@@ -4,10 +4,10 @@
 
 this.EXPORTED_SYMBOLS = ['HistoryEngine', 'HistoryRec'];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 const HISTORY_TTL = 5184000; // 60 days
 
@@ -44,6 +44,25 @@ HistoryEngine.prototype = {
   applyIncomingBatchSize: HISTORY_STORE_BATCH_SIZE,
 
   syncPriority: 7,
+
+  _processIncoming: function (newitems) {
+    // We want to notify history observers that a batch operation is underway
+    // so they don't do lots of work for each incoming record.
+    let observers = PlacesUtils.history.getObservers();
+    function notifyHistoryObservers(notification) {
+      for (let observer of observers) {
+        try {
+          observer[notification]();
+        } catch (ex) { }
+      }
+    }
+    notifyHistoryObservers("onBeginUpdateBatch");
+    try {
+      return SyncEngine.prototype._processIncoming.call(this, newitems);
+    } finally {
+      notifyHistoryObservers("onEndUpdateBatch");
+    }
+  },
 };
 
 function HistoryStore(name, engine) {
@@ -51,7 +70,8 @@ function HistoryStore(name, engine) {
 
   // Explicitly nullify our references to our cached services so we don't leak
   Svc.Obs.add("places-shutdown", function() {
-    for each ([query, stmt] in Iterator(this._stmts)) {
+    for (let query in this._stmts) {
+      let stmt = this._stmts;
       stmt.finalize();
     }
     this._stmts = {};
@@ -131,7 +151,7 @@ HistoryStore.prototype = {
       "SELECT visit_type type, visit_date date " +
       "FROM moz_historyvisits " +
       "WHERE place_id = (SELECT id FROM moz_places WHERE url = :url) " +
-      "ORDER BY date DESC LIMIT 10");
+      "ORDER BY date DESC LIMIT 20");
   },
   _visitCols: ["date", "type"],
 
@@ -203,7 +223,7 @@ HistoryStore.prototype = {
         } else {
           shouldApply = this._recordToPlaceInfo(record);
         }
-      } catch(ex) {
+      } catch (ex if !Async.isShutdownException(ex)) {
         failed.push(record.id);
         shouldApply = false;
       }
@@ -276,14 +296,14 @@ HistoryStore.prototype = {
       if (!visit.date || typeof visit.date != "number") {
         this._log.warn("Encountered record with invalid visit date: "
                        + visit.date);
-        throw "Visit has no date!";
+        continue;
       }
 
       if (!visit.type || !(visit.type >= PlacesUtils.history.TRANSITION_LINK &&
                            visit.type <= PlacesUtils.history.TRANSITION_FRAMED_LINK)) {
-        this._log.warn("Encountered record with invalid visit type: "
-                       + visit.type);
-        throw "Invalid visit type!";
+        this._log.warn("Encountered record with invalid visit type: " +
+                       visit.type + "; ignoring.");
+        continue;
       }
 
       // Dates need to be integers.
@@ -294,6 +314,7 @@ HistoryStore.prototype = {
         // overwritten.
         continue;
       }
+
       visit.visitDate = visit.date;
       visit.transitionType = visit.type;
       k += 1;
@@ -345,7 +366,9 @@ HistoryStore.prototype = {
   },
 
   wipe: function HistStore_wipe() {
-    PlacesUtils.history.removeAllPages();
+    let cb = Async.makeSyncCallback();
+    PlacesUtils.history.clear().then(result => {cb(null, result)}, err => {cb(err)});
+    return Async.waitForSyncCallback(cb);
   }
 };
 

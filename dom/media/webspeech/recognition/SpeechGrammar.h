@@ -32,7 +32,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<SpeechGrammar>
     Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);
@@ -49,6 +49,8 @@ private:
   ~SpeechGrammar();
 
   nsCOMPtr<nsISupports> mParent;
+
+  nsString mSrc;
 };
 
 } // namespace dom

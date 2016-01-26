@@ -52,6 +52,7 @@ public:
 
   virtual void OverrideBaseURI(nsIURI* aNewBaseURI) override;
   virtual void SetLineNumber(uint32_t aLineNumber) override;
+  virtual uint32_t GetLineNumber() override;
 
   enum RelValue {
     ePREFETCH =     0x00000001,
@@ -127,7 +128,7 @@ private:
                               bool* aIsAlternate,
                               bool aForceUpdate);
 
-  nsRefPtr<mozilla::CSSStyleSheet> mStyleSheet;
+  RefPtr<mozilla::CSSStyleSheet> mStyleSheet;
 protected:
   bool mDontLoadStyle;
   bool mUpdatesEnabled;

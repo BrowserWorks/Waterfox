@@ -58,6 +58,42 @@ class BufferOffset
     }
 };
 
+inline bool
+operator<(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() < b.getOffset();
+}
+
+inline bool
+operator>(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() > b.getOffset();
+}
+
+inline bool
+operator<=(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() <= b.getOffset();
+}
+
+inline bool
+operator>=(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() >= b.getOffset();
+}
+
+inline bool
+operator==(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() == b.getOffset();
+}
+
+inline bool
+operator!=(BufferOffset a, BufferOffset b)
+{
+    return a.getOffset() != b.getOffset();
+}
+
 template<int SliceSize>
 class BufferSlice
 {
@@ -88,7 +124,7 @@ class BufferSlice
         next->prev_ = this;
     }
 
-    void putBytes(size_t numBytes, const uint8_t* source) {
+    void putBytes(size_t numBytes, const void* source) {
         MOZ_ASSERT(bytelength_ + numBytes <= SliceSize);
         if (source)
             memcpy(&instructions[length()], source, numBytes);
@@ -99,22 +135,20 @@ class BufferSlice
 template<int SliceSize, class Inst>
 class AssemblerBuffer
 {
+  protected:
     typedef BufferSlice<SliceSize> Slice;
     typedef AssemblerBuffer<SliceSize, Inst> AssemblerBuffer_;
 
-  protected:
     // Doubly-linked list of BufferSlices, with the most recent in tail position.
     Slice* head;
     Slice* tail;
 
-  public:
     bool m_oom;
     bool m_bail;
 
     // How many bytes has been committed to the buffer thus far.
     // Does not include tail.
     uint32_t bufferSize;
-    uint32_t lastInstSize;
 
     // Finger for speeding up accesses.
     Slice* finger;
@@ -129,7 +163,6 @@ class AssemblerBuffer
         m_oom(false),
         m_bail(false),
         bufferSize(0),
-        lastInstSize(0),
         finger(nullptr),
         finger_offset(0),
         lifoAlloc_(8192)
@@ -141,6 +174,7 @@ class AssemblerBuffer
         return !(size() & (alignment - 1));
     }
 
+  protected:
     virtual Slice* newSlice(LifoAlloc& a) {
         Slice* tmp = static_cast<Slice*>(a.alloc(sizeof(Slice)));
         if (!tmp) {
@@ -150,10 +184,16 @@ class AssemblerBuffer
         return new (tmp) Slice;
     }
 
-    bool ensureSpace(int size) {
+  public:
+    bool ensureSpace(size_t size) {
         // Space can exist in the most recent Slice.
-        if (tail && tail->length() + size <= tail->Capacity())
+        if (tail && tail->length() + size <= tail->Capacity()) {
+            // Simulate allocation failure even when we don't need a new slice.
+            if (js::oom::ShouldFailWithOOM())
+                return fail_oom();
+
             return true;
+        }
 
         // Otherwise, a new Slice must be added.
         Slice* slice = newSlice(lifoAlloc_);
@@ -178,22 +218,44 @@ class AssemblerBuffer
     }
 
     BufferOffset putByte(uint8_t value) {
-        return putBytes(sizeof(value), (uint8_t*)&value);
+        return putBytes(sizeof(value), &value);
     }
 
     BufferOffset putShort(uint16_t value) {
-        return putBytes(sizeof(value), (uint8_t*)&value);
+        return putBytes(sizeof(value), &value);
     }
 
     BufferOffset putInt(uint32_t value) {
-        return putBytes(sizeof(value), (uint8_t*)&value);
+        return putBytes(sizeof(value), &value);
     }
-    BufferOffset putBytes(uint32_t instSize, uint8_t* inst) {
-        if (!ensureSpace(instSize))
+
+    // Add numBytes bytes to this buffer.
+    // The data must fit in a single slice.
+    BufferOffset putBytes(size_t numBytes, const void* inst) {
+        if (!ensureSpace(numBytes))
             return BufferOffset();
 
         BufferOffset ret = nextOffset();
-        tail->putBytes(instSize, inst);
+        tail->putBytes(numBytes, inst);
+        return ret;
+    }
+
+    // Add a potentially large amount of data to this buffer.
+    // The data may be distrubuted across multiple slices.
+    // Return the buffer offset of the first added byte.
+    BufferOffset putBytesLarge(size_t numBytes, const void* data)
+    {
+        BufferOffset ret = nextOffset();
+        while (numBytes > 0) {
+            if (!ensureSpace(1))
+                return BufferOffset();
+            size_t avail = tail->Capacity() - tail->length();
+            size_t xfer = numBytes < avail ? numBytes : avail;
+            MOZ_ASSERT(xfer > 0, "ensureSpace should have allocated a slice");
+            tail->putBytes(xfer, data);
+            data = (const uint8_t*)data + xfer;
+            numBytes -= xfer;
+        }
         return ret;
     }
 
@@ -214,12 +276,13 @@ class AssemblerBuffer
         m_bail = true;
         return false;
     }
+
+  private:
     void update_finger(Slice* finger_, int fingerOffset_) {
         finger = finger_;
         finger_offset = fingerOffset_;
     }
 
-  private:
     static const unsigned SliceDistanceRequiringFingerUpdate = 3;
 
     Inst* getInstForwards(BufferOffset off, Slice* start, int startOffset, bool updateFinger = false) {
@@ -246,7 +309,7 @@ class AssemblerBuffer
             slicesSkipped++;
         }
 
-        MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Invalid instruction cursor.");
+        MOZ_CRASH("Invalid instruction cursor.");
     }
 
     Inst* getInstBackwards(BufferOffset off, Slice* start, int startOffset, bool updateFinger = false) {
@@ -275,12 +338,21 @@ class AssemblerBuffer
             slicesSkipped++;
         }
 
-        MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Invalid instruction cursor.");
+        MOZ_CRASH("Invalid instruction cursor.");
     }
 
   public:
+    Inst* getInstOrNull(BufferOffset off) {
+        if (!off.assigned())
+            return nullptr;
+        return getInst(off);
+    }
+
+    // Get a pointer to the instruction at offset |off| which must be within the
+    // bounds of the buffer. Use |getInstOrNull()| if |off| may be unassigned.
     Inst* getInst(BufferOffset off) {
         const int offset = off.getOffset();
+        MOZ_RELEASE_ASSERT(off.assigned() && offset >= 0 && (unsigned)offset < size());
 
         // Is the instruction in the last slice?
         if (offset >= int(bufferSize))
@@ -300,7 +372,8 @@ class AssemblerBuffer
         if (offset < int(bufferSize - offset))
             return getInstForwards(off, head, 0);
 
-        // The last slice was already checked above, so start at the second-to-last.
+        // The last slice was already checked above, so start at the
+        // second-to-last.
         Slice* prev = tail->getPrev();
         return getInstBackwards(off, prev, bufferSize - prev->length());
     }
@@ -309,19 +382,6 @@ class AssemblerBuffer
         if (tail)
             return BufferOffset(bufferSize + tail->length());
         return BufferOffset(bufferSize);
-    }
-
-    // Break the instruction stream so we can go back and edit it at this point
-    void perforate() {
-        Slice* slice = newSlice(lifoAlloc_);
-        if (!slice) {
-            fail_oom();
-            return;
-        }
-
-        bufferSize += tail->length();
-        tail->setNext(slice);
-        tail = slice;
     }
 
     class AssemblerBufferInstIterator

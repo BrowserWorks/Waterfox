@@ -13,6 +13,7 @@
 #include "nsISupportsPrimitives.h"
 #include <windows.h>
 #include "mozilla/Attributes.h"
+#include "mozilla/RefPtr.h"
 
 class nsIWidget;
 
@@ -23,16 +24,20 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD GetSurfaceForPrinter(gfxASurface **surface);
+  NS_IMETHOD GetSurfaceForPrinter(gfxASurface **surface) override;
   NS_IMETHOD BeginDocument(const nsAString& aTitle,
-                           char16_t*       aPrintToFileName,
+                           const nsAString& aPrintToFileName,
                            int32_t          aStartPage,
-                           int32_t          aEndPage) { return NS_OK; }
-  NS_IMETHOD EndDocument() { return NS_OK; }
-  NS_IMETHOD BeginPage() { return NS_OK; }
-  NS_IMETHOD EndPage() { return NS_OK; }
+                           int32_t          aEndPage) override { return NS_OK; }
+  NS_IMETHOD EndDocument() override { return NS_OK; }
+  NS_IMETHOD BeginPage() override { return NS_OK; }
+  NS_IMETHOD EndPage() override { return NS_OK; }
 
-  NS_IMETHOD Init(nsIWidget* aWidget, nsIPrintSettings* aPS, bool aIsPrintPreview);
+  NS_IMETHOD Init(nsIWidget* aWidget, nsIPrintSettings* aPS, bool aIsPrintPreview) override;
+
+  float GetDPI() final  { return 144.0f; }
+
+  float GetPrintingScale() final;
 
   void GetDriverName(wchar_t *&aDriverName) const   { aDriverName = mDriverName;     }
   void GetDeviceName(wchar_t *&aDeviceName) const   { aDeviceName = mDeviceName;     }
@@ -46,16 +51,11 @@ public:
   // helper functions
   nsresult GetDataFromPrinter(char16ptr_t aName, nsIPrintSettings* aPS = nullptr);
 
-  static nsresult SetPrintSettingsFromDevMode(nsIPrintSettings* aPrintSettings, 
-                                              LPDEVMODEW         aDevMode);
-
 protected:
 
   void SetDeviceName(char16ptr_t aDeviceName);
   void SetDriverName(char16ptr_t aDriverName);
   void SetDevMode(LPDEVMODEW aDevMode);
-
-  void SetupPaperInfoFromSettings();
 
   virtual ~nsDeviceContextSpecWin();
 

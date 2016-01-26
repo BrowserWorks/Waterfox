@@ -6,7 +6,6 @@
 #ifndef GFXQTNATIVERENDER_H_
 #define GFXQTNATIVERENDER_H_
 
-#include "gfxColor.h"
 #include "gfxContext.h"
 #include "gfxXlibSurface.h"
 #include "mozilla/gfx/Rect.h"
@@ -62,7 +61,7 @@ public:
      * successful, a pointer to the new gfxASurface is stored in *resultSurface,
      * otherwise *resultSurface is set to nullptr.
      */
-    nsresult Draw(gfxContext* ctx, nsIntSize size,
+    nsresult Draw(gfxContext* ctx, mozilla::gfx::IntSize size,
                   uint32_t flags, Screen* screen, Visual* visual);
 };
 

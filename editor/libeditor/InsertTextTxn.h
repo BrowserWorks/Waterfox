@@ -44,7 +44,7 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(InsertTextTxn, EditTxn)
-	
+
   NS_DECL_EDITTXN
 
   NS_IMETHOD Merge(nsITransaction* aTransaction, bool* aDidMerge) override;
@@ -59,7 +59,7 @@ private:
   bool IsSequentialInsert(InsertTextTxn& aOtherTxn);
 
   /** The Text node to operate upon */
-  nsRefPtr<Text> mTextNode;
+  RefPtr<Text> mTextNode;
 
   /** The offset into mTextNode where the insertion is to take place */
   uint32_t mOffset;
@@ -73,7 +73,7 @@ private:
 
 NS_DEFINE_STATIC_IID_ACCESSOR(InsertTextTxn, NS_INSERTTEXTTXN_IID)
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

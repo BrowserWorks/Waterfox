@@ -3,8 +3,8 @@ function test() {
 
   var tab = gBrowser.addTab();
   gBrowser.selectedTab = tab;
-  tab.linkedBrowser.addEventListener("load", function () {
-    tab.linkedBrowser.removeEventListener("load", arguments.callee, true);
+  tab.linkedBrowser.addEventListener("pageshow", function () {
+    tab.linkedBrowser.removeEventListener("pageshow", arguments.callee, true);
     checkPageStyleMenu();
   }, true);
   let rootDir = getRootDirectory(gTestPath);
@@ -32,7 +32,7 @@ function checkPageStyleMenu() {
                    " with rel=\"" + rel + "\"" +
                    (media ? " and media=\"" + media + "\"" : "");
 
-    var item = items.filter(function (item) item.getAttribute("label") == title);
+    var item = items.filter(item => item.getAttribute("label") == title);
     var found = item.length == 1;
     var checked = found && (item[0].getAttribute("checked") == "true");
 

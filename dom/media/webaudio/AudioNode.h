@@ -89,13 +89,22 @@ public:
     return mContext;
   }
 
-  virtual void Connect(AudioNode& aDestination, uint32_t aOutput,
-                       uint32_t aInput, ErrorResult& aRv);
+  virtual AudioNode* Connect(AudioNode& aDestination, uint32_t aOutput,
+                             uint32_t aInput, ErrorResult& aRv);
 
   virtual void Connect(AudioParam& aDestination, uint32_t aOutput,
                        ErrorResult& aRv);
 
   virtual void Disconnect(uint32_t aOutput, ErrorResult& aRv);
+
+  // Called after input nodes have been explicitly added or removed through
+  // the Connect() or Disconnect() methods.
+  virtual void NotifyInputsChanged() {}
+  // Indicate that the node should continue indefinitely to behave as if an
+  // input is connected, even though there is no longer a corresponding entry
+  // in mInputNodes.  Called after an input node has been removed because it
+  // is being garbage collected.
+  virtual void NotifyHasPhantomInput() {}
 
   // The following two virtual methods must be implemented by each node type
   // to provide their number of input and output ports. These numbers are
@@ -159,7 +168,7 @@ public:
 
     // Weak reference.
     AudioNode* mInputNode;
-    nsRefPtr<MediaInputPort> mStreamPort;
+    RefPtr<MediaInputPort> mStreamPort;
     // The index of the input port this node feeds into.
     // This is not used for connections to AudioParams.
     uint32_t mInputPort;
@@ -167,17 +176,18 @@ public:
     uint32_t mOutputPort;
   };
 
-  MediaStream* Stream() { return mStream; }
+  // Returns the stream, if any.
+  AudioNodeStream* GetStream() const { return mStream; }
 
   const nsTArray<InputNode>& InputNodes() const
   {
     return mInputNodes;
   }
-  const nsTArray<nsRefPtr<AudioNode> >& OutputNodes() const
+  const nsTArray<RefPtr<AudioNode> >& OutputNodes() const
   {
     return mOutputNodes;
   }
-  const nsTArray<nsRefPtr<AudioParam> >& OutputParams() const
+  const nsTArray<RefPtr<AudioParam> >& OutputParams() const
   {
     return mOutputParams;
   }
@@ -201,28 +211,28 @@ public:
   virtual const char* NodeType() const = 0;
 
 private:
-  friend class AudioBufferSourceNode;
-  // This could possibly delete 'this'.
+  virtual void LastRelease() override
+  {
+    // We are about to be deleted, disconnect the object from the graph before
+    // the derived type is destroyed.
+    DisconnectFromGraph();
+  }
+  // Callers must hold a reference to 'this'.
   void DisconnectFromGraph();
 
 protected:
-  static void Callback(AudioNode* aNode) { /* not implemented */ }
-
   // Helpers for sending different value types to streams
   void SendDoubleParameterToStream(uint32_t aIndex, double aValue);
   void SendInt32ParameterToStream(uint32_t aIndex, int32_t aValue);
   void SendThreeDPointParameterToStream(uint32_t aIndex, const ThreeDPoint& aValue);
   void SendChannelMixingParametersToStream();
-  static void SendTimelineParameterToStream(AudioNode* aNode, uint32_t aIndex,
-                                            const AudioParamTimeline& aValue);
 
 private:
-  nsRefPtr<AudioContext> mContext;
+  RefPtr<AudioContext> mContext;
 
 protected:
-  // Must be set in the constructor. Must not be null.
-  // If MaxNumberOfInputs() is > 0, then mStream must be a ProcessedMediaStream.
-  nsRefPtr<MediaStream> mStream;
+  // Must be set in the constructor. Must not be null unless finished.
+  RefPtr<AudioNodeStream> mStream;
 
 private:
   // For every InputNode, there is a corresponding entry in mOutputNodes of the
@@ -232,13 +242,13 @@ private:
   // of the mOutputNode entry. We won't necessarily be able to identify the
   // exact matching entry, since mOutputNodes doesn't include the port
   // identifiers and the same node could be connected on multiple ports.
-  nsTArray<nsRefPtr<AudioNode> > mOutputNodes;
+  nsTArray<RefPtr<AudioNode> > mOutputNodes;
   // For every mOutputParams entry, there is a corresponding entry in
   // AudioParam::mInputNodes of the mOutputParams entry. We won't necessarily be
   // able to identify the exact matching entry, since mOutputParams doesn't
   // include the port identifiers and the same node could be connected on
   // multiple ports.
-  nsTArray<nsRefPtr<AudioParam> > mOutputParams;
+  nsTArray<RefPtr<AudioParam> > mOutputParams;
   uint32_t mChannelCount;
   ChannelCountMode mChannelCountMode;
   ChannelInterpretation mChannelInterpretation;
@@ -246,14 +256,9 @@ private:
   // Whether the node just passes through its input.  This is a devtools API that
   // only works for some node types.
   bool mPassThrough;
-#ifdef DEBUG
-  // In debug builds, check to make sure that the node demise notification has
-  // been properly sent before the node is destroyed.
-  bool mDemiseNotified;
-#endif
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

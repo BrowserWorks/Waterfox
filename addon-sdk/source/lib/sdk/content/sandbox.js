@@ -10,6 +10,7 @@ module.metadata = {
 const { Class } = require('../core/heritage');
 const { EventTarget } = require('../event/target');
 const { on, off, emit } = require('../event/core');
+const { events } = require('./sandbox/events');
 const { requiresAddonGlobal } = require('./utils');
 const { delay: async } = require('../lang/functional');
 const { Ci, Cu, Cc } = require('chrome');
@@ -17,11 +18,10 @@ const timer = require('../timers');
 const { URL } = require('../url');
 const { sandbox, evaluate, load } = require('../loader/sandbox');
 const { merge } = require('../util/object');
-const { getTabForContentWindow } = require('../tabs/utils');
+const { getTabForContentWindowNoShim } = require('../tabs/utils');
 const { getInnerId } = require('../window/utils');
 const { PlainTextConsole } = require('../console/plain-text');
-const { data } = require('../self');
-const { isChildLoader } = require('../remote/core');
+const { data } = require('../self');const { isChildLoader } = require('../remote/core');
 // WeakMap of sandboxes so we can access private values
 const sandboxes = new WeakMap();
 
@@ -29,7 +29,7 @@ const sandboxes = new WeakMap();
   require('./content-worker.js');
   Then, retrieve URL of these files in the XPI:
 */
-let prefix = module.uri.split('sandbox.js')[0];
+var prefix = module.uri.split('sandbox.js')[0];
 const CONTENT_WORKER_URL = prefix + 'content-worker.js';
 const metadata = require('@loader/options').metadata;
 
@@ -53,11 +53,11 @@ function isWindowInTab(window) {
   if (isChildLoader) {
     let { frames } = require('../remote/child');
     let frame = frames.getFrameForWindow(window.top);
-    return frame.isTab;
+    return frame && frame.isTab;
   }
   else {
     // The deprecated sync worker API still does everything in the main process
-    return getTabForContentWindow(window);
+    return getTabForContentWindowNoShim(window);
   }
 }
 
@@ -162,10 +162,17 @@ const WorkerSandbox = Class({
     let parent = window.parent === window ? content : content.parent;
     merge(content, {
       // We need 'this === window === top' to be true in toplevel scope:
-      get window() content,
-      get top() top,
-      get parent() parent
+      get window() {
+        return content;
+      },
+      get top() {
+        return top;
+      },
+      get parent() {
+        return parent;
+      }
     });
+
     // Use the Greasemonkey naming convention to provide access to the
     // unwrapped window object so the content script can access document
     // JavaScript values.
@@ -261,6 +268,11 @@ const WorkerSandbox = Class({
       win.console = con;
     };
 
+    emit(events, "content-script-before-inserted", {
+      window: window,
+      worker: worker
+    });
+
     // The order of `contentScriptFile` and `contentScript` evaluation is
     // intentional, so programs can load libraries like jQuery from script URLs
     // and use them in scripts.
@@ -273,6 +285,7 @@ const WorkerSandbox = Class({
 
     if (contentScriptFile)
       importScripts.apply(null, [this].concat(contentScriptFile));
+
     if (contentScript) {
       evaluateIn(
         this,

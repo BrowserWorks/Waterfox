@@ -37,7 +37,7 @@ public:
     return mContext;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   double DopplerFactor() const
   {
@@ -117,7 +117,7 @@ private:
 
 private:
   friend class PannerNode;
-  nsRefPtr<AudioContext> mContext;
+  RefPtr<AudioContext> mContext;
   ThreeDPoint mPosition;
   ThreeDPoint mFrontVector;
   ThreeDPoint mRightVector;
@@ -127,8 +127,8 @@ private:
   nsTArray<WeakPtr<PannerNode> > mPanners;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

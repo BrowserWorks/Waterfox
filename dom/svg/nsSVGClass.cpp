@@ -5,10 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsSVGClass.h"
+
+#include "mozilla/dom/SVGAnimatedString.h"
+#include "mozilla/Move.h"
 #include "nsSVGElement.h"
 #include "nsSMILValue.h"
 #include "SMILStringType.h"
-#include "mozilla/dom/SVGAnimatedString.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -55,7 +57,7 @@ NS_INTERFACE_MAP_END
 already_AddRefed<SVGAnimatedString>
 nsSVGClass::ToDOMAnimatedString(nsSVGElement* aSVGElement)
 {
-  nsRefPtr<DOMAnimatedString> result = new DOMAnimatedString(this, aSVGElement);
+  RefPtr<DOMAnimatedString> result = new DOMAnimatedString(this, aSVGElement);
   return result.forget();
 }
 
@@ -130,7 +132,7 @@ nsSVGClass::SMILString::ValueFromString(const nsAString& aStr,
   nsSMILValue val(SMILStringType::Singleton());
 
   *static_cast<nsAString*>(val.mU.mPtr) = aStr;
-  aValue.Swap(val);
+  aValue = Move(val);
   aPreventCachingOfSandwich = false;
   return NS_OK;
 }

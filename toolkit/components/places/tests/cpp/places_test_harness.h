@@ -7,12 +7,12 @@
 #include "TestHarness.h"
 #include "nsMemory.h"
 #include "nsThreadUtils.h"
-#include "nsNetUtil.h"
 #include "nsDocShellCID.h"
 
 #include "nsToolkitCompsCID.h"
 #include "nsINavHistoryService.h"
 #include "nsIObserverService.h"
+#include "nsIURI.h"
 #include "mozilla/IHistory.h"
 #include "mozIStorageConnection.h"
 #include "mozIStorageStatement.h"
@@ -22,6 +22,7 @@
 #include "nsPIPlacesDatabase.h"
 #include "nsIObserver.h"
 #include "prinrval.h"
+#include "prtime.h"
 #include "mozilla/Attributes.h"
 
 #define WAITFORTOPIC_TIMEOUT_SECONDS 5
@@ -346,7 +347,7 @@ do_wait_async_updates() {
 
   db->CreateAsyncStatement(NS_LITERAL_CSTRING("COMMIT"),
                            getter_AddRefs(stmt));
-  nsRefPtr<AsyncStatementSpinner> spinner = new AsyncStatementSpinner();
+  RefPtr<AsyncStatementSpinner> spinner = new AsyncStatementSpinner();
   (void)stmt->ExecuteAsync(spinner, getter_AddRefs(pending));
 
   spinner->SpinUntilCompleted();
@@ -374,7 +375,7 @@ static const char TOPIC_PLACES_CONNECTION_CLOSED[] = "places-connection-closed";
 
 class WaitForConnectionClosed final : public nsIObserver
 {
-  nsRefPtr<WaitForTopicSpinner> mSpinner;
+  RefPtr<WaitForTopicSpinner> mSpinner;
 
   ~WaitForConnectionClosed() {}
 

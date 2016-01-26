@@ -65,7 +65,7 @@ class IDBFactory final
 
   // This will only be set if the factory belongs to a window in a child
   // process.
-  nsRefPtr<TabChild> mTabChild;
+  RefPtr<TabChild> mTabChild;
 
   nsTArray<nsAutoPtr<PendingRequestInfo>> mPendingRequests;
 
@@ -86,9 +86,9 @@ public:
                   IDBFactory** aFactory);
 
   static nsresult
-  CreateForChromeJS(JSContext* aCx,
-                    JS::Handle<JSObject*> aOwningObject,
-                    IDBFactory** aFactory);
+  CreateForMainThreadJS(JSContext* aCx,
+                        JS::Handle<JSObject*> aOwningObject,
+                        IDBFactory** aFactory);
 
   static nsresult
   CreateForDatastore(JSContext* aCx,
@@ -105,16 +105,21 @@ public:
   static bool
   AllowedForWindow(nsPIDOMWindow* aWindow);
 
+  static bool
+  AllowedForPrincipal(nsIPrincipal* aPrincipal,
+                      bool* aIsSystemPrincipal = nullptr);
+
+#ifdef DEBUG
+  void
+  AssertIsOnOwningThread() const;
+
+  PRThread*
+  OwningThread() const;
+#else
   void
   AssertIsOnOwningThread() const
-#ifdef DEBUG
-  ;
-#else
   { }
 #endif
-
-  void
-  SetBackgroundActor(BackgroundFactoryChild* aBackgroundActor);
 
   void
   ClearBackgroundActor()

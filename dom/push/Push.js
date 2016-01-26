@@ -4,105 +4,25 @@
 
 "use strict";
 
-// Don't modify this, instead set dom.push.debug.
-let gDebuggingEnabled = true;
-
-function debug(s) {
-  if (gDebuggingEnabled)
-    dump("-*- Push.js: " + s + "\n");
-}
-
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
+const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
-Cu.import("resource://gre/modules/AppsUtils.jsm");
 
-const PUSH_SUBSCRIPTION_CID = Components.ID("{CA86B665-BEDA-4212-8D0F-5C9F65270B58}");
+XPCOMUtils.defineLazyGetter(this, "console", () => {
+  let {ConsoleAPI} = Cu.import("resource://gre/modules/Console.jsm", {});
+  return new ConsoleAPI({
+    maxLogLevelPref: "dom.push.loglevel",
+    prefix: "Push",
+  });
+});
 
-function PushSubscription(pushEndpoint, scope, pageURL) {
-  debug("PushSubscription Constructor");
-  this._pushEndpoint = pushEndpoint;
-  this._scope = scope;
-  this._pageURL = pageURL;
-}
-
-PushSubscription.prototype = {
-  __proto__: DOMRequestIpcHelper.prototype,
-
-  contractID: "@mozilla.org/push/PushSubscription;1",
-
-  classID : PUSH_SUBSCRIPTION_CID,
-
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer,
-                                          Ci.nsISupportsWeakReference,
-                                          Ci.nsIObserver]),
-
-  init: function(aWindow) {
-    debug("PushSubscription init()");
-
-    this.initDOMRequestHelper(aWindow, [
-      "PushService:Unregister:OK",
-      "PushService:Unregister:KO",
-    ]);
-
-    this._cpmm = Cc["@mozilla.org/childprocessmessagemanager;1"]
-                   .getService(Ci.nsISyncMessageSender);
-  },
-
-  __init: function(endpoint, scope, pageURL) {
-    this._pushEndpoint = endpoint;
-    this._scope = scope;
-    this._pageURL = pageURL;
-  },
-
-  get endpoint() {
-    return this._pushEndpoint;
-  },
-
-  unsubscribe: function() {
-    debug("unsubscribe! ")
-
-    let promiseInit = function(resolve, reject) {
-      let resolverId = this.getPromiseResolverId({resolve: resolve,
-                                                  reject: reject });
-
-      this._cpmm.sendAsyncMessage("Push:Unregister", {
-                                  pageURL: this._pageURL,
-                                  scope: this._scope,
-                                  pushEndpoint: this._pushEndpoint,
-                                  requestID: resolverId
-                                });
-    }.bind(this);
-
-    return this.createPromise(promiseInit);
-  },
-
-  receiveMessage: function(aMessage) {
-    debug("push subscription receiveMessage(): " + JSON.stringify(aMessage))
-
-    let json = aMessage.data;
-    let resolver = this.takePromiseResolver(json.requestID);
-    if (resolver == null) {
-      return;
-    }
-
-    switch (aMessage.name) {
-      case "PushService:Unregister:OK":
-        resolver.resolve(false);
-        break;
-      case "PushService:Unregister:KO":
-        resolver.reject(true);
-        break;
-      default:
-        debug("NOT IMPLEMENTED! receiveMessage for " + aMessage.name);
-    }
-  },
-
-};
+XPCOMUtils.defineLazyServiceGetter(this, "PushService",
+  "@mozilla.org/push/Service;1", "nsIPushService");
 
 const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
 
@@ -112,7 +32,7 @@ const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
  * one actually performing all operations.
  */
 function Push() {
-  debug("Push Constructor");
+  console.debug("Push()");
 }
 
 Push.prototype = {
@@ -127,57 +47,106 @@ Push.prototype = {
                                           Ci.nsIObserver]),
 
   init: function(aWindow) {
-    // Set debug first so that all debugging actually works.
-    // NOTE: We don't add an observer here like in PushService. Flipping the
-    // pref will require a reload of the app/page, which seems acceptable.
-    gDebuggingEnabled = Services.prefs.getBoolPref("dom.push.debug");
-    debug("init()");
+    console.debug("init()");
 
-    this._pageURL = aWindow.document.nodePrincipal.URI;
     this._window = aWindow;
 
-    this.initDOMRequestHelper(aWindow, [
-      "PushService:Register:OK",
-      "PushService:Register:KO",
-      "PushService:Registration:OK",
-      "PushService:Registration:KO"
-    ]);
+    this.initDOMRequestHelper(aWindow);
 
-    this._cpmm = Cc["@mozilla.org/childprocessmessagemanager;1"]
-                   .getService(Ci.nsISyncMessageSender);
+    this._principal = aWindow.document.nodePrincipal;
   },
 
   setScope: function(scope){
-    debug('setScope ' + scope);
+    console.debug("setScope()", scope);
     this._scope = scope;
   },
 
   askPermission: function (aAllowCallback, aCancelCallback) {
-    debug("askPermission");
+    console.debug("askPermission()");
 
-    let principal = this._window.document.nodePrincipal;
-    let type = "push";
-    let permValue =
-      Services.perms.testExactPermissionFromPrincipal(principal, type);
+    return this.createPromise((resolve, reject) => {
+      let permissionDenied = () => {
+        reject(new this._window.DOMException(
+          "User denied permission to use the Push API",
+          "PermissionDeniedError"
+        ));
+      };
 
-    debug("Existing permission " + permValue);
+      let permission = Ci.nsIPermissionManager.UNKNOWN_ACTION;
+      try {
+        permission = this._testPermission();
+      } catch (e) {
+        permissionDenied();
+        return;
+      }
 
-    if (permValue == Ci.nsIPermissionManager.ALLOW_ACTION) {
-        aAllowCallback();
-      return;
-    }
+      if (permission == Ci.nsIPermissionManager.ALLOW_ACTION) {
+        resolve();
+      } else if (permission == Ci.nsIPermissionManager.DENY_ACTION) {
+        permissionDenied();
+      } else {
+        this._requestPermission(resolve, permissionDenied);
+      }
+    });
+  },
 
-    if (permValue == Ci.nsIPermissionManager.DENY_ACTION) {
-      aCancelCallback();
-      return;
-    }
+  subscribe: function() {
+    console.debug("subscribe()", this._scope);
 
+    let histogram = Services.telemetry.getHistogramById("PUSH_API_USED");
+    histogram.add(true);
+    return this.askPermission().then(() =>
+      this.createPromise((resolve, reject) => {
+        let callback = new PushSubscriptionCallback(this, resolve, reject);
+        PushService.subscribe(this._scope, this._principal, callback);
+      })
+    );
+  },
+
+  getSubscription: function() {
+    console.debug("getSubscription()", this._scope);
+
+    return this.createPromise((resolve, reject) => {
+      let callback = new PushSubscriptionCallback(this, resolve, reject);
+      PushService.getSubscription(this._scope, this._principal, callback);
+    });
+  },
+
+  permissionState: function() {
+    console.debug("permissionState()", this._scope);
+
+    return this.createPromise((resolve, reject) => {
+      let permission = Ci.nsIPermissionManager.UNKNOWN_ACTION;
+
+      try {
+        permission = this._testPermission();
+      } catch(e) {
+        reject();
+        return;
+      }
+
+      let pushPermissionStatus = "prompt";
+      if (permission == Ci.nsIPermissionManager.ALLOW_ACTION) {
+        pushPermissionStatus = "granted";
+      } else if (permission == Ci.nsIPermissionManager.DENY_ACTION) {
+        pushPermissionStatus = "denied";
+      }
+      resolve(pushPermissionStatus);
+    });
+  },
+
+  _testPermission: function() {
+    return Services.perms.testExactPermissionFromPrincipal(
+      this._principal, "desktop-notification");
+  },
+
+  _requestPermission: function(allowCallback, cancelCallback) {
     // Create an array with a single nsIContentPermissionType element.
-    type = {
-      type: "push",
+    let type = {
+      type: "desktop-notification",
       access: null,
       options: [],
-      QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionType])
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionType]),
     };
     let typeArray = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
     typeArray.appendElement(type, false);
@@ -185,131 +154,76 @@ Push.prototype = {
     // create a nsIContentPermissionRequest
     let request = {
       types: typeArray,
-      principal: principal,
+      principal: this._principal,
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionRequest]),
       allow: function() {
-        aAllowCallback();
+        let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_GRANTED");
+        histogram.add();
+        allowCallback();
       },
       cancel: function() {
-        aCancelCallback();
+        let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_DENIED");
+        histogram.add();
+        cancelCallback();
       },
-      window: this._window
+      window: this._window,
     };
 
-    debug("asking the window utils about permission...")
+    let histogram = Services.telemetry.getHistogramById("PUSH_API_PERMISSION_REQUESTED");
+    histogram.add(1);
     // Using askPermission from nsIDOMWindowUtils that takes care of the
     // remoting if needed.
     let windowUtils = this._window.QueryInterface(Ci.nsIInterfaceRequestor)
                           .getInterface(Ci.nsIDOMWindowUtils);
     windowUtils.askPermission(request);
   },
+};
 
+function PushSubscriptionCallback(pushManager, resolve, reject) {
+  this.pushManager = pushManager;
+  this.resolve = resolve;
+  this.reject = reject;
+}
 
+PushSubscriptionCallback.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPushSubscriptionCallback]),
 
-  receiveMessage: function(aMessage) {
-    debug("push receiveMessage(): " + JSON.stringify(aMessage))
-
-    let json = aMessage.data;
-    let resolver = this.takePromiseResolver(json.requestID);
-
-    if (!resolver) {
+  onPushSubscription: function(ok, subscription) {
+    let {pushManager} = this;
+    if (!Components.isSuccessCode(ok)) {
+      this.reject(new pushManager._window.DOMException(
+        "Error retrieving push subscription",
+        "AbortError"
+      ));
       return;
     }
 
-    switch (aMessage.name) {
-      case "PushService:Register:OK":
-      {
-        let subscription = new this._window.PushSubscription(json.pushEndpoint,
-                                                             this._scope,
-                                                             this._pageURL.spec);
-        resolver.resolve(subscription);
-        break;
-      }
-      case "PushService:Register:KO":
-        resolver.reject(null);
-        break;
-      case "PushService:Registration:OK":
-      {
-        let subscription = null;
-        try {
-          subscription = new this._window.PushSubscription(json.registration.pushEndpoint,
-                                                          this._scope, this._pageURL.spec);
-        } catch(error) {
-        }
-        resolver.resolve(subscription);
-        break;
-      }
-      case "PushService:Registration:KO":
-        resolver.reject(null);
-        break;
-      default:
-        debug("NOT IMPLEMENTED! receiveMessage for " + aMessage.name);
+    if (!subscription) {
+      this.resolve(null);
+      return;
     }
+
+    let publicKey = this._getKey(subscription, "p256dh");
+    let authSecret = this._getKey(subscription, "auth");
+    let sub = new pushManager._window.PushSubscription(subscription.endpoint,
+                                                       pushManager._scope,
+                                                       publicKey,
+                                                       authSecret);
+    sub.setPrincipal(pushManager._principal);
+    this.resolve(sub);
   },
 
-  subscribe: function() {
-    debug("subscribe()");
-    let p = this.createPromise(function(resolve, reject) {
-      let resolverId = this.getPromiseResolverId({ resolve: resolve, reject: reject });
-
-      this.askPermission(
-        function() {
-          this._cpmm.sendAsyncMessage("Push:Register", {
-                                      pageURL: this._pageURL.spec,
-                                      scope: this._scope,
-                                      requestID: resolverId
-                                    });
-        }.bind(this),
-
-        function() {
-          reject("PermissionDeniedError");
-        }
-      );
-    }.bind(this));
-    return p;
+  _getKey: function(subscription, name) {
+    let outKeyLen = {};
+    let rawKey = subscription.getKey(name, outKeyLen);
+    if (!outKeyLen.value) {
+      return null;
+    }
+    let key = new ArrayBuffer(outKeyLen.value);
+    let keyView = new Uint8Array(key);
+    keyView.set(rawKey);
+    return key;
   },
+};
 
-  getSubscription: function() {
-    debug("getSubscription()" + this._scope);
-
-    let p = this.createPromise(function(resolve, reject) {
-
-      let resolverId = this.getPromiseResolverId({ resolve: resolve, reject: reject });
-
-      this.askPermission(
-        function() {
-          this._cpmm.sendAsyncMessage("Push:Registration", {
-                                      pageURL: this._pageURL.spec,
-                                      scope: this._scope,
-                                      requestID: resolverId
-                                    });
-        }.bind(this),
-
-        function() {
-          reject("PermissionDeniedError");
-        }
-      );
-    }.bind(this));
-    return p;
-  },
-
-  hasPermission: function() {
-    debug("getSubscription()" + this._scope);
-
-    let p = this.createPromise(function(resolve, reject) {
-      let permissionManager = Cc["@mozilla.org/permissionmanager;1"].getService(Ci.nsIPermissionManager);
-      let permission = permissionManager.testExactPermission(this._pageURL, "push");
-
-      let pushPermissionStatus = "default";
-      if (permission == Ci.nsIPermissionManager.ALLOW_ACTION) {
-        pushPermissionStatus = "granted";
-      } else if (permission == Ci.nsIPermissionManager.DENY_ACTION) {
-        pushPermissionStatus = "denied";
-      }
-      resolve(pushPermissionStatus);
-    }.bind(this));
-    return p;
-  },
-}
-
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([Push, PushSubscription]);
+this.NSGetFactory = XPCOMUtils.generateNSGetFactory([Push]);

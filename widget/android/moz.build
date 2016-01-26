@@ -19,10 +19,11 @@ EXPORTS += [
     'AndroidBridge.h',
     'AndroidJavaWrappers.h',
     'AndroidJNIWrapper.h',
+    'GeneratedJNINatives.h',
     'GeneratedJNIWrappers.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'AndroidBridge.cpp',
     'AndroidContentController.cpp',
     'AndroidDirectTexture.cpp',
@@ -30,6 +31,7 @@ SOURCES += [
     'AndroidJavaWrappers.cpp',
     'AndroidJNI.cpp',
     'AndroidJNIWrapper.cpp',
+    'ANRReporter.cpp',
     'GeneratedJNIWrappers.cpp',
     'GfxInfo.cpp',
     'NativeJSContainer.cpp',
@@ -45,8 +47,6 @@ SOURCES += [
     'nsWidgetFactory.cpp',
     'nsWindow.cpp',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

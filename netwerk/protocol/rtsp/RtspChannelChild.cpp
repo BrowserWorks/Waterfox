@@ -4,8 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsContentSecurityManager.h"
+#include "nsContentUtils.h"
 #include "RtspChannelChild.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "nsServiceManagerUtils.h"
 
 using namespace mozilla::ipc;
 
@@ -97,14 +100,21 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<nsIStreamListener> mListener;
-  nsRefPtr<nsIRequest> mRequest;
-  nsRefPtr<nsISupports> mContext;
+  RefPtr<nsIStreamListener> mListener;
+  RefPtr<nsIRequest> mRequest;
+  RefPtr<nsISupports> mContext;
 };
 
 NS_IMETHODIMP
 RtspChannelChild::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
 {
+  MOZ_ASSERT(!mLoadInfo ||
+             mLoadInfo->GetSecurityMode() == 0 ||
+             mLoadInfo->GetInitialSecurityCheckDone() ||
+             (mLoadInfo->GetSecurityMode() == nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
+              nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
+             "security flags in loadInfo but asyncOpen2() not called");
+
   // Precondition checks.
   MOZ_ASSERT(aListener);
   nsCOMPtr<nsIURI> uri = nsBaseChannel::URI();
@@ -132,6 +142,15 @@ RtspChannelChild::AsyncOpen(nsIStreamListener *aListener, nsISupports *aContext)
     new CallListenerOnStartRequestEvent(mListener, this, mListenerContext));
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+RtspChannelChild::AsyncOpen2(nsIStreamListener *aListener)
+{
+  nsCOMPtr<nsIStreamListener> listener = aListener;
+  nsresult rv = nsContentSecurityManager::doContentSecurityCheck(this, listener);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return AsyncOpen(listener, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -186,9 +205,9 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<nsIStreamListener> mListener;
-  nsRefPtr<nsIRequest> mRequest;
-  nsRefPtr<nsISupports> mContext;
+  RefPtr<nsIStreamListener> mListener;
+  RefPtr<nsIRequest> mRequest;
+  RefPtr<nsISupports> mContext;
   nsresult mStatus;
 };
 
@@ -265,6 +284,10 @@ NS_IMETHODIMP
 RtspChannelChild::CompleteRedirectSetup(nsIStreamListener *aListener,
                                         nsISupports *aContext)
 {
+  if (mLoadInfo && mLoadInfo->GetEnforceSecurity()) {
+    MOZ_ASSERT(!aContext, "aContext should be null!");
+    return AsyncOpen2(aListener);
+  }
   return AsyncOpen(aListener, aContext);
 }
 

@@ -19,7 +19,7 @@ static bool test_prop_get( JSContext* cx, JS::HandleObject obj, JS::HandleId id,
 }
 
 static bool
-PTest(JSContext* cx, unsigned argc, jsval* vp);
+PTest(JSContext* cx, unsigned argc, JS::Value* vp);
 
 static const JSClass ptestClass = {
     "PTest",
@@ -31,7 +31,7 @@ static const JSClass ptestClass = {
 };
 
 static bool
-PTest(JSContext* cx, unsigned argc, jsval* vp)
+PTest(JSContext* cx, unsigned argc, JS::Value* vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JSObject* obj = JS_NewObjectForConstructor(cx, &ptestClass, args);
@@ -40,7 +40,7 @@ PTest(JSContext* cx, unsigned argc, jsval* vp)
     args.rval().setObject(*obj);
     return true;
 }
-static bool test_fn(JSContext* cx, unsigned argc, jsval* vp)
+static bool test_fn(JSContext* cx, unsigned argc, JS::Value* vp)
 {
     called_test_fn++;
     return true;
@@ -53,7 +53,7 @@ static const JSFunctionSpec ptestFunctions[] = {
 
 BEGIN_TEST(testClassGetter_isCalled)
 {
-    CHECK(JS_InitClass(cx, global, js::NullPtr(), &ptestClass, PTest, 0,
+    CHECK(JS_InitClass(cx, global, nullptr, &ptestClass, PTest, 0,
                        nullptr, ptestFunctions, nullptr, nullptr));
 
     EXEC("function check() { var o = new PTest(); o.test_fn(); o.test_value1; o.test_value2; o.test_value1; }");
@@ -62,8 +62,8 @@ BEGIN_TEST(testClassGetter_isCalled)
         JS::RootedValue rval(cx);
         CHECK(JS_CallFunctionName(cx, global, "check", JS::HandleValueArray::empty(),
                                   &rval));
-        CHECK_SAME(INT_TO_JSVAL(called_test_fn), INT_TO_JSVAL(i));
-        CHECK_SAME(INT_TO_JSVAL(called_test_prop_get), INT_TO_JSVAL(4 * i));
+        CHECK(called_test_fn == i);
+        CHECK(called_test_prop_get == 4 * i);
     }
     return true;
 }

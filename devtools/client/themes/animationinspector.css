@@ -1,0 +1,537 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* Animation-inspector specific theme variables */
+
+.theme-dark {
+  --even-animation-timeline-background-color: rgba(255,255,255,0.03);
+}
+
+.theme-light {
+  --even-animation-timeline-background-color: rgba(128,128,128,0.03);
+}
+
+:root {
+  /* How high should toolbars be */
+  --toolbar-height: 20px;
+  /* How wide should the sidebar be (should be wide enough to contain long
+     property names like 'border-bottom-right-radius' without ellipsis) */
+  --timeline-sidebar-width: 200px;
+  /* How high should animations displayed in the timeline be */
+  --timeline-animation-height: 20px;
+  /* The size of a keyframe marker in the keyframes diagram */
+  --keyframes-marker-size: 10px;
+  /* The color of the time graduation borders. This should match the the color
+     devtools/client/animationinspector/utils.js */
+  --time-graduation-border-color: rgba(128, 136, 144, .5);
+}
+
+.animation {
+  --timeline-border-color: var(--theme-body-color);
+  --timeline-background-color: var(--theme-splitter-color);
+}
+
+.animation.cssanimation {
+  --timeline-border-color: var(--theme-highlight-lightorange);
+  --timeline-background-color: var(--theme-contrast-background);
+}
+
+.animation.csstransition {
+  --timeline-border-color: var(--theme-highlight-bluegrey);
+  --timeline-background-color: var(--theme-highlight-blue);
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display : flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  color: var(--theme-content-color3);
+}
+
+/* The top toolbar, containing the toggle-all button. And the timeline toolbar,
+   containing playback control buttons, shown only when there are animations
+   displayed in the timeline */
+
+#global-toolbar,
+#timeline-toolbar {
+  border-bottom: 1px solid var(--theme-splitter-color);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  height: var(--toolbar-height);
+}
+
+#timeline-toolbar {
+  display: none;
+  justify-content: flex-start;
+}
+
+[timeline] #global-toolbar {
+  display: none;
+}
+
+[timeline] #timeline-toolbar {
+  display: flex;
+}
+
+/* The main animations container */
+
+#players {
+  height: calc(100% - var(--toolbar-height));
+  overflow: auto;
+}
+
+[empty] #players {
+  display: none;
+}
+
+/* The error message, shown when an invalid/unanimated element is selected */
+
+#error-message {
+  padding-top: 10%;
+  text-align: center;
+  flex: 1;
+  overflow: auto;
+
+  /* The error message is hidden by default */
+  display: none;
+}
+
+[empty] #error-message {
+  display: block;
+}
+
+/* Element picker, toggle-all buttons, timeline pause button, ... */
+
+#global-toolbar > *,
+#timeline-toolbar > * {
+  min-height: var(--toolbar-height);
+  border-width: 0 0 0 1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#global-toolbar .label,
+#timeline-toolbar .label {
+  padding: 0 5px;
+  border-style: solid;
+}
+
+#timeline-toolbar .devtools-button,
+#timeline-toolbar .label {
+  border-width: 0 1px 0 0;
+}
+
+#element-picker::before {
+  background-image: url("chrome://devtools/skin/images/command-pick.png");
+}
+
+.pause-button::before {
+  background-image: url("images/debugger-pause.png");
+}
+
+#rewind-timeline::before {
+  background-image: url("images/rewind.png");
+}
+
+.pause-button.paused::before {
+  background-image: url("images/debugger-play.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  #element-picker::before {
+    background-image: url("chrome://devtools/skin/images/command-pick@2x.png");
+  }
+
+  .pause-button::before {
+    background-image: url("images/debugger-pause@2x.png");
+  }
+
+  .pause-button.paused::before {
+    background-image: url("images/debugger-play@2x.png");
+  }
+
+  #rewind-timeline::before {
+    background-image: url("images/rewind@2x.png");
+  }
+}
+
+#timeline-rate select {
+  -moz-appearance: none;
+  text-align: center;
+  color: inherit;
+  font-family: inherit;
+}
+
+/* Animation timeline component */
+
+.animation-timeline {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  /* The timeline gets its background-image from a canvas element created in
+     /devtools/client/animationinspector/utils.js drawGraphElementBackground
+     thanks to document.mozSetImageElement("time-graduations", canvas)
+     This is done so that the background can be built dynamically from script */
+  background-image: -moz-element(#time-graduations);
+  background-repeat: repeat-y;
+  /* Make the background be 100% of the timeline area so that it resizes with
+     it and subtract the width of the sidebar and the buffer at the right of the
+     timeline */
+  background-size: calc(100% - var(--timeline-sidebar-width) - var(--keyframes-marker-size)) 100%;
+  background-position: var(--timeline-sidebar-width) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Useful for positioning animations or keyframes in the timeline */
+.animation-timeline .track-container {
+  position: absolute;
+  top: 0;
+  left: var(--timeline-sidebar-width);
+  /* Leave the width of a marker right of a track so the 100% markers can be
+     selected easily */
+  right: var(--keyframes-marker-size);
+  height: var(--timeline-animation-height);
+}
+
+.animation-timeline .scrubber-wrapper {
+  z-index: 1;
+  pointer-events: none;
+  height: 100%;
+}
+
+.animation-timeline .scrubber {
+  position: absolute;
+  height: 100%;
+  width: 0;
+  border-right: 1px solid red;
+  box-sizing: border-box;
+}
+
+.animation-timeline .scrubber::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 1px;
+  right: -6px;
+  border-top: 5px solid red;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+/* The scrubber handle is a transparent element displayed on top of the scrubber
+   line that allows users to drag it */
+.animation-timeline .scrubber .scrubber-handle {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  /* Make it thick enough for easy dragging */
+  width: 6px;
+  right: -3px;
+  cursor: col-resize;
+  pointer-events: all;
+}
+
+.animation-timeline .time-header {
+  min-height: var(--toolbar-height);
+  cursor: col-resize;
+  -moz-user-select: none;
+}
+
+.animation-timeline .time-header .time-tick {
+  position: absolute;
+  top: 3px;
+}
+
+.animation-timeline .animations {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Leave some space for the header */
+  margin-top: var(--timeline-animation-height);
+  padding: 0;
+  list-style-type: none;
+  border-top: 1px solid var(--time-graduation-border-color);
+}
+
+/* Animation block widgets */
+
+.animation-timeline .animation {
+  margin: 2px 0;
+  height: var(--timeline-animation-height);
+  position: relative;
+}
+
+/* We want animations' background colors to alternate, but each animation has
+   a sibling (hidden by default) that contains the animated properties and
+   keyframes, so we need to alternate every 4 elements. */
+.animation-timeline .animation:nth-child(4n+1) {
+  background-color: var(--even-animation-timeline-background-color);
+}
+
+.animation-timeline .animation .target {
+  width: var(--timeline-sidebar-width);
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.animation-timeline .animation-target {
+  background-color: transparent;
+}
+
+.animation-timeline .animation .time-block {
+  cursor: pointer;
+}
+
+/* Animation iterations */
+
+.animation-timeline .animation .iterations {
+  position: absolute;
+  height: 100%;
+  box-sizing: border-box;
+
+  /* Iterations of the animation are displayed with a repeating linear-gradient
+     which size is dynamically changed from JS. The gradient only draws 1px
+     borders between each iteration. These borders must have the same color as
+     the border of this element */
+  background-image:
+    linear-gradient(to right,
+                    var(--timeline-border-color) 0,
+                    var(--timeline-border-color) 1px,
+                    transparent 1px,
+                    transparent 2px);
+  background-repeat: repeat-x;
+  background-position: -1px 0;
+  border: 1px solid var(--timeline-border-color);
+  /* Border-right is already handled by the gradient */
+  border-width: 1px 0 1px 1px;
+
+  /* The background color is set independently */
+  background-color: var(--timeline-background-color);
+}
+
+.animation-timeline .animation .iterations.infinite {
+  border-right-width: 0;
+}
+
+.animation-timeline .animation .iterations.infinite::before,
+.animation-timeline .animation .iterations.infinite::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-right: 4px solid var(--theme-body-background);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+.animation-timeline .animation .iterations.infinite::after {
+  bottom: 0;
+  top: unset;
+}
+
+.animation-timeline .animation .name {
+  position: absolute;
+  color: var(--theme-selection-color);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  box-sizing: border-box;
+  --fast-track-icon-width: 12px;
+}
+
+.animation-timeline .animation .name div {
+  /* Flex items don't support text-overflow, so a child div is used */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.animation-timeline .fast-track .name div {
+  width: calc(100% - var(--fast-track-icon-width));
+}
+
+.animation-timeline .fast-track .name::after {
+  /* Animations running on the compositor have the fast-track background image*/
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: var(--fast-track-icon-width);
+
+  background-image: url("images/animation-fast-track.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.animation-timeline .animation .delay {
+  position: absolute;
+  height: 100%;
+
+  border: 1px solid var(--timeline-border-color);
+  box-sizing: border-box;
+  border-width: 1px 0 1px 1px;
+
+  background-image: repeating-linear-gradient(45deg,
+                                              transparent,
+                                              transparent 1px,
+                                              var(--theme-selection-color) 1px,
+                                              var(--theme-selection-color) 4px);
+  background-color: var(--timeline-border-color);
+}
+
+.animation-timeline .animation .delay.negative {
+  /* Negative delays are displayed on top of the animation, so they need a
+     right border. Whereas normal delays are displayed just before the
+     animation, so there's already the animation's left border that serves as
+     a separation. */
+  border-width: 1px;
+}
+
+/* Animation target node gutter, contains a preview of the dom node */
+
+.animation-target {
+  background-color: var(--theme-toolbar-background);
+  padding: 0 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.animation-target .attribute-name {
+  padding-left: 4px;
+}
+
+.animation-target .node-highlighter {
+  background: url("chrome://devtools/skin/images/vview-open-inspector.png") no-repeat 0 0;
+  padding-left: 16px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.animation-target .node-highlighter:hover {
+  filter: url(images/filters.svg#checked-icon-state);
+}
+
+.animation-target .node-highlighter:active,
+.animation-target .node-highlighter.selected {
+  filter: url(images/filters.svg#checked-icon-state) brightness(0.9);
+}
+
+/* Inline keyframes info in the timeline */
+
+.animation-timeline .animated-properties:not(.selected) {
+  display: none;
+}
+
+.animation-timeline .animated-properties {
+  background-color: var(--theme-selection-background-semitransparent);
+}
+
+.animation-timeline .animated-properties ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.animation-timeline .animated-properties .property {
+  height: var(--timeline-animation-height);
+  position: relative;
+}
+
+.animation-timeline .animated-properties .property:nth-child(2n) {
+  background-color: var(--even-animation-timeline-background-color);
+}
+
+.animation-timeline .animated-properties .name {
+  width: var(--timeline-sidebar-width);
+  padding-right: var(--keyframes-marker-size);
+  box-sizing: border-box;
+  height: 100%;
+  color: var(--theme-body-color-alt);
+  white-space: nowrap;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.animation-timeline .animated-properties .name div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.animation-timeline .animated-properties .frames {
+  /* The frames list is absolutely positioned and the left and width properties
+     are dynamically set from javascript to match the animation's startTime and
+     duration */
+  position: absolute;
+  top: 0;
+  height: 100%;
+  /* Using flexbox to vertically center the frames */
+  display: flex;
+  align-items: center;
+}
+
+/* Keyframes diagram, displayed below the timeline, inside the animation-details
+   element. */
+
+.keyframes {
+  /* Actual keyframe markers are positioned absolutely within this container and
+     their position is relative to its size (we know the offset of each frame
+     in percentage) */
+  position: relative;
+  width: 100%;
+  height: 0;
+}
+
+.keyframes.cssanimation {
+  background-color: var(--theme-contrast-background);
+}
+
+.keyframes.csstransition {
+  background-color: var(--theme-highlight-blue);
+}
+
+.keyframes .frame {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  background-color: inherit;
+  cursor: pointer;
+}
+
+.keyframes .frame::before {
+  content: "";
+  display: block;
+  transform:
+    translateX(calc(var(--keyframes-marker-size) * -.5))
+    /* The extra pixel on the Y axis is so that markers are centered on the
+       horizontal line in the keyframes diagram. */
+    translateY(calc(var(--keyframes-marker-size) * -.5 + 1px));
+  width: var(--keyframes-marker-size);
+  height: var(--keyframes-marker-size);
+  border-radius: 100%;
+  background-color: inherit;
+}

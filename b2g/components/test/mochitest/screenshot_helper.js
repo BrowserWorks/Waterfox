@@ -1,14 +1,16 @@
-const Cu = Components.utils;
-const Ci = Components.interfaces;
+var Cu = Components.utils;
+var Ci = Components.interfaces;
+
+Cu.importGlobalProperties(['File']);
 
 const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 
 // Load a duplicated copy of the jsm to prevent messing with the currently running one
-let scope = {};
+var scope = {};
 Services.scriptloader.loadSubScript("resource://gre/modules/Screenshot.jsm", scope);
 const { Screenshot } = scope;
 
-let index = -1;
+var index = -1;
 function next() {
   index++;
   if (index >= steps.length) {
@@ -22,10 +24,10 @@ function next() {
   }
 }
 
-let steps = [
+var steps = [
   function getScreenshot() {
     let screenshot = Screenshot.get();
-    assert.ok(screenshot instanceof Ci.nsIDOMFile,
+    assert.ok(screenshot instanceof File,
               "Screenshot.get() returns a File");
     next();
   },

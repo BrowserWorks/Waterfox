@@ -48,9 +48,13 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(DOMEventTargetHelper)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(DOMEventTargetHelper)
-  if (tmp->IsBlack()) {
+  if (tmp->IsBlack() || tmp->IsCertainlyAliveForCC()) {
     if (tmp->mListenerManager) {
       tmp->mListenerManager->MarkForCC();
+    }
+    if (!tmp->IsBlack() && tmp->PreservingWrapper()) {
+      // This marks the wrapper black.
+      tmp->GetWrapper();
     }
     return true;
   }
@@ -258,10 +262,8 @@ DOMEventTargetHelper::DispatchEvent(nsIDOMEvent* aEvent, bool* aRetVal)
 nsresult
 DOMEventTargetHelper::DispatchTrustedEvent(const nsAString& aEventName)
 {
-  nsCOMPtr<nsIDOMEvent> event;
-  NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  nsresult rv = event->InitEvent(aEventName, false, false);
-  NS_ENSURE_SUCCESS(rv, rv);
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  event->InitEvent(aEventName, false, false);
 
   return DispatchTrustedEvent(event);
 }
@@ -280,10 +282,10 @@ DOMEventTargetHelper::SetEventHandler(nsIAtom* aType,
                                       JSContext* aCx,
                                       const JS::Value& aValue)
 {
-  nsRefPtr<EventHandlerNonNull> handler;
+  RefPtr<EventHandlerNonNull> handler;
   JS::Rooted<JSObject*> callable(aCx);
   if (aValue.isObject() && JS::IsCallable(callable = &aValue.toObject())) {
-    handler = new EventHandlerNonNull(callable, dom::GetIncumbentGlobal());
+    handler = new EventHandlerNonNull(aCx, callable, dom::GetIncumbentGlobal());
   }
   SetEventHandler(aType, EmptyString(), handler);
   return NS_OK;

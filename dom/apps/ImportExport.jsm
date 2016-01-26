@@ -13,6 +13,9 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Webapps.jsm");
+Cu.import("resource://gre/modules/MessageBroadcaster.jsm");
+
+Cu.importGlobalProperties(['File', 'FileReader']);
 
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
   "resource://gre/modules/FileUtils.jsm");
@@ -129,8 +132,12 @@ this.ImportExport = {
     }
 
     let files = [];
+    debug("aApp=" + uneval(aApp));
     if (aApp.origin.startsWith("app://")) {
-      files.push("update.webapp");
+      // Apps sideloaded from WebIDE don't have an update manifest.
+      if (!aApp.sideloaded) {
+        files.push("update.webapp");
+      }
       files.push("application.zip");
     } else {
       files.push("manifest.webapp");
@@ -213,18 +220,19 @@ this.ImportExport = {
   _importPackagedApp: function(aZipReader, aManifestURL, aDir) {
     debug("Importing packaged app " + aManifestURL);
 
-    if (!aZipReader.hasEntry("update.webapp")) {
-      throw "NoUpdateManifestFound";
-    }
-
     if (!aZipReader.hasEntry("application.zip")) {
       throw "NoPackageFound";
     }
 
+    // The order matters, application.zip needs to be the last element.
+    let files = [];
+    aZipReader.hasEntry("update.webapp") && files.push("update.webapp");
+    files.push("application.zip");
+
     // Extract application.zip and update.webapp
     // We get manifest.webapp from application.zip itself.
     let file;
-    ["update.webapp", "application.zip"].forEach((aName) => {
+    files.forEach((aName) => {
       file = aDir.clone();
       file.append(aName);
       aZipReader.extract(aName, file);
@@ -243,7 +251,9 @@ this.ImportExport = {
       throw "NoManifestFound";
     }
 
-    return [readObjectFromZip(appZipReader, "manifest.webapp"), file];
+    return [readObjectFromZip(appZipReader, "manifest.webapp"),
+            readObjectFromZip(appZipReader, "update.webapp"),
+            file];
   },
 
   // Returns a promise that resolves to the temp file path.
@@ -252,8 +262,7 @@ this.ImportExport = {
     debug("_writeBlobToTempFile");
     let path;
     return new Promise((aResolve, aReject) => {
-      let reader = Cc['@mozilla.org/files/filereader;1']
-                     .createInstance(Ci.nsIDOMFileReader);
+      let reader = new FileReader();
       reader.onloadend = () => {
         path = OS.Path.join(OS.Constants.Path.tmpDir, "app-blob.zip");
         debug("onloadend path=" + path);
@@ -284,7 +293,7 @@ this.ImportExport = {
       throw "NoBlobFound";
     }
 
-    let isFileBlob = aBlob instanceof Ci.nsIDOMFile;
+    let isFileBlob = aBlob instanceof File;
     // We can't QI the DOMFile to nsIFile, so we need to create one.
     let zipFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
     if (!isFileBlob) {
@@ -299,6 +308,7 @@ this.ImportExport = {
     let meta;
     let appDir;
     let manifest;
+    let updateManifest;
     let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                       .createInstance(Ci.nsIZipReader);
     try {
@@ -345,7 +355,7 @@ this.ImportExport = {
       let appFile;
 
       if (isPackage) {
-        [manifest, appFile] =
+        [manifest, updateManifest, appFile] =
           this._importPackagedApp(zipReader, meta.manifestURL, appDir);
       } else {
         manifest = this._importHostedApp(zipReader, meta.manifestURL);
@@ -387,6 +397,16 @@ this.ImportExport = {
       meta.installerIsBrowser = false;
       meta.role = manifest.role;
 
+      // If there is an id in the mini-manifest, use it for blocklisting purposes.
+      if (isPackage && updateManifest && ("id" in updateManifest)) {
+        meta.blocklistId = updateManifest["id"];
+      }
+
+      let devMode = false;
+      try {
+        devMode = Services.prefs.getBoolPref("dom.apps.developer_mode");
+      } catch(e) {}
+
       // Set the appropriate metadata for hosted and packaged apps.
       if (isPackage) {
         meta.origin = "app://" + meta.id;
@@ -396,12 +416,10 @@ this.ImportExport = {
           yield DOMApplicationRegistry._openPackage(appFile, meta, false);
         let maxStatus = isSigned ? Ci.nsIPrincipal.APP_STATUS_PRIVILEGED
                                  : Ci.nsIPrincipal.APP_STATUS_INSTALLED;
-        try {
-          // Anything is possible in developer mode.
-          if (Services.prefs.getBoolPref("dom.apps.developer_mode")) {
-            maxStatus = Ci.nsIPrincipal.APP_STATUS_CERTIFIED;
-          }
-        } catch(e) {};
+        // Anything is possible in developer mode.
+        if (devMode) {
+          maxStatus = Ci.nsIPrincipal.APP_STATUS_CERTIFIED;
+        }
         meta.appStatus = AppsUtils.getAppManifestStatus(manifest);
         debug("Signed app? " + isSigned);
         if (meta.appStatus > maxStatus) {
@@ -410,12 +428,12 @@ this.ImportExport = {
 
         // Custom origin.
         // We unfortunately can't reuse _checkOrigin here.
-        if (isSigned &&
-            meta.appStatus == Ci.nsIPrincipal.APP_STATUS_PRIVILEGED &&
+        if ((isSigned || devMode) &&
+            meta.appStatus >= Ci.nsIPrincipal.APP_STATUS_PRIVILEGED &&
             manifest.origin) {
           let uri;
           try {
-            uri = Services.io.newURI(aManifest.origin, null, null);
+            uri = Services.io.newURI(manifest.origin, null, null);
           } catch(e) {
             throw "InvalidOrigin";
           }
@@ -465,10 +483,10 @@ this.ImportExport = {
 
       app = AppsUtils.cloneAppObject(meta);
       app.manifest = manifest;
-      DOMApplicationRegistry.broadcastMessage("Webapps:AddApp",
-                                              { id: meta.id, app: app });
-      DOMApplicationRegistry.broadcastMessage("Webapps:Install:Return:OK",
-                                              { app: app });
+      MessageBroadcaster.broadcastMessage("Webapps:AddApp",
+                                          { id: meta.id, app: app });
+      MessageBroadcaster.broadcastMessage("Webapps:Install:Return:OK",
+                                          { app: app });
       Services.obs.notifyObservers(null, "webapps-installed",
         JSON.stringify({ manifestURL: meta.manifestURL }));
 
@@ -498,7 +516,7 @@ this.ImportExport = {
       throw "NoBlobFound";
     }
 
-    let isFileBlob = aBlob instanceof Ci.nsIDOMFile;
+    let isFileBlob = aBlob instanceof File;
     // We can't QI the DOMFile to nsIFile, so we need to create one.
     let zipFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
     if (!isFileBlob) {

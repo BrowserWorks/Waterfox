@@ -141,7 +141,7 @@ NS_NewElement(Element** aResult,
               already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
               FromParser aFromParser)
 {
-  nsRefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
   int32_t ns = ni->NamespaceID();
   if (ns == kNameSpaceID_XHTML) {
     return NS_NewHTMLElement(aResult, ni.forget(), aFromParser);
@@ -189,7 +189,7 @@ nsresult nsNameSpaceManager::AddNameSpace(const nsAString& aURI,
                "BAD! AddNameSpace not called in right order!");
 
   nsString* uri = new nsString(aURI);
-  if (!uri || !mURIArray.AppendElement(uri)) {
+  if (!mURIArray.AppendElement(uri)) {
     delete uri;
     return NS_ERROR_OUT_OF_MEMORY;
   }

@@ -25,7 +25,6 @@ XPIDL_SOURCES += [
     'nsISupports.idl',
     'nsIUUIDGenerator.idl',
     'nsIVersionComparator.idl',
-    'nsIVisualEventTracer.idl',
     'nsIWeakReference.idl',
     'nsrootidl.idl',
 ]
@@ -33,6 +32,12 @@ XPIDL_SOURCES += [
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     XPIDL_SOURCES += [
         'nsIMacUtils.idl',
+    ]
+    EXPORTS.mozilla += [
+        'MacHelpers.h',
+    ]
+    UNIFIED_SOURCES += [
+        'MacHelpers.mm',
     ]
 
 XPIDL_MODULE = 'xpcom_base'
@@ -48,6 +53,7 @@ EXPORTS += [
     'nscore.h',
     'nsCycleCollector.h',
     'nsDebugImpl.h',
+    'nsDumpUtils.h',
     'nsError.h',
     'nsGZFileWriter.h',
     'nsIID.h',
@@ -56,8 +62,6 @@ EXPORTS += [
     'nsISupportsBase.h',
     'nsObjCExceptions.h',
     'nsQueryObject.h',
-    'nsRefPtr.h',
-    'nsStackWalk.h',
     'nsTraceRefcnt.h',
     'nsWeakPtr.h',
 ]
@@ -66,9 +70,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     EXPORTS += [
         'nsWindowsHelpers.h',
     ]
-    if CONFIG['MOZ_DEBUG']:
-        EXPORTS += ['pure.h']
-        SOURCES += ['pure_api.c']
 
 EXPORTS.mozilla += [
     'AvailableMemoryTracker.h',
@@ -80,13 +81,14 @@ EXPORTS.mozilla += [
     'DeferredFinalize.h',
     'ErrorNames.h',
     'HoldDropJSObjects.h',
+    'JSObjectHolder.h',
     'LinuxUtils.h',
+    'Logging.h',
     'nsMemoryInfoDumper.h',
-    'StackWalk.h',
+    'OwningNonNull.h',
     'StaticMutex.h',
     'StaticPtr.h',
     'SystemMemoryReporter.h',
-    'VisualEventTracer.h',
 ]
 
 # nsDebugImpl isn't unified because we disable PGO so that NS_ABORT_OOM isn't
@@ -105,9 +107,13 @@ UNIFIED_SOURCES += [
     'DeferredFinalize.cpp',
     'ErrorNames.cpp',
     'HoldDropJSObjects.cpp',
+    'JSObjectHolder.cpp',
+    'Logging.cpp',
+    'LogModulePrefWatcher.cpp',
     'nsConsoleMessage.cpp',
     'nsConsoleService.cpp',
     'nsCycleCollector.cpp',
+    'nsCycleCollectorTraceJSHelpers.cpp',
     'nsDumpUtils.cpp',
     'nsErrorService.cpp',
     'nsGZFileWriter.cpp',
@@ -116,24 +122,14 @@ UNIFIED_SOURCES += [
     'nsMemoryInfoDumper.cpp',
     'nsMemoryReporterManager.cpp',
     'nsMessageLoop.cpp',
+    'NSPRLogModulesParser.cpp',
     'nsSecurityConsoleMessage.cpp',
     'nsStatusReporterManager.cpp',
     'nsSystemInfo.cpp',
     'nsTraceRefcnt.cpp',
     'nsUUIDGenerator.cpp',
     'nsVersionComparatorImpl.cpp',
-    'VisualEventTracer.cpp',
 ]
-
-# MOZ_STACKWALKING is defined in configure.in when the build configuration meets
-# the conditions for NS_StackWalk to work correctly.
-# We exclude this file from other build configurations so that if somebody adds a
-# new usage of NS_StackWalk it will cause a link error, which is better than having
-# NS_StackWalk silently return garbage at runtime.
-if CONFIG['MOZ_STACKWALKING']:
-    SOURCES += [
-        'nsStackWalk.cpp',
-    ]
 
 if CONFIG['OS_ARCH'] == 'Linux':
     SOURCES += [
@@ -162,4 +158,5 @@ LOCAL_INCLUDES += [
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

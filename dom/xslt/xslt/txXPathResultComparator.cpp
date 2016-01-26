@@ -73,10 +73,6 @@ txResultStringComparator::createSortableValue(Expr *aExpr,
         return NS_ERROR_FAILURE;
 
     val->mCaseKey = new nsString;
-    if (!val->mCaseKey) {
-        return NS_ERROR_OUT_OF_MEMORY;
-    }
-
     nsString& nsCaseKey = *(nsString *)val->mCaseKey;
     nsresult rv = aExpr->evaluateToString(aContext, nsCaseKey);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -197,7 +193,7 @@ txResultNumberComparator::createSortableValue(Expr *aExpr,
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
-    nsRefPtr<txAExprResult> exprRes;
+    RefPtr<txAExprResult> exprRes;
     nsresult rv = aExpr->evaluate(aContext, getter_AddRefs(exprRes));
     NS_ENSURE_SUCCESS(rv, rv);
 

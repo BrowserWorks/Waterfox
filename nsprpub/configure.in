@@ -15,8 +15,8 @@ dnl ========================================================
 dnl = Defaults
 dnl ========================================================
 MOD_MAJOR_VERSION=4
-MOD_MINOR_VERSION=10
-MOD_PATCH_VERSION=8
+MOD_MINOR_VERSION=11
+MOD_PATCH_VERSION=0
 NSPR_MODNAME=nspr20
 _HAVE_PTHREADS=
 USE_PTHREADS=
@@ -567,15 +567,6 @@ if test "$target" != "$host"; then
         _SAVE_CXXFLAGS=$CXXFLAGS
         CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CFLAGS"
         CXXFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk $CXXFLAGS"
-        ;;
-      *:arm*-apple-darwin*)
-        dnl The arm compiler doesn't appear to know about its root by default,
-        dnl so explicitly pass it one here. Later on we'll put this in CFLAGS
-        dnl anyway.
-        _SAVE_CFLAGS=$CFLAGS
-        _SAVE_CXXFLAGS=$CXXFLAGS
-        CFLAGS="-isysroot $MACOS_SDK_DIR $CFLAGS"
-        CXXFLAGS="-isysroot $MACOS_SDK_DIR $CXXFLAGS"
         ;;
     esac
 
@@ -1378,7 +1369,7 @@ case "$target" in
     if test "`echo $CC | grep -c '\-arch '`" = "0"; then
         CC="$CC -arch $CPU_ARCH"
     fi
-    AC_CHECK_HEADER(crt_externs.h)
+    AC_CHECK_HEADER(crt_externs.h, AC_DEFINE(HAVE_CRT_EXTERNS_H))
     DSO_CFLAGS=-fPIC
     DSO_LDOPTS='-dynamiclib -compatibility_version 1 -current_version 1 -all_load -install_name @executable_path/$@ -headerpad_max_install_names'
     _OPTIMIZE_FLAGS=-O2
@@ -1902,7 +1893,11 @@ tools are selected during the Xcode/Developer Tools installation.])
         changequote(,)
         _MSVC_VER_FILTER='s|.* \([0-9]\+\.[0-9]\+\.[0-9]\+\(\.[0-9]\+\)\?\).*|\1|p'
         changequote([,])
-        CC_VERSION=`"${CC}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
+        CC_VERSION=`${CC} -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
+        if test -z "$CC_VERSION"; then
+            AC_MSG_ERROR([Could not determine MSC version.])
+        fi
+
         _CC_MAJOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $1 }'`
         _CC_MINOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $2 }'`
         _CC_RELEASE=`echo ${CC_VERSION} | awk -F\. '{ print $3 }'`
@@ -2086,6 +2081,7 @@ tools are selected during the Xcode/Developer Tools installation.])
     AC_DEFINE(XP_UNIX)
     AC_DEFINE(NETBSD)
     AC_DEFINE(HAVE_BSD_FLOCK)
+    AC_DEFINE(HAVE_SOCKLEN_T)
     if test -z "$USE_NSPR_THREADS"; then
         USE_PTHREADS=1
     fi

@@ -24,7 +24,7 @@ add_task(function () {
   let browser = tab.linkedBrowser;
   yield promiseBrowserLoaded(browser);
 
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
   let {entries} = JSON.parse(ss.getTabState(tab));
 
   // Check URLs.
@@ -61,34 +61,26 @@ add_task(function () {
   let browser = tab.linkedBrowser;
   yield promiseBrowserLoaded(browser);
 
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
   let {entries} = JSON.parse(ss.getTabState(tab));
 
   // Check URLs.
   ok(entries[0].url.startsWith("data:text/html"), "correct root url");
-  is(entries[0].children[0].url, "about:mozilla", "correct url for static frame");
-
-  // Check the number of children.
-  is(entries.length, 1, "there is one root entry ...");
-  is(entries[0].children.length, 1, "... with a single child entry");
+  ok(!entries[0].children, "no children collected");
 
   // Navigate the subframe.
   browser.messageManager.sendAsyncMessage("ss-test:click", {id: "lnk"});
   yield promiseBrowserLoaded(browser, false /* don't ignore subframes */);
 
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
   ({entries} = JSON.parse(ss.getTabState(tab)));
 
   // Check URLs.
   ok(entries[0].url.startsWith("data:text/html"), "correct 1st root url");
   ok(entries[1].url.startsWith("data:text/html"), "correct 2nd root url");
-  is(entries[0].children[0].url, "about:mozilla", "correct url for 1st static frame");
-  is(entries[1].children[0].url, "about:robots", "correct url for 2ns static frame");
-
-  // Check the number of children.
-  is(entries.length, 2, "there are two root entries ...");
-  is(entries[0].children.length, 1, "... with a single child entry ...");
-  is(entries[1].children.length, 1, "... each");
+  ok(!entries.children, "no children collected");
+  ok(!entries[0].children, "no children collected");
+  ok(!entries[1].children, "no children collected");
 
   // Cleanup.
   gBrowser.removeTab(tab);

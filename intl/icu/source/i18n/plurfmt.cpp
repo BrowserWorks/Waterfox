@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2013, International Business Machines Corporation and
+* Copyright (C) 2009-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -15,9 +15,12 @@
 #include "unicode/utypes.h"
 #include "cmemory.h"
 #include "messageimpl.h"
+#include "nfrule.h"
 #include "plurrule_impl.h"
 #include "uassert.h"
 #include "uhash.h"
+#include "precision.h"
+#include "visibledigits.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -258,18 +261,37 @@ PluralFormat::format(const Formattable& numberObject, double number,
     double numberMinusOffset = number - offset;
     UnicodeString numberString;
     FieldPosition ignorePos;
-    FixedDecimal dec(numberMinusOffset);
+    FixedPrecision fp;
+    VisibleDigitsWithExponent dec;
+    fp.initVisibleDigitsWithExponent(numberMinusOffset, dec, status);
+    if (U_FAILURE(status)) {
+        return appendTo;
+    }
     if (offset == 0) {
-        numberFormat->format(numberObject, numberString, ignorePos, status);  // could be BigDecimal etc.
         DecimalFormat *decFmt = dynamic_cast<DecimalFormat *>(numberFormat);
         if(decFmt != NULL) {
-            dec = decFmt->getFixedDecimal(numberObject, status);
+            decFmt->initVisibleDigitsWithExponent(
+                    numberObject, dec, status);
+            if (U_FAILURE(status)) {
+                return appendTo;
+            }
+            decFmt->format(dec, numberString, ignorePos, status);
+        } else {
+            numberFormat->format(
+                    numberObject, numberString, ignorePos, status);  // could be BigDecimal etc.
         }
     } else {
-        numberFormat->format(numberMinusOffset, numberString, ignorePos, status);
         DecimalFormat *decFmt = dynamic_cast<DecimalFormat *>(numberFormat);
         if(decFmt != NULL) {
-            dec = decFmt->getFixedDecimal(numberMinusOffset, status);
+            decFmt->initVisibleDigitsWithExponent(
+                    numberMinusOffset, dec, status);
+            if (U_FAILURE(status)) {
+                return appendTo;
+            }
+            decFmt->format(dec, numberString, ignorePos, status);
+        } else {
+            numberFormat->format(
+                    numberMinusOffset, numberString, ignorePos, status);
         }
     }
     int32_t partIndex = findSubMessage(msgPattern, 0, pluralRulesWrapper, &dec, number, status);
@@ -481,6 +503,77 @@ int32_t PluralFormat::findSubMessage(const MessagePattern& pattern, int32_t part
     return msgStart;
 }
 
+void PluralFormat::parseType(const UnicodeString& source, const NFRule *rbnfLenientScanner, Formattable& result, FieldPosition& pos) const {
+    // If no pattern was applied, return null.
+    if (msgPattern.countParts() == 0) {
+        pos.setBeginIndex(-1);
+        pos.setEndIndex(-1);
+        return;
+    }
+    int partIndex = 0;
+    int currMatchIndex;
+    int count=msgPattern.countParts();
+    int startingAt = pos.getBeginIndex();
+    if (startingAt < 0) {
+        startingAt = 0;
+    }
+
+    // The keyword is null until we need to match against a non-explicit, not-"other" value.
+    // Then we get the keyword from the selector.
+    // (In other words, we never call the selector if we match against an explicit value,
+    // or if the only non-explicit keyword is "other".)
+    UnicodeString keyword;
+    UnicodeString matchedWord;
+    const UnicodeString& pattern = msgPattern.getPatternString();
+    int matchedIndex = -1;
+    // Iterate over (ARG_SELECTOR ARG_START message ARG_LIMIT) tuples
+    // until the end of the plural-only pattern.
+    while (partIndex < count) {
+        const MessagePattern::Part* partSelector = &msgPattern.getPart(partIndex++);
+        if (partSelector->getType() != UMSGPAT_PART_TYPE_ARG_SELECTOR) {
+            // Bad format
+            continue;
+        }
+
+        const MessagePattern::Part* partStart = &msgPattern.getPart(partIndex++);
+        if (partStart->getType() != UMSGPAT_PART_TYPE_MSG_START) {
+            // Bad format
+            continue;
+        }
+
+        const MessagePattern::Part* partLimit = &msgPattern.getPart(partIndex++);
+        if (partLimit->getType() != UMSGPAT_PART_TYPE_MSG_LIMIT) {
+            // Bad format
+            continue;
+        }
+
+        UnicodeString currArg = pattern.tempSubString(partStart->getLimit(), partLimit->getIndex() - partStart->getLimit());
+        if (rbnfLenientScanner != NULL) {
+            // If lenient parsing is turned ON, we've got some time consuming parsing ahead of us.
+            int32_t length = -1;
+            currMatchIndex = rbnfLenientScanner->findTextLenient(source, currArg, startingAt, &length);
+        }
+        else {
+            currMatchIndex = source.indexOf(currArg, startingAt);
+        }
+        if (currMatchIndex >= 0 && currMatchIndex >= matchedIndex && currArg.length() > matchedWord.length()) {
+            matchedIndex = currMatchIndex;
+            matchedWord = currArg;
+            keyword = pattern.tempSubString(partStart->getLimit(), partLimit->getIndex() - partStart->getLimit());
+        }
+    }
+    if (matchedIndex >= 0) {
+        pos.setBeginIndex(matchedIndex);
+        pos.setEndIndex(matchedIndex + matchedWord.length());
+        result.setString(keyword);
+        return;
+    }
+
+    // Not found!
+    pos.setBeginIndex(-1);
+    pos.setEndIndex(-1);
+}
+
 PluralFormat::PluralSelector::~PluralSelector() {}
 
 PluralFormat::PluralSelectorAdapter::~PluralSelectorAdapter() {
@@ -490,8 +583,7 @@ PluralFormat::PluralSelectorAdapter::~PluralSelectorAdapter() {
 UnicodeString PluralFormat::PluralSelectorAdapter::select(void *context, double number,
                                                           UErrorCode& /*ec*/) const {
     (void)number;  // unused except in the assertion
-    FixedDecimal *dec=static_cast<FixedDecimal *>(context);
-    U_ASSERT(dec->source==number);
+    VisibleDigitsWithExponent *dec=static_cast<VisibleDigitsWithExponent *>(context);
     return pluralRules->select(*dec);
 }
 

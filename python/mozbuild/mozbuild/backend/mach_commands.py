@@ -2,17 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
-import glob
-import logging
 import os
 import sys
 import subprocess
 import which
-
-from mozbuild.backend.cpp_eclipse import CppEclipseBackend
 
 from mozbuild.base import (
     MachCommandBase,
@@ -71,13 +67,10 @@ class MachCommands(MachCommandBase):
         if res != 0:
             return 1
 
-        if ide == 'androidstudio' or 'intellij':
+        if ide in ('androidstudio', 'intellij'):
             res = self._mach_context.commands.dispatch('package', self._mach_context)
             if res != 0:
                 return 1
-            res = self._mach_context.commands.dispatch('gradle-install', self._mach_context)
-            if res != 0:
-                 return 1
         else:
             # Generate or refresh the IDE backend.
             python = self.virtualenv_manager.python_path
@@ -103,6 +96,7 @@ class MachCommands(MachCommandBase):
             process = subprocess.check_call(studio + [gradle_dir])
 
     def get_eclipse_workspace_path(self):
+        from mozbuild.backend.cpp_eclipse import CppEclipseBackend
         return CppEclipseBackend.get_workspace_path(self.topsrcdir, self.topobjdir)
 
     def get_visualstudio_workspace_path(self):

@@ -10,20 +10,100 @@
 interface nsIDOMDocument;
 interface nsINode;
 interface nsIPrincipal;
-interface nsIURI;
+
+%{C++
+#include "nsTArray.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/LoadTainting.h"
+
+class nsCString;
+%}
+
+[ref] native const_nsIPrincipalArray(const nsTArray<nsCOMPtr<nsIPrincipal>>);
+native NeckoOriginAttributes(mozilla::NeckoOriginAttributes);
+[ref] native const_OriginAttributesRef(const mozilla::NeckoOriginAttributes);
+[ref] native StringArrayRef(const nsTArray<nsCString>);
 
 typedef unsigned long nsSecurityFlags;
 
 /**
  * An nsILoadOwner represents per-load information about who started the load.
  */
-[scriptable, builtinclass, uuid(768a1f20-57d4-462a-812a-41c04e5d1e19)]
+[scriptable, builtinclass, uuid(ddc65bf9-2f60-41ab-b22a-4f1ae9efcd36)]
 interface nsILoadInfo : nsISupports
 {
   /**
    * No special security flags:
    */
   const unsigned long SEC_NORMAL = 0;
+
+  /**
+   * The following five flags determine the security mode and hence what kind of
+   * security checks should be performed throughout the lifetime of the channel.
+   *
+   *    * SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS
+   *    * SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED
+   *    * SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS
+   *    * SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL
+   *    * SEC_REQUIRE_CORS_DATA_INHERITS
+   *
+   * Exactly one of these flags are required to be set in order to allow
+   * the channel to perform the correct security checks (SOP, CORS, ...) and
+   * return the correct result principal. If none or more than one of these
+   * flags are set AsyncOpen2 will fail.
+   */
+
+  /*
+   * Enforce the same origin policy where data: loads inherit
+   * the principal.
+   */
+  const unsigned long SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS = (1<<0);
+
+  /*
+   * Enforce the same origin policy but data: loads are blocked.
+   */
+  const unsigned long SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED = (1<<1);
+
+  /**
+   * Allow loads from other origins. Loads from data: will inherit
+   * the principal of the origin that triggered the load.
+   * Commonly used by plain <img>, <video>, <link rel=stylesheet> etc.
+   */
+   const unsigned long SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS = (1<<2);
+
+  /**
+   * Allow loads from other origins. Loads from data: will be allowed,
+   * but the resulting resource will get a null principal.
+   * Used in blink/webkit for <iframe>s. Likely also the mode
+   * that should be used by most Chrome code.
+   */
+  const unsigned long SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL = (1<<3);
+
+  /**
+   * Allow loads from any origin, but require CORS for cross-origin
+   * loads. Loads from data: are allowed and the result will inherit
+   * the principal of the origin that triggered the load.
+   * Commonly used by <img crossorigin>, <video crossorigin>,
+   * XHR, fetch(), etc.
+   */
+  const unsigned long SEC_REQUIRE_CORS_DATA_INHERITS = (1<<4);
+
+  /**
+   * Choose cookie policy. The default policy is equivalent to "INCLUDE" for
+   * SEC_REQUIRE_SAME_ORIGIN_* and SEC_ALLOW_CROSS_ORIGIN_* modes, and
+   * equivalent to "SAME_ORIGIN" for SEC_REQUIRE_CORS_DATA_INHERITS mode.
+   *
+   * This means that if you want to perform a CORS load with credentials, pass
+   * SEC_COOKIES_INCLUDE.
+   *
+   * Note that these flags are still subject to the user's cookie policies.
+   * For example, if the user is blocking 3rd party cookies, those cookies
+   * will be blocked no matter which of these flags are set.
+   */
+  const unsigned long SEC_COOKIES_DEFAULT = (0 << 5);
+  const unsigned long SEC_COOKIES_INCLUDE = (1 << 5);
+  const unsigned long SEC_COOKIES_SAME_ORIGIN = (2 << 5);
+  const unsigned long SEC_COOKIES_OMIT = (3 << 5);
 
   /**
    * Force inheriting of the Principal. The resulting resource will use the
@@ -40,7 +120,7 @@ interface nsILoadInfo : nsISupports
    *
    * This flag can not be used together with SEC_SANDBOXED.
    */
-  const unsigned long SEC_FORCE_INHERIT_PRINCIPAL = 0x01;
+  const unsigned long SEC_FORCE_INHERIT_PRINCIPAL = (1<<7);
 
   /**
    * Sandbox the load. The resulting resource will use a freshly created
@@ -52,7 +132,30 @@ interface nsILoadInfo : nsISupports
    *
    * This flag can not be used together with SEC_FORCE_INHERIT_PRINCIPAL.
    */
-  const unsigned long SEC_SANDBOXED = 0x02;
+  const unsigned long SEC_SANDBOXED = (1<<8);
+
+  /**
+   * Inherit the Principal for about:blank.
+   */
+  const unsigned long SEC_ABOUT_BLANK_INHERITS = (1<<9);
+
+  /**
+   * Allow access to chrome: packages that are content accessible.
+   */
+  const unsigned long SEC_ALLOW_CHROME = (1<<10);
+
+  /**
+   * Don't follow redirects. Instead the redirect response is returned
+   * as a successful response for the channel.
+   *
+   * Redirects not initiated by a server response, i.e. REDIRECT_INTERNAL and
+   * REDIRECT_STS_UPGRADE, are still followed.
+   *
+   * Note: If this flag is set and the channel response is a redirect, then
+   * the response body might not be available.
+   * This can happen if the redirect was cached.
+   */
+  const unsigned long SEC_DONT_FOLLOW_REDIRECTS = (1<<11);
 
   /**
    * The loadingPrincipal is the principal that is responsible for the load.
@@ -138,6 +241,27 @@ interface nsILoadInfo : nsISupports
 %}
 
   /**
+   * Allows to query only the security mode bits from above.
+   */
+  [infallible] readonly attribute unsigned long securityMode;
+
+  /**
+   * True if this request is embedded in a context that can't be third-party
+   * (i.e. an iframe embedded in a cross-origin parent window). If this is
+   * false, then this request may be third-party if it's a third-party to
+   * loadingPrincipal.
+   */
+  [infallible] readonly attribute boolean isInThirdPartyContext;
+
+  /**
+   * See the SEC_COOKIES_* flags above. This attribute will never return
+   * SEC_COOKIES_DEFAULT, but will instead return what the policy resolves to.
+   * I.e. SEC_COOKIES_SAME_ORIGIN for CORS mode, and SEC_COOKIES_INCLUDE
+   * otherwise.
+   */
+  [infallible] readonly attribute unsigned long cookiePolicy;
+
+  /**
    * If forceInheritPrincipal is true, the data coming from the channel should
    * use loadingPrincipal for its principal, even when the data is loaded over
    * http:// or another protocol that would normally use a URI-based principal.
@@ -153,51 +277,255 @@ interface nsILoadInfo : nsISupports
   [infallible] readonly attribute boolean loadingSandboxed;
 
   /**
-   * The contentPolicyType of the channel, used for security checks
-   * like Mixed Content Blocking and Content Security Policy.
+   * If aboutBlankInherits is true, then about:blank should inherit
+   * the principal.
    */
-  readonly attribute nsContentPolicyType contentPolicyType;
+  [infallible] readonly attribute boolean aboutBlankInherits;
+
+  /**
+   * If allowChrome is true, then use nsIScriptSecurityManager::ALLOW_CHROME
+   * when calling CheckLoadURIWithPrincipal().
+   */
+  [infallible] readonly attribute boolean allowChrome;
+
+  /**
+   * Returns true if SEC_DONT_FOLLOW_REDIRECTS is set.
+   */
+  [infallible] readonly attribute boolean dontFollowRedirects;
+
+  /**
+   * The external contentPolicyType of the channel, used for security checks
+   * like Mixed Content Blocking and Content Security Policy.
+   *
+   * Specifically, content policy types with _INTERNAL_ in their name will
+   * never get returned from this attribute.
+   */
+  readonly attribute nsContentPolicyType externalContentPolicyType;
 
 %{ C++
-  inline nsContentPolicyType GetContentPolicyType()
+  inline nsContentPolicyType GetExternalContentPolicyType()
   {
     nsContentPolicyType result;
-    mozilla::DebugOnly<nsresult> rv = GetContentPolicyType(&result);
+    mozilla::DebugOnly<nsresult> rv = GetExternalContentPolicyType(&result);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     return result;
   }
 %}
 
   /**
-   * A base URI for use in situations where it cannot otherwise be inferred.
-   * This attribute may be null.  The value of this attribute may be
-   * ignored if the base URI can be inferred by the channel's URI.
+   * The internal contentPolicyType of the channel, used for constructing
+   * RequestContext values when creating a fetch event for an intercepted
+   * channel.
+   *
+   * This should not be used for the purposes of security checks, since
+   * the content policy implementations cannot be expected to deal with
+   * _INTERNAL_ values.  Please use the contentPolicyType attribute above
+   * for that purpose.
    */
-  readonly attribute nsIURI baseURI;
+  [noscript, notxpcom]
+  nsContentPolicyType internalContentPolicyType();
 
   /**
-   * A C++-friendly version of baseURI.
-   */
-  [noscript, notxpcom, nostdcall, binaryname(BaseURI)]
-  nsIURI binaryBaseURI();
-
-  /**
-   * The innerWindowId of the loadingDocument, used to identify
-   * the loadingDocument in e10s where the loadingDocument is
-   * not available.
+   * Returns true if document or any of the documents ancestors
+   * up to the toplevel document make use of the CSP directive
+   * 'upgrade-insecure-requests'. Used to identify upgrade
+   * requests in e10s where the loadingDocument is not available.
    *
    * Warning: If the loadingDocument is null, then the
-   * innerWindowId is 0.
+   * upgradeInsecureRequests is false.
    */
-  readonly attribute unsigned long innerWindowID;
+  [infallible] readonly attribute boolean upgradeInsecureRequests;
+
+  /**
+   * Typically these are the window IDs of the window in which the element being
+   * loaded lives. However, if the element being loaded is <frame
+   * src="foo.html"> (or, more generally, if the element QIs to
+   * nsIFrameLoaderOwner) then the window IDs are for the window containing the
+   * foo.html document. In this case, parentOuterWindowID is the window ID of
+   * the window containing the <frame> element.
+   *
+   * Note that these window IDs can be 0 if the window is not
+   * available. parentOuterWindowID will be the same as outerWindowID if the
+   * window has no parent.
+   */
+  [infallible] readonly attribute unsigned long long innerWindowID;
+  [infallible] readonly attribute unsigned long long outerWindowID;
+  [infallible] readonly attribute unsigned long long parentOuterWindowID;
+
+  /**
+   * Customized NeckoOriginAttributes within LoadInfo to allow overwriting of the
+   * default originAttributes from the loadingPrincipal.
+   */
+  [implicit_jscontext, binaryname(ScriptableOriginAttributes)]
+  attribute jsval originAttributes;
+
+  [noscript, nostdcall, binaryname(GetOriginAttributes)]
+  NeckoOriginAttributes binaryGetOriginAttributes();
+
+  [noscript, nostdcall, binaryname(SetOriginAttributes)]
+  void binarySetOriginAttributes(in const_OriginAttributesRef aOriginAttrs);
 
 %{ C++
-  inline uint32_t GetInnerWindowID()
+  inline mozilla::NeckoOriginAttributes GetOriginAttributes()
   {
-    uint32_t result;
-    mozilla::DebugOnly<nsresult> rv = GetInnerWindowID(&result);
+    mozilla::NeckoOriginAttributes result;
+    mozilla::DebugOnly<nsresult> rv = GetOriginAttributes(&result);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     return result;
+  }
+%}
+
+  /**
+   * Whenever a channel is openend by asyncOpen2() [or also open2()],
+   * lets set this flag so that redirects of such channels are also
+   * openend using asyncOpen2() [open2()].
+   *
+   * Please note, once the flag is set to true it must remain true
+   * throughout the lifetime of the channel. Trying to set it
+   * to anything else than true will be discareded.
+   *
+   */
+  [infallible] attribute boolean enforceSecurity;
+
+  /**
+   * Whenever a channel is evaluated by the ContentSecurityManager
+   * the first time, we set this flag to true to indicate that
+   * subsequent calls of AsyncOpen2() do not have to enforce all
+   * security checks again. E.g., after a redirect there is no
+   * need to set up CORS again. We need this separate flag
+   * because the redirectChain might also contain internal
+   * redirects which might pollute the redirectChain so we can't
+   * rely on the size of the redirectChain-array to query whether
+   * a channel got redirected or not.
+   *
+   * Please note, once the flag is set to true it must remain true
+   * throughout the lifetime of the channel. Trying to set it
+   * to anything else than true will be discarded.
+   *
+   */
+  [infallible] attribute boolean initialSecurityCheckDone;
+
+  /**
+   * Whenever a channel gets redirected, append the principal of the
+   * channel [before the channels got redirected] to the loadinfo,
+   * so that at every point this array lets us reason about all the
+   * redirects this channel went through.
+   * @param aPrincipal, the channelURIPrincipal before the channel
+   *         got redirected.
+   * @param aIsInternalRedirect should be true if the channel is going
+   *        through an internal redirect, otherwise false.
+   */
+  void appendRedirectedPrincipal(in nsIPrincipal principal,
+                                 in boolean isInternalRedirect);
+
+  /**
+   * An array of nsIPrincipals which stores redirects associated with this
+   * channel. This array is filled whether or not the channel has ever been
+   * opened. The last element of the array is associated with the most recent
+   * redirect. Please note, that this array *includes* internal redirects.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval redirectChainIncludingInternalRedirects;
+
+  /**
+   * A C++-friendly version of redirectChain.
+   * Please note that this array has the same lifetime as the
+   * loadInfo object - use with caution!
+   */
+  [noscript, notxpcom, nostdcall, binaryname(RedirectChainIncludingInternalRedirects)]
+  const_nsIPrincipalArray binaryRedirectChainIncludingInternalRedirects();
+
+  /**
+   * Same as RedirectChain but does *not* include internal redirects.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval redirectChain;
+
+  /**
+   * A C++-friendly version of redirectChain.
+   * Please note that this array has the same lifetime as the
+   * loadInfo object - use with caution!
+   */
+  [noscript, notxpcom, nostdcall, binaryname(RedirectChain)]
+  const_nsIPrincipalArray binaryRedirectChain();
+
+  /**
+   * Sets the list of unsafe headers according to CORS spec, as well as
+   * potentially forces a preflight.
+   * Note that you do not need to set the Content-Type header. That will be
+   * automatically detected as needed.
+   *
+   * Only call this function when using the SEC_REQUIRE_CORS_DATA_INHERITS mode.
+   */
+  [noscript, notxpcom, nostdcall]
+  void setCorsPreflightInfo(in StringArrayRef unsafeHeaders,
+                            in boolean forcePreflight);
+
+  /**
+   * A C++-friendly getter for the list of cors-unsafe headers.
+   * Please note that this array has the same lifetime as the
+   * loadInfo object - use with caution!
+   */
+  [noscript, notxpcom, nostdcall, binaryname(CorsUnsafeHeaders)]
+  StringArrayRef corsUnsafeHeaders();
+
+  /**
+   * Returns value set through setCorsPreflightInfo.
+   */
+  [infallible] readonly attribute boolean forcePreflight;
+
+  /**
+   * A C++ friendly getter for the forcePreflight flag.
+   */
+  [infallible] readonly attribute boolean isPreflight;
+
+  /**
+  * Constants reflecting the channel tainting.  These are mainly defined here
+  * for script.  Internal C++ code should use the enum defined in LoadTainting.h.
+  * See LoadTainting.h for documentation.
+  */
+  const unsigned long TAINTING_BASIC = 0;
+  const unsigned long TAINTING_CORS = 1;
+  const unsigned long TAINTING_OPAQUE = 2;
+
+  /**
+   * Determine the associated channel's current tainting.  Note, this can
+   * change due to a service worker intercept, so it should be checked after
+   * OnStartRequest() fires.
+   */
+  readonly attribute unsigned long tainting;
+
+  /**
+   * Note a new tainting level and possibly increase the current tainting
+   * to match.  If the tainting level is already greater than the given
+   * value, then there is no effect.  It is not possible to reduce the tainting
+   * level on an existing channel/loadinfo.
+   */
+  void maybeIncreaseTainting(in unsigned long aTainting);
+
+  /**
+   * Various helper code to provide more convenient C++ access to the tainting
+   * attribute and maybeIncreaseTainting().
+   */
+%{C++
+  static_assert(TAINTING_BASIC == static_cast<uint32_t>(mozilla::LoadTainting::Basic),
+                "basic tainting enums should match");
+  static_assert(TAINTING_CORS == static_cast<uint32_t>(mozilla::LoadTainting::CORS),
+                "cors tainting enums should match");
+  static_assert(TAINTING_OPAQUE == static_cast<uint32_t>(mozilla::LoadTainting::Opaque),
+                "opaque tainting enums should match");
+
+  mozilla::LoadTainting GetTainting()
+  {
+    uint32_t tainting = TAINTING_BASIC;
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetTainting(&tainting)));
+    return static_cast<mozilla::LoadTainting>(tainting);
+  }
+
+  void MaybeIncreaseTainting(mozilla::LoadTainting aTainting)
+  {
+    uint32_t tainting = static_cast<uint32_t>(aTainting);
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(MaybeIncreaseTainting(tainting)));
   }
 %}
 };

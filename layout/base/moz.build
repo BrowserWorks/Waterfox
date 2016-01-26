@@ -40,6 +40,9 @@ with Files('nsChangeHint.h'):
 with Files('nsBidi*'):
     BUG_COMPONENT = ('Core', 'Layout: Text')
 
+with Files('AccessibleCaret*'):
+    BUG_COMPONENT = ('Core', 'Selection')
+
 XPIDL_SOURCES += [
     'nsIStyleSheetService.idl',
 ]
@@ -55,10 +58,12 @@ EXPORTS += [
     'ActiveLayerTracker.h',
     'CaretAssociationHint.h',
     'DisplayItemClip.h',
+    'DisplayItemScrollClip.h',
     'DisplayListClipState.h',
     'FrameLayerBuilder.h',
     'FramePropertyTable.h',
     'LayerState.h',
+    'LayoutLogging.h',
     'nsArenaMemoryStats.h',
     'nsBidi.h',
     'nsBidiPresUtils.h',
@@ -76,11 +81,12 @@ EXPORTS += [
     'nsIFrameTraversal.h',
     'nsILayoutDebugger.h',
     'nsILayoutHistoryState.h',
-    'nsIPercentHeightObserver.h',
+    'nsIPercentBSizeObserver.h',
     'nsIPresShell.h',
     'nsIReflowCallback.h',
     'nsLayoutUtils.h',
     'nsPresArena.h',
+    'nsPresArenaObjectList.h',
     'nsPresContext.h',
     'nsPresState.h',
     'nsRefreshDriver.h',
@@ -93,6 +99,9 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    'ArenaObjectID.h',
+    'ArenaRefPtr.h',
+    'ArenaRefPtrInlines.h',
     'GeometryUtils.h',
     'PaintTracker.h',
     'RestyleLogging.h',
@@ -101,15 +110,17 @@ EXPORTS.mozilla += [
 UNIFIED_SOURCES += [
     'AccessibleCaret.cpp',
     'AccessibleCaretEventHub.cpp',
-    'AccessibleCaretLogger.cpp',
     'AccessibleCaretManager.cpp',
     'ActiveLayerTracker.cpp',
     'DisplayItemClip.cpp',
+    'DisplayItemScrollClip.cpp',
     'DisplayListClipState.cpp',
     'FrameLayerBuilder.cpp',
     'FramePropertyTable.cpp',
     'GeometryUtils.cpp',
+    'LayoutLogging.cpp',
     'MaskLayerImageCache.cpp',
+    'MobileViewportManager.cpp',
     'nsBidi.cpp',
     'nsBidiPresUtils.cpp',
     'nsCaret.cpp',
@@ -137,10 +148,9 @@ UNIFIED_SOURCES += [
     'RestyleManager.cpp',
     'RestyleTracker.cpp',
     'ScrollbarStyles.cpp',
-    'SelectionCarets.cpp',
     'StackArena.cpp',
-    'TouchCaret.cpp',
     'TouchManager.cpp',
+    'ZoomConstraintsClient.cpp',
 ]
 
 # nsPresArena.cpp needs to be built separately because it uses plarena.h.
@@ -152,8 +162,6 @@ SOURCES += [
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['gtest']
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -177,8 +185,9 @@ LOCAL_INCLUDES += [
 
 FINAL_LIBRARY = 'xul'
 
+BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
+MARIONETTE_LAYOUT_MANIFESTS += ['tests/marionette/manifest.ini']
 MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
-BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']

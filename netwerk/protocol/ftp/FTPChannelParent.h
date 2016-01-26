@@ -14,11 +14,19 @@
 #include "nsIParentChannel.h"
 #include "nsIInterfaceRequestor.h"
 #include "OfflineObserver.h"
+#include "nsIChannelEventSink.h"
 
 class nsILoadContext;
 
 namespace mozilla {
+
+namespace dom {
+class TabParent;
+class PBrowserOrId;
+} // namespace dom
+
 namespace net {
+class ChannelEventQueue;
 
 class FTPChannelParent final : public PFTPChannelParent
                              , public nsIParentChannel
@@ -35,7 +43,9 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICHANNELEVENTSINK
 
-  FTPChannelParent(nsILoadContext* aLoadContext, PBOverrideStatus aOverrideStatus);
+  FTPChannelParent(const dom::PBrowserOrId& aIframeEmbedding,
+                   nsILoadContext* aLoadContext,
+                   PBOverrideStatus aOverrideStatus);
 
   bool Init(const FTPChannelCreationArgs& aOpenArgs);
 
@@ -64,15 +74,21 @@ protected:
   bool DoAsyncOpen(const URIParams& aURI, const uint64_t& aStartPos,
                    const nsCString& aEntityID,
                    const OptionalInputStreamParams& aUploadStream,
-                   const ipc::PrincipalInfo& aRequestingPrincipalInfo,
-                   const ipc::PrincipalInfo& aTriggeringPrincipalInfo,
-                   const uint32_t& aSecurityFlags,
-                   const uint32_t& aContentPolicyType,
-                   const uint32_t& aInnerWindowID);
+                   const OptionalLoadInfoArgs& aLoadInfoArgs);
 
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during HTTP->FTP redirects.
   bool ConnectChannel(const uint32_t& channelId);
+
+  void DivertOnDataAvailable(const nsCString& data,
+                             const uint64_t& offset,
+                             const uint32_t& count);
+  void DivertOnStopRequest(const nsresult& statusCode);
+  void DivertComplete();
+
+  friend class FTPDivertDataAvailableEvent;
+  friend class FTPDivertStopRequestEvent;
+  friend class FTPDivertCompleteEvent;
 
   virtual bool RecvCancel(const nsresult& status) override;
   virtual bool RecvSuspend() override;
@@ -112,7 +128,10 @@ protected:
   // Set if we successfully suspended the nsHttpChannel for diversion. Unset
   // when we call ResumeForDiversion.
   bool mSuspendedForDiversion;
-  nsRefPtr<OfflineObserver> mObserver;
+  RefPtr<OfflineObserver> mObserver;
+  RefPtr<mozilla::dom::TabParent> mTabParent;
+
+  RefPtr<ChannelEventQueue> mEventQ;
 };
 
 } // namespace net

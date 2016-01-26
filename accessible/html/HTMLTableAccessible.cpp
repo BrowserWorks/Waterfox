@@ -143,6 +143,20 @@ HTMLTableCellAccessible::NativeAttributes()
   return attributes.forget();
 }
 
+GroupPos
+HTMLTableCellAccessible::GroupPosition()
+{
+  int32_t count = 0, index = 0;
+  TableAccessible* table = Table();
+  if (table && nsCoreUtils::GetUIntAttr(table->AsAccessible()->GetContent(),
+                                        nsGkAtoms::aria_colcount, &count) &&
+      nsCoreUtils::GetUIntAttr(mContent, nsGkAtoms::aria_colindex, &index)) {
+    return GroupPos(0, index, count);
+  }
+
+  return HyperTextAccessibleWrap::GroupPosition();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLTableCellAccessible: TableCellAccessible implementation
 
@@ -354,6 +368,20 @@ HTMLTableRowAccessible::NativeRole()
     return roles::MATHML_LABELED_ROW;
   }
   return roles::ROW;
+}
+
+GroupPos
+HTMLTableRowAccessible::GroupPosition()
+{
+  int32_t count = 0, index = 0;
+  Accessible* table = nsAccUtils::TableFor(this);
+  if (table && nsCoreUtils::GetUIntAttr(table->GetContent(),
+                                        nsGkAtoms::aria_rowcount, &count) &&
+      nsCoreUtils::GetUIntAttr(mContent, nsGkAtoms::aria_rowindex, &index)) {
+    return GroupPos(0, index, count);
+  }
+
+  return AccessibleWrap::GroupPosition();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -784,7 +812,7 @@ HTMLTableAccessible::AddRowOrColumnToSelection(int32_t aIndex, uint32_t aTarget)
     count = RowCount();
 
   nsIPresShell* presShell(mDoc->PresShell());
-  nsRefPtr<nsFrameSelection> tableSelection =
+  RefPtr<nsFrameSelection> tableSelection =
     const_cast<nsFrameSelection*>(presShell->ConstFrameSelection());
 
   for (uint32_t idx = 0; idx < count; idx++) {
@@ -810,7 +838,7 @@ HTMLTableAccessible::RemoveRowsOrColumnsFromSelection(int32_t aIndex,
     return NS_OK;
 
   nsIPresShell* presShell(mDoc->PresShell());
-  nsRefPtr<nsFrameSelection> tableSelection =
+  RefPtr<nsFrameSelection> tableSelection =
     const_cast<nsFrameSelection*>(presShell->ConstFrameSelection());
 
   bool doUnselectRow = (aTarget == nsISelectionPrivate::TABLESELECTION_ROW);
@@ -941,8 +969,8 @@ HTMLTableAccessible::IsProbablyLayoutTable()
     RETURN_LAYOUT_ANSWER(false, "Has role attribute, weak role, and role is table");
   }
 
-  if (!mContent->IsHTMLElement(nsGkAtoms::table))
-    RETURN_LAYOUT_ANSWER(true, "table built by CSS display:table style");
+  NS_ASSERTION(mContent->IsHTMLElement(nsGkAtoms::table),
+    "table should not be built by CSS display:table style");
 
   // Check if datatable attribute has "0" value.
   if (mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::datatable,

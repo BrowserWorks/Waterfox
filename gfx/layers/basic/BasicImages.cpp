@@ -12,7 +12,8 @@
 #include "gfxPlatform.h"                // for gfxPlatform, gfxImageFormat
 #include "gfxUtils.h"                   // for gfxUtils
 #include "mozilla/mozalloc.h"           // for operator delete[], etc
-#include "nsAutoPtr.h"                  // for nsRefPtr, nsAutoArrayPtr
+#include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAutoRef.h"                  // for nsCountedRef
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ERROR, NS_ASSERTION
@@ -28,11 +29,11 @@
 namespace mozilla {
 namespace layers {
 
-class BasicPlanarYCbCrImage : public PlanarYCbCrImage
+class BasicPlanarYCbCrImage : public RecyclingPlanarYCbCrImage
 {
 public:
   BasicPlanarYCbCrImage(const gfx::IntSize& aScaleHint, gfxImageFormat aOffscreenFormat, BufferRecycleBin *aRecycleBin)
-    : PlanarYCbCrImage(aRecycleBin)
+    : RecyclingPlanarYCbCrImage(aRecycleBin)
     , mScaleHint(aScaleHint)
     , mDelayedConversion(false)
   {
@@ -44,14 +45,14 @@ public:
     if (mDecodedBuffer) {
       // Right now this only happens if the Image was never drawn, otherwise
       // this will have been tossed away at surface destruction.
-      mRecycleBin->RecycleBuffer(mDecodedBuffer.forget(), mSize.height * mStride);
+      mRecycleBin->RecycleBuffer(Move(mDecodedBuffer), mSize.height * mStride);
     }
   }
 
-  virtual void SetData(const Data& aData) override;
+  virtual bool SetData(const Data& aData) override;
   virtual void SetDelayedConversion(bool aDelayed) override { mDelayedConversion = aDelayed; }
 
-  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
@@ -60,13 +61,13 @@ public:
 
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
-    size_t size = PlanarYCbCrImage::SizeOfExcludingThis(aMallocSizeOf);
-    size += mDecodedBuffer.SizeOfExcludingThis(aMallocSizeOf);
+    size_t size = RecyclingPlanarYCbCrImage::SizeOfExcludingThis(aMallocSizeOf);
+    size += aMallocSizeOf(mDecodedBuffer.get());
     return size;
   }
 
 private:
-  nsAutoArrayPtr<uint8_t> mDecodedBuffer;
+  UniquePtr<uint8_t[]> mDecodedBuffer;
   gfx::IntSize mScaleHint;
   int mStride;
   bool mDelayedConversion;
@@ -77,34 +78,27 @@ class BasicImageFactory : public ImageFactory
 public:
   BasicImageFactory() {}
 
-  virtual already_AddRefed<Image> CreateImage(ImageFormat aFormat,
-                                              const gfx::IntSize &aScaleHint,
-                                              BufferRecycleBin *aRecycleBin)
+  virtual RefPtr<PlanarYCbCrImage>
+  CreatePlanarYCbCrImage(const gfx::IntSize& aScaleHint, BufferRecycleBin* aRecycleBin)
   {
-    nsRefPtr<Image> image;
-    if (aFormat == ImageFormat::PLANAR_YCBCR) {
-      image = new BasicPlanarYCbCrImage(aScaleHint, gfxPlatform::GetPlatform()->GetOffscreenFormat(), aRecycleBin);
-      return image.forget();
-    }
-
-    return ImageFactory::CreateImage(aFormat, aScaleHint, aRecycleBin);
+    return new BasicPlanarYCbCrImage(aScaleHint, gfxPlatform::GetPlatform()->GetOffscreenFormat(), aRecycleBin);
   }
 };
 
-void
+bool
 BasicPlanarYCbCrImage::SetData(const Data& aData)
 {
-  PlanarYCbCrImage::SetData(aData);
+  RecyclingPlanarYCbCrImage::SetData(aData);
 
   if (mDelayedConversion) {
-    return;
+    return false;
   }
 
   // Do some sanity checks to prevent integer overflow
   if (aData.mYSize.width > PlanarYCbCrImage::MAX_DIMENSION ||
       aData.mYSize.height > PlanarYCbCrImage::MAX_DIMENSION) {
     NS_ERROR("Illegal image source width or height");
-    return;
+    return false;
   }
 
   gfx::SurfaceFormat format = gfx::ImageFormatToSurfaceFormat(GetOffscreenFormat());
@@ -114,7 +108,7 @@ BasicPlanarYCbCrImage::SetData(const Data& aData)
   if (size.width > PlanarYCbCrImage::MAX_DIMENSION ||
       size.height > PlanarYCbCrImage::MAX_DIMENSION) {
     NS_ERROR("Illegal image dest width or height");
-    return;
+    return false;
   }
 
   gfxImageFormat iFormat = gfx::SurfaceFormatToImageFormat(format);
@@ -122,21 +116,24 @@ BasicPlanarYCbCrImage::SetData(const Data& aData)
   mDecodedBuffer = AllocateBuffer(size.height * mStride);
   if (!mDecodedBuffer) {
     // out of memory
-    return;
+    return false;
   }
 
-  gfx::ConvertYCbCrToRGB(aData, format, size, mDecodedBuffer, mStride);
+  gfx::ConvertYCbCrToRGB(aData, format, size, mDecodedBuffer.get(), mStride);
   SetOffscreenFormat(iFormat);
   mSize = size;
+
+  return true;
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 BasicPlanarYCbCrImage::GetAsSourceSurface()
 {
   NS_ASSERTION(NS_IsMainThread(), "Must be main thread");
 
   if (mSourceSurface) {
-    return mSourceSurface.get();
+    RefPtr<gfx::SourceSurface> surface(mSourceSurface);
+    return surface.forget();
   }
 
   if (!mDecodedBuffer) {
@@ -151,7 +148,7 @@ BasicPlanarYCbCrImage::GetAsSourceSurface()
     // We create the target out of mDecodedBuffer, and get a snapshot from it.
     // The draw target is destroyed on scope exit and the surface owns the data.
     RefPtr<gfx::DrawTarget> drawTarget
-      = gfxPlatform::GetPlatform()->CreateDrawTargetForData(mDecodedBuffer,
+      = gfxPlatform::GetPlatform()->CreateDrawTargetForData(mDecodedBuffer.get(),
                                                             mSize,
                                                             mStride,
                                                             gfx::ImageFormatToSurfaceFormat(format));
@@ -162,10 +159,10 @@ BasicPlanarYCbCrImage::GetAsSourceSurface()
     surface = drawTarget->Snapshot();
   }
 
-  mRecycleBin->RecycleBuffer(mDecodedBuffer.forget(), mSize.height * mStride);
+  mRecycleBin->RecycleBuffer(Move(mDecodedBuffer), mSize.height * mStride);
 
   mSourceSurface = surface;
-  return mSourceSurface.get();
+  return surface.forget();
 }
 
 
@@ -179,5 +176,5 @@ BasicLayerManager::GetImageFactory()
   return mFactory.get();
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

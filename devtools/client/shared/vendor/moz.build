@@ -1,0 +1,20 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+modules = []
+
+if CONFIG['DEBUG_JS_MODULES'] or CONFIG['MOZ_DEBUG']:
+    modules += ['react-dev.js']
+
+modules += [
+    'react-dom.js',
+    'react-redux.js',
+    'react.js',
+    'redux.js',
+    'seamless-immutable.js'
+]
+
+DevToolsModules(*modules)

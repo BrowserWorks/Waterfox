@@ -22,8 +22,8 @@
 #include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/dom/CameraFacesDetectedEvent.h"
 #include "mozilla/dom/CameraStateChangeEvent.h"
-#include "DOMCameraDetectedFace.h"
 #include "nsNetUtil.h"
+#include "DOMCameraDetectedFace.h"
 #include "nsServiceManagerUtils.h"
 #include "nsICameraTestHardware.h"
 
@@ -66,7 +66,7 @@ protected:
     MOZ_COUNT_DTOR(TestGonkCameraHardwareListener);
   }
 
-  nsRefPtr<nsGonkCameraControl> mTarget;
+  RefPtr<nsGonkCameraControl> mTarget;
   nsCOMPtr<nsIThread> mCameraThread;
 };
 
@@ -110,16 +110,19 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
 
       if (blob) {
         static const uint64_t MAX_FILE_SIZE = 2147483647;
-        uint64_t dataLength = 0;
-        nsresult rv = blob->GetSize(&dataLength);
 
-        if (NS_WARN_IF(NS_FAILED(rv) || dataLength > MAX_FILE_SIZE)) {
+        ErrorResult rv;
+        uint64_t dataLength = blob->GetSize(rv);
+
+        if (NS_WARN_IF(rv.Failed()) || NS_WARN_IF(dataLength > MAX_FILE_SIZE)) {
+          rv.SuppressException();
           return NS_OK;
         }
 
         nsCOMPtr<nsIInputStream> inputStream;
-        rv = blob->GetInternalStream(getter_AddRefs(inputStream));
-        if (NS_WARN_IF(NS_FAILED(rv))) {
+        blob->GetInternalStream(getter_AddRefs(inputStream), rv);
+        if (NS_WARN_IF(rv.Failed())) {
+          rv.SuppressException();
           return NS_OK;
         }
 
@@ -127,7 +130,8 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
         rv = NS_ReadInputStreamToBuffer(inputStream,
                                         reinterpret_cast<void**>(&data),
                                         static_cast<uint32_t>(dataLength));
-        if (NS_WARN_IF(NS_FAILED(rv))) {
+        if (NS_WARN_IF(rv.Failed())) {
+          rv.SuppressException();
           delete [] data;
           return NS_OK;
         }
@@ -164,7 +168,7 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
             }
 
           protected:
-            nsRefPtr<nsGonkCameraControl> mTarget;
+            RefPtr<nsGonkCameraControl> mTarget;
           };
 
           mCameraThread->Dispatch(new DeferredSystemFailure(mTarget), NS_DISPATCH_NORMAL);
@@ -178,7 +182,7 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
     CameraFacesDetectedEvent* event = aEvent->InternalDOMEvent()->AsCameraFacesDetectedEvent();
 
     if (!NS_WARN_IF(!event)) {
-      Nullable<nsTArray<nsRefPtr<DOMCameraDetectedFace>>> faces;
+      Nullable<nsTArray<RefPtr<DOMCameraDetectedFace>>> faces;
       event->GetFaces(faces);
 
       camera_frame_metadata_t metadata;
@@ -187,7 +191,7 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
       if (faces.IsNull()) {
         OnFacesDetected(mTarget, &metadata);
       } else {
-        const nsTArray<nsRefPtr<DOMCameraDetectedFace>>& facesData = faces.Value();
+        const nsTArray<RefPtr<DOMCameraDetectedFace>>& facesData = faces.Value();
         uint32_t i = facesData.Length();
 
         metadata.number_of_faces = i;
@@ -196,7 +200,7 @@ TestGonkCameraHardwareListener::HandleEvent(nsIDOMEvent* aEvent)
 
         while (i > 0) {
           --i;
-          const nsRefPtr<DOMCameraDetectedFace>& face = facesData[i];
+          const RefPtr<DOMCameraDetectedFace>& face = facesData[i];
           camera_face_t& f = metadata.faces[i];
           const DOMRect& bounds = *face->Bounds();
           f.rect[0] = static_cast<int32_t>(bounds.Left());
@@ -322,7 +326,7 @@ TestGonkCameraHardware::~TestGonkCameraHardware()
 }
 
 nsresult
-TestGonkCameraHardware::WaitWhileRunningOnMainThread(nsRefPtr<ControlMessage> aRunnable)
+TestGonkCameraHardware::WaitWhileRunningOnMainThread(RefPtr<ControlMessage> aRunnable)
 {
   MutexAutoLock lock(mMutex);
 

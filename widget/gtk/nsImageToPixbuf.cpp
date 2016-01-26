@@ -14,7 +14,6 @@
 
 using mozilla::gfx::DataSourceSurface;
 using mozilla::gfx::SurfaceFormat;
-using mozilla::RefPtr;
 
 NS_IMPL_ISUPPORTS(nsImageToPixbuf, nsIImageToPixbuf)
 
@@ -75,7 +74,9 @@ nsImageToPixbuf::SourceSurfaceToPixbuf(SourceSurface* aSurface,
 
     RefPtr<DataSourceSurface> dataSurface = aSurface->GetDataSurface();
     DataSourceSurface::MappedSurface map;
-    dataSurface->Map(DataSourceSurface::MapType::READ, &map);
+    if (!dataSurface->Map(DataSourceSurface::MapType::READ, &map))
+        return nullptr;
+
     uint8_t* srcData = map.mData;
     int32_t srcStride = map.mStride;
 

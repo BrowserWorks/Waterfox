@@ -12,6 +12,7 @@ const XPI_CONTENT_TYPE = "application/x-xpinstall";
 const MSG_INSTALL_ADDONS = "WebInstallerInstallAddonsFromWebpage";
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
 
 function amContentHandler() {
 }
@@ -27,7 +28,7 @@ amContentHandler.prototype = {
    * @param  aRequest
    *         The nsIRequest dealing with the content
    */
-  handleContent: function XCH_handleContent(aMimetype, aContext, aRequest) {
+  handleContent: function(aMimetype, aContext, aRequest) {
     if (aMimetype != XPI_CONTENT_TYPE)
       throw Cr.NS_ERROR_WONT_HANDLE_CONTENT;
 
@@ -43,37 +44,52 @@ amContentHandler.prototype = {
     if (callbacks)
       window = callbacks.getInterface(Ci.nsIDOMWindow);
 
-    let referer = null;
-    if (aRequest instanceof Ci.nsIPropertyBag2) {
-      referer = aRequest.getPropertyAsInterface("docshell.internalReferrer",
-                                                Ci.nsIURI);
-    }
-
-    if (!referer && aRequest instanceof Ci.nsIHttpChannel)
-      referer = aRequest.referrer;
-
     aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
-    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                               .getInterface(Ci.nsIDocShell)
-                               .QueryInterface(Ci.nsIInterfaceRequestor)
-                               .getInterface(Ci.nsIContentFrameMessageManager);
-
-    messageManager.sendAsyncMessage(MSG_INSTALL_ADDONS, {
+    let installs = {
       uris: [uri.spec],
       hashes: [null],
       names: [null],
       icons: [null],
       mimetype: XPI_CONTENT_TYPE,
-      referer: referer ? referer.spec : null,
+      triggeringPrincipal: aRequest.loadInfo.triggeringPrincipal,
       callbackID: -1
-    });
+    };
+
+    if (Services.appinfo.processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
+      // When running in the main process this might be a frame inside an
+      // in-content UI page, walk up to find the first frame element in a chrome
+      // privileged document
+      let element = window.frameElement;
+      let ssm = Services.scriptSecurityManager;
+      while (element && !ssm.isSystemPrincipal(element.ownerDocument.nodePrincipal))
+        element = element.ownerDocument.defaultView.frameElement;
+
+      if (element) {
+        let listener = Cc["@mozilla.org/addons/integration;1"].
+                       getService(Ci.nsIMessageListener);
+        listener.wrappedJSObject.receiveMessage({
+          name: MSG_INSTALL_ADDONS,
+          target: element,
+          data: installs,
+        });
+        return;
+      }
+    }
+
+    // Fall back to sending through the message manager
+    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIDocShell)
+                               .QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIContentFrameMessageManager);
+
+    messageManager.sendAsyncMessage(MSG_INSTALL_ADDONS, installs);
   },
 
   classID: Components.ID("{7beb3ba8-6ec3-41b4-b67c-da89b8518922}"),
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentHandler]),
 
-  log : function XCH_log(aMsg) {
+  log : function(aMsg) {
     let msg = "amContentHandler.js: " + (aMsg.join ? aMsg.join("") : aMsg);
     Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).
       logStringMessage(msg);

@@ -1,7 +1,7 @@
 
 /* pngpriv.h - private declarations for use inside libpng
  *
- * Last changed in libpng 1.6.17 [March 25, 2015]
+ * Last changed in libpng 1.6.18 [July 23, 2015]
  * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
@@ -118,8 +118,12 @@
     * to compile with an appropriate #error if ALIGNED_MEMORY has been turned
     * off.
     *
-    * Note that gcc-4.9 defines __ARM_NEON instead of __ARM_NEON__, so we
-    * check both variants.
+    * Note that gcc-4.9 defines __ARM_NEON instead of the deprecated
+    * __ARM_NEON__, so we check both variants.
+    *
+    * To disable ARM_NEON optimizations entirely, and skip compiling the
+    * associated assembler code, pass --enable-arm-neon=no to configure
+    * or put -DPNG_ARM_NEON_OPT=0 in CPPFLAGS.
     */
 #  if (defined(__ARM_NEON__) || defined(__ARM_NEON)) && \
    defined(PNG_ALIGNED_MEMORY_SUPPORTED)
@@ -248,17 +252,18 @@
  * always be used to declare an extern data or function object in this file.
  */
 #ifndef PNG_INTERNAL_DATA
-#  define PNG_INTERNAL_DATA(type, name, array) extern type name array
+#  define PNG_INTERNAL_DATA(type, name, array) PNG_LINKAGE_DATA type name array
 #endif
 
 #ifndef PNG_INTERNAL_FUNCTION
 #  define PNG_INTERNAL_FUNCTION(type, name, args, attributes)\
-      extern PNG_FUNCTION(type, name, args, PNG_EMPTY attributes)
+      PNG_LINKAGE_FUNCTION PNG_FUNCTION(type, name, args, PNG_EMPTY attributes)
 #endif
 
 #ifndef PNG_INTERNAL_CALLBACK
 #  define PNG_INTERNAL_CALLBACK(type, name, args, attributes)\
-      extern PNG_FUNCTION(type, (PNGCBAPI name), args, PNG_EMPTY attributes)
+      PNG_LINKAGE_CALLBACK PNG_FUNCTION(type, (PNGCBAPI name), args,\
+         PNG_EMPTY attributes)
 #endif
 
 /* If floating or fixed point APIs are disabled they may still be compiled
@@ -294,6 +299,22 @@
 /* pngconf.h does not set PNG_DLL_EXPORT unless it is required, so: */
 #ifndef PNG_DLL_EXPORT
 #  define PNG_DLL_EXPORT
+#endif
+
+/* This is a global switch to set the compilation for an installed system
+ * (a release build).  It can be set for testing debug builds to ensure that
+ * they will compile when the build type is switched to RC or STABLE, the
+ * default is just to use PNG_LIBPNG_BUILD_BASE_TYPE.  Set this in CPPFLAGS
+ * with either:
+ *
+ *   -DPNG_RELEASE_BUILD Turns on the release compile path
+ *   -DPNG_RELEASE_BUILD=0 Turns it off
+ * or in your pngusr.h with
+ *   #define PNG_RELEASE_BUILD=1 Turns on the release compile path
+ *   #define PNG_RELEASE_BUILD=0 Turns it off
+ */
+#ifndef PNG_RELEASE_BUILD
+#  define PNG_RELEASE_BUILD (PNG_LIBPNG_BUILD_BASE_TYPE >= PNG_LIBPNG_BUILD_RC)
 #endif
 
 /* SECURITY and SAFETY:
@@ -558,10 +579,6 @@
 #define PNG_STRUCT_PNG   0x0001
 #define PNG_STRUCT_INFO  0x0002
 
-/* Scaling factor for filter heuristic weighting calculations */
-#define PNG_WEIGHT_FACTOR (1<<(PNG_WEIGHT_SHIFT))
-#define PNG_COST_FACTOR (1<<(PNG_COST_SHIFT))
-
 /* Flags for the png_ptr->flags rather than declaring a byte for each one */
 #define PNG_FLAG_ZLIB_CUSTOM_STRATEGY     0x0001
 #define PNG_FLAG_ZSTREAM_INITIALIZED      0x0002 /* Added to libpng-1.6.0 */
@@ -652,7 +669,7 @@
 /* The fixed point conversion performs range checking and evaluates
  * its argument multiple times, so must be used with care.  The
  * range checking uses the PNG specification values for a signed
- * 32 bit fixed point value except that the values are deliberately
+ * 32-bit fixed point value except that the values are deliberately
  * rounded-to-zero to an integral value - 21474 (21474.83 is roughly
  * (2^31-1) * 100000). 's' is a string that describes the value being
  * converted.
@@ -809,7 +826,7 @@
     */
 #endif
 
-/* This is used for 16 bit gamma tables -- only the top level pointers are
+/* This is used for 16-bit gamma tables -- only the top level pointers are
  * const; this could be changed:
  */
 typedef const png_uint_16p * png_const_uint_16pp;
@@ -1386,10 +1403,6 @@ PNG_INTERNAL_FUNCTION(void,png_push_read_chunk,(png_structrp png_ptr,
 PNG_INTERNAL_FUNCTION(void,png_push_read_sig,(png_structrp png_ptr,
     png_inforp info_ptr),PNG_EMPTY);
 PNG_INTERNAL_FUNCTION(void,png_push_check_crc,(png_structrp png_ptr),PNG_EMPTY);
-PNG_INTERNAL_FUNCTION(void,png_push_crc_skip,(png_structrp png_ptr,
-    png_uint_32 length),PNG_EMPTY);
-PNG_INTERNAL_FUNCTION(void,png_push_crc_finish,(png_structrp png_ptr),
-    PNG_EMPTY);
 PNG_INTERNAL_FUNCTION(void,png_push_save_buffer,(png_structrp png_ptr),
     PNG_EMPTY);
 PNG_INTERNAL_FUNCTION(void,png_push_restore_buffer,(png_structrp png_ptr,

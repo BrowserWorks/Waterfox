@@ -19,4 +19,5 @@ LOCAL_INCLUDES += [
     '/rdf/datasource',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

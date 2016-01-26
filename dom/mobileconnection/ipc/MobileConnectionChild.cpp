@@ -18,6 +18,8 @@ NS_IMPL_ISUPPORTS(MobileConnectionChild, nsIMobileConnection)
 MobileConnectionChild::MobileConnectionChild(uint32_t aServiceId)
   : mServiceId(aServiceId)
   , mLive(true)
+  , mRadioState(0)
+  , mNetworkSelectionMode(0)
 {
   MOZ_COUNT_CTOR(MobileConnectionChild);
 }
@@ -87,7 +89,7 @@ MobileConnectionChild::UnregisterListener(nsIMobileConnectionListener* aListener
 NS_IMETHODIMP
 MobileConnectionChild::GetVoice(nsIMobileConnectionInfo** aVoice)
 {
-  nsRefPtr<nsIMobileConnectionInfo> voice(mVoice);
+  RefPtr<nsIMobileConnectionInfo> voice(mVoice);
   voice.forget(aVoice);
   return NS_OK;
 }
@@ -95,7 +97,7 @@ MobileConnectionChild::GetVoice(nsIMobileConnectionInfo** aVoice)
 NS_IMETHODIMP
 MobileConnectionChild::GetData(nsIMobileConnectionInfo** aData)
 {
-  nsRefPtr<nsIMobileConnectionInfo> data(mData);
+  RefPtr<nsIMobileConnectionInfo> data(mData);
   data.forget(aData);
   return NS_OK;
 }
@@ -105,6 +107,12 @@ MobileConnectionChild::GetRadioState(int32_t* aRadioState)
 {
   *aRadioState = mRadioState;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+MobileConnectionChild::GetDeviceIdentities(nsIMobileDeviceIdentities** aIdentities)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
@@ -276,9 +284,10 @@ MobileConnectionChild::ChangeCallBarringPassword(const nsAString& aPin,
 
 NS_IMETHODIMP
 MobileConnectionChild::SetCallWaiting(bool aEnabled,
+                                      uint16_t aServiceClass,
                                       nsIMobileConnectionCallback* aCallback)
 {
-  return SendRequest(SetCallWaitingRequest(aEnabled), aCallback)
+  return SendRequest(SetCallWaitingRequest(aEnabled, aServiceClass), aCallback)
     ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -551,6 +560,12 @@ MobileConnectionRequestChild::DoReply(const MobileConnectionReplySuccessCallBarr
 }
 
 bool
+MobileConnectionRequestChild::DoReply(const MobileConnectionReplySuccessCallWaiting& aReply)
+{
+  return NS_SUCCEEDED(mRequestCallback->NotifyGetCallWaitingSuccess(aReply.serviceClass()));
+}
+
+bool
 MobileConnectionRequestChild::DoReply(const MobileConnectionReplySuccessClirStatus& aReply)
 {
   return NS_SUCCEEDED(mRequestCallback->NotifyGetClirStatusSuccess(aReply.n(),
@@ -591,6 +606,8 @@ MobileConnectionRequestChild::Recv__delete__(const MobileConnectionReply& aReply
       return DoReply(aReply.get_MobileConnectionReplySuccessCallForwarding());
     case MobileConnectionReply::TMobileConnectionReplySuccessCallBarring:
       return DoReply(aReply.get_MobileConnectionReplySuccessCallBarring());
+    case MobileConnectionReply::TMobileConnectionReplySuccessCallWaiting:
+      return DoReply(aReply.get_MobileConnectionReplySuccessCallWaiting());
     case MobileConnectionReply::TMobileConnectionReplySuccessClirStatus:
       return DoReply(aReply.get_MobileConnectionReplySuccessClirStatus());
     case MobileConnectionReply::TMobileConnectionReplySuccessPreferredNetworkType:

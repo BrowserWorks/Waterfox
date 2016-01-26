@@ -1,11 +1,11 @@
-let bookmarksMenuButton = document.getElementById("bookmarks-menu-button");
-let BMB_menuPopup = document.getElementById("BMB_bookmarksPopup");
-let BMB_showAllBookmarks = document.getElementById("BMB_bookmarksShowAll");
-let contextMenu = document.getElementById("placesContext");
-let newBookmarkItem = document.getElementById("placesContext_new:bookmark");
+var bookmarksMenuButton = document.getElementById("bookmarks-menu-button");
+var BMB_menuPopup = document.getElementById("BMB_bookmarksPopup");
+var BMB_showAllBookmarks = document.getElementById("BMB_bookmarksShowAll");
+var contextMenu = document.getElementById("placesContext");
+var newBookmarkItem = document.getElementById("placesContext_new:bookmark");
 
 waitForExplicitFinish();
-add_task(function testPopup() {
+add_task(function* testPopup() {
   info("Checking popup context menu before moving the bookmarks button");
   yield checkPopupContextMenu();
   let pos = CustomizableUI.getPlacementOfWidget("bookmarks-menu-button").position;

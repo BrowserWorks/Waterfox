@@ -8,10 +8,11 @@
 #include "mozilla/dom/DocumentTimelineBinding.h"
 #include "AnimationUtils.h"
 #include "nsContentUtils.h"
+#include "nsDOMMutationObserver.h"
+#include "nsDOMNavigationTiming.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "nsRefreshDriver.h"
-#include "nsDOMNavigationTiming.h"
 
 namespace mozilla {
 namespace dom {
@@ -57,7 +58,7 @@ DocumentTimeline::GetCurrentTimeStamp() const
   // If we don't have a refresh driver and we've never had one use the
   // timeline's zero time.
   if (result.IsNull()) {
-    nsRefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
+    RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
     if (timing) {
       result = timing->GetNavigationStartTimeStamp();
       // Also, let this time represent the current refresh time. This way
@@ -82,7 +83,7 @@ DocumentTimeline::ToTimelineTime(const TimeStamp& aTimeStamp) const
     return result;
   }
 
-  nsRefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
+  RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
   if (MOZ_UNLIKELY(!timing)) {
     return result;
   }
@@ -91,11 +92,100 @@ DocumentTimeline::ToTimelineTime(const TimeStamp& aTimeStamp) const
   return result;
 }
 
+void
+DocumentTimeline::NotifyAnimationUpdated(Animation& aAnimation)
+{
+  AnimationTimeline::NotifyAnimationUpdated(aAnimation);
+
+  if (!mIsObservingRefreshDriver) {
+    nsRefreshDriver* refreshDriver = GetRefreshDriver();
+    if (refreshDriver) {
+      refreshDriver->AddRefreshObserver(this, Flush_Style);
+      mIsObservingRefreshDriver = true;
+    }
+  }
+}
+
+void
+DocumentTimeline::WillRefresh(mozilla::TimeStamp aTime)
+{
+  MOZ_ASSERT(mIsObservingRefreshDriver);
+  MOZ_ASSERT(GetRefreshDriver(),
+             "Should be able to reach refresh driver from within WillRefresh");
+
+  bool needsTicks = false;
+  nsTArray<Animation*> animationsToRemove(mAnimations.Count());
+
+  nsAutoAnimationMutationBatch mb(mDocument);
+
+  for (Animation* animation = mAnimationOrder.getFirst(); animation;
+       animation = animation->getNext()) {
+    // Skip any animations that are longer need associated with this timeline.
+    if (animation->GetTimeline() != this) {
+      // If animation has some other timeline, it better not be also in the
+      // animation list of this timeline object!
+      MOZ_ASSERT(!animation->GetTimeline());
+      animationsToRemove.AppendElement(animation);
+      continue;
+    }
+
+    needsTicks |= animation->NeedsTicks();
+    // Even if |animation| doesn't need future ticks, we should still
+    // Tick it this time around since it might just need a one-off tick in
+    // order to dispatch events.
+    animation->Tick();
+
+    if (!animation->IsRelevant() && !animation->NeedsTicks()) {
+      animationsToRemove.AppendElement(animation);
+    }
+  }
+
+  for (Animation* animation : animationsToRemove) {
+    RemoveAnimation(animation);
+  }
+
+  if (!needsTicks) {
+    // We already assert that GetRefreshDriver() is non-null at the beginning
+    // of this function but we check it again here to be sure that ticking
+    // animations does not have any side effects that cause us to lose the
+    // connection with the refresh driver, such as triggering the destruction
+    // of mDocument's PresShell.
+    MOZ_ASSERT(GetRefreshDriver(),
+               "Refresh driver should still be valid at end of WillRefresh");
+    GetRefreshDriver()->RemoveRefreshObserver(this, Flush_Style);
+    mIsObservingRefreshDriver = false;
+  }
+}
+
+void
+DocumentTimeline::NotifyRefreshDriverCreated(nsRefreshDriver* aDriver)
+{
+  MOZ_ASSERT(!mIsObservingRefreshDriver,
+             "Timeline should not be observing the refresh driver before"
+             " it is created");
+
+  if (!mAnimationOrder.isEmpty()) {
+    aDriver->AddRefreshObserver(this, Flush_Style);
+    mIsObservingRefreshDriver = true;
+  }
+}
+
+void
+DocumentTimeline::NotifyRefreshDriverDestroying(nsRefreshDriver* aDriver)
+{
+  if (!mIsObservingRefreshDriver) {
+    return;
+  }
+
+  aDriver->RemoveRefreshObserver(this, Flush_Style);
+  mIsObservingRefreshDriver = false;
+}
+
 TimeStamp
 DocumentTimeline::ToTimeStamp(const TimeDuration& aTimeDuration) const
 {
   TimeStamp result;
-  nsRefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
+  RefPtr<nsDOMNavigationTiming> timing = mDocument->GetNavigationTiming();
   if (MOZ_UNLIKELY(!timing)) {
     return result;
   }

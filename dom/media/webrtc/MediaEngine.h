@@ -15,7 +15,7 @@ namespace mozilla {
 
 namespace dom {
 class Blob;
-}
+} // namespace dom
 
 enum {
   kVideoTrack = 1,
@@ -52,17 +52,24 @@ public:
   static const int DEFAULT_43_VIDEO_HEIGHT = 480;
   static const int DEFAULT_169_VIDEO_WIDTH = 1280;
   static const int DEFAULT_169_VIDEO_HEIGHT = 720;
-  static const int DEFAULT_AUDIO_TIMER_MS = 10;
+
+#ifndef MOZ_B2G
+  static const int DEFAULT_SAMPLE_RATE = 32000;
+#else
+  static const int DEFAULT_SAMPLE_RATE = 16000;
+#endif
 
   /* Populate an array of video sources in the nsTArray. Also include devices
    * that are currently unavailable. */
   virtual void EnumerateVideoDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineVideoSource> >*) = 0;
+                                     nsTArray<RefPtr<MediaEngineVideoSource> >*) = 0;
 
   /* Populate an array of audio sources in the nsTArray. Also include devices
    * that are currently unavailable. */
   virtual void EnumerateAudioDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineAudioSource> >*) = 0;
+                                     nsTArray<RefPtr<MediaEngineAudioSource> >*) = 0;
+
+  virtual void Shutdown() = 0;
 
 protected:
   virtual ~MediaEngine() {}
@@ -81,11 +88,13 @@ public:
 
   virtual ~MediaEngineSource() {}
 
+  virtual void Shutdown() = 0;
+
   /* Populate the human readable name of this device in the nsAString */
   virtual void GetName(nsAString&) = 0;
 
-  /* Populate the UUID of this device in the nsAString */
-  virtual void GetUUID(nsAString&) = 0;
+  /* Populate the UUID of this device in the nsACString */
+  virtual void GetUUID(nsACString&) = 0;
 
   /* Release the device back to the system. */
   virtual nsresult Deallocate() = 0;
@@ -107,11 +116,10 @@ public:
   /* Stop the device and release the corresponding MediaStream */
   virtual nsresult Stop(SourceMediaStream *aSource, TrackID aID) = 0;
 
-  /* Change device configuration.  */
-  virtual nsresult Config(bool aEchoOn, uint32_t aEcho,
-                          bool aAgcOn, uint32_t aAGC,
-                          bool aNoiseOn, uint32_t aNoise,
-                          int32_t aPlayoutDelay) = 0;
+  /* Restart with new capability */
+  virtual nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
+                           const MediaEnginePrefs &aPrefs,
+                           const nsString& aDeviceId) = 0;
 
   /* Returns true if a source represents a fake capture device and
    * false otherwise
@@ -119,7 +127,7 @@ public:
   virtual bool IsFake() = 0;
 
   /* Returns the type of media source (camera, microphone, screen, window, etc) */
-  virtual const dom::MediaSourceEnum GetMediaSource() = 0;
+  virtual dom::MediaSourceEnum GetMediaSource() const = 0;
 
   // Callback interface for TakePhoto(). Either PhotoComplete() or PhotoError()
   // should be called.
@@ -160,13 +168,34 @@ public:
     mHasFakeTracks = aHasFakeTracks;
   }
 
+  /* This call reserves but does not start the device. */
+  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
+                            const MediaEnginePrefs &aPrefs,
+                            const nsString& aDeviceId) = 0;
+
+  virtual uint32_t GetBestFitnessDistance(
+      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets,
+      const nsString& aDeviceId) = 0;
+
 protected:
   // Only class' own members can be initialized in constructor initializer list.
   explicit MediaEngineSource(MediaEngineState aState)
     : mState(aState)
+#ifdef DEBUG
+    , mOwningThread(PR_GetCurrentThread())
+#endif
     , mHasFakeTracks(false)
   {}
+
+  void AssertIsOnOwningThread()
+  {
+    MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+  }
+
   MediaEngineState mState;
+#ifdef DEBUG
+  PRThread* mOwningThread;
+#endif
   bool mHasFakeTracks;
 };
 
@@ -175,10 +204,35 @@ protected:
  */
 class MediaEnginePrefs {
 public:
+  MediaEnginePrefs()
+    : mWidth(0)
+    , mHeight(0)
+    , mFPS(0)
+    , mMinFPS(0)
+    , mFreq(0)
+    , mAecOn(false)
+    , mAgcOn(false)
+    , mNoiseOn(false)
+    , mAec(0)
+    , mAgc(0)
+    , mNoise(0)
+    , mPlayoutDelay(0)
+    , mFullDuplex(false)
+  {}
+
   int32_t mWidth;
   int32_t mHeight;
   int32_t mFPS;
   int32_t mMinFPS;
+  int32_t mFreq; // for test tones (fake:true)
+  bool mAecOn;
+  bool mAgcOn;
+  bool mNoiseOn;
+  int32_t mAec;
+  int32_t mAgc;
+  int32_t mNoise;
+  int32_t mPlayoutDelay;
+  bool mFullDuplex;
 
   // mWidth and/or mHeight may be zero (=adaptive default), so use functions.
 
@@ -220,13 +274,6 @@ class MediaEngineVideoSource : public MediaEngineSource
 public:
   virtual ~MediaEngineVideoSource() {}
 
-  /* This call reserves but does not start the device. */
-  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                            const MediaEnginePrefs &aPrefs) = 0;
-
-  virtual uint32_t GetBestFitnessDistance(
-      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) = 0;
-
 protected:
   explicit MediaEngineVideoSource(MediaEngineState aState)
     : MediaEngineSource(aState) {}
@@ -237,14 +284,12 @@ protected:
 /**
  * Audio source and friends.
  */
-class MediaEngineAudioSource : public MediaEngineSource
+class MediaEngineAudioSource : public MediaEngineSource,
+                               public AudioDataListenerInterface
 {
 public:
   virtual ~MediaEngineAudioSource() {}
 
-  /* This call reserves but does not start the device. */
-  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                            const MediaEnginePrefs &aPrefs) = 0;
 protected:
   explicit MediaEngineAudioSource(MediaEngineState aState)
     : MediaEngineSource(aState) {}
@@ -253,6 +298,6 @@ protected:
 
 };
 
-}
+} // namespace mozilla
 
 #endif /* MEDIAENGINE_H_ */

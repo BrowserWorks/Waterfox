@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsSVGString.h"
+
+#include "mozilla/Move.h"
 #include "nsSVGAttrTearoffTable.h"
 #include "nsSMILValue.h"
 #include "SMILStringType.h"
@@ -80,7 +82,7 @@ nsSVGString::SetAnimValue(const nsAString& aValue, nsSVGElement *aSVGElement)
 already_AddRefed<SVGAnimatedString>
 nsSVGString::ToDOMAnimatedString(nsSVGElement* aSVGElement)
 {
-  nsRefPtr<DOMAnimatedString> domAnimatedString =
+  RefPtr<DOMAnimatedString> domAnimatedString =
     SVGAnimatedStringTearoffTable().GetTearoff(this);
   if (!domAnimatedString) {
     domAnimatedString = new DOMAnimatedString(this, aSVGElement);
@@ -110,7 +112,7 @@ nsSVGString::SMILString::ValueFromString(const nsAString& aStr,
   nsSMILValue val(SMILStringType::Singleton());
 
   *static_cast<nsAString*>(val.mU.mPtr) = aStr;
-  aValue.Swap(val);
+  aValue = Move(val);
   aPreventCachingOfSandwich = false;
   return NS_OK;
 }

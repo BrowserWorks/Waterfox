@@ -22,13 +22,14 @@
 #include "BaseWebSocketChannel.h"
 
 #ifdef MOZ_WIDGET_GONK
-#include "nsINetworkManager.h"
+#include "nsINetworkInterface.h"
 #include "nsProxyRelease.h"
 #endif
 
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsDeque.h"
+#include "mozilla/Atomics.h"
 
 class nsIAsyncVerifyRedirectCallback;
 class nsIDashboardEventNotifier;
@@ -38,7 +39,8 @@ class nsIRandomGenerator;
 class nsISocketTransport;
 class nsIURI;
 
-namespace mozilla { namespace net {
+namespace mozilla {
+namespace net {
 
 class OutboundMessage;
 class OutboundEnqueuer;
@@ -48,6 +50,7 @@ class CallOnMessageAvailable;
 class CallOnStop;
 class CallOnServerClose;
 class CallAcknowledge;
+class WebSocketEventService;
 
 // Used to enforce "1 connecting websocket per host" rule, and reconnect delays
 enum wsConnectingState {
@@ -69,6 +72,8 @@ class WebSocketChannel : public BaseWebSocketChannel,
                          public nsIInterfaceRequestor,
                          public nsIChannelEventSink
 {
+  friend class WebSocketFrame;
+
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIHTTPUPGRADELISTENER
@@ -87,6 +92,7 @@ public:
   //
   NS_IMETHOD AsyncOpen(nsIURI *aURI,
                        const nsACString &aOrigin,
+                       uint64_t aWindowID,
                        nsIWebSocketListener *aListener,
                        nsISupports *aContext) override;
   NS_IMETHOD Close(uint16_t aCode, const nsACString & aReason) override;
@@ -103,23 +109,19 @@ public:
   void GetEffectiveURL(nsAString& aEffectiveURL) const override;
   bool IsEncrypted() const override;
 
-  enum {
-    // Non Control Frames
-    kContinuation = 0x0,
-    kText =         0x1,
-    kBinary =       0x2,
-
-    // Control Frames
-    kClose =        0x8,
-    kPing =         0x9,
-    kPong =         0xA
-  };
-
   const static uint32_t kControlFrameMask   = 0x8;
-  const static uint8_t kMaskBit             = 0x80;
+
+  // First byte of the header
   const static uint8_t kFinalFragBit        = 0x80;
   const static uint8_t kRsvBitsMask         = 0x70;
   const static uint8_t kRsv1Bit             = 0x40;
+  const static uint8_t kRsv2Bit             = 0x20;
+  const static uint8_t kRsv3Bit             = 0x10;
+  const static uint8_t kOpcodeBitsMask      = 0x0F;
+
+  // Second byte of the header
+  const static uint8_t kMaskBit             = 0x80;
+  const static uint8_t kPayloadLengthBitsMask = 0x7F;
 
 protected:
   virtual ~WebSocketChannel();
@@ -147,7 +149,8 @@ private:
   nsresult OnNetworkChanged();
   nsresult StartPinging();
 
-  void     BeginOpen();
+  void     BeginOpen(bool aCalledFromAdmissionManager);
+  void     BeginOpenInternal();
   nsresult HandleExtensions();
   nsresult SetupRequest();
   nsresult ApplyForAdmission();
@@ -164,7 +167,8 @@ private:
   void DecrementSessionCount();
 
   void EnsureHdrOut(uint32_t size);
-  void ApplyMask(uint32_t mask, uint8_t *data, uint64_t len);
+
+  static void ApplyMask(uint32_t mask, uint8_t *data, uint64_t len);
 
   bool     IsPersistentFramePtr();
   nsresult ProcessInput(uint8_t *buffer, uint32_t count);
@@ -176,7 +180,14 @@ private:
   {
     mPingOutstanding = 0;
     if (mPingTimer) {
-      mPingTimer->SetDelay(mPingInterval);
+      if (!mPingInterval) {
+        // The timer was created by forced ping and regular pinging is disabled,
+        // so cancel and null out mPingTimer.
+        mPingTimer->Cancel();
+        mPingTimer = nullptr;
+      } else {
+        mPingTimer->SetDelay(mPingInterval);
+      }
     }
   }
 
@@ -216,24 +227,34 @@ private:
   const static int32_t            kLingeringCloseTimeout =   1000;
   const static int32_t            kLingeringCloseThreshold = 50;
 
+  RefPtr<WebSocketEventService>   mService;
+
   int32_t                         mMaxConcurrentConnections;
 
+  uint64_t                        mInnerWindowID;
+
+  // following members are accessed only on the main thread
   uint32_t                        mGotUpgradeOK              : 1;
   uint32_t                        mRecvdHttpUpgradeTransport : 1;
-  uint32_t                        mRequestedClose            : 1;
-  uint32_t                        mClientClosed              : 1;
-  uint32_t                        mServerClosed              : 1;
-  uint32_t                        mStopped                   : 1;
-  uint32_t                        mCalledOnStop              : 1;
-  uint32_t                        mPingOutstanding           : 1;
   uint32_t                        mAutoFollowRedirects       : 1;
-  uint32_t                        mReleaseOnTransmit         : 1;
-  uint32_t                        mTCPClosed                 : 1;
-  uint32_t                        mOpenedHttpChannel         : 1;
-  uint32_t                        mDataStarted               : 1;
-  uint32_t                        mIncrementedSessionCount   : 1;
-  uint32_t                        mDecrementedSessionCount   : 1;
   uint32_t                        mAllowPMCE                 : 1;
+  uint32_t                                                   : 0;
+
+  // following members are accessed only on the socket thread
+  uint32_t                        mPingOutstanding           : 1;
+  uint32_t                        mReleaseOnTransmit         : 1;
+  uint32_t                                                   : 0;
+
+  Atomic<bool>                    mDataStarted;
+  Atomic<bool>                    mRequestedClose;
+  Atomic<bool>                    mClientClosed;
+  Atomic<bool>                    mServerClosed;
+  Atomic<bool>                    mStopped;
+  Atomic<bool>                    mCalledOnStop;
+  Atomic<bool>                    mTCPClosed;
+  Atomic<bool>                    mOpenedHttpChannel;
+  Atomic<bool>                    mIncrementedSessionCount;
+  Atomic<bool>                    mDecrementedSessionCount;
 
   int32_t                         mMaxMessageSize;
   nsresult                        mStopOnClose;
@@ -273,17 +294,15 @@ private:
   bool                            mPrivateBrowsing;
 
   nsCOMPtr<nsIDashboardEventNotifier> mConnectionLogService;
-  uint32_t mSerial;
-  static uint32_t sSerialSeed;
 
 // These members are used for network per-app metering (bug 855949)
 // Currently, they are only available on gonk.
-  uint64_t                        mCountRecv;
-  uint64_t                        mCountSent;
+  Atomic<uint64_t, Relaxed>       mCountRecv;
+  Atomic<uint64_t, Relaxed>       mCountSent;
   uint32_t                        mAppId;
   bool                            mIsInBrowser;
 #ifdef MOZ_WIDGET_GONK
-  nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
+  nsMainThreadPtrHandle<nsINetworkInfo> mActiveNetworkInfo;
 #endif
   nsresult                        SaveNetworkStats(bool);
   void                            CountRecvBytes(uint64_t recvBytes)
@@ -306,6 +325,7 @@ protected:
     virtual ~WebSocketSSLChannel() {}
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_WebSocketChannel_h

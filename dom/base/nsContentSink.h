@@ -24,7 +24,7 @@
 #include "nsITimer.h"
 #include "nsStubDocumentObserver.h"
 #include "nsIContentSink.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsThreadUtils.h"
 
@@ -42,18 +42,18 @@ class nsIApplicationCache;
 namespace mozilla {
 namespace css {
 class Loader;
-}
-}
+} // namespace css
+} // namespace mozilla
 
 #ifdef DEBUG
 
-extern PRLogModuleInfo* gContentSinkLogModuleInfo;
+extern mozilla::LazyLogModule gContentSinkLogModuleInfo;
 
 #define SINK_TRACE_CALLS              0x1
 #define SINK_TRACE_REFLOW             0x2
 #define SINK_ALWAYS_REFLOW            0x4
 
-#define SINK_LOG_TEST(_lm, _bit) (int((_lm)->level) & (_bit))
+#define SINK_LOG_TEST(_lm, _bit) (int((_lm)->Level()) & (_bit))
 
 #define SINK_TRACE(_lm, _bit, _args) \
   PR_BEGIN_MACRO                     \
@@ -151,7 +151,7 @@ protected:
   nsresult ProcessLink(const nsSubstring& aAnchor,
                        const nsSubstring& aHref, const nsSubstring& aRel,
                        const nsSubstring& aTitle, const nsSubstring& aType,
-                       const nsSubstring& aMedia);
+                       const nsSubstring& aMedia, const nsSubstring& aCrossOrigin);
 
   virtual nsresult ProcessStyleLink(nsIContent* aElement,
                                     const nsSubstring& aHref,
@@ -163,10 +163,9 @@ protected:
   void PrefetchHref(const nsAString &aHref, nsINode *aSource,
                     bool aExplicit);
 
-  // For both PrefetchDNS() and Preconnect() aHref can either be the usual
+  // For PrefetchDNS() aHref can either be the usual
   // URI format or of the form "//www.hostname.com" without a scheme.
   void PrefetchDNS(const nsAString &aHref);
-  void Preconnect(const nsAString &aHref);
 
   // Gets the cache key (used to identify items in a cache) of the channel.
   nsresult GetChannelCacheKey(nsIChannel* aChannel, nsACString& aCacheKey);
@@ -224,6 +223,10 @@ public:
   // element and calls the above method.
   void ProcessOfflineManifest(nsIContent *aElement);
 
+  // For Preconnect() aHref can either be the usual
+  // URI format or of the form "//www.hostname.com" without a scheme.
+  void Preconnect(const nsAString& aHref, const nsAString& aCrossOrigin);
+
 protected:
   // Tries to scroll to the URI's named anchor. Once we've successfully
   // done that, further calls to this method will be ignored.
@@ -270,12 +273,12 @@ private:
 protected:
 
   nsCOMPtr<nsIDocument>         mDocument;
-  nsRefPtr<nsParserBase>        mParser;
+  RefPtr<nsParserBase>        mParser;
   nsCOMPtr<nsIURI>              mDocumentURI;
   nsCOMPtr<nsIDocShell>         mDocShell;
-  nsRefPtr<mozilla::css::Loader> mCSSLoader;
-  nsRefPtr<nsNodeInfoManager>   mNodeInfoManager;
-  nsRefPtr<nsScriptLoader>      mScriptLoader;
+  RefPtr<mozilla::css::Loader> mCSSLoader;
+  RefPtr<nsNodeInfoManager>   mNodeInfoManager;
+  RefPtr<nsScriptLoader>      mScriptLoader;
 
   // back off timer notification after count
   int32_t mBackoffCount;

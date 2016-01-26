@@ -9,6 +9,8 @@
 
 #include <string>
 
+#include "base/eintr_wrapper.h"
+
 #include "chrome/common/child_process_info.h"
 
 #include "mozilla/ipc/Transport.h"
@@ -21,9 +23,10 @@ using base::ProcessHandle;
 namespace mozilla {
 namespace ipc {
 
-bool
-CreateTransport(base::ProcessId /*unused*/,
-                TransportDescriptor* aOne, TransportDescriptor* aTwo)
+nsresult
+CreateTransport(base::ProcessId aProcIdOne,
+                TransportDescriptor* aOne,
+                TransportDescriptor* aTwo)
 {
   wstring id = IPC::Channel::GenerateVerifiedChannelID(std::wstring());
   // Use MODE_SERVER to force creation of the socketpair
@@ -32,7 +35,7 @@ CreateTransport(base::ProcessId /*unused*/,
   int fd2, dontcare;
   t.GetClientFileDescriptorMapping(&fd2, &dontcare);
   if (fd1 < 0 || fd2 < 0) {
-    return false;
+    return NS_ERROR_TRANSPORT_INIT;
   }
 
   // The Transport closes these fds when it goes out of scope, so we
@@ -40,12 +43,14 @@ CreateTransport(base::ProcessId /*unused*/,
   fd1 = dup(fd1);
   fd2 = dup(fd2);
   if (fd1 < 0 || fd2 < 0) {
-    return false;
+    HANDLE_EINTR(close(fd1));
+    HANDLE_EINTR(close(fd2));
+    return NS_ERROR_DUPLICATE_HANDLE;
   }
 
   aOne->mFd = base::FileDescriptor(fd1, true/*close after sending*/);
   aTwo->mFd = base::FileDescriptor(fd2, true/*close after sending*/);
-  return true;
+  return NS_OK;
 }
 
 Transport*
@@ -58,6 +63,15 @@ Transport*
 OpenDescriptor(const FileDescriptor& aFd, Transport::Mode aMode)
 {
   return new Transport(aFd.PlatformHandle(), aMode, nullptr);
+}
+
+TransportDescriptor
+DuplicateDescriptor(const TransportDescriptor& aTd)
+{
+  TransportDescriptor result = aTd;
+  result.mFd.fd = dup(aTd.mFd.fd);
+  MOZ_RELEASE_ASSERT(result.mFd.fd != -1, "DuplicateDescriptor failed");
+  return result;
 }
 
 void

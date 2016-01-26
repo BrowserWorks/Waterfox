@@ -10,7 +10,7 @@
 #include <stdlib.h>                     // for getenv
 #include "DirectedGraph.h"              // for DirectedGraph
 #include "Layers.h"                     // for Layer
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
+#include "gfxEnv.h"                     // for gfxEnv
 #include "gfxLineSegment.h"             // for gfxLineSegment
 #include "gfxPoint.h"                   // for gfxPoint
 #include "gfxQuad.h"                    // for gfxQuad
@@ -41,11 +41,11 @@ enum LayerSortOrder {
  *
  * point = normal . (p0 - l0) / normal . l
  */
-static gfxFloat RecoverZDepth(const gfx3DMatrix& aTransform, const gfxPoint& aPoint)
+static gfxFloat RecoverZDepth(const Matrix4x4& aTransform, const gfxPoint& aPoint)
 {
     const Point3D l(0, 0, 1);
     Point3D l0 = Point3D(aPoint.x, aPoint.y, 0);
-    Point3D p0 = aTransform.Transform3D(Point3D(0, 0, 0));
+    Point3D p0 = aTransform * Point3D(0, 0, 0);
     Point3D normal = aTransform.GetNormalVector();
 
     gfxFloat n = normal.DotProduct(p0 - l0); 
@@ -76,15 +76,20 @@ static gfxFloat RecoverZDepth(const gfx3DMatrix& aTransform, const gfxPoint& aPo
  * unsolved without changing our rendering code.
  */
 static LayerSortOrder CompareDepth(Layer* aOne, Layer* aTwo) {
-  gfxRect ourRect = aOne->GetEffectiveVisibleRegion().GetBounds();
-  gfxRect otherRect = aTwo->GetEffectiveVisibleRegion().GetBounds();
+  gfxRect ourRect = ThebesRect(aOne->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
+  gfxRect otherRect = ThebesRect(aTwo->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
 
-  gfx3DMatrix ourTransform = To3DMatrix(aOne->GetTransform());
-  gfx3DMatrix otherTransform = To3DMatrix(aTwo->GetTransform());
+  MOZ_ASSERT(aOne->GetParent() && aOne->GetParent()->Extend3DContext() &&
+             aTwo->GetParent() && aTwo->GetParent()->Extend3DContext());
+  // Effective transform of leaves may had been projected to 2D.
+  Matrix4x4 ourTransform =
+    aOne->GetLocalTransform() * aOne->GetParent()->GetEffectiveTransform();
+  Matrix4x4 otherTransform =
+    aTwo->GetLocalTransform() * aTwo->GetParent()->GetEffectiveTransform();
 
   // Transform both rectangles and project into 2d space.
-  gfxQuad ourTransformedRect = ourTransform.TransformRect(ourRect);
-  gfxQuad otherTransformedRect = otherTransform.TransformRect(otherRect);
+  gfxQuad ourTransformedRect = ourRect.TransformToQuad(ourTransform);
+  gfxQuad otherTransformedRect = otherRect.TransformToQuad(otherTransform);
 
   gfxRect ourBounds = ourTransformedRect.GetBounds();
   gfxRect otherBounds = otherTransformedRect.GetBounds();
@@ -148,8 +153,6 @@ static LayerSortOrder CompareDepth(Layer* aOne, Layer* aTwo) {
 }
 
 #ifdef DEBUG
-static bool gDumpLayerSortList = getenv("MOZ_DUMP_LAYER_SORT_LIST") != 0;
-
 // #define USE_XTERM_COLORING
 #ifdef USE_XTERM_COLORING
 // List of color values, which can be added to the xterm foreground offset or
@@ -247,7 +250,7 @@ void SortLayersBy3DZOrder(nsTArray<Layer*>& aLayers)
   DirectedGraph<Layer*> graph;
 
 #ifdef DEBUG
-  if (gDumpLayerSortList) {
+  if (gfxEnv::DumpLayerSortList()) {
     for (uint32_t i = 0; i < nodeCount; i++) {
       if (aLayers.ElementAt(i)->GetDebugColorIndex() == 0) {
         aLayers.ElementAt(i)->SetDebugColorIndex(gColorIndex++);
@@ -276,7 +279,7 @@ void SortLayersBy3DZOrder(nsTArray<Layer*>& aLayers)
   }
 
 #ifdef DEBUG
-  if (gDumpLayerSortList) {
+  if (gfxEnv::DumpLayerSortList()) {
     fprintf(stderr, " --- Edge List: --- \n");
     DumpEdgeList(graph);
   }
@@ -343,7 +346,7 @@ void SortLayersBy3DZOrder(nsTArray<Layer*>& aLayers)
   } while (!noIncoming.IsEmpty());
   NS_ASSERTION(!graph.GetEdgeCount(), "Cycles detected!");
 #ifdef DEBUG
-  if (gDumpLayerSortList) {
+  if (gfxEnv::DumpLayerSortList()) {
     fprintf(stderr, " --- Layers after sorting: --- \n");
     DumpLayerList(sortedList);
   }
@@ -353,5 +356,5 @@ void SortLayersBy3DZOrder(nsTArray<Layer*>& aLayers)
   aLayers.AppendElements(sortedList);
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

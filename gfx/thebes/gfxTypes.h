@@ -44,19 +44,6 @@ enum class gfxBreakPriority {
   eNormalBreak
 };
 
-/**
-  * The format for an image surface. For all formats with alpha data, 0
-  * means transparent, 1 or 255 means fully opaque.
-  */
-enum class gfxImageFormat {
-  ARGB32, ///< ARGB data in native endianness, using premultiplied alpha
-  RGB24,  ///< xRGB data in native endianness
-  A8,     ///< Only an alpha channel
-  A1,     ///< Packed transparency information (one byte refers to 8 pixels)
-  RGB16_565,  ///< RGB_565 data in native endianness
-  Unknown
-};
-
 enum class gfxSurfaceType {
   Image,
   PDF,
@@ -82,7 +69,6 @@ enum class gfxSurfaceType {
   XML,
   Skia,
   Subsurface,
-  D2D,
   Max
 };
 
@@ -91,17 +77,6 @@ enum class gfxContentType {
   ALPHA       = 0x2000,
   COLOR_ALPHA = 0x3000,
   SENTINEL    = 0xffff
-};
-
-/**
-  * The memory used by a gfxASurface (as reported by KnownMemoryUsed()) can
-  * either live in this process's heap, in this process but outside the
-  * heap, or in another process altogether.
-  */
-enum class gfxMemoryLocation {
-  IN_PROCESS_HEAP,
-  IN_PROCESS_NONHEAP,
-  OUT_OF_PROCESS
 };
 
 #endif /* GFX_TYPES_H */

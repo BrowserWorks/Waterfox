@@ -1,19 +1,19 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let tmp = {};
+var tmp = {};
 Cu.import("resource://gre/modules/PageThumbs.jsm", tmp);
 Cu.import("resource://gre/modules/BackgroundPageThumbs.jsm", tmp);
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
 Cu.import("resource:///modules/sessionstore/SessionStore.jsm", tmp);
 Cu.import("resource://gre/modules/FileUtils.jsm", tmp);
 Cu.import("resource://gre/modules/osfile.jsm", tmp);
-let {PageThumbs, BackgroundPageThumbs, NewTabUtils, PageThumbsStorage, SessionStore, FileUtils, OS} = tmp;
+var {PageThumbs, BackgroundPageThumbs, NewTabUtils, PageThumbsStorage, SessionStore, FileUtils, OS} = tmp;
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
   "resource://testing-common/PlacesTestUtils.jsm");
 
-let oldEnabledPref = Services.prefs.getBoolPref("browser.pagethumbnails.capturing_disabled");
+var oldEnabledPref = Services.prefs.getBoolPref("browser.pagethumbnails.capturing_disabled");
 Services.prefs.setBoolPref("browser.pagethumbnails.capturing_disabled", false);
 
 registerCleanupFunction(function () {
@@ -32,7 +32,7 @@ function test() {
 /**
  * The test runner that controls the execution flow of our tests.
  */
-let TestRunner = {
+var TestRunner = {
   /**
    * Starts the test runner.
    */
@@ -55,17 +55,18 @@ let TestRunner = {
    *               iterator.
    */
   next: function (aValue) {
-    try {
-      let value = TestRunner._iter.send(aValue);
-      if (value && typeof value.then == "function") {
-        value.then(result => {
-          next(result);
-        }, error => {
-          ok(false, error + "\n" + error.stack);
-        });
-      }
-    } catch (e if e instanceof StopIteration) {
+    let { done, value } = TestRunner._iter.next(aValue);
+    if (done) {
       finish();
+      return;
+    }
+
+    if (value && typeof value.then == "function") {
+      value.then(result => {
+        next(result);
+      }, error => {
+        ok(false, error + "\n" + error.stack);
+      });
     }
   }
 };
@@ -145,33 +146,21 @@ function captureAndCheckColor(aRed, aGreen, aBlue, aMessage) {
 function retrieveImageDataForURL(aURL, aCallback) {
   let width = 100, height = 100;
   let thumb = PageThumbs.getThumbnailURL(aURL, width, height);
-  // create a tab with a chrome:// URL so it can host the thumbnail image.
-  // Note that we tried creating the element directly in the top-level chrome
-  // document, but this caused a strange problem:
-  // * call this with the url of an image.
-  // * immediately change the image content.
-  // * call this again with the same url (now holding different content)
-  // The original image data would be used.  Maybe the img hadn't been
-  // collected yet and the platform noticed the same URL, so reused the
-  // content?  Not sure - but this solves the problem.
-  addTab("chrome://global/content/mozilla.xhtml", () => {
-    let doc = gBrowser.selectedBrowser.contentDocument;
-    let htmlns = "http://www.w3.org/1999/xhtml";
-    let img = doc.createElementNS(htmlns, "img");
-    img.setAttribute("src", thumb);
 
-    whenLoaded(img, function () {
-      let canvas = document.createElementNS(htmlns, "canvas");
-      canvas.setAttribute("width", width);
-      canvas.setAttribute("height", height);
+  let htmlns = "http://www.w3.org/1999/xhtml";
+  let img = document.createElementNS(htmlns, "img");
+  img.setAttribute("src", thumb);
 
-      // Draw the image to a canvas and compare the pixel color values.
-      let ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-      let result = ctx.getImageData(0, 0, 100, 100).data;
-      gBrowser.removeTab(gBrowser.selectedTab);
-      aCallback(result);
-    });
+  whenLoaded(img, function () {
+    let canvas = document.createElementNS(htmlns, "canvas");
+    canvas.setAttribute("width", width);
+    canvas.setAttribute("height", height);
+
+    // Draw the image to a canvas and compare the pixel color values.
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, width, height);
+    let result = ctx.getImageData(0, 0, 100, 100).data;
+    aCallback(result);
   });
 }
 
@@ -210,6 +199,9 @@ function addVisitsAndRepopulateNewTabLinks(aPlaceInfo, aCallback) {
     NewTabUtils.links.populateCache(aCallback, true);
   });
 }
+function promiseAddVisitsAndRepopulateNewTabLinks(aPlaceInfo) {
+  return new Promise(resolve => addVisitsAndRepopulateNewTabLinks(aPlaceInfo, resolve));
+}
 
 /**
  * Calls a given callback when the thumbnail for a given URL has been found
@@ -222,7 +214,7 @@ function addVisitsAndRepopulateNewTabLinks(aPlaceInfo, aCallback) {
 function whenFileExists(aURL, aCallback = next) {
   let callback = aCallback;
   if (!thumbnailExists(aURL)) {
-    callback = function () whenFileExists(aURL, aCallback);
+    callback = () => whenFileExists(aURL, aCallback);
   }
 
   executeSoon(callback);
@@ -239,7 +231,7 @@ function whenFileExists(aURL, aCallback = next) {
 function whenFileRemoved(aFile, aCallback) {
   let callback = aCallback;
   if (aFile.exists()) {
-    callback = function () whenFileRemoved(aFile, aCallback);
+    callback = () => whenFileRemoved(aFile, aCallback);
   }
 
   executeSoon(callback || next);
@@ -313,7 +305,9 @@ function bgAddCrashObserver() {
     }
   }, 'ipc:content-shutdown', false);
   return {
-    get crashed() crashed
+    get crashed() {
+      return crashed;
+    }
   };
 }
 

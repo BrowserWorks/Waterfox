@@ -4,9 +4,9 @@
 
 this.EXPORTED_SYMBOLS = ["WebappManager"];
 
-let Ci = Components.interfaces;
-let Cc = Components.classes;
-let Cu = Components.utils;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -207,17 +207,13 @@ this.WebappManager = {
     let app = aData.app;
     let manifest = new ManifestHelper(jsonManifest, app.origin, app.manifestURL);
 
-    let host;
-    try {
-      host = requestingURI.host;
-    } catch(e) {
-      host = requestingURI.spec;
-    }
+    let options = {
+      displayURI: requestingURI,
+    };
 
-    let message = bundle.getFormattedString("webapps.requestInstall",
-                                            [manifest.name, host], 2);
+    let message = bundle.getFormattedString("webapps.requestInstall2",
+                                            [manifest.name]);
 
-    let eventCallback = null;
     let gBrowser = chromeWin.gBrowser;
     if (gBrowser) {
       let windowID = aData.oid;
@@ -232,14 +228,14 @@ this.WebappManager = {
 
       gBrowser.addProgressListener(listener);
 
-      eventCallback = (event) => {
+      options.eventCallback = event => {
         if (event != "removed") {
           return;
         }
         // The notification was removed, so we should
         // remove our listener.
         gBrowser.removeProgressListener(listener);
-      }
+      };
     }
 
     notification = chromeWin.PopupNotifications.show(aBrowser,
@@ -247,7 +243,7 @@ this.WebappManager = {
                                                      message,
                                                      "webapps-notification-icon",
                                                      mainAction, [],
-                                                     eventCallback);
+                                                     options);
   },
 
   doUninstall: function(aData, aBrowser) {
@@ -284,7 +280,7 @@ this.WebappManager = {
                                             [manifest.name]);
 
 
-    let eventCallback = null;
+    let options = {};
     let gBrowser = chromeWin.gBrowser;
     if (gBrowser) {
       let windowID = aData.oid;
@@ -299,21 +295,21 @@ this.WebappManager = {
 
       gBrowser.addProgressListener(listener);
 
-      eventCallback = (event) => {
+      options.eventCallback = event => {
         if (event != "removed") {
           return;
         }
         // The notification was removed, so we should
         // remove our listener.
         gBrowser.removeProgressListener(listener);
-      }
+      };
     }
 
     notification = chromeWin.PopupNotifications.show(
                      aBrowser, "webapps-uninstall", message,
                      "webapps-notification-icon",
                      mainAction, [secondaryAction],
-                     eventCallback);
+                     options);
   }
 }
 

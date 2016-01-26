@@ -30,7 +30,7 @@ def filesystem_path(base_path, request, url_base="/"):
     if base_path is None:
         base_path = request.doc_root
 
-    path = request.url_parts.path
+    path = urllib.unquote(request.url_parts.path)
 
     if path.startswith(url_base):
         path = path[len(url_base):]
@@ -51,10 +51,17 @@ class DirectoryHandler(object):
         self.base_path = base_path
         self.url_base = url_base
 
+    def __repr__(self):
+        return "<%s base_path:%s url_base:%s>" % (self.__class__.__name__, self.base_path, self.url_base)
+
     def __call__(self, request, response):
+        if not request.url_parts.path.endswith("/"):
+            raise HTTPException(404)
+
         path = filesystem_path(self.base_path, request, self.url_base)
 
-        assert os.path.isdir(path)
+        if not os.path.isdir(path):
+            raise HTTPException(404, "%s is not a directory" % path)
 
         response.headers = [("Content-Type", "text/html")]
         response.content = """<!doctype html>
@@ -63,7 +70,7 @@ class DirectoryHandler(object):
 <h1>Directory listing for %(path)s</h1>
 <ul>
 %(items)s
-</li>
+</ul>
 """ % {"path": cgi.escape(request.url_parts.path),
        "items": "\n".join(self.list_items(request, path))}
 
@@ -79,7 +86,7 @@ class DirectoryHandler(object):
             base_path += "/"
         if base_path != "/":
             link = urlparse.urljoin(base_path, "..")
-            yield ("""<li class="dir"><a href="%(link)s">%(name)s</a>""" %
+            yield ("""<li class="dir"><a href="%(link)s">%(name)s</a></li>""" %
                    {"link": link, "name": ".."})
         for item in sorted(os.listdir(path)):
             link = cgi.escape(urllib.quote(item))
@@ -88,7 +95,7 @@ class DirectoryHandler(object):
                 class_ = "dir"
             else:
                 class_ = "file"
-            yield ("""<li class="%(class)s"><a href="%(link)s">%(name)s</a>""" %
+            yield ("""<li class="%(class)s"><a href="%(link)s">%(name)s</a></li>""" %
                    {"link": link, "name": cgi.escape(item), "class": class_})
 
 
@@ -99,7 +106,10 @@ class FileHandler(object):
     def __init__(self, base_path=None, url_base="/"):
         self.base_path = base_path
         self.url_base = url_base
-        self.directory_handler = DirectoryHandler(self.base_path)
+        self.directory_handler = DirectoryHandler(self.base_path, self.url_base)
+
+    def __repr__(self):
+        return "<%s base_path:%s url_base:%s>" % (self.__class__.__name__, self.base_path, self.url_base)
 
     def __call__(self, request, response):
         path = filesystem_path(self.base_path, request, self.url_base)
@@ -127,7 +137,9 @@ class FileHandler(object):
             if "pipe" in query:
                 pipeline = Pipeline(query["pipe"][-1])
             elif os.path.splitext(path)[0].endswith(".sub"):
-                pipeline = Pipeline("sub")
+                ml_extensions = {".html", ".htm", ".xht", ".xhtml", ".xml", ".svg"}
+                escape_type = "html" if os.path.splitext(path)[1] in ml_extensions else "none"
+                pipeline = Pipeline("sub(%s)" % escape_type)
             if pipeline is not None:
                 response = pipeline(request, response)
 
@@ -157,7 +169,7 @@ class FileHandler(object):
             return []
         else:
             if use_sub:
-                data = template(request, data)
+                data = template(request, data, escape_type="none")
             return [tuple(item.strip() for item in line.split(":", 1))
                     for line in data.splitlines() if line]
 
@@ -205,6 +217,9 @@ class PythonScriptHandler(object):
     def __init__(self, base_path=None, url_base="/"):
         self.base_path = base_path
         self.url_base = url_base
+
+    def __repr__(self):
+        return "<%s base_path:%s url_base:%s>" % (self.__class__.__name__, self.base_path, self.url_base)
 
     def __call__(self, request, response):
         path = filesystem_path(self.base_path, request, self.url_base)
@@ -327,3 +342,29 @@ class ErrorHandler(object):
 
     def __call__(self, request, response):
         response.set_error(self.status)
+
+
+class StaticHandler(object):
+    def __init__(self, path, format_args, content_type, **headers):
+        """Hander that reads a file from a path and substitutes some fixed data
+
+        :param path: Path to the template file to use
+        :param format_args: Dictionary of values to substitute into the template file
+        :param content_type: Content type header to server the response with
+        :param headers: List of headers to send with responses"""
+
+        with open(path) as f:
+            self.data = f.read() % format_args
+
+        self.resp_headers = [("Content-Type", content_type)]
+        for k, v in headers.iteritems():
+            resp_headers.append((k.replace("_", "-"), v))
+
+        self.handler = handler(self.handle_request)
+
+    def handle_request(self, request, response):
+        return self.resp_headers, self.data
+
+    def __call__(self, request, response):
+        rv = self.handler(request, response)
+        return rv

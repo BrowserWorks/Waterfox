@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -76,7 +76,7 @@ function initApp() {
 
 function AsyncRunner() {
   do_test_pending();
-  do_register_cleanup((function () this.destroy()).bind(this));
+  do_register_cleanup(() => this.destroy());
 
   this._callbacks = {
     done: do_test_finished,
@@ -113,23 +113,20 @@ AsyncRunner.prototype = {
     this._iteratorQueue.push(iter);
   },
 
-  next: function next(/* ... */) {
+  next: function next(arg) {
     if (!this._iteratorQueue.length) {
       this.destroy();
       this._callbacks.done();
       return;
     }
 
-    // send() discards all arguments after the first, so there's no choice here
-    // but to send only one argument to the yielder.
-    let args = [arguments.length <= 1 ? arguments[0] : Array.slice(arguments)];
     try {
-      var val = this._iteratorQueue[0].send.apply(this._iteratorQueue[0], args);
-    }
-    catch (err if err instanceof StopIteration) {
-      this._iteratorQueue.shift();
-      this.next();
-      return;
+      var { done, value: val } = this._iteratorQueue[0].next(arg);
+      if (done) {
+        this._iteratorQueue.shift();
+        this.next();
+        return;
+      }
     }
     catch (err) {
       this._callbacks.error(err);

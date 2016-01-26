@@ -5,19 +5,24 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 notification {
-  color: InfoText;
+  color: -moz-gtk-info-bar-text;
+  -moz-appearance: -moz-gtk-info-bar;
+%if MOZ_WIDGET_GTK == 2
   background-color: InfoBackground;
+%endif
   text-shadow: none;
 }
 
 notification[type="info"] {
   color: -moz-DialogText;
   background-color: -moz-Dialog;
+  -moz-appearance: none;
 }
 
 notification[type="critical"] {
   color: white;
   background-image: linear-gradient(rgb(212,0,0), rgb(152,0,0));
+  -moz-appearance: none;
 }
 
 .notification-inner {
@@ -63,16 +68,16 @@ notification[type="critical"] {
 
 /* Popup notification */
 
-.popup-notification-description {
-  max-width: 24em;
+.popup-notification-body {
+  max-width: 25em;
 }
 
-.popup-notification-originHost:not([value]),
+.popup-notification-origin:not([value]),
 .popup-notification-learnmore-link:not([href]) {
   display: none;
 }
 
-.popup-notification-originHost {
+.popup-notification-origin {
   margin-bottom: .3em !important;
 }
 
@@ -82,4 +87,13 @@ notification[type="critical"] {
 
 .popup-notification-button-container {
   margin-top: 17px;
+}
+
+.popup-notification-closebutton {
+  -moz-margin-end: -10px;
+  margin-top: -6px;
+}
+
+.popup-notification-menubutton > .button-menubutton-button[disabled] {
+  opacity: 0.5;
 }

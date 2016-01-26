@@ -29,105 +29,112 @@ const int32_t kLayerCacheSize1 = 5;
 class DrawTargetD2D1 : public DrawTarget
 {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTargetD2D1)
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTargetD2D1, override)
   DrawTargetD2D1();
   virtual ~DrawTargetD2D1();
 
   virtual DrawTargetType GetType() const override { return DrawTargetType::HARDWARE_RASTER; }
-  virtual BackendType GetBackendType() const { return BackendType::DIRECT2D1_1; }
-  virtual TemporaryRef<SourceSurface> Snapshot();
-  virtual IntSize GetSize() { return mSize; }
+  virtual BackendType GetBackendType() const override { return BackendType::DIRECT2D1_1; }
+  virtual already_AddRefed<SourceSurface> Snapshot() override;
+  virtual IntSize GetSize() override { return mSize; }
 
-  virtual void Flush();
+  virtual void Flush() override;
   virtual void DrawSurface(SourceSurface *aSurface,
                            const Rect &aDest,
                            const Rect &aSource,
                            const DrawSurfaceOptions &aSurfOptions,
-                           const DrawOptions &aOptions);
+                           const DrawOptions &aOptions) override;
   virtual void DrawFilter(FilterNode *aNode,
                           const Rect &aSourceRect,
                           const Point &aDestPoint,
-                          const DrawOptions &aOptions = DrawOptions());
+                          const DrawOptions &aOptions = DrawOptions()) override;
   virtual void DrawSurfaceWithShadow(SourceSurface *aSurface,
                                      const Point &aDest,
                                      const Color &aColor,
                                      const Point &aOffset,
                                      Float aSigma,
-                                     CompositionOp aOperator);
-  virtual void ClearRect(const Rect &aRect);
+                                     CompositionOp aOperator) override;
+  virtual void ClearRect(const Rect &aRect) override;
   virtual void MaskSurface(const Pattern &aSource,
                            SourceSurface *aMask,
                            Point aOffset,
-                           const DrawOptions &aOptions = DrawOptions());
+                           const DrawOptions &aOptions = DrawOptions()) override;
 
   virtual void CopySurface(SourceSurface *aSurface,
                            const IntRect &aSourceRect,
-                           const IntPoint &aDestination);
+                           const IntPoint &aDestination) override;
 
   virtual void FillRect(const Rect &aRect,
                         const Pattern &aPattern,
-                        const DrawOptions &aOptions = DrawOptions());
+                        const DrawOptions &aOptions = DrawOptions()) override;
   virtual void StrokeRect(const Rect &aRect,
                           const Pattern &aPattern,
                           const StrokeOptions &aStrokeOptions = StrokeOptions(),
-                          const DrawOptions &aOptions = DrawOptions());
+                          const DrawOptions &aOptions = DrawOptions()) override;
   virtual void StrokeLine(const Point &aStart,
                           const Point &aEnd,
                           const Pattern &aPattern,
                           const StrokeOptions &aStrokeOptions = StrokeOptions(),
-                          const DrawOptions &aOptions = DrawOptions());
+                          const DrawOptions &aOptions = DrawOptions()) override;
   virtual void Stroke(const Path *aPath,
                       const Pattern &aPattern,
                       const StrokeOptions &aStrokeOptions = StrokeOptions(),
-                      const DrawOptions &aOptions = DrawOptions());
+                      const DrawOptions &aOptions = DrawOptions()) override;
   virtual void Fill(const Path *aPath,
                     const Pattern &aPattern,
-                    const DrawOptions &aOptions = DrawOptions());
+                    const DrawOptions &aOptions = DrawOptions()) override;
   virtual void FillGlyphs(ScaledFont *aFont,
                           const GlyphBuffer &aBuffer,
                           const Pattern &aPattern,
                           const DrawOptions &aOptions = DrawOptions(),
-                          const GlyphRenderingOptions *aRenderingOptions = nullptr);
+                          const GlyphRenderingOptions *aRenderingOptions = nullptr) override;
   virtual void Mask(const Pattern &aSource,
                     const Pattern &aMask,
-                    const DrawOptions &aOptions = DrawOptions());
-  virtual void PushClip(const Path *aPath);
-  virtual void PushClipRect(const Rect &aRect);
-  virtual void PopClip();
+                    const DrawOptions &aOptions = DrawOptions()) override;
+  virtual void PushClip(const Path *aPath) override;
+  virtual void PushClipRect(const Rect &aRect) override;
+  virtual void PopClip() override;
+  virtual void PushLayer(bool aOpaque, Float aOpacity,
+                         SourceSurface* aMask,
+                         const Matrix& aMaskTransform,
+                         const IntRect& aBounds = IntRect(),
+                         bool aCopyBackground = false) override;
+  virtual void PopLayer() override;
 
-  virtual TemporaryRef<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
+  virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
                                                                   const IntSize &aSize,
                                                                   int32_t aStride,
-                                                                  SurfaceFormat aFormat) const;
-  virtual TemporaryRef<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const;
+                                                                  SurfaceFormat aFormat) const override;
+  virtual already_AddRefed<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override;
 
-  virtual TemporaryRef<SourceSurface>
-    CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const { return nullptr; }
+  virtual already_AddRefed<SourceSurface>
+    CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const override { return nullptr; }
   
-  virtual TemporaryRef<DrawTarget>
-    CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const;
+  virtual already_AddRefed<DrawTarget>
+    CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const override;
 
-  virtual TemporaryRef<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const;
+  virtual already_AddRefed<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const override;
 
-  virtual TemporaryRef<GradientStops>
+  virtual already_AddRefed<GradientStops>
     CreateGradientStops(GradientStop *aStops,
                         uint32_t aNumStops,
-                        ExtendMode aExtendMode = ExtendMode::CLAMP) const;
+                        ExtendMode aExtendMode = ExtendMode::CLAMP) const override;
 
-  virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType);
+  virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) override;
 
-  virtual bool SupportsRegionClipping() const { return false; }
+  virtual bool SupportsRegionClipping() const override { return false; }
+  virtual bool IsCurrentGroupOpaque() override { return CurrentLayer().mIsOpaque; }
 
-  virtual void *GetNativeSurface(NativeSurfaceType aType) { return nullptr; }
+  virtual void *GetNativeSurface(NativeSurfaceType aType) override { return nullptr; }
 
   bool Init(const IntSize &aSize, SurfaceFormat aFormat);
   bool Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat);
   uint32_t GetByteSize() const;
 
-  TemporaryRef<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, Matrix &aSourceTransform,
+  already_AddRefed<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, Matrix &aSourceTransform,
                                               ExtendMode aExtendMode, const IntRect* aSourceRect = nullptr);
 
-  TemporaryRef<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, ExtendMode aExtendMode) {
+  already_AddRefed<ID2D1Image> GetImageForSurface(SourceSurface *aSurface, ExtendMode aExtendMode) {
     Matrix mat;
     return GetImageForSurface(aSurface, mat, aExtendMode, nullptr);
   }
@@ -167,26 +174,40 @@ private:
   }
   void AddDependencyOnSource(SourceSurfaceD2D1* aSource);
 
+  // Must be called with all clips popped and an identity matrix set.
+  already_AddRefed<ID2D1Image> GetImageForLayerContent();
+
+  ID2D1Image* CurrentTarget()
+  {
+    if (CurrentLayer().mCurrentList) {
+      return CurrentLayer().mCurrentList;
+    }
+    return mBitmap;
+  }
+
   // This returns the clipped geometry, in addition it returns aClipBounds which
   // represents the intersection of all pixel-aligned rectangular clips that
   // are currently set. The returned clipped geometry must be clipped by these
-  // bounds to correctly reflect the total clip. This is in device space.
-  TemporaryRef<ID2D1Geometry> GetClippedGeometry(IntRect *aClipBounds);
+  // bounds to correctly reflect the total clip. This is in device space and
+  // only for clips applied to the -current layer-.
+  already_AddRefed<ID2D1Geometry> GetClippedGeometry(IntRect *aClipBounds);
 
-  TemporaryRef<ID2D1Geometry> GetInverseClippedGeometry();
+  already_AddRefed<ID2D1Geometry> GetInverseClippedGeometry();
 
+  // This gives the device space clip rect applied to the -current layer-.
   bool GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAligned);
 
   void PopAllClips();
   void PushAllClips();
-  void PushClipsToDC(ID2D1DeviceContext *aDC);
+  void PushClipsToDC(ID2D1DeviceContext *aDC, bool aForceIgnoreAlpha = false, const D2D1_RECT_F& aMaxRect = D2D1::InfiniteRect());
   void PopClipsFromDC(ID2D1DeviceContext *aDC);
 
-  TemporaryRef<ID2D1Brush> CreateTransparentBlackBrush();
-  TemporaryRef<ID2D1SolidColorBrush> GetSolidColorBrush(const D2D_COLOR_F& aColor);
-  TemporaryRef<ID2D1Brush> CreateBrushForPattern(const Pattern &aPattern, Float aAlpha = 1.0f);
+  already_AddRefed<ID2D1Brush> CreateTransparentBlackBrush();
+  already_AddRefed<ID2D1SolidColorBrush> GetSolidColorBrush(const D2D_COLOR_F& aColor);
+  already_AddRefed<ID2D1Brush> CreateBrushForPattern(const Pattern &aPattern, Float aAlpha = 1.0f);
 
-  void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform);
+  void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform,
+                    bool aForceIgnoreAlpha = false, const D2D1_RECT_F& aLayerRect = D2D1::InfiniteRect());
 
   IntSize mSize;
 
@@ -199,8 +220,7 @@ private:
   IntRect mCurrentClipBounds;
   mutable RefPtr<ID2D1DeviceContext> mDC;
   RefPtr<ID2D1Bitmap1> mBitmap;
-  RefPtr<ID2D1Bitmap1> mTempBitmap;
-  RefPtr<ID2D1Effect> mBlendEffect;
+  RefPtr<ID2D1CommandList> mCommandList;
 
   RefPtr<ID2D1SolidColorBrush> mSolidColorBrush;
 
@@ -219,7 +239,24 @@ private:
     };
     RefPtr<PathD2D> mPath;
   };
-  std::vector<PushedClip> mPushedClips;
+
+  // List of pushed layers.
+  struct PushedLayer
+  {
+    PushedLayer() : mClipsArePushed(false), mIsOpaque(false), mOldPermitSubpixelAA(false) {}
+
+    std::vector<PushedClip> mPushedClips;
+    RefPtr<ID2D1CommandList> mCurrentList;
+    // True if the current clip stack is pushed to the CurrentTarget().
+    bool mClipsArePushed;
+    bool mIsOpaque;
+    bool mOldPermitSubpixelAA;
+  };
+  std::vector<PushedLayer> mPushedLayers;
+  PushedLayer& CurrentLayer()
+  {
+    return mPushedLayers.back();
+  }
 
   // The latest snapshot of this surface. This needs to be told when this
   // target is modified. We keep it alive as a cache.
@@ -229,8 +266,8 @@ private:
   // A list of targets which have this object in their mDependentTargets set
   TargetSet mDependingOnTargets;
 
-  // True of the current clip stack is pushed to the main RT.
-  bool mClipsArePushed;
+  uint32_t mPushedLayersSincePurge;
+
   static ID2D1Factory1 *mFactory;
   static IDWriteFactory *mDWriteFactory;
 };

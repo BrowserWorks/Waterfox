@@ -2,12 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import argparse
 import itertools
+import json
 import logging
 import operator
 import os
+import subprocess
 import sys
 
 import mozpack.path as mozpath
@@ -17,17 +20,26 @@ from mach.decorators import (
     CommandArgumentGroup,
     CommandProvider,
     Command,
+    SubCommand,
 )
 
 from mach.mixin.logging import LoggingMixin
 
 from mozbuild.base import (
+    BuildEnvironmentNotFoundException,
     MachCommandBase,
+    MachCommandConditions as conditions,
     MozbuildObject,
     MozconfigFindException,
     MozconfigLoadException,
     ObjdirMismatchException,
 )
+
+from mozpack.manifests import (
+    InstallManifest,
+)
+
+from mozbuild.backend import backends
 
 
 BUILD_WHAT_HELP = '''
@@ -123,21 +135,17 @@ class BuildProgressFooter(object):
         # terminal is a blessings.Terminal.
         self._t = terminal
         self._fh = sys.stdout
-        self._monitor = monitor
-
-    def _clear_lines(self, n):
-        self._fh.write(self._t.move_x(0))
-        self._fh.write(self._t.clear_eos())
+        self.tiers = monitor.tiers.tier_status.viewitems()
 
     def clear(self):
         """Removes the footer from the current terminal."""
-        self._clear_lines(1)
+        self._fh.write(self._t.move_x(0))
+        self._fh.write(self._t.clear_eos())
 
     def draw(self):
         """Draws this footer in the terminal."""
-        tiers = self._monitor.tiers
 
-        if not tiers.tiers:
+        if not self.tiers:
             return
 
         # The drawn terminal looks something like:
@@ -146,15 +154,15 @@ class BuildProgressFooter(object):
         # This is a list of 2-tuples of (encoding function, input). None means
         # no encoding. For a full reason on why we do things this way, read the
         # big comment below.
-        parts = [('bold', 'TIER'), ':', ' ']
-
-        for tier, active, finished in tiers.tier_status():
-            if active:
-                parts.extend([('underline_yellow', tier), ' '])
-            elif finished:
-                parts.extend([('green', tier), ' '])
+        parts = [('bold', 'TIER:')]
+        append = parts.append
+        for tier, status in self.tiers:
+            if status is None:
+                append(tier)
+            elif status == 'finished':
+                append(('green', tier))
             else:
-                parts.extend([tier, ' '])
+                append(('underline_yellow', tier))
 
         # We don't want to write more characters than the current width of the
         # terminal otherwise wrapping may result in weird behavior. We can't
@@ -166,30 +174,25 @@ class BuildProgressFooter(object):
         written = 0
         write_pieces = []
         for part in parts:
-            if isinstance(part, tuple):
-                func, arg = part
+            try:
+                func, part = part
+                encoded = getattr(self._t, func)(part)
+            except ValueError:
+                encoded = part
 
-                if written + len(arg) > max_width:
-                    write_pieces.append(arg[0:max_width - written])
-                    written += len(arg)
-                    break
+            len_part = len(part)
+            len_spaces = len(write_pieces)
+            if written + len_part + len_spaces > max_width:
+                write_pieces.append(part[0:max_width - written - len_spaces])
+                written += len_part
+                break
 
-                encoded = getattr(self._t, func)(arg)
+            write_pieces.append(encoded)
+            written += len_part
 
-                write_pieces.append(encoded)
-                written += len(arg)
-            else:
-                if written + len(part) > max_width:
-                    write_pieces.append(part[0:max_width - written])
-                    written += len(part)
-                    break
-
-                write_pieces.append(part)
-                written += len(part)
         with self._t.location():
             self._t.move(self._t.height-1,0)
-            self._fh.write(''.join(write_pieces))
-        self._fh.flush()
+            self._fh.write(' '.join(write_pieces))
 
 
 class BuildOutputManager(LoggingMixin):
@@ -279,6 +282,26 @@ class Build(MachCommandBase):
         help='Verbose output for what commands the build is running.')
     def build(self, what=None, disable_extra_make_dependencies=None, jobs=0,
         directory=None, verbose=False):
+        """Build the source tree.
+
+        With no arguments, this will perform a full build.
+
+        Positional arguments define targets to build. These can be make targets
+        or patterns like "<dir>/<target>" to indicate a make target within a
+        directory.
+
+        There are a few special targets that can be used to perform a partial
+        build faster than what `mach build` would perform:
+
+        * binaries - compiles and links all C/C++ sources and produces shared
+          libraries and executables (binaries).
+
+        * faster - builds JavaScript, XUL, CSS, etc files.
+
+        "binaries" and "faster" almost fully complement each other. However,
+        there are build actions not captured by either. If things don't appear to
+        be rebuilding, perform a vanilla `mach build` to rebuild the world.
+        """
         import which
         from mozbuild.controller.building import BuildMonitor
         from mozbuild.util import resolve_target_to_make
@@ -304,6 +327,8 @@ class Build(MachCommandBase):
                 if directory.startswith('/'):
                     directory = directory[1:]
 
+            status = None
+            monitor.start_resource_recording()
             if what:
                 top_make = os.path.join(self.topobjdir, 'Makefile')
                 if not os.path.exists(top_make):
@@ -361,10 +386,12 @@ class Build(MachCommandBase):
                 # backend. But that involves make reinvoking itself and there
                 # are undesired side-effects of this. See bug 877308 for a
                 # comprehensive history lesson.
-                self._run_make(directory=self.topobjdir,
-                    target='backend.RecursiveMakeBackend',
+                self._run_make(directory=self.topobjdir, target='backend',
                     line_handler=output.on_line, log=False,
                     print_directory=False)
+
+                if self.substs.get('MOZ_ARTIFACT_BUILDS', False):
+                    self._run_mach_artifact_install()
 
                 # Build target pairs.
                 for make_dir, make_target in target_pairs:
@@ -380,7 +407,19 @@ class Build(MachCommandBase):
                     if status != 0:
                         break
             else:
-                monitor.start_resource_recording()
+                try:
+                    if self.substs.get('MOZ_ARTIFACT_BUILDS', False):
+                        self._run_mach_artifact_install()
+                except BuildEnvironmentNotFoundException:
+                    # Can't read self.substs from config.status?  That means we
+                    # need to run configure.  The client.mk invocation below
+                    # will configure, which will run config.status, which will
+                    # invoke |mach artifact install| itself before continuing
+                    # the build.  Therefore, we needn't install artifacts
+                    # ourselves.
+                    self.log(logging.DEBUG, 'artifact',
+                             {}, "Not running |mach artifact install| -- it will be run by client.mk.")
+
                 status = self._run_make(srcdir=True, filename='client.mk',
                     line_handler=output.on_line, log=False, print_directory=False,
                     allow_parallel=False, ensure_exit_code=False, num_jobs=jobs,
@@ -392,15 +431,20 @@ class Build(MachCommandBase):
                 # For universal builds, we need to run the automation steps in
                 # the first architecture from MOZ_BUILD_PROJECTS
                 projects = make_extra.get('MOZ_BUILD_PROJECTS')
+                append_env = None
                 if projects:
-                    subdir = os.path.join(self.topobjdir, projects.split()[0])
+                    project = projects.split()[0]
+                    append_env = {b'MOZ_CURRENT_PROJECT': project.encode('utf-8')}
+                    subdir = os.path.join(self.topobjdir, project)
                 else:
                     subdir = self.topobjdir
                 moz_automation = os.getenv('MOZ_AUTOMATION') or make_extra.get('export MOZ_AUTOMATION', None)
                 if moz_automation and status == 0:
                     status = self._run_make(target='automation/build', directory=subdir,
                         line_handler=output.on_line, log=False, print_directory=False,
-                        ensure_exit_code=False, num_jobs=jobs, silent=not verbose)
+                        ensure_exit_code=False, num_jobs=jobs, silent=not verbose,
+                        append_env=append_env
+                    )
 
                 self.log(logging.WARNING, 'warning_summary',
                     {'count': len(monitor.warnings_database)},
@@ -420,9 +464,16 @@ class Build(MachCommandBase):
                 self.log(logging.INFO, 'ccache',
                          {'msg': ccache_diff.hit_rate_message()}, "{msg}")
 
-        if monitor.elapsed > 300:
+        notify_minimum_time = 300
+        try:
+            notify_minimum_time = int(os.environ.get('MACH_NOTIFY_MINTIME', '300'))
+        except ValueError:
+            # Just stick with the default
+            pass
+
+        if monitor.elapsed > notify_minimum_time:
             # Display a notification when the build completes.
-            self.notify('Build complete')
+            self.notify('Build complete' if not status else 'Build failed')
 
         if status:
             return status
@@ -510,21 +561,40 @@ class Build(MachCommandBase):
         print('Hit CTRL+c to stop server.')
         server.run()
 
+    CLOBBER_CHOICES = ['objdir', 'python']
     @Command('clobber', category='build',
         description='Clobber the tree (delete the object directory).')
-    def clobber(self):
-        try:
-            self.remove_objdir()
-            return 0
-        except OSError as e:
-            if sys.platform.startswith('win'):
-                if isinstance(e, WindowsError) and e.winerror in (5,32):
-                    self.log(logging.ERROR, 'file_access_error', {'error': e},
-                        "Could not clobber because a file was in use. If the "
-                        "application is running, try closing it. {error}")
-                    return 1
+    @CommandArgument('what', default=['objdir'], nargs='*',
+        help='Target to clobber, must be one of {{{}}} (default objdir).'.format(
+             ', '.join(CLOBBER_CHOICES)))
+    def clobber(self, what):
+        invalid = set(what) - set(self.CLOBBER_CHOICES)
+        if invalid:
+            print('Unknown clobber target(s): {}'.format(', '.join(invalid)))
+            return 1
 
-            raise
+        ret = 0
+        if 'objdir' in what:
+            try:
+                self.remove_objdir()
+            except OSError as e:
+                if sys.platform.startswith('win'):
+                    if isinstance(e, WindowsError) and e.winerror in (5,32):
+                        self.log(logging.ERROR, 'file_access_error', {'error': e},
+                            "Could not clobber because a file was in use. If the "
+                            "application is running, try closing it. {error}")
+                        return 1
+                raise
+
+        if 'python' in what:
+            if os.path.isdir(mozpath.join(self.topsrcdir, '.hg')):
+                cmd = ['hg', 'purge', '--all', '-I', 'glob:**.py[co]']
+            elif os.path.isdir(mozpath.join(self.topsrcdir, '.git')):
+                cmd = ['git', 'clean', '-f', '-x', '*.py[co]']
+            else:
+                cmd = ['find', '.', '-type', 'f', '-name', '*.py[co]', '-delete']
+            ret = subprocess.call(cmd, cwd=self.topsrcdir)
+        return ret
 
     @Command('build-backend', category='build',
         description='Generate a backend used to build the tree.')
@@ -532,11 +602,13 @@ class Build(MachCommandBase):
         help='Show a diff of changes.')
     # It would be nice to filter the choices below based on
     # conditions, but that is for another day.
-    @CommandArgument('-b', '--backend',
-        choices=['RecursiveMake', 'AndroidEclipse', 'CppEclipse', 'VisualStudio'],
-        default='RecursiveMake',
-        help='Which backend to build (default: RecursiveMake).')
-    def build_backend(self, backend='RecursiveMake', diff=False):
+    @CommandArgument('-b', '--backend', nargs='+', choices=sorted(backends),
+        help='Which backend to build.')
+    @CommandArgument('-v', '--verbose', action='store_true',
+        help='Verbose output.')
+    @CommandArgument('-n', '--dry-run', action='store_true',
+        help='Do everything except writing files out.')
+    def build_backend(self, backend, diff=False, verbose=False, dry_run=False):
         python = self.virtualenv_manager.python_path
         config_status = os.path.join(self.topobjdir, 'config.status')
 
@@ -546,12 +618,31 @@ class Build(MachCommandBase):
                   % backend)
             return 1
 
-        args = [python, config_status, '--backend=%s' % backend]
+        args = [python, config_status]
+        if backend:
+            args.append('--backend')
+            args.extend(backend)
         if diff:
             args.append('--diff')
+        if verbose:
+            args.append('--verbose')
+        if dry_run:
+            args.append('--dry-run')
 
         return self._run_command_in_objdir(args=args, pass_thru=True,
             ensure_exit_code=False)
+
+    def _run_mach_artifact_install(self):
+        # We'd like to launch artifact using
+        # self._mach_context.commands.dispatch.  However, artifact activates
+        # the virtualenv, which plays badly with the rest of this code.
+        # Therefore, we run |mach artifact install| in a new process (and
+        # throw an exception if it fails).
+        self.log(logging.INFO, 'artifact',
+                 {}, "Running |mach artifact install|.")
+        args = [os.path.join(self.topsrcdir, 'mach'), 'artifact', 'install']
+        self._run_command_in_srcdir(args=args, require_unix_environment=True,
+            pass_thru=True, ensure_exit_code=True)
 
 @CommandProvider
 class Doctor(MachCommandBase):
@@ -565,6 +656,65 @@ class Doctor(MachCommandBase):
         from mozbuild.doctor import Doctor
         doctor = Doctor(self.topsrcdir, self.topobjdir, fix)
         return doctor.check_all()
+
+@CommandProvider
+class Logs(MachCommandBase):
+    """Provide commands to read mach logs."""
+    NO_AUTO_LOG = True
+
+    @Command('show-log', category='post-build',
+        description='Display mach logs')
+    @CommandArgument('log_file', nargs='?', type=argparse.FileType('rb'),
+        help='Filename to read log data from. Defaults to the log of the last '
+             'mach command.')
+    def show_log(self, log_file=None):
+        if not log_file:
+            path = self._get_state_filename('last_log.json')
+            log_file = open(path, 'rb')
+
+        if self.log_manager.terminal:
+            env = dict(os.environ)
+            if 'LESS' not in env:
+                # Sensible default flags if none have been set in the user
+                # environment.
+                env['LESS'] = 'FRX'
+            less = subprocess.Popen(['less'], stdin=subprocess.PIPE, env=env)
+            # Various objects already have a reference to sys.stdout, so we
+            # can't just change it, we need to change the file descriptor under
+            # it to redirect to less's input.
+            # First keep a copy of the sys.stdout file descriptor.
+            output_fd = os.dup(sys.stdout.fileno())
+            os.dup2(less.stdin.fileno(), sys.stdout.fileno())
+
+        startTime = 0
+        for line in log_file:
+            created, action, params = json.loads(line)
+            if not startTime:
+                startTime = created
+                self.log_manager.terminal_handler.formatter.start_time = \
+                    created
+            if 'line' in params:
+                record = logging.makeLogRecord({
+                    'created': created,
+                    'name': self._logger.name,
+                    'levelno': logging.INFO,
+                    'msg': '{line}',
+                    'params': params,
+                    'action': action,
+                })
+                self._logger.handle(record)
+
+        if self.log_manager.terminal:
+            # Close less's input so that it knows that we're done sending data.
+            less.stdin.close()
+            # Since the less's input file descriptor is now also the stdout
+            # file descriptor, we still actually have a non-closed system file
+            # descriptor for less's input. Replacing sys.stdout's file
+            # descriptor with what it was before we replaced it will properly
+            # close less's input.
+            os.dup2(output_fd, sys.stdout.fileno())
+            less.wait()
+
 
 @CommandProvider
 class Warnings(MachCommandBase):
@@ -589,13 +739,22 @@ class Warnings(MachCommandBase):
 
     @Command('warnings-summary', category='post-build',
         description='Show a summary of compiler warnings.')
+    @CommandArgument('-C', '--directory', default=None,
+        help='Change to a subdirectory of the build directory first.')
     @CommandArgument('report', default=None, nargs='?',
         help='Warnings report to display. If not defined, show the most '
             'recent report.')
-    def summary(self, report=None):
+    def summary(self, directory=None, report=None):
         database = self.database
 
-        type_counts = database.type_counts
+        if directory:
+            dirpath = self.join_ensure_dir(self.topsrcdir, directory)
+            if not dirpath:
+                return 1
+        else:
+            dirpath = None
+
+        type_counts = database.type_counts(dirpath)
         sorted_counts = sorted(type_counts.iteritems(),
             key=operator.itemgetter(1))
 
@@ -608,19 +767,41 @@ class Warnings(MachCommandBase):
 
     @Command('warnings-list', category='post-build',
         description='Show a list of compiler warnings.')
+    @CommandArgument('-C', '--directory', default=None,
+        help='Change to a subdirectory of the build directory first.')
+    @CommandArgument('--flags', default=None, nargs='+',
+        help='Which warnings flags to match.')
     @CommandArgument('report', default=None, nargs='?',
         help='Warnings report to display. If not defined, show the most '
             'recent report.')
-    def list(self, report=None):
+    def list(self, directory=None, flags=None, report=None):
         database = self.database
 
         by_name = sorted(database.warnings)
 
-        for warning in by_name:
-            filename = warning['filename']
+        topsrcdir = mozpath.normpath(self.topsrcdir)
 
-            if filename.startswith(self.topsrcdir):
-                filename = filename[len(self.topsrcdir) + 1:]
+        if directory:
+            directory = mozpath.normsep(directory)
+            dirpath = self.join_ensure_dir(topsrcdir, directory)
+            if not dirpath:
+                return 1
+
+        if flags:
+            # Flatten lists of flags.
+            flags = set(itertools.chain(*[flaglist.split(',') for flaglist in flags]))
+
+        for warning in by_name:
+            filename = mozpath.normsep(warning['filename'])
+
+            if filename.startswith(topsrcdir):
+                filename = filename[len(topsrcdir) + 1:]
+
+            if directory and not filename.startswith(directory):
+                continue
+
+            if flags and warning['flag'] not in flags:
+                continue
 
             if warning['column'] is not None:
                 print('%s:%d:%d [%s] %s' % (filename, warning['line'],
@@ -628,6 +809,16 @@ class Warnings(MachCommandBase):
             else:
                 print('%s:%d [%s] %s' % (filename, warning['line'],
                     warning['flag'], warning['message']))
+
+    def join_ensure_dir(self, dir1, dir2):
+        dir1 = mozpath.normpath(dir1)
+        dir2 = mozpath.normsep(dir2)
+        joined_path = mozpath.join(dir1, dir2)
+        if os.path.isdir(joined_path):
+            return joined_path
+        else:
+            print('Specified directory not found.')
+            return None
 
 @CommandProvider
 class GTestCommands(MachCommandBase):
@@ -645,7 +836,7 @@ class GTestCommands(MachCommandBase):
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
-        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used. The following arguments have no effect without this.')
+        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used.')
     @CommandArgument('--debugger', default=None, type=str, group='debugging',
         help='Name of debugger to use.')
     @CommandArgument('--debugger-args', default=None, metavar='params', type=str,
@@ -656,12 +847,13 @@ class GTestCommands(MachCommandBase):
               debugger_args):
 
         # We lazy build gtest because it's slow to link
-        self._run_make(directory="testing/gtest", target='gtest', ensure_exit_code=True)
+        self._run_make(directory="testing/gtest", target='gtest',
+                       print_directory=False, ensure_exit_code=True)
 
         app_path = self.get_binary_path('app')
         args = [app_path, '-unittest'];
 
-        if debug:
+        if debug or debugger or debugger_args:
             args = self.prepend_debugger_args(args, debugger, debugger_args)
 
         cwd = os.path.join(self.topobjdir, '_tests', 'gtest')
@@ -753,13 +945,13 @@ class GTestCommands(MachCommandBase):
         # Parameters come from the CLI. We need to convert them before
         # their use.
         if debugger_args:
-            import pymake.process
-            argv, badchar = pymake.process.clinetoargv(debugger_args, os.getcwd())
-            if badchar:
+            from mozbuild import shellutil
+            try:
+                debugger_args = shellutil.split(debugger_args)
+            except shellutil.MetaCharacterException as e:
                 print("The --debugger_args you passed require a real shell to parse them.")
-                print("(We can't handle the %r character.)" % (badchar,))
+                print("(We can't handle the %r character.)" % e.char)
                 return 1
-            debugger_args = argv;
 
         # Prepend the debugger args.
         args = [debuggerInfo.path] + debuggerInfo.args + args
@@ -824,8 +1016,11 @@ class Package(MachCommandBase):
 
     @Command('package', category='post-build',
         description='Package the built product for distribution as an APK, DMG, etc.')
-    def package(self):
-        ret = self._run_make(directory=".", target='package', ensure_exit_code=False)
+    @CommandArgument('-v', '--verbose', action='store_true',
+        help='Verbose output for what commands the packaging process is running.')
+    def package(self, verbose=False):
+        ret = self._run_make(directory=".", target='package',
+                             silent=not verbose, ensure_exit_code=False)
         if ret == 0:
             self.notify('Packaging complete')
         return ret
@@ -837,6 +1032,9 @@ class Install(MachCommandBase):
     @Command('install', category='post-build',
         description='Install the package on the machine, or on a device.')
     def install(self):
+        if conditions.is_android(self):
+            from mozrunner.devices.android_device import verify_android_device
+            verify_android_device(self)
         ret = self._run_make(directory=".", target='install', ensure_exit_code=False)
         if ret == 0:
             self.notify('Install complete')
@@ -862,7 +1060,7 @@ class RunProgram(MachCommandBase):
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
-        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used. The following arguments have no effect without this.')
+        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used.')
     @CommandArgument('--debugger', default=None, type=str, group='debugging',
         help='Name of debugger to use.')
     @CommandArgument('--debugparams', default=None, metavar='params', type=str,
@@ -879,7 +1077,7 @@ class RunProgram(MachCommandBase):
     @CommandArgumentGroup('DMD')
     @CommandArgument('--dmd', action='store_true', group='DMD',
         help='Enable DMD. The following arguments have no effect without this.')
-    @CommandArgument('--mode', choices=['live', 'dark-matter', 'cumulative'], group='DMD',
+    @CommandArgument('--mode', choices=['live', 'dark-matter', 'cumulative', 'scan'], group='DMD',
          help='Profiling mode. The default is \'dark-matter\'.')
     @CommandArgument('--sample-below', default=None, type=str, group='DMD',
         help='Sample blocks smaller than this. Use 1 for no sampling. The default is 4093.')
@@ -891,37 +1089,51 @@ class RunProgram(MachCommandBase):
         debugparams, slowscript, dmd, mode, sample_below, max_frames,
         show_dump_stats):
 
-        try:
-            binpath = self.get_binary_path('app')
-        except Exception as e:
-            print("It looks like your program isn't built.",
-                "You can run |mach build| to build it.")
-            print(e)
-            return 1
+        if conditions.is_android(self):
+            # Running Firefox for Android is completely different
+            if dmd:
+                print("DMD is not supported for Firefox for Android")
+                return 1
+            from mozrunner.devices.android_device import verify_android_device, run_firefox_for_android
+            if not (debug or debugger or debugparams):
+                verify_android_device(self, install=True)
+                return run_firefox_for_android(self, params)
+            verify_android_device(self, install=True, debugger=True)
+            args = ['']
 
-        args = [binpath]
+        else:
 
-        if params:
-            args.extend(params)
+            try:
+                binpath = self.get_binary_path('app')
+            except Exception as e:
+                print("It looks like your program isn't built.",
+                    "You can run |mach build| to build it.")
+                print(e)
+                return 1
 
-        if not remote:
-            args.append('-no-remote')
+            args = [binpath]
 
-        if not background and sys.platform == 'darwin':
-            args.append('-foreground')
+            if params:
+                args.extend(params)
 
-        no_profile_option_given = \
-            all(p not in params for p in ['-profile', '--profile', '-P'])
-        if no_profile_option_given and not noprofile:
-            path = os.path.join(self.topobjdir, 'tmp', 'scratch_user')
-            if not os.path.isdir(path):
-                os.makedirs(path)
-            args.append('-profile')
-            args.append(path)
+            if not remote:
+                args.append('-no-remote')
 
-        extra_env = {}
+            if not background and sys.platform == 'darwin':
+                args.append('-foreground')
 
-        if debug:
+            no_profile_option_given = \
+                all(p not in params for p in ['-profile', '--profile', '-P'])
+            if no_profile_option_given and not noprofile:
+                path = os.path.join(self.topobjdir, 'tmp', 'scratch_user')
+                if not os.path.isdir(path):
+                    os.makedirs(path)
+                args.append('-profile')
+                args.append(path)
+
+        extra_env = {'MOZ_CRASHREPORTER_DISABLE': '1'}
+
+        if debug or debugger or debugparams:
             import mozdebug
             if not debugger:
                 # No debugger name was provided. Look for the default ones on
@@ -937,18 +1149,16 @@ class RunProgram(MachCommandBase):
             # Parameters come from the CLI. We need to convert them before
             # their use.
             if debugparams:
-                import pymake.process
-                argv, badchar = pymake.process.clinetoargv(debugparams, os.getcwd())
-                if badchar:
+                from mozbuild import shellutil
+                try:
+                    debugparams = shellutil.split(debugparams)
+                except shellutil.MetaCharacterException as e:
                     print("The --debugparams you passed require a real shell to parse them.")
-                    print("(We can't handle the %r character.)" % (badchar,))
+                    print("(We can't handle the %r character.)" % e.char)
                     return 1
-                debugparams = argv;
 
             if not slowscript:
                 extra_env['JS_DISABLE_SLOW_SCRIPT_SIGNALS'] = '1'
-
-            extra_env['MOZ_CRASHREPORTER_DISABLE'] = '1'
 
             # Prepend the debugger args.
             args = [self.debuggerInfo.path] + self.debuggerInfo.args + args
@@ -1192,3 +1402,151 @@ class MachDebug(MachCommandBase):
                     return list(obj)
                 return json.JSONEncoder.default(self, obj)
         json.dump(self, cls=EnvironmentEncoder, sort_keys=True, fp=out)
+
+class ArtifactSubCommand(SubCommand):
+    def __call__(self, func):
+        after = SubCommand.__call__(self, func)
+        jobchoices = {
+            'android-api-11',
+            'android-x86',
+            'linux',
+            'linux64',
+            'macosx64',
+            'win32',
+            'win64'
+        }
+        args = [
+            CommandArgument('--tree', metavar='TREE', type=str,
+                help='Firefox tree.'),
+            CommandArgument('--job', metavar='JOB', choices=jobchoices,
+                help='Build job.'),
+            CommandArgument('--verbose', '-v', action='store_true',
+                help='Print verbose output.'),
+        ]
+        for arg in args:
+            after = arg(after)
+        return after
+
+
+@CommandProvider
+class PackageFrontend(MachCommandBase):
+    """Fetch and install binary artifacts from Mozilla automation."""
+
+    @Command('artifact', category='post-build',
+        description='Use pre-built artifacts to build Firefox.',
+        conditions=[
+            conditions.is_hg,  # mercurial only for now.
+        ])
+    def artifact(self):
+        '''Download, cache, and install pre-built binary artifacts to build Firefox.
+
+        Use |mach build| as normal to freshen your installed binary libraries:
+        artifact builds automatically download, cache, and install binary
+        artifacts from Mozilla automation, replacing whatever may be in your
+        object directory.  Use |mach artifact last| to see what binary artifacts
+        were last used.
+
+        Never build libxul again!
+
+        '''
+        pass
+
+    def _set_log_level(self, verbose):
+        self.log_manager.terminal_handler.setLevel(logging.INFO if not verbose else logging.DEBUG)
+
+    def _make_artifacts(self, tree=None, job=None):
+        self._activate_virtualenv()
+        self.virtualenv_manager.install_pip_package('pylru==1.0.9')
+        self.virtualenv_manager.install_pip_package('taskcluster==0.0.32')
+        self.virtualenv_manager.install_pip_package('mozregression==1.0.2')
+
+        state_dir = self._mach_context.state_dir
+        cache_dir = os.path.join(state_dir, 'package-frontend')
+
+        import which
+        if self._is_windows():
+          hg = which.which('hg.exe')
+        else:
+          hg = which.which('hg')
+
+        # Absolutely must come after the virtualenv is populated!
+        from mozbuild.artifacts import Artifacts
+        artifacts = Artifacts(tree, job, log=self.log, cache_dir=cache_dir, hg=hg)
+        return artifacts
+
+    def _compute_defaults(self, tree=None, job=None):
+        # Firefox front-end developers mostly use fx-team.  Post auto-land, make this central.
+        tree = tree or 'fx-team'
+        if job:
+            return (tree, job)
+        if self.substs.get('MOZ_BUILD_APP', '') == 'mobile/android':
+            if self.substs['ANDROID_CPU_ARCH'] == 'x86':
+                return tree, 'android-x86'
+            return tree, 'android-api-11'
+        # TODO: check for 32/64 bit builds.  We'd like to use HAVE_64BIT_BUILD
+        # but that relies on the compile environment.
+        if self.defines.get('XP_LINUX', False):
+            return tree, 'linux64'
+        if self.defines.get('XP_MACOSX', False):
+            return tree, 'macosx64'
+        if self.defines.get('XP_WIN', False):
+            return tree, 'win32'
+        raise Exception('Cannot determine default tree and job for |mach artifact|!')
+
+    @ArtifactSubCommand('artifact', 'install',
+        'Install a good pre-built artifact.')
+    @CommandArgument('source', metavar='SRC', nargs='?', type=str,
+        help='Where to fetch and install artifacts from.  Can be omitted, in '
+            'which case the current hg repository is inspected; an hg revision; '
+            'a remote URL; or a local file.',
+        default=None)
+    def artifact_install(self, source=None, tree=None, job=None, verbose=False):
+        self._set_log_level(verbose)
+        tree, job = self._compute_defaults(tree, job)
+        artifacts = self._make_artifacts(tree=tree, job=job)
+
+        manifest_path = mozpath.join(self.topobjdir, '_build_manifests', 'install', 'dist_bin')
+        manifest = InstallManifest(manifest_path)
+
+        def install_callback(path, file_existed, file_updated):
+            # Our paths are either under dist/bin or dist/plugins (for test
+            # plugins). dist/plugins. does not have an install manifest.
+            if not path.startswith('bin/'):
+                return
+            path = path[len('bin/'):]
+            if path not in manifest:
+                manifest.add_optional_exists(path)
+
+        retcode = artifacts.install_from(source, self.distdir, install_callback=install_callback)
+
+        if retcode == 0:
+            manifest.write(manifest_path)
+
+        return retcode
+
+    @ArtifactSubCommand('artifact', 'last',
+        'Print the last pre-built artifact installed.')
+    def artifact_print_last(self, tree=None, job=None, verbose=False):
+        self._set_log_level(verbose)
+        tree, job = self._compute_defaults(tree, job)
+        artifacts = self._make_artifacts(tree=tree, job=job)
+        artifacts.print_last()
+        return 0
+
+    @ArtifactSubCommand('artifact', 'print-cache',
+        'Print local artifact cache for debugging.')
+    def artifact_print_cache(self, tree=None, job=None, verbose=False):
+        self._set_log_level(verbose)
+        tree, job = self._compute_defaults(tree, job)
+        artifacts = self._make_artifacts(tree=tree, job=job)
+        artifacts.print_cache()
+        return 0
+
+    @ArtifactSubCommand('artifact', 'clear-cache',
+        'Delete local artifacts and reset local artifact cache.')
+    def artifact_clear_cache(self, tree=None, job=None, verbose=False):
+        self._set_log_level(verbose)
+        tree, job = self._compute_defaults(tree, job)
+        artifacts = self._make_artifacts(tree=tree, job=job)
+        artifacts.clear_cache()
+        return 0

@@ -9,6 +9,7 @@
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
 #include "nsNetUtil.h"
+#include "nsIPipe.h"
 #include "nsContentUtils.h"
 #include "nsEscape.h"
 #include "nsAboutProtocolUtils.h"
@@ -345,7 +346,8 @@ nsAboutCache::OnCacheStorageInfo(uint32_t aEntryCount, uint64_t aConsumption,
 NS_IMETHODIMP
 nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
                                int64_t aDataSize, int32_t aFetchCount,
-                               uint32_t aLastModified, uint32_t aExpirationTime)
+                               uint32_t aLastModified, uint32_t aExpirationTime,
+                               bool aPinned)
 {
     // We need mStream for this
     if (!mStream) {
@@ -361,6 +363,7 @@ nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
                               "   <col id=\"col-fetchCount\">\n"
                               "   <col id=\"col-lastModified\">\n"
                               "   <col id=\"col-expires\">\n"
+                              "   <col id=\"col-pinned\">\n"
                               "  </colgroup>\n"
                               "  <thead>\n"
                               "    <tr>\n"
@@ -369,6 +372,7 @@ nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
                               "      <th>Fetch count</th>\n"
                               "      <th>Last Modifed</th>\n"
                               "      <th>Expires</th>\n"
+                              "      <th>Pinning</th>\n"
                               "    </tr>\n"
                               "  </thead>\n");
         mEntriesHeaderAdded = true;
@@ -442,6 +446,15 @@ nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
         mBuffer.Append(buf);
     } else {
         mBuffer.AppendLiteral("No expiration time");
+    }
+    mBuffer.AppendLiteral("</td>\n");
+
+    // Pinning
+    mBuffer.AppendLiteral("    <td>");
+    if (aPinned) {
+      mBuffer.Append(NS_LITERAL_CSTRING("Pinned"));
+    } else {
+      mBuffer.Append(NS_LITERAL_CSTRING("&nbsp;"));
     }
     mBuffer.AppendLiteral("</td>\n");
 

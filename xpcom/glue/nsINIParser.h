@@ -15,7 +15,7 @@
 
 #include "nscore.h"
 #include "nsClassHashtable.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 
 #include <stdio.h>
 
@@ -106,22 +106,13 @@ private:
 
     const char* key;
     const char* value;
-    nsAutoPtr<INIValue> next;
-  };
-
-  struct GSClosureStruct
-  {
-    INISectionCallback usercb;
-    void* userclosure;
+    mozilla::UniquePtr<INIValue> next;
   };
 
   nsClassHashtable<nsDepCharHashKey, INIValue> mSections;
-  nsAutoArrayPtr<char> mFileContents;
+  mozilla::UniquePtr<char[]> mFileContents;
 
   nsresult InitFromFILE(FILE* aFd);
-
-  static PLDHashOperator GetSectionsCB(const char* aKey,
-                                       INIValue* aData, void* aClosure);
 };
 
 #endif /* nsINIParser_h__ */

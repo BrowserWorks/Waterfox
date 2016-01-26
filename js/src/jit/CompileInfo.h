@@ -10,6 +10,7 @@
 #include "jsfun.h"
 
 #include "jit/JitAllocPolicy.h"
+#include "jit/JitFrames.h"
 #include "jit/Registers.h"
 #include "vm/ScopeObject.h"
 
@@ -199,6 +200,8 @@ class CompileInfo
                 InlineScriptTree* inlineScriptTree)
       : script_(script), fun_(fun), osrPc_(osrPc), constructing_(constructing),
         analysisMode_(analysisMode), scriptNeedsArgsObj_(scriptNeedsArgsObj),
+        hadOverflowBailout_(script->hadOverflowBailout()),
+        mayReadFrameArgsDirectly_(script->mayReadFrameArgsDirectly()),
         inlineScriptTree_(inlineScriptTree)
     {
         MOZ_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOP_LOOPENTRY);
@@ -220,14 +223,14 @@ class CompileInfo
         nbodyfixed_ = script->nbodyfixed();
         nlocals_ = script->nfixed();
         fixedLexicalBegin_ = script->fixedLexicalBegin();
-        nstack_ = script->nslots() - script->nfixed();
+        nstack_ = Max<unsigned>(script->nslots() - script->nfixed(), MinJITStackSize);
         nslots_ = nimplicit_ + nargs_ + nlocals_ + nstack_;
     }
 
     explicit CompileInfo(unsigned nlocals)
       : script_(nullptr), fun_(nullptr), osrPc_(nullptr), osrStaticScope_(nullptr),
         constructing_(false), analysisMode_(Analysis_None), scriptNeedsArgsObj_(false),
-        inlineScriptTree_(nullptr)
+        mayReadFrameArgsDirectly_(false), inlineScriptTree_(nullptr)
     {
         nimplicit_ = 0;
         nargs_ = 0;
@@ -247,20 +250,23 @@ class CompileInfo
     JSFunction* funMaybeLazy() const {
         return fun_;
     }
+    ModuleObject* module() const {
+        return script_->module();
+    }
     bool constructing() const {
         return constructing_;
     }
-    jsbytecode* osrPc() {
+    jsbytecode* osrPc() const {
         return osrPc_;
     }
-    NestedScopeObject* osrStaticScope() const {
+    NestedStaticScope* osrStaticScope() const {
         return osrStaticScope_;
     }
     InlineScriptTree* inlineScriptTree() const {
         return inlineScriptTree_;
     }
 
-    bool hasOsrAt(jsbytecode* pc) {
+    bool hasOsrAt(jsbytecode* pc) const {
         MOZ_ASSERT(JSOp(*pc) == JSOP_LOOPENTRY);
         return pc == osrPc();
     }
@@ -401,7 +407,7 @@ class CompileInfo
         return nimplicit() + nargs() + nlocals();
     }
 
-    bool isSlotAliased(uint32_t index, NestedScopeObject* staticScope) const {
+    bool isSlotAliased(uint32_t index, NestedStaticScope* staticScope) const {
         MOZ_ASSERT(index >= startArgSlot());
 
         if (funMaybeLazy() && index == thisSlot())
@@ -425,12 +431,12 @@ class CompileInfo
 
             // Otherwise, it might be part of a block scope.
             for (; staticScope; staticScope = staticScope->enclosingNestedScope()) {
-                if (!staticScope->is<StaticBlockObject>())
+                if (!staticScope->is<StaticBlockScope>())
                     continue;
-                StaticBlockObject& blockObj = staticScope->as<StaticBlockObject>();
-                if (blockObj.localOffset() < local) {
-                    if (local - blockObj.localOffset() < blockObj.numVariables())
-                        return blockObj.isAliased(local - blockObj.localOffset());
+                StaticBlockScope& blockScope = staticScope->as<StaticBlockScope>();
+                if (blockScope.localOffset() < local) {
+                    if (local - blockScope.localOffset() < blockScope.numVariables())
+                        return blockScope.isAliased(local - blockScope.localOffset());
                     return false;
                 }
             }
@@ -460,7 +466,7 @@ class CompileInfo
         return scriptNeedsArgsObj_;
     }
     bool argsObjAliasesFormals() const {
-        return scriptNeedsArgsObj_ && !script()->strict();
+        return scriptNeedsArgsObj_ && script()->hasMappedArgsObj();
     }
 
     AnalysisMode analysisMode() const {
@@ -493,7 +499,7 @@ class CompileInfo
         if (slot == thisSlot())
             return true;
 
-        if (funMaybeLazy()->isHeavyweight() && slot == scopeChainSlot())
+        if (funMaybeLazy()->needsCallObject() && slot == scopeChainSlot())
             return true;
 
         // If the function may need an arguments object, then make sure to
@@ -526,7 +532,7 @@ class CompileInfo
     // definition can be optimized away as long as we can compute its values.
     bool isRecoverableOperand(uint32_t slot) const {
         // If this script is not a function, then none of the slots are
-        // obserbavle.  If it this |slot| is not observable, thus we can always
+        // observable.  If it this |slot| is not observable, thus we can always
         // recover it.
         if (!funMaybeLazy())
             return true;
@@ -544,6 +550,15 @@ class CompileInfo
         return true;
     }
 
+    // Check previous bailout states to prevent doing the same bailout in the
+    // next compilation.
+    bool hadOverflowBailout() const {
+        return hadOverflowBailout_;
+    }
+    bool mayReadFrameArgsDirectly() const {
+        return mayReadFrameArgsDirectly_;
+    }
+
   private:
     unsigned nimplicit_;
     unsigned nargs_;
@@ -555,7 +570,7 @@ class CompileInfo
     JSScript* script_;
     JSFunction* fun_;
     jsbytecode* osrPc_;
-    NestedScopeObject* osrStaticScope_;
+    NestedStaticScope* osrStaticScope_;
     bool constructing_;
     AnalysisMode analysisMode_;
 
@@ -563,6 +578,12 @@ class CompileInfo
     // since the arguments optimization could be marked as failed on the main
     // thread, so cache a value here and use it throughout for consistency.
     bool scriptNeedsArgsObj_;
+
+    // Record the state of previous bailouts in order to prevent compiling the
+    // same function identically the next time.
+    bool hadOverflowBailout_;
+
+    bool mayReadFrameArgsDirectly_;
 
     InlineScriptTree* inlineScriptTree_;
 };

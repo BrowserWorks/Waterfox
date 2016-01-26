@@ -17,6 +17,7 @@
 #include "gfxPlatform.h"                // for gfxImageFormat, gfxPlatform
 #include "gfxSharedImageSurface.h"      // for gfxSharedImageSurface
 #include "ipc/IPCMessageUtils.h"        // for gfxContentType, null_t
+#include "IPDLActor.h"
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient, etc
@@ -28,7 +29,6 @@
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "nsAutoPtr.h"                  // for nsRefPtr, getter_AddRefs, etc
-#include "nsSize.h"                     // for nsIntSize
 #include "nsTArray.h"                   // for nsAutoTArray, nsTArray, etc
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
 #include "mozilla/ReentrantMonitor.h"
@@ -36,18 +36,20 @@
 namespace mozilla {
 namespace ipc {
 class Shmem;
-}
+} // namespace ipc
 
 namespace layers {
 
-using namespace mozilla::ipc;
+using namespace mozilla::gfx;
 using namespace mozilla::gl;
+using namespace mozilla::ipc;
 
 class ClientTiledLayerBuffer;
 
 typedef nsTArray<SurfaceDescriptor> BufferArray;
 typedef std::vector<Edit> EditVector;
 typedef std::set<ShadowableLayer*> ShadowableLayerSet;
+typedef nsTArray<OpDestroy> OpDestroyVector;
 
 class Transaction
 {
@@ -60,7 +62,7 @@ public:
   {}
 
   void Begin(const gfx::IntRect& aTargetBounds, ScreenRotation aRotation,
-             dom::ScreenOrientation aOrientation)
+             dom::ScreenOrientationInternal aOrientation)
   {
     mOpen = true;
     mTargetBounds = aTargetBounds;
@@ -118,13 +120,15 @@ public:
     mCset.clear();
     mPaints.clear();
     mMutants.clear();
+    mDestroyedActors.Clear();
     mOpen = false;
     mSwapRequired = false;
     mRotationChanged = false;
   }
 
   bool Empty() const {
-    return mCset.empty() && mPaints.empty() && mMutants.empty();
+    return mCset.empty() && mPaints.empty() && mMutants.empty()
+           && mDestroyedActors.IsEmpty();
   }
   bool RotationChanged() const {
     return mRotationChanged;
@@ -133,12 +137,33 @@ public:
 
   bool Opened() const { return mOpen; }
 
+  void FallbackDestroyActors()
+  {
+    for (auto& actor : mDestroyedActors) {
+      switch (actor.type()) {
+      case OpDestroy::TPTextureChild: {
+        DebugOnly<bool> ok = TextureClient::DestroyFallback(actor.get_PTextureChild());
+        MOZ_ASSERT(ok);
+        break;
+      }
+      case OpDestroy::TPCompositableChild: {
+        DebugOnly<bool> ok = CompositableClient::DestroyFallback(actor.get_PCompositableChild());
+        MOZ_ASSERT(ok);
+        break;
+      }
+      default: MOZ_CRASH();
+      }
+    }
+    mDestroyedActors.Clear();
+  }
+
   EditVector mCset;
   EditVector mPaints;
+  OpDestroyVector mDestroyedActors;
   ShadowableLayerSet mMutants;
   gfx::IntRect mTargetBounds;
   ScreenRotation mTargetRotation;
-  dom::ScreenOrientation mTargetOrientation;
+  dom::ScreenOrientationInternal mTargetOrientation;
   bool mSwapRequired;
 
 private:
@@ -167,6 +192,7 @@ ShadowLayerForwarder::ShadowLayerForwarder()
  : mDiagnosticTypes(DiagnosticTypes::NO_DIAGNOSTIC)
  , mIsFirstPaint(false)
  , mWindowOverlayChanged(false)
+ , mPaintSyncId(0)
 {
   mTxn = new Transaction();
 }
@@ -174,6 +200,9 @@ ShadowLayerForwarder::ShadowLayerForwarder()
 ShadowLayerForwarder::~ShadowLayerForwarder()
 {
   MOZ_ASSERT(mTxn->Finished(), "unfinished transaction?");
+  if (!mTxn->mDestroyedActors.IsEmpty()) {
+    mTxn->FallbackDestroyActors();
+  }
   delete mTxn;
   if (mShadowManager) {
     mShadowManager->SetForwarder(nullptr);
@@ -184,7 +213,7 @@ ShadowLayerForwarder::~ShadowLayerForwarder()
 void
 ShadowLayerForwarder::BeginTransaction(const gfx::IntRect& aTargetBounds,
                                        ScreenRotation aRotation,
-                                       dom::ScreenOrientation aOrientation)
+                                       dom::ScreenOrientationInternal aOrientation)
 {
   MOZ_ASSERT(HasShadowManager(), "no manager to forward to");
   MOZ_ASSERT(mTxn->Finished(), "uncommitted txn?");
@@ -318,11 +347,12 @@ ShadowLayerForwarder::CheckSurfaceDescriptor(const SurfaceDescriptor* aDescripto
     return;
   }
 
-  if (aDescriptor->type() == SurfaceDescriptor::TSurfaceDescriptorShmem) {
-    const SurfaceDescriptorShmem& shmem = aDescriptor->get_SurfaceDescriptorShmem();
-    shmem.data().AssertInvariants();
+  if (aDescriptor->type() == SurfaceDescriptor::TSurfaceDescriptorBuffer &&
+      aDescriptor->get_SurfaceDescriptorBuffer().data().type() == MemoryOrShmem::TShmem) {
+    const Shmem& shmem = aDescriptor->get_SurfaceDescriptorBuffer().data().get_Shmem();
+    shmem.AssertInvariants();
     MOZ_ASSERT(mShadowManager &&
-               mShadowManager->IsTrackingSharedMemory(shmem.data().mSegment));
+               mShadowManager->IsTrackingSharedMemory(shmem.mSegment));
   }
 }
 #endif
@@ -331,8 +361,8 @@ void
 ShadowLayerForwarder::UseTiledLayerBuffer(CompositableClient* aCompositable,
                                           const SurfaceDescriptorTiles& aTileLayerDescriptor)
 {
-  MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
+  MOZ_ASSERT(aCompositable && aCompositable->IsConnected());
+
   mTxn->AddNoSwapPaint(OpUseTiledLayerBuffer(nullptr, aCompositable->GetIPDLActor(),
                                              aTileLayerDescriptor));
 }
@@ -343,41 +373,41 @@ ShadowLayerForwarder::UpdateTextureRegion(CompositableClient* aCompositable,
                                           const nsIntRegion& aUpdatedRegion)
 {
   MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
+  MOZ_ASSERT(aCompositable);
+  MOZ_ASSERT(aCompositable->IsConnected());
+
   mTxn->AddPaint(OpPaintTextureRegion(nullptr, aCompositable->GetIPDLActor(),
                                       aThebesBufferData,
                                       aUpdatedRegion));
 }
 
 void
-ShadowLayerForwarder::UpdatePictureRect(CompositableClient* aCompositable,
-                                        const gfx::IntRect& aRect)
+ShadowLayerForwarder::UseTextures(CompositableClient* aCompositable,
+                                  const nsTArray<TimedTextureClient>& aTextures)
 {
-  MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
-  mTxn->AddNoSwapPaint(OpUpdatePictureRect(nullptr, aCompositable->GetIPDLActor(), aRect));
-}
+  MOZ_ASSERT(aCompositable && aCompositable->IsConnected());
 
-void
-ShadowLayerForwarder::UseTexture(CompositableClient* aCompositable,
-                                 TextureClient* aTexture)
-{
-  MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aTexture);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
-  MOZ_ASSERT(aTexture->GetIPDLActor());
+  nsAutoTArray<TimedTexture,4> textures;
 
-  FenceHandle fence = aTexture->GetAcquireFenceHandle();
-  mTxn->AddEdit(OpUseTexture(nullptr, aCompositable->GetIPDLActor(),
-                             nullptr, aTexture->GetIPDLActor(),
-                             fence.IsValid() ? MaybeFence(fence) : MaybeFence(null_t())));
-  if (aTexture->GetFlags() & TextureFlags::IMMEDIATE_UPLOAD
-      && aTexture->HasInternalBuffer()) {
-    // We use IMMEDIATE_UPLOAD when we want to be sure that the upload cannot
-    // race with updates on the main thread. In this case we want the transaction
-    // to be synchronous.
-    mTxn->MarkSyncTransaction();
+  for (auto& t : aTextures) {
+    MOZ_ASSERT(t.mTextureClient);
+    MOZ_ASSERT(t.mTextureClient->GetIPDLActor());
+    FenceHandle fence = t.mTextureClient->GetAcquireFenceHandle();
+    textures.AppendElement(TimedTexture(nullptr, t.mTextureClient->GetIPDLActor(),
+                                        fence.IsValid() ? MaybeFence(fence) : MaybeFence(null_t()),
+                                        t.mTimeStamp, t.mPictureRect,
+                                        t.mFrameID, t.mProducerID));
+    if ((t.mTextureClient->GetFlags() & TextureFlags::IMMEDIATE_UPLOAD)
+        && t.mTextureClient->HasInternalBuffer()) {
+
+      // We use IMMEDIATE_UPLOAD when we want to be sure that the upload cannot
+      // race with updates on the main thread. In this case we want the transaction
+      // to be synchronous.
+      mTxn->MarkSyncTransaction();
+    }
   }
+  mTxn->AddEdit(OpUseTexture(nullptr, aCompositable->GetIPDLActor(),
+                             textures));
 }
 
 void
@@ -386,12 +416,14 @@ ShadowLayerForwarder::UseComponentAlphaTextures(CompositableClient* aCompositabl
                                                 TextureClient* aTextureOnWhite)
 {
   MOZ_ASSERT(aCompositable);
+  MOZ_ASSERT(aCompositable->IsConnected());
   MOZ_ASSERT(aTextureOnWhite);
   MOZ_ASSERT(aTextureOnBlack);
   MOZ_ASSERT(aCompositable->GetIPDLActor());
   MOZ_ASSERT(aTextureOnBlack->GetIPDLActor());
   MOZ_ASSERT(aTextureOnWhite->GetIPDLActor());
   MOZ_ASSERT(aTextureOnBlack->GetSize() == aTextureOnWhite->GetSize());
+
   mTxn->AddEdit(OpUseComponentAlphaTextures(nullptr, aCompositable->GetIPDLActor(),
                                             nullptr, aTextureOnBlack->GetIPDLActor(),
                                             nullptr, aTextureOnWhite->GetIPDLActor()));
@@ -400,12 +432,43 @@ ShadowLayerForwarder::UseComponentAlphaTextures(CompositableClient* aCompositabl
 #ifdef MOZ_WIDGET_GONK
 void
 ShadowLayerForwarder::UseOverlaySource(CompositableClient* aCompositable,
-                                       const OverlaySource& aOverlay)
+                                       const OverlaySource& aOverlay,
+                                       const nsIntRect& aPictureRect)
 {
   MOZ_ASSERT(aCompositable);
-  mTxn->AddEdit(OpUseOverlaySource(nullptr, aCompositable->GetIPDLActor(), aOverlay));
+  MOZ_ASSERT(aCompositable->IsConnected());
+
+  mTxn->AddEdit(OpUseOverlaySource(nullptr, aCompositable->GetIPDLActor(),
+      aOverlay, aPictureRect));
 }
 #endif
+
+static bool
+AddOpDestroy(Transaction* aTxn, const OpDestroy& op, bool synchronously)
+{
+  if (!aTxn->Opened()) {
+    return false;
+  }
+
+  aTxn->mDestroyedActors.AppendElement(op);
+  if (synchronously) {
+    aTxn->MarkSyncTransaction();
+  }
+
+  return true;
+}
+
+bool
+ShadowLayerForwarder::DestroyInTransaction(PTextureChild* aTexture, bool synchronously)
+{
+  return AddOpDestroy(mTxn, OpDestroy(aTexture), synchronously);
+}
+
+bool
+ShadowLayerForwarder::DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously)
+{
+  return AddOpDestroy(mTxn, OpDestroy(aCompositable), synchronously);
+}
 
 void
 ShadowLayerForwarder::RemoveTextureFromCompositable(CompositableClient* aCompositable,
@@ -413,15 +476,18 @@ ShadowLayerForwarder::RemoveTextureFromCompositable(CompositableClient* aComposi
 {
   MOZ_ASSERT(aCompositable);
   MOZ_ASSERT(aTexture);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
+  MOZ_ASSERT(aCompositable->IsConnected());
   MOZ_ASSERT(aTexture->GetIPDLActor());
+  if (!aCompositable->IsConnected() || !aTexture->GetIPDLActor()) {
+    // We don't have an actor anymore, don't try to use it!
+    return;
+  }
+
   mTxn->AddEdit(OpRemoveTexture(nullptr, aCompositable->GetIPDLActor(),
                                 nullptr, aTexture->GetIPDLActor()));
   if (aTexture->GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
     mTxn->MarkSyncTransaction();
   }
-  // Hold texture until transaction complete.
-  HoldUntilTransaction(aTexture);
 }
 
 void
@@ -429,23 +495,25 @@ ShadowLayerForwarder::RemoveTextureFromCompositableAsync(AsyncTransactionTracker
                                                      CompositableClient* aCompositable,
                                                      TextureClient* aTexture)
 {
-  if (mTxn->Opened()) {
+  MOZ_ASSERT(aCompositable);
+  MOZ_ASSERT(aTexture);
+  MOZ_ASSERT(aCompositable->IsConnected());
+  MOZ_ASSERT(aTexture->GetIPDLActor());
+#ifdef MOZ_WIDGET_GONK
+  mPendingAsyncMessages.push_back(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
+                                  aAsyncTransactionTracker->GetId(),
+                                  nullptr, aCompositable->GetIPDLActor(),
+                                  nullptr, aTexture->GetIPDLActor()));
+#else
+  if (mTxn->Opened() && aCompositable->IsConnected()) {
     mTxn->AddEdit(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
                                        aAsyncTransactionTracker->GetId(),
                                        nullptr, aCompositable->GetIPDLActor(),
                                        nullptr, aTexture->GetIPDLActor()));
   } else {
-    // If the function is called outside of transaction,
-    // OpRemoveTextureAsync message is stored as pending message.
-#ifdef MOZ_WIDGET_GONK
-    mPendingAsyncMessages.push_back(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
-                                    aAsyncTransactionTracker->GetId(),
-                                    nullptr, aCompositable->GetIPDLActor(),
-                                    nullptr, aTexture->GetIPDLActor()));
-#else
     NS_RUNTIMEABORT("not reached");
-#endif
   }
+#endif
   CompositableClient::HoldUntilComplete(aCompositable->GetIPDLActor(),
                                         aAsyncTransactionTracker);
 }
@@ -454,38 +522,6 @@ bool
 ShadowLayerForwarder::InWorkerThread()
 {
   return MessageLoop::current() && (GetMessageLoop()->id() == MessageLoop::current()->id());
-}
-
-static void RemoveTextureWorker(TextureClient* aTexture, ReentrantMonitor* aBarrier, bool* aDone)
-{
-  aTexture->ForceRemove();
-
-  ReentrantMonitorAutoEnter autoMon(*aBarrier);
-  *aDone = true;
-  aBarrier->NotifyAll();
-}
-
-void
-ShadowLayerForwarder::RemoveTexture(TextureClient* aTexture)
-{
-  MOZ_ASSERT(aTexture);
-  if (InWorkerThread()) {
-    aTexture->ForceRemove();
-    return;
-  }
-
-  ReentrantMonitor barrier("ShadowLayerForwarder::RemoveTexture Lock");
-  ReentrantMonitorAutoEnter autoMon(barrier);
-  bool done = false;
-
-  GetMessageLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableFunction(&RemoveTextureWorker, aTexture, &barrier, &done));
-
-  // Wait until the TextureClient has been ForceRemoved on the worker thread
-  while (!done) {
-    barrier.Wait();
-  }
 }
 
 void
@@ -530,10 +566,13 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     mDiagnosticTypes = diagnostics;
     mTxn->AddEdit(OpSetDiagnosticTypes(diagnostics));
   }
+  if (mWindowOverlayChanged) {
+    mTxn->AddEdit(OpWindowOverlayChanged());
+  }
 
   AutoTxnEnd _(mTxn);
 
-  if (mTxn->Empty() && !mTxn->RotationChanged() && !mWindowOverlayChanged) {
+  if (mTxn->Empty() && !mTxn->RotationChanged()) {
     MOZ_LAYERS_LOG(("[LayersForwarder] 0-length cset (?) and no rotation event, skipping Update()"));
     return true;
   }
@@ -572,14 +611,19 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     common.postXScale() = mutant->GetPostXScale();
     common.postYScale() = mutant->GetPostYScale();
     common.transform() = mutant->GetBaseTransform();
+    common.transformIsPerspective() = mutant->GetTransformIsPerspective();
     common.contentFlags() = mutant->GetContentFlags();
     common.opacity() = mutant->GetOpacity();
     common.useClipRect() = !!mutant->GetClipRect();
     common.clipRect() = (common.useClipRect() ?
                          *mutant->GetClipRect() : ParentLayerIntRect());
     common.isFixedPosition() = mutant->GetIsFixedPosition();
-    common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
-    common.fixedPositionMargin() = mutant->GetFixedPositionMargins();
+    if (mutant->GetIsFixedPosition()) {
+      common.fixedPositionScrollContainerId() = mutant->GetFixedPositionScrollContainerId();
+      common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
+      common.fixedPositionSides() = mutant->GetFixedPositionSides();
+      common.isClipFixed() = mutant->IsClipFixed();
+    }
     common.isStickyPosition() = mutant->GetIsStickyPosition();
     if (mutant->GetIsStickyPosition()) {
       common.stickyScrollContainerId() = mutant->GetStickyScrollContainerId();
@@ -608,6 +652,14 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     common.animations() = mutant->GetAnimations();
     common.invalidRegion() = mutant->GetInvalidRegion();
     common.metrics() = mutant->GetAllFrameMetrics();
+    for (size_t i = 0; i < mutant->GetAncestorMaskLayerCount(); i++) {
+      auto layer = Shadow(mutant->GetAncestorMaskLayerAt(i)->AsShadowableLayer());
+      common.ancestorMaskLayersChild().AppendElement(layer);
+    }
+    nsCString log;
+    mutant->GetDisplayListLog(log);
+    common.displayListLog() = log;
+
     attrs.specific() = null_t();
     mutant->FillSpecificAttributes(attrs.specific());
 
@@ -618,7 +670,7 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
 
   AutoInfallibleTArray<Edit, 10> cset;
   size_t nCsets = mTxn->mCset.size() + mTxn->mPaints.size();
-  MOZ_ASSERT(nCsets > 0 || mWindowOverlayChanged || mTxn->RotationChanged(), "should have bailed by now");
+  MOZ_ASSERT(nCsets > 0 || mTxn->RotationChanged(), "should have bailed by now");
 
   cset.SetCapacity(nCsets);
   if (!mTxn->mCset.empty()) {
@@ -648,11 +700,13 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     RenderTraceScope rendertrace3("Forward Transaction", "000093");
     if (!HasShadowManager() ||
         !mShadowManager->IPCOpen() ||
-        !mShadowManager->SendUpdate(cset, aId, targetConfig, mPluginWindowData,
+        !mShadowManager->SendUpdate(cset, mTxn->mDestroyedActors,
+                                    aId, targetConfig, mPluginWindowData,
                                     mIsFirstPaint, aScheduleComposite,
                                     aPaintSequenceNumber, aIsRepeatTransaction,
-                                    aTransactionStart, aReplies)) {
+                                    aTransactionStart, mPaintSyncId, aReplies)) {
       MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
+      mTxn->FallbackDestroyActors();
       return false;
     }
   } else {
@@ -662,21 +716,20 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     RenderTraceScope rendertrace3("Forward NoSwap Transaction", "000093");
     if (!HasShadowManager() ||
         !mShadowManager->IPCOpen() ||
-        !mShadowManager->SendUpdateNoSwap(cset, aId, targetConfig, mPluginWindowData,
+        !mShadowManager->SendUpdateNoSwap(cset, mTxn->mDestroyedActors,
+                                          aId, targetConfig, mPluginWindowData,
                                           mIsFirstPaint, aScheduleComposite,
                                           aPaintSequenceNumber, aIsRepeatTransaction,
-                                          aTransactionStart)) {
+                                          aTransactionStart, mPaintSyncId)) {
       MOZ_LAYERS_LOG(("[LayersForwarder] WARNING: sending transaction failed!"));
+      mTxn->FallbackDestroyActors();
       return false;
     }
   }
 
-  // Clear any cached plugin data we might have, now that the
-  // transaction is complete.
-  mPluginWindowData.Clear();
-
   *aSent = true;
   mIsFirstPaint = false;
+  mPaintSyncId = 0;
   MOZ_LAYERS_LOG(("[LayersForwarder] ... done"));
   return true;
 }
@@ -731,6 +784,16 @@ ShadowLayerForwarder::IsSameProcess() const
   return mShadowManager->OtherPid() == base::GetCurrentProcId();
 }
 
+base::ProcessId
+ShadowLayerForwarder::ParentPid() const
+{
+  if (!HasShadowManager() || !mShadowManager->IPCOpen()) {
+    return base::ProcessId();
+  }
+
+  return mShadowManager->OtherPid();
+}
+
 /**
   * We bail out when we have no shadow manager. That can happen when the
   * layer manager is created by the preallocated process.
@@ -757,7 +820,8 @@ ShadowLayerForwarder::PlatformSyncBeforeUpdate()
 #endif  // !defined(MOZ_HAVE_PLATFORM_SPECIFIC_LAYER_BUFFERS)
 
 void
-ShadowLayerForwarder::Connect(CompositableClient* aCompositable)
+ShadowLayerForwarder::Connect(CompositableClient* aCompositable,
+                              ImageContainer* aImageContainer)
 {
 #ifdef GFX_COMPOSITOR_LOGGING
   printf("ShadowLayerForwarder::Connect(Compositable)\n");
@@ -779,7 +843,6 @@ void ShadowLayerForwarder::Attach(CompositableClient* aCompositable,
 {
   MOZ_ASSERT(aLayer);
   MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
   mTxn->AddEdit(OpAttachCompositable(nullptr, Shadow(aLayer),
                                      nullptr, aCompositable->GetIPDLActor()));
 }
@@ -795,13 +858,14 @@ void ShadowLayerForwarder::AttachAsyncCompositable(uint64_t aCompositableID,
 
 PTextureChild*
 ShadowLayerForwarder::CreateTexture(const SurfaceDescriptor& aSharedData,
+                                    LayersBackend aLayersBackend,
                                     TextureFlags aFlags)
 {
   if (!HasShadowManager() ||
       !mShadowManager->IPCOpen()) {
     return nullptr;
   }
-  return mShadowManager->SendPTextureConstructor(aSharedData, aFlags);
+  return mShadowManager->SendPTextureConstructor(aSharedData, aLayersBackend, aFlags);
 }
 
 

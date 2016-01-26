@@ -106,6 +106,8 @@ extern NS_METHOD NS_GetCurrentThread(nsIThread** aResult);
  *   If event is null.
  */
 extern NS_METHOD NS_DispatchToCurrentThread(nsIRunnable* aEvent);
+extern NS_METHOD
+NS_DispatchToCurrentThread(already_AddRefed<nsIRunnable>&& aEvent);
 
 /**
  * Dispatch the given event to the main thread.
@@ -120,6 +122,9 @@ extern NS_METHOD NS_DispatchToCurrentThread(nsIRunnable* aEvent);
  */
 extern NS_METHOD
 NS_DispatchToMainThread(nsIRunnable* aEvent,
+                        uint32_t aDispatchFlags = NS_DISPATCH_NORMAL);
+extern NS_METHOD
+NS_DispatchToMainThread(already_AddRefed<nsIRunnable>&& aEvent,
                         uint32_t aDispatchFlags = NS_DISPATCH_NORMAL);
 
 #ifndef XPCOM_GLUE_AVOID_NSPR
@@ -300,7 +305,7 @@ public:
 template<class ClassType, bool Owning>
 struct nsRunnableMethodReceiver
 {
-  nsRefPtr<ClassType> mObj;
+  RefPtr<ClassType> mObj;
   explicit nsRunnableMethodReceiver(ClassType* aObj) : mObj(aObj) {}
   ~nsRunnableMethodReceiver() { Revoke(); }
   ClassType* Get() const { return mObj.get(); }
@@ -364,7 +369,7 @@ struct StoreCopyPassByValue
   typedef T passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByValue(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByValue(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -378,7 +383,7 @@ struct StoreCopyPassByConstLRef
   typedef const T& passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByConstLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByConstLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -392,7 +397,7 @@ struct StoreCopyPassByLRef
   typedef T& passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByLRef(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -406,7 +411,7 @@ struct StoreCopyPassByRRef
   typedef T&& passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByRRef(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByRRef(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return mozilla::Move(m); }
 };
 template<typename S>
@@ -420,7 +425,7 @@ struct StoreRefPassByLRef
   typedef T& passed_type;
   stored_type m;
   template <typename A>
-  StoreRefPassByLRef(A& a) : m(a) {}
+  explicit StoreRefPassByLRef(A& a) : m(a) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -434,7 +439,7 @@ struct StoreConstRefPassByConstLRef
   typedef const T& passed_type;
   stored_type m;
   template <typename A>
-  StoreConstRefPassByConstLRef(const A& a) : m(a) {}
+  explicit StoreConstRefPassByConstLRef(const A& a) : m(a) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -444,11 +449,11 @@ struct IsParameterStorageClass<StoreConstRefPassByConstLRef<S>>
 template<typename T>
 struct StorensRefPtrPassByPtr
 {
-  typedef nsRefPtr<T> stored_type;
+  typedef RefPtr<T> stored_type;
   typedef T* passed_type;
   stored_type m;
   template <typename A>
-  StorensRefPtrPassByPtr(A a) : m(a) {}
+  explicit StorensRefPtrPassByPtr(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return m.get(); }
 };
 template<typename S>
@@ -462,7 +467,7 @@ struct StorePtrPassByPtr
   typedef T* passed_type;
   stored_type m;
   template <typename A>
-  StorePtrPassByPtr(A a) : m(a) {}
+  explicit StorePtrPassByPtr(A a) : m(a) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -476,7 +481,7 @@ struct StoreConstPtrPassByConstPtr
   typedef const T* passed_type;
   stored_type m;
   template <typename A>
-  StoreConstPtrPassByConstPtr(A a) : m(a) {}
+  explicit StoreConstPtrPassByConstPtr(A a) : m(a) {}
   passed_type PassAsParameter() { return m; }
 };
 template<typename S>
@@ -490,7 +495,7 @@ struct StoreCopyPassByConstPtr
   typedef const T* passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByConstPtr(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByConstPtr(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return &m; }
 };
 template<typename S>
@@ -504,7 +509,7 @@ struct StoreCopyPassByPtr
   typedef T* passed_type;
   stored_type m;
   template <typename A>
-  StoreCopyPassByPtr(A&& a) : m(mozilla::Forward<A>(a)) {}
+  explicit StoreCopyPassByPtr(A&& a) : m(mozilla::Forward<A>(a)) {}
   passed_type PassAsParameter() { return &m; }
 };
 template<typename S>
@@ -521,9 +526,54 @@ struct NonnsISupportsPointerStorageClass
                          StorePtrPassByPtr<TWithoutPointer>>
 {};
 
+template<typename>
+struct SFINAE1True : mozilla::TrueType
+{};
+
+template<class T>
+static auto HasRefCountMethodsTest(int)
+    -> SFINAE1True<decltype(mozilla::DeclVal<T>().AddRef(),
+                            mozilla::DeclVal<T>().Release())>;
+template<class>
+static auto HasRefCountMethodsTest(long) -> mozilla::FalseType;
+
+template<class T>
+struct HasRefCountMethods : decltype(HasRefCountMethodsTest<T>(0))
+{};
+
+template<typename T>
+struct IsRefcountedSmartPointer : public mozilla::FalseType
+{};
+
+template<typename T>
+struct IsRefcountedSmartPointer<RefPtr<T>> : public mozilla::TrueType
+{};
+
+template<typename T>
+struct IsRefcountedSmartPointer<nsCOMPtr<T>> : public mozilla::TrueType
+{};
+
+template<typename T>
+struct StripSmartPointer
+{
+  typedef void Type;
+};
+
+template<typename T>
+struct StripSmartPointer<RefPtr<T>>
+{
+  typedef T Type;
+};
+
+template<typename T>
+struct StripSmartPointer<nsCOMPtr<T>>
+{
+  typedef T Type;
+};
+
 template<typename TWithoutPointer>
 struct PointerStorageClass
-  : mozilla::Conditional<mozilla::IsBaseOf<nsISupports, TWithoutPointer>::value,
+  : mozilla::Conditional<HasRefCountMethods<TWithoutPointer>::value,
                          StorensRefPtrPassByPtr<TWithoutPointer>,
                          typename NonnsISupportsPointerStorageClass<
                            TWithoutPointer
@@ -539,11 +589,19 @@ struct LValueReferenceStorageClass
 {};
 
 template<typename T>
+struct SmartPointerStorageClass
+  : mozilla::Conditional<IsRefcountedSmartPointer<T>::value,
+                         StorensRefPtrPassByPtr<
+                           typename StripSmartPointer<T>::Type>,
+                         StoreCopyPassByValue<T>>
+{};
+
+template<typename T>
 struct NonLValueReferenceStorageClass
   : mozilla::Conditional<mozilla::IsRvalueReference<T>::value,
                          StoreCopyPassByRRef<
                            typename mozilla::RemoveReference<T>::Type>,
-                         StoreCopyPassByValue<T>>
+                         typename SmartPointerStorageClass<T>::Type>
 {};
 
 template<typename T>
@@ -566,12 +624,15 @@ struct NonParameterStorageClass
 
 // Choose storage&passing strategy based on preferred storage type:
 // - If IsParameterStorageClass<T>::value is true, use as-is.
-// - nsISupports* -> StorensRefPtrPassByPtr<T>   : Store nsRefPtr<T>, pass T*
+// - RC*       -> StorensRefPtrPassByPtr<RC>     : Store RefPtr<RC>, pass RC*
+//   ^^ RC quacks like a ref-counted type (i.e., has AddRef and Release methods)
 // - const T*  -> StoreConstPtrPassByConstPtr<T> : Store const T*, pass const T*
 // - T*        -> StorePtrPassByPtr<T>           : Store T*, pass T*.
 // - const T&  -> StoreConstRefPassByConstLRef<T>: Store const T&, pass const T&.
 // - T&        -> StoreRefPassByLRef<T>          : Store T&, pass T&.
 // - T&&       -> StoreCopyPassByRRef<T>         : Store T, pass Move(T).
+// - RefPtr<T>, nsCOMPtr<T>
+//             -> StorensRefPtrPassByPtr<T>      : Store RefPtr<T>, pass T*
 // - Other T   -> StoreCopyPassByValue<T>        : Store T, pass T.
 // Other available explicit options:
 // -              StoreCopyPassByConstLRef<T>    : Store T, pass const T&.
@@ -607,7 +668,7 @@ struct nsRunnableMethodArguments<T0>
 {
   typename ::detail::ParameterStorage<T0>::Type m0;
   template<typename A0>
-  nsRunnableMethodArguments(A0&& a0)
+  explicit nsRunnableMethodArguments(A0&& a0)
     : m0(mozilla::Forward<A0>(a0))
   {}
   template<class C, typename M> void apply(C* o, M m)
@@ -954,7 +1015,7 @@ private:
   nsRevocableEventPtr(const nsRevocableEventPtr&);
   nsRevocableEventPtr& operator=(const nsRevocableEventPtr&);
 
-  nsRefPtr<T> mEvent;
+  RefPtr<T> mEvent;
 };
 
 /**
@@ -1002,20 +1063,5 @@ private:
 
 void
 NS_SetMainThread();
-
-/**
- * Helpers for thread to report their status when compiled with Nuwa.
- */
-#ifdef MOZILLA_INTERNAL_API
-#ifdef MOZ_NUWA_PROCESS
-extern void
-NS_SetIgnoreStatusOfCurrentThread();
-#else // MOZ_NUWA_PROCESS
-inline void
-NS_SetIgnoreStatusOfCurrentThread()
-{
-}
-#endif // MOZ_NUWA_PROCESS
-#endif // MOZILLA_INTERNAL_API
 
 #endif  // nsThreadUtils_h__

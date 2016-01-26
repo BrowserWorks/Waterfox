@@ -1,14 +1,23 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+Components.utils.importGlobalProperties(["URLSearchParams"]);
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/AppConstants.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "LaterRun",
+                                  "resource:///modules/LaterRun.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
+                                  "resource:///modules/ShellService.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils",
+                                   "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
 
 const nsISupports            = Components.interfaces.nsISupports;
 
@@ -33,15 +42,11 @@ const nsIWebNavigation       = Components.interfaces.nsIWebNavigation;
 const nsIWindowMediator      = Components.interfaces.nsIWindowMediator;
 const nsIWindowWatcher       = Components.interfaces.nsIWindowWatcher;
 const nsIWebNavigationInfo   = Components.interfaces.nsIWebNavigationInfo;
-const nsIBrowserSearchService = Components.interfaces.nsIBrowserSearchService;
 const nsICommandLineValidator = Components.interfaces.nsICommandLineValidator;
 
 const NS_BINDING_ABORTED = Components.results.NS_BINDING_ABORTED;
 const NS_ERROR_WONT_HANDLE_CONTENT = 0x805d0001;
 const NS_ERROR_ABORT = Components.results.NS_ERROR_ABORT;
-
-const URI_INHERITS_SECURITY_CONTEXT = Components.interfaces.nsIHttpProtocolHandler
-                                        .URI_INHERITS_SECURITY_CONTEXT;
 
 function shouldLoadURI(aURI) {
   if (aURI && !aURI.schemeIs("chrome"))
@@ -229,34 +234,22 @@ function openWindow(parent, url, target, features, args, noExternalArgs) {
 }
 
 function openPreferences() {
-  if (Services.prefs.getBoolPref("browser.preferences.inContent")) { 
-    var sa = Components.classes["@mozilla.org/supports-array;1"]
-                       .createInstance(Components.interfaces.nsISupportsArray);
+  var sa = Components.classes["@mozilla.org/supports-array;1"]
+                     .createInstance(Components.interfaces.nsISupportsArray);
 
-    var wuri = Components.classes["@mozilla.org/supports-string;1"]
-                         .createInstance(Components.interfaces.nsISupportsString);
-    wuri.data = "about:preferences";
+  var wuri = Components.classes["@mozilla.org/supports-string;1"]
+                       .createInstance(Components.interfaces.nsISupportsString);
+  wuri.data = "about:preferences";
 
-    sa.AppendElement(wuri);
+  sa.AppendElement(wuri);
 
-    var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-                           .getService(nsIWindowWatcher);
+  var wwatch = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+                         .getService(nsIWindowWatcher);
 
-    wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
-                      "_blank",
-                      "chrome,dialog=no,all",
-                      sa);
-  } else {
-    var features = "chrome,titlebar,toolbar,centerscreen,dialog=no";
-    var url = "chrome://browser/content/preferences/preferences.xul";
-    
-    var win = getMostRecentWindow("Browser:Preferences");
-    if (win) {
-      win.focus();
-    } else {
-      openWindow(null, url, "_blank", features);
-    }
-  }
+  wwatch.openWindow(null, gBrowserContentHandler.chromeURL,
+                    "_blank",
+                    "chrome,dialog=no,all",
+                    sa);
 }
 
 function getMostRecentWindow(aType) {
@@ -265,11 +258,17 @@ function getMostRecentWindow(aType) {
   return wm.getMostRecentWindow(aType);
 }
 
-function doSearch(searchTerm, cmdLine) {
-  var ss = Components.classes["@mozilla.org/browser/search-service;1"]
-                     .getService(nsIBrowserSearchService);
+function logSystemBasedSearch(engine) {
+  var countId = (engine.identifier || ("other-" + engine.name)) + ".system";
+  var count = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS");
+  count.add(countId);
+}
 
-  var submission = ss.defaultEngine.getSubmission(searchTerm);
+function doSearch(searchTerm, cmdLine) {
+  var engine = Services.search.defaultEngine;
+  logSystemBasedSearch(engine);
+
+  var submission = engine.getSubmission(searchTerm, null, "system");
 
   // fill our nsISupportsArray with uri-as-wstring, null, null, postData
   var sa = Components.classes["@mozilla.org/supports-array;1"]
@@ -356,7 +355,7 @@ nsBrowserContentHandler.prototype = {
     var uriparam;
     try {
       while ((uriparam = cmdLine.handleFlagWithParam("new-window", false))) {
-        var uri = resolveURIInternal(cmdLine, uriparam);
+        let uri = resolveURIInternal(cmdLine, uriparam);
         if (!shouldLoadURI(uri))
           continue;
         openWindow(null, this.chromeURL, "_blank",
@@ -371,7 +370,7 @@ nsBrowserContentHandler.prototype = {
 
     try {
       while ((uriparam = cmdLine.handleFlagWithParam("new-tab", false))) {
-        var uri = resolveURIInternal(cmdLine, uriparam);
+        let uri = resolveURIInternal(cmdLine, uriparam);
         handURIToExistingBrowser(uri, nsIBrowserDOMWindow.OPEN_NEWTAB, cmdLine);
         cmdLine.preventDefault = true;
       }
@@ -385,19 +384,26 @@ nsBrowserContentHandler.prototype = {
 
       // Handle old preference dialog URLs.
       if (chromeParam == "chrome://browser/content/pref/pref.xul" ||
-          (Services.prefs.getBoolPref("browser.preferences.inContent") &&
-           chromeParam == "chrome://browser/content/preferences/preferences.xul")) {
+          chromeParam == "chrome://browser/content/preferences/preferences.xul") {
         openPreferences();
         cmdLine.preventDefault = true;
       } else try {
-        // only load URIs which do not inherit chrome privs
-        var features = "chrome,dialog=no,all" + this.getFeatures(cmdLine);
-        var uri = resolveURIInternal(cmdLine, chromeParam);
-        var netutil = Components.classes["@mozilla.org/network/util;1"]
-                                .getService(nsINetUtil);
-        if (!netutil.URIChainHasFlags(uri, URI_INHERITS_SECURITY_CONTEXT)) {
-          openWindow(null, uri.spec, "_blank", features);
+        let resolvedURI = resolveURIInternal(cmdLine, chromeParam);
+        let isLocal = uri => {
+          let localSchemes = new Set(["chrome", "file", "resource"]);
+          if (uri instanceof Components.interfaces.nsINestedURI) {
+            uri = uri.QueryInterface(Components.interfaces.nsINestedURI).innerMostURI;
+          }
+          return localSchemes.has(uri.scheme);
+        };
+        if (isLocal(resolvedURI)) {
+          // If the URI is local, we are sure it won't wrongly inherit chrome privs
+          var features = "chrome,dialog=no,all" + this.getFeatures(cmdLine);
+          openWindow(null, resolvedURI.spec, "_blank", features);
           cmdLine.preventDefault = true;
+        } else {
+          dump("*** Preventing load of web URI as chrome\n");
+          dump("    If you're trying to load a webpage, do not pass --chrome.\n");
         }
       }
       catch (e) {
@@ -414,11 +420,14 @@ nsBrowserContentHandler.prototype = {
     try {
       var privateWindowParam = cmdLine.handleFlagWithParam("private-window", false);
       if (privateWindowParam) {
-        var uri = resolveURIInternal(cmdLine, privateWindowParam);
-        handURIToExistingBrowser(uri, nsIBrowserDOMWindow.OPEN_NEWTAB, cmdLine, true);
+        let resolvedURI = resolveURIInternal(cmdLine, privateWindowParam);
+        handURIToExistingBrowser(resolvedURI, nsIBrowserDOMWindow.OPEN_NEWTAB, cmdLine, true);
         cmdLine.preventDefault = true;
       }
-    } catch (e if e.result == Components.results.NS_ERROR_INVALID_ARG) {
+    } catch (e) {
+      if (e.result != Components.results.NS_ERROR_INVALID_ARG) {
+        throw e;
+      }
       // NS_ERROR_INVALID_ARG is thrown when flag exists, but has no param.
       if (cmdLine.handleFlag("private-window", false)) {
         openWindow(null, this.chromeURL, "_blank",
@@ -445,38 +454,42 @@ nsBrowserContentHandler.prototype = {
       var file = cmdLine.resolveFile(fileParam);
       var ios = Components.classes["@mozilla.org/network/io-service;1"]
                           .getService(Components.interfaces.nsIIOService);
-      var uri = ios.newFileURI(file);
-      openWindow(null, this.chromeURL, "_blank", 
+      var fileURI = ios.newFileURI(file);
+      openWindow(null, this.chromeURL, "_blank",
                  "chrome,dialog=no,all" + this.getFeatures(cmdLine),
-                 uri.spec);
+                 fileURI.spec);
       cmdLine.preventDefault = true;
     }
 
-#ifdef XP_WIN
-    // Handle "? searchterm" for Windows Vista start menu integration
-    for (var i = cmdLine.length - 1; i >= 0; --i) {
-      var param = cmdLine.getArgument(i);
-      if (param.match(/^\? /)) {
-        cmdLine.removeArguments(i, i);
-        cmdLine.preventDefault = true;
+    if (AppConstants.platform  == "win") {
+      // Handle "? searchterm" for Windows Vista start menu integration
+      for (var i = cmdLine.length - 1; i >= 0; --i) {
+        var param = cmdLine.getArgument(i);
+        if (param.match(/^\? /)) {
+          cmdLine.removeArguments(i, i);
+          cmdLine.preventDefault = true;
 
-        searchParam = param.substr(2);
-        doSearch(searchParam, cmdLine);
+          searchParam = param.substr(2);
+          doSearch(searchParam, cmdLine);
+        }
       }
     }
-#endif
   },
 
-  helpInfo : "  --browser          Open a browser window.\n" +
-             "  --new-window <url> Open <url> in a new window.\n" +
-             "  --new-tab <url>    Open <url> in a new tab.\n" +
-             "  --private-window <url> Open <url> in a new private window.\n" +
-#ifdef XP_WIN
-             "  --preferences      Open Options dialog.\n" +
-#else
-             "  --preferences      Open Preferences dialog.\n" +
-#endif
-             "  --search <term>    Search <term> with your default search engine.\n",
+  get helpInfo() {
+    let info =
+              "  --browser          Open a browser window.\n" +
+              "  --new-window <url> Open <url> in a new window.\n" +
+              "  --new-tab <url>    Open <url> in a new tab.\n" +
+              "  --private-window <url> Open <url> in a new private window.\n";
+    if (AppConstants.platform == "win") {
+      info += "  --preferences      Open Options dialog.\n";
+    } else {
+      info += "  --preferences      Open Preferences dialog.\n";
+    }
+    info += "  --search <term>    Search <term> with your default search engine.\n";
+    return info;
+  },
 
   /* nsIBrowserHandler */
 
@@ -491,7 +504,9 @@ nsBrowserContentHandler.prototype = {
       }
     }
 
+    var override;
     var overridePage = "";
+    var additionalPage = "";
     var willRestoreSession = false;
     try {
       // Read the old value of homepage_override.mstone before
@@ -503,12 +518,15 @@ nsBrowserContentHandler.prototype = {
       try {
         old_mstone = Services.prefs.getCharPref("browser.startup.homepage_override.mstone");
       } catch (ex) {}
-      let override = needHomepageOverride(prefb);
+      override = needHomepageOverride(prefb);
       if (override != OVERRIDE_NONE) {
         switch (override) {
           case OVERRIDE_NEW_PROFILE:
             // New profile.
             overridePage = Services.urlFormatter.formatURLPref("startup.homepage_welcome_url");
+            additionalPage = Services.urlFormatter.formatURLPref("startup.homepage_welcome_url.additional");
+            // Turn on 'later run' pages for new profiles.
+            LaterRun.enabled = true;
             break;
           case OVERRIDE_NEW_MSTONE:
             // Check whether we will restore a session. If we will, we assume
@@ -533,6 +551,34 @@ nsBrowserContentHandler.prototype = {
     // formatURLPref might return "about:blank" if getting the pref fails
     if (overridePage == "about:blank")
       overridePage = "";
+
+    // Temporary override page for users who are running Firefox on Windows 10 for their first time.
+    let platformVersion = Services.sysinfo.getProperty("version");
+    if (AppConstants.platform == "win" &&
+        Services.vc.compare(platformVersion, "10") == 0 &&
+        !Services.prefs.getBoolPref("browser.usedOnWindows10")) {
+      Services.prefs.setBoolPref("browser.usedOnWindows10", true);
+      let firstUseOnWindows10URL = Services.urlFormatter.formatURLPref("browser.usedOnWindows10.introURL");
+
+      if (firstUseOnWindows10URL && firstUseOnWindows10URL.length) {
+        additionalPage = firstUseOnWindows10URL;
+        if (override == OVERRIDE_NEW_PROFILE) {
+          additionalPage += "&utm_content=firstrun";
+        }
+      }
+    }
+
+    if (!additionalPage) {
+      additionalPage = LaterRun.getURL() || "";
+    }
+
+    if (additionalPage && additionalPage != "about:blank") {
+      if (overridePage) {
+        overridePage += "|" + additionalPage;
+      } else {
+        overridePage = additionalPage;
+      }
+    }
 
     var startPage = "";
     try {
@@ -622,6 +668,19 @@ nsBrowserContentHandler.prototype = {
       var urlParam = cmdLine.getArgument(urlFlagIdx + 1);
       if (cmdLine.length != urlFlagIdx + 2 || /firefoxurl:/.test(urlParam))
         throw NS_ERROR_ABORT;
+      var isDefault = false;
+      try {
+        var url = Services.urlFormatter.formatURLPref("app.support.baseURL") +
+                  "win10-default-browser";
+        if (urlParam == url) {
+          isDefault = ShellService.isDefaultBrowser(false, false);
+        }
+      } catch (ex) {}
+      if (isDefault) {
+        // Firefox is already the default HTTP handler.
+        // We don't have to show the instruction page.
+        throw NS_ERROR_ABORT;
+      }
       cmdLine.handleFlag("osint", false)
     }
   },
@@ -672,40 +731,88 @@ nsDefaultCommandLineHandler.prototype = {
     return this;
   },
 
-#ifdef XP_WIN
   _haveProfile: false,
-#endif
 
   /* nsICommandLineHandler */
   handle : function dch_handle(cmdLine) {
     var urilist = [];
 
-#ifdef XP_WIN
-    // If we don't have a profile selected yet (e.g. the Profile Manager is
-    // displayed) we will crash if we open an url and then select a profile. To
-    // prevent this handle all url command line flags and set the command line's
-    // preventDefault to true to prevent the display of the ui. The initial
-    // command line will be retained when nsAppRunner calls LaunchChild though
-    // urls launched after the initial launch will be lost.
-    if (!this._haveProfile) {
-      try {
-        // This will throw when a profile has not been selected.
-        var fl = Components.classes["@mozilla.org/file/directory_service;1"]
-                           .getService(Components.interfaces.nsIProperties);
-        var dir = fl.get("ProfD", Components.interfaces.nsILocalFile);
-        this._haveProfile = true;
-      }
-      catch (e) {
-        while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
-        cmdLine.preventDefault = true;
+    if (AppConstants.platform == "win") {
+      // If we don't have a profile selected yet (e.g. the Profile Manager is
+      // displayed) we will crash if we open an url and then select a profile. To
+      // prevent this handle all url command line flags and set the command line's
+      // preventDefault to true to prevent the display of the ui. The initial
+      // command line will be retained when nsAppRunner calls LaunchChild though
+      // urls launched after the initial launch will be lost.
+      if (!this._haveProfile) {
+        try {
+          // This will throw when a profile has not been selected.
+          var fl = Components.classes["@mozilla.org/file/directory_service;1"]
+                             .getService(Components.interfaces.nsIProperties);
+          var dir = fl.get("ProfD", Components.interfaces.nsILocalFile);
+          this._haveProfile = true;
+        }
+        catch (e) {
+          while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
+          cmdLine.preventDefault = true;
+        }
       }
     }
-#endif
+
+    let redirectWinSearch = false;
+    if (AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
+      redirectWinSearch = Services.prefs.getBoolPref("browser.search.redirectWindowsSearch");
+    }
 
     try {
       var ar;
       while ((ar = cmdLine.handleFlagWithParam("url", false))) {
         var uri = resolveURIInternal(cmdLine, ar);
+
+        // Searches in the Windows 10 task bar searchbox simply open the default browser
+        // with a URL for a search on Bing. Here we extract the search term and use the
+        // user's default search engine instead.
+        var uriScheme = "", uriHost = "", uriPath = "";
+        try {
+          uriScheme = uri.scheme;
+          uriHost = uri.host;
+          uriPath = uri.path;
+        } catch(e) {
+        }
+
+        // Most Windows searches are "https://www.bing.com/search...", but bug
+        // 1182308 reports a Chinese edition of Windows 10 using
+        // "http://cn.bing.com/search...", so be a bit flexible in what we match.
+        if (redirectWinSearch &&
+            (uriScheme == "http" || uriScheme == "https") &&
+            uriHost.endsWith(".bing.com") && uriPath.startsWith("/search")) {
+          try {
+            var url = uri.QueryInterface(Components.interfaces.nsIURL);
+            var params = new URLSearchParams(url.query);
+            // We don't want to rewrite all Bing URLs coming from external apps. Look
+            // for the magic URL parm that's present in searches from the task bar.
+            // * Typed searches use "form=WNSGPH"
+            // * Cortana voice searches use "FORM=WNSBOX" or direct results, or "FORM=WNSFC2"
+            //   for "see more results on Bing.com")
+            // * Cortana voice searches started from "Hey, Cortana" use "form=WNSHCO"
+            //   or "form=WNSSSV" or "form=WNSSCX"
+            var allowedParams = ["WNSGPH", "WNSBOX", "WNSFC2", "WNSHCO", "WNSSCX", "WNSSSV"];
+            var formParam = params.get("form");
+            if (!formParam) {
+              formParam = params.get("FORM");
+            }
+            if (allowedParams.indexOf(formParam) != -1) {
+              var term = params.get("q");
+              var engine = Services.search.defaultEngine;
+              logSystemBasedSearch(engine);
+              var submission = engine.getSubmission(term, null, "system");
+              uri = submission.uri;
+            }
+          } catch (e) {
+            Components.utils.reportError("Couldn't redirect Windows search: " + e);
+          }
+        }
+
         urilist.push(uri);
       }
     }
@@ -743,7 +850,7 @@ nsDefaultCommandLineHandler.prototype = {
         }
       }
 
-      var URLlist = urilist.filter(shouldLoadURI).map(function (u) u.spec);
+      var URLlist = urilist.filter(shouldLoadURI).map(u => u.spec);
       if (URLlist.length) {
         openWindow(null, gBrowserContentHandler.chromeURL, "_blank",
                    "chrome,dialog=no,all" + gBrowserContentHandler.getFeatures(cmdLine),
@@ -752,6 +859,16 @@ nsDefaultCommandLineHandler.prototype = {
 
     }
     else if (!cmdLine.preventDefault) {
+      if (AppConstants.isPlatformAndVersionAtLeast("win", "10") &&
+          cmdLine.state != nsICommandLine.STATE_INITIAL_LAUNCH &&
+          WindowsUIUtils.inTabletMode) {
+        // In windows 10 tablet mode, do not create a new window, but reuse the existing one.
+        let win = RecentWindow.getMostRecentBrowserWindow();
+        if (win) {
+          win.focus();
+          return;
+        }
+      }
       // Passing defaultArgs, so use NO_EXTERNAL_URIS
       openWindow(null, gBrowserContentHandler.chromeURL, "_blank",
                  "chrome,dialog=no,all" + gBrowserContentHandler.getFeatures(cmdLine),

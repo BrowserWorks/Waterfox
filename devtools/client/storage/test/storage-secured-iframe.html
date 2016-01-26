@@ -1,0 +1,78 @@
+﻿<!DOCTYPE HTML>
+<html>
+<!--
+Iframe for testing multiple host detetion in storage actor
+-->
+<head>
+  <meta charset="utf-8">
+</head>
+<body>
+<script type="application/javascript;version=1.7">
+"use strict";
+document.cookie = "sc1=foobar;";
+localStorage.setItem("iframe-s-ls1", "foobar");
+sessionStorage.setItem("iframe-s-ss1", "foobar-2");
+
+function success(event) {
+  setupIDB.next(event);
+}
+
+window.idbGenerator = function*(callback) {
+  let request = indexedDB.open("idb-s1", 1);
+  request.onupgradeneeded = success;
+  request.onsuccess = success;
+  request.onerror = function() {
+    throw new Error("error opening db connection");
+  };
+  let event = yield undefined;
+  let db = event.target.result;
+  let store1 = db.createObjectStore("obj-s1", { keyPath: "id" });
+
+  store1.add({id: 6, name: "foo", email: "foo@bar.com"}).onsuccess = success;
+  yield undefined;
+  store1.add({id: 7, name: "foo2", email: "foo2@bar.com"}).onsuccess = success;
+  yield undefined;
+
+  yield undefined;
+  db.close();
+
+  request = indexedDB.open("idb-s2", 1);
+  request.onupgradeneeded = success;
+  request.onsuccess = success;
+  event = yield undefined;
+
+  let db2 = event.target.result;
+  let store3 =
+    db2.createObjectStore("obj-s2", { keyPath: "id3", autoIncrement: true });
+  store3.createIndex("name2", "name2", { unique: true });
+  store3.add({id3: 16, name2: "foo", email: "foo@bar.com"}).onsuccess = success;
+  yield undefined;
+
+  yield undefined;
+  db2.close();
+  dump("added cookies and stuff from secured iframe\n");
+  callback();
+};
+
+function deleteDB(dbName) {
+  return new Promise(resolve => {
+    dump("removing database " + dbName + " from " + document.location + "\n");
+    indexedDB.deleteDatabase(dbName).onsuccess = resolve;
+  });
+}
+
+window.clear = function*() {
+  document.cookie = "sc1=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+  localStorage.clear();
+  sessionStorage.clear();
+
+  yield deleteDB("idb-s1");
+  yield deleteDB("idb-s2");
+
+  dump("removed cookies, localStorage, sessionStorage and indexedDB data " +
+       "from " + document.location + "\n");
+};
+</script>
+</body>
+</html>

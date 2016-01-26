@@ -5,7 +5,7 @@
 "use strict";
 
 /* static functions */
-const DEBUG = false;
+const DEBUG = true;
 
 function debug(aStr) {
   DEBUG && dump("AlarmService: " + aStr + "\n");
@@ -49,6 +49,8 @@ XPCOMUtils.defineLazyGetter(this, "powerManagerService", function() {
  */
 
 this.AlarmService = {
+  lastChromeId: 0,
+
   init: function init() {
     debug("init()");
 
@@ -205,6 +207,12 @@ this.AlarmService = {
       };
     }
 
+    // Is this a chrome alarm?
+    if (aId < 0) {
+      aRemoveSuccessCb();
+      return;
+    }
+
     this._db.remove(aId, aManifestURL, aRemoveSuccessCb,
                     function removeErrorCb(aErrorMsg) {
                       throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
@@ -241,20 +249,44 @@ this.AlarmService = {
   _notifyAlarmObserver: function _notifyAlarmObserver(aAlarm) {
     debug("_notifyAlarmObserver()");
 
-    if (aAlarm.manifestURL) {
-      this._fireSystemMessage(aAlarm);
-    } else if (typeof aAlarm.alarmFiredCb === "function") {
-      aAlarm.alarmFiredCb(this._publicAlarm(aAlarm));
-    }
+    let wakeLock = powerManagerService.newWakeLock("cpu");
+
+    let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    timer.initWithCallback(() => {
+      debug("_notifyAlarmObserver - timeout()");
+      if (aAlarm.manifestURL) {
+        this._fireSystemMessage(aAlarm);
+      } else if (typeof aAlarm.alarmFiredCb === "function") {
+        aAlarm.alarmFiredCb(this._publicAlarm(aAlarm));
+      }
+
+      wakeLock.unlock();
+    }, 0, Ci.nsITimer.TYPE_ONE_SHOT);
   },
 
   _onAlarmFired: function _onAlarmFired() {
     debug("_onAlarmFired()");
 
     if (this._currentAlarm) {
+      let currentAlarmTime = this._getAlarmTime(this._currentAlarm);
+
+      // If a alarm fired before the actual time that the current
+      // alarm should occur, we reset this current alarm.
+      if (currentAlarmTime > Date.now()) {
+        let currentAlarm = this._currentAlarm;
+        this._currentAlarm = currentAlarm;
+
+        this._debugCurrentAlarm();
+        return;
+      }
+
       this._removeAlarmFromDb(this._currentAlarm.id, null);
-      this._notifyAlarmObserver(this._currentAlarm);
+      // We need to clear the current alarm before notifying because chrome
+      // alarms may add a new alarm during their callback, and we do not want
+      // to clobber it.
+      let firingAlarm = this._currentAlarm;
       this._currentAlarm = null;
+      this._notifyAlarmObserver(firingAlarm);
     }
 
     // Reset the next alarm from the queue.
@@ -297,15 +329,25 @@ this.AlarmService = {
         debug("Callback after getting alarms from database: " +
               JSON.stringify(aAlarms));
 
-        // Clear any alarms set or queued in the cache.
+        // Clear any alarms set or queued in the cache if coming from db.
         let alarmQueue = this._alarmQueue;
-        alarmQueue.length = 0;
-        this._currentAlarm = null;
+        if (this._currentAlarm) {
+          alarmQueue.unshift(this._currentAlarm);
+          this._currentAlarm = null;
+        }
+        for (let i = 0; i < alarmQueue.length;) {
+          if (alarmQueue[i]['id'] < 0) {
+            ++i;
+            continue;
+          }
+          alarmQueue.splice(i, 1);
+        }
 
         // Only restore the alarm that's not yet expired; otherwise, remove it
         // from the database and notify the observer.
         aAlarms.forEach(function addAlarm(aAlarm) {
-          if (this._getAlarmTime(aAlarm) > Date.now()) {
+          if ("manifestURL" in aAlarm && aAlarm.manifestURL &&
+              this._getAlarmTime(aAlarm) > Date.now()) {
             alarmQueue.push(aAlarm);
           } else {
             this._removeAlarmFromDb(aAlarm.id, null);
@@ -404,46 +446,65 @@ this.AlarmService = {
 
     aNewAlarm['timezoneOffset'] = this._currentTimezoneOffset;
 
-    this._db.add(aNewAlarm,
-      function addSuccessCb(aNewId) {
-        debug("Callback after adding alarm in database.");
+    if ("manifestURL" in aNewAlarm) {
+      this._db.add(aNewAlarm,
+        function addSuccessCb(aNewId) {
+          debug("Callback after adding alarm in database.");
+          this.processNewAlarm(aNewAlarm, aNewId, aAlarmFiredCb, aSuccessCb);
+        }.bind(this),
+        function addErrorCb(aErrorMsg) {
+          aErrorCb(aErrorMsg);
+        }.bind(this));
+    } else {
+      // alarms without manifests are managed by chrome code. For them we use
+      // negative IDs.
+      this.processNewAlarm(aNewAlarm, --this.lastChromeId, aAlarmFiredCb,
+                           aSuccessCb);
+    }
+  },
 
-        aNewAlarm['id'] = aNewId;
+  processNewAlarm: function(aNewAlarm, aNewId, aAlarmFiredCb, aSuccessCb) {
+    aNewAlarm['id'] = aNewId;
 
-        // Now that the alarm has been added to the database, we can tack on
-        // the non-serializable callback to the in-memory object.
-        aNewAlarm['alarmFiredCb'] = aAlarmFiredCb;
+    // Now that the alarm has been added to the database, we can tack on
+    // the non-serializable callback to the in-memory object.
+    aNewAlarm['alarmFiredCb'] = aAlarmFiredCb;
 
-        // If there is no alarm being set in system, set the new alarm.
-        if (this._currentAlarm == null) {
-          this._currentAlarm = aNewAlarm;
-          this._debugCurrentAlarm();
-          aSuccessCb(aNewId);
-          return;
-        }
+    // If the new alarm already expired at this moment, we directly
+    // notify this alarm
+    let newAlarmTime = this._getAlarmTime(aNewAlarm);
+    if (newAlarmTime < Date.now()) {
+      aSuccessCb(aNewId);
+      this._removeAlarmFromDb(aNewAlarm.id, null);
+      this._notifyAlarmObserver(aNewAlarm);
+      return;
+    }
 
-        // If the new alarm is earlier than the current alarm, swap them and
-        // push the previous alarm back to the queue.
-        let alarmQueue = this._alarmQueue;
-        let aNewAlarmTime = this._getAlarmTime(aNewAlarm);
-        let currentAlarmTime = this._getAlarmTime(this._currentAlarm);
-        if (aNewAlarmTime < currentAlarmTime) {
-          alarmQueue.unshift(this._currentAlarm);
-          this._currentAlarm = aNewAlarm;
-          this._debugCurrentAlarm();
-          aSuccessCb(aNewId);
-          return;
-        }
+    // If there is no alarm being set in system, set the new alarm.
+    if (this._currentAlarm == null) {
+      this._currentAlarm = aNewAlarm;
+      this._debugCurrentAlarm();
+      aSuccessCb(aNewId);
+      return;
+    }
 
-        // Push the new alarm in the queue.
-        alarmQueue.push(aNewAlarm);
-        alarmQueue.sort(this._sortAlarmByTimeStamps.bind(this));
-        this._debugCurrentAlarm();
-        aSuccessCb(aNewId);
-      }.bind(this),
-      function addErrorCb(aErrorMsg) {
-        aErrorCb(aErrorMsg);
-      }.bind(this));
+    // If the new alarm is earlier than the current alarm, swap them and
+    // push the previous alarm back to the queue.
+    let alarmQueue = this._alarmQueue;
+    let currentAlarmTime = this._getAlarmTime(this._currentAlarm);
+    if (newAlarmTime < currentAlarmTime) {
+      alarmQueue.unshift(this._currentAlarm);
+      this._currentAlarm = aNewAlarm;
+      this._debugCurrentAlarm();
+      aSuccessCb(aNewId);
+      return;
+    }
+
+    // Push the new alarm in the queue.
+    alarmQueue.push(aNewAlarm);
+    alarmQueue.sort(this._sortAlarmByTimeStamps.bind(this));
+    this._debugCurrentAlarm();
+    aSuccessCb(aNewId);
   },
 
   /*

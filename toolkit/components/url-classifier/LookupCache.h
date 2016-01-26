@@ -12,8 +12,9 @@
 #include "nsCOMPtr.h"
 #include "nsIFile.h"
 #include "nsIFileStreams.h"
+#include "mozilla/RefPtr.h"
 #include "nsUrlClassifierPrefixSet.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 namespace safebrowsing {
@@ -23,7 +24,8 @@ namespace safebrowsing {
 
 class LookupResult {
 public:
-  LookupResult() : mComplete(false), mNoise(false), mFresh(false), mProtocolConfirmed(false) {}
+  LookupResult() : mComplete(false), mNoise(false),
+                   mFresh(false), mProtocolConfirmed(false) {}
 
   // The fragment that matched in the LookupCache
   union {
@@ -31,8 +33,13 @@ public:
     Completion complete;
   } hash;
 
-  const Prefix &PrefixHash() { return hash.prefix; }
-  const Completion &CompleteHash() { return hash.complete; }
+  const Prefix &PrefixHash() {
+    return hash.prefix;
+  }
+  const Completion &CompleteHash() {
+    MOZ_ASSERT(!mNoise);
+    return hash.complete;
+  }
 
   bool Confirmed() const { return (mComplete && mFresh) || mProtocolConfirmed; }
   bool Complete() const { return mComplete; }
@@ -41,7 +48,10 @@ public:
   bool mComplete;
 
   // True if this is a noise entry, i.e. an extra entry
-  // that is inserted to mask the true URL we are requesting
+  // that is inserted to mask the true URL we are requesting.
+  // Noise entries will not have a complete 256-bit hash as
+  // they are fetched from the local 32-bit database and we
+  // don't know the corresponding full URL.
   bool mNoise;
 
   // True if we've updated this table recently-enough.
@@ -77,13 +87,6 @@ public:
   //  www.mail.hostname.com/foo/bar -> [hostname.com, mail.hostname.com]
   static nsresult GetHostKeys(const nsACString& aSpec,
                               nsTArray<nsCString>* aHostKeys);
-  // Get the database key for a given URI.  This is the top three
-  // domain components if they exist, otherwise the top two.
-  //  hostname.com/foo/bar -> hostname.com
-  //  mail.hostname.com/foo/bar -> mail.hostname.com
-  //  www.mail.hostname.com/foo/bar -> mail.hostname.com
-  static nsresult GetKey(const nsACString& aSpec, Completion* aHash,
-                         nsCOMPtr<nsICryptoHash>& aCryptoHash);
 
   LookupCache(const nsACString& aTableName, nsIFile* aStoreFile);
   ~LookupCache();
@@ -101,7 +104,7 @@ public:
   nsresult GetPrefixes(FallibleTArray<uint32_t>& aAddPrefixes);
   void ClearCompleteCache();
 
-#if DEBUG && defined(PR_LOGGING)
+#if DEBUG
   void Dump();
 #endif
   nsresult WriteFile();
@@ -133,10 +136,10 @@ private:
   nsCOMPtr<nsIFile> mStoreDirectory;
   CompletionArray mCompletions;
   // Set of prefixes known to be in the database
-  nsRefPtr<nsUrlClassifierPrefixSet> mPrefixSet;
+  RefPtr<nsUrlClassifierPrefixSet> mPrefixSet;
 };
 
-}
-}
+} // namespace safebrowsing
+} // namespace mozilla
 
 #endif

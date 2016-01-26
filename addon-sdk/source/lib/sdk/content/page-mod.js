@@ -18,8 +18,7 @@ const { on: domOn, removeListener: domOff } = require('../dom/events');
 const { isRegExp, isUndefined } = require('../lang/type');
 const { merge } = require('../util/object');
 const { isBrowser, getFrames } = require('../window/utils');
-const { getTabs, getTabContentWindow, getTabForContentWindow,
-        getURI: getTabURI } = require('../tabs/utils');
+const { getTabs, getURI: getTabURI } = require('../tabs/utils');
 const { ignoreWindow } = require('../private-browsing/utils');
 const { Style } = require("../stylesheet/style");
 const { attach, detach } = require("../content/mod");
@@ -32,10 +31,10 @@ const { frames, process } = require('../remote/child');
 
 const pagemods = new Map();
 const styles = new WeakMap();
-let styleFor = (mod) => styles.get(mod);
+var styleFor = (mod) => styles.get(mod);
 
 // Helper functions
-let modMatchesURI = (mod, uri) => mod.include.matchesAny(uri) && !mod.exclude.matchesAny(uri);
+var modMatchesURI = (mod, uri) => mod.include.matchesAny(uri) && !mod.exclude.matchesAny(uri);
 
 /**
  * PageMod constructor (exported below).

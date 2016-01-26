@@ -35,7 +35,7 @@ def require_arg(kwargs, name, value_func=None):
 
 
 def create_parser(product_choices=None):
-    from mozlog.structured import commandline
+    from mozlog import commandline
 
     import products
 
@@ -86,6 +86,14 @@ def create_parser(product_choices=None):
                         default=False,
                         help="List the tests that are disabled on the current platform")
 
+    build_type = parser.add_mutually_exclusive_group()
+    build_type.add_argument("--debug-build", dest="debug", action="store_true",
+                            default=None,
+                            help="Build is a debug build (overrides any mozinfo file)")
+    build_type.add_argument("--release-build", dest="debug", action="store_false",
+                            default=None,
+                            help="Build is a release (overrides any mozinfo file)")
+
     test_selection_group = parser.add_argument_group("Test Selection")
     test_selection_group.add_argument("--test-types", action="store",
                                       nargs="*", default=["testharness", "reftest"],
@@ -97,6 +105,8 @@ def create_parser(product_choices=None):
                                       help="URL prefix to exclude")
     test_selection_group.add_argument("--include-manifest", type=abs_path,
                                       help="Path to manifest listing tests to include")
+    test_selection_group.add_argument("--tag", action="append", dest="tags",
+                                      help="Labels applied to tests to include in the run. Labels starting dir: are equivalent to top-level directories.")
 
     debugging_group = parser.add_argument_group("Debugging")
     debugging_group.add_argument('--debugger', const="__default__", nargs="?",
@@ -144,10 +154,21 @@ def create_parser(product_choices=None):
     gecko_group = parser.add_argument_group("Gecko-specific")
     gecko_group.add_argument("--prefs-root", dest="prefs_root", action="store", type=abs_path,
                              help="Path to the folder containing browser prefs")
+    gecko_group.add_argument("--e10s", dest="gecko_e10s", action="store_true",
+                             help="Run tests with electrolysis preferences")
 
     b2g_group = parser.add_argument_group("B2G-specific")
     b2g_group.add_argument("--b2g-no-backup", action="store_true", default=False,
                            help="Don't backup device before testrun with --product=b2g")
+
+    servo_group = parser.add_argument_group("Servo-specific")
+    servo_group.add_argument("--user-stylesheet",
+                             default=[], action="append", dest="user_stylesheets",
+                             help="Inject a user CSS stylesheet into every test.")
+    servo_group.add_argument("--servo-backend",
+                             default="cpu", choices=["cpu", "webrender"],
+                             help="Rendering backend to use with Servo.")
+
 
     parser.add_argument("test_list", nargs="*",
                         help="List of URLs for tests to run, or paths including tests to run. "
@@ -275,7 +296,7 @@ def check_args(kwargs):
             kwargs["debugger"] = mozdebug.get_default_debugger_name()
         debug_info = mozdebug.get_debugger_info(kwargs["debugger"],
                                                 kwargs["debugger_args"])
-        if debug_info.interactive:
+        if debug_info and debug_info.interactive:
             if kwargs["processes"] != 1:
                 kwargs["processes"] = 1
             kwargs["no_capture_stdio"] = True
@@ -317,12 +338,25 @@ def check_args(kwargs):
 
     return kwargs
 
+def check_args_update(kwargs):
+    set_from_config(kwargs)
 
-def create_parser_update():
+    if kwargs["product"] is None:
+        kwargs["product"] = "firefox"
+
+def create_parser_update(product_choices=None):
     from mozlog.structured import commandline
+
+    import products
+
+    if product_choices is None:
+        config_data = config.load()
+        product_choices = products.products_enabled(config_data)
 
     parser = argparse.ArgumentParser("web-platform-tests-update",
                                      description="Update script for web-platform-tests tests.")
+    parser.add_argument("--product", action="store", choices=product_choices,
+                        default=None, help="Browser for which metadata is being updated")
     parser.add_argument("--config", action="store", type=abs_path, help="Path to config file")
     parser.add_argument("--metadata", action="store", type=abs_path, dest="metadata_root",
                         help="Path to the folder containing test metadata"),
@@ -365,7 +399,7 @@ def parse_args():
 def parse_args_update():
     parser = create_parser_update()
     rv = vars(parser.parse_args())
-    set_from_config(rv)
+    check_args_update(rv)
     return rv
 
 

@@ -7,40 +7,54 @@
 #define GFX_VR_OCULUS_H
 
 #include "nsTArray.h"
-#include "nsIScreen.h"
-#include "nsCOMPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/EnumeratedArray.h"
 
 #include "gfxVR.h"
+//#include <OVR_CAPI.h>
+//#include <OVR_CAPI_D3D.h>
 #include "ovr_capi_dynamic.h"
 
 namespace mozilla {
 namespace gfx {
 namespace impl {
 
-class HMDInfoOculus : public VRHMDInfo {
+class HMDInfoOculus : public VRHMDInfo, public VRHMDRenderingSupport {
 public:
-  explicit HMDInfoOculus(ovrHmd aHMD);
+  explicit HMDInfoOculus(ovrSession aSession);
 
   bool SetFOV(const VRFieldOfView& aFOVLeft, const VRFieldOfView& aFOVRight,
               double zNear, double zFar) override;
 
-  bool StartSensorTracking() override;
   VRHMDSensorState GetSensorState(double timeOffset) override;
-  void StopSensorTracking() override;
   void ZeroSensor() override;
+  bool KeepSensorTracking() override;
+  void NotifyVsync(const TimeStamp& aVsyncTimestamp) override;
 
   void FillDistortionConstants(uint32_t whichEye,
                                const IntSize& textureSize, const IntRect& eyeViewport,
                                const Size& destViewport, const Rect& destRect,
                                VRDistortionConstants& values) override;
 
+  VRHMDRenderingSupport* GetRenderingSupport() override { return this; }
+  
   void Destroy();
 
+  /* VRHMDRenderingSupport */
+  already_AddRefed<RenderTargetSet> CreateRenderTargetSet(layers::Compositor *aCompositor, const IntSize& aSize) override;
+  void DestroyRenderTargetSet(RenderTargetSet *aRTSet) override;
+  void SubmitFrame(RenderTargetSet *aRTSet) override;
+
+  ovrSession GetOculusSession() const { return mSession; }
+
 protected:
+  virtual ~HMDInfoOculus() {
+      Destroy();
+      MOZ_COUNT_DTOR_INHERITED(HMDInfoOculus, VRHMDInfo);
+  }
+
   // must match the size of VRDistortionVertex
   struct DistortionVertex {
     float pos[2];
@@ -50,14 +64,10 @@ protected:
     float genericAttribs[4];
   };
 
-  virtual ~HMDInfoOculus() {
-      Destroy();
-      MOZ_COUNT_DTOR_INHERITED(HMDInfoOculus, VRHMDInfo);
-  }
-
-  ovrHmd mHMD;
+  ovrSession mSession;
+  ovrHmdDesc mDesc;
   ovrFovPort mFOVPort[2];
-  uint32_t mStartCount;
+  ovrTrackingState mLastTrackingState;
 };
 
 } // namespace impl
@@ -65,18 +75,18 @@ protected:
 class VRHMDManagerOculus : public VRHMDManager
 {
 public:
-  VRHMDManagerOculus()
-    : mOculusInitialized(false), mOculusPlatformInitialized(false)
-  { }
-
-  virtual bool PlatformInit() override;
+  static already_AddRefed<VRHMDManagerOculus> Create();
   virtual bool Init() override;
   virtual void Destroy() override;
-  virtual void GetHMDs(nsTArray<nsRefPtr<VRHMDInfo> >& aHMDResult) override;
+  virtual void GetHMDs(nsTArray<RefPtr<VRHMDInfo> >& aHMDResult) override;
 protected:
-  nsTArray<nsRefPtr<impl::HMDInfoOculus>> mOculusHMDs;
+  VRHMDManagerOculus()
+    : mOculusInitialized(false)
+  { }
+
+  RefPtr<impl::HMDInfoOculus> mHMDInfo;
   bool mOculusInitialized;
-  bool mOculusPlatformInitialized;
+  RefPtr<nsIThread> mOculusThread;
 };
 
 } // namespace gfx

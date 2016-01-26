@@ -15,7 +15,9 @@ BEGIN_TEST(testDebugger_newScriptHook)
 {
     // Test that top-level indirect eval fires the newScript hook.
     CHECK(JS_DefineDebuggerObject(cx, global));
-    JS::RootedObject g(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
+    JS::CompartmentOptions options;
+    JS::RootedObject g(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
+                                              JS::FireOnNewGlobalHook, options));
     CHECK(g);
     {
         JSAutoCompartment ae(cx, g);
@@ -57,7 +59,7 @@ bool testIndirectEval(JS::HandleObject scope, const char* code)
 
     JS::RootedValue hitsv(cx);
     EVAL("hits", &hitsv);
-    CHECK_SAME(hitsv, INT_TO_JSVAL(1));
+    CHECK(hitsv.isInt32(1));
     return true;
 }
 END_TEST(testDebugger_newScriptHook)

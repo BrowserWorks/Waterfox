@@ -12,6 +12,7 @@
 #include "mozilla/ClearOnShutdown.h"
 
 #include "nsPrintfCString.h"
+#include "nsIScriptSecurityManager.h"
 
 // XXX need another bug to move this to a common header.
 #ifdef DISABLE_ASSERTS_FOR_FUZZING
@@ -32,7 +33,7 @@ ContentProcessManager::sSingleton;
 /* static */ ContentProcessManager*
 ContentProcessManager::GetSingleton()
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
 
   if (!sSingleton) {
     sSingleton = new ContentProcessManager();
@@ -149,10 +150,9 @@ ContentProcessManager::AllocateTabId(const TabId& aOpenerTabId,
 
   struct RemoteFrameInfo info;
 
-  const IPCTabAppBrowserContext& appBrowser = aContext.appBrowserContext();
   // If it's a PopupIPCTabContext, it's the case that a TabChild want to
   // open a new tab. aOpenerTabId has to be it's parent frame's opener id.
-  if (appBrowser.type() == IPCTabAppBrowserContext::TPopupIPCTabContext) {
+  if (aContext.type() == IPCTabContext::TPopupIPCTabContext) {
     auto remoteFrameIter = iter->second.mRemoteFrames.find(aOpenerTabId);
     if (remoteFrameIter == iter->second.mRemoteFrames.end()) {
       ASSERT_UNLESS_FUZZING("Failed to find parent frame's opener id.");
@@ -161,7 +161,7 @@ ContentProcessManager::AllocateTabId(const TabId& aOpenerTabId,
 
     info.mOpenerTabId = remoteFrameIter->second.mOpenerTabId;
 
-    const PopupIPCTabContext &ipcContext = appBrowser.get_PopupIPCTabContext();
+    const PopupIPCTabContext &ipcContext = aContext.get_PopupIPCTabContext();
     MOZ_ASSERT(ipcContext.opener().type() == PBrowserOrId::TTabId);
 
     remoteFrameIter = iter->second.mRemoteFrames.find(ipcContext.opener().get_TabId());
@@ -289,10 +289,9 @@ ContentProcessManager::GetTabParentByProcessAndTabId(const ContentParentId& aChi
     return nullptr;
   }
 
-  const InfallibleTArray<PBrowserParent*>& browsers =
-    iter->second.mCp->ManagedPBrowserParent();
-  for (uint32_t i = 0; i < browsers.Length(); i++) {
-    nsRefPtr<TabParent> tab = TabParent::GetFrom(browsers[i]);
+  const ManagedContainer<PBrowserParent>& browsers = iter->second.mCp->ManagedPBrowserParent();
+  for (auto iter = browsers.ConstIter(); !iter.Done(); iter.Next()) {
+    RefPtr<TabParent> tab = TabParent::GetFrom(iter.Get()->GetKey());
     if (tab->GetTabId() == aChildTabId) {
       return tab.forget();
     }
@@ -332,6 +331,41 @@ ContentProcessManager::GetTopLevelTabParentByProcessAndTabId(const ContentParent
 
   // Get the top level TabParent by the current ContentParentId and TabId
   return GetTabParentByProcessAndTabId(currentCpId, currentTabId);
+}
+
+nsTArray<TabId>
+ContentProcessManager::GetTabParentsByProcessId(const ContentParentId& aChildCpId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsTArray<TabId> tabIdList;
+  auto iter = mContentParentMap.find(aChildCpId);
+  if (NS_WARN_IF(iter == mContentParentMap.end())) {
+    ASSERT_UNLESS_FUZZING();
+    return Move(tabIdList);
+  }
+
+  for (auto remoteFrameIter = iter->second.mRemoteFrames.begin();
+      remoteFrameIter != iter->second.mRemoteFrames.end();
+      ++remoteFrameIter) {
+    tabIdList.AppendElement(remoteFrameIter->first);
+  }
+
+  return Move(tabIdList);
+}
+
+uint32_t
+ContentProcessManager::GetAppIdByProcessAndTabId(const ContentParentId& aChildCpId,
+                                                 const TabId& aChildTabId)
+{
+  uint32_t appId = nsIScriptSecurityManager::NO_APP_ID;
+  if (aChildCpId && aChildTabId) {
+    TabContext tabContext;
+    if (GetTabContextByProcessAndTabId(aChildCpId, aChildTabId, &tabContext)) {
+      appId = tabContext.OwnOrContainingAppId();
+    }
+  }
+  return appId;
 }
 
 } // namespace dom

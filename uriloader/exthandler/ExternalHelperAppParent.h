@@ -10,10 +10,11 @@
 #include "nsIResumableChannel.h"
 #include "nsIStreamListener.h"
 #include "nsHashPropertyBag.h"
+#include "PrivateBrowsingChannel.h"
 
 namespace IPC {
 class URI;
-}
+} // namespace IPC
 
 namespace mozilla {
 
@@ -36,6 +37,7 @@ class ExternalHelperAppParent : public PExternalHelperAppParent
                               , public nsIMultiPartChannel
                               , public nsIResumableChannel
                               , public nsIStreamListener
+                              , public net::PrivateBrowsingChannel<ExternalHelperAppParent>
 {
     typedef mozilla::ipc::OptionalURIParams OptionalURIParams;
 

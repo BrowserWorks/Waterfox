@@ -5,13 +5,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mp4_demuxer/Box.h"
-#include "mp4_demuxer/mp4_demuxer.h"
+#include "mp4_demuxer/Stream.h"
 #include "mozilla/Endian.h"
 #include <algorithm>
 
 using namespace mozilla;
 
 namespace mp4_demuxer {
+
+// Limit reads to 32MiB max.
+// static
+const uint64_t Box::kMAX_BOX_READ = 32 * 1024 * 1024;
 
 // Returns the offset from the start of the body of a box of type |aType|
 // to the start of its first child.
@@ -40,6 +44,11 @@ Box::Box(BoxContext* aContext, uint64_t aOffset, const Box* aParent)
   : mContext(aContext), mParent(aParent)
 {
   uint8_t header[8];
+
+  if (aOffset > INT64_MAX - sizeof(header)) {
+    return;
+  }
+
   MediaByteRange headerRange(aOffset, aOffset + sizeof(header));
   if (mParent && !mParent->mRange.Contains(headerRange)) {
     return;
@@ -51,7 +60,7 @@ Box::Box(BoxContext* aContext, uint64_t aOffset, const Box* aParent)
       return;
     }
 
-    byteRange = &mContext->mByteRanges[i];
+    byteRange = static_cast<const MediaByteRange*>(&mContext->mByteRanges[i]);
     if (byteRange->Contains(headerRange)) {
       break;
     }
@@ -67,25 +76,41 @@ Box::Box(BoxContext* aContext, uint64_t aOffset, const Box* aParent)
   uint64_t size = BigEndian::readUint32(header);
   if (size == 1) {
     uint8_t bigLength[8];
+    if (aOffset > INT64_MAX - sizeof(header) - sizeof(bigLength)) {
+      return;
+    }
     MediaByteRange bigLengthRange(headerRange.mEnd,
                                   headerRange.mEnd + sizeof(bigLength));
     if ((mParent && !mParent->mRange.Contains(bigLengthRange)) ||
         !byteRange->Contains(bigLengthRange) ||
-        !mContext->mSource->CachedReadAt(aOffset, bigLength,
+        !mContext->mSource->CachedReadAt(aOffset + sizeof(header), bigLength,
                                          sizeof(bigLength), &bytes) ||
         bytes != sizeof(bigLength)) {
       return;
     }
     size = BigEndian::readUint64(bigLength);
     mBodyOffset = bigLengthRange.mEnd;
+  } else if (size == 0) {
+    // box extends to end of file.
+    size = mContext->mByteRanges.LastInterval().mEnd - aOffset;
+    mBodyOffset = headerRange.mEnd;
   } else {
     mBodyOffset = headerRange.mEnd;
+  }
+
+  if (size > INT64_MAX) {
+    return;
+  }
+  int64_t end = static_cast<int64_t>(aOffset) + static_cast<int64_t>(size);
+  if (end < static_cast<int64_t>(aOffset)) {
+    // Overflowed.
+    return;
   }
 
   mType = BigEndian::readUint32(&header[4]);
   mChildOffset = mBodyOffset + BoxOffset(mType);
 
-  MediaByteRange boxRange(aOffset, aOffset + size);
+  MediaByteRange boxRange(aOffset, end);
   if (mChildOffset > boxRange.mEnd ||
       (mParent && !mParent->mRange.Contains(boxRange)) ||
       !byteRange->Contains(boxRange)) {
@@ -128,8 +153,8 @@ Box::Read(nsTArray<uint8_t>* aDest, const MediaByteRange& aRange)
   int64_t length;
   if (!mContext->mSource->Length(&length)) {
     // The HTTP server didn't give us a length to work with.
-    // Limit the read to 32MiB max.
-    length = std::min(aRange.mEnd - mChildOffset, uint64_t(32 * 1024 * 1024));
+    // Limit the read to kMAX_BOX_READ max.
+    length = std::min(aRange.mEnd - mChildOffset, kMAX_BOX_READ);
   } else {
     length = aRange.mEnd - mChildOffset;
   }

@@ -12,7 +12,8 @@
 #include "AudioSampleFormat.h"
 #include "nsIMemoryReporter.h"
 #include "SharedBuffer.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -20,10 +21,10 @@ namespace mozilla {
 namespace layers {
 class Image;
 class ImageContainer;
-}
+} // namespace layers
 
-class MediaLargeByteBuffer;
 class MediaByteBuffer;
+class SharedTrackInfo;
 
 // Container that holds media samples.
 class MediaData {
@@ -40,12 +41,14 @@ public:
   MediaData(Type aType,
             int64_t aOffset,
             int64_t aTimestamp,
-            int64_t aDuration)
+            int64_t aDuration,
+            uint32_t aFrames)
     : mType(aType)
     , mOffset(aOffset)
     , mTime(aTimestamp)
     , mTimecode(aTimestamp)
     , mDuration(aDuration)
+    , mFrames(aFrames)
     , mKeyframe(false)
     , mDiscontinuity(false)
   {}
@@ -66,6 +69,9 @@ public:
   // Duration of sample, in microseconds.
   int64_t mDuration;
 
+  // Amount of frames for contained data.
+  const uint32_t mFrames;
+
   bool mKeyframe;
 
   // True if this is the first sample after a gap or discontinuity in
@@ -74,13 +80,34 @@ public:
 
   int64_t GetEndTime() const { return mTime + mDuration; }
 
+  bool AdjustForStartTime(int64_t aStartTime)
+  {
+    mTime = mTime - aStartTime;
+    return mTime >= 0;
+  }
+
+  template <typename ReturnType>
+  const ReturnType* As() const
+  {
+    MOZ_ASSERT(this->mType == ReturnType::sType);
+    return static_cast<const ReturnType*>(this);
+  }
+
+  template <typename ReturnType>
+  ReturnType* As()
+  {
+    MOZ_ASSERT(this->mType == ReturnType::sType);
+    return static_cast<ReturnType*>(this);
+  }
+
 protected:
-  explicit MediaData(Type aType)
+  MediaData(Type aType, uint32_t aFrames)
     : mType(aType)
     , mOffset(0)
     , mTime(0)
     , mTimecode(0)
     , mDuration(0)
+    , mFrames(aFrames)
     , mKeyframe(false)
     , mDiscontinuity(false)
   {}
@@ -97,16 +124,18 @@ public:
             int64_t aTime,
             int64_t aDuration,
             uint32_t aFrames,
-            AudioDataValue* aData,
+            UniquePtr<AudioDataValue[]> aData,
             uint32_t aChannels,
             uint32_t aRate)
-    : MediaData(AUDIO_DATA, aOffset, aTime, aDuration)
-    , mFrames(aFrames)
+    : MediaData(sType, aOffset, aTime, aDuration, aFrames)
     , mChannels(aChannels)
     , mRate(aRate)
-    , mAudioData(aData) {}
+    , mAudioData(Move(aData)) {}
 
-  // Creates a new VideoData identical to aOther, but with a different
+  static const Type sType = AUDIO_DATA;
+  static const char* sTypeName;
+
+  // Creates a new AudioData identical to aOther, but with a different
   // specified timestamp and duration. All data from aOther is copied
   // into the new AudioData but the audio data which is transferred.
   // After such call, the original aOther is unusable.
@@ -120,14 +149,17 @@ public:
   // If mAudioBuffer is null, creates it from mAudioData.
   void EnsureAudioBuffer();
 
-  const uint32_t mFrames;
+  // To check whether mAudioData has audible signal, it's used to distinguish
+  // the audiable data and silent data.
+  bool IsAudible() const;
+
   const uint32_t mChannels;
   const uint32_t mRate;
   // At least one of mAudioBuffer/mAudioData must be non-null.
   // mChannels channels, each with mFrames frames
-  nsRefPtr<SharedBuffer> mAudioBuffer;
+  RefPtr<SharedBuffer> mAudioBuffer;
   // mFrames frames, each with mChannels values
-  nsAutoArrayPtr<AudioDataValue> mAudioData;
+  UniquePtr<AudioDataValue[]> mAudioData;
 
 protected:
   ~AudioData() {}
@@ -136,7 +168,7 @@ protected:
 namespace layers {
 class TextureClient;
 class PlanarYCbCrImage;
-}
+} // namespace layers
 
 class VideoInfo;
 
@@ -148,6 +180,9 @@ public:
   typedef layers::ImageContainer ImageContainer;
   typedef layers::Image Image;
   typedef layers::PlanarYCbCrImage PlanarYCbCrImage;
+
+  static const Type sType = VIDEO_DATA;
+  static const char* sTypeName;
 
   // YCbCr data obtained from decoding the video. The index's are:
   //   0 = Y
@@ -222,7 +257,7 @@ public:
                                                      int64_t aOffset,
                                                      int64_t aTime,
                                                      int64_t aDuration,
-                                                     const nsRefPtr<Image>& aImage,
+                                                     const RefPtr<Image>& aImage,
                                                      bool aKeyframe,
                                                      int64_t aTimecode,
                                                      const IntRect& aPicture);
@@ -252,23 +287,11 @@ public:
 
   // Initialize PlanarYCbCrImage. Only When aCopyData is true,
   // video data is copied to PlanarYCbCrImage.
-  static void SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
+  static bool SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
                                   const VideoInfo& aInfo,
                                   const YCbCrBuffer &aBuffer,
                                   const IntRect& aPicture,
                                   bool aCopyData);
-
-  // Constructs a duplicate VideoData object. This intrinsically tells the
-  // player that it does not need to update the displayed frame when this
-  // frame is played; this frame is identical to the previous.
-  static already_AddRefed<VideoData> CreateDuplicate(int64_t aOffset,
-                                                     int64_t aTime,
-                                                     int64_t aDuration,
-                                                     int64_t aTimecode)
-  {
-    nsRefPtr<VideoData> rv = new VideoData(aOffset, aTime, aDuration, aTimecode);
-    return rv.forget();
-  }
 
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
@@ -278,23 +301,19 @@ public:
   const IntSize mDisplay;
 
   // This frame's image.
-  nsRefPtr<Image> mImage;
+  RefPtr<Image> mImage;
 
-  // When true, denotes that this frame is identical to the frame that
-  // came before; it's a duplicate. mBuffer will be empty.
-  const bool mDuplicate;
+  int32_t mFrameID;
 
-  VideoData(int64_t aOffset,
-            int64_t aTime,
-            int64_t aDuration,
-            int64_t aTimecode);
+  bool mSentToCompositor;
 
   VideoData(int64_t aOffset,
             int64_t aTime,
             int64_t aDuration,
             bool aKeyframe,
             int64_t aTimecode,
-            IntSize aDisplay);
+            IntSize aDisplay,
+            uint32_t aFrameID);
 
 protected:
   ~VideoData();
@@ -303,7 +322,7 @@ protected:
 class CryptoTrack
 {
 public:
-  CryptoTrack() : mValid(false) {}
+  CryptoTrack() : mValid(false), mMode(0), mIVSize(0) {}
   bool mValid;
   int32_t mMode;
   int32_t mIVSize;
@@ -346,9 +365,9 @@ class MediaRawDataWriter
 {
 public:
   // Pointer to data or null if not-yet allocated
-  uint8_t* mData;
+  uint8_t* Data();
   // Writeable size of buffer.
-  size_t mSize;
+  size_t Size();
   // Writeable reference to MediaRawData::mCryptoInternal
   CryptoSample& mCrypto;
 
@@ -361,7 +380,7 @@ public:
   bool Prepend(const uint8_t* aData, size_t aSize);
   // Replace current content with aData.
   bool Replace(const uint8_t* aData, size_t aSize);
-  // Clear the memory buffer. Will set mData and mSize to 0.
+  // Clear the memory buffer. Will set target mData and mSize to 0.
   void Clear();
 
 private:
@@ -369,7 +388,6 @@ private:
   explicit MediaRawDataWriter(MediaRawData* aMediaRawData);
   bool EnsureSize(size_t aSize);
   MediaRawData* mTarget;
-  nsRefPtr<MediaLargeByteBuffer> mBuffer;
 };
 
 class MediaRawData : public MediaData {
@@ -378,12 +396,18 @@ public:
   MediaRawData(const uint8_t* aData, size_t mSize);
 
   // Pointer to data or null if not-yet allocated
-  const uint8_t* mData;
+  const uint8_t* Data() const { return mData; }
   // Size of buffer.
-  size_t mSize;
+  size_t Size() const { return mSize; }
+  size_t ComputedSizeOfIncludingThis() const
+  {
+    return sizeof(*this) + mCapacity;
+  }
 
   const CryptoSample& mCrypto;
-  nsRefPtr<MediaByteBuffer> mExtraData;
+  RefPtr<MediaByteBuffer> mExtraData;
+
+  RefPtr<SharedTrackInfo> mTrackInfo;
 
   // Return a deep copy or nullptr if out of memory.
   virtual already_AddRefed<MediaRawData> Clone() const;
@@ -403,26 +427,19 @@ private:
   // read as required by some data decoders.
   // Returns false if memory couldn't be allocated.
   bool EnsureCapacity(size_t aSize);
-  nsRefPtr<MediaLargeByteBuffer> mBuffer;
+  uint8_t* mData;
+  size_t mSize;
+  UniquePtr<uint8_t[]> mBuffer;
+  uint32_t mCapacity;
   CryptoSample mCryptoInternal;
-  uint32_t mPadding;
   MediaRawData(const MediaRawData&); // Not implemented
-};
-
-  // MediaLargeByteBuffer is a ref counted fallible TArray.
-  // It is designed to share potentially big byte arrays.
-class MediaLargeByteBuffer : public FallibleTArray<uint8_t> {
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaLargeByteBuffer);
-  MediaLargeByteBuffer() = default;
-  explicit MediaLargeByteBuffer(size_t aCapacity) : FallibleTArray<uint8_t>(aCapacity) {}
-
-private:
-  ~MediaLargeByteBuffer() {}
 };
 
   // MediaByteBuffer is a ref counted infallible TArray.
 class MediaByteBuffer : public nsTArray<uint8_t> {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaByteBuffer);
+  MediaByteBuffer() = default;
+  explicit MediaByteBuffer(size_t aCapacity) : nsTArray<uint8_t>(aCapacity) {}
 
 private:
   ~MediaByteBuffer() {}

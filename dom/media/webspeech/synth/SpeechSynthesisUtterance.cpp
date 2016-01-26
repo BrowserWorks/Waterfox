@@ -55,7 +55,7 @@ already_AddRefed<SpeechSynthesisUtterance>
 SpeechSynthesisUtterance::Constructor(GlobalObject& aGlobal,
                                       ErrorResult& aRv)
 {
-  return Constructor(aGlobal, NS_LITERAL_STRING(""), aRv);
+  return Constructor(aGlobal, EmptyString(), aRv);
 }
 
 already_AddRefed<SpeechSynthesisUtterance>
@@ -70,7 +70,7 @@ SpeechSynthesisUtterance::Constructor(GlobalObject& aGlobal,
   }
 
   MOZ_ASSERT(win->IsInnerWindow());
-  nsRefPtr<SpeechSynthesisUtterance> object =
+  RefPtr<SpeechSynthesisUtterance> object =
     new SpeechSynthesisUtterance(win, aText);
   return object.forget();
 }
@@ -162,11 +162,12 @@ SpeechSynthesisUtterance::DispatchSpeechSynthesisEvent(const nsAString& aEventTy
   SpeechSynthesisEventInit init;
   init.mBubbles = false;
   init.mCancelable = false;
+  init.mUtterance = this;
   init.mCharIndex = aCharIndex;
   init.mElapsedTime = aElapsedTime;
   init.mName = aName;
 
-  nsRefPtr<SpeechSynthesisEvent> event =
+  RefPtr<SpeechSynthesisEvent> event =
     SpeechSynthesisEvent::Constructor(this, aEventType, init);
   DispatchTrustedEvent(event);
 }

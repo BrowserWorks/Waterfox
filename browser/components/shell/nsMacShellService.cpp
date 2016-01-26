@@ -17,7 +17,8 @@
 #include "nsIURL.h"
 #include "nsIWebBrowserPersist.h"
 #include "nsMacShellService.h"
-#include "nsNetUtil.h"
+#include "nsIProperties.h"
+#include "nsServiceManagerUtils.h"
 #include "nsShellService.h"
 #include "nsStringAPI.h"
 #include "nsIDocShell.h"
@@ -56,12 +57,6 @@ nsMacShellService::IsDefaultBrowser(bool aStartupCheck,
     ::CFRelease(defaultBrowserID);
   }
 
-  // If this is the first browser window, maintain internal state that we've
-  // checked this session (so that subsequent window opens don't show the 
-  // default browser dialog).
-  if (aStartupCheck)
-    mCheckedThisSession = true;
-
   return NS_OK;
 }
 
@@ -94,46 +89,11 @@ nsMacShellService::SetDefaultBrowser(bool aClaimAllTypes, bool aForAllUsers)
   nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID));
   if (prefs) {
     (void) prefs->SetBoolPref(PREF_CHECKDEFAULTBROWSER, true);
+    // Reset the number of times the dialog should be shown
+    // before it is silenced.
+    (void) prefs->SetIntPref(PREF_DEFAULTBROWSERCHECKCOUNT, 0);
   }
 
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsMacShellService::GetShouldCheckDefaultBrowser(bool* aResult)
-{
-  // If we've already checked, the browser has been started and this is a 
-  // new window open, and we don't want to check again.
-  if (mCheckedThisSession) {
-    *aResult = false;
-    return NS_OK;
-  }
-
-  nsresult rv;
-  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return prefs->GetBoolPref(PREF_CHECKDEFAULTBROWSER, aResult);
-}
-
-NS_IMETHODIMP
-nsMacShellService::SetShouldCheckDefaultBrowser(bool aShouldCheck)
-{
-  nsresult rv;
-  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return prefs->SetBoolPref(PREF_CHECKDEFAULTBROWSER, aShouldCheck);
-}
-
-NS_IMETHODIMP
-nsMacShellService::GetCanSetDesktopBackground(bool* aResult)
-{
-  *aResult = true;
   return NS_OK;
 }
 
@@ -355,8 +315,7 @@ nsMacShellService::OpenApplication(int32_t aApplication)
       if (!exists)
         return NS_ERROR_FILE_NOT_FOUND;
       return lf->Launch();
-    }  
-    break;
+    }
   case nsIMacShellService::APPLICATION_DESKTOP:
     {
       nsCOMPtr<nsIFile> lf;
@@ -367,8 +326,7 @@ nsMacShellService::OpenApplication(int32_t aApplication)
       if (!exists)
         return NS_ERROR_FILE_NOT_FOUND;
       return lf->Launch();
-    }  
-    break;
+    }
   }
 
   if (appURL && err == noErr) {

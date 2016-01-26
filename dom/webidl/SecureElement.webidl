@@ -15,6 +15,8 @@ enum SEError {
   "SEBadStateError",            // Error occuring as a result of bad state.
   "SEInvalidChannelError",      // Opening a channel failed because no channel is available.
   "SEInvalidApplicationError",  // The requested application was not found on the secure element.
+  "SENotPresentError",          // Secure Element is not present
+  "SEIllegalParameterError",    // Request operation does not have valid parameters.
   "SEGenericError"              // Generic failures.
 };
 
@@ -35,7 +37,7 @@ dictionary SECommand {
 };
 
 [Pref="dom.secureelement.enabled",
- CheckPermissions="secureelement-manage",
+ CheckAnyPermissions="secureelement-manage",
  AvailableIn="CertifiedApps",
  JSImplementation="@mozilla.org/secureelement/reader;1"]
 interface SEReader {
@@ -64,7 +66,7 @@ interface SEReader {
 };
 
 [Pref="dom.secureelement.enabled",
- CheckPermissions="secureelement-manage",
+ CheckAnyPermissions="secureelement-manage",
  AvailableIn="CertifiedApps",
  JSImplementation="@mozilla.org/secureelement/session;1"]
 interface SESession {
@@ -100,7 +102,7 @@ interface SESession {
 };
 
 [Pref="dom.secureelement.enabled",
- CheckPermissions="secureelement-manage",
+ CheckAnyPermissions="secureelement-manage",
  AvailableIn="CertifiedApps",
  JSImplementation="@mozilla.org/secureelement/channel;1"]
 interface SEChannel {
@@ -140,7 +142,7 @@ interface SEChannel {
 };
 
 [Pref="dom.secureelement.enabled",
- CheckPermissions="secureelement-manage",
+ CheckAnyPermissions="secureelement-manage",
  AvailableIn="CertifiedApps",
  JSImplementation="@mozilla.org/secureelement/response;1"]
 interface SEResponse {

@@ -12,7 +12,6 @@
 #include "mozilla/Attributes.h"
 #include "AudioContext.h"
 #include "AudioNodeEngine.h"
-#include "nsAutoPtr.h"
 
 namespace mozilla {
 
@@ -35,7 +34,7 @@ public:
     return mContext;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint32_t DataLength() const
   {
@@ -53,12 +52,12 @@ public:
 private:
   ~PeriodicWave() {}
 
-  nsRefPtr<AudioContext> mContext;
-  nsRefPtr<ThreadSharedFloatArrayBufferList> mCoefficients;
+  RefPtr<AudioContext> mContext;
+  RefPtr<ThreadSharedFloatArrayBufferList> mCoefficients;
   uint32_t mLength;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "gmp-entrypoints.h"
 
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
 #include "mozilla/Sandbox.h"
 #endif
 
@@ -21,7 +21,7 @@ class SandboxStarter {
 public:
   virtual ~SandboxStarter() {}
   virtual bool Start(const char* aLibPath) = 0;
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
   // On OS X we need to set Mac-specific sandbox info just before we start the
   // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
   // objects are created.
@@ -52,7 +52,7 @@ public:
   // Calculates the device-bound node id, then activates the sandbox,
   // then loads the GMP library and (if applicable) passes the bound node id
   // to the GMP.
-  virtual bool Load(const char* aLibPath,
+  virtual bool Load(const char* aUTF8LibPath,
                     uint32_t aLibPathLen,
                     char* aOriginSalt,
                     uint32_t aOriginSaltLen,
@@ -65,7 +65,7 @@ public:
   // plugin library.
   virtual void Shutdown() = 0;
 
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
   // On OS X we need to set Mac-specific sandbox info just before we start the
   // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
   // objects are created.

@@ -189,6 +189,20 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::border, aBorder, aError);
   }
+  void SetReferrerPolicy(const nsAString& aReferrer, ErrorResult& aError)
+  {
+    SetHTMLAttr(nsGkAtoms::referrerpolicy, aReferrer, aError);
+  }
+  void GetReferrerPolicy(nsAString& aReferrer)
+  {
+    GetHTMLAttr(nsGkAtoms::referrerpolicy, aReferrer);
+  }
+
+  net::ReferrerPolicy
+  GetImageReferrerPolicy() override
+  {
+    return GetReferrerPolicyAsEnum();
+  }
 
   int32_t X();
   int32_t Y();
@@ -251,6 +265,12 @@ public:
                                 const nsAString& aMediaAttr,
                                 nsAString& aResult);
 
+  /**
+   * If this image's src pointers to an SVG document, flush the SVG document's
+   * use counters to telemetry.  Only used for testing purposes.
+   */
+  void FlushUseCounters();
+
 protected:
   virtual ~HTMLImageElement();
 
@@ -260,7 +280,7 @@ protected:
   // algorithm (InResponsiveMode()) -- synchronous actions when just
   // using img.src will bypass this, and update source and kick off
   // image load synchronously.
-  void QueueImageLoadTask();
+  void QueueImageLoadTask(bool aAlwaysLoad);
 
   // True if we have a srcset attribute or a <picture> parent, regardless of if
   // any valid responsive sources were parsed from either.
@@ -272,7 +292,7 @@ protected:
 
   // Resolve and load the current mResponsiveSelector (responsive mode) or src
   // attr image.
-  nsresult LoadSelectedImage(bool aForce, bool aNotify);
+  nsresult LoadSelectedImage(bool aForce, bool aNotify, bool aAlwaysLoad);
 
   // True if this string represents a type we would support on <source type>
   static bool SupportedPictureSourceType(const nsAString& aType);
@@ -301,7 +321,9 @@ protected:
   // the existing mResponsiveSelector, meaning you need to update its
   // parameters as appropriate before calling (or null it out to force
   // recreation)
-  void UpdateResponsiveSource();
+  //
+  // Returns true if the source has changed, and false otherwise.
+  bool UpdateResponsiveSource();
 
   // Given a <source> node that is a previous sibling *or* ourselves, try to
   // create a ResponsiveSelector.
@@ -320,7 +342,7 @@ protected:
   void UpdateFormOwner();
 
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 const nsAttrValueOrString* aValue,
+                                 nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
@@ -331,7 +353,7 @@ protected:
   HTMLFormElement* mForm;
 
   // Created when we're tracking responsive image state
-  nsRefPtr<ResponsiveImageSelector> mResponsiveSelector;
+  RefPtr<ResponsiveImageSelector> mResponsiveSelector;
 
 private:
   bool SourceElementMatches(nsIContent* aSourceNode);
@@ -339,6 +361,7 @@ private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     nsRuleData* aData);
 
+  bool mInDocResponsiveContent;
   nsCOMPtr<nsIRunnable> mPendingImageLoadTask;
 };
 

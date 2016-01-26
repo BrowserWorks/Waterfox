@@ -21,7 +21,7 @@ add_task(function session_storage() {
   yield promiseBrowserLoaded(browser);
 
   // Flush to make sure chrome received all data.
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   let {storage} = JSON.parse(ss.getTabState(tab));
   is(storage["http://example.com"].test, INNER_VALUE,
@@ -30,8 +30,8 @@ add_task(function session_storage() {
     "sessionStorage data for mochi.test has been serialized correctly");
 
   // Ensure that modifying sessionStore values works for the inner frame only.
-  yield modifySessionStorage2(browser, {test: "modified1"});
-  TabState.flush(browser);
+  yield modifySessionStorage(browser, {test: "modified1"}, {frameIndex: 0});
+  yield TabStateFlusher.flush(browser);
 
   ({storage} = JSON.parse(ss.getTabState(tab)));
   is(storage["http://example.com"].test, "modified1",
@@ -41,8 +41,8 @@ add_task(function session_storage() {
 
   // Ensure that modifying sessionStore values works for both frames.
   yield modifySessionStorage(browser, {test: "modified"});
-  yield modifySessionStorage2(browser, {test: "modified2"});
-  TabState.flush(browser);
+  yield modifySessionStorage(browser, {test: "modified2"}, {frameIndex: 0});
+  yield TabStateFlusher.flush(browser);
 
   ({storage} = JSON.parse(ss.getTabState(tab)));
   is(storage["http://example.com"].test, "modified2",
@@ -56,7 +56,7 @@ add_task(function session_storage() {
   yield promiseTabRestored(tab2);
 
   // Flush to make sure chrome received all data.
-  TabState.flush(browser2);
+  yield TabStateFlusher.flush(browser2);
 
   ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://example.com"].test, "modified2",
@@ -67,7 +67,7 @@ add_task(function session_storage() {
   // Ensure that the content script retains restored data
   // (by e.g. duplicateTab) and sends it along with new data.
   yield modifySessionStorage(browser2, {test: "modified3"});
-  TabState.flush(browser2);
+  yield TabStateFlusher.flush(browser2);
 
   ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://example.com"].test, "modified2",
@@ -78,7 +78,7 @@ add_task(function session_storage() {
   // Check that loading a new URL discards data.
   browser2.loadURI("http://mochi.test:8888/");
   yield promiseBrowserLoaded(browser2);
-  TabState.flush(browser2);
+  yield TabStateFlusher.flush(browser2);
 
   ({storage} = JSON.parse(ss.getTabState(tab2)));
   is(storage["http://mochi.test:8888"].test, "modified3",
@@ -88,14 +88,14 @@ add_task(function session_storage() {
   // Check that loading a new URL discards data.
   browser2.loadURI("about:mozilla");
   yield promiseBrowserLoaded(browser2);
-  TabState.flush(browser2);
+  yield TabStateFlusher.flush(browser2);
 
   let state = JSON.parse(ss.getTabState(tab2));
   ok(!state.hasOwnProperty("storage"), "storage data was discarded");
 
   // Clean up.
-  gBrowser.removeTab(tab);
-  gBrowser.removeTab(tab2);
+  yield promiseRemoveTab(tab);
+  yield promiseRemoveTab(tab2);
 });
 
 /**
@@ -111,7 +111,7 @@ add_task(function purge_domain() {
   yield purgeDomainData(browser, "mochi.test");
 
   // Flush to make sure chrome received all data.
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 
   let {storage} = JSON.parse(ss.getTabState(tab));
   ok(!storage["http://mochi.test:8888"],
@@ -119,7 +119,7 @@ add_task(function purge_domain() {
   is(storage["http://example.com"].test, INNER_VALUE,
     "sessionStorage data for example.com has been preserved");
 
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
 });
 
 /**
@@ -164,6 +164,13 @@ add_task(function respect_privacy_level() {
   [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   ok(!storage, "sessionStorage data has *not* been saved");
 
+  // Remove all closed tabs before continuing with the next test.
+  // As Date.now() isn't monotonic we might sometimes check
+  // the wrong closedTabData entry.
+  while (ss.getClosedTabCount(window) > 0) {
+    ss.forgetClosedTab(window, 0);
+  }
+
   // Restore the default privacy level and close the duplicated tab.
   Services.prefs.clearUserPref("browser.sessionstore.privacy_level");
   yield promiseRemoveTab(tab2);
@@ -176,19 +183,45 @@ add_task(function respect_privacy_level() {
     "https sessionStorage data has been saved");
 });
 
-function waitForStorageEvent(browser) {
-  return promiseContentMessage(browser, "ss-test:MozStorageChanged");
-}
+// Test that we record the size of messages.
+add_task(function* test_telemetry() {
+  Services.telemetry.canRecordExtended = true;
+  let histogram = Services.telemetry.getHistogramById("FX_SESSION_RESTORE_DOM_STORAGE_SIZE_ESTIMATE_CHARS");
+  let snap1 = histogram.snapshot();
 
-function modifySessionStorage(browser, data) {
-  browser.messageManager.sendAsyncMessage("ss-test:modifySessionStorage", data);
-  return waitForStorageEvent(browser);
-}
+  let tab = gBrowser.addTab(URL);
+  let browser = tab.linkedBrowser;
+  yield promiseBrowserLoaded(browser);
 
-function modifySessionStorage2(browser, data) {
-  browser.messageManager.sendAsyncMessage("ss-test:modifySessionStorage2", data);
-  return waitForStorageEvent(browser);
-}
+  // Flush to make sure chrome received all data.
+  yield TabStateFlusher.flush(browser);
+  let snap2 = histogram.snapshot();
+
+  Assert.ok(snap2.counts[5] > snap1.counts[5]);
+  yield promiseRemoveTab(tab);
+  Services.telemetry.canRecordExtended = false;
+});
+
+// Lower the size limit for DOM Storage content. Check that DOM Storage
+// is not updated, but that other things remain updated.
+add_task(function* test_large_content() {
+  Services.prefs.setIntPref("browser.sessionstore.dom_storage_limit", 5);
+
+  let tab = gBrowser.addTab(URL);
+  let browser = tab.linkedBrowser;
+  yield promiseBrowserLoaded(browser);
+
+  // Flush to make sure chrome received all data.
+  yield TabStateFlusher.flush(browser);
+
+  let state = JSON.parse(ss.getTabState(tab));
+  info(JSON.stringify(state, null, "\t"));
+  Assert.equal(state.storage, null, "We have no storage for the tab");
+  Assert.equal(state.entries[0].title, OUTER_VALUE);
+  yield promiseRemoveTab(tab);
+
+  Services.prefs.clearUserPref("browser.sessionstore.dom_storage_limit");
+});
 
 function purgeDomainData(browser, domain) {
   return sendMessage(browser, "ss-test:purgeDomainData", domain);

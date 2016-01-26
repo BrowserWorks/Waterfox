@@ -22,6 +22,12 @@ from .base import (ExecutorException,
                    reftest_result_converter)
 from .process import ProcessTestExecutor
 from ..browsers.base import browser_command
+render_arg = None
+
+
+def do_delayed_imports():
+    global render_arg
+    from ..browsers.servo import render_arg
 
 hosts_text = """127.0.0.1 web-platform.test
 127.0.0.1 www.web-platform.test
@@ -37,11 +43,13 @@ def make_hosts_file():
         f.write(hosts_text)
     return hosts_path
 
+
 class ServoTestharnessExecutor(ProcessTestExecutor):
     convert_result = testharness_result_converter
 
     def __init__(self, browser, server_config, timeout_multiplier=1, debug_info=None,
                  pause_after_test=False):
+        do_delayed_imports()
         ProcessTestExecutor.__init__(self, browser, server_config,
                                      timeout_multiplier=timeout_multiplier,
                                      debug_info=debug_info)
@@ -62,8 +70,13 @@ class ServoTestharnessExecutor(ProcessTestExecutor):
         self.result_data = None
         self.result_flag = threading.Event()
 
-        debug_args, command = browser_command(self.binary, ["--cpu", "--hard-fail", "-z", self.test_url(test)],
-                                              self.debug_info)
+        args = [render_arg(self.browser.render_backend), "--hard-fail", "-u", "Servo/wptrunner",
+                "-z", self.test_url(test)]
+        for stylesheet in self.browser.user_stylesheets:
+            args += ["--user-stylesheet", stylesheet]
+        for pref in test.environment.get('prefs', {}):
+            args += ["--pref", pref]
+        debug_args, command = browser_command(self.binary, args, self.debug_info)
 
         self.command = command
 
@@ -74,7 +87,7 @@ class ServoTestharnessExecutor(ProcessTestExecutor):
 
         env = os.environ.copy()
         env["HOST_FILE"] = self.hosts_path
-
+        env["RUST_BACKTRACE"] = "1"
 
 
         if not self.interactive:
@@ -99,15 +112,17 @@ class ServoTestharnessExecutor(ProcessTestExecutor):
                 self.proc.wait()
 
             proc_is_running = True
-            if self.result_flag.is_set() and self.result_data is not None:
-                self.result_data["test"] = test.url
-                result = self.convert_result(test, self.result_data)
-            else:
-                if self.proc.poll() is not None:
+
+            if self.result_flag.is_set():
+                if self.result_data is not None:
+                    result = self.convert_result(test, self.result_data)
+                else:
+                    self.proc.wait()
                     result = (test.result_cls("CRASH", None), [])
                     proc_is_running = False
-                else:
-                    result = (test.result_cls("TIMEOUT", None), [])
+            else:
+                result = (test.result_cls("TIMEOUT", None), [])
+
 
             if proc_is_running:
                 if self.pause_after_test:
@@ -160,7 +175,7 @@ class ServoRefTestExecutor(ProcessTestExecutor):
 
     def __init__(self, browser, server_config, binary=None, timeout_multiplier=1,
                  screenshot_cache=None, debug_info=None, pause_after_test=False):
-
+        do_delayed_imports()
         ProcessTestExecutor.__init__(self,
                                      browser,
                                      server_config,
@@ -185,23 +200,46 @@ class ServoRefTestExecutor(ProcessTestExecutor):
         full_url = self.test_url(test)
 
         with TempFilename(self.tempdir) as output_path:
-            self.command = [self.binary, "--cpu", "--hard-fail", "--exit",
-                            "-Z", "disable-text-aa", "--output=%s" % output_path,
-                            full_url]
+            debug_args, command = browser_command(
+                self.binary,
+                [render_arg(self.browser.render_backend), "--hard-fail", "--exit",
+                 "-u", "Servo/wptrunner", "-Z", "disable-text-aa",
+                 "--output=%s" % output_path, full_url],
+                self.debug_info)
+
+            for stylesheet in self.browser.user_stylesheets:
+                command += ["--user-stylesheet", stylesheet]
+
+            for pref in test.environment.get('prefs', {}):
+                command += ["--pref", pref]
+
+            self.command = debug_args + command
 
             env = os.environ.copy()
             env["HOST_FILE"] = self.hosts_path
+            env["RUST_BACKTRACE"] = "1"
 
-            self.proc = ProcessHandler(self.command,
-                                       processOutputLine=[self.on_output],
-                                       env=env)
+            if not self.interactive:
+                self.proc = ProcessHandler(self.command,
+                                           processOutputLine=[self.on_output],
+                                           env=env)
 
-            try:
-                self.proc.run()
-                rv = self.proc.wait(timeout=test.timeout)
-            except KeyboardInterrupt:
-                self.proc.kill()
-                raise
+
+                try:
+                    self.proc.run()
+                    timeout = test.timeout * self.timeout_multiplier + 5
+                    rv = self.proc.wait(timeout=timeout)
+                except KeyboardInterrupt:
+                    self.proc.kill()
+                    raise
+            else:
+                self.proc = subprocess.Popen(self.command,
+                                             env=env)
+                try:
+                    rv = self.proc.wait()
+                except KeyboardInterrupt:
+                    self.proc.kill()
+                    raise
 
             if rv is None:
                 self.proc.kill()

@@ -15,11 +15,12 @@ EXTRA_COMPONENTS += [
 
 EXTRA_JS_MODULES['services-common'] += [
     'logmanager.js',
+    'moz-kinto-client.js',
     'stringbundle.js',
     'utils.js',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android' or CONFIG['MOZ_B2GDROID']:
     EXTRA_JS_MODULES['services-common'] += [
         'hawkclient.js',
         'hawkrequest.js',

@@ -67,6 +67,30 @@ function testClone() {
   });
 }
 
+function testCloneUnfiltered() {
+  var url = 'http://example.com/tests/dom/security/test/cors/file_CrossSiteXHR_server.sjs?status=200';
+  return fetch(url, { mode: 'no-cors' }).then(function(response) {
+    // By default the chrome-only function should not be available.
+    is(response.type, 'opaque', 'response should be opaque');
+    is(response.cloneUnfiltered, undefined,
+       'response.cloneUnfiltered should be undefined');
+
+    // When the test is run in a worker context we can't actually try to use
+    // the chrome-only function.  SpecialPowers is not defined.
+    if (typeof SpecialPowers !== 'object') {
+      return;
+    }
+
+    // With a chrome code, however, should be able to get an unfiltered response.
+    var chromeResponse = SpecialPowers.wrap(response);
+    is(typeof chromeResponse.cloneUnfiltered, 'function',
+       'chromeResponse.cloneFiltered should be a function');
+    var unfiltered = chromeResponse.cloneUnfiltered();
+    is(unfiltered.type, 'default', 'unfiltered response should be default');
+    is(unfiltered.status, 200, 'unfiltered response should have 200 status');
+  });
+}
+
 function testError() {
   var res = Response.error();
   is(res.status, 0, "Error response status should be 0");
@@ -108,16 +132,16 @@ function testRedirect() {
 }
 
 function testOk() {
-  var r1 = new Response("", { status: 200});
+  var r1 = new Response("", { status: 200 });
   ok(r1.ok, "Response with status 200 should have ok true");
 
-  var r2 = new Response("", { status: 204});
+  var r2 = new Response(undefined, { status: 204 });
   ok(r2.ok, "Response with status 204 should have ok true");
 
-  var r3 = new Response("", { status: 299});
+  var r3 = new Response("", { status: 299 });
   ok(r3.ok, "Response with status 299 should have ok true");
 
-  var r4 = new Response("", { status: 302});
+  var r4 = new Response("", { status: 302 });
   ok(!r4.ok, "Response with status 302 should have ok false");
 }
 
@@ -202,16 +226,42 @@ function testBodyExtraction() {
   })
 }
 
+function testNullBodyStatus() {
+  [204, 205, 304].forEach(function(status) {
+    try {
+      var res = new Response(new Blob(), { "status": status });
+      ok(false, "Response body provided but status code does not permit a body");
+    } catch(e) {
+      ok(true, "Response body provided but status code does not permit a body");
+    }
+  });
+
+  [204, 205, 304].forEach(function(status) {
+    try {
+      var res = new Response(undefined, { "status": status });
+      ok(true, "Response body provided but status code does not permit a body");
+    } catch(e) {
+      ok(false, "Response body provided but status code does not permit a body");
+    }
+  });
+}
+
 function runTest() {
   testDefaultCtor();
   testError();
   testRedirect();
   testOk();
+  testNullBodyStatus();
 
   return Promise.resolve()
     .then(testBodyCreation)
     .then(testBodyUsed)
     .then(testBodyExtraction)
     .then(testClone)
+    .then(testCloneUnfiltered)
     // Put more promise based tests here.
+    .catch(function(e) {
+      dump('### ### ' + e + '\n');
+      ok(false, 'got unexpected error!');
+    });
 }

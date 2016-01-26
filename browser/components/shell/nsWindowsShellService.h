@@ -27,11 +27,10 @@ public:
 
 protected:
   bool IsDefaultBrowserVista(bool aCheckAllTypes, bool* aIsDefaultBrowser);
-  nsresult LaunchControlPanelDefaultPrograms();
+  nsresult LaunchControlPanelDefaultsSelectionUI();
+  nsresult LaunchModernSettingsDialogDefaultApps();
+  nsresult InvokeHTTPOpenAsVerb();
   nsresult LaunchHTTPHandlerPane();
-
-private:
-  bool      mCheckedThisSession;
 };
 
 #endif // nswindowsshellservice_h____

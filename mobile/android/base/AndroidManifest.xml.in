@@ -13,15 +13,23 @@
 #ifdef MOZ_ANDROID_MAX_SDK_VERSION
               android:maxSdkVersion="@MOZ_ANDROID_MAX_SDK_VERSION@"
 #endif
-              android:targetSdkVersion="@ANDROID_TARGET_SDK@"/>
+              android:targetSdkVersion="23"/>
 
 #include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
-#include ../services/manifests/SyncAndroidManifest_permissions.xml.in
 
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_permissions.xml.in
 #endif
+
+    <!-- A signature level permission specific to each Firefox version (Android
+         package name, e.g., org.mozilla.firefox).  Use this permission to
+         broadcast securely within a single Firefox version.  This needs to
+         agree with GlobalConstants.PER_ANDROID_PACKAGE_PERMISSION. -->
+    <permission
+        android:name="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE"
+        android:protectionLevel="signature"/>
+
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE" />
 
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -35,9 +43,6 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"/>
-    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
-    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"/>
 #ifdef MOZ_ANDROID_DOWNLOADS_INTEGRATION
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 #endif
@@ -47,6 +52,8 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.WRITE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
+
+    <uses-feature android:name="android.hardware.telephony"/>
 #endif
 
     <uses-feature android:name="android.hardware.location" android:required="false"/>
@@ -60,10 +67,8 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
 #endif
 
-#ifdef MOZ_ANDROID_TAB_QUEUE
     <!-- Tab Queue -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-#endif
 
 #ifdef MOZ_ANDROID_BEAM
     <!-- Android Beam support -->
@@ -89,6 +94,7 @@
                  android:logo="@drawable/logo"
                  android:name="@MOZ_ANDROID_APPLICATION_CLASS@"
                  android:hardwareAccelerated="true"
+                 android:allowBackup="false"
 # The preprocessor does not yet support arbitrary parentheses, so this cannot
 # be parenthesized thus to clarify that the logical AND operator has precedence:
 #   !defined(MOZILLA_OFFICIAL) || (defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG))
@@ -105,8 +111,6 @@
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 #endif
 
-        <!-- If the windowSoftInputMode adjust* flag changes below, the
-             setSoftInputMode call in BrowserSearch#onStop must also be updated. -->
         <activity android:name="@MOZ_ANDROID_BROWSER_INTENT_CLASS@"
                   android:label="@string/moz_app_displayname"
                   android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
@@ -142,6 +146,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/>
+                <category android:name="android.intent.category.APP_BROWSER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -171,34 +176,7 @@
                 <action android:name="org.mozilla.gecko.UPDATE"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-#ifndef MOZ_ANDROID_TAB_QUEUE
-            <!-- The main reason for the Tab Queue build flag is to not mess with the VIEW intent filter
-                 before the rest of the plumbing is in place -->
 
-            <!-- The entry point for Intent.VIEW actions will move to the TabQueue activity -->
-
-            <!-- Default browser intents -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:scheme="about" />
-                <data android:scheme="javascript" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="file" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:mimeType="text/html"/>
-                <data android:mimeType="text/plain"/>
-                <data android:mimeType="application/xhtml+xml"/>
-            </intent-filter>
-#endif
             <intent-filter>
                 <action android:name="android.intent.action.WEB_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -206,10 +184,6 @@
                 <data android:scheme="" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
 
             <!-- For XPI installs from websites and the download manager. -->
@@ -240,9 +214,6 @@
             </intent-filter>
 #endif
 
-            <meta-data android:name="android.app.searchable"
-                       android:resource="@xml/searchable" />
-
             <!-- For debugging -->
             <intent-filter>
                 <action android:name="org.mozilla.gecko.DEBUG" />
@@ -250,7 +221,12 @@
             </intent-filter>
         </activity-alias>
 
-#ifdef MOZ_ANDROID_TAB_QUEUE
+        <service android:name="org.mozilla.gecko.GeckoService" />
+
+        <activity android:name="org.mozilla.gecko.trackingprotection.TrackingProtectionPrompt"
+                  android:launchMode="singleTop"
+                  android:theme="@style/OverlayActivity" />
+
         <!-- The main reason for the Tab Queue build flag is to not mess with the VIEW intent filter
              before the rest of the plumbing is in place -->
 
@@ -263,6 +239,8 @@
         <activity android:name="org.mozilla.gecko.tabqueue.TabQueueDispatcher"
                   android:label="@MOZ_APP_DISPLAYNAME@"
                   android:launchMode="singleTask"
+                  android:excludeFromRecents="true"
+                  android:taskAffinity="@ANDROID_PACKAGE_NAME@.TABQUEUE"
                   android:theme="@style/TabQueueActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -285,11 +263,6 @@
                 <data android:mimeType="application/xhtml+xml"/>
             </intent-filter>
         </activity>
-#endif
-
-        <activity android:name="org.mozilla.gecko.StartPane"
-                  android:theme="@style/GeckoStartPane"
-                  android:excludeFromRecents="true"/>
 
         <activity android:name="org.mozilla.gecko.webapp.Dispatcher"
             android:noHistory="true" >
@@ -312,6 +285,12 @@
           <intent-filter>
              <action android:name="org.mozilla.webapp.TASK_REMOVED" />
              <category android:name="android.intent.category.DEFAULT" />
+          </intent-filter>
+        </receiver>
+
+        <receiver android:name="org.mozilla.gecko.restrictions.RestrictionProvider">
+          <intent-filter>
+            <action android:name="android.intent.action.GET_RESTRICTION_ENTRIES" />
           </intent-filter>
         </receiver>
 
@@ -366,10 +345,7 @@
         </receiver>
 
         <receiver android:name="org.mozilla.gecko.GeckoMessageReceiver"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER">
-            <intent-filter>
-                  <action android:name="org.mozilla.gecko.INIT_PW"></action>
-            </intent-filter>
+                  android:exported="false">
         </receiver>
 
         <!-- Catch install referrer so we can do post-install work. -->
@@ -381,13 +357,14 @@
         </receiver>
 
         <service android:name="org.mozilla.gecko.Restarter"
-                  android:exported="false"
-                  android:process="@MANGLED_ANDROID_PACKAGE_NAME@.Restarter">
+                 android:exported="false"
+                 android:process="@MANGLED_ANDROID_PACKAGE_NAME@.Restarter">
         </service>
 
+        <receiver android:name="org.mozilla.gecko.AlarmReceiver" >
+        </receiver>
+
 #include ../services/manifests/FxAccountAndroidManifest_activities.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_activities.xml.in
-#include ../services/manifests/SyncAndroidManifest_activities.xml.in
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_activities.xml.in
 #endif
@@ -413,14 +390,8 @@
 
         <provider android:name="org.mozilla.gecko.db.BrowserProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.browser"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER">
+                  android:exported="false"/>
 
-            <path-permission android:pathPrefix="/search_suggest_query"
-                             android:readPermission="android.permission.GLOBAL_SEARCH" />
-
-        </provider>
-
-#ifdef MOZ_ANDROID_SHARE_OVERLAY
         <!-- Share overlay activity
 
              Setting launchMode="singleTop" ensures onNewIntent is called when the Activity is
@@ -442,7 +413,7 @@
 
         <!-- Service to handle requests from overlays. -->
         <service android:name="org.mozilla.gecko.overlays.service.OverlayActionService" />
-#endif
+
         <!--
           Ensure that passwords provider runs in its own process. (Bug 718760.)
           Process name is per-application to avoid loading CPs from multiple
@@ -452,36 +423,35 @@
         <provider android:name="org.mozilla.gecko.db.PasswordsProvider"
                   android:label="@string/sync_configure_engines_title_passwords"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.passwords"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"
+                  android:exported="false"
                   android:process="@MANGLED_ANDROID_PACKAGE_NAME@.PasswordsProvider"/>
 
         <provider android:name="org.mozilla.gecko.db.FormHistoryProvider"
                   android:label="@string/sync_configure_engines_title_history"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.formhistory"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"
-                  android:protectionLevel="signature"/>
+                  android:exported="false"/>
 
         <provider android:name="org.mozilla.gecko.GeckoProfilesProvider"
-                  android:authorities="@ANDROID_PACKAGE_NAME@.profiles"/>
+                  android:authorities="@ANDROID_PACKAGE_NAME@.profiles"
+                  android:exported="false"/>
 
         <provider android:name="org.mozilla.gecko.db.TabsProvider"
                   android:label="@string/sync_configure_engines_title_tabs"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.tabs"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+                  android:exported="false"/>
 
         <provider android:name="org.mozilla.gecko.db.HomeProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.home"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+                  android:exported="false"/>
 
         <provider android:name="org.mozilla.gecko.db.ReadingListProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.readinglist"
-                  android:exported="false"
                   android:label="@string/reading_list_title"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+                  android:exported="false"/>
 
         <provider android:name="org.mozilla.gecko.db.SearchHistoryProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.searchhistory"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
+                  android:exported="false"/>
 
         <service
             android:exported="false"
@@ -494,10 +464,19 @@
             android:name="org.mozilla.gecko.NotificationService">
         </service>
 
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.dlc.DownloadContentService">
+        </service>
+
 
 #include ../services/manifests/FxAccountAndroidManifest_services.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_services.xml.in
-#include ../services/manifests/SyncAndroidManifest_services.xml.in
+
+        <service
+            android:name="org.mozilla.gecko.tabqueue.TabReceivedService"
+            android:exported="false" />
+
+
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_services.xml.in
 #endif
@@ -506,14 +485,4 @@
 #endif
 
     </application>
-
-    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"
-                android:protectionLevel="signature"/>
-
-    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"
-                android:protectionLevel="signature"/>
-
-    <permission android:name="@ANDROID_PACKAGE_NAME@.permissions.FORMHISTORY_PROVIDER"
-                android:protectionLevel="signature"/>
-
 </manifest>

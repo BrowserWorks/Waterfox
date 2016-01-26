@@ -175,6 +175,11 @@ typedef struct {
  *
  * Some items still missing.  Those are commented out at the end.
  * Keep sorted for bsearch.
+ *
+ * Updated as of 2015-05-06: OT1.7 on MS website has some newer
+ * items that we don't have here, eg. Zazaki.  This is the new
+ * items in OpenType 1.7 (red items), most of which we have:
+ * http://www.microsoft.com/typography/otspec170/languagetags.htm
  */
 
 static const LangTag ot_languages[] = {
@@ -217,9 +222,9 @@ static const LangTag ot_languages[] = {
   {"bci",	HB_TAG('B','A','U',' ')},	/* Baoulé */
   {"bcl",	HB_TAG('B','I','K',' ')},	/* Central Bikol */
   {"bcq",	HB_TAG('B','C','H',' ')},	/* Bench */
-  {"be",	HB_TAG('B','E','L',' ')},  	/* Belarusian */
+  {"be",	HB_TAG('B','E','L',' ')},	/* Belarusian */
   {"bem",	HB_TAG('B','E','M',' ')},	/* Bemba (Zambia) */
-  {"ber",	HB_TAG('B','E','R',' ')},  	/* Berber [family] */
+  {"ber",	HB_TAG('B','E','R',' ')},	/* Berber [family] */
   {"bfq",	HB_TAG('B','A','D',' ')},	/* Badaga */
   {"bft",	HB_TAG('B','L','T',' ')},	/* Balti */
   {"bfy",	HB_TAG('B','A','G',' ')},	/* Baghelkhandi */
@@ -346,11 +351,10 @@ static const LangTag ot_languages[] = {
   {"gv",	HB_TAG('M','N','X',' ')},	/* Manx */
   {"ha",	HB_TAG('H','A','U',' ')},	/* Hausa */
   {"har",	HB_TAG('H','R','I',' ')},	/* Harari */
-  {"haw",	HB_TAG('H','A','W',' ')},  	/* Hawaiian */
-  {"hay",	HB_TAG('H','A','Y',' ')},  	/* Haya */
-  {"haz",	HB_TAG('H','A','Z',' ')},  	/* Hazaragi */
+  {"haw",	HB_TAG('H','A','W',' ')},	/* Hawaiian */
+  {"hay",	HB_TAG('H','A','Y',' ')},	/* Haya */
+  {"haz",	HB_TAG('H','A','Z',' ')},	/* Hazaragi */
   {"he",	HB_TAG('I','W','R',' ')},	/* Hebrew */
-  {"hz",	HB_TAG('H','E','R',' ')},	/* Herero */
   {"hi",	HB_TAG('H','I','N',' ')},	/* Hindi */
   {"hil",	HB_TAG('H','I','L',' ')},	/* Hiligaynon */
   {"hnd",	HB_TAG('H','N','D',' ')},	/* [Southern] Hindko */
@@ -542,6 +546,7 @@ static const LangTag ot_languages[] = {
   {"nr",	HB_TAG('N','D','B',' ')},	/* [South] Ndebele */
   {"nsk",	HB_TAG('N','A','S',' ')},	/* Naskapi */
   {"nso",	HB_TAG('S','O','T',' ')},	/* [Northern] Sotho */
+  {"nv",	HB_TAG('N','A','V',' ')},	/* Navajo */
   {"ny",	HB_TAG('C','H','I',' ')},	/* Chewa/Chichwa/Nyanja */
   {"nym",	HB_TAG('N','Y','M',' ')},	/* Nyamwezi */
   {"nyn",	HB_TAG('N','K','L',' ')},	/* Nyankole */
@@ -595,8 +600,8 @@ static const LangTag ot_languages[] = {
   {"sah",	HB_TAG('Y','A','K',' ')},	/* Yakut */
   {"sas",	HB_TAG('S','A','S',' ')},	/* Sasak */
   {"sat",	HB_TAG('S','A','T',' ')},	/* Santali */
-  {"sck",	HB_TAG('S','A','D',' ')},	/* Sadri */
   {"sc",	HB_TAG('S','R','D',' ')},	/* Sardinian [macrolanguage] */
+  {"sck",	HB_TAG('S','A','D',' ')},	/* Sadri */
   {"scn",	HB_TAG('S','C','N',' ')},	/* Sicilian */
   {"sco",	HB_TAG('S','C','O',' ')},	/* Scots */
   {"scs",	HB_TAG('S','L','A',' ')},	/* [North] Slavey */
@@ -684,8 +689,8 @@ static const LangTag ot_languages[] = {
   {"uzs",	HB_TAG('U','Z','B',' ')},	/* Southern Uzbek */
   {"ve",	HB_TAG('V','E','N',' ')},	/* Venda */
   {"vec",	HB_TAG('V','E','C',' ')},	/* Venetian */
-  {"vls",	HB_TAG('F','L','E',' ')},	/* Vlaams */
   {"vi",	HB_TAG('V','I','T',' ')},	/* Vietnamese */
+  {"vls",	HB_TAG('F','L','E',' ')},	/* Vlaams */
   {"vmw",	HB_TAG('M','A','K',' ')},	/* Makhuwa */
   {"vo",	HB_TAG('V','O','L',' ')},	/* Volapük */
   {"vro",	HB_TAG('V','R','O',' ')},	/* Võro */
@@ -694,9 +699,9 @@ static const LangTag ot_languages[] = {
   {"wbm",	HB_TAG('W','A',' ',' ')},	/* Wa */
   {"wbr",	HB_TAG('W','A','G',' ')},	/* Wagdi */
   {"wle",	HB_TAG('S','I','G',' ')},	/* Wolane */
+  {"wo",	HB_TAG('W','L','F',' ')},	/* Wolof */
   {"wry",	HB_TAG('M','A','W',' ')},	/* Merwari */
   {"wtm",	HB_TAG('W','T','M',' ')},	/* Mewati */
-  {"wo",	HB_TAG('W','L','F',' ')},	/* Wolof */
   {"xal",	HB_TAG('K','L','M',' ')},	/* Kalmyk */
   {"xh",	HB_TAG('X','H','S',' ')},	/* Xhosa */
   {"xog",	HB_TAG('X','O','G',' ')},	/* Soga */
@@ -727,7 +732,6 @@ static const LangTag ot_languages[] = {
 /*{"fuf?",	HB_TAG('F','T','A',' ')},*/	/* Futa */
 /*{"ar-Syrc?",	HB_TAG('G','A','R',' ')},*/	/* Garshuni */
 /*{"cfm/rnl?",	HB_TAG('H','A','L',' ')},*/	/* Halam */
-/*{"fonipa",	HB_TAG('I','P','P','H')},*/	/* Phonetic transcription—IPA conventions */
 /*{"ga-Latg?/Latg?",	HB_TAG('I','R','T',' ')},*/	/* Irish Traditional */
 /*{"krc",	HB_TAG('K','A','R',' ')},*/	/* Karachay */
 /*{"alw?/ktb?",	HB_TAG('K','E','B',' ')},*/	/* Kebena */
@@ -826,6 +830,14 @@ hb_ot_tag_from_language (hb_language_t language)
     }
   }
 
+  /*
+   * The International Phonetic Alphabet is a variant tag in BCP-47,
+   * which can be applied to any language.
+   */
+  if (strstr (lang_str, "-fonipa")) {
+    return HB_TAG('I','P','P','H');  /* Phonetic transcription—IPA conventions */
+  }
+
   /* Find a language matching in the first component */
   {
     const LangTag *lang_tag;
@@ -864,6 +876,15 @@ hb_ot_tag_from_language (hb_language_t language)
   return HB_OT_TAG_DEFAULT_LANGUAGE;
 }
 
+/**
+ * hb_ot_tag_to_language:
+ *
+ * 
+ *
+ * Return value: (transfer none):
+ *
+ * Since: 0.9.2
+ **/
 hb_language_t
 hb_ot_tag_to_language (hb_tag_t tag)
 {
@@ -886,6 +907,12 @@ hb_ot_tag_to_language (hb_tag_t tag)
     }
   }
 
+  /* struct LangTag has only room for 3-letter language tags. */
+  switch (tag) {
+  case HB_TAG('I','P','P','H'):  /* Phonetic transcription—IPA conventions */
+    return hb_language_from_string ("und-fonipa", -1);
+  }
+
   /* Else return a custom language in the form of "x-hbotABCD" */
   {
     unsigned char buf[11] = "x-hbot";
@@ -900,4 +927,27 @@ hb_ot_tag_to_language (hb_tag_t tag)
   }
 }
 
+static inline void
+test_langs_sorted (void)
+{
+  for (unsigned int i = 1; i < ARRAY_LENGTH (ot_languages); i++)
+  {
+    int c = lang_compare_first_component (ot_languages[i-1].language, ot_languages[i].language);
+    if (c >= 0)
+    {
+      fprintf (stderr, "ot_languages not sorted at index %d: %s %d %s\n",
+	       i, ot_languages[i-1].language, c, ot_languages[i].language);
+      abort();
+    }
+  }
+}
 
+#ifdef MAIN
+int
+main (void)
+{
+  test_langs_sorted ();
+  return 0;
+}
+
+#endif

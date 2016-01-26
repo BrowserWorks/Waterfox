@@ -12,7 +12,11 @@
 #include "gfxAlphaRecovery.h"
 #include "gfxPattern.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Helpers.h"
 #include "gfx2DGlue.h"
+
+#include "cairo.h"
+#include "cairo-win32.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -42,13 +46,26 @@ HDC
 gfxWindowsNativeDrawing::BeginNativeDrawing()
 {
     if (mRenderState == RENDER_STATE_INIT) {
-        nsRefPtr<gfxASurface> surf;
-        
-        if (mContext->GetCairo()) {
-          surf = mContext->CurrentSurface(&mDeviceOffset.x, &mDeviceOffset.y);
+        RefPtr<gfxASurface> surf;
+        DrawTarget* drawTarget = mContext->GetDrawTarget();
+        cairo_t* cairo = nullptr;
+        if (drawTarget->GetBackendType() == BackendType::CAIRO) {
+            cairo = static_cast<cairo_t*>
+                (drawTarget->GetNativeSurface(NativeSurfaceType::CAIRO_CONTEXT));
+            if (cairo) {
+                cairo_surface_t* s = cairo_get_group_target(cairo);
+                if (s) {
+                    mDeviceOffset = mContext->GetDeviceOffset();
+                    double sdx, sdy;
+                    cairo_surface_get_device_offset(s, &sdx, &sdy);
+                    mDeviceOffset.x -= sdx;
+                    mDeviceOffset.y -= sdy;
+                    surf = gfxASurface::Wrap(s);
+                }
+            }
         }
 
-        if (surf && surf->CairoStatus())
+        if (surf && surf->CairoStatus() != 0)
             return nullptr;
 
         gfxMatrix m = mContext->CurrentMatrix();
@@ -72,7 +89,7 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
             // grab the DC. This can fail if there is a complex clipping path,
             // in which case we'll have to fall back.
             mWinSurface = static_cast<gfxWindowsSurface*>(static_cast<gfxASurface*>(surf.get()));
-            mDC = mWinSurface->GetDCWithClip(mContext);
+            mDC = cairo_win32_get_dc_with_clip(cairo);
 
             if (mDC) {
                 if (mTransformType == TRANSLATION_ONLY) {
@@ -117,7 +134,7 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
                 // There's probably a better fix, but I haven't figured out
                 // the root cause of the problem.
                 mTempSurfaceSize =
-                    gfxIntSize((int32_t) ceil(mNativeRect.Width() + 1),
+                    IntSize((int32_t) ceil(mNativeRect.Width() + 1),
                                (int32_t) ceil(mNativeRect.Height() + 1));
             } else {
                 // figure out the scale factors
@@ -132,7 +149,7 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
 
                 // See comment above about "+1"
                 mTempSurfaceSize =
-                    gfxIntSize((int32_t) ceil(mNativeRect.Width() * mScale.width + 1),
+                    IntSize((int32_t) ceil(mNativeRect.Width() * mScale.width + 1),
                                (int32_t) ceil(mNativeRect.Height() * mScale.height + 1));
             }
         }
@@ -149,8 +166,8 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
         }
         GetViewportOrgEx(mDC, &mOrigViewportOrigin);
         SetViewportOrgEx(mDC,
-                         mOrigViewportOrigin.x + (int)mDeviceOffset.x,
-                         mOrigViewportOrigin.y + (int)mDeviceOffset.y,
+                         mOrigViewportOrigin.x - (int)mDeviceOffset.x,
+                         mOrigViewportOrigin.y - (int)mDeviceOffset.y,
                          nullptr);
 
         return mDC;
@@ -182,28 +199,6 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
         NS_ERROR("Bogus render state!");
         return nullptr;
     }
-}
-
-bool
-gfxWindowsNativeDrawing::IsDoublePass()
-{
-    if (mContext->GetDrawTarget()->GetBackendType() != mozilla::gfx::BackendType::CAIRO ||
-        mContext->GetDrawTarget()->IsDualDrawTarget()) {
-      return true;
-    }
-
-    nsRefPtr<gfxASurface> surf = mContext->CurrentSurface(&mDeviceOffset.x, &mDeviceOffset.y);
-    if (!surf || surf->CairoStatus())
-        return false;
-    if (surf->GetType() != gfxSurfaceType::Win32 &&
-        surf->GetType() != gfxSurfaceType::Win32Printing) {
-        return true;
-    }
-    if ((surf->GetContentType() != gfxContentType::COLOR ||
-         (surf->GetContentType() == gfxContentType::COLOR_ALPHA &&
-          !(mNativeDrawFlags & CAN_DRAW_TO_COLOR_ALPHA))))
-        return true;
-    return false;
 }
 
 bool
@@ -263,8 +258,8 @@ gfxWindowsNativeDrawing::PaintToContext()
         // nothing to do, it already went to the context
         mRenderState = RENDER_STATE_DONE;
     } else if (mRenderState == RENDER_STATE_ALPHA_RECOVERY_WHITE_DONE) {
-        nsRefPtr<gfxImageSurface> black = mBlackSurface->GetAsImageSurface();
-        nsRefPtr<gfxImageSurface> white = mWhiteSurface->GetAsImageSurface();
+        RefPtr<gfxImageSurface> black = mBlackSurface->GetAsImageSurface();
+        RefPtr<gfxImageSurface> white = mWhiteSurface->GetAsImageSurface();
         if (!gfxAlphaRecovery::RecoverAlpha(black, white)) {
             NS_ERROR("Alpha recovery failure");
             return;
@@ -274,26 +269,22 @@ gfxWindowsNativeDrawing::PaintToContext()
                                                      black->Stride(),
                                                      black->GetSize(),
                                                      SurfaceFormat::B8G8R8A8);
+        {
+            DrawTarget* dt = mContext->GetDrawTarget();
+            AutoRestoreTransform autoRestoreTransform(dt);
 
-        mContext->Save();
-        mContext->SetMatrix(
-          mContext->CurrentMatrix().Translate(mNativeRect.TopLeft()));
-        mContext->NewPath();
-        mContext->Rectangle(gfxRect(gfxPoint(0.0, 0.0), mNativeRect.Size()));
+            Matrix newTransform = dt->GetTransform();
+            newTransform.PreTranslate(ToPoint(mNativeRect.TopLeft()));
+            dt->SetTransform(newTransform);
 
-        nsRefPtr<gfxPattern> pat = new gfxPattern(source, Matrix());
-
-        gfxMatrix m;
-        m.Scale(mScale.width, mScale.height);
-        pat->SetMatrix(m);
-
-        if (mNativeDrawFlags & DO_NEAREST_NEIGHBOR_FILTERING)
-            pat->SetFilter(GraphicsFilter::FILTER_FAST);
-
-        pat->SetExtend(gfxPattern::EXTEND_PAD);
-        mContext->SetPattern(pat);
-        mContext->Fill();
-        mContext->Restore();
+            Rect rect(Point(0.0, 0.0), ToSize(mNativeRect.Size()));
+            Matrix m = Matrix::Scaling(1.0 / mScale.width, 1.0 / mScale.height);
+            Filter filter = (mNativeDrawFlags & DO_NEAREST_NEIGHBOR_FILTERING)
+                          ? Filter::LINEAR
+                          : Filter::GOOD;
+            SurfacePattern pat(source, ExtendMode::CLAMP, m, filter);
+            dt->FillRect(rect, pat);
+        }
 
         mRenderState = RENDER_STATE_DONE;
     } else {

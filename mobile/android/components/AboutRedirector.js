@@ -8,7 +8,7 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-let modules = {
+var modules = {
   // about:
   "": {
     uri: "chrome://browser/content/about.xhtml",
@@ -22,7 +22,9 @@ let modules = {
     privileged: true,
     hide: true
   },
-  get firefox() this.fennec,
+  get firefox() {
+    return this.fennec
+  },
 
   // about:blank has some bad loading behavior we can avoid, if we use an alias
   empty: {
@@ -32,9 +34,7 @@ let modules = {
   },
 
   rights: {
-    uri: AppConstants.MOZ_OFFICIAL_BRANDING ?
-      "chrome://browser/content/aboutRights.xhtml" :
-      "chrome://global/content/aboutRights-unbranded.xhtml",
+    uri: "chrome://browser/content/aboutRights.xhtml",
     privileged: false
   },
   blocked: {
@@ -50,10 +50,6 @@ let modules = {
   home: {
     uri: "chrome://browser/content/aboutHome.xhtml",
     privileged: false
-  },
-  apps: {
-    uri: "chrome://browser/content/aboutApps.xhtml",
-    privileged: true
   },
   downloads: {
     uri: "chrome://browser/content/aboutDownloads.xhtml",
@@ -73,7 +69,15 @@ let modules = {
     uri: "chrome://browser/content/aboutPrivateBrowsing.xhtml",
     privileged: true
   },
-}
+  logins: {
+    uri: "chrome://browser/content/aboutLogins.xhtml",
+    privileged: true
+  },
+  accounts: {
+    uri: "chrome://browser/content/aboutAccounts.xhtml",
+    privileged: true
+  },
+};
 
 if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
   modules['healthreport'] = {
@@ -84,12 +88,6 @@ if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
 if (AppConstants.MOZ_DEVICES) {
   modules['devices'] = {
     uri: "chrome://browser/content/aboutDevices.xhtml",
-    privileged: true
-  };
-}
-if (AppConstants.NIGHTLY_BUILD) {
-  modules['passwords'] = {
-    uri: "chrome://browser/content/aboutPasswords.xhtml",
     privileged: true
   };
 }

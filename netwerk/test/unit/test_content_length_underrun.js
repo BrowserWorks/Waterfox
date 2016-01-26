@@ -6,7 +6,7 @@
 // Test infrastructure
 
 Cu.import("resource://testing-common/httpd.js");
-Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
   return "http://localhost:" + httpserver.identity.primaryPort;
@@ -41,8 +41,8 @@ function run_test_number(num)
 
   var channel = setupChannel(testPath);
   flags = test_flags[num];   // OK if flags undefined for test
-  channel.asyncOpen(new ChannelListener(eval("completeTest" + num),
-                                        channel, flags), null);
+  channel.asyncOpen2(new ChannelListener(eval("completeTest" + num),
+                                        channel, flags));
 }
 
 function run_gzip_test(num)
@@ -77,22 +77,16 @@ function run_gzip_test(num)
 
   let listener = new StreamListener();
  
-  channel.asyncOpen(listener, null);
+  channel.asyncOpen2(listener);
 
 }
 
 function setupChannel(url)
 {
-  var ios = Components.classes["@mozilla.org/network/io-service;1"].
-                       getService(Ci.nsIIOService);
-  var chan = ios.newChannel2(URL + url,
-                             "",
-                             null,
-                             null,      // aLoadingNode
-                             Services.scriptSecurityManager.getSystemPrincipal(),
-                             null,      // aTriggeringPrincipal
-                             Ci.nsILoadInfo.SEC_NORMAL,
-                             Ci.nsIContentPolicy.TYPE_OTHER);
+  var chan = NetUtil.newChannel({
+    uri: URL + url,
+    loadUsingSystemPrincipal: true
+  });
   var httpChan = chan.QueryInterface(Components.interfaces.nsIHttpChannel);
   return httpChan;
 }
@@ -126,6 +120,29 @@ function completeTest1(request, data, ctx)
 {
   do_check_eq(request.status, Components.results.NS_ERROR_NET_PARTIAL_TRANSFER);
 
+  run_test_number(11);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Test 11: PASS because of Content-Length underrun with HTTP 1.1 but non 2xx
+test_flags[11] = CL_IGNORE_CL;
+
+function handler11(metadata, response)
+{
+  var body = "blablabla";
+
+  response.seizePower();
+  response.write("HTTP/1.1 404 NotOK\r\n");
+  response.write("Content-Type: text/plain\r\n");
+  response.write("Content-Length: 556677\r\n");
+  response.write("\r\n");
+  response.write(body);
+  response.finish();
+}
+
+function completeTest11(request, data, ctx)
+{
+  do_check_eq(request.status, Components.results.NS_OK);
   run_test_number(2);
 }
 

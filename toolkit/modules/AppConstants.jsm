@@ -5,6 +5,9 @@
 
 "use strict";
 
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
+
 this.EXPORTED_SYMBOLS = ["AppConstants"];
 
 // Immutable for export.
@@ -49,8 +52,22 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_DEV_EDITION:
+#ifdef MOZ_DEV_EDITION
+  true,
+#else
+  false,
+#endif
+
   MOZ_SERVICES_HEALTHREPORT:
 #ifdef MOZ_SERVICES_HEALTHREPORT
+  true,
+#else
+  false,
+#endif
+
+  MOZ_DATA_REPORTING:
+#ifdef MOZ_DATA_REPORTING
   true,
 #else
   false,
@@ -77,19 +94,22 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
-  MOZ_SHARK:
-#ifdef XP_MACOSX
-#ifdef MOZ_SHARK
+  MOZ_TELEMETRY_REPORTING:
+#ifdef MOZ_TELEMETRY_REPORTING
   true,
 #else
   false,
 #endif
+
+  MOZ_TELEMETRY_ON_BY_DEFAULT:
+#ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
+  true,
 #else
   false,
 #endif
 
-  MOZ_TELEMETRY_REPORTING:
-#ifdef MOZ_TELEMETRY_REPORTING
+  MOZ_SERVICES_CLOUDSYNC:
+#ifdef MOZ_SERVICES_CLOUDSYNC
   true,
 #else
   false,
@@ -102,8 +122,30 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_SWITCHBOARD:
+#ifdef MOZ_SWITCHBOARD
+  true,
+#else
+  false,
+#endif
+
   MOZ_WEBRTC:
 #ifdef MOZ_WEBRTC
+  true,
+#else
+  false,
+#endif
+
+# MOZ_B2G covers both device and desktop b2g
+  MOZ_B2G:
+#ifdef MOZ_B2G
+  true,
+#else
+  false,
+#endif
+
+  XP_UNIX:
+#ifdef XP_UNIX
   true,
 #else
   false,
@@ -130,8 +172,27 @@ this.AppConstants = Object.freeze({
   "other",
 #endif
 
+  isPlatformAndVersionAtLeast(platform, version) {
+    let platformVersion = Services.sysinfo.getProperty("version");
+    return platform == this.platform &&
+           Services.vc.compare(platformVersion, version) >= 0;
+  },
+
+  isPlatformAndVersionAtMost(platform, version) {
+    let platformVersion = Services.sysinfo.getProperty("version");
+    return platform == this.platform &&
+           Services.vc.compare(platformVersion, version) <= 0;
+  },
+
   MOZ_CRASHREPORTER:
 #ifdef MOZ_CRASHREPORTER
+  true,
+#else
+  false,
+#endif
+
+  MOZ_VERIFY_MAR_SIGNATURE:
+#ifdef MOZ_VERIFY_MAR_SIGNATURE
   true,
 #else
   false,
@@ -158,10 +219,94 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_B2G_RIL:
+#ifdef MOZ_B2G_RIL
+  true,
+#else
+  false,
+#endif
+
+  MOZ_B2GDROID:
+#ifdef MOZ_B2GDROID
+  true,
+#else
+  false,
+#endif
+
+  MOZ_GRAPHENE:
+#ifdef MOZ_GRAPHENE
+  true,
+#else
+  false,
+#endif
+
+  MOZ_PLACES:
+#ifdef MOZ_PLACES
+  true,
+#else
+  false,
+#endif
+
+  MOZ_REQUIRE_SIGNING:
+#ifdef MOZ_REQUIRE_SIGNING
+  true,
+#else
+  false,
+#endif
+
+  MENUBAR_CAN_AUTOHIDE:
+#ifdef MENUBAR_CAN_AUTOHIDE
+  true,
+#else
+  false,
+#endif
+
+  CAN_DRAW_IN_TITLEBAR:
+#ifdef CAN_DRAW_IN_TITLEBAR
+  true,
+#else
+  false,
+#endif
+
+  MOZ_ANDROID_HISTORY:
+#ifdef MOZ_ANDROID_HISTORY
+  true,
+#else
+  false,
+#endif
+
+  DLL_PREFIX: "@DLL_PREFIX@",
+  DLL_SUFFIX: "@DLL_SUFFIX@",
+
   MOZ_APP_NAME: "@MOZ_APP_NAME@",
   MOZ_APP_VERSION: "@MOZ_APP_VERSION@",
+  MOZ_APP_VERSION_DISPLAY: "@MOZ_APP_VERSION_DISPLAY@",
   MOZ_BUILD_APP: "@MOZ_BUILD_APP@",
+  MOZ_MACBUNDLE_NAME: "@MOZ_MACBUNDLE_NAME@",
   MOZ_UPDATE_CHANNEL: "@MOZ_UPDATE_CHANNEL@",
+  INSTALL_LOCALE: "@AB_CD@",
   MOZ_WIDGET_TOOLKIT: "@MOZ_WIDGET_TOOLKIT@",
   ANDROID_PACKAGE_NAME: "@ANDROID_PACKAGE_NAME@",
+  MOZ_B2G_VERSION: @MOZ_B2G_VERSION@,
+  MOZ_B2G_OS_NAME: @MOZ_B2G_OS_NAME@,
+
+  MOZ_ANDROID_APZ:
+#ifdef MOZ_ANDROID_APZ
+    true,
+#else
+    false,
+#endif
+  DEBUG_JS_MODULES: "@DEBUG_JS_MODULES@",
+
+  // URL to the hg revision this was built from (e.g.
+  // "https://hg.mozilla.org/mozilla-central/rev/6256ec9113c1")
+  // On unofficial builds, this is an empty string.
+  SOURCE_REVISION_URL: "@SOURCE_REV_URL@",
+
+  MOZ_NUWA_PROCESS:
+#ifdef MOZ_NUWA_PROCESS
+    true
+#else
+    false
+#endif
 });

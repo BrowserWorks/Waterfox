@@ -16,7 +16,6 @@
 #include "nsCOMPtr.h"
 #include "nsDataHashtable.h"
 #include "nsIDocShell.h"
-#include "nsIDOMWindow.h"
 #include "nsIDOMHTMLInputElement.h"
 #include "nsILoginManager.h"
 #include "nsIMutationObserver.h"
@@ -30,6 +29,7 @@
 
 class nsFormHistory;
 class nsINode;
+class nsPIDOMWindow;
 
 class nsFormFillController final : public nsIFormFillController,
                                    public nsIAutoCompleteInput,
@@ -58,8 +58,8 @@ public:
 protected:
   virtual ~nsFormFillController();
 
-  void AddWindowListeners(nsIDOMWindow *aWindow);
-  void RemoveWindowListeners(nsIDOMWindow *aWindow);
+  void AddWindowListeners(nsPIDOMWindow *aWindow);
+  void RemoveWindowListeners(nsPIDOMWindow *aWindow);
 
   void AddKeyListener(nsINode* aInput);
   void RemoveKeyListener();
@@ -72,20 +72,19 @@ protected:
    */
   void MaybeStartControllingInput(nsIDOMHTMLInputElement* aElement);
 
-  nsresult PerformInputListAutoComplete(nsIAutoCompleteResult* aPreviousResult);
+  nsresult PerformInputListAutoComplete(const nsAString& aSearch,
+                                        nsIAutoCompleteResult** aResult);
 
   void RevalidateDataList();
   bool RowMatch(nsFormHistory *aHistory, uint32_t aIndex, const nsAString &aInputName, const nsAString &aInputValue);
 
   inline nsIDocShell *GetDocShellForInput(nsIDOMHTMLInputElement *aInput);
-  inline nsIDOMWindow *GetWindowForDocShell(nsIDocShell *aDocShell);
+  inline nsPIDOMWindow *GetWindowForDocShell(nsIDocShell *aDocShell);
   inline int32_t GetIndexOfDocShell(nsIDocShell *aDocShell);
 
   void MaybeRemoveMutationObserver(nsINode* aNode);
 
-  static PLDHashOperator RemoveForDocumentEnumerator(const nsINode* aKey,
-                                                     bool& aEntry,
-                                                     void* aUserData);
+  void RemoveForDocument(nsIDocument* aDoc);
   bool IsEventTrusted(nsIDOMEvent *aEvent);
   // members //////////////////////////////////////////
 
@@ -101,9 +100,6 @@ protected:
 
   nsTArray<nsCOMPtr<nsIDocShell> > mDocShells;
   nsTArray<nsCOMPtr<nsIAutoCompletePopup> > mPopups;
-
-  //these are used to dynamically update the autocomplete
-  nsCOMPtr<nsIAutoCompleteResult> mLastSearchResult;
 
   // The observer passed to StartSearch. It will be notified when the search is
   // complete or the data from a datalist changes.

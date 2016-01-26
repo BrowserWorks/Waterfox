@@ -9,14 +9,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-function ok(passed, text) {
-  do_report_result(passed, text, Components.stack.caller, false);
-}
-
-function is(lhs, rhs, text) {
-  do_report_result(lhs === rhs, text, Components.stack.caller, false);
-}
-
 add_test(function filepicker_open() {
   let chromeWin = Services.wm.getMostRecentWindow("navigator:browser");
 
@@ -39,14 +31,15 @@ add_test(function filepicker_open() {
         is(file.path, "/mnt/sdcard/my-favorite-martian.png", "Retrieve the right martian file from array!");
       }
 
-      do_print("DOMFile: " + fp.domfile.mozFullPath);
-      is(fp.domfile.mozFullPath, "/mnt/sdcard/my-favorite-martian.png", "Retrieve the right martian domfile!");
+      let file = fp.domFileOrDirectory;
+      do_print("DOMFile: " + file.mozFullPath);
+      is(file.mozFullPath, "/mnt/sdcard/my-favorite-martian.png", "Retrieve the right martian DOM File!");
 
-      let domfiles = fp.domfiles;
-      while (domfiles.hasMoreElements()) {
-        let domfile = domfiles.getNext();
-        do_print("DOMFile: " + domfile.mozFullPath);
-        is(domfile.mozFullPath, "/mnt/sdcard/my-favorite-martian.png", "Retrieve the right martian file from domfile array!");
+      let e = fp.domFileOrDirectoryEnumerator;
+      while (e.hasMoreElements()) {
+        let file = e.getNext();
+        do_print("DOMFile: " + file.mozFullPath);
+        is(file.mozFullPath, "/mnt/sdcard/my-favorite-martian.png", "Retrieve the right martian file from domFileOrDirectoryEnumerator array!");
       }
 
       do_test_finished();

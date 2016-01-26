@@ -8,7 +8,7 @@
    dump('presentation_prompt_handler_chrome: ' + str + '\n');
  }
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 const { XPCOMUtils } = Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 const { SystemAppProxy } = Cu.import('resource://gre/modules/SystemAppProxy.jsm');
 
@@ -65,7 +65,7 @@ addMessageListener('setup', function(device_options) {
   sendAsyncMessage('setup-complete');
 });
 
-let eventHandler = function(evt) {
+var eventHandler = function(evt) {
   if (!evt.detail || evt.detail.type !== 'presentation-select-device') {
     return;
   }

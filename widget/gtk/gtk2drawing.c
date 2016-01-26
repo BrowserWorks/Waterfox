@@ -1293,7 +1293,7 @@ moz_gtk_scrollbar_trough_paint(GtkThemeWidgetType widget,
 
     ensure_scrollbar_widget();
 
-    if (widget ==  MOZ_GTK_SCROLLBAR_TRACK_HORIZONTAL)
+    if (widget ==  MOZ_GTK_SCROLLBAR_HORIZONTAL)
         scrollbar = GTK_SCROLLBAR(gHorizScrollbarWidget);
     else
         scrollbar = GTK_SCROLLBAR(gVertScrollbarWidget);
@@ -2748,6 +2748,7 @@ moz_gtk_get_widget_border(GtkThemeWidgetType widget, gint* left, gint* top,
 
     switch (widget) {
     case MOZ_GTK_BUTTON:
+    case MOZ_GTK_TOOLBAR_BUTTON:
         {
             GtkBorder inner_border;
             gboolean interior_focus;
@@ -2976,8 +2977,8 @@ moz_gtk_get_widget_border(GtkThemeWidgetType widget, gint* left, gint* top,
     case MOZ_GTK_CHECKBUTTON:
     case MOZ_GTK_RADIOBUTTON:
     case MOZ_GTK_SCROLLBAR_BUTTON:
-    case MOZ_GTK_SCROLLBAR_TRACK_HORIZONTAL:
-    case MOZ_GTK_SCROLLBAR_TRACK_VERTICAL:
+    case MOZ_GTK_SCROLLBAR_HORIZONTAL:
+    case MOZ_GTK_SCROLLBAR_VERTICAL:
     case MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL:
     case MOZ_GTK_SCROLLBAR_THUMB_VERTICAL:
     case MOZ_GTK_SCALE_THUMB_HORIZONTAL:
@@ -3142,6 +3143,14 @@ moz_gtk_get_menu_separator_height(gint *size)
     return MOZ_GTK_SUCCESS;
 }
 
+void
+moz_gtk_get_scale_metrics(GtkOrientation orient, gint* scale_width,
+                          gint* scale_height)
+{
+  moz_gtk_get_scalethumb_metrics(orient, scale_width, scale_height);
+}
+
+
 gint
 moz_gtk_get_scalethumb_metrics(GtkOrientation orient, gint* thumb_length, gint* thumb_height)
 {
@@ -3210,6 +3219,7 @@ moz_gtk_widget_paint(GtkThemeWidgetType widget, GdkDrawable* drawable,
 {
     switch (widget) {
     case MOZ_GTK_BUTTON:
+    case MOZ_GTK_TOOLBAR_BUTTON:
         if (state->depressed) {
             ensure_toggle_button_widget();
             return moz_gtk_button_paint(drawable, rect, cliprect, state,
@@ -3234,8 +3244,8 @@ moz_gtk_widget_paint(GtkThemeWidgetType widget, GdkDrawable* drawable,
                                               (GtkScrollbarButtonFlags) flags,
                                               direction);
         break;
-    case MOZ_GTK_SCROLLBAR_TRACK_HORIZONTAL:
-    case MOZ_GTK_SCROLLBAR_TRACK_VERTICAL:
+    case MOZ_GTK_SCROLLBAR_HORIZONTAL:
+    case MOZ_GTK_SCROLLBAR_VERTICAL:
         return moz_gtk_scrollbar_trough_paint(widget, drawable, rect,
                                               cliprect, state, direction);
         break;
@@ -3407,6 +3417,20 @@ GtkWidget* moz_gtk_get_scrollbar_widget(void)
     MOZ_ASSERT(is_initialized, "Forgot to call moz_gtk_init()");
     ensure_scrollbar_widget();
     return gHorizScrollbarWidget;
+}
+
+gboolean moz_gtk_has_scrollbar_buttons(void)
+{
+    gboolean backward, forward, secondary_backward, secondary_forward;
+    MOZ_ASSERT(is_initialized, "Forgot to call moz_gtk_init()");
+    ensure_scrollbar_widget();
+    gtk_widget_style_get (gHorizScrollbarWidget,
+                          "has-backward-stepper", &backward,
+                          "has-forward-stepper", &forward,
+                          "has-secondary-backward-stepper", &secondary_backward,
+                          "has-secondary-forward-stepper", &secondary_forward,
+                          NULL);
+    return backward | forward | secondary_forward | secondary_forward;
 }
 
 gint

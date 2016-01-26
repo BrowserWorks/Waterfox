@@ -9,6 +9,7 @@
  */
 
 
+#include "./vpx_dsp_rtcd.h"
 #include "./vpx_scale_rtcd.h"
 #include "vp8/common/onyxc_int.h"
 #include "onyx_int.h"
@@ -23,8 +24,8 @@
 
 extern int vp8_calc_ss_err(YV12_BUFFER_CONFIG *source, YV12_BUFFER_CONFIG *dest);
 
-void vp8_yv12_copy_partial_frame_c(YV12_BUFFER_CONFIG *src_ybc,
-                                   YV12_BUFFER_CONFIG *dst_ybc)
+static void yv12_copy_partial_frame(YV12_BUFFER_CONFIG *src_ybc,
+                                    YV12_BUFFER_CONFIG *dst_ybc)
 {
     unsigned char *src_y, *dst_y;
     int yheight;
@@ -49,7 +50,7 @@ void vp8_yv12_copy_partial_frame_c(YV12_BUFFER_CONFIG *src_ybc,
     src_y = src_ybc->y_buffer + yoffset;
     dst_y = dst_ybc->y_buffer + yoffset;
 
-    vpx_memcpy(dst_y, src_y, ystride * linestocopy);
+    memcpy(dst_y, src_y, ystride * linestocopy);
 }
 
 static int calc_partial_ssl_err(YV12_BUFFER_CONFIG *source,
@@ -83,7 +84,7 @@ static int calc_partial_ssl_err(YV12_BUFFER_CONFIG *source,
         for (j = 0; j < source->y_width; j += 16)
         {
             unsigned int sse;
-            Total += vp8_mse16x16(src + j, source->y_stride,
+            Total += vpx_mse16x16(src + j, source->y_stride,
                                                      dst + j, dest->y_stride,
                                                      &sse);
         }
@@ -142,7 +143,7 @@ void vp8cx_pick_filter_level_fast(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
     int min_filter_level = get_min_filter_level(cpi, cm->base_qindex);
     int max_filter_level = get_max_filter_level(cpi, cm->base_qindex);
     int filt_val;
-    int best_filt_val = cm->filter_level;
+    int best_filt_val;
     YV12_BUFFER_CONFIG * saved_frame = cm->frame_to_show;
 
     /* Replace unfiltered frame buffer with a new one */
@@ -173,7 +174,7 @@ void vp8cx_pick_filter_level_fast(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
     /* Get the err using the previous frame's filter value. */
 
     /* Copy the unfiltered / processed recon buffer to the new buffer */
-    vp8_yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
+    yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
     vp8_loop_filter_partial_frame(cm, &cpi->mb.e_mbd, filt_val);
 
     best_err = calc_partial_ssl_err(sd, cm->frame_to_show);
@@ -184,7 +185,7 @@ void vp8cx_pick_filter_level_fast(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
     while (filt_val >= min_filter_level)
     {
         /* Apply the loop filter */
-        vp8_yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
+        yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
         vp8_loop_filter_partial_frame(cm, &cpi->mb.e_mbd, filt_val);
 
         /* Get the err for filtered frame */
@@ -214,7 +215,7 @@ void vp8cx_pick_filter_level_fast(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
         while (filt_val < max_filter_level)
         {
             /* Apply the loop filter */
-            vp8_yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
+            yv12_copy_partial_frame(saved_frame, cm->frame_to_show);
 
             vp8_loop_filter_partial_frame(cm, &cpi->mb.e_mbd, filt_val);
 
@@ -274,8 +275,7 @@ void vp8cx_pick_filter_level(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
 
     int filter_step;
     int filt_high = 0;
-    /* Start search at previous frame filter level */
-    int filt_mid = cm->filter_level;
+    int filt_mid;
     int filt_low = 0;
     int filt_best;
     int filt_direction = 0;
@@ -287,7 +287,7 @@ void vp8cx_pick_filter_level(YV12_BUFFER_CONFIG *sd, VP8_COMP *cpi)
 
     YV12_BUFFER_CONFIG * saved_frame = cm->frame_to_show;
 
-    vpx_memset(ss_err, 0, sizeof(ss_err));
+    memset(ss_err, 0, sizeof(ss_err));
 
     /* Replace unfiltered frame buffer with a new one */
     cm->frame_to_show = &cpi->pick_lf_lvl_frame;

@@ -33,6 +33,7 @@ NativeMenuItemTarget* nsMenuBarX::sNativeEventTarget = nil;
 nsMenuBarX* nsMenuBarX::sLastGeckoMenuBarPainted = nullptr; // Weak
 nsMenuBarX* nsMenuBarX::sCurrentPaintDelayedMenuBar = nullptr; // Weak
 NSMenu* sApplicationMenu = nil;
+BOOL sApplicationMenuIsFallback = NO;
 BOOL gSomeMenuBarPainted = NO;
 
 // We keep references to the first quit and pref item content nodes we find, which
@@ -49,7 +50,7 @@ NS_IMETHODIMP nsNativeMenuServiceX::CreateNativeMenuBar(nsIWidget* aParent, nsIC
 {
   NS_ASSERTION(NS_IsMainThread(), "Attempting to create native menu bar on wrong thread!");
 
-  nsRefPtr<nsMenuBarX> mb = new nsMenuBarX();
+  RefPtr<nsMenuBarX> mb = new nsMenuBarX();
   if (!mb)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -186,13 +187,7 @@ void nsMenuBarX::ConstructFallbackNativeMenus()
   [quitMenuItem setTarget:nsMenuBarX::sNativeEventTarget];
   [quitMenuItem setTag:eCommand_ID_Quit];
   [sApplicationMenu addItem:quitMenuItem];
-
-  // Add debug logging to help decipher bug 1151345.
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-  NSLog(@"nsMenuBarX::ConstructFallbackNativeMenus(): labelUTF16 %s, keyUTF16 %s",
-        NS_ConvertUTF16toUTF8(labelUTF16).get(),
-        NS_ConvertUTF16toUTF8(keyUTF16).get());
-#endif
+  sApplicationMenuIsFallback = YES;
 }
 
 uint32_t nsMenuBarX::GetMenuCount()
@@ -214,6 +209,11 @@ nsresult nsMenuBarX::InsertMenuAtIndex(nsMenuX* aMenu, uint32_t aIndex)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
+  // If we've only yet created a fallback global Application menu (using
+  // ContructFallbackNativeMenus()), destroy it before recreating it properly.
+  if (sApplicationMenu && sApplicationMenuIsFallback) {
+    ResetNativeApplicationMenu();
+  }
   // If we haven't created a global Application menu yet, do it.
   if (!sApplicationMenu) {
     nsresult rv = NS_OK; // avoid warning about rv being unused
@@ -248,7 +248,10 @@ void nsMenuBarX::RemoveMenuAtIndex(uint32_t aIndex)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  NS_ASSERTION(aIndex < mMenuArray.Length(), "Attempting submenu removal with bad index!");
+  if (mMenuArray.Length() <= aIndex) {
+    NS_ERROR("Attempting submenu removal with bad index!");
+    return;
+  }
 
   // Our native menu and our internal menu object array might be out of sync.
   // This happens, for example, when a submenu is hidden. Because of this we
@@ -504,6 +507,15 @@ char nsMenuBarX::GetLocalizedAccelKey(const char *shortcutID)
   return retval;
 }
 
+/* static */
+void nsMenuBarX::ResetNativeApplicationMenu()
+{
+  [sApplicationMenu removeAllItems];
+  [sApplicationMenu release];
+  sApplicationMenu = nil;
+  sApplicationMenuIsFallback = NO;
+}
+
 // Hide the item in the menu by setting the 'hidden' attribute. Returns it in |outHiddenNode| so
 // the caller can hang onto it if they so choose. It is acceptable to pass nsull
 // for |outHiddenNode| if the caller doesn't care about the hidden node.
@@ -559,26 +571,13 @@ NSMenuItem* nsMenuBarX::CreateNativeAppMenuItem(nsMenuX* inMenu, const nsAString
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  // Add debug logging to help decipher bug 1151345.
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-  NS_ConvertUTF16toUTF8 nodeID_UTF8(nodeID);
-#endif
-
   nsCOMPtr<nsIDocument> doc = inMenu->Content()->GetUncomposedDoc();
   if (!doc) {
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-    NSLog(@"nsMenuBarX::CreateNativeAppMenuItem(1): nodeID %s, doc is null!",
-          nodeID_UTF8.get());
-#endif
     return nil;
   }
 
   nsCOMPtr<nsIDOMDocument> domdoc(do_QueryInterface(doc));
   if (!domdoc) {
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-    NSLog(@"nsMenuBarX::CreateNativeAppMenuItem(2): nodeID %s, domdoc is null!",
-          nodeID_UTF8.get());
-#endif
     return nil;
   }
 
@@ -594,10 +593,6 @@ NSMenuItem* nsMenuBarX::CreateNativeAppMenuItem(nsMenuX* inMenu, const nsAString
     menuItem->GetAttribute(NS_LITERAL_STRING("key"), key);
   }
   else {
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-    NSLog(@"nsMenuBarX::CreateNativeAppMenuItem(3): nodeID %s, menuItem is null!",
-          nodeID_UTF8.get());
-#endif
     return nil;
   }
 
@@ -644,15 +639,6 @@ NSMenuItem* nsMenuBarX::CreateNativeAppMenuItem(nsMenuX* inMenu, const nsAString
   [newMenuItem setRepresentedObject:info];
   [info release];
 
-#if !defined(RELEASE_BUILD) || defined(DEBUG)
-  if (!newMenuItem) {
-    NSLog(@"nsMenuBarX::CreateNativeAppMenuItem(4): nodeID %s, label %s, modifiers %s, key %s, newMenuItem is null!",
-          nodeID_UTF8.get(),
-          NS_ConvertUTF16toUTF8(label).get(),
-          NS_ConvertUTF16toUTF8(modifiers).get(),
-          NS_ConvertUTF16toUTF8(key).get());
-  }
-#endif
   return newMenuItem;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NIL;
@@ -946,28 +932,11 @@ static BOOL gMenuItemsExecuteCommands = YES;
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  // menuGroupOwner below is an nsMenuBarX object, which we sometimes access
-  // after it's been deleted, causing crashes (see bug 704866 and bug 670914).
-  // To fix this "correctly", in nsMenuBarX::~nsMenuBarX() we'd need to
-  // iterate through every NSMenuItem in nsMenuBarX::mNativeMenu and its
-  // submenus, which might be quite time consuming.  (For every NSMenuItem
-  // that has a "representedObject" that's a MenuItemInfo object, we'd need
-  // need to null out its "menuGroupOwner" if it's the same as the nsMenuBarX
-  // object being destroyed.)  But if the nsMenuBarX object being destroyed
-  // corresponds to the currently focused window, it's likely that the
-  // nsMenuBarX destructor will null out sLastGeckoMenuBarPainted.  So we can
-  // probably eliminate most of these crashes if we use this variable being
-  // null as an indicator that we're likely to crash below when we dereference
-  // menuGroupOwner.
-  if (!nsMenuBarX::sLastGeckoMenuBarPainted) {
+  if (!gMenuItemsExecuteCommands) {
     return;
   }
 
   int tag = [sender tag];
-
-  if (!gMenuItemsExecuteCommands) {
-    return;
-  }
 
   nsMenuGroupOwnerX* menuGroupOwner = nullptr;
   nsMenuBarX* menuBar = nullptr;

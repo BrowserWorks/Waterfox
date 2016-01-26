@@ -8,27 +8,27 @@
 // 3. run `[path to]/run-mozilla.sh [path to]/xpcshell \
 //                                  [path to]/genHPKPStaticpins.js \
 //                                  [absolute path to]/PreloadedHPKPins.json \
-//                                  [absolute path to]/default-ee.der \
+//                                  [an unused argument - see bug 1205406] \
 //                                  [absolute path to]/StaticHPKPins.h
+"use strict";
 
 if (arguments.length != 3) {
   throw "Usage: genHPKPStaticPins.js " +
         "<absolute path to PreloadedHPKPins.json> " +
-        "<absolute path to default-ee.der> " +
+        "<an unused argument - see bug 1205406> " +
         "<absolute path to StaticHPKPins.h>";
 }
 
-const { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
+var { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
 
-let { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
-let { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
-let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
+var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 
-let gCertDB = Cc["@mozilla.org/security/x509certdb;1"]
+var gCertDB = Cc["@mozilla.org/security/x509certdb;1"]
                 .getService(Ci.nsIX509CertDB);
 
 const BUILT_IN_NICK_PREFIX = "Builtin Object Token:";
-const SHA1_PREFIX = "sha1/";
 const SHA256_PREFIX = "sha256/";
 const GOOGLE_PIN_PREFIX = "GOOGLE_PIN_";
 
@@ -53,27 +53,24 @@ const DOMAINHEADER = "/* Domainlist */\n" +
   "  const bool mTestMode;\n" +
   "  const bool mIsMoz;\n" +
   "  const int32_t mId;\n" +
-  "  const StaticPinset *pinset;\n" +
+  "  const StaticFingerprints* pinset;\n" +
   "};\n\n";
 
 const PINSETDEF = "/* Pinsets are each an ordered list by the actual value of the fingerprint */\n" +
   "struct StaticFingerprints {\n" +
   "  const size_t size;\n" +
   "  const char* const* data;\n" +
-  "};\n\n" +
-  "struct StaticPinset {\n" +
-  "  const StaticFingerprints* sha1;\n" +
-  "  const StaticFingerprints* sha256;\n" +
   "};\n\n";
 
 // Command-line arguments
-let gStaticPins = parseJson(arguments[0]);
-let gTestCertFile = arguments[1];
+var gStaticPins = parseJson(arguments[0]);
+
+// arguments[1] is ignored for now. See bug 1205406.
 
 // Open the output file.
-let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
 file.initWithPath(arguments[2]);
-let gFileOutputStream = FileUtils.openSafeFileOutputStream(file);
+var gFileOutputStream = FileUtils.openSafeFileOutputStream(file);
 
 function writeString(string) {
   gFileOutputStream.write(string, string.length);
@@ -144,8 +141,8 @@ function download(filename) {
 }
 
 function downloadAsJson(filename) {
-  // we have to filter out '//' comments
-  let result = download(filename).replace(/\/\/[^\n]*\n/g, "");
+  // we have to filter out '//' comments, while not mangling the json
+  let result = download(filename).replace(/^(\s*)?\/\/[^\n]*\n/mg, "");
   let data = null;
   try {
     data = JSON.parse(result);
@@ -162,13 +159,49 @@ function getSKDFromPem(pem) {
   return cert.sha256SubjectPublicKeyInfoDigest;
 }
 
+/**
+ * Hashes |input| using the SHA-256 algorithm in the following manner:
+ *   btoa(sha256(atob(input)))
+ *
+ * @argument {String} input Base64 string to decode and return the hash of.
+ * @returns {String} Base64 encoded SHA-256 hash.
+ */
+function sha256Base64(input) {
+  let decodedValue;
+  try {
+    decodedValue = atob(input);
+  }
+  catch (e) {
+    throw `ERROR: could not decode as base64: '${input}': ${e}`;
+  }
+
+  // Convert |decodedValue| to an array so that it can be hashed by the
+  // nsICryptoHash instance below.
+  // In most cases across the code base, convertToByteArray() of
+  // nsIScriptableUnicodeConverter is used to do this, but the method doesn't
+  // seem to work here.
+  let data = [];
+  for (let i = 0; i < decodedValue.length; i++) {
+    data[i] = decodedValue.charCodeAt(i);
+  }
+
+  let hasher = Cc["@mozilla.org/security/hash;1"]
+                 .createInstance(Ci.nsICryptoHash);
+  hasher.init(hasher.SHA256);
+  hasher.update(data, data.length);
+
+  // true is passed so that the hasher returns a Base64 encoded string.
+  return hasher.finish(true);
+}
+
 // Downloads the static certs file and tries to map Google Chrome nicknames
 // to Mozilla nicknames, as well as storing any hashes for pins for which we
 // don't have root PEMs. Each entry consists of a line containing the name of
-// the pin followed either by a hash in the format "sha1/" + base64(hash), or
-// a PEM encoded certificate. For certificates that we have in our database,
+// the pin followed either by a hash in the format "sha256/" + base64(hash),
+// a PEM encoded public key, or a PEM encoded certificate.
+// For certificates that we have in our database,
 // return a map of Google's nickname to ours. For ones that aren't return a
-// map of Google's nickname to sha1 values. This code is modeled after agl's
+// map of Google's nickname to SHA-256 values. This code is modeled after agl's
 // https://github.com/agl/transport-security-state-generate, which doesn't
 // live in the Chromium repo because go is not an official language in
 // Chromium.
@@ -179,26 +212,29 @@ function getSKDFromPem(pem) {
 // and stick the hash in certSKDToName
 // We MUST be able to find a corresponding cert nickname for the Chrome names,
 // otherwise we skip all pinsets referring to that Chrome name.
-function downloadAndParseChromeCerts(filename, certSKDToName) {
+function downloadAndParseChromeCerts(filename, certNameToSKD, certSKDToName) {
   // Prefixes that we care about.
   const BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
   const END_CERT = "-----END CERTIFICATE-----";
+  const BEGIN_PUB_KEY = "-----BEGIN PUBLIC KEY-----";
+  const END_PUB_KEY = "-----END PUBLIC KEY-----";
 
   // Parsing states.
   const PRE_NAME = 0;
   const POST_NAME = 1;
   const IN_CERT = 2;
+  const IN_PUB_KEY = 3;
   let state = PRE_NAME;
 
   let lines = download(filename).split("\n");
   let name = "";
   let pemCert = "";
+  let pemPubKey = "";
   let hash = "";
   let chromeNameToHash = {};
-  let chromeNameToMozName = {}
+  let chromeNameToMozName = {};
   let chromeName;
-  for (let i = 0; i < lines.length; ++i) {
-    let line = lines[i];
+  for (let line of lines) {
     // Skip comments and newlines.
     if (line.length == 0 || line[0] == '#') {
       continue;
@@ -209,21 +245,16 @@ function downloadAndParseChromeCerts(filename, certSKDToName) {
         state = POST_NAME;
         break;
       case POST_NAME:
-        if (line.startsWith(SHA1_PREFIX) ||
-            line.startsWith(SHA256_PREFIX)) {
-          if (line.startsWith(SHA1_PREFIX)) {
-            hash = line.substring(SHA1_PREFIX.length);
-          } else if (line.startsWith(SHA256_PREFIX)) {
-            hash = line.substring(SHA256_PREFIX);
-          }
-          // Store the entire prefixed hash, so we can disambiguate sha1 from
-          // sha256 later.
-          chromeNameToHash[chromeName] = line;
+        if (line.startsWith(SHA256_PREFIX)) {
+          hash = line.substring(SHA256_PREFIX.length);
+          chromeNameToHash[chromeName] = hash;
           certNameToSKD[chromeName] = hash;
           certSKDToName[hash] = chromeName;
           state = PRE_NAME;
         } else if (line.startsWith(BEGIN_CERT)) {
           state = IN_CERT;
+        } else if (line.startsWith(BEGIN_PUB_KEY)) {
+          state = IN_PUB_KEY;
         } else {
           throw "ERROR: couldn't parse Chrome certificate file " + line;
         }
@@ -250,6 +281,18 @@ function downloadAndParseChromeCerts(filename, certSKDToName) {
           pemCert += line;
         }
         break;
+      case IN_PUB_KEY:
+        if (line.startsWith(END_PUB_KEY)) {
+          state = PRE_NAME;
+          hash = sha256Base64(pemPubKey);
+          pemPubKey = "";
+          chromeNameToHash[chromeName] = hash;
+          certNameToSKD[chromeName] = hash;
+          certSKDToName[hash] = chromeName;
+        } else {
+          pemPubKey += line;
+        }
+        break;
       default:
         throw "ERROR: couldn't parse Chrome certificate file " + line;
     }
@@ -265,7 +308,6 @@ function downloadAndParseChromeCerts(filename, certSKDToName) {
 // {
 //   pinset_name : {
 //     // Array of names with entries in certNameToSKD
-//     sha1_hashes: [],
 //     sha256_hashes: []
 //   }
 // }
@@ -284,20 +326,13 @@ function downloadAndParseChromePins(filename,
 
   chromePins.forEach(function(pin) {
     let valid = true;
-    let pinset = { name: pin.name, sha1_hashes: [], sha256_hashes: [] };
+    let pinset = { name: pin.name, sha256_hashes: [] };
     // Translate the Chrome pinset format to ours
     pin.static_spki_hashes.forEach(function(name) {
       if (name in chromeNameToHash) {
         let hash = chromeNameToHash[name];
-        if (hash.startsWith(SHA1_PREFIX)) {
-          hash = hash.substring(SHA1_PREFIX.length);
-          pinset.sha1_hashes.push(certSKDToName[hash]);
-        } else if (hash.startsWith(SHA256_PREFIX)) {
-          hash = hash.substring(SHA256_PREFIX.length);
-          pinset.sha256_hashes.push(certSKDToName[hash]);
-        } else {
-          throw("Unsupported hash type: " + chromeNameToHash[name]);
-        }
+        pinset.sha256_hashes.push(certSKDToName[hash]);
+
         // We should have already added hashes for all of these when we
         // imported the certificate file.
         if (!certNameToSKD[name]) {
@@ -350,7 +385,7 @@ function downloadAndParseChromePins(filename,
 
 // Returns a pair of maps [certNameToSKD, certSKDToName] between cert
 // nicknames and digests of the SPKInfo for the mozilla trust store
-function loadNSSCertinfo(derTestFile, extraCertificates) {
+function loadNSSCertinfo(extraCertificates) {
   let allCerts = gCertDB.getCerts();
   let enumerator = allCerts.getEnumerator();
   let certNameToSKD = {};
@@ -374,13 +409,10 @@ function loadNSSCertinfo(derTestFile, extraCertificates) {
   }
 
   {
-    // A certificate for *.example.com.
-    let der = readFileToString(derTestFile);
-    let testCert = gCertDB.constructX509(der, der.length);
-    // We can't include this cert in the previous loop, because it skips
-    // non-builtin certs and the nickname is not built-in to the cert.
+    // This is the pinning test certificate. The key hash identifies the
+    // default RSA key from pykey.
     let name = "End Entity Test Cert";
-    let SKD  = testCert.sha256SubjectPublicKeyInfoDigest;
+    let SKD = "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=";
     certNameToSKD[name] = SKD;
     certSKDToName[SKD] = name;
   }
@@ -416,26 +448,16 @@ function genExpirationTime() {
 }
 
 function writeFullPinset(certNameToSKD, certSKDToName, pinset) {
-  // We aren't guaranteed to have sha1 hashes in our own imported pins.
   let prefix = "kPinset_" + pinset.name;
-  let sha1Name = "nullptr";
-  let sha256Name = "nullptr";
-  if (pinset.sha1_hashes && pinset.sha1_hashes.length > 0) {
-    writeFingerprints(certNameToSKD, certSKDToName, pinset.name,
-                      pinset.sha1_hashes, "sha1");
-    sha1Name = "&" + prefix + "_sha1";
+  if (!pinset.sha256_hashes || pinset.sha256_hashes.length == 0) {
+    throw `ERROR: Pinset ${pinset.name} does not contain any hashes.`;
   }
-  if (pinset.sha256_hashes && pinset.sha256_hashes.length > 0) {
-    writeFingerprints(certNameToSKD, certSKDToName, pinset.name,
-                      pinset.sha256_hashes, "sha256");
-    sha256Name = "&" + prefix + "_sha256";
-  }
-  writeString("static const StaticPinset " + prefix + " = {\n" +
-          "  " + sha1Name + ",\n  " + sha256Name + "\n};\n\n");
+  writeFingerprints(certNameToSKD, certSKDToName, pinset.name,
+                    pinset.sha256_hashes);
 }
 
-function writeFingerprints(certNameToSKD, certSKDToName, name, hashes, type) {
-  let varPrefix = "kPinset_" + name + "_" + type;
+function writeFingerprints(certNameToSKD, certSKDToName, name, hashes) {
+  let varPrefix = "kPinset_" + name;
   writeString("static const char* " + varPrefix + "_Data[] = {\n");
   let SKDList = [];
   for (let certName of hashes) {
@@ -533,23 +555,12 @@ function writeFile(certNameToSKD, certSKDToName,
   let mozillaPins = {};
   gStaticPins.pinsets.forEach(function(pinset) {
     mozillaPins[pinset.name] = true;
-    // We aren't guaranteed to have sha1_hashes in our own JSON.
-    if (pinset.sha1_hashes) {
-      pinset.sha1_hashes.forEach(function(name) {
-        usedFingerprints[name] = true;
-      });
-    }
-    if (pinset.sha256_hashes) {
-      pinset.sha256_hashes.forEach(function(name) {
-        usedFingerprints[name] = true;
-      });
-    }
+    pinset.sha256_hashes.forEach(function (name) {
+      usedFingerprints[name] = true;
+    });
   });
   for (let key in chromeImportedPinsets) {
     let pinset = chromeImportedPinsets[key];
-    pinset.sha1_hashes.forEach(function(name) {
-      usedFingerprints[name] = true;
-    });
     pinset.sha256_hashes.forEach(function(name) {
       usedFingerprints[name] = true;
     });
@@ -598,12 +609,11 @@ function loadExtraCertificates(certStringList) {
   return constructedCerts;
 }
 
-let extraCertificates = loadExtraCertificates(gStaticPins.extra_certificates);
-let [ certNameToSKD, certSKDToName ] = loadNSSCertinfo(gTestCertFile,
-                                                       extraCertificates);
-let [ chromeNameToHash, chromeNameToMozName ] = downloadAndParseChromeCerts(
-  gStaticPins.chromium_data.cert_file_url, certSKDToName);
-let [ chromeImportedPinsets, chromeImportedEntries ] =
+var extraCertificates = loadExtraCertificates(gStaticPins.extra_certificates);
+var [ certNameToSKD, certSKDToName ] = loadNSSCertinfo(extraCertificates);
+var [ chromeNameToHash, chromeNameToMozName ] = downloadAndParseChromeCerts(
+  gStaticPins.chromium_data.cert_file_url, certNameToSKD, certSKDToName);
+var [ chromeImportedPinsets, chromeImportedEntries ] =
   downloadAndParseChromePins(gStaticPins.chromium_data.json_file_url,
     chromeNameToHash, chromeNameToMozName, certNameToSKD, certSKDToName);
 

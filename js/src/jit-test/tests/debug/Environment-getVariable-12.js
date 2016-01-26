@@ -5,12 +5,12 @@ var gw = dbg.addDebuggee(g);
 var hits = 0;
 dbg.onDebuggerStatement = function (frame) {
     hits++;
-    assertEq(frame.environment.parent.getVariable('y'), true);
+    assertEq(frame.environment.parent.parent.getVariable('y'), true);
 };
 
 g.eval("var g;" +
        "function f(x) {" +
-       "  let (y = x) {" +
+       "  { let y = x; " +
        "    if (x)" +
        "      g = function() { eval('debugger') };" +
        "    else" +
@@ -29,9 +29,9 @@ dbg.onDebuggerStatement = function (frame) {
 };
 
 g.eval("var g;" +
-       "let (y = 1) {" +
+       "{ let y = 1; " +
        "  g = function () { debugger; };" +
-       "  let (z = 2) {" +
+       "  { let z = 2; " +
        "    g();" +
        "  }"+
        "}");
@@ -49,8 +49,8 @@ dbg.onDebuggerStatement = function (frame) {
 g.eval("var g;" +
        "function h() { debugger };" +
        "for (var x of [true, false]) {" +
-       "  let (y = x) {" +
-       "    let (z = x) {" +
+       "  { let y = x; " +
+       "    { let z = x; " +
        "      if (x)" +
        "        g = function () { print(z); h() };" +
        "      else" +

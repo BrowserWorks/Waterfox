@@ -6,6 +6,7 @@
            position="after_start"
            hidden="true"
            orient="vertical"
+           noautofocus="true"
            role="alert"/>
 
     <popupnotification id="webRTC-shareDevices-notification" hidden="true">
@@ -57,17 +58,26 @@
     <popupnotification id="password-notification" hidden="true">
       <popupnotificationcontent orient="vertical">
         <textbox id="password-notification-username"/>
-        <textbox id="password-notification-password" type="password"
-                 disabled="true"/>
+        <textbox id="password-notification-password" type="password" show-content=""/>
       </popupnotificationcontent>
     </popupnotification>
 
-    <vbox id="login-fill-doorhanger" hidden="true">
-      <description id="login-fill-testing"
-                   value="Thanks for testing the login fill doorhanger!"/>
-      <textbox id="login-fill-filter"/>
-      <richlistbox id="login-fill-list"/>
-    </vbox>
+    <stack id="login-fill-doorhanger" hidden="true">
+      <vbox id="login-fill-mainview">
+        <description id="login-fill-testing"
+                     value="Thanks for testing the login fill doorhanger!"/>
+        <textbox id="login-fill-filter"/>
+        <richlistbox id="login-fill-list"/>
+      </vbox>
+      <vbox id="login-fill-clickcapturer"/>
+      <vbox id="login-fill-details">
+        <textbox id="login-fill-username" readonly="true"/>
+        <textbox id="login-fill-password" type="password" disabled="true"/>
+        <hbox>
+          <button id="login-fill-use" label="Use in form"/>
+        </hbox>
+      </vbox>
+    </stack>
 
 #ifdef E10S_TESTING_ONLY
     <popupnotification id="enable-e10s-notification" hidden="true">

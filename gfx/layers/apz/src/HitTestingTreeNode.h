@@ -9,14 +9,16 @@
 
 #include "APZUtils.h"                       // for HitTestResult
 #include "FrameMetrics.h"                   // for ScrollableLayerGuid
+#include "Layers.h"
 #include "mozilla/gfx/Matrix.h"             // for Matrix4x4
 #include "mozilla/layers/LayersTypes.h"     // for EventRegions
 #include "mozilla/Maybe.h"                  // for Maybe
-#include "nsRefPtr.h"                       // for nsRefPtr
+#include "mozilla/RefPtr.h"               // for nsRefPtr
 
 namespace mozilla {
 namespace layers {
 
+class AsyncDragMetrics;
 class AsyncPanZoomController;
 
 /**
@@ -53,8 +55,9 @@ class HitTestingTreeNode {
 private:
   ~HitTestingTreeNode();
 public:
-  HitTestingTreeNode(AsyncPanZoomController* aApzc, bool aIsPrimaryHolder);
-  void RecycleWith(AsyncPanZoomController* aApzc);
+  HitTestingTreeNode(AsyncPanZoomController* aApzc, bool aIsPrimaryHolder,
+                     uint64_t aLayersId);
+  void RecycleWith(AsyncPanZoomController* aApzc, uint64_t aLayersId);
   void Destroy();
 
   /* Tree construction methods */
@@ -75,15 +78,24 @@ public:
 
   AsyncPanZoomController* GetApzc() const;
   AsyncPanZoomController* GetNearestContainingApzc() const;
+  AsyncPanZoomController* GetNearestContainingApzcWithSameLayersId() const;
   bool IsPrimaryHolder() const;
+  uint64_t GetLayersId() const;
 
   /* Hit test related methods */
 
   void SetHitTestData(const EventRegions& aRegions,
-                      const gfx::Matrix4x4& aTransform,
+                      const CSSTransformMatrix& aTransform,
                       const Maybe<ParentLayerIntRegion>& aClipRegion,
                       const EventRegionsOverride& aOverride);
   bool IsOutsideClip(const ParentLayerPoint& aPoint) const;
+
+  /* Scrollbar info */
+
+  void SetScrollbarData(FrameMetrics::ViewID aScrollViewId, Layer::ScrollDirection aDir, int32_t aScrollSize);
+  bool MatchesScrollDragMetrics(const AsyncDragMetrics& aDragMetrics) const;
+  int32_t GetScrollSize() const;
+
   /* Convert aPoint into the LayerPixel space for the layer corresponding to
    * this node. */
   Maybe<LayerPoint> Untransform(const ParentLayerPoint& aPoint) const;
@@ -99,12 +111,18 @@ public:
 private:
   void SetApzcParent(AsyncPanZoomController* aApzc);
 
-  nsRefPtr<HitTestingTreeNode> mLastChild;
-  nsRefPtr<HitTestingTreeNode> mPrevSibling;
-  nsRefPtr<HitTestingTreeNode> mParent;
+  RefPtr<HitTestingTreeNode> mLastChild;
+  RefPtr<HitTestingTreeNode> mPrevSibling;
+  RefPtr<HitTestingTreeNode> mParent;
 
-  nsRefPtr<AsyncPanZoomController> mApzc;
+  RefPtr<AsyncPanZoomController> mApzc;
   bool mIsPrimaryApzcHolder;
+
+  uint64_t mLayersId;
+
+  FrameMetrics::ViewID mScrollViewId;
+  Layer::ScrollDirection mScrollDir;
+  int32_t mScrollSize;
 
   /* Let {L,M} be the {layer, scrollable metrics} pair that this node
    * corresponds to in the layer tree. mEventRegions contains the event regions
@@ -117,7 +135,7 @@ private:
 
   /* This is the transform from layer L. This does NOT include any async
    * transforms. */
-  gfx::Matrix4x4 mTransform;
+  CSSTransformMatrix mTransform;
 
   /* This is clip rect for L that we wish to use for hit-testing purposes. Note
    * that this may not be exactly the same as the clip rect on layer L because
@@ -131,7 +149,7 @@ private:
   EventRegionsOverride mOverride;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif // mozilla_layers_HitTestingTreeNode_h

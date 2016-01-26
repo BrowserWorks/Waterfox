@@ -1,8 +1,8 @@
 const TEST_PAGE = "http://mochi.test:8888/browser/browser/base/content/test/general/file_double_close_tab.html";
 
-let expectingDialog = false;
-let wantToClose = true;
-let resolveDialogPromise;
+var expectingDialog = false;
+var wantToClose = true;
+var resolveDialogPromise;
 function onTabModalDialogLoaded(node) {
   ok(expectingDialog, "Should be expecting this dialog.");
   expectingDialog = false;
@@ -18,6 +18,7 @@ function onTabModalDialogLoaded(node) {
   }
 }
 
+SpecialPowers.pushPrefEnv({"set": [["dom.require_user_interaction_for_beforeunload", false]]});
 
 // Listen for the dialog being created
 Services.obs.addObserver(onTabModalDialogLoaded, "tabmodal-dialog-loaded", false);

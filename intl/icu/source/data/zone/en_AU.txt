@@ -1,16 +1,25 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_AU.xml
 // *
 // ***************************************************************************
 en_AU{
-    %%Parent{"en_GB"}
-    Version{"2.0.92.87"}
+    %%Parent{"en_001"}
+    Version{"2.1.20.4"}
     zoneStrings{
+        "meta:Africa_Eastern"{
+            ls{"Eastern Africa Time"}
+        }
+        "meta:Arabian"{
+            ld{"Arabia Daylight Time"}
+            lg{"Arabia Time"}
+            ls{"Arabia Standard Time"}
+        }
         "meta:Australia_Central"{
+            lg{"Australian Central Time"}
             sd{"ACDT"}
             sg{"ACT"}
             ss{"ACST"}
@@ -21,39 +30,47 @@ en_AU{
             ss{"ACWST"}
         }
         "meta:Australia_Eastern"{
+            lg{"Australian Eastern Time"}
             sd{"AEDT"}
             sg{"AET"}
             ss{"AEST"}
         }
         "meta:Australia_Western"{
+            lg{"Australian Western Time"}
             sd{"AWDT"}
             sg{"AWT"}
             ss{"AWST"}
         }
-        "meta:Europe_Central"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
+        "meta:Cook"{
+            ld{"Cook Island Summer Time"}
+            lg{"Cook Island Time"}
+            ls{"Cook Island Standard Time"}
         }
-        "meta:Europe_Eastern"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
+        "meta:Japan"{
+            ld{"Japan Summer Time"}
         }
-        "meta:Europe_Western"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
+        "meta:Korea"{
+            ld{"Korean Summer Time"}
+            lg{"Korea Time"}
         }
         "meta:Lord_Howe"{
             sd{"LHDT"}
             sg{"LHT"}
             ss{"LHST"}
         }
+        "meta:Moscow"{
+            ld{"Moscow Daylight Time"}
+        }
         "meta:New_Zealand"{
             sd{"NZDT"}
             sg{"NZT"}
             ss{"NZST"}
+        }
+        "meta:Samoa"{
+            ld{"Samoa Summer Time"}
+        }
+        "meta:Taipei"{
+            ld{"Taipei Summer Time"}
         }
     }
 }

@@ -20,6 +20,7 @@ ProxyObject::New(JSContext* cx, const BaseProxyHandler* handler, HandleValue pri
     const Class* clasp = options.clasp();
 
     MOZ_ASSERT(isValidProxyClass(clasp));
+    MOZ_ASSERT(clasp->shouldDelayMetadataCallback());
     MOZ_ASSERT_IF(proto.isObject(), cx->compartment() == proto.toObject()->compartment());
 
     /*
@@ -42,9 +43,12 @@ ProxyObject::New(JSContext* cx, const BaseProxyHandler* handler, HandleValue pri
         allocKind = GetBackgroundAllocKind(allocKind);
 
     ProxyValueArray* values = cx->zone()->new_<ProxyValueArray>();
-    if (!values)
+    if (!values) {
+        ReportOutOfMemory(cx);
         return nullptr;
+    }
 
+    AutoSetNewObjectMetadata metadata(cx);
     // Note: this will initialize the object's |data| to strange values, but we
     // will immediately overwrite those below.
     RootedObject obj(cx, NewObjectWithGivenTaggedProto(cx, clasp, proto, allocKind,

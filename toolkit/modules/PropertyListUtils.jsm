@@ -61,7 +61,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.importGlobalProperties(['File']);
+Cu.importGlobalProperties(['File', 'FileReader']);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
@@ -83,7 +83,7 @@ this.PropertyListUtils = Object.freeze({
    *        The reaon for failure is reported to the Error Console.
    */
   read: function PLU_read(aFile, aCallback) {
-    if (!(aFile instanceof Ci.nsILocalFile || aFile instanceof Ci.nsIDOMFile))
+    if (!(aFile instanceof Ci.nsILocalFile || aFile instanceof File))
       throw new Error("aFile is not a file object");
     if (typeof(aCallback) != "function")
       throw new Error("Invalid value for aCallback");
@@ -100,8 +100,7 @@ this.PropertyListUtils = Object.freeze({
           file = new File(file);
         }
 
-        let fileReader = Cc["@mozilla.org/files/filereader;1"].
-                         createInstance(Ci.nsIDOMFileReader);
+        let fileReader = new FileReader();
         let onLoadEnd = function() {
           let root = null;
           try {
@@ -259,11 +258,14 @@ BinaryPropertyListReader.prototype = {
    * Checks if the given ArrayBuffer can be read as a binary property list.
    * It can be called on the prototype.
    */
-  canProcess: function BPLR_canProcess(aBuffer)
-    [String.fromCharCode(c) for each (c in new Uint8Array(aBuffer, 0, 8))].
-    join("") == "bplist00",
+  canProcess: function BPLR_canProcess(aBuffer) {
+    return Array.from(new Uint8Array(aBuffer, 0, 8)).map(c => String.fromCharCode(c)).
+           join("") == "bplist00";
+  },
 
-  get root() this._readObject(this._rootObjectIndex),
+  get root() {
+    return this._readObject(this._rootObjectIndex);
+  },
 
   _readTrailerInfo: function BPLR__readTrailer() {
     // The first 6 bytes of the 32-bytes trailer are unused
@@ -374,7 +376,7 @@ BinaryPropertyListReader.prototype = {
   function BPLR__readString(aByteOffset, aNumberOfChars, aUnicode) {
     let codes = this._readUnsignedInts(aByteOffset, aUnicode ? 2 : 1,
                                        aNumberOfChars);
-    return [String.fromCharCode(c) for each (c in codes)].join("");
+    return codes.map(c => String.fromCharCode(c)).join("");
   },
 
   /**
@@ -656,7 +658,9 @@ function XMLPropertyListReader(aDOMDoc) {
 }
 
 XMLPropertyListReader.prototype = {
-  get root() this._readObject(this._plistRootElement),
+  get root() {
+    return this._readObject(this._plistRootElement);
+  },
 
   /**
    * Convert a dom element to a property list object.
@@ -687,7 +691,7 @@ XMLPropertyListReader.prototype = {
         // Strip spaces and new lines.
         let base64str = aDOMElt.textContent.replace(/\s*/g, "");
         let decoded = atob(base64str);
-        return new Uint8Array([decoded.charCodeAt(i) for (i in decoded)]);
+        return new Uint8Array(Array.from(decoded, c => c.charCodeAt(0)));
       case "dict":
         return this._wrapDictionary(aDOMElt);
       case "array":

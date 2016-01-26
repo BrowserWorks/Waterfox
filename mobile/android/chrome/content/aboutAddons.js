@@ -4,7 +4,9 @@
 
 "use strict";
 
-let Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
+/*globals gChromeWin */
+
+var Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm")
 Cu.import("resource://gre/modules/AddonManager.jsm");
@@ -12,16 +14,17 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const AMO_ICON = "chrome://browser/skin/images/amo-logo.png";
 
-let gStringBundle = Services.strings.createBundle("chrome://browser/locale/aboutAddons.properties");
+var gStringBundle = Services.strings.createBundle("chrome://browser/locale/aboutAddons.properties");
 
-XPCOMUtils.defineLazyGetter(window, "gChromeWin", function()
-  window.QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIWebNavigation)
-    .QueryInterface(Ci.nsIDocShellTreeItem)
-    .rootTreeItem
-    .QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIDOMWindow)
-    .QueryInterface(Ci.nsIDOMChromeWindow));
+XPCOMUtils.defineLazyGetter(window, "gChromeWin", function() {
+  return window.QueryInterface(Ci.nsIInterfaceRequestor)
+           .getInterface(Ci.nsIWebNavigation)
+           .QueryInterface(Ci.nsIDocShellTreeItem)
+           .rootTreeItem
+           .QueryInterface(Ci.nsIInterfaceRequestor)
+           .getInterface(Ci.nsIDOMWindow)
+           .QueryInterface(Ci.nsIDOMChromeWindow);
+});
 
 var ContextMenus = {
   target: null,
@@ -58,6 +61,14 @@ var ContextMenus = {
       document.getElementById("contextmenu-uninstall").removeAttribute("hidden");
     }
 
+    // Hide the enable/disable context menu items if the add-on was disabled by
+    // Firefox (e.g. unsigned or blocklisted add-on).
+    if (addon.appDisabled) {
+      document.getElementById("contextmenu-enable").setAttribute("hidden", "true");
+      document.getElementById("contextmenu-disable").setAttribute("hidden", "true");
+      return;
+    }
+
     let enabled = this.target.getAttribute("isDisabled") != "true";
     if (enabled) {
       document.getElementById("contextmenu-enable").setAttribute("hidden", "true");
@@ -92,7 +103,6 @@ function init() {
   Addons.init();
   showList();
   ContextMenus.init();
-
 }
 
 
@@ -101,14 +111,9 @@ function uninit() {
   AddonManager.removeAddonListener(Addons);
 }
 
-function openLink(aEvent) {
-  try {
-    let formatter = Cc["@mozilla.org/toolkit/URLFormatterService;1"].getService(Ci.nsIURLFormatter);
-
-    let url = formatter.formatURLPref(aEvent.currentTarget.getAttribute("pref"));
-    let BrowserApp = gChromeWin.BrowserApp;
-    BrowserApp.addTab(url, { selected: true, parentId: BrowserApp.selectedTab.id });
-  } catch (ex) {}
+function openLink(url) {
+  let BrowserApp = gChromeWin.BrowserApp;
+  BrowserApp.addTab(url, { selected: true, parentId: BrowserApp.selectedTab.id });
 }
 
 function onPopState(aEvent) {
@@ -184,8 +189,14 @@ var Addons = {
     let outer = document.createElement("div");
     outer.className = "addon-item list-item";
     outer.setAttribute("role", "button");
-    outer.setAttribute("pref", "extensions.getAddons.browseAddons");
-    outer.addEventListener("click", openLink, true);
+    outer.addEventListener("click", function(event) {
+      try {
+        let formatter = Cc["@mozilla.org/toolkit/URLFormatterService;1"].getService(Ci.nsIURLFormatter);
+        openLink(formatter.formatURLPref("extensions.getAddons.browseAddons"));
+      } catch (e) {
+        Cu.reportError(e);
+      }
+    }, true);
 
     let img = document.createElement("img");
     img.className = "icon";
@@ -226,6 +237,7 @@ var Addons = {
 
     let item = this._createItem(aAddon);
     item.setAttribute("isDisabled", !aAddon.isActive);
+    item.setAttribute("isUnsigned", aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING);
     item.setAttribute("opType", opType);
     item.setAttribute("updateable", updateable);
     if (blocked)
@@ -266,6 +278,10 @@ var Addons = {
     document.getElementById("cancel-btn").addEventListener("click", Addons.cancelUninstall.bind(this), false);
     document.getElementById("disable-btn").addEventListener("click", Addons.disable.bind(this), false);
     document.getElementById("enable-btn").addEventListener("click", Addons.enable.bind(this), false);
+
+    document.getElementById("unsigned-learn-more").addEventListener("click", function() {
+      openLink(Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons");
+    }, false);
   },
 
   _getOpTypeForOperations: function _getOpTypeForOperations(aOperations) {
@@ -297,6 +313,7 @@ var Addons = {
 
     let detailItem = document.querySelector("#addons-details > .addon-item");
     detailItem.setAttribute("isDisabled", aListItem.getAttribute("isDisabled"));
+    detailItem.setAttribute("isUnsigned", aListItem.getAttribute("isUnsigned"));
     detailItem.setAttribute("opType", aListItem.getAttribute("opType"));
     detailItem.setAttribute("optionsURL", aListItem.getAttribute("optionsURL"));
     let addon = detailItem.addon = aListItem.addon;
@@ -311,16 +328,18 @@ var Addons = {
       gStringBundle.formatStringFromName("addonStatus.uninstalled", [addon.name], 1);
 
     let enableBtn = document.getElementById("enable-btn");
-    if (addon.appDisabled)
+    if (addon.appDisabled) {
       enableBtn.setAttribute("disabled", "true");
-    else
+    } else {
       enableBtn.removeAttribute("disabled");
+    }
 
     let uninstallBtn = document.getElementById("uninstall-btn");
-    if (addon.scope == AddonManager.SCOPE_APPLICATION)
+    if (addon.scope == AddonManager.SCOPE_APPLICATION) {
       uninstallBtn.setAttribute("disabled", "true");
-    else
+    } else {
       uninstallBtn.removeAttribute("disabled");
+    }
 
     let box = document.querySelector("#addons-details > .addon-item .options-box");
     box.innerHTML = "";

@@ -54,15 +54,11 @@ nsStyleStructID_Inherited_Count =
 nsStyleStructID_Reset_Count =
   nsStyleStructID_Length - nsStyleStructID_Reset_Start,
 
-// An ID used for properties that are not in style structs.  This is
-// used only in some users of nsStyleStructID, such as
-// nsCSSProps::kSIDTable, including some that store SIDs in a bitfield,
-// such as nsCSSCompressedDataBlock::mStyleBits.
-eStyleStruct_BackendOnly = nsStyleStructID_Length
-
 };
 
 // A bit corresponding to each struct ID
 #define NS_STYLE_INHERIT_BIT(sid_)        (1 << uint64_t(eStyleStruct_##sid_))
+
+typedef decltype(nsStyleStructID(0) + nsStyleStructID(0)) nsStyleStructID_size_t;
 
 #endif /* nsStyleStructFwd_h_ */

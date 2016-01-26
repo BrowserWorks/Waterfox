@@ -23,40 +23,21 @@ namespace cache {
 class ManagerId final
 {
 public:
-  // nsTArray comparator that compares by value instead of pointer values.
-  class MOZ_STACK_CLASS Comparator final
-  {
-  public:
-    bool Equals(ManagerId *aA, ManagerId* aB) const { return *aA == *aB; }
-    bool LessThan(ManagerId *aA, ManagerId* aB) const { return *aA < *aB; }
-  };
-
   // Main thread only
   static nsresult Create(nsIPrincipal* aPrincipal, ManagerId** aManagerIdOut);
 
   // Main thread only
   already_AddRefed<nsIPrincipal> Principal() const;
 
-  const nsACString& Origin() const { return mOrigin; }
+  const nsACString& QuotaOrigin() const { return mQuotaOrigin; }
 
   bool operator==(const ManagerId& aOther) const
   {
-    return mOrigin == aOther.mOrigin &&
-           mAppId == aOther.mAppId &&
-           mInBrowserElement == aOther.mInBrowserElement;
-  }
-
-  bool operator<(const ManagerId& aOther) const
-  {
-    return mOrigin < aOther.mOrigin ||
-           (mOrigin == aOther.mOrigin && mAppId < aOther.mAppId) ||
-           (mOrigin == aOther.mOrigin && mAppId == aOther.mAppId &&
-            mInBrowserElement < aOther.mInBrowserElement);
+    return mQuotaOrigin == aOther.mQuotaOrigin;
   }
 
 private:
-  ManagerId(nsIPrincipal* aPrincipal, const nsACString& aOrigin,
-            uint32_t aAppId, bool aInBrowserElement);
+  ManagerId(nsIPrincipal* aPrincipal, const nsACString& aOrigin);
   ~ManagerId();
 
   ManagerId(const ManagerId&) = delete;
@@ -66,9 +47,7 @@ private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
 
   // immutable to allow threadsfe access
-  const nsCString mOrigin;
-  const uint32_t mAppId;
-  const bool mInBrowserElement;
+  const nsCString mQuotaOrigin;
 
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(mozilla::dom::cache::ManagerId)

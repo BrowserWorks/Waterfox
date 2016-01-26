@@ -15,6 +15,7 @@ namespace mozilla {
 namespace a11y {
 class Accessible;
 class HyperTextAccessible;
+class TextLeafAccessible;
 class ImageAccessible;
 class TableAccessible;
 class TableCellAccessible;
@@ -32,8 +33,28 @@ public:
   { MOZ_COUNT_CTOR(DocAccessibleChild); }
   ~DocAccessibleChild()
   {
-    mDoc->SetIPCDoc(nullptr);
+    // Shutdown() should have been called, but maybe it isn't if the process is
+    // killed?
+    MOZ_ASSERT(!mDoc);
+    if (mDoc)
+      mDoc->SetIPCDoc(nullptr);
     MOZ_COUNT_DTOR(DocAccessibleChild);
+  }
+
+  void Shutdown()
+  {
+    mDoc->SetIPCDoc(nullptr);
+    mDoc = nullptr;
+    SendShutdown();
+  }
+
+  virtual void ActorDestroy(ActorDestroyReason) override
+  {
+    if (!mDoc)
+      return;
+
+    mDoc->SetIPCDoc(nullptr);
+    mDoc = nullptr;
   }
 
   void ShowEvent(AccShowEvent* aShowEvent);
@@ -44,12 +65,19 @@ public:
   virtual bool RecvState(const uint64_t& aID, uint64_t* aState) override;
 
   /*
+   * Return the native state for the accessible with given ID.
+   */
+  virtual bool RecvNativeState(const uint64_t& aID, uint64_t* aState) override;
+
+  /*
    * Get the name for the accessible with given id.
    */
   virtual bool RecvName(const uint64_t& aID, nsString* aName) override;
 
   virtual bool RecvValue(const uint64_t& aID, nsString* aValue) override;
-  
+
+  virtual bool RecvHelp(const uint64_t& aID, nsString* aHelp) override;
+
   /*
    * Get the description for the accessible with given id.
    */
@@ -60,13 +88,28 @@ public:
                              nsTArray<RelationTargets>* aRelations)
     override;
 
+  virtual bool RecvIsSearchbox(const uint64_t& aID, bool* aRetVal) override;
+
+  virtual bool RecvLandmarkRole(const uint64_t& aID, nsString* aLandmark) override;
+
+  virtual bool RecvARIARoleAtom(const uint64_t& aID, nsString* aRole) override;
+
+  virtual bool RecvGetLevelInternal(const uint64_t& aID, int32_t* aLevel) override;
+
   virtual bool RecvAttributes(const uint64_t& aID,
                               nsTArray<Attribute> *aAttributes) override;
+  virtual bool RecvScrollTo(const uint64_t& aID, const uint32_t& aScrollType)
+    override;
+  virtual bool RecvScrollToPoint(const uint64_t& aID,
+                                 const uint32_t& aScrollType,
+                                 const int32_t& aX, const int32_t& aY) override;
 
+  virtual bool RecvCaretLineNumber(const uint64_t& aID, int32_t* aLineNumber)
+    override;
   virtual bool RecvCaretOffset(const uint64_t& aID, int32_t* aOffset)
     override;
-  virtual bool RecvSetCaretOffset(const uint64_t& aID, const int32_t& aOffset,
-                                  bool* aValid) override;
+  virtual bool RecvSetCaretOffset(const uint64_t& aID, const int32_t& aOffset)
+    override;
 
   virtual bool RecvCharacterCount(const uint64_t& aID, int32_t* aCount)
      override;
@@ -160,6 +203,9 @@ public:
                                           const uint32_t& aCoordinateType,
                                           const int32_t& aX,
                                           const int32_t& aY) override;
+
+  virtual bool RecvText(const uint64_t& aID,
+                        nsString* aText) override;
 
   virtual bool RecvReplaceText(const uint64_t& aID,
                                const nsString& aText) override;
@@ -322,6 +368,14 @@ public:
                                     const uint32_t& aRow) override;
   virtual bool RecvTableIsProbablyForLayout(const uint64_t& aID,
                                             bool* aForLayout) override;
+  virtual bool RecvAtkTableColumnHeader(const uint64_t& aID,
+                                        const int32_t& aCol,
+                                        uint64_t* aHeader,
+                                        bool* aOk) override;
+  virtual bool RecvAtkTableRowHeader(const uint64_t& aID,
+                                     const int32_t& aRow,
+                                     uint64_t* aHeader,
+                                     bool* aOk) override;
 
   virtual bool RecvSelectedItems(const uint64_t& aID,
                                  nsTArray<uint64_t>* aSelectedItemIDs) override;
@@ -352,6 +406,10 @@ public:
   virtual bool RecvUnselectAll(const uint64_t& aID,
                                bool* aSuccess) override;
 
+  virtual bool RecvTakeSelection(const uint64_t& aID) override;
+  virtual bool RecvSetSelected(const uint64_t& aID,
+                               const bool& aSelect) override;
+
   virtual bool RecvDoAction(const uint64_t& aID,
                             const uint8_t& aIndex,
                             bool* aSuccess) override;
@@ -375,6 +433,9 @@ public:
                                     uint32_t* aKey,
                                     uint32_t* aModifierMask) override;
 
+  virtual bool RecvAtkKeyBinding(const uint64_t& aID,
+                                 nsString* aResult) override;
+
   virtual bool RecvCurValue(const uint64_t& aID,
                             double* aValue) override;
 
@@ -393,33 +454,51 @@ public:
 
   virtual bool RecvTakeFocus(const uint64_t& aID) override;
 
+  virtual bool RecvEmbeddedChildCount(const uint64_t& aID, uint32_t* aCount)
+    override final;
+
   virtual bool RecvIndexOfEmbeddedChild(const uint64_t& aID,
                                         const uint64_t& aChildID,
                                         uint32_t* aChildIdx) override final;
 
-  virtual bool RecvChildAtPoint(const uint64_t& aID,
-                                const int32_t& aX,
-                                const int32_t& aY,
-                                const uint32_t& aWhich,
+  virtual bool RecvEmbeddedChildAt(const uint64_t& aID, const uint32_t& aIdx,
+                                   uint64_t* aChildID) override final;
+
+  virtual bool RecvFocusedChild(const uint64_t& aID,
                                 uint64_t* aChild,
                                 bool* aOk) override;
 
-  virtual bool RecvBounds(const uint64_t& aID, nsIntRect* aRect) override;
-
   virtual bool RecvLanguage(const uint64_t& aID, nsString* aLocale) override;
   virtual bool RecvDocType(const uint64_t& aID, nsString* aType) override;
+  virtual bool RecvTitle(const uint64_t& aID, nsString* aTitle) override;
   virtual bool RecvURL(const uint64_t& aID, nsString* aURL) override;
   virtual bool RecvMimeType(const uint64_t& aID, nsString* aMime) override;
   virtual bool RecvURLDocTypeMimeType(const uint64_t& aID,
                                       nsString* aURL,
                                       nsString* aDocType,
                                       nsString* aMimeType) override;
+
+  virtual bool RecvAccessibleAtPoint(const uint64_t& aID,
+                                     const int32_t& aX,
+                                     const int32_t& aY,
+                                     const bool& aNeedsScreenCoords,
+                                     const uint32_t& aWhich,
+                                     uint64_t* aResult,
+                                     bool* aOk) override;
+
+  virtual bool RecvExtents(const uint64_t& aID,
+                           const bool& aNeedsScreenCoords,
+                           int32_t* aX,
+                           int32_t* aY,
+                           int32_t* aWidth,
+                           int32_t* aHeight) override;
 private:
 
   Accessible* IdToAccessible(const uint64_t& aID) const;
   Accessible* IdToAccessibleLink(const uint64_t& aID) const;
   Accessible* IdToAccessibleSelect(const uint64_t& aID) const;
   HyperTextAccessible* IdToHyperTextAccessible(const uint64_t& aID) const;
+  TextLeafAccessible* IdToTextLeafAccessible(const uint64_t& aID) const;
   ImageAccessible* IdToImageAccessible(const uint64_t& aID) const;
   TableCellAccessible* IdToTableCellAccessible(const uint64_t& aID) const;
   TableAccessible* IdToTableAccessible(const uint64_t& aID) const;

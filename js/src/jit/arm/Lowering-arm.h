@@ -22,7 +22,8 @@ class LIRGeneratorARM : public LIRGeneratorShared
   protected:
     // Adds a box input to an instruction, setting operand |n| to the type and
     // |n+1| to the payload.
-    void useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register reg2);
+    void useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register reg2,
+                     bool useAtStart = false);
 
     // x86 has constraints on what registers can be formatted for 1-byte
     // stores and loads; on ARM all registers are okay.
@@ -66,8 +67,6 @@ class LIRGeneratorARM : public LIRGeneratorShared
 
     void lowerForBitAndAndBranch(LBitAndAndBranch* baab, MInstruction* mir,
                                  MDefinition* lhs, MDefinition* rhs);
-    void lowerConstantDouble(double d, MInstruction* ins);
-    void lowerConstantFloat32(float d, MInstruction* ins);
     void lowerTruncateDToInt32(MTruncateToInt32* ins);
     void lowerTruncateFToInt32(MTruncateToInt32* ins);
     void lowerDivI(MDiv* div);
@@ -83,7 +82,6 @@ class LIRGeneratorARM : public LIRGeneratorShared
     LTableSwitchV* newLTableSwitchV(MTableSwitch* ins);
 
   public:
-    void visitConstant(MConstant* ins);
     void visitBox(MBox* box);
     void visitUnbox(MUnbox* unbox);
     void visitReturn(MReturn* ret);
@@ -96,6 +94,7 @@ class LIRGeneratorARM : public LIRGeneratorShared
     void visitAsmJSStoreHeap(MAsmJSStoreHeap* ins);
     void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins);
     void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins);
+    void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
     void visitSimdBinaryArith(MSimdBinaryArith* ins);
@@ -103,8 +102,10 @@ class LIRGeneratorARM : public LIRGeneratorShared
     void visitSimdSplatX4(MSimdSplatX4* ins);
     void visitSimdValueX4(MSimdValueX4* ins);
     void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins);
+    void visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins);
     void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins);
     void visitSubstr(MSubstr* ins);
+    void visitRandom(MRandom* ins);
 };
 
 typedef LIRGeneratorARM LIRGeneratorSpecific;

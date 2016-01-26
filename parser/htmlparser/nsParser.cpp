@@ -28,7 +28,6 @@
 #include "nsIFragmentContentSink.h"
 #include "nsStreamUtils.h"
 #include "nsHTMLTokenizer.h"
-#include "nsNetUtil.h"
 #include "nsScriptLoader.h"
 #include "nsDataHashtable.h"
 #include "nsXPCOMCIDInternal.h"
@@ -112,7 +111,7 @@ For more details @see bugzilla bug 76722
 class nsParserContinueEvent : public nsRunnable
 {
 public:
-  nsRefPtr<nsParser> mParser;
+  RefPtr<nsParser> mParser;
 
   explicit nsParserContinueEvent(nsParser* aParser)
     : mParser(aParser)
@@ -1685,7 +1684,7 @@ ExtractCharsetFromXmlDeclaration(const unsigned char* aBytes, int32_t aLen,
   return !oCharset.IsEmpty();
 }
 
-inline const char
+inline char
 GetNextChar(nsACString::const_iterator& aStart,
             nsACString::const_iterator& aEnd)
 {

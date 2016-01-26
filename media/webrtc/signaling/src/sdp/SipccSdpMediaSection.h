@@ -75,7 +75,15 @@ private:
   bool Load(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadConnection(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
   bool LoadProtocol(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
-  void LoadFormats(sdp_t* sdp, uint16_t level);
+  bool LoadFormats(sdp_t* sdp, uint16_t level, SdpErrorHolder& errorHolder);
+  bool ValidateSimulcast(sdp_t* sdp, uint16_t level,
+                         SdpErrorHolder& errorHolder) const;
+  bool ValidateSimulcastVersions(
+      sdp_t* sdp,
+      uint16_t level,
+      const SdpSimulcastAttribute::Versions& versions,
+      sdp::Direction direction,
+      SdpErrorHolder& errorHolder) const;
 
   // the following values are cached on first get
   MediaType mMediaType;

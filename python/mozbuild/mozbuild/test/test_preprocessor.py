@@ -440,12 +440,6 @@ class TestPreprocessor(unittest.TestCase):
             '#endif',
         ])
 
-    def test_lineEndings(self):
-        with MockedOpen({'f': 'first\n#literal second\n'}):
-            self.pp.setLineEndings('cr')
-            self.pp.do_include('f')
-            self.assertEqual(self.pp.out.getvalue(), "first\rsecond\r")
-
     def test_filterDefine(self):
         self.do_include_pass([
             '#filter substitution',
@@ -561,6 +555,56 @@ class TestPreprocessor(unittest.TestCase):
         with MockedOpen(files):
             self.pp.do_include('f')
             self.assertEqual(self.pp.out.getvalue(), 'foobarbaz\nbarfoobaz\n')
+
+    def test_include_line(self):
+        files = {
+            'test.js': '\n'.join([
+                '#define foo foobarbaz',
+                '#include @inc@',
+                '@bar@',
+                '',
+            ]),
+            'bar.js': '\n'.join([
+                '#define bar barfoobaz',
+                '@foo@',
+                '',
+            ]),
+            'foo.js': '\n'.join([
+                'bazfoobar',
+                '#include bar.js',
+                'bazbarfoo',
+                '',
+            ]),
+            'baz.js': 'baz\n',
+            'f.js': '\n'.join([
+                '#include foo.js',
+                '#filter substitution',
+                '#define inc bar.js',
+                '#include test.js',
+                '#include baz.js',
+                'fin',
+                '',
+            ]),
+        }
+
+        with MockedOpen(files):
+            self.pp.do_include('f.js')
+            self.assertEqual(self.pp.out.getvalue(),
+                             ('//@line 1 "CWD/foo.js"\n'
+                              'bazfoobar\n'
+                              '//@line 2 "CWD/bar.js"\n'
+                              '@foo@\n'
+                              '//@line 3 "CWD/foo.js"\n'
+                              'bazbarfoo\n'
+                              '//@line 2 "CWD/bar.js"\n'
+                              'foobarbaz\n'
+                              '//@line 3 "CWD/test.js"\n'
+                              'barfoobaz\n'
+                              '//@line 1 "CWD/baz.js"\n'
+                              'baz\n'
+                              '//@line 6 "CWD/f.js"\n'
+                              'fin\n').replace('CWD/',
+                                               os.getcwd() + os.path.sep))
 
     def test_include_missing_file(self):
         with MockedOpen({'f': '#include foo\n'}):

@@ -29,6 +29,13 @@ function SetForEach(callbackfn, thisArg = undefined) {
         if (result.done)
             break;
         var value = result.value;
-        callFunction(callbackfn, thisArg, value, value, S);
+        callContentFunction(callbackfn, thisArg, value, value, S);
     }
 }
+
+// ES6 final draft 23.2.2.2.
+function SetSpecies() {
+    // Step 1.
+    return this;
+}
+_SetCanonicalName(SetSpecies, "get [Symbol.species]");

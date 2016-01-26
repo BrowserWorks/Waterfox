@@ -70,7 +70,15 @@ public:
         // by default do nothing - only multiplexed protocols need to overload
         return;
     }
-    //
+
+    // This is the companion to *HasDataToWrite() for the case
+    // when a gecko caller has called ResumeRecv() after being paused
+    virtual void TransactionHasDataToRecv(nsAHttpTransaction *)
+    {
+        // by default do nothing - only multiplexed protocols need to overload
+        return;
+    }
+
     // called by the connection manager to close a transaction being processed
     // by this connection.
     //
@@ -246,6 +254,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpConnection, NS_AHTTPCONNECTION_IID)
             (fwdObject)->SetSecurityCallbacks(aCallbacks);  \
     }
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // nsAHttpConnection_h__

@@ -198,7 +198,7 @@ PowerManager::SetCpuSleepAllowed(bool aAllowed)
 already_AddRefed<PowerManager>
 PowerManager::CreateInstance(nsPIDOMWindow* aWindow)
 {
-  nsRefPtr<PowerManager> powerManager = new PowerManager();
+  RefPtr<PowerManager> powerManager = new PowerManager();
   if (NS_FAILED(powerManager->Init(aWindow))) {
     powerManager = nullptr;
   }
@@ -206,5 +206,5 @@ PowerManager::CreateInstance(nsPIDOMWindow* aWindow)
   return powerManager.forget();
 }
 
-} // dom
-} // mozilla
+} // namespace dom
+} // namespace mozilla

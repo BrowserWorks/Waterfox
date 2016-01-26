@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<svg height="0" xmlns="http://www.w3.org/2000/svg">
+  <filter id="checked-icon-state">
+    <feColorMatrix in="SourceGraphic" type="matrix"
+      values="0 0 0 0 0.043
+              0 0 0 0 0.415
+              0 0 0 0 0.79
+              0 0 0 1 0"/>
+  </filter>
+
+  <!-- Web Audio Gradients -->
+  <linearGradient id="bypass-light" x1="6%" y1="8%" x2="12%" y2="12%" spreadMethod="repeat">
+    <stop offset="0%" stop-color="#f0f1f2"/> <!-- theme-toolbar-background -->
+    <stop offset="50%" stop-color="#fff"/>
+  </linearGradient>
+
+  <linearGradient id="bypass-dark" x1="6%" y1="8%" x2="12%" y2="12%" spreadMethod="repeat">
+    <stop offset="0%" stop-color="#343c45"/> <!-- theme-toolbar-background -->
+    <stop offset="50%" stop-color="transparent"/>
+  </linearGradient>
+</svg>

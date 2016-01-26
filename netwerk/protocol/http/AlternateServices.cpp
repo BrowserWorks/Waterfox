@@ -109,7 +109,7 @@ AltSvcMapping::ProcessHeader(const nsCString &buf, const nsCString &originScheme
       continue;
     }
 
-    nsRefPtr<AltSvcMapping> mapping = new AltSvcMapping(originScheme,
+    RefPtr<AltSvcMapping> mapping = new AltSvcMapping(originScheme,
                                                         originHost, originPort,
                                                         username, privateBrowsing,
                                                         NowInSeconds() + maxage,
@@ -219,15 +219,13 @@ AltSvcMapping::RouteEquals(AltSvcMapping *map)
   return mAlternateHost.Equals(map->mAlternateHost) &&
     (mAlternatePort == map->mAlternatePort) &&
     mNPNToken.Equals(map->mNPNToken);
-
-  return false;
 }
 
 void
 AltSvcMapping::GetConnectionInfo(nsHttpConnectionInfo **outCI,
                                  nsProxyInfo *pi)
 {
-  nsRefPtr<nsHttpConnectionInfo> ci =
+  RefPtr<nsHttpConnectionInfo> ci =
     new nsHttpConnectionInfo(mOriginHost, mOriginPort, mNPNToken,
                              mUsername, pi, mAlternateHost, mAlternatePort);
   ci->SetInsecureScheme(!mHttps);
@@ -373,7 +371,7 @@ public:
   }
 
 private:
-  nsRefPtr<AltSvcMapping> mMapping;
+  RefPtr<AltSvcMapping> mMapping;
   uint32_t                mRunning : 1;
   uint32_t                mTriedToValidate : 1;
   uint32_t                mTriedToWrite : 1;
@@ -419,13 +417,13 @@ AltSvcCache::UpdateAltServiceMapping(AltSvcMapping *map, nsProxyInfo *pi,
 
   mHash.Put(map->mHashKey, map);
 
-  nsRefPtr<nsHttpConnectionInfo> ci;
+  RefPtr<nsHttpConnectionInfo> ci;
   map->GetConnectionInfo(getter_AddRefs(ci), pi);
   caps |= ci->GetAnonymous() ? NS_HTTP_LOAD_ANONYMOUS : 0;
 
   nsCOMPtr<nsIInterfaceRequestor> callbacks = new AltSvcOverride(aCallbacks);
 
-  nsRefPtr<AltSvcTransaction> nullTransaction =
+  RefPtr<AltSvcTransaction> nullTransaction =
     new AltSvcTransaction(map, ci, aCallbacks, caps);
   nullTransaction->StartTransaction();
   gHttpHandler->ConnMgr()->SpeculativeConnect(ci, callbacks, caps, nullTransaction);
@@ -586,5 +584,5 @@ AltSvcOverride::GetAllow1918(bool *allow)
 
 NS_IMPL_ISUPPORTS(AltSvcOverride, nsIInterfaceRequestor, nsISpeculativeConnectionOverrider)
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

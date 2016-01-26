@@ -8,24 +8,19 @@
 #define mozilla_dom_MessageEvent_h_
 
 #include "mozilla/dom/Event.h"
+#include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/MessagePortList.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDOMMessageEvent.h"
-#include "mozilla/dom/MessagePortList.h"
 
 namespace mozilla {
 namespace dom {
 
 struct MessageEventInit;
 class MessagePort;
-class MessagePortBase;
 class MessagePortList;
-class OwningWindowProxyOrMessagePortOrClient;
-
-namespace workers {
-
-class ServiceWorkerClient;
-
-}
+class OwningWindowProxyOrMessagePort;
+class WindowProxyOrMessagePort;
 
 /**
  * Implements the MessageEvent event, used for cross-document messaging and
@@ -55,7 +50,7 @@ public:
   void GetData(JSContext* aCx, JS::MutableHandle<JS::Value> aData,
                ErrorResult& aRv);
 
-  void GetSource(Nullable<OwningWindowProxyOrMessagePortOrClient>& aValue) const;
+  void GetSource(Nullable<OwningWindowProxyOrMessagePort>& aValue) const;
 
   MessagePortList* GetPorts()
   {
@@ -66,8 +61,6 @@ public:
 
   // Non WebIDL methods
   void SetSource(mozilla::dom::MessagePort* aPort);
-
-  void SetSource(workers::ServiceWorkerClient* aClient);
 
   void SetSource(nsPIDOMWindow* aWindow)
   {
@@ -86,6 +79,12 @@ public:
               const MessageEventInit& aEventInit,
               ErrorResult& aRv);
 
+  void InitMessageEvent(JSContext* aCx, const nsAString& aType, bool aCanBubble,
+                        bool aCancelable, JS::Handle<JS::Value> aData,
+                        const nsAString& aOrigin, const nsAString& aLastEventId,
+                        const Nullable<WindowProxyOrMessagePort>& aSource,
+                        const Nullable<Sequence<OwningNonNull<MessagePort>>>& aPorts);
+
 protected:
   ~MessageEvent();
 
@@ -94,12 +93,16 @@ private:
   nsString mOrigin;
   nsString mLastEventId;
   nsCOMPtr<nsIDOMWindow> mWindowSource;
-  nsRefPtr<MessagePortBase> mPortSource;
-  nsRefPtr<workers::ServiceWorkerClient> mClientSource;
-  nsRefPtr<MessagePortList> mPorts;
+  RefPtr<MessagePort> mPortSource;
+  RefPtr<MessagePortList> mPorts;
 };
 
 } // namespace dom
 } // namespace mozilla
+
+already_AddRefed<mozilla::dom::MessageEvent>
+NS_NewDOMMessageEvent(mozilla::dom::EventTarget* aOwner,
+                      nsPresContext* aPresContext,
+                      mozilla::WidgetEvent* aEvent);
 
 #endif // mozilla_dom_MessageEvent_h_

@@ -3,17 +3,15 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-
-Components.utils.import("resource:///modules/UITour.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   function test_info_customize_auto_open_close(done) {
     let popup = document.getElementById("UITourTooltip");
     gContentAPI.showInfo("customize", "Customization", "Customize me please!");
@@ -70,7 +68,7 @@ let tests = [
   taskify(function* test_bookmarks_menu() {
     let bookmarksMenuButton = document.getElementById("bookmarks-menu-button");
 
-    ise(bookmarksMenuButton.open, false, "Menu should initially be closed");
+    is(bookmarksMenuButton.open, false, "Menu should initially be closed");
     gContentAPI.showMenu("bookmarks");
 
     yield waitForConditionPromise(() => {

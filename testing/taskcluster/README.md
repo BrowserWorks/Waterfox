@@ -57,7 +57,8 @@ templates variables:
 
 By convention build tasks are stored in `tasks/builds/` the location of
 each particular type of build is specified in `job_flags.yml` (and more
-locations in the future)
+locations in the future), which is located in the appropriate subdirectory
+of `branches/`.
 
 #### Task format
 
@@ -87,7 +88,7 @@ task:
     # need to provide an easy way to lookup the correct aritfact path.
     locations:
       build: 'public/name_i_made_up.tar.gz'
-      tests: 'public/some_tests.zip'
+      tests: 'public/some_tests.zip' or test_packages: 'public/test_packages.json'
 ```
 
 #### Templates properties

@@ -13,12 +13,14 @@
 #include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
 #include "nsICookiePermission.h"
+#include "nsPIDOMWindow.h"
 
 #include "mozilla/dom/StorageBinding.h"
 #include "mozilla/dom/StorageEvent.h"
 #include "mozilla/dom/StorageEventBinding.h"
 #include "mozilla/Services.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/EnumSet.h"
 #include "nsThreadUtils.h"
 #include "nsContentUtils.h"
 #include "nsServiceManagerUtils.h"
@@ -69,7 +71,7 @@ DOMStorage::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 uint32_t
 DOMStorage::GetLength(ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return 0;
   }
@@ -82,7 +84,7 @@ DOMStorage::GetLength(ErrorResult& aRv)
 void
 DOMStorage::Key(uint32_t aIndex, nsAString& aResult, ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -93,7 +95,7 @@ DOMStorage::Key(uint32_t aIndex, nsAString& aResult, ErrorResult& aRv)
 void
 DOMStorage::GetItem(const nsAString& aKey, nsAString& aResult, ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -105,7 +107,7 @@ void
 DOMStorage::SetItem(const nsAString& aKey, const nsAString& aData,
                     ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -138,7 +140,7 @@ DOMStorage::SetItem(const nsAString& aKey, const nsAString& aData,
 void
 DOMStorage::RemoveItem(const nsAString& aKey, ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -157,7 +159,7 @@ DOMStorage::RemoveItem(const nsAString& aKey, ErrorResult& aRv)
 void
 DOMStorage::Clear(ErrorResult& aRv)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -199,7 +201,7 @@ StorageNotifierRunnable::Run()
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
@@ -217,10 +219,10 @@ DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
 
   // Note, this DOM event should never reach JS. It is cloned later in
   // nsGlobalWindow.
-  nsRefPtr<StorageEvent> event =
+  RefPtr<StorageEvent> event =
     StorageEvent::Constructor(nullptr, NS_LITERAL_STRING("storage"), dict);
 
-  nsRefPtr<StorageNotifierRunnable> r =
+  RefPtr<StorageNotifierRunnable> r =
     new StorageNotifierRunnable(event,
                                 GetType() == LocalStorage
                                   ? MOZ_UTF16("localStorage")
@@ -228,70 +230,37 @@ DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
   NS_DispatchToMainThread(r);
 }
 
-static const uint32_t ASK_BEFORE_ACCEPT = 1;
-static const uint32_t ACCEPT_SESSION = 2;
-static const uint32_t BEHAVIOR_REJECT = 2;
-
 static const char kPermissionType[] = "cookie";
 static const char kStorageEnabled[] = "dom.storage.enabled";
-static const char kCookiesBehavior[] = "network.cookie.cookieBehavior";
-static const char kCookiesLifetimePolicy[] = "network.cookie.lifetimePolicy";
 
 // static, public
 bool
-DOMStorage::CanUseStorage(DOMStorage* aStorage)
+DOMStorage::CanUseStorage(nsPIDOMWindow* aWindow, DOMStorage* aStorage)
 {
   // This method is responsible for correct setting of mIsSessionOnly.
   // It doesn't work with mIsPrivate flag at all, since it is checked
   // regardless mIsSessionOnly flag in DOMStorageCache code.
-  if (aStorage) {
-    aStorage->mIsSessionOnly = false;
-  }
 
   if (!mozilla::Preferences::GetBool(kStorageEnabled)) {
     return false;
   }
 
-  // chrome can always use aStorage regardless of permission preferences
-  nsCOMPtr<nsIPrincipal> subjectPrincipal =
-    nsContentUtils::SubjectPrincipal();
-  if (nsContentUtils::IsSystemPrincipal(subjectPrincipal)) {
-    return true;
+  nsContentUtils::StorageAccess access = nsContentUtils::StorageAccess::eDeny;
+  if (aWindow) {
+    access = nsContentUtils::StorageAllowedForWindow(aWindow);
+  } else if (aStorage) {
+    access = nsContentUtils::StorageAllowedForPrincipal(aStorage->mPrincipal);
   }
 
-  nsCOMPtr<nsIPermissionManager> permissionManager =
-    services::GetPermissionManager();
-  if (!permissionManager) {
+  if (access == nsContentUtils::StorageAccess::eDeny) {
     return false;
-  }
-
-  uint32_t perm;
-  permissionManager->TestPermissionFromPrincipal(subjectPrincipal,
-                                                 kPermissionType, &perm);
-
-  if (perm == nsIPermissionManager::DENY_ACTION) {
-    return false;
-  }
-
-  if (perm == nsICookiePermission::ACCESS_SESSION) {
-    if (aStorage) {
-      aStorage->mIsSessionOnly = true;
-    }
-  } else if (perm != nsIPermissionManager::ALLOW_ACTION) {
-    uint32_t cookieBehavior = Preferences::GetUint(kCookiesBehavior);
-    uint32_t lifetimePolicy = Preferences::GetUint(kCookiesLifetimePolicy);
-
-    // Treat "ask every time" as "reject always".
-    if ((cookieBehavior == BEHAVIOR_REJECT || lifetimePolicy == ASK_BEFORE_ACCEPT)) {
-      return false;
-    }
-
-    if (lifetimePolicy == ACCEPT_SESSION && aStorage) {
-      aStorage->mIsSessionOnly = true;
-    }
   }
 
   if (aStorage) {
+    aStorage->mIsSessionOnly = access <= nsContentUtils::StorageAccess::eSessionScoped;
+
+    nsCOMPtr<nsIPrincipal> subjectPrincipal =
+      nsContentUtils::SubjectPrincipal();
     return aStorage->CanAccess(subjectPrincipal);
   }
 
@@ -329,7 +298,7 @@ DOMStorage::CanAccess(nsIPrincipal* aPrincipal)
 void
 DOMStorage::GetSupportedNames(unsigned, nsTArray<nsString>& aKeys)
 {
-  if (!CanUseStorage(this)) {
+  if (!CanUseStorage(nullptr, this)) {
     // return just an empty array
     aKeys.Clear();
     return;
@@ -338,5 +307,5 @@ DOMStorage::GetSupportedNames(unsigned, nsTArray<nsString>& aKeys)
   mCache->GetKeys(this, aKeys);
 }
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla

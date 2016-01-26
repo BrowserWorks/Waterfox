@@ -26,8 +26,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "appsService",
                                    "@mozilla.org/AppsService;1",
                                    "nsIAppsService");
 
-// Shared code for AppsServiceChild.jsm, TrustedHostedAppsUtils.jsm,
-// Webapps.jsm and Webapps.js
+// Shared code for AppsServiceChild.jsm, Webapps.jsm and Webapps.js
 
 this.EXPORTED_SYMBOLS =
   ["AppsUtils", "ManifestHelper", "isAbsoluteURI", "mozIApplication"];
@@ -49,15 +48,10 @@ this.mozIApplication = function(aApp) {
 
 mozIApplication.prototype = {
   hasPermission: function(aPermission) {
-    let uri = Services.io.newURI(this.origin, null, null);
-    let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                   .getService(Ci.nsIScriptSecurityManager);
     // This helper checks an URI inside |aApp|'s origin and part of |aApp| has a
     // specific permission. It is not checking if browsers inside |aApp| have such
     // permission.
-    let principal = secMan.getAppCodebasePrincipal(uri, this.localId,
-                                                   /*mozbrowser*/false);
-    let perm = Services.perms.testExactPermissionFromPrincipal(principal,
+    let perm = Services.perms.testExactPermissionFromPrincipal(this.principal,
                                                                aPermission);
     return (perm === Ci.nsIPermissionManager.ALLOW_ACTION);
   },
@@ -66,8 +60,27 @@ mozIApplication.prototype = {
     let uri = Services.io.newURI(aPageURL, null, null);
     let filepath = AppsUtils.getFilePath(uri.path);
     let eliminatedUri = Services.io.newURI(uri.prePath + filepath, null, null);
-    let equalCriterion = aUri => aUri.equals(eliminatedUri);
+    let equalCriterion = aUrl => Services.io.newURI(aUrl, null, null)
+                                            .equals(eliminatedUri);
     return this.widgetPages.find(equalCriterion) !== undefined;
+  },
+
+  get principal() {
+    if (this._principal) {
+      return this._principal;
+    }
+
+    this._principal = null;
+
+    try {
+      this._principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        Services.io.newURI(this.origin, null, null),
+        {appId: this.localId});
+    } catch(e) {
+      dump("Could not create app principal " + e + "\n");
+    }
+
+    return this._principal;
   },
 
   QueryInterface: function(aIID) {
@@ -117,6 +130,15 @@ function _setAppProperties(aObj, aApp) {
   aObj.kind = aApp.kind;
   aObj.enabled = aApp.enabled !== undefined ? aApp.enabled : true;
   aObj.sideloaded = aApp.sideloaded;
+  aObj.extensionVersion = aApp.extensionVersion;
+  aObj.blockedStatus =
+    aApp.blockedStatus !== undefined ? aApp.blockedStatus
+                                     : Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
+  aObj.blocklistId = aApp.blocklistId;
+#ifdef MOZ_B2GDROID
+  aObj.android_packagename = aApp.android_packagename;
+  aObj.android_classname = aApp.android_classname;
+#endif
 }
 
 this.AppsUtils = {
@@ -134,6 +156,10 @@ this.AppsUtils = {
        topWindow : null,
        appId: aAppId,
        isInBrowserElement: aIsBrowser,
+       originAttributes: {
+         appId: aAppId,
+         inBrowser: aIsBrowser
+       },
        usePrivateBrowsing: false,
        isContent: false,
 
@@ -274,7 +300,7 @@ this.AppsUtils = {
     for (let id in aApps) {
       let app = aApps[id];
       if (app.localId == aLocalId) {
-        // Use the app kind and the app status to choose the right default CSP.
+        // Use the app status to choose the right default CSP.
         try {
           switch (app.appStatus) {
             case Ci.nsIPrincipal.APP_STATUS_CERTIFIED:
@@ -284,9 +310,7 @@ this.AppsUtils = {
               return Services.prefs.getCharPref("security.apps.privileged.CSP.default");
               break;
             case Ci.nsIPrincipal.APP_STATUS_INSTALLED:
-              return app.kind == "hosted-trusted"
-                ? Services.prefs.getCharPref("security.apps.trusted.CSP.default")
-                : "";
+              return "";
               break;
           }
         } catch(e) {}
@@ -488,7 +512,7 @@ this.AppsUtils = {
     let hadCharset = { };
     let charset = { };
     let netutil = Cc["@mozilla.org/network/util;1"].getService(Ci.nsINetUtil);
-    let contentType = netutil.parseContentType(aContentType, charset, hadCharset);
+    let contentType = netutil.parseResponseContentType(aContentType, charset, hadCharset);
     if (aInstallOrigin != aWebappOrigin &&
         !(contentType == "application/x-web-app-manifest+json" ||
           contentType == "application/manifest+json")) {
@@ -589,7 +613,6 @@ this.AppsUtils = {
 
     switch(type) {
     case "web":
-    case "trusted":
       return Ci.nsIPrincipal.APP_STATUS_INSTALLED;
     case "privileged":
       return Ci.nsIPrincipal.APP_STATUS_PRIVILEGED;
@@ -696,17 +719,13 @@ this.AppsUtils = {
       let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
       file.initWithPath(aPath);
 
-      let channel = NetUtil.newChannel2(file,
-                                        null,
-                                        null,
-                                        null,      // aLoadingNode
-                                        Services.scriptSecurityManager.getSystemPrincipal(),
-                                        null,      // aTriggeringPrincipal
-                                        Ci.nsILoadInfo.SEC_NORMAL,
-                                        Ci.nsIContentPolicy.TYPE_OTHER);
+      let channel = NetUtil.newChannel({
+        uri: NetUtil.newURI(file),
+        loadUsingSystemPrincipal: true});
+
       channel.contentType = "application/json";
 
-      NetUtil.asyncFetch2(channel, function(aStream, aResult) {
+      NetUtil.asyncFetch(channel, function(aStream, aResult) {
         if (!Components.isSuccessCode(aResult)) {
           deferred.resolve(null);
 
@@ -747,8 +766,8 @@ this.AppsUtils = {
     return deferred.promise;
   },
 
-  // Returns the MD5 hash of a string.
-  computeHash: function(aString) {
+  // Returns the hash of a string, with MD5 as a default hashing function.
+  computeHash: function(aString, aAlgorithm = "MD5") {
     let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                       .createInstance(Ci.nsIScriptableUnicodeConverter);
     converter.charset = "UTF-8";
@@ -758,7 +777,7 @@ this.AppsUtils = {
 
     let hasher = Cc["@mozilla.org/security/hash;1"]
                    .createInstance(Ci.nsICryptoHash);
-    hasher.init(hasher.MD5);
+    hasher.initWithString(aAlgorithm);
     hasher.update(data, data.length);
     // We're passing false to get the binary hash and not base64.
     let hash = hasher.finish(false);
@@ -768,7 +787,7 @@ this.AppsUtils = {
     }
 
     // Convert the binary hash data to a hex string.
-    return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
+    return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
   },
 
   // Returns the hash for a JS object.
@@ -895,18 +914,17 @@ ManifestHelper.prototype = {
     return {};
   },
 
-  get biggestIconURL() {
+  biggestIconURL: function(predicate) {
     let icons = this._localeProp("icons");
     if (!icons) {
       return null;
     }
 
-    let iconSizes = Object.keys(icons);
+    let iconSizes = Object.keys(icons).sort((a, b) => a - b)
+                          .filter(predicate || (() => true));
     if (iconSizes.length == 0) {
       return null;
     }
-
-    iconSizes.sort((a, b) => a - b);
     let biggestIconSize = iconSizes.pop();
     let biggestIcon = icons[biggestIconSize];
     let biggestIconURL = this._baseURI.resolve(biggestIcon);

@@ -26,6 +26,8 @@ const appInfo = Cc["@mozilla.org/xre/app-info;1"].
 const vc = Cc["@mozilla.org/xpcom/version-comparator;1"].
            getService(Ci.nsIVersionComparator);
 
+const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
+
 const Startup = Cu.import("resource://gre/modules/sdk/system/Startup.js", {}).exports;
 
 
@@ -34,12 +36,12 @@ const REASON = [ 'unknown', 'startup', 'shutdown', 'enable', 'disable',
 
 const bind = Function.call.bind(Function.bind);
 
-let loader = null;
-let unload = null;
-let cuddlefishSandbox = null;
-let nukeTimer = null;
+var loader = null;
+var unload = null;
+var cuddlefishSandbox = null;
+var nukeTimer = null;
 
-let resourceDomains = [];
+var resourceDomains = [];
 function setResourceSubstitution(domain, uri) {
   resourceDomains.push(domain);
   resourceHandler.setSubstitution(domain, uri);
@@ -48,18 +50,12 @@ function setResourceSubstitution(domain, uri) {
 // Utility function that synchronously reads local resource from the given
 // `uri` and returns content string.
 function readURI(uri) {
-  let ioservice = Cc['@mozilla.org/network/io-service;1'].
-    getService(Ci.nsIIOService);
+  let channel = NetUtil.newChannel({
+    uri: NetUtil.newURI(uri, 'UTF-8'),
+    loadUsingSystemPrincipal: true
+  });
 
-  let channel = ioservice.newChannel2(uri,
-                                      'UTF-8',
-                                      null,
-                                      null,      // aLoadingNode
-                                      systemPrincipal,
-                                      null,      // aTriggeringPrincipal
-                                      Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_OTHER);
-  let stream = channel.open();
+  let stream = channel.open2();
 
   let cstream = Cc['@mozilla.org/intl/converter-input-stream;1'].
     createInstance(Ci.nsIConverterInputStream);

@@ -1,7 +1,7 @@
 // Bug 356571 - loadOneOrMoreURIs gives up if one of the URLs has an unknown protocol
 
-const Cr = Components.results;
-const Cm = Components.manager;
+var Cr = Components.results;
+var Cm = Components.manager;
 
 // Set to true when docShell alerts for unknown protocol error
 var didFail = false;
@@ -14,7 +14,7 @@ const kPromptServiceContractID = "@mozilla.org/embedcomp/prompt-service;1";
 const kPromptServiceFactory = Cm.getClassObject(Cc[kPromptServiceContractID],
                                                 Ci.nsIFactory);
 
-let fakePromptServiceFactory = {
+var fakePromptServiceFactory = {
   createInstance: function(aOuter, aIid) {
     if (aOuter != null)
       throw Cr.NS_ERROR_NO_AGGREGATION;
@@ -22,7 +22,7 @@ let fakePromptServiceFactory = {
   }
 };
 
-let promptService = {
+var promptService = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptService]),
   alert: function() {
     didFail = true;

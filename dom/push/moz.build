@@ -6,11 +6,16 @@
 EXTRA_COMPONENTS += [
     'Push.js',
     'Push.manifest',
-    'PushNotificationService.js',
+    'PushComponents.js',
 ]
 
-EXTRA_PP_JS_MODULES += [
+EXTRA_JS_MODULES += [
+    'PushCrypto.jsm',
+    'PushDB.jsm',
+    'PushRecord.jsm',
     'PushService.jsm',
+    'PushServiceHttp2.jsm',
+    'PushServiceWebSocket.jsm',
 ]
 
 MOCHITEST_MANIFESTS += [
@@ -20,3 +25,26 @@ MOCHITEST_MANIFESTS += [
 XPCSHELL_TESTS_MANIFESTS += [
     'test/xpcshell/xpcshell.ini',
 ]
+
+EXPORTS.mozilla.dom += [
+    'PushManager.h',
+    'PushNotifier.h',
+]
+
+UNIFIED_SOURCES += [
+    'PushManager.cpp',
+    'PushNotifier.cpp',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
+
+LOCAL_INCLUDES += [
+    '../base',
+    '../ipc',
+    '../workers',
+]
+
+FINAL_LIBRARY = 'xul'

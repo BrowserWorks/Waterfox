@@ -24,8 +24,8 @@ function Deferred() {
   Object.freeze(this);
 }
 
-let _pendingEmulatorCmdCount = 0;
-let _pendingEmulatorShellCmdCount = 0;
+var _pendingEmulatorCmdCount = 0;
+var _pendingEmulatorShellCmdCount = 0;
 
 /**
  * Send emulator command with safe guard.
@@ -93,7 +93,7 @@ function runEmulatorShellCmdSafe(aCommands) {
   return deferred.promise;
 }
 
-let workingFrame;
+var workingFrame;
 
 /**
  * Get mozSettings value specified by @aKey.
@@ -222,7 +222,7 @@ function setDataApnSettings(aApnSettings, aAllowError) {
   return setSettings1(SETTINGS_KEY_DATA_APN_SETTINGS, aApnSettings, aAllowError);
 }
 
-let mobileConnection;
+var mobileConnection;
 
 /**
  * Push required permissions and test if
@@ -638,6 +638,37 @@ function selectNetworkAutomaticallyAndWait() {
  function changeCallBarringPassword(aOptions) {
   let request = mobileConnection.changeCallBarringPassword(aOptions);
   return request.then(null, () => { throw request.error });
+}
+
+/**
+ * Configures call waiting options.
+ *
+ * Fulfill params: (none)
+ * Reject params:
+ *   'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter' or
+ *   'GenericFailure'.
+ *
+ * @return A deferred promise.
+ */
+ function setCallWaitingOption(aEnabled) {
+  let request = mobileConnection.setCallWaitingOption(aEnabled);
+  return request.then(null, () => { throw request.error });
+}
+
+/**
+ * Queries current call waiting status.
+ *
+ * Fulfill params:
+ *   A boolean indicating the call waiting status.
+ * Reject params:
+ *   'RadioNotAvailable', 'RequestNotSupported', 'InvalidParameter' or
+ *   'GenericFailure'.
+ *
+ * @return A deferred promise.
+ */
+ function getCallWaitingOption() {
+  let request = mobileConnection.getCallWaitingOption();
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -1105,7 +1136,7 @@ function setEmulatorLteSignalStrengthAndWait(aRxlev, aRsrp, aRssnr,
   return Promise.all(promises);
 }
 
-let _networkManager;
+var _networkManager;
 
 /**
  * Get internal NetworkManager service.
@@ -1120,7 +1151,7 @@ function getNetworkManager() {
   return _networkManager;
 }
 
-let _numOfRadioInterfaces;
+var _numOfRadioInterfaces;
 
 /*
  * Get number of radio interfaces. Default is 1 if preference is not set.

@@ -32,7 +32,7 @@ static NS_DEFINE_CID(kZipReaderCacheCID, NS_ZIPREADERCACHE_CID);
 nsJARProtocolHandler *gJarHandler = nullptr;
 
 nsJARProtocolHandler::nsJARProtocolHandler()
-: mIsMainProcess(XRE_GetProcessType() == GeckoProcessType_Default)
+: mIsMainProcess(XRE_IsParentProcess())
 {
     MOZ_ASSERT(NS_IsMainThread());
 }
@@ -192,7 +192,7 @@ nsJARProtocolHandler::NewURI(const nsACString &aSpec,
 {
     nsresult rv = NS_OK;
 
-    nsRefPtr<nsJARURI> jarURI = new nsJARURI();
+    RefPtr<nsJARURI> jarURI = new nsJARURI();
     if (!jarURI)
         return NS_ERROR_OUT_OF_MEMORY;
 

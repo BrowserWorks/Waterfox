@@ -4,17 +4,10 @@
 
 'use strict';
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
-
-XPCOMUtils.defineLazyServiceGetter(
-  this,
-  "PushNotificationService",
-  "@mozilla.org/push/NotificationService;1",
-  "nsIPushNotificationService"
-);
 
 const bundle = Services.strings.createBundle(
   "chrome://global/locale/aboutServiceWorkers.properties");
@@ -22,8 +15,8 @@ const bundle = Services.strings.createBundle(
 const brandBundle = Services.strings.createBundle(
   "chrome://branding/locale/brand.properties");
 
-let gSWM;
-let gSWCount = 0;
+var gSWM;
+var gSWCount = 0;
 
 function init() {
   let enabled = Services.prefs.getBoolPref("dom.serviceWorkers.enabled");
@@ -53,18 +46,26 @@ function init() {
     return;
   }
 
+  let ps = undefined;
+  try {
+    ps = Cc["@mozilla.org/push/Service;1"]
+           .getService(Ci.nsIPushService);
+  } catch(e) {
+    dump("Could not acquire PushService\n");
+  }
+
   for (let i = 0; i < length; ++i) {
-    let info = data.queryElementAt(i, Ci.nsIServiceWorkerInfo);
+    let info = data.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
     if (!info) {
-      dump("AboutServiceWorkers: Invalid nsIServiceWorkerInfo interface.\n");
+      dump("AboutServiceWorkers: Invalid nsIServiceWorkerRegistrationInfo interface.\n");
       continue;
     }
 
-    display(info);
+    display(info, ps);
   }
 }
 
-function display(info) {
+function display(info, pushService) {
   let parent = document.getElementById("serviceworkers");
 
   let div = document.createElement('div');
@@ -115,24 +116,28 @@ function display(info) {
 
   createItem(bundle.GetStringFromName('scope'), info.scope);
   createItem(bundle.GetStringFromName('scriptSpec'), info.scriptSpec, true);
-  createItem(bundle.GetStringFromName('currentWorkerURL'), info.currentWorkerURL, true);
-  createItem(bundle.GetStringFromName('activeCacheName'), info.activeCacheName);
-  createItem(bundle.GetStringFromName('waitingCacheName'), info.waitingCacheName);
+  let currentWorkerURL = info.activeWorker ? info.activeWorker.scriptSpec : "";
+  createItem(bundle.GetStringFromName('currentWorkerURL'), currentWorkerURL, true);
+  let activeCacheName = info.activeWorker ? info.activeWorker.cacheName : "";
+  createItem(bundle.GetStringFromName('activeCacheName'), activeCacheName);
+  let waitingCacheName = info.waitingWorker ? info.waitingWorker.cacheName : "";
+  createItem(bundle.GetStringFromName('waitingCacheName'), waitingCacheName);
 
   let pushItem = createItem(bundle.GetStringFromName('pushEndpoint'), bundle.GetStringFromName('waiting'));
-  PushNotificationService.registration(info.scope).then(
-    pushRecord => {
-      pushItem.data = JSON.stringify(pushRecord);
-    },
-    error => {
-      dump("about:serviceworkers - push registration failed\n");
-    }
-  );
+  if (pushService) {
+    pushService.getSubscription(info.scope, info.principal, (status, pushRecord) => {
+      if (Components.isSuccessCode(status)) {
+        pushItem.data = JSON.stringify(pushRecord);
+      } else {
+        dump("about:serviceworkers - retrieving push registration failed\n");
+      }
+    });
+  }
 
   let updateButton = document.createElement("button");
   updateButton.appendChild(document.createTextNode(bundle.GetStringFromName('update')));
   updateButton.onclick = function() {
-    gSWM.softUpdate(info.scope);
+    gSWM.propagateSoftUpdate(info.principal.originAttributes, info.scope);
   };
   div.appendChild(updateButton);
 
@@ -164,7 +169,7 @@ function display(info) {
     };
 
     loadingMessage.classList.remove('inactive');
-    gSWM.unregister(info.principal, cb, info.scope);
+    gSWM.propagateUnregister(info.principal, cb, info.scope);
   };
 
   let sep = document.createElement('hr');

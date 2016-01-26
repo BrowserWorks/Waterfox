@@ -13,6 +13,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Preferences.h"
 #include "AccessCheck.h"
+#include "nsContentUtils.h"
 
 namespace mozilla {
 namespace dom {
@@ -44,7 +45,7 @@ DataStore::Constructor(GlobalObject& aGlobal, ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<DataStore> store = new DataStore(window);
+  RefPtr<DataStore> store = new DataStore(window);
   return store.forget();
 }
 

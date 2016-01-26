@@ -25,35 +25,265 @@ Structure::
       info: {
         reason: <string>, // what triggered this ping: "saved-session", "environment-change", "shutdown", ...
         revision: <string>, // the Histograms.json revision
-        timezoneOffset: <number>, // time-zone offset from UTC, in minutes, for the current locale
+        timezoneOffset: <integer>, // time-zone offset from UTC, in minutes, for the current locale
         previousBuildId: <string>, // null if this is the first run, or the previous build ID is unknown
 
         sessionId: <uuid>,  // random session id, shared by subsessions
         subsessionId: <uuid>,  // random subsession id
+        previousSessionId: <uuid>, // session id of the previous session, null on first run.
         previousSubsessionId: <uuid>, // subsession id of the previous subsession (even if it was in a different session),
                                       // null on first run.
 
-        subsessionCounter: <number>, // the running no. of this subsession since the start of the browser session
-        profileSubsessionCounter: <number>, // the running no. of all subsessions for the whole profile life time
+        subsessionCounter: <unsigned integer>, // the running no. of this subsession since the start of the browser session
+        profileSubsessionCounter: <unsigned integer>, // the running no. of all subsessions for the whole profile life time
 
         sessionStartDate: <ISO date>, // daily precision
         subsessionStartDate: <ISO date>, // daily precision, ISO date in local time
-        subsessionLength: <number>, // the subsession length in seconds
+        sessionLength: <integer>, // the session length until now in seconds, monotonic
+        subsessionLength: <integer>, // the subsession length in seconds, monotonic
+
+        flashVersion: <string>, // obsolete, use ``environment.addons.activePlugins``
+        addons: <string>, // obsolete, use ``environment.addons``
       },
 
-      childPayloads: {...}, // only present with e10s; a reduced payload from content processes
+      childPayloads: {...}, // only present with e10s; a reduced payload from content processes, null on failure
+      simpleMeasurements: {...},
 
-      simpleMeasurements: { ... },
-      histograms: {},
-      keyedHistograms: {},
-      chromeHangs: {},
-      threadHangStats: {},
-      log: [],
+      // The following properties may all be null if we fail to collect them.
+      histograms: {...},
+      keyedHistograms: {...},
+      chromeHangs: {...},
+      threadHangStats: [...],
+      log: [...],
+      webrtc: {...},
       fileIOReports: {...},
       lateWrites: {...},
-      addonDetails: { ... },
+      addonDetails: {...},
       addonHistograms: {...},
       UIMeasurements: {...},
       slowSQL: {...},
       slowSQLstartup: {...},
     }
+
+info
+----
+
+sessionLength
+~~~~~~~~~~~~~
+The length of the current session so far in seconds.
+This uses a monotonic clock, so this may mismatch with other measurements that
+are not monotonic like calculations based on ``Date.now()``.
+
+If the monotonic clock failed, this will be ``-1``.
+
+subsessionLength
+~~~~~~~~~~~~~~~~
+The length of this subsession in seconds.
+This uses a monotonic clock, so this may mismatch with other measurements that are not monotonic (e.g. based on Date.now()).
+
+If ``sessionLength`` is ``-1``, the monotonic clock is not working.
+
+simpleMeasurements
+------------------
+This section contains a list of simple measurements, or counters. In addition to the ones highlighted below, Telemetry timestamps (see `here <https://dxr.mozilla.org/mozilla-central/search?q=%22TelemetryTimestamps.add%22&redirect=false&case=true>`_ and `here <https://dxr.mozilla.org/mozilla-central/search?q=%22recordTimestamp%22&redirect=false&case=true>`_) can be reported.
+
+totalTime
+~~~~~~~~~
+A non-monotonic integer representing the number of seconds the session has been alive.
+
+uptime
+~~~~~~
+A non-monotonic integer representing the number of minutes the session has been alive.
+
+addonManager
+~~~~~~~~~~~~
+Only available in the extended set of measures, it contains a set of counters related to Addons. See `here <https://dxr.mozilla.org/mozilla-central/search?q=%22AddonManagerPrivate.recordSimpleMeasure%22&redirect=false&case=true>`_ for a list of recorded measures.
+
+UITelemetry
+~~~~~~~~~~~
+Only available in the extended set of measures. See the documentation for :doc:`/browser/docs/UITelemetry <UITelemetry>`.
+
+startupInterrupted
+~~~~~~~~~~~~~~~~~~
+A boolean set to true if startup was interrupted by an interactive prompt.
+
+js
+~~
+This section contains a series of counters from the JavaScript engine.
+
+Structure::
+
+    "js" : {
+      "setProto": <unsigned integer>, // Number of times __proto__ is set
+      "customIter": <unsigned integer> // Number of times __iterator__ is used (i.e., is found for a for-in loop)
+    }
+
+maximalNumberOfConcurrentThreads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An integer representing the highest number of threads encountered so far during the session.
+
+startupSessionRestoreReadBytes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Windows-only integer representing the number of bytes read by the main process up until the session store has finished restoring the windows.
+
+startupSessionRestoreWriteBytes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Windows-only integer representing the number of bytes written by the main process up until the session store has finished restoring the windows.
+
+startupWindowVisibleReadBytes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Windows-only integer representing the number of bytes read by the main process up until after a XUL window is made visible.
+
+startupWindowVisibleWriteBytes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Windows-only integer representing the number of bytes written by the main process up until after a XUL window is made visible.
+
+debuggerAttached
+~~~~~~~~~~~~~~~~
+A boolean set to true if a debugger is attached to the main process.
+
+shutdownDuration
+~~~~~~~~~~~~~~~~
+The time, in ticks per seconds (this behaves inconsistently across platforms, see `bug 1232285 <https://bugzilla.mozilla.org/show_bug.cgi?id=1232285>`_), it took to complete the last shutdown.
+
+failedProfileLockCount
+~~~~~~~~~~~~~~~~~~~~~~
+The number of times the system failed to lock the user profile.
+
+savedPings
+~~~~~~~~~~
+Integer count of the number of pings that need to be sent.
+
+activeTicks
+~~~~~~~~~~~
+Integer count of the number of five-second intervals ('ticks') the user was considered 'active' (sending UI events to the window). An extra event is fired immediately when the user becomes active after being inactive. This is for some mouse and gamepad events, and all touch, keyboard, wheel, and pointer events (see `EventStateManager.cpp <https://dxr.mozilla.org/mozilla-central/rev/e6463ae7eda2775bc84593bb4a0742940bb87379/dom/events/EventStateManager.cpp#549>`_).
+This measure might be useful to give a trend of how much a user actually interacts with the browser when compared to overall session duration. It does not take into account whether or not the window has focus or is in the foreground. Just if it is receiving these interaction events.
+Note that in ``main`` pings, this measure is reset on subsession splits, while in ``saved-session`` pings it covers the whole browser session.
+
+pingsOverdue
+~~~~~~~~~~~~
+Integer count of pending pings that are overdue.
+
+threadHangStats
+---------------
+Contains the statistics about the hangs in main and background threads. Note that hangs in this section capture the [C++ pseudostack](https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Profiling_with_the_Built-in_Profiler#Native_stack_vs._Pseudo_stack) and an incomplete JS stack, which is not 100% precise.
+
+To avoid submitting overly large payloads, some limits are applied:
+
+* Identical, adjacent "(chrome script)" or "(content script)" stack entries are collapsed together. If a stack is reduced, the "(reduced stack)" frame marker is added as the oldest frame.
+* The depth of the reported stacks is limited to 11 entries. This value represents the 99.9th percentile of the thread hangs stack depths reported by Telemetry.
+
+Structure::
+
+    "threadHangStats" : [
+      {
+        "name" : "Gecko",
+        "activity" : {...}, // a time histogram of all task run times
+        "hangs" : [
+          {
+            "stack" : [
+              "Startup::XRE_Main",
+              "Timer::Fire",
+              "(content script)",
+              "IPDL::PPluginScriptableObject::SendGetChildProperty",
+              ... up to 11 frames ...
+            ],
+            "nativeStack": [...], // optionally available
+            "histogram" : {...}, // the time histogram of the hang times
+            "annotations" : [
+              {
+                "pluginName" : "Shockwave Flash",
+                "pluginVersion" : "18.0.0.209",
+                "pluginIsWhitelistedForShumway" : "false"
+              },
+              ... other annotations ...
+            ]
+          },
+        ],
+      },
+      ... other threads ...
+     ]
+
+chromeHangs
+-----------
+Contains the statistics about the hangs happening exclusively on the main thread of the parent process. Precise C++ stacks are reported. This is only available on Nightly Release on Windows, when building using "--enable-profiling" switch.
+
+Some limits are applied:
+
+* Reported chrome hang stacks are limited in depth to 50 entries.
+* The maximum number of reported stacks is 50.
+
+Structure::
+
+    "chromeHangs" : {
+      "memoryMap" : [
+        ["wgdi32.pdb", "08A541B5942242BDB4AEABD8C87E4CFF2"],
+        ["igd10iumd32.pdb", "D36DEBF2E78149B5BE1856B772F1C3991"],
+        ... other entries in the format ["module name", "breakpad identifier"] ...
+       ],
+      "stacks" : [
+        [
+          [
+            0, // the module index or -1 for invalid module indices
+            190649 // the offset of this program counter in its module or an absolute pc
+          ],
+          [1, 2540075],
+          ... other frames, up to 50 ...
+         ],
+         ... other stacks, up to 50 ...
+      ],
+      "durations" : [8, ...], // the hang durations (in seconds)
+      "systemUptime" : [692, ...], // the system uptime (in minutes) at the time of the hang
+      "firefoxUptime" : [672, ...], // the Firefox uptime (in minutes) at the time of the hang
+      "annotations" : [
+        [
+          [0, ...], // the indices of the related hangs
+          {
+            "pluginName" : "Shockwave Flash",
+            "pluginVersion" : "18.0.0.209",
+            "pluginIsWhitelistedForShumway" : "false",
+            ... other annotations as key:value pairs ...
+          }
+        ],
+        ...
+      ]
+    },
+
+webrtc
+------
+Contains special statistics gathered by WebRTC releated components.
+
+So far only a bitmask for the ICE candidate type present in a successful or
+failed WebRTC connection is getting reported through C++ code as
+IceCandidatesStats, because the required bitmask is too big to be represented
+in a regular enum histogram. Further this data differentiates between Loop
+(aka Firefox Hello) connections and everything else, which is categorized as
+WebRTC.
+
+Note: in most cases the webrtc and loop dictionaries inside of
+IceCandidatesStats will simply be empty as the user has not used any WebRTC
+PeerConnection at all during the ping report time.
+
+Structure::
+
+    "webrtc": {
+      "IceCandidatesStats": {
+        "webrtc": {
+          "34526345": {
+            "successCount": 5
+          },
+          "2354353": {
+            "failureCount": 1
+          }
+        },
+        "loop": {
+          "2349346359": {
+            "successCount": 3
+          },
+          "73424": {
+            "successCount": 1,
+            "failureCount": 5
+          }
+        }
+      }
+    },

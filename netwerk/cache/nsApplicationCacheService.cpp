@@ -7,9 +7,12 @@
 #include "nsCacheService.h"
 #include "nsApplicationCacheService.h"
 #include "nsCRT.h"
+#include "mozIApplicationClearPrivateDataParams.h"
+#include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIObserverService.h"
-#include "nsILoadContextInfo.h"
+#include "nsIPrincipal.h"
+#include "mozilla/LoadContextInfo.h"
 
 using namespace mozilla;
 
@@ -32,35 +35,35 @@ nsApplicationCacheService::~nsApplicationCacheService()
 }
 
 NS_IMETHODIMP
-nsApplicationCacheService::BuildGroupID(nsIURI *aManifestURL,
-                                        nsILoadContextInfo *aLoadContextInfo,
-                                        nsACString &_result)
+nsApplicationCacheService::BuildGroupIDForInfo(
+    nsIURI *aManifestURL,
+    nsILoadContextInfo *aLoadContextInfo,
+    nsACString &_result)
 {
     nsresult rv;
 
-    uint32_t appId = NECKO_NO_APP_ID;
-    bool isInBrowserElement = false;
-
+    nsAutoCString originSuffix;
     if (aLoadContextInfo) {
-        appId = aLoadContextInfo->AppId();
-        isInBrowserElement = aLoadContextInfo->IsInBrowserElement();
+        aLoadContextInfo->OriginAttributesPtr()->CreateSuffix(originSuffix);
     }
 
     rv = nsOfflineCacheDevice::BuildApplicationCacheGroupID(
-        aManifestURL, appId, isInBrowserElement, _result);
+        aManifestURL, originSuffix, _result);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsApplicationCacheService::BuildGroupIDForApp(nsIURI *aManifestURL,
-                                              uint32_t aAppId,
-                                              bool aIsInBrowser,
-                                              nsACString &_result)
+nsApplicationCacheService::BuildGroupIDForSuffix(
+    nsIURI *aManifestURL,
+    nsACString const &aOriginSuffix,
+    nsACString &_result)
 {
-    nsresult rv = nsOfflineCacheDevice::BuildApplicationCacheGroupID(
-        aManifestURL, aAppId, aIsInBrowser, _result);
+    nsresult rv;
+
+    rv = nsOfflineCacheDevice::BuildApplicationCacheGroupID(
+        aManifestURL, aOriginSuffix, _result);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
@@ -73,7 +76,7 @@ nsApplicationCacheService::CreateApplicationCache(const nsACString &group,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->CreateApplicationCache(group, out);
@@ -88,7 +91,7 @@ nsApplicationCacheService::CreateCustomApplicationCache(const nsACString & group
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetCustomOfflineDevice(profileDir,
                                                         quota,
                                                         getter_AddRefs(device));
@@ -103,7 +106,7 @@ nsApplicationCacheService::GetApplicationCache(const nsACString &clientID,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->GetApplicationCache(clientID, out);
@@ -116,7 +119,7 @@ nsApplicationCacheService::GetActiveCache(const nsACString &group,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->GetActiveCache(group, out);
@@ -128,7 +131,7 @@ nsApplicationCacheService::DeactivateGroup(const nsACString &group)
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->DeactivateGroup(group);
@@ -142,7 +145,7 @@ nsApplicationCacheService::ChooseApplicationCache(const nsACString &key,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -156,22 +159,41 @@ nsApplicationCacheService::CacheOpportunistically(nsIApplicationCache* cache,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->CacheOpportunistically(cache, key);
 }
 
 NS_IMETHODIMP
-nsApplicationCacheService::DiscardByAppId(int32_t appID, bool isInBrowser)
+nsApplicationCacheService::Evict(nsILoadContextInfo *aInfo)
 {
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
-    return device->DiscardByAppId(appID, isInBrowser);
+    return device->Evict(aInfo);
+}
+
+NS_IMETHODIMP
+nsApplicationCacheService::EvictMatchingOriginAttributes(nsAString const &aPattern)
+{
+    if (!mCacheService)
+        return NS_ERROR_UNEXPECTED;
+
+    RefPtr<nsOfflineCacheDevice> device;
+    nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    mozilla::OriginAttributesPattern pattern;
+    if (!pattern.Init(aPattern)) {
+        NS_ERROR("Could not parse OriginAttributesPattern JSON in clear-origin-data notification");
+        return NS_ERROR_FAILURE;
+    }
+
+    return device->Evict(pattern);
 }
 
 NS_IMETHODIMP
@@ -181,7 +203,7 @@ nsApplicationCacheService::GetGroups(uint32_t *count,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->GetGroups(count, keys);
@@ -194,7 +216,7 @@ nsApplicationCacheService::GetGroupsTimeOrdered(uint32_t *count,
     if (!mCacheService)
         return NS_ERROR_UNEXPECTED;
 
-    nsRefPtr<nsOfflineCacheDevice> device;
+    RefPtr<nsOfflineCacheDevice> device;
     nsresult rv = mCacheService->GetOfflineDevice(getter_AddRefs(device));
     NS_ENSURE_SUCCESS(rv, rv);
     return device->GetGroupsTimeOrdered(count, keys);
@@ -215,19 +237,15 @@ public:
     NS_IMETHODIMP
     Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) override
     {
-        MOZ_ASSERT(!nsCRT::strcmp(aTopic, TOPIC_WEB_APP_CLEAR_DATA));
+        MOZ_ASSERT(!nsCRT::strcmp(aTopic, "clear-origin-data"));
 
-        uint32_t appId = NECKO_UNKNOWN_APP_ID;
-        bool browserOnly = false;
-        nsresult rv = NS_GetAppInfoFromClearDataNotification(aSubject, &appId,
-                                                             &browserOnly);
-        NS_ENSURE_SUCCESS(rv, rv);
+        nsresult rv;
 
         nsCOMPtr<nsIApplicationCacheService> cacheService =
             do_GetService(NS_APPLICATIONCACHESERVICE_CONTRACTID, &rv);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        return cacheService->DiscardByAppId(appId, browserOnly);
+        return cacheService->EvictMatchingOriginAttributes(nsDependentString(aData));
     }
 
 private:
@@ -236,7 +254,7 @@ private:
 
 NS_IMPL_ISUPPORTS(AppCacheClearDataObserver, nsIObserver)
 
-} // anonymous namespace
+} // namespace
 
 // Instantiates and registers AppCacheClearDataObserver for notifications
 void
@@ -244,10 +262,7 @@ nsApplicationCacheService::AppClearDataObserverInit()
 {
   nsCOMPtr<nsIObserverService> observerService = services::GetObserverService();
   if (observerService) {
-    nsRefPtr<AppCacheClearDataObserver> obs
-      = new AppCacheClearDataObserver();
-    observerService->AddObserver(obs, TOPIC_WEB_APP_CLEAR_DATA,
-				 /*holdsWeak=*/ false);
+    RefPtr<AppCacheClearDataObserver> obs = new AppCacheClearDataObserver();
+    observerService->AddObserver(obs, "clear-origin-data", /*holdsWeak=*/ false);
   }
 }
-

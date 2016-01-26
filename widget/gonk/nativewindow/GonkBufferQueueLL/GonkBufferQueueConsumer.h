@@ -137,10 +137,10 @@ public:
     virtual sp<NativeHandle> getSidebandStream() const;
 
     // dump our state in a String
-    virtual void dump(String8& result, const char* prefix) const;
+    virtual void dumpToString(String8& result, const char* prefix) const;
 
     // Added by mozilla
-    virtual mozilla::TemporaryRef<GonkBufferSlot::TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
+    virtual already_AddRefed<GonkBufferSlot::TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
 
     virtual int getSlotFromTextureClientLocked(GonkBufferSlot::TextureClient* client) const;
 

@@ -16,6 +16,9 @@
 #include "jit/JitSpewer.h"
 #include "js/TrackedOptimizationInfo.h"
 
+#include "vm/ObjectGroup-inl.h"
+#include "vm/TypeInference-inl.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -136,7 +139,7 @@ void
 SpewTempOptimizationTypeInfoVector(const TempOptimizationTypeInfoVector* types,
                                    const char* indent = nullptr)
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     for (const OptimizationTypeInfo* t = types->begin(); t != types->end(); t++) {
         JitSpewStart(JitSpew_OptimizationTracking, "   %s%s of type %s, type set",
                      indent ? indent : "",
@@ -152,7 +155,7 @@ void
 SpewTempOptimizationAttemptsVector(const TempOptimizationAttemptsVector* attempts,
                                    const char* indent = nullptr)
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     for (const OptimizationAttempt* a = attempts->begin(); a != attempts->end(); a++) {
         JitSpew(JitSpew_OptimizationTracking, "   %s%s: %s", indent ? indent : "",
                 TrackedStrategyString(a->strategy()), TrackedOutcomeString(a->outcome()));
@@ -163,7 +166,7 @@ SpewTempOptimizationAttemptsVector(const TempOptimizationAttemptsVector* attempt
 void
 TrackedOptimizations::spew() const
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     SpewTempOptimizationTypeInfoVector(&types_);
     SpewTempOptimizationAttemptsVector(&attempts_);
 #endif
@@ -372,14 +375,14 @@ class jit::UniqueTrackedTypes
     { }
 
     bool init() { return map_.init(); }
-    bool getIndexOf(TypeSet::Type ty, uint8_t* indexp);
+    bool getIndexOf(JSContext* cx, TypeSet::Type ty, uint8_t* indexp);
 
     uint32_t count() const { MOZ_ASSERT(map_.count() == list_.length()); return list_.length(); }
     bool enumerate(TypeSet::TypeList* types) const;
 };
 
 bool
-UniqueTrackedTypes::getIndexOf(TypeSet::Type ty, uint8_t* indexp)
+UniqueTrackedTypes::getIndexOf(JSContext* cx, TypeSet::Type ty, uint8_t* indexp)
 {
     TypesMap::AddPtr p = map_.lookupForAdd(ty);
     if (p) {
@@ -445,7 +448,8 @@ IonTrackedOptimizationsRegion::RangeIterator::readNext(uint32_t* startOffset, ui
 }
 
 Maybe<uint8_t>
-JitcodeGlobalEntry::IonEntry::trackedOptimizationIndexAtAddr(void* ptr, uint32_t* entryOffsetOut)
+JitcodeGlobalEntry::IonEntry::trackedOptimizationIndexAtAddr(JSRuntime *rt, void* ptr,
+                                                             uint32_t* entryOffsetOut)
 {
     MOZ_ASSERT(hasTrackedOptimizations());
     MOZ_ASSERT(containsPointer(ptr));
@@ -454,6 +458,20 @@ JitcodeGlobalEntry::IonEntry::trackedOptimizationIndexAtAddr(void* ptr, uint32_t
     if (region.isNothing())
         return Nothing();
     return region->findIndex(ptrOffset, entryOffsetOut);
+}
+
+void
+JitcodeGlobalEntry::IonEntry::forEachOptimizationAttempt(JSRuntime *rt, uint8_t index,
+                                                         ForEachTrackedOptimizationAttemptOp& op)
+{
+    trackedOptimizationAttempts(index).forEach(op);
+}
+
+void
+JitcodeGlobalEntry::IonEntry::forEachOptimizationTypeInfo(JSRuntime *rt, uint8_t index,
+                                    IonTrackedOptimizationsTypeInfo::ForEachOpAdapter& op)
+{
+    trackedOptimizationTypeInfo(index).forEach(op, allTrackedTypes());
 }
 
 void
@@ -593,15 +611,15 @@ OptimizationAttempt::writeCompact(CompactBufferWriter& writer) const
 }
 
 bool
-OptimizationTypeInfo::writeCompact(CompactBufferWriter& writer,
-                              UniqueTrackedTypes& uniqueTypes) const
+OptimizationTypeInfo::writeCompact(JSContext* cx, CompactBufferWriter& writer,
+                                   UniqueTrackedTypes& uniqueTypes) const
 {
     writer.writeUnsigned((uint32_t) site_);
     writer.writeUnsigned((uint32_t) mirType_);
     writer.writeUnsigned(types_.length());
     for (uint32_t i = 0; i < types_.length(); i++) {
         uint8_t index;
-        if (!uniqueTypes.getIndexOf(types_[i], &index))
+        if (!uniqueTypes.getIndexOf(cx, types_[i], &index))
             return false;
         writer.writeByte(index);
     }
@@ -834,7 +852,7 @@ MaybeConstructorFromType(TypeSet::Type ty)
 static void
 SpewConstructor(TypeSet::Type ty, JSFunction* constructor)
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     if (!constructor->isInterpreted()) {
         JitSpew(JitSpew_OptimizationTracking, "   Unique type %s has native constructor",
                 TypeSet::TypeString(ty));
@@ -865,7 +883,7 @@ SpewConstructor(TypeSet::Type ty, JSFunction* constructor)
 static void
 SpewAllocationSite(TypeSet::Type ty, JSScript* script, uint32_t offset)
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     JitSpew(JitSpew_OptimizationTracking, "   Unique type %s has alloc site %s:%u",
             TypeSet::TypeString(ty), script->filename(),
             PCToLineNumber(script, script->offsetToPC(offset)));
@@ -885,7 +903,7 @@ jit::WriteIonTrackedOptimizationsTable(JSContext* cx, CompactBufferWriter& write
 {
     MOZ_ASSERT(unique.sorted());
 
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     // Spew training data, which may be fed into a script to determine a good
     // encoding strategy.
     if (JitSpewEnabled(JitSpew_OptimizationTracking)) {
@@ -947,7 +965,7 @@ jit::WriteIonTrackedOptimizationsTable(JSContext* cx, CompactBufferWriter& write
             return false;
 
         for (const OptimizationTypeInfo* t = v->begin(); t != v->end(); t++) {
-            if (!t->writeCompact(writer, uniqueTypes))
+            if (!t->writeCompact(cx, writer, uniqueTypes))
                 return false;
         }
     }
@@ -1261,8 +1279,9 @@ FrameHandle::updateHasTrackedOptimizations()
         return;
     if (!entry_.hasTrackedOptimizations())
         return;
+
     uint32_t entryOffset;
-    optsIndex_ = entry_.trackedOptimizationIndexAtAddr(addr_, &entryOffset);
+    optsIndex_ = entry_.trackedOptimizationIndexAtAddr(rt_, addr_, &entryOffset);
     if (optsIndex_.isSome())
         canonicalAddr_ = (void*)(((uint8_t*) entry_.nativeStartAddr()) + entryOffset);
 }
@@ -1271,13 +1290,15 @@ void
 FrameHandle::forEachOptimizationAttempt(ForEachTrackedOptimizationAttemptOp& op,
                                         JSScript** scriptOut, jsbytecode** pcOut) const
 {
-    entry_.trackedOptimizationAttempts(*optsIndex_).forEach(op);
+    MOZ_ASSERT(optsIndex_.isSome());
+    entry_.forEachOptimizationAttempt(rt_, *optsIndex_, op);
     entry_.youngestFrameLocationAtAddr(rt_, addr_, scriptOut, pcOut);
 }
 
 void
 FrameHandle::forEachOptimizationTypeInfo(ForEachTrackedOptimizationTypeInfoOp& op) const
 {
+    MOZ_ASSERT(optsIndex_.isSome());
     IonTrackedOptimizationsTypeInfo::ForEachOpAdapter adapter(op);
-    entry_.trackedOptimizationTypeInfo(*optsIndex_).forEach(adapter, entry_.allTrackedTypes());
+    entry_.forEachOptimizationTypeInfo(rt_, *optsIndex_, adapter);
 }

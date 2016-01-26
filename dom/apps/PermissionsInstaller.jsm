@@ -107,9 +107,6 @@ this.PermissionsInstaller = {
         break;
       case Ci.nsIPrincipal.APP_STATUS_INSTALLED:
         appStatus = "app";
-        if (aApp.kind == "hosted-trusted") {
-          appStatus = "trusted";
-        }
         break;
       default:
         // Cannot determine app type, abort install by throwing an error.
@@ -167,7 +164,8 @@ this.PermissionsInstaller = {
               PermissionSettingsModule.getPermission(expandedPermNames[idx],
                                                      aApp.manifestURL,
                                                      aApp.origin,
-                                                     false);
+                                                     false,
+                                                     aApp.isCachedPackage);
             if (permValue === "unknown") {
               permValue = PERM_TO_STRING[permission];
             }
@@ -195,7 +193,7 @@ this.PermissionsInstaller = {
    *        The permission value.
    * @param object aApp
    *        The just-installed app configuration.
-   *        The properties used are manifestURL and origin.
+   *        The properties used are manifestURL, origin, appId, isCachedPackage.
    * @returns void
    **/
   _setPermission: function setPermission(aPermName, aPermValue, aApp) {
@@ -204,7 +202,9 @@ this.PermissionsInstaller = {
       origin: aApp.origin,
       manifestURL: aApp.manifestURL,
       value: aPermValue,
-      browserFlag: false
+      browserFlag: false,
+      localId: aApp.localId,
+      isCachedPackage: aApp.isCachedPackage,
     });
   }
 };

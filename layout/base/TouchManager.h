@@ -12,8 +12,14 @@
 #ifndef TouchManager_h_
 #define TouchManager_h_
 
+#include "mozilla/BasicEvents.h"
+#include "mozilla/dom/Touch.h"
+#include "nsRefPtrHashtable.h"
+
 class PresShell;
 class nsIDocument;
+
+namespace mozilla {
 
 class TouchManager {
 public:
@@ -30,14 +36,15 @@ public:
                       bool& aIsHandlingUserInput,
                       nsCOMPtr<nsIContent>& aCurrentEventContent);
 
-  static bool gPreventMouseEvents;
   static nsRefPtrHashtable<nsUint32HashKey, mozilla::dom::Touch>* gCaptureTouchList;
 
 private:
   void EvictTouches();
 
-  nsRefPtr<PresShell>   mPresShell;
+  RefPtr<PresShell>   mPresShell;
   nsCOMPtr<nsIDocument> mDocument;
 };
+
+} // namespace mozilla
 
 #endif /* !defined(TouchManager_h_) */

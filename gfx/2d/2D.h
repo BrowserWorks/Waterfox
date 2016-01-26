@@ -42,6 +42,9 @@ struct ID3D11Texture2D;
 struct ID3D11Device;
 struct ID2D1Device;
 struct IDWriteRenderingParams;
+struct IDWriteFont;
+struct IDWriteFontFamily;
+struct IDWriteFontFace;
 
 class GrContext;
 
@@ -89,7 +92,7 @@ struct DrawOptions {
                                      operation is multiplied. */
   CompositionOp mCompositionOp; /**< The operator that indicates how the source and
                                      destination patterns are blended. */
-  AntialiasMode mAntialiasMode; /**< The AntiAlias mode used for this drawing 
+  AntialiasMode mAntialiasMode; /**< The AntiAlias mode used for this drawing
                                      operation. */
 };
 
@@ -317,8 +320,13 @@ class DrawTargetCaptureImpl;
  * This is the base class for source surfaces. These objects are surfaces
  * which may be used as a source in a SurfacePattern or a DrawSurface call.
  * They cannot be drawn to directly.
+ *
+ * Although SourceSurface has thread-safe refcount, some SourceSurface cannot
+ * be used on random threads at the same time. Only DataSourceSurface can be
+ * used on random threads now. This will be fixed in the future. Eventually
+ * all SourceSurface should be thread-safe.
  */
-class SourceSurface : public RefCounted<SourceSurface>
+class SourceSurface : public external::AtomicRefCounted<SourceSurface>
 {
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(SourceSurface)
@@ -339,7 +347,7 @@ public:
    * This function will get a DataSourceSurface for this surface, a
    * DataSourceSurface's data can be accessed directly.
    */
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface() = 0;
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface() = 0;
 
   /** Tries to get this SourceSurface's native surface.  This will fail if aType
    * is not the type of this SourceSurface's native surface.
@@ -395,6 +403,52 @@ public:
     READ_WRITE
   };
 
+  /**
+   * This is a scoped version of Map(). Map() is called in the constructor and
+   * Unmap() in the destructor. Use this for automatic unmapping of your data
+   * surfaces.
+   *
+   * Use IsMapped() to verify whether Map() succeeded or not.
+   */
+  class ScopedMap {
+  public:
+    explicit ScopedMap(DataSourceSurface* aSurface, MapType aType)
+      : mSurface(aSurface)
+      , mIsMapped(aSurface->Map(aType, &mMap)) {}
+
+    virtual ~ScopedMap()
+    {
+      if (mIsMapped) {
+        mSurface->Unmap();
+      }
+    }
+
+    uint8_t* GetData() const
+    {
+      MOZ_ASSERT(mIsMapped);
+      return mMap.mData;
+    }
+
+    int32_t GetStride() const
+    {
+      MOZ_ASSERT(mIsMapped);
+      return mMap.mStride;
+    }
+
+    const MappedSurface* GetMappedSurface() const
+    {
+      MOZ_ASSERT(mIsMapped);
+      return &mMap;
+    }
+
+    bool IsMapped() const { return mIsMapped; }
+
+  private:
+    RefPtr<DataSourceSurface> mSurface;
+    MappedSurface mMap;
+    bool mIsMapped;
+  };
+
   virtual SurfaceType GetType() const override { return SurfaceType::DATA; }
   /** @deprecated
    * Get the raw bitmap data of the surface.
@@ -430,7 +484,7 @@ public:
    * Returns a DataSourceSurface with the same data as this one, but
    * guaranteed to have surface->GetType() == SurfaceType::DATA.
    */
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface() override;
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface() override;
 
 protected:
   bool mIsMapped;
@@ -481,14 +535,14 @@ class Path : public RefCounted<Path>
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(Path)
   virtual ~Path();
-  
+
   virtual BackendType GetBackendType() const = 0;
 
   /** This returns a PathBuilder object that contains a copy of the contents of
    * this path and is still writable.
    */
-  virtual TemporaryRef<PathBuilder> CopyToBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
-  virtual TemporaryRef<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform,
+  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+  virtual already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform,
                                                              FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
 
   /** This function checks if a point lies within a path. It allows passing a
@@ -552,7 +606,7 @@ public:
   /** Finish writing to the path and return a Path object that can be used for
    * drawing. Future use of the builder results in a crash!
    */
-  virtual TemporaryRef<Path> Finish() = 0;
+  virtual already_AddRefed<Path> Finish() = 0;
 
   virtual BackendType GetBackendType() const = 0;
 };
@@ -592,7 +646,7 @@ public:
    * can be used with any DrawTarget that has the same backend as the one
    * passed in.
    */
-  virtual TemporaryRef<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget) = 0;
+  virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget) = 0;
 
   /** This copies the path describing the glyphs into a PathBuilder. We use this
    * API rather than a generic API to append paths because it allows easier
@@ -614,6 +668,29 @@ protected:
   ScaledFont() {}
 
   UserData mUserData;
+};
+
+/**
+ * Derived classes hold a native font resource from which to create
+ * ScaledFonts.
+ */
+class NativeFontResource : public RefCounted<NativeFontResource>
+{
+public:
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(NativeFontResource)
+
+  /**
+   * Creates a ScaledFont using the font corresponding to the index and
+   * the given glyph size.
+   *
+   * @param aIndex index for the font within the resource.
+   * @param aGlyphSize the size of ScaledFont required.
+   * @return an already_addrefed ScaledFont, containing nullptr if failed.
+   */
+  virtual already_AddRefed<ScaledFont>
+    CreateScaledFont(uint32_t aIndex, uint32_t aGlyphSize) = 0;
+
+  virtual ~NativeFontResource() {};
 };
 
 /** This class is designed to allow passing additional glyph rendering
@@ -648,15 +725,19 @@ public:
   DrawTarget() : mTransformDirty(false), mPermitSubpixelAA(false) {}
   virtual ~DrawTarget() {}
 
+  virtual bool IsValid() const { return true; };
   virtual DrawTargetType GetType() const = 0;
 
   virtual BackendType GetBackendType() const = 0;
+
+  virtual bool IsRecording() const { return false; }
+
   /**
    * Returns a SourceSurface which is a snapshot of the current contents of the DrawTarget.
    * Multiple calls to Snapshot() without any drawing operations in between will
    * normally return the same SourceSurface object.
    */
-  virtual TemporaryRef<SourceSurface> Snapshot() = 0;
+  virtual already_AddRefed<SourceSurface> Snapshot() = 0;
   virtual IntSize GetSize() = 0;
 
   /**
@@ -665,7 +746,8 @@ public:
    * Release takes the original data pointer for safety.
    */
   virtual bool LockBits(uint8_t** aData, IntSize* aSize,
-                        int32_t* aStride, SurfaceFormat* aFormat) { return false; }
+                        int32_t* aStride, SurfaceFormat* aFormat,
+                        IntPoint* aOrigin = nullptr) { return false; }
   virtual void ReleaseBits(uint8_t* aData) {}
 
   /** Ensure that the DrawTarget backend has flushed all drawing operations to
@@ -757,7 +839,7 @@ public:
 
   /** @see CopySurface
    * Same as CopySurface, except uses itself as the source.
-   * 
+   *
    * Some backends may be able to optimize this better
    * than just taking a snapshot and using CopySurface.
    */
@@ -817,7 +899,7 @@ public:
                       const Pattern &aPattern,
                       const StrokeOptions &aStrokeOptions = StrokeOptions(),
                       const DrawOptions &aOptions = DrawOptions()) = 0;
-  
+
   /**
    * Fill a path on the draw target with a certain source pattern.
    *
@@ -887,12 +969,41 @@ public:
   virtual void PopClip() = 0;
 
   /**
+   * Push a 'layer' to the DrawTarget, a layer is a temporary surface that all
+   * drawing will be redirected to, this is used for example to support group
+   * opacity or the masking of groups. Clips must be balanced within a layer,
+   * i.e. between a matching PushLayer/PopLayer pair there must be as many
+   * PushClip(Rect) calls as there are PopClip calls.
+   *
+   * @param aOpaque Whether the layer will be opaque
+   * @param aOpacity Opacity of the layer
+   * @param aMask Mask applied to the layer
+   * @param aMaskTransform Transform applied to the layer mask
+   * @param aBounds Optional bounds in device space to which the layer is
+   *                limited in size.
+   * @param aCopyBackground Whether to copy the background into the layer, this
+   *                        is only supported when aOpaque is true.
+   */
+  virtual void PushLayer(bool aOpaque, Float aOpacity,
+                         SourceSurface* aMask,
+                         const Matrix& aMaskTransform,
+                         const IntRect& aBounds = IntRect(),
+                         bool aCopyBackground = false) { MOZ_CRASH(); }
+
+  /**
+   * This balances a call to PushLayer and proceeds to blend the layer back
+   * onto the background. This blend will blend the temporary surface back
+   * onto the target in device space using POINT sampling and operator over.
+   */
+  virtual void PopLayer() { MOZ_CRASH(); }
+
+  /**
    * Create a SourceSurface optimized for use with this DrawTarget from
    * existing bitmap data in memory.
    *
    * The SourceSurface does not take ownership of aData, and may be freed at any time.
    */
-  virtual TemporaryRef<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
+  virtual already_AddRefed<SourceSurface> CreateSourceSurfaceFromData(unsigned char *aData,
                                                                   const IntSize &aSize,
                                                                   int32_t aStride,
                                                                   SurfaceFormat aFormat) const = 0;
@@ -902,29 +1013,29 @@ public:
    * arbitrary SourceSurface type supported by this backend. This may return
    * aSourceSurface or some other existing surface.
    */
-  virtual TemporaryRef<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const = 0;
+  virtual already_AddRefed<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const = 0;
 
   /**
    * Create a SourceSurface for a type of NativeSurface. This may fail if the
    * draw target does not know how to deal with the type of NativeSurface passed
    * in.
    */
-  virtual TemporaryRef<SourceSurface>
+  virtual already_AddRefed<SourceSurface>
     CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const = 0;
 
   /**
    * Create a DrawTarget whose snapshot is optimized for use with this DrawTarget.
    */
-  virtual TemporaryRef<DrawTarget>
+  virtual already_AddRefed<DrawTarget>
     CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const = 0;
 
   /**
    * Create a DrawTarget that captures the drawing commands and can be replayed
    * onto a compatible DrawTarget afterwards.
    *
-   * @param aSize Size of the area this DT will capture. 
+   * @param aSize Size of the area this DT will capture.
    */
-  virtual TemporaryRef<DrawTargetCapture> CreateCaptureDT(const IntSize& aSize);
+  virtual already_AddRefed<DrawTargetCapture> CreateCaptureDT(const IntSize& aSize);
 
   /**
    * Create a draw target optimized for drawing a shadow.
@@ -934,7 +1045,7 @@ public:
    * surface, the caller is still responsible for including the shadow area in
    * its size.
    */
-  virtual TemporaryRef<DrawTarget>
+  virtual already_AddRefed<DrawTarget>
     CreateShadowDrawTarget(const IntSize &aSize, SurfaceFormat aFormat,
                            float aSigma) const
   {
@@ -948,7 +1059,7 @@ public:
    * ID2D1SimplifiedGeometrySink requires the fill mode
    * to be set before calling BeginFigure().
    */
-  virtual TemporaryRef<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+  virtual already_AddRefed<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
 
   /**
    * Create a GradientStops object that holds information about a set of
@@ -960,7 +1071,7 @@ public:
    * @param aExtendNone This describes how to extend the stop color outside of the
    *                    gradient area.
    */
-  virtual TemporaryRef<GradientStops>
+  virtual already_AddRefed<GradientStops>
     CreateGradientStops(GradientStop *aStops,
                         uint32_t aNumStops,
                         ExtendMode aExtendMode = ExtendMode::CLAMP) const = 0;
@@ -971,7 +1082,7 @@ public:
    *
    * @param aType Type of filter node to be created.
    */
-  virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType) = 0;
+  virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) = 0;
 
   Matrix GetTransform() const { return mTransform; }
 
@@ -1032,6 +1143,10 @@ public:
     return mOpaqueRect;
   }
 
+  virtual bool IsCurrentGroupOpaque() {
+    return GetFormat() == SurfaceFormat::B8G8R8X8;
+  }
+
   virtual void SetPermitSubpixelAA(bool aPermitSubpixelAA) {
     mPermitSubpixelAA = aPermitSubpixelAA;
   }
@@ -1082,54 +1197,79 @@ struct TileSet
   size_t mTileCount;
 };
 
+struct Config {
+  LogForwarder* mLogForwarder;
+  int32_t mMaxTextureSize;
+  int32_t mMaxAllocSize;
+
+  Config()
+  : mLogForwarder(nullptr)
+  , mMaxTextureSize(8192)
+  , mMaxAllocSize(52000000)
+  {}
+};
+
 class GFX2D_API Factory
 {
 public:
+  static void Init(const Config& aConfig);
+  static void ShutDown();
+
   static bool HasSSE2();
 
   /** Make sure that the given dimensions don't overflow a 32-bit signed int
    * using 4 bytes per pixel; optionally, make sure that either dimension
    * doesn't exceed the given limit.
    */
-  static bool CheckSurfaceSize(const IntSize &sz, int32_t limit = 0);
+  static bool CheckSurfaceSize(const IntSize &sz,
+                               int32_t limit = 0,
+                               int32_t allocLimit = 0);
+
+  /**
+   * Make sure that the given buffer size doesn't exceed the allocation limit.
+   */
+  static bool CheckBufferSize(int32_t bufSize);
 
   /** Make sure the given dimension satisfies the CheckSurfaceSize and is
    * within 8k limit.  The 8k value is chosen a bit randomly.
    */
   static bool ReasonableSurfaceSize(const IntSize &aSize);
 
-  static TemporaryRef<DrawTarget> CreateDrawTargetForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat = nullptr);
+  static bool AllowedSurfaceSize(const IntSize &aSize);
 
-  static TemporaryRef<DrawTarget>
+  static already_AddRefed<DrawTarget> CreateDrawTargetForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat = nullptr);
+
+  static already_AddRefed<SourceSurface> CreateSourceSurfaceForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat aFormat);
+
+  static already_AddRefed<DrawTarget>
     CreateDrawTarget(BackendType aBackend, const IntSize &aSize, SurfaceFormat aFormat);
 
-  static TemporaryRef<DrawTarget>
+  static already_AddRefed<DrawTarget>
     CreateRecordingDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT);
-     
-  static TemporaryRef<DrawTarget>
+
+  static already_AddRefed<DrawTarget>
     CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat);
 
-  static TemporaryRef<ScaledFont>
+  static already_AddRefed<ScaledFont>
     CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSize);
 
   /**
-   * This creates a ScaledFont from TrueType data.
+   * This creates a NativeFontResource from TrueType data.
    *
    * @param aData Pointer to the data
    * @param aSize Size of the TrueType data
-   * @param aFaceIndex Index of the font face in the truetype data this ScaledFont needs to represent.
-   * @param aGlyphSize Size of the glyphs in this ScaledFont
-   * @param aType Type of ScaledFont that should be created.
+   * @param aType Type of NativeFontResource that should be created.
+   * @return a NativeFontResource of nullptr if failed.
    */
-  static TemporaryRef<ScaledFont>
-    CreateScaledFontForTrueTypeData(uint8_t *aData, uint32_t aSize, uint32_t aFaceIndex, Float aGlyphSize, FontType aType);
+  static already_AddRefed<NativeFontResource>
+    CreateNativeFontResource(uint8_t *aData, uint32_t aSize, FontType aType);
 
   /**
    * This creates a scaled font with an associated cairo_scaled_font_t, and
    * must be used when using the Cairo backend. The NativeFont and
    * cairo_scaled_font_t* parameters must correspond to the same font.
    */
-  static TemporaryRef<ScaledFont>
+  static already_AddRefed<ScaledFont>
     CreateScaledFontWithCairo(const NativeFont &aNativeFont, Float aSize, cairo_scaled_font_t* aScaledFont);
 
   /**
@@ -1138,7 +1278,7 @@ public:
    * destroyed.  The caller is responsible for handing the case where nullptr
    * is returned. The surface is not zeroed unless requested.
    */
-  static TemporaryRef<DataSourceSurface>
+  static already_AddRefed<DataSourceSurface>
     CreateDataSourceSurface(const IntSize &aSize, SurfaceFormat aFormat, bool aZero = false);
 
   /**
@@ -1148,7 +1288,7 @@ public:
    * the surface is destroyed.  The caller is responsible for handling the case
    * where nullptr is returned. The surface is not zeroed unless requested.
    */
-  static TemporaryRef<DataSourceSurface>
+  static already_AddRefed<DataSourceSurface>
     CreateDataSourceSurfaceWithStride(const IntSize &aSize, SurfaceFormat aFormat, int32_t aStride, bool aZero = false);
 
   /**
@@ -1157,11 +1297,16 @@ public:
    * responsible for deallocating the memory only after destruction of the
    * surface.
    */
-  static TemporaryRef<DataSourceSurface>
+  static already_AddRefed<DataSourceSurface>
     CreateWrappingDataSourceSurface(uint8_t *aData, int32_t aStride,
                                     const IntSize &aSize, SurfaceFormat aFormat);
 
-  static TemporaryRef<DrawEventRecorder>
+  static void
+    CopyDataSourceSurface(DataSourceSurface* aSource,
+                          DataSourceSurface* aDest);
+
+
+  static already_AddRefed<DrawEventRecorder>
     CreateEventRecorderForFile(const char *aFilename);
 
   static void SetGlobalEventRecorder(DrawEventRecorder *aRecorder);
@@ -1171,14 +1316,14 @@ public:
 
   static uint32_t GetMaxSurfaceSize(BackendType aType);
 
-  static LogForwarder* GetLogForwarder() { return mLogForwarder; }
+  static LogForwarder* GetLogForwarder() { return sConfig ? sConfig->mLogForwarder : nullptr; }
 
 private:
-  static LogForwarder* mLogForwarder;
+  static Config* sConfig;
 public:
 
 #ifdef USE_SKIA_GPU
-  static TemporaryRef<DrawTarget>
+  static already_AddRefed<DrawTarget>
     CreateDrawTargetSkiaWithGrContext(GrContext* aGrContext,
                                       const IntSize &aSize,
                                       SurfaceFormat aFormat);
@@ -1187,10 +1332,10 @@ public:
   static void PurgeAllCaches();
 
 #if defined(USE_SKIA) && defined(MOZ_ENABLE_FREETYPE)
-  static TemporaryRef<GlyphRenderingOptions>
-    CreateCairoGlyphRenderingOptions(FontHinting aHinting, bool aAutoHinting);
+  static already_AddRefed<GlyphRenderingOptions>
+    CreateCairoGlyphRenderingOptions(FontHinting aHinting, bool aAutoHinting, AntialiasMode aAntialiasMode = AntialiasMode::DEFAULT);
 #endif
-  static TemporaryRef<DrawTarget>
+  static already_AddRefed<DrawTarget>
     CreateDualDrawTarget(DrawTarget *targetA, DrawTarget *targetB);
 
   /*
@@ -1199,38 +1344,44 @@ public:
    * individual offset. The tiles in the set must each have the same backend
    * and format.
    */
-  static TemporaryRef<DrawTarget> CreateTiledDrawTarget(const TileSet& aTileSet);
+  static already_AddRefed<DrawTarget> CreateTiledDrawTarget(const TileSet& aTileSet);
 
   static bool DoesBackendSupportDataDrawtarget(BackendType aType);
 
-#ifdef XP_MACOSX
-  static TemporaryRef<DrawTarget> CreateDrawTargetForCairoCGContext(CGContextRef cg, const IntSize& aSize);
-  static TemporaryRef<GlyphRenderingOptions>
+#ifdef XP_DARWIN
+  static already_AddRefed<DrawTarget> CreateDrawTargetForCairoCGContext(CGContextRef cg, const IntSize& aSize);
+  static already_AddRefed<GlyphRenderingOptions>
     CreateCGGlyphRenderingOptions(const Color &aFontSmoothingBackgroundColor);
 #endif
 
 #ifdef WIN32
-  static TemporaryRef<DrawTarget> CreateDrawTargetForD3D10Texture(ID3D10Texture2D *aTexture, SurfaceFormat aFormat);
-  static TemporaryRef<DrawTarget>
+  static already_AddRefed<DrawTarget> CreateDrawTargetForD3D10Texture(ID3D10Texture2D *aTexture, SurfaceFormat aFormat);
+  static already_AddRefed<DrawTarget>
     CreateDualDrawTargetForD3D10Textures(ID3D10Texture2D *aTextureA,
                                          ID3D10Texture2D *aTextureB,
                                          SurfaceFormat aFormat);
 
   static void SetDirect3D10Device(ID3D10Device1 *aDevice);
   static ID3D10Device1 *GetDirect3D10Device();
-  static TemporaryRef<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
+  static already_AddRefed<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
 
   static void SetDirect3D11Device(ID3D11Device *aDevice);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
   static bool SupportsD2D1();
 
-  static TemporaryRef<GlyphRenderingOptions>
+  static already_AddRefed<GlyphRenderingOptions>
     CreateDWriteGlyphRenderingOptions(IDWriteRenderingParams *aParams);
 
   static uint64_t GetD2DVRAMUsageDrawTarget();
   static uint64_t GetD2DVRAMUsageSourceSurface();
   static void D2DCleanup();
+
+  static already_AddRefed<ScaledFont>
+    CreateScaledFontForDWriteFont(IDWriteFont* aFont,
+                                  IDWriteFontFamily* aFontFamily,
+                                  IDWriteFontFace* aFontFace,
+                                  Float aSize);
 
 private:
   static ID2D1Device *mD2D1Device;
@@ -1241,7 +1392,7 @@ private:
   static DrawEventRecorder *mRecorder;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif // _MOZILLA_GFX_2D_H

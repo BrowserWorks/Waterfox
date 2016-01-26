@@ -6,6 +6,7 @@
 
 #include "Activity.h"
 #include "mozilla/dom/ToJSValue.h"
+#include "mozilla/dom/ContentChild.h"
 #include "nsContentUtils.h"
 #include "nsDOMClassInfo.h"
 #include "nsIConsoleService.h"
@@ -68,12 +69,24 @@ Activity::Initialize(nsPIDOMWindow* aWindow,
   mProxy = do_CreateInstance("@mozilla.org/dom/activities/proxy;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // We're about the pass the dictionary to a JS-implemented component, so
+  // rehydrate it in a system scode so that security wrappers don't get in the
+  // way. See bug 1161748 comment 16.
+  bool ok;
   JS::Rooted<JS::Value> optionsValue(aCx);
-  if (!ToJSValue(aCx, aOptions, &optionsValue)) {
-    return NS_ERROR_FAILURE;
+  {
+    JSAutoCompartment ac(aCx, xpc::PrivilegedJunkScope());
+    ok = ToJSValue(aCx, aOptions, &optionsValue);
+    NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
   }
+  ok = JS_WrapValue(aCx, &optionsValue);
+  NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
 
-  mProxy->StartActivity(static_cast<nsIDOMDOMRequest*>(this), optionsValue, aWindow);
+  ContentChild *cpc = ContentChild::GetSingleton();
+  uint64_t childID = cpc ? cpc->GetID() : 0;
+
+  mProxy->StartActivity(static_cast<nsIDOMDOMRequest*>(this), optionsValue,
+                        aWindow, childID);
   return NS_OK;
 }
 

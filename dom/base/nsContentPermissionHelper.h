@@ -21,6 +21,7 @@
 
 class nsPIDOMWindow;
 class nsContentPermissionRequestProxy;
+class VisibilityChangeListener;
 
 // Forward declare IPC::Principal here which is defined in
 // PermissionMessageUtils.h. Include this file will transitively includes
@@ -30,26 +31,7 @@ class nsContentPermissionRequestProxy;
 // That will mess up windows build.
 namespace IPC {
 class Principal;
-}
-
-class VisibilityChangeListener final : public nsIDOMEventListener
-{
-public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIDOMEVENTLISTENER
-
-  explicit VisibilityChangeListener(nsPIDOMWindow* aWindow);
-
-  void RemoveListener();
-  void SetCallback(nsIContentPermissionRequestCallback* aCallback);
-  already_AddRefed<nsIContentPermissionRequestCallback> GetCallback();
-
-private:
-  virtual ~VisibilityChangeListener() {}
-
-  nsWeakPtr mWindow;
-  nsCOMPtr<nsIContentPermissionRequestCallback> mCallback;
-};
+} // namespace IPC
 
 namespace mozilla {
 namespace dom {
@@ -108,6 +90,12 @@ public:
 
   static void
   NotifyRemoveContentPermissionRequestParent(PContentPermissionRequestParent* aParent);
+
+  static nsTArray<PContentPermissionRequestChild*>
+  GetContentPermissionRequestChildById(const TabId& aTabId);
+
+  static void
+  NotifyRemoveContentPermissionRequestChild(PContentPermissionRequestChild* aChild);
 };
 
 class nsContentPermissionRequester final : public nsIContentPermissionRequester
@@ -121,8 +109,8 @@ public:
 private:
   virtual ~nsContentPermissionRequester();
 
-  nsCOMPtr<nsPIDOMWindow> mWindow;
-  nsRefPtr<VisibilityChangeListener> mListener;
+  nsWeakPtr mWindow;
+  RefPtr<VisibilityChangeListener> mListener;
 };
 
 } // namespace dom
@@ -171,7 +159,7 @@ private:
   // Non-owning pointer to the ContentPermissionRequestParent object which owns this proxy.
   ContentPermissionRequestParent* mParent;
   nsTArray<mozilla::dom::PermissionRequest> mPermissionRequests;
-  nsRefPtr<nsContentPermissionRequesterProxy> mRequester;
+  RefPtr<nsContentPermissionRequesterProxy> mRequester;
 };
 
 /**
@@ -188,8 +176,8 @@ public:
                           nsPIDOMWindow* aWindow);
 
   // It will be called when prompt dismissed.
-  virtual bool Recv__delete__(const bool &aAllow,
-                              InfallibleTArray<PermissionChoice>&& aChoices) override;
+  virtual bool RecvNotifyResult(const bool &aAllow,
+                                InfallibleTArray<PermissionChoice>&& aChoices) override;
 
   virtual bool RecvGetVisibility() override;
 
@@ -205,11 +193,12 @@ public:
     Release();
   }
 
+  void Destroy();
+
+  bool IPCOpen() const { return mIPCOpen && !mDestroyed; }
+
 private:
-  virtual ~RemotePermissionRequest()
-  {
-    MOZ_ASSERT(!mIPCOpen, "Protocol must not be open when RemotePermissionRequest is destroyed.");
-  }
+  virtual ~RemotePermissionRequest();
 
   void DoAllow(JS::HandleValue aChoices);
   void DoCancel();
@@ -217,7 +206,8 @@ private:
   nsCOMPtr<nsIContentPermissionRequest> mRequest;
   nsCOMPtr<nsPIDOMWindow>               mWindow;
   bool                                  mIPCOpen;
-  nsRefPtr<VisibilityChangeListener>    mListener;
+  bool                                  mDestroyed;
+  RefPtr<VisibilityChangeListener>    mListener;
 };
 
 #endif // nsContentPermissionHelper_h

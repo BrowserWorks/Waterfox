@@ -3,7 +3,7 @@
 
 const ANNO_LEGACYGUID = "placesInternal/GUID";
 
-let getTotalGuidAnnotationsCount = Task.async(function* (db) {
+var getTotalGuidAnnotationsCount = Task.async(function* (db) {
   let rows = yield db.execute(
     `SELECT count(*)
      FROM moz_items_annos a
@@ -34,7 +34,7 @@ add_task(function* database_is_valid() {
   Assert.equal((yield db.getSchemaVersion()), CURRENT_SCHEMA_VERSION);
 });
 
-add_task(function test_bookmark_guid_annotation_removed()
+add_task(function* test_bookmark_guid_annotation_removed()
 {
   let db = yield PlacesUtils.promiseDBConnection();
   Assert.equal((yield getTotalGuidAnnotationsCount(db)), 0,

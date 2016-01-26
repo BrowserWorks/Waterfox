@@ -51,15 +51,21 @@ this.Downloads = {
   /**
    * Work on downloads that were not started from a private browsing window.
    */
-  get PUBLIC() "{Downloads.PUBLIC}",
+  get PUBLIC() {
+    return "{Downloads.PUBLIC}";
+  },
   /**
    * Work on downloads that were started from a private browsing window.
    */
-  get PRIVATE() "{Downloads.PRIVATE}",
+  get PRIVATE() {
+    return "{Downloads.PRIVATE}";
+  },
   /**
    * Work on both Downloads.PRIVATE and Downloads.PUBLIC downloads.
    */
-  get ALL() "{Downloads.ALL}",
+  get ALL() {
+    return "{Downloads.ALL}";
+  },
 
   /**
    * Creates a new Download object.
@@ -166,7 +172,7 @@ this.Downloads = {
   getList: function (aType)
   {
     if (!this._promiseListsInitialized) {
-      this._promiseListsInitialized = Task.spawn(function () {
+      this._promiseListsInitialized = Task.spawn(function* () {
         let publicList = new DownloadList();
         let privateList = new DownloadList();
         let combinedList = new DownloadCombinedList(publicList, privateList);

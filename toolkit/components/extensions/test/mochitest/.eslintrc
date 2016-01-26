@@ -1,0 +1,17 @@
+{
+  "extends": "../../../../../testing/mochitest/mochitest.eslintrc",
+
+  "env": {
+    "webextensions": true,
+  },
+
+  "globals": {
+    "sendAsyncMessage": false,
+
+    "waitForLoad": true,
+
+    "ExtensionTestUtils": false,
+    "NetUtil": true,
+    "XPCOMUtils": true,
+  },
+}

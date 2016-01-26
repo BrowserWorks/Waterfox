@@ -28,19 +28,19 @@ environment created as above::
   pip install -e ./
 
 In addition to the dependencies installed by pip, wptrunner requires
-a copy of the web-platform-tests repository. That can be located
-anywhere on the filesystem, but the easiest option is to put it within
-the wptrunner checkout directory, as a subdirectory named ``tests``::
+a copy of the web-platform-tests repository. This can be located
+anywhere on the filesystem, but the easiest option is to put it
+under the same parent directory as the wptrunner checkout::
 
-  git clone https://github.com/w3c/web-platform-tests.git tests
+  git clone https://github.com/w3c/web-platform-tests.git
 
 It is also necessary to generate a web-platform-tests ``MANIFEST.json``
-file. It's recommended to put that within the wptrunner
-checkout directory, in a subdirectory named ``meta``::
+file. It's recommended to also put that under the same parent directory as
+the wptrunner checkout, in a directory named ``meta``::
 
   mkdir meta
-  cd tests
-  python tools/scripts/manifest.py ../meta/MANIFEST.json
+  cd web-platform-tests
+  python manifest --path ../meta/MANIFEST.json
 
 The ``MANIFEST.json`` file needs to be regenerated each time the
 web-platform-tests checkout is updated. To aid with the update process
@@ -56,8 +56,14 @@ takes multiple options, of which the following are most significant:
 ``--product`` (defaults to `firefox`)
   The product to test against: `b2g`, `chrome`, `firefox`, or `servo`.
 
-``--binary`` (required)
+``--binary`` (required if product is `firefox` or `servo`)
   The path to a binary file for the product (browser) to test against.
+
+``--webdriver-binary`` (required if product is `chrome`)
+  The path to a `*driver` binary; e.g., a `chromedriver` binary.
+
+``--certutil-binary`` (required if product is `firefox` [#]_)
+  The path to a `certutil` binary (for tests that must be run over https).
 
 ``--metadata`` (required only when not `using default paths`_)
   The path to a directory containing test metadata. [#]_
@@ -67,6 +73,12 @@ takes multiple options, of which the following are most significant:
 
 ``--prefs-root`` (required only when testing a Firefox binary)
   The path to a directory containing Firefox test-harness preferences. [#]_
+
+``--config`` (should default to `wptrunner.default.ini`)
+  The path to the config (ini) file.
+
+.. [#] The ``--certutil-binary`` option is required when the product is
+   ``firefox`` unless ``--ssl-type=none`` is specified.
 
 .. [#] The ``--metadata`` path is to a directory that contains:
 
@@ -85,30 +97,41 @@ The following examples show how to start wptrunner with various options.
 Starting wptrunner
 ------------------
 
+The examples below assume the following directory layout,
+though no specific folder structure is required::
+
+  ~/testtwf/wptrunner          # wptrunner checkout
+  ~/testtwf/web-platform-tests # web-platform-tests checkout
+  ~/testtwf/meta               # metadata
+
 To test a Firefox Nightly build in an OS X environment, you might start
 wptrunner using something similar to the following example::
 
-  wptrunner --metadata=~/web-platform-tests/ --tests=~/web-platform-tests/ \
-    --binary=~/mozilla-central/obj-x86_64-apple-darwin14.0.0/dist/Nightly.app/Contents/MacOS/firefox \
+  wptrunner --metadata=~/testtwf/meta/ --tests=~/testtwf/web-platform-tests/ \
+    --binary=~/mozilla-central/obj-x86_64-apple-darwin14.3.0/dist/Nightly.app/Contents/MacOS/firefox \
+    --certutil-binary=~/mozilla-central/obj-x86_64-apple-darwin14.3.0/security/nss/cmd/certutil/certutil \
     --prefs-root=~/mozilla-central/testing/profiles
+
 
 And to test a Chromium build in an OS X environment, you might start
 wptrunner using something similar to the following example::
 
-  wptrunner --metadata=~/web-platform-tests/ --tests=~/web-platform-tests/ \
+  wptrunner --metadata=~/testtwf/meta/ --tests=~/testtwf/web-platform-tests/ \
     --binary=~/chromium/src/out/Release/Chromium.app/Contents/MacOS/Chromium \
-    --product=chrome
+    --webdriver-binary=/usr/local/bin/chromedriver --product=chrome
 
 --------------------
 Running test subsets
 --------------------
 
 To restrict a test run just to tests in a particular web-platform-tests
-subdirectory, use ``--include`` with the directory name; for example::
+subdirectory, specify the directory name in the positional arguments after
+the options; for example, run just the tests in the `dom` subdirectory::
 
-  wptrunner --metadata=~/web-platform-tests/ --tests=~/web-platform-tests/ \
-    --binary=/path/to/firefox --prefs-root=/path/to/testing/profiles \
-    --include=dom
+  wptrunner --metadata=~/testtwf/meta --tests=~/testtwf/web-platform-tests/ \
+    --binary=/path/to/firefox --certutil-binary=/path/to/certutil \
+    --prefs-root=/path/to/testing/profiles \
+    dom
 
 -------------------
 Running in parallel
@@ -141,11 +164,11 @@ metadata files in a subdirectory of the current directory named ``meta``.
 Output
 ------
 
-wptrunner uses the :py:mod:`mozlog.structured` package for output. This
+wptrunner uses the :py:mod:`mozlog` package for output. This
 structures events such as test results or log messages as JSON objects
 that can then be fed to other tools for interpretation. More details
 about the message format are given in the
-:py:mod:`mozlog.structured` documentation.
+:py:mod:`mozlog` documentation.
 
 By default the raw JSON messages are dumped to stdout. This is
 convenient for piping into other tools, but not ideal for humans
@@ -167,7 +190,7 @@ Configuration File
 
 wptrunner uses a ``.ini`` file to control some configuration
 sections. The file has three sections; ``[products]``,
-``[paths]`` and ``[web-platform-tests]``.
+``[manifest:default]`` and ``[web-platform-tests]``.
 
 ``[products]`` is used to
 define the set of available products. By default this section is empty
@@ -182,12 +205,12 @@ e.g.::
   chrome =
   netscape4 = path/to/netscape.py
 
-``[paths]`` specifies the default paths for the tests and metadata,
+``[manifest:default]`` specifies the default paths for the tests and metadata,
 relative to the config file. For example::
 
-  [paths]
-  tests = checkouts/web-platform-tests
-  metadata = /home/example/wpt/metadata
+  [manifest:default]
+  tests = ~/testtwf/web-platform-tests
+  metadata = ~/testtwf/meta
 
 
 ``[web-platform-tests]`` is used to set the properties of the upstream

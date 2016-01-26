@@ -40,17 +40,10 @@
 
     function setOnClickAttr(aID)
     {
-      this.__proto__ = new textLeafUpdate(aID, true);
-
-      this.invoke = function setOnClickAttr_invoke()
-      {
-        this.node.setAttribute("onclick", "alert(3);");
-      }
-
-      this.getID = function setOnClickAttr_getID()
-      {
-        return "make " + prettyName(aID) + " linkable";
-      }
+      var node = getNode(aID);
+      node.setAttribute("onclick", "alert(3);");
+      var textLeaf = getAccessible(node).firstChild;
+      is(textLeaf.actionCount, 1, "Wrong action numbers!");
     }
 
     function removeOnClickAttr(aID)
@@ -84,7 +77,7 @@
       }
     }
 
-    function removeTextData(aID)
+    function removeTextData(aID, aRole)
     {
       this.containerNode = getNode(aID);
       this.textNode = this.containerNode.firstChild;
@@ -96,7 +89,7 @@
       this.invoke = function removeTextData_invoke()
       {
         var tree = {
-          role: ROLE_PARAGRAPH,
+          role: aRole,
           children: [
             {
               role: ROLE_TEXT_LEAF,
@@ -112,7 +105,7 @@
       this.finalCheck = function removeTextData_finalCheck()
       {
         var tree = {
-          role: ROLE_PARAGRAPH,
+          role: aRole,
           children: []
         };
         testAccessibleTree(this.containerNode, tree);
@@ -134,11 +127,10 @@
 
     function doTest()
     {
-      gQueue = new eventQueue();
-
       // adds onclick on element, text leaf should inherit its action
-      gQueue.push(new setOnClickAttr("div"));
-
+      setOnClickAttr("div");
+      // Call rest of event tests.
+      gQueue = new eventQueue();
       // remove onclick attribute, text leaf shouldn't have any action
       gQueue.push(new removeOnClickAttr("div"));
 
@@ -147,8 +139,8 @@
       gQueue.push(new setOnClickNRoleAttrs("span"));
 
       // text data removal of text node should remove its text accessible
-      gQueue.push(new removeTextData("p"));
-      gQueue.push(new removeTextData("pre"));
+      gQueue.push(new removeTextData("p", ROLE_PARAGRAPH));
+      gQueue.push(new removeTextData("pre", ROLE_TEXT_CONTAINER));
 
       gQueue.invoke(); // SimpleTest.finish() will be called in the end
     }

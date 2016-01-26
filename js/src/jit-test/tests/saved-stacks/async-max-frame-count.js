@@ -4,7 +4,7 @@ const defaultAsyncStackLimit = 60;
 
 function recur(n, limit) {
   if (n > 0) {
-    return callFunctionWithAsyncStack(recur.bind(undefined, n - 1, limit),
+    return callFunctionWithAsyncStack(function recur() {return recur(n - 1, limit)},
                                       saveStack(limit), "Recurse");
   }
   return saveStack(limit);
@@ -13,13 +13,26 @@ function recur(n, limit) {
 function checkRecursion(n, limit) {
   print("checkRecursion(" + uneval(n) + ", " + uneval(limit) + ")");
 
-  var stack = recur(n, limit);
+  try {
+    var stack = recur(n, limit);
+  } catch (e) {
+    // Some platforms, like ASAN builds, can end up overrecursing. Tolerate
+    // these failures.
+    assertEq(/too much recursion/.test("" + e), true);
+    return;
+  }
 
   // Async stacks are limited even if we didn't ask for a limit. There is a
-  // default limit on frames attached on top of any synchronous frames. In this
-  // case the synchronous frame is the last call to `recur`.
+  // default limit on frames attached on top of any synchronous frames, and
+  // every time the limit is reached when capturing, half of the frames are
+  // truncated from the old end of the async stack.
   if (limit == 0) {
-    limit = defaultAsyncStackLimit + 1;
+    // Always add one synchronous frame that is the last call to `recur`.
+    if (n + 1 < defaultAsyncStackLimit) {
+      limit = defaultAsyncStackLimit + 1;
+    } else {
+      limit = n + 2 - (defaultAsyncStackLimit / 2);
+    }
   }
 
   // The first `n` or `limit` frames should have `recur` as their `asyncParent`.
@@ -61,6 +74,8 @@ function checkRecursion(n, limit) {
 checkRecursion(0, 0);
 checkRecursion(1, 0);
 checkRecursion(2, 0);
+checkRecursion(defaultAsyncStackLimit - 10, 0);
+checkRecursion(defaultAsyncStackLimit, 0);
 checkRecursion(defaultAsyncStackLimit + 10, 0);
 
 // Limit of 1 frame.

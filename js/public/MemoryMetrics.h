@@ -12,6 +12,7 @@
 
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/PodOperations.h"
+#include "mozilla/TypeTraits.h"
 
 #include <string.h>
 
@@ -54,22 +55,62 @@ struct TabSizes
     size_t other;
 };
 
+/** These are the measurements used by Servo. */
+struct ServoSizes
+{
+    enum Kind {
+        GCHeapUsed,
+        GCHeapUnused,
+        GCHeapAdmin,
+        GCHeapDecommitted,
+        MallocHeap,
+        NonHeap,
+        Ignore
+    };
+
+    ServoSizes() { mozilla::PodZero(this); }
+
+    void add(Kind kind, size_t n) {
+        switch (kind) {
+            case GCHeapUsed:        gcHeapUsed        += n; break;
+            case GCHeapUnused:      gcHeapUnused      += n; break;
+            case GCHeapAdmin:       gcHeapAdmin       += n; break;
+            case GCHeapDecommitted: gcHeapDecommitted += n; break;
+            case MallocHeap:        mallocHeap        += n; break;
+            case NonHeap:           nonHeap           += n; break;
+            case Ignore:            /* do nothing */        break;
+            default:                MOZ_CRASH("bad ServoSizes kind");
+        }
+    }
+
+    size_t gcHeapUsed;
+    size_t gcHeapUnused;
+    size_t gcHeapAdmin;
+    size_t gcHeapDecommitted;
+    size_t mallocHeap;
+    size_t nonHeap;
+};
+
 } // namespace JS
 
 namespace js {
 
-// In memory reporting, we have concept of "sundries", line items which are too
-// small to be worth reporting individually.  Under some circumstances, a memory
-// reporter gets tossed into the sundries bucket if it's smaller than
-// MemoryReportingSundriesThreshold() bytes.
-//
-// We need to define this value here, rather than in the code which actually
-// generates the memory reports, because NotableStringInfo uses this value.
+/**
+ * In memory reporting, we have concept of "sundries", line items which are too
+ * small to be worth reporting individually.  Under some circumstances, a memory
+ * reporter gets tossed into the sundries bucket if it's smaller than
+ * MemoryReportingSundriesThreshold() bytes.
+ *
+ * We need to define this value here, rather than in the code which actually
+ * generates the memory reports, because NotableStringInfo uses this value.
+ */
 JS_FRIEND_API(size_t) MemoryReportingSundriesThreshold();
 
-// This hash policy avoids flattening ropes (which perturbs the site being
-// measured and requires a JSContext) at the expense of doing a FULL ROPE COPY
-// on every hash and match! Beware.
+/**
+ * This hash policy avoids flattening ropes (which perturbs the site being
+ * measured and requires a JSContext) at the expense of doing a FULL ROPE COPY
+ * on every hash and match! Beware.
+ */
 struct InefficientNonFlatteningStringHashPolicy
 {
     typedef JSString* Lookup;
@@ -92,24 +133,29 @@ struct CStringHashPolicy
 // then use the following macros to transform those lists into the required
 // methods.
 //
+// - The |tabKind| value is used when measuring TabSizes.
+//
+// - The |servoKind| value is used when measuring ServoSizes and also for
+//   the various sizeOfLiveGCThings() methods.
+//
 // In some classes, one or more of the macro arguments aren't used.  We use '_'
 // for those.
 //
-#define DECL_SIZE(kind, gc, mSize)                      size_t mSize;
-#define ZERO_SIZE(kind, gc, mSize)                      mSize(0),
-#define COPY_OTHER_SIZE(kind, gc, mSize)                mSize(other.mSize),
-#define ADD_OTHER_SIZE(kind, gc, mSize)                 mSize += other.mSize;
-#define SUB_OTHER_SIZE(kind, gc, mSize)                 MOZ_ASSERT(mSize >= other.mSize); \
-                                                        mSize -= other.mSize;
-#define ADD_SIZE_TO_N(kind, gc, mSize)                  n += mSize;
-#define ADD_SIZE_TO_N_IF_LIVE_GC_THING(kind, gc, mSize) n += (js::gc) ? mSize : 0;
-#define ADD_TO_TAB_SIZES(kind, gc, mSize)               sizes->add(JS::TabSizes::kind, mSize);
-
-// Used to annotate which size_t fields measure live GC things and which don't.
-enum {
-    NotLiveGCThing = false,
-    IsLiveGCThing = true
-};
+#define DECL_SIZE(tabKind, servoKind, mSize)        size_t mSize;
+#define ZERO_SIZE(tabKind, servoKind, mSize)        mSize(0),
+#define COPY_OTHER_SIZE(tabKind, servoKind, mSize)  mSize(other.mSize),
+#define ADD_OTHER_SIZE(tabKind, servoKind, mSize)   mSize += other.mSize;
+#define SUB_OTHER_SIZE(tabKind, servoKind, mSize) \
+    MOZ_ASSERT(mSize >= other.mSize); \
+    mSize -= other.mSize;
+#define ADD_SIZE_TO_N(tabKind, servoKind, mSize)                  n += mSize;
+#define ADD_SIZE_TO_N_IF_LIVE_GC_THING(tabKind, servoKind, mSize) \
+    /* Avoid self-comparison warnings by comparing enums indirectly. */ \
+    n += (mozilla::IsSame<int[ServoSizes::servoKind], int[ServoSizes::GCHeapUsed]>::value) \
+         ? mSize \
+         : 0;
+#define ADD_TO_TAB_SIZES(tabKind, servoKind, mSize)               sizes->add(JS::TabSizes::tabKind, mSize);
+#define ADD_TO_SERVO_SIZES(tabKind, servoKind, mSize)             sizes->add(JS::ServoSizes::servoKind, mSize);
 
 } // namespace js
 
@@ -118,21 +164,21 @@ namespace JS {
 struct ClassInfo
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(Objects, IsLiveGCThing,  objectsGCHeap) \
-    macro(Objects, NotLiveGCThing, objectsMallocHeapSlots) \
-    macro(Objects, NotLiveGCThing, objectsMallocHeapElementsNonAsmJS) \
-    macro(Objects, NotLiveGCThing, objectsMallocHeapElementsAsmJS) \
-    macro(Objects, NotLiveGCThing, objectsNonHeapElementsAsmJS) \
-    macro(Objects, NotLiveGCThing, objectsNonHeapElementsMapped) \
-    macro(Objects, NotLiveGCThing, objectsNonHeapCodeAsmJS) \
-    macro(Objects, NotLiveGCThing, objectsMallocHeapMisc) \
+    macro(Objects, GCHeapUsed, objectsGCHeap) \
+    macro(Objects, MallocHeap, objectsMallocHeapSlots) \
+    macro(Objects, MallocHeap, objectsMallocHeapElementsNonAsmJS) \
+    macro(Objects, MallocHeap, objectsMallocHeapElementsAsmJS) \
+    macro(Objects, NonHeap,    objectsNonHeapElementsAsmJS) \
+    macro(Objects, NonHeap,    objectsNonHeapElementsMapped) \
+    macro(Objects, NonHeap,    objectsNonHeapCodeAsmJS) \
+    macro(Objects, MallocHeap, objectsMallocHeapMisc) \
     \
-    macro(Other,   IsLiveGCThing,  shapesGCHeapTree) \
-    macro(Other,   IsLiveGCThing,  shapesGCHeapDict) \
-    macro(Other,   IsLiveGCThing,  shapesGCHeapBase) \
-    macro(Other,   NotLiveGCThing, shapesMallocHeapTreeTables) \
-    macro(Other,   NotLiveGCThing, shapesMallocHeapDictTables) \
-    macro(Other,   NotLiveGCThing, shapesMallocHeapTreeKids) \
+    macro(Other,   GCHeapUsed, shapesGCHeapTree) \
+    macro(Other,   GCHeapUsed, shapesGCHeapDict) \
+    macro(Other,   GCHeapUsed, shapesGCHeapBase) \
+    macro(Other,   MallocHeap, shapesMallocHeapTreeTables) \
+    macro(Other,   MallocHeap, shapesMallocHeapDictTables) \
+    macro(Other,   MallocHeap, shapesMallocHeapTreeKids)
 
     ClassInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -168,18 +214,24 @@ struct ClassInfo
         FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
     }
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
     FOR_EACH_SIZE(DECL_SIZE)
     int dummy;  // present just to absorb the trailing comma from FOR_EACH_SIZE(ZERO_SIZE)
 
 #undef FOR_EACH_SIZE
 };
 
-// Holds data about a notable class (one whose combined object and shape
-// instances use more than a certain amount of memory) so we can report it
-// individually.
-//
-// The only difference between this class and ClassInfo is that this class
-// holds a copy of the filename.
+/**
+ * Holds data about a notable class (one whose combined object and shape
+ * instances use more than a certain amount of memory) so we can report it
+ * individually.
+ *
+ * The only difference between this class and ClassInfo is that this class
+ * holds a copy of the filename.
+ */
 struct NotableClassInfo : public ClassInfo
 {
     NotableClassInfo();
@@ -197,66 +249,76 @@ struct NotableClassInfo : public ClassInfo
     NotableClassInfo(const NotableClassInfo& info) = delete;
 };
 
-// Data for tracking JIT-code memory usage.
+/** Data for tracking JIT-code memory usage. */
 struct CodeSizes
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, ion) \
-    macro(_, _, baseline) \
-    macro(_, _, regexp) \
-    macro(_, _, other) \
-    macro(_, _, unused)
+    macro(_, NonHeap, ion) \
+    macro(_, NonHeap, baseline) \
+    macro(_, NonHeap, regexp) \
+    macro(_, NonHeap, other) \
+    macro(_, NonHeap, unused)
 
     CodeSizes()
       : FOR_EACH_SIZE(ZERO_SIZE)
         dummy()
     {}
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
     FOR_EACH_SIZE(DECL_SIZE)
     int dummy;  // present just to absorb the trailing comma from FOR_EACH_SIZE(ZERO_SIZE)
 
 #undef FOR_EACH_SIZE
 };
 
-// Data for tracking GC memory usage.
+/** Data for tracking GC memory usage. */
 struct GCSizes
 {
+    // |nurseryDecommitted| is marked as NonHeap rather than GCHeapDecommitted
+    // because we don't consider the nursery to be part of the GC heap.
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, marker) \
-    macro(_, _, nurseryCommitted) \
-    macro(_, _, nurseryDecommitted) \
-    macro(_, _, nurseryMallocedBuffers) \
-    macro(_, _, storeBufferVals) \
-    macro(_, _, storeBufferCells) \
-    macro(_, _, storeBufferSlots) \
-    macro(_, _, storeBufferWholeCells) \
-    macro(_, _, storeBufferRelocVals) \
-    macro(_, _, storeBufferRelocCells) \
-    macro(_, _, storeBufferGenerics)
+    macro(_, MallocHeap, marker) \
+    macro(_, NonHeap,    nurseryCommitted) \
+    macro(_, NonHeap,    nurseryDecommitted) \
+    macro(_, MallocHeap, nurseryMallocedBuffers) \
+    macro(_, MallocHeap, storeBufferVals) \
+    macro(_, MallocHeap, storeBufferCells) \
+    macro(_, MallocHeap, storeBufferSlots) \
+    macro(_, MallocHeap, storeBufferWholeCells) \
+    macro(_, MallocHeap, storeBufferGenerics)
 
     GCSizes()
       : FOR_EACH_SIZE(ZERO_SIZE)
         dummy()
     {}
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
     FOR_EACH_SIZE(DECL_SIZE)
     int dummy;  // present just to absorb the trailing comma from FOR_EACH_SIZE(ZERO_SIZE)
 
 #undef FOR_EACH_SIZE
 };
 
-// This class holds information about the memory taken up by identical copies of
-// a particular string.  Multiple JSStrings may have their sizes aggregated
-// together into one StringInfo object.  Note that two strings with identical
-// chars will not be aggregated together if one is a short string and the other
-// is not.
+/**
+ * This class holds information about the memory taken up by identical copies of
+ * a particular string.  Multiple JSStrings may have their sizes aggregated
+ * together into one StringInfo object.  Note that two strings with identical
+ * chars will not be aggregated together if one is a short string and the other
+ * is not.
+ */
 struct StringInfo
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(Strings, IsLiveGCThing,  gcHeapLatin1) \
-    macro(Strings, IsLiveGCThing,  gcHeapTwoByte) \
-    macro(Strings, NotLiveGCThing, mallocHeapLatin1) \
-    macro(Strings, NotLiveGCThing, mallocHeapTwoByte)
+    macro(Strings, GCHeapUsed, gcHeapLatin1) \
+    macro(Strings, GCHeapUsed, gcHeapTwoByte) \
+    macro(Strings, MallocHeap, mallocHeapLatin1) \
+    macro(Strings, MallocHeap, mallocHeapTwoByte)
 
     StringInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -290,17 +352,23 @@ struct StringInfo
         FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
     }
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
     FOR_EACH_SIZE(DECL_SIZE)
     uint32_t numCopies;     // How many copies of the string have we seen?
 
 #undef FOR_EACH_SIZE
 };
 
-// Holds data about a notable string (one which, counting all duplicates, uses
-// more than a certain amount of memory) so we can report it individually.
-//
-// The only difference between this class and StringInfo is that
-// NotableStringInfo holds a copy of some or all of the string's chars.
+/**
+ * Holds data about a notable string (one which, counting all duplicates, uses
+ * more than a certain amount of memory) so we can report it individually.
+ *
+ * The only difference between this class and StringInfo is that
+ * NotableStringInfo holds a copy of some or all of the string's chars.
+ */
 struct NotableStringInfo : public StringInfo
 {
     static const size_t MAX_SAVED_CHARS = 1024;
@@ -321,14 +389,16 @@ struct NotableStringInfo : public StringInfo
     NotableStringInfo(const NotableStringInfo& info) = delete;
 };
 
-// This class holds information about the memory taken up by script sources
-// from a particular file.
+/**
+ * This class holds information about the memory taken up by script sources
+ * from a particular file.
+ */
 struct ScriptSourceInfo
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, compressed) \
-    macro(_, _, uncompressed) \
-    macro(_, _, misc)
+    macro(_, MallocHeap, compressed) \
+    macro(_, MallocHeap, uncompressed) \
+    macro(_, MallocHeap, misc)
 
     ScriptSourceInfo()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -345,6 +415,10 @@ struct ScriptSourceInfo
         numScripts--;
     }
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    }
+
     bool isNotable() const {
         static const size_t NotabilityThreshold = 16 * 1024;
         size_t n = 0;
@@ -359,12 +433,14 @@ struct ScriptSourceInfo
 #undef FOR_EACH_SIZE
 };
 
-// Holds data about a notable script source file (one whose combined
-// script sources use more than a certain amount of memory) so we can report it
-// individually.
-//
-// The only difference between this class and ScriptSourceInfo is that this
-// class holds a copy of the filename.
+/**
+ * Holds data about a notable script source file (one whose combined
+ * script sources use more than a certain amount of memory) so we can report it
+ * individually.
+ *
+ * The only difference between this class and ScriptSourceInfo is that this
+ * class holds a copy of the filename.
+ */
 struct NotableScriptSourceInfo : public ScriptSourceInfo
 {
     NotableScriptSourceInfo();
@@ -382,21 +458,23 @@ struct NotableScriptSourceInfo : public ScriptSourceInfo
     NotableScriptSourceInfo(const NotableScriptSourceInfo& info) = delete;
 };
 
-// These measurements relate directly to the JSRuntime, and not to zones and
-// compartments within it.
+/**
+ * These measurements relate directly to the JSRuntime, and not to zones and
+ * compartments within it.
+ */
 struct RuntimeSizes
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, object) \
-    macro(_, _, atomsTable) \
-    macro(_, _, contexts) \
-    macro(_, _, dtoa) \
-    macro(_, _, temporary) \
-    macro(_, _, interpreterStack) \
-    macro(_, _, mathCache) \
-    macro(_, _, uncompressedSourceCache) \
-    macro(_, _, compressedSourceSet) \
-    macro(_, _, scriptData) \
+    macro(_, MallocHeap, object) \
+    macro(_, MallocHeap, atomsTable) \
+    macro(_, MallocHeap, contexts) \
+    macro(_, MallocHeap, dtoa) \
+    macro(_, MallocHeap, temporary) \
+    macro(_, MallocHeap, interpreterStack) \
+    macro(_, MallocHeap, mathCache) \
+    macro(_, MallocHeap, uncompressedSourceCache) \
+    macro(_, MallocHeap, compressedSourceSet) \
+    macro(_, MallocHeap, scriptData)
 
     RuntimeSizes()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -417,14 +495,21 @@ struct RuntimeSizes
         js_delete(allScriptSources);
     }
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+        scriptSourceInfo.addToServoSizes(sizes);
+        code.addToServoSizes(sizes);
+        gc.addToServoSizes(sizes);
+    }
+
     // The script source measurements in |scriptSourceInfo| are initially for
     // all script sources.  At the end, if the measurement granularity is
     // FineGrained, we subtract the measurements of the notable script sources
     // and move them into |notableScriptSources|.
     FOR_EACH_SIZE(DECL_SIZE)
-    ScriptSourceInfo    scriptSourceInfo;
-    CodeSizes           code;
-    GCSizes             gc;
+    ScriptSourceInfo scriptSourceInfo;
+    CodeSizes code;
+    GCSizes gc;
 
     typedef js::HashMap<const char*, ScriptSourceInfo,
                         js::CStringHashPolicy,
@@ -440,46 +525,46 @@ struct RuntimeSizes
 #undef FOR_EACH_SIZE
 };
 
-struct GCThingSizes
+struct UnusedGCThingSizes
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, object) \
-    macro(_, _, script) \
-    macro(_, _, lazyScript) \
-    macro(_, _, shape) \
-    macro(_, _, baseShape) \
-    macro(_, _, objectGroup) \
-    macro(_, _, string) \
-    macro(_, _, symbol) \
-    macro(_, _, jitcode) \
+    macro(Other, GCHeapUnused, object) \
+    macro(Other, GCHeapUnused, script) \
+    macro(Other, GCHeapUnused, lazyScript) \
+    macro(Other, GCHeapUnused, shape) \
+    macro(Other, GCHeapUnused, baseShape) \
+    macro(Other, GCHeapUnused, objectGroup) \
+    macro(Other, GCHeapUnused, string) \
+    macro(Other, GCHeapUnused, symbol) \
+    macro(Other, GCHeapUnused, jitcode) \
 
-    GCThingSizes()
+    UnusedGCThingSizes()
       : FOR_EACH_SIZE(ZERO_SIZE)
         dummy()
     {}
 
-    GCThingSizes(GCThingSizes&& other)
+    UnusedGCThingSizes(UnusedGCThingSizes&& other)
       : FOR_EACH_SIZE(COPY_OTHER_SIZE)
         dummy()
     {}
 
-    void addToKind(JSGCTraceKind kind, intptr_t n) {
+    void addToKind(JS::TraceKind kind, intptr_t n) {
         switch (kind) {
-          case JSTRACE_OBJECT:       object += n;      break;
-          case JSTRACE_STRING:       string += n;      break;
-          case JSTRACE_SYMBOL:       symbol += n;      break;
-          case JSTRACE_SCRIPT:       script += n;      break;
-          case JSTRACE_SHAPE:        shape += n;       break;
-          case JSTRACE_BASE_SHAPE:   baseShape += n;   break;
-          case JSTRACE_JITCODE:      jitcode += n;     break;
-          case JSTRACE_LAZY_SCRIPT:  lazyScript += n;  break;
-          case JSTRACE_OBJECT_GROUP: objectGroup += n; break;
+          case JS::TraceKind::Object:       object += n;      break;
+          case JS::TraceKind::String:       string += n;      break;
+          case JS::TraceKind::Symbol:       symbol += n;      break;
+          case JS::TraceKind::Script:       script += n;      break;
+          case JS::TraceKind::Shape:        shape += n;       break;
+          case JS::TraceKind::BaseShape:    baseShape += n;   break;
+          case JS::TraceKind::JitCode:      jitcode += n;     break;
+          case JS::TraceKind::LazyScript:   lazyScript += n;  break;
+          case JS::TraceKind::ObjectGroup:  objectGroup += n; break;
           default:
-            MOZ_CRASH("Bad trace kind for GCThingSizes");
+            MOZ_CRASH("Bad trace kind for UnusedGCThingSizes");
         }
     }
 
-    void addSizes(const GCThingSizes& other) {
+    void addSizes(const UnusedGCThingSizes& other) {
         FOR_EACH_SIZE(ADD_OTHER_SIZE)
     }
 
@@ -487,6 +572,14 @@ struct GCThingSizes
         size_t n = 0;
         FOR_EACH_SIZE(ADD_SIZE_TO_N)
         return n;
+    }
+
+    void addToTabSizes(JS::TabSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
+    }
+
+    void addToServoSizes(JS::ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
     }
 
     FOR_EACH_SIZE(DECL_SIZE)
@@ -498,15 +591,16 @@ struct GCThingSizes
 struct ZoneStats
 {
 #define FOR_EACH_SIZE(macro) \
-    macro(Other,   IsLiveGCThing,  symbolsGCHeap) \
-    macro(Other,   NotLiveGCThing, gcHeapArenaAdmin) \
-    macro(Other,   IsLiveGCThing,  lazyScriptsGCHeap) \
-    macro(Other,   NotLiveGCThing, lazyScriptsMallocHeap) \
-    macro(Other,   IsLiveGCThing,  jitCodesGCHeap) \
-    macro(Other,   IsLiveGCThing,  objectGroupsGCHeap) \
-    macro(Other,   NotLiveGCThing, objectGroupsMallocHeap) \
-    macro(Other,   NotLiveGCThing, typePool) \
-    macro(Other,   NotLiveGCThing, baselineStubsOptimized) \
+    macro(Other,   GCHeapUsed,  symbolsGCHeap) \
+    macro(Other,   GCHeapAdmin, gcHeapArenaAdmin) \
+    macro(Other,   GCHeapUsed,  lazyScriptsGCHeap) \
+    macro(Other,   MallocHeap,  lazyScriptsMallocHeap) \
+    macro(Other,   GCHeapUsed,  jitCodesGCHeap) \
+    macro(Other,   GCHeapUsed,  objectGroupsGCHeap) \
+    macro(Other,   MallocHeap,  objectGroupsMallocHeap) \
+    macro(Other,   MallocHeap,  typePool) \
+    macro(Other,   MallocHeap,  baselineStubsOptimized) \
+    macro(Other,   MallocHeap,  uniqueIdMap)
 
     ZoneStats()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -558,8 +652,15 @@ struct ZoneStats
     void addToTabSizes(JS::TabSizes* sizes) const {
         MOZ_ASSERT(isTotals);
         FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
-        sizes->add(JS::TabSizes::Other, unusedGCThings.totalSize());
+        unusedGCThings.addToTabSizes(sizes);
         stringInfo.addToTabSizes(sizes);
+    }
+
+    void addToServoSizes(JS::ServoSizes *sizes) const {
+        MOZ_ASSERT(isTotals);
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+        unusedGCThings.addToServoSizes(sizes);
+        stringInfo.addToServoSizes(sizes);
     }
 
     // These string measurements are initially for all strings.  At the end,
@@ -567,7 +668,7 @@ struct ZoneStats
     // measurements of the notable script sources and move them into
     // |notableStrings|.
     FOR_EACH_SIZE(DECL_SIZE)
-    GCThingSizes unusedGCThings;
+    UnusedGCThingSizes unusedGCThings;
     StringInfo stringInfo;
     void* extra;    // This field can be used by embedders.
 
@@ -588,25 +689,30 @@ struct ZoneStats
 
 struct CompartmentStats
 {
+    // We assume that |objectsPrivate| is on the malloc heap, but it's not
+    // actually guaranteed. But for Servo, at least, it's a moot point because
+    // it doesn't provide an ObjectPrivateVisitor so the value will always be
+    // zero.
 #define FOR_EACH_SIZE(macro) \
-    macro(Private, NotLiveGCThing, objectsPrivate) \
-    macro(Other,   IsLiveGCThing,  scriptsGCHeap) \
-    macro(Other,   NotLiveGCThing, scriptsMallocHeapData) \
-    macro(Other,   NotLiveGCThing, baselineData) \
-    macro(Other,   NotLiveGCThing, baselineStubsFallback) \
-    macro(Other,   NotLiveGCThing, ionData) \
-    macro(Other,   NotLiveGCThing, typeInferenceTypeScripts) \
-    macro(Other,   NotLiveGCThing, typeInferenceAllocationSiteTables) \
-    macro(Other,   NotLiveGCThing, typeInferenceArrayTypeTables) \
-    macro(Other,   NotLiveGCThing, typeInferenceObjectTypeTables) \
-    macro(Other,   NotLiveGCThing, compartmentObject) \
-    macro(Other,   NotLiveGCThing, compartmentTables) \
-    macro(Other,   NotLiveGCThing, innerViewsTable) \
-    macro(Other,   NotLiveGCThing, lazyArrayBuffersTable) \
-    macro(Other,   NotLiveGCThing, objectMetadataTable) \
-    macro(Other,   NotLiveGCThing, crossCompartmentWrappersTable) \
-    macro(Other,   NotLiveGCThing, regexpCompartment) \
-    macro(Other,   NotLiveGCThing, savedStacksSet)
+    macro(Private, MallocHeap, objectsPrivate) \
+    macro(Other,   GCHeapUsed, scriptsGCHeap) \
+    macro(Other,   MallocHeap, scriptsMallocHeapData) \
+    macro(Other,   MallocHeap, baselineData) \
+    macro(Other,   MallocHeap, baselineStubsFallback) \
+    macro(Other,   MallocHeap, ionData) \
+    macro(Other,   MallocHeap, typeInferenceTypeScripts) \
+    macro(Other,   MallocHeap, typeInferenceAllocationSiteTables) \
+    macro(Other,   MallocHeap, typeInferenceArrayTypeTables) \
+    macro(Other,   MallocHeap, typeInferenceObjectTypeTables) \
+    macro(Other,   MallocHeap, compartmentObject) \
+    macro(Other,   MallocHeap, compartmentTables) \
+    macro(Other,   MallocHeap, innerViewsTable) \
+    macro(Other,   MallocHeap, lazyArrayBuffersTable) \
+    macro(Other,   MallocHeap, objectMetadataTable) \
+    macro(Other,   MallocHeap, crossCompartmentWrappersTable) \
+    macro(Other,   MallocHeap, regexpCompartment) \
+    macro(Other,   MallocHeap, savedStacksSet) \
+    macro(Other,   MallocHeap, nonSyntacticLexicalScopesTable)
 
     CompartmentStats()
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -658,12 +764,18 @@ struct CompartmentStats
         classInfo.addToTabSizes(sizes);
     }
 
+    void addToServoSizes(ServoSizes *sizes) const {
+        MOZ_ASSERT(isTotals);
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+        classInfo.addToServoSizes(sizes);
+    }
+
     // The class measurements in |classInfo| are initially for all classes.  At
     // the end, if the measurement granularity is FineGrained, we subtract the
     // measurements of the notable classes and move them into |notableClasses|.
     FOR_EACH_SIZE(DECL_SIZE)
-    ClassInfo   classInfo;
-    void*       extra;     // This field can be used by embedders.
+    ClassInfo classInfo;
+    void* extra;            // This field can be used by embedders.
 
     typedef js::HashMap<const char*, ClassInfo,
                         js::CStringHashPolicy,
@@ -682,13 +794,18 @@ typedef js::Vector<ZoneStats, 0, js::SystemAllocPolicy> ZoneStatsVector;
 
 struct RuntimeStats
 {
+    // |gcHeapChunkTotal| is ignored because it's the sum of all the other
+    // values. |gcHeapGCThings| is ignored because it's the sum of some of the
+    // values from the zones and compartments. Both of those values are not
+    // reported directly, but are just present for sanity-checking other
+    // values.
 #define FOR_EACH_SIZE(macro) \
-    macro(_, _, gcHeapChunkTotal) \
-    macro(_, _, gcHeapDecommittedArenas) \
-    macro(_, _, gcHeapUnusedChunks) \
-    macro(_, _, gcHeapUnusedArenas) \
-    macro(_, _, gcHeapChunkAdmin) \
-    macro(_, _, gcHeapGCThings) \
+    macro(_, Ignore,            gcHeapChunkTotal) \
+    macro(_, GCHeapDecommitted, gcHeapDecommittedArenas) \
+    macro(_, GCHeapUnused,      gcHeapUnusedChunks) \
+    macro(_, GCHeapUnused,      gcHeapUnusedArenas) \
+    macro(_, GCHeapAdmin,       gcHeapChunkAdmin) \
+    macro(_, Ignore,            gcHeapGCThings)
 
     explicit RuntimeStats(mozilla::MallocSizeOf mallocSizeOf)
       : FOR_EACH_SIZE(ZERO_SIZE)
@@ -709,7 +826,7 @@ struct RuntimeStats
     //   - unused bytes
     //     - rtStats.gcHeapUnusedChunks (empty chunks)
     //     - rtStats.gcHeapUnusedArenas (empty arenas within non-empty chunks)
-    //     - rtStats.zTotals.unusedGCThings (empty GC thing slots within non-empty arenas)
+    //     - rtStats.zTotals.unusedGCThings.totalSize() (empty GC thing slots within non-empty arenas)
     //   - used bytes
     //     - rtStats.gcHeapChunkAdmin
     //     - rtStats.zTotals.gcHeapArenaAdmin
@@ -720,6 +837,11 @@ struct RuntimeStats
     // we don't count those under rtStats.gcHeapDecommittedArenas because (a)
     // it's rare, and (b) this means that rtStats.gcHeapUnusedChunks is a
     // multiple of the chunk size, which is good.
+
+    void addToServoSizes(ServoSizes *sizes) const {
+        FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+        runtime.addToServoSizes(sizes);
+    }
 
     FOR_EACH_SIZE(DECL_SIZE)
 
@@ -773,6 +895,10 @@ PeakSizeOfTemporary(const JSRuntime* rt);
 extern JS_PUBLIC_API(bool)
 AddSizeOfTab(JSRuntime* rt, JS::HandleObject obj, mozilla::MallocSizeOf mallocSizeOf,
              ObjectPrivateVisitor* opv, TabSizes* sizes);
+
+extern JS_PUBLIC_API(bool)
+AddServoSizeOf(JSRuntime *rt, mozilla::MallocSizeOf mallocSizeOf,
+               ObjectPrivateVisitor *opv, ServoSizes *sizes);
 
 } // namespace JS
 

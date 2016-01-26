@@ -4,8 +4,8 @@
 MARIONETTE_TIMEOUT = 30000;
 MARIONETTE_HEAD_JS = 'head.js';
 
-let MANIFEST_URL = "app://system.gaiamobile.org/manifest.webapp";
-let INCORRECT_MANIFEST_URL = "app://xyz.gaiamobile.org/manifest.webapp";
+var MANIFEST_URL = "app://system.gaiamobile.org/manifest.webapp";
+var INCORRECT_MANIFEST_URL = "app://xyz.gaiamobile.org/manifest.webapp";
 
 function peerReadyCb(evt) {
   log("peerReadyCb called");
@@ -28,8 +28,7 @@ function peerLostCb(evt) {
 
 function handleTechnologyDiscoveredRE0(msg) {
   log("Received \'nfc-manager-tech-discovered\'");
-  is(msg.type, "techDiscovered", "check for correct message type");
-  is(msg.isP2P, "P2P", "check for correct tech type");
+  ok(msg.peer, "check for correct tech type");
 
   nfc.onpeerready = peerReadyCb;
   nfc.onpeerlost = peerLostCb;
@@ -39,19 +38,13 @@ function handleTechnologyDiscoveredRE0(msg) {
 
 function handleTechnologyDiscoveredRE0ForP2PRegFailure(msg) {
   log("Received \'nfc-manager-tech-discovered\'");
-  is(msg.type, "techDiscovered", "check for correct message type");
-  is(msg.isP2P, "P2P", "check for correct tech type");
+  ok(msg.peer, "check for correct tech type");
 
   nfc.onpeerready = peerReadyCb;
 
-  let promise = nfc.checkP2PRegistration(INCORRECT_MANIFEST_URL);
-  promise.then(evt => {
-    is(request.result, false, "check for P2P registration result");
-
-    nfc.onpeerready = null;
-    NCI.deactivate().then(() => toggleNFC(false)).then(runNextTest);
-  }).catch(() => {
-    ok(false, "checkP2PRegistration failed.");
+  nfc.checkP2PRegistration(INCORRECT_MANIFEST_URL)
+  .then((result) => {
+    is(result, false, "check for P2P registration result");
 
     nfc.onpeerready = null;
     NCI.deactivate().then(() => toggleNFC(false)).then(runNextTest);
@@ -150,19 +143,19 @@ function testPeerShouldThrow() {
 
   nfc.onpeerlost = function () {
     log("testPeerShouldThrow peerlost");
-    try {
-      peer.sendNDEF(ndef);
+    peer.sendNDEF(ndef)
+    .then(() => {
       ok(false, "sendNDEF should throw error");
-    } catch (e) {
+    }).catch((e) => {
       ok(true, "Exception expected " + e);
-    }
+    });
 
-    try {
-      peer.sendFile(new Blob());
+    peer.sendFile(new Blob())
+    .then(() => {
       ok(false, "sendfile should throw error");
-    } catch (e) {
+    }).catch((e) => {
       ok(true, "Exception expected" + e);
-    }
+    });
 
     nfc.onpeerready = null;
     nfc.onpeerlost = null;
@@ -178,7 +171,7 @@ function testPeerShouldThrow() {
     .then(() => NCI.activateRE(emulator.P2P_RE_INDEX_0));
 }
 
-let tests = [
+var tests = [
   testPeerReady,
   testGetNFCPeer,
   testCheckP2PRegFailure,

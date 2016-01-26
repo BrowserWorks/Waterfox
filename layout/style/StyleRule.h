@@ -19,6 +19,7 @@
 #include "nsCOMPtr.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSPseudoClasses.h"
+#include "nsIStyleRule.h"
 
 class nsIAtom;
 struct nsCSSSelectorList;
@@ -106,6 +107,8 @@ public:
   /** Do a deep clone.  Should be used only on the first in the linked list. */
   nsAttrSelector* Clone() const { return Clone(true); }
 
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
   nsString        mValue;
   nsAttrSelector* mNext;
   nsCOMPtr<nsIAtom> mLowercaseAttr;
@@ -159,16 +162,27 @@ public:
   void ToString(nsAString& aString, mozilla::CSSStyleSheet* aSheet,
                 bool aAppend = false) const;
 
+  bool IsRestrictedSelector() const {
+    return PseudoType() == nsCSSPseudoElements::ePseudo_NotPseudoElement;
+  }
+
+#ifdef DEBUG
+  nsCString RestrictedSelectorToString() const;
+#endif
+
 private:
   void AddPseudoClassInternal(nsPseudoClassList *aPseudoClass);
   nsCSSSelector* Clone(bool aDeepNext, bool aDeepNegations) const;
 
-  void AppendToStringWithoutCombinators(nsAString& aString,
-                                        mozilla::CSSStyleSheet* aSheet) const;
-  void AppendToStringWithoutCombinatorsOrNegations(nsAString& aString,
-                                                   mozilla::CSSStyleSheet* aSheet,
-                                                   bool aIsNegated)
-                                                        const;
+  void AppendToStringWithoutCombinators(
+      nsAString& aString,
+      mozilla::CSSStyleSheet* aSheet,
+      bool aUseStandardNamespacePrefixes) const;
+  void AppendToStringWithoutCombinatorsOrNegations(
+      nsAString& aString,
+      mozilla::CSSStyleSheet* aSheet,
+      bool aIsNegated,
+      bool aUseStandardNamespacePrefixes) const;
   // Returns true if this selector can have a namespace specified (which
   // happens if and only if the default namespace would apply to this
   // selector).
@@ -279,31 +293,6 @@ namespace css {
 class Declaration;
 class DOMCSSStyleRule;
 
-class StyleRule;
-
-class ImportantRule final : public nsIStyleRule {
-public:
-  explicit ImportantRule(Declaration *aDeclaration);
-
-  NS_DECL_ISUPPORTS
-
-  // nsIStyleRule interface
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
-#ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
-#endif
-
-protected:
-  virtual ~ImportantRule();
-
-  // Not an owning reference; the StyleRule that owns this
-  // ImportantRule also owns the mDeclaration, and any rule node
-  // pointing to this rule keeps that StyleRule alive as well.
-  Declaration* mDeclaration;
-
-  friend class StyleRule;
-};
-
 class StyleRule final : public Rule
 {
  public:
@@ -313,9 +302,6 @@ class StyleRule final : public Rule
 private:
   // for |Clone|
   StyleRule(const StyleRule& aCopy);
-  // for |DeclarationChanged|
-  StyleRule(StyleRule& aCopy,
-            Declaration *aDeclaration);
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_CSS_STYLE_RULE_IMPL_CID)
 
@@ -326,25 +312,7 @@ public:
 
   Declaration* GetDeclaration() const { return mDeclaration; }
 
-  /**
-   * Return a new |nsIStyleRule| instance that replaces the current
-   * one, with |aDecl| replacing the previous declaration. Due to the
-   * |nsIStyleRule| contract of immutability, this must be called if
-   * the declaration is modified.
-   *
-   * |DeclarationChanged| handles replacing the object in the container
-   * sheet or group rule if |aHandleContainer| is true.
-   */
-  already_AddRefed<StyleRule>
-  DeclarationChanged(Declaration* aDecl, bool aHandleContainer);
-
-  nsIStyleRule* GetImportantRule() const { return mImportantRule; }
-
-  /**
-   * The rule processor must call this method before calling
-   * nsRuleWalker::Forward on this rule during rule matching.
-   */
-  void RuleMatched();
+  void SetDeclaration(Declaration* aDecl);
 
   // hooks for DOM rule
   void GetCssText(nsAString& aCssText);
@@ -360,9 +328,6 @@ public:
 
   virtual nsIDOMCSSRule* GetExistingDOMRule() override;
 
-  // The new mapping function.
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
-
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
@@ -374,9 +339,8 @@ private:
 
 private:
   nsCSSSelectorList*      mSelector; // null for style attribute
-  Declaration*            mDeclaration;
-  nsRefPtr<ImportantRule> mImportantRule; // initialized by RuleMatched
-  nsRefPtr<DOMCSSStyleRule> mDOMRule;
+  RefPtr<Declaration>     mDeclaration;
+  RefPtr<DOMCSSStyleRule> mDOMRule;
 
 private:
   StyleRule& operator=(const StyleRule& aCopy) = delete;

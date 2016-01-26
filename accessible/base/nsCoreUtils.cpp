@@ -34,12 +34,23 @@
 #include "nsITreeBoxObject.h"
 #include "nsITreeColumns.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/HTMLLabelElement.h"
 
 using namespace mozilla;
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsCoreUtils
 ////////////////////////////////////////////////////////////////////////////////
+
+bool
+nsCoreUtils::IsLabelWithControl(nsIContent* aContent)
+{
+  dom::HTMLLabelElement* label = dom::HTMLLabelElement::FromContent(aContent);
+  if (label && label->GetControl())
+    return true;
+
+  return false;
+}
 
 bool
 nsCoreUtils::HasClickListener(nsIContent *aContent)
@@ -102,7 +113,7 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
   nsIWidget *rootWidget =
     rootFrame->GetViewExternal()->GetNearestWidget(&offset);
 
-  nsRefPtr<nsPresContext> presContext = presShell->GetPresContext();
+  RefPtr<nsPresContext> presContext = presShell->GetPresContext();
 
   int32_t cnvdX = presContext->CSSPixelsToDevPixels(tcX + x + 1) +
     presContext->AppUnitsToDevPixels(offset.x);
@@ -110,19 +121,19 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
     presContext->AppUnitsToDevPixels(offset.y);
 
   // XUL is just desktop, so there is no real reason for senfing touch events.
-  DispatchMouseEvent(NS_MOUSE_BUTTON_DOWN, cnvdX, cnvdY,
+  DispatchMouseEvent(eMouseDown, cnvdX, cnvdY,
                      tcContent, tcFrame, presShell, rootWidget);
 
-  DispatchMouseEvent(NS_MOUSE_BUTTON_UP, cnvdX, cnvdY,
+  DispatchMouseEvent(eMouseUp, cnvdX, cnvdY,
                      tcContent, tcFrame, presShell, rootWidget);
 }
 
 void
-nsCoreUtils::DispatchMouseEvent(uint32_t aEventType, int32_t aX, int32_t aY,
+nsCoreUtils::DispatchMouseEvent(EventMessage aMessage, int32_t aX, int32_t aY,
                                 nsIContent *aContent, nsIFrame *aFrame,
                                 nsIPresShell *aPresShell, nsIWidget *aRootWidget)
 {
-  WidgetMouseEvent event(true, aEventType, aRootWidget,
+  WidgetMouseEvent event(true, aMessage, aRootWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
   event.refPoint = LayoutDeviceIntPoint(aX, aY);
@@ -137,20 +148,20 @@ nsCoreUtils::DispatchMouseEvent(uint32_t aEventType, int32_t aX, int32_t aY,
 }
 
 void
-nsCoreUtils::DispatchTouchEvent(uint32_t aEventType, int32_t aX, int32_t aY,
+nsCoreUtils::DispatchTouchEvent(EventMessage aMessage, int32_t aX, int32_t aY,
                                 nsIContent* aContent, nsIFrame* aFrame,
                                 nsIPresShell* aPresShell, nsIWidget* aRootWidget)
 {
   if (!dom::TouchEvent::PrefEnabled())
     return;
 
-  WidgetTouchEvent event(true, aEventType, aRootWidget);
+  WidgetTouchEvent event(true, aMessage, aRootWidget);
 
   event.time = PR_IntervalNow();
 
   // XXX: Touch has an identifier of -1 to hint that it is synthesized.
-  nsRefPtr<dom::Touch> t = new dom::Touch(-1, LayoutDeviceIntPoint(aX, aY),
-                                          nsIntPoint(1, 1), 0.0f, 1.0f);
+  RefPtr<dom::Touch> t = new dom::Touch(-1, LayoutDeviceIntPoint(aX, aY),
+                                        LayoutDeviceIntPoint(1, 1), 0.0f, 1.0f);
   t->SetTarget(aContent);
   event.touches.AppendElement(t);
   nsEventStatus status = nsEventStatus_eIgnore;
@@ -425,7 +436,7 @@ nsCoreUtils::IsTabDocument(nsIDocument* aDocumentNode)
   treeItem->GetParent(getter_AddRefs(parentTreeItem));
 
   // Tab document running in own process doesn't have parent.
-  if (XRE_GetProcessType() == GeckoProcessType_Content)
+  if (XRE_IsContentProcess())
     return !parentTreeItem;
 
   // Parent of docshell for tab document running in chrome process is root.

@@ -70,6 +70,9 @@ PluginWidgetParent::GetTabParent()
 void
 PluginWidgetParent::SetParent(nsIWidget* aParent)
 {
+  // This will trigger sync send messages to the plugin process window
+  // procedure and a cascade of events to that window related to focus
+  // and activation.
   if (mWidget && aParent) {
     mWidget->SetParent(aParent);
   }
@@ -115,8 +118,8 @@ PluginWidgetParent::RecvCreate(nsresult* aResult)
   initData.mUnicode = false;
   initData.clipChildren = true;
   initData.clipSiblings = true;
-  *aResult = mWidget->Create(parentWidget.get(), nullptr, nsIntRect(0,0,0,0),
-                             &initData);
+  *aResult = mWidget->Create(parentWidget.get(), nullptr,
+                             LayoutDeviceIntRect(0, 0, 0, 0), &initData);
   if (NS_FAILED(*aResult)) {
     KillWidget();
     // This should never fail, abort.
@@ -208,6 +211,21 @@ PluginWidgetParent::RecvGetNativePluginPort(uintptr_t* value)
 #endif
   PWLOG("PluginWidgetParent::RecvGetNativeData() %p\n", (void*)*value);
   return true;
+}
+
+bool
+PluginWidgetParent::RecvSetNativeChildWindow(const uintptr_t& aChildWindow)
+{
+#if defined(XP_WIN)
+  ENSURE_CHANNEL;
+  PWLOG("PluginWidgetParent::RecvSetNativeChildWindow(%p)\n",
+        (void*)aChildWindow);
+  mWidget->SetNativeData(NS_NATIVE_CHILD_WINDOW, aChildWindow);
+  return true;
+#else
+  NS_NOTREACHED("PluginWidgetParent::RecvSetNativeChildWindow not implemented!");
+  return false;
+#endif
 }
 
 } // namespace plugins

@@ -14,6 +14,7 @@ UNIFIED_SOURCES += [
     'NSSCertDBTrustDomain.cpp',
     'OCSPCache.cpp',
     'OCSPRequestor.cpp',
+    'OCSPVerificationTrustDomain.cpp',
 ]
 
 if not CONFIG['NSS_NO_EV_CERTS']:
@@ -22,9 +23,8 @@ if not CONFIG['NSS_NO_EV_CERTS']:
     ]
 
 LOCAL_INCLUDES += [
-    '../manager/boot/src',
-    '../manager/ssl/src',
-    '../pkix/include',
+    '/security/manager/ssl',
+    '/security/pkix/include',
 ]
 
 DIRS += [
@@ -36,6 +36,7 @@ if CONFIG['_MSC_VER']:
   # -Wall with Visual C++ enables too many problematic warnings
   CXXFLAGS += [
     '-wd4355', # 'this' used in base member initializer list
+    '-wd4464', # relative include path contains '..'
     '-wd4480', # nonstandard extension used: specifying underlying type for
                # enum 'enum'
     '-wd4481', # nonstandard extension used: override specifier 'keyword'
@@ -45,6 +46,8 @@ if CONFIG['_MSC_VER']:
     '-wd4610', # struct 'symbol' can never be instantiated - user defined
                # constructor required
     '-wd4619', # pragma warning: there is no warning 'warning'
+    '-wd4623', # default constructor could not be generated because a base
+               # class default constructor is inaccessible or deleted
     '-wd4625', # copy constructor could not be generated because a base
                # class copy constructor is inaccessible or deleted
     '-wd4626', # assignment operator could not be generated because a base
@@ -68,7 +71,5 @@ if CONFIG['_MSC_VER']:
     '-wd4127', # conditional expression is constant
     '-wd4946', # reinterpret_cast used between related types
   ]
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

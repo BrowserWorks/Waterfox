@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-Cu.import("resource://gre/modules/Services.jsm");
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 // Check that the zip cache can expire entries from nested jars
 var ios = Cc["@mozilla.org/network/io-service;1"].
@@ -13,15 +13,8 @@ var ios = Cc["@mozilla.org/network/io-service;1"].
 
 function open_inner_zip(base, idx) {
     var spec = "jar:" + base + "inner" + idx + ".zip!/foo";
-    var channel = ios.newChannel2(spec,
-                                  null,
-                                  null,
-                                  null,      // aLoadingNode
-                                  Services.scriptSecurityManager.getSystemPrincipal(),
-                                  null,      // aTriggeringPrincipal
-                                  Ci.nsILoadInfo.SEC_NORMAL,
-                                  Ci.nsIContentPolicy.TYPE_OTHER);
-    var stream = channel.open();
+    var channel = NetUtil.newChannel({uri: spec, loadUsingSystemPrincipal: true});
+    var stream = channel.open2();
 }
 
 function run_test() {

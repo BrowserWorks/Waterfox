@@ -19,6 +19,7 @@ EXPORTS.mozilla.dom.ipc += [
     'BlobParent.h',
     'IdType.h',
     'nsIRemoteBlob.h',
+    'StructuredCloneData.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -34,8 +35,9 @@ EXPORTS.mozilla.dom += [
     'FilePickerParent.h',
     'nsIContentChild.h',
     'nsIContentParent.h',
+    'NuwaChild.h',
+    'NuwaParent.h',
     'PermissionMessageUtils.h',
-    'StructuredCloneUtils.h',
     'TabChild.h',
     'TabContext.h',
     'TabMessageUtils.h',
@@ -62,11 +64,13 @@ UNIFIED_SOURCES += [
     'FilePickerParent.cpp',
     'nsIContentChild.cpp',
     'nsIContentParent.cpp',
+    'NuwaChild.cpp',
+    'NuwaParent.cpp',
     'PermissionMessageUtils.cpp',
     'PreallocatedProcessManager.cpp',
     'ProcessPriorityManager.cpp',
     'ScreenManagerParent.cpp',
-    'StructuredCloneUtils.cpp',
+    'StructuredCloneData.cpp',
     'TabChild.cpp',
     'TabContext.cpp',
     'TabMessageUtils.cpp',
@@ -101,13 +105,12 @@ IPDL_SOURCES += [
     'PDocumentRenderer.ipdl',
     'PFilePicker.ipdl',
     'PMemoryReportRequest.ipdl',
+    'PNuwa.ipdl',
     'PPluginWidget.ipdl',
     'PProcessHangMonitor.ipdl',
     'PScreenManager.ipdl',
     'PTabContext.ipdlh',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -123,13 +126,16 @@ LOCAL_INCLUDES += [
     '/chrome',
     '/docshell/base',
     '/dom/base',
-    '/dom/bluetooth',
+    '/dom/bluetooth/common',
+    '/dom/bluetooth/ipc',
     '/dom/devicestorage',
+    '/dom/events',
     '/dom/filesystem',
     '/dom/fmradio/ipc',
     '/dom/geolocation',
     '/dom/media/webspeech/synth/ipc',
     '/dom/mobilemessage/ipc',
+    '/dom/security',
     '/dom/storage',
     '/dom/workers',
     '/editor/libeditor',
@@ -154,6 +160,11 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         '/security/sandbox/chromium-shim',
     ]
 
+if CONFIG['OS_ARCH'] != 'WINNT':
+    LOCAL_INCLUDES += [
+        '/modules/libjar',
+    ]
+
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
@@ -161,17 +172,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:
     DEFINES['MOZ_TOOLKIT_SEARCH'] = True
-
-if CONFIG['MOZ_B2G_BT_API_V2']:
-    LOCAL_INCLUDES += [
-        '/dom/bluetooth/bluetooth2',
-        '/dom/bluetooth/bluetooth2/ipc',
-    ]
-else:
-    LOCAL_INCLUDES += [
-        '/dom/bluetooth/bluetooth1',
-        '/dom/bluetooth/bluetooth1/ipc',
-    ]
 
 JAR_MANIFESTS += ['jar.mn']
 

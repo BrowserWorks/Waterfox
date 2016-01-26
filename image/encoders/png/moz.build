@@ -8,10 +8,11 @@ SOURCES += [
     'nsPNGEncoder.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 LOCAL_INCLUDES += [
-    '/image/src',
+    '/image',
 ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

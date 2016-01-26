@@ -1,8 +1,8 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 const PREF_DISABLE_OPEN_NEW_WINDOW = "browser.link.open_newwindow.disabled_in_fullscreen";
 const isOSX = (Services.appinfo.OS === "Darwin");
@@ -40,7 +40,7 @@ registerCleanupFunction(function(){
   Services.prefs.clearUserPref(PREF_DISABLE_OPEN_NEW_WINDOW);
 });
 
-let gTests = [
+var gTests = [
   test_open,
   test_open_with_size,
   test_open_with_pos,
@@ -332,7 +332,7 @@ WindowListener.prototype = {
 
     let domwindow = aXULWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                     .getInterface(Ci.nsIDOMWindow);
-    domwindow.addEventListener("load", function onLoad(aEvent) {
+    let onLoad = aEvent => {
       is(domwindow.document.location.href, this.test_url,
         "Opened Window is expected: "+ this.test_title);
       if (this.callback_onSuccess) {
@@ -352,7 +352,8 @@ WindowListener.prototype = {
         domwindow.close();
         executeSoon(this.callBack_onFinalize);
       }
-    }.bind(this), true);
+    };
+    domwindow.addEventListener("load", onLoad, true);
   },
   onCloseWindow: function(aXULWindow) {},
   onWindowTitleChange: function(aXULWindow, aNewTitle) {},

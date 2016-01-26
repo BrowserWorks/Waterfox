@@ -47,7 +47,7 @@ nsReferencedElement::Reset(nsIContent* aFromContent, nsIURI* aURI,
     return;
 
   // Get the current document
-  nsIDocument *doc = aFromContent->GetComposedDoc();
+  nsIDocument *doc = aFromContent->OwnerDoc();
   if (!doc)
     return;
 
@@ -89,7 +89,7 @@ nsReferencedElement::Reset(nsIContent* aFromContent, nsIURI* aURI,
   bool isEqualExceptRef;
   rv = aURI->EqualsExceptRef(doc->GetDocumentURI(), &isEqualExceptRef);
   if (NS_FAILED(rv) || !isEqualExceptRef) {
-    nsRefPtr<nsIDocument::ExternalResourceLoad> load;
+    RefPtr<nsIDocument::ExternalResourceLoad> load;
     doc = doc->RequestExternalResource(aURI, aFromContent,
                                        getter_AddRefs(load));
     if (!doc) {
@@ -124,7 +124,7 @@ void
 nsReferencedElement::ResetWithID(nsIContent* aFromContent, const nsString& aID,
                                  bool aWatch)
 {
-  nsIDocument *doc = aFromContent->GetComposedDoc();
+  nsIDocument *doc = aFromContent->OwnerDoc();
   if (!doc)
     return;
 

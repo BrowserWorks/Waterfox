@@ -67,11 +67,11 @@ private:
   * and rects.numRects * 3 * 6
   */
 void DecomposeIntoNoRepeatTriangles(const gfx::IntRect& aTexCoordRect,
-                                    const nsIntSize& aTexSize,
+                                    const gfx::IntSize& aTexSize,
                                     RectTriangles& aRects,
                                     bool aFlipY = false);
 
-}
-}
+} // namespace gl
+} // namespace mozilla
 
 #endif // DecomposeIntoNoRepeatTriangles_h_

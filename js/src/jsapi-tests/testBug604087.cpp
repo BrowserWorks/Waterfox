@@ -19,8 +19,6 @@ const js::Class OuterWrapperClass =
         "Proxy",
         0, /* additional class flags */
         PROXY_MAKE_EXT(
-            nullptr, /* outerObject */
-            js::proxy_innerObject,
             false,   /* isWrappedNative */
             nullptr  /* objectMoved */
         ));
@@ -56,13 +54,22 @@ static const JSWrapObjectCallbacks WrapObjectCallbacks = {
 
 BEGIN_TEST(testBug604087)
 {
+    js::SetWindowProxyClass(cx->runtime(), &OuterWrapperClass);
+
     js::WrapperOptions options;
     options.setClass(&OuterWrapperClass);
     options.setSingleton(true);
     JS::RootedObject outerObj(cx, js::Wrapper::New(cx, global, &js::Wrapper::singleton, options));
-    JS::RootedObject compartment2(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
-    JS::RootedObject compartment3(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
-    JS::RootedObject compartment4(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
+    JS::CompartmentOptions globalOptions;
+    JS::RootedObject compartment2(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
+                                                         JS::FireOnNewGlobalHook, globalOptions));
+    CHECK(compartment2 != nullptr);
+    JS::RootedObject compartment3(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
+                                                         JS::FireOnNewGlobalHook, globalOptions));
+    CHECK(compartment3 != nullptr);
+    JS::RootedObject compartment4(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
+                                                         JS::FireOnNewGlobalHook, globalOptions));
+    CHECK(compartment4 != nullptr);
 
     JS::RootedObject c2wrapper(cx, wrap(cx, outerObj, compartment2));
     CHECK(c2wrapper);

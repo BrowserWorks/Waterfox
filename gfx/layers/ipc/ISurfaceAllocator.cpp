@@ -33,7 +33,7 @@ namespace layers {
 
 NS_IMPL_ISUPPORTS(GfxMemoryImageReporter, nsIMemoryReporter)
 
-mozilla::Atomic<size_t> GfxMemoryImageReporter::sAmount(0);
+mozilla::Atomic<ptrdiff_t> GfxMemoryImageReporter::sAmount(0);
 
 mozilla::ipc::SharedMemory::SharedMemoryType OptimalShmemType()
 {
@@ -60,38 +60,38 @@ ISurfaceAllocator::Finalize()
 }
 
 static inline uint8_t*
-GetAddressFromDescriptor(const SurfaceDescriptor& aDescriptor, size_t& aSize)
+GetAddressFromDescriptor(const SurfaceDescriptor& aDescriptor)
 {
   MOZ_ASSERT(IsSurfaceDescriptorValid(aDescriptor));
-  MOZ_ASSERT(aDescriptor.type() == SurfaceDescriptor::TSurfaceDescriptorShmem ||
-             aDescriptor.type() == SurfaceDescriptor::TSurfaceDescriptorMemory);
-  if (aDescriptor.type() == SurfaceDescriptor::TSurfaceDescriptorShmem) {
-    Shmem shmem(aDescriptor.get_SurfaceDescriptorShmem().data());
-    aSize = shmem.Size<uint8_t>();
-    return shmem.get<uint8_t>();
+  MOZ_RELEASE_ASSERT(aDescriptor.type() == SurfaceDescriptor::TSurfaceDescriptorBuffer);
+
+  auto memOrShmem = aDescriptor.get_SurfaceDescriptorBuffer().data();
+  if (memOrShmem.type() == MemoryOrShmem::TShmem) {
+    return memOrShmem.get_Shmem().get<uint8_t>();
   } else {
-    const SurfaceDescriptorMemory& image = aDescriptor.get_SurfaceDescriptorMemory();
-    aSize = std::numeric_limits<size_t>::max();
-    return reinterpret_cast<uint8_t*>(image.data());
+    return reinterpret_cast<uint8_t*>(memOrShmem.get_uintptr_t());
   }
 }
 
-TemporaryRef<gfx::DrawTarget>
+already_AddRefed<gfx::DrawTarget>
 GetDrawTargetForDescriptor(const SurfaceDescriptor& aDescriptor, gfx::BackendType aBackend)
 {
-  size_t size;
-  uint8_t* data = GetAddressFromDescriptor(aDescriptor, size);
-  ImageDataDeserializer image(data, size);
-  return image.GetAsDrawTarget(aBackend);
+  uint8_t* data = GetAddressFromDescriptor(aDescriptor);
+  auto rgb = aDescriptor.get_SurfaceDescriptorBuffer().desc().get_RGBDescriptor();
+  uint32_t stride = ImageDataSerializer::GetRGBStride(rgb);
+  return gfx::Factory::CreateDrawTargetForData(gfx::BackendType::CAIRO,
+                                               data, rgb.size(),
+                                               stride, rgb.format());
 }
 
-TemporaryRef<gfx::DataSourceSurface>
+already_AddRefed<gfx::DataSourceSurface>
 GetSurfaceForDescriptor(const SurfaceDescriptor& aDescriptor)
 {
-  size_t size;
-  uint8_t* data = GetAddressFromDescriptor(aDescriptor, size);
-  ImageDataDeserializer image(data, size);
-  return image.GetAsSurface();
+  uint8_t* data = GetAddressFromDescriptor(aDescriptor);
+  auto rgb = aDescriptor.get_SurfaceDescriptorBuffer().desc().get_RGBDescriptor();
+  uint32_t stride = ImageDataSerializer::GetRGBStride(rgb);
+  return gfx::Factory::CreateWrappingDataSourceSurface(data, stride, rgb.size(),
+                                                       rgb.format());
 }
 
 bool
@@ -99,6 +99,9 @@ ISurfaceAllocator::AllocSurfaceDescriptor(const gfx::IntSize& aSize,
                                           gfxContentType aContent,
                                           SurfaceDescriptor* aBuffer)
 {
+  if (!IPCOpen()) {
+    return false;
+  }
   return AllocSurfaceDescriptorWithCaps(aSize, aContent, DEFAULT_BUFFER_CAPS, aBuffer);
 }
 
@@ -108,26 +111,31 @@ ISurfaceAllocator::AllocSurfaceDescriptorWithCaps(const gfx::IntSize& aSize,
                                                   uint32_t aCaps,
                                                   SurfaceDescriptor* aBuffer)
 {
+  if (!IPCOpen()) {
+    return false;
+  }
   gfx::SurfaceFormat format =
     gfxPlatform::GetPlatform()->Optimal2DFormatForContent(aContent);
-  size_t size = ImageDataSerializer::ComputeMinBufferSize(aSize, format);
+  size_t size = ImageDataSerializer::ComputeRGBBufferSize(aSize, format);
   if (!size) {
     return false;
   }
+
+  MemoryOrShmem bufferDesc;
   if (IsSameProcess()) {
-    uint8_t *data = new (std::nothrow) uint8_t[size];
+    uint8_t* data = new (std::nothrow) uint8_t[size];
     if (!data) {
       return false;
     }
     GfxMemoryImageReporter::DidAlloc(data);
 #ifdef XP_MACOSX
     // Workaround a bug in Quartz where drawing an a8 surface to another a8
-    // surface with OPERATOR_SOURCE still requires the destination to be clear.
+    // surface with OP_SOURCE still requires the destination to be clear.
     if (format == gfx::SurfaceFormat::A8) {
       memset(data, 0, size);
     }
 #endif
-    *aBuffer = SurfaceDescriptorMemory((uintptr_t)data, format);
+    bufferDesc = reinterpret_cast<uintptr_t>(data);
   } else {
 
     mozilla::ipc::SharedMemory::SharedMemoryType shmemType = OptimalShmemType();
@@ -136,24 +144,29 @@ ISurfaceAllocator::AllocSurfaceDescriptorWithCaps(const gfx::IntSize& aSize,
       return false;
     }
 
-    *aBuffer = SurfaceDescriptorShmem(shmem, format);
+    bufferDesc = shmem;
   }
-  
-  uint8_t* data = GetAddressFromDescriptor(*aBuffer, size);
-  ImageDataSerializer serializer(data, size);
-  serializer.InitializeBufferInfo(aSize, format);
+
+  *aBuffer = SurfaceDescriptorBuffer(RGBDescriptor(aSize, format), bufferDesc);
+
   return true;
 }
 
 /* static */ bool
 ISurfaceAllocator::IsShmem(SurfaceDescriptor* aSurface)
 {
-  return aSurface && (aSurface->type() == SurfaceDescriptor::TSurfaceDescriptorShmem);
+  return aSurface && (aSurface->type() == SurfaceDescriptor::TSurfaceDescriptorBuffer)
+      && (aSurface->get_SurfaceDescriptorBuffer().data().type() == MemoryOrShmem::TShmem);
 }
 
 void
 ISurfaceAllocator::DestroySharedSurface(SurfaceDescriptor* aSurface)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return;
+  }
+
   MOZ_ASSERT(aSurface);
   if (!aSurface) {
     return;
@@ -161,17 +174,18 @@ ISurfaceAllocator::DestroySharedSurface(SurfaceDescriptor* aSurface)
   if (!IPCOpen()) {
     return;
   }
-  switch (aSurface->type()) {
-    case SurfaceDescriptor::TSurfaceDescriptorShmem:
-      DeallocShmem(aSurface->get_SurfaceDescriptorShmem().data());
+  SurfaceDescriptorBuffer& desc = aSurface->get_SurfaceDescriptorBuffer();
+  switch (desc.data().type()) {
+    case MemoryOrShmem::TShmem: {
+      DeallocShmem(desc.data().get_Shmem());
       break;
-    case SurfaceDescriptor::TSurfaceDescriptorMemory:
-      GfxMemoryImageReporter::WillFree((uint8_t*)aSurface->get_SurfaceDescriptorMemory().data());
-      delete [] (uint8_t*)aSurface->get_SurfaceDescriptorMemory().data();
+    }
+    case MemoryOrShmem::Tuintptr_t: {
+      uint8_t* ptr = (uint8_t*)desc.data().get_uintptr_t();
+      GfxMemoryImageReporter::WillFree(ptr);
+      delete [] ptr;
       break;
-    case SurfaceDescriptor::Tnull_t:
-    case SurfaceDescriptor::T__None:
-      break;
+    }
     default:
       NS_RUNTIMEABORT("surface type not implemented!");
   }
@@ -207,6 +221,10 @@ struct ShmemSectionHeapAllocation
 bool
 ISurfaceAllocator::AllocShmemSection(size_t aSize, mozilla::layers::ShmemSection* aShmemSection)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return false;
+  }
   // For now we only support sizes of 4. If we want to support different sizes
   // some more complicated bookkeeping should be added.
   MOZ_ASSERT(aSize == sSupportedBlockSize);
@@ -277,6 +295,11 @@ ISurfaceAllocator::AllocShmemSection(size_t aSize, mozilla::layers::ShmemSection
 void
 ISurfaceAllocator::FreeShmemSection(mozilla::layers::ShmemSection& aShmemSection)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return;
+  }
+
   MOZ_ASSERT(aShmemSection.size() == sSupportedBlockSize);
   MOZ_ASSERT(aShmemSection.offset() < sShmemPageSize - sSupportedBlockSize);
 
@@ -301,6 +324,10 @@ ISurfaceAllocator::FreeShmemSection(mozilla::layers::ShmemSection& aShmemSection
 void
 ISurfaceAllocator::ShrinkShmemSectionHeap()
 {
+  if (!IPCOpen()) {
+    return;
+  }
+
   // The loop will terminate as we either increase i, or decrease size
   // every time through.
   size_t i = 0;
@@ -327,18 +354,33 @@ ISurfaceAllocator::AllocGrallocBuffer(const gfx::IntSize& aSize,
                                       uint32_t aUsage,
                                       MaybeMagicGrallocBufferHandle* aHandle)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return false;
+  }
+
   return SharedBufferManagerChild::GetSingleton()->AllocGrallocBuffer(aSize, aFormat, aUsage, aHandle);
 }
 
 void
 ISurfaceAllocator::DeallocGrallocBuffer(MaybeMagicGrallocBufferHandle* aHandle)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return;
+  }
+
   SharedBufferManagerChild::GetSingleton()->DeallocGrallocBuffer(*aHandle);
 }
 
 void
 ISurfaceAllocator::DropGrallocBuffer(MaybeMagicGrallocBufferHandle* aHandle)
 {
+  MOZ_ASSERT(IPCOpen());
+  if (!IPCOpen()) {
+    return;
+  }
+
   SharedBufferManagerChild::GetSingleton()->DropGrallocBuffer(*aHandle);
 }
 

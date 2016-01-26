@@ -511,18 +511,68 @@ nsSVGIntegrationUtils::PaintFramesWithEffects(gfxContext& aContext,
   gfxMatrix cssPxToDevPxMatrix = GetCSSPxToDevPxMatrix(aFrame);
 
   bool complexEffects = false;
+
+  // These are used if we require a temporary surface for a custom blend mode.
+  RefPtr<gfxContext> target = &aContext;
+  IntPoint targetOffset;
+
   /* Check if we need to do additional operations on this child's
    * rendering, which necessitates rendering into another surface. */
   if (opacity != 1.0f || maskFrame || (clipPathFrame && !isTrivialClip)
       || aFrame->StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
     complexEffects = true;
+
+    Matrix maskTransform;
+    RefPtr<SourceSurface> maskSurface =
+      maskFrame ? maskFrame->GetMaskForMaskedFrame(&aContext,
+                                                    aFrame, cssPxToDevPxMatrix, opacity, &maskTransform)
+                : nullptr;
+
+    if (maskFrame && !maskSurface) {
+      // Entire surface is clipped out.
+      return;
+    }
+
     aContext.Save();
     nsRect clipRect =
       aFrame->GetVisualOverflowRectRelativeToSelf() + toUserSpace;
     aContext.Clip(NSRectToSnappedRect(clipRect,
                                   aFrame->PresContext()->AppUnitsPerDevPixel(),
                                   *drawTarget));
-    aContext.PushGroup(gfxContentType::COLOR_ALPHA);
+
+    if (aFrame->StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
+      // Create a temporary context to draw to so we can blend it back with
+      // another operator.
+      gfxRect clipRect;
+      {
+        gfxContextMatrixAutoSaveRestore matRestore(&aContext);
+
+        aContext.SetMatrix(gfxMatrix());
+        clipRect = aContext.GetClipExtents();
+      }
+
+      IntRect drawRect = RoundedOut(ToRect(clipRect));
+
+      RefPtr<DrawTarget> targetDT = aContext.GetDrawTarget()->CreateSimilarDrawTarget(drawRect.Size(), SurfaceFormat::B8G8R8A8);
+      target = new gfxContext(targetDT);
+      target->SetMatrix(aContext.CurrentMatrix() * gfxMatrix::Translation(-drawRect.TopLeft()));
+      targetOffset = drawRect.TopLeft();
+    }
+
+    if (clipPathFrame && !isTrivialClip) {
+      Matrix clippedMaskTransform;
+      RefPtr<SourceSurface> clipMaskSurface = clipPathFrame->GetClipMask(aContext, aFrame, cssPxToDevPxMatrix,
+                                                                         &clippedMaskTransform, maskSurface, maskTransform);
+
+      if (clipMaskSurface) {
+        maskSurface = clipMaskSurface;
+        maskTransform = clippedMaskTransform;
+      }
+    }
+
+    if (opacity != 1.0f || maskFrame || (clipPathFrame && !isTrivialClip)) {
+      target->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity, maskSurface, maskTransform);
+    }
   }
 
   /* If this frame has only a trivial clipPath, set up cairo's clipping now so
@@ -540,11 +590,15 @@ nsSVGIntegrationUtils::PaintFramesWithEffects(gfxContext& aContext,
 
     nsRegion dirtyRegion = aDirtyRect - offsetToBoundingBox;
     gfxMatrix tm = nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(aFrame);
-    nsFilterInstance::PaintFilteredFrame(aFrame, aContext, tm, &callback, &dirtyRegion);
+    nsFilterInstance::PaintFilteredFrame(aFrame, target->GetDrawTarget(),
+                                         tm, &callback, &dirtyRegion);
   } else {
-    aContext.SetMatrix(matrixAutoSaveRestore.Matrix());
+    target->SetMatrix(matrixAutoSaveRestore.Matrix());
+    BasicLayerManager* basic = static_cast<BasicLayerManager*>(aLayerManager);
+    RefPtr<gfxContext> oldCtx = basic->GetTarget();
+    basic->SetTarget(target);
     aLayerManager->EndTransaction(FrameLayerBuilder::DrawPaintedLayer, aBuilder);
-    aContext.SetMatrix(aContext.CurrentMatrix().Translate(devPixelOffsetToUserSpace));
+    basic->SetTarget(oldCtx);
   }
 
   if (clipPathFrame && isTrivialClip) {
@@ -556,39 +610,19 @@ nsSVGIntegrationUtils::PaintFramesWithEffects(gfxContext& aContext,
     return;
   }
 
-  aContext.PopGroupToSource();
-
-  Matrix maskTransform;
-  RefPtr<SourceSurface> maskSurface =
-    maskFrame ? maskFrame->GetMaskForMaskedFrame(&aContext,
-                                                 aFrame, cssPxToDevPxMatrix,
-                                                 opacity, &maskTransform)
-              : nullptr;
-
-  if (clipPathFrame && !isTrivialClip) {
-    aContext.PushGroup(gfxContentType::COLOR_ALPHA);
-
-    nsresult rv = clipPathFrame->ApplyClipOrPaintClipMask(aContext, aFrame, cssPxToDevPxMatrix);
-    Matrix clippedMaskTransform;
-    RefPtr<SourceSurface> clipMaskSurface = aContext.PopGroupToSurface(&clippedMaskTransform);
-
-    if (NS_SUCCEEDED(rv) && clipMaskSurface) {
-      // Still more set after clipping, so clip to another surface
-      if (maskSurface || opacity != 1.0f) {
-        aContext.PushGroup(gfxContentType::COLOR_ALPHA);
-        aContext.Mask(clipMaskSurface, clippedMaskTransform);
-        aContext.PopGroupToSource();
-      } else {
-        aContext.Mask(clipMaskSurface, clippedMaskTransform);
-      }
-    }
+  if (opacity != 1.0f || maskFrame || (clipPathFrame && !isTrivialClip)) {
+    target->PopGroupAndBlend();
   }
 
-  if (maskSurface) {
-    aContext.Mask(maskSurface, maskTransform);
-  } else if (opacity != 1.0f ||
-             aFrame->StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-    aContext.Paint(opacity);
+  if (aFrame->StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
+    RefPtr<DrawTarget> targetDT = target->GetDrawTarget();
+    target = nullptr;
+    RefPtr<SourceSurface> targetSurf = targetDT->Snapshot();
+
+    aContext.SetMatrix(gfxMatrix()); // This will be restored right after.
+    RefPtr<gfxPattern> pattern = new gfxPattern(targetSurf, Matrix::Translation(targetOffset.x, targetOffset.y));
+    aContext.SetPattern(pattern);
+    aContext.Paint();
   }
 
   aContext.Restore();
@@ -610,7 +644,7 @@ class PaintFrameCallback : public gfxDrawingCallback {
 public:
   PaintFrameCallback(nsIFrame* aFrame,
                      const nsSize aPaintServerSize,
-                     const gfxIntSize aRenderSize,
+                     const IntSize aRenderSize,
                      uint32_t aFlags)
    : mFrame(aFrame)
    , mPaintServerSize(aPaintServerSize)
@@ -618,20 +652,20 @@ public:
    , mFlags (aFlags)
   {}
   virtual bool operator()(gfxContext* aContext,
-                            const gfxRect& aFillRect,
-                            const GraphicsFilter& aFilter,
-                            const gfxMatrix& aTransform) override;
+                          const gfxRect& aFillRect,
+                          const Filter& aFilter,
+                          const gfxMatrix& aTransform) override;
 private:
   nsIFrame* mFrame;
   nsSize mPaintServerSize;
-  gfxIntSize mRenderSize;
+  IntSize mRenderSize;
   uint32_t mFlags;
 };
 
 bool
 PaintFrameCallback::operator()(gfxContext* aContext,
                                const gfxRect& aFillRect,
-                               const GraphicsFilter& aFilter,
+                               const Filter& aFilter,
                                const gfxMatrix& aTransform)
 {
   if (mFrame->GetStateBits() & NS_FRAME_DRAWING_AS_PAINTSERVER)
@@ -674,8 +708,7 @@ PaintFrameCallback::operator()(gfxContext* aContext,
   nsRect dirty(-offset.x, -offset.y,
                mPaintServerSize.width, mPaintServerSize.height);
 
-  uint32_t flags = nsLayoutUtils::PAINT_IN_TRANSFORM |
-                   nsLayoutUtils::PAINT_ALL_CONTINUATIONS;
+  uint32_t flags = nsLayoutUtils::PAINT_IN_TRANSFORM;
   if (mFlags & nsSVGIntegrationUtils::FLAG_SYNC_DECODE_IMAGES) {
     flags |= nsLayoutUtils::PAINT_SYNC_DECODE_IMAGES;
   }
@@ -683,6 +716,23 @@ PaintFrameCallback::operator()(gfxContext* aContext,
   nsLayoutUtils::PaintFrame(&context, mFrame,
                             dirty, NS_RGBA(0, 0, 0, 0),
                             flags);
+
+  nsIFrame* currentFrame = mFrame;
+   while ((currentFrame = currentFrame->GetNextContinuation()) != nullptr) {
+    offset = currentFrame->GetOffsetToCrossDoc(mFrame);
+    devPxOffset = gfxPoint(offset.x, offset.y) / appUnitsPerDevPixel;
+
+    aContext->Save();
+    aContext->Multiply(gfxMatrix::Scaling(1/scaleX, 1/scaleY));
+    aContext->Multiply(gfxMatrix::Translation(devPxOffset));
+    aContext->Multiply(gfxMatrix::Scaling(scaleX, scaleY));
+
+    nsLayoutUtils::PaintFrame(&context, currentFrame,
+                              dirty - offset, NS_RGBA(0, 0, 0, 0),
+                              flags);
+
+    aContext->Restore();
+  }
 
   aContext->Restore();
 
@@ -695,7 +745,7 @@ PaintFrameCallback::operator()(gfxContext* aContext,
 nsSVGIntegrationUtils::DrawableFromPaintServer(nsIFrame*         aFrame,
                                                nsIFrame*         aTarget,
                                                const nsSize&     aPaintServerSize,
-                                               const gfxIntSize& aRenderSize,
+                                               const IntSize& aRenderSize,
                                                const DrawTarget* aDrawTarget,
                                                const gfxMatrix&  aContextMatrix,
                                                uint32_t          aFlags)
@@ -716,7 +766,7 @@ nsSVGIntegrationUtils::DrawableFromPaintServer(nsIFrame*         aFrame,
     gfxRect overrideBounds(0, 0,
                            aPaintServerSize.width, aPaintServerSize.height);
     overrideBounds.ScaleInverse(aFrame->PresContext()->AppUnitsPerDevPixel());
-    nsRefPtr<gfxPattern> pattern =
+    RefPtr<gfxPattern> pattern =
     server->GetPaintServerPattern(aTarget, aDrawTarget,
                                   aContextMatrix, &nsStyleSVG::mFill, 1.0,
                                   &overrideBounds);
@@ -733,15 +783,15 @@ nsSVGIntegrationUtils::DrawableFromPaintServer(nsIFrame*         aFrame,
     gfxFloat scaleY = overrideBounds.Height() / aRenderSize.height;
     gfxMatrix scaleMatrix = gfxMatrix::Scaling(scaleX, scaleY);
     pattern->SetMatrix(scaleMatrix * pattern->GetMatrix());
-    nsRefPtr<gfxDrawable> drawable =
+    RefPtr<gfxDrawable> drawable =
       new gfxPatternDrawable(pattern, aRenderSize);
     return drawable.forget();
   }
 
   // We don't want to paint into a surface as long as we don't need to, so we
   // set up a drawing callback.
-  nsRefPtr<gfxDrawingCallback> cb =
+  RefPtr<gfxDrawingCallback> cb =
     new PaintFrameCallback(aFrame, aPaintServerSize, aRenderSize, aFlags);
-  nsRefPtr<gfxDrawable> drawable = new gfxCallbackDrawable(cb, aRenderSize);
+  RefPtr<gfxDrawable> drawable = new gfxCallbackDrawable(cb, aRenderSize);
   return drawable.forget();
 }

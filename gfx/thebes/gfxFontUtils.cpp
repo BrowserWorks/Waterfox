@@ -7,7 +7,6 @@
 #include "mozilla/BinarySearch.h"
 
 #include "gfxFontUtils.h"
-#include "gfxColor.h"
 
 #include "nsServiceManagerUtils.h"
 
@@ -15,6 +14,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/BinarySearch.h"
+#include "mozilla/Snprintf.h"
 
 #include "nsCOMPtr.h"
 #include "nsIUUIDGenerator.h"
@@ -23,10 +23,10 @@
 #include "harfbuzz/hb.h"
 
 #include "plbase64.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#define LOG(log, args) PR_LOG(gfxPlatform::GetLog(log), \
-                               PR_LOG_DEBUG, args)
+#define LOG(log, args) MOZ_LOG(gfxPlatform::GetLog(log), \
+                               LogLevel::Debug, args)
 
 #define UNICODE_BMP_LIMIT 0x10000
 
@@ -68,9 +68,10 @@ gfxSparseBitSet::Dump(const char* aPrefix, eGfxLog aWhichLog) const
     for (b = 0; b < numBlocks; b++) {
         Block *block = mBlocks[b];
         if (!block) continue;
-        char outStr[256];
+        const int BUFSIZE = 256;
+        char outStr[BUFSIZE];
         int index = 0;
-        index += sprintf(&outStr[index], "%s u+%6.6x [", aPrefix, (b << BLOCK_INDEX_SHIFT));
+        index += snprintf(&outStr[index], BUFSIZE - index, "%s u+%6.6x [", aPrefix, (b << BLOCK_INDEX_SHIFT));
         for (int i = 0; i < 32; i += 4) {
             for (int j = i; j < i + 4; j++) {
                 uint8_t bits = block->mBits[j];
@@ -78,11 +79,11 @@ gfxSparseBitSet::Dump(const char* aPrefix, eGfxLog aWhichLog) const
                 uint8_t flip2 = ((flip1 & 0xcc) >> 2) | ((flip1 & 0x33) << 2);
                 uint8_t flipped = ((flip2 & 0xf0) >> 4) | ((flip2 & 0x0f) << 4);
 
-                index += sprintf(&outStr[index], "%2.2x", flipped);
+                index += snprintf(&outStr[index], BUFSIZE - index, "%2.2x", flipped);
             }
-            if (i + 4 != 32) index += sprintf(&outStr[index], " ");
+            if (i + 4 != 32) index += snprintf(&outStr[index], BUFSIZE - index, " ");
         }
-        index += sprintf(&outStr[index], "]");
+        index += snprintf(&outStr[index], BUFSIZE - index, "]");
         LOG(aWhichLog, ("%s", outStr));
     }
 }
@@ -288,7 +289,7 @@ gfxFontUtils::ReadCMAPTableFormat4(const uint8_t *aBuf, uint32_t aLength,
 
 nsresult
 gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
-                                    uint8_t*& aTable)
+                                    UniquePtr<uint8_t[]>& aTable)
 {
     enum {
         OffsetFormat = 0,
@@ -370,8 +371,8 @@ gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
         }
     }
 
-    aTable = new uint8_t[tablelen];
-    memcpy(aTable, aBuf, tablelen);
+    aTable = MakeUnique<uint8_t[]>(tablelen);
+    memcpy(aTable.get(), aBuf, tablelen);
 
     return NS_OK;
 }
@@ -387,7 +388,7 @@ gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
     #define acceptableUCS4Encoding(p, e, k) \
         (((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDUCS4ForMicrosoftPlatform) && (k) != 12 || \
          ((p) == PLATFORM_ID_UNICODE   && \
-          ((e) == EncodingIDDefaultForUnicodePlatform || (e) >= EncodingIDUCS4ForUnicodePlatform)))
+          ((e) != EncodingIDUVSForUnicodePlatform)))
 #else
     #define acceptableFormat4(p,e,k) ((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDMicrosoft)
 
@@ -990,7 +991,7 @@ gfxFontUtils::RenameFont(const nsAString& aName, const uint8_t *aFontData,
     uint32_t adjFontDataSize = paddedFontDataSize + nameTableSize;
 
     // create new buffer: old font data plus new name table
-    if (!aNewFont->AppendElements(adjFontDataSize))
+    if (!aNewFont->AppendElements(adjFontDataSize, fallible))
         return NS_ERROR_OUT_OF_MEMORY;
 
     // copy the old font data
@@ -1410,8 +1411,8 @@ gfxFontUtils::DecodeFontName(const char *aNameData, int32_t aByteLen,
         char warnBuf[128];
         if (aByteLen > 64)
             aByteLen = 64;
-        sprintf(warnBuf, "skipping font name, unknown charset %d:%d:%d for <%.*s>",
-                aPlatformCode, aScriptCode, aLangCode, aByteLen, aNameData);
+        snprintf_literal(warnBuf, "skipping font name, unknown charset %d:%d:%d for <%.*s>",
+                         aPlatformCode, aScriptCode, aLangCode, aByteLen, aNameData);
         NS_WARNING(warnBuf);
 #endif
         return false;

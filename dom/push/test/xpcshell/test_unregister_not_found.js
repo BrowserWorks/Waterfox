@@ -13,6 +13,7 @@ function run_test() {
 
 add_task(function* test_unregister_not_found() {
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -27,9 +28,10 @@ add_task(function* test_unregister_not_found() {
     }
   });
 
-  let promise = PushNotificationService.unregister(
-    'https://example.net/nonexistent');
-  yield rejects(promise, function(error) {
-    return error == 'NotFoundError';
-  }, 'Wrong error for nonexistent scope');
+  let result = yield PushService.unregister({
+    scope: 'https://example.net/nonexistent',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+  });
+  ok(result === false, "unregister should resolve with false for nonexistent scope");
 });

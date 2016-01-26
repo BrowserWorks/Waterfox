@@ -288,6 +288,13 @@ MobileConnectionParent::NotifyNetworkSelectionModeChanged()
   return SendNotifyNetworkSelectionModeChanged(mode) ? NS_OK : NS_ERROR_FAILURE;
 }
 
+NS_IMETHODIMP
+MobileConnectionParent::NotifyDeviceIdentitiesChanged()
+{
+  // To be supported when bug 1222870 is required in m-c.
+  return NS_OK;
+}
+
 /******************************************************************************
  * PMobileConnectionRequestParent
  ******************************************************************************/
@@ -434,7 +441,9 @@ MobileConnectionRequestParent::DoRequest(const SetCallWaitingRequest& aRequest)
 {
   NS_ENSURE_TRUE(mMobileConnection, false);
 
-  return NS_SUCCEEDED(mMobileConnection->SetCallWaiting(aRequest.enabled(), this));
+  return NS_SUCCEEDED(mMobileConnection->SetCallWaiting(aRequest.enabled(),
+                                                        aRequest.serviceClass(),
+                                                        this));
 }
 
 bool
@@ -534,6 +543,12 @@ MobileConnectionRequestParent::NotifyGetCallBarringSuccess(uint16_t aProgram,
 {
   return SendReply(MobileConnectionReplySuccessCallBarring(aProgram, aEnabled,
                                                            aServiceClass));
+}
+
+NS_IMETHODIMP
+MobileConnectionRequestParent::NotifyGetCallWaitingSuccess(uint16_t aServiceClass)
+{
+  return SendReply(MobileConnectionReplySuccessCallWaiting(aServiceClass));
 }
 
 NS_IMETHODIMP

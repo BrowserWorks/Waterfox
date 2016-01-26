@@ -10,6 +10,8 @@
 #include "nsString.h"
 #include "nsTArrayForwardDeclare.h"
 #include "gfxFontFamilyList.h"
+#include "nsStyleStruct.h"
+#include "nsCRT.h"
 
 class nsCSSValue;
 class nsStringComparator;
@@ -20,7 +22,6 @@ class nsIURI;
 struct gfxFontFeature;
 struct gfxAlternateValue;
 struct nsCSSValueList;
-struct nsStylePosition;
 
 // Style utility functions
 class nsStyleUtil {
@@ -38,10 +39,9 @@ public:
 
   // Append the identifier given by |aIdent| to |aResult|, with
   // appropriate escaping so that it can be reparsed to the same
-  // identifier.
-  // Returns false if |aIdent| contains U+0000
-  // Returns true for all other cases
-  static bool AppendEscapedCSSIdent(const nsAString& aIdent,
+  // identifier.  An exception is if aIdent contains U+0000, which
+  // will be escaped as U+FFFD and then reparsed back to U+FFFD.
+  static void AppendEscapedCSSIdent(const nsAString& aIdent,
                                     nsAString& aResult);
 
   static void
@@ -71,6 +71,17 @@ public:
   {
     aResult.AppendFloat(aNumber);
   }
+
+  static void AppendStepsTimingFunction(nsTimingFunction::Type aType,
+                                        uint32_t aSteps,
+                                        nsTimingFunction::StepSyntax aSyntax,
+                                        nsAString& aResult);
+  static void AppendCubicBezierTimingFunction(float aX1, float aY1,
+                                              float aX2, float aY2,
+                                              nsAString& aResult);
+  static void AppendCubicBezierKeywordTimingFunction(
+      nsTimingFunction::Type aType,
+      nsAString& aResult);
 
   static void AppendSerializedFontSrc(const nsCSSValue& aValue,
                                       nsAString& aResult);
@@ -164,6 +175,29 @@ public:
                                    const nsSubstring& aStyleText,
                                    nsresult* aRv);
 
+  template<size_t N>
+  static bool MatchesLanguagePrefix(const char16_t* aLang, size_t aLen,
+                                    const char16_t (&aPrefix)[N])
+  {
+    return !nsCRT::strncmp(aLang, aPrefix, N - 1) &&
+           (aLen == N - 1 || aLang[N - 1] == '-');
+  }
+
+  template<size_t N>
+  static bool MatchesLanguagePrefix(const nsIAtom* aLang,
+                                    const char16_t (&aPrefix)[N])
+  {
+    MOZ_ASSERT(aLang);
+    return MatchesLanguagePrefix(aLang->GetUTF16String(),
+                                 aLang->GetLength(), aPrefix);
+  }
+
+  template<size_t N>
+  static bool MatchesLanguagePrefix(const nsAString& aLang,
+                                    const char16_t (&aPrefix)[N])
+  {
+    return MatchesLanguagePrefix(aLang.Data(), aLang.Length(), aPrefix);
+  }
 };
 
 

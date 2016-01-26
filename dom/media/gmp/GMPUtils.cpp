@@ -8,6 +8,10 @@
 #include "nsDirectoryServiceDefs.h"
 #include "nsIFile.h"
 #include "nsCOMPtr.h"
+#include "nsLiteralString.h"
+#include "nsCRTGlue.h"
+#include "mozilla/Base64.h"
+#include "nsISimpleEnumerator.h"
 
 namespace mozilla {
 
@@ -33,6 +37,76 @@ EMEVoucherFileExists()
   return GetEMEVoucherPath(getter_AddRefs(path)) &&
          NS_SUCCEEDED(path->Exists(&exists)) &&
          exists;
+}
+
+void
+SplitAt(const char* aDelims,
+        const nsACString& aInput,
+        nsTArray<nsCString>& aOutTokens)
+{
+  nsAutoCString str(aInput);
+  char* end = str.BeginWriting();
+  const char* start = nullptr;
+  while (!!(start = NS_strtok(aDelims, &end))) {
+    aOutTokens.AppendElement(nsCString(start));
+  }
+}
+
+nsCString
+ToBase64(const nsTArray<uint8_t>& aBytes)
+{
+  nsAutoCString base64;
+  nsDependentCSubstring raw(reinterpret_cast<const char*>(aBytes.Elements()),
+                            aBytes.Length());
+  nsresult rv = Base64Encode(raw, base64);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_LITERAL_CSTRING("[Base64EncodeFailed]");
+  }
+  return base64;
+}
+
+bool
+FileExists(nsIFile* aFile)
+{
+  bool exists = false;
+  return aFile && NS_SUCCEEDED(aFile->Exists(&exists)) && exists;
+}
+
+DirectoryEnumerator::DirectoryEnumerator(nsIFile* aPath, Mode aMode)
+  : mMode(aMode)
+{
+  aPath->GetDirectoryEntries(getter_AddRefs(mIter));
+}
+
+already_AddRefed<nsIFile>
+DirectoryEnumerator::Next()
+{
+  if (!mIter) {
+    return nullptr;
+  }
+  bool hasMore = false;
+  while (NS_SUCCEEDED(mIter->HasMoreElements(&hasMore)) && hasMore) {
+    nsCOMPtr<nsISupports> supports;
+    nsresult rv = mIter->GetNext(getter_AddRefs(supports));
+    if (NS_FAILED(rv)) {
+      continue;
+    }
+
+    nsCOMPtr<nsIFile> path(do_QueryInterface(supports, &rv));
+    if (NS_FAILED(rv)) {
+      continue;
+    }
+
+    if (mMode == DirsOnly) {
+      bool isDirectory = false;
+      rv = path->IsDirectory(&isDirectory);
+      if (NS_FAILED(rv) || !isDirectory) {
+        continue;
+      }
+    }
+    return path.forget();
+  }
+  return nullptr;
 }
 
 } // namespace mozilla

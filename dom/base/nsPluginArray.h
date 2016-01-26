@@ -11,11 +11,11 @@
 #include "nsWeakReference.h"
 #include "nsIObserver.h"
 #include "nsWrapperCache.h"
-#include "nsPluginTags.h"
 #include "nsPIDOMWindow.h"
 
 class nsPluginElement;
 class nsMimeType;
+class nsIInternalPluginTag;
 
 class nsPluginArray final : public nsIObserver,
                             public nsSupportsWeakReference,
@@ -40,8 +40,7 @@ public:
   void Init();
   void Invalidate();
 
-  void GetMimeTypes(nsTArray<nsRefPtr<nsMimeType> >& aMimeTypes,
-                    nsTArray<nsRefPtr<nsMimeType> >& aHiddenMimeTypes);
+  void GetMimeTypes(nsTArray<RefPtr<nsMimeType>>& aMimeTypes);
 
   // PluginArray WebIDL methods
 
@@ -61,18 +60,7 @@ private:
   void EnsurePlugins();
 
   nsCOMPtr<nsPIDOMWindow> mWindow;
-
-  // Many sites check whether a particular plugin is installed by enumerating
-  // all navigator.plugins, checking each plugin's name. These sites should
-  // just check navigator.plugins["Popular Plugin Name"] instead. mPlugins
-  // contains those popular plugins that must be exposed in navigator.plugins
-  // enumeration to avoid breaking web content.
-  nsTArray<nsRefPtr<nsPluginElement> > mPlugins;
-
-  // mHiddenPlugins contains plugins that can be queried by
-  // navigator.plugins["Hidden Plugin Name"] but do not need to be exposed in
-  // navigator.plugins enumeration.
-  nsTArray<nsRefPtr<nsPluginElement> > mHiddenPlugins;
+  nsTArray<RefPtr<nsPluginElement> > mPlugins;
 };
 
 class nsPluginElement final : public nsISupports,
@@ -82,12 +70,12 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(nsPluginElement)
 
-  nsPluginElement(nsPIDOMWindow* aWindow, nsPluginTag* aPluginTag);
+  nsPluginElement(nsPIDOMWindow* aWindow, nsIInternalPluginTag* aPluginTag);
 
   nsPIDOMWindow* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  nsPluginTag* PluginTag() const
+  nsIInternalPluginTag* PluginTag() const
   {
     return mPluginTag;
   }
@@ -106,7 +94,7 @@ public:
   uint32_t Length();
   void GetSupportedNames(unsigned, nsTArray<nsString>& retval);
 
-  nsTArray<nsRefPtr<nsMimeType> >& MimeTypes();
+  nsTArray<RefPtr<nsMimeType> >& MimeTypes();
 
 protected:
   ~nsPluginElement();
@@ -114,8 +102,8 @@ protected:
   void EnsurePluginMimeTypes();
 
   nsCOMPtr<nsPIDOMWindow> mWindow;
-  nsRefPtr<nsPluginTag> mPluginTag;
-  nsTArray<nsRefPtr<nsMimeType> > mMimeTypes;
+  nsCOMPtr<nsIInternalPluginTag> mPluginTag;
+  nsTArray<RefPtr<nsMimeType> > mMimeTypes;
 };
 
 #endif /* nsPluginArray_h___ */

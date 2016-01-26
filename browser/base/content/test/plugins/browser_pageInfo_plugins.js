@@ -1,13 +1,13 @@
-let gHttpTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
-let gPageInfo = null;
-let gNextTest = null;
-let gTestBrowser = null;
-let gPluginHost = Components.classes["@mozilla.org/plugin/host;1"]
+var gHttpTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
+var gPageInfo = null;
+var gNextTest = null;
+var gTestBrowser = null;
+var gPluginHost = Components.classes["@mozilla.org/plugin/host;1"]
                     .getService(Components.interfaces.nsIPluginHost);
-let gPermissionManager = Components.classes["@mozilla.org/permissionmanager;1"]
+var gPermissionManager = Components.classes["@mozilla.org/permissionmanager;1"]
                            .getService(Components.interfaces.nsIPermissionManager);
-let gTestPermissionString = gPluginHost.getPermissionStringForType("application/x-test");
-let gSecondTestPermissionString = gPluginHost.getPermissionStringForType("application/x-second-test");
+var gTestPermissionString = gPluginHost.getPermissionStringForType("application/x-test");
+var gSecondTestPermissionString = gPluginHost.getPermissionStringForType("application/x-second-test");
 
 function doOnPageLoad(url, continuation) {
   gNextTest = continuation;
@@ -34,12 +34,12 @@ function doOnOpenPageInfo(continuation) {
 
 function pageInfoObserve(win, topic, data) {
   Services.obs.removeObserver(pageInfoObserve, "page-info-dialog-loaded");
-  executeSoon(gNextTest);
+  gPageInfo.onFinished.push(() => executeSoon(gNextTest));
 }
 
 function finishTest() {
-  gPermissionManager.remove("127.0.0.1:8888", gTestPermissionString);
-  gPermissionManager.remove("127.0.0.1:8888", gSecondTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gSecondTestPermissionString);
   Services.prefs.clearUserPref("plugins.click_to_play");
   gBrowser.removeCurrentTab();
 
@@ -59,8 +59,8 @@ function test() {
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Second Test Plug-in");
   gBrowser.selectedTab = gBrowser.addTab();
   gTestBrowser = gBrowser.selectedBrowser;
-  gPermissionManager.remove("127.0.0.1:8888", gTestPermissionString);
-  gPermissionManager.remove("127.0.0.1:8888", gSecondTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gSecondTestPermissionString);
   doOnPageLoad(gHttpTestRoot + "plugin_two_types.html", testPart1a);
 }
 
@@ -141,8 +141,8 @@ function testPart3() {
      "part 3: Second test plugin should be marked as PLUGIN_DISABLED");
 
   // reset permissions
-  gPermissionManager.remove("127.0.0.1:8888", gTestPermissionString);
-  gPermissionManager.remove("127.0.0.1:8888", gSecondTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gTestPermissionString);
+  gPermissionManager.remove(makeURI("http://127.0.0.1:8888/"), gSecondTestPermissionString);
   // check that changing the permissions affects the radio state in the
   // open Page Info window
   let testRadioGroup = gPageInfo.document.getElementById(gTestPermissionString + "RadioGroup");

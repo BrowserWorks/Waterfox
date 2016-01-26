@@ -18,6 +18,7 @@
 #include "nsWeakReference.h"
 #include "nsCOMArray.h"
 #include "nsRect.h"
+#include "Units.h"
 
 // Interfaces needed
 #include "nsIBaseWindow.h"
@@ -37,8 +38,8 @@
 namespace mozilla {
 namespace dom {
 class Element;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 // nsXULWindow
 
@@ -88,6 +89,9 @@ protected:
    NS_IMETHOD EnsurePrimaryContentTreeOwner();
    NS_IMETHOD EnsurePrompter();
    NS_IMETHOD EnsureAuthPrompter();
+
+   mozilla::DesktopToLayoutDeviceScale
+   GetScaleForDestinationPosition(int32_t aX, int32_t aY);
 
    void OnChromeLoaded();
    void StaggerPosition(int32_t &aRequestedX, int32_t &aRequestedY,
@@ -157,6 +161,8 @@ protected:
    nsIntRect               mOpenerScreenRect; // the screen rect of the opener
 
    nsCOMArray<nsIWeakReference> mTargetableShells; // targetable shells only
+
+   nsCOMPtr<nsITabParent> mPrimaryTabParent;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsXULWindow, NS_XULWINDOW_IMPL_CID)
@@ -172,7 +178,7 @@ public:
    ~nsContentShellInfo();
 
 public:
-   nsAutoString id; // The identifier of the content shell
+   nsString id; // The identifier of the content shell
    nsWeakPtr child; // content shell (weak reference to nsIDocShellTreeItem)
 };
 

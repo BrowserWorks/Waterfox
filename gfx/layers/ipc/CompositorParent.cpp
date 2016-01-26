@@ -28,18 +28,23 @@
 #include "mozilla/gfx/2D.h"          // for DrawTarget
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/gfx/Rect.h"          // for IntSize
+#include "VRManager.h"                  // for VRManager
 #include "mozilla/ipc/Transport.h"      // for Transport
 #include "mozilla/layers/APZCTreeManager.h"  // for APZCTreeManager
 #include "mozilla/layers/APZThreadUtils.h"  // for APZCTreeManager
 #include "mozilla/layers/AsyncCompositionManager.h"
 #include "mozilla/layers/BasicCompositor.h"  // for BasicCompositor
 #include "mozilla/layers/Compositor.h"  // for Compositor
+#include "mozilla/layers/CompositorLRU.h"  // for CompositorLRU
 #include "mozilla/layers/CompositorOGL.h"  // for CompositorOGL
 #include "mozilla/layers/CompositorTypes.h"
+#include "mozilla/layers/FrameUniformityData.h"
+#include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/PLayerTransactionParent.h"
 #include "mozilla/layers/ShadowLayersManager.h" // for ShadowLayersManager
+#include "mozilla/media/MediaSystemResourceService.h" // for MediaSystemResourceService
 #include "mozilla/mozalloc.h"           // for operator new, etc
 #include "mozilla/Telemetry.h"
 #ifdef MOZ_WIDGET_GTK
@@ -49,10 +54,10 @@
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsIWidget.h"                  // for nsIWidget
-#include "nsIXULRuntime.h"              // for mozilla::BrowserTabsRemoteAutostart
 #include "nsTArray.h"                   // for nsTArray
 #include "nsThreadUtils.h"              // for NS_IsMainThread
 #include "nsXULAppAPI.h"                // for XRE_GetIOMessageLoop
+#include "nsIXULRuntime.h"              // for BrowserTabsRemoteAutostart
 #ifdef XP_WIN
 #include "mozilla/layers/CompositorD3D11.h"
 #include "mozilla/layers/CompositorD3D9.h"
@@ -70,9 +75,18 @@
 
 #ifdef MOZ_WIDGET_GONK
 #include "GeckoTouchDispatcher.h"
+#include "nsScreenManagerGonk.h"
 #endif
 
+#include "LayerScope.h"
+
 namespace mozilla {
+
+namespace gfx {
+// See VRManagerChild.cpp
+void ReleaseVRManagerParentSingleton();
+} // namespace gfx
+
 namespace layers {
 
 using namespace mozilla::ipc;
@@ -219,81 +233,14 @@ static void SetThreadPriority()
   hal::SetCurrentThreadPriority(hal::THREAD_PRIORITY_COMPOSITOR);
 }
 
-CompositorScheduler::CompositorScheduler(CompositorParent* aCompositorParent)
-  : mCompositorParent(aCompositorParent)
-  , mCurrentCompositeTask(nullptr)
-{
-}
-
-CompositorScheduler::~CompositorScheduler()
-{
-  MOZ_ASSERT(!mCompositorParent);
-}
-
-void
-CompositorScheduler::CancelCurrentCompositeTask()
-{
-  if (mCurrentCompositeTask) {
-    mCurrentCompositeTask->Cancel();
-    mCurrentCompositeTask = nullptr;
-  }
-}
-
-void
-CompositorScheduler::ScheduleTask(CancelableTask* aTask, int aTime)
-{
-  MOZ_ASSERT(CompositorParent::CompositorLoop());
-  MOZ_ASSERT(aTime >= 0);
-  CompositorParent::CompositorLoop()->PostDelayedTask(FROM_HERE, aTask, aTime);
-}
-
-void
-CompositorScheduler::ResumeComposition()
-{
-  mLastCompose = TimeStamp::Now();
-  ComposeToTarget(nullptr);
-}
-
-void
-CompositorScheduler::ForceComposeToTarget(gfx::DrawTarget* aTarget, const IntRect* aRect)
-{
-  mLastCompose = TimeStamp::Now();
-  ComposeToTarget(aTarget, aRect);
-}
-
-void
-CompositorScheduler::ComposeToTarget(gfx::DrawTarget* aTarget, const IntRect* aRect)
-{
-  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
-  MOZ_ASSERT(mCompositorParent);
-  mCompositorParent->CompositeToTarget(aTarget, aRect);
-}
-
-void
-CompositorScheduler::Destroy()
-{
-  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
-  CancelCurrentCompositeTask();
-  mCompositorParent = nullptr;
-}
-
-CompositorSoftwareTimerScheduler::CompositorSoftwareTimerScheduler(CompositorParent* aCompositorParent)
-  : CompositorScheduler(aCompositorParent)
-{
-}
-
-CompositorSoftwareTimerScheduler::~CompositorSoftwareTimerScheduler()
-{
-  MOZ_ASSERT(!mCurrentCompositeTask);
-}
-
-// Used when layout.frame_rate is -1. Needs to be kept in sync with
-// DEFAULT_FRAME_RATE in nsRefreshDriver.cpp.
-static const int32_t kDefaultFrameRate = 60;
-
+#ifdef COMPOSITOR_PERFORMANCE_WARNING
 static int32_t
 CalculateCompositionFrameRate()
 {
+  // Used when layout.frame_rate is -1. Needs to be kept in sync with
+  // DEFAULT_FRAME_RATE in nsRefreshDriver.cpp.
+  // TODO: This should actually return the vsync rate.
+  const int32_t defaultFrameRate = 60;
   int32_t compositionFrameRatePref = gfxPrefs::LayersCompositionFrameRate();
   if (compositionFrameRatePref < 0) {
     // Use the same frame rate for composition as for layout.
@@ -301,68 +248,13 @@ CalculateCompositionFrameRate()
     if (layoutFrameRatePref < 0) {
       // TODO: The main thread frame scheduling code consults the actual
       // monitor refresh rate in this case. We should do the same.
-      return kDefaultFrameRate;
+      return defaultFrameRate;
     }
     return layoutFrameRatePref;
   }
   return compositionFrameRatePref;
 }
-
-void
-CompositorSoftwareTimerScheduler::ScheduleComposition()
-{
-  if (mCurrentCompositeTask) {
-    return;
-  }
-
-  bool initialComposition = mLastCompose.IsNull();
-  TimeDuration delta;
-  if (!initialComposition) {
-    delta = TimeStamp::Now() - mLastCompose;
-  }
-
-  int32_t rate = CalculateCompositionFrameRate();
-
-  // If rate == 0 (ASAP mode), minFrameDelta must be 0 so there's no delay.
-  TimeDuration minFrameDelta = TimeDuration::FromMilliseconds(
-    rate == 0 ? 0.0 : std::max(0.0, 1000.0 / rate));
-
-  mCurrentCompositeTask = NewRunnableMethod(this,
-                                            &CompositorSoftwareTimerScheduler::CallComposite);
-
-  if (!initialComposition && delta < minFrameDelta) {
-    TimeDuration delay = minFrameDelta - delta;
-#ifdef COMPOSITOR_PERFORMANCE_WARNING
-    mExpectedComposeStartTime = TimeStamp::Now() + delay;
 #endif
-    ScheduleTask(mCurrentCompositeTask, delay.ToMilliseconds());
-  } else {
-#ifdef COMPOSITOR_PERFORMANCE_WARNING
-    mExpectedComposeStartTime = TimeStamp::Now();
-#endif
-    ScheduleTask(mCurrentCompositeTask, 0);
-  }
-}
-
-bool
-CompositorSoftwareTimerScheduler::NeedsComposite()
-{
-  return mCurrentCompositeTask ? true : false;
-}
-
-void
-CompositorSoftwareTimerScheduler::CallComposite()
-{
-  Composite(TimeStamp::Now());
-}
-
-void
-CompositorSoftwareTimerScheduler::Composite(TimeStamp aTimestamp)
-{
-  mCurrentCompositeTask = nullptr;
-  mLastCompose = aTimestamp;
-  ComposeToTarget(nullptr);
-}
 
 CompositorVsyncScheduler::Observer::Observer(CompositorVsyncScheduler* aOwner)
   : mMutex("CompositorVsyncScheduler.Observer.Mutex")
@@ -393,14 +285,22 @@ CompositorVsyncScheduler::Observer::Destroy()
 }
 
 CompositorVsyncScheduler::CompositorVsyncScheduler(CompositorParent* aCompositorParent, nsIWidget* aWidget)
-  : CompositorScheduler(aCompositorParent)
-  , mNeedsComposite(false)
+  : mCompositorParent(aCompositorParent)
+  , mLastCompose(TimeStamp::Now())
   , mIsObservingVsync(false)
+  , mNeedsComposite(0)
   , mVsyncNotificationsSkipped(0)
-  , mCompositorParent(aCompositorParent)
   , mCurrentCompositeTaskMonitor("CurrentCompositeTaskMonitor")
+  , mCurrentCompositeTask(nullptr)
   , mSetNeedsCompositeMonitor("SetNeedsCompositeMonitor")
   , mSetNeedsCompositeTask(nullptr)
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+  , mDisplayEnabled(false)
+  , mSetDisplayMonitor("SetDisplayMonitor")
+  , mSetDisplayTask(nullptr)
+#endif
+#endif
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWidget != nullptr);
@@ -408,7 +308,17 @@ CompositorVsyncScheduler::CompositorVsyncScheduler(CompositorParent* aCompositor
   mCompositorVsyncDispatcher = aWidget->GetCompositorVsyncDispatcher();
 #ifdef MOZ_WIDGET_GONK
   GeckoTouchDispatcher::GetInstance()->SetCompositorVsyncScheduler(this);
+
+#if ANDROID_VERSION >= 19
+  RefPtr<nsScreenManagerGonk> screenManager = nsScreenManagerGonk::GetInstance();
+  screenManager->SetCompositorVsyncScheduler(this);
 #endif
+#endif
+
+  // mAsapScheduling is set on the main thread during init,
+  // but is only accessed after on the compositor thread.
+  mAsapScheduling = gfxPrefs::LayersCompositionFrameRate() == 0 ||
+                    gfxPlatform::IsInLayoutAsapMode();
 }
 
 CompositorVsyncScheduler::~CompositorVsyncScheduler()
@@ -420,6 +330,54 @@ CompositorVsyncScheduler::~CompositorVsyncScheduler()
   mCompositorVsyncDispatcher = nullptr;
 }
 
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+void
+CompositorVsyncScheduler::SetDisplay(bool aDisplayEnable)
+{
+  // SetDisplay() is usually called from nsScreenManager at main thread. Post
+  // to compositor thread if needs.
+  if (!CompositorParent::IsInCompositorThread()) {
+    MOZ_ASSERT(NS_IsMainThread());
+    MonitorAutoLock lock(mSetDisplayMonitor);
+    mSetDisplayTask = NewRunnableMethod(this,
+                                        &CompositorVsyncScheduler::SetDisplay,
+                                        aDisplayEnable);
+    ScheduleTask(mSetDisplayTask, 0);
+    return;
+  } else {
+    MonitorAutoLock lock(mSetDisplayMonitor);
+    mSetDisplayTask = nullptr;
+  }
+
+  if (mDisplayEnabled == aDisplayEnable) {
+    return;
+  }
+
+  mDisplayEnabled = aDisplayEnable;
+  if (!mDisplayEnabled) {
+    CancelCurrentSetNeedsCompositeTask();
+    CancelCurrentCompositeTask();
+  }
+}
+
+void
+CompositorVsyncScheduler::CancelSetDisplayTask()
+{
+  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
+  MonitorAutoLock lock(mSetDisplayMonitor);
+  if (mSetDisplayTask) {
+    mSetDisplayTask->Cancel();
+    mSetDisplayTask = nullptr;
+  }
+
+  // CancelSetDisplayTask is only be called in clean-up process, so
+  // mDisplayEnabled could be false there.
+  mDisplayEnabled = false;
+}
+#endif //ANDROID_VERSION >= 19
+#endif //MOZ_WIDGET_GONK
+
 void
 CompositorVsyncScheduler::Destroy()
 {
@@ -427,14 +385,49 @@ CompositorVsyncScheduler::Destroy()
   UnobserveVsync();
   mVsyncObserver->Destroy();
   mVsyncObserver = nullptr;
+
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+  CancelSetDisplayTask();
+#endif
+#endif
   CancelCurrentSetNeedsCompositeTask();
-  CompositorScheduler::Destroy();
+  CancelCurrentCompositeTask();
+}
+
+void
+CompositorVsyncScheduler::PostCompositeTask(TimeStamp aCompositeTimestamp)
+{
+  // can be called from the compositor or vsync thread
+  MonitorAutoLock lock(mCurrentCompositeTaskMonitor);
+  if (mCurrentCompositeTask == nullptr) {
+    mCurrentCompositeTask = NewRunnableMethod(this,
+                                              &CompositorVsyncScheduler::Composite,
+                                              aCompositeTimestamp);
+    ScheduleTask(mCurrentCompositeTask, 0);
+  }
 }
 
 void
 CompositorVsyncScheduler::ScheduleComposition()
 {
-  SetNeedsComposite(true);
+  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
+  if (mAsapScheduling) {
+    // Used only for performance testing purposes
+    PostCompositeTask(TimeStamp::Now());
+#ifdef MOZ_WIDGET_ANDROID
+  } else if (mNeedsComposite >= 2 && mIsObservingVsync) {
+    // uh-oh, we already requested a composite at least twice so far, and a
+    // composite hasn't happened yet. It is possible that the vsync observation
+    // is blocked on the main thread, so let's just composite ASAP and not
+    // wait for the vsync. Note that this should only ever happen on Fennec
+    // because there content runs in the same process as the compositor, and so
+    // content can actually block the main thread in this process.
+    PostCompositeTask(TimeStamp::Now());
+#endif
+  } else {
+    SetNeedsComposite();
+  }
 }
 
 void
@@ -446,7 +439,7 @@ CompositorVsyncScheduler::CancelCurrentSetNeedsCompositeTask()
     mSetNeedsCompositeTask->Cancel();
     mSetNeedsCompositeTask = nullptr;
   }
-  mNeedsComposite = false;
+  mNeedsComposite = 0;
 }
 
 /**
@@ -457,13 +450,12 @@ CompositorVsyncScheduler::CancelCurrentSetNeedsCompositeTask()
  * How many skipped vsync events until we stop listening to vsync events?
  */
 void
-CompositorVsyncScheduler::SetNeedsComposite(bool aNeedsComposite)
+CompositorVsyncScheduler::SetNeedsComposite()
 {
   if (!CompositorParent::IsInCompositorThread()) {
     MonitorAutoLock lock(mSetNeedsCompositeMonitor);
     mSetNeedsCompositeTask = NewRunnableMethod(this,
-                                              &CompositorVsyncScheduler::SetNeedsComposite,
-                                              aNeedsComposite);
+                                              &CompositorVsyncScheduler::SetNeedsComposite);
     ScheduleTask(mSetNeedsCompositeTask, 0);
     return;
   } else {
@@ -471,7 +463,16 @@ CompositorVsyncScheduler::SetNeedsComposite(bool aNeedsComposite)
     mSetNeedsCompositeTask = nullptr;
   }
 
-  mNeedsComposite = aNeedsComposite;
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+  // Skip composition when display off.
+  if (!mDisplayEnabled) {
+    return;
+  }
+#endif
+#endif
+
+  mNeedsComposite++;
   if (!mIsObservingVsync && mNeedsComposite) {
     ObserveVsync();
   }
@@ -483,14 +484,7 @@ CompositorVsyncScheduler::NotifyVsync(TimeStamp aVsyncTimestamp)
   // Called from the vsync dispatch thread
   MOZ_ASSERT(!CompositorParent::IsInCompositorThread());
   MOZ_ASSERT(!NS_IsMainThread());
-
-  MonitorAutoLock lock(mCurrentCompositeTaskMonitor);
-  if (mCurrentCompositeTask == nullptr) {
-    mCurrentCompositeTask = NewRunnableMethod(this,
-                                              &CompositorVsyncScheduler::Composite,
-                                              aVsyncTimestamp);
-    ScheduleTask(mCurrentCompositeTask, 0);
-  }
+  PostCompositeTask(aVsyncTimestamp);
   return true;
 }
 
@@ -499,7 +493,10 @@ CompositorVsyncScheduler::CancelCurrentCompositeTask()
 {
   MOZ_ASSERT(CompositorParent::IsInCompositorThread() || NS_IsMainThread());
   MonitorAutoLock lock(mCurrentCompositeTaskMonitor);
-  CompositorScheduler::CancelCurrentCompositeTask();
+  if (mCurrentCompositeTask) {
+    mCurrentCompositeTask->Cancel();
+    mCurrentCompositeTask = nullptr;
+  }
 }
 
 void
@@ -512,12 +509,17 @@ CompositorVsyncScheduler::Composite(TimeStamp aVsyncTimestamp)
   }
 
   DispatchTouchEvents(aVsyncTimestamp);
+  DispatchVREvents(aVsyncTimestamp);
 
-  if (mNeedsComposite) {
-    mNeedsComposite = false;
+  if (mNeedsComposite || mAsapScheduling) {
+    mNeedsComposite = 0;
     mLastCompose = aVsyncTimestamp;
     ComposeToTarget(nullptr);
     mVsyncNotificationsSkipped = 0;
+
+    TimeDuration compositeFrameTotal = TimeStamp::Now() - aVsyncTimestamp;
+    mozilla::Telemetry::Accumulate(mozilla::Telemetry::COMPOSITE_FRAME_ROUNDTRIP_TIME,
+                                   compositeFrameTotal.ToMilliseconds());
   } else if (mVsyncNotificationsSkipped++ > gfxPrefs::CompositorUnobserveCount()) {
     UnobserveVsync();
   }
@@ -544,7 +546,8 @@ void
 CompositorVsyncScheduler::ForceComposeToTarget(gfx::DrawTarget* aTarget, const IntRect* aRect)
 {
   OnForceComposeToTarget();
-  CompositorScheduler::ForceComposeToTarget(aTarget, aRect);
+  mLastCompose = TimeStamp::Now();
+  ComposeToTarget(aTarget, aRect);
 }
 
 bool
@@ -578,6 +581,15 @@ CompositorVsyncScheduler::DispatchTouchEvents(TimeStamp aVsyncTimestamp)
 #endif
 }
 
+void
+CompositorVsyncScheduler::DispatchVREvents(TimeStamp aVsyncTimestamp)
+{
+  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
+
+  VRManager* vm = VRManager::Get();
+  vm->NotifyVsync(aVsyncTimestamp);
+}
+
 void CompositorParent::StartUp()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on the main Thread!");
@@ -592,6 +604,8 @@ void CompositorParent::ShutDown()
   MOZ_ASSERT(sCompositorThreadHolder, "The compositor thread has already been shut down!");
 
   ReleaseImageBridgeParentSingleton();
+  ReleaseVRManagerParentSingleton();
+  MediaSystemResourceService::Shutdown();
 
   sCompositorThreadHolder = nullptr;
 
@@ -607,22 +621,27 @@ MessageLoop* CompositorParent::CompositorLoop()
   return CompositorThread() ? CompositorThread()->message_loop() : nullptr;
 }
 
-static bool
-IsInCompositorAsapMode()
+void
+CompositorVsyncScheduler::ScheduleTask(CancelableTask* aTask, int aTime)
 {
-  // Returns true if the compositor is allowed to be in ASAP mode
-  // and layout is not in ASAP mode
-  return gfxPrefs::LayersCompositionFrameRate() == 0 &&
-            !gfxPlatform::IsInLayoutAsapMode();
+  MOZ_ASSERT(CompositorParent::CompositorLoop());
+  MOZ_ASSERT(aTime >= 0);
+  CompositorParent::CompositorLoop()->PostDelayedTask(FROM_HERE, aTask, aTime);
 }
 
-static bool
-UseVsyncComposition()
+void
+CompositorVsyncScheduler::ResumeComposition()
 {
-  return gfxPrefs::VsyncAlignedCompositor()
-          && gfxPrefs::HardwareVsyncEnabled()
-          && !IsInCompositorAsapMode()
-          && !gfxPlatform::IsInLayoutAsapMode();
+  mLastCompose = TimeStamp::Now();
+  ComposeToTarget(nullptr);
+}
+
+void
+CompositorVsyncScheduler::ComposeToTarget(gfx::DrawTarget* aTarget, const IntRect* aRect)
+{
+  MOZ_ASSERT(CompositorParent::IsInCompositorThread());
+  MOZ_ASSERT(mCompositorParent);
+  mCompositorParent->CompositeToTarget(aTarget, aRect);
 }
 
 CompositorParent::CompositorParent(nsIWidget* aWidget,
@@ -636,10 +655,16 @@ CompositorParent::CompositorParent(nsIWidget* aWidget,
   , mEGLSurfaceSize(aSurfaceWidth, aSurfaceHeight)
   , mPauseCompositionMonitor("PauseCompositionMonitor")
   , mResumeCompositionMonitor("ResumeCompositionMonitor")
+  , mRootLayerTreeID(AllocateLayerTreeId())
   , mOverrideComposeReadiness(false)
   , mForceCompositionTask(nullptr)
   , mCompositorThreadHolder(sCompositorThreadHolder)
   , mCompositorScheduler(nullptr)
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  , mLastPluginUpdateLayerTreeId(0)
+  , mPluginUpdateResponsePending(false)
+  , mDeferPluginWindows(false)
+#endif
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(CompositorThread(),
@@ -655,33 +680,21 @@ CompositorParent::CompositorParent(nsIWidget* aWidget,
 
   CompositorLoop()->PostTask(FROM_HERE, NewRunnableFunction(SetThreadPriority));
 
-  mRootLayerTreeID = AllocateLayerTreeId();
 
   { // scope lock
     MonitorAutoLock lock(*sIndirectLayerTreesLock);
     sIndirectLayerTrees[mRootLayerTreeID].mParent = this;
   }
 
-  if (gfxPrefs::AsyncPanZoomEnabled() &&
-#if !defined(MOZ_B2G) && !defined(MOZ_WIDGET_ANDROID)
-      // For XUL applications (everything but B2G on mobile and desktop, and
-      // Firefox on Android) we only want to use APZ when E10S is enabled. If
-      // we ever get input events off the main thread we can consider relaxing
-      // this requirement.
-      mozilla::BrowserTabsRemoteAutostart() &&
-#endif
+  // The Compositor uses the APZ pref directly since it needs to know whether
+  // to attempt to create the APZ machinery at all.
+  if (gfxPlatform::AsyncPanZoomEnabled() &&
       (aWidget->WindowType() == eWindowType_toplevel || aWidget->WindowType() == eWindowType_child)) {
     mApzcTreeManager = new APZCTreeManager();
   }
 
-  if (UseVsyncComposition()) {
-    NS_WARNING("Enabling vsync compositor");
-    mCompositorScheduler = new CompositorVsyncScheduler(this, aWidget);
-  } else {
-    mCompositorScheduler = new CompositorSoftwareTimerScheduler(this);
-  }
-
-  gfxPlatform::GetPlatform()->ComputeTileSize();
+  mCompositorScheduler = new CompositorVsyncScheduler(this, aWidget);
+  LayerScope::SetPixelScale(mWidget->GetDefaultScale().scale);
 }
 
 bool
@@ -705,7 +718,7 @@ CompositorParent::~CompositorParent()
 void
 CompositorParent::Destroy()
 {
-  MOZ_ASSERT(ManagedPLayerTransactionParent().Length() == 0,
+  MOZ_ASSERT(ManagedPLayerTransactionParent().Count() == 0,
              "CompositorParent destroyed before managed PLayerTransactionParent");
 
   MOZ_ASSERT(mPaused); // Ensure RecvWillStop was called
@@ -765,6 +778,7 @@ CompositorParent::RecvWillStop()
 void CompositorParent::DeferredDestroy()
 {
   MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(mCompositorThreadHolder);
   mCompositorThreadHolder = nullptr;
   Release();
 }
@@ -803,7 +817,30 @@ CompositorParent::RecvMakeSnapshot(const SurfaceDescriptor& aInSnapshot,
                                    const gfx::IntRect& aRect)
 {
   RefPtr<DrawTarget> target = GetDrawTargetForDescriptor(aInSnapshot, gfx::BackendType::CAIRO);
+  MOZ_ASSERT(target);
+  if (!target) {
+    // We kill the content process rather than have it continue with an invalid
+    // snapshot, that may be too harsh and we could decide to return some sort
+    // of error to the child process and let it deal with it...
+    return false;
+  }
   ForceComposeToTarget(target, &aRect);
+  return true;
+}
+
+bool
+CompositorParent::RecvMakeWidgetSnapshot(const SurfaceDescriptor& aInSnapshot)
+{
+  if (!mCompositor || !mCompositor->GetWidget()) {
+    return false;
+  }
+
+  RefPtr<DrawTarget> target = GetDrawTargetForDescriptor(aInSnapshot, gfx::BackendType::CAIRO);
+  MOZ_ASSERT(target);
+  if (!target) {
+    return false;
+  }
+  mCompositor->GetWidget()->CaptureWidgetOnScreen(target);
   return true;
 }
 
@@ -833,6 +870,15 @@ CompositorParent::RecvNotifyRegionInvalidated(const nsIntRegion& aRegion)
     mLayerManager->AddInvalidRegion(aRegion);
   }
   return true;
+}
+
+void
+CompositorParent::Invalidate()
+{
+  if (mLayerManager && mLayerManager->GetRoot()) {
+    mLayerManager->AddInvalidRegion(
+                                    mLayerManager->GetRoot()->GetVisibleRegion().ToUnknownRegion().GetBounds());
+  }
 }
 
 bool
@@ -889,6 +935,14 @@ CompositorParent::ScheduleRenderOnCompositorThread()
 }
 
 void
+CompositorParent::InvalidateOnCompositorThread()
+{
+  CancelableTask *renderTask = NewRunnableMethod(this, &CompositorParent::Invalidate);
+  MOZ_ASSERT(CompositorLoop());
+  CompositorLoop()->PostTask(FROM_HERE, renderTask);
+}
+
+void
 CompositorParent::PauseComposition()
 {
   MOZ_ASSERT(IsInCompositorThread(),
@@ -900,7 +954,9 @@ CompositorParent::PauseComposition()
     mPaused = true;
 
     mCompositor->Pause();
-    DidComposite();
+
+    TimeStamp now = TimeStamp::Now();
+    DidComposite(now, now);
   }
 
   // if anyone's waiting to make sure that composition really got paused, tell them
@@ -1063,6 +1119,9 @@ CompositorParent::SetShadowProperties(Layer* aLayer)
   if (Layer* maskLayer = aLayer->GetMaskLayer()) {
     SetShadowProperties(maskLayer);
   }
+  for (size_t i = 0; i < aLayer->GetAncestorMaskLayerCount(); i++) {
+    SetShadowProperties(aLayer->GetAncestorMaskLayerAt(i));
+  }
 
   // FIXME: Bug 717688 -- Do these updates in LayerTransactionParent::RecvUpdate.
   LayerComposite* layerComposite = aLayer->AsLayerComposite();
@@ -1100,11 +1159,60 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRe
 #endif
 
   if (!CanComposite()) {
-    DidComposite();
+    TimeStamp end = TimeStamp::Now();
+    DidComposite(start, end);
     return;
   }
 
-  AutoResolveRefLayers resolve(mCompositionManager);
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  // Still waiting on plugin update confirmation
+  if (mPluginUpdateResponsePending) {
+    return;
+  }
+#endif
+
+  bool hasRemoteContent = false;
+  bool pluginsUpdatedFlag = true;
+  AutoResolveRefLayers resolve(mCompositionManager, this,
+                               &hasRemoteContent,
+                               &pluginsUpdatedFlag);
+
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  /*
+   * AutoResolveRefLayers handles two tasks related to Windows and Linux
+   * plugin window management:
+   * 1) calculating if we have remote content in the view. If we do not have
+   * remote content, all plugin windows for this CompositorParent (window)
+   * can be hidden since we do not support plugins in chrome when running
+   * under e10s.
+   * 2) Updating plugin position, size, and clip. We do this here while the
+   * remote layer tree is hooked up to to chrome layer tree. This is needed
+   * since plugin clipping can depend on chrome (for example, due to tab modal
+   * prompts). Updates in step 2 are applied via an async ipc message sent
+   * to the main thread.
+   * Windows specific: The compositor will wait for confirmation that plugin
+   * updates have been applied before painting. Deferment of painting is
+   * indicated by the mPluginUpdateResponsePending flag. The main thread
+   * messages back using the RemotePluginsReady async ipc message.
+   * This is neccessary since plugin windows can leave remnants of window
+   * content if moved after the underlying window paints.
+   */
+  if (pluginsUpdatedFlag) {
+    mPluginUpdateResponsePending = true;
+    return;
+  }
+
+  // We do not support plugins in local content. When switching tabs
+  // to local pages, hide every plugin associated with the window.
+  if (!hasRemoteContent && BrowserTabsRemoteAutostart() &&
+      mCachedPluginData.Length()) {
+    Unused << SendHideAllPlugins((uintptr_t)GetWidget());
+    mCachedPluginData.Clear();
+    // Wait for confirmation the hide operation is complete.
+    mPluginUpdateResponsePending = true;
+    return;
+  }
+#endif
 
   if (aTarget) {
     mLayerManager->BeginTransactionWithDrawTarget(aTarget, *aRect);
@@ -1140,13 +1248,20 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRe
   }
 #endif
   mLayerManager->SetDebugOverlayWantsNextFrame(false);
-  mLayerManager->EndEmptyTransaction();
+  mLayerManager->EndTransaction(time);
 
   if (!aTarget) {
-    DidComposite();
+    TimeStamp end = TimeStamp::Now();
+    DidComposite(start, end);
   }
 
-  if (mLayerManager->DebugOverlayWantsNextFrame()) {
+  // We're not really taking advantage of the stored composite-again-time here.
+  // We might be able to skip the next few composites altogether. However,
+  // that's a bit complex to implement and we'll get most of the advantage
+  // by skipping compositing when we detect there's nothing invalid. This is why
+  // we do "composite until" rather than "composite again at".
+  if (!mCompositor->GetCompositeUntilTime().IsNull() ||
+      mLayerManager->DebugOverlayWantsNextFrame()) {
     ScheduleComposition();
   }
 
@@ -1169,9 +1284,24 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRe
     // Special full-tilt composite mode for performance testing
     ScheduleComposition();
   }
+  mCompositor->SetCompositionTime(TimeStamp());
 
   mozilla::Telemetry::AccumulateTimeDelta(mozilla::Telemetry::COMPOSITE_TIME, start);
   profiler_tracing("Paint", "Composite", TRACING_INTERVAL_END);
+}
+
+bool
+CompositorParent::RecvRemotePluginsReady()
+{
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  mPluginUpdateResponsePending = false;
+  ScheduleComposition();
+  return true;
+#else
+  NS_NOTREACHED("CompositorParent::RecvRemotePluginsReady calls "
+                "unexpected on this platform.");
+  return false;
+#endif
 }
 
 void
@@ -1218,7 +1348,8 @@ CompositorParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
                                       bool aIsFirstPaint,
                                       bool aScheduleComposite,
                                       uint32_t aPaintSequenceNumber,
-                                      bool aIsRepeatTransaction)
+                                      bool aIsRepeatTransaction,
+                                      int32_t aPaintSyncId)
 {
   ScheduleRotationOnCompositorThread(aTargetConfig, aIsFirstPaint);
 
@@ -1227,8 +1358,9 @@ CompositorParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
   // race condition.
   mLayerManager->UpdateRenderBounds(aTargetConfig.naturalBounds());
   mLayerManager->SetRegionToClear(aTargetConfig.clearRegion());
+  mLayerManager->GetCompositor()->SetScreenRotation(aTargetConfig.rotation());
 
-  mCompositionManager->Updated(aIsFirstPaint, aTargetConfig);
+  mCompositionManager->Updated(aIsFirstPaint, aTargetConfig, aPaintSyncId);
   Layer* root = aLayerTree->GetRoot();
   mLayerManager->SetRoot(root);
 
@@ -1238,7 +1370,10 @@ CompositorParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
         mRootLayerTreeID, aPaintSequenceNumber);
   }
 
-  MOZ_ASSERT(aTransactionId > mPendingTransaction);
+  // The transaction ID might get reset to 1 if the page gets reloaded, see
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1145295#c41
+  // Otherwise, it should be continually increasing.
+  MOZ_ASSERT(aTransactionId == 1 || aTransactionId > mPendingTransaction);
   mPendingTransaction = aTransactionId;
 
   if (root) {
@@ -1247,7 +1382,8 @@ CompositorParent::ShadowLayersUpdated(LayerTransactionParent* aLayerTree,
   if (aScheduleComposite) {
     ScheduleComposition();
     if (mPaused) {
-      DidComposite();
+      TimeStamp now = TimeStamp::Now();
+      DidComposite(now, now);
     }
   }
   mLayerManager->NotifyShadowTreeTransaction();
@@ -1280,7 +1416,8 @@ CompositorParent::SetTestSampleTime(LayerTransactionParent* aLayerTree,
     if (!requestNextFrame) {
       CancelCurrentCompositeTask();
       // Pretend we composited in case someone is wating for this event.
-      DidComposite();
+      TimeStamp now = TimeStamp::Now();
+      DidComposite(now, now);
     }
   }
 
@@ -1312,17 +1449,38 @@ CompositorParent::ApplyAsyncProperties(LayerTransactionParent* aLayerTree)
     if (!requestNextFrame) {
       CancelCurrentCompositeTask();
       // Pretend we composited in case someone is waiting for this event.
-      DidComposite();
+      TimeStamp now = TimeStamp::Now();
+      DidComposite(now, now);
     }
   }
+}
+
+bool
+CompositorParent::RecvGetFrameUniformity(FrameUniformityData* aOutData)
+{
+  mCompositionManager->GetFrameUniformity(aOutData);
+  return true;
 }
 
 bool
 CompositorParent::RecvRequestOverfill()
 {
   uint32_t overfillRatio = mCompositor->GetFillRatio();
-  unused << SendOverfill(overfillRatio);
+  Unused << SendOverfill(overfillRatio);
   return true;
+}
+
+void
+CompositorParent::FlushApzRepaints(const LayerTransactionParent* aLayerTree)
+{
+  MOZ_ASSERT(mApzcTreeManager);
+  uint64_t layersId = aLayerTree->GetId();
+  if (layersId == 0) {
+    // The request is coming from the parent-process layer tree, so we should
+    // use the compositor's root layer tree id.
+    layersId = mRootLayerTreeID;
+  }
+  mApzcTreeManager->FlushApzRepaints(layersId);
 }
 
 void
@@ -1336,7 +1494,7 @@ CompositorParent::GetAPZTestData(const LayerTransactionParent* aLayerTree,
 class NotifyAPZConfirmedTargetTask : public Task
 {
 public:
-  explicit NotifyAPZConfirmedTargetTask(const nsRefPtr<APZCTreeManager>& aAPZCTM,
+  explicit NotifyAPZConfirmedTargetTask(const RefPtr<APZCTreeManager>& aAPZCTM,
                                         const uint64_t& aInputBlockId,
                                         const nsTArray<ScrollableLayerGuid>& aTargets)
    : mAPZCTM(aAPZCTM),
@@ -1350,7 +1508,7 @@ public:
   }
 
 private:
-  nsRefPtr<APZCTreeManager> mAPZCTM;
+  RefPtr<APZCTreeManager> mAPZCTM;
   uint64_t mInputBlockId;
   nsTArray<ScrollableLayerGuid> mTargets;
 };
@@ -1425,12 +1583,7 @@ CompositorParent::AllocPLayerTransactionParent(const nsTArray<LayersBackend>& aB
 {
   MOZ_ASSERT(aId == 0);
 
-  // mWidget doesn't belong to the compositor thread, so it should be set to
-  // nullptr before returning from this method, to avoid accessing it elsewhere.
-  gfx::IntRect rect;
-  mWidget->GetClientBounds(rect);
   InitializeLayerManager(aBackendHints);
-  mWidget = nullptr;
 
   if (!mLayerManager) {
     NS_WARNING("Failed to initialise Compositor");
@@ -1535,7 +1688,10 @@ CompositorParent::DeallocateLayerTreeId(uint64_t aId)
   // Here main thread notifies compositor to remove an element from
   // sIndirectLayerTrees. This removed element might be queried soon.
   // Checking the elements of sIndirectLayerTrees exist or not before using.
-  MOZ_ASSERT(CompositorLoop());
+  if (!CompositorLoop()) {
+    gfxCriticalError() << "Attempting to post to a invalid Compositor Loop";
+    return;
+  }
   CompositorLoop()->PostTask(FROM_HERE,
                              NewRunnableFunction(&EraseLayerState, aId));
 }
@@ -1563,7 +1719,8 @@ UpdateControllerForLayersId(uint64_t aLayersId,
     already_AddRefed<GeckoContentController>(aController);
 }
 
-ScopedLayerTreeRegistration::ScopedLayerTreeRegistration(uint64_t aLayersId,
+ScopedLayerTreeRegistration::ScopedLayerTreeRegistration(APZCTreeManager* aApzctm,
+                                                         uint64_t aLayersId,
                                                          Layer* aRoot,
                                                          GeckoContentController* aController)
     : mLayersId(aLayersId)
@@ -1595,11 +1752,14 @@ CompositorParent::SetControllerForLayerTree(uint64_t aLayersId,
 /*static*/ APZCTreeManager*
 CompositorParent::GetAPZCTreeManager(uint64_t aLayersId)
 {
-  const CompositorParent::LayerTreeState* state = CompositorParent::GetIndirectShadowTree(aLayersId);
-  if (state && state->mParent) {
-    return state->mParent->mApzcTreeManager;
+  EnsureLayerTreeMapReady();
+  MonitorAutoLock lock(*sIndirectLayerTreesLock);
+  LayerTreeMap::iterator cit = sIndirectLayerTrees.find(aLayersId);
+  if (sIndirectLayerTrees.end() == cit) {
+    return nullptr;
   }
-  return nullptr;
+  LayerTreeState* lts = &cit->second;
+  return (lts->mParent ? lts->mParent->mApzcTreeManager.get() : nullptr);
 }
 
 float
@@ -1665,11 +1825,9 @@ class CrossProcessCompositorParent final : public PCompositorParent,
 public:
   explicit CrossProcessCompositorParent(Transport* aTransport)
     : mTransport(aTransport)
-    , mCompositorThreadHolder(sCompositorThreadHolder)
     , mNotifyAfterRemotePaint(false)
   {
     MOZ_ASSERT(NS_IsMainThread());
-    gfxPlatform::GetPlatform()->ComputeTileSize();
   }
 
   // IToplevelProtocol::CloneToplevel()
@@ -1686,10 +1844,14 @@ public:
   virtual bool RecvStop() override { return true; }
   virtual bool RecvPause() override { return true; }
   virtual bool RecvResume() override { return true; }
+  virtual bool RecvNotifyHidden(const uint64_t& id) override;
+  virtual bool RecvNotifyVisible(const uint64_t& id) override;
   virtual bool RecvNotifyChildCreated(const uint64_t& child) override;
   virtual bool RecvAdoptChild(const uint64_t& child) override { return false; }
   virtual bool RecvMakeSnapshot(const SurfaceDescriptor& aInSnapshot,
                                 const gfx::IntRect& aRect) override
+  { return true; }
+  virtual bool RecvMakeWidgetSnapshot(const SurfaceDescriptor& aInSnapshot) override
   { return true; }
   virtual bool RecvFlushRendering() override { return true; }
   virtual bool RecvNotifyRegionInvalidated(const nsIntRegion& aRegion) override { return true; }
@@ -1702,6 +1864,13 @@ public:
     return true;
   }
 
+  virtual bool RecvGetFrameUniformity(FrameUniformityData* aOutData) override
+  {
+    // Don't support calculating frame uniformity on the child process and
+    // this is just a stub for now.
+    MOZ_ASSERT(false);
+    return true;
+  }
 
   /**
    * Tells this CompositorParent to send a message when the compositor has received the transaction.
@@ -1723,7 +1892,8 @@ public:
                                    bool aIsFirstPaint,
                                    bool aScheduleComposite,
                                    uint32_t aPaintSequenceNumber,
-                                   bool aIsRepeatTransaction) override;
+                                   bool aIsRepeatTransaction,
+                                   int32_t /*aPaintSyncId: unused*/) override;
   virtual void ForceComposite(LayerTransactionParent* aLayerTree) override;
   virtual void NotifyClearCachedResources(LayerTransactionParent* aLayerTree) override;
   virtual bool SetTestSampleTime(LayerTransactionParent* aLayerTree,
@@ -1731,6 +1901,7 @@ public:
   virtual void LeaveTestMode(LayerTransactionParent* aLayerTree) override;
   virtual void ApplyAsyncProperties(LayerTransactionParent* aLayerTree)
                override;
+  virtual void FlushApzRepaints(const LayerTransactionParent* aLayerTree) override;
   virtual void GetAPZTestData(const LayerTransactionParent* aLayerTree,
                               APZTestData* aOutData) override;
   virtual void SetConfirmedTargetAPZC(const LayerTransactionParent* aLayerTree,
@@ -1738,9 +1909,14 @@ public:
                                       const nsTArray<ScrollableLayerGuid>& aTargets) override;
 
   virtual AsyncCompositionManager* GetCompositionManager(LayerTransactionParent* aParent) override;
+  virtual bool RecvRemotePluginsReady()  override { return false; }
 
-  void DidComposite(uint64_t aId);
+  void DidComposite(uint64_t aId,
+                    TimeStamp& aCompositeStart,
+                    TimeStamp& aCompositeEnd);
 
+protected:
+  void OnChannelConnected(int32_t pid) override { mCompositorThreadHolder = sCompositorThreadHolder; }
 private:
   // Private destructor, to discourage deletion outside of Release():
   virtual ~CrossProcessCompositorParent();
@@ -1750,21 +1926,28 @@ private:
   // There can be many CPCPs, and IPDL-generated code doesn't hold a
   // reference to top-level actors.  So we hold a reference to
   // ourself.  This is released (deferred) in ActorDestroy().
-  nsRefPtr<CrossProcessCompositorParent> mSelfRef;
+  RefPtr<CrossProcessCompositorParent> mSelfRef;
   Transport* mTransport;
 
-  nsRefPtr<CompositorThreadHolder> mCompositorThreadHolder;
+  RefPtr<CompositorThreadHolder> mCompositorThreadHolder;
   // If true, we should send a RemotePaintIsReady message when the layer transaction
   // is received
   bool mNotifyAfterRemotePaint;
 };
 
 void
-CompositorParent::DidComposite()
+CompositorParent::DidComposite(TimeStamp& aCompositeStart,
+                               TimeStamp& aCompositeEnd)
 {
-  if (mPendingTransaction) {
-    unused << SendDidComposite(0, mPendingTransaction);
-    mPendingTransaction = 0;
+  Unused << SendDidComposite(0, mPendingTransaction, aCompositeStart, aCompositeEnd);
+  mPendingTransaction = 0;
+
+  if (mLayerManager) {
+    nsTArray<ImageCompositeNotification> notifications;
+    mLayerManager->ExtractImageCompositeNotifications(&notifications);
+    if (!notifications.IsEmpty()) {
+      Unused << ImageBridgeParent::NotifyImageComposites(notifications);
+    }
   }
 
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
@@ -1772,7 +1955,8 @@ CompositorParent::DidComposite()
        it != sIndirectLayerTrees.end(); it++) {
     LayerTreeState* lts = &it->second;
     if (lts->mParent == this && lts->mCrossProcessParent) {
-      static_cast<CrossProcessCompositorParent*>(lts->mCrossProcessParent)->DidComposite(it->first);
+      static_cast<CrossProcessCompositorParent*>(lts->mCrossProcessParent)->DidComposite(
+        it->first, aCompositeStart, aCompositeEnd);
     }
   }
 }
@@ -1791,7 +1975,7 @@ CompositorParent::Create(Transport* aTransport, ProcessId aOtherPid)
 {
   gfxPlatform::InitLayersIPC();
 
-  nsRefPtr<CrossProcessCompositorParent> cpcp =
+  RefPtr<CrossProcessCompositorParent> cpcp =
     new CrossProcessCompositorParent(aTransport);
 
   cpcp->mSelfRef = cpcp;
@@ -1802,24 +1986,6 @@ CompositorParent::Create(Transport* aTransport, ProcessId aOtherPid)
   // The return value is just compared to null for success checking,
   // we're not sharing a ref.
   return cpcp.get();
-}
-
-IToplevelProtocol*
-CompositorParent::CloneToplevel(const InfallibleTArray<mozilla::ipc::ProtocolFdMapping>& aFds,
-                                base::ProcessHandle aPeerProcess,
-                                mozilla::ipc::ProtocolCloneContext* aCtx)
-{
-  for (unsigned int i = 0; i < aFds.Length(); i++) {
-    if (aFds[i].protocolId() == (unsigned)GetProtocolId()) {
-      Transport* transport = OpenDescriptor(aFds[i].fd(),
-                                            Transport::MODE_SERVER);
-      PCompositorParent* compositor = Create(transport, base::GetProcId(aPeerProcess));
-      compositor->CloneManagees(this, aCtx);
-      compositor->IToplevelProtocol::SetTransport(transport);
-      return compositor;
-    }
-  }
-  return nullptr;
 }
 
 static void
@@ -1842,6 +2008,22 @@ CompositorParent::GetIndirectShadowTree(uint64_t aId)
 }
 
 bool
+CrossProcessCompositorParent::RecvNotifyHidden(const uint64_t& id)
+{
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  lru->Add(this, id);
+  return true;
+}
+
+bool
+CrossProcessCompositorParent::RecvNotifyVisible(const uint64_t& id)
+{
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  lru->Remove(this, id);
+  return true;
+}
+
+bool
 CrossProcessCompositorParent::RecvRequestNotifyAfterRemotePaint()
 {
   mNotifyAfterRemotePaint = true;
@@ -1851,6 +2033,9 @@ CrossProcessCompositorParent::RecvRequestNotifyAfterRemotePaint()
 void
 CrossProcessCompositorParent::ActorDestroy(ActorDestroyReason aWhy)
 {
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  lru->Remove(this);
+
   MessageLoop::current()->PostTask(
     FROM_HERE,
     NewRunnableMethod(this, &CrossProcessCompositorParent::DeferredDestroy));
@@ -1925,7 +2110,8 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
   bool aIsFirstPaint,
   bool aScheduleComposite,
   uint32_t aPaintSequenceNumber,
-  bool aIsRepeatTransaction)
+  bool aIsRepeatTransaction,
+  int32_t /*aPaintSyncId: unused*/)
 {
   uint64_t id = aLayerTree->GetId();
 
@@ -1953,12 +2139,12 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
 
   // Send the 'remote paint ready' message to the content thread if it has already asked.
   if(mNotifyAfterRemotePaint)  {
-    unused << SendRemotePaintIsReady();
+    Unused << SendRemotePaintIsReady();
     mNotifyAfterRemotePaint = false;
   }
 
   if (state->mLayerTreeReadyObserver) {
-    nsRefPtr<CompositorUpdateObserver> observer = state->mLayerTreeReadyObserver;
+    RefPtr<CompositorUpdateObserver> observer = state->mLayerTreeReadyObserver;
     state->mLayerTreeReadyObserver = nullptr;
     observer->ObserveUpdate(id, true);
   }
@@ -1967,33 +2153,75 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-// Sends plugin window state changes to the main thread
-static void
-UpdatePluginWindowState(uint64_t aId)
+//#define PLUGINS_LOG(...) printf_stderr("CP [%s]: ", __FUNCTION__);
+//                         printf_stderr(__VA_ARGS__);
+//                         printf_stderr("\n");
+#define PLUGINS_LOG(...)
+
+bool
+CompositorParent::UpdatePluginWindowState(uint64_t aId)
 {
+  MonitorAutoLock lock(*sIndirectLayerTreesLock);
   CompositorParent::LayerTreeState& lts = sIndirectLayerTrees[aId];
-  if (!lts.mPluginData.Length() && !lts.mUpdatedPluginDataAvailable) {
-    return;
+  if (!lts.mParent) {
+    PLUGINS_LOG("[%" PRIu64 "] layer tree compositor parent pointer is null", aId);
+    return false;
   }
 
-  bool shouldComposePlugin = !!lts.mRoot &&
-                             !!lts.mRoot->GetParent();
+  // Check if this layer tree has received any shadow layer updates
+  if (!lts.mUpdatedPluginDataAvailable) {
+    PLUGINS_LOG("[%" PRIu64 "] no plugin data", aId);
+    return false;
+  }
 
-  bool shouldHidePlugin = (!lts.mRoot ||
-                           !lts.mRoot->GetParent()) &&
-                          !lts.mUpdatedPluginDataAvailable;
-  if (shouldComposePlugin) {
-    if (!lts.mPluginData.Length()) {
-      // We will pass through here in cases where the previous shadow layer
-      // tree contained visible plugins and the new tree does not. All we need
-      // to do here is hide the plugins for the old tree, so don't waste time
-      // calculating clipping.
-      nsTArray<uintptr_t> aVisibleIdList;
-      unused << lts.mParent->SendUpdatePluginVisibility(aVisibleIdList);
-      lts.mUpdatedPluginDataAvailable = false;
-      return;
+  // pluginMetricsChanged tracks whether we need to send plugin update
+  // data to the main thread. If we do we'll have to block composition,
+  // which we want to avoid if at all possible.
+  bool pluginMetricsChanged = false;
+
+  // Same layer tree checks
+  if (mLastPluginUpdateLayerTreeId == aId) {
+    // no plugin data and nothing has changed, bail.
+    if (!mCachedPluginData.Length() && !lts.mPluginData.Length()) {
+      PLUGINS_LOG("[%" PRIu64 "] no data, no changes", aId);
+      return false;
     }
 
+    if (mCachedPluginData.Length() == lts.mPluginData.Length()) {
+      // check for plugin data changes
+      for (uint32_t idx = 0; idx < lts.mPluginData.Length(); idx++) {
+        if (!(mCachedPluginData[idx] == lts.mPluginData[idx])) {
+          pluginMetricsChanged = true;
+          break;
+        }
+      }
+    } else {
+      // array lengths don't match, need to update
+      pluginMetricsChanged = true;
+    }
+  } else {
+    // exchanging layer trees, we need to update
+    pluginMetricsChanged = true;
+  }
+
+  // Check if plugin windows are currently hidden due to scrolling
+  if (mDeferPluginWindows) {
+    PLUGINS_LOG("[%" PRIu64 "] suppressing", aId);
+    return false;
+  }
+
+  if (!lts.mPluginData.Length()) {
+    // We will pass through here in cases where the previous shadow layer
+    // tree contained visible plugins and the new tree does not. All we need
+    // to do here is hide the plugins for the old tree, so don't waste time
+    // calculating clipping.
+    mPluginsLayerOffset = nsIntPoint(0,0);
+    mPluginsLayerVisibleRegion.SetEmpty();
+    uintptr_t parentWidget = (uintptr_t)lts.mParent->GetWidget();
+    Unused << lts.mParent->SendHideAllPlugins(parentWidget);
+    lts.mUpdatedPluginDataAvailable = false;
+    PLUGINS_LOG("[%" PRIu64 "] hide all", aId);
+  } else {
     // Retrieve the offset and visible region of the layer that hosts
     // the plugins, CompositorChild needs these in calculating proper
     // plugin clipping.
@@ -2003,48 +2231,90 @@ UpdatePluginWindowState(uint64_t aId)
       nsIntPoint offset;
       nsIntRegion visibleRegion;
       if (contentRoot->GetVisibleRegionRelativeToRootLayer(visibleRegion,
-                                                           &offset)) {
-        unused <<
-          lts.mParent->SendUpdatePluginConfigurations(offset, visibleRegion,
-                                                      lts.mPluginData);
+                                                            &offset)) {
+        // Check to see if these values have changed, if so we need to
+        // update plugin window position within the window.
+        if (!pluginMetricsChanged &&
+            mPluginsLayerVisibleRegion == visibleRegion &&
+            mPluginsLayerOffset == offset) {
+          PLUGINS_LOG("[%" PRIu64 "] no change", aId);
+          return false;
+        }
+        mPluginsLayerOffset = offset;
+        mPluginsLayerVisibleRegion = visibleRegion;
+        Unused << lts.mParent->SendUpdatePluginConfigurations(
+          LayoutDeviceIntPoint::FromUnknownPoint(offset),
+          LayoutDeviceIntRegion::FromUnknownRegion(visibleRegion),
+          lts.mPluginData);
         lts.mUpdatedPluginDataAvailable = false;
+        PLUGINS_LOG("[%" PRIu64 "] updated", aId);
       } else {
-        shouldHidePlugin = true;
+        PLUGINS_LOG("[%" PRIu64 "] no visibility data", aId);
+        return false;
       }
+    } else {
+      PLUGINS_LOG("[%" PRIu64 "] no content root", aId);
+      return false;
     }
   }
 
-  // Hide all plugins, this remote layer tree is no longer active
-  if (shouldHidePlugin) {
-    // hide all the plugins
-    for (uint32_t pluginsIdx = 0; pluginsIdx < lts.mPluginData.Length();
-         pluginsIdx++) {
-      lts.mPluginData[pluginsIdx].visible() = false;
-    }
-    nsIntPoint offset;
-    nsIntRegion region;
-    unused << lts.mParent->SendUpdatePluginConfigurations(offset,
-                                                          region,
-                                                          lts.mPluginData);
-    // Clear because there's no recovering from this until we receive
-    // new shadow layer plugin data in ShadowLayersUpdated.
-    lts.mPluginData.Clear();
+  mLastPluginUpdateLayerTreeId = aId;
+  mCachedPluginData = lts.mPluginData;
+  return true;
+}
+
+void
+CompositorParent::ScheduleShowAllPluginWindows()
+{
+  CancelableTask *pluginTask =
+    NewRunnableMethod(this, &CompositorParent::ShowAllPluginWindows);
+  MOZ_ASSERT(CompositorLoop());
+  CompositorLoop()->PostTask(FROM_HERE, pluginTask);
+}
+
+void
+CompositorParent::ShowAllPluginWindows()
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  mDeferPluginWindows = false;
+  ScheduleComposition();
+}
+
+void
+CompositorParent::ScheduleHideAllPluginWindows()
+{
+  CancelableTask *pluginTask =
+    NewRunnableMethod(this, &CompositorParent::HideAllPluginWindows);
+  MOZ_ASSERT(CompositorLoop());
+  CompositorLoop()->PostTask(FROM_HERE, pluginTask);
+}
+
+void
+CompositorParent::HideAllPluginWindows()
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  // No plugins in the cache implies no plugins to manage
+  // in this content.
+  if (!mCachedPluginData.Length() || mDeferPluginWindows) {
+    return;
   }
+  mDeferPluginWindows = true;
+  mPluginUpdateResponsePending = true;
+  Unused << SendHideAllPlugins((uintptr_t)GetWidget());
+  ScheduleComposition();
 }
 #endif // #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 
 void
-CrossProcessCompositorParent::DidComposite(uint64_t aId)
+CrossProcessCompositorParent::DidComposite(uint64_t aId,
+                                           TimeStamp& aCompositeStart,
+                                           TimeStamp& aCompositeEnd)
 {
   sIndirectLayerTreesLock->AssertCurrentThreadOwns();
-  LayerTransactionParent *layerTree = sIndirectLayerTrees[aId].mLayerTree;
-  if (layerTree && layerTree->GetPendingTransactionId()) {
-    unused << SendDidComposite(aId, layerTree->GetPendingTransactionId());
+  if (LayerTransactionParent *layerTree = sIndirectLayerTrees[aId].mLayerTree) {
+    Unused << SendDidComposite(aId, layerTree->GetPendingTransactionId(), aCompositeStart, aCompositeEnd);
     layerTree->SetPendingTransactionId(0);
   }
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-  UpdatePluginWindowState(aId);
-#endif
 }
 
 void
@@ -2068,7 +2338,7 @@ CrossProcessCompositorParent::NotifyClearCachedResources(LayerTransactionParent*
   uint64_t id = aLayerTree->GetId();
   MOZ_ASSERT(id != 0);
 
-  nsRefPtr<CompositorUpdateObserver> observer;
+  RefPtr<CompositorUpdateObserver> observer;
   { // scope lock
     MonitorAutoLock lock(*sIndirectLayerTreesLock);
     observer = sIndirectLayerTrees[id].mLayerTreeClearedObserver;
@@ -2125,6 +2395,21 @@ CrossProcessCompositorParent::ApplyAsyncProperties(
 }
 
 void
+CrossProcessCompositorParent::FlushApzRepaints(const LayerTransactionParent* aLayerTree)
+{
+  uint64_t id = aLayerTree->GetId();
+  MOZ_ASSERT(id != 0);
+  const CompositorParent::LayerTreeState* state =
+    CompositorParent::GetIndirectShadowTree(id);
+  if (!state) {
+    return;
+  }
+
+  MOZ_ASSERT(state->mParent);
+  state->mParent->FlushApzRepaints(aLayerTree);
+}
+
+void
 CrossProcessCompositorParent::GetAPZTestData(const LayerTransactionParent* aLayerTree,
                                              APZTestData* aOutData)
 {
@@ -2142,11 +2427,10 @@ CrossProcessCompositorParent::SetConfirmedTargetAPZC(const LayerTransactionParen
   uint64_t id = aLayerTree->GetId();
   MOZ_ASSERT(id != 0);
   const CompositorParent::LayerTreeState* state = CompositorParent::GetIndirectShadowTree(id);
-  if (!state) {
+  if (!state || !state->mParent) {
     return;
   }
 
-  MOZ_ASSERT(state->mParent);
   state->mParent->SetConfirmedTargetAPZC(aLayerTree, aInputBlockId, aTargets);
 }
 
@@ -2166,6 +2450,7 @@ CrossProcessCompositorParent::GetCompositionManager(LayerTransactionParent* aLay
 void
 CrossProcessCompositorParent::DeferredDestroy()
 {
+  MOZ_ASSERT(mCompositorThreadHolder);
   mCompositorThreadHolder = nullptr;
   mSelfRef = nullptr;
 }
@@ -2191,6 +2476,9 @@ CrossProcessCompositorParent::CloneToplevel(const InfallibleTArray<mozilla::ipc:
         CompositorParent::Create(transport, base::GetProcId(aPeerProcess));
       compositor->CloneManagees(this, aCtx);
       compositor->IToplevelProtocol::SetTransport(transport);
+      // The reference to the compositor thread is held in OnChannelConnected().
+      // We need to do this for cloned actors, too.
+      compositor->OnChannelConnected(base::GetProcId(aPeerProcess));
       return compositor;
     }
   }

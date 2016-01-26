@@ -64,18 +64,6 @@ var simple_entries = [
     name: 'cat_in_the_hat',
     request: new Request('http://example.com/cat/in/the/hat'),
     response: new Response('')
-  },
-
-  {
-    name: 'secret_cat',
-    request: new Request('http://tom:jerry@example.com/cat'),
-    response: new Response('')
-  },
-
-  {
-    name: 'top_secret_cat',
-    request: new Request('http://tom:j3rry@example.com/cat'),
-    response: new Response('')
   }
 ];
 
@@ -109,7 +97,7 @@ var vary_entries = [
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll('not-present-in-the-cache')
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result, [],
             'Cache.matchAll should resolve with an empty array on failure.');
         });
@@ -126,23 +114,23 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(entries.a.request.url)
       .then(function(result) {
-          assert_array_objects_equals(result, [entries.a.response],
-                                      'Cache.matchAll should match by URL.');
+          assert_response_array_equals(result, [entries.a.response],
+                                       'Cache.matchAll should match by URL.');
         });
   }, 'Cache.matchAll with URL');
 
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(entries.a.request.url)
       .then(function(result) {
-          assert_object_equals(result, entries.a.response,
-                               'Cache.match should match by URL.');
+          assert_response_equals(result, entries.a.response,
+                                 'Cache.match should match by URL.');
         });
   }, 'Cache.match with URL');
 
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(entries.a.request)
       .then(function(result) {
-          assert_array_objects_equals(
+          assert_response_array_equals(
             result, [entries.a.response],
             'Cache.matchAll should match by Request.');
         });
@@ -151,15 +139,15 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(entries.a.request)
       .then(function(result) {
-          assert_object_equals(result, entries.a.response,
-                               'Cache.match should match by Request.');
+          assert_response_equals(result, entries.a.response,
+                                 'Cache.match should match by Request.');
         });
   }, 'Cache.match with Request');
 
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(new Request(entries.a.request.url))
       .then(function(result) {
-          assert_array_objects_equals(
+          assert_response_array_equals(
             result, [entries.a.response],
             'Cache.matchAll should match by Request.');
         });
@@ -168,8 +156,8 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(new Request(entries.a.request.url))
       .then(function(result) {
-          assert_object_equals(result, entries.a.response,
-                               'Cache.match should match by Request.');
+          assert_response_equals(result, entries.a.response,
+                                 'Cache.match should match by Request.');
         });
   }, 'Cache.match with new Request');
 
@@ -177,7 +165,7 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(entries.a.request,
                           {ignoreSearch: true})
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
               entries.a.response,
@@ -194,7 +182,7 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(entries.a.request,
                        {ignoreSearch: true})
       .then(function(result) {
-          assert_object_in_array(
+          assert_response_in_array(
             result,
             [
               entries.a.response,
@@ -211,7 +199,7 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(entries.a_with_query.request,
                           {ignoreSearch: true})
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
               entries.a.response,
@@ -227,7 +215,7 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(entries.a_with_query.request,
                        {ignoreSearch: true})
       .then(function(result) {
-          assert_object_in_array(
+          assert_response_in_array(
             result,
             [
               entries.a.response,
@@ -242,7 +230,7 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll(entries.cat.request.url + '#mouse')
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
               entries.cat.response,
@@ -254,15 +242,15 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.match(entries.cat.request.url + '#mouse')
       .then(function(result) {
-          assert_object_equals(result, entries.cat.response,
-                               'Cache.match should ignore URL fragment.');
+          assert_response_equals(result, entries.cat.response,
+                                 'Cache.match should ignore URL fragment.');
         });
   }, 'Cache.match with URL containing fragment');
 
 prepopulated_cache_test(simple_entries, function(cache, entries) {
     return cache.matchAll('http')
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result, [],
             'Cache.matchAll should treat query as a URL and not ' +
             'just a string fragment.');
@@ -279,28 +267,10 @@ prepopulated_cache_test(simple_entries, function(cache, entries) {
         });
   }, 'Cache.match with string fragment "http" as query');
 
-prepopulated_cache_test(simple_entries, function(cache, entries) {
-    return cache.matchAll(entries.secret_cat.request.url)
-      .then(function(result) {
-          assert_array_equivalent(
-            result, [entries.secret_cat.response],
-            'Cache.matchAll should not ignore embedded credentials');
-        });
-  }, 'Cache.matchAll with URL containing credentials');
-
-prepopulated_cache_test(simple_entries, function(cache, entries) {
-    return cache.match(entries.secret_cat.request.url)
-      .then(function(result) {
-          assert_object_equals(
-            result, entries.secret_cat.response,
-            'Cache.match should not ignore embedded credentials');
-        });
-  }, 'Cache.match with URL containing credentials');
-
 prepopulated_cache_test(vary_entries, function(cache, entries) {
     return cache.matchAll('http://example.com/c')
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
               entries.vary_cookie_absent.response
@@ -316,7 +286,7 @@ prepopulated_cache_test(vary_entries, function(cache, entries) {
                         {headers: {'Cookies': 'none-of-the-above'}}));
         })
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
             ],
@@ -331,7 +301,7 @@ prepopulated_cache_test(vary_entries, function(cache, entries) {
                         {headers: {'Cookies': 'is-for-cookie'}}));
         })
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [entries.vary_cookie_is_cookie.response],
             'Cache.matchAll should match the entire header if a vary header ' +
@@ -342,7 +312,7 @@ prepopulated_cache_test(vary_entries, function(cache, entries) {
 prepopulated_cache_test(vary_entries, function(cache, entries) {
     return cache.match('http://example.com/c')
       .then(function(result) {
-          assert_object_in_array(
+          assert_response_in_array(
             result,
             [
               entries.vary_cookie_absent.response
@@ -355,7 +325,7 @@ prepopulated_cache_test(vary_entries, function(cache, entries) {
     return cache.matchAll('http://example.com/c',
                           {ignoreVary: true})
       .then(function(result) {
-          assert_array_equivalent(
+          assert_response_array_equivalent(
             result,
             [
               entries.vary_cookie_is_cookie.response,
@@ -383,7 +353,7 @@ cache_test(function(cache) {
           return cache.match(request.url);
         })
       .then(function(result) {
-          assert_object_equals(
+          assert_response_equals(
             result, response,
             'Cache.match should return a Response object that has the same ' +
             'properties as the stored response.');

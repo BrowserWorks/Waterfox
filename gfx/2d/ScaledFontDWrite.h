@@ -19,14 +19,23 @@ class ScaledFontDWrite final : public ScaledFontBase
 public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontDwrite)
   ScaledFontDWrite(IDWriteFontFace *aFont, Float aSize)
-    : mFontFace(aFont)
-    , ScaledFontBase(aSize)
+    : ScaledFontBase(aSize)
+    , mFont(nullptr)
+    , mFontFamily(nullptr)
+    , mFontFace(aFont)
   {}
-  ScaledFontDWrite(uint8_t *aData, uint32_t aSize, uint32_t aIndex, Float aGlyphSize);
+
+  ScaledFontDWrite(IDWriteFont* aFont, IDWriteFontFamily* aFontFamily,
+                   IDWriteFontFace *aFontFace, Float aSize)
+    : ScaledFontBase(aSize)
+    , mFont(aFont)
+    , mFontFamily(aFontFamily)
+    , mFontFace(aFontFace)
+  {}
 
   virtual FontType GetType() const { return FontType::DWRITE; }
 
-  virtual TemporaryRef<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
+  virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
   virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint);
 
   void CopyGlyphsToSink(const GlyphBuffer &aBuffer, ID2D1GeometrySink *aSink);
@@ -36,14 +45,17 @@ public:
   virtual AntialiasMode GetDefaultAAMode();
 
 #ifdef USE_SKIA
-  virtual SkTypeface* GetSkTypeface()
-  {
-    MOZ_ASSERT(false, "Skia and DirectWrite do not mix");
-    return nullptr;
-  }
+  virtual SkTypeface* GetSkTypeface();
 #endif
 
+  RefPtr<IDWriteFont> mFont;
+  RefPtr<IDWriteFontFamily> mFontFamily;
   RefPtr<IDWriteFontFace> mFontFace;
+
+protected:
+#ifdef USE_CAIRO_SCALED_FONT
+  cairo_font_face_t* GetCairoFontFace() override;
+#endif
 };
 
 class GlyphRenderingOptionsDWrite : public GlyphRenderingOptions

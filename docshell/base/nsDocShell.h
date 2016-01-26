@@ -18,11 +18,13 @@
 #include "nsIContentViewerContainer.h"
 #include "nsIDOMStorageManager.h"
 #include "nsDocLoader.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "GeckoProfiler.h"
 #include "mozilla/dom/ProfileTimelineMarkerBinding.h"
+#include "mozilla/LinkedList.h"
 #include "jsapi.h"
 
 // Helper Classes
@@ -32,7 +34,9 @@
 #include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsContentUtils.h"
-#include "TimelineMarker.h"
+#include "timeline/ObservedDocShell.h"
+#include "timeline/TimelineConsumers.h"
+#include "timeline/TimelineMarker.h"
 
 // Threshold value in ms for META refresh based redirects
 #define REFRESH_REDIRECT_TIMER 15000
@@ -55,13 +59,14 @@
 #include "prtime.h"
 #include "nsRect.h"
 #include "Units.h"
+#include "nsIDeprecationWarner.h"
 
 namespace mozilla {
 namespace dom {
 class EventTarget;
-class URLSearchParams;
-}
-}
+typedef uint32_t ScreenOrientationInternal;
+} // namespace dom
+} // namespace mozilla
 
 class nsDocShell;
 class nsDOMNavigationTiming;
@@ -106,7 +111,7 @@ public:
 
   int32_t GetDelay() { return mDelay ;}
 
-  nsRefPtr<nsDocShell> mDocShell;
+  RefPtr<nsDocShell> mDocShell;
   nsCOMPtr<nsIURI> mURI;
   int32_t mDelay;
   bool mRepeat;
@@ -142,6 +147,7 @@ class nsDocShell final
   , public nsIClipboardCommands
   , public nsIDOMStorageManager
   , public nsINetworkInterceptController
+  , public nsIDeprecationWarner
   , public mozilla::SupportsWeakPtr<nsDocShell>
 {
   friend class nsDSURIContentListener;
@@ -173,6 +179,7 @@ public:
   NS_DECL_NSICLIPBOARDCOMMANDS
   NS_DECL_NSIWEBSHELLSERVICES
   NS_DECL_NSINETWORKINTERCEPTCONTROLLER
+  NS_DECL_NSIDEPRECATIONWARNER
   NS_FORWARD_SAFE_NSIDOMSTORAGEMANAGER(TopSessionStorageManager())
 
   NS_IMETHOD Stop() override
@@ -224,6 +231,7 @@ public:
   NS_IMETHOD SetPrivateBrowsing(bool) override;
   NS_IMETHOD GetUseRemoteTabs(bool*) override;
   NS_IMETHOD SetRemoteTabs(bool) override;
+  NS_IMETHOD GetOriginAttributes(JS::MutableHandle<JS::Value>) override;
 
   // Restores a cached presentation from history (mLSHE).
   // This method swaps out the content viewer and simulates loads for
@@ -256,20 +264,48 @@ public:
   // is no longer applied
   void NotifyAsyncPanZoomStopped();
 
-  // Add new profile timeline markers to this docShell. This will only add
-  // markers if the docShell is currently recording profile timeline markers.
-  // See nsIDocShell::recordProfileTimelineMarkers
-  void AddProfileTimelineMarker(const char* aName, TracingMetadata aMetaData);
-  void AddProfileTimelineMarker(mozilla::UniquePtr<TimelineMarker>&& aMarker);
+  void SetInFrameSwap(bool aInSwap)
+  {
+    mInFrameSwap = aInSwap;
+  }
+  bool InFrameSwap();
 
-  // Global counter for how many docShells are currently recording profile
-  // timeline markers
-  static unsigned long gProfileTimelineRecordingsCount;
+  mozilla::DocShellOriginAttributes GetOriginAttributes();
 
+  void GetInterceptedDocumentId(nsAString& aId)
+  {
+    aId = mInterceptedDocumentId;
+  }
+
+private:
+  // An observed docshell wrapper is created when recording markers is enabled.
+  mozilla::UniquePtr<mozilla::ObservedDocShell> mObserved;
+
+  // It is necessary to allow adding a timeline marker wherever a docshell
+  // instance is available. This operation happens frequently and needs to
+  // be very fast, so instead of using a Map or having to search for some
+  // docshell-specific markers storage, a pointer to an `ObservedDocShell` is
+  // is stored on docshells directly.
+  friend void mozilla::TimelineConsumers::AddConsumer(nsDocShell*);
+  friend void mozilla::TimelineConsumers::RemoveConsumer(nsDocShell*);
+  friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
+    nsDocShell*, const char*, MarkerTracingType);
+  friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
+    nsDocShell*, const char*, const TimeStamp&, MarkerTracingType);
+  friend void mozilla::TimelineConsumers::AddMarkerForDocShell(
+    nsDocShell*, UniquePtr<AbstractTimelineMarker>&&);
+
+public:
   // Tell the favicon service that aNewURI has the same favicon as aOldURI.
   static void CopyFavicon(nsIURI* aOldURI,
                           nsIURI* aNewURI,
+                          nsIPrincipal* aLoadingPrincipal,
                           bool aInPrivateBrowsing);
+
+  static nsDocShell* Cast(nsIDocShell* aDocShell)
+  {
+    return static_cast<nsDocShell*>(aDocShell);
+  }
 
 protected:
   virtual ~nsDocShell();
@@ -308,7 +344,12 @@ protected:
   // not have an owner on the channel should just pass null.
   // If aSrcdoc is not void, the load will be considered as a srcdoc load,
   // and the contents of aSrcdoc will be loaded instead of aURI.
+  // aOriginalURI will be set as the originalURI on the channel that does the
+  // load. If aOriginalURI is null, aURI will be set as the originalURI.
+  // If aLoadReplace is true, OLOAD_REPLACE flag will be set to the nsIChannel.
   nsresult DoURILoad(nsIURI* aURI,
+                     nsIURI* aOriginalURI,
+                     bool aLoadReplace,
                      nsIURI* aReferrer,
                      bool aSendReferrer,
                      uint32_t aReferrerPolicy,
@@ -449,6 +490,8 @@ protected:
                                      nsIChannel* aNewChannel,
                                      uint32_t aRedirectFlags,
                                      uint32_t aStateFlags) override;
+
+  nsresult SetIsActiveInternal(bool aIsActive, bool aIsHidden);
 
   /**
    * Helper function that determines if channel is an HTTP POST.
@@ -693,6 +736,14 @@ protected:
    */
   void MaybeInitTiming();
 
+  bool DisplayLoadError(nsresult aError, nsIURI* aURI, const char16_t* aURL,
+                        nsIChannel* aFailedChannel)
+  {
+    bool didDisplayLoadError = false;
+    DisplayLoadError(aError, aURI, aURL, aFailedChannel, &didDisplayLoadError);
+    return didDisplayLoadError;
+  }
+
 public:
   // Event type dispatched by RestorePresentation
   class RestorePresentationEvent : public nsRunnable
@@ -702,7 +753,7 @@ public:
     explicit RestorePresentationEvent(nsDocShell* aDs) : mDocShell(aDs) {}
     void Revoke() { mDocShell = nullptr; }
   private:
-    nsRefPtr<nsDocShell> mDocShell;
+    RefPtr<nsDocShell> mDocShell;
   };
 
 protected:
@@ -741,6 +792,7 @@ protected:
   nsIntRect mBounds;
   nsString mName;
   nsString mTitle;
+  nsString mCustomUserAgent;
 
   /**
    * Content-Type Hint of the most-recently initiated load. Used for
@@ -751,7 +803,7 @@ protected:
 
   nsCOMPtr<nsISupportsArray> mRefreshURIList;
   nsCOMPtr<nsISupportsArray> mSavedRefreshURIList;
-  nsRefPtr<nsDSURIContentListener> mContentListener;
+  RefPtr<nsDSURIContentListener> mContentListener;
   nsCOMPtr<nsIContentViewer> mContentViewer;
   nsCOMPtr<nsIWidget> mParentWidget;
 
@@ -759,7 +811,7 @@ protected:
   nsCOMPtr<nsIURI> mCurrentURI;
   nsCOMPtr<nsIURI> mReferrerURI;
   uint32_t mReferrerPolicy;
-  nsRefPtr<nsGlobalWindow> mScriptGlobal;
+  RefPtr<nsGlobalWindow> mScriptGlobal;
   nsCOMPtr<nsISHistory> mSessionHistory;
   nsCOMPtr<nsIGlobalHistory2> mGlobalHistory;
   nsCOMPtr<nsIWebBrowserFind> mFind;
@@ -802,9 +854,6 @@ protected:
   nsCOMPtr<nsIURI> mFailedURI;
   nsCOMPtr<nsIChannel> mFailedChannel;
   uint32_t mFailedLoadType;
-
-  // window.location.searchParams is updated in sync with this object.
-  nsRefPtr<mozilla::dom::URLSearchParams> mURLSearchParams;
 
   // Set in DoURILoad when either the LOAD_RELOAD_ALLOW_MIXED_CONTENT flag or
   // the LOAD_NORMAL_ALLOW_MIXED_CONTENT flag is set.
@@ -862,6 +911,10 @@ protected:
   };
   FullscreenAllowedState mFullscreenAllowed;
 
+  // The orientation lock as described by
+  // https://w3c.github.io/screen-orientation/
+  mozilla::dom::ScreenOrientationInternal mOrientationLock;
+
   // Cached value of the "browser.xul.error_pages.enabled" preference.
   static bool sUseErrorPages;
 
@@ -890,6 +943,7 @@ protected:
   bool mUseRemoteTabs;
   bool mDeviceSizeIsPageSize;
   bool mWindowDraggingAllowed;
+  bool mInFrameSwap;
 
   // Because scriptability depends on the mAllowJavascript values of our
   // ancestors, we cache the effective scriptability and recompute it when
@@ -934,7 +988,7 @@ protected:
 
   static nsIURIFixup* sURIFixup;
 
-  nsRefPtr<nsDOMNavigationTiming> mTiming;
+  RefPtr<nsDOMNavigationTiming> mTiming;
 
   // This flag means that mTiming has been initialized but nulled out.
   // We will check the innerWin's timing before creating a new one
@@ -954,9 +1008,18 @@ protected:
   // find it by walking up the docshell hierarchy.)
   uint32_t mOwnOrContainingAppId;
 
+  // userContextId signifying which container we are in
+  uint32_t mUserContextId;
+
   nsString mPaymentRequestId;
 
   nsString GetInheritedPaymentRequestId();
+
+  // The packageId for a signed packaged iff this docShell is created
+  // for a signed package.
+  nsString mSignedPkg;
+
+  nsString mInterceptedDocumentId;
 
 private:
   nsCString mForcedCharset;
@@ -972,14 +1035,6 @@ private:
   // A depth count of how many times NotifyRunToCompletionStart
   // has been called without a matching NotifyRunToCompletionStop.
   uint32_t mJSRunToCompletionDepth;
-
-  // True if recording profiles.
-  bool mProfileTimelineRecording;
-
-  nsTArray<mozilla::UniquePtr<TimelineMarker>> mProfileTimelineMarkers;
-
-  // Get rid of all the timeline markers accumulated so far
-  void ClearProfileTimelineMarkers();
 
   // Separate function to do the actual name (i.e. not _top, _self etc.)
   // searching for FindItemWithName.

@@ -30,6 +30,7 @@
 
 #undef LOG
 #include <android/log.h>
+#undef ALOGE
 #define ALOGE(args...)  __android_log_print(ANDROID_LOG_ERROR, "gonkperm" , ## args)
 
 using namespace android;
@@ -51,7 +52,7 @@ class GonkPermissionChecker : public nsRunnable {
 public:
   static already_AddRefed<GonkPermissionChecker> Inspect(int32_t pid)
   {
-    nsRefPtr<GonkPermissionChecker> that = new GonkPermissionChecker(pid);
+    RefPtr<GonkPermissionChecker> that = new GonkPermissionChecker(pid);
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
     MOZ_ASSERT(mainThread);
     SyncRunnable::DispatchToThread(mainThread, that);
@@ -89,9 +90,11 @@ GonkPermissionChecker::Run()
   }
 
   // Now iterate its apps...
-  for (uint32_t i = 0; i < contentParent->ManagedPBrowserParent().Length(); i++) {
+  const ManagedContainer<dom::PBrowserParent>& browsers =
+    contentParent->ManagedPBrowserParent();
+  for (auto iter = browsers.ConstIter(); !iter.Done(); iter.Next()) {
     dom::TabParent *tabParent =
-      static_cast<dom::TabParent*>(contentParent->ManagedPBrowserParent()[i]);
+      static_cast<dom::TabParent*>(iter.Get()->GetKey());
     nsCOMPtr<mozIApplication> mozApp = tabParent->GetOwnOrContainingApp();
     if (!mozApp) {
       continue;
@@ -120,7 +123,7 @@ GonkPermissionService::checkPermission(const String16& permission, int32_t pid,
   String8 perm8(permission);
 
   // Some ril implementations need android.permission.MODIFY_AUDIO_SETTINGS
-  if ((uid == AID_RADIO || uid == AID_BLUETOOTH) &&
+  if ((uid == AID_SYSTEM || uid == AID_RADIO || uid == AID_BLUETOOTH) &&
       perm8 == "android.permission.MODIFY_AUDIO_SETTINGS") {
     return true;
   }
@@ -151,7 +154,7 @@ GonkPermissionService::checkPermission(const String16& permission, int32_t pid,
 
   // Camera/audio record permissions are allowed for apps with the
   // "camera" permission.
-  nsRefPtr<GonkPermissionChecker> checker =
+  RefPtr<GonkPermissionChecker> checker =
     GonkPermissionChecker::Inspect(pid);
   bool canUseCamera = checker->CanUseCamera();
   if (!canUseCamera) {

@@ -8,6 +8,7 @@
 #include "mozilla/dom/MediaStreamAudioSourceNodeBinding.h"
 #include "AudioNodeEngine.h"
 #include "AudioNodeExternalInputStream.h"
+#include "AudioStreamTrack.h"
 #include "nsIDocument.h"
 #include "mozilla/CORSMode.h"
 
@@ -30,19 +31,45 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(MediaStreamAudioSourceNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(MediaStreamAudioSourceNode, AudioNode)
 
-MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext,
-                                                       DOMMediaStream* aMediaStream)
+MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext)
   : AudioNode(aContext,
               2,
               ChannelCountMode::Max,
-              ChannelInterpretation::Speakers),
-    mInputStream(aMediaStream)
+              ChannelInterpretation::Speakers)
 {
+}
+
+/* static */ already_AddRefed<MediaStreamAudioSourceNode>
+MediaStreamAudioSourceNode::Create(AudioContext* aContext,
+                                   DOMMediaStream* aStream, ErrorResult& aRv)
+{
+  RefPtr<MediaStreamAudioSourceNode> node =
+    new MediaStreamAudioSourceNode(aContext);
+
+  node->Init(aStream, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  return node.forget();
+}
+
+void
+MediaStreamAudioSourceNode::Init(DOMMediaStream* aMediaStream, ErrorResult& aRv)
+{
+  MOZ_ASSERT(aMediaStream);
+  MediaStream* inputStream = aMediaStream->GetPlaybackStream();
+  MediaStreamGraph* graph = Context()->Graph();
+  if (NS_WARN_IF(graph != inputStream->Graph())) {
+    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return;
+  }
+
+  mInputStream = aMediaStream;
   AudioNodeEngine* engine = new MediaStreamAudioSourceNodeEngine(this);
-  mStream = aContext->Graph()->CreateAudioNodeExternalInputStream(engine);
+  mStream = AudioNodeExternalInputStream::Create(graph, engine);
   ProcessedMediaStream* outputStream = static_cast<ProcessedMediaStream*>(mStream.get());
-  mInputPort = outputStream->AllocateInputPort(aMediaStream->GetStream(),
-                                               MediaInputPort::FLAG_BLOCK_INPUT);
+  mInputPort = outputStream->AllocateInputPort(inputStream);
   mInputStream->AddConsumerToKeepAlive(static_cast<nsIDOMEventTarget*>(this));
 
   PrincipalChanged(mInputStream); // trigger enabling/disabling of the connector
@@ -80,7 +107,7 @@ MediaStreamAudioSourceNode::PrincipalChanged(DOMMediaStream* aDOMMediaStream)
     if (doc) {
       nsIPrincipal* docPrincipal = doc->NodePrincipal();
       nsIPrincipal* streamPrincipal = mInputStream->GetPrincipal();
-      if (NS_FAILED(docPrincipal->Subsumes(streamPrincipal, &subsumes))) {
+      if (!streamPrincipal || NS_FAILED(docPrincipal->Subsumes(streamPrincipal, &subsumes))) {
         subsumes = false;
       }
     }
@@ -122,5 +149,5 @@ MediaStreamAudioSourceNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGi
   return MediaStreamAudioSourceNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla

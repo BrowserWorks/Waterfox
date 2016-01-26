@@ -49,6 +49,8 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/dom/EncodingUtils.h"
+#include "nsContainerFrame.h"
+#include "nsBlockFrame.h"
 #include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
@@ -144,7 +146,7 @@ protected:
 
   nsCOMPtr<nsIDocument>          mDocument;
   nsCOMPtr<nsISelection>         mSelection;
-  nsRefPtr<nsRange>              mRange;
+  RefPtr<nsRange>              mRange;
   nsCOMPtr<nsINode>              mNode;
   nsCOMPtr<nsIOutputStream>      mStream;
   nsCOMPtr<nsIContentSerializer> mSerializer;
@@ -324,7 +326,45 @@ nsDocumentEncoder::IncludeInContext(nsINode *aNode)
 
 static
 bool
-IsInvisibleBreak(nsINode *aNode) {
+LineHasNonEmptyContentWorker(nsIFrame* aFrame)
+{
+  // Look for non-empty frames, but ignore inline and br frames.
+  // For inline frames, descend into the children, if any.
+  if (aFrame->GetType() == nsGkAtoms::inlineFrame) {
+    nsIFrame* child = aFrame->GetFirstPrincipalChild();
+    while (child) {
+      if (LineHasNonEmptyContentWorker(child)) {
+        return true;
+      }
+      child = child->GetNextSibling();
+    }
+  } else {
+    if (aFrame->GetType() != nsGkAtoms::brFrame &&
+        !aFrame->IsEmpty()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static
+bool
+LineHasNonEmptyContent(nsLineBox* aLine)
+{
+  int32_t count = aLine->GetChildCount();
+  for (nsIFrame* frame = aLine->mFirstChild; count > 0;
+       --count, frame = frame->GetNextSibling()) {
+    if (LineHasNonEmptyContentWorker(frame)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static
+bool
+IsInvisibleBreak(nsINode *aNode)
+{
   if (!aNode->IsElement() || !aNode->IsEditable()) {
     return false;
   }
@@ -333,14 +373,36 @@ IsInvisibleBreak(nsINode *aNode) {
     return false;
   }
 
-  // If the BRFrame has caused a visible line break, it should have a next
-  // sibling, or otherwise no siblings (or immediately after a br) and a
-  // non-zero height.
-  bool visible = frame->GetNextSibling() ||
-                 ((!frame->GetPrevSibling() ||
-                   frame->GetPrevSibling()->GetType() == nsGkAtoms::brFrame) &&
-                  frame->GetRect().Height() != 0);
-  return !visible;
+  nsContainerFrame* f = frame->GetParent();
+  while (f && f->IsFrameOfType(nsBox::eLineParticipant)) {
+    f = f->GetParent();
+  }
+  nsBlockFrame* blockAncestor = do_QueryFrame(f);
+  if (!blockAncestor) {
+    // The container frame doesn't support line breaking.
+    return false;
+  }
+
+  bool valid = false;
+  nsBlockInFlowLineIterator iter(blockAncestor, frame, &valid);
+  if (!valid) {
+    return false;
+  }
+
+  bool lineNonEmpty = LineHasNonEmptyContent(iter.GetLine());
+
+  while (iter.Next()) {
+    auto currentLine = iter.GetLine();
+    // Completely skip empty lines.
+    if (!currentLine->IsEmpty()) {
+      // If we come across an inline line, the BR has caused a visible line break.
+      if (currentLine->IsInline()) {
+        return false;
+      }
+    }
+  }
+
+  return lineNonEmpty;
 }
 
 nsresult
@@ -1038,6 +1100,9 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
   static const size_t bufferSize = 2048;
   if (!mCachedBuffer) {
     mCachedBuffer = nsStringBuffer::Alloc(bufferSize).take();
+    if (NS_WARN_IF(!mCachedBuffer)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
   }
   NS_ASSERTION(!mCachedBuffer->IsReadonly(),
                "DocumentEncoder shouldn't keep reference to non-readonly buffer!");
@@ -1245,8 +1310,6 @@ nsresult
 NS_NewTextEncoder(nsIDocumentEncoder** aResult)
 {
   *aResult = new nsDocumentEncoder;
-  if (!*aResult)
-    return NS_ERROR_OUT_OF_MEMORY;
  NS_ADDREF(*aResult);
  return NS_OK;
 }
@@ -1367,10 +1430,6 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     return NS_ERROR_NULL_POINTER;
   range->GetCommonAncestorContainer(getter_AddRefs(commonParent));
 
-  // Thunderbird's msg compose code abuses the HTML copy encoder and gets
-  // confused if mIsTextWidget ends up becoming true, so for now we skip
-  // this logic in Thunderbird.
-#ifndef MOZ_THUNDERBIRD
   for (nsCOMPtr<nsIContent> selContent(do_QueryInterface(commonParent));
        selContent;
        selContent = selContent->GetParent())
@@ -1381,6 +1440,46 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
       mIsTextWidget = true;
       break;
     }
+#ifdef MOZ_THUNDERBIRD
+    else if (selContent->IsHTMLElement(nsGkAtoms::body)) {
+      // Currently, setting mIsTextWidget to 'true' will result in the selection
+      // being encoded/copied as pre-formatted plain text.
+      // This is fine for copying pre-formatted plain text with Firefox, it is
+      // already not correct for copying pre-formatted "rich" text (bold, colour)
+      // with Firefox. As long as the serialisers aren't fixed, copying
+      // pre-formatted text in Firefox is broken. If we set mIsTextWidget,
+      // pre-formatted plain text is copied, but pre-formatted "rich" text loses
+      // the "rich" formatting. If we don't set mIsTextWidget, "rich" text
+      // attributes aren't lost, but white-space is lost.
+      // So far the story for Firefox.
+      //
+      // Thunderbird has two *conflicting* requirements.
+      // Case 1:
+      // When selecting and copying text, even pre-formatted text, as a quote
+      // to be placed into a reply, we *always* expect HTML to be copied.
+      // Case 2:
+      // When copying text in a so-called "plain text" message, that is
+      // one where the body carries style "white-space:pre-wrap", the text should
+      // be copied as pre-formatted plain text.
+      //
+      // Therefore the following code checks for "pre-wrap" on the body.
+      // This is a terrible hack.
+      //
+      // The proper fix would be this:
+      // For case 1:
+      // Communicate the fact that HTML is required to EncodeToString(),
+      // bug 1141786.
+      // For case 2:
+      // Wait for Firefox to get fixed to detect pre-formatting correctly,
+      // bug 1174452.
+      nsAutoString styleVal;
+      if (selContent->GetAttr(kNameSpaceID_None, nsGkAtoms::style, styleVal) &&
+          styleVal.Find(NS_LITERAL_STRING("pre-wrap")) != kNotFound) {
+        mIsTextWidget = true;
+        break;
+      }
+    }
+#endif
   }
 
   // normalize selection if we are not in a widget
@@ -1390,7 +1489,6 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     mMimeType.AssignLiteral("text/plain");
     return NS_OK;
   }
-#endif
 
   // also consider ourselves in a text widget if we can't find an html document
   nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(mDocument);
@@ -1983,8 +2081,6 @@ nsresult
 NS_NewHTMLCopyTextEncoder(nsIDocumentEncoder** aResult)
 {
   *aResult = new nsHTMLCopyEncoder;
-  if (!*aResult)
-    return NS_ERROR_OUT_OF_MEMORY;
  NS_ADDREF(*aResult);
  return NS_OK;
 }

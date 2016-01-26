@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = 'c9a12e81-ea5e-40f9-8bf4-acee34621671';
 const channelID = 'c0660af8-b532-4931-81f0-9fd27a12d6ab';
@@ -11,19 +11,16 @@ const channelID = 'c0660af8-b532-4931-81f0-9fd27a12d6ab';
 function run_test() {
   do_get_profile();
   setPrefs();
-  disableServiceWorkerEvents(
-    'https://example.net/page/invalid-endpoint'
-  );
   run_next_test();
 }
 
 add_task(function* test_register_invalid_endpoint() {
-  let db = new PushDB();
-  let promiseDB = promisifyDatabase(db);
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
 
-  PushService._generateID = () => channelID;
+  PushServiceWebSocket._generateID = () => channelID;
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
@@ -49,14 +46,14 @@ add_task(function* test_register_invalid_endpoint() {
   });
 
   yield rejects(
-    PushNotificationService.register(
-      'https://example.net/page/invalid-endpoint'),
-    function(error) {
-      return error && error.contains('Invalid pushEndpoint');
-    },
-    'Wrong error for invalid endpoint'
+    PushService.register({
+      scope: 'https://example.net/page/invalid-endpoint',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for invalid endpoint'
   );
 
-  let record = yield promiseDB.getByChannelID(channelID);
+  let record = yield db.getByKeyID(channelID);
   ok(!record, 'Should not store records with invalid endpoints');
 });

@@ -23,7 +23,9 @@ enum MyTestEnum {
              object obj1,
              object? obj2, sequence<Dict> seq, optional any any2,
              optional object obj3,
-             optional object? obj4),
+             optional object? obj4,
+             Uint8Array typedArr,
+             ArrayBuffer arrayBuf),
  JSImplementation="@mozilla.org/test-js-impl-interface;1"]
 interface TestJSImplInterface {
   // Integer types
@@ -550,6 +552,17 @@ interface TestJSImplInterface {
   void passDateMozMap(MozMap<Date> arg);
   Date receiveDate();
   Date? receiveNullableDate();
+
+  // Promise types
+  void passPromise(Promise<any> arg);
+  void passNullablePromise(Promise<any>? arg);
+  void passOptionalPromise(optional Promise<any> arg);
+  void passOptionalNullablePromise(optional Promise<any>? arg);
+  void passOptionalNullablePromiseWithDefaultValue(optional Promise<any>? arg = null);
+  void passPromiseSequence(sequence<Promise<any>> arg);
+  void passNullablePromiseSequence(sequence<Promise<any>?> arg);
+  Promise<any> receivePromise();
+  Promise<any> receiveAddrefedPromise();
 
   // binaryNames tests
   void methodRenamedFrom();

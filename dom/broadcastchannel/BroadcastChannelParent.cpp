@@ -18,27 +18,16 @@ using namespace ipc;
 
 namespace dom {
 
-BroadcastChannelParent::BroadcastChannelParent(
-                                            const PrincipalInfo& aPrincipalInfo,
-                                            const nsAString& aOrigin,
-                                            const nsAString& aChannel,
-                                            bool aPrivateBrowsing)
+BroadcastChannelParent::BroadcastChannelParent(const nsACString& aOrigin,
+                                               const nsAString& aChannel,
+                                               bool aPrivateBrowsing)
   : mService(BroadcastChannelService::GetOrCreate())
   , mOrigin(aOrigin)
   , mChannel(aChannel)
-  , mAppId(nsIScriptSecurityManager::UNKNOWN_APP_ID)
-  , mIsInBrowserElement(false)
   , mPrivateBrowsing(aPrivateBrowsing)
 {
   AssertIsOnBackgroundThread();
   mService->RegisterActor(this);
-
-  if (aPrincipalInfo.type() ==PrincipalInfo::TContentPrincipalInfo) {
-    const ContentPrincipalInfo& info =
-      aPrincipalInfo.get_ContentPrincipalInfo();
-    mAppId = info.appId();
-    mIsInBrowserElement = info.isInBrowserElement();
-  }
 }
 
 BroadcastChannelParent::~BroadcastChannelParent()
@@ -55,8 +44,7 @@ BroadcastChannelParent::RecvPostMessage(const ClonedMessageData& aData)
     return false;
   }
 
-  mService->PostMessage(this, aData, mOrigin, mAppId, mIsInBrowserElement,
-                        mChannel, mPrivateBrowsing);
+  mService->PostMessage(this, aData, mOrigin, mChannel, mPrivateBrowsing);
   return true;
 }
 
@@ -72,7 +60,7 @@ BroadcastChannelParent::RecvClose()
   mService->UnregisterActor(this);
   mService = nullptr;
 
-  unused << Send__delete__(this);
+  Unused << Send__delete__(this);
 
   return true;
 }
@@ -91,33 +79,21 @@ BroadcastChannelParent::ActorDestroy(ActorDestroyReason aWhy)
 
 void
 BroadcastChannelParent::CheckAndDeliver(const ClonedMessageData& aData,
-                                        const nsString& aOrigin,
-                                        uint64_t aAppId,
-                                        bool aInBrowserElement,
+                                        const nsCString& aOrigin,
                                         const nsString& aChannel,
                                         bool aPrivateBrowsing)
 {
   AssertIsOnBackgroundThread();
 
   if (aOrigin == mOrigin &&
-      aAppId == mAppId &&
-      aInBrowserElement == mIsInBrowserElement &&
       aChannel == mChannel &&
       aPrivateBrowsing == mPrivateBrowsing) {
-    // We need to duplicate data only if we have blobs or if the manager of
-    // them is different than the manager of this parent actor.
-    if (aData.blobsParent().IsEmpty() ||
-        static_cast<BlobParent*>(aData.blobsParent()[0])->GetBackgroundManager() == Manager()) {
-      unused << SendNotify(aData);
-      return;
-    }
-
     // Duplicate the data for this parent.
     ClonedMessageData newData(aData);
 
     // Ricreate the BlobParent for this new message.
     for (uint32_t i = 0, len = newData.blobsParent().Length(); i < len; ++i) {
-      nsRefPtr<BlobImpl> impl =
+      RefPtr<BlobImpl> impl =
         static_cast<BlobParent*>(newData.blobsParent()[i])->GetBlobImpl();
 
       PBlobParent* blobParent =
@@ -129,9 +105,9 @@ BroadcastChannelParent::CheckAndDeliver(const ClonedMessageData& aData,
       newData.blobsParent()[i] = blobParent;
     }
 
-    unused << SendNotify(newData);
+    Unused << SendNotify(newData);
   }
 }
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla

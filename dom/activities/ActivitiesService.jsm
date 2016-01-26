@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/IndexedDBHelper.jsm");
 Cu.import("resource://gre/modules/AppsUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "DOMApplicationRegistry",
   "resource://gre/modules/Webapps.jsm");
@@ -34,7 +35,7 @@ function debug(aMsg) {
 }
 
 const DB_NAME    = "activities";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "activities";
 
 function ActivitiesDb() {
@@ -63,6 +64,28 @@ ActivitiesDb.prototype = {
    */
   upgradeSchema: function actdb_upgradeSchema(aTransaction, aDb, aOldVersion, aNewVersion) {
     debug("Upgrade schema " + aOldVersion + " -> " + aNewVersion);
+
+    let self = this;
+
+    /**
+     * WARNING!! Before upgrading the Activities DB take into account that an
+     * OTA unregisters all the activities and reinstalls them during the first
+     * run process. Check Bug 1193503.
+     */
+
+    function upgrade(currentVersion) {
+      let next = upgrade.bind(self, currentVersion + 1);
+      switch (currentVersion) {
+        case 0:
+          self.createSchema(aDb, next);
+          break;
+      }
+    }
+
+    upgrade(aOldVersion);
+  },
+
+  createSchema: function(aDb, aNext) {
     let objectStore = aDb.createObjectStore(STORE_NAME, { keyPath: "id" });
 
     // indexes
@@ -70,6 +93,8 @@ ActivitiesDb.prototype = {
     objectStore.createIndex("manifest", "manifest", { unique: false });
 
     debug("Created object stores and indexes");
+
+    aNext();
   },
 
   // unique ids made of (uri, action)
@@ -83,8 +108,17 @@ ActivitiesDb.prototype = {
     hasher.init(hasher.SHA1);
 
     // add uri and action to the hash
-    ["manifest", "name"].forEach(function(aProp) {
-      let data = converter.convertToByteArray(aObject[aProp], {});
+    ["manifest", "name", "description"].forEach(function(aProp) {
+      if (!aObject[aProp]) {
+        return;
+      }
+
+      let property = aObject[aProp];
+      if (aProp == "description") {
+        property = JSON.stringify(aObject[aProp]);
+      }
+
+      let data = converter.convertToByteArray(property, {});
       hasher.update(data, data.length);
     });
 
@@ -110,16 +144,17 @@ ActivitiesDb.prototype = {
 
   // Remove all the activities carried in the |aObjects| array.
   remove: function actdb_remove(aObjects) {
-    this.newTxn("readwrite", STORE_NAME, function (txn, store) {
-      aObjects.forEach(function (aObject) {
+    this.newTxn("readwrite", STORE_NAME, (txn, store) => {
+      aObjects.forEach((aObject) => {
         let object = {
           manifest: aObject.manifest,
-          name: aObject.name
+          name: aObject.name,
+          description: aObject.description
         };
         debug("Going to remove " + JSON.stringify(object));
         store.delete(this.createId(object));
-      }, this);
-    }.bind(this), function() {}, function() {});
+      });
+    }, function() {}, function() {});
   },
 
   // Remove all activities associated with the given |aManifest| URL.
@@ -166,7 +201,7 @@ ActivitiesDb.prototype = {
   }
 }
 
-let Activities = {
+var Activities = {
   messages: [
     // ActivityProxy.js
     "Activity:Start",
@@ -247,13 +282,20 @@ let Activities = {
             debug("Activity choice: " + aResult);
 
             // We have no matching activity registered, let's fire an error.
-            // Don't do this check until we have passed to UIGlue so the glue can choose to launch
-            // its own activity if needed.
+            // Don't do this check until we have passed to UIGlue so the glue
+            // can choose to launch its own activity if needed.
             if (aResults.options.length === 0) {
-              self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
-                "id": aMsg.id,
-                "error": "NO_PROVIDER"
-              });
+              if (AppConstants.MOZ_B2GDROID) {
+                // Fallback on the Android Intent mapper.
+                let glue = Cc["@mozilla.org/dom/activities/android-ui-glue;1"]
+                             .createInstance(Ci.nsIActivityUIGlue);
+                glue.chooseActivity(aMsg.options, aResults.options, getActivityChoice);
+              } else {
+                self.trySendAndCleanup(aMsg.id, "Activity:FireError", {
+                  "id": aMsg.id,
+                  "error": "NO_PROVIDER"
+                });
+              }
               return;
             }
 
@@ -270,7 +312,7 @@ let Activities = {
                           .getService(Ci.nsISystemMessagesInternal);
             if (!sysmm) {
               // System message is not present, what should we do?
-              delete self.callers[aMsg.id];
+              self.removeCaller(aMsg.id);
               return;
             }
 
@@ -334,7 +376,7 @@ let Activities = {
               "id": aMsg.id,
               "result": results
             });
-          delete Activities.callers[aMsg.id];
+          self.removeCaller(aMsg.id);
         });
       } else {
         let glue = Cc["@mozilla.org/dom/activities/ui-glue;1"]
@@ -383,7 +425,7 @@ let Activities = {
     try {
       this.callers[aId].mm.sendAsyncMessage(aName, aPayload);
     } finally {
-      delete this.callers[aId];
+      this.removeCaller(aId);
     }
   },
 
@@ -409,8 +451,10 @@ let Activities = {
 
     switch(aMessage.name) {
       case "Activity:Start":
+        Services.obs.notifyObservers(null, "activity-opened", msg.childID);
         this.callers[msg.id] = { mm: mm,
                                  manifestURL: msg.manifestURL,
+                                 childID: msg.childID,
                                  pageURL: msg.pageURL };
         this.startActivity(msg);
         break;
@@ -427,13 +471,16 @@ let Activities = {
         break;
 
       case "Activities:Register":
-        let self = this;
         this.db.add(msg,
           function onSuccess(aEvent) {
+            debug("Activities:Register:OK");
+            Services.obs.notifyObservers(null, "new-activity-registered-success", null);
             mm.sendAsyncMessage("Activities:Register:OK", null);
           },
           function onError(aEvent) {
             msg.error = "REGISTER_ERROR";
+            debug("Activities:Register:KO");
+            Services.obs.notifyObservers(null, "new-activity-registered-failure", null);
             mm.sendAsyncMessage("Activities:Register:KO", msg);
           });
         break;
@@ -455,6 +502,12 @@ let Activities = {
         }
         break;
     }
+  },
+
+  removeCaller: function activities_removeCaller(id) {
+    Services.obs.notifyObservers(null, "activity-closed",
+                                 this.callers[id].childID);
+    delete this.callers[id];
   }
 
 }

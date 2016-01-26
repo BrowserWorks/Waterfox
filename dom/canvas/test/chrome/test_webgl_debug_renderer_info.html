@@ -17,6 +17,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=666446
 const UNMASKED_VENDOR_WEBGL = 0x9245;
 const UNMASKED_RENDERER_WEBGL = 0x9246;
 
+
+var Cu = parent.Components.utils;
+Cu.import("resource://gre/modules/AppConstants.jsm");
+// This gives us `AppConstants` in the global scope.
+// We need this because we only expose debug_renderer_info #ifndef MOZ_RELEASE_BUILD.
+// This should match AppConstants.RELEASE_BUILD.
+
+const canBeUnprivileged = !AppConstants.RELEASE_BUILD;
+
+
 function isNonEmptyString(s)
 {
   return s && (typeof s) == "string";
@@ -43,13 +53,13 @@ function checkChromeCase(canvas) {
   var exts = gl.getSupportedExtensions();
   ok(exts.indexOf("WEBGL_debug_renderer_info") != -1,
      "WEBGL_debug_renderer_info should be listed by getSupportedExtensions in chrome contexts");
-  var debugRendererInfoExtension = gl.getExtension("WEBGL_debug_renderer_info");
-  ok(debugRendererInfoExtension,
+  var ext = gl.getExtension("WEBGL_debug_renderer_info");
+  ok(ext,
      "WEBGL_debug_renderer_info should be available through getExtension in chrome contexts");
 
-  ok(debugRendererInfoExtension.UNMASKED_VENDOR_WEBGL == UNMASKED_VENDOR_WEBGL,
+  ok(ext.UNMASKED_VENDOR_WEBGL == UNMASKED_VENDOR_WEBGL,
      "UNMASKED_VENDOR_WEBGL has the correct value");
-  ok(debugRendererInfoExtension.UNMASKED_RENDERER_WEBGL == UNMASKED_RENDERER_WEBGL,
+  ok(ext.UNMASKED_RENDERER_WEBGL == UNMASKED_RENDERER_WEBGL,
      "UNMASKED_RENDERER_WEBGL has the correct value");
 
   ok(isNonEmptyString(gl.getParameter(UNMASKED_VENDOR_WEBGL)) && gl.getError() == gl.NO_ERROR,
@@ -77,7 +87,9 @@ function main()
     checkChromeCase(iframe.contentDocument.createElement("canvas"));
 
     iframe.contentWindow.addEventListener("message", messageListener, false);
-    iframe.contentWindow.postMessage("run", "*");
+    iframe.contentWindow.postMessage({run: true,
+                                      canBeUnprivileged: canBeUnprivileged},
+                                     "*");
   };
 
   document.body.appendChild(iframe);

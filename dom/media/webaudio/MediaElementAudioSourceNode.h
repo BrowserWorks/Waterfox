@@ -15,23 +15,25 @@ namespace dom {
 class MediaElementAudioSourceNode final : public MediaStreamAudioSourceNode
 {
 public:
-  MediaElementAudioSourceNode(AudioContext* aContext,
-                              DOMMediaStream* aStream);
+  static already_AddRefed<MediaElementAudioSourceNode>
+  Create(AudioContext* aContext, DOMMediaStream* aStream, ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual const char* NodeType() const override
+  const char* NodeType() const override
   {
     return "MediaElementAudioSourceNode";
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
+private:
+  explicit MediaElementAudioSourceNode(AudioContext* aContext);
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

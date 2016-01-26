@@ -98,6 +98,12 @@ public:
   bool IsAnimating() const {
     return mAList->IsAnimating();
   }
+  /**
+   * Returns true if there is an animated list mirroring the base list.
+   */
+  bool AnimListMirrorsBaseList() const {
+    return mAList->mAnimVal && !mAList->IsAnimating();
+  }
 
   uint32_t NumberOfItems() const
   {
@@ -165,7 +171,7 @@ private:
   // of clearing our pointer to them when they die.
   FallibleTArray<DOMSVGNumber*> mItems;
 
-  nsRefPtr<DOMSVGAnimatedNumberList> mAList;
+  RefPtr<DOMSVGAnimatedNumberList> mAList;
 };
 
 } // namespace mozilla

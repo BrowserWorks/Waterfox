@@ -20,24 +20,17 @@ using namespace android;
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* gMediaDecoderLog;
-#define DECODER_LOG(type, msg) PR_LOG(gMediaDecoderLog, type, msg)
-#else
-#define DECODER_LOG(type, msg)
-#endif
+extern LazyLogModule gMediaDecoderLog;
+#define DECODER_LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
 
-MediaOmxCommonDecoder::MediaOmxCommonDecoder()
-  : MediaDecoder()
+MediaOmxCommonDecoder::MediaOmxCommonDecoder(MediaDecoderOwner* aOwner)
+  : MediaDecoder(aOwner)
   , mReader(nullptr)
   , mCanOffloadAudio(false)
   , mFallbackToStateMachine(false)
+  , mIsCaptured(false)
 {
-#ifdef PR_LOGGING
-  if (!gMediaDecoderLog) {
-    gMediaDecoderLog = PR_NewLogModule("MediaDecoder");
-  }
-#endif
+  mDormantSupported = true;
 }
 
 MediaOmxCommonDecoder::~MediaOmxCommonDecoder() {}
@@ -45,15 +38,40 @@ MediaOmxCommonDecoder::~MediaOmxCommonDecoder() {}
 void
 MediaOmxCommonDecoder::SetPlatformCanOffloadAudio(bool aCanOffloadAudio)
 {
-  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-  mCanOffloadAudio = aCanOffloadAudio;
+  if (!aCanOffloadAudio) {
+    return;
+  }
+
+  // Stop MDSM from playing to avoid startup glitch (bug 1053186).
+  GetStateMachine()->DispatchAudioOffloading(true);
+
+  // Modify mCanOffloadAudio in the main thread.
+  RefPtr<MediaOmxCommonDecoder> self = this;
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction([=] () {
+    self->mCanOffloadAudio = true;
+  });
+  AbstractThread::MainThread()->Dispatch(r.forget());
+}
+
+void
+MediaOmxCommonDecoder::DisableStateMachineAudioOffloading()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (mCanOffloadAudio) {
+    // mCanOffloadAudio is true implies we've called
+    // |GetStateMachine()->DispatchAudioOffloading(true)| in
+    // SetPlatformCanOffloadAudio(). We need to turn off audio offloading
+    // for MDSM so it can start playback.
+    GetStateMachine()->DispatchAudioOffloading(false);
+  }
 }
 
 bool
 MediaOmxCommonDecoder::CheckDecoderCanOffloadAudio()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   return (mCanOffloadAudio && !mFallbackToStateMachine &&
-          !mOutputStreams.Length() && mPlaybackRate == 1.0);
+          !mIsCaptured && mPlaybackRate == 1.0);
 }
 
 void
@@ -62,16 +80,12 @@ MediaOmxCommonDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (mShuttingDown) {
-    return;
-  }
-
   MediaDecoder::FirstFrameLoaded(aInfo, aEventVisibility);
 
-  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
   if (!CheckDecoderCanOffloadAudio()) {
-    DECODER_LOG(PR_LOG_DEBUG, ("In %s Offload Audio check failed",
+    DECODER_LOG(LogLevel::Debug, ("In %s Offload Audio check failed",
         __PRETTY_FUNCTION__));
+    DisableStateMachineAudioOffloading();
     return;
   }
 
@@ -79,6 +93,7 @@ MediaOmxCommonDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
   mAudioOffloadPlayer = new AudioOffloadPlayer(this);
 #endif
   if (!mAudioOffloadPlayer) {
+    DisableStateMachineAudioOffloading();
     return;
   }
 
@@ -87,8 +102,9 @@ MediaOmxCommonDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
   if (err != OK) {
     mAudioOffloadPlayer = nullptr;
     mFallbackToStateMachine = true;
-    DECODER_LOG(PR_LOG_DEBUG, ("In %s Unable to start offload audio %d."
+    DECODER_LOG(LogLevel::Debug, ("In %s Unable to start offload audio %d."
       "Switching to normal mode", __PRETTY_FUNCTION__, err));
+    DisableStateMachineAudioOffloading();
     return;
   }
   PauseStateMachine();
@@ -98,8 +114,8 @@ MediaOmxCommonDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
                                    MediaDecoderEventVisibility::Observable);
     mSeekRequest.DisconnectIfExists();
     mSeekRequest.Begin(mAudioOffloadPlayer->Seek(target)
-      ->RefableThen(AbstractThread::MainThread(), __func__, static_cast<MediaDecoder*>(this),
-                    &MediaDecoder::OnSeekResolved, &MediaDecoder::OnSeekRejected));
+      ->Then(AbstractThread::MainThread(), __func__, static_cast<MediaDecoder*>(this),
+             &MediaDecoder::OnSeekResolved, &MediaDecoder::OnSeekRejected));
   }
   // Call ChangeState() to run AudioOffloadPlayer since offload state enabled
   ChangeState(mPlayState);
@@ -109,8 +125,7 @@ void
 MediaOmxCommonDecoder::PauseStateMachine()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  GetReentrantMonitor().AssertCurrentThreadIn();
-  DECODER_LOG(PR_LOG_DEBUG, ("%s", __PRETTY_FUNCTION__));
+  DECODER_LOG(LogLevel::Debug, ("%s", __PRETTY_FUNCTION__));
 
   if (mShuttingDown) {
     return;
@@ -120,20 +135,14 @@ MediaOmxCommonDecoder::PauseStateMachine()
     return;
   }
   // enter dormant state
-  RefPtr<nsRunnable> event =
-    NS_NewRunnableMethodWithArg<bool>(
-      GetStateMachine(),
-      &MediaDecoderStateMachine::SetDormant,
-      true);
-  GetStateMachine()->TaskQueue()->Dispatch(event);
+  GetStateMachine()->DispatchSetDormant(true);
 }
 
 void
 MediaOmxCommonDecoder::ResumeStateMachine()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-  DECODER_LOG(PR_LOG_DEBUG, ("%s current time %f", __PRETTY_FUNCTION__, mLogicalPosition));
+  DECODER_LOG(LogLevel::Debug, ("%s current time %f", __PRETTY_FUNCTION__, mLogicalPosition));
 
   if (mShuttingDown) {
     return;
@@ -143,28 +152,20 @@ MediaOmxCommonDecoder::ResumeStateMachine()
     return;
   }
 
+  GetStateMachine()->DispatchAudioOffloading(false);
+
   mFallbackToStateMachine = true;
   mAudioOffloadPlayer = nullptr;
   SeekTarget target = SeekTarget(mLogicalPosition,
                                  SeekTarget::Accurate,
                                  MediaDecoderEventVisibility::Suppressed);
   // Call Seek of MediaDecoderStateMachine to suppress seek events.
-  RefPtr<nsRunnable> event =
-    NS_NewRunnableMethodWithArg<SeekTarget>(
-      GetStateMachine(),
-      &MediaDecoderStateMachine::Seek,
-      target);
-  GetStateMachine()->TaskQueue()->Dispatch(event);
+  GetStateMachine()->InvokeSeek(target);
 
   mNextState = mPlayState;
   ChangeState(PLAY_STATE_LOADING);
   // exit dormant state
-  event =
-    NS_NewRunnableMethodWithArg<bool>(
-      GetStateMachine(),
-      &MediaDecoderStateMachine::SetDormant,
-      false);
-  GetStateMachine()->TaskQueue()->Dispatch(event);
+  GetStateMachine()->DispatchSetDormant(false);
   UpdateLogicalPosition();
 }
 
@@ -172,7 +173,7 @@ void
 MediaOmxCommonDecoder::AudioOffloadTearDown()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  DECODER_LOG(PR_LOG_DEBUG, ("%s", __PRETTY_FUNCTION__));
+  DECODER_LOG(LogLevel::Debug, ("%s", __PRETTY_FUNCTION__));
 
   // mAudioOffloadPlayer can be null here if ResumeStateMachine was called
   // just before because of some other error.
@@ -186,6 +187,8 @@ MediaOmxCommonDecoder::AddOutputStream(ProcessedMediaStream* aStream,
                                        bool aFinishWhenEnded)
 {
   MOZ_ASSERT(NS_IsMainThread());
+
+  mIsCaptured = true;
 
   if (mAudioOffloadPlayer) {
     ResumeStateMachine();
@@ -237,8 +240,8 @@ MediaOmxCommonDecoder::CallSeek(const SeekTarget& aTarget)
 
   mSeekRequest.DisconnectIfExists();
   mSeekRequest.Begin(mAudioOffloadPlayer->Seek(aTarget)
-    ->RefableThen(AbstractThread::MainThread(), __func__, static_cast<MediaDecoder*>(this),
-                  &MediaDecoder::OnSeekResolved, &MediaDecoder::OnSeekRejected));
+    ->Then(AbstractThread::MainThread(), __func__, static_cast<MediaDecoder*>(this),
+           &MediaDecoder::OnSeekResolved, &MediaDecoder::OnSeekRejected));
 }
 
 int64_t
@@ -248,9 +251,7 @@ MediaOmxCommonDecoder::CurrentPosition()
   if (!mAudioOffloadPlayer) {
     return MediaDecoder::CurrentPosition();
   }
-
-  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-  return mAudioOffloadPlayer->GetMediaTimeSecs();
+  return mAudioOffloadPlayer->GetMediaTimeUs();
 }
 
 void

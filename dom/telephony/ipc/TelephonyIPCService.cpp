@@ -37,7 +37,7 @@ getDefaultServiceId()
   return id;
 }
 
-} // Anonymous namespace
+} // namespace
 
 NS_IMPL_ISUPPORTS(TelephonyIPCService,
                   nsITelephonyService,
@@ -372,15 +372,6 @@ TelephonyIPCService::CallStateChanged(uint32_t aLength, nsITelephonyCallInfo** a
 {
   for (uint32_t i = 0; i < mListeners.Length(); i++) {
     mListeners[i]->CallStateChanged(aLength, aAllInfo);
-  }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TelephonyIPCService::ConferenceCallStateChanged(uint16_t aCallState)
-{
-  for (uint32_t i = 0; i < mListeners.Length(); i++) {
-    mListeners[i]->ConferenceCallStateChanged(aCallState);
   }
   return NS_OK;
 }

@@ -27,7 +27,7 @@ const isOSX10_6 = (() => {
 
 const { search } = require('sdk/places/history');
 const {
-  invalidResolve, invalidReject, createTree, createBookmark,
+  invalidResolve, createTree, createBookmark,
   compareWithHost, addVisits, resetPlaces, createBookmarkItem,
   removeVisits, historyBatch
 } = require('./places-helper');
@@ -316,7 +316,7 @@ after(exports, (name, assert, done) => setTimeout(() => resetPlaces(done), 1));
 before(exports, (name, assert, done) => resetPlaces(done));
 
 function saveP () {
-  return promisedEmitter(save.apply(null, Array.slice(arguments)));
+  return promisedEmitter(save.apply(null, Array.prototype.slice.call(arguments)));
 }
 
 function makeCompleted (done, countTo) {

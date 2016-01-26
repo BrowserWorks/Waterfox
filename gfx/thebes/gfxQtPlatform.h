@@ -27,10 +27,10 @@ public:
     }
 
     virtual already_AddRefed<gfxASurface>
-      CreateOffscreenSurface(const IntSize& size,
-                             gfxContentType contentType) override;
+      CreateOffscreenSurface(const IntSize& aSize,
+                             gfxImageFormat aFormat) override;
 
-    virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
+    virtual already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont) override;
 
     virtual nsresult GetFontList(nsIAtom *aLangGroup,
@@ -41,9 +41,12 @@ public:
 
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName) override;
 
-    virtual gfxFontGroup *CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                          const gfxFontStyle *aStyle,
-                                          gfxUserFontSet* aUserFontSet) override;
+    gfxFontGroup*
+    CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
+                    const gfxFontStyle *aStyle,
+                    gfxTextPerfMetrics* aTextPerf,
+                    gfxUserFontSet *aUserFontSet,
+                    gfxFloat aDevToCssSize) override;
 
     /**
      * Look up a local platform font using the full font face name (needed to
@@ -52,7 +55,7 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic) override;
+                                          uint8_t aStyle) override;
 
     /**
      * Activate a platform font (needed to support @font-face src url() )
@@ -61,7 +64,7 @@ public:
     virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
                                            uint16_t aWeight,
                                            int16_t aStretch,
-                                           bool aItalic,
+                                           uint8_t aStyle,
                                            const uint8_t* aFontData,
                                            uint32_t aLength) override;
 
@@ -80,7 +83,9 @@ public:
     static Screen* GetXScreen(QWindow* aWindow = 0);
 #endif
 
-    virtual int GetScreenDepth() const override;
+    bool AccelerateLayersByDefault() override {
+      return true;
+    }
 
 protected:
     static gfxFontconfigUtils *sFontconfigUtils;

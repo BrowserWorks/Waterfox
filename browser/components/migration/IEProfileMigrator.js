@@ -9,236 +9,34 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
+const kLoginsKey = "Software\\Microsoft\\Internet Explorer\\IntelliForms\\Storage2";
 const kMainKey = "Software\\Microsoft\\Internet Explorer\\Main";
 
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource:///modules/MigrationUtils.jsm");
+Cu.import("resource:///modules/MSMigrationUtils.jsm");
+Cu.import("resource://gre/modules/LoginHelper.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
-                                  "resource://gre/modules/PlacesUtils.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
                                   "resource://gre/modules/ctypes.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+                                  "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "OSCrypto",
+                                  "resource://gre/modules/OSCrypto.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WindowsRegistry",
                                   "resource://gre/modules/WindowsRegistry.jsm");
 
-Cu.importGlobalProperties(["File"]);
+Cu.importGlobalProperties(["URL"]);
 
-////////////////////////////////////////////////////////////////////////////////
-//// Helpers.
-
-let CtypesHelpers = {
-  _structs: {},
-  _functions: {},
-  _libs: {},
-
-  /**
-   * Must be invoked once before first use of any of the provided helpers.
-   */
-  initialize: function CH_initialize() {
-    const WORD = ctypes.uint16_t;
-    const DWORD = ctypes.uint32_t;
-    const BOOL = ctypes.int;
-
-    this._structs.SYSTEMTIME = new ctypes.StructType('SYSTEMTIME', [
-      {wYear: WORD},
-      {wMonth: WORD},
-      {wDayOfWeek: WORD},
-      {wDay: WORD},
-      {wHour: WORD},
-      {wMinute: WORD},
-      {wSecond: WORD},
-      {wMilliseconds: WORD}
-    ]);
-
-    this._structs.FILETIME = new ctypes.StructType('FILETIME', [
-      {dwLowDateTime: DWORD},
-      {dwHighDateTime: DWORD}
-    ]);
-
-    try {
-      this._libs.kernel32 = ctypes.open("Kernel32");
-      this._functions.FileTimeToSystemTime =
-        this._libs.kernel32.declare("FileTimeToSystemTime",
-                                    ctypes.default_abi,
-                                    BOOL,
-                                    this._structs.FILETIME.ptr,
-                                    this._structs.SYSTEMTIME.ptr);
-    } catch (ex) {
-      this.finalize();
-    }
-  },
-
-  /**
-   * Must be invoked once after last use of any of the provided helpers.
-   */
-  finalize: function CH_finalize() {
-    this._structs = {};
-    this._functions = {};
-    for each (let lib in this._libs) {
-      try {
-        lib.close();
-      } catch (ex) {}
-    }
-    this._libs = {};
-  },
-
-  /**
-   * Converts a FILETIME struct (2 DWORDS), to a SYSTEMTIME struct,
-   * and then deduces the number of seconds since the epoch (which
-   * is the data we want for the cookie expiry date).
-   *
-   * @param aTimeHi
-   *        Least significant DWORD.
-   * @param aTimeLo
-   *        Most significant DWORD.
-   * @return the number of seconds since the epoch
-   */
-  fileTimeToSecondsSinceEpoch(aTimeHi, aTimeLo) {
-    let fileTime = this._structs.FILETIME();
-    fileTime.dwLowDateTime = aTimeLo;
-    fileTime.dwHighDateTime = aTimeHi;
-    let systemTime = this._structs.SYSTEMTIME();
-    let result = this._functions.FileTimeToSystemTime(fileTime.address(),
-                                                      systemTime.address());
-    if (result == 0)
-      throw new Error(ctypes.winLastError);
-
-    // System time is in UTC, so we use Date.UTC to get milliseconds from epoch,
-    // then divide by 1000 to get seconds, and round down:
-    return Math.floor(Date.UTC(systemTime.wYear,
-                               systemTime.wMonth - 1,
-                               systemTime.wDay,
-                               systemTime.wHour,
-                               systemTime.wMinute,
-                               systemTime.wSecond,
-                               systemTime.wMilliseconds) / 1000);
-  }
-};
-
-/**
- * Checks whether an host is an IP (v4 or v6) address.
- *
- * @param aHost
- *        The host to check.
- * @return whether aHost is an IP address.
- */
-function hostIsIPAddress(aHost) {
-  try {
-    Services.eTLD.getBaseDomainFromHost(aHost);
-  } catch (e if e.result == Cr.NS_ERROR_HOST_IS_IP_ADDRESS) {
-    return true;
-  } catch (e) {}
-  return false;
-}
+var CtypesKernelHelpers = MSMigrationUtils.CtypesKernelHelpers;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Resources
 
-function Bookmarks() {
-}
-
-Bookmarks.prototype = {
-  type: MigrationUtils.resourceTypes.BOOKMARKS,
-
-  get exists() !!this._favoritesFolder,
-
-  __favoritesFolder: null,
-  get _favoritesFolder() {
-    if (!this.__favoritesFolder) {
-      let favoritesFolder = Services.dirsvc.get("Favs", Ci.nsIFile);
-      if (favoritesFolder.exists() && favoritesFolder.isReadable())
-        this.__favoritesFolder = favoritesFolder;
-    }
-    return this.__favoritesFolder;
-  },
-
-  __toolbarFolderName: null,
-  get _toolbarFolderName() {
-    if (!this.__toolbarFolderName) {
-      // Retrieve the name of IE's favorites subfolder that holds the bookmarks
-      // in the toolbar. This was previously stored in the registry and changed
-      // in IE7 to always be called "Links".
-      let folderName = WindowsRegistry.readRegKey(Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-                                                  "Software\\Microsoft\\Internet Explorer\\Toolbar",
-                                                  "LinksFolderName");
-      this.__toolbarFolderName = folderName || "Links";
-    }
-    return this.__toolbarFolderName;
-  },
-
-  migrate: function B_migrate(aCallback) {
-    return Task.spawn(function* () {
-      // Import to the bookmarks menu.
-      let folderGuid = PlacesUtils.bookmarks.menuGuid;
-      if (!MigrationUtils.isStartupMigration) {
-        folderGuid =
-          yield MigrationUtils.createImportedBookmarksFolder("IE", folderGuid);
-      }
-      yield this._migrateFolder(this._favoritesFolder, folderGuid);
-    }.bind(this)).then(() => aCallback(true),
-                        e => { Cu.reportError(e); aCallback(false) });
-  },
-
-  _migrateFolder: Task.async(function* (aSourceFolder, aDestFolderGuid) {
-    // TODO (bug 741993): the favorites order is stored in the Registry, at
-    // HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MenuOrder\Favorites
-    // Until we support it, bookmarks are imported in alphabetical order.
-    let entries = aSourceFolder.directoryEntries;
-    while (entries.hasMoreElements()) {
-      let entry = entries.getNext().QueryInterface(Ci.nsIFile);
-      try {
-        // Make sure that entry.path == entry.target to not follow .lnk folder
-        // shortcuts which could lead to infinite cycles.
-        // Don't use isSymlink(), since it would throw for invalid
-        // lnk files pointing to URLs or to unresolvable paths.
-        if (entry.path == entry.target && entry.isDirectory()) {
-          let folderGuid;
-          if (entry.leafName == this._toolbarFolderName &&
-              entry.parent.equals(this._favoritesFolder)) {
-            // Import to the bookmarks toolbar.
-            folderGuid = PlacesUtils.bookmarks.toolbarGuid;
-            if (!MigrationUtils.isStartupMigration) {
-              folderGuid =
-                yield MigrationUtils.createImportedBookmarksFolder("IE", folderGuid);
-            }
-          }
-          else {
-            // Import to a new folder.
-            folderGuid = (yield PlacesUtils.bookmarks.insert({
-              type: PlacesUtils.bookmarks.TYPE_FOLDER,
-              parentGuid: aDestFolderGuid,
-              title: entry.leafName
-            })).guid;
-          }
-
-          if (entry.isReadable()) {
-            // Recursively import the folder.
-            yield this._migrateFolder(entry, folderGuid);
-          }
-        }
-        else {
-          // Strip the .url extension, to both check this is a valid link file,
-          // and get the associated title.
-          let matches = entry.leafName.match(/(.+)\.url$/i);
-          if (matches) {
-            let fileHandler = Cc["@mozilla.org/network/protocol;1?name=file"].
-                              getService(Ci.nsIFileProtocolHandler);
-            let uri = fileHandler.readURLFile(entry);
-            let title = matches[1];
-
-            yield PlacesUtils.bookmarks.insert({
-              parentGuid: aDestFolderGuid, url: uri, title
-            });
-          }
-        }
-      } catch (ex) {
-        Components.utils.reportError("Unable to import IE favorite (" + entry.leafName + "): " + ex);
-      }
-    }
-  })
-};
 
 function History() {
 }
@@ -246,36 +44,13 @@ function History() {
 History.prototype = {
   type: MigrationUtils.resourceTypes.HISTORY,
 
-  get exists() true,
-
-  __typedURLs: null,
-  get _typedURLs() {
-    if (!this.__typedURLs) {
-      // The list of typed URLs is a sort of annotation stored in the registry.
-      // Currently, IE stores 25 entries and this value is not configurable,
-      // but we just keep reading up to the first non-existing entry to support
-      // possible future bumps of this limit.
-      this.__typedURLs = {};
-      let registry = Cc["@mozilla.org/windows-registry-key;1"].
-                     createInstance(Ci.nsIWindowsRegKey);
-      try {
-        registry.open(Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-                      "Software\\Microsoft\\Internet Explorer\\TypedURLs",
-                      Ci.nsIWindowsRegKey.ACCESS_READ);
-        for (let entry = 1; registry.hasValue("url" + entry); entry++) {
-          let url = registry.readStringValue("url" + entry);
-          this.__typedURLs[url] = true;
-        }
-      } catch (ex) {
-      } finally {
-        registry.close();
-      }
-    }
-    return this.__typedURLs;
+  get exists() {
+    return true;
   },
 
   migrate: function H_migrate(aCallback) {
     let places = [];
+    let typedURLs = MSMigrationUtils.getTypedURLs("Software\\Microsoft\\Internet Explorer");
     let historyEnumerator = Cc["@mozilla.org/profile/migrator/iehistoryenumerator;1"].
                             createInstance(Ci.nsISimpleEnumerator);
     while (historyEnumerator.hasMoreElements()) {
@@ -295,10 +70,14 @@ History.prototype = {
       }
 
       // The typed urls are already fixed-up, so we can use them for comparison.
-      let transitionType = this._typedURLs[uri.spec] ?
+      let transitionType = typedURLs.has(uri.spec) ?
                              Ci.nsINavHistoryService.TRANSITION_TYPED :
                              Ci.nsINavHistoryService.TRANSITION_LINK;
-      let lastVisitTime = entry.get("time");
+      // use the current date if we have no visits for this entry.
+      // Note that the entry will have a time in microseconds (PRTime),
+      // and Date.now() returns milliseconds. Places expects PRTime,
+      // so we multiply the Date.now return value to make up the difference.
+      let lastVisitTime = entry.get("time") || (Date.now() * 1000);
 
       places.push(
         { uri: uri,
@@ -329,148 +108,239 @@ History.prototype = {
   }
 };
 
-function Cookies() {
+// IE form password migrator supporting windows from XP until 7 and IE from 7 until 11
+function IE7FormPasswords () {
+  // used to distinguish between this migrator and other passwords migrators in tests.
+  this.name = "IE7FormPasswords";
 }
 
-Cookies.prototype = {
-  type: MigrationUtils.resourceTypes.COOKIES,
+IE7FormPasswords.prototype = {
+  type: MigrationUtils.resourceTypes.PASSWORDS,
 
-  get exists() !!this._cookiesFolder,
-
-  __cookiesFolder: null,
-  get _cookiesFolder() {
-    // Cookies are stored in txt files, in a Cookies folder whose path varies
-    // across the different OS versions.  CookD takes care of most of these
-    // cases, though, in Windows Vista/7, UAC makes a difference.
-    // If UAC is enabled, the most common destination is CookD/Low.  Though,
-    // if the user runs the application in administrator mode or disables UAC,
-    // cookies are stored in the original CookD destination.  Cause running the
-    // browser in administrator mode is unsafe and discouraged, we just care
-    // about the UAC state.
-    if (!this.__cookiesFolder) {
-      let cookiesFolder = Services.dirsvc.get("CookD", Ci.nsIFile);
-      if (cookiesFolder.exists() && cookiesFolder.isReadable()) {
-        // Check if UAC is enabled.
-        if (Services.appinfo.QueryInterface(Ci.nsIWinAppHelper).userCanElevate) {
-          cookiesFolder.append("Low");
-        }
-        this.__cookiesFolder = cookiesFolder;
-      }
+  get exists() {
+    // work only on windows until 7
+    if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
+      return false;
     }
-    return this.__cookiesFolder;
+
+    try {
+      let nsIWindowsRegKey = Ci.nsIWindowsRegKey;
+      let key = Cc["@mozilla.org/windows-registry-key;1"].
+                createInstance(nsIWindowsRegKey);
+      key.open(nsIWindowsRegKey.ROOT_KEY_CURRENT_USER, kLoginsKey,
+               nsIWindowsRegKey.ACCESS_READ);
+      let count = key.valueCount;
+      key.close();
+      return count > 0;
+    } catch (e) {
+      return false;
+    }
   },
 
-  migrate: function C_migrate(aCallback) {
-    CtypesHelpers.initialize();
-
-    let cookiesGenerator = (function genCookie() {
-      let success = false;
-      let entries = this._cookiesFolder.directoryEntries;
-      while (entries.hasMoreElements()) {
-        let entry = entries.getNext().QueryInterface(Ci.nsIFile);
-        // Skip eventual bogus entries.
-        if (!entry.isFile() || !/\.txt$/.test(entry.leafName))
-          continue;
-
-        this._readCookieFile(entry, function(aSuccess) {
-          // Importing even a single cookie file is considered a success.
-          if (aSuccess)
-            success = true;
-          try {
-            cookiesGenerator.next();
-          } catch (ex) {}
-        });
-
-        yield undefined;
+  migrate(aCallback) {
+    let historyEnumerator = Cc["@mozilla.org/profile/migrator/iehistoryenumerator;1"].
+                            createInstance(Ci.nsISimpleEnumerator);
+    let uris = []; // the uris of the websites that are going to be migrated
+    while (historyEnumerator.hasMoreElements()) {
+      let entry = historyEnumerator.getNext().QueryInterface(Ci.nsIPropertyBag2);
+      let uri = entry.get("uri").QueryInterface(Ci.nsIURI);
+      // MSIE stores some types of URLs in its history that we don't handle, like HTMLHelp
+      // and others. Since we are not going to import the logins that are performed in these URLs
+      // we can just skip them.
+      if (["http", "https", "ftp"].indexOf(uri.scheme) == -1) {
+        continue;
       }
 
-      CtypesHelpers.finalize();
-
-      aCallback(success);
-    }).apply(this);
-    cookiesGenerator.next();
-  },
-
-  _readCookieFile: function C__readCookieFile(aFile, aCallback) {
-    let fileReader = Cc["@mozilla.org/files/filereader;1"].
-                     createInstance(Ci.nsIDOMFileReader);
-    fileReader.addEventListener("loadend", (function onLoadEnd() {
-      fileReader.removeEventListener("loadend", onLoadEnd, false);
-
-      if (fileReader.readyState != fileReader.DONE) {
-        Cu.reportError("Could not read cookie contents: " + fileReader.error);
-        aCallback(false);
-        return;
-      }
-
-      let success = true;
-      try {
-        this._parseCookieBuffer(fileReader.result);
-      } catch (ex) {
-        Components.utils.reportError("Unable to migrate cookie: " + ex);
-        success = false;
-      } finally {
-        aCallback(success);
-      }
-    }).bind(this), false);
-    fileReader.readAsText(new File(aFile));
+      uris.push(uri);
+    }
+    this._migrateURIs(uris);
+    aCallback(true);
   },
 
   /**
-   * Parses a cookie file buffer and returns an array of the contained cookies.
-   *
-   * The cookie file format is a newline-separated-values with a "*" used as
-   * delimeter between multiple records.
-   * Each cookie has the following fields:
-   *  - name
-   *  - value
-   *  - host/path
-   *  - flags
-   *  - Expiration time most significant integer
-   *  - Expiration time least significant integer
-   *  - Creation time most significant integer
-   *  - Creation time least significant integer
-   *  - Record delimiter "*"
-   *
-   * @note All the times are in FILETIME format.
+   * Migrate the logins that were saved for the uris arguments.
+   * @param {nsIURI[]} uris - the uris that are going to be migrated.
    */
-  _parseCookieBuffer: function C__parseCookieBuffer(aTextBuffer) {
-    // Note the last record is an empty string.
-    let records = [r for each (r in aTextBuffer.split("*\n")) if (r)];
-    for (let record of records) {
-      let [name, value, hostpath, flags,
-           expireTimeLo, expireTimeHi] = record.split("\n");
+  _migrateURIs(uris) {
+    this.ctypesKernelHelpers = new MSMigrationUtils.CtypesKernelHelpers();
+    this._crypto = new OSCrypto();
+    let nsIWindowsRegKey = Ci.nsIWindowsRegKey;
+    let key = Cc["@mozilla.org/windows-registry-key;1"].
+              createInstance(nsIWindowsRegKey);
+    key.open(nsIWindowsRegKey.ROOT_KEY_CURRENT_USER, kLoginsKey,
+             nsIWindowsRegKey.ACCESS_READ);
 
-      // IE stores deleted cookies with a zero-length value, skip them.
-      if (value.length == 0)
-        continue;
+    let urlsSet = new Set(); // set of the already processed urls.
+    // number of the successfully decrypted registry values
+    let successfullyDecryptedValues = 0;
+    /* The logins are stored in the registry, where the key is a hashed URL and its
+     * value contains the encrypted details for all logins for that URL.
+     *
+     * First iterate through IE history, hashing each URL and looking for a match. If
+     * found, decrypt the value, using the URL as a salt. Finally add any found logins
+     * to the Firefox password manager.
+     */
 
-      let hostLen = hostpath.indexOf("/");
-      let host = hostpath.substr(0, hostLen);
-      let path = hostpath.substr(hostLen);
-
-      // For a non-null domain, assume it's what Mozilla considers
-      // a domain cookie.  See bug 222343.
-      if (host.length > 0) {
-        // Fist delete any possible extant matching host cookie.
-        Services.cookies.remove(host, name, path, false);
-        // Now make it a domain cookie.
-        if (host[0] != "." && !hostIsIPAddress(host))
-          host = "." + host;
+    for (let uri of uris) {
+      try {
+        // remove the query and the ref parts of the URL
+        let urlObject = new URL(uri.spec);
+        let url = urlObject.origin + urlObject.pathname;
+        // if the current url is already processed, it should be skipped
+        if (urlsSet.has(url)) {
+          continue;
+        }
+        urlsSet.add(url);
+        // hash value of the current uri
+        let hashStr = this._crypto.getIELoginHash(url);
+        if (!key.hasValue(hashStr)) {
+          continue;
+        }
+        let value = key.readBinaryValue(hashStr);
+        // if no value was found, the uri is skipped
+        if (value == null) {
+          continue;
+        }
+        let data;
+        try {
+          // the url is used as salt to decrypt the registry value
+          data = this._crypto.decryptData(value, url, true);
+        } catch (e) {
+          continue;
+        }
+        // extract the login details from the decrypted data
+        let ieLogins = this._extractDetails(data, uri);
+        // if at least a credential was found in the current data, successfullyDecryptedValues should
+        // be incremented by one
+        if (ieLogins.length) {
+          successfullyDecryptedValues++;
+        }
+        this._addLogins(ieLogins);
+      } catch (e) {
+        Cu.reportError("Error while importing logins for " + uri.spec + ": " + e);
       }
-
-      let expireTime = CtypesHelpers.fileTimeToSecondsSinceEpoch(Number(expireTimeHi),
-                                                                 Number(expireTimeLo));
-      Services.cookies.add(host,
-                           path,
-                           name,
-                           value,
-                           Number(flags) & 0x1, // secure
-                           false, // httpOnly
-                           false, // session
-                           expireTime);
     }
-  }
+    // if the number of the imported values is less than the number of values in the key, it means
+    // that not all the values were imported and an error should be reported
+    if (successfullyDecryptedValues < key.valueCount) {
+      Cu.reportError("We failed to decrypt and import some logins. " +
+                     "This is likely because we didn't find the URLs where these " +
+                     "passwords were submitted in the IE history and which are needed to be used " +
+                     "as keys in the decryption.");
+    }
+
+    key.close();
+    this._crypto.finalize();
+    this.ctypesKernelHelpers.finalize();
+  },
+
+  _crypto: null,
+
+  /**
+   * Add the logins to the password manager.
+   * @param {Object[]} logins - array of the login details.
+   */
+  _addLogins(ieLogins) {
+    for (let ieLogin of ieLogins) {
+      try {
+        // create a new login
+        let login = {
+          username: ieLogin.username,
+          password: ieLogin.password,
+          hostname: ieLogin.url,
+          timeCreated: ieLogin.creation,
+          };
+        LoginHelper.maybeImportLogin(login);
+      } catch (e) {
+        Cu.reportError(e);
+      }
+    }
+  },
+
+  /**
+   * Extract the details of one or more logins from the raw decrypted data.
+   * @param {string} data - the decrypted data containing raw information.
+   * @param {nsURI} uri - the nsURI of page where the login has occur.
+   * @returns {Object[]} array of objects where each of them contains the username, password, URL,
+   * and creation time representing all the logins found in the data arguments.
+   */
+  _extractDetails(data, uri) {
+    // the structure of the header of the IE7 decrypted data for all the logins sharing the same URL
+    let loginData = new ctypes.StructType("loginData", [
+      // Bytes 0-3 are not needed and not documented
+      {"unknown1": ctypes.uint32_t},
+      // Bytes 4-7 are the header size
+      {"headerSize": ctypes.uint32_t},
+      // Bytes 8-11 are the data size
+      {"dataSize": ctypes.uint32_t},
+      // Bytes 12-19 are not needed and not documented
+      {"unknown2": ctypes.uint32_t},
+      {"unknown3": ctypes.uint32_t},
+      // Bytes 20-23 are the data count: each username and password is considered as a data
+      {"dataMax": ctypes.uint32_t},
+      // Bytes 24-35 are not needed and not documented
+      {"unknown4": ctypes.uint32_t},
+      {"unknown5": ctypes.uint32_t},
+      {"unknown6": ctypes.uint32_t}
+    ]);
+
+    // the structure of a IE7 decrypted login item
+    let loginItem = new ctypes.StructType("loginItem", [
+      // Bytes 0-3 are the offset of the username
+      {"usernameOffset": ctypes.uint32_t},
+      // Bytes 4-11 are the date
+      {"loDateTime": ctypes.uint32_t},
+      {"hiDateTime": ctypes.uint32_t},
+      // Bytes 12-15 are not needed and not documented
+      {"foo": ctypes.uint32_t},
+      // Bytes 16-19 are the offset of the password
+      {"passwordOffset": ctypes.uint32_t},
+      // Bytes 20-31 are not needed and not documented
+      {"unknown1": ctypes.uint32_t},
+      {"unknown2": ctypes.uint32_t},
+      {"unknown3": ctypes.uint32_t}
+    ]);
+
+    let url = uri.prePath;
+    let results = [];
+    let arr = this._crypto.stringToArray(data);
+    // convert data to ctypes.unsigned_char.array(arr.length)
+    let cdata = ctypes.unsigned_char.array(arr.length)(arr);
+    // Bytes 0-35 contain the loginData data structure for all the logins sharing the same URL
+    let currentLoginData = ctypes.cast(cdata, loginData);
+    let headerSize = currentLoginData.headerSize;
+    let currentInfoIndex = loginData.size;
+    // pointer to the current login item
+    let currentLoginItemPointer = ctypes.cast(cdata.addressOfElement(currentInfoIndex),
+                                              loginItem.ptr);
+    // currentLoginData.dataMax is the data count: each username and password is considered as
+    // a data. So, the number of logins is the number of data dived by 2
+    let numLogins = currentLoginData.dataMax / 2;
+    for (let n = 0; n < numLogins; n++) {
+      // Bytes 0-31 starting from currentInfoIndex contain the loginItem data structure for the
+      // current login
+      let currentLoginItem = currentLoginItemPointer.contents;
+      let creation = this.ctypesKernelHelpers.
+                     fileTimeToSecondsSinceEpoch(currentLoginItem.hiDateTime,
+                                                 currentLoginItem.loDateTime) * 1000;
+      let currentResult = {
+        creation: creation,
+        url: url,
+      };
+      // The username is UTF-16 and null-terminated.
+      currentResult.username =
+        ctypes.cast(cdata.addressOfElement(headerSize + 12 + currentLoginItem.usernameOffset),
+                                          ctypes.char16_t.ptr).readString();
+      // The password is UTF-16 and null-terminated.
+      currentResult.password =
+        ctypes.cast(cdata.addressOfElement(headerSize + 12 + currentLoginItem.passwordOffset),
+                                          ctypes.char16_t.ptr).readString();
+      results.push(currentResult);
+      // move to the next login item
+      currentLoginItemPointer = currentLoginItemPointer.increment();
+    }
+    return results;
+  },
 };
 
 function Settings() {
@@ -479,11 +349,13 @@ function Settings() {
 Settings.prototype = {
   type: MigrationUtils.resourceTypes.SETTINGS,
 
-  get exists() true,
+  get exists() {
+    return true;
+  },
 
   migrate: function S_migrate(aCallback) {
     // Converts from yes/no to a boolean.
-    function yesNoToBoolean(v) v == "yes";
+    let yesNoToBoolean = v => v == "yes";
 
     // Converts source format like "en-us,ar-kw;q=0.7,ar-om;q=0.3" into
     // destination format like "en-us, ar-kw, ar-om".
@@ -495,7 +367,7 @@ Settings.prototype = {
                 let qB = parseFloat(b.split(";q=")[1]) || 1.0;
                 return qA < qB ? 1 : qA == qB ? 0 : -1;
               })
-              .map(function(a) a.split(";")[0]);
+              .map(a => a.split(";")[0]);
     }
 
     // For reference on some of the available IE Registry settings:
@@ -527,7 +399,7 @@ Settings.prototype = {
     this._set(kMainKey,
               "Display Inline Images",
               "permissions.default.image",
-              function (v) yesNoToBoolean(v) ? 1 : 2);
+              v => yesNoToBoolean(v) ? 1 : 2);
     this._set(kMainKey,
               "Move System Caret",
               "accessibility.browsewithcaret",
@@ -535,11 +407,11 @@ Settings.prototype = {
     this._set("Software\\Microsoft\\Internet Explorer\\Settings",
               "Always Use My Colors",
               "browser.display.document_color_use",
-              function (v) !Boolean(v) ? 0 : 2);
+              v => !Boolean(v) ? 0 : 2);
     this._set("Software\\Microsoft\\Internet Explorer\\Settings",
               "Always Use My Font Face",
               "browser.display.use_document_fonts",
-              function (v) !Boolean(v));
+              v => !Boolean(v));
     this._set(kMainKey,
               "SmoothScroll",
               "general.smoothScroll",
@@ -551,7 +423,7 @@ Settings.prototype = {
     this._set("Software\\Microsoft\\Internet Explorer\\TabbedBrowsing\\",
               "OpenInForeground",
               "browser.tabs.loadInBackground",
-              function (v) !Boolean(v));
+              v => !Boolean(v));
 
     aCallback(true);
   },
@@ -600,18 +472,27 @@ Settings.prototype = {
 
 function IEProfileMigrator()
 {
+  this.wrappedJSObject = this; // export this to be able to use it in the unittest.
 }
 
 IEProfileMigrator.prototype = Object.create(MigratorPrototype);
 
 IEProfileMigrator.prototype.getResources = function IE_getResources() {
   let resources = [
-    new Bookmarks()
+    MSMigrationUtils.getBookmarksMigrator()
   , new History()
-  , new Cookies()
+  , MSMigrationUtils.getCookiesMigrator()
   , new Settings()
   ];
-  return [r for each (r in resources) if (r.exists)];
+  // Only support the form password migrator for Windows XP to 7.
+  if (AppConstants.isPlatformAndVersionAtMost("win", "6.1")) {
+    resources.push(new IE7FormPasswords());
+  }
+  let windowsVaultFormPasswordsMigrator =
+    MSMigrationUtils.getWindowsVaultFormPasswordsMigrator();
+  windowsVaultFormPasswordsMigrator.name = "IEVaultFormPasswords";
+  resources.push(windowsVaultFormPasswordsMigrator);
+  return resources.filter(r => r.exists);
 };
 
 Object.defineProperty(IEProfileMigrator.prototype, "sourceHomePageURL", {

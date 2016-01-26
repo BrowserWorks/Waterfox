@@ -9,6 +9,8 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "nsHtml5ViewSourceUtils.h"
+
+#include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
 
 using namespace mozilla;
@@ -53,13 +55,11 @@ nsHtml5Highlighter::nsHtml5Highlighter(nsAHtml5TreeOpSink* aOpSink)
  , mInlinesOpen(0)
  , mInCharacters(false)
  , mBuffer(nullptr)
- , mSyntaxHighlight(Preferences::GetBool("view_source.syntax_highlight",
-                                         true))
  , mOpSink(aOpSink)
  , mCurrentRun(nullptr)
  , mAmpersand(nullptr)
  , mSlash(nullptr)
- , mHandles(new nsIContent*[NS_HTML5_HIGHLIGHTER_HANDLE_ARRAY_LENGTH])
+ , mHandles(MakeUnique<nsIContent*[]>(NS_HTML5_HIGHLIGHTER_HANDLE_ARRAY_LENGTH))
  , mHandlesUsed(0)
  , mSeenBase(false)
 {
@@ -570,7 +570,7 @@ nsHtml5Highlighter::FlushChars()
           // the input data, because there are no reparses in the View Source
           // case, so we won't need the original data in the buffer anymore.
           buf[i] = '\n';
-          // fall through
+          MOZ_FALLTHROUGH;
         case '\n': {
           ++i;
           if (mCStart < i) {
@@ -643,8 +643,8 @@ nsIContent**
 nsHtml5Highlighter::AllocateContentHandle()
 {
   if (mHandlesUsed == NS_HTML5_HIGHLIGHTER_HANDLE_ARRAY_LENGTH) {
-    mOldHandles.AppendElement(mHandles.forget());
-    mHandles = new nsIContent*[NS_HTML5_HIGHLIGHTER_HANDLE_ARRAY_LENGTH];
+    mOldHandles.AppendElement(Move(mHandles));
+    mHandles = MakeUnique<nsIContent*[]>(NS_HTML5_HIGHLIGHTER_HANDLE_ARRAY_LENGTH);
     mHandlesUsed = 0;
   }
 #ifdef DEBUG
@@ -713,9 +713,6 @@ nsHtml5Highlighter::AppendCharacters(const char16_t* aBuffer,
 void
 nsHtml5Highlighter::AddClass(const char16_t* aClass)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   mOpQueue.AppendElement()->InitAddClass(CurrentNode(), aClass);
 }
 
@@ -751,9 +748,6 @@ nsHtml5Highlighter::AddBase(const nsString& aValue)
 void
 nsHtml5Highlighter::AddErrorToCurrentNode(const char* aMsgId)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
   treeOp->Init(CurrentNode(), aMsgId);
@@ -762,9 +756,6 @@ nsHtml5Highlighter::AddErrorToCurrentNode(const char* aMsgId)
 void
 nsHtml5Highlighter::AddErrorToCurrentRun(const char* aMsgId)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   NS_PRECONDITION(mCurrentRun, "Adding error to run without one!");
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
@@ -775,9 +766,6 @@ void
 nsHtml5Highlighter::AddErrorToCurrentRun(const char* aMsgId,
                                          nsIAtom* aName)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   NS_PRECONDITION(mCurrentRun, "Adding error to run without one!");
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
@@ -789,9 +777,6 @@ nsHtml5Highlighter::AddErrorToCurrentRun(const char* aMsgId,
                                          nsIAtom* aName,
                                          nsIAtom* aOther)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   NS_PRECONDITION(mCurrentRun, "Adding error to run without one!");
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
@@ -801,9 +786,6 @@ nsHtml5Highlighter::AddErrorToCurrentRun(const char* aMsgId,
 void
 nsHtml5Highlighter::AddErrorToCurrentAmpersand(const char* aMsgId)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   NS_PRECONDITION(mAmpersand, "Adding error to ampersand without one!");
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");
@@ -813,9 +795,6 @@ nsHtml5Highlighter::AddErrorToCurrentAmpersand(const char* aMsgId)
 void
 nsHtml5Highlighter::AddErrorToCurrentSlash(const char* aMsgId)
 {
-  if (!mSyntaxHighlight) {
-    return;
-  }
   NS_PRECONDITION(mSlash, "Adding error to slash without one!");
   nsHtml5TreeOperation* treeOp = mOpQueue.AppendElement();
   NS_ASSERTION(treeOp, "Tree op allocation failed.");

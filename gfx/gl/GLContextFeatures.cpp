@@ -210,34 +210,53 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
+        // Check for just the blit framebuffer blit part of
+        // ARB_framebuffer_object
         "framebuffer_blit",
         GLVersion::GL3,
         GLESVersion::ES3,
-        GLContext::Extension_None,
+        GLContext::ARB_framebuffer_object,
         {
-            GLContext::EXT_framebuffer_blit,
             GLContext::ANGLE_framebuffer_blit,
+            GLContext::EXT_framebuffer_blit,
+            GLContext::NV_framebuffer_blit,
             GLContext::Extensions_End
         }
     },
     {
+        // Check for just the multisample renderbuffer part of
+        // ARB_framebuffer_object
         "framebuffer_multisample",
         GLVersion::GL3,
         GLESVersion::ES3,
-        GLContext::Extension_None,
+        GLContext::ARB_framebuffer_object,
         {
-            GLContext::EXT_framebuffer_multisample,
             GLContext::ANGLE_framebuffer_multisample,
+            GLContext::APPLE_framebuffer_multisample,
+            GLContext::EXT_framebuffer_multisample,
+            GLContext::EXT_multisampled_render_to_texture,
             GLContext::Extensions_End
         }
     },
     {
+        // ARB_framebuffer_object support
         "framebuffer_object",
         GLVersion::GL3,
-        GLESVersion::ES2,
+        GLESVersion::ES3,
         GLContext::ARB_framebuffer_object,
         {
+            GLContext::Extensions_End
+        }
+    },
+    {
+        // EXT_framebuffer_object/OES_framebuffer_object support
+        "framebuffer_object_EXT_OES",
+        GLVersion::GL3,
+        GLESVersion::ES2,
+        GLContext::Extension_None,
+        {
             GLContext::EXT_framebuffer_object,
+            GLContext::OES_framebuffer_object,
             GLContext::Extensions_End
         }
     },
@@ -257,6 +276,18 @@ static const FeatureInfo sFeatureInfoArr[] = {
         GLESVersion::ES3,
         GLContext::Extension_None,
         {
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "get_query_object_i64v",
+        GLVersion::GL3_3,
+        GLESVersion::NONE,
+        GLContext::ARB_timer_query,
+        {
+            GLContext::ANGLE_timer_query,
+            GLContext::EXT_disjoint_timer_query,
+            GLContext::EXT_timer_query,
             GLContext::Extensions_End
         }
     },
@@ -319,6 +350,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
          * ANGLE_instanced_arrays and NV_instanced_arrays forbid this, but GLES3
          * has no such restriction.
          */
+    },
+    {
+        "internalformat_query",
+        GLVersion::GL4_2,
+        GLESVersion::ES3,
+        GLContext::ARB_internalformat_query,
+        {
+            GLContext::Extensions_End
+        }
     },
     {
         "invalidate_framebuffer",
@@ -393,19 +433,46 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
+        "query_counter",
+        GLVersion::GL3_3,
+        GLESVersion::NONE,
+        GLContext::ARB_timer_query,
+        {
+            GLContext::ANGLE_timer_query,
+            GLContext::EXT_disjoint_timer_query,
+            // EXT_timer_query does NOT support GL_TIMESTAMP retrieval with
+            // QueryCounter.
+            GLContext::Extensions_End
+        }
+    },
+    {
         "query_objects",
         GLVersion::GL2,
         GLESVersion::ES3,
         GLContext::Extension_None,
         {
+            GLContext::ANGLE_timer_query,
+            GLContext::EXT_disjoint_timer_query,
             GLContext::EXT_occlusion_query_boolean,
             GLContext::Extensions_End
         }
         /*
          * XXX_query_objects only provide entry points commonly supported by
-         * ARB_occlusion_query (added in OpenGL 2.0) and EXT_occlusion_query_boolean
-         * (added in OpenGL ES 3.0)
+         * ARB_occlusion_query (added in OpenGL 2.0), EXT_occlusion_query_boolean
+         * (added in OpenGL ES 3.0), and ARB_timer_query (added in OpenGL 3.3)
          */
+    },
+    {
+        "query_time_elapsed",
+        GLVersion::GL3_3,
+        GLESVersion::NONE,
+        GLContext::ARB_timer_query,
+        {
+            GLContext::ANGLE_timer_query,
+            GLContext::EXT_disjoint_timer_query,
+            GLContext::EXT_timer_query,
+            GLContext::Extensions_End
+        }
     },
     {
         "read_buffer",
@@ -481,12 +548,37 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
+        // Do we have separate DRAW and READ framebuffer bind points?
+        "split_framebuffer",
+        GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::ARB_framebuffer_object,
+        {
+            GLContext::ANGLE_framebuffer_blit,
+            GLContext::APPLE_framebuffer_multisample,
+            GLContext::EXT_framebuffer_blit,
+            GLContext::NV_framebuffer_blit,
+            GLContext::Extensions_End
+        }
+    },
+    {
         "standard_derivatives",
         GLVersion::GL2,
         GLESVersion::ES3,
         GLContext::Extension_None,
         {
             GLContext::OES_standard_derivatives,
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "sync",
+        GLVersion::GL3_2,
+        GLESVersion::ES3,
+        GLContext::Extension_None,
+        {
+            GLContext::ARB_sync,
+            GLContext::APPLE_sync,
             GLContext::Extensions_End
         }
     },
@@ -600,6 +692,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
              * doesn't guarantee glTexStorage3D, which is required for
              * WebGL 2.
              */
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "texture_swizzle",
+        GLVersion::GL3_3,
+        GLESVersion::ES3,
+        GLContext::ARB_texture_swizzle,
+        {
             GLContext::Extensions_End
         }
     },
@@ -732,6 +833,15 @@ GLContext::InitFeatures()
                 mAvailableFeatures[featureId] = true;
                 break;
             }
+        }
+    }
+
+    if (ShouldDumpExts()) {
+        for (size_t featureId = 0; featureId < size_t(GLFeature::EnumMax); featureId++) {
+            GLFeature feature = GLFeature(featureId);
+            printf_stderr("[%s] Feature::%s\n",
+                          IsSupported(feature) ? "enabled" : "disabled",
+                          GetFeatureName(feature));
         }
     }
 

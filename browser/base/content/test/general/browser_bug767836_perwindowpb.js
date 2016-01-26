@@ -1,57 +1,64 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
+/* globals waitForExplicitFinish, executeSoon, finish, whenNewWindowLoaded, ok */
+/* globals is */
+/* exported test */
 
 function test() {
   //initialization
   waitForExplicitFinish();
-  let newTabPrefName = "browser.newtab.url";
+
+  let aboutNewTabService = Components.classes["@mozilla.org/browser/aboutnewtab-service;1"]
+                                     .getService(Components.interfaces.nsIAboutNewTabService);
   let newTabURL;
   let testURL = "http://example.com/";
+  let defaultURL = aboutNewTabService.newTabURL;
   let mode;
 
   function doTest(aIsPrivateMode, aWindow, aCallback) {
-    openNewTab(aWindow, function () {
+    openNewTab(aWindow, function() {
       if (aIsPrivateMode) {
         mode = "per window private browsing";
         newTabURL = "about:privatebrowsing";
       } else {
         mode = "normal";
-        newTabURL = Services.prefs.getCharPref(newTabPrefName) || "about:blank";
+        newTabURL = "about:newtab";
       }
 
       // Check the new tab opened while in normal/private mode
       is(aWindow.gBrowser.selectedBrowser.currentURI.spec, newTabURL,
         "URL of NewTab should be " + newTabURL + " in " + mode +  " mode");
       // Set the custom newtab url
-      Services.prefs.setCharPref(newTabPrefName, testURL);
-      ok(Services.prefs.prefHasUserValue(newTabPrefName), "Custom newtab url is set");
+      aboutNewTabService.newTabURL = testURL;
+      is(aboutNewTabService.newTabURL, testURL, "Custom newtab url is set");
 
       // Open a newtab after setting the custom newtab url
-      openNewTab(aWindow, function () {
+      openNewTab(aWindow, function() {
         is(aWindow.gBrowser.selectedBrowser.currentURI.spec, testURL,
            "URL of NewTab should be the custom url");
 
-        // clear the custom url preference
-        Services.prefs.clearUserPref(newTabPrefName);
-        ok(!Services.prefs.prefHasUserValue(newTabPrefName), "No custom newtab url is set");
+        // Clear the custom url.
+        aboutNewTabService.resetNewTabURL();
+        is(aboutNewTabService.newTabURL, defaultURL, "No custom newtab url is set");
 
         aWindow.gBrowser.removeTab(aWindow.gBrowser.selectedTab);
         aWindow.gBrowser.removeTab(aWindow.gBrowser.selectedTab);
         aWindow.close();
-        aCallback()
+        aCallback();
       });
     });
   }
 
   function testOnWindow(aIsPrivate, aCallback) {
     whenNewWindowLoaded({private: aIsPrivate}, function(win) {
-      executeSoon(function() aCallback(win));
+      executeSoon(() => aCallback(win));
     });
   }
 
   // check whether any custom new tab url has been configured
-  ok(!Services.prefs.prefHasUserValue(newTabPrefName), "No custom newtab url is set");
+  ok(!aboutNewTabService.overridden, "No custom newtab url is set");
 
   // test normal mode
   testOnWindow(false, function(aWindow) {
@@ -71,7 +78,7 @@ function openNewTab(aWindow, aCallback) {
   aWindow.BrowserOpenTab();
 
   let browser = aWindow.gBrowser.selectedBrowser;
-  if (browser.contentDocument.readyState == "complete") {
+  if (browser.contentDocument.readyState === "complete") {
     executeSoon(aCallback);
     return;
   }

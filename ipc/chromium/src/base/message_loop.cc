@@ -32,6 +32,7 @@
 #endif
 #ifdef MOZ_TASK_TRACER
 #include "GeckoTaskTracer.h"
+#include "TracedTaskCommon.h"
 #endif
 
 #include "MessagePump.h"
@@ -287,6 +288,7 @@ void MessageLoop::PostIdleTask(
 
 #ifdef MOZ_TASK_TRACER
   task = mozilla::tasktracer::CreateTracedTask(task);
+  (static_cast<mozilla::tasktracer::TracedTask*>(task))->DispatchTask();
 #endif
 
   task->SetBirthPlace(from_here);
@@ -301,6 +303,7 @@ void MessageLoop::PostTask_Helper(
 
 #ifdef MOZ_TASK_TRACER
   task = mozilla::tasktracer::CreateTracedTask(task);
+  (static_cast<mozilla::tasktracer::TracedTask*>(task))->DispatchTask(delay_ms);
 #endif
 
   task->SetBirthPlace(from_here);
@@ -318,7 +321,7 @@ void MessageLoop::PostTask_Helper(
   // directly, as it could starve handling of foreign threads.  Put every task
   // into this queue.
 
-  nsRefPtr<base::MessagePump> pump;
+  RefPtr<base::MessagePump> pump;
   {
     AutoLock locked(incoming_queue_lock_);
     incoming_queue_.push(pending_task);

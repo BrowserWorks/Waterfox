@@ -142,16 +142,16 @@ ALL_TESTS_JSON = b'''
             "subsuite": ""
         }
    ],
-   "browser/devtools/markupview/test/browser_markupview_copy_image_data.js": [
+   "devtools/client/markupview/test/browser_markupview_copy_image_data.js": [
         {
-            "dir_relpath": "browser/devtools/markupview/test",
-            "file_relpath": "browser/devtools/markupview/test/browser_markupview_copy_image_data.js",
+            "dir_relpath": "devtools/client/markupview/test",
+            "file_relpath": "devtools/client/markupview/test/browser_markupview_copy_image_data.js",
             "flavor": "browser-chrome",
-            "here": "/home/chris/m-c/obj-dbg/_tests/testing/mochitest/browser/browser/devtools/markupview/test",
-            "manifest": "/home/chris/m-c/browser/devtools/markupview/test/browser.ini",
+            "here": "/home/chris/m-c/obj-dbg/_tests/testing/mochitest/browser/devtools/client/markupview/test",
+            "manifest": "/home/chris/m-c/devtools/client/markupview/test/browser.ini",
             "name": "browser_markupview_copy_image_data.js",
-            "path": "/home/chris/m-c/obj-dbg/_tests/testing/mochitest/browser/browser/devtools/markupview/test/browser_markupview_copy_image_data.js",
-            "relpath": "browser/devtools/markupview/test/browser_markupview_copy_image_data.js",
+            "path": "/home/chris/m-c/obj-dbg/_tests/testing/mochitest/browser/devtools/client/markupview/test/browser_markupview_copy_image_data.js",
+            "relpath": "devtools/client/markupview/test/browser_markupview_copy_image_data.js",
             "subsuite": "devtools",
             "tags": "devtools"
         }
@@ -287,6 +287,22 @@ class TestTestResolver(Base):
         tests = list(r.resolve_tests(paths=['mobile'], subsuite='background'))
         self.assertEqual(len(tests), 1)
         self.assertEqual(tests[0]['name'], 'src/common/TestAndroidLogWriters.java')
+
+    def test_wildcard_patterns(self):
+        """Test matching paths by wildcard."""
+
+        r = self._get_resolver()
+
+        tests = list(r.resolve_tests(paths=['mobile/**']))
+        self.assertEqual(len(tests), 2)
+        for t in tests:
+            self.assertTrue(t['file_relpath'].startswith('mobile'))
+
+        tests = list(r.resolve_tests(paths=['**/**.js', 'accessible/**']))
+        self.assertEqual(len(tests), 7)
+        for t in tests:
+            path = t['file_relpath']
+            self.assertTrue(path.startswith('accessible') or path.endswith('.js'))
 
 
 if __name__ == '__main__':

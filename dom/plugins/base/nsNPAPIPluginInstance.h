@@ -17,6 +17,7 @@
 #include "nsHashKeys.h"
 #include <prinrval.h>
 #include "js/TypeDecls.h"
+#include "nsIAudioChannelAgent.h"
 #ifdef MOZ_WIDGET_ANDROID
 #include "nsAutoPtr.h"
 #include "nsIRunnable.h"
@@ -30,6 +31,7 @@ class SharedPluginTexture;
 
 #include "mozilla/TimeStamp.h"
 #include "mozilla/PluginLibrary.h"
+#include "mozilla/WeakPtr.h"
 
 class nsPluginStreamListenerPeer; // browser-initiated stream class
 class nsNPAPIPluginStreamListener; // plugin-initiated stream class
@@ -74,13 +76,18 @@ public:
   bool needUnschedule;
 };
 
-class nsNPAPIPluginInstance : public nsISupports
+class nsNPAPIPluginInstance final : public nsIAudioChannelAgentCallback
+                                  , public mozilla::SupportsWeakPtr<nsNPAPIPluginInstance>
 {
 private:
   typedef mozilla::PluginLibrary PluginLibrary;
 
 public:
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsNPAPIPluginInstance)
   NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIAUDIOCHANNELAGENTCALLBACK
 
   nsresult Initialize(nsNPAPIPlugin *aPlugin, nsPluginInstanceOwner* aOwner, const nsACString& aMIMEType);
   nsresult Start();
@@ -103,8 +110,8 @@ public:
   nsresult NotifyPainted(void);
   nsresult GetIsOOP(bool* aIsOOP);
   nsresult SetBackgroundUnknown();
-  nsresult BeginUpdateBackground(nsIntRect* aRect, gfxContext** aContext);
-  nsresult EndUpdateBackground(gfxContext* aContext, nsIntRect* aRect);
+  nsresult BeginUpdateBackground(nsIntRect* aRect, DrawTarget** aContext);
+  nsresult EndUpdateBackground(nsIntRect* aRect);
   nsresult IsTransparent(bool* isTransparent);
   nsresult GetFormValue(nsAString& aValue);
   nsresult PushPopupsEnabledState(bool aEnabled);
@@ -116,7 +123,16 @@ public:
   nsresult GetJSContext(JSContext* *outContext);
   nsPluginInstanceOwner* GetOwner();
   void SetOwner(nsPluginInstanceOwner *aOwner);
-  nsresult ShowStatus(const char* message);
+  void DidComposite();
+
+  bool HasAudioChannelAgent() const
+  {
+    return !!mAudioChannelAgent;
+  }
+
+  nsresult GetOrCreateAudioChannelAgent(nsIAudioChannelAgent** aAgent);
+
+  nsresult SetMuted(bool aIsMuted);
 
   nsNPAPIPlugin* GetPlugin();
 
@@ -211,7 +227,7 @@ public:
       mSurfaceTexture = nullptr;
     }
 
-    mozilla::RefPtr<mozilla::gl::AndroidSurfaceTexture> mSurfaceTexture;
+    RefPtr<mozilla::gl::AndroidSurfaceTexture> mSurfaceTexture;
     gfxRect mDimensions;
   };
 
@@ -279,6 +295,11 @@ public:
 
   void URLRedirectResponse(void* notifyData, NPBool allow);
 
+  NPError InitAsyncSurface(NPSize *size, NPImageFormat format,
+                           void *initData, NPAsyncSurface *surface);
+  NPError FinalizeAsyncSurface(NPAsyncSurface *surface);
+  void SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *changed);
+
   // Called when the instance fails to instantiate beceause the Carbon
   // event model is not supported.
   void CarbonNPAPIFailure();
@@ -326,7 +347,7 @@ protected:
 
   friend class PluginEventRunnable;
 
-  nsTArray<nsRefPtr<PluginEventRunnable>> mPostedEvents;
+  nsTArray<RefPtr<PluginEventRunnable>> mPostedEvents;
   void PopPostedEvent(PluginEventRunnable* r);
   void OnSurfaceTextureFrameAvailable();
 
@@ -335,8 +356,8 @@ protected:
   bool mFullScreen;
   mozilla::gl::OriginPos mOriginPos;
 
-  mozilla::RefPtr<SharedPluginTexture> mContentTexture;
-  mozilla::RefPtr<mozilla::gl::AndroidSurfaceTexture> mContentSurface;
+  RefPtr<SharedPluginTexture> mContentTexture;
+  RefPtr<mozilla::gl::AndroidSurfaceTexture> mContentSurface;
 #endif
 
   enum {
@@ -387,7 +408,7 @@ private:
 
 #ifdef MOZ_WIDGET_ANDROID
   void EnsureSharedTexture();
-  mozilla::TemporaryRef<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
+  already_AddRefed<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
 
   std::map<void*, VideoInfo*> mVideos;
   bool mOnScreen;
@@ -405,6 +426,8 @@ private:
   uint32_t mCachedParamLength;
   char **mCachedParamNames;
   char **mCachedParamValues;
+
+  nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
 };
 
 // On Android, we need to guard against plugin code leaking entries in the local

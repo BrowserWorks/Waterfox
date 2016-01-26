@@ -36,7 +36,7 @@ of the License or (at your option) any later version.
 #include "inc/Slot.h"
 #include "inc/Main.h"
 #include "inc/CmapCache.h"
-#include "inc/Bidi.h"
+#include "inc/Collider.h"
 #include "graphite2/Segment.h"
 
 
@@ -46,6 +46,7 @@ Segment::Segment(unsigned int numchars, const Face* face, uint32 script, int tex
 : m_freeSlots(NULL),
   m_freeJustifies(NULL),
   m_charinfo(new CharInfo[numchars]),
+  m_collisions(NULL),
   m_face(face),
   m_silf(face->chooseSilf(script)),
   m_first(NULL),
@@ -55,7 +56,8 @@ Segment::Segment(unsigned int numchars, const Face* face, uint32 script, int tex
   m_numCharinfo(numchars),
   m_passBits(m_silf->aPassBits() ? -1 : 0),
   m_defaultOriginal(0),
-  m_dir(textDir)
+  m_dir(textDir),
+  m_flags(((m_silf->flags() & 0x20) != 0) << 1)
 {
     freeSlot(newSlot());
     m_bufSize = log_binary(numchars)+1;
@@ -65,9 +67,12 @@ Segment::~Segment()
 {
     for (SlotRope::iterator i = m_slots.begin(); i != m_slots.end(); ++i)
         free(*i);
-    for (AttributeRope::iterator j = m_userAttrs.begin(); j != m_userAttrs.end(); ++j)
-        free(*j);
+    for (AttributeRope::iterator i = m_userAttrs.begin(); i != m_userAttrs.end(); ++i)
+        free(*i);
+    for (JustifyRope::iterator i = m_justifies.begin(); i != m_justifies.end(); ++i)
+        free(*i);
     delete[] m_charinfo;
+    free(m_collisions);
 }
 
 #ifndef GRAPHITE2_NSEGCACHE
@@ -164,18 +169,25 @@ Slot *Segment::newSlot()
 {
     if (!m_freeSlots)
     {
+        // check that the segment doesn't grow indefinintely
+        if (m_numGlyphs > m_numCharinfo * MAX_SEG_GROWTH_FACTOR)
+            return NULL;
         int numUser = m_silf->numUser();
 #if !defined GRAPHITE2_NTRACING
         if (m_face->logger()) ++numUser;
 #endif
         Slot *newSlots = grzeroalloc<Slot>(m_bufSize);
-        int16 *newAttrs = grzeroalloc<int16>(numUser * m_bufSize);
-        if (!newSlots || !newAttrs) return NULL;
+        int16 *newAttrs = grzeroalloc<int16>(m_bufSize * numUser);
+        if (!newSlots || !newAttrs)
+        {
+            free(newSlots);
+            free(newAttrs);
+            return NULL;
+        }
         for (size_t i = 0; i < m_bufSize; i++)
         {
+            ::new (newSlots + i) Slot(newAttrs + i * numUser);
             newSlots[i].next(newSlots + i + 1);
-            newSlots[i].userAttrs(newAttrs + i * numUser);
-            newSlots[i].setBidiClass(-1);
         }
         newSlots[m_bufSize - 1].next(NULL);
         newSlots[0].next(NULL);
@@ -202,7 +214,7 @@ void Segment::freeSlot(Slot *aSlot)
         aSlot->removeChild(aSlot->firstChild());
     }
     // reset the slot incase it is reused
-    ::new (aSlot) Slot;
+    ::new (aSlot) Slot(aSlot->userAttrs());
     memset(aSlot->userAttrs(), 0, m_silf->numUser() * sizeof(int16));
     // Update generation counter for debug
 #if !defined GRAPHITE2_NTRACING
@@ -306,6 +318,61 @@ void Segment::splice(size_t offset, size_t length, Slot * const startSlot,
 }
 #endif // GRAPHITE2_NSEGCACHE
 
+// reverse the slots but keep diacritics in their same position after their bases
+void Segment::reverseSlots()
+{
+    m_dir = m_dir ^ 64;                 // invert the reverse flag
+    if (m_first == m_last) return;      // skip 0 or 1 glyph runs
+
+    Slot *t = 0;
+    Slot *curr = m_first;
+    Slot *tlast;
+    Slot *tfirst;
+    Slot *out = 0;
+
+    while (curr && getSlotBidiClass(curr) == 16)
+        curr = curr->next();
+    if (!curr) return;
+    tfirst = curr->prev();
+    tlast = curr;
+
+    while (curr)
+    {
+        if (getSlotBidiClass(curr) == 16)
+        {
+            Slot *d = curr->next();
+            while (d && getSlotBidiClass(d) == 16)
+                d = d->next();
+
+            d = d ? d->prev() : m_last;
+            Slot *p = out->next();    // one after the diacritics. out can't be null
+            if (p)
+                p->prev(d);
+            else
+                tlast = d;
+            t = d->next();
+            d->next(p);
+            curr->prev(out);
+            out->next(curr);
+        }
+        else    // will always fire first time round the loop
+        {
+            if (out)
+                out->prev(curr);
+            t = curr->next();
+            curr->next(out);
+            out = curr;
+        }
+        curr = t;
+    }
+    out->prev(tfirst);
+    if (tfirst)
+        tfirst->next(out);
+    else
+        m_first = out;
+    m_last = tlast;
+}
+
 void Segment::linkClusters(Slot *s, Slot * end)
 {
     end = end->next();
@@ -335,21 +402,29 @@ void Segment::linkClusters(Slot *s, Slot * end)
     }
 }
 
-Position Segment::positionSlots(const Font *font, Slot * iStart, Slot * iEnd)
+Position Segment::positionSlots(const Font *font, Slot * iStart, Slot * iEnd, bool isRtl, bool isFinal)
 {
     Position currpos(0., 0.);
     float clusterMin = 0.;
     Rect bbox;
 
+    if (currdir() != isRtl)
+    {
+        Slot *temp;
+        reverseSlots();
+        temp = iStart;
+        iStart = iEnd;
+        iEnd = temp;
+    }
     if (!iStart)    iStart = m_first;
     if (!iEnd)      iEnd   = m_last;
 
-    if (m_dir & 1)
+    if (isRtl)
     {
         for (Slot * s = iEnd, * const end = iStart->prev(); s && s != end; s = s->prev())
         {
             if (s->isBase())
-                currpos = s->finalise(this, font, currpos, bbox, 0, clusterMin = currpos.x);
+                currpos = s->finalise(this, font, currpos, bbox, 0, clusterMin = currpos.x, isRtl, isFinal);
         }
     }
     else
@@ -357,7 +432,7 @@ Position Segment::positionSlots(const Font *font, Slot * iStart, Slot * iEnd)
         for (Slot * s = iStart, * const end = iEnd->next(); s && s != end; s = s->next())
         {
             if (s->isBase())
-                currpos = s->finalise(this, font, currpos, bbox, 0, clusterMin = currpos.x);
+                currpos = s->finalise(this, font, currpos, bbox, 0, clusterMin = currpos.x, isRtl, isFinal);
         }
     }
     return currpos;
@@ -434,61 +509,23 @@ bool Segment::read_text(const Face *face, const Features* pFeats/*must not be NU
     return true;
 }
 
-void Segment::prepare_pos(const Font * /*font*/)
+void Segment::doMirror(uint16 aMirror)
 {
-    // copy key changeable metrics into slot (if any);
-}
-
-Slot *process_bidi(Slot *start, int level, int prelevel, int &nextLevel, int dirover, int isol, int &cisol, int &isolerr, int &embederr, int init, Segment *seg, uint8 aMirror, BracketPairStack &stack);
-void resolveImplicit(Slot *s, Segment *seg, uint8 aMirror);
-void resolveWhitespace(int baseLevel, Slot *s);
-Slot *resolveOrder(Slot * & s, const bool reordered, const int level = 0);
-
-void Segment::bidiPass(uint8 aBidi, int paradir, uint8 aMirror)
-{
-    if (slotCount() == 0)
-        return;
-
-    Slot *s;
-    int baseLevel = paradir ? 1 : 0;
-    unsigned int bmask = 0;
-    unsigned int ssize = 0;
-    for (s = first(); s; s = s->next())
+    Slot * s;
+    for (s = m_first; s; s = s->next())
     {
-        if (s->getBidiClass() == -1)
-        {
-            unsigned int bAttr = glyphAttr(s->gid(), aBidi);
-            s->setBidiClass((bAttr <= 22) * bAttr);
-        }
-        bmask |= (1 << s->getBidiClass());
-        s->setBidiLevel(baseLevel);
-        if (glyphAttr(s->gid(), aMirror) && s->getBidiClass() == 21)
-            ++ssize;
-    }
-
-    BracketPairStack bstack(ssize);
-    if (bmask & (paradir ? 0x2E7892 : 0x2E789C))
-    {
-        // O(8N) algorithm, with no working data beyond what is needed for processParens
-        int nextLevel = paradir;
-        int e, i, c;
-        process_bidi(first(), baseLevel, paradir, nextLevel, 0, 0, c = 0, i = 0, e = 0, 1, this, aMirror, bstack);
-        resolveImplicit(first(), this, aMirror);
-        resolveWhitespace(baseLevel, last());
-        s = resolveOrder(s = first(), baseLevel != 0);
-        if (s)
-        {
-            first(s); last(s->prev());
-            s->prev()->next(0); s->prev(0);
-        }
-    }
-    else if (!(dir() & 4) && baseLevel && aMirror)
-    {
-        for (s = first(); s; s = s->next())
-        {
-            unsigned short g = glyphAttr(s->gid(), aMirror);
-            if (g) s->setGlyph(this, g);
-        }
+        unsigned short g = glyphAttr(s->gid(), aMirror);
+        if (g && (!(dir() & 4) || !glyphAttr(s->gid(), aMirror + 1)))
+            s->setGlyph(this, g);
     }
 }
 
+bool Segment::initCollisions()
+{
+    m_collisions = grzeroalloc<SlotCollision>(slotCount());
+    if (!m_collisions) return false;
+
+    for (Slot *p = m_first; p; p = p->next())
+        ::new (collisionInfo(p)) SlotCollision(this, p);
+    return true;
+}

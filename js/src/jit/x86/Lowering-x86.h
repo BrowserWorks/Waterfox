@@ -22,7 +22,8 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
   protected:
     // Adds a box input to an instruction, setting operand |n| to the type and
     // |n+1| to the payload.
-    void useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register reg2);
+    void useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register reg2,
+                     bool useAtStart = false);
 
     // It's a trap! On x86, the 1-byte store can only use one of
     // {al,bl,cl,dl,ah,bh,ch,dh}. That means if the register allocator
@@ -47,6 +48,7 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     void visitUnbox(MUnbox* unbox);
     void visitReturn(MReturn* ret);
     void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins);
+    void visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins);
     void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins);
     void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins);
     void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins);
@@ -54,9 +56,11 @@ class LIRGeneratorX86 : public LIRGeneratorX86Shared
     void visitAsmJSStoreHeap(MAsmJSStoreHeap* ins);
     void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins);
     void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins);
+    void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
     void visitSubstr(MSubstr* ins);
+    void visitRandom(MRandom* ins);
     void lowerPhi(MPhi* phi);
 
     static bool allowTypedElementHoleCheck() {

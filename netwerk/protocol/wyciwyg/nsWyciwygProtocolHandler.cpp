@@ -10,9 +10,9 @@
 #include "nsNetCID.h"
 #include "nsServiceManagerUtils.h"
 #include "plstr.h"
-#include "nsNetUtil.h"
 #include "nsIObserverService.h"
 #include "mozIApplicationClearPrivateDataParams.h"
+#include "nsIURI.h"
 
 #include "mozilla/net/NeckoChild.h"
 
@@ -23,9 +23,6 @@ using namespace mozilla::net;
 
 nsWyciwygProtocolHandler::nsWyciwygProtocolHandler() 
 {
-  if (!gWyciwygLog)
-    gWyciwygLog = PR_NewLogModule("nsWyciwygChannel");
-
   LOG(("Creating nsWyciwygProtocolHandler [this=%p].\n", this));
 }
 

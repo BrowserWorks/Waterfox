@@ -13,6 +13,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PeerConnectionIdp",
   "resource://gre/modules/media/PeerConnectionIdp.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "convertToRTCStatsReport",
   "resource://gre/modules/media/RTCStatsReport.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+  "resource://gre/modules/AppConstants.jsm");
 
 const PC_CONTRACT = "@mozilla.org/dom/peerconnection;1";
 const PC_OBS_CONTRACT = "@mozilla.org/dom/peerconnectionobserver;1";
@@ -23,6 +25,7 @@ const PC_STATS_CONTRACT = "@mozilla.org/dom/rtcstatsreport;1";
 const PC_STATIC_CONTRACT = "@mozilla.org/dom/peerconnectionstatic;1";
 const PC_SENDER_CONTRACT = "@mozilla.org/dom/rtpsender;1";
 const PC_RECEIVER_CONTRACT = "@mozilla.org/dom/rtpreceiver;1";
+const PC_COREQUEST_CONTRACT = "@mozilla.org/dom/createofferrequest;1";
 
 const PC_CID = Components.ID("{bdc2e533-b308-4708-ac8e-a8bfade6d851}");
 const PC_OBS_CID = Components.ID("{d1748d4c-7f6a-4dc5-add6-d55b7678537e}");
@@ -33,6 +36,7 @@ const PC_STATS_CID = Components.ID("{7fe6e18b-0da3-4056-bf3b-440ef3809e06}");
 const PC_STATIC_CID = Components.ID("{0fb47c47-a205-4583-a9fc-cbadf8c95880}");
 const PC_SENDER_CID = Components.ID("{4fff5d46-d827-4cd4-a970-8fd53977440e}");
 const PC_RECEIVER_CID = Components.ID("{d974b814-8fde-411c-8c45-b86791b81030}");
+const PC_COREQUEST_CID = Components.ID("{74b2122d-65a8-4824-aa9e-3d664cb75dc2}");
 
 // Global list of PeerConnection objects, so they can be cleaned up when
 // a page is torn down. (Maps inner window ID to an array of PC objects).
@@ -40,11 +44,14 @@ function GlobalPCList() {
   this._list = {};
   this._networkdown = false; // XXX Need to query current state somehow
   this._lifecycleobservers = {};
+  this._nextId = 1;
   Services.obs.addObserver(this, "inner-window-destroyed", true);
   Services.obs.addObserver(this, "profile-change-net-teardown", true);
   Services.obs.addObserver(this, "network:offline-about-to-go-offline", true);
   Services.obs.addObserver(this, "network:offline-status-changed", true);
   Services.obs.addObserver(this, "gmp-plugin-crash", true);
+  Services.obs.addObserver(this, "PeerConnection:response:allow", true);
+  Services.obs.addObserver(this, "PeerConnection:response:deny", true);
   if (Cc["@mozilla.org/childprocessmessagemanager;1"]) {
     let mm = Cc["@mozilla.org/childprocessmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("gmp-plugin-crash", this);
@@ -78,7 +85,21 @@ GlobalPCList.prototype = {
     } else {
       this._list[winID] = [Cu.getWeakReference(pc)];
     }
+    pc._globalPCListId = this._nextId++;
     this.removeNullRefs(winID);
+  },
+
+  findPC: function(globalPCListId) {
+    for (let winId in this._list) {
+      if (this._list.hasOwnProperty(winId)) {
+        for (let pcref of this._list[winId]) {
+          let pc = pcref.get();
+          if (pc && pc._globalPCListId == globalPCListId) {
+            return pc;
+          }
+        }
+      }
+    }
   },
 
   removeNullRefs: function(winID) {
@@ -187,6 +208,18 @@ GlobalPCList.prototype = {
         let data = { pluginID, pluginName };
         this.handleGMPCrash(data);
       }
+    } else if (topic == "PeerConnection:response:allow" ||
+               topic == "PeerConnection:response:deny") {
+      var pc = this.findPC(data);
+      if (pc) {
+        if (topic == "PeerConnection:response:allow") {
+          pc._settlePermission.allow();
+        } else {
+          let err = new pc._win.DOMException("The operation is insecure.",
+                                             "SecurityError");
+          pc._settlePermission.deny(err);
+        }
+      }
     }
   },
 
@@ -194,13 +227,13 @@ GlobalPCList.prototype = {
     this._lifecycleobservers[winID] = cb;
   },
 };
-let _globalPCList = new GlobalPCList();
+var _globalPCList = new GlobalPCList();
 
 function RTCIceCandidate() {
   this.candidate = this.sdpMid = this.sdpMLineIndex = null;
 }
 RTCIceCandidate.prototype = {
-  classDescription: "mozRTCIceCandidate",
+  classDescription: "RTCIceCandidate",
   classID: PC_ICE_CID,
   contractID: PC_ICE_CONTRACT,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
@@ -219,7 +252,7 @@ function RTCSessionDescription() {
   this.type = this.sdp = null;
 }
 RTCSessionDescription.prototype = {
-  classDescription: "mozRTCSessionDescription",
+  classDescription: "RTCSessionDescription",
   classID: PC_SESSION_CID,
   contractID: PC_SESSION_CONTRACT,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
@@ -313,7 +346,7 @@ function RTCPeerConnection() {
   this._iceGatheringState = this._iceConnectionState = "new";
 }
 RTCPeerConnection.prototype = {
-  classDescription: "mozRTCPeerConnection",
+  classDescription: "RTCPeerConnection",
   classID: PC_CID,
   contractID: PC_CONTRACT,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
@@ -323,27 +356,40 @@ RTCPeerConnection.prototype = {
   __init: function(rtcConfig) {
     this._winID = this._win.QueryInterface(Ci.nsIInterfaceRequestor)
     .getInterface(Ci.nsIDOMWindowUtils).currentInnerWindowID;
-
+    // TODO: Update this code once we support pc.setConfiguration, to track
+    // setting from content independently from pref (Bug 1181768).
+    if (rtcConfig.iceTransportPolicy == "all" &&
+        Services.prefs.getBoolPref("media.peerconnection.ice.relay_only")) {
+      rtcConfig.iceTransportPolicy = "relay";
+    }
     if (!rtcConfig.iceServers ||
         !Services.prefs.getBoolPref("media.peerconnection.use_document_iceservers")) {
-      rtcConfig.iceServers =
-        JSON.parse(Services.prefs.getCharPref("media.peerconnection.default_iceservers"));
-    }
-    // Normalize iceServers input
-    rtcConfig.iceServers.forEach(server => {
-      if (typeof server.urls === "string") {
-        server.urls = [server.urls];
-      } else if (!server.urls && server.url) {
-        // TODO: Remove support for legacy iceServer.url eventually (Bug 1116766)
-        server.urls = [server.url];
-        this.logWarning("RTCIceServer.url is deprecated! Use urls instead.", null, 0);
+      try {
+         rtcConfig.iceServers =
+           JSON.parse(Services.prefs.getCharPref("media.peerconnection.default_iceservers") || "[]");
+      } catch (e) {
+        this.logWarning(
+            "Ignoring invalid media.peerconnection.default_iceservers in about:config",
+             null, 0);
+        rtcConfig.iceServers = [];
       }
-    });
-    this._mustValidateRTCConfiguration(rtcConfig,
+      try {
+        this._mustValidateRTCConfiguration(rtcConfig,
+            "Ignoring invalid media.peerconnection.default_iceservers in about:config");
+      } catch (e) {
+        this.logWarning(e.message, null, 0);
+        rtcConfig.iceServers = [];
+      }
+    } else {
+      // This gets executed in the typical case when iceServers
+      // are passed in through the web page.
+      this._mustValidateRTCConfiguration(rtcConfig,
         "RTCPeerConnection constructor passed invalid RTCConfiguration");
-
+    }
     // Save the appId
-    this._appId = Cu.getWebIDLCallerPrincipal().appId;
+    var principal = Cu.getWebIDLCallerPrincipal();
+    this._appId = principal.appId;
+    this._isChrome = Services.scriptSecurityManager.isSystemPrincipal(principal);
 
     // Get the offline status for this appId
     let appOffline = false;
@@ -359,8 +405,9 @@ RTCPeerConnection.prototype = {
           "InvalidStateError");
     }
 
-    this.makeGetterSetterEH("onaddstream");
-    this.makeGetterSetterEH("onaddtrack");
+    this.makeGetterSetterEH("ontrack");
+    this.makeLegacyGetterSetterEH("onaddstream", "Use peerConnection.ontrack instead.");
+    this.makeLegacyGetterSetterEH("onaddtrack", "Use peerConnection.ontrack instead.");
     this.makeGetterSetterEH("onicecandidate");
     this.makeGetterSetterEH("onnegotiationneeded");
     this.makeGetterSetterEH("onsignalingstatechange");
@@ -378,11 +425,16 @@ RTCPeerConnection.prototype = {
     this.__DOM_IMPL__._innerObject = this;
     this._observer = new this._win.PeerConnectionObserver(this.__DOM_IMPL__);
 
+    var location = "" + this._win.location;
+    this._isLoop = location.startsWith("about:loop") ||
+                   location.startsWith("https://hello.firefox.com/");
+
     // Add a reference to the PeerConnection to global list (before init).
     _globalPCList.addPC(this);
 
     this._impl.initialize(this._observer, this._win, rtcConfig,
                           Services.tm.currentThread);
+    this._initCertificate(rtcConfig.certificates);
     this._initIdp();
     _globalPCList.notifyLifecycleObservers(this, "initialized");
   },
@@ -394,6 +446,30 @@ RTCPeerConnection.prototype = {
           "InvalidStateError");
     }
     return this._pc;
+  },
+
+  _initCertificate: function(certificates) {
+    let certPromise;
+    if (certificates && certificates.length > 0) {
+      if (certificates.length > 1) {
+        throw new this._win.DOMException(
+          "RTCPeerConnection does not currently support multiple certificates",
+          "NotSupportedError");
+      }
+      let cert = certificates.find(c => c.expires > Date.now());
+      if (!cert) {
+        throw new this._win.DOMException(
+          "Unable to create RTCPeerConnection with an expired certificate",
+          "InvalidParameterError");
+      }
+      certPromise = Promise.resolve(cert);
+    } else {
+      certPromise = this._win.RTCPeerConnection.generateCertificate({
+        name: "ECDSA", namedCurve: "P-256"
+      });
+    }
+    this._certificateReady = certPromise
+      .then(cert => this._impl.certificate = cert);
   },
 
   _initIdp: function() {
@@ -463,12 +539,23 @@ RTCPeerConnection.prototype = {
    *                   { urls: ["turn:turn1.x.org", "turn:turn2.x.org"],
    *                     username:"jib", credential:"mypass"} ] }
    *
-   * WebIDL normalizes structure for us, so we test well-formed stun/turn urls,
-   * but not validity of servers themselves, before passing along to C++.
-   *
+   * This function normalizes the structure of the input for rtcConfig.iceServers for us,
+   * so we test well-formed stun/turn urls before passing along to C++.
    *   msg - Error message to detail which array-entry failed, if any.
    */
   _mustValidateRTCConfiguration: function(rtcConfig, msg) {
+
+    // Normalize iceServers input
+    rtcConfig.iceServers.forEach(server => {
+      if (typeof server.urls === "string") {
+        server.urls = [server.urls];
+      } else if (!server.urls && server.url) {
+        // TODO: Remove support for legacy iceServer.url eventually (Bug 1116766)
+        server.urls = [server.url];
+        this.logWarning("RTCIceServer.url is deprecated! Use urls instead.", null, 0);
+      }
+    });
+
     let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
 
     let nicerNewURI = uriStr => {
@@ -577,16 +664,32 @@ RTCPeerConnection.prototype = {
                           });
   },
 
-  _addIdentityAssertion: function(p, origin) {
-    if (this._localIdp.enabled) {
-      return this._localIdp.getIdentityAssertion(this._impl.fingerprint, origin)
-        .then(() => p)
-        .then(sdp => this._localIdp.addIdentityAttribute(sdp));
+  makeLegacyGetterSetterEH: function(name, msg) {
+    Object.defineProperty(this, name,
+                          {
+                            get:function()  { return this.getEH(name); },
+                            set:function(h) {
+                              this.logWarning(name + " is deprecated! " + msg,
+                                              null, 0);
+                              return this.setEH(name, h);
+                            }
+                          });
+  },
+
+  _addIdentityAssertion: function(sdpPromise, origin) {
+    if (!this._localIdp.enabled) {
+      return sdpPromise;
     }
-    return p;
+    return Promise.all([
+      this._certificateReady
+        .then(() => this._localIdp.getIdentityAssertion(this._impl.fingerprint,
+                                                        origin)),
+      sdpPromise
+    ]).then(([,sdp]) => this._localIdp.addIdentityAttribute(sdp));
   },
 
   createOffer: function(optionsOrOnSuccess, onError, options) {
+    // This entry-point handles both new and legacy call sig. Decipher which one
     let onSuccess;
     if (typeof optionsOrOnSuccess == "function") {
       onSuccess = optionsOrOnSuccess;
@@ -594,7 +697,7 @@ RTCPeerConnection.prototype = {
       options = optionsOrOnSuccess;
     }
     return this._legacyCatch(onSuccess, onError, () => {
-      // TODO: Remove old constraint-like RTCOptions support soon (Bug 1064223).
+      // TODO: Remove error on constraint-like RTCOptions next cycle (1197021).
       // Note that webidl bindings make o.mandatory implicit but not o.optional.
       function convertLegacyOptions(o) {
         // Detect (mandatory OR optional) AND no other top-level members.
@@ -631,54 +734,84 @@ RTCPeerConnection.prototype = {
       }
 
       if (options && convertLegacyOptions(options)) {
-        this.logWarning(
-          "Mandatory/optional in createOffer options is deprecated! Use " +
+        this.logError(
+          "Mandatory/optional in createOffer options no longer works! Use " +
             JSON.stringify(options) + " instead (note the case difference)!",
           null, 0);
+        options = {};
       }
 
       let origin = Cu.getWebIDLCallerPrincipal().origin;
       return this._chain(() => {
-        let p = new this._win.Promise((resolve, reject) => {
-          this._onCreateOfferSuccess = resolve;
-          this._onCreateOfferFailure = reject;
-          this._impl.createOffer(options);
-        });
+        let p = Promise.all([this.getPermission(), this._certificateReady])
+          .then(() => new this._win.Promise((resolve, reject) => {
+            this._onCreateOfferSuccess = resolve;
+            this._onCreateOfferFailure = reject;
+            this._impl.createOffer(options);
+          }));
         p = this._addIdentityAssertion(p, origin);
         return p.then(
-          sdp => new this._win.mozRTCSessionDescription({ type: "offer", sdp: sdp }));
+          sdp => new this._win.RTCSessionDescription({ type: "offer", sdp: sdp }));
       });
     });
   },
 
-  createAnswer: function(onSuccess, onError) {
+  createAnswer: function(optionsOrOnSuccess, onError) {
+    // This entry-point handles both new and legacy call sig. Decipher which one
+    let onSuccess, options;
+    if (typeof optionsOrOnSuccess == "function") {
+      onSuccess = optionsOrOnSuccess;
+    } else {
+      options = optionsOrOnSuccess;
+    }
     return this._legacyCatch(onSuccess, onError, () => {
       let origin = Cu.getWebIDLCallerPrincipal().origin;
       return this._chain(() => {
-        let p = new this._win.Promise((resolve, reject) => {
-        // We give up line-numbers in errors by doing this here, but do all
-        // state-checks inside the chain, to support the legacy feature that
-        // callers don't have to wait for setRemoteDescription to finish.
-        if (!this.remoteDescription) {
-          throw new this._win.DOMException("setRemoteDescription not called",
-                                           "InvalidStateError");
-        }
-        if (this.remoteDescription.type != "offer") {
-          throw new this._win.DOMException("No outstanding offer",
-                                           "InvalidStateError");
-        }
-        this._onCreateAnswerSuccess = resolve;
-        this._onCreateAnswerFailure = reject;
-        this._impl.createAnswer();
-        });
+        let p = Promise.all([this.getPermission(), this._certificateReady])
+          .then(() => new this._win.Promise((resolve, reject) => {
+            // We give up line-numbers in errors by doing this here, but do all
+            // state-checks inside the chain, to support the legacy feature that
+            // callers don't have to wait for setRemoteDescription to finish.
+            if (!this.remoteDescription) {
+              throw new this._win.DOMException("setRemoteDescription not called",
+                                               "InvalidStateError");
+            }
+            if (this.remoteDescription.type != "offer") {
+              throw new this._win.DOMException("No outstanding offer",
+                                               "InvalidStateError");
+            }
+            this._onCreateAnswerSuccess = resolve;
+            this._onCreateAnswerFailure = reject;
+            this._impl.createAnswer();
+          }));
         p = this._addIdentityAssertion(p, origin);
         return p.then(sdp => {
-          return new this._win.mozRTCSessionDescription({ type: "answer", sdp: sdp });
+          return new this._win.RTCSessionDescription({ type: "answer", sdp: sdp });
         });
       });
     });
   },
 
+  getPermission: function() {
+    if (this._havePermission) {
+      return this._havePermission;
+    }
+    if (this._isChrome ||
+        AppConstants.MOZ_B2G ||
+        Services.prefs.getBoolPref("media.navigator.permission.disabled")) {
+      return this._havePermission = Promise.resolve();
+    }
+    return this._havePermission = new Promise((resolve, reject) => {
+      this._settlePermission = { allow: resolve, deny: reject };
+      let outerId = this._win.QueryInterface(Ci.nsIInterfaceRequestor).
+          getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
+
+      let chrome = new CreateOfferRequest(outerId, this._winID,
+                                                 this._globalPCListId, false);
+      let request = this._win.CreateOfferRequest._create(this._win, chrome);
+      Services.obs.notifyObservers(request, "PeerConnection:request", null);
+    });
+  },
 
   setLocalDescription: function(desc, onSuccess, onError) {
     return this._legacyCatch(onSuccess, onError, () => {
@@ -695,16 +828,27 @@ RTCPeerConnection.prototype = {
         case "pranswer":
           throw new this._win.DOMException("pranswer not yet implemented",
                                            "NotSupportedError");
+        case "rollback":
+          type = Ci.IPeerConnection.kActionRollback;
+          break;
         default:
           throw new this._win.DOMException(
               "Invalid type " + desc.type + " provided to setLocalDescription",
               "InvalidParameterError");
       }
-      return this._chain(() => new this._win.Promise((resolve, reject) => {
+
+      if (desc.type !== "rollback" && !desc.sdp) {
+        throw new this._win.DOMException(
+            "Empty or null SDP provided to setLocalDescription",
+            "InvalidParameterError");
+      }
+
+      return this._chain(() => this.getPermission()
+          .then(() => new this._win.Promise((resolve, reject) => {
         this._onSetLocalDescriptionSuccess = resolve;
         this._onSetLocalDescriptionFailure = reject;
         this._impl.setLocalDescription(type, desc.sdp);
-      }));
+      })));
     });
   },
 
@@ -768,24 +912,41 @@ RTCPeerConnection.prototype = {
         case "pranswer":
           throw new this._win.DOMException("pranswer not yet implemented",
                                            "NotSupportedError");
+        case "rollback":
+          type = Ci.IPeerConnection.kActionRollback;
+          break;
         default:
           throw new this._win.DOMException(
               "Invalid type " + desc.type + " provided to setRemoteDescription",
+              "InvalidParameterError");
+      }
+
+      if (!desc.sdp && desc.type !== "rollback") {
+        throw new this._win.DOMException(
+            "Empty or null SDP provided to setRemoteDescription",
             "InvalidParameterError");
       }
 
       // Get caller's origin before hitting the promise chain
       let origin = Cu.getWebIDLCallerPrincipal().origin;
 
-      // Do setRemoteDescription and identity validation in parallel
-      return this._chain(() => this._win.Promise.all([
-        new this._win.Promise((resolve, reject) => {
-          this._onSetRemoteDescriptionSuccess = resolve;
-          this._onSetRemoteDescriptionFailure = reject;
-          this._impl.setRemoteDescription(type, desc.sdp);
-        }),
-        this._validateIdentity(desc.sdp, origin)
-      ])).then(() => {}); // must return undefined
+      return this._chain(() => {
+        let setRem = this.getPermission()
+          .then(() => new this._win.Promise((resolve, reject) => {
+            this._onSetRemoteDescriptionSuccess = resolve;
+            this._onSetRemoteDescriptionFailure = reject;
+            this._impl.setRemoteDescription(type, desc.sdp);
+          }));
+
+        if (desc.type === "rollback") {
+          return setRem;
+        }
+
+        // Do setRemoteDescription and identity validation in parallel
+        let validId = this._validateIdentity(desc.sdp, origin);
+        return this._win.Promise.all([setRem, validId])
+          .then(() => {}); // must return undefined
+      });
     });
   },
 
@@ -796,9 +957,11 @@ RTCPeerConnection.prototype = {
 
   getIdentityAssertion: function() {
     let origin = Cu.getWebIDLCallerPrincipal().origin;
-    return this._chain(() => {
-      return this._localIdp.getIdentityAssertion(this._impl.fingerprint, origin);
-    });
+    return this._chain(
+      () => this._certificateReady.then(
+        () => this._localIdp.getIdentityAssertion(this._impl.fingerprint, origin)
+      )
+    );
   },
 
   updateIce: function(config) {
@@ -888,6 +1051,34 @@ RTCPeerConnection.prototype = {
     });
   },
 
+  _setParameters: function(sender, parameters) {
+    if (!Services.prefs.getBoolPref("media.peerconnection.simulcast")) {
+      return;
+    }
+    // validate parameters input
+    var encodings = parameters.encodings || [];
+
+    encodings.reduce((uniqueRids, encoding) => {
+      if (!encoding.rid && encodings.length > 1) {
+        throw new this._win.DOMException("Missing rid", "TypeError");
+      }
+      if (uniqueRids[encoding.rid]) {
+        throw new this._win.DOMException("Duplicate rid", "TypeError");
+      }
+      uniqueRids[encoding.rid] = true;
+      return uniqueRids;
+    }, {});
+
+    this._impl.setParameters(sender.track, parameters);
+  },
+
+  _getParameters: function(sender) {
+    if (!Services.prefs.getBoolPref("media.peerconnection.simulcast")) {
+      return;
+    }
+    return this._impl.getParameters(sender.track);
+  },
+
   close: function() {
     if (this._closed) {
       return;
@@ -917,6 +1108,10 @@ RTCPeerConnection.prototype = {
     return this._receivers;
   },
 
+  mozSelectSsrc: function(receiver, ssrcIndex) {
+    this._impl.selectSsrc(receiver.track, ssrcIndex);
+  },
+
   get localDescription() {
     this._checkClosed();
     let sdp = this._impl.localDescription;
@@ -925,7 +1120,7 @@ RTCPeerConnection.prototype = {
     }
 
     sdp = this._localIdp.addIdentityAttribute(sdp);
-    return new this._win.mozRTCSessionDescription({ type: this._localType,
+    return new this._win.RTCSessionDescription({ type: this._localType,
                                                     sdp: sdp });
   },
 
@@ -935,7 +1130,7 @@ RTCPeerConnection.prototype = {
     if (sdp.length == 0) {
       return null;
     }
-    return new this._win.mozRTCSessionDescription({ type: this._remoteType,
+    return new this._win.RTCSessionDescription({ type: this._remoteType,
                                                     sdp: sdp });
   },
 
@@ -998,6 +1193,7 @@ RTCPeerConnection.prototype = {
                                               // the name change
       this.logWarning("Deprecated RTCDataChannelInit dictionary entry outOfOrderAllowed used!", null, 0);
     }
+
     if (dict.preset != undefined) {
       dict.negotiated = dict.preset;
       this.logWarning("Deprecated RTCDataChannelInit dictionary entry preset used!", null, 0);
@@ -1123,7 +1319,7 @@ PeerConnectionObserver.prototype = {
     if (candidate == "") {
       this.foundIceCandidate(null);
     } else {
-      this.foundIceCandidate(new this._dompc._win.mozRTCIceCandidate(
+      this.foundIceCandidate(new this._dompc._win.RTCIceCandidate(
           {
               candidate: candidate,
               sdpMid: mid,
@@ -1174,18 +1370,30 @@ PeerConnectionObserver.prototype = {
   //                 STUN requests.
 
   handleIceConnectionStateChange: function(iceConnectionState) {
-    var histogram = Services.telemetry.getHistogramById("WEBRTC_ICE_SUCCESS_RATE");
+    let pc = this._dompc;
+    if (pc.iceConnectionState === 'new') {
+      var checking_histogram = Services.telemetry.getHistogramById("WEBRTC_ICE_CHECKING_RATE");
+      if (iceConnectionState === 'checking') {
+        checking_histogram.add(true);
+      } else if (iceConnectionState === 'failed') {
+        checking_histogram.add(false);
+      }
+    } else if (pc.iceConnectionState === 'checking') {
+      var success_histogram = Services.telemetry.getHistogramById(pc._isLoop ?
+        "LOOP_ICE_SUCCESS_RATE" : "WEBRTC_ICE_SUCCESS_RATE");
+      if (iceConnectionState === 'completed' ||
+          iceConnectionState === 'connected') {
+        success_histogram.add(true);
+      } else if (iceConnectionState === 'failed') {
+        success_histogram.add(false);
+      }
+    }
 
     if (iceConnectionState === 'failed') {
-      histogram.add(false);
-      this._dompc.logError("ICE failed, see about:webrtc for more details", null, 0);
+      pc.logError("ICE failed, see about:webrtc for more details", null, 0);
     }
-    if (this._dompc.iceConnectionState === 'checking' &&
-        (iceConnectionState === 'completed' ||
-         iceConnectionState === 'connected')) {
-          histogram.add(true);
-    }
-    this._dompc.changeIceConnectionState(iceConnectionState);
+
+    pc.changeIceConnectionState(iceConnectionState);
   },
 
   // This method is responsible for updating iceGatheringState. This
@@ -1240,11 +1448,11 @@ PeerConnectionObserver.prototype = {
   },
 
   onGetStatsSuccess: function(dict) {
-    let chromeobj = new RTCStatsReport(this._dompc._win, dict);
-    let webidlobj = this._dompc._win.RTCStatsReport._create(this._dompc._win,
-                                                            chromeobj);
+    let pc = this._dompc;
+    let chromeobj = new RTCStatsReport(pc._win, dict);
+    let webidlobj = pc._win.RTCStatsReport._create(pc._win, chromeobj);
     chromeobj.makeStatsPublic();
-    this._dompc._onGetStatsSuccess(webidlobj);
+    pc._onGetStatsSuccess(webidlobj);
   },
 
   onGetStatsError: function(code, message) {
@@ -1257,20 +1465,34 @@ PeerConnectionObserver.prototype = {
     this.dispatchEvent(ev);
   },
 
-  onRemoveStream: function(stream, type) {
+  onRemoveStream: function(stream) {
     this.dispatchEvent(new this._dompc._win.MediaStreamEvent("removestream",
                                                              { stream: stream }));
   },
 
-  onAddTrack: function(track) {
-    let ev = new this._dompc._win.MediaStreamTrackEvent("addtrack",
-                                                        { track: track });
+  onAddTrack: function(track, streams) {
+    let pc = this._dompc;
+    let receiver = pc._win.RTCRtpReceiver._create(pc._win,
+                                                  new RTCRtpReceiver(this,
+                                                                     track));
+    pc._receivers.push(receiver);
+    let ev = new pc._win.RTCTrackEvent("track",
+                                       { receiver: receiver,
+                                         track: track,
+                                         streams: streams });
+    this.dispatchEvent(ev);
+
+    // Fire legacy event as well for a little bit.
+    ev = new pc._win.MediaStreamTrackEvent("addtrack", { track: track });
     this.dispatchEvent(ev);
   },
 
-  onRemoveTrack: function(track, type) {
-    this.dispatchEvent(new this._dompc._win.MediaStreamTrackEvent("removetrack",
-                                                                  { track: track }));
+  onRemoveTrack: function(track) {
+    let pc = this._dompc;
+    let i = pc._receivers.findIndex(receiver => receiver.track == track);
+    if (i >= 0) {
+      pc._receivers.splice(i, 1);
+    }
   },
 
   onReplaceTrackSuccess: function() {
@@ -1302,7 +1524,7 @@ PeerConnectionObserver.prototype = {
 function RTCPeerConnectionStatic() {
 }
 RTCPeerConnectionStatic.prototype = {
-  classDescription: "mozRTCPeerConnectionStatic",
+  classDescription: "RTCPeerConnectionStatic",
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
                                          Ci.nsIDOMGlobalPropertyInitializer]),
 
@@ -1332,17 +1554,38 @@ RTCRtpSender.prototype = {
 
   replaceTrack: function(withTrack) {
     return this._pc._chain(() => this._pc._replaceTrack(this, withTrack));
+  },
+
+  setParameters: function(parameters) {
+    return this._pc._setParameters(this, parameters);
+  },
+
+  getParameters: function() {
+    return this._pc._getParameters(this);
   }
 };
 
 function RTCRtpReceiver(pc, track) {
-  this.pc = pc;
+  this._pc = pc;
   this.track = track;
 }
 RTCRtpReceiver.prototype = {
   classDescription: "RTCRtpReceiver",
   classID: PC_RECEIVER_CID,
   contractID: PC_RECEIVER_CONTRACT,
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports]),
+};
+
+function CreateOfferRequest(windowID, innerWindowID, callID, isSecure) {
+  this.windowID = windowID;
+  this.innerWindowID = innerWindowID;
+  this.callID = callID;
+  this.isSecure = isSecure;
+}
+CreateOfferRequest.prototype = {
+  classDescription: "CreateOfferRequest",
+  classID: PC_COREQUEST_CID,
+  contractID: PC_COREQUEST_CONTRACT,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports]),
 };
 
@@ -1355,5 +1598,6 @@ this.NSGetFactory = XPCOMUtils.generateNSGetFactory(
    RTCRtpReceiver,
    RTCRtpSender,
    RTCStatsReport,
-   PeerConnectionObserver]
+   PeerConnectionObserver,
+   CreateOfferRequest]
 );

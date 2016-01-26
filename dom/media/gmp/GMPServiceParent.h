@@ -30,7 +30,7 @@ public:
   static already_AddRefed<GeckoMediaPluginServiceParent> GetSingleton();
 
   GeckoMediaPluginServiceParent();
-  virtual nsresult Init() override;
+  nsresult Init() override;
 
   NS_DECL_ISUPPORTS_INHERITED
 
@@ -41,6 +41,7 @@ public:
                                     nsACString& aOutVersion) override;
   NS_IMETHOD GetNodeId(const nsAString& aOrigin,
                        const nsAString& aTopLevelOrigin,
+                       const nsAString& aGMPName,
                        bool aInPrivateBrowsingMode,
                        UniquePtr<GetNodeIdCallback>&& aCallback) override;
 
@@ -49,9 +50,11 @@ public:
 
   void AsyncShutdownNeeded(GMPParent* aParent);
   void AsyncShutdownComplete(GMPParent* aParent);
-  void AbortAsyncShutdown();
 
   int32_t AsyncShutdownTimeoutMs();
+#ifdef MOZ_CRASHREPORTER
+  void SetAsyncShutdownPluginState(GMPParent* aGMPParent, char aId, const nsCString& aState);
+#endif // MOZ_CRASHREPORTER
 
 private:
   friend class GMPServiceParent;
@@ -69,11 +72,13 @@ private:
                                   size_t* aOutPluginIndex);
 
   nsresult GetNodeId(const nsAString& aOrigin, const nsAString& aTopLevelOrigin,
+                     const nsAString& aGMPName,
                      bool aInPrivateBrowsing, nsACString& aOutId);
 
   void UnloadPlugins();
   void CrashPlugins();
-  void SetAsyncShutdownComplete();
+  void NotifySyncShutdownComplete();
+  void NotifyAsyncShutdownComplete();
 
   void LoadFromEnvironment();
   void ProcessPossiblePlugin(nsIFile* aDir);
@@ -90,19 +95,20 @@ private:
     ~DirectoryFilter() {}
   };
   void ClearNodeIdAndPlugin(DirectoryFilter& aFilter);
-
+  void ClearNodeIdAndPlugin(nsIFile* aPluginStorageDir,
+                            DirectoryFilter& aFilter);
   void ForgetThisSiteOnGMPThread(const nsACString& aOrigin);
   void ClearRecentHistoryOnGMPThread(PRTime aSince);
 
 protected:
   friend class GMPParent;
-  void ReAddOnGMPThread(const nsRefPtr<GMPParent>& aOld);
-  void PluginTerminated(const nsRefPtr<GMPParent>& aOld);
-  virtual void InitializePlugins() override;
-  virtual bool GetContentParentFrom(const nsACString& aNodeId,
-                                    const nsCString& aAPI,
-                                    const nsTArray<nsCString>& aTags,
-                                    UniquePtr<GetGMPContentParentCallback>&& aCallback)
+  void ReAddOnGMPThread(const RefPtr<GMPParent>& aOld);
+  void PluginTerminated(const RefPtr<GMPParent>& aOld);
+  void InitializePlugins() override;
+  bool GetContentParentFrom(const nsACString& aNodeId,
+                            const nsCString& aAPI,
+                            const nsTArray<nsCString>& aTags,
+                            UniquePtr<GetGMPContentParentCallback>&& aCallback)
     override;
 private:
   GMPParent* ClonePlugin(const GMPParent* aOriginal);
@@ -129,15 +135,31 @@ private:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<GeckoMediaPluginServiceParent> mService;
+    RefPtr<GeckoMediaPluginServiceParent> mService;
     nsString mPath;
     EOperation mOperation;
     bool mDefer;
   };
 
   // Protected by mMutex from the base class.
-  nsTArray<nsRefPtr<GMPParent>> mPlugins;
+  nsTArray<RefPtr<GMPParent>> mPlugins;
   bool mShuttingDown;
+  nsTArray<RefPtr<GMPParent>> mAsyncShutdownPlugins;
+
+#ifdef MOZ_CRASHREPORTER
+  Mutex mAsyncShutdownPluginStatesMutex; // Protects mAsyncShutdownPluginStates.
+  class AsyncShutdownPluginStates
+  {
+  public:
+    void Update(const nsCString& aPlugin, const nsCString& aInstance,
+                char aId, const nsCString& aState);
+  private:
+    struct State { nsCString mStateSequence; nsCString mLastStateDescription; };
+    typedef nsClassHashtable<nsCStringHashKey, State> StatesByInstance;
+    typedef nsClassHashtable<nsCStringHashKey, StatesByInstance> StateInstancesByPlugin;
+    StateInstancesByPlugin mStates;
+  } mAsyncShutdownPluginStates;
+#endif // MOZ_CRASHREPORTER
 
   // True if we've inspected MOZ_GMP_PATH on the GMP thread and loaded any
   // plugins found there into mPlugins.
@@ -158,9 +180,7 @@ private:
     T mValue;
   };
 
-  MainThreadOnly<bool> mWaitingForPluginsAsyncShutdown;
-
-  nsTArray<nsRefPtr<GMPParent>> mAsyncShutdownPlugins; // GMP Thread only.
+  MainThreadOnly<bool> mWaitingForPluginsSyncShutdown;
 
   nsTArray<nsString> mPluginsWaitingForDeletion;
 
@@ -187,28 +207,28 @@ public:
   }
   virtual ~GMPServiceParent();
 
-  virtual bool RecvLoadGMP(const nsCString& aNodeId,
-                           const nsCString& aApi,
-                           nsTArray<nsCString>&& aTags,
-                           nsTArray<ProcessId>&& aAlreadyBridgedTo,
-                           base::ProcessId* aID,
-                           nsCString* aDisplayName,
-                           uint32_t* aPluginId) override;
-  virtual bool RecvGetGMPNodeId(const nsString& aOrigin,
-                                const nsString& aTopLevelOrigin,
-                                const bool& aInPrivateBrowsing,
-                                nsCString* aID) override;
+  bool RecvLoadGMP(const nsCString& aNodeId,
+                   const nsCString& aApi,
+                   nsTArray<nsCString>&& aTags,
+                   nsTArray<ProcessId>&& aAlreadyBridgedTo,
+                   base::ProcessId* aID,
+                   nsCString* aDisplayName,
+                   uint32_t* aPluginId) override;
+  bool RecvGetGMPNodeId(const nsString& aOrigin,
+                        const nsString& aTopLevelOrigin,
+                        const nsString& aGMPName,
+                        const bool& aInPrivateBrowsing,
+                        nsCString* aID) override;
   static bool RecvGetGMPPluginVersionForAPI(const nsCString& aAPI,
                                             nsTArray<nsCString>&& aTags,
                                             bool* aHasPlugin,
                                             nsCString* aVersion);
-
-  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
+  void ActorDestroy(ActorDestroyReason aWhy) override;
 
   static PGMPServiceParent* Create(Transport* aTransport, ProcessId aOtherPid);
 
 private:
-  nsRefPtr<GeckoMediaPluginServiceParent> mService;
+  RefPtr<GeckoMediaPluginServiceParent> mService;
 };
 
 } // namespace gmp

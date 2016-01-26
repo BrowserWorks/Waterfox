@@ -53,7 +53,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangeNumberNotifier
 // Stack-based helper class to pair calls to WillChangeNumberList and
 // DidChangeNumberList.
-class MOZ_STACK_CLASS AutoChangeNumberNotifier
+class MOZ_RAII AutoChangeNumberNotifier
 {
 public:
   explicit AutoChangeNumberNotifier(DOMSVGNumber* aNumber MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -121,7 +121,7 @@ DOMSVGNumber::Constructor(const dom::GlobalObject& aGlobal, ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<DOMSVGNumber> number = new DOMSVGNumber(window);
+  RefPtr<DOMSVGNumber> number = new DOMSVGNumber(window);
   return number.forget();
 }
 
@@ -135,7 +135,7 @@ DOMSVGNumber::Constructor(const dom::GlobalObject& aGlobal, float aValue,
     return nullptr;
   }
 
-  nsRefPtr<DOMSVGNumber> number = new DOMSVGNumber(window);
+  RefPtr<DOMSVGNumber> number = new DOMSVGNumber(window);
   number->SetValue(aValue, aRv);
   return number.forget();
 }

@@ -40,12 +40,11 @@
 #include "nsXULContentUtils.h"
 #include "nsLayoutCID.h"
 #include "nsNameSpaceManager.h"
-#include "nsNetUtil.h"
 #include "nsRDFCID.h"
 #include "nsString.h"
 #include "nsXPIDLString.h"
 #include "nsGkAtoms.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prtime.h"
 #include "rdf.h"
 #include "nsContentUtils.h"
@@ -67,7 +66,7 @@ nsIRDFService* nsXULContentUtils::gRDF;
 nsIDateTimeFormat* nsXULContentUtils::gFormat;
 nsICollation *nsXULContentUtils::gCollation;
 
-extern PRLogModuleInfo* gXULTemplateLog;
+extern LazyLogModule gXULTemplateLog;
 
 #define XUL_RESOURCE(ident, uri) nsIRDFResource* nsXULContentUtils::ident
 #define XUL_LITERAL(ident, val) nsIRDFLiteral* nsXULContentUtils::ident
@@ -96,7 +95,7 @@ nsXULContentUtils::Init()
 
 #define XUL_LITERAL(ident, val)                                   \
   PR_BEGIN_MACRO                                                  \
-   rv = gRDF->GetLiteral(NS_LITERAL_STRING(val).get(), &(ident)); \
+   rv = gRDF->GetLiteral(MOZ_UTF16(val), &(ident));               \
    if (NS_FAILED(rv)) return rv;                                  \
   PR_END_MACRO
 
@@ -363,6 +362,6 @@ nsXULContentUtils::LogTemplateError(const char* aStr)
   nsCOMPtr<nsIConsoleService> cs = do_GetService(NS_CONSOLESERVICE_CONTRACTID);
   if (cs) {
     cs->LogStringMessage(message.get());
-    PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS, ("Error parsing template: %s", aStr));
+    MOZ_LOG(gXULTemplateLog, LogLevel::Info, ("Error parsing template: %s", aStr));
   }
 }

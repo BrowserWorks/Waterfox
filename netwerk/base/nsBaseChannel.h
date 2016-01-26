@@ -25,7 +25,6 @@
 #include "nsIThreadRetargetableStreamListener.h"
 #include "PrivateBrowsingChannel.h"
 #include "nsThreadUtils.h"
-#include "nsNetUtil.h"
 
 class nsIInputStream;
 
@@ -261,16 +260,15 @@ private:
     }
 
   private:
-    nsRefPtr<nsBaseChannel> mChannel;
+    RefPtr<nsBaseChannel> mChannel;
     nsCOMPtr<nsIChannel> mNewChannel;
   };
   friend class RedirectRunnable;
 
-  nsRefPtr<nsInputStreamPump>         mPump;
+  RefPtr<nsInputStreamPump>         mPump;
   nsCOMPtr<nsIProgressEventSink>      mProgressSink;
   nsCOMPtr<nsIURI>                    mOriginalURI;
   nsCOMPtr<nsISupports>               mOwner;
-  nsCOMPtr<nsILoadInfo>               mLoadInfo;
   nsCOMPtr<nsISupports>               mSecurityInfo;
   nsCOMPtr<nsIChannel>                mRedirectChannel;
   nsCString                           mContentType;
@@ -286,6 +284,7 @@ private:
 protected:
   nsCOMPtr<nsIURI>                    mURI;
   nsCOMPtr<nsILoadGroup>              mLoadGroup;
+  nsCOMPtr<nsILoadInfo>               mLoadInfo;
   nsCOMPtr<nsIInterfaceRequestor>     mCallbacks;
   nsCOMPtr<nsIStreamListener>         mListener;
   nsCOMPtr<nsISupports>               mListenerContext;

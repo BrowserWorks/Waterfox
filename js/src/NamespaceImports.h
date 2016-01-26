@@ -13,6 +13,7 @@
 // These includes are needed these for some typedefs (e.g. HandleValue) and
 // functions (e.g. NullValue())...
 #include "js/CallNonGenericMethod.h"
+#include "js/GCVector.h"
 #include "js/TypeDecls.h"
 #include "js/Value.h"
 
@@ -33,22 +34,22 @@ class AutoVectorRooter;
 typedef AutoVectorRooter<Value> AutoValueVector;
 typedef AutoVectorRooter<jsid> AutoIdVector;
 typedef AutoVectorRooter<JSObject*> AutoObjectVector;
-typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
 typedef AutoVectorRooter<JSScript*> AutoVector;
 
-class AutoIdArray;
+using ValueVector = js::GCVector<JS::Value>;
+using IdVector = js::GCVector<jsid>;
+using ScriptVector = js::GCVector<JSScript*>;
 
 template <typename T> class AutoVectorRooter;
 template<typename K, typename V> class AutoHashMapRooter;
 template<typename T> class AutoHashSetRooter;
-template<typename T> class RootedGeneric;
 
 class MOZ_STACK_CLASS SourceBufferHolder;
 
 class HandleValueArray;
 
 class ObjectOpResult;
-}
+} // namespace JS
 
 // Do the importing.
 namespace js {
@@ -76,19 +77,20 @@ using JS::TwoByteChars;
 using JS::TwoByteCharsZ;
 using JS::UTF8Chars;
 using JS::UTF8CharsZ;
+using JS::UniqueChars;
+using JS::UniqueTwoByteChars;
 
 using JS::AutoVectorRooter;
 typedef AutoVectorRooter<Value> AutoValueVector;
 typedef AutoVectorRooter<jsid> AutoIdVector;
 typedef AutoVectorRooter<JSObject*> AutoObjectVector;
-typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
-typedef AutoVectorRooter<JSScript*> AutoScriptVector;
 
-using JS::AutoIdArray;
+using JS::ValueVector;
+using JS::IdVector;
+using JS::ScriptVector;
 
 using JS::AutoHashMapRooter;
 using JS::AutoHashSetRooter;
-using JS::RootedGeneric;
 
 using JS::CallArgs;
 using JS::CallNonGenericMethod;
@@ -99,6 +101,7 @@ using JS::NativeImpl;
 using JS::OwningCompileOptions;
 using JS::ReadOnlyCompileOptions;
 using JS::SourceBufferHolder;
+using JS::TransitiveCompileOptions;
 
 using JS::Rooted;
 using JS::RootedFunction;

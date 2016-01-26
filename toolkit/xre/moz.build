@@ -40,12 +40,15 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'MacLaunchHelper.mm',
         'nsNativeAppSupportCocoa.mm',
     ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
+    UNIFIED_SOURCES += [
+        'nsNativeAppSupportDefault.cpp',
+        'UIKitDirProvider.mm',
+    ]
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     EXPORTS += ['nsQAppInstance.h']
-    GENERATED_SOURCES += [
-        'moc_nsNativeAppSupportQt.cpp',
-    ]
     SOURCES += [
+        '!moc_nsNativeAppSupportQt.cpp',
         'nsNativeAppSupportQt.cpp',
         'nsQAppInstance.cpp',
     ]
@@ -79,14 +82,15 @@ UNIFIED_SOURCES += [
     'nsNativeAppSupportBase.cpp',
     'nsSigHandlers.cpp',
     'nsXREDirProvider.cpp',
-    'ProfileReset.cpp',
 ]
 
-# nsAppRunner.cpp cannot be built in unified mode because it pulls in OS X system headers.
+# nsAppRunner.cpp and ProfileReset.cpp cannot be built in unified mode because
+# they pull in OS X system headers.
 # nsEmbedFunctions.cpp cannot be built in unified mode because it pulls in X11 headers.
 SOURCES += [
     'nsAppRunner.cpp',
     'nsEmbedFunctions.cpp',
+    'ProfileReset.cpp',
 ]
 
 if CONFIG['MOZ_GL_DEFAULT_PROVIDER'] == 'GLX':
@@ -142,8 +146,8 @@ DEFINES['GRE_MILESTONE'] = CONFIG['GRE_MILESTONE']
 for var in ('APP_VERSION', 'APP_ID'):
     DEFINES[var] = CONFIG['MOZ_%s' % var]
 
-if CONFIG['MOZILLA_OFFICIAL']:
-    DEFINES['MOZILLA_OFFICIAL'] = True
+if CONFIG['MOZ_BUILD_APP'] == 'browser':
+    DEFINES['MOZ_BUILD_APP_IS_BROWSER'] = True
 
 LOCAL_INCLUDES += [
     '../profile',
@@ -175,5 +179,3 @@ CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
-
-FAIL_ON_WARNINGS = True

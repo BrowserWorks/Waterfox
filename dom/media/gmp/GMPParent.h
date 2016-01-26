@@ -21,7 +21,6 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsIFile.h"
-#include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
 class nsIThread;
 
@@ -72,7 +71,7 @@ public:
 class GMPParent final : public PGMPParent
 {
 public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GMPParent)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPParent)
 
   GMPParent();
 
@@ -123,7 +122,8 @@ public:
 
   const nsCString& GetDisplayName() const;
   const nsCString& GetVersion() const;
-  const uint32_t GetPluginId() const;
+  uint32_t GetPluginId() const;
+  nsString GetPluginBaseName() const;
 
   // Returns true if a plugin can be or is being used across multiple NodeIds.
   bool CanBeSharedCrossNodeIds() const;
@@ -151,39 +151,40 @@ public:
 
 private:
   ~GMPParent();
-  nsRefPtr<GeckoMediaPluginServiceParent> mService;
+  RefPtr<GeckoMediaPluginServiceParent> mService;
   bool EnsureProcessLoaded();
   nsresult ReadGMPMetaData();
 #ifdef MOZ_CRASHREPORTER
   void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
   void GetCrashID(nsString& aResult);
 #endif
-  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
+  void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
-  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
+  PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
+  bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
 
-  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
-  virtual PGMPStorageParent* AllocPGMPStorageParent() override;
-  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
+  bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
+  PGMPStorageParent* AllocPGMPStorageParent() override;
+  bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
 
-  virtual PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
-                                                    ProcessId aOtherPid) override;
+  PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
+                                            ProcessId aOtherPid) override;
 
-  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
-  virtual PGMPTimerParent* AllocPGMPTimerParent() override;
-  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) override;
+  bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
+  PGMPTimerParent* AllocPGMPTimerParent() override;
+  bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) override;
 
-  virtual bool RecvAsyncShutdownComplete() override;
-  virtual bool RecvAsyncShutdownRequired() override;
+  bool RecvAsyncShutdownComplete() override;
+  bool RecvAsyncShutdownRequired() override;
 
-  virtual bool RecvPGMPContentChildDestroyed() override;
+  bool RecvPGMPContentChildDestroyed() override;
   bool IsUsed()
   {
     return mGMPContentChildCount > 0;
   }
 
 
+  static void AbortWaitingForGMPAsyncShutdown(nsITimer* aTimer, void* aClosure);
   nsresult EnsureAsyncShutdownTimeoutSet();
 
   GMPState mState;
@@ -201,25 +202,29 @@ private:
 
   bool mCanDecrypt;
 
-  nsTArray<nsRefPtr<GMPTimerParent>> mTimers;
-  nsTArray<nsRefPtr<GMPStorageParent>> mStorage;
+  nsTArray<RefPtr<GMPTimerParent>> mTimers;
+  nsTArray<RefPtr<GMPStorageParent>> mStorage;
   nsCOMPtr<nsIThread> mGMPThread;
   nsCOMPtr<nsITimer> mAsyncShutdownTimeout; // GMP Thread only.
   // NodeId the plugin is assigned to, or empty if the the plugin is not
   // assigned to a NodeId.
-  nsAutoCString mNodeId;
+  nsCString mNodeId;
   // This is used for GMP content in the parent, there may be more of these in
   // the content processes.
-  nsRefPtr<GMPContentParent> mGMPContentParent;
+  RefPtr<GMPContentParent> mGMPContentParent;
   nsTArray<UniquePtr<GetGMPContentParentCallback>> mCallbacks;
   uint32_t mGMPContentChildCount;
 
   bool mAsyncShutdownRequired;
   bool mAsyncShutdownInProgress;
 
-#ifdef PR_LOGGING
   int mChildPid;
-#endif
+
+  // We hold a self reference to ourself while the child process is alive.
+  // This ensures that if the GMPService tries to shut us down and drops
+  // its reference to us, we stay alive long enough for the child process
+  // to terminate gracefully.
+  bool mHoldingSelfRef;
 };
 
 } // namespace gmp

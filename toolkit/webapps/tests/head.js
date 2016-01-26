@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
@@ -64,7 +64,7 @@ function dirContainsOnly(dir, expectedFiles) {
     let ret = true;
 
     // Find unexpected files
-    for each (let {path} in entries) {
+    for (let {path} of entries) {
       if (expectedFiles.indexOf(path) == -1) {
         info("Unexpected file: " + path);
         ret = false;
@@ -72,7 +72,7 @@ function dirContainsOnly(dir, expectedFiles) {
     }
 
     // Find missing files
-    for each (let expectedPath in expectedFiles) {
+    for (let expectedPath of expectedFiles) {
       if (entries.findIndex(({path}) => path == expectedPath) == -1) {
         info("Missing file: " + expectedPath);
         ret = false;
@@ -83,7 +83,7 @@ function dirContainsOnly(dir, expectedFiles) {
   });
 }
 
-let dirSize = Task.async(function*(aDir) {
+var dirSize = Task.async(function*(aDir) {
   let iterator = new OS.File.DirectoryIterator(aDir);
 
   let entries;
@@ -95,7 +95,7 @@ let dirSize = Task.async(function*(aDir) {
 
   let size = 0;
 
-  for each (let entry in entries) {
+  for (let entry of entries) {
     if (entry.isDir) {
       size += yield dirSize(entry.path);
     } else {
@@ -515,13 +515,13 @@ function confirmNextPopup() {
   }, false);
 }
 
-let readJSON = Task.async(function*(aPath) {
+var readJSON = Task.async(function*(aPath) {
   let decoder = new TextDecoder();
   let data = yield OS.File.read(aPath);
   return JSON.parse(decoder.decode(data));
 });
 
-let setMacRootInstallDir = Task.async(function*(aPath) {
+var setMacRootInstallDir = Task.async(function*(aPath) {
   let oldRootInstallDir = NativeApp.prototype._rootInstallDir;
 
   NativeApp.prototype._rootInstallDir = OS.Path.join(OS.Constants.Path.homeDir,
@@ -534,7 +534,7 @@ let setMacRootInstallDir = Task.async(function*(aPath) {
   });
 });
 
-let writeToFile = Task.async(function*(aPath, aData) {
+var writeToFile = Task.async(function*(aPath, aData) {
   let data = new TextEncoder().encode(aData);
 
   let file;
@@ -553,7 +553,7 @@ const CID = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).
 const ALERTS_SERVICE_CONTRACT_ID = "@mozilla.org/alerts-service;1";
 const ALERTS_SERVICE_CID = Components.ID(Cc[ALERTS_SERVICE_CONTRACT_ID].number);
 
-let AlertsService = {
+var AlertsService = {
   classID: Components.ID(CID),
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory,
@@ -586,3 +586,7 @@ AlertsService.init();
 SimpleTest.registerCleanupFunction(() => {
   AlertsService.restore();
 });
+
+function prepareEnv(cb) {
+  SpecialPowers.pushPrefEnv({"set":[["dom.mozApps.debug", true]]}, cb);
+}

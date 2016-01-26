@@ -16,6 +16,8 @@
 #include "jit/MIR.h"
 #include "jit/Recover.h"
 
+#include "vm/Printer.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -312,7 +314,7 @@ RValueAllocation
 RValueAllocation::read(CompactBufferReader& reader)
 {
     uint8_t mode = reader.readByte();
-    const Layout& layout = layoutFromMode(Mode(mode & MODE_MASK));
+    const Layout& layout = layoutFromMode(Mode(mode & MODE_BITS_MASK));
     Payload arg1, arg2;
 
     readPayload(reader, layout.type1, &mode, &arg1);
@@ -321,8 +323,7 @@ RValueAllocation::read(CompactBufferReader& reader)
 }
 
 void
-RValueAllocation::writePayload(CompactBufferWriter& writer, PayloadType type,
-                               Payload p)
+RValueAllocation::writePayload(CompactBufferWriter& writer, PayloadType type, Payload p)
 {
     switch (type) {
       case PAYLOAD_NONE:
@@ -346,10 +347,12 @@ RValueAllocation::writePayload(CompactBufferWriter& writer, PayloadType type,
       case PAYLOAD_PACKED_TAG: {
         // This code assumes that the PACKED_TAG payload is following the
         // writeByte of the mode.
-        MOZ_ASSERT(writer.length());
-        uint8_t* mode = writer.buffer() + (writer.length() - 1);
-        MOZ_ASSERT((*mode & PACKED_TAG_MASK) == 0 && (p.type & ~PACKED_TAG_MASK) == 0);
-        *mode = *mode | p.type;
+        if (!writer.oom()) {
+            MOZ_ASSERT(writer.length());
+            uint8_t* mode = writer.buffer() + (writer.length() - 1);
+            MOZ_ASSERT((*mode & PACKED_TAG_MASK) == 0 && (p.type & ~PACKED_TAG_MASK) == 0);
+            *mode = *mode | p.type;
+        }
         break;
       }
     }
@@ -419,43 +422,43 @@ ValTypeToString(JSValueType type)
 }
 
 void
-RValueAllocation::dumpPayload(FILE* fp, PayloadType type, Payload p)
+RValueAllocation::dumpPayload(GenericPrinter& out, PayloadType type, Payload p)
 {
     switch (type) {
       case PAYLOAD_NONE:
         break;
       case PAYLOAD_INDEX:
-        fprintf(fp, "index %u", p.index);
+        out.printf("index %u", p.index);
         break;
       case PAYLOAD_STACK_OFFSET:
-        fprintf(fp, "stack %d", p.stackOffset);
+        out.printf("stack %d", p.stackOffset);
         break;
       case PAYLOAD_GPR:
-        fprintf(fp, "reg %s", p.gpr.name());
+        out.printf("reg %s", p.gpr.name());
         break;
       case PAYLOAD_FPU:
-        fprintf(fp, "reg %s", p.fpu.name());
+        out.printf("reg %s", p.fpu.name());
         break;
       case PAYLOAD_PACKED_TAG:
-        fprintf(fp, "%s", ValTypeToString(p.type));
+        out.printf("%s", ValTypeToString(p.type));
         break;
     }
 }
 
 void
-RValueAllocation::dump(FILE* fp) const
+RValueAllocation::dump(GenericPrinter& out) const
 {
     const Layout& layout = layoutFromMode(mode());
-    fprintf(fp, "%s", layout.name);
+    out.printf("%s", layout.name);
 
     if (layout.type1 != PAYLOAD_NONE)
-        fprintf(fp, " (");
-    dumpPayload(fp, layout.type1, arg1_);
+        out.printf(" (");
+    dumpPayload(out, layout.type1, arg1_);
     if (layout.type2 != PAYLOAD_NONE)
-        fprintf(fp, ", ");
-    dumpPayload(fp, layout.type2, arg2_);
+        out.printf(", ");
+    dumpPayload(out, layout.type2, arg2_);
     if (layout.type1 != PAYLOAD_NONE)
-        fprintf(fp, ")");
+        out.printf(")");
 }
 
 bool
@@ -548,12 +551,13 @@ SnapshotReader::spewBailingFrom() const
 {
     if (JitSpewEnabled(JitSpew_IonBailouts)) {
         JitSpewHeader(JitSpew_IonBailouts);
-        fprintf(JitSpewFile, " bailing from bytecode: %s, MIR: ", js_CodeName[pcOpcode_]);
-        MDefinition::PrintOpcodeName(JitSpewFile, MDefinition::Opcode(mirOpcode_));
-        fprintf(JitSpewFile, " [%u], LIR: ", mirId_);
-        LInstruction::printName(JitSpewFile, LInstruction::Opcode(lirOpcode_));
-        fprintf(JitSpewFile, " [%u]", lirId_);
-        fprintf(JitSpewFile, "\n");
+        Fprinter& out = JitSpewPrinter();
+        out.printf(" bailing from bytecode: %s, MIR: ", CodeName[pcOpcode_]);
+        MDefinition::PrintOpcodeName(out, MDefinition::Opcode(mirOpcode_));
+        out.printf(" [%u], LIR: ", mirId_);
+        LInstruction::printName(out, LInstruction::Opcode(lirOpcode_));
+        out.printf(" [%u]", lirId_);
+        out.printf("\n");
     }
 }
 #endif
@@ -658,17 +662,20 @@ SnapshotWriter::add(const RValueAllocation& alloc)
     if (!p) {
         offset = allocWriter_.length();
         alloc.write(allocWriter_);
-        if (!allocMap_.add(p, alloc, offset))
+        if (!allocMap_.add(p, alloc, offset)) {
+            allocWriter_.setOOM();
             return false;
+        }
     } else {
         offset = p->value();
     }
 
     if (JitSpewEnabled(JitSpew_IonSnapshots)) {
         JitSpewHeader(JitSpew_IonSnapshots);
-        fprintf(JitSpewFile, "    slot %u (%d): ", allocWritten_, offset);
-        alloc.dump(JitSpewFile);
-        fprintf(JitSpewFile, "\n");
+        Fprinter& out = JitSpewPrinter();
+        out.printf("    slot %u (%d): ", allocWritten_, offset);
+        alloc.dump(out);
+        out.printf("\n");
     }
 
     allocWritten_++;

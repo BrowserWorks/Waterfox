@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsGIOService.h"
-#include "nsStringAPI.h"
+#include "nsString.h"
 #include "nsIURI.h"
 #include "nsTArray.h"
 #include "nsIStringEnumerator.h"
@@ -69,7 +69,7 @@ NS_IMETHODIMP
 nsGIOMimeApp::Launch(const nsACString& aUri)
 {
   GList uris = { 0 };
-  PromiseFlatCString flatUri(aUri);
+  nsPromiseFlatCString flatUri(aUri);
   uris.data = const_cast<char*>(flatUri.get());
 
   GError *error = nullptr;
@@ -123,7 +123,7 @@ nsGIOMimeApp::GetSupportedURISchemes(nsIUTF8StringEnumerator** aSchemes)
 {
   *aSchemes = nullptr;
 
-  nsRefPtr<GIOUTF8StringEnumerator> array = new GIOUTF8StringEnumerator();
+  RefPtr<GIOUTF8StringEnumerator> array = new GIOUTF8StringEnumerator();
   NS_ENSURE_TRUE(array, NS_ERROR_OUT_OF_MEMORY);
 
   GVfs *gvfs = g_vfs_get_default();

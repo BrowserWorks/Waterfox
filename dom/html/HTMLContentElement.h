@@ -102,7 +102,7 @@ public:
   explicit DistributedContentList(HTMLContentElement* aHostElement);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS(DistributedContentList)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DistributedContentList)
 
   // nsIDOMNodeList
   NS_DECL_NSIDOMNODELIST
@@ -114,7 +114,7 @@ public:
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~DistributedContentList();
-  nsRefPtr<HTMLContentElement> mParent;
+  RefPtr<HTMLContentElement> mParent;
   nsCOMArray<nsIContent> mDistributedNodes;
 };
 

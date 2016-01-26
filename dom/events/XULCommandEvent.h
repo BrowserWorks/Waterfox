@@ -43,7 +43,7 @@ public:
 
   already_AddRefed<Event> GetSourceEvent()
   {
-    nsRefPtr<Event> e =
+    RefPtr<Event> e =
       mSourceEvent ? mSourceEvent->InternalDOMEvent() : nullptr;
     return e.forget();
   }
@@ -70,5 +70,10 @@ protected:
 
 } // namespace dom
 } // namespace mozilla
+
+already_AddRefed<mozilla::dom::XULCommandEvent>
+NS_NewDOMXULCommandEvent(mozilla::dom::EventTarget* aOwner,
+                         nsPresContext* aPresContext,
+                         mozilla::WidgetInputEvent* aEvent);
 
 #endif // mozilla_dom_XULCommandEvent_h_

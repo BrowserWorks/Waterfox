@@ -12,6 +12,7 @@
 
 #include "jsprf.h"
 
+#include "mozilla/Snprintf.h"
 #include "mozilla/Vector.h"
 
 #include <stdarg.h>
@@ -286,8 +287,6 @@ static bool cvt_ll(SprintfState* ss, int64_t num, int width, int prec, int radix
 /*
  * Convert a double precision floating point number into its printable
  * form.
- *
- * XXX stop using sprintf to convert floating point
  */
 static bool cvt_f(SprintfState* ss, double d, const char* fmt0, const char* fmt1)
 {
@@ -303,7 +302,7 @@ static bool cvt_f(SprintfState* ss, double d, const char* fmt0, const char* fmt1
     js_memcpy(fin, fmt0, (size_t)amount);
     fin[amount] = 0;
 
-    // Convert floating point using the native sprintf code
+    // Convert floating point using the native snprintf code
 #ifdef DEBUG
     {
         const char* p = fin;
@@ -313,12 +312,7 @@ static bool cvt_f(SprintfState* ss, double d, const char* fmt0, const char* fmt1
         }
     }
 #endif
-    sprintf(fout, fin, d);
-
-    // This assert will catch overflow's of fout, when building with
-    // debugging on. At least this way we can track down the evil piece
-    // of calling code and fix it!
-    MOZ_ASSERT(strlen(fout) < sizeof(fout));
+    snprintf_literal(fout, fin, d);
 
     return (*ss->stuff)(ss, fout, strlen(fout));
 }
@@ -381,11 +375,11 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
             if (c > '9' || c < '0') {
                 if (c == '$') {         // numbered argument case
                     if (i > 0)
-                        return false;
+                        MOZ_CRASH("Bad format string");
                     number++;
                 } else {                // non-numbered argument case
                     if (number > 0)
-                        return false;
+                        MOZ_CRASH("Bad format string");
                     i = 1;
                 }
                 break;
@@ -423,7 +417,7 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
         }
 
         if (!c || cn < 1 || cn > number)
-            return false;
+            MOZ_CRASH("Bad format string");
 
         // nas[cn] starts from 0, and make sure nas[cn].type is not assigned.
         cn--;
@@ -435,7 +429,7 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
         // width
         if (c == '*') {
             // not supported feature, for the argument is not numbered
-            return false;
+            MOZ_CRASH("Bad format string");
         }
 
         while ((c >= '0') && (c <= '9')) {
@@ -447,7 +441,7 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
             c = *p++;
             if (c == '*') {
                 // not supported feature, for the argument is not numbered
-                return false;
+                MOZ_CRASH("Bad format string");
             }
 
             while ((c >= '0') && (c <= '9')) {
@@ -533,7 +527,7 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
 
         // get a legal para.
         if (nas[cn].type == TYPE_UNKNOWN)
-            return false;
+            MOZ_CRASH("Bad format string");
     }
 
 
@@ -563,7 +557,7 @@ BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas)
         case TYPE_INTSTR:       (void) va_arg(ap, int*);        break;
         case TYPE_DOUBLE:       (void) va_arg(ap, double);      break;
 
-        default: return false;
+        default: MOZ_CRASH();
         }
 
         cn++;
@@ -605,8 +599,7 @@ dosprintf(SprintfState* ss, const char* fmt, va_list ap)
     NumArgStateVector nas;
     if (!BuildArgArray(fmt, ap, nas)) {
         // the fmt contains error Numbered Argument format, jliu@netscape.com
-        MOZ_ASSERT(0);
-        return false;
+        MOZ_CRASH("Bad format string");
     }
 
     while ((c = *fmt++) != 0) {
@@ -639,7 +632,7 @@ dosprintf(SprintfState* ss, const char* fmt, va_list ap)
             }
 
             if (nas[i - 1].type == TYPE_UNKNOWN)
-                return false;
+                MOZ_CRASH("Bad format string");
 
             ap = nas[i - 1].ap;
             dolPt = fmt;
@@ -1003,8 +996,8 @@ JS_snprintf(char* out, uint32_t outlen, const char* fmt, ...)
     va_list ap;
     int rv;
 
-    MOZ_ASSERT(int32_t(outlen) > 0);
-    if (int32_t(outlen) <= 0)
+    MOZ_ASSERT(outlen > 0);
+    if (outlen == 0)
         return 0;
 
     va_start(ap, fmt);
@@ -1017,10 +1010,8 @@ JS_PUBLIC_API(uint32_t)
 JS_vsnprintf(char* out, uint32_t outlen, const char* fmt, va_list ap)
 {
     SprintfState ss;
-    uint32_t n;
 
-    MOZ_ASSERT(int32_t(outlen) > 0);
-    if (int32_t(outlen) <= 0)
+    if (outlen == 0)
         return 0;
 
     ss.stuff = LimitStuff;
@@ -1029,12 +1020,19 @@ JS_vsnprintf(char* out, uint32_t outlen, const char* fmt, va_list ap)
     ss.maxlen = outlen;
     (void) dosprintf(&ss, fmt, ap);
 
-    /* If we added chars, and we didn't append a null, do it now. */
-    if (ss.cur != ss.base && ss.cur[-1] != '\0')
-        ss.cur[-1] = '\0';
+    uint32_t charsWritten = ss.cur - ss.base;
+    MOZ_RELEASE_ASSERT(charsWritten > 0);
 
-    n = ss.cur - ss.base;
-    return n ? n - 1 : n;
+    // If we didn't append a null then we must have hit the buffer limit. Write
+    // a null terminator now and return a value indicating that we failed.
+    if (ss.cur[-1] != '\0') {
+        ss.cur[-1] = '\0';
+        return outlen;
+    }
+
+    // Success: return the number of character written excluding the null
+    // terminator.
+    return charsWritten - 1;
 }
 
 JS_PUBLIC_API(char*)

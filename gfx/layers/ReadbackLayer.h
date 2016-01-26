@@ -8,9 +8,8 @@
 
 #include <stdint.h>                     // for uint64_t
 #include "Layers.h"                     // for Layer, etc
-#include "gfxColor.h"                   // for gfxRGBA
-#include "mozilla/gfx/Rect.h"                    // for gfxRect
-#include "mozilla/gfx/Point.h"                    // for gfxRect
+#include "mozilla/gfx/Rect.h"           // for gfxRect
+#include "mozilla/gfx/Point.h"          // for IntPoint
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAutoPtr.h"                  // for nsAutoPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
@@ -27,7 +26,7 @@ class ReadbackProcessor;
 
 namespace layerscope {
 class LayersPacket;
-}
+} // namespace layerscope
 
 /**
  * A ReadbackSink receives a stream of updates to a rectangle of pixels.
@@ -59,7 +58,7 @@ public:
    * We don't support partially unknown backgrounds. Therefore, the
    * first BeginUpdate after a SetUnknown will have the complete background.
    */
-  virtual already_AddRefed<gfxContext>
+  virtual already_AddRefed<gfx::DrawTarget>
       BeginUpdate(const gfx::IntRect& aRect, uint64_t aSequenceNumber) = 0;
   /**
    * EndUpdate must be called immediately after BeginUpdate, without returning
@@ -67,7 +66,7 @@ public:
    * @param aContext the context returned by BeginUpdate
    * Implicitly Restore()s the state of aContext.
    */
-  virtual void EndUpdate(gfxContext* aContext, const gfx::IntRect& aRect) = 0;
+  virtual void EndUpdate(const gfx::IntRect& aRect) = 0;
 };
 
 /**
@@ -131,7 +130,7 @@ public:
 
   bool IsBackgroundKnown()
   {
-    return mBackgroundLayer || mBackgroundColor.a == 1.0;
+    return mBackgroundLayer || mBackgroundColor.a == 1.f;
   }
 
   void NotifyRemoved() {
@@ -157,7 +156,7 @@ public:
         mSink->SetUnknown(AllocateSequenceNumber());
       }
       mBackgroundLayer = nullptr;
-      mBackgroundColor = gfxRGBA(0,0,0,0);
+      mBackgroundColor = gfx::Color();
     }
   }
 
@@ -170,7 +169,7 @@ protected:
     mSize(0,0),
     mBackgroundLayer(nullptr),
     mBackgroundLayerOffset(0, 0),
-    mBackgroundColor(gfxRGBA(0,0,0,0))
+    mBackgroundColor(gfx::Color())
   {}
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
@@ -196,9 +195,10 @@ protected:
   // When mBackgroundColor is opaque, this is the color of the ColorLayer
   // that contained the contents we reported to mSink, which covered the
   // entire readback area.
-  gfxRGBA      mBackgroundColor;
+  gfx::Color   mBackgroundColor;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
+
 #endif /* GFX_READBACKLAYER_H */

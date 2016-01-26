@@ -62,7 +62,7 @@ FragmentBuffer::AddFrame(EncodedFrame* aFrame)
 
   EncodedFrame::FrameType type = aFrame->GetFrameType();
   if (type == EncodedFrame::AAC_CSD || type == EncodedFrame::AVC_CSD ||
-      type == EncodedFrame::AMR_AUDIO_CSD) {
+      type == EncodedFrame::AMR_AUDIO_CSD || type == EncodedFrame::EVRC_AUDIO_CSD) {
     mCSDFrame = aFrame;
     // Use CSD's timestamp as the start time. Encoder should send CSD frame first
     // and then data frames.
@@ -89,7 +89,7 @@ FragmentBuffer::AddFrame(EncodedFrame* aFrame)
 }
 
 nsresult
-FragmentBuffer::GetFirstFragment(nsTArray<nsRefPtr<EncodedFrame>>& aFragment,
+FragmentBuffer::GetFirstFragment(nsTArray<RefPtr<EncodedFrame>>& aFragment,
                                  bool aFlush)
 {
   // It should be called only if there is a complete fragment in mFragArray.
@@ -168,7 +168,8 @@ ISOControl::SetMetadata(TrackMetadataBase* aTrackMeta)
 {
   if (aTrackMeta->GetKind() == TrackMetadataBase::METADATA_AAC ||
       aTrackMeta->GetKind() == TrackMetadataBase::METADATA_AMR ||
-      aTrackMeta->GetKind() == TrackMetadataBase::METADATA_AVC) {
+      aTrackMeta->GetKind() == TrackMetadataBase::METADATA_AVC ||
+      aTrackMeta->GetKind() == TrackMetadataBase::METADATA_EVRC) {
     mMetaArray.AppendElement(aTrackMeta);
     return NS_OK;
   }
@@ -176,11 +177,12 @@ ISOControl::SetMetadata(TrackMetadataBase* aTrackMeta)
 }
 
 nsresult
-ISOControl::GetAudioMetadata(nsRefPtr<AudioTrackMetadata>& aAudMeta)
+ISOControl::GetAudioMetadata(RefPtr<AudioTrackMetadata>& aAudMeta)
 {
   for (uint32_t i = 0; i < mMetaArray.Length() ; i++) {
     if (mMetaArray[i]->GetKind() == TrackMetadataBase::METADATA_AAC ||
-        mMetaArray[i]->GetKind() == TrackMetadataBase::METADATA_AMR) {
+        mMetaArray[i]->GetKind() == TrackMetadataBase::METADATA_AMR ||
+        mMetaArray[i]->GetKind() == TrackMetadataBase::METADATA_EVRC) {
       aAudMeta = static_cast<AudioTrackMetadata*>(mMetaArray[i].get());
       return NS_OK;
     }
@@ -189,7 +191,7 @@ ISOControl::GetAudioMetadata(nsRefPtr<AudioTrackMetadata>& aAudMeta)
 }
 
 nsresult
-ISOControl::GetVideoMetadata(nsRefPtr<VideoTrackMetadata>& aVidMeta)
+ISOControl::GetVideoMetadata(RefPtr<VideoTrackMetadata>& aVidMeta)
 {
   for (uint32_t i = 0; i < mMetaArray.Length() ; i++) {
     if (mMetaArray[i]->GetKind() == TrackMetadataBase::METADATA_AVC) {
@@ -203,7 +205,7 @@ ISOControl::GetVideoMetadata(nsRefPtr<VideoTrackMetadata>& aVidMeta)
 bool
 ISOControl::HasAudioTrack()
 {
-  nsRefPtr<AudioTrackMetadata> audMeta;
+  RefPtr<AudioTrackMetadata> audMeta;
   GetAudioMetadata(audMeta);
   return audMeta;
 }
@@ -211,7 +213,7 @@ ISOControl::HasAudioTrack()
 bool
 ISOControl::HasVideoTrack()
 {
-  nsRefPtr<VideoTrackMetadata> vidMeta;
+  RefPtr<VideoTrackMetadata> vidMeta;
   GetVideoMetadata(vidMeta);
   return vidMeta;
 }
@@ -386,7 +388,7 @@ ISOControl::GenerateMoof(uint32_t aTrackType)
   first_sample_offset += mdat_box->FirstSampleOffsetInMediaDataBox();
 
   // correct offset info
-  nsTArray<nsRefPtr<MuxerOperation>> tfhds;
+  nsTArray<RefPtr<MuxerOperation>> tfhds;
   rv = moof_box->Find(NS_LITERAL_CSTRING("tfhd"), tfhds);
   NS_ENSURE_SUCCESS(rv, rv);
   uint32_t len = tfhds.Length();

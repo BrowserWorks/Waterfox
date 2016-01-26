@@ -18,6 +18,7 @@
 #include "nsIFile.h"
 #include "prinrval.h"
 #include "nsThreadUtils.h"
+#include "mozilla/UniquePtr.h"
 #include "gtest/gtest.h"
 
 namespace TestExpirationTracker {
@@ -43,13 +44,13 @@ static uint32_t slackMS = 30; // allow this much error
 
 template <uint32_t K> class Tracker : public nsExpirationTracker<Object,K> {
 public:
-  Tracker() : nsExpirationTracker<Object,K>(periodMS) {
+  Tracker() : nsExpirationTracker<Object,K>(periodMS, "Tracker") {
     Object* obj = new Object();
     mUniverse.AppendElement(obj);
     LogAction(obj, "Created");
   }
 
-  nsTArray<nsAutoArrayPtr<Object> > mUniverse;
+  nsTArray<mozilla::UniquePtr<Object>> mUniverse;
 
   void LogAction(Object* aObj, const char* aAction) {
     if (logging) {
@@ -79,28 +80,28 @@ public:
       break;
     }
     case 1: {
-      obj = mUniverse[uint32_t(rand())%mUniverse.Length()];
-      if (obj->mExpiration.IsTracked()) {
-        nsExpirationTracker<Object,K>::RemoveObject(obj);
-        LogAction(obj, "Removed");
+      UniquePtr<Object>& objref = mUniverse[uint32_t(rand())%mUniverse.Length()];
+      if (objref->mExpiration.IsTracked()) {
+        nsExpirationTracker<Object,K>::RemoveObject(objref.get());
+        LogAction(objref.get(), "Removed");
       }
       break;
     }
     case 2: {
-      obj = mUniverse[uint32_t(rand())%mUniverse.Length()];
-      if (!obj->mExpiration.IsTracked()) {
-        obj->Touch();
-        nsExpirationTracker<Object,K>::AddObject(obj);
-        LogAction(obj, "Added");
+      UniquePtr<Object>& objref = mUniverse[uint32_t(rand())%mUniverse.Length()];
+      if (!objref->mExpiration.IsTracked()) {
+        objref->Touch();
+        nsExpirationTracker<Object,K>::AddObject(objref.get());
+        LogAction(objref.get(), "Added");
       }
       break;
     }
     case 3: {
-      obj = mUniverse[uint32_t(rand())%mUniverse.Length()];
-      if (obj->mExpiration.IsTracked()) {
-        obj->Touch();
-        nsExpirationTracker<Object,K>::MarkUsed(obj);
-        LogAction(obj, "Marked used");
+      UniquePtr<Object>& objref = mUniverse[uint32_t(rand())%mUniverse.Length()];
+      if (objref->mExpiration.IsTracked()) {
+        objref->Touch();
+        nsExpirationTracker<Object,K>::MarkUsed(objref.get());
+        LogAction(objref.get(), "Marked used");
       }
       break;
     }
@@ -181,4 +182,4 @@ TEST(ExpirationTracker, main)
   }
 }
 
-}
+} // namespace TestExpirationTracker

@@ -8,7 +8,6 @@
 
 #include <stdint.h>                     // for uint8_t, uint16_t
 #include <sys/types.h>                  // for int16_t
-#include "gfxCore.h"                    // for NS_GFX
 #include "gfxFontFamilyList.h"
 #include "gfxFontFeatures.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
@@ -40,7 +39,7 @@ const uint8_t kGenericFont_cursive      = 0x10;
 const uint8_t kGenericFont_fantasy      = 0x20;
 
 // Font structure.
-struct NS_GFX nsFont {
+struct nsFont {
 
   // list of font families, either named or generic
   mozilla::FontFamilyList fontlist;
@@ -66,10 +65,6 @@ struct NS_GFX nsFont {
 
   // -- bitmask for both enumerated and functional propvals
   uint16_t variantAlternates;
-
-  // The decorations on the font (underline, overline,
-  // line-through). The decorations can be binary or'd together.
-  uint8_t decorations;
 
   // Smoothing - controls subpixel-antialiasing (currently OSX only)
   uint8_t smoothing;
@@ -100,7 +95,7 @@ struct NS_GFX nsFont {
   nsTArray<gfxAlternateValue> alternateValues;
 
   // -- object used to look these up once the font is matched
-  nsRefPtr<gfxFontFeatureValueSet> featureValueLookup;
+  RefPtr<gfxFontFeatureValueSet> featureValueLookup;
 
   // Font features from CSS font-feature-settings
   nsTArray<gfxFontFeature> fontFeatureSettings;
@@ -111,28 +106,28 @@ struct NS_GFX nsFont {
   nsString languageOverride;
 
   // initialize the font with a fontlist
-  nsFont(const mozilla::FontFamilyList& aFontlist, uint8_t aStyle,
-         uint16_t aWeight, int16_t aStretch,
-         uint8_t aDecoration, nscoord aSize);
+  nsFont(const mozilla::FontFamilyList& aFontlist, nscoord aSize);
 
   // initialize the font with a single generic
-  nsFont(mozilla::FontFamilyType aGenericType, uint8_t aStyle,
-         uint16_t aWeight, int16_t aStretch, uint8_t aDecoration,
-         nscoord aSize);
+  nsFont(mozilla::FontFamilyType aGenericType, nscoord aSize);
 
   // Make a copy of the given font
   nsFont(const nsFont& aFont);
 
+  // leave members uninitialized
   nsFont();
+
   ~nsFont();
 
   bool operator==(const nsFont& aOther) const {
     return Equals(aOther);
   }
 
-  bool Equals(const nsFont& aOther) const ;
-  // Compare ignoring differences in 'variant' and 'decoration'
-  bool BaseEquals(const nsFont& aOther) const;
+  bool operator!=(const nsFont& aOther) const {
+    return !Equals(aOther);
+  }
+
+  bool Equals(const nsFont& aOther) const;
 
   nsFont& operator=(const nsFont& aOther);
 
@@ -147,10 +142,5 @@ protected:
 
 #define NS_FONT_VARIANT_NORMAL            0
 #define NS_FONT_VARIANT_SMALL_CAPS        1
-
-#define NS_FONT_DECORATION_NONE           0x0
-#define NS_FONT_DECORATION_UNDERLINE      0x1
-#define NS_FONT_DECORATION_OVERLINE       0x2
-#define NS_FONT_DECORATION_LINE_THROUGH   0x4
 
 #endif /* nsFont_h___ */

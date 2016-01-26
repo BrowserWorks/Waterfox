@@ -14,16 +14,17 @@ EXPORTS.opus += [
     'include/opus_types.h',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['OPUS_BUILD'] = True
-DEFINES['OPUS_VERSION'] = '"v1.1-mozilla"'
+DEFINES['OPUS_VERSION'] = '"v1.1.2-mozilla"'
 DEFINES['USE_ALLOCA'] = True
 
-# We only need to export symbols if we're built into libgkmedias
-# instead of libxul.
-if not CONFIG['GKMEDIAS_SHARED_LIBRARY']:
-    DEFINES['OPUS_EXPORT'] = ''
+# Don't export symbols
+DEFINES['OPUS_EXPORT'] = ''
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['GNU_AS']:
     DEFINES['OPUS_ARM_ASM'] = True
@@ -69,9 +70,9 @@ LOCAL_INCLUDES += [
 include('sources.mozbuild')
 
 UNIFIED_SOURCES += celt_sources
-SOURCES += celt_nonunified_sources
 UNIFIED_SOURCES += silk_sources
 UNIFIED_SOURCES += opus_sources
+SOURCES += opus_nonunified_sources
 
 if CONFIG['MOZ_SAMPLE_TYPE_FLOAT32']:
     LOCAL_INCLUDES += [
@@ -89,9 +90,9 @@ else:
 
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['GNU_AS']:
     SOURCES += celt_sources_arm
-    GENERATED_SOURCES += [ '%s.%s' % (f, CONFIG['ASM_SUFFIX']) for f in [
-        'celt_pitch_xcorr_arm-gnu',
-    ]]
+    SOURCES += [
+        '!celt_pitch_xcorr_arm-gnu.%s' % CONFIG['ASM_SUFFIX']
+    ]
     # -Os is significantly slower, enable -O3 unless optimization is disabled
     if CONFIG['MOZ_OPTIMIZE']:
         CFLAGS += [
@@ -109,6 +110,5 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['GNU_AS']:
 
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wno-declaration-after-statement']
     if CONFIG['CLANG_CXX']:
-        CFLAGS += ['-Wno-\#pragma-messages']
+        CFLAGS += ['-Wno-#pragma-messages']

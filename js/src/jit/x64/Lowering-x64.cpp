@@ -15,12 +15,12 @@ using namespace js;
 using namespace js::jit;
 
 void
-LIRGeneratorX64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register)
+LIRGeneratorX64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register, bool useAtStart)
 {
     MOZ_ASSERT(mir->type() == MIRType_Value);
 
     ensureDefined(mir);
-    lir->setOperand(n, LUse(reg1, mir->virtualRegister()));
+    lir->setOperand(n, LUse(reg1, mir->virtualRegister(), useAtStart));
 }
 
 LAllocation
@@ -61,7 +61,7 @@ LIRGeneratorX64::visitBox(MBox* box)
     if (opd->isConstant()) {
         define(new(alloc()) LValue(opd->toConstant()->value()), box, LDefinition(LDefinition::BOX));
     } else {
-        LBox* ins = new(alloc()) LBox(opd->type(), useRegister(opd));
+        LBox* ins = new(alloc()) LBox(useRegister(opd), opd->type());
         define(ins, box, LDefinition(LDefinition::BOX));
     }
 }
@@ -125,6 +125,12 @@ void
 LIRGeneratorX64::visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins)
 {
     lowerCompareExchangeTypedArrayElement(ins, /* useI386ByteRegisters = */ false);
+}
+
+void
+LIRGeneratorX64::visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins)
+{
+    lowerAtomicExchangeTypedArrayElement(ins, /* useI386ByteRegisters = */ false);
 }
 
 void
@@ -220,6 +226,23 @@ LIRGeneratorX64::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins)
 }
 
 void
+LIRGeneratorX64::visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins)
+{
+    MOZ_ASSERT(ins->ptr()->type() == MIRType_Int32);
+
+    const LAllocation ptr = useRegister(ins->ptr());
+    const LAllocation value = useRegister(ins->value());
+
+    // The output may not be used but will be clobbered regardless,
+    // so ignore the case where we're not using the value and just
+    // use the output register as a temp.
+
+    LAsmJSAtomicExchangeHeap* lir =
+        new(alloc()) LAsmJSAtomicExchangeHeap(ptr, value);
+    define(lir, ins);
+}
+
+void
 LIRGeneratorX64::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
 {
     MDefinition* ptr = ins->ptr();
@@ -308,4 +331,13 @@ void
 LIRGeneratorX64::visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins)
 {
     MOZ_CRASH("NYI");
+}
+
+void
+LIRGeneratorX64::visitRandom(MRandom* ins)
+{
+    LRandom *lir = new(alloc()) LRandom(temp(),
+                                        temp(),
+                                        temp());
+    defineFixed(lir, ins, LFloatReg(ReturnDoubleReg));
 }

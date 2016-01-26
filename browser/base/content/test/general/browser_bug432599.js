@@ -71,15 +71,15 @@ function waitForStarChange(aValue, aCallback) {
   aCallback();
 }
 
-let invokers = [invokeUsingStarButton, invokeUsingCtrlD];
-let currentInvoker = 0;
+var invokers = [invokeUsingStarButton, invokeUsingCtrlD];
+var currentInvoker = 0;
 
-let initialValue;
-let initialRemoveHidden;
+var initialValue;
+var initialRemoveHidden;
 
-let popupElement = document.getElementById("editBookmarkPanel");
-let titleElement = document.getElementById("editBookmarkPanelTitle");
-let removeElement = document.getElementById("editBookmarkPanelRemoveButton");
+var popupElement = document.getElementById("editBookmarkPanel");
+var titleElement = document.getElementById("editBookmarkPanelTitle");
+var removeElement = document.getElementById("editBookmarkPanelRemoveButton");
 
 function checkBookmarksPanel(invoker, phase)
 {
@@ -99,7 +99,7 @@ function checkBookmarksPanel(invoker, phase)
         if (currentInvoker < invokers.length) {
           checkBookmarksPanel(invokers[currentInvoker], 1);
         } else {
-          gBrowser.removeCurrentTab();
+          gBrowser.removeTab(gBrowser.selectedTab, {skipPermitUnload: true});
           PlacesUtils.bookmarks.removeItem(bookmarkId);
           executeSoon(finish);
         }

@@ -5,6 +5,7 @@
 
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 const CLIENT_OPTIONS = {
   serverURL: "http://127.0.0.1:9010/v1",
@@ -19,7 +20,7 @@ const STATUS_SUCCESS = 200;
  *        Mocked raw response from the server
  * @returns {Function}
  */
-let mockResponse = function (response) {
+var mockResponse = function (response) {
   return function () {
     return {
       setHeader: function () {},
@@ -37,7 +38,7 @@ let mockResponse = function (response) {
  *        Error object
  * @returns {Function}
  */
-let mockResponseError = function (error) {
+var mockResponseError = function (error) {
   return function () {
     return {
       setHeader: function () {},
@@ -145,6 +146,7 @@ add_test(function networkErrorResponse () {
     serverURL: "http://",
     client_id: "abc123"
   });
+  Services.prefs.setBoolPref("identity.fxaccounts.skipDeviceRegistration", true);
   client.getTokenFromAssertion("assertion", "scope")
     .then(
       null,
@@ -155,7 +157,8 @@ add_test(function networkErrorResponse () {
         do_check_eq(e.error, ERROR_NETWORK);
         run_next_test();
       }
-    );
+    ).catch(() => {}).then(() =>
+      Services.prefs.clearUserPref("identity.fxaccounts.skipDeviceRegistration"));
 });
 
 add_test(function unsupportedMethod () {

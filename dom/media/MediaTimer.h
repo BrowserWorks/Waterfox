@@ -7,32 +7,31 @@
 #if !defined(MediaTimer_h_)
 #define MediaTimer_h_
 
-#include "MediaPromise.h"
+#include "mozilla/Monitor.h"
+#include "mozilla/MozPromise.h"
+#include "mozilla/TimeStamp.h"
 
 #include <queue>
 
 #include "nsITimer.h"
-#include "nsRefPtr.h"
-
-#include "mozilla/Monitor.h"
-#include "mozilla/TimeStamp.h"
+#include "mozilla/RefPtr.h"
 
 namespace mozilla {
 
-extern PRLogModuleInfo* gMediaTimerLog;
+extern LazyLogModule gMediaTimerLog;
 
 #define TIMER_LOG(x, ...) \
   MOZ_ASSERT(gMediaTimerLog); \
-  PR_LOG(gMediaTimerLog, PR_LOG_DEBUG, ("[MediaTimer=%p relative_t=%lld]" x, this, \
+  MOZ_LOG(gMediaTimerLog, LogLevel::Debug, ("[MediaTimer=%p relative_t=%lld]" x, this, \
                                         RelativeMicroseconds(TimeStamp::Now()), ##__VA_ARGS__))
 
 // This promise type is only exclusive because so far there isn't a reason for
 // it not to be. Feel free to change that.
-typedef MediaPromise<bool, bool, /* IsExclusive = */ true> MediaTimerPromise;
+typedef MozPromise<bool, bool, /* IsExclusive = */ true> MediaTimerPromise;
 
 // Timers only know how to fire at a given thread, which creates an impedence
-// mismatch with code that operates with MediaTaskQueues. This class solves
-// that mismatch with a dedicated (but shared) thread and a nice MediaPromise-y
+// mismatch with code that operates with TaskQueues. This class solves
+// that mismatch with a dedicated (but shared) thread and a nice MozPromise-y
 // interface.
 class MediaTimer
 {
@@ -43,7 +42,7 @@ public:
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void);
   NS_IMETHOD_(MozExternalRefCountType) Release(void);
 
-  nsRefPtr<MediaTimerPromise> WaitUntil(const TimeStamp& aTimeStamp, const char* aCallSite);
+  RefPtr<MediaTimerPromise> WaitUntil(const TimeStamp& aTimeStamp, const char* aCallSite);
 
 private:
   virtual ~MediaTimer() { MOZ_ASSERT(OnMediaTimerThread()); }
@@ -79,7 +78,7 @@ private:
   struct Entry
   {
     TimeStamp mTimeStamp;
-    nsRefPtr<MediaTimerPromise::Private> mPromise;
+    RefPtr<MediaTimerPromise::Private> mPromise;
 
     explicit Entry(const TimeStamp& aTimeStamp, const char* aCallSite)
       : mTimeStamp(aTimeStamp)
@@ -112,6 +111,58 @@ private:
   }
 
   bool mUpdateScheduled;
+};
+
+// Class for managing delayed dispatches on target thread.
+class DelayedScheduler {
+public:
+  explicit DelayedScheduler(AbstractThread* aTargetThread)
+    : mTargetThread(aTargetThread), mMediaTimer(new MediaTimer())
+  {
+    MOZ_ASSERT(mTargetThread);
+  }
+
+  bool IsScheduled() const { return !mTarget.IsNull(); }
+
+  void Reset()
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn(),
+      "Must be on target thread to disconnect");
+    if (IsScheduled()) {
+      mRequest.Disconnect();
+      mTarget = TimeStamp();
+    }
+  }
+
+  template <typename ResolveFunc, typename RejectFunc>
+  void Ensure(mozilla::TimeStamp& aTarget,
+              ResolveFunc&& aResolver,
+              RejectFunc&& aRejector)
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn());
+    if (IsScheduled() && mTarget <= aTarget) {
+      return;
+    }
+    Reset();
+    mTarget = aTarget;
+    mRequest.Begin(mMediaTimer->WaitUntil(mTarget, __func__)->Then(
+      mTargetThread, __func__,
+      Forward<ResolveFunc>(aResolver),
+      Forward<RejectFunc>(aRejector)));
+  }
+
+  void CompleteRequest()
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn());
+    mRequest.Complete();
+    mTarget = TimeStamp();
+  }
+
+private:
+  RefPtr<AbstractThread> mTargetThread;
+  RefPtr<MediaTimer> mMediaTimer;
+  MozPromiseRequestHolder<mozilla::MediaTimerPromise> mRequest;
+  TimeStamp mTarget;
 };
 
 } // namespace mozilla

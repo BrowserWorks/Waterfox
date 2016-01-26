@@ -19,8 +19,8 @@
 namespace mozilla {
 namespace dom {
 class Promise;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 BEGIN_WORKERS_NAMESPACE
 
@@ -93,7 +93,7 @@ public:
     aLanguages = mProperties.mLanguages;
   }
 
-  void GetUserAgent(nsString& aUserAgent) const;
+  void GetUserAgent(nsString& aUserAgent, ErrorResult& aRv) const;
 
   bool OnLine() const
   {

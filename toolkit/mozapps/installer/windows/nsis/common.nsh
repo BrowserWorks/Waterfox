@@ -2708,6 +2708,22 @@
       ReadRegStr $R5 SHCTX "$R6\$R7" "InstallLocation"
       IfErrors loop
       ${${_MOZFUNC_UN}RemoveQuotesFromPath} "$R5" $R9
+
+      ; Detect when the path is just a drive letter without a trailing
+      ; backslash (e.g., "C:"), and add a backslash. If we don't, the Win32
+      ; calls in GetLongPath will interpret that syntax as a shorthand
+      ; for the working directory, because that's the DOS 2.0 convention,
+      ; and will return the path to that directory instead of just the drive.
+      ; Back here, we would then successfully match that with our $INSTDIR,
+      ; and end up deleting a registry key that isn't really ours.
+      StrLen $R5 "$R9"
+      ${If} $R5 == 2
+        StrCpy $R5 "$R9" 1 1
+        ${If} "$R5" == ":"
+          StrCpy $R9 "$R9\"
+        ${EndIf}
+      ${EndIf}
+
       ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
       StrCmp "$R9" "$R4" +1 loop
       ClearErrors
@@ -2985,10 +3001,18 @@
       Exch $R8
       Push $R7
 
+      DeleteRegValue HKCU "Software\Classes\$R9\OpenWithProgids" $R8
+      EnumRegValue $R7 HKCU "Software\Classes\$R9\OpenWithProgids" 0
+      StrCmp "$R7" "" +1 +2
+      DeleteRegKey HKCU "Software\Classes\$R9\OpenWithProgids"
       ReadRegStr $R7 HKCU "Software\Classes\$R9" ""
       StrCmp "$R7" "$R8" +1 +2
       DeleteRegKey HKCU "Software\Classes\$R9"
 
+      DeleteRegValue HKLM "Software\Classes\$R9\OpenWithProgids" $R8
+      EnumRegValue $R7 HKLM "Software\Classes\$R9\OpenWithProgids" 0
+      StrCmp "$R7" "" +1 +2
+      DeleteRegKey HKLM "Software\Classes\$R9\OpenWithProgids"
       ReadRegStr $R7 HKLM "Software\Classes\$R9" ""
       StrCmp "$R7" "$R8" +1 +2
       DeleteRegValue HKLM "Software\Classes\$R9" ""
@@ -5531,6 +5555,27 @@
 
       SetShellVarContext current  ; Set SHCTX to HKCU
       ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+
+      ${If} ${RunningX64}
+        ; In HKCU there is no WOW64 redirection, which means we may have gotten
+        ; the path to a 32-bit install even though we're 64-bit, or vice-versa.
+        ; In that case, just use the default path instead of offering an upgrade.
+        ; But only do that override if the existing install is in Program Files,
+        ; because that's the only place we can be sure is specific
+        ; to either 32 or 64 bit applications.
+        ; The WordFind syntax below searches for the first occurence of the
+        ; "delimiter" (the Program Files path) in the install path and returns
+        ; anything that appears before that. If nothing appears before that,
+        ; then the install is under Program Files (32 or 64).
+!ifdef HAVE_64BIT_BUILD
+        ${WordFind} $R9 $PROGRAMFILES32 "+1{" $0
+!else
+        ${WordFind} $R9 $PROGRAMFILES64 "+1{" $0
+!endif
+        ${If} $0 == ""
+          StrCpy $R9 "false"
+        ${EndIf}
+      ${EndIf}
 
       finish_get_install_dir:
       StrCmp "$R9" "false" +2 +1

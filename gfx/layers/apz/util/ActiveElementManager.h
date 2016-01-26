@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 class Element;
 class EventTarget;
-}
+} // namespace dom
 
 namespace layers {
 
@@ -45,9 +45,9 @@ public:
    */
   void HandleTouchStart(bool aCanBePan);
   /**
-   * Handle the start of panning.
+   * Clear the active element.
    */
-  void HandlePanStart();
+  void ClearActivation();
   /**
    * Handle a touch-end or touch-cancel event.
    * @param aWasClick whether the touch was a click
@@ -97,7 +97,7 @@ private:
   void CancelTask();
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* mozilla_layers_ActiveElementManager_h */

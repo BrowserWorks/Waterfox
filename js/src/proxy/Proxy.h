@@ -40,7 +40,7 @@ class Proxy
                              ObjectOpResult& result);
     static bool setImmutablePrototype(JSContext* cx, HandleObject proxy, bool* succeeded);
     static bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp);
-    static bool get(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
+    static bool get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
                     MutableHandleValue vp);
     static bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
                     HandleValue receiver, ObjectOpResult& result);
@@ -53,14 +53,15 @@ class Proxy
     static bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp);
     static bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                              AutoIdVector& props);
-    static bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl, CallArgs args);
+    static bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
+                           const CallArgs& args);
     static bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp);
-    static bool objectClassIs(HandleObject obj, ESClassValue classValue, JSContext* cx);
+    static bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClassValue* classValue);
+    static bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer);
     static const char* className(JSContext* cx, HandleObject proxy);
     static JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent);
     static bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g);
     static bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp);
-    static bool defaultValue(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp);
 
     static bool watch(JSContext* cx, HandleObject proxy, HandleId id, HandleObject callable);
     static bool unwatch(JSContext* cx, HandleObject proxy, HandleId id);
@@ -69,10 +70,6 @@ class Proxy
                             ElementAdder* adder);
 
     static void trace(JSTracer* trc, JSObject* obj);
-
-    /* IC entry path for handling __noSuchMethod__ on access. */
-    static bool callProp(JSContext* cx, HandleObject proxy, HandleObject reveiver, HandleId id,
-                         MutableHandleValue vp);
 };
 
 } /* namespace js */

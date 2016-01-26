@@ -15,6 +15,7 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'ExportHelpers.cpp',
     'nsScriptError.cpp',
+    'nsScriptErrorWithStack.cpp',
     'nsXPConnect.cpp',
     'Sandbox.cpp',
     'XPCCallContext.cpp',
@@ -50,8 +51,6 @@ SOURCES += [
     'XPCComponents.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -71,13 +70,5 @@ LOCAL_INCLUDES += [
 
 if CONFIG['MOZ_B2G_BT']:
     LOCAL_INCLUDES += [
-        '/dom/bluetooth',
+        '/dom/bluetooth/common',
     ]
-    if CONFIG['MOZ_B2G_BT_API_V2']:
-        LOCAL_INCLUDES += [
-            '/dom/bluetooth/bluetooth2',
-        ]
-    else:
-        LOCAL_INCLUDES += [
-            '/dom/bluetooth/bluetooth1',
-        ]

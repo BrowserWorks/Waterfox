@@ -4,7 +4,7 @@
 
 "use strict";
 
-const kXULWidgetId = "sync-button";
+const kXULWidgetId = "a-test-button"; // we'll create a button with this ID.
 const kAPIWidgetId = "feed-button";
 const kPanel = CustomizableUI.AREA_PANEL;
 const kToolbar = CustomizableUI.AREA_NAVBAR;
@@ -15,7 +15,7 @@ function checkWrapper(id) {
   is(document.querySelectorAll("#wrapper-" + id).length, 1, "There should be exactly 1 wrapper for " + id + " in the customizing window.");
 }
 
-let move = {
+var move = {
   "drag": function(id, target) {
     let targetNode = document.getElementById(target);
     if (targetNode.customizationTarget) {
@@ -141,13 +141,26 @@ function checkPalette(id, method) {
   checkWrapper(id);
 }
 
-let otherWin;
+// This test needs a XUL button that's in the palette by default. No such
+// button currently exists, so we create a simple one.
+function createXULButtonForWindow(win) {
+  createDummyXULButton(kXULWidgetId, "test-button", win);
+}
+
+function removeXULButtonForWindow(win) {
+  win.gNavToolbox.palette.querySelector(`#${kXULWidgetId}`).remove();
+}
+
+var otherWin;
 
 // Moving widgets in two windows, one with customize mode and one without, should work.
-add_task(function MoveWidgetsInTwoWindows() {
+add_task(function* MoveWidgetsInTwoWindows() {
   yield startCustomizing();
   otherWin = yield openAndLoadWindow(null, true);
   yield otherWin.PanelUI.ensureReady();
+  // Create the XUL button to use in the test in both windows.
+  createXULButtonForWindow(window);
+  createXULButtonForWindow(otherWin);
   ok(CustomizableUI.inDefaultState, "Should start in default state");
 
   for (let widgetId of [kXULWidgetId, kAPIWidgetId]) {
@@ -164,8 +177,9 @@ add_task(function MoveWidgetsInTwoWindows() {
   yield promiseWindowClosed(otherWin);
   otherWin = null;
   yield endCustomizing();
+  removeXULButtonForWindow(window);
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   yield resetCustomization();
 });

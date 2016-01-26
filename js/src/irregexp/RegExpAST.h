@@ -31,6 +31,14 @@
 #ifndef V8_REGEXP_AST_H_
 #define V8_REGEXP_AST_H_
 
+// Prevent msvc build failures as indicated in bug 1205328
+#ifdef min
+# undef min
+#endif
+#ifdef max
+# undef max
+#endif
+
 #include "irregexp/RegExpEngine.h"
 
 namespace js {
@@ -74,7 +82,7 @@ class RegExpTree
 #undef MAKE_ASTYPE
 };
 
-typedef Vector<RegExpTree*, 1, LifoAllocPolicy<Infallible> > RegExpTreeVector;
+typedef InfallibleVector<RegExpTree*, 1> RegExpTreeVector;
 
 class RegExpDisjunction : public RegExpTree
 {
@@ -130,7 +138,9 @@ class RegExpAssertion : public RegExpTree {
     END_OF_LINE,
     END_OF_INPUT,
     BOUNDARY,
-    NON_BOUNDARY
+    NON_BOUNDARY,
+    NOT_AFTER_LEAD_SURROGATE,
+    NOT_IN_SURROGATE_PAIR
   };
   explicit RegExpAssertion(AssertionType type) : assertion_type_(type) { }
   virtual void* Accept(RegExpVisitor* visitor, void* data);
@@ -225,7 +235,7 @@ class RegExpCharacterClass : public RegExpTree
     bool is_negated_;
 };
 
-typedef Vector<char16_t, 10, LifoAllocPolicy<Infallible> > CharacterVector;
+typedef InfallibleVector<char16_t, 10> CharacterVector;
 
 class RegExpAtom : public RegExpTree
 {
@@ -393,7 +403,7 @@ class RegExpLookahead : public RegExpTree
     int capture_from_;
 };
 
-typedef Vector<RegExpCapture*, 1, LifoAllocPolicy<Infallible> > RegExpCaptureVector;
+typedef InfallibleVector<RegExpCapture*, 1> RegExpCaptureVector;
 
 class RegExpBackReference : public RegExpTree
 {

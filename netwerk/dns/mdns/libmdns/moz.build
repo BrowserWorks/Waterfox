@@ -1,0 +1,38 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    EXTRA_COMPONENTS += [
+        'nsDNSServiceDiscovery.js',
+        'nsDNSServiceDiscovery.manifest',
+    ]
+
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa' or \
+        (CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['ANDROID_VERSION'] >= '16'):
+    UNIFIED_SOURCES += [
+        'MDNSResponderOperator.cpp',
+        'MDNSResponderReply.cpp',
+        'nsDNSServiceDiscovery.cpp',
+    ]
+
+    LOCAL_INCLUDES += [
+      '/netwerk/base',
+    ]
+
+    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+        LOCAL_INCLUDES += [
+            '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
+                'external/mdnsresponder/mDNSShared',
+            ]
+        ]
+
+UNIFIED_SOURCES += [
+    'nsDNSServiceInfo.cpp',
+    'nsMulticastDNSModule.cpp',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+FINAL_LIBRARY = 'xul'

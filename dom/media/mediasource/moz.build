@@ -8,7 +8,8 @@ MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 EXPORTS += [
     'AsyncEventRunner.h',
     'MediaSourceDecoder.h',
-    'MediaSourceReader.h',
+    'MediaSourceDemuxer.h',
+    'SourceBufferContentManager.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -21,16 +22,21 @@ UNIFIED_SOURCES += [
     'ContainerParser.cpp',
     'MediaSource.cpp',
     'MediaSourceDecoder.cpp',
-    'MediaSourceReader.cpp',
+    'MediaSourceDemuxer.cpp',
     'MediaSourceUtils.cpp',
     'ResourceQueue.cpp',
     'SourceBuffer.cpp',
-    'SourceBufferDecoder.cpp',
+    'SourceBufferContentManager.cpp',
     'SourceBufferList.cpp',
     'SourceBufferResource.cpp',
-    'TrackBuffer.cpp',
+    'TrackBuffersManager.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+TEST_DIRS += [
+    'gtest',
+]
+
+if CONFIG['MOZ_GONK_MEDIACODEC']:
+    DEFINES['MOZ_GONK_MEDIACODEC'] = True
 
 FINAL_LIBRARY = 'xul'

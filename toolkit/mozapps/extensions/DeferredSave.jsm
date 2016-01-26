@@ -12,7 +12,7 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 
 // Make it possible to mock out timers for testing
-let MakeTimer = () => Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+var MakeTimer = () => Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
 this.EXPORTED_SYMBOLS = ["DeferredSave"];
 
@@ -23,9 +23,9 @@ Cu.import("resource://gre/modules/Log.jsm");
 //Configure a logger at the parent 'DeferredSave' level to format
 //messages for all the modules under DeferredSave.*
 const DEFERREDSAVE_PARENT_LOGGER_ID = "DeferredSave";
-let parentLogger = Log.repository.getLogger(DEFERREDSAVE_PARENT_LOGGER_ID);
+var parentLogger = Log.repository.getLogger(DEFERREDSAVE_PARENT_LOGGER_ID);
 parentLogger.level = Log.Level.Warn;
-let formatter = new Log.BasicFormatter();
+var formatter = new Log.BasicFormatter();
 //Set parent logger (and its children) to append to
 //the Javascript section of the Browser Console
 parentLogger.addAppender(new Log.ConsoleAppender(formatter));
@@ -51,13 +51,13 @@ const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID = "nsPref:changed";
 * parent 'addons' level logger accordingly.
 */
 var PrefObserver = {
- init: function PrefObserver_init() {
+ init: function() {
    Services.prefs.addObserver(PREF_LOGGING_ENABLED, this, false);
    Services.obs.addObserver(this, "xpcom-shutdown", false);
    this.observe(null, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID, PREF_LOGGING_ENABLED);
  },
 
- observe: function PrefObserver_observe(aSubject, aTopic, aData) {
+ observe: function(aSubject, aTopic, aData) {
    if (aTopic == "xpcom-shutdown") {
      Services.prefs.removeObserver(PREF_LOGGING_ENABLED, this);
      Services.obs.removeObserver(this, "xpcom-shutdown");
@@ -103,7 +103,7 @@ PrefObserver.init();
  *        that marks the data as needing to be saved, and when the DeferredSave
  *        begins writing the data to disk. Default 50 milliseconds.
  */
-this.DeferredSave = function (aPath, aDataProvider, aDelay) {
+this.DeferredSave = function(aPath, aDataProvider, aDelay) {
   // Create a new logger (child of 'DeferredSave' logger)
   // for use by this particular instance of DeferredSave object
   let leafName = OS.Path.basename(aPath);

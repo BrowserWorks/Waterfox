@@ -121,7 +121,7 @@ BRFrame::Reflow(nsPresContext* aPresContext,
       // We also do this in strict mode because BR should act like a
       // normal inline frame.  That line-height is used is important
       // here for cases where the line-height is less than 1.
-      nsRefPtr<nsFontMetrics> fm;
+      RefPtr<nsFontMetrics> fm;
       nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
         nsLayoutUtils::FontSizeInflationFor(this));
       if (fm) {
@@ -144,7 +144,7 @@ BRFrame::Reflow(nsPresContext* aPresContext,
     }
 
     // Return our reflow status
-    uint32_t breakType = aReflowState.mStyleDisplay->mBreakType;
+    uint32_t breakType = aReflowState.mStyleDisplay->PhysicalBreakType(wm);
     if (NS_STYLE_CLEAR_NONE == breakType) {
       breakType = NS_STYLE_CLEAR_LINE;
     }
@@ -170,7 +170,7 @@ BRFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
                            nsIFrame::InlineMinISizeData *aData)
 {
   if (!GetParent()->StyleContext()->ShouldSuppressLineBreak()) {
-    aData->ForceBreak(aRenderingContext);
+    aData->ForceBreak();
   }
 }
 
@@ -179,7 +179,7 @@ BRFrame::AddInlinePrefISize(nsRenderingContext *aRenderingContext,
                             nsIFrame::InlinePrefISizeData *aData)
 {
   if (!GetParent()->StyleContext()->ShouldSuppressLineBreak()) {
-    aData->ForceBreak(aRenderingContext);
+    aData->ForceBreak();
   }
 }
 

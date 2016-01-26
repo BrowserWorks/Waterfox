@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 from io import BytesIO
 import struct
 import zlib
@@ -456,19 +458,23 @@ class JarWriter(object):
     archives as well as jar archives optimized for Gecko. See the documentation
     for the close() member function for a description of both layouts.
     '''
-    def __init__(self, file=None, fileobj=None, compress=True, optimize=True):
+    def __init__(self, file=None, fileobj=None, compress=True, optimize=True,
+                 compress_level=9):
         '''
         Initialize a Jar archive in the given file. Use the given file-like
         object if one is given instead of opening the given file name.
         The compress option determines the default behavior for storing data
         in the jar archive. The optimize options determines whether the jar
-        archive should be optimized for Gecko or not.
+        archive should be optimized for Gecko or not. ``compress_level``
+        defines the zlib compression level. It must be a value between 0 and 9
+        and defaults to 9, the highest and slowest level of compression.
         '''
         if fileobj:
             self._data = fileobj
         else:
             self._data = open(file, 'wb')
         self._compress = compress
+        self._compress_level = compress_level
         self._contents = OrderedDict()
         self._last_preloaded = None
         self._optimize = optimize
@@ -590,11 +596,12 @@ class JarWriter(object):
                 or (isinstance(data, Deflater) and data.compress == compress):
             deflater = data
         else:
-            deflater = Deflater(compress)
+            deflater = Deflater(compress, compress_level=self._compress_level)
             if isinstance(data, basestring):
                 deflater.write(data)
             elif hasattr(data, 'read'):
-                data.seek(0)
+                if hasattr(data, 'seek'):
+                    data.seek(0)
                 deflater.write(data.read())
             else:
                 raise JarWriterError("Don't know how to handle %s" %
@@ -648,7 +655,7 @@ class Deflater(object):
     compressed unless the compressed form is smaller than the uncompressed
     data.
     '''
-    def __init__(self, compress=True):
+    def __init__(self, compress=True, compress_level=9):
         '''
         Initialize a Deflater. The compress argument determines whether to
         try to compress at all.
@@ -656,7 +663,8 @@ class Deflater(object):
         self._data = BytesIO()
         self.compress = compress
         if compress:
-            self._deflater = zlib.compressobj(9, zlib.DEFLATED, -MAX_WBITS)
+            self._deflater = zlib.compressobj(compress_level, zlib.DEFLATED,
+                                              -MAX_WBITS)
             self._deflated = BytesIO()
         else:
             self._deflater = None

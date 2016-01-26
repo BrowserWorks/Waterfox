@@ -7,13 +7,15 @@
 
 #include "nsICacheStorageService.h"
 #include "nsIMemoryReporter.h"
-
 #include "nsITimer.h"
+#include "nsICacheTesting.h"
+
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
+#include "mozilla/Monitor.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/TimeStamp.h"
@@ -65,12 +67,14 @@ protected:
 class CacheStorageService final : public nsICacheStorageService
                                 , public nsIMemoryReporter
                                 , public nsITimerCallback
+                                , public nsICacheTesting
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSICACHESTORAGESERVICE
   NS_DECL_NSIMEMORYREPORTER
   NS_DECL_NSITIMERCALLBACK
+  NS_DECL_NSICACHETESTING
 
   CacheStorageService();
 
@@ -100,7 +104,8 @@ public:
   public:
     virtual void OnEntryInfo(const nsACString & aURISpec, const nsACString & aIdEnhance,
                              int64_t aDataSize, int32_t aFetchCount,
-                             uint32_t aLastModifiedTime, uint32_t aExpirationTime) = 0;
+                             uint32_t aLastModifiedTime, uint32_t aExpirationTime,
+                             bool aPinned) = 0;
   };
 
   // Invokes OnEntryInfo for the given aEntry, synchronously.
@@ -273,11 +278,14 @@ private:
   nsresult DoomStorageEntries(nsCSubstring const& aContextKey,
                               nsILoadContextInfo* aContext,
                               bool aDiskStorage,
+                              bool aPin,
                               nsICacheEntryDoomCallback* aCallback);
   nsresult AddStorageEntry(nsCSubstring const& aContextKey,
                            nsIURI* aURI,
                            const nsACString & aIdExtension,
                            bool aWriteToDisk,
+                           bool aSkipSizeCheck,
+                           bool aPin,
                            bool aCreateIfNotExist,
                            bool aReplace,
                            CacheEntryHandle** aResult);
@@ -302,8 +310,8 @@ private:
     explicit MemoryPool(EType aType);
     ~MemoryPool();
 
-    nsTArray<nsRefPtr<CacheEntry> > mFrecencyArray;
-    nsTArray<nsRefPtr<CacheEntry> > mExpirationArray;
+    nsTArray<RefPtr<CacheEntry> > mFrecencyArray;
+    nsTArray<RefPtr<CacheEntry> > mExpirationArray;
     mozilla::Atomic<uint32_t> mMemorySize;
 
     bool OnMemoryConsumptionChange(uint32_t aSavedMemorySize,
@@ -317,7 +325,7 @@ private:
     void PurgeAll(uint32_t aWhat);
 
   private:
-    uint32_t const Limit() const;
+    uint32_t Limit() const;
     MemoryPool() = delete;
   };
 
@@ -343,15 +351,9 @@ private:
   private:
     virtual ~PurgeFromMemoryRunnable() { }
 
-    NS_IMETHOD Run()
-    {
-      // TODO not all flags apply to both pools
-      mService->Pool(true).PurgeAll(mWhat);
-      mService->Pool(false).PurgeAll(mWhat);
-      return NS_OK;
-    }
+    NS_IMETHOD Run() override;
 
-    nsRefPtr<CacheStorageService> mService;
+    RefPtr<CacheStorageService> mService;
     uint32_t mWhat;
   };
 
@@ -360,6 +362,22 @@ private:
   // and also would be complicated to report since reporting happens on the main
   // thread but this table is manipulated on the management thread.
   nsDataHashtable<nsCStringHashKey, mozilla::TimeStamp> mPurgeTimeStamps;
+
+  // nsICacheTesting
+  class IOThreadSuspender : public nsRunnable
+  {
+  public:
+    IOThreadSuspender() : mMon("IOThreadSuspender"), mSignaled(false) { }
+    void Notify();
+  private:
+    virtual ~IOThreadSuspender() { }
+    NS_IMETHOD Run() override;
+
+    Monitor mMon;
+    bool mSignaled;
+  };
+
+  RefPtr<IOThreadSuspender> mActiveIOSuspender;
 };
 
 template<class T>
@@ -378,8 +396,8 @@ void ProxyReleaseMainThread(nsCOMPtr<T> &object)
   ProxyRelease(object, mainThread);
 }
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #define NS_CACHE_STORAGE_SERVICE_CID \
   { 0xea70b098, 0x5014, 0x4e21, \

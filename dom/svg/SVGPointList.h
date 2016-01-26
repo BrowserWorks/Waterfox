@@ -68,7 +68,7 @@ public:
   }
 
   bool SetCapacity(uint32_t aSize) {
-    return mItems.SetCapacity(aSize);
+    return mItems.SetCapacity(aSize, fallible);
   }
 
   void Compact() {
@@ -99,7 +99,7 @@ protected:
    * increased, in which case the list will be left unmodified.
    */
   bool SetLength(uint32_t aNumberOfItems) {
-    return mItems.SetLength(aNumberOfItems);
+    return mItems.SetLength(aNumberOfItems, fallible);
   }
 
 private:
@@ -118,7 +118,7 @@ private:
     if (aIndex >= mItems.Length()) {
       aIndex = mItems.Length();
     }
-    return !!mItems.InsertElementAt(aIndex, aPoint);
+    return !!mItems.InsertElementAt(aIndex, aPoint, fallible);
   }
 
   void ReplaceItem(uint32_t aIndex, const SVGPoint &aPoint) {
@@ -134,7 +134,7 @@ private:
   }
 
   bool AppendItem(SVGPoint aPoint) {
-    return !!mItems.AppendElement(aPoint);
+    return !!mItems.AppendElement(aPoint, fallible);
   }
 
 protected:

@@ -16,8 +16,8 @@ class nsIDOMValidityState;
 namespace mozilla {
 namespace dom {
 class ValidityState;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #define NS_ICONSTRAINTVALIDATION_IID \
 { 0x983829da, 0x1aaf, 0x449c, \
@@ -98,7 +98,7 @@ protected:
   /**
    * A pointer to the ValidityState object.
    */
-  nsRefPtr<mozilla::dom::ValidityState>  mValidity;
+  RefPtr<mozilla::dom::ValidityState>  mValidity;
 
 private:
 

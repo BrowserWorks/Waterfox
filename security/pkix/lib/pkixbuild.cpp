@@ -188,6 +188,11 @@ PathBuildingStep::Check(Input potentialIssuerDER,
     }
   }
 
+  rv = CheckTLSFeatures(subject, potentialIssuer);
+  if (rv != Success) {
+    return RecordResult(rv, keepGoing);
+  }
+
   // RFC 5280, Section 4.2.1.3: "If the keyUsage extension is present, then the
   // subject public key MUST NOT be used to verify signatures on certificates
   // or CRLs unless the corresponding keyCertSign or cRLSign bit is set."
@@ -224,8 +229,17 @@ PathBuildingStep::Check(Input potentialIssuerDER,
   if (deferredSubjectError != Result::ERROR_EXPIRED_CERTIFICATE) {
     CertID certID(subject.GetIssuer(), potentialIssuer.GetSubjectPublicKeyInfo(),
                   subject.GetSerialNumber());
+    Time notBefore(Time::uninitialized);
+    Time notAfter(Time::uninitialized);
+    // This should never fail. If we're here, we've already parsed the validity
+    // and checked that the given time is in the certificate's validity period.
+    rv = ParseValidity(subject.GetValidity(), &notBefore, &notAfter);
+    if (rv != Success) {
+      return rv;
+    }
+    Duration validityDuration(notAfter, notBefore);
     rv = trustDomain.CheckRevocation(subject.endEntityOrCA, certID, time,
-                                     stapledOCSPResponse,
+                                     validityDuration, stapledOCSPResponse,
                                      subject.GetAuthorityInfoAccess());
     if (rv != Success) {
       return RecordResult(rv, keepGoing);

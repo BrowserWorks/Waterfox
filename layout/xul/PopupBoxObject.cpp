@@ -110,11 +110,27 @@ PopupBoxObject::OpenPopupAtScreen(int32_t aXPos, int32_t aYPos,
 }
 
 void
+PopupBoxObject::OpenPopupAtScreenRect(const nsAString& aPosition,
+                                      int32_t aXPos, int32_t aYPos,
+                                      int32_t aWidth, int32_t aHeight,
+                                      bool aIsContextMenu,
+                                      bool aAttributesOverride,
+                                      Event* aTriggerEvent)
+{
+  nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
+  if (pm && mContent) {
+    pm->ShowPopupAtScreenRect(mContent, aPosition,
+                              nsIntRect(aXPos, aYPos, aWidth, aHeight),
+                              aIsContextMenu, aAttributesOverride, aTriggerEvent);
+  }
+}
+
+void
 PopupBoxObject::MoveTo(int32_t aLeft, int32_t aTop)
 {
   nsMenuPopupFrame *menuPopupFrame = mContent ? do_QueryFrame(mContent->GetPrimaryFrame()) : nullptr;
   if (menuPopupFrame) {
-    menuPopupFrame->MoveTo(aLeft, aTop, true);
+    menuPopupFrame->MoveTo(CSSIntPoint(aLeft, aTop), true);
   }
 }
 
@@ -255,7 +271,7 @@ PopupBoxObject::GetAnchorNode() const
 already_AddRefed<DOMRect>
 PopupBoxObject::GetOuterScreenRect()
 {
-  nsRefPtr<DOMRect> rect = new DOMRect(mContent);
+  RefPtr<DOMRect> rect = new DOMRect(mContent);
 
   // Return an empty rectangle if the popup is not open.
   nsMenuPopupFrame *menuPopupFrame = do_QueryFrame(GetFrame(false));
@@ -267,11 +283,11 @@ PopupBoxObject::GetOuterScreenRect()
   if (view) {
     nsIWidget* widget = view->GetWidget();
     if (widget) {
-      nsIntRect screenRect;
+      LayoutDeviceIntRect screenRect;
       widget->GetScreenBounds(screenRect);
 
       int32_t pp = menuPopupFrame->PresContext()->AppUnitsPerDevPixel();
-      rect->SetLayoutRect(ToAppUnits(screenRect, pp));
+      rect->SetLayoutRect(LayoutDeviceIntRect::ToAppUnits(screenRect, pp));
     }
   }
   return rect.forget();

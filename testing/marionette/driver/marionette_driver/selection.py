@@ -37,20 +37,26 @@ class SelectionManager(object):
         if self._input_or_textarea():
             # We must unwrap sel so that DOMRect could be returned to Python
             # side.
-            return '''var sel = SpecialPowers.wrap(arguments[0]).editor.selection;
-                   sel = SpecialPowers.unwrap(sel);'''
+            return '''var sel = arguments[0].editor.selection;'''
         else:
             return '''var sel = window.getSelection();'''
 
     def move_caret_by_offset(self, offset, backward=False):
-        '''Move caret in the element by character offset.'''
-        cmd = self.js_selection_cmd() +\
-            '''sel.modify("move", arguments[1], "character");'''
-        direction = 'backward' if backward else 'forward'
+        '''Move caret in the element by character offset.
 
-        for i in range(offset):
-            self.element.marionette.execute_script(
-                cmd, script_args=[self.element, direction])
+        :param offset: Move the caret to the direction by offset characters.
+        :param backward: Optional, True to move backward; Default to False to
+         move forward.
+
+        '''
+        cmd = self.js_selection_cmd() + '''
+              for (let i = 0; i < %d; ++i) {
+                  sel.modify("move", "%s", "character");
+              }
+              ''' % (offset, 'backward' if backward else 'forward')
+
+        self.element.marionette.execute_script(
+            cmd, script_args=[self.element], sandbox='system')
 
     def move_caret_to_front(self):
         '''Move caret in the element to the front of the content.'''
@@ -83,13 +89,17 @@ class SelectionManager(object):
         '''
         cmd = self.js_selection_cmd() +\
             '''return sel.getRangeAt(%d).getClientRects();''' % idx
-        return self.element.marionette.execute_script(cmd, script_args=[self.element])
+        return self.element.marionette.execute_script(cmd,
+                                                      script_args=[self.element],
+                                                      sandbox='system')
 
     def range_count(self):
         '''Get selection's range count'''
         cmd = self.js_selection_cmd() +\
             '''return sel.rangeCount;'''
-        return self.element.marionette.execute_script(cmd, script_args=[self.element])
+        return self.element.marionette.execute_script(cmd,
+                                                      script_args=[self.element],
+                                                      sandbox='system')
 
     def _selection_location_helper(self, location_type):
         '''Return the start and end location of the selection in the element.
@@ -100,7 +110,7 @@ class SelectionManager(object):
         considered.
 
         '''
-        range_count = self.range_count();
+        range_count = self.range_count()
         first_rect_list = self.selection_rect_list(0)
         last_rect_list = self.selection_rect_list(range_count - 1)
         last_list_length = last_rect_list['length']
@@ -200,4 +210,6 @@ class SelectionManager(object):
         '''Return the selected portion of the content in the element.'''
         cmd = self.js_selection_cmd() +\
             '''return sel.toString();'''
-        return self.element.marionette.execute_script(cmd, script_args=[self.element])
+        return self.element.marionette.execute_script(cmd,
+                                                      script_args=[self.element],
+                                                      sandbox='system')

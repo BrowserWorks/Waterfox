@@ -30,8 +30,8 @@ template<class T> struct already_AddRefed;
 namespace mozilla {
 namespace dom {
 class NodeInfo;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsNodeInfoManager final
 {
@@ -137,7 +137,7 @@ private:
   mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mTextNodeInfo; // WEAK to avoid circular ownership
   mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mCommentNodeInfo; // WEAK to avoid circular ownership
   mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mDocumentNodeInfo; // WEAK to avoid circular ownership
-  nsRefPtr<nsBindingManager> mBindingManager;
+  RefPtr<nsBindingManager> mBindingManager;
 };
 
 #endif /* nsNodeInfoManager_h___ */

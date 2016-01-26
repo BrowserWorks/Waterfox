@@ -42,13 +42,13 @@ http://creativecommons.org/licenses/publicdomain/
 
   function hasPermission(swr) {
     var p = new Promise(function(res, rej) {
-      swr.pushManager.hasPermission().then(
-        function(status) {
-          debug("status: " + status);
-          ok(true, "hasPermission() returned a status");
+      swr.pushManager.permissionState().then(
+        function(state) {
+          debug("state: " + state);
+          ok(["granted", "denied", "prompt"].indexOf(state) >= 0, "permissionState() returned a valid state.");
           res(swr);
         }, function(error) {
-          ok(false, "hasPermission failed.");
+          ok(false, "permissionState() failed.");
           res(swr);
         }
         );
@@ -65,7 +65,7 @@ http://creativecommons.org/licenses/publicdomain/
     }).then(SimpleTest.finish);
   }
 
-  SpecialPowers.addPermission('push', false, document);
+  SpecialPowers.addPermission("desktop-notification", false, document);
   SpecialPowers.pushPrefEnv({"set": [
     ["dom.push.enabled", true],
     ["dom.serviceWorkers.exemptFromPerDomainMax", true],

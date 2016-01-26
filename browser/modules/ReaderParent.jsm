@@ -13,24 +13,20 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI", "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils","resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "ReadingList", "resource:///modules/readinglist/ReadingList.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UITour", "resource:///modules/UITour.jsm");
 
 const gStringBundle = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
-let ReaderParent = {
+var ReaderParent = {
   _readerModeInfoPanelOpen: false,
 
   MESSAGES: [
     "Reader:AddToList",
-    "Reader:AddToPocket",
     "Reader:ArticleGet",
     "Reader:FaviconRequest",
     "Reader:ListStatusRequest",
-    "Reader:PocketEnabledGet",
     "Reader:RemoveFromList",
     "Reader:Share",
     "Reader:SystemUIVisibility",
@@ -48,56 +44,18 @@ let ReaderParent = {
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:AddToList": {
-        let article = message.data.article;
-        ReadingList.getMetadataFromBrowser(message.target).then(function(metadata) {
-          if (metadata.previews.length > 0) {
-            article.preview = metadata.previews[0];
-          }
-
-          ReadingList.addItem({
-            url: article.url,
-            title: article.title,
-            excerpt: article.excerpt,
-            preview: article.preview
-          });
-        });
-        break;
-      }
-
-      case "Reader:AddToPocket": {
-        let doc = message.target.ownerDocument;
-        let pocketWidget = doc.getElementById("pocket-button");
-        let placement = CustomizableUI.getPlacementOfWidget("pocket-button");
-        if (placement) {
-          if (placement.area == CustomizableUI.AREA_PANEL) {
-            doc.defaultView.PanelUI.show().then(function() {
-              // The DOM node might not exist yet if the panel wasn't opened before.
-              pocketWidget = doc.getElementById("pocket-button");
-              pocketWidget.doCommand();
-            });
-          } else {
-            pocketWidget.doCommand();
-          }
-        }
-        break;
-      }
-
       case "Reader:ArticleGet":
         this._getArticle(message.data.url, message.target).then((article) => {
           // Make sure the target browser is still alive before trying to send data back.
           if (message.target.messageManager) {
             message.target.messageManager.sendAsyncMessage("Reader:ArticleData", { article: article });
           }
+        }, e => {
+          if (e && e.newURL) {
+            message.target.loadURI("about:reader?url=" + encodeURIComponent(e.newURL));
+          }
         });
         break;
-
-      case "Reader:PocketEnabledGet": {
-        let pocketPlacement = CustomizableUI.getPlacementOfWidget("pocket-button");
-        let isPocketEnabled = pocketPlacement && pocketPlacement.area;
-        message.target.messageManager.sendAsyncMessage("Reader:PocketEnabledData", { enabled: !!isPocketEnabled});
-        break;
-      }
 
       case "Reader:FaviconRequest": {
         if (message.target.messageManager) {
@@ -114,24 +72,6 @@ let ReaderParent = {
         }
         break;
       }
-      case "Reader:ListStatusRequest":
-        ReadingList.hasItemForURL(message.data.url).then(inList => {
-          let mm = message.target.messageManager
-          // Make sure the target browser is still alive before trying to send data back.
-          if (mm) {
-            mm.sendAsyncMessage("Reader:ListStatusData",
-                                { inReadingList: inList, url: message.data.url });
-          }
-        });
-        break;
-
-      case "Reader:RemoveFromList":
-        // We need to get the "real" item to delete it.
-        ReadingList.itemForURL(message.data.url).then(item => {
-          ReadingList.deleteItem(item)
-        });
-        break;
-
       case "Reader:Share":
         // XXX: To implement.
         break;
@@ -249,7 +189,7 @@ let ReaderParent = {
       } else {
         icon += "reader-tour.png";
       }
-      UITour.showInfo(win, browser.messageManager, target,
+      UITour.showInfo(win, target,
                       browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.title"),
                       browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.body"),
                       icon);
@@ -266,6 +206,10 @@ let ReaderParent = {
    */
   _getArticle: Task.async(function* (url, browser) {
     return yield ReaderMode.downloadAndParseDocument(url).catch(e => {
+      if (e && e.newURL) {
+        // Pass up the error so we can navigate the browser in question to the new URL:
+        throw e;
+      }
       Cu.reportError("Error downloading and parsing document: " + e);
       return null;
     });

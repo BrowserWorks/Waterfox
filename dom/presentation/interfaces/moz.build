@@ -10,9 +10,18 @@ XPIDL_SOURCES += [
     'nsIPresentationDeviceManager.idl',
     'nsIPresentationDevicePrompt.idl',
     'nsIPresentationDeviceProvider.idl',
+    'nsIPresentationListener.idl',
+    'nsIPresentationRequestUIGlue.idl',
+    'nsIPresentationService.idl',
     'nsIPresentationSessionRequest.idl',
+    'nsIPresentationSessionTransport.idl',
     'nsITCPPresentationServer.idl',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    XPIDL_SOURCES += [
+        'nsIPresentationNetworkHelper.idl',
+    ]
 
 XPIDL_MODULE = 'dom_presentation'
 

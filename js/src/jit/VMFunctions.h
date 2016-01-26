@@ -7,6 +7,8 @@
 #ifndef jit_VMFunctions_h
 #define jit_VMFunctions_h
 
+#include "mozilla/Attributes.h"
+
 #include "jspubtd.h"
 
 #include "jit/CompileInfo.h"
@@ -15,7 +17,7 @@
 namespace js {
 
 class DeclEnvObject;
-class StaticWithObject;
+class StaticWithScope;
 class InlineTypedObject;
 class GeneratorObject;
 
@@ -280,8 +282,8 @@ template <> struct TypeToDataType<Handle<InlineTypedObject*> > { static const Da
 template <> struct TypeToDataType<Handle<ArrayObject*> > { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<Handle<GeneratorObject*> > { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<Handle<PlainObject*> > { static const DataType result = Type_Handle; };
-template <> struct TypeToDataType<Handle<StaticWithObject*> > { static const DataType result = Type_Handle; };
-template <> struct TypeToDataType<Handle<StaticBlockObject*> > { static const DataType result = Type_Handle; };
+template <> struct TypeToDataType<Handle<StaticWithScope*> > { static const DataType result = Type_Handle; };
+template <> struct TypeToDataType<Handle<StaticBlockScope*> > { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<HandleScript> { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<HandleValue> { static const DataType result = Type_Handle; };
 template <> struct TypeToDataType<MutableHandleValue> { static const DataType result = Type_Handle; };
@@ -321,11 +323,11 @@ template <> struct TypeToArgProperties<Handle<GeneratorObject*> > {
 template <> struct TypeToArgProperties<Handle<PlainObject*> > {
     static const uint32_t result = TypeToArgProperties<PlainObject*>::result | VMFunction::ByRef;
 };
-template <> struct TypeToArgProperties<Handle<StaticWithObject*> > {
-    static const uint32_t result = TypeToArgProperties<StaticWithObject*>::result | VMFunction::ByRef;
+template <> struct TypeToArgProperties<Handle<StaticWithScope*> > {
+    static const uint32_t result = TypeToArgProperties<StaticWithScope*>::result | VMFunction::ByRef;
 };
-template <> struct TypeToArgProperties<Handle<StaticBlockObject*> > {
-    static const uint32_t result = TypeToArgProperties<StaticBlockObject*>::result | VMFunction::ByRef;
+template <> struct TypeToArgProperties<Handle<StaticBlockScope*> > {
+    static const uint32_t result = TypeToArgProperties<StaticBlockScope*>::result | VMFunction::ByRef;
 };
 template <> struct TypeToArgProperties<HandleScript> {
     static const uint32_t result = TypeToArgProperties<JSScript*>::result | VMFunction::ByRef;
@@ -398,10 +400,10 @@ template <> struct TypeToRootType<Handle<GeneratorObject*> > {
 template <> struct TypeToRootType<Handle<PlainObject*> > {
     static const uint32_t result = VMFunction::RootObject;
 };
-template <> struct TypeToRootType<Handle<StaticBlockObject*> > {
+template <> struct TypeToRootType<Handle<StaticBlockScope*> > {
     static const uint32_t result = VMFunction::RootObject;
 };
-template <> struct TypeToRootType<Handle<StaticWithObject*> > {
+template <> struct TypeToRootType<Handle<StaticWithScope*> > {
     static const uint32_t result = VMFunction::RootCell;
 };
 template <class T> struct TypeToRootType<Handle<T> > {
@@ -440,167 +442,113 @@ template <> struct MatchContext<ExclusiveContext*> {
     static const bool valid = true;
 };
 
-#define FOR_EACH_ARGS_1(Macro, Sep, Last) Macro(1) Last(1)
-#define FOR_EACH_ARGS_2(Macro, Sep, Last) FOR_EACH_ARGS_1(Macro, Sep, Sep) Macro(2) Last(2)
-#define FOR_EACH_ARGS_3(Macro, Sep, Last) FOR_EACH_ARGS_2(Macro, Sep, Sep) Macro(3) Last(3)
-#define FOR_EACH_ARGS_4(Macro, Sep, Last) FOR_EACH_ARGS_3(Macro, Sep, Sep) Macro(4) Last(4)
-#define FOR_EACH_ARGS_5(Macro, Sep, Last) FOR_EACH_ARGS_4(Macro, Sep, Sep) Macro(5) Last(5)
-#define FOR_EACH_ARGS_6(Macro, Sep, Last) FOR_EACH_ARGS_5(Macro, Sep, Sep) Macro(6) Last(6)
+// Extract the last element of a list of types.
+template <typename... ArgTypes>
+struct LastArg;
 
-#define COMPUTE_INDEX(NbArg) NbArg
-#define COMPUTE_OUTPARAM_RESULT(NbArg) OutParamToDataType<A ## NbArg>::result
-#define COMPUTE_OUTPARAM_ROOT(NbArg) OutParamToRootType<A ## NbArg>::result
-#define COMPUTE_ARG_PROP(NbArg) (TypeToArgProperties<A ## NbArg>::result << (2 * (NbArg - 1)))
-#define COMPUTE_ARG_ROOT(NbArg) (uint64_t(TypeToRootType<A ## NbArg>::result) << (3 * (NbArg - 1)))
-#define COMPUTE_ARG_FLOAT(NbArg) (TypeToPassInFloatReg<A ## NbArg>::result) << (NbArg - 1)
-#define SEP_OR(_) |
-#define NOTHING(_)
-
-#define FUNCTION_INFO_STRUCT_BODY(ForEachNb)                                            \
-    static inline DataType returnType() {                                               \
-        return TypeToDataType<R>::result;                                               \
-    }                                                                                   \
-    static inline DataType outParam() {                                                 \
-        return ForEachNb(NOTHING, NOTHING, COMPUTE_OUTPARAM_RESULT);                    \
-    }                                                                                   \
-    static inline RootType outParamRootType() {                                         \
-        return ForEachNb(NOTHING, NOTHING, COMPUTE_OUTPARAM_ROOT);                      \
-    }                                                                                   \
-    static inline size_t NbArgs() {                                                     \
-        return ForEachNb(NOTHING, NOTHING, COMPUTE_INDEX);                              \
-    }                                                                                   \
-    static inline size_t explicitArgs() {                                               \
-        return NbArgs() - (outParam() != Type_Void ? 1 : 0);                            \
-    }                                                                                   \
-    static inline uint32_t argumentProperties() {                                       \
-        return ForEachNb(COMPUTE_ARG_PROP, SEP_OR, NOTHING);                            \
-    }                                                                                   \
-    static inline uint32_t argumentPassedInFloatRegs() {                                \
-        return ForEachNb(COMPUTE_ARG_FLOAT, SEP_OR, NOTHING);                           \
-    }                                                                                   \
-    static inline uint64_t argumentRootTypes() {                                        \
-        return ForEachNb(COMPUTE_ARG_ROOT, SEP_OR, NOTHING);                            \
-    }                                                                                   \
-    explicit FunctionInfo(pf fun, MaybeTailCall expectTailCall,                         \
-                          PopValues extraValuesToPop = PopValues(0))                    \
-        : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),                  \
-                     argumentProperties(), argumentPassedInFloatRegs(),                 \
-                     argumentRootTypes(), outParam(), outParamRootType(),               \
-                     returnType(), extraValuesToPop.numValues, expectTailCall)          \
-    {                                                                                   \
-        static_assert(MatchContext<Context>::valid, "Invalid cx type in VMFunction");   \
-    }                                                                                   \
-    explicit FunctionInfo(pf fun, PopValues extraValuesToPop = PopValues(0))            \
-        : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),                  \
-                     argumentProperties(), argumentPassedInFloatRegs(),                 \
-                     argumentRootTypes(), outParam(), outParamRootType(),               \
-                     returnType(), extraValuesToPop.numValues, NonTailCall)             \
-    {                                                                                   \
-        static_assert(MatchContext<Context>::valid, "Invalid cx type in VMFunction");   \
-    }
-
-template <typename Fun>
-struct FunctionInfo {
+template <>
+struct LastArg<>
+{
+    typedef void Type;
+    static MOZ_CONSTEXPR_VAR size_t nbArgs = 0;
 };
 
-// VMFunction wrapper with no explicit arguments.
-template <class R, class Context>
-struct FunctionInfo<R (*)(Context)> : public VMFunction {
-    typedef R (*pf)(Context);
+template <typename HeadType>
+struct LastArg<HeadType>
+{
+    typedef HeadType Type;
+    static MOZ_CONSTEXPR_VAR size_t nbArgs = 1;
+};
 
-    static inline DataType returnType() {
+template <typename HeadType, typename... TailTypes>
+struct LastArg<HeadType, TailTypes...>
+{
+    typedef typename LastArg<TailTypes...>::Type Type;
+    static MOZ_CONSTEXPR_VAR size_t nbArgs = LastArg<TailTypes...>::nbArgs + 1;
+};
+
+// Construct a bit mask from a list of types.  The mask is constructed as an OR
+// of the mask produced for each argument. The result of each argument is
+// shifted by its index, such that the result of the first argument is on the
+// low bits of the mask, and the result of the last argument in part of the
+// high bits of the mask.
+template <template<typename> class Each, typename ResultType, size_t Shift,
+          typename... Args>
+struct BitMask;
+
+template <template<typename> class Each, typename ResultType, size_t Shift>
+struct BitMask<Each, ResultType, Shift>
+{
+    static MOZ_CONSTEXPR_VAR ResultType result = ResultType();
+};
+
+template <template<typename> class Each, typename ResultType, size_t Shift,
+          typename HeadType, typename... TailTypes>
+struct BitMask<Each, ResultType, Shift, HeadType, TailTypes...>
+{
+    static_assert(ResultType(Each<HeadType>::result) < (1 << Shift),
+                  "not enough bits reserved by the shift for individual results");
+    static_assert(LastArg<TailTypes...>::nbArgs < (8 * sizeof(ResultType) / Shift),
+                  "not enough bits in the result type to store all bit masks");
+
+    static MOZ_CONSTEXPR_VAR ResultType result =
+        ResultType(Each<HeadType>::result) |
+        (BitMask<Each, ResultType, Shift, TailTypes...>::result << Shift);
+};
+
+// Extract VMFunction properties based on the signature of the function. The
+// properties are used to generate the logic for calling the VM function, and
+// also for marking the stack during GCs.
+template <typename... Args>
+struct FunctionInfo;
+
+template <class R, class Context, typename... Args>
+struct FunctionInfo<R (*)(Context, Args...)> : public VMFunction
+{
+    typedef R (*pf)(Context, Args...);
+
+    static DataType returnType() {
         return TypeToDataType<R>::result;
     }
-    static inline DataType outParam() {
-        return Type_Void;
+    static DataType outParam() {
+        return OutParamToDataType<typename LastArg<Args...>::Type>::result;
     }
-    static inline RootType outParamRootType() {
-        return RootNone;
+    static RootType outParamRootType() {
+        return OutParamToRootType<typename LastArg<Args...>::Type>::result;
     }
-    static inline size_t explicitArgs() {
-        return 0;
+    static size_t NbArgs() {
+        return LastArg<Args...>::nbArgs;
     }
-    static inline uint32_t argumentProperties() {
-        return 0;
+    static size_t explicitArgs() {
+        return NbArgs() - (outParam() != Type_Void ? 1 : 0);
     }
-    static inline uint32_t argumentPassedInFloatRegs() {
-        return 0;
+    static uint32_t argumentProperties() {
+        return BitMask<TypeToArgProperties, uint32_t, 2, Args...>::result;
     }
-    static inline uint64_t argumentRootTypes() {
-        return 0;
+    static uint32_t argumentPassedInFloatRegs() {
+        return BitMask<TypeToPassInFloatReg, uint32_t, 2, Args...>::result;
     }
-    explicit FunctionInfo(pf fun)
-      : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),
-                   argumentProperties(), argumentPassedInFloatRegs(),
-                   argumentRootTypes(), outParam(), outParamRootType(),
-                   returnType(), 0, NonTailCall)
+    static uint64_t argumentRootTypes() {
+        return BitMask<TypeToRootType, uint64_t, 3, Args...>::result;
+    }
+    explicit FunctionInfo(pf fun, PopValues extraValuesToPop = PopValues(0))
+        : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),
+                     argumentProperties(), argumentPassedInFloatRegs(),
+                     argumentRootTypes(), outParam(), outParamRootType(),
+                     returnType(), extraValuesToPop.numValues, NonTailCall)
     {
         static_assert(MatchContext<Context>::valid, "Invalid cx type in VMFunction");
     }
-    explicit FunctionInfo(pf fun, MaybeTailCall expectTailCall)
-      : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),
-                   argumentProperties(), argumentPassedInFloatRegs(),
-                   argumentRootTypes(), outParam(), outParamRootType(),
-                   returnType(), expectTailCall)
+    explicit FunctionInfo(pf fun, MaybeTailCall expectTailCall,
+                          PopValues extraValuesToPop = PopValues(0))
+        : VMFunction(JS_FUNC_TO_DATA_PTR(void*, fun), explicitArgs(),
+                     argumentProperties(), argumentPassedInFloatRegs(),
+                     argumentRootTypes(), outParam(), outParamRootType(),
+                     returnType(), extraValuesToPop.numValues, expectTailCall)
     {
         static_assert(MatchContext<Context>::valid, "Invalid cx type in VMFunction");
     }
 };
-
-// Specialize the class for each number of argument used by VMFunction.
-// Keep it verbose unless you find a readable macro for it.
-template <class R, class Context, class A1>
-struct FunctionInfo<R (*)(Context, A1)> : public VMFunction {
-    typedef R (*pf)(Context, A1);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_1)
-};
-
-template <class R, class Context, class A1, class A2>
-struct FunctionInfo<R (*)(Context, A1, A2)> : public VMFunction {
-    typedef R (*pf)(Context, A1, A2);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_2)
-};
-
-template <class R, class Context, class A1, class A2, class A3>
-struct FunctionInfo<R (*)(Context, A1, A2, A3)> : public VMFunction {
-    typedef R (*pf)(Context, A1, A2, A3);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_3)
-};
-
-template <class R, class Context, class A1, class A2, class A3, class A4>
-struct FunctionInfo<R (*)(Context, A1, A2, A3, A4)> : public VMFunction {
-    typedef R (*pf)(Context, A1, A2, A3, A4);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_4)
-};
-
-template <class R, class Context, class A1, class A2, class A3, class A4, class A5>
-    struct FunctionInfo<R (*)(Context, A1, A2, A3, A4, A5)> : public VMFunction {
-    typedef R (*pf)(Context, A1, A2, A3, A4, A5);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_5)
-};
-
-template <class R, class Context, class A1, class A2, class A3, class A4, class A5, class A6>
-    struct FunctionInfo<R (*)(Context, A1, A2, A3, A4, A5, A6)> : public VMFunction {
-    typedef R (*pf)(Context, A1, A2, A3, A4, A5, A6);
-    FUNCTION_INFO_STRUCT_BODY(FOR_EACH_ARGS_6)
-};
-
-#undef FUNCTION_INFO_STRUCT_BODY
-
-#undef FOR_EACH_ARGS_6
-#undef FOR_EACH_ARGS_5
-#undef FOR_EACH_ARGS_4
-#undef FOR_EACH_ARGS_3
-#undef FOR_EACH_ARGS_2
-#undef FOR_EACH_ARGS_1
-
-#undef COMPUTE_INDEX
-#undef COMPUTE_OUTPARAM_RESULT
-#undef COMPUTE_OUTPARAM_ROOT
-#undef COMPUTE_ARG_PROP
-#undef COMPUTE_ARG_FLOAT
-#undef SEP_OR
-#undef NOTHING
 
 class AutoDetectInvalidation
 {
@@ -631,14 +579,19 @@ class AutoDetectInvalidation
     }
 };
 
-bool InvokeFunction(JSContext* cx, HandleObject obj0, uint32_t argc, Value* argv, Value* rval);
+bool InvokeFunction(JSContext* cx, HandleObject obj0, bool constructing, uint32_t argc,
+                    Value* argv, MutableHandleValue rval);
+bool InvokeFunctionShuffleNewTarget(JSContext* cx, HandleObject obj, uint32_t numActualArgs,
+                                    uint32_t numFormalArgs, Value* argv, MutableHandleValue rval);
 
 bool CheckOverRecursed(JSContext* cx);
 bool CheckOverRecursedWithExtra(JSContext* cx, BaselineFrame* frame,
                                 uint32_t extra, uint32_t earlyCheck);
 
-bool DefVarOrConst(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain);
-bool SetConst(JSContext* cx, HandlePropertyName name, HandleObject scopeChain, HandleValue rval);
+JSObject* BindVar(JSContext* cx, HandleObject scopeChain);
+bool DefVar(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain);
+bool DefLexical(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain);
+bool DefGlobalLexical(JSContext* cx, HandlePropertyName dn, unsigned attrs);
 bool MutatePrototype(JSContext* cx, HandlePlainObject obj, HandleValue value);
 bool InitProp(JSContext* cx, HandleObject obj, HandlePropertyName name, HandleValue value,
               jsbytecode* pc);
@@ -658,7 +611,7 @@ template<bool Equal>
 bool StringsEqual(JSContext* cx, HandleString left, HandleString right, bool* res);
 
 bool ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
-bool ArrayPushDense(JSContext* cx, HandleArrayObject obj, HandleValue v, uint32_t* length);
+bool ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length);
 bool ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval);
 JSObject* ArrayConcatDense(JSContext* cx, HandleObject obj1, HandleObject obj2, HandleObject res);
 JSString* ArrayJoin(JSContext* cx, HandleObject array, HandleString sep);
@@ -682,11 +635,9 @@ bool OperatorInI(JSContext* cx, uint32_t index, HandleObject obj, bool* out);
 
 bool GetIntrinsicValue(JSContext* cx, HandlePropertyName name, MutableHandleValue rval);
 
-bool CreateThis(JSContext* cx, HandleObject callee, MutableHandleValue rval);
+bool CreateThis(JSContext* cx, HandleObject callee, HandleObject newTarget, MutableHandleValue rval);
 
 void GetDynamicName(JSContext* cx, JSObject* scopeChain, JSString* str, Value* vp);
-
-bool FilterArgumentsOrEval(JSContext* cx, JSString* str);
 
 void PostWriteBarrier(JSRuntime* rt, JSObject* obj);
 void PostGlobalWriteBarrier(JSRuntime* rt, JSObject* obj);
@@ -708,8 +659,9 @@ bool DebugAfterYield(JSContext* cx, BaselineFrame* frame);
 bool GeneratorThrowOrClose(JSContext* cx, BaselineFrame* frame, Handle<GeneratorObject*> genObj,
                            HandleValue arg, uint32_t resumeKind);
 
-bool StrictEvalPrologue(JSContext* cx, BaselineFrame* frame);
-bool HeavyweightFunPrologue(JSContext* cx, BaselineFrame* frame);
+bool GlobalNameConflictsCheckFromIon(JSContext* cx, HandleScript script);
+bool InitGlobalOrEvalScopeObjects(JSContext* cx, BaselineFrame* frame);
+bool InitFunctionScopeObjects(JSContext* cx, BaselineFrame* frame);
 
 bool NewArgumentsObject(JSContext* cx, BaselineFrame* frame, MutableHandleValue res);
 
@@ -721,10 +673,10 @@ bool OnDebuggerStatement(JSContext* cx, BaselineFrame* frame, jsbytecode* pc, bo
 bool GlobalHasLiveOnDebuggerStatement(JSContext* cx);
 
 bool EnterWith(JSContext* cx, BaselineFrame* frame, HandleValue val,
-               Handle<StaticWithObject*> templ);
+               Handle<StaticWithScope*> templ);
 bool LeaveWith(JSContext* cx, BaselineFrame* frame);
 
-bool PushBlockScope(JSContext* cx, BaselineFrame* frame, Handle<StaticBlockObject*> block);
+bool PushBlockScope(JSContext* cx, BaselineFrame* frame, Handle<StaticBlockScope*> block);
 bool PopBlockScope(JSContext* cx, BaselineFrame* frame);
 bool DebugLeaveThenPopBlockScope(JSContext* cx, BaselineFrame* frame, jsbytecode* pc);
 bool FreshenBlockScope(JSContext* cx, BaselineFrame* frame);
@@ -782,7 +734,13 @@ IonMarkFunction(MIRType type)
 
 bool ObjectIsCallable(JSObject* obj);
 
-bool ThrowUninitializedLexical(JSContext* cx);
+bool ThrowRuntimeLexicalError(JSContext* cx, unsigned errorNumber);
+bool BaselineThrowUninitializedThis(JSContext* cx, BaselineFrame* frame);
+bool ThrowBadDerivedReturn(JSContext* cx, HandleValue v);
+
+bool ThrowObjectCoercible(JSContext* cx, HandleValue v);
+
+bool BaselineGetFunctionThis(JSContext* cx, BaselineFrame* frame, MutableHandleValue res);
 
 } // namespace jit
 } // namespace js

@@ -86,7 +86,7 @@ BytesPerPixel(SurfaceFormat aFormat)
   switch (aFormat) {
   case SurfaceFormat::A8:
     return 1;
-  case SurfaceFormat::R5G6B5:
+  case SurfaceFormat::R5G6B5_UINT16:
     return 2;
   default:
     return 4;
@@ -215,7 +215,7 @@ int32_t GetAlignedStride(int32_t aStride)
   return (aStride + mask) & ~mask;
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_TOOLS_H_ */

@@ -60,7 +60,7 @@
     <!-- DropDown List View -->
     <style name="DropDownListView" parent="@android:style/Widget.Holo.ListView.DropDown">
          <item name="android:listSelector">@drawable/action_bar_button</item>
-         <item name="android:divider">@color/divider_light</item>
+         <item name="android:divider">@color/toolbar_divider_grey</item>
          <item name="android:dividerHeight">1dp</item>
     </style>
 
@@ -88,6 +88,10 @@
         <item name="android:background">@android:color/transparent</item>
         <item name="android:paddingLeft">15dp</item>
         <item name="android:paddingRight">15dp</item>
+        <!-- gravity and minWidth are added here to more resemble our values/styles.xml
+             counterpart. This is solely to correct bug 1233709 -->
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minWidth">0dp</item>
     </style>
 
     <style name="GeckoActionBar.Button" parent="android:style/Widget.Holo.Light.ActionButton">
@@ -98,9 +102,12 @@
     </style>
 
     <style name="GeckoActionBar.Button.MenuButton" parent="android:style/Widget.Holo.Light.ActionButton.Overflow">
-        <item name="android:scaleType">center</item>
+        <item name="android:scaleType">centerInside</item>
         <item name="android:background">@android:color/transparent</item>
-        <item name="android:src">@drawable/menu_light</item>
+        <item name="android:src">@drawable/menu</item>
+        <item name="android:tint">@color/toolbar_icon_grey</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:layout_marginBottom">16dp</item>
     </style>
 
     <style name="TabInput"></style>

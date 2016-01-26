@@ -89,7 +89,7 @@ const MICROSEC_PER_SEC = 1000000;
 const EXPORT_INDENT = "    "; // four spaces
 
 // Counter used to build fake favicon urls.
-let serialNumber = 0;
+var serialNumber = 0;
 
 function base64EncodeString(aString) {
   let stream = Cc["@mozilla.org/io/string-input-stream;1"]
@@ -517,6 +517,7 @@ BookmarkImporter.prototype = {
     let generatedTitle = this._safeTrim(aElt.getAttribute("generated_title"));
     let dateAdded = this._safeTrim(aElt.getAttribute("add_date"));
     let lastModified = this._safeTrim(aElt.getAttribute("last_modified"));
+    let tags = this._safeTrim(aElt.getAttribute("tags"));
 
     // For feeds, get the feed URL.  If it is invalid, mPreviousFeed will be
     // NULL and we'll create it as a normal bookmark.
@@ -573,6 +574,15 @@ BookmarkImporter.prototype = {
       try {
         PlacesUtils.bookmarks.setItemDateAdded(frame.previousId,
           this._convertImportedDateToInternalDate(dateAdded));
+      } catch(e) {
+      }
+    }
+
+    // Adds tags to the URI, if there are any.
+    if (tags) {
+      try {
+        let tagsArray = tags.split(",");
+        PlacesUtils.tagging.tagURI(frame.previousLink, tagsArray);
       } catch(e) {
       }
     }
@@ -829,9 +839,10 @@ BookmarkImporter.prototype = {
     // worry about data
     if (aIconURI) {
       if (aIconURI.schemeIs("chrome")) {
-        PlacesUtils.favicons.setAndFetchFaviconForPage(aPageURI, aIconURI,
-                                                       false,
-                                                       PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+        PlacesUtils.favicons.setAndFetchFaviconForPage(aPageURI, aIconURI, false,
+                                                       PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+                                                       Services.scriptSecurityManager.getSystemPrincipal());
+
         return;
       }
     }
@@ -860,8 +871,11 @@ BookmarkImporter.prototype = {
     // This could fail if the favicon is bigger than defined limit, in such a
     // case neither the favicon URI nor the favicon data will be saved.  If the
     // bookmark is visited again later, the URI and data will be fetched.
-    PlacesUtils.favicons.replaceFaviconDataFromDataURL(faviconURI, aData);
-    PlacesUtils.favicons.setAndFetchFaviconForPage(aPageURI, faviconURI, false, PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+    PlacesUtils.favicons.replaceFaviconDataFromDataURL(faviconURI, aData, 0,
+                                                       Services.scriptSecurityManager.getSystemPrincipal());
+    PlacesUtils.favicons.setAndFetchFaviconForPage(aPageURI, faviconURI, false,
+                                                   PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+                                                   Services.scriptSecurityManager.getSystemPrincipal());
   },
 
   /**
@@ -1031,7 +1045,7 @@ BookmarkExporter.prototype = {
     this._writeLine("<TITLE>Bookmarks</TITLE>");
   },
 
-  _writeContainer: function (aItem, aIndent = "") {
+  *_writeContainer(aItem, aIndent = "") {
     if (aItem == this._root) {
       this._writeLine("<H1>" + escapeHtmlEntities(this._root.title) + "</H1>");
       this._writeLine("");
@@ -1058,18 +1072,19 @@ BookmarkExporter.prototype = {
       this._writeLine(aIndent + "</DL><p>");
   },
 
-  _writeContainerContents: function (aItem, aIndent) {
+  *_writeContainerContents(aItem, aIndent) {
     let localIndent = aIndent + EXPORT_INDENT;
 
     for (let child of aItem.children) {
-      if (child.annos && child.annos.some(anno => anno.name == PlacesUtils.LMANNO_FEEDURI))
-          this._writeLivemark(child, localIndent);
-      else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER)
-          yield this._writeContainer(child, localIndent);
-      else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR)
+      if (child.annos && child.annos.some(anno => anno.name == PlacesUtils.LMANNO_FEEDURI)) {
+        this._writeLivemark(child, localIndent);
+      } else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER) {
+        yield this._writeContainer(child, localIndent);
+      } else if (child.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
         this._writeSeparator(child, localIndent);
-      else
+      } else {
         yield this._writeItem(child, localIndent);
+      }
     }
   },
 
@@ -1092,7 +1107,7 @@ BookmarkExporter.prototype = {
     this._writeDescription(aItem, aIndent);
   },
 
-  _writeItem: function (aItem, aIndent) {
+  *_writeItem(aItem, aIndent) {
     let uri = null;
     try {
       uri = NetUtil.newURI(aItem.uri);
@@ -1131,7 +1146,7 @@ BookmarkExporter.prototype = {
                            Math.floor(aItem.lastModified / MICROSEC_PER_SEC));
   },
 
-  _writeFaviconAttribute: function (aItem) {
+  *_writeFaviconAttribute(aItem) {
     if (!aItem.iconuri)
       return;
     let favicon;

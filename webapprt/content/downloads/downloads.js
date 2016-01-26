@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { interfaces: Ci, utils: Cu, classes: Cc } = Components;
+var { interfaces: Ci, utils: Cu, classes: Cc } = Components;
 
 const nsIDM = Ci.nsIDownloadManager;
 
@@ -22,9 +22,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "DownloadUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
   "resource://gre/modules/PluralForm.jsm");
 
-let gStr = {};
+var gStr = {};
 
-let DownloadItem = function(aID, aDownload) {
+var DownloadItem = function(aID, aDownload) {
   this.id = aID;
   this._download = aDownload;
 
@@ -570,13 +570,13 @@ DownloadItem.prototype = {
       case "cmd_copyLocation":
         let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].
                         getService(Ci.nsIClipboardHelper);
-        clipboard.copyString(this.uri, document);
+        clipboard.copyString(this.uri);
         break;
     }
   },
 };
 
-let gDownloadList = {
+var gDownloadList = {
   downloadItemsMap: new Map(),
   idToDownloadItemMap: new Map(),
   _autoIncrementID: 0,

@@ -3,13 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-let EXPORTED_SYMBOLS = ["Addon", "STATE_ENABLED", "STATE_DISABLED"];
+var EXPORTED_SYMBOLS = ["Addon", "STATE_ENABLED", "STATE_DISABLED"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/addons/AddonRepository.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-sync/addonutils.js");
 Cu.import("resource://services-sync/util.js");
@@ -20,15 +20,11 @@ const STATE_ENABLED = 1;
 const STATE_DISABLED = 2;
 
 function GetFileAsText(file) {
-  let channel = Services.io.newChannel2(file,
-                                        null,
-                                        null,
-                                        null,      // aLoadingNode
-                                        Services.scriptSecurityManager.getSystemPrincipal(),
-                                        null,      // aTriggeringPrincipal
-                                        Ci.nsILoadInfo.SEC_NORMAL,
-                                        Ci.nsIContentPolicy.TYPE_OTHER);
-  let inputStream = channel.open();
+  let channel = NetUtil.newChannel({
+    uri: file,
+    loadUsingSystemPrincipal: true
+  });
+  let inputStream = channel.open2();
   if (channel instanceof Ci.nsIHttpChannel &&
       channel.responseStatus != 200) {
     return "";

@@ -58,7 +58,7 @@ SourceSurfaceCairo::GetFormat() const
   return mFormat;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 SourceSurfaceCairo::GetDataSurface()
 {
   RefPtr<DataSourceSurface> dataSurf;
@@ -81,7 +81,7 @@ SourceSurfaceCairo::GetDataSurface()
 
   // We also need to make sure that the returned surface has
   // surface->GetType() == SurfaceType::DATA.
-  return new DataSourceSurfaceWrapper(dataSurf);
+  return MakeAndAddRef<DataSourceSurfaceWrapper>(dataSurf);
 }
 
 cairo_surface_t*
@@ -158,5 +158,5 @@ DataSourceSurfaceCairo::GetSurface() const
   return mImageSurface;
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

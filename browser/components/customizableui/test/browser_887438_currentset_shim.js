@@ -4,9 +4,9 @@
 
 "use strict";
 
-let navbar = document.getElementById("nav-bar");
-let navbarCT = navbar.customizationTarget;
-let overflowPanelList = document.getElementById("widget-overflow-list");
+var navbar = document.getElementById("nav-bar");
+var navbarCT = navbar.customizationTarget;
+var overflowPanelList = document.getElementById("widget-overflow-list");
 
 // Reading currentset
 add_task(function() {
@@ -70,6 +70,6 @@ add_task(function() {
   is(currentSet, navbar.currentSet, "Should be able to return to original state.");
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   yield resetCustomization();
 });

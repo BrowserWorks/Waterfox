@@ -10,8 +10,10 @@ function test() {
   // Disable direct request whitelisting, installing should be blocked.
   Services.prefs.setBoolPref("xpinstall.whitelist.directRequest", false);
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
+  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
+    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
+  });
 }
 
 function allow_blocked(installInfo) {
@@ -22,7 +24,7 @@ function allow_blocked(installInfo) {
 function finish_test(count) {
   is(count, 0, "No add-ons should have been installed");
 
-  Services.perms.remove("example.org", "install");
+  Services.perms.remove(makeURI("http://example.org"), "install");
   Services.prefs.clearUserPref("xpinstall.whitelist.directRequest");
 
   gBrowser.removeCurrentTab();

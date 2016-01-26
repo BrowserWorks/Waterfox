@@ -25,7 +25,7 @@ using namespace mozilla::net;
 #include "nsFtpProtocolHandler.h"
 #include "nsFTPChannel.h"
 #include "nsIStandardURL.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsIObserverService.h"
@@ -42,12 +42,12 @@ using namespace mozilla::net;
 //    set NSPR_LOG_MODULES=nsFtp:5
 //    set NSPR_LOG_FILE=nspr.log
 //
-// this enables PR_LOG_DEBUG level information and places all output in
+// this enables LogLevel::Debug level information and places all output in
 // the file nspr.log
 //
-PRLogModuleInfo* gFTPLog = nullptr;
+LazyLogModule gFTPLog("nsFtp");
 #undef LOG
-#define LOG(args) PR_LOG(gFTPLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gFTPLog, mozilla::LogLevel::Debug, args)
 
 //-----------------------------------------------------------------------------
 
@@ -67,9 +67,6 @@ nsFtpProtocolHandler::nsFtpProtocolHandler()
     , mControlQoSBits(0x00)
     , mDataQoSBits(0x00)
 {
-    if (!gFTPLog)
-        gFTPLog = PR_NewLogModule("nsFtp");
-
     LOG(("FTP:creating handler @%x\n", this));
 
     gFtpHandler = this;
@@ -220,7 +217,7 @@ nsFtpProtocolHandler::NewProxiedChannel2(nsIURI* uri, nsIProxyInfo* proxyInfo,
                                          nsIChannel* *result)
 {
     NS_ENSURE_ARG_POINTER(uri);
-    nsRefPtr<nsBaseChannel> channel;
+    RefPtr<nsBaseChannel> channel;
     if (IsNeckoChild())
         channel = new FTPChannelChild(uri);
     else

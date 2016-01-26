@@ -33,10 +33,11 @@
 #include "plbase64.h"
 #include "plstr.h"
 #include "prprf.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prmem.h"
 #include "prnetdb.h"
 #include "mozilla/Likely.h"
+#include "mozilla/Snprintf.h"
 
 //-----------------------------------------------------------------------------
 
@@ -276,11 +277,12 @@ nsHttpNegotiateAuth::GenerateCredentials(nsIHttpAuthenticableChannel *authChanne
     LOG(("  Sending a token of length %d\n", outTokenLen));
 
     // allocate a buffer sizeof("Negotiate" + " " + b64output_token + "\0")
-    *creds = (char *) moz_xmalloc(kNegotiateLen + 1 + strlen(encoded_token) + 1);
+    const int bufsize = kNegotiateLen + 1 + strlen(encoded_token) + 1;
+    *creds = (char *) moz_xmalloc(bufsize);
     if (MOZ_UNLIKELY(!*creds))
         rv = NS_ERROR_OUT_OF_MEMORY;
     else
-        sprintf(*creds, "%s %s", kNegotiate, encoded_token);
+        snprintf(*creds, bufsize, "%s %s", kNegotiate, encoded_token);
 
     PR_Free(encoded_token);
     return rv;
@@ -314,7 +316,7 @@ nsHttpNegotiateAuth::TestNonFqdn(nsIURI *uri)
         return false;
 
     // return true if host does not contain a dot and is not an ip address
-    return !host.IsEmpty() && host.FindChar('.') == kNotFound &&
+    return !host.IsEmpty() && !host.Contains('.') &&
            PR_StringToNetAddr(host.BeginReading(), &addr) != PR_SUCCESS;
 }
 

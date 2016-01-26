@@ -30,7 +30,7 @@ SpeakerManagerService::GetOrCreateSpeakerManagerService()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return SpeakerManagerServiceChild::GetOrCreateSpeakerManagerService();
   }
 
@@ -40,7 +40,7 @@ SpeakerManagerService::GetOrCreateSpeakerManagerService()
   }
 
   // Create new instance, register, return
-  nsRefPtr<SpeakerManagerService> service = new SpeakerManagerService();
+  RefPtr<SpeakerManagerService> service = new SpeakerManagerService();
 
   gSpeakerManagerService = service;
 
@@ -52,7 +52,7 @@ SpeakerManagerService::GetSpeakerManagerService()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return SpeakerManagerServiceChild::GetSpeakerManagerService();
   }
 
@@ -62,7 +62,7 @@ SpeakerManagerService::GetSpeakerManagerService()
 void
 SpeakerManagerService::Shutdown()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return SpeakerManagerServiceChild::Shutdown();
   }
 
@@ -133,7 +133,7 @@ SpeakerManagerService::Notify()
   nsTArray<ContentParent*> children;
   ContentParent::GetAll(children);
   for (uint32_t i = 0; i < children.Length(); i++) {
-    unused << children[i]->SendSpeakerManagerNotify();
+    Unused << children[i]->SendSpeakerManagerNotify();
   }
 
   for (uint32_t i = 0; i < mRegisteredSpeakerManagers.Length(); i++) {
@@ -179,6 +179,22 @@ SpeakerManagerService::Observe(nsISupports* aSubject,
     } else {
       NS_WARNING("ipc:content-shutdown message without childID property");
     }
+  } else if (!strcmp(aTopic, "xpcom-will-shutdown")) {
+    // Note that we need to do this before xpcom-shutdown, since the
+    // AudioChannelService cannot be used past that point.
+    RefPtr<AudioChannelService> audioChannelService =
+      AudioChannelService::GetOrCreate();
+    if (audioChannelService) {
+      audioChannelService->UnregisterSpeakerManager(this);
+    }
+
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    if (obs) {
+      obs->RemoveObserver(this, "ipc:content-shutdown");
+      obs->RemoveObserver(this, "xpcom-will-shutdown");
+    }
+
+    Shutdown();
   }
   return NS_OK;
 }
@@ -188,14 +204,15 @@ SpeakerManagerService::SpeakerManagerService()
     mVisible(false)
 {
   MOZ_COUNT_CTOR(SpeakerManagerService);
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     if (obs) {
       obs->AddObserver(this, "ipc:content-shutdown", false);
+      obs->AddObserver(this, "xpcom-will-shutdown", false);
     }
   }
-  AudioChannelService* audioChannelService =
-    AudioChannelService::GetOrCreateAudioChannelService();
+  RefPtr<AudioChannelService> audioChannelService =
+    AudioChannelService::GetOrCreate();
   if (audioChannelService) {
     audioChannelService->RegisterSpeakerManager(this);
   }
@@ -204,8 +221,4 @@ SpeakerManagerService::SpeakerManagerService()
 SpeakerManagerService::~SpeakerManagerService()
 {
   MOZ_COUNT_DTOR(SpeakerManagerService);
-  AudioChannelService* audioChannelService =
-    AudioChannelService::GetOrCreateAudioChannelService();
-  if (audioChannelService)
-    audioChannelService->UnregisterSpeakerManager(this);
 }

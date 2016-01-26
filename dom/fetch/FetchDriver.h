@@ -8,11 +8,11 @@
 #define mozilla_dom_FetchDriver_h
 
 #include "nsAutoPtr.h"
-#include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIStreamListener.h"
-#include "nsRefPtr.h"
+#include "nsIThreadRetargetableStreamListener.h"
+#include "mozilla/RefPtr.h"
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/net/ReferrerPolicy.h"
@@ -31,20 +31,33 @@ class InternalResponse;
 class FetchDriverObserver
 {
 public:
+  FetchDriverObserver() : mGotResponseAvailable(false)
+  { }
+
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FetchDriverObserver);
-  virtual void OnResponseAvailable(InternalResponse* aResponse) = 0;
+  void OnResponseAvailable(InternalResponse* aResponse)
+  {
+    MOZ_ASSERT(!mGotResponseAvailable);
+    mGotResponseAvailable = true;
+    OnResponseAvailableInternal(aResponse);
+  }
   virtual void OnResponseEnd()
   { };
 
 protected:
   virtual ~FetchDriverObserver()
   { };
+
+  virtual void OnResponseAvailableInternal(InternalResponse* aResponse) = 0;
+
+private:
+  bool mGotResponseAvailable;
 };
 
 class FetchDriver final : public nsIStreamListener,
                           public nsIChannelEventSink,
                           public nsIInterfaceRequestor,
-                          public nsIAsyncVerifyRedirectCallback
+                          public nsIThreadRetargetableStreamListener
 {
 public:
   NS_DECL_ISUPPORTS
@@ -52,7 +65,7 @@ public:
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSICHANNELEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
-  NS_DECL_NSIASYNCVERIFYREDIRECTCALLBACK
+  NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   explicit FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
                        nsILoadGroup* aLoadGroup);
@@ -64,38 +77,32 @@ public:
 private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
-  nsRefPtr<InternalRequest> mRequest;
-  nsRefPtr<InternalResponse> mResponse;
+  RefPtr<InternalRequest> mRequest;
+  RefPtr<InternalResponse> mResponse;
   nsCOMPtr<nsIOutputStream> mPipeOutputStream;
-  nsRefPtr<FetchDriverObserver> mObserver;
-  nsCOMPtr<nsIInterfaceRequestor> mNotificationCallbacks;
-  nsCOMPtr<nsIAsyncVerifyRedirectCallback> mRedirectCallback;
-  nsCOMPtr<nsIChannel> mOldRedirectChannel;
-  nsCOMPtr<nsIChannel> mNewRedirectChannel;
+  RefPtr<FetchDriverObserver> mObserver;
   nsCOMPtr<nsIDocument> mDocument;
-  uint32_t mFetchRecursionCount;
 
   DebugOnly<bool> mResponseAvailableCalled;
+  DebugOnly<bool> mFetchCalled;
 
   FetchDriver() = delete;
   FetchDriver(const FetchDriver&) = delete;
   FetchDriver& operator=(const FetchDriver&) = delete;
   ~FetchDriver();
 
-  nsresult Fetch(bool aCORSFlag);
-  nsresult ContinueFetch(bool aCORSFlag);
-  nsresult BasicFetch();
-  nsresult HttpFetch(bool aCORSFlag = false, bool aCORSPreflightFlag = false, bool aAuthenticationFlag = false);
-  nsresult ContinueHttpFetchAfterNetworkFetch();
+  nsresult ContinueFetch();
+  nsresult HttpFetch();
   // Returns the filtered response sent to the observer.
+  // Callers who don't have access to a channel can pass null for aFinalURI.
   already_AddRefed<InternalResponse>
-  BeginAndGetFilteredResponse(InternalResponse* aResponse);
+  BeginAndGetFilteredResponse(InternalResponse* aResponse, nsIURI* aFinalURI,
+                              bool aFoundOpaqueRedirect);
   // Utility since not all cases need to do any post processing of the filtered
   // response.
-  void BeginResponse(InternalResponse* aResponse);
   nsresult FailWithNetworkError();
-  nsresult SucceedWithResponse();
-  nsresult DoesNotRequirePreflight(nsIChannel* aChannel);
+
+  void SetRequestHeaders(nsIHttpChannel* aChannel) const;
 };
 
 } // namespace dom

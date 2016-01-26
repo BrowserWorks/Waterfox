@@ -176,7 +176,7 @@ ConnectionData::OnTransportStatus(nsITransport *aTransport, nsresult aStatus,
 
     GetErrorString(aStatus, mStatus);
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<ConnectionData> >
+        NS_NewRunnableMethodWithArg<RefPtr<ConnectionData> >
         (mDashboard, &Dashboard::GetConnectionStatus, this);
     mThread->Dispatch(event, NS_DISPATCH_NORMAL);
 
@@ -198,7 +198,7 @@ ConnectionData::Notify(nsITimer *aTimer)
 
     mStatus.AssignLiteral(MOZ_UTF16("NS_ERROR_NET_TIMEOUT"));
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<ConnectionData> >
+        NS_NewRunnableMethodWithArg<RefPtr<ConnectionData> >
         (mDashboard, &Dashboard::GetConnectionStatus, this);
     mThread->Dispatch(event, NS_DISPATCH_NORMAL);
 
@@ -245,7 +245,7 @@ public:
     }
 
     nsCOMPtr<nsIDNSRecord> mRecord;
-    nsRefPtr<LookupHelper> mHelper;
+    RefPtr<LookupHelper> mHelper;
 };
 
 NS_IMPL_ISUPPORTS0(LookupArgument)
@@ -286,9 +286,9 @@ LookupHelper::OnLookupComplete(nsICancelable *aRequest,
     mCancel = nullptr;
     mStatus = aStatus;
 
-    nsRefPtr<LookupArgument> arg = new LookupArgument(aRecord, this);
+    RefPtr<LookupArgument> arg = new LookupArgument(aRecord, this);
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<LookupArgument> >(
+        NS_NewRunnableMethodWithArg<RefPtr<LookupArgument> >(
         this, &LookupHelper::ConstructAnswer, arg);
     mThread->Dispatch(event, NS_DISPATCH_NORMAL);
 
@@ -298,7 +298,6 @@ LookupHelper::OnLookupComplete(nsICancelable *aRequest,
 nsresult
 LookupHelper::ConstructAnswer(LookupArgument *aArgument)
 {
-
     nsIDNSRecord *aRecord = aArgument->mRecord;
     AutoSafeJSContext cx;
 
@@ -312,10 +311,15 @@ LookupHelper::ConstructAnswer(LookupArgument *aArgument)
         bool hasMore;
         aRecord->HasMore(&hasMore);
         while (hasMore) {
-           nsCString nextAddress;
-           aRecord->GetNextAddrAsString(nextAddress);
-           CopyASCIItoUTF16(nextAddress, *addresses.AppendElement());
-           aRecord->HasMore(&hasMore);
+            nsString* nextAddress = addresses.AppendElement(fallible);
+            if (!nextAddress) {
+                return NS_ERROR_OUT_OF_MEMORY;
+            }
+
+            nsCString nextAddressASCII;
+            aRecord->GetNextAddrAsString(nextAddressASCII);
+            CopyASCIItoUTF16(nextAddressASCII, *nextAddress);
+            aRecord->HasMore(&hasMore);
         }
     } else {
         dict.mAnswer = false;
@@ -346,12 +350,12 @@ Dashboard::~Dashboard()
 NS_IMETHODIMP
 Dashboard::RequestSockets(NetDashboardCallback *aCallback)
 {
-    nsRefPtr<SocketData> socketData = new SocketData();
+    RefPtr<SocketData> socketData = new SocketData();
     socketData->mCallback =
         new nsMainThreadPtrHolder<NetDashboardCallback>(aCallback, true);
     socketData->mThread = NS_GetCurrentThread();
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<SocketData> >
+        NS_NewRunnableMethodWithArg<RefPtr<SocketData> >
         (this, &Dashboard::GetSocketsDispatch, socketData);
     gSocketTransportService->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -360,14 +364,14 @@ Dashboard::RequestSockets(NetDashboardCallback *aCallback)
 nsresult
 Dashboard::GetSocketsDispatch(SocketData *aSocketData)
 {
-    nsRefPtr<SocketData> socketData = aSocketData;
+    RefPtr<SocketData> socketData = aSocketData;
     if (gSocketTransportService) {
         gSocketTransportService->GetSocketConnections(&socketData->mData);
         socketData->mTotalSent = gSocketTransportService->GetSentBytes();
         socketData->mTotalRecv = gSocketTransportService->GetReceivedBytes();
     }
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<SocketData> >
+        NS_NewRunnableMethodWithArg<RefPtr<SocketData> >
         (this, &Dashboard::GetSockets, socketData);
     socketData->mThread->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -376,7 +380,7 @@ Dashboard::GetSocketsDispatch(SocketData *aSocketData)
 nsresult
 Dashboard::GetSockets(SocketData *aSocketData)
 {
-    nsRefPtr<SocketData> socketData = aSocketData;
+    RefPtr<SocketData> socketData = aSocketData;
     AutoSafeJSContext cx;
 
     mozilla::dom::SocketsDict dict;
@@ -387,13 +391,13 @@ Dashboard::GetSockets(SocketData *aSocketData)
     Sequence<mozilla::dom::SocketElement> &sockets = dict.mSockets.Value();
 
     uint32_t length = socketData->mData.Length();
-    if (!sockets.SetCapacity(length)) {
+    if (!sockets.SetCapacity(length, fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < socketData->mData.Length(); i++) {
-        mozilla::dom::SocketElement &mSocket = *sockets.AppendElement();
+        dom::SocketElement &mSocket = *sockets.AppendElement(fallible);
         CopyASCIItoUTF16(socketData->mData[i].host, mSocket.mHost);
         mSocket.mPort = socketData->mData[i].port;
         mSocket.mActive = socketData->mData[i].active;
@@ -417,13 +421,13 @@ Dashboard::GetSockets(SocketData *aSocketData)
 NS_IMETHODIMP
 Dashboard::RequestHttpConnections(NetDashboardCallback *aCallback)
 {
-    nsRefPtr<HttpData> httpData = new HttpData();
+    RefPtr<HttpData> httpData = new HttpData();
     httpData->mCallback =
         new nsMainThreadPtrHolder<NetDashboardCallback>(aCallback, true);
     httpData->mThread = NS_GetCurrentThread();
 
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<HttpData> >
+        NS_NewRunnableMethodWithArg<RefPtr<HttpData> >
         (this, &Dashboard::GetHttpDispatch, httpData);
     gSocketTransportService->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -432,10 +436,10 @@ Dashboard::RequestHttpConnections(NetDashboardCallback *aCallback)
 nsresult
 Dashboard::GetHttpDispatch(HttpData *aHttpData)
 {
-    nsRefPtr<HttpData> httpData = aHttpData;
+    RefPtr<HttpData> httpData = aHttpData;
     HttpInfo::GetHttpConnectionData(&httpData->mData);
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<HttpData> >
+        NS_NewRunnableMethodWithArg<RefPtr<HttpData> >
         (this, &Dashboard::GetHttpConnections, httpData);
     httpData->mThread->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -445,7 +449,7 @@ Dashboard::GetHttpDispatch(HttpData *aHttpData)
 nsresult
 Dashboard::GetHttpConnections(HttpData *aHttpData)
 {
-    nsRefPtr<HttpData> httpData = aHttpData;
+    RefPtr<HttpData> httpData = aHttpData;
     AutoSafeJSContext cx;
 
     mozilla::dom::HttpConnDict dict;
@@ -457,13 +461,13 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
     Sequence<HttpConnectionElement> &connections = dict.mConnections.Value();
 
     uint32_t length = httpData->mData.Length();
-    if (!connections.SetCapacity(length)) {
+    if (!connections.SetCapacity(length, fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < httpData->mData.Length(); i++) {
-        HttpConnectionElement &connection = *connections.AppendElement();
+        HttpConnectionElement &connection = *connections.AppendElement(fallible);
 
         CopyASCIItoUTF16(httpData->mData[i].host, connection.mHost);
         connection.mPort = httpData->mData[i].port;
@@ -478,15 +482,16 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
         Sequence<HttpConnInfo> &idle = connection.mIdle.Value();
         Sequence<HalfOpenInfoDict> &halfOpens = connection.mHalfOpens.Value();
 
-        if (!active.SetCapacity(httpData->mData[i].active.Length()) ||
-            !idle.SetCapacity(httpData->mData[i].idle.Length()) ||
-            !halfOpens.SetCapacity(httpData->mData[i].halfOpens.Length())) {
+        if (!active.SetCapacity(httpData->mData[i].active.Length(), fallible) ||
+            !idle.SetCapacity(httpData->mData[i].idle.Length(), fallible) ||
+            !halfOpens.SetCapacity(httpData->mData[i].halfOpens.Length(),
+                                   fallible)) {
                 JS_ReportOutOfMemory(cx);
                 return NS_ERROR_OUT_OF_MEMORY;
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].active.Length(); j++) {
-            HttpConnInfo &info = *active.AppendElement();
+            HttpConnInfo &info = *active.AppendElement(fallible);
             info.mRtt = httpData->mData[i].active[j].rtt;
             info.mTtl = httpData->mData[i].active[j].ttl;
             info.mProtocolVersion =
@@ -494,14 +499,14 @@ Dashboard::GetHttpConnections(HttpData *aHttpData)
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].idle.Length(); j++) {
-            HttpConnInfo &info = *idle.AppendElement();
+            HttpConnInfo &info = *idle.AppendElement(fallible);
             info.mRtt = httpData->mData[i].idle[j].rtt;
             info.mTtl = httpData->mData[i].idle[j].ttl;
             info.mProtocolVersion = httpData->mData[i].idle[j].protocolVersion;
         }
 
         for (uint32_t j = 0; j < httpData->mData[i].halfOpens.Length(); j++) {
-            HalfOpenInfoDict &info = *halfOpens.AppendElement();
+            HalfOpenInfoDict &info = *halfOpens.AppendElement(fallible);
             info.mSpeculative = httpData->mData[i].halfOpens[j].speculative;
         }
     }
@@ -594,13 +599,13 @@ Dashboard::NewMsgReceived(const nsACString& aHost, uint32_t aSerial, uint32_t aL
 NS_IMETHODIMP
 Dashboard::RequestWebsocketConnections(NetDashboardCallback *aCallback)
 {
-    nsRefPtr<WebSocketRequest> wsRequest = new WebSocketRequest();
+    RefPtr<WebSocketRequest> wsRequest = new WebSocketRequest();
     wsRequest->mCallback =
         new nsMainThreadPtrHolder<NetDashboardCallback>(aCallback, true);
     wsRequest->mThread = NS_GetCurrentThread();
 
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<WebSocketRequest> >
+        NS_NewRunnableMethodWithArg<RefPtr<WebSocketRequest> >
         (this, &Dashboard::GetWebSocketConnections, wsRequest);
     wsRequest->mThread->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -609,7 +614,7 @@ Dashboard::RequestWebsocketConnections(NetDashboardCallback *aCallback)
 nsresult
 Dashboard::GetWebSocketConnections(WebSocketRequest *aWsRequest)
 {
-    nsRefPtr<WebSocketRequest> wsRequest = aWsRequest;
+    RefPtr<WebSocketRequest> wsRequest = aWsRequest;
     AutoSafeJSContext cx;
 
     mozilla::dom::WebSocketDict dict;
@@ -619,13 +624,13 @@ Dashboard::GetWebSocketConnections(WebSocketRequest *aWsRequest)
 
     mozilla::MutexAutoLock lock(mWs.lock);
     uint32_t length = mWs.data.Length();
-    if (!websockets.SetCapacity(length)) {
+    if (!websockets.SetCapacity(length, fallible)) {
         JS_ReportOutOfMemory(cx);
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < mWs.data.Length(); i++) {
-        mozilla::dom::WebSocketElement &websocket = *websockets.AppendElement();
+        dom::WebSocketElement &websocket = *websockets.AppendElement(fallible);
         CopyASCIItoUTF16(mWs.data[i].mHost, websocket.mHostport);
         websocket.mMsgsent = mWs.data[i].mMsgSent;
         websocket.mMsgreceived = mWs.data[i].mMsgReceived;
@@ -646,7 +651,7 @@ Dashboard::GetWebSocketConnections(WebSocketRequest *aWsRequest)
 NS_IMETHODIMP
 Dashboard::RequestDNSInfo(NetDashboardCallback *aCallback)
 {
-    nsRefPtr<DnsData> dnsData = new DnsData();
+    RefPtr<DnsData> dnsData = new DnsData();
     dnsData->mCallback =
         new nsMainThreadPtrHolder<NetDashboardCallback>(aCallback, true);
 
@@ -662,7 +667,7 @@ Dashboard::RequestDNSInfo(NetDashboardCallback *aCallback)
     }
 
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<DnsData> >
+        NS_NewRunnableMethodWithArg<RefPtr<DnsData> >
         (this, &Dashboard::GetDnsInfoDispatch, dnsData);
     gSocketTransportService->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -671,12 +676,12 @@ Dashboard::RequestDNSInfo(NetDashboardCallback *aCallback)
 nsresult
 Dashboard::GetDnsInfoDispatch(DnsData *aDnsData)
 {
-    nsRefPtr<DnsData> dnsData = aDnsData;
+    RefPtr<DnsData> dnsData = aDnsData;
     if (mDnsService) {
         mDnsService->GetDNSCacheEntries(&dnsData->mData);
     }
     nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethodWithArg<nsRefPtr<DnsData> >
+        NS_NewRunnableMethodWithArg<RefPtr<DnsData> >
         (this, &Dashboard::GetDNSCacheEntries, dnsData);
     dnsData->mThread->Dispatch(event, NS_DISPATCH_NORMAL);
     return NS_OK;
@@ -692,17 +697,17 @@ Dashboard::GetDNSCacheEntries(DnsData *dnsData)
     Sequence<mozilla::dom::DnsCacheEntry> &entries = dict.mEntries.Value();
 
     uint32_t length = dnsData->mData.Length();
-    if (!entries.SetCapacity(length)) {
+    if (!entries.SetCapacity(length, fallible)) {
         JS_ReportOutOfMemory(cx);
         return NS_ERROR_OUT_OF_MEMORY;
     }
 
     for (uint32_t i = 0; i < dnsData->mData.Length(); i++) {
-        mozilla::dom::DnsCacheEntry &entry = *entries.AppendElement();
+        dom::DnsCacheEntry &entry = *entries.AppendElement(fallible);
         entry.mHostaddr.Construct();
 
         Sequence<nsString> &addrs = entry.mHostaddr.Value();
-        if (!addrs.SetCapacity(dnsData->mData[i].hostaddr.Length())) {
+        if (!addrs.SetCapacity(dnsData->mData[i].hostaddr.Length(), fallible)) {
             JS_ReportOutOfMemory(cx);
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -712,7 +717,7 @@ Dashboard::GetDNSCacheEntries(DnsData *dnsData)
 
         for (uint32_t j = 0; j < dnsData->mData[i].hostaddr.Length(); j++) {
             CopyASCIItoUTF16(dnsData->mData[i].hostaddr[j],
-                *addrs.AppendElement());
+                             *addrs.AppendElement(fallible));
         }
 
         if (dnsData->mData[i].family == PR_AF_INET6) {
@@ -744,7 +749,7 @@ Dashboard::RequestDNSLookup(const nsACString &aHost,
         }
     }
 
-    nsRefPtr<LookupHelper> helper = new LookupHelper();
+    RefPtr<LookupHelper> helper = new LookupHelper();
     helper->mCallback =
         new nsMainThreadPtrHolder<NetDashboardCallback>(aCallback, true);
     helper->mThread = NS_GetCurrentThread();
@@ -780,10 +785,6 @@ HttpConnInfo::SetHTTP2ProtocolVersion(uint8_t pv)
 {
     if (pv == SPDY_VERSION_31) {
         protocolVersion.AssignLiteral(MOZ_UTF16("spdy/3.1"));
-    } else if (pv == HTTP_VERSION_2_DRAFT_15) {
-        protocolVersion.AssignLiteral(MOZ_UTF16("h2-14/15"));
-    } else if (pv == HTTP_VERSION_2_DRAFT_LATEST) {
-        protocolVersion.Assign(NS_LITERAL_STRING(HTTP2_DRAFT_LATEST_TOKEN));
     } else {
         MOZ_ASSERT (pv == HTTP_VERSION_2);
         protocolVersion.Assign(MOZ_UTF16("h2"));
@@ -796,7 +797,7 @@ Dashboard::RequestConnection(const nsACString& aHost, uint32_t aPort,
                              NetDashboardCallback *aCallback)
 {
     nsresult rv;
-    nsRefPtr<ConnectionData> connectionData = new ConnectionData(this);
+    RefPtr<ConnectionData> connectionData = new ConnectionData(this);
     connectionData->mHost = aHost;
     connectionData->mPort = aPort;
     connectionData->mProtocol = aProtocol;
@@ -810,7 +811,7 @@ Dashboard::RequestConnection(const nsACString& aHost, uint32_t aPort,
     if (NS_FAILED(rv)) {
         mozilla::net::GetErrorString(rv, connectionData->mStatus);
         nsCOMPtr<nsIRunnable> event =
-            NS_NewRunnableMethodWithArg<nsRefPtr<ConnectionData> >
+            NS_NewRunnableMethodWithArg<RefPtr<ConnectionData> >
             (this, &Dashboard::GetConnectionStatus, connectionData);
         connectionData->mThread->Dispatch(event, NS_DISPATCH_NORMAL);
         return rv;
@@ -822,7 +823,7 @@ Dashboard::RequestConnection(const nsACString& aHost, uint32_t aPort,
 nsresult
 Dashboard::GetConnectionStatus(ConnectionData *aConnectionData)
 {
-    nsRefPtr<ConnectionData> connectionData = aConnectionData;
+    RefPtr<ConnectionData> connectionData = aConnectionData;
     AutoSafeJSContext cx;
 
     mozilla::dom::ConnStatusDict dict;
@@ -840,7 +841,7 @@ Dashboard::GetConnectionStatus(ConnectionData *aConnectionData)
 nsresult
 Dashboard::TestNewConnection(ConnectionData *aConnectionData)
 {
-    nsRefPtr<ConnectionData> connectionData = aConnectionData;
+    RefPtr<ConnectionData> connectionData = aConnectionData;
 
     nsresult rv;
     if (!connectionData->mHost.Length() ||
@@ -917,4 +918,5 @@ GetErrorString(nsresult rv, nsAString& errorString)
     CopyUTF8toUTF16(errorCString, errorString);
 }
 
-} } // namespace mozilla::net
+} // namespace net
+} // namespace mozilla

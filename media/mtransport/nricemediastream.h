@@ -80,9 +80,17 @@ struct NrIceCandidate {
     ICE_RELAYED
   };
 
+  enum TcpType {
+    ICE_NONE,
+    ICE_ACTIVE,
+    ICE_PASSIVE,
+    ICE_SO
+  };
+
   NrIceAddr cand_addr;
   NrIceAddr local_addr;
   Type type;
+  TcpType tcp_type;
   std::string codeword;
 };
 
@@ -136,9 +144,7 @@ class NrIceMediaStream {
   // queue, in priority order. |out_pairs| is cleared before being filled.
   nsresult GetCandidatePairs(std::vector<NrIceCandidatePair>* out_pairs) const;
 
-  // TODO(bug 1096795): This needs to take a component number, so we can get
-  // default candidates for rtcp.
-  nsresult GetDefaultCandidate(NrIceCandidate* candidate) const;
+  nsresult GetDefaultCandidate(int component, NrIceCandidate* candidate) const;
 
   // Parse remote attributes
   nsresult ParseAttributes(std::vector<std::string>& candidates);

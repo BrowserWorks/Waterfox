@@ -3,14 +3,16 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-let bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
+var bsp = Cu.import("resource://gre/modules/CrashManager.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
+Cu.import("resource://gre/modules/TelemetryEnvironment.jsm", this);
 
 Cu.import("resource://testing-common/CrashManagerTest.jsm", this);
+Cu.import("resource://testing-common/TelemetryArchiveTesting.jsm", this);
 
 const DUMMY_DATE = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
 DUMMY_DATE.setMilliseconds(0);
@@ -21,6 +23,7 @@ DUMMY_DATE_2.setMilliseconds(0);
 function run_test() {
   do_get_profile();
   configureLogging();
+  TelemetryArchiveTesting.setup();
   run_next_test();
 }
 
@@ -93,7 +96,7 @@ add_task(function* test_submitted_dumps() {
   entries = yield m.submittedDumps();
   Assert.equal(entries.length, COUNT + 1, "hr- in filename detected.");
 
-  let gotIDs = new Set([e.id for (e of entries)]);
+  let gotIDs = new Set(entries.map(e => e.id));
   Assert.ok(gotIDs.has(hrID));
 });
 
@@ -207,8 +210,16 @@ add_task(function* test_schedule_maintenance() {
 });
 
 add_task(function* test_main_crash_event_file() {
+  let ac = new TelemetryArchiveTesting.Checker();
+  yield ac.promiseInit();
+  let theEnvironment = TelemetryEnvironment.currentEnvironment;
+
+  // To test proper escaping, add data to the environment with an embedded
+  // double-quote
+  theEnvironment.testValue = "MyValue\"";
+
   let m = yield getManager();
-  yield m.createEventsFile("1", "crash.main.2", DUMMY_DATE, "id1\nk1=v1\nk2=v2");
+  yield m.createEventsFile("1", "crash.main.2", DUMMY_DATE, "id1\nk1=v1\nk2=v2\nTelemetryEnvironment=" + JSON.stringify(theEnvironment));
   let count = yield m.aggregateEventsFiles();
   Assert.equal(count, 1);
 
@@ -216,8 +227,45 @@ add_task(function* test_main_crash_event_file() {
   Assert.equal(crashes.length, 1);
   Assert.equal(crashes[0].id, "id1");
   Assert.equal(crashes[0].type, "main-crash");
-  Assert.deepEqual(crashes[0].metadata, { k1: "v1", k2: "v2"});
+  Assert.equal(crashes[0].metadata.k1, "v1");
+  Assert.equal(crashes[0].metadata.k2, "v2");
+  Assert.ok(crashes[0].metadata.TelemetryEnvironment);
+  Assert.equal(Object.getOwnPropertyNames(crashes[0].metadata).length, 3);
   Assert.deepEqual(crashes[0].crashDate, DUMMY_DATE);
+
+  let found = yield ac.promiseFindPing("crash", [
+    [["payload", "hasCrashEnvironment"], true],
+    [["payload", "metadata", "k1"], "v1"],
+  ]);
+  Assert.ok(found, "Telemetry ping submitted for found crash");
+  Assert.deepEqual(found.environment, theEnvironment, "The saved environment should be present");
+
+  count = yield m.aggregateEventsFiles();
+  Assert.equal(count, 0);
+});
+
+add_task(function* test_main_crash_event_file_noenv() {
+  let ac = new TelemetryArchiveTesting.Checker();
+  yield ac.promiseInit();
+
+  let m = yield getManager();
+  yield m.createEventsFile("1", "crash.main.2", DUMMY_DATE, "id1\nk1=v3\nk2=v2");
+  let count = yield m.aggregateEventsFiles();
+  Assert.equal(count, 1);
+
+  let crashes = yield m.getCrashes();
+  Assert.equal(crashes.length, 1);
+  Assert.equal(crashes[0].id, "id1");
+  Assert.equal(crashes[0].type, "main-crash");
+  Assert.deepEqual(crashes[0].metadata, { k1: "v3", k2: "v2"});
+  Assert.deepEqual(crashes[0].crashDate, DUMMY_DATE);
+
+  let found = yield ac.promiseFindPing("crash", [
+    [["payload", "hasCrashEnvironment"], false],
+    [["payload", "metadata", "k1"], "v3"],
+  ]);
+  Assert.ok(found, "Telemetry ping submitted for found crash");
+  Assert.ok(found.environment, "There is an environment");
 
   count = yield m.aggregateEventsFiles();
   Assert.equal(count, 0);

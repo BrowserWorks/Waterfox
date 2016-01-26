@@ -3,8 +3,9 @@
 
 "use strict";
 
-const URL = ROOT + "browser_scrollPositions_sample.html";
-const URL_FRAMESET = ROOT + "browser_scrollPositions_sample_frameset.html";
+const BASE = "http://example.com/browser/browser/components/sessionstore/test/"
+const URL = BASE + "browser_scrollPositions_sample.html";
+const URL_FRAMESET = BASE + "browser_scrollPositions_sample_frameset.html";
 
 // Randomized set of scroll positions we will use in this test.
 const SCROLL_X = Math.round(100 * (1 + Math.random()));
@@ -14,6 +15,8 @@ const SCROLL_STR = SCROLL_X + "," + SCROLL_Y;
 const SCROLL2_X = Math.round(300 * (1 + Math.random()));
 const SCROLL2_Y = Math.round(400 * (1 + Math.random()));
 const SCROLL2_STR = SCROLL2_X + "," + SCROLL2_Y;
+
+requestLongerTimeout(2);
 
 /**
  * This test ensures that we properly serialize and restore scroll positions
@@ -26,7 +29,7 @@ add_task(function test_scroll() {
 
   // Scroll down a little.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: SCROLL_X, y: SCROLL_Y});
-  checkScroll(tab, {scroll: SCROLL_STR}, "scroll is fine");
+  yield checkScroll(tab, {scroll: SCROLL_STR}, "scroll is fine");
 
   // Duplicate and check that the scroll position is restored.
   let tab2 = ss.duplicateTab(window, tab);
@@ -40,22 +43,22 @@ add_task(function test_scroll() {
   // Check that reloading retains the scroll positions.
   browser2.reload();
   yield promiseBrowserLoaded(browser2);
-  checkScroll(tab2, {scroll: SCROLL_STR}, "reloading retains scroll positions");
+  yield checkScroll(tab2, {scroll: SCROLL_STR}, "reloading retains scroll positions");
 
   // Check that a force-reload resets scroll positions.
   browser2.reloadWithFlags(Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE);
   yield promiseBrowserLoaded(browser2);
-  checkScroll(tab2, null, "force-reload resets scroll positions");
+  yield checkScroll(tab2, null, "force-reload resets scroll positions");
 
   // Scroll back to the top and check that the position has been reset. We
   // expect the scroll position to be "null" here because there is no data to
   // be stored if the frame is in its default scroll position.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: 0, y: 0});
-  checkScroll(tab, null, "no scroll stored");
+  yield checkScroll(tab, null, "no scroll stored");
 
   // Cleanup.
-  gBrowser.removeTab(tab);
-  gBrowser.removeTab(tab2);
+  yield promiseRemoveTab(tab);
+  yield promiseRemoveTab(tab2);
 });
 
 /**
@@ -69,11 +72,11 @@ add_task(function test_scroll_nested() {
 
   // Scroll the first child frame down a little.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: SCROLL_X, y: SCROLL_Y, frame: 0});
-  checkScroll(tab, {children: [{scroll: SCROLL_STR}]}, "scroll is fine");
+  yield checkScroll(tab, {children: [{scroll: SCROLL_STR}]}, "scroll is fine");
 
   // Scroll the second child frame down a little.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: SCROLL2_X, y: SCROLL2_Y, frame: 1});
-  checkScroll(tab, {children: [{scroll: SCROLL_STR}, {scroll: SCROLL2_STR}]}, "scroll is fine");
+  yield checkScroll(tab, {children: [{scroll: SCROLL_STR}, {scroll: SCROLL2_STR}]}, "scroll is fine");
 
   // Duplicate and check that the scroll position is restored.
   let tab2 = ss.duplicateTab(window, tab);
@@ -91,20 +94,67 @@ add_task(function test_scroll_nested() {
   // Check that resetting one frame's scroll position removes it from the
   // serialized value.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: 0, y: 0, frame: 0});
-  checkScroll(tab, {children: [null, {scroll: SCROLL2_STR}]}, "scroll is fine");
+  yield checkScroll(tab, {children: [null, {scroll: SCROLL2_STR}]}, "scroll is fine");
 
   // Check the resetting all frames' scroll positions nulls the stored value.
   yield sendMessage(browser, "ss-test:setScrollPosition", {x: 0, y: 0, frame: 1});
-  checkScroll(tab, null, "no scroll stored");
+  yield checkScroll(tab, null, "no scroll stored");
 
   // Cleanup.
-  gBrowser.removeTab(tab);
-  gBrowser.removeTab(tab2);
+  yield promiseRemoveTab(tab);
+  yield promiseRemoveTab(tab2);
 });
 
-function checkScroll(tab, expected, msg) {
+/**
+ * Test that scroll positions persist after restoring background tabs in
+ * a restored window (bug 1228518).
+ */
+add_task(function test_scroll_background_tabs() {
+  pushPrefs(["browser.sessionstore.restore_on_demand", true]);
+
+  let newWin = yield BrowserTestUtils.openNewBrowserWindow();
+  let tab = newWin.gBrowser.addTab(URL);
   let browser = tab.linkedBrowser;
-  TabState.flush(browser);
+  yield BrowserTestUtils.browserLoaded(browser);
+
+  // Scroll down a little.
+  yield sendMessage(browser, "ss-test:setScrollPosition", {x: SCROLL_X, y: SCROLL_Y});
+  yield checkScroll(tab, {scroll: SCROLL_STR}, "scroll is fine");
+
+  // Close the window
+  yield BrowserTestUtils.closeWindow(newWin);
+
+  // Now restore the window
+  newWin = ss.undoCloseWindow(0);
+
+  // Make sure to wait for the window to be restored.
+  yield BrowserTestUtils.waitForEvent(newWin, "SSWindowStateReady");
+
+  is(newWin.gBrowser.tabs.length, 2, "There should be two tabs");
+
+  // The second tab should be the one we loaded URL at still
+  tab = newWin.gBrowser.tabs[1];
+  yield promiseTabRestoring(tab);
+
+  ok(tab.hasAttribute("pending"), "Tab should be pending");
+  browser = tab.linkedBrowser;
+
+  // Ensure there are no pending queued messages in the child.
+  yield TabStateFlusher.flush(browser);
+
+  // Now check to see if the background tab remembers where it
+  // should be scrolled to.
+  newWin.gBrowser.selectedTab = tab;
+  yield promiseTabRestored(tab);
+
+  yield checkScroll(tab, {scroll: SCROLL_STR}, "scroll is still fine");
+
+  yield BrowserTestUtils.closeWindow(newWin);
+});
+
+function* checkScroll(tab, expected, msg) {
+  let browser = tab.linkedBrowser;
+  yield TabStateFlusher.flush(browser);
 
   let scroll = JSON.parse(ss.getTabState(tab)).scroll || null;
   is(JSON.stringify(scroll), JSON.stringify(expected), msg);

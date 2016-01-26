@@ -5,7 +5,7 @@
 Components.utils.import("resource:///modules/SitePermissions.jsm");
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
 
-const nsIQuotaManager = Components.interfaces.nsIQuotaManager;
+const nsIQuotaManagerService = Components.interfaces.nsIQuotaManagerService;
 
 var gPermURI;
 var gUsageRequest;
@@ -18,7 +18,7 @@ var permissionObserver = {
   {
     if (aTopic == "perm-changed") {
       var permission = aSubject.QueryInterface(Components.interfaces.nsIPermission);
-      if (permission.host == gPermURI.host) {
+      if (permission.matchesURI(gPermURI, true)) {
         if (gPermissions.indexOf(permission.type) > -1)
           initRow(permission.type);
         else if (permission.type.startsWith("plugin"))
@@ -28,14 +28,13 @@ var permissionObserver = {
   }
 };
 
-function onLoadPermission()
+function onLoadPermission(uri)
 {
-  var uri = BrowserUtils.makeURIFromCPOW(gDocument.documentURIObject);
   var permTab = document.getElementById("permTab");
   if (SitePermissions.isSupportedURI(uri)) {
     gPermURI = uri;
     var hostText = document.getElementById("hostText");
-    hostText.value = gPermURI.host;
+    hostText.value = gPermURI.prePath;
 
     for (var i of gPermissions)
       initRow(i);
@@ -187,10 +186,15 @@ function initIndexedDBRow()
 
   row.appendChild(extras);
 
-  var quotaManager = Components.classes["@mozilla.org/dom/quota/manager;1"]
-                               .getService(nsIQuotaManager);
+  var quotaManagerService =
+    Components.classes["@mozilla.org/dom/quota-manager-service;1"]
+              .getService(nsIQuotaManagerService);
+  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                            .getService(Components.interfaces.nsIScriptSecurityManager)
+                            .createCodebasePrincipal(gPermURI, {});
   gUsageRequest =
-    quotaManager.getUsageForURI(gPermURI, onIndexedDBUsageCallback);
+    quotaManagerService.getUsageForPrincipal(principal,
+                                             onIndexedDBUsageCallback);
 
   var status = document.getElementById("indexedDBStatus");
   var button = document.getElementById("indexedDBClear");
@@ -202,21 +206,30 @@ function initIndexedDBRow()
 
 function onIndexedDBClear()
 {
-  Components.classes["@mozilla.org/dom/quota/manager;1"]
-            .getService(nsIQuotaManager)
-            .clearStoragesForURI(gPermURI);
+  let principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                            .getService(Components.interfaces.nsIScriptSecurityManager)
+                            .createCodebasePrincipal(gPermURI, {});
+
+  Components.classes["@mozilla.org/dom/quota-manager-service;1"]
+            .getService(nsIQuotaManagerService)
+            .clearStoragesForPrincipal(principal);
+
+  Components.classes["@mozilla.org/serviceworkers/manager;1"]
+            .getService(Components.interfaces.nsIServiceWorkerManager)
+            .removeAndPropagate(gPermURI.host);
 
   SitePermissions.remove(gPermURI, "indexedDB");
   initIndexedDBRow();
 }
 
-function onIndexedDBUsageCallback(uri, usage, fileUsage)
+function onIndexedDBUsageCallback(request)
 {
+  let uri = request.principal.URI;
   if (!uri.equals(gPermURI)) {
     throw new Error("Callback received for bad URI: " + uri);
   }
 
-  if (usage) {
+  if (request.usage) {
     if (!("DownloadUtils" in window)) {
       Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
     }
@@ -226,7 +239,7 @@ function onIndexedDBUsageCallback(uri, usage, fileUsage)
 
     status.value =
       gBundle.getFormattedString("indexedDBUsage",
-                                 DownloadUtils.convertByteUnits(usage));
+                                 DownloadUtils.convertByteUnits(request.usage));
     status.removeAttribute("hidden");
     button.removeAttribute("hidden");
   }
@@ -284,14 +297,13 @@ function initPluginsRow() {
     }
   }
 
-  let entries = [{name: item[1], permission: item[0]} for (item of permissionMap)];
+  let entries = Array.from(permissionMap, item => ({ name: item[1], permission: item[0] }));
+
   entries.sort(function(a, b) {
     return a.name < b.name ? -1 : (a.name == b.name ? 0 : 1);
   });
 
-  let permissionEntries = [
-    fillInPluginPermissionTemplate(p.name, p.permission) for (p of entries)
-  ];
+  let permissionEntries = entries.map(p => fillInPluginPermissionTemplate(p.name, p.permission));
 
   let permPluginsRow = document.getElementById("perm-plugins-row");
   clearPluginPermissionTemplate();

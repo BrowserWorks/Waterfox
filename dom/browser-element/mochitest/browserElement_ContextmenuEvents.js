@@ -2,10 +2,11 @@
 
 SimpleTest.waitForExplicitFinish();
 browserElementTestHelpers.setEnabledPref(true);
+browserElementTestHelpers.setClipboardPlainTextOnlyPref(false);
 browserElementTestHelpers.addPermission();
 
-let audioUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/audio.ogg';
-let videoUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/short-video.ogv';
+var audioUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/audio.ogg';
+var videoUrl = 'http://mochi.test:8888/tests/dom/browser-element/mochitest/short-video.ogv';
 
 function runTests() {
   createIframe(function onIframeLoaded() {
@@ -24,7 +25,12 @@ function checkEmptyContextMenu() {
 function checkInnerContextMenu() {
   sendContextMenuTo('#inner-link', function onContextMenu(detail) {
     is(detail.systemTargets.length, 1, 'Includes anchor data');
-    is(detail.contextmenu.items.length, 2, 'Inner clicks trigger correct menu');
+    is(detail.contextmenu.items.length, 3, 'Inner clicks trigger correct customized menu');
+    is(detail.contextmenu.items[0].label, 'foo', 'Customized menu has a "foo" menu item');
+    is(detail.contextmenu.items[1].label, 'bar', 'Customized menu has a "bar" menu item');
+    is(detail.contextmenu.items[2].id, 'copy-link', '#inner-link has a copy-link menu item');
+    is(detail.contextmenu.customized, true, 'Make sure contextmenu has customized items');
+
     var target = detail.systemTargets[0];
     is(target.nodeName, 'A', 'Reports correct nodeName');
     is(target.data.uri, 'foo.html', 'Reports correct uri');
@@ -47,9 +53,19 @@ function checkNestedContextMenu() {
     var innerMenu = detail.contextmenu.items.filter(function(x) {
       return x.type === 'menu';
     });
-    is(detail.systemTargets.length, 2, 'Includes anchor and img data');
+    is(detail.systemTargets.length, 2, 'Includes two systemTargets');
+    is(detail.systemTargets[0].nodeName, 'IMG', 'Includes "IMG" node');
+    is(detail.systemTargets[0].data.uri, 'example.png', 'Img data has the correct uri');
+    is(detail.systemTargets[1].nodeName, 'A', 'Includes "A" node');
+    is(detail.systemTargets[1].data.uri, 'bar.html', 'Anchor has the correct uri');
     ok(innerMenu.length > 0, 'Menu contains a nested menu');
 
+    is(detail.contextmenu.items.length, 4, 'We have correct # of menu items')
+    is(detail.contextmenu.customized, true, 'Make sure contextmenu has customized items');
+    is(detail.contextmenu.items[0].label, 'outer', 'Customized menu has an "outer" menu item');
+    is(detail.contextmenu.items[1].label, 'submenu', 'Customized menu has an "submenu" menu item');
+    is(detail.contextmenu.items[2].id, 'copy-link', 'Has a copy-link menu item');
+    is(detail.contextmenu.items[3].id, 'copy-image', 'Has a copy-image menu item');
     checkPreviousContextMenuHandler();
   });
 }
@@ -131,6 +147,9 @@ function checkImageContextMenu() {
     var target = detail.systemTargets[0];
     is(target.nodeName, 'IMG', 'Reports correct nodeName');
     is(target.data.uri, 'example.png', 'Reports correct uri');
+    is(detail.contextmenu.items.length, 1, 'Reports correct # of menu items');
+    is(detail.contextmenu.items[0].id, 'copy-image', 'IMG has a copy-image menu item');
+    is(detail.contextmenu.customized, false, 'Make sure we do not have customized items');
 
     checkVideoContextMenu();
   }, /* ignorePreventDefault */ true);
@@ -265,7 +284,7 @@ function createIframe(callback) {
     '</menu>' +
     '<menu type="context" id="menu2" label="secondmenu">' +
       '<menuitem label="outer" onclick="window.onContextMenuCallbackFired(event)"></menuitem>' +
-      '<menu>' +
+      '<menu label="submenu">' +
         '<menuitem label="inner 1"></menuitem>' +
         '<menuitem label="inner 2" onclick="window.onContextMenuCallbackFired(event)"></menuitem>' +
       '</menu>' +

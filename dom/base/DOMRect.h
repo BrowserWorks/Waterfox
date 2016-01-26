@@ -206,12 +206,11 @@ public:
   }
 
 protected:
-  nsTArray<nsRefPtr<DOMRect> > mArray;
+  nsTArray<RefPtr<DOMRect> > mArray;
   nsCOMPtr<nsISupports> mParent;
 };
 
-}
-
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif /*MOZILLA_DOMRECT_H_*/

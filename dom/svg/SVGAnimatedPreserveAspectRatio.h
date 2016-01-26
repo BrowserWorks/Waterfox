@@ -21,7 +21,7 @@ namespace mozilla {
 namespace dom {
 class DOMSVGAnimatedPreserveAspectRatio;
 class SVGAnimationElement;
-}
+} // namespace dom
 
 class SVGAnimatedPreserveAspectRatio final
 {
@@ -137,7 +137,7 @@ class DOMSVGAnimatedPreserveAspectRatio final : public nsISupports,
 protected:
   // kept alive because it belongs to content:
   SVGAnimatedPreserveAspectRatio* mVal;
-  nsRefPtr<nsSVGElement> mSVGElement;
+  RefPtr<nsSVGElement> mSVGElement;
 };
 
 } // namespace dom

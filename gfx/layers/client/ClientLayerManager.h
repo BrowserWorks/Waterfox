@@ -34,11 +34,12 @@ class ClientPaintedLayer;
 class CompositorChild;
 class ImageLayer;
 class PLayerChild;
+class FrameUniformityData;
 class TextureClientPool;
 
 class ClientLayerManager final : public LayerManager
 {
-  typedef nsTArray<nsRefPtr<Layer> > LayerRefArray;
+  typedef nsTArray<RefPtr<Layer> > LayerRefArray;
 
 public:
   explicit ClientLayerManager(nsIWidget* aWidget);
@@ -87,8 +88,6 @@ public:
 
   virtual void Mutated(Layer* aLayer) override;
 
-  virtual bool IsOptimizedFor(PaintedLayer* aLayer, PaintedLayerCreationHint aHint) override;
-
   virtual already_AddRefed<PaintedLayer> CreatePaintedLayer() override;
   virtual already_AddRefed<PaintedLayer> CreatePaintedLayerWithHint(PaintedLayerCreationHint aHint) override;
   virtual already_AddRefed<ContainerLayer> CreateContainerLayer() override;
@@ -122,12 +121,7 @@ public:
 
   virtual void SetIsFirstPaint() override;
 
-  TextureClientPool* GetTexturePool(gfx::SurfaceFormat aFormat);
-
-  /// Utility methods for managing texture clients.
-  void ReturnTextureClientDeferred(TextureClient& aClient);
-  void ReturnTextureClient(TextureClient& aClient);
-  void ReportClientLost(TextureClient& aClient);
+  TextureClientPool* GetTexturePool(gfx::SurfaceFormat aFormat, TextureFlags aFlags);
 
   /**
    * Pass through call to the forwarder for nsPresContext's
@@ -200,10 +194,13 @@ public:
   bool NeedsComposite() const { return mNeedsComposite; }
 
   virtual void Composite() override;
+  virtual void GetFrameUniformity(FrameUniformityData* aFrameUniformityData) override;
   virtual bool RequestOverfill(mozilla::dom::OverfillCallback* aCallback) override;
   virtual void RunOverfillCallback(const uint32_t aOverfill) override;
 
-  virtual void DidComposite(uint64_t aTransactionId);
+  void DidComposite(uint64_t aTransactionId,
+                    const mozilla::TimeStamp& aCompositeStart,
+                    const mozilla::TimeStamp& aCompositeEnd);
 
   virtual bool SupportsMixBlendModes(EnumSet<gfx::CompositionOp>& aMixBlendModes) override
   {
@@ -250,6 +247,19 @@ public:
   void SetTransactionIdAllocator(TransactionIdAllocator* aAllocator) { mTransactionIdAllocator = aAllocator; }
 
   float RequestProperty(const nsAString& aProperty) override;
+
+  bool AsyncPanZoomEnabled() const override;
+
+  void SetNextPaintSyncId(int32_t aSyncId);
+
+  class DidCompositeObserver {
+  public:
+    virtual void DidComposite() = 0;
+  };
+
+  void AddDidCompositeObserver(DidCompositeObserver* aObserver);
+  void RemoveDidCompositeObserver(DidCompositeObserver* aObserver);
+
 protected:
   enum TransactionPhase {
     PHASE_NONE, PHASE_CONSTRUCTION, PHASE_DRAWING, PHASE_FORWARD
@@ -314,9 +324,9 @@ private:
   // we send a message to our remote side to capture the actual pixels
   // being drawn to the default target, and then copy those pixels
   // back to mShadowTarget.
-  nsRefPtr<gfxContext> mShadowTarget;
+  RefPtr<gfxContext> mShadowTarget;
 
-  nsRefPtr<TransactionIdAllocator> mTransactionIdAllocator;
+  RefPtr<TransactionIdAllocator> mTransactionIdAllocator;
   uint64_t mLatestTransactionId;
 
   // Sometimes we draw to targets that don't natively support
@@ -344,7 +354,9 @@ private:
   nsAutoTArray<dom::OverfillCallback*,0> mOverfillCallbacks;
   mozilla::TimeStamp mTransactionStart;
 
-  nsRefPtr<MemoryPressureObserver> mMemoryPressureObserver;
+  nsTArray<DidCompositeObserver*> mDidCompositeObservers;
+
+  RefPtr<MemoryPressureObserver> mMemoryPressureObserver;
 };
 
 class ClientLayer : public ShadowableLayer
@@ -385,6 +397,16 @@ public:
   {
     return static_cast<ClientLayer*>(aLayer->ImplData());
   }
+
+  template <typename LayerType>
+  static inline void RenderMaskLayers(LayerType* aLayer) {
+    if (aLayer->GetMaskLayer()) {
+      ToClientLayer(aLayer->GetMaskLayer())->RenderLayer();
+    }
+    for (size_t i = 0; i < aLayer->GetAncestorMaskLayerCount(); i++) {
+      ToClientLayer(aLayer->GetAncestorMaskLayerAt(i))->RenderLayer();
+    }
+  }
 };
 
 // Create a shadow layer (PLayerChild) for aLayer, if we're forwarding
@@ -409,7 +431,7 @@ CreateShadowFor(ClientLayer* aLayer,
                   &ShadowLayerForwarder::Created ## _type ## Layer)
 
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_CLIENTLAYERMANAGER_H */

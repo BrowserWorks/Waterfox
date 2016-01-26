@@ -37,25 +37,26 @@ Shape::search(ExclusiveContext* cx, jsid id)
     return search(cx, this, id, &_);
 }
 
+template<MaybeAdding Adding>
 /* static */ inline Shape*
-Shape::search(ExclusiveContext* cx, Shape* start, jsid id, ShapeTable::Entry** pentry, bool adding)
+Shape::search(ExclusiveContext* cx, Shape* start, jsid id, ShapeTable::Entry** pentry)
 {
     if (start->inDictionary()) {
-        *pentry = &start->table().search(id, adding);
+        *pentry = &start->table().search<Adding>(id);
         return (*pentry)->shape();
     }
 
     *pentry = nullptr;
 
     if (start->hasTable()) {
-        ShapeTable::Entry& entry = start->table().search(id, adding);
+        ShapeTable::Entry& entry = start->table().search<Adding>(id);
         return entry.shape();
     }
 
     if (start->numLinearSearches() == LINEAR_SEARCHES_MAX) {
         if (start->isBigEnoughForAShapeTable()) {
             if (Shape::hashify(cx, start)) {
-                ShapeTable::Entry& entry = start->table().search(id, adding);
+                ShapeTable::Entry& entry = start->table().search<Adding>(id);
                 return entry.shape();
             } else {
                 cx->recoverFromOutOfMemory();
@@ -79,10 +80,9 @@ Shape::search(ExclusiveContext* cx, Shape* start, jsid id, ShapeTable::Entry** p
 }
 
 inline Shape*
-Shape::new_(ExclusiveContext* cx, StackShape& unrootedOther, uint32_t nfixed)
+Shape::new_(ExclusiveContext* cx, Handle<StackShape> other, uint32_t nfixed)
 {
-    RootedGeneric<StackShape*> other(cx, &unrootedOther);
-    Shape* shape = other->isAccessorShape()
+    Shape* shape = other.isAccessorShape()
                    ? js::Allocate<AccessorShape>(cx)
                    : js::Allocate<Shape>(cx);
     if (!shape) {
@@ -90,10 +90,10 @@ Shape::new_(ExclusiveContext* cx, StackShape& unrootedOther, uint32_t nfixed)
         return nullptr;
     }
 
-    if (other->isAccessorShape())
-        new (shape) AccessorShape(*other, nfixed);
+    if (other.isAccessorShape())
+        new (shape) AccessorShape(other, nfixed);
     else
-        new (shape) Shape(*other, nfixed);
+        new (shape) Shape(other, nfixed);
 
     return shape;
 }
@@ -166,7 +166,7 @@ GetShapeAttributes(JSObject* obj, Shape* shape)
     MOZ_ASSERT(obj->isNative());
 
     if (IsImplicitDenseOrTypedArrayElement(shape)) {
-        if (IsAnyTypedArray(obj))
+        if (obj->is<TypedArrayObject>())
             return JSPROP_ENUMERATE | JSPROP_PERMANENT;
         return JSPROP_ENUMERATE;
     }

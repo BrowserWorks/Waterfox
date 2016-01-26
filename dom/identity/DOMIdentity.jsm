@@ -80,8 +80,8 @@ function IDPProvisioningContext(aID, aOrigin, aTargetMM) {
 }
 
 IDPProvisioningContext.prototype = {
-  get id() this._id,
-  get origin() this._origin,
+  get id() { return this._id; },
+  get origin() { return this._origin; },
 
   sendAsyncMessage: _sendAsyncMessage,
 
@@ -112,8 +112,8 @@ function IDPAuthenticationContext(aID, aOrigin, aTargetMM) {
 }
 
 IDPAuthenticationContext.prototype = {
-  get id() this._id,
-  get origin() this._origin,
+  get id() { return this._id; },
+  get origin() { return this._origin; },
 
   sendAsyncMessage: _sendAsyncMessage,
 
@@ -277,14 +277,9 @@ this.DOMIdentity = {
       if (!aMessage.principal) {
         return false;
       }
-      let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                     .getService(Ci.nsIScriptSecurityManager);
-      let uri = Services.io.newURI(aMessage.principal.origin, null, null);
-      let principal = secMan.getAppCodebasePrincipal(uri,
-        aMessage.principal.appId, aMessage.principal.isInBrowserElement);
 
       let permission =
-        permissionManager.testPermissionFromPrincipal(principal,
+        permissionManager.testPermissionFromPrincipal(aMessage.principal,
                                                       FXA_PERMISSION);
       return permission != Ci.nsIPermissionManager.UNKNOWN_ACTION &&
              permission != Ci.nsIPermissionManager.DENY_ACTION;

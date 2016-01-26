@@ -94,12 +94,11 @@ function verifyBlob(blob1, blob2, fileId, blobReadHandler)
 {
   is(blob1 instanceof Components.interfaces.nsIDOMBlob, true,
      "Instance of nsIDOMBlob");
-  is(blob1 instanceof Components.interfaces.nsIDOMFile,
-     blob2 instanceof Components.interfaces.nsIDOMFile,
-     "Instance of nsIDOMFile");
+  is(blob1 instanceof File, blob2 instanceof File,
+     "Instance of DOM File");
   is(blob1.size, blob2.size, "Correct size");
   is(blob1.type, blob2.type, "Correct type");
-  if (blob2 instanceof Components.interfaces.nsIDOMFile) {
+  if (blob2 instanceof File) {
     is(blob1.name, blob2.name, "Correct name");
   }
   is(utils.getFileId(blob1), fileId, "Correct file id");
@@ -173,24 +172,27 @@ function verifyBlobArray(blobs1, blobs2, expectedFileIds)
              expectedFileIds[verifiedCount], blobReadHandler);
 }
 
-function grabFileUsageAndContinueHandler(usage, fileUsage)
+function verifyMutableFile(mutableFile1, file2)
 {
-  testGenerator.send(fileUsage);
+  ok(mutableFile1 instanceof IDBMutableFile, "Instance of IDBMutableFile");
+  is(mutableFile1.name, file2.name, "Correct name");
+  is(mutableFile1.type, file2.type, "Correct type");
+  executeSoon(function() {
+    testGenerator.next();
+  });
+}
+
+function grabFileUsageAndContinueHandler(request)
+{
+  testGenerator.send(request.fileUsage);
 }
 
 function getUsage(usageHandler)
 {
+  let qms = SpecialPowers.Services.qms;
   let principal = SpecialPowers.wrap(document).nodePrincipal;
-  let appId, inBrowser;
-  if (principal.appId != Components.interfaces.nsIPrincipal.UNKNOWN_APP_ID &&
-      principal.appId != Components.interfaces.nsIPrincipal.NO_APP_ID) {
-    appId = principal.appId;
-    inBrowser = principal.isInBrowserElement;
-  }
-  SpecialPowers.getStorageUsageForURI(window.document.documentURI,
-                                      usageHandler,
-                                      appId,
-                                      inBrowser);
+  let cb = SpecialPowers.wrapCallback(usageHandler);
+  qms.getUsageForPrincipal(principal, cb);
 }
 
 function getFileId(file)
@@ -220,4 +222,9 @@ function getFileDBRefCount(name, id)
   let count = {};
   utils.getFileReferences(name, id, null, {}, count);
   return count.value;
+}
+
+function flushPendingFileDeletions()
+{
+  utils.flushPendingFileDeletions();
 }

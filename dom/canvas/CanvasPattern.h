@@ -17,7 +17,7 @@ class nsIPrincipal;
 namespace mozilla {
 namespace gfx {
 class SourceSurface;
-}
+} // namespace gfx
 
 namespace dom {
 class SVGMatrix;
@@ -65,7 +65,7 @@ public:
   // WebIDL
   void SetTransform(SVGMatrix& matrix);
 
-  nsRefPtr<CanvasRenderingContext2D> mContext;
+  RefPtr<CanvasRenderingContext2D> mContext;
   RefPtr<gfx::SourceSurface> mSurface;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   mozilla::gfx::Matrix mTransform;
@@ -74,7 +74,7 @@ public:
   const RepeatMode mRepeat;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_CanvasPattern_h

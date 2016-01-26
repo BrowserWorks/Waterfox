@@ -13,7 +13,7 @@ const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cr = Components.results;
 
-let XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {}).XPCOMUtils;
+var XPCOMUtils = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {}).XPCOMUtils;
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
   "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
@@ -25,7 +25,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 /**
  * Conversion between nsIPropertyBag and JS object
  */
-let PropertyBagConverter = {
+var PropertyBagConverter = {
   // From nsIPropertyBag to JS
   toObject: function(bag) {
     if (!(bag instanceof Ci.nsIPropertyBag)) {
@@ -226,17 +226,26 @@ function nsAsyncShutdownService() {
   // Cache for the getters
 
   for (let _k of
-   ["profileBeforeChange",
+   [// Parent process
+    "profileBeforeChange",
     "profileChangeTeardown",
+    "quitApplicationGranted",
     "sendTelemetry",
+
+    // Child processes
+    "contentChildShutdown",
+
+    // All processes
     "webWorkersShutdown",
-    "xpcomThreadsShutdown"]) {
+    "xpcomThreadsShutdown",
+    ]) {
     let k = _k;
     Object.defineProperty(this, k, {
       configurable: true,
       get: function() {
         delete this[k];
-        let result = new nsAsyncShutdownClient(AsyncShutdown[k]);
+        let wrapped = AsyncShutdown[k]; // May be undefined, if we're on the wrong process.
+        let result = wrapped ? new nsAsyncShutdownClient(wrapped) : undefined;
         Object.defineProperty(this, k, {
           value: result
         });
@@ -266,4 +275,3 @@ this.NSGetFactory = XPCOMUtils.generateNSGetFactory([
     nsAsyncShutdownBarrier,
     nsAsyncShutdownClient,
 ]);
-

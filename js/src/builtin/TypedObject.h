@@ -123,7 +123,7 @@ enum Kind {
     Array = JS_TYPEREPR_ARRAY_KIND
 };
 
-}
+} // namespace type
 
 ///////////////////////////////////////////////////////////////////////////
 // Typed Prototypes
@@ -327,38 +327,24 @@ class ComplexTypeDescr : public TypeDescr
     }
 };
 
+enum class SimdType : uint8_t;
+
 /*
- * Type descriptors `float32x4`, `int32x4` and `float64x2`
+ * SIMD Type descriptors.
  */
 class SimdTypeDescr : public ComplexTypeDescr
 {
   public:
-    enum Type {
-        Int32x4 = JS_SIMDTYPEREPR_INT32,
-        Float32x4 = JS_SIMDTYPEREPR_FLOAT32,
-        Float64x2 = JS_SIMDTYPEREPR_FLOAT64,
-        LAST_TYPE = Float64x2
-    };
-
     static const type::Kind Kind = type::Simd;
     static const bool Opaque = false;
     static const Class class_;
-    static int32_t size(Type t);
-    static int32_t alignment(Type t);
-    static int32_t lanes(Type t);
-
-    SimdTypeDescr::Type type() const {
-        return (SimdTypeDescr::Type) getReservedSlot(JS_DESCR_SLOT_TYPE).toInt32();
-    }
-
+    static int32_t size(SimdType t);
+    static int32_t alignment(SimdType t);
     static bool call(JSContext* cx, unsigned argc, Value* vp);
     static bool is(const Value& v);
-};
 
-#define JS_FOR_EACH_SIMD_TYPE_REPR(macro_)               \
-    macro_(SimdTypeDescr::Int32x4, int32_t, int32, 4)    \
-    macro_(SimdTypeDescr::Float32x4, float, float32, 4)  \
-    macro_(SimdTypeDescr::Float64x2, double, float64, 2)
+    SimdType type() const;
+};
 
 bool IsTypedObjectClass(const Class* clasp); // Defined below
 bool IsTypedObjectArray(JSObject& obj);
@@ -415,11 +401,6 @@ class ArrayTypeDescr : public ComplexTypeDescr
 
     TypeDescr& elementType() const {
         return getReservedSlot(JS_DESCR_SLOT_ARRAY_ELEM_TYPE).toObject().as<TypeDescr>();
-    }
-
-    TypeDescr& maybeForwardedElementType() const {
-        JSObject* elemType = &getReservedSlot(JS_DESCR_SLOT_ARRAY_ELEM_TYPE).toObject();
-        return MaybeForwarded(elemType)->as<TypeDescr>();
     }
 
     int32_t length() const {
@@ -486,10 +467,6 @@ class StructTypeDescr : public ComplexTypeDescr
     ArrayObject& fieldInfoObject(size_t slot) const {
         return getReservedSlot(slot).toObject().as<ArrayObject>();
     }
-
-    ArrayObject& maybeForwardedFieldInfoObject(size_t slot) const {
-        return MaybeForwarded(&getReservedSlot(slot).toObject())->as<ArrayObject>();
-    }
 };
 
 typedef Handle<StructTypeDescr*> HandleStructTypeDescr;
@@ -534,10 +511,10 @@ class TypedObject : public JSObject
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
-    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiver,
                                 HandleId id, MutableHandleValue vp);
 
-    static bool obj_getElement(JSContext* cx, HandleObject obj, HandleObject receiver,
+    static bool obj_getElement(JSContext* cx, HandleObject obj, HandleValue receiver,
                                uint32_t index, MutableHandleValue vp);
 
     static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
@@ -549,23 +526,16 @@ class TypedObject : public JSObject
     static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
                                    ObjectOpResult& result);
 
-    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties);
+    static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties,
+                              bool enumerableOnly);
 
   public:
     TypedProto& typedProto() const {
         return getProto()->as<TypedProto>();
     }
 
-    TypedProto& maybeForwardedTypedProto() const {
-        return MaybeForwarded(getProto())->as<TypedProto>();
-    }
-
     TypeDescr& typeDescr() const {
         return group()->typeDescr();
-    }
-
-    TypeDescr& maybeForwardedTypeDescr() const {
-        return MaybeForwarded(&typeDescr())->as<TypeDescr>();
     }
 
     int32_t offset() const;
@@ -605,7 +575,7 @@ class TypedObject : public JSObject
     static bool GetBuffer(JSContext* cx, unsigned argc, Value* vp);
     static bool GetByteOffset(JSContext* cx, unsigned argc, Value* vp);
 
-    Shape* shapeFromGC() { return shape_; }
+    Shape** addressOfShapeFromGC() { return shape_.unsafeUnbarrieredForTracing(); }
 };
 
 typedef Handle<TypedObject*> HandleTypedObject;
@@ -849,7 +819,7 @@ bool GetTypedObjectModule(JSContext* cx, unsigned argc, Value* vp);
 /*
  * Usage: GetFloat32x4TypeDescr()
  *
- * Returns the float32x4 type object. SIMD pseudo-module must have
+ * Returns the Float32x4 type object. SIMD pseudo-module must have
  * been initialized for this to be safe.
  */
 bool GetFloat32x4TypeDescr(JSContext* cx, unsigned argc, Value* vp);
@@ -857,18 +827,90 @@ bool GetFloat32x4TypeDescr(JSContext* cx, unsigned argc, Value* vp);
 /*
  * Usage: GetFloat64x2TypeDescr()
  *
- * Returns the float64x2 type object. SIMD pseudo-module must have
+ * Returns the Float64x2 type object. SIMD pseudo-module must have
  * been initialized for this to be safe.
  */
 bool GetFloat64x2TypeDescr(JSContext* cx, unsigned argc, Value* vp);
 
 /*
+ * Usage: GetBool8x16TypeDescr()
+ *
+ * Returns the Bool8x16 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetBool8x16TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetBool16x8TypeDescr()
+ *
+ * Returns the Bool16x8 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetBool16x8TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetBool32x4TypeDescr()
+ *
+ * Returns the Bool32x4 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetBool32x4TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetBool64x2TypeDescr()
+ *
+ * Returns the Bool64x2 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetBool64x2TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetInt8x16TypeDescr()
+ *
+ * Returns the Int8x16 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetInt8x16TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetInt16x8TypeDescr()
+ *
+ * Returns the Int16x8 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetInt16x8TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
  * Usage: GetInt32x4TypeDescr()
  *
- * Returns the int32x4 type object. SIMD pseudo-module must have
+ * Returns the Int32x4 type object. SIMD pseudo-module must have
  * been initialized for this to be safe.
  */
 bool GetInt32x4TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetUint8x16TypeDescr()
+ *
+ * Returns the Uint8x16 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetUint8x16TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetUint16x8TypeDescr()
+ *
+ * Returns the Uint16x8 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetUint16x8TypeDescr(JSContext* cx, unsigned argc, Value* vp);
+
+/*
+ * Usage: GetUint32x4TypeDescr()
+ *
+ * Returns the Uint32x4 type object. SIMD pseudo-module must have
+ * been initialized for this to be safe.
+ */
+bool GetUint32x4TypeDescr(JSContext* cx, unsigned argc, Value* vp);
 
 /*
  * Usage: Store_int8(targetDatum, targetOffset, value)

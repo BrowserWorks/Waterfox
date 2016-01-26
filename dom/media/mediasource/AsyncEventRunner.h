@@ -27,9 +27,10 @@ public:
   }
 
 private:
-  nsRefPtr<T> mTarget;
+  RefPtr<T> mTarget;
   const char* mName;
 };
 
 } // namespace mozilla
+
 #endif /* MOZILLA_ASYNCEVENTRUNNER_H_ */

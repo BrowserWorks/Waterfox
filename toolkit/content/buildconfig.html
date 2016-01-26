@@ -18,10 +18,6 @@
 </head>
 <body class="aboutPageWideContainer">
 <h1>about:buildconfig</h1>
-#ifdef BUILD_HOSTNAME
-<h2>Build Machine</h2>
-<p>@BUILD_HOSTNAME@</p>
-#endif
 #ifdef SOURCE_REPO
 #ifdef SOURCE_CHANGESET
 <h2>Source</h2>
@@ -58,7 +54,9 @@
     <tr>
       <td>@CXX@</td>
       <td>@CXX_VERSION@</td>
+#ifndef BUILD_FASTER
       <td>@CXXFLAGS@ @CPPFLAGS@</td>
+#endif
     </tr>
   </tbody>
 </table>

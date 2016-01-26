@@ -8,7 +8,6 @@ EXPORTS += [
     'ContextStateTracker.h',
     'DrawMode.h',
     'gfx2DGlue.h',
-    'gfx3DMatrix.h',
     'gfxAlphaRecovery.h',
     'gfxASurface.h',
     'gfxBaseSharedMemorySurface.h',
@@ -16,6 +15,7 @@ EXPORTS += [
     'gfxColor.h',
     'gfxContext.h',
     'gfxDrawable.h',
+    'gfxEnv.h',
     'gfxFailure.h',
     'gfxFont.h',
     'gfxFontConstants.h',
@@ -23,6 +23,7 @@ EXPORTS += [
     'gfxFontFamilyList.h',
     'gfxFontFeatures.h',
     'gfxFontInfoLoader.h',
+    'gfxFontPrefLangList.h',
     'gfxFontTest.h',
     'gfxFontUtils.h',
     'gfxGradientCache.h',
@@ -49,7 +50,6 @@ EXPORTS += [
     'gfxTypes.h',
     'gfxUserFontSet.h',
     'gfxUtils.h',
-    'GraphicsFilter.h',
     'RoundedRect.h',
     'SoftwareVsyncSource.h',
     'VsyncSource.h',
@@ -102,9 +102,9 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     ]
 elif CONFIG['MOZ_WIDGET_GTK']:
     EXPORTS += [
+        'gfxFontconfigFonts.h',
         'gfxFT2FontBase.h',
         'gfxGdkNativeRenderer.h',
-        'gfxPangoFonts.h',
         'gfxPDFSurface.h',
         'gfxPlatformGtk.h',
         'gfxPSSurface.h',
@@ -112,11 +112,11 @@ elif CONFIG['MOZ_WIDGET_GTK']:
 
     SOURCES += [
         'gfxFcPlatformFontList.cpp',
+        'gfxFontconfigFonts.cpp',
         'gfxFontconfigUtils.cpp',
         'gfxFT2FontBase.cpp',
         'gfxFT2Utils.cpp',
         'gfxGdkNativeRenderer.cpp',
-        'gfxPangoFonts.cpp',
         'gfxPDFSurface.cpp',
         'gfxPlatformGtk.cpp',
         'gfxPSSurface.cpp',
@@ -134,18 +134,18 @@ elif CONFIG['MOZ_WIDGET_GTK']:
 
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     EXPORTS += [
+        'gfxFontconfigFonts.h',
         'gfxFT2FontBase.h',
-        'gfxPangoFonts.h',
         'gfxPDFSurface.h',
         'gfxQPainterSurface.h',
         'gfxQtNativeRenderer.h',
         'gfxQtPlatform.h',
     ]
     SOURCES += [
+        'gfxFontconfigFonts.cpp',
         'gfxFontconfigUtils.cpp',
         'gfxFT2FontBase.cpp',
         'gfxFT2Utils.cpp',
-        'gfxPangoFonts.cpp',
         'gfxPDFSurface.cpp',
         'gfxQPainterSurface.cpp',
         'gfxQtPlatform.cpp',
@@ -162,7 +162,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
 
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     EXPORTS += [
-        'gfxD2DSurface.h',
         'gfxDWriteFonts.h',
         'gfxGDIFont.h',
         'gfxGDIFontList.h',
@@ -185,7 +184,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
             'gfxDWriteFontList.cpp',
         ]
         SOURCES += [
-            'gfxD2DSurface.cpp',
             'gfxDWriteCommon.cpp',
             'gfxDWriteFonts.cpp',
         ]
@@ -213,7 +211,6 @@ SOURCES += [
 
 UNIFIED_SOURCES += [
     'CJKCompatSVS.cpp',
-    'gfx3DMatrix.cpp',
     'gfxAlphaRecovery.cpp',
     'gfxBaseSharedMemorySurface.cpp',
     'gfxBlur.cpp',
@@ -259,11 +256,13 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 if CONFIG['ENABLE_INTL_API']:
     CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
     CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
+    LOCAL_INCLUDES += CONFIG['MOZ_ICU_INCLUDES']
     USE_LIBS += [
         'icu',
     ]
 
-FAIL_ON_WARNINGS = not CONFIG['_MSC_VER']
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -274,6 +273,7 @@ GENERATED_FILES = [
 ]
 
 LOCAL_INCLUDES += [
+    '/dom/workers',
     '/dom/xml',
 ]
 
@@ -304,10 +304,10 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3', 'qt'):
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
 
+LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
+
 DEFINES['GRAPHITE2_STATIC'] = True
 
-if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
-    DEFINES['OTS_DLL'] = True
-
-if CONFIG['OS_ARCH'] == 'WINNT':
-    del DEFINES['UNICODE']
+if CONFIG['CLANG_CXX']:
+    # Suppress warnings from Skia header files.
+    SOURCES['gfxPlatform.cpp'].flags += ['-Wno-implicit-fallthrough']

@@ -11,12 +11,14 @@
 #define nsStyleTransformMatrix_h_
 
 #include "nsCSSValue.h"
-#include "gfx3DMatrix.h"
 
 class nsIFrame;
 class nsStyleContext;
 class nsPresContext;
 struct nsRect;
+namespace mozilla {
+class RuleNodeCacheConditions;
+} // namespace mozilla
 
 /**
  * A helper to generate gfxMatrixes from css transform functions.
@@ -79,11 +81,28 @@ namespace nsStyleTransformMatrix {
 
     void Init(const nsSize& aDimensions);
 
+    /**
+     * The offset of the reference box from the nsIFrame's TopLeft(). This
+     * is non-zero only in the case of SVG content. If we can successfully
+     * implement UNIFIED_CONTINUATIONS at some point in the future then it
+     * may also be non-zero for non-SVG content.
+     */
+    nscoord X() {
+      EnsureDimensionsAreCached();
+      return mX;
+    }
+    nscoord Y() {
+      EnsureDimensionsAreCached();
+      return mY;
+    }
+
+    /**
+     * The size of the reference box.
+     */
     nscoord Width() {
       EnsureDimensionsAreCached();
       return mWidth;
     }
-
     nscoord Height() {
       EnsureDimensionsAreCached();
       return mHeight;
@@ -98,7 +117,7 @@ namespace nsStyleTransformMatrix {
     void EnsureDimensionsAreCached();
 
     const nsIFrame* mFrame;
-    nscoord mWidth, mHeight;
+    nscoord mX, mY, mWidth, mHeight;
     bool mIsCached;
   };
 
@@ -111,17 +130,17 @@ namespace nsStyleTransformMatrix {
   float ProcessTranslatePart(const nsCSSValue& aValue,
                              nsStyleContext* aContext,
                              nsPresContext* aPresContext,
-                             bool& aCanStoreInRuleTree,
+                             mozilla::RuleNodeCacheConditions& aConditions,
                              TransformReferenceBox* aRefBox,
                              TransformReferenceBox::DimensionGetter aDimensionGetter = nullptr);
 
   void
-  ProcessInterpolateMatrix(gfx3DMatrix& aMatrix,
-                            const nsCSSValue::Array* aData,
-                            nsStyleContext* aContext,
-                            nsPresContext* aPresContext,
-                            bool& aCanStoreInRuleTree,
-                            TransformReferenceBox& aBounds);
+  ProcessInterpolateMatrix(mozilla::gfx::Matrix4x4& aMatrix,
+                           const nsCSSValue::Array* aData,
+                           nsStyleContext* aContext,
+                           nsPresContext* aPresContext,
+                           mozilla::RuleNodeCacheConditions& aConditions,
+                           TransformReferenceBox& aBounds);
 
   /**
    * Given an nsCSSValueList containing -moz-transform functions,
@@ -130,8 +149,8 @@ namespace nsStyleTransformMatrix {
    * @param aData The nsCSSValueList containing the transform functions
    * @param aContext The style context, used for unit conversion.
    * @param aPresContext The presentation context, used for unit conversion.
-   * @param aCanStoreInRuleTree Set to false if the result cannot be cached
-   *                            in the rule tree, otherwise untouched.
+   * @param aConditions Set to uncachable (by calling SetUncacheable()) if the
+   *   result cannot be cached in the rule tree, otherwise untouched.
    * @param aBounds The frame's bounding rectangle.
    * @param aAppUnitsPerMatrixUnit The number of app units per device pixel.
    *
@@ -139,12 +158,12 @@ namespace nsStyleTransformMatrix {
    * length values in aData are already known to have been converted to
    * eCSSUnit_Pixel (as they are in an StyleAnimationValue)
    */
-  gfx3DMatrix ReadTransforms(const nsCSSValueList* aList,
-                             nsStyleContext* aContext,
-                             nsPresContext* aPresContext,
-                             bool &aCanStoreInRuleTree,
-                             TransformReferenceBox& aBounds,
-                             float aAppUnitsPerMatrixUnit);
+  mozilla::gfx::Matrix4x4 ReadTransforms(const nsCSSValueList* aList,
+                                         nsStyleContext* aContext,
+                                         nsPresContext* aPresContext,
+                                         mozilla::RuleNodeCacheConditions& aConditions,
+                                         TransformReferenceBox& aBounds,
+                                         float aAppUnitsPerMatrixUnit);
 
 } // namespace nsStyleTransformMatrix
 

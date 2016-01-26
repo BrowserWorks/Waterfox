@@ -52,7 +52,7 @@ FakeSpeechRecognitionService::SoundEnd()
 }
 
 NS_IMETHODIMP
-FakeSpeechRecognitionService::ValidateAndSetGrammarList(mozilla::dom::SpeechGrammarList*, nsISpeechGrammarCompilationCallback*)
+FakeSpeechRecognitionService::ValidateAndSetGrammarList(mozilla::dom::SpeechGrammar*, nsISpeechGrammarCompilationCallback*)
 {
   return NS_OK;
 }
@@ -86,7 +86,7 @@ FakeSpeechRecognitionService::Observe(nsISupports* aSubject, const char* aTopic,
                                 NS_LITERAL_STRING("RECOGNITIONSERVICE_ERROR test event"));
 
   } else if (eventName.EqualsLiteral("EVENT_RECOGNITIONSERVICE_FINAL_RESULT")) {
-    nsRefPtr<SpeechEvent> event =
+    RefPtr<SpeechEvent> event =
       new SpeechEvent(mRecognition,
                       SpeechRecognition::EVENT_RECOGNITIONSERVICE_FINAL_RESULT);
 
@@ -102,12 +102,14 @@ FakeSpeechRecognitionService::BuildMockResultList()
 {
   SpeechRecognitionResultList* resultList = new SpeechRecognitionResultList(mRecognition);
   SpeechRecognitionResult* result = new SpeechRecognitionResult(mRecognition);
-  SpeechRecognitionAlternative* alternative = new SpeechRecognitionAlternative(mRecognition);
+  if (0 < mRecognition->MaxAlternatives()) {
+    SpeechRecognitionAlternative* alternative = new SpeechRecognitionAlternative(mRecognition);
 
-  alternative->mTranscript = NS_LITERAL_STRING("Mock final result");
-  alternative->mConfidence = 0.0f;
+    alternative->mTranscript = NS_LITERAL_STRING("Mock final result");
+    alternative->mConfidence = 0.0f;
 
-  result->mItems.AppendElement(alternative);
+    result->mItems.AppendElement(alternative);
+  }
   resultList->mItems.AppendElement(result);
 
   return resultList;

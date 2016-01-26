@@ -8,6 +8,7 @@
 
 #include "nsIDOMDocument.h"
 #include "nsNetUtil.h"
+#include "nsIStreamListener.h"
 #include "nsStringStream.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsCRT.h"
@@ -380,7 +381,7 @@ DOMParser::Constructor(const GlobalObject& aOwner,
     rv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
   }
-  nsRefPtr<DOMParser> domParser = new DOMParser(aOwner.GetAsSupports());
+  RefPtr<DOMParser> domParser = new DOMParser(aOwner.GetAsSupports());
   rv = domParser->InitInternal(aOwner.GetAsSupports(), aPrincipal, aDocumentURI,
                                aBaseURI);
   if (rv.Failed()) {
@@ -393,7 +394,7 @@ DOMParser::Constructor(const GlobalObject& aOwner,
 DOMParser::Constructor(const GlobalObject& aOwner,
                        ErrorResult& rv)
 {
-  nsRefPtr<DOMParser> domParser = new DOMParser(aOwner.GetAsSupports());
+  RefPtr<DOMParser> domParser = new DOMParser(aOwner.GetAsSupports());
   rv = domParser->InitInternal(aOwner.GetAsSupports(),
                                nsContentUtils::SubjectPrincipal(),
                                nullptr, nullptr);

@@ -12,10 +12,8 @@ import tempfile
 import xml.dom.minidom
 import zipfile
 
-import mozdevice
 import mozfile
 import mozlog
-from mozlog import structured
 
 import errors
 
@@ -27,9 +25,9 @@ class Version(object):
 
     def __init__(self):
         self._info = {}
-        self._logger = structured.get_default_logger(component='mozversion')
+        self._logger = mozlog.get_default_logger(component='mozversion')
         if not self._logger:
-            self._logger = mozlog.getLogger('mozversion')
+            self._logger = mozlog.unstructured.getLogger('mozversion')
 
     def get_gecko_info(self, path):
         for type, section in INI_DATA_MAPPING:
@@ -190,6 +188,13 @@ class RemoteB2GVersion(B2GVersion):
                  **kwargs):
         B2GVersion.__init__(self, sources, **kwargs)
 
+        try:
+            import mozdevice
+        except ImportError:
+            self._logger.critical("mozdevice is required to get the version"
+                                  " of a remote device")
+            raise
+
         if dm_type == 'adb':
             dm = mozdevice.DeviceManagerADB(deviceSerial=device_serial,
                                             serverHost=adb_host,
@@ -311,16 +316,16 @@ def cli(args=sys.argv[1:]):
     fxos.add_argument(
         '--adb-port',
         help='port running adb')
-    structured.commandline.add_logging_group(
+    mozlog.commandline.add_logging_group(
         parser,
-        include_formatters=structured.commandline.TEXT_FORMATTERS
+        include_formatters=mozlog.commandline.TEXT_FORMATTERS
     )
 
     args = parser.parse_args()
     dm_type = os.environ.get('DM_TRANS', 'adb')
     host = os.environ.get('TEST_DEVICE')
 
-    structured.commandline.setup_logging(
+    mozlog.commandline.setup_logging(
         'mozversion', args, {'mach': sys.stdout})
 
     get_version(binary=args.binary,

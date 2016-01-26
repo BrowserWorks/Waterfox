@@ -7,7 +7,6 @@
 include('/ipc/chromium/chromium-config.mozbuild')
 SOURCES += [
     'mozEnglishWordUtils.cpp',
-    'mozGenericWordUtils.cpp',
     'mozInlineSpellChecker.cpp',
     'mozInlineSpellWordUtil.cpp',
     'mozPersonalDictionary.cpp',
@@ -19,6 +18,7 @@ SOURCES += [
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
+    '../hunspell/glue',
     '../hunspell/src',
     '/dom/base',
     '/editor/libeditor',
@@ -26,5 +26,3 @@ LOCAL_INCLUDES += [
 EXPORTS.mozilla += [
      'mozSpellChecker.h',
 ]
-
-FAIL_ON_WARNINGS = True

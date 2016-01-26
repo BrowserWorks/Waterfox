@@ -3,6 +3,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#include "gfxPrefs.h"
 #include "gfxUtils.h"
 #include "gtest/gtest.h"
 #include "TestLayers.h"
@@ -33,28 +34,35 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_IMETHOD              GetClientBounds(IntRect &aRect) override {
-    aRect = IntRect(0, 0, gCompWidth, gCompHeight);
+  NS_IMETHOD GetClientBounds(LayoutDeviceIntRect& aRect) override {
+    aRect = LayoutDeviceIntRect(0, 0, gCompWidth, gCompHeight);
     return NS_OK;
   }
-  NS_IMETHOD              GetBounds(IntRect &aRect) override { return GetClientBounds(aRect); }
+  NS_IMETHOD GetBounds(LayoutDeviceIntRect& aRect) override {
+    return GetClientBounds(aRect);
+  }
 
   void* GetNativeData(uint32_t aDataType) override {
     if (aDataType == NS_NATIVE_OPENGL_CONTEXT) {
       mozilla::gl::SurfaceCaps caps = mozilla::gl::SurfaceCaps::ForRGB();
       caps.preserve = false;
       caps.bpp16 = false;
-      nsRefPtr<GLContext> context = GLContextProvider::CreateOffscreen(
-        gfxIntSize(gCompWidth, gCompHeight), caps, true);
+      RefPtr<GLContext> context = GLContextProvider::CreateOffscreen(
+        IntSize(gCompWidth, gCompHeight), caps,
+        CreateContextFlags::REQUIRE_COMPAT_PROFILE);
       return context.forget().take();
     }
     return nullptr;
   }
 
-  NS_IMETHOD              Create(nsIWidget *aParent,
+  NS_IMETHOD              Create(nsIWidget* aParent,
                                  nsNativeWidget aNativeParent,
-                                 const IntRect &aRect,
-                                 nsWidgetInitData *aInitData = nullptr) override { return NS_OK; }
+                                 const LayoutDeviceIntRect& aRect,
+                                 nsWidgetInitData* aInitData = nullptr) override { return NS_OK; }
+  NS_IMETHOD              Create(nsIWidget* aParent,
+                                 nsNativeWidget aNativeParent,
+                                 const DesktopIntRect& aRect,
+                                 nsWidgetInitData* aInitData = nullptr) override { return NS_OK; }
   NS_IMETHOD              Show(bool aState) override { return NS_OK; }
   virtual bool            IsVisible() const override { return true; }
   NS_IMETHOD              ConstrainPosition(bool aAllowSlop,
@@ -68,7 +76,7 @@ public:
   virtual bool            IsEnabled() const override { return true; }
   NS_IMETHOD              SetFocus(bool aRaise) override { return NS_OK; }
   virtual nsresult        ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override { return NS_OK; }
-  NS_IMETHOD              Invalidate(const IntRect &aRect) override { return NS_OK; }
+  NS_IMETHOD              Invalidate(const LayoutDeviceIntRect& aRect) override { return NS_OK; }
   NS_IMETHOD              SetTitle(const nsAString& title) override { return NS_OK; }
   virtual LayoutDeviceIntPoint WidgetToScreenOffset() override { return LayoutDeviceIntPoint(0, 0); }
   NS_IMETHOD              DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
@@ -87,7 +95,7 @@ NS_IMPL_ISUPPORTS_INHERITED0(MockWidget, nsBaseWidget)
 struct LayerManagerData {
   RefPtr<MockWidget> mWidget;
   RefPtr<Compositor> mCompositor;
-  nsRefPtr<LayerManagerComposite> mLayerManager;
+  RefPtr<LayerManagerComposite> mLayerManager;
 
   LayerManagerData(Compositor* compositor, MockWidget* widget, LayerManagerComposite* layerManager)
     : mWidget(widget)
@@ -96,7 +104,7 @@ struct LayerManagerData {
   {}
 };
 
-static TemporaryRef<Compositor> CreateTestCompositor(LayersBackend backend, MockWidget* widget)
+static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, MockWidget* widget)
 {
   gfxPrefs::GetSingleton();
 
@@ -125,7 +133,7 @@ static TemporaryRef<Compositor> CreateTestCompositor(LayersBackend backend, Mock
     abort();
   }
 
-  return compositor;
+  return compositor.forget();
 }
 
 /**
@@ -141,7 +149,7 @@ static std::vector<LayerManagerData> GetLayerManagers(std::vector<LayersBackend>
     RefPtr<MockWidget> widget = new MockWidget();
     RefPtr<Compositor> compositor = CreateTestCompositor(backend, widget);
 
-    nsRefPtr<LayerManagerComposite> layerManager = new LayerManagerComposite(compositor);
+    RefPtr<LayerManagerComposite> layerManager = new LayerManagerComposite(compositor);
 
     layerManager->Initialize();
 
@@ -170,20 +178,18 @@ static std::vector<LayersBackend> GetPlatformBackends()
   return backends;
 }
 
-static TemporaryRef<DrawTarget> CreateDT()
+static already_AddRefed<DrawTarget> CreateDT()
 {
-  RefPtr<DrawTarget> dt = gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
+  return gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
     IntSize(gCompWidth, gCompHeight), SurfaceFormat::B8G8R8A8);
-
-  return dt;
 }
 
-static bool CompositeAndCompare(nsRefPtr<LayerManagerComposite> layerManager, DrawTarget* refDT)
+static bool CompositeAndCompare(RefPtr<LayerManagerComposite> layerManager, DrawTarget* refDT)
 {
   RefPtr<DrawTarget> drawTarget = CreateDT();
 
   layerManager->BeginTransactionWithDrawTarget(drawTarget, IntRect(0, 0, gCompWidth, gCompHeight));
-  layerManager->EndEmptyTransaction();
+  layerManager->EndTransaction(TimeStamp::Now());
 
   RefPtr<SourceSurface> ss = drawTarget->Snapshot();
   RefPtr<DataSourceSurface> dss = ss->GetDataSurface();
@@ -227,33 +233,33 @@ TEST(Gfx, CompositorSimpleTree)
 {
   auto layerManagers = GetLayerManagers(GetPlatformBackends());
   for (size_t i = 0; i < layerManagers.size(); i++) {
-    nsRefPtr<LayerManagerComposite> layerManager = layerManagers[i].mLayerManager;
-    nsRefPtr<LayerManager> lmBase = layerManager.get();
-    nsTArray<nsRefPtr<Layer>> layers;
+    RefPtr<LayerManagerComposite> layerManager = layerManagers[i].mLayerManager;
+    RefPtr<LayerManager> lmBase = layerManager.get();
+    nsTArray<RefPtr<Layer>> layers;
     nsIntRegion layerVisibleRegion[] = {
       nsIntRegion(IntRect(0, 0, gCompWidth, gCompHeight)),
       nsIntRegion(IntRect(0, 0, gCompWidth, gCompHeight)),
       nsIntRegion(IntRect(0, 0, 100, 100)),
       nsIntRegion(IntRect(0, 50, 100, 100)),
     };
-    nsRefPtr<Layer> root = CreateLayerTree("c(ooo)", layerVisibleRegion, nullptr, lmBase, layers);
+    RefPtr<Layer> root = CreateLayerTree("c(ooo)", layerVisibleRegion, nullptr, lmBase, layers);
 
     { // background
       ColorLayer* colorLayer = layers[1]->AsColorLayer();
-      colorLayer->SetColor(gfxRGBA(1.f, 0.f, 1.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetColor(Color(1.f, 0.f, 1.f, 1.f));
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     {
       ColorLayer* colorLayer = layers[2]->AsColorLayer();
-      colorLayer->SetColor(gfxRGBA(1.f, 0.f, 0.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetColor(Color(1.f, 0.f, 0.f, 1.f));
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     {
       ColorLayer* colorLayer = layers[3]->AsColorLayer();
-      colorLayer->SetColor(gfxRGBA(0.f, 0.f, 1.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetColor(Color(0.f, 0.f, 1.f, 1.f));
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     RefPtr<DrawTarget> refDT = CreateDT();

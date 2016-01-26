@@ -1,0 +1,63 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+// Test the HeapAnalyses{Client,Worker} "getImmediatelyDominated" request.
+
+function run_test() {
+  run_next_test();
+}
+
+const breakdown = {
+  by: "coarseType",
+  objects: { by: "count", count: true, bytes: true },
+  scripts: { by: "count", count: true, bytes: true },
+  strings: { by: "count", count: true, bytes: true },
+  other: { by: "count", count: true, bytes: true },
+};
+
+add_task(function* () {
+  const client = new HeapAnalysesClient();
+
+  const snapshotFilePath = saveNewHeapSnapshot();
+  yield client.readHeapSnapshot(snapshotFilePath);
+  const dominatorTreeId = yield client.computeDominatorTree(snapshotFilePath);
+
+  const partialTree = yield client.getDominatorTree({
+    dominatorTreeId,
+    breakdown
+  });
+  ok(partialTree.children.length > 0,
+     "root should immediately dominate some nodes");
+
+  // First, test getting a subset of children available.
+  const response = yield client.getImmediatelyDominated({
+    dominatorTreeId,
+    breakdown,
+    nodeId: partialTree.nodeId,
+    startIndex: 0,
+    maxCount: partialTree.children.length - 1
+  });
+
+  ok(Array.isArray(response.nodes));
+  ok(response.nodes.every(node => node.parentId === partialTree.nodeId));
+  ok(response.moreChildrenAvailable);
+  equal(response.path.length, 1);
+  equal(response.path[0], partialTree.nodeId);
+
+  // Next, test getting a subset of children available.
+  const secondResponse = yield client.getImmediatelyDominated({
+    dominatorTreeId,
+    breakdown,
+    nodeId: partialTree.nodeId,
+    startIndex: 0,
+    maxCount: Infinity
+  });
+
+  ok(Array.isArray(secondResponse.nodes));
+  ok(secondResponse.nodes.every(node => node.parentId === partialTree.nodeId));
+  ok(!secondResponse.moreChildrenAvailable);
+  equal(secondResponse.path.length, 1);
+  equal(secondResponse.path[0], partialTree.nodeId);
+
+  client.destroy();
+});

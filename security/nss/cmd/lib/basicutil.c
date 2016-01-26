@@ -241,7 +241,7 @@ void
 SECU_PrintAsHex(FILE *out, const SECItem *data, const char *m, int level)
 {
     unsigned i;
-    int column;
+    int column = 0;
     PRBool isString     = PR_TRUE;
     PRBool isWhiteSpace = PR_TRUE;
     PRBool printedHex   = PR_FALSE;
@@ -684,7 +684,7 @@ static unsigned char nibble(char c) {
 SECStatus
 SECU_SECItemHexStringToBinary(SECItem* srcdest)
 {
-    int i;
+    unsigned int i;
 
     if (!srcdest) {
         PORT_SetError(SEC_ERROR_INVALID_ARGS);

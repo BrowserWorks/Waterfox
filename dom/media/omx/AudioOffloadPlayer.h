@@ -78,27 +78,27 @@ public:
   ~AudioOffloadPlayer();
 
   // Caller retains ownership of "aSource".
-  virtual void SetSource(const android::sp<MediaSource> &aSource) override;
+  void SetSource(const android::sp<MediaSource> &aSource) override;
 
   // Start the source if it's not already started and open the GonkAudioSink to
   // create an offloaded audio track
-  virtual status_t Start(bool aSourceAlreadyStarted = false) override;
+  status_t Start(bool aSourceAlreadyStarted = false) override;
 
-  virtual status_t ChangeState(MediaDecoder::PlayState aState) override;
+  status_t ChangeState(MediaDecoder::PlayState aState) override;
 
-  virtual void SetVolume(double aVolume) override;
+  void SetVolume(double aVolume) override;
 
-  virtual double GetMediaTimeSecs() override;
+  int64_t GetMediaTimeUs() override;
 
   // To update progress bar when the element is visible
-  virtual void SetElementVisibility(bool aIsVisible) override;;
+  void SetElementVisibility(bool aIsVisible) override;
 
   // Update ready state based on current play state. Not checking data
   // availability since offloading is currently done only when whole compressed
   // data is available
-  virtual MediaDecoderOwner::NextFrameStatus GetNextFrameStatus() override;
+  MediaDecoderOwner::NextFrameStatus GetNextFrameStatus() override;
 
-  virtual nsRefPtr<MediaDecoder::SeekPromise> Seek(SeekTarget aTarget) override;
+  RefPtr<MediaDecoder::SeekPromise> Seek(SeekTarget aTarget) override;
 
   void TimeUpdate();
 
@@ -146,10 +146,10 @@ private:
   // mLock
   SeekTarget mSeekTarget;
 
-  // MediaPromise of current seek.
+  // MozPromise of current seek.
   // Used in main thread and offload callback thread, protected by Mutex
   // mLock
-  MediaPromiseHolder<MediaDecoder::SeekPromise> mSeekPromise;
+  MozPromiseHolder<MediaDecoder::SeekPromise> mSeekPromise;
 
   // Positions obtained from offlaoded tracks (DSP)
   // Used in main thread and offload callback thread, protected by Mutex
@@ -190,9 +190,7 @@ private:
 
   // To avoid device suspend when mResetTimer is going to be triggered.
   // Used only from main thread so no lock is needed.
-  nsRefPtr<mozilla::dom::WakeLock> mWakeLock;
-
-  int64_t GetMediaTimeUs();
+  RefPtr<mozilla::dom::WakeLock> mWakeLock;
 
   // Provide the playback position in microseconds from total number of
   // frames played by audio track

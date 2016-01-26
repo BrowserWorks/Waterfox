@@ -1,8 +1,13 @@
+% This Source Code Form is subject to the terms of the Mozilla Public
+% License, v. 2.0. If a copy of the MPL was not distributed with this
+% file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 @import url("chrome://global/skin/in-content/common.css");
 /* Body and container */
 body {
   display: flex;
-  box-sizing: padding-box;
+  flex-direction: column;
+  box-sizing: border-box;
   min-height: 100vh;
   padding-top: 0;
   padding-bottom: 0;
@@ -17,9 +22,16 @@ body {
   max-width: 52em;
 }
 
+.container.restore-chosen {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin: 10vh 0;
+}
+
 /* Typography */
 .title {
-  background-image: url("chrome://browser/skin/aboutNetError_info.svg");
+  background-image: url("chrome://global/skin/icons/info.svg");
   background-position: left 0;
   background-repeat: no-repeat;
   background-size: 1.6em;
@@ -82,8 +94,16 @@ ul {
 }
 
 /* Trees */
-tree {
-  min-height: 12em;
+.tree-container {
   margin-top: 1.2em;
+  flex-grow: 1;
+  min-height: 12em;
+}
+
+.tree-container > tree {
+  height: 100%;
+}
+
+tree {
   width: 100%;
 }

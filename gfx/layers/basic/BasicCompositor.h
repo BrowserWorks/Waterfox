@@ -46,26 +46,21 @@ protected:
   virtual ~BasicCompositor();
 
 public:
-  virtual bool Initialize() override { return true; };
+  virtual bool Initialize() override;
 
   virtual void Destroy() override;
 
-  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
-  {
-    return TextureFactoryIdentifier(LayersBackend::LAYERS_BASIC,
-                                    XRE_GetProcessType(),
-                                    GetMaxTextureSize());
-  }
+  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTarget(const gfx::IntRect &aRect, SurfaceInitMode aInit) override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                const CompositingRenderTarget *aSource,
                                const gfx::IntPoint &aSourcePoint) override;
 
-  virtual TemporaryRef<DataTextureSource>
+  virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
   virtual bool SupportsEffect(EffectTypes aEffect) override;
@@ -84,7 +79,8 @@ public:
                         const gfx::Rect& aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
-                        const gfx::Matrix4x4 &aTransform) override;
+                        const gfx::Matrix4x4& aTransform,
+                        const gfx::Rect& aVisibleRect) override;
 
   virtual void ClearRect(const gfx::Rect& aRect) override;
 
@@ -94,10 +90,7 @@ public:
                           gfx::Rect *aClipRectOut = nullptr,
                           gfx::Rect *aRenderBoundsOut = nullptr) override;
   virtual void EndFrame() override;
-  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override
-  {
-    NS_RUNTIMEABORT("We shouldn't ever hit this");
-  }
+  virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override;
 
   virtual bool SupportsPartialTextureUpdate() override { return true; }
   virtual bool CanUseCanvasLayerForSize(const gfx::IntSize &aSize) override { return true; }
@@ -108,8 +101,6 @@ public:
   }
 
   virtual void MakeCurrent(MakeCurrentFlags aFlags = 0) override { }
-
-  virtual void PrepareViewport(const gfx::IntSize& aSize) override { }
 
 #ifdef MOZ_DUMP_PAINTING
   virtual const char* Name() const override { return "Basic"; }
@@ -125,19 +116,17 @@ public:
 
 private:
 
-  virtual gfx::IntSize GetWidgetSize() const override { return mWidgetSize; }
-
   // Widget associated with this compositor
   nsIWidget *mWidget;
-  gfx::IntSize mWidgetSize;
 
   // The final destination surface
   RefPtr<gfx::DrawTarget> mDrawTarget;
   // The current render target for drawing
   RefPtr<BasicCompositingRenderTarget> mRenderTarget;
 
-  gfx::IntRect mInvalidRect;
-  nsIntRegion mInvalidRegion;
+  LayoutDeviceIntRect mInvalidRect;
+  LayoutDeviceIntRegion mInvalidRegion;
+  bool mDidExternalComposition;
 
   uint32_t mMaxTextureSize;
 };

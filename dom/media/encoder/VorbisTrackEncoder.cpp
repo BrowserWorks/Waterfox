@@ -17,23 +17,14 @@ static const float BASE_QUALITY = 0.4f;
 namespace mozilla {
 
 #undef LOG
-#ifdef PR_LOGGING
-PRLogModuleInfo* gVorbisTrackEncoderLog;
-#define VORBISLOG(msg, ...) PR_LOG(gVorbisTrackEncoderLog, PR_LOG_DEBUG, \
+LazyLogModule gVorbisTrackEncoderLog("VorbisTrackEncoder");
+#define VORBISLOG(msg, ...) MOZ_LOG(gVorbisTrackEncoderLog, mozilla::LogLevel::Debug, \
                              (msg, ##__VA_ARGS__))
-#else
-#define VORBISLOG(msg, ...)
-#endif
 
 VorbisTrackEncoder::VorbisTrackEncoder()
   : AudioTrackEncoder()
 {
   MOZ_COUNT_CTOR(VorbisTrackEncoder);
-#ifdef PR_LOGGING
-  if (!gVorbisTrackEncoderLog) {
-    gVorbisTrackEncoderLog = PR_NewLogModule("VorbisTrackEncoder");
-  }
-#endif
 }
 
 VorbisTrackEncoder::~VorbisTrackEncoder()
@@ -62,9 +53,12 @@ VorbisTrackEncoder::Init(int aChannels, int aSamplingRate)
 
   int ret = 0;
   vorbis_info_init(&mVorbisInfo);
+  double quality = mAudioBitrate ? (double)mAudioBitrate/aSamplingRate :
+                   BASE_QUALITY;
 
+  printf("quality %f \n", quality);
   ret = vorbis_encode_init_vbr(&mVorbisInfo, mChannels, mSamplingRate,
-                               BASE_QUALITY);
+                               quality);
 
   mInitialized = (ret == 0);
 
@@ -107,7 +101,7 @@ VorbisTrackEncoder::GetMetadata()
 
   // Vorbis codec specific data
   // http://matroska.org/technical/specs/codecid/index.html
-  nsRefPtr<VorbisMetadata> meta = new VorbisMetadata();
+  RefPtr<VorbisMetadata> meta = new VorbisMetadata();
   meta->mBitDepth = 32; // float for desktop
   meta->mChannels = mChannels;
   meta->mSamplingFrequency = mSamplingRate;
@@ -148,6 +142,8 @@ VorbisTrackEncoder::GetEncodedFrames(EncodedFrameContainer& aData)
       VORBISLOG("vorbis_analysis_blockout block size %d", oggPacket.bytes);
       EncodedFrame* audiodata = new EncodedFrame();
       audiodata->SetFrameType(EncodedFrame::VORBIS_AUDIO_FRAME);
+      audiodata->SetTimeStamp(oggPacket.granulepos * PR_USEC_PER_SEC
+                              / mSamplingRate);
       nsTArray<uint8_t> frameData;
       frameData.AppendElements(oggPacket.packet, oggPacket.bytes);
       audiodata->SwapInFrameData(frameData);

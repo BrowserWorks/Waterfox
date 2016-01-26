@@ -71,11 +71,12 @@ VolumeManager::NumVolumes()
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::GetVolume(size_t aIndex)
 {
   MOZ_ASSERT(aIndex < NumVolumes());
-  return sVolumeManager->mVolumeArray[aIndex];
+  RefPtr<Volume> vol = sVolumeManager->mVolumeArray[aIndex];
+  return vol.forget();
 }
 
 //static
@@ -124,7 +125,7 @@ void VolumeManager::UnregisterStateObserver(StateObserver* aObserver)
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::FindVolumeByName(const nsCSubstring& aName)
 {
   if (!sVolumeManager) {
@@ -135,25 +136,46 @@ VolumeManager::FindVolumeByName(const nsCSubstring& aName)
   for (volIndex = 0; volIndex < numVolumes; volIndex++) {
     RefPtr<Volume> vol = GetVolume(volIndex);
     if (vol->Name().Equals(aName)) {
-      return vol;
+      return vol.forget();
     }
   }
   return nullptr;
 }
 
 //static
-TemporaryRef<Volume>
+already_AddRefed<Volume>
 VolumeManager::FindAddVolumeByName(const nsCSubstring& aName)
 {
   RefPtr<Volume> vol = FindVolumeByName(aName);
   if (vol) {
-    return vol;
+    return vol.forget();
   }
   // No volume found, create and add a new one.
   vol = new Volume(aName);
   sVolumeManager->mVolumeArray.AppendElement(vol);
-  return vol;
+  return vol.forget();
 }
+
+//static
+bool
+VolumeManager::RemoveVolumeByName(const nsCSubstring& aName)
+{
+  if (!sVolumeManager) {
+    return false;
+  }
+  VolumeArray::size_type  numVolumes = NumVolumes();
+  VolumeArray::index_type volIndex;
+  for (volIndex = 0; volIndex < numVolumes; volIndex++) {
+    RefPtr<Volume> vol = GetVolume(volIndex);
+    if (vol->Name().Equals(aName)) {
+      sVolumeManager->mVolumeArray.RemoveElementAt(volIndex);
+      return true;
+    }
+  }
+  // No volume found. Return false to indicate this.
+  return false;
+}
+
 
 //static
 void VolumeManager::InitConfig()
@@ -233,6 +255,17 @@ void VolumeManager::InitConfig()
       } else {
         ERR("Invalid volume name '%s'.", volName.get());
       }
+      continue;
+    }
+    if (command.EqualsLiteral("ignore")) {
+      // This command is useful to remove volumes which are being tracked by
+      // vold, but for which we have no interest.
+      if (!tokenizer.hasMoreTokens()) {
+        ERR("No vol_name in %s line %d", filename, n);
+        continue;
+      }
+      nsCString volName(tokenizer.nextToken());
+      RemoveVolumeByName(volName);
       continue;
     }
     ERR("Unrecognized command: '%s'", command.get());

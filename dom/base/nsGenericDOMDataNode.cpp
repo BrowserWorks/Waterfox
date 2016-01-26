@@ -33,7 +33,7 @@
 #include "nsCCUncollectableMarker.h"
 #include "mozAutoDocUpdate.h"
 
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "prprf.h"
 #include "nsWrapperCacheInlines.h"
 
@@ -343,7 +343,6 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
     // Allocate new buffer
     int32_t newLength = textLength - aCount + aLength;
     char16_t* to = new char16_t[newLength];
-    NS_ENSURE_TRUE(to, NS_ERROR_OUT_OF_MEMORY);
 
     // Copy over appropriate data
     if (aOffset) {
@@ -387,7 +386,7 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
     nsNodeUtils::CharacterDataChanged(this, &info);
 
     if (haveMutationListeners) {
-      InternalMutationEvent mutation(true, NS_MUTATION_CHARACTERDATAMODIFIED);
+      InternalMutationEvent mutation(true, eLegacyCharacterDataModified);
 
       mutation.mPrevAttrValue = oldValue;
       if (aLength > 0) {
@@ -514,6 +513,8 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     }
   }
 
+  bool hadParent = !!GetParentNode();
+
   // Set parent
   if (aParent) {
     if (!GetParent()) {
@@ -548,6 +549,9 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   }
 
   nsNodeUtils::ParentChainChanged(this);
+  if (!hadParent && IsRootOfNativeAnonymousSubtree()) {
+    nsNodeUtils::NativeAnonymousChildListChange(this, false);
+  }
 
   UpdateEditableState(false);
 
@@ -570,6 +574,9 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
     HasFlag(NODE_FORCE_XBL_BINDINGS) ? OwnerDoc() : GetComposedDoc();
 
   if (aNullParent) {
+    if (this->IsRootOfNativeAnonymousSubtree()) {
+      nsNodeUtils::NativeAnonymousChildListChange(this, true);
+    }
     if (GetParent()) {
       NS_RELEASE(mParent);
     } else {
@@ -696,7 +703,10 @@ ShadowRoot *
 nsGenericDOMDataNode::GetContainingShadow() const
 {
   nsDataSlots *slots = GetExistingDataSlots();
-  return slots ? slots->mContainingShadow : nullptr;
+  if (!slots) {
+    return nullptr;
+  }
+  return slots->mContainingShadow;
 }
 
 void

@@ -1,0 +1,10 @@
+$inherits:
+  from: 'tasks/builds/dbg_linux64_clobber.yml'
+task:
+  # same as clobber, but with a cached workspace
+  scopes:
+    - 'docker-worker:cache:level-{{level}}-{{project}}-build-linux64-workspace'
+
+  payload:
+    cache:
+      level-{{level}}-{{project}}-build-linux64-workspace: '/home/worker/workspace'

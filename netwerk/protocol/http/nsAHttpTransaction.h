@@ -11,7 +11,7 @@
 
 class nsIInterfaceRequestor;
 class nsITransport;
-class nsILoadGroupConnectionInfo;
+class nsISchedulingContext;
 
 namespace mozilla { namespace net {
 
@@ -100,7 +100,7 @@ public:
     // at least partially written and cannot be moved.
     //
     virtual nsresult TakeSubTransactions(
-        nsTArray<nsRefPtr<nsAHttpTransaction> > &outTransactions) = 0;
+        nsTArray<RefPtr<nsAHttpTransaction> > &outTransactions) = 0;
 
     // called to add a sub-transaction in the case of pipelined transactions
     // classes that do not implement sub transactions
@@ -144,8 +144,8 @@ public:
     // other types
     virtual SpdyConnectTransaction *QuerySpdyConnectTransaction() { return nullptr; }
 
-    // return the load group connection information associated with the transaction
-    virtual nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() { return nullptr; }
+    // return the scheduling context associated with the transaction
+    virtual nsISchedulingContext *SchedulingContext() { return nullptr; }
 
     // return the connection information associated with the transaction
     virtual nsHttpConnectionInfo *ConnectionInfo() = 0;
@@ -212,7 +212,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpTransaction, NS_AHTTPTRANSACTION_IID)
     void     SetProxyConnectFailed() override;                                   \
     virtual nsHttpRequestHead *RequestHead() override;                                   \
     uint32_t Http1xTransactionCount() override;                                  \
-    nsresult TakeSubTransactions(nsTArray<nsRefPtr<nsAHttpTransaction> > &outTransactions) override; \
+    nsresult TakeSubTransactions(nsTArray<RefPtr<nsAHttpTransaction> > &outTransactions) override; \
     nsresult AddTransaction(nsAHttpTransaction *) override;                      \
     uint32_t PipelineDepth() override;                                           \
     nsresult SetPipelinePosition(int32_t) override;                              \
@@ -265,6 +265,7 @@ public:
 #define NS_DECL_NSAHTTPSEGMENTWRITER \
     nsresult OnWriteSegment(char *, uint32_t, uint32_t *) override;
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // nsAHttpTransaction_h__

@@ -25,6 +25,8 @@ class JavaScriptParent : public JavaScriptBase<PJavaScriptParent>
 
     void drop(JSObject* obj);
 
+    bool allowMessage(JSContext* cx) override;
+
     mozilla::ipc::IProtocol*
     CloneProtocol(Channel* aChannel, ProtocolCloneContext* aCtx) override;
 
@@ -33,8 +35,8 @@ class JavaScriptParent : public JavaScriptBase<PJavaScriptParent>
     virtual JSObject* scopeForTargetObjects() override;
 };
 
-} // jsipc
-} // mozilla
+} // namespace jsipc
+} // namespace mozilla
 
 #endif // mozilla_jsipc_JavaScriptWrapper_h__
 

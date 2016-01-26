@@ -21,6 +21,7 @@ public:
     NS_DECL_NSISTREAMTRANSPORTSERVICE
     NS_DECL_NSIEVENTTARGET
     NS_DECL_NSIOBSERVER
+    using nsIEventTarget::Dispatch;
 
     nsresult Init();
 

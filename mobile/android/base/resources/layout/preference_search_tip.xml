@@ -3,7 +3,10 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
+<!-- Ignore UseCompoundDrawables because they caused a regression in bug 1208790. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              tools:ignore="UseCompoundDrawables"
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -11,7 +14,7 @@
 
     <TextView android:id="@+id/label_search_hint"
               android:layout_height="wrap_content"
-              android:layout_width="wrap_content"
+              android:layout_width="0dp"
               android:text="@string/pref_search_hint"
               android:layout_marginTop="5dip"
               android:layout_marginBottom="6dip"

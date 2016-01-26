@@ -32,6 +32,10 @@ const kEventConstructors = {
                                                          return new AnimationEvent(aName, aProps);
                                                        },
                                              },
+  AnimationPlaybackEvent:                    { create: function (aName, aProps) {
+                                                         return new AnimationPlaybackEvent(aName, aProps);
+                                                       },
+                                             },
   AudioProcessingEvent:                      { create: null, // Cannot create untrusted event from JS.
                                              },
   BeforeAfterKeyboardEvent:                  { create: function (aName, aProps) {
@@ -60,8 +64,8 @@ const kEventConstructors = {
                                                           return new BluetoothDeviceEvent(aName, aProps);
                                                        },
                                              },
-  BluetoothDiscoveryStateChangedEvent:       { create: function (aName, aProps) {
-                                                          return new BluetoothDiscoveryStateChangedEvent(aName, aProps);
+  BluetoothGattAttributeEvent:               { create: function (aName, aProps) {
+                                                          return new BluetoothGattAttributeEvent(aName, aProps);
                                                        },
                                              },
   BluetoothGattCharacteristicEvent:          { create: function (aName, aProps) {
@@ -72,12 +76,52 @@ const kEventConstructors = {
                                                           return new BluetoothLeDeviceEvent(aName, aProps);
                                                        },
                                              },
+  BluetoothObexAuthEvent:                    { create: function (aName, aProps) {
+                                                          return new BluetoothObexAuthEvent(aName, aProps);
+                                                       },
+                                             },
   BluetoothPairingEvent:                     { create: function (aName, aProps) {
                                                           return new BluetoothPairingEvent(aName, aProps);
                                                        },
                                              },
+  BluetoothMapFolderListingEvent:            { create: function (aName, aProps) {
+                                                          return new BluetoothMapFolderListingEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothMapGetMessageEvent:               { create: function (aName, aProps) {
+                                                          return new BluetoothMapGetMessageEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothMapMessagesListingEvent:          { create: function (aName, aProps) {
+                                                          return new BluetoothMapMessagesListingEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothMapMessageUpdateEvent:            { create: function (aName, aProps) {
+                                                          return new BluetoothMapMessageUpdateEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothMapSendMessageEvent:              { create: function (aName, aProps) {
+                                                          return new BluetoothMapSendMessageEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothMapSetMessageStatusEvent:         { create: function (aName, aProps) {
+                                                          return new BluetoothMapSetMessageStatusEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothPhonebookPullingEvent:            { create: function (aName, aProps) {
+                                                          return new BluetoothPhonebookPullingEvent(aName, aProps);
+                                                       },
+                                             },
   BluetoothStatusChangedEvent:               { create: function (aName, aProps) {
                                                           return new BluetoothStatusChangedEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothVCardListingEvent:                { create: function (aName, aProps) {
+                                                          return new BluetoothVCardListingEvent(aName, aProps);
+                                                       },
+                                             },
+  BluetoothVCardPullingEvent:                { create: function (aName, aProps) {
+                                                          return new BluetoothVCardPullingEvent(aName, aProps);
                                                        },
                                              },
   CallEvent:                                 { create: function (aName, aProps) {
@@ -128,10 +172,6 @@ const kEventConstructors = {
                                                          e.initCompositionEvent(aName, aProps.bubbles, aProps.cancelable,
                                                                                 aProps.view, aProps.data, aProps.locale);
                                                          return e;
-                                                       },
-                                             },
-  CSSFontFaceLoadEvent:                      { create: function (aName, aProps) {
-                                                         return new CSSFontFaceLoadEvent(aName, aProps);
                                                        },
                                              },
   CustomEvent:                               { create: function (aName, aProps) {
@@ -205,6 +245,10 @@ const kEventConstructors = {
   },
   FocusEvent:                                { create: function (aName, aProps) {
                                                          return new FocusEvent(aName, aProps);
+                                                       },
+                                             },
+  FontFaceSetLoadEvent:                      { create: function (aName, aProps) {
+                                                         return new FontFaceSetLoadEvent(aName, aProps);
                                                        },
                                              },
   GamepadEvent:                              { create: function (aName, aProps) {
@@ -405,12 +449,22 @@ const kEventConstructors = {
                                                          return new RTCPeerConnectionIceEvent(aName, aProps);
                                                        },
                                              },
+  RTCTrackEvent:                             {
+                                               // Difficult to test required arguments.
+                                             },
   ScrollAreaEvent:                           { create: function (aName, aProps) {
                                                          var e = document.createEvent("scrollareaevent");
                                                          e.initScrollAreaEvent(aName, aProps.bubbles, aProps.cancelable,
                                                                                aProps.view, aProps.details,
                                                                                aProps.x || 0.0, aProps.y || 0.0,
                                                                                aProps.width || 0.0, aProps.height || 0.0);
+                                                         return e;
+                                                       },
+                                             },
+  ServiceWorkerMessageEvent:                 { create: function (aName, aProps) {
+                                                         var e = new ServiceWorkerMessageEvent("serviceworkermessageevent", { bubbles: aProps.bubbles,
+                                                             cancelable: aProps.cancelable, data: aProps.data, origin: aProps.origin,
+                                                             lastEventId: aProps.lastEventId, source: aProps.source });
                                                          return e;
                                                        },
                                              },
@@ -427,11 +481,22 @@ const kEventConstructors = {
                                                          return e;
                                                        },
                                              },
+  SpeechRecognitionError:                    { create: function (aName, aProps) {
+                                                         return new SpeechRecognitionError(aName, aProps);
+                                                       },
+                                             },
   SpeechRecognitionEvent:                    { create: function (aName, aProps) {
                                                          return new SpeechRecognitionEvent(aName, aProps);
                                                        },
                                              },
+  SpeechSynthesisErrorEvent:                 { create: function (aName, aProps) {
+                                                         aProps.error = "synthesis-unavailable";
+                                                         aProps.utterance = new SpeechSynthesisUtterance("Hello World");
+                                                         return new SpeechSynthesisErrorEvent(aName, aProps);
+                                                       },
+                                             },
   SpeechSynthesisEvent:                      { create: function (aName, aProps) {
+                                                         aProps.utterance = new SpeechSynthesisUtterance("Hello World");
                                                          return new SpeechSynthesisEvent(aName, aProps);
                                                        },
                                              },
@@ -459,6 +524,18 @@ const kEventConstructors = {
                                                          e.initUIEvent(aName, aProps.bubbles, aProps.cancelable,
                                                                        aProps.view, aProps.detail);
                                                          return e;
+                                                       },
+                                             },
+  TCPSocketErrorEvent:                       { create: function(aName, aProps) {
+                                                         return new TCPSocketErrorEvent(aName, aProps);
+                                                       },
+                                             },
+  TCPSocketEvent:                            { create: function(aName, aProps) {
+                                                         return new TCPSocketEvent(aName, aProps);
+                                                       },
+                                             },
+  TCPServerSocketEvent:                      { create: function(aName, aProps) {
+                                                         return new TCPServerSocketEvent(aName, aProps);
                                                        },
                                              },
   TimeEvent:                                 { create: function (aName, aProps) {

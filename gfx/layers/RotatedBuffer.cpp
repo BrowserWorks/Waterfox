@@ -24,7 +24,7 @@
 #include "mozilla/gfx/Types.h"          // for ExtendMode::ExtendMode::CLAMP, etc
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowableLayer
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
-#include "nsSize.h"                     // for nsIntSize
+#include "mozilla/gfx/Point.h"          // for IntSize
 #include "gfx2DGlue.h"
 #include "nsLayoutUtils.h"              // for invalidation debugging
 
@@ -109,17 +109,17 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
       aOperator == CompositionOp::OP_SOURCE) {
     aOperator = CompositionOp::OP_OVER;
     if (snapshot->GetFormat() == SurfaceFormat::B8G8R8A8) {
-      aTarget->ClearRect(ToRect(fillRect));
+      aTarget->ClearRect(IntRectToRect(fillRect));
     }
   }
 
-  if (aOperator == CompositionOp::OP_SOURCE) {
-    // OP_SOURCE is unbounded in Azure, and we really don't want that behaviour here.
-    // We also can't do a ClearRect+FillRect since we need the drawing to happen
-    // as an atomic operation (to prevent flickering).
-    aTarget->PushClipRect(gfx::Rect(fillRect.x, fillRect.y,
-                                    fillRect.width, fillRect.height));
-  }
+  // OP_SOURCE is unbounded in Azure, and we really don't want that behaviour here.
+  // We also can't do a ClearRect+FillRect since we need the drawing to happen
+  // as an atomic operation (to prevent flickering).
+  // We also need this clip in the case where we have a mask, since the mask surface
+  // might cover more than fillRect, but we only want to touch the pixels inside
+  // fillRect.
+  aTarget->PushClipRect(IntRectToRect(fillRect));
 
   if (aMask) {
     Matrix oldTransform = aTarget->GetTransform();
@@ -149,15 +149,13 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
 #else
     DrawSurfaceOptions options;
 #endif
-    aTarget->DrawSurface(snapshot, ToRect(fillRect),
+    aTarget->DrawSurface(snapshot, IntRectToRect(fillRect),
                          GetSourceRectangle(aXSide, aYSide),
                          options,
                          DrawOptions(aOpacity, aOperator));
   }
 
-  if (aOperator == CompositionOp::OP_SOURCE) {
-    aTarget->PopClip();
-  }
+  aTarget->PopClip();
 }
 
 void
@@ -179,7 +177,7 @@ RotatedBuffer::DrawBufferWithRotation(gfx::DrawTarget *aTarget, ContextSource aS
   DrawBufferQuadrant(aTarget, RIGHT, BOTTOM, aSource, aOpacity, aOperator,aMask, aMaskTransform);
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 SourceRotatedBuffer::GetSourceSurface(ContextSource aSource) const
 {
   RefPtr<SourceSurface> surf;
@@ -191,7 +189,7 @@ SourceRotatedBuffer::GetSourceSurface(ContextSource aSource) const
   }
 
   MOZ_ASSERT(surf);
-  return surf;
+  return surf.forget();
 }
 
 /* static */ bool
@@ -223,14 +221,14 @@ RotatedContentBuffer::DrawTo(PaintedLayer* aLayer,
   // Also clip to the visible region if we're told to.
   if (!aLayer->GetValidRegion().Contains(BufferRect()) ||
       (ToData(aLayer)->GetClipToVisibleRegion() &&
-       !aLayer->GetVisibleRegion().Contains(BufferRect())) ||
-      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion())) {
+       !aLayer->GetVisibleRegion().ToUnknownRegion().Contains(BufferRect())) ||
+      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion())) {
     // We don't want to draw invalid stuff, so we need to clip. Might as
     // well clip to the smallest area possible --- the visible region.
     // Bug 599189 if there is a non-integer-translation transform in aTarget,
     // we might sample pixels outside GetEffectiveVisibleRegion(), which is wrong
     // and may cause gray lines.
-    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion());
+    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
     clipped = true;
   }
 
@@ -308,9 +306,12 @@ RotatedContentBuffer::BorrowDrawTargetForQuadrantUpdate(const IntRect& aBounds,
 void
 BorrowDrawTarget::ReturnDrawTarget(gfx::DrawTarget*& aReturned)
 {
+  MOZ_ASSERT(mLoanedDrawTarget);
   MOZ_ASSERT(aReturned == mLoanedDrawTarget);
-  mLoanedDrawTarget->SetTransform(mLoanedTransform);
-  mLoanedDrawTarget = nullptr;
+  if (mLoanedDrawTarget) {
+    mLoanedDrawTarget->SetTransform(mLoanedTransform);
+    mLoanedDrawTarget = nullptr;
+  }
   aReturned = nullptr;
 }
 
@@ -332,7 +333,7 @@ RotatedContentBuffer::BufferContentType()
 }
 
 bool
-RotatedContentBuffer::BufferSizeOkFor(const nsIntSize& aSize)
+RotatedContentBuffer::BufferSizeOkFor(const IntSize& aSize)
 {
   return (aSize == mBufferRect.Size() ||
           (SizedToVisibleBounds != mBufferSizePolicy &&
@@ -453,7 +454,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
 
   while (true) {
     mode = aLayer->GetSurfaceMode();
-    neededRegion = aLayer->GetVisibleRegion();
+    neededRegion = aLayer->GetVisibleRegion().ToUnknownRegion();
     canReuseBuffer &= BufferSizeOkFor(neededRegion.GetBounds().Size());
     result.mContentType = layerContentType;
 
@@ -736,6 +737,7 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   if (!result) {
     return nullptr;
   }
+
   nsIntRegion* drawPtr = &aPaintState.mRegionToDraw;
   if (aIter) {
     // The iterators draw region currently only contains the bounds of the region,
@@ -745,6 +747,8 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   }
   if (result->GetBackendType() == BackendType::DIRECT2D ||
       result->GetBackendType() == BackendType::DIRECT2D1_1) {
+    // Simplify the draw region to avoid hitting expensive drawing paths
+    // for complex regions.
     drawPtr->SimplifyOutwardByArea(100 * 100);
   }
 
@@ -775,7 +779,7 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
   return result;
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 RotatedContentBuffer::GetSourceSurface(ContextSource aSource) const
 {
   MOZ_ASSERT(mDTBuffer);
@@ -788,6 +792,6 @@ RotatedContentBuffer::GetSourceSurface(ContextSource aSource) const
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 

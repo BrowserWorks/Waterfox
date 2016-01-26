@@ -1,29 +1,6 @@
 var databaseName = "database";
 var databaseVersion = 1;
 
-if (!window.indexedDB)
-{
-    if (window.msIndexedDB)
-    {
-        window.indexedDB = window.msIndexedDB;
-    }
-    else if (window.mozIndexedDB)
-    {
-        window.indexedDB = window.mozIndexedDB;
-    }
-    else if (window.webkitIndexedDB)
-    {
-        window.indexedDB        = webkitIndexedDB;
-        IDBCursor               = webkitIDBCursor;
-        IDBDatabaseException    = webkitIDBDatabaseException;
-        IDBIndex                = webkitIDBIndex;
-        IDBObjectStore          = webkitIDBObjectStore;
-        IDBRequest              = webkitIDBRequest;
-        IDBKeyRange             = webkitIDBKeyRange;
-        IDBTransaction          = webkitIDBTransaction;
-    }
-}
-
 /* Delete created databases
  *
  * Go through each finished test, see if it has an associated database. Close
@@ -119,4 +96,8 @@ function createdb_for_multiple_tests(dbname, version) {
     });
 
     return rq_open;
+}
+
+function assert_key_equals(actual, expected, description) {
+    assert_equals(indexedDB.cmp(actual, expected), 0, description);
 }

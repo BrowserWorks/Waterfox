@@ -8,7 +8,7 @@
 "use strict";
 dump("############################### browserElementPanningAPZDisabled.js loaded\n");
 
-let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
+var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Geometry.jsm");
 
@@ -348,8 +348,10 @@ const ContentPanningAPZDisabled = {
       let isScrollableTextarea = (node.tagName == 'TEXTAREA' &&
           (node.scrollHeight > node.clientHeight ||
            node.scrollWidth > node.clientWidth ||
-           ('scrollLeftMax' in node && node.scrollLeftMax > 0) ||
-           ('scrollTopMax' in node && node.scrollTopMax > 0)));
+           ('scrollLeftMin' in node && 'scrollLeftMax' in node &&
+            node.scrollLeftMin != node.scrollLeftMax) ||
+           ('scrollTopMin' in node && 'scrollTopMax' in node &&
+            node.scrollTopMin != node.scrollTopMax)));
       if (isScroll || isAuto || isScrollableTextarea) {
         return node;
       }
@@ -357,7 +359,8 @@ const ContentPanningAPZDisabled = {
       node = node.parentNode;
     }
 
-    if (nodeContent.scrollMaxX || nodeContent.scrollMaxY) {
+    if (nodeContent.scrollMaxX != nodeContent.scrollMinX ||
+        nodeContent.scrollMaxY != nodeContent.scrollMinY) {
       return nodeContent;
     }
 
@@ -622,7 +625,7 @@ const KineticPanning = {
                    v.y * Math.exp(-t / c) * -c + a.y * t * t + v.y * c);
     }
 
-    let startTime = content.mozAnimationStartTime;
+    let startTime = content.performance.now();
     let elapsedTime = 0, targetedTime = 0, averageTime = 0;
 
     let velocity = this._velocity;
@@ -667,9 +670,9 @@ const KineticPanning = {
         return;
       }
 
-      content.mozRequestAnimationFrame(callback);
+      content.requestAnimationFrame(callback);
     }).bind(this);
 
-    content.mozRequestAnimationFrame(callback);
+    content.requestAnimationFrame(callback);
   }
 };

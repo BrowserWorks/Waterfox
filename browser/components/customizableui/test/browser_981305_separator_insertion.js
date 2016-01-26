@@ -4,7 +4,7 @@
 
 "use strict";
 
-let tempElements = [];
+var tempElements = [];
 
 function insertTempItemsIntoMenu(parentMenu) {
   // Last element is null to insert at the end:
@@ -24,7 +24,7 @@ function insertTempItemsIntoMenu(parentMenu) {
 }
 
 function checkSeparatorInsertion(menuId, buttonId, subviewId) {
-  return function() {
+  return function*() {
     info("Checking for duplicate separators in " + buttonId + " widget");
     let menu = document.getElementById(menuId);
     insertTempItemsIntoMenu(menu);

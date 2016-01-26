@@ -40,10 +40,12 @@ let tests = [
   function* setup() {
     Services.prefs.setBoolPref("browser.send_pings", true);
     Services.prefs.setIntPref("browser.send_pings.max_per_link", -1);
+    Services.prefs.setBoolPref("security.mixed_content.block_active_content", false);
 
     SimpleTest.registerCleanupFunction(() => {
       Services.prefs.clearUserPref("browser.send_pings");
       Services.prefs.clearUserPref("browser.send_pings.max_per_link");
+      Services.prefs.clearUserPref("security.mixed_content.block_active_content");
     });
   },
 
@@ -242,9 +244,7 @@ function createToPathHandler(server, path) {
 // createPingPathHandler() defined below to ensure all headers are sent
 // and received as expected.
 function createPingPathHandlers(server, paths, lazyHeaders) {
-  return [
-    createPingPathHandler(server, path, lazyHeaders) for (path of paths)
-  ]
+  return Array.from(paths, (path) => createPingPathHandler(server, path, lazyHeaders));
 }
 
 // Registers a path handler for the given server that will receive pings as

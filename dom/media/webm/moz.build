@@ -5,23 +5,17 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
-    'IntelWebMVideoDecoder.h',
-    'SoftwareWebMVideoDecoder.h',
+    'NesteggPacketHolder.h',
     'WebMBufferedParser.h',
     'WebMDecoder.h',
-    'WebMReader.h',
+    'WebMDemuxer.h',
 ]
 
 UNIFIED_SOURCES += [
-    'SoftwareWebMVideoDecoder.cpp',
     'WebMBufferedParser.cpp',
     'WebMDecoder.cpp',
-    'WebMReader.cpp',
+    'WebMDemuxer.cpp',
 ]
-
-if CONFIG['MOZ_FMP4'] and CONFIG['MOZ_WMF']:
-    DEFINES['MOZ_PDM_VPX'] = True
-    UNIFIED_SOURCES += ['IntelWebMVideoDecoder.cpp']
 
 if CONFIG['MOZ_WEBM_ENCODER']:
     EXPORTS += ['WebMWriter.h']
@@ -30,7 +24,5 @@ if CONFIG['MOZ_WEBM_ENCODER']:
     ]
 
 CXXFLAGS += CONFIG['MOZ_LIBVPX_CFLAGS']
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

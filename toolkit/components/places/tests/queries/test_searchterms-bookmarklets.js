@@ -3,7 +3,7 @@
 
 // Check that bookmarklets are returned by searches with searchTerms.
 
-let testData = [
+var testData = [
   { isInQuery: true
   , isBookmark: true
   , title: "bookmark 1"
@@ -22,7 +22,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_initalize()
+add_task(function* test_initalize()
 {
   yield task_populateDB(testData);
 });

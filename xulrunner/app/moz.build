@@ -4,8 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-DIRS += ['profile']
-
 GeckoProgram('xulrunner')
 
 SOURCES += [
@@ -13,7 +11,7 @@ SOURCES += [
 ]
 
 DEFINES['XULRUNNER_PROGNAME'] = '"xulrunner"'
-if CONFIG['DEBUG']:
+if CONFIG['MOZ_DEBUG']:
     DEFINES['DEBUG'] = True
 
 LOCAL_INCLUDES += [
@@ -54,19 +52,15 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
 DISABLE_STL_WRAPPING = True
 
-FAIL_ON_WARNINGS = True
-
-JS_PREFERENCE_FILES += [
+JS_PREFERENCE_PP_FILES += [
     'xulrunner.js',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     BRANDING_FILES += [
-        'app.ico',
         'document.ico',
         'xulrunner.ico',
     ]
-    BRANDING_FILES['app.ico'].source = 'xulrunner.ico'
 
 if CONFIG['MOZ_WIDGET_GTK']:
     BRANDING_FILES += [

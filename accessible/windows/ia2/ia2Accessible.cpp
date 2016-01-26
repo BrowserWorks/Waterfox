@@ -8,6 +8,7 @@
 
 #include "Accessible2_i.c"
 #include "Accessible2_2_i.c"
+#include "Accessible2_3_i.c"
 #include "AccessibleRole.h"
 #include "AccessibleStates.h"
 
@@ -18,6 +19,8 @@
 #include "nsIAccessibleTypes.h"
 #include "mozilla/a11y/PDocAccessible.h"
 #include "Relation.h"
+#include "TextRange-inl.h"
+#include "nsAccessibilityService.h"
 
 #include "nsIPersistentProperties2.h"
 #include "nsISimpleEnumerator.h"
@@ -39,7 +42,9 @@ ia2Accessible::QueryInterface(REFIID iid, void** ppv)
 
   *ppv = nullptr;
 
-  if (IID_IAccessible2_2 == iid)
+  if (IID_IAccessible2_3 == iid)
+    *ppv = static_cast<IAccessible2_3*>(this);
+  else if (IID_IAccessible2_2 == iid)
     *ppv = static_cast<IAccessible2_2*>(this);
   else if (IID_IAccessible2 == iid && !Compatibility::IsIA2Off())
     *ppv = static_cast<IAccessible2*>(this);
@@ -117,12 +122,12 @@ ia2Accessible::get_relation(long aRelationIndex,
         continue;
 
       if (static_cast<size_t>(aRelationIndex) == i) {
-        nsTArray<nsRefPtr<Accessible>> targets;
+        nsTArray<RefPtr<Accessible>> targets;
         size_t targetCount = targetSets[i].Length();
         for (size_t j = 0; j < targetCount; j++)
           targets.AppendElement(WrapperFor(targetSets[i][j]));
 
-        nsRefPtr<ia2AccessibleRelation> rel =
+        RefPtr<ia2AccessibleRelation> rel =
           new ia2AccessibleRelation(types[i], Move(targets));
         rel.forget(aRelation);
         return S_OK;
@@ -139,7 +144,7 @@ ia2Accessible::get_relation(long aRelationIndex,
 
     RelationType relationType = sRelationTypePairs[idx].first;
     Relation rel = acc->RelationByType(relationType);
-    nsRefPtr<ia2AccessibleRelation> ia2Relation =
+    RefPtr<ia2AccessibleRelation> ia2Relation =
       new ia2AccessibleRelation(relationType, &rel);
     if (ia2Relation->HasTargets()) {
       if (relIdx == aRelationIndex) {
@@ -185,11 +190,11 @@ ia2Accessible::get_relations(long aMaxRelations,
         continue;
 
       size_t targetCount = targetSets[i].Length();
-      nsTArray<nsRefPtr<Accessible>> targets(targetCount);
+      nsTArray<RefPtr<Accessible>> targets(targetCount);
       for (size_t j = 0; j < targetCount; j++)
         targets.AppendElement(WrapperFor(targetSets[i][j]));
 
-      nsRefPtr<ia2AccessibleRelation> rel =
+      RefPtr<ia2AccessibleRelation> rel =
         new ia2AccessibleRelation(types[i], Move(targets));
       rel.forget(aRelation + i);
       i++;
@@ -206,7 +211,7 @@ ia2Accessible::get_relations(long aMaxRelations,
 
     RelationType relationType = sRelationTypePairs[idx].first;
     Relation rel = acc->RelationByType(relationType);
-    nsRefPtr<ia2AccessibleRelation> ia2Rel =
+    RefPtr<ia2AccessibleRelation> ia2Rel =
       new ia2AccessibleRelation(relationType, &rel);
     if (ia2Rel->HasTargets()) {
       ia2Rel.forget(aRelation + (*aNRelations));
@@ -246,7 +251,7 @@ ia2Accessible::role(long* aRole)
 #include "RoleMap.h"
     default:
       MOZ_CRASH("Unknown role.");
-  };
+  }
 
 #undef ROLE
 
@@ -278,8 +283,13 @@ ia2Accessible::scrollTo(enum IA2ScrollType aScrollType)
   if (acc->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
-  nsCoreUtils::ScrollTo(acc->Document()->PresShell(),
-                        acc->GetContent(), aScrollType);
+  if (acc->IsProxy()) {
+    acc->Proxy()->ScrollTo(aScrollType);
+  } else {
+    nsCoreUtils::ScrollTo(acc->Document()->PresShell(), acc->GetContent(),
+                          aScrollType);
+  }
+
   return S_OK;
 
   A11Y_TRYBLOCK_END
@@ -299,7 +309,12 @@ ia2Accessible::scrollToPoint(enum IA2CoordinateType aCoordType,
     nsIAccessibleCoordinateType::COORDTYPE_SCREEN_RELATIVE :
     nsIAccessibleCoordinateType::COORDTYPE_PARENT_RELATIVE;
 
-  acc->ScrollToPoint(geckoCoordType, aX, aY);
+  if (acc->IsProxy()) {
+    acc->Proxy()->ScrollToPoint(geckoCoordType, aX, aY);
+  } else {
+    acc->ScrollToPoint(geckoCoordType, aX, aY);
+  }
+
   return S_OK;
 
   A11Y_TRYBLOCK_END
@@ -651,7 +666,28 @@ ia2Accessible::get_accessibleWithCaret(IUnknown** aAccessible,
 
   *aAccessible = nullptr;
   *aCaretOffset = -1;
-  return E_NOTIMPL;
+
+  AccessibleWrap* acc = static_cast<AccessibleWrap*>(this);
+  if (acc->IsDefunct())
+    return CO_E_OBJNOTCONNECTED;
+
+  int32_t caretOffset = -1;
+  Accessible* accWithCaret = SelectionMgr()->AccessibleWithCaret(&caretOffset);
+  if (acc->Document() != accWithCaret->Document())
+    return S_FALSE;
+
+  Accessible* child = accWithCaret;
+  while (!child->IsDoc() && child != acc)
+    child = child->Parent();
+
+  if (child != acc)
+    return S_FALSE;
+
+  *aAccessible =  static_cast<IAccessible2*>(
+    static_cast<AccessibleWrap*>(accWithCaret));
+  (*aAccessible)->AddRef();
+  *aCaretOffset = caretOffset;
+  return S_OK;
 
   A11Y_TRYBLOCK_END
 }
@@ -716,6 +752,58 @@ ia2Accessible::get_relationTargetsOfType(BSTR aType,
 
   A11Y_TRYBLOCK_END
 }
+
+STDMETHODIMP
+ia2Accessible::get_selectionRanges(IA2Range** aRanges,
+                                   long *aNRanges)
+{
+  A11Y_TRYBLOCK_BEGIN
+
+  if (!aRanges || !aNRanges || aNRanges <= 0)
+    return E_INVALIDARG;
+
+  *aNRanges = 0;
+
+  AccessibleWrap* acc = static_cast<AccessibleWrap*>(this);
+  if (acc->IsDefunct())
+    return CO_E_OBJNOTCONNECTED;
+
+  nsAutoTArray<TextRange, 1> ranges;
+  acc->Document()->SelectionRanges(&ranges);
+  uint32_t len = ranges.Length();
+  for (uint32_t idx = 0; idx < len; idx++) {
+    if (!ranges[idx].Crop(acc)) {
+      ranges.RemoveElementAt(idx);
+    }
+  }
+
+  *aNRanges = ranges.Length();
+  *aRanges = static_cast<IA2Range*>(
+    ::CoTaskMemAlloc(sizeof(IA2Range) * *aNRanges));
+  if (!*aRanges)
+    return E_OUTOFMEMORY;
+
+  for (uint32_t idx = 0; idx < static_cast<uint32_t>(*aNRanges); idx++) {
+    AccessibleWrap* anchor =
+      static_cast<AccessibleWrap*>(ranges[idx].StartContainer());
+    (*aRanges)[idx].anchor = static_cast<IAccessible2*>(anchor);
+    anchor->AddRef();
+
+    (*aRanges)[idx].anchorOffset = ranges[idx].StartOffset();
+
+    AccessibleWrap* active =
+      static_cast<AccessibleWrap*>(ranges[idx].EndContainer());
+    (*aRanges)[idx].active = static_cast<IAccessible2*>(active);
+    active->AddRef();
+
+    (*aRanges)[idx].activeOffset = ranges[idx].EndOffset();
+  }
+
+  return S_OK;
+
+  A11Y_TRYBLOCK_END
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers

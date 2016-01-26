@@ -15,7 +15,6 @@ const { PlainTextConsole } = require("../console/plain-text");
 const { when: unload } = require("../system/unload");
 const { format, fromException }  = require("../console/traceback");
 const system = require("../system");
-const memory = require('../deprecated/memory');
 const { gc: gcPromise } = require('./memory');
 const { defer } = require('../core/promise');
 const { extend } = require('../core/heritage');
@@ -150,7 +149,7 @@ function reportMemoryUsage() {
     return emptyPromise();
   }
 
-  return gcPromise().then((function () {
+  return gcPromise().then((() => {
     var mgr = Cc["@mozilla.org/memory-reporter-manager;1"]
               .getService(Ci.nsIMemoryReporterManager);
     let count = 0;
@@ -158,11 +157,6 @@ function reportMemoryUsage() {
       print(((++count == 1) ? "\n" : "") + description + ": " + amount + "\n");
     }
     mgr.getReportsForThisProcess(logReporter, null, /* anonymize = */ false);
-
-    var weakrefs = [info.weakref.get()
-                    for (info of memory.getObjects())];
-    weakrefs = [weakref for (weakref of weakrefs) if (weakref)];
-    print("Tracked memory objects in testing sandbox: " + weakrefs.length + "\n");
   }));
 }
 
@@ -199,7 +193,7 @@ function showResults() {
           var data = ref.__url__ ? ref.__url__ : ref;
           var warning = data == "[object Object]"
             ? "[object " + data.constructor.name + "(" +
-              [p for (p in data)].join(", ") + ")]"
+              Object.keys(data).join(", ") + ")]"
             : data;
           console.warn("LEAK", warning, info.bin);
         }
@@ -216,16 +210,6 @@ function showResults() {
 function cleanup() {
   let coverObject = {};
   try {
-    for (let name in loader.modules)
-      memory.track(loader.modules[name],
-                           "module global scope: " + name);
-      memory.track(loader, "Cuddlefish Loader");
-
-    if (profileMemory) {
-      gWeakrefInfo = [{ weakref: info.weakref, bin: info.bin }
-                      for (info of memory.getObjects())];
-    }
-
     loader.unload();
 
     if (loader.globals.console.errorsLogged && !results.failed) {
@@ -251,7 +235,7 @@ function cleanup() {
 
     consoleListener.unregister();
 
-    memory.gc();
+    Cu.forceGC();
   }
   catch (e) {
     results.failed++;
@@ -278,7 +262,7 @@ function cleanup() {
 }
 
 function getPotentialLeaks() {
-  memory.gc();
+  Cu.forceGC();
 
   // Things we can assume are part of the platform and so aren't leaks
   let GOOD_BASE_URLS = [
@@ -343,7 +327,9 @@ function getPotentialLeaks() {
         principal: details[1],
         location: details[2] ? details[2].replace(/\\/g, "/") : undefined,
         source: details[3] ? details[3].split(" -> ").reverse() : undefined,
-        toString: function() this.location
+        toString: function() {
+          return this.location;
+        }
       };
 
       if (!isPossibleLeak(item))
@@ -367,7 +353,9 @@ function getPotentialLeaks() {
         path: matches[1],
         location: details[1].replace(/\\/g, "/"),
         source: [details[1].replace(/\\/g, "/")],
-        toString: function() this.location
+        toString: function() {
+          return this.location;
+        }
       };
 
       if (!isPossibleLeak(item))
@@ -473,8 +461,7 @@ var consoleListener = {
       testConsole.error(message);
       return;
     }
-    var pointless = [err for (err of POINTLESS_ERRORS)
-                         if (message.indexOf(err) >= 0)];
+    var pointless = POINTLESS_ERRORS.filter(err => message.indexOf(err) >= 0);
     if (pointless.length == 0 && message)
       testConsole.log(message);
   }
@@ -647,7 +634,7 @@ var runTests = exports.runTests = function runTests(options) {
       fileName: { value: e.fileName, writable: true, configurable: true },
       lineNumber: { value: e.lineNumber, writable: true, configurable: true },
       stack: { value: stack, writable: true, configurable: true },
-      toString: { value: function() String(e), writable: true, configurable: true },
+      toString: { value: () => String(e), writable: true, configurable: true },
     });
 
     print("Error: " + error + " \n " + format(error));

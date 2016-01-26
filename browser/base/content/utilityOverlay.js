@@ -1,40 +1,29 @@
-# -*- indent-tabs-mode: nil; js-indent-level: 4 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Services = object with smart getters for common XPCOM services
+Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Components.utils.import("resource:///modules/RecentWindow.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "BROWSER_NEW_TAB_URL", function () {
-  const PREF = "browser.newtab.url";
+XPCOMUtils.defineLazyModuleGetter(this, "ShellService",
+                                  "resource:///modules/ShellService.jsm");
 
-  function getNewTabPageURL() {
-    if (PrivateBrowsingUtils.isWindowPrivate(window) &&
-        !PrivateBrowsingUtils.permanentPrivateBrowsing &&
-        !Services.prefs.prefHasUserValue(PREF)) {
-      return "about:privatebrowsing";
-    }
+XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
+                                   "@mozilla.org/browser/aboutnewtab-service;1",
+                                   "nsIAboutNewTabService");
 
-    let url = Services.prefs.getComplexValue(PREF, Ci.nsISupportsString).data;
-    return url || "about:blank";
+this.__defineGetter__("BROWSER_NEW_TAB_URL", () => {
+  if (PrivateBrowsingUtils.isWindowPrivate(window) &&
+      !PrivateBrowsingUtils.permanentPrivateBrowsing &&
+      !aboutNewTabService.overridden) {
+    return "about:privatebrowsing";
   }
-
-  function update() {
-    BROWSER_NEW_TAB_URL = getNewTabPageURL();
-  }
-
-  Services.prefs.addObserver(PREF, update, false);
-
-  addEventListener("unload", function onUnload() {
-    removeEventListener("unload", onUnload);
-    Services.prefs.removeObserver(PREF, update);
-  });
-
-  return getNewTabPageURL();
+  return "about:newtab";
 });
 
 var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -151,11 +140,8 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
 
   // Don't do anything special with right-mouse clicks.  They're probably clicks on context menu items.
 
-#ifdef XP_MACOSX
-  if (meta || (middle && middleUsesTabs))
-#else
-  if (ctrl || (middle && middleUsesTabs))
-#endif
+  var metaKey = AppConstants.platform == "macosx" ? meta : ctrl;
+  if (metaKey || (middle && middleUsesTabs))
     return shift ? "tabshifted" : "tab";
 
   if (alt && getBoolPref("browser.altClickSave", false))
@@ -188,6 +174,8 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
  *   relatedToCurrent     (boolean)
  *   skipTabAnimation     (boolean)
  *   allowPinnedTabHostChange (boolean)
+ *   allowPopups          (boolean)
+ *   userContextId        (unsigned int)
  */
 function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI) {
   var params;
@@ -230,6 +218,9 @@ function openLinkIn(url, where, params) {
   var aSkipTabAnimation     = params.skipTabAnimation;
   var aAllowPinnedTabHostChange = !!params.allowPinnedTabHostChange;
   var aNoReferrer           = params.noReferrer;
+  var aAllowPopups          = !!params.allowPopups;
+  var aUserContextId        = params.userContextId;
+  var aIndicateErrorPageLoad = params.indicateErrorPageLoad;
 
   if (where == "save") {
     if (!aInitiatingDoc) {
@@ -342,8 +333,16 @@ function openLinkIn(url, where, params) {
     // i.e. it causes them not to load at all. Callers should strip
     // "javascript:" from pasted strings to protect users from malicious URIs
     // (see stripUnsafeProtocolOnPaste).
-    if (aDisallowInheritPrincipal && !(uriObj && uriObj.schemeIs("javascript")))
+    if (aDisallowInheritPrincipal && !(uriObj && uriObj.schemeIs("javascript"))) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_DISALLOW_INHERIT_OWNER;
+    }
+
+    if (aAllowPopups) {
+      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_POPUPS;
+    }
+    if (aIndicateErrorPageLoad) {
+      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ERROR_LOAD_CHANGES_RV;
+    }
 
     w.gBrowser.loadURIWithFlags(url, {
       flags: flags,
@@ -366,7 +365,8 @@ function openLinkIn(url, where, params) {
       relatedToCurrent: aRelatedToCurrent,
       skipAnimation: aSkipTabAnimation,
       allowMixedContent: aAllowMixedContent,
-      noReferrer: aNoReferrer
+      noReferrer: aNoReferrer,
+      userContextId: aUserContextId
     });
     break;
   }
@@ -457,15 +457,10 @@ function gatherTextUnder ( root )
   return text;
 }
 
+// This function exists for legacy reasons.
 function getShellService()
 {
-  var shell = null;
-  try {
-    shell = Components.classes["@mozilla.org/browser/shell-service;1"]
-      .getService(Components.interfaces.nsIShellService);
-  } catch (e) {
-  }
-  return shell;
+  return ShellService;
 }
 
 function isBidiEnabled() {
@@ -514,13 +509,15 @@ function openAboutDialog() {
     return;
   }
 
-#ifdef XP_WIN
-  var features = "chrome,centerscreen,dependent";
-#elifdef XP_MACOSX
-  var features = "chrome,resizable=no,minimizable=no";
-#else
-  var features = "chrome,centerscreen,dependent,dialog=no";
-#endif
+  var features = "chrome,";
+  if (AppConstants.platform == "win") {
+    features += "centerscreen,dependent";
+  } else if (AppConstants.platform == "macosx") {
+    features += "resizable=no,minimizable=no";
+  } else {
+    features += "centerscreen,dependent,dialog=no";
+  }
+
   window.openDialog("chrome://browser/content/aboutDialog.xul", "", features);
 }
 
@@ -538,64 +535,55 @@ function openPreferences(paneID, extraArgs)
     return (aName || "").replace(/^pane./, function(toReplace) { return toReplace[4].toLowerCase(); });
   }
 
-  if (getBoolPref("browser.preferences.inContent")) {
-    let win = Services.wm.getMostRecentWindow("navigator:browser");
-    let friendlyCategoryName = internalPrefCategoryNameToFriendlyName(paneID);
-    let preferencesURL = "about:preferences" +
-                         (friendlyCategoryName ? "#" + friendlyCategoryName : "");
-    let newLoad = true;
-    let browser = null;
-    if (!win) {
-      const Cc = Components.classes;
-      const Ci = Components.interfaces;
-      let windowArguments = Cc["@mozilla.org/supports-array;1"]
-                              .createInstance(Ci.nsISupportsArray);
-      let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
-                                    .createInstance(Ci.nsISupportsString);
-      supportsStringPrefURL.data = preferencesURL;
-      windowArguments.AppendElement(supportsStringPrefURL);
-
-      win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
-                                   "_blank", "chrome,dialog=no,all", windowArguments);
-    } else {
-      newLoad = !win.switchToTabHavingURI(preferencesURL, true, {ignoreFragment: true});
-      browser = win.gBrowser.selectedBrowser;
-    }
-
-    if (newLoad) {
-      Services.obs.addObserver(function advancedPaneLoadedObs(prefWin, topic, data) {
-        if (!browser) {
-          browser = win.gBrowser.selectedBrowser;
-        }
-        if (prefWin != browser.contentWindow) {
-          return;
-        }
-        Services.obs.removeObserver(advancedPaneLoadedObs, "advanced-pane-loaded");
-        switchToAdvancedSubPane(browser.contentDocument);
-      }, "advanced-pane-loaded", false);
-    } else {
-      if (paneID) {
-        browser.contentWindow.gotoPref(paneID);
+  let win = Services.wm.getMostRecentWindow("navigator:browser");
+  let friendlyCategoryName = internalPrefCategoryNameToFriendlyName(paneID);
+  let params;
+  if (extraArgs && extraArgs["urlParams"]) {
+    params = new URLSearchParams();
+    let urlParams = extraArgs["urlParams"];
+    for (let name in urlParams) {
+      if (urlParams[name] !== undefined) {
+        params.set(name, urlParams[name]);
       }
-      switchToAdvancedSubPane(browser.contentDocument);
     }
+  }
+  let preferencesURL = "about:preferences" + (params ? "?" + params : "") +
+                       (friendlyCategoryName ? "#" + friendlyCategoryName : "");
+  let newLoad = true;
+  let browser = null;
+  if (!win) {
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    let windowArguments = Cc["@mozilla.org/supports-array;1"]
+                            .createInstance(Ci.nsISupportsArray);
+    let supportsStringPrefURL = Cc["@mozilla.org/supports-string;1"]
+                                  .createInstance(Ci.nsISupportsString);
+    supportsStringPrefURL.data = preferencesURL;
+    windowArguments.AppendElement(supportsStringPrefURL);
+
+    win = Services.ww.openWindow(null, Services.prefs.getCharPref("browser.chromeURL"),
+                                 "_blank", "chrome,dialog=no,all", windowArguments);
   } else {
-    var instantApply = getBoolPref("browser.preferences.instantApply", false);
-    var features = "chrome,titlebar,toolbar,centerscreen" + (instantApply ? ",dialog=no" : ",modal");
+    newLoad = !win.switchToTabHavingURI(preferencesURL, true, {ignoreFragment: true});
+    browser = win.gBrowser.selectedBrowser;
+  }
 
-    var win = Services.wm.getMostRecentWindow("Browser:Preferences");
-    if (win) {
-      win.focus();
-      if (paneID) {
-        var pane = win.document.getElementById(paneID);
-        win.document.documentElement.showPane(pane);
+  if (newLoad) {
+    Services.obs.addObserver(function advancedPaneLoadedObs(prefWin, topic, data) {
+      if (!browser) {
+        browser = win.gBrowser.selectedBrowser;
       }
-
-      switchToAdvancedSubPane(win.document);
-    } else {
-      openDialog("chrome://browser/content/preferences/preferences.xul",
-                 "Preferences", features, paneID, extraArgs);
+      if (prefWin != browser.contentWindow) {
+        return;
+      }
+      Services.obs.removeObserver(advancedPaneLoadedObs, "advanced-pane-loaded");
+      switchToAdvancedSubPane(browser.contentDocument);
+    }, "advanced-pane-loaded", false);
+  } else {
+    if (paneID) {
+      browser.contentWindow.gotoPref(paneID);
     }
+    switchToAdvancedSubPane(browser.contentDocument);
   }
 }
 
@@ -613,7 +601,6 @@ function openTroubleshootingPage()
   openUILinkIn("about:support", "tab");
 }
 
-#ifdef MOZ_SERVICES_HEALTHREPORT
 /**
  * Opens the troubleshooting information (about:support) page for this version
  * of the application.
@@ -622,7 +609,6 @@ function openHealthReport()
 {
   openUILinkIn("about:healthreport", "tab");
 }
-#endif
 
 /**
  * Opens the feedback page for this version of the application.
@@ -645,7 +631,7 @@ function openTourPage()
 function buildHelpMenu()
 {
   // Enable/disable the "Report Web Forgery" menu item.
-  if (typeof gSafeBrowsing != "undefined")
+  if (typeof gSafeBrowsing != "undefined" && AppConstants.MOZ_SAFE_BROWSING)
     gSafeBrowsing.setReportPhishingMenu();
 }
 

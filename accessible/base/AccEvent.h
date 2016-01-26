@@ -127,7 +127,7 @@ protected:
   bool mIsFromUserInput;
   uint32_t mEventType;
   EEventRule mEventRule;
-  nsRefPtr<Accessible> mAccessible;
+  RefPtr<Accessible> mAccessible;
 
   friend class EventQueue;
   friend class AccReorderEvent;
@@ -194,6 +194,7 @@ public:
   bool IsTextInserted() const { return mIsInserted; }
   void GetModifiedText(nsAString& aModifiedText)
     { aModifiedText = mModifiedText; }
+  const nsString& ModifiedText() const { return mModifiedText; }
 
 private:
   int32_t mStart;
@@ -211,8 +212,7 @@ private:
 class AccMutationEvent: public AccEvent
 {
 public:
-  AccMutationEvent(uint32_t aEventType, Accessible* aTarget,
-                   nsINode* aTargetNode) :
+  AccMutationEvent(uint32_t aEventType, Accessible* aTarget) :
     AccEvent(aEventType, aTarget, eAutoDetect, eCoalesceMutationTextChange)
   {
     // Don't coalesce these since they are coalesced by reorder event. Coalesce
@@ -236,8 +236,8 @@ public:
 
 protected:
   nsCOMPtr<nsINode> mNode;
-  nsRefPtr<Accessible> mParent;
-  nsRefPtr<AccTextChangeEvent> mTextChangeEvent;
+  RefPtr<Accessible> mParent;
+  RefPtr<AccTextChangeEvent> mTextChangeEvent;
 
   friend class EventQueue;
 };
@@ -249,7 +249,7 @@ protected:
 class AccHideEvent: public AccMutationEvent
 {
 public:
-  AccHideEvent(Accessible* aTarget, nsINode* aTargetNode);
+  explicit AccHideEvent(Accessible* aTarget, bool aNeedsShutdown = true);
 
   // Event
   static const EventGroup kEventGroup = eHideEvent;
@@ -262,10 +262,12 @@ public:
   Accessible* TargetParent() const { return mParent; }
   Accessible* TargetNextSibling() const { return mNextSibling; }
   Accessible* TargetPrevSibling() const { return mPrevSibling; }
+  bool NeedsShutdown() const { return mNeedsShutdown; }
 
 protected:
-  nsRefPtr<Accessible> mNextSibling;
-  nsRefPtr<Accessible> mPrevSibling;
+  bool mNeedsShutdown;
+  RefPtr<Accessible> mNextSibling;
+  RefPtr<Accessible> mPrevSibling;
 
   friend class EventQueue;
 };
@@ -277,7 +279,7 @@ protected:
 class AccShowEvent: public AccMutationEvent
 {
 public:
-  AccShowEvent(Accessible* aTarget, nsINode* aTargetNode);
+  explicit AccShowEvent(Accessible* aTarget);
 
   // Event
   static const EventGroup kEventGroup = eShowEvent;
@@ -393,7 +395,7 @@ public:
   bool IsCaretMoveOnly() const;
 
 private:
-  nsRefPtr<dom::Selection> mSel;
+  RefPtr<dom::Selection> mSel;
   int32_t mReason;
 
   friend class EventQueue;
@@ -428,8 +430,8 @@ public:
   Accessible* Widget() const { return mWidget; }
 
 private:
-  nsRefPtr<Accessible> mWidget;
-  nsRefPtr<Accessible> mItem;
+  RefPtr<Accessible> mWidget;
+  RefPtr<Accessible> mItem;
   SelChangeType mSelChangeType;
   uint32_t mPreceedingCount;
   AccSelChangeEvent* mPackedEvent;
@@ -491,7 +493,7 @@ public:
   int32_t Reason() const { return mReason; }
 
 private:
-  nsRefPtr<Accessible> mOldAccessible;
+  RefPtr<Accessible> mOldAccessible;
   int32_t mOldStart;
   int32_t mOldEnd;
   int16_t mReason;

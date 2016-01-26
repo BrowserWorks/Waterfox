@@ -50,6 +50,12 @@ public:
    */
   static void NotifyAnimated(nsIFrame* aFrame, nsCSSProperty aProperty);
   /**
+   * Notify aFrame as being known to have an animation of aProperty through an
+   * inline style modification during aScrollFrame's scroll event handler.
+   */
+  static void NotifyAnimatedFromScrollHandler(nsIFrame* aFrame, nsCSSProperty aProperty,
+                                              nsIFrame* aScrollFrame);
+  /**
    * Notify that a property in the inline style rule of aFrame's element
    * has been modified.
    * This notification is incomplete --- not all modifications to inline
@@ -72,6 +78,14 @@ public:
    * as being animated for constructing active layers.
    */
   static bool IsOffsetOrMarginStyleAnimated(nsIFrame* aFrame);
+
+  /**
+   * Return true if aFrame either has an animated scale now, or is likely to
+   * have one in the future because it has a CSS animation or transition
+   * (which may not be playing right now) that affects its scale.
+   */
+  static bool IsScaleSubjectToAnimation(nsIFrame* aFrame);
+
   /**
    * Transfer the LayerActivity property to the frame's content node when the
    * frame is about to be destroyed so that layer activity can be tracked
@@ -99,8 +113,15 @@ public:
    * Return true if this frame's content is still marked as active.
    */
   static bool IsContentActive(nsIFrame* aFrame);
+
+  /**
+   * Called before and after a scroll event handler is executed, with the
+   * scrollframe or nullptr, respectively. This acts as a hint to treat
+   * inline style changes during the handler differently.
+   */
+  static void SetCurrentScrollHandlerFrame(nsIFrame* aFrame);
 };
 
-}
+} // namespace mozilla
 
 #endif /* ACTIVELAYERTRACKER_H_ */

@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this,
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 from mach.decorators import (
     CommandArgument,
@@ -14,7 +14,7 @@ from mozbuild.base import (
     MachCommandBase,
 )
 
-import mozpack
+import mozpack.path as mozpath
 
 
 MERGE_HELP = '''Directory to merge to. Will be removed to before running

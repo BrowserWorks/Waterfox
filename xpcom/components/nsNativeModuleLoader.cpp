@@ -17,7 +17,7 @@
 
 #include "nsNativeModuleLoader.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinit.h"
 #include "prerror.h"
 
@@ -38,34 +38,20 @@
 #include <signal.h>
 #endif
 
-#ifdef VMS
-#include <lib$routines.h>
-#include <ssdef.h>
-#endif
-
 #ifdef DEBUG
 #define IMPLEMENT_BREAK_AFTER_LOAD
 #endif
 
 using namespace mozilla;
 
-static PRLogModuleInfo*
-GetNativeModuleLoaderLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsNativeModuleLoader");
-  }
-  return sLog;
-}
-
-#define LOG(level, args) PR_LOG(GetNativeModuleLoaderLog(), level, args)
+static LazyLogModule sNativeModuleLoaderLog("nsNativeModuleLoader");
+#define LOG(level, args) MOZ_LOG(sNativeModuleLoaderLog, level, args)
 
 nsresult
 nsNativeModuleLoader::Init()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Startup not on main thread?");
-  LOG(PR_LOG_DEBUG, ("nsNativeModuleLoader::Init()"));
+  LOG(LogLevel::Debug, ("nsNativeModuleLoader::Init()"));
   return NS_OK;
 }
 
@@ -87,7 +73,7 @@ public:
     return NS_OK;
   }
 
-  nsRefPtr<nsComponentManagerImpl> mManager;
+  RefPtr<nsComponentManagerImpl> mManager;
   nsNativeModuleLoader* mLoader;
   FileLocation mFile;
   const mozilla::Module* mResult;
@@ -106,7 +92,7 @@ nsNativeModuleLoader::LoadModule(FileLocation& aFile)
   if (!NS_IsMainThread()) {
     // If this call is off the main thread, synchronously proxy it
     // to the main thread.
-    nsRefPtr<LoadModuleMainThreadRunnable> r =
+    RefPtr<LoadModuleMainThreadRunnable> r =
       new LoadModuleMainThreadRunnable(this, aFile);
     NS_DispatchToMainThread(r, NS_DISPATCH_SYNC);
     return r->mResult;
@@ -125,7 +111,7 @@ nsNativeModuleLoader::LoadModule(FileLocation& aFile)
 
   if (mLibraries.Get(hashedFile, &data)) {
     NS_ASSERTION(data.mModule, "Corrupt mLibraries hash");
-    LOG(PR_LOG_DEBUG,
+    LOG(LogLevel::Debug,
         ("nsNativeModuleLoader::LoadModule(\"%s\") - found in cache",
          filePath.get()));
     return data.mModule;
@@ -191,50 +177,44 @@ nsNativeModuleLoader::LoadModule(FileLocation& aFile)
   return data.mModule;
 }
 
-PLDHashOperator
-nsNativeModuleLoader::ReleaserFunc(nsIHashable* aHashedFile,
-                                   NativeLoadData& aLoadData, void*)
-{
-  aLoadData.mModule = nullptr;
-  return PL_DHASH_NEXT;
-}
-
-PLDHashOperator
-nsNativeModuleLoader::UnloaderFunc(nsIHashable* aHashedFile,
-                                   NativeLoadData& aLoadData, void*)
-{
-  if (PR_LOG_TEST(GetNativeModuleLoaderLog(), PR_LOG_DEBUG)) {
-    nsCOMPtr<nsIFile> file(do_QueryInterface(aHashedFile));
-
-    nsAutoCString filePath;
-    file->GetNativePath(filePath);
-
-    LOG(PR_LOG_DEBUG,
-        ("nsNativeModuleLoader::UnloaderFunc(\"%s\")", filePath.get()));
-  }
-
-#ifdef NS_BUILD_REFCNT_LOGGING
-  nsTraceRefcnt::SetActivityIsLegal(false);
-#endif
-
-#if 0
-  // XXXbsmedberg: do this as soon as the static-destructor crash(es)
-  // are fixed
-  PRStatus ret = PR_UnloadLibrary(aLoadData.mLibrary);
-  NS_ASSERTION(ret == PR_SUCCESS, "Failed to unload library");
-#endif
-
-#ifdef NS_BUILD_REFCNT_LOGGING
-  nsTraceRefcnt::SetActivityIsLegal(true);
-#endif
-
-  return PL_DHASH_REMOVE;
-}
-
 void
 nsNativeModuleLoader::UnloadLibraries()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Shutdown not on main thread?");
-  mLibraries.Enumerate(ReleaserFunc, nullptr);
-  mLibraries.Enumerate(UnloaderFunc, nullptr);
+
+  for (auto iter = mLibraries.Iter(); !iter.Done(); iter.Next()) {
+    NativeLoadData& loadData = iter.Data();
+    loadData.mModule = nullptr;
+  }
+
+  for (auto iter = mLibraries.Iter(); !iter.Done(); iter.Next()) {
+    if (MOZ_LOG_TEST(sNativeModuleLoaderLog, LogLevel::Debug)) {
+      nsIHashable* hashedFile = iter.Key();
+      nsCOMPtr<nsIFile> file(do_QueryInterface(hashedFile));
+
+      nsAutoCString filePath;
+      file->GetNativePath(filePath);
+
+      LOG(LogLevel::Debug,
+          ("nsNativeModuleLoader::UnloaderFunc(\"%s\")", filePath.get()));
+    }
+
+#ifdef NS_BUILD_REFCNT_LOGGING
+    nsTraceRefcnt::SetActivityIsLegal(false);
+#endif
+
+#if 0
+    // XXXbsmedberg: do this as soon as the static-destructor crash(es)
+    // are fixed
+    NativeLoadData& loadData = iter.Data();
+    PRStatus ret = PR_UnloadLibrary(loadData.mLibrary);
+    NS_ASSERTION(ret == PR_SUCCESS, "Failed to unload library");
+#endif
+
+#ifdef NS_BUILD_REFCNT_LOGGING
+    nsTraceRefcnt::SetActivityIsLegal(true);
+#endif
+
+    iter.Remove();
+  }
 }

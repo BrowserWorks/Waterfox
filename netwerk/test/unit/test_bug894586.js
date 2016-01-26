@@ -5,6 +5,10 @@
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
+
+var contentSecManager = Cc["@mozilla.org/contentsecuritymanager;1"]
+                          .getService(Ci.nsIContentSecurityManager);
 
 function ProtocolHandler() {
   this.uri = Cc["@mozilla.org/network/simple-uri;1"].
@@ -15,32 +19,55 @@ function ProtocolHandler() {
 
 ProtocolHandler.prototype = {
   /** nsIProtocolHandler */
-  get scheme() "x-bug894586",
-  get defaultPort() -1,
-  get protocolFlags() Ci.nsIProtocolHandler.URI_NORELATIVE |
-                      Ci.nsIProtocolHandler.URI_NOAUTH |
-                      Ci.nsIProtocolHandler.URI_IS_UI_RESOURCE |
-                      Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE |
-                      Ci.nsIProtocolHandler.URI_NON_PERSISTABLE |
-                      Ci.nsIProtocolHandler.URI_SYNC_LOAD_IS_OK,
-  newURI: function(aSpec, aOriginCharset, aBaseURI) this.uri,
+  get scheme() {
+    return "x-bug894586";
+  },
+  get defaultPort() {
+    return -1;
+  },
+  get protocolFlags() {
+    return Ci.nsIProtocolHandler.URI_NORELATIVE |
+           Ci.nsIProtocolHandler.URI_NOAUTH |
+           Ci.nsIProtocolHandler.URI_IS_UI_RESOURCE |
+           Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE |
+           Ci.nsIProtocolHandler.URI_NON_PERSISTABLE |
+           Ci.nsIProtocolHandler.URI_SYNC_LOAD_IS_OK;
+  },
+  newURI: function(aSpec, aOriginCharset, aBaseURI) {
+    return this.uri;
+  },
   newChannel2: function(aURI, aLoadInfo) {
     this.loadInfo = aLoadInfo;
     return this;
   },
-  newChannel: function(aURI) this,
-  allowPort: function(port, scheme) port != -1,
+  newChannel: function(aURI) {
+    return this;
+  },
+  allowPort: function(port, scheme) {
+    return port != -1;
+  },
 
   /** nsIChannel */
-  get originalURI() this.uri,
-  get URI() this.uri,
+  get originalURI() {
+    return this.uri;
+  },
+  get URI() {
+    return this.uri;
+  },
   owner: null,
   notificationCallbacks: null,
-  get securityInfo() null,
-  get contentType() "text/css",
-  set contentType(val) void(0),
+  get securityInfo() {
+    return null;
+  },
+  get contentType() {
+    return "text/css";
+  },
+  set contentType(val) {
+  },
   contentCharset: "UTF-8",
-  get contentLength() -1,
+  get contentLength() {
+    return -1;
+  },
   set contentLength(val) {
     throw Components.Exception("Setting content length", NS_ERROR_NOT_IMPLEMENTED);
   },
@@ -48,14 +75,18 @@ ProtocolHandler.prototype = {
     var file = do_get_file("test_bug894586.js", false);
     do_check_true(file.exists());
     var url = Services.io.newFileURI(file);
-    return Services.io.newChannelFromURI2(url,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_OTHER).open();
+    return NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true}).open2();
+  },
+  open2: function() {
+    // throws an error if security checks fail
+    contentSecManager.performSecurityCheck(this, null);
+    return this.open();
   },
   asyncOpen: function(aListener, aContext) {
+    throw Components.Exception("Not implemented",
+                               Cr.NS_ERROR_NOT_IMPLEMENTED);
+  },
+  asyncOpen2: function(aListener, aContext) {
     throw Components.Exception("Not implemented",
                                Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
@@ -70,9 +101,13 @@ ProtocolHandler.prototype = {
   },
 
   /** nsIRequest */
-  get name() this.uri.spec,
-  isPending: function() false,
-  get status() Cr.NS_OK,
+  get name() {
+    return this.uri.spec;
+  },
+  isPending: () => false,
+  get status() {
+    return Cr.NS_OK;
+  },
   cancel: function(status) {},
   loadGroup: null,
   loadFlags: Ci.nsIRequest.LOAD_NORMAL |

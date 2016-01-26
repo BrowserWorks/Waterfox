@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-const Cu = Components.utils;
+var Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 
 // Values taken from using zipinfo to list the test.zip contents
@@ -75,7 +75,7 @@ var methods = {
                                                   null,      // aLoadingNode
                                                   Services.scriptSecurityManager.getSystemPrincipal(),
                                                   null,      // aTriggeringPrincipal
-                                                  Ci.nsILoadInfo.SEC_NORMAL,
+                                                  Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                                   Ci.nsIContentPolicy.TYPE_OTHER), true);
   },
   stream: function method_stream(entry, source)
@@ -86,7 +86,7 @@ var methods = {
                                                  null,      // aLoadingNode
                                                  Services.scriptSecurityManager.getSystemPrincipal(),
                                                  null,      // aTriggeringPrincipal
-                                                 Ci.nsILoadInfo.SEC_NORMAL,
+                                                 Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                                  Ci.nsIContentPolicy.TYPE_OTHER).open(), true);
   }
 }

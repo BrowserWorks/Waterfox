@@ -11,6 +11,7 @@
 #include "mozilla/MemoryReporting.h"
 #include "nsPrintfCString.h"
 #include "nsString.h"
+#include "prenv.h"
 #include "WebGLContext.h"
 #include "WebGLObjectModel.h"
 #include "WebGLShaderValidator.h"
@@ -92,6 +93,9 @@ TranslateWithoutValidation(const nsACString& sourceNS, bool isWebGL2,
 
     switch (glesslVersion) {
     case 100:
+        /* According to ARB_ES2_compatibility extension glsl
+         * should accept #version 100 for ES 2 shaders. */
+        reversionedSource.insert(versionStrStart, "#version 100\n");
         break;
     case 300:
         reversionedSource.insert(versionStrStart, "#version 330\n");
@@ -140,6 +144,8 @@ WebGLShader::WebGLShader(WebGLContext* webgl, GLenum type)
     : WebGLContextBoundObject(webgl)
     , mGLName(CreateShader(webgl->GL(), type))
     , mType(type)
+    , mTranslationSuccessful(false)
+    , mCompilationSuccessful(false)
 {
     mContext->mShaders.insertBack(this);
 }
@@ -160,7 +166,7 @@ WebGLShader::ShaderSource(const nsAString& source)
 
     // We checked that the source stripped of comments is in the
     // 7-bit ASCII range, so we can skip the NS_IsAscii() check.
-    NS_LossyConvertUTF16toASCII sourceCString(cleanSource);
+    const NS_LossyConvertUTF16toASCII sourceCString(cleanSource);
 
     if (mContext->gl->WorkAroundDriverBugs()) {
         const size_t maxSourceLength = 0x3ffff;
@@ -172,23 +178,24 @@ WebGLShader::ShaderSource(const nsAString& source)
         }
     }
 
-    // HACK - dump shader source
-    {
-/*
-        printf_stderr("//-*- glsl -*-\n");
-        // Wow - Roll Your Own For Each Lines because printf_stderr has a hard-coded internal size, so long strings are truncated.
-        const nsString& src = shader->Source();
+    if (PR_GetEnv("MOZ_WEBGL_DUMP_SHADERS")) {
+        printf_stderr("////////////////////////////////////////\n");
+        printf_stderr("// MOZ_WEBGL_DUMP_SHADERS:\n");
+
+        // Wow - Roll Your Own Foreach-Lines because printf_stderr has a hard-coded
+        // internal size, so long strings are truncated.
+
         int32_t start = 0;
-        int32_t end = src.Find("\n", false, start, -1);
+        int32_t end = sourceCString.Find("\n", false, start, -1);
         while (end > -1) {
-            printf_stderr("%s\n", NS_ConvertUTF16toUTF8(nsDependentSubstring(src, start, end - start)).get());
+            const nsCString line(sourceCString.BeginReading() + start, end - start);
+            printf_stderr("%s\n", line.BeginReading());
             start = end + 1;
-            end = src.Find("\n", false, start, -1);
+            end = sourceCString.Find("\n", false, start, -1);
         }
-        printf_stderr("//\n");
-*/
+
+        printf_stderr("////////////////////////////////////////\n");
     }
-    // HACK
 
     mSource = source;
     mCleanSource = sourceCString;
@@ -299,6 +306,16 @@ WebGLShader::CalcNumSamplerUniforms() const
     return 0;
 }
 
+size_t
+WebGLShader::NumAttributes() const
+{
+    if (mValidator)
+        return mValidator->NumAttributes();
+
+    // TODO
+    return 0;
+}
+
 void
 WebGLShader::BindAttribLocation(GLuint prog, const nsCString& userName,
                                 GLuint index) const
@@ -329,6 +346,23 @@ WebGLShader::FindAttribUserNameByMappedName(const nsACString& mappedName,
 }
 
 bool
+WebGLShader::FindVaryingByMappedName(const nsACString& mappedName,
+                                     nsCString* const out_userName,
+                                     bool* const out_isArray) const
+{
+    if (!mValidator)
+        return false;
+
+    const std::string mappedNameStr(mappedName.BeginReading());
+    std::string userNameStr;
+    if (!mValidator->FindVaryingByMappedName(mappedNameStr, &userNameStr, out_isArray))
+        return false;
+
+    *out_userName = userNameStr.c_str();
+    return true;
+}
+
+bool
 WebGLShader::FindUniformByMappedName(const nsACString& mappedName,
                                      nsCString* const out_userName,
                                      bool* const out_isArray) const
@@ -350,8 +384,16 @@ WebGLShader::FindUniformBlockByMappedName(const nsACString& mappedName,
                                           nsCString* const out_userName,
                                           bool* const out_isArray) const
 {
-    // TODO: Extract block information from shader validator.
-    return false;
+    if (!mValidator)
+        return false;
+
+    const std::string mappedNameStr(mappedName.BeginReading(), mappedName.Length());
+    std::string userNameStr;
+    if (!mValidator->FindUniformBlockByMappedName(mappedNameStr, &userNameStr))
+        return false;
+
+    *out_userName = userNameStr.c_str();
+    return true;
 }
 
 void
@@ -372,9 +414,8 @@ WebGLShader::ApplyTransformFeedbackVaryings(GLuint prog,
         std::string userNameStr(userName.BeginReading());
 
         const std::string* mappedNameStr = &userNameStr;
-        // TODO: Are vertex->fragment shader varyings listed under attribs?
         if (mValidator)
-            mValidator->FindAttribMappedNameByUserName(userNameStr, &mappedNameStr);
+            mValidator->FindVaryingMappedNameByUserName(userNameStr, &mappedNameStr);
 
         mappedVaryings.push_back(*mappedNameStr);
     }
@@ -396,9 +437,9 @@ WebGLShader::ApplyTransformFeedbackVaryings(GLuint prog,
 // Boilerplate
 
 JSObject*
-WebGLShader::WrapObject(JSContext* js, JS::Handle<JSObject*> aGivenProto)
+WebGLShader::WrapObject(JSContext* js, JS::Handle<JSObject*> givenProto)
 {
-    return dom::WebGLShaderBinding::Wrap(js, this, aGivenProto);
+    return dom::WebGLShaderBinding::Wrap(js, this, givenProto);
 }
 
 size_t

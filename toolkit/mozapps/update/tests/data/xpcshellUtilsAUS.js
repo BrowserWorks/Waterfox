@@ -74,6 +74,7 @@ const LOG_SWITCH_SUCCESS = "rename_file: proceeding to rename the directory\n" +
 const ERR_RENAME_FILE = "rename_file: failed to rename file";
 const ERR_UNABLE_OPEN_DEST = "unable to open destination file";
 const ERR_BACKUP_DISCARD = "backup_discard: unable to remove";
+const ERR_MOVE_DESTDIR_7 = "Moving destDir to tmpDir failed, err: 7";
 
 const LOG_SVC_SUCCESSFUL_LAUNCH = "Process was started... waiting on result.";
 
@@ -144,7 +145,6 @@ var gCallbackArgs = ["./", "callback.log", "Test Arg 2", "Test Arg 3"];
 var gPostUpdateBinFile = "postup_app" + BIN_SUFFIX;
 var gStageUpdate = false;
 var gSwitchApp = false;
-var gDisableReplaceFallback = false;
 var gUseTestAppDir = true;
 
 var gTimeoutRuns = 0;
@@ -1272,6 +1272,41 @@ function getTestDirFile(aRelPath, aAllowNonExists) {
   return do_get_file(relpath, !!aAllowNonExists);
 }
 
+/**
+ * Helper function for getting the nsIFile for the maintenance service
+ * directory on Windows.
+ *
+ * @return  The nsIFile for the maintenance service directory.
+ */
+function getMaintSvcDir() {
+  if (!IS_WIN) {
+    do_throw("Windows only function called by a different platform!");
+  }
+
+  const CSIDL_PROGRAM_FILES = 0x26;
+  const CSIDL_PROGRAM_FILESX86 = 0x2A;
+  // This will return an empty string on our Win XP build systems.
+  let maintSvcDir = getSpecialFolderDir(CSIDL_PROGRAM_FILESX86);
+  if (maintSvcDir) {
+    maintSvcDir.append("Mozilla Maintenance Service");
+    debugDump("using CSIDL_PROGRAM_FILESX86 - maintenance service install " +
+              "directory path: " + maintSvcDir.path);
+  }
+  if (!maintSvcDir || !maintSvcDir.exists()) {
+    maintSvcDir = getSpecialFolderDir(CSIDL_PROGRAM_FILES);
+    if (maintSvcDir) {
+      maintSvcDir.append("Mozilla Maintenance Service");
+      debugDump("using CSIDL_PROGRAM_FILES - maintenance service install " +
+                "directory path: " + maintSvcDir.path);
+    }
+  }
+  if (!maintSvcDir) {
+    do_throw("Unable to find the maintenance service install directory");
+  }
+
+  return maintSvcDir;
+}
+
 function getSpecialFolderDir(aCSIDL) {
   if (!IS_WIN) {
     do_throw("Windows only function called by a different platform!");
@@ -1584,20 +1619,10 @@ function runUpdate(aExpectedExitValue, aExpectedStatus, aCallback) {
   }
   debugDump("running the updater: " + updateBin.path + " " + args.join(" "));
 
-  let env = Cc["@mozilla.org/process/environment;1"].
-            getService(Ci.nsIEnvironment);
-  if (gDisableReplaceFallback) {
-    env.set("MOZ_NO_REPLACE_FALLBACK", "1");
-  }
-
   let process = Cc["@mozilla.org/process/util;1"].
                 createInstance(Ci.nsIProcess);
   process.init(updateBin);
   process.run(true, args, args.length);
-
-  if (gDisableReplaceFallback) {
-    env.set("MOZ_NO_REPLACE_FALLBACK", "");
-  }
 
   let status = readStatusFile();
   if (process.exitValue != aExpectedExitValue || status != aExpectedStatus) {
@@ -1943,26 +1968,7 @@ function copyFileToTestAppDir(aFileRelPath, aInGreDir) {
  * a unprivileged location.
  */
 function attemptServiceInstall() {
-  const CSIDL_PROGRAM_FILES = 0x26;
-  const CSIDL_PROGRAM_FILESX86 = 0x2A;
-  // This will return an empty string on our Win XP build systems.
-  let maintSvcDir = getSpecialFolderDir(CSIDL_PROGRAM_FILESX86);
-  if (maintSvcDir) {
-    maintSvcDir.append("Mozilla Maintenance Service");
-    debugDump("using CSIDL_PROGRAM_FILESX86 - maintenance service install " +
-              "directory path: " + maintSvcDir.path);
-  }
-  if (!maintSvcDir || !maintSvcDir.exists()) {
-    maintSvcDir = getSpecialFolderDir(CSIDL_PROGRAM_FILES);
-    if (maintSvcDir) {
-      maintSvcDir.append("Mozilla Maintenance Service");
-      debugDump("using CSIDL_PROGRAM_FILES - maintenance service install " +
-                "directory path: " + maintSvcDir.path);
-    }
-  }
-  if (!maintSvcDir) {
-    do_throw("Unable to find the maintenance service install directory");
-  }
+  let maintSvcDir = getMaintSvcDir();
   Assert.ok(maintSvcDir.exists(), MSG_SHOULD_EXIST);
   let oldMaintSvcBin = maintSvcDir.clone();
   oldMaintSvcBin.append(FILE_MAINTENANCE_SERVICE_BIN);
@@ -2023,10 +2029,7 @@ function runUpdateUsingService(aInitialStatus, aExpectedStatus, aCheckSvcLog) {
                     "contain the successful launch string");
   }
   function readServiceLogFile() {
-    let file = Cc["@mozilla.org/file/directory_service;1"].
-               getService(Ci.nsIProperties).
-               get("CmAppData", Ci.nsIFile);
-    file.append("Mozilla");
+    let file = getMaintSvcDir();
     file.append("logs");
     file.append("maintenanceservice.log");
     return readFile(file);
@@ -2126,7 +2129,7 @@ function runUpdateUsingService(aInitialStatus, aExpectedStatus, aCheckSvcLog) {
 
   gServiceLaunchedCallbackArgs = [
     "-no-remote",
-    "-process-updates",
+    "-test-process-updates",
     "-dump-args",
     appArgsLogPath
   ];
@@ -2343,7 +2346,6 @@ function setupUpdaterTest(aMarFile) {
   helperBin.copyToFollowingLinks(afterApplyBinDir, gCallbackBinFile);
   helperBin.copyToFollowingLinks(afterApplyBinDir, gPostUpdateBinFile);
 
-  let applyToDir = getApplyDirFile(null, true);
   gTestFiles.forEach(function SUT_TF_FE(aTestFile) {
     if (aTestFile.originalFile || aTestFile.originalContents) {
       let testDir = getApplyDirFile(aTestFile.relPathDir, true);
@@ -3184,7 +3186,7 @@ xhr.prototype = {
     eval("this._on" + aEvent + " = aValue");
   },
   flags: Ci.nsIClassInfo.SINGLETON,
-  getScriptableHelper: function() null,
+  getScriptableHelper: () => null,
   getInterfaces: function(aCount) {
     let interfaces = [Ci.nsISupports];
     aCount.value = interfaces.length;
@@ -3231,7 +3233,7 @@ function UpdatePrompt(aCallback) {
 
 UpdatePrompt.prototype = {
   flags: Ci.nsIClassInfo.SINGLETON,
-  getScriptableHelper: function() null,
+  getScriptableHelper: () => null,
   getInterfaces: function(aCount) {
     let interfaces = [Ci.nsISupports, Ci.nsIUpdatePrompt];
     aCount.value = interfaces.length;
@@ -3386,8 +3388,8 @@ function createAppInfo(aID, aName, aVersion, aPlatformVersion) {
  * Command line arguments used when launching the application:
  * -no-remote prevents shell integration from being affected by an existing
  * application process.
- * -process-updates makes the application exits after being relaunched by the
- * updater.
+ * -test-process-updates makes the application exit after being relaunched by
+ * the updater.
  * the platform specific string defined by PIPE_TO_NULL to output both stdout
  * and stderr to null. This is needed to prevent output from the application
  * from ending up in the xpchsell log.
@@ -3409,14 +3411,14 @@ function getProcessArgs(aExtraArgs) {
     launchScript.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, PERMS_DIRECTORY);
 
     let scriptContents = "#! /bin/sh\n";
-    scriptContents += appBinPath + " -no-remote -process-updates " +
+    scriptContents += appBinPath + " -no-remote -test-process-updates " +
                       aExtraArgs.join(" ") + " " + PIPE_TO_NULL;
     writeFile(launchScript, scriptContents);
     debugDump("created " + launchScript.path + " containing:\n" +
               scriptContents);
     args = [launchScript.path];
   } else {
-    args = ["/D", "/Q", "/C", appBinPath, "-no-remote", "-process-updates"].
+    args = ["/D", "/Q", "/C", appBinPath, "-no-remote", "-test-process-updates"].
            concat(aExtraArgs).concat([PIPE_TO_NULL]);
   }
   return args;

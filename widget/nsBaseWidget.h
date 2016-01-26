@@ -7,6 +7,7 @@
 
 #include "mozilla/EventForwards.h"
 #include "mozilla/WidgetUtils.h"
+#include "mozilla/layers/APZCCallbackHelper.h"
 #include "nsRect.h"
 #include "nsIWidget.h"
 #include "nsWidgetsCID.h"
@@ -39,15 +40,14 @@ class APZCTreeManager;
 class GeckoContentController;
 class APZEventState;
 struct ScrollableLayerGuid;
-struct SetAllowedTouchBehaviorCallback;
-}
+} // namespace layers
 
 class CompositorVsyncDispatcher;
-}
+} // namespace mozilla
 
 namespace base {
 class Thread;
-}
+} // namespace base
 
 // Windows specific constant indicating the maximum number of touch points the
 // inject api will allow. This also sets the maximum numerical value for touch
@@ -86,6 +86,7 @@ public:
 class nsBaseWidget : public nsIWidget, public nsSupportsWeakReference
 {
   friend class nsAutoRollup;
+  friend class DispatchWheelEventOnMainThread;
 
 protected:
   typedef base::Thread Thread;
@@ -98,6 +99,8 @@ protected:
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
   typedef mozilla::layers::APZEventState APZEventState;
   typedef mozilla::layers::SetAllowedTouchBehaviorCallback SetAllowedTouchBehaviorCallback;
+  typedef mozilla::CSSIntRect CSSIntRect;
+  typedef mozilla::CSSRect CSSRect;
   typedef mozilla::ScreenRotation ScreenRotation;
 
   virtual ~nsBaseWidget();
@@ -124,8 +127,8 @@ public:
   NS_IMETHOD              PlaceBehind(nsTopLevelWidgetZPlacement aPlacement,
                                       nsIWidget *aWidget, bool aActivate) override;
 
-  NS_IMETHOD              SetSizeMode(int32_t aMode) override;
-  virtual int32_t         SizeMode() override
+  NS_IMETHOD              SetSizeMode(nsSizeMode aMode) override;
+  virtual nsSizeMode      SizeMode() override
   {
     return mSizeMode;
   }
@@ -137,13 +140,19 @@ public:
   virtual void            ClearCachedCursor() override { mUpdateCursor = true; }
   virtual void            SetTransparencyMode(nsTransparencyMode aMode) override;
   virtual nsTransparencyMode GetTransparencyMode() override;
-  virtual void            GetWindowClipRegion(nsTArray<nsIntRect>* aRects) override;
+  virtual void            GetWindowClipRegion(nsTArray<LayoutDeviceIntRect>* aRects) override;
   NS_IMETHOD              SetWindowShadowStyle(int32_t aStyle) override;
   virtual void            SetShowsToolbarButton(bool aShow) override {}
   virtual void            SetShowsFullScreenButton(bool aShow) override {}
   virtual void            SetWindowAnimationType(WindowAnimationType aType) override {}
   NS_IMETHOD              HideWindowChrome(bool aShouldHide) override;
+  virtual bool PrepareForFullscreenTransition(nsISupports** aData) override { return false; }
+  virtual void PerformFullscreenTransition(FullscreenTransitionStage aStage,
+                                           uint16_t aDuration,
+                                           nsISupports* aData,
+                                           nsIRunnable* aCallback) override;
   NS_IMETHOD              MakeFullScreen(bool aFullScreen, nsIScreen* aScreen = nullptr) override;
+
   virtual LayerManager*   GetLayerManager(PLayerTransactionChild* aShadowManager = nullptr,
                                           LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                                           LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
@@ -158,43 +167,48 @@ public:
   virtual void            CleanupWindowEffects() override {}
   virtual bool            PreRender(LayerManagerComposite* aManager) override { return true; }
   virtual void            PostRender(LayerManagerComposite* aManager) override {}
-  virtual void            DrawWindowUnderlay(LayerManagerComposite* aManager, nsIntRect aRect) override {}
-  virtual void            DrawWindowOverlay(LayerManagerComposite* aManager, nsIntRect aRect) override {}
-  virtual mozilla::TemporaryRef<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
+  virtual void            DrawWindowUnderlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override {}
+  virtual void            DrawWindowOverlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override {}
+  virtual already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
   virtual void            EndRemoteDrawing() override { };
   virtual void            CleanupRemoteDrawing() override { };
   virtual void            UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override {}
   NS_IMETHOD              SetModal(bool aModal) override;
   virtual uint32_t        GetMaxTouchPoints() const override;
   NS_IMETHOD              SetWindowClass(const nsAString& xulWinType) override;
-  virtual nsresult        SetWindowClipRegion(const nsTArray<nsIntRect>& aRects, bool aIntersectWithExisting) override;
+  virtual nsresult        SetWindowClipRegion(const nsTArray<LayoutDeviceIntRect>& aRects, bool aIntersectWithExisting) override;
   // Return whether this widget interprets parameters to Move and Resize APIs
-  // as "global display pixels" rather than "device pixels", and therefore
+  // as "desktop pixels" rather than "device pixels", and therefore
   // applies its GetDefaultScale() value to them before using them as mBounds
   // etc (which are always stored in device pixels).
   // Note that APIs that -get- the widget's position/size/bounds, rather than
   // -setting- them (i.e. moving or resizing the widget) will always return
   // values in the widget's device pixels.
-  bool                    BoundsUseDisplayPixels() const {
+  bool                    BoundsUseDesktopPixels() const {
     return mWindowType <= eWindowType_popup;
+  }
+  // Default implementation, to be overridden by platforms where desktop coords
+  // are virtualized and may not correspond to device pixels on the screen.
+  mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale() override {
+    return mozilla::DesktopToLayoutDeviceScale(1.0);
   }
   NS_IMETHOD              MoveClient(double aX, double aY) override;
   NS_IMETHOD              ResizeClient(double aWidth, double aHeight, bool aRepaint) override;
   NS_IMETHOD              ResizeClient(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
-  NS_IMETHOD              GetBounds(nsIntRect &aRect) override;
-  NS_IMETHOD              GetClientBounds(nsIntRect &aRect) override;
-  NS_IMETHOD              GetScreenBounds(nsIntRect &aRect) override;
-  NS_IMETHOD              GetRestoredBounds(nsIntRect &aRect) override;
-  NS_IMETHOD              GetNonClientMargins(nsIntMargin &margins) override;
-  NS_IMETHOD              SetNonClientMargins(nsIntMargin &margins) override;
-  virtual nsIntPoint      GetClientOffset() override;
+  NS_IMETHOD              GetBounds(LayoutDeviceIntRect& aRect) override;
+  NS_IMETHOD              GetClientBounds(LayoutDeviceIntRect& aRect) override;
+  NS_IMETHOD              GetScreenBounds(LayoutDeviceIntRect& aRect) override;
+  NS_IMETHOD              GetRestoredBounds(LayoutDeviceIntRect& aRect) override;
+  NS_IMETHOD              GetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
+  NS_IMETHOD              SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
+  virtual LayoutDeviceIntPoint GetClientOffset() override;
   NS_IMETHOD              EnableDragDrop(bool aEnable) override;
   NS_IMETHOD              GetAttention(int32_t aCycleCount) override;
   virtual bool            HasPendingInputEvent() override;
   NS_IMETHOD              SetIcon(const nsAString &anIconSpec) override;
   NS_IMETHOD              SetWindowTitlebarColor(nscolor aColor, bool aActive) override;
   virtual void            SetDrawsInTitlebar(bool aState) override {}
-  virtual bool            ShowsResizeIndicator(nsIntRect* aResizerRect) override;
+  virtual bool            ShowsResizeIndicator(LayoutDeviceIntRect* aResizerRect) override;
   virtual void            FreeNativeData(void * data, uint32_t aDataType) override {}
   NS_IMETHOD              BeginResizeDrag(mozilla::WidgetGUIEvent* aEvent,
                                           int32_t aHorizontal,
@@ -209,29 +223,39 @@ public:
                           { return NS_ERROR_NOT_IMPLEMENTED; }
   NS_IMETHOD              SetPluginFocused(bool& aFocused) override
                           { return NS_ERROR_NOT_IMPLEMENTED; }
+  virtual void            SetCandidateWindowForPlugin(int32_t aX,
+                                                      int32_t aY) override
+                          { }
+  virtual void            DefaultProcOfPluginEvent(
+                            const mozilla::WidgetPluginEvent& aEvent) override
+                          { }
   NS_IMETHOD              AttachNativeKeyEvent(mozilla::WidgetKeyboardEvent& aEvent) override { return NS_ERROR_NOT_IMPLEMENTED; }
   NS_IMETHOD_(bool)       ExecuteNativeKeyBinding(
                             NativeKeyBindingsType aType,
                             const mozilla::WidgetKeyboardEvent& aEvent,
                             DoCommandCallback aCallback,
                             void* aCallbackData) override { return false; }
-  virtual bool            ComputeShouldAccelerate(bool aDefault);
-  NS_IMETHOD              GetToggledKeyState(uint32_t aKeyCode, bool* aLEDState) override { return NS_ERROR_NOT_IMPLEMENTED; }
+  virtual bool            ComputeShouldAccelerate();
   virtual nsIMEUpdatePreference GetIMEUpdatePreference() override { return nsIMEUpdatePreference(); }
-  NS_IMETHOD              OnDefaultButtonLoaded(const nsIntRect &aButtonRect) override { return NS_ERROR_NOT_IMPLEMENTED; }
+  NS_IMETHOD              OnDefaultButtonLoaded(const LayoutDeviceIntRect& aButtonRect) override { return NS_ERROR_NOT_IMPLEMENTED; }
   NS_IMETHOD              OverrideSystemMouseScrollSpeed(double aOriginalDeltaX,
                                                          double aOriginalDeltaY,
                                                          double& aOverriddenDeltaX,
                                                          double& aOverriddenDeltaY) override;
   virtual already_AddRefed<nsIWidget>
-  CreateChild(const nsIntRect  &aRect,
-              nsWidgetInitData *aInitData = nullptr,
-              bool             aForceUseIWidgetParent = false) override;
+  CreateChild(const LayoutDeviceIntRect& aRect,
+              nsWidgetInitData* aInitData = nullptr,
+              bool aForceUseIWidgetParent = false) override;
   NS_IMETHOD              AttachViewToTopLevel(bool aUseAttachedEvents) override;
   virtual nsIWidgetListener* GetAttachedWidgetListener() override;
   virtual void               SetAttachedWidgetListener(nsIWidgetListener* aListener) override;
+  virtual nsIWidgetListener* GetPreviouslyAttachedWidgetListener() override;
+  virtual void               SetPreviouslyAttachedWidgetListener(nsIWidgetListener* aListener) override;
   NS_IMETHOD_(TextEventDispatcher*) GetTextEventDispatcher() override final;
-
+  virtual void ZoomToRect(const uint32_t& aPresShellId,
+                          const FrameMetrics::ViewID& aViewId,
+                          const CSSRect& aRect,
+                          const uint32_t& aFlags) override;
   // Helper function for dispatching events which are not processed by APZ,
   // but need to be transformed by APZ.
   nsEventStatus DispatchInputEvent(mozilla::WidgetInputEvent* aEvent) override;
@@ -241,6 +265,12 @@ public:
 
   void SetConfirmedTargetAPZC(uint64_t aInputBlockId,
                               const nsTArray<ScrollableLayerGuid>& aTargets) const override;
+
+  void UpdateZoomConstraints(const uint32_t& aPresShellId,
+                             const FrameMetrics::ViewID& aViewId,
+                             const mozilla::Maybe<ZoomConstraints>& aConstraints) override;
+
+  bool AsyncPanZoomEnabled() const override;
 
   void NotifyWindowDestroyed();
   void NotifySizeMoveDone();
@@ -266,11 +296,14 @@ public:
 
   nsPopupLevel PopupLevel() { return mPopupLevel; }
 
-  virtual mozilla::LayoutDeviceIntSize
-  ClientToWindowSize(const mozilla::LayoutDeviceIntSize& aClientSize) override
+  virtual LayoutDeviceIntSize
+  ClientToWindowSize(const LayoutDeviceIntSize& aClientSize) override
   {
     return aClientSize;
   }
+
+  // return the screen the widget is in.
+  already_AddRefed<nsIScreen> GetWidgetScreen();
 
   // return true if this is a popup widget with a native titlebar
   bool IsPopupWithTitleBar() const
@@ -284,8 +317,14 @@ public:
 
   virtual uint32_t GetGLFrameBufferFormat() override;
 
-  virtual const SizeConstraints& GetSizeConstraints() const override;
+  virtual const SizeConstraints GetSizeConstraints() override;
   virtual void SetSizeConstraints(const SizeConstraints& aConstraints) override;
+
+  virtual bool CaptureWidgetOnScreen(RefPtr<mozilla::gfx::DrawTarget> aDT) override {
+    return false;
+  }
+
+  virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
   /**
    * Use this when GetLayerManager() returns a BasicLayerManager
@@ -305,7 +344,7 @@ public:
     ~AutoLayerManagerSetup();
   private:
     nsBaseWidget* mWidget;
-    nsRefPtr<BasicLayerManager> mLayerManager;
+    RefPtr<BasicLayerManager> mLayerManager;
   };
   friend class AutoLayerManagerSetup;
 
@@ -322,8 +361,7 @@ protected:
                                   nsIFile **aResult);
   virtual void    OnDestroy();
   void            BaseCreate(nsIWidget *aParent,
-                             const nsIntRect &aRect,
-                             nsWidgetInitData *aInitData);
+                             nsWidgetInitData* aInitData);
 
   virtual void ConfigureAPZCTreeManager();
   virtual void ConfigureAPZControllerThread();
@@ -335,8 +373,9 @@ protected:
                                              uint64_t aInputBlockId,
                                              nsEventStatus aApzResponse);
 
-  const nsIntRegion RegionFromArray(const nsTArray<nsIntRect>& aRects);
-  void ArrayFromRegion(const nsIntRegion& aRegion, nsTArray<nsIntRect>& aRects);
+  const LayoutDeviceIntRegion RegionFromArray(const nsTArray<LayoutDeviceIntRect>& aRects);
+  void ArrayFromRegion(const LayoutDeviceIntRegion& aRegion,
+                       nsTArray<LayoutDeviceIntRect>& aRects);
 
   virtual nsIContent* GetLastRollup() override
   {
@@ -354,7 +393,7 @@ protected:
     return NS_ERROR_UNEXPECTED;
   }
 
-  virtual nsresult SynthesizeNativeMouseEvent(mozilla::LayoutDeviceIntPoint aPoint,
+  virtual nsresult SynthesizeNativeMouseEvent(LayoutDeviceIntPoint aPoint,
                                               uint32_t aNativeMessage,
                                               uint32_t aModifierFlags,
                                               nsIObserver* aObserver) override
@@ -363,14 +402,14 @@ protected:
     return NS_ERROR_UNEXPECTED;
   }
 
-  virtual nsresult SynthesizeNativeMouseMove(mozilla::LayoutDeviceIntPoint aPoint,
+  virtual nsresult SynthesizeNativeMouseMove(LayoutDeviceIntPoint aPoint,
                                              nsIObserver* aObserver) override
   {
     mozilla::widget::AutoObserverNotifier notifier(aObserver, "mouseevent");
     return NS_ERROR_UNEXPECTED;
   }
 
-  virtual nsresult SynthesizeNativeMouseScrollEvent(mozilla::LayoutDeviceIntPoint aPoint,
+  virtual nsresult SynthesizeNativeMouseScrollEvent(LayoutDeviceIntPoint aPoint,
                                                     uint32_t aNativeMessage,
                                                     double aDeltaX,
                                                     double aDeltaY,
@@ -385,7 +424,7 @@ protected:
 
   virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                               TouchPointerState aPointerState,
-                                              nsIntPoint aPointerScreenPoint,
+                                              ScreenIntPoint aPointerScreenPoint,
                                               double aPointerPressure,
                                               uint32_t aPointerOrientation,
                                               nsIObserver* aObserver) override
@@ -400,10 +439,10 @@ protected:
 protected:
   // Utility to check if an array of clip rects is equal to our
   // internally stored clip rect array mClipRects.
-  bool IsWindowClipRegionEqual(const nsTArray<nsIntRect>& aRects);
+  bool IsWindowClipRegionEqual(const nsTArray<LayoutDeviceIntRect>& aRects);
 
   // Stores the clip rectangles in aRects into mClipRects.
-  void StoreWindowClipRegion(const nsTArray<nsIntRect>& aRects);
+  void StoreWindowClipRegion(const nsTArray<LayoutDeviceIntRect>& aRects);
 
   virtual already_AddRefed<nsIWidget>
   AllocateChildPopupWidget()
@@ -432,22 +471,22 @@ protected:
    * @param aWidth width to constrain
    * @param aHeight height to constrain
    */
-  void ConstrainSize(int32_t* aWidth, int32_t* aHeight) const
+  void ConstrainSize(int32_t* aWidth, int32_t* aHeight)
   {
-    *aWidth = std::max(mSizeConstraints.mMinSize.width,
-                     std::min(mSizeConstraints.mMaxSize.width, *aWidth));
-    *aHeight = std::max(mSizeConstraints.mMinSize.height,
-                      std::min(mSizeConstraints.mMaxSize.height, *aHeight));
+    SizeConstraints c = GetSizeConstraints();
+    *aWidth = std::max(c.mMinSize.width,
+                       std::min(c.mMaxSize.width, *aWidth));
+    *aHeight = std::max(c.mMinSize.height,
+                        std::min(c.mMaxSize.height, *aHeight));
   }
 
   virtual CompositorChild* GetRemoteRenderer() override;
-
-  virtual void GetPreferredCompositorBackends(nsTArray<mozilla::layers::LayersBackend>& aHints);
 
   /**
    * Notify the widget that this window is being used with OMTC.
    */
   virtual void WindowUsesOMTC() {}
+  virtual void RegisterTouchWindow() {}
 
   nsIDocument* GetDocument() const;
 
@@ -461,53 +500,72 @@ protected:
    * require the compositor to be destroyed before ~nsBaseWidget is
    * reached (This is the case with gtk2 for instance).
    */
-  void DestroyCompositor();
+  virtual void DestroyCompositor();
   void DestroyLayerManager();
 
   void FreeShutdownObserver();
 
   nsIWidgetListener* mWidgetListener;
   nsIWidgetListener* mAttachedWidgetListener;
-  nsRefPtr<LayerManager> mLayerManager;
-  nsRefPtr<CompositorChild> mCompositorChild;
-  nsRefPtr<CompositorParent> mCompositorParent;
-  nsRefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
-  nsRefPtr<APZCTreeManager> mAPZC;
-  nsRefPtr<APZEventState> mAPZEventState;
-  nsRefPtr<SetAllowedTouchBehaviorCallback> mSetAllowedTouchBehaviorCallback;
-  nsRefPtr<WidgetShutdownObserver> mShutdownObserver;
-  nsRefPtr<TextEventDispatcher> mTextEventDispatcher;
+  nsIWidgetListener* mPreviouslyAttachedWidgetListener;
+  RefPtr<LayerManager> mLayerManager;
+  RefPtr<CompositorChild> mCompositorChild;
+  RefPtr<CompositorParent> mCompositorParent;
+  RefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
+  RefPtr<APZCTreeManager> mAPZC;
+  RefPtr<APZEventState> mAPZEventState;
+  SetAllowedTouchBehaviorCallback mSetAllowedTouchBehaviorCallback;
+  RefPtr<WidgetShutdownObserver> mShutdownObserver;
+  RefPtr<TextEventDispatcher> mTextEventDispatcher;
   nsCursor          mCursor;
-  bool              mUpdateCursor;
   nsBorderStyle     mBorderStyle;
-  bool              mUseLayersAcceleration;
-  bool              mUseAttachedEvents;
-  nsIntRect         mBounds;
-  nsIntRect*        mOriginalBounds;
+  LayoutDeviceIntRect mBounds;
+  LayoutDeviceIntRect* mOriginalBounds;
   // When this pointer is null, the widget is not clipped
-  nsAutoArrayPtr<nsIntRect> mClipRects;
+  mozilla::UniquePtr<LayoutDeviceIntRect[]> mClipRects;
   uint32_t          mClipRectCount;
   nsSizeMode        mSizeMode;
   nsPopupLevel      mPopupLevel;
   nsPopupType       mPopupType;
   SizeConstraints   mSizeConstraints;
 
+  bool              mUpdateCursor;
+  bool              mUseAttachedEvents;
+  bool              mIMEHasFocus;
+#ifdef XP_WIN
+  bool              mAccessibilityInUseFlag;
+#endif
   static nsIRollupListener* gRollupListener;
 
   // the last rolled up popup. Only set this when an nsAutoRollup is in scope,
   // so it can be cleared automatically.
   static nsIContent* mLastRollup;
 
+  struct InitialZoomConstraints {
+    InitialZoomConstraints(const uint32_t& aPresShellID,
+                           const FrameMetrics::ViewID& aViewID,
+                           const ZoomConstraints& aConstraints)
+      : mPresShellID(aPresShellID), mViewID(aViewID), mConstraints(aConstraints)
+    {
+    }
+
+    uint32_t mPresShellID;
+    FrameMetrics::ViewID mViewID;
+    ZoomConstraints mConstraints;
+  };
+
+  mozilla::Maybe<InitialZoomConstraints> mInitialZoomConstraints;
+
 #ifdef DEBUG
 protected:
   static nsAutoString debug_GuiEventToString(mozilla::WidgetGUIEvent* aGuiEvent);
   static bool debug_WantPaintFlashing();
 
-  static void debug_DumpInvalidate(FILE *                aFileOut,
-                                   nsIWidget *           aWidget,
-                                   const nsIntRect *     aRect,
-                                   const nsAutoCString & aWidgetName,
-                                   int32_t               aWindowID);
+  static void debug_DumpInvalidate(FILE* aFileOut,
+                                   nsIWidget* aWidget,
+                                   const LayoutDeviceIntRect* aRect,
+                                   const nsAutoCString& aWidgetName,
+                                   int32_t aWindowID);
 
   static void debug_DumpEvent(FILE* aFileOut,
                               nsIWidget* aWidget,

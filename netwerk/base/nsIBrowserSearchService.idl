@@ -22,7 +22,7 @@ interface nsISearchSubmission : nsISupports
   readonly attribute nsIURI uri;
 };
 
-[scriptable, uuid(65fd517b-6bda-4bac-bbe1-42de1b3a7df6)]
+[scriptable, uuid(620bd920-0491-48c8-99a8-d6047e64802d)]
 interface nsISearchEngine : nsISupports
 {
   /**
@@ -116,19 +116,6 @@ interface nsISearchEngine : nsISupports
   void speculativeConnect(in jsval options);
 
   /**
-   * Supported search engine types.
-   */
-  const unsigned long TYPE_MOZSEARCH     = 1;
-  const unsigned long TYPE_SHERLOCK      = 2;
-  const unsigned long TYPE_OPENSEARCH    = 3;
-
-  /**
-   * Supported search engine data types.
-   */
-  const unsigned long DATA_XML     = 1;
-  const unsigned long DATA_TEXT    = 2;
-
-  /**
    * An optional shortcut alias for the engine.
    * When non-null, this is a unique identifier.
    */
@@ -158,11 +145,6 @@ interface nsISearchEngine : nsISupports
    * A URL string pointing to the engine's search form.
    */
   readonly attribute AString searchForm;
-
-  /**
-   * The search engine type.
-   */
-  readonly attribute long type;
 
   /**
    * An optional unique identifier for this search engine within the context of
@@ -253,7 +235,7 @@ interface nsIBrowserSearchInitObserver : nsISupports
   void onInitComplete(in nsresult aStatus);
 };
 
-[scriptable, uuid(75731859-c7b1-4edf-8d1c-3d4d79a55d1d)]
+[scriptable, uuid(150ef720-bbe2-4169-b9f3-ef7ec0654ced)]
 interface nsIBrowserSearchService : nsISupports
 {
   /**
@@ -296,8 +278,7 @@ interface nsIBrowserSearchService : nsISupports
    *        The URL to the search engine's description file.
    *
    * @param dataType
-   *        An integer representing the plugin file format. Must be one
-   *        of the supported search engine data types defined above.
+   *        Obsolete, the value is ignored.
    *
    * @param iconURL
    *        A URL string to an icon file to be used as the search engine's
@@ -315,8 +296,8 @@ interface nsIBrowserSearchService : nsISupports
    *        addition is complete, or if the addition fails. It will not be
    *        called if addEngine throws an exception.
    *
-   * @throws NS_ERROR_FAILURE if the type is invalid, or if the description
-   *         file cannot be successfully loaded.
+   * @throws NS_ERROR_FAILURE if the description file cannot be successfully
+   *         loaded.
    */
   void addEngine(in AString engineURL, in long dataType, in AString iconURL,
                  in boolean confirm, [optional] in nsISearchInstallCallback callback);
@@ -439,16 +420,28 @@ interface nsIBrowserSearchService : nsISupports
   void removeEngine(in nsISearchEngine engine);
 
   /**
-   * The default search engine. Returns the first visible engine if the default
-   * engine is hidden. May be null if there are no visible search engines.
+   * Alias for the currentEngine attribute, kept for add-on compatibility.
    */
   attribute nsISearchEngine defaultEngine;
 
   /**
-   * The currently active search engine. May be null if there are no visible
-   * search engines.
+   * The currently active search engine.
+   * Unless the application doesn't ship any search plugin, this should never
+   * be null. If the currently active engine is removed, this attribute will
+   * fallback first to the original default engine if it's not hidden, then to
+   * the first visible engine, and as a last resort it will unhide the original
+   * default engine.
    */
   attribute nsISearchEngine currentEngine;
+
+  /**
+   * Gets a representation of the default engine in an anonymized JSON
+   * string suitable for recording in the Telemetry environment.
+   *
+   * @return an object containing anonymized info about the default engine:
+   *         name, loadPath, submissionURL (for default engines).
+   */
+  jsval getDefaultEngineInfo();
 
   /**
    * Determines if the provided URL represents results from a search engine, and

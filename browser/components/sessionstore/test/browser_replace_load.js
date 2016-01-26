@@ -17,7 +17,7 @@ add_task(function* () {
   yield testSwitchToTab("about:mozilla?foo=bar", {replaceQueryString: true});
 });
 
-let testSwitchToTab = Task.async(function* (url, options) {
+var testSwitchToTab = Task.async(function* (url, options) {
   // Create a background tab.
   let tab = gBrowser.addTab("about:blank");
   let browser = tab.linkedBrowser;
@@ -34,9 +34,8 @@ let testSwitchToTab = Task.async(function* (url, options) {
 
   // Switch-to-tab with a similar URI.
   switchToTabHavingURI(url, false, options);
-  ok(!tab.hasAttribute("pending"), "tab is no longer pending");
 
-  // Wait until the tab is restored.
+  // Tab should now restore
   yield promiseTabRestored(tab);
   is(browser.currentURI.spec, url, "correct URL loaded");
 

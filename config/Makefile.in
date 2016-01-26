@@ -10,10 +10,6 @@ ifdef NSBUILDROOT
 override NSBUILDROOT :=
 endif
 
-ifdef GNU_CC
-MODULE_OPTIMIZE_FLAGS = -O3
-endif
-
 include $(topsrcdir)/config/config.mk
 
 # L10n jobs are doing make -C config manually before anything else,
@@ -34,24 +30,15 @@ INSTALL_TARGETS += NSINSTALL
 endif
 endif
 
-ifndef JS_STANDALONE
-HEADERS_FILES = \
-	$(DEPTH)/mozilla-config.h \
-	$(NULL)
-HEADERS_DEST := $(DIST)/include
-HEADERS_TARGET := export
-INSTALL_TARGETS += HEADERS
-endif
-
 include $(topsrcdir)/config/rules.mk
-
-HOST_CFLAGS += -DUNICODE -D_UNICODE
 
 ifndef JS_STANDALONE
 ifndef MOZ_PROFILE_USE
 # Generate a new buildid every time we "export" in config... that's only
 # supposed to be once per-build!
-export::
+export:: buildid
+
+buildid: FORCE
 ifdef MOZ_BUILD_DATE
 	printf '%s' $(MOZ_BUILD_DATE) > buildid
 else

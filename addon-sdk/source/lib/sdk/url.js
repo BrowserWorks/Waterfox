@@ -54,14 +54,14 @@ function resolveResourceURI(uri) {
   return resolved;
 }
 
-let fromFilename = exports.fromFilename = function fromFilename(path) {
+var fromFilename = exports.fromFilename = function fromFilename(path) {
   var file = Cc['@mozilla.org/file/local;1']
              .createInstance(Ci.nsILocalFile);
   file.initWithPath(path);
   return ios.newFileURI(file).spec;
 };
 
-let toFilename = exports.toFilename = function toFilename(url) {
+var toFilename = exports.toFilename = function toFilename(url) {
   var uri = newURI(url);
   if (uri.scheme == "resource")
     uri = newURI(resolveResourceURI(uri));
@@ -126,6 +126,15 @@ function URL(url, base) {
     }
   }
 
+  let fileName = "/";
+  try {
+    fileName = uri.QueryInterface(Ci.nsIURL).fileName;
+  } catch (e) {
+    if (e.result != Cr.NS_NOINTERFACE) {
+      throw e;
+    }
+  }
+
   let uriData = [uri.path, uri.path.length, {}, {}, {}, {}, {}, {}];
   URLParser.parsePath.apply(URLParser, uriData);
   let [{ value: filepathPos }, { value: filepathLen },
@@ -137,35 +146,44 @@ function URL(url, base) {
   let search = uri.path.substr(queryPos, queryLen);
   search = search ? "?" + search : "";
 
-  this.__defineGetter__("scheme", function() uri.scheme);
-  this.__defineGetter__("userPass", function() userPass);
-  this.__defineGetter__("host", function() host);
-  this.__defineGetter__("hostname", function() host);
-  this.__defineGetter__("port", function() port);
-  this.__defineGetter__("path", function() uri.path);
-  this.__defineGetter__("pathname", function() pathname);
-  this.__defineGetter__("hash", function() hash);
-  this.__defineGetter__("href", function() uri.spec);
-  this.__defineGetter__("origin", function() uri.prePath);
-  this.__defineGetter__("protocol", function() uri.scheme + ":");
-  this.__defineGetter__("search", function() search);
+  this.__defineGetter__("fileName", () => fileName);
+  this.__defineGetter__("scheme", () => uri.scheme);
+  this.__defineGetter__("userPass", () => userPass);
+  this.__defineGetter__("host", () => host);
+  this.__defineGetter__("hostname", () => host);
+  this.__defineGetter__("port", () => port);
+  this.__defineGetter__("path", () => uri.path);
+  this.__defineGetter__("pathname", () => pathname);
+  this.__defineGetter__("hash", () => hash);
+  this.__defineGetter__("href", () => uri.spec);
+  this.__defineGetter__("origin", () => uri.prePath);
+  this.__defineGetter__("protocol", () => uri.scheme + ":");
+  this.__defineGetter__("search", () => search);
 
   Object.defineProperties(this, {
     toString: {
-      value() new String(uri.spec).toString(),
+      value() {
+        return new String(uri.spec).toString();
+      },
       enumerable: false
     },
     valueOf: {
-      value() new String(uri.spec).valueOf(),
+      value() {
+        return new String(uri.spec).valueOf();
+      },
       enumerable: false
     },
     toSource: {
-      value() new String(uri.spec).toSource(),
+      value() {
+        return new String(uri.spec).toSource();
+      },
       enumerable: false
     },
     // makes more sense to flatten to string, easier to travel across JSON
     toJSON: {
-      value() new String(uri.spec).toString(),
+      value() {
+        return new String(uri.spec).toString();
+      },
       enumerable: false
     }
   });
@@ -292,7 +310,7 @@ const DataURL = Class({
 
 exports.DataURL = DataURL;
 
-let getTLD = exports.getTLD = function getTLD (url) {
+var getTLD = exports.getTLD = function getTLD (url) {
   let uri = newURI(url.toString());
   let tld = null;
   try {
@@ -307,7 +325,7 @@ let getTLD = exports.getTLD = function getTLD (url) {
   return tld;
 };
 
-let isValidURI = exports.isValidURI = function (uri) {
+var isValidURI = exports.isValidURI = function (uri) {
   try {
     newURI(uri);
   }

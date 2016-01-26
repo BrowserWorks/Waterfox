@@ -45,13 +45,16 @@ public:
      
   virtual DrawTargetType GetType() const override { return mA->GetType(); }
   virtual BackendType GetBackendType() const override { return mA->GetBackendType(); }
-  virtual TemporaryRef<SourceSurface> Snapshot() override { return new SourceSurfaceDual(mA, mB); }
+  virtual already_AddRefed<SourceSurface> Snapshot() override {
+    return MakeAndAddRef<SourceSurfaceDual>(mA, mB);
+  }
   virtual IntSize GetSize() override { return mA->GetSize(); }
      
   FORWARD_FUNCTION(Flush)
   FORWARD_FUNCTION1(PushClip, const Path *, aPath)
   FORWARD_FUNCTION1(PushClipRect, const Rect &, aRect)
   FORWARD_FUNCTION(PopClip)
+  FORWARD_FUNCTION(PopLayer)
   FORWARD_FUNCTION1(ClearRect, const Rect &, aRect)
 
   virtual void SetTransform(const Matrix &aTransform) override {
@@ -102,8 +105,14 @@ public:
                           const GlyphRenderingOptions *aRenderingOptions) override;
   
   virtual void Mask(const Pattern &aSource, const Pattern &aMask, const DrawOptions &aOptions) override;
-     
-  virtual TemporaryRef<SourceSurface>
+
+  virtual void PushLayer(bool aOpaque, Float aOpacity,
+                         SourceSurface* aMask,
+                         const Matrix& aMaskTransform,
+                         const IntRect& aBounds = IntRect(),
+                         bool aCopyBackground = false) override;
+
+  virtual already_AddRefed<SourceSurface>
     CreateSourceSurfaceFromData(unsigned char *aData,
                                 const IntSize &aSize,
                                 int32_t aStride,
@@ -112,26 +121,26 @@ public:
     return mA->CreateSourceSurfaceFromData(aData, aSize, aStride, aFormat);
   }
      
-  virtual TemporaryRef<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override
+  virtual already_AddRefed<SourceSurface> OptimizeSourceSurface(SourceSurface *aSurface) const override
   {
     return mA->OptimizeSourceSurface(aSurface);
   }
      
-  virtual TemporaryRef<SourceSurface>
+  virtual already_AddRefed<SourceSurface>
     CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurface) const override
   {
     return mA->CreateSourceSurfaceFromNativeSurface(aSurface);
   }
      
-  virtual TemporaryRef<DrawTarget>
+  virtual already_AddRefed<DrawTarget>
     CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const override;
      
-  virtual TemporaryRef<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const override
+  virtual already_AddRefed<PathBuilder> CreatePathBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const override
   {
     return mA->CreatePathBuilder(aFillRule);
   }
      
-  virtual TemporaryRef<GradientStops>
+  virtual already_AddRefed<GradientStops>
     CreateGradientStops(GradientStop *aStops,
                         uint32_t aNumStops,
                         ExtendMode aExtendMode = ExtendMode::CLAMP) const override
@@ -139,7 +148,7 @@ public:
     return mA->CreateGradientStops(aStops, aNumStops, aExtendMode);
   }
 
-  virtual TemporaryRef<FilterNode> CreateFilter(FilterType aType) override
+  virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) override
   {
     return mA->CreateFilter(aType);
   }
@@ -153,13 +162,15 @@ public:
   {
     return true;
   }
+
+  virtual bool IsCurrentGroupOpaque() override { return mA->IsCurrentGroupOpaque(); }
      
 private:
   RefPtr<DrawTarget> mA;
   RefPtr<DrawTarget> mB;
 };
      
-}
-}
+} // namespace gfx
+} // namespace mozilla
      
 #endif /* MOZILLA_GFX_DRAWTARGETDUAL_H_ */ 

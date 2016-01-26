@@ -6,6 +6,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/WidgetUtils.h"
+#ifdef XP_WIN
+#include "WinUtils.h"
+#endif
+#if MOZ_WIDGET_GTK == 3
+#include "mozilla/WidgetUtilsGtk.h"
+#endif
 
 namespace mozilla {
 
@@ -86,7 +92,22 @@ nsIntRect RotateRect(nsIntRect aRect,
                        aRect.height, aRect.width);
     default:
       MOZ_CRASH("Unknown rotation");
-      return aRect;
   }
 }
+
+namespace widget {
+
+uint32_t
+WidgetUtils::IsTouchDeviceSupportPresent()
+{
+#ifdef XP_WIN
+  return WinUtils::IsTouchDeviceSupportPresent();
+#elif MOZ_WIDGET_GTK == 3
+  return WidgetUtilsGTK::IsTouchDeviceSupportPresent();
+#else
+  return 0;
+#endif
+}
+
+} // namespace widget
 } // namespace mozilla

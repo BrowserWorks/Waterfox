@@ -71,8 +71,8 @@ public:
 
   virtual int32_t TabIndexDefault() override;
 
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(nsGenericHTMLFrameElement,
-                                                     nsGenericHTMLElement)
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsGenericHTMLFrameElement,
+                                           nsGenericHTMLElement)
 
   void SwapFrameLoaders(nsXULElement& aOtherOwner, mozilla::ErrorResult& aError);
 
@@ -100,7 +100,7 @@ protected:
   already_AddRefed<nsPIDOMWindow> GetContentWindow();
   nsresult GetContentWindow(nsIDOMWindow** aContentWindow);
 
-  nsRefPtr<nsFrameLoader> mFrameLoader;
+  RefPtr<nsFrameLoader> mFrameLoader;
 
   /**
    * True when the element is created by the parser using the
@@ -112,6 +112,11 @@ protected:
   bool mIsPrerendered;
   bool mBrowserFrameListenersRegistered;
   bool mFrameLoaderCreationDisallowed;
+
+  // This flag is only used by <iframe>. See HTMLIFrameElement::
+  // FullscreenFlag() for details. It is placed here so that we
+  // do not bloat any struct.
+  bool mFullscreenFlag = false;
 
 private:
   void GetManifestURLByType(nsIAtom *aAppType, nsAString& aOut);

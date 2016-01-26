@@ -149,22 +149,26 @@
 // A small scrollbar.
 #define NS_THEME_SCROLLBAR_SMALL                           81
 
+// The scrollbar slider
+#define NS_THEME_SCROLLBAR_HORIZONTAL                      82
+#define NS_THEME_SCROLLBAR_VERTICAL                        83
+
 // A scrollbar button (up/down/left/right)
-#define NS_THEME_SCROLLBAR_BUTTON_UP                       82
-#define NS_THEME_SCROLLBAR_BUTTON_DOWN                     83
-#define NS_THEME_SCROLLBAR_BUTTON_LEFT                     84
-#define NS_THEME_SCROLLBAR_BUTTON_RIGHT                    85
+#define NS_THEME_SCROLLBAR_BUTTON_UP                       84
+#define NS_THEME_SCROLLBAR_BUTTON_DOWN                     85
+#define NS_THEME_SCROLLBAR_BUTTON_LEFT                     86
+#define NS_THEME_SCROLLBAR_BUTTON_RIGHT                    87
 
 // The scrollbar track
-#define NS_THEME_SCROLLBAR_TRACK_HORIZONTAL                86
-#define NS_THEME_SCROLLBAR_TRACK_VERTICAL                  87
+#define NS_THEME_SCROLLBAR_TRACK_HORIZONTAL                88
+#define NS_THEME_SCROLLBAR_TRACK_VERTICAL                  89
 
 // The scrollbar thumb
-#define NS_THEME_SCROLLBAR_THUMB_HORIZONTAL                88
-#define NS_THEME_SCROLLBAR_THUMB_VERTICAL                  89
+#define NS_THEME_SCROLLBAR_THUMB_HORIZONTAL                90
+#define NS_THEME_SCROLLBAR_THUMB_VERTICAL                  91
 
 // A non-disappearing scrollbar.
-#define NS_THEME_SCROLLBAR_NON_DISAPPEARING                90
+#define NS_THEME_SCROLLBAR_NON_DISAPPEARING                92
 
 // A textfield or text area
 #define NS_THEME_TEXTFIELD                                 95
@@ -255,8 +259,7 @@
 #define NS_THEME_WIN_MEDIA_TOOLBOX                         222
 #define NS_THEME_WIN_BROWSER_TAB_BAR_TOOLBOX               223
 
-// Unified toolbar and titlebar elements on the Mac
-#define NS_THEME_MOZ_MAC_UNIFIED_TOOLBAR                   224
+// Titlebar elements on the Mac
 #define NS_THEME_MOZ_MAC_FULLSCREEN_BUTTON                 226
 
 // Mac help button
@@ -286,3 +289,5 @@
 #define NS_THEME_MAC_VIBRANCY_DARK                         244
 #define NS_THEME_MAC_DISCLOSURE_BUTTON_OPEN                245
 #define NS_THEME_MAC_DISCLOSURE_BUTTON_CLOSED              246
+
+#define NS_THEME_GTK_INFO_BAR                              247

@@ -9,7 +9,7 @@
 #include "base/process.h"
 #include "mozilla/Mutex.h"
 
-#if defined(OS_LINUX) || defined(OS_MACOSX)
+#if defined(OS_LINUX) || defined(XP_DARWIN)
 #include <pthread.h>
 #include "SharedMemoryBasic.h"
 #include "mozilla/Atomics.h"
@@ -19,7 +19,7 @@
 namespace IPC {
 template<typename T>
 struct ParamTraits;
-}
+} // namespace IPC
 
 //
 // Provides:
@@ -101,7 +101,7 @@ private:
 #if defined(OS_WIN)
   HANDLE mMutex;
 #elif defined(OS_LINUX) || defined(OS_MACOSX)
-  nsRefPtr<mozilla::ipc::SharedMemoryBasic> mSharedBuffer;
+  RefPtr<mozilla::ipc::SharedMemoryBasic> mSharedBuffer;
   pthread_mutex_t* mMutex;
   mozilla::Atomic<int32_t>* mCount;
 #endif
@@ -110,5 +110,6 @@ private:
 typedef BaseAutoLock<CrossProcessMutex> CrossProcessMutexAutoLock;
 typedef BaseAutoUnlock<CrossProcessMutex> CrossProcessMutexAutoUnlock;
 
-}
+} // namespace mozilla
+
 #endif

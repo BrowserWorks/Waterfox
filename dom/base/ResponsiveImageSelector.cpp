@@ -9,7 +9,6 @@
 #include "nsIDocument.h"
 #include "nsContentUtils.h"
 #include "nsPresContext.h"
-#include "nsNetUtil.h"
 
 #include "nsCSSParser.h"
 #include "nsCSSProps.h"
@@ -294,7 +293,6 @@ ResponsiveImageSelector::SelectImage(bool aReselect)
   nsCOMPtr<nsIURI> baseURI = mOwnerNode ? mOwnerNode->GetBaseURI() : nullptr;
 
   if (!pctx || !doc || !baseURI) {
-    MOZ_ASSERT(false, "Unable to find document prescontext and base URI");
     return oldBest != -1;
   }
 
@@ -704,8 +702,8 @@ ResponsiveImageCandidate::Density(int32_t aMatchingWidth) const
   if (mType == eCandidateType_Density) {
     return mValue.mDensity;
   } else if (mType == eCandidateType_ComputedFromWidth) {
-    if (aMatchingWidth <= 0) {
-      MOZ_ASSERT(false, "0 or negative matching width is invalid per spec");
+    if (aMatchingWidth < 0) {
+      MOZ_ASSERT(false, "Don't expect to have a negative matching width at this point");
       return 1.0;
     }
     double density = double(mValue.mWidth) / double(aMatchingWidth);

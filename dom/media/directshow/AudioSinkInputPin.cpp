@@ -7,7 +7,7 @@
 #include "AudioSinkInputPin.h"
 #include "AudioSinkFilter.h"
 #include "SampleSink.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include <wmsdkidl.h>
 
@@ -15,12 +15,8 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-PRLogModuleInfo* GetDirectShowLog();
-#define LOG(...) PR_LOG(GetDirectShowLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#else
-#define LOG(...)
-#endif
+extern LogModule* GetDirectShowLog();
+#define LOG(...) MOZ_LOG(GetDirectShowLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 AudioSinkInputPin::AudioSinkInputPin(wchar_t* aObjectName,
                                      AudioSinkFilter* aFilter,
@@ -135,15 +131,15 @@ AudioSinkInputPin::Receive(IMediaSample* aSample )
   return S_OK;
 }
 
-TemporaryRef<IMediaSeeking>
+already_AddRefed<IMediaSeeking>
 AudioSinkInputPin::GetConnectedPinSeeking()
 {
   RefPtr<IPin> peer = GetConnected();
   if (!peer)
     return nullptr;
   RefPtr<IMediaSeeking> seeking;
-  peer->QueryInterface(static_cast<IMediaSeeking**>(byRef(seeking)));
-  return seeking;
+  peer->QueryInterface(static_cast<IMediaSeeking**>(getter_AddRefs(seeking)));
+  return seeking.forget();
 }
 
 HRESULT

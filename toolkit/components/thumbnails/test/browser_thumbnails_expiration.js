@@ -6,14 +6,15 @@ const URL1 = URL + "#1";
 const URL2 = URL + "#2";
 const URL3 = URL + "#3";
 
-let tmp = {};
+var tmp = {};
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("resource://gre/modules/PageThumbs.jsm", tmp);
 
-const {EXPIRATION_MIN_CHUNK_SIZE, PageThumbsExpiration} = tmp;
+const EXPIRATION_MIN_CHUNK_SIZE = 50;
+const {PageThumbsExpiration} = tmp;
 
-function runTests() {
+function* runTests() {
   // Create dummy URLs.
   let dummyURLs = [];
   for (let i = 0; i < EXPIRATION_MIN_CHUNK_SIZE + 10; i++) {
@@ -57,12 +58,12 @@ function runTests() {
 
   // Expire thumbnails and expect 10 remaining.
   yield expireThumbnails([]);
-  let remainingURLs = [u for (u of dummyURLs) if (thumbnailExists(u))];
+  let remainingURLs = dummyURLs.filter(thumbnailExists);
   is(remainingURLs.length, 10, "10 dummy thumbnails remaining");
 
   // Expire thumbnails again. All should be gone by now.
   yield expireThumbnails([]);
-  remainingURLs = [u for (u of remainingURLs) if (thumbnailExists(u))];
+  remainingURLs = remainingURLs.filter(thumbnailExists);
   is(remainingURLs.length, 0, "no dummy thumbnails remaining");
 }
 

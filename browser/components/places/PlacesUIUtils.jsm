@@ -31,17 +31,11 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
 
-#ifdef MOZ_SERVICES_CLOUDSYNC
 XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
                                   "resource://gre/modules/CloudSync.jsm");
-#else
-let CloudSync = null;
-#endif
 
-#ifdef MOZ_SERVICES_SYNC
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
                                   "resource://services-sync/main.js");
-#endif
 
 // copied from utilityOverlay.js
 const TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -134,11 +128,13 @@ this.PlacesUIUtils = {
     return bundle.GetStringFromName(key);
   },
 
-  get _copyableAnnotations() [
-    this.DESCRIPTION_ANNO,
-    this.LOAD_IN_SIDEBAR_ANNO,
-    PlacesUtils.READ_ONLY_ANNO,
-  ],
+  get _copyableAnnotations() {
+    return [
+      this.DESCRIPTION_ANNO,
+      this.LOAD_IN_SIDEBAR_ANNO,
+      PlacesUtils.READ_ONLY_ANNO,
+    ];
+  },
 
   /**
    * Get a transaction for copying a uri item (either a bookmark or a history
@@ -174,7 +170,7 @@ this.PlacesUIUtils = {
     let annos = [];
     if (aData.annos) {
       annos = aData.annos.filter(function (aAnno) {
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1;
+        return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
 
@@ -200,14 +196,21 @@ this.PlacesUIUtils = {
    *       annotations are synced from the old one.
    * @see this._copyableAnnotations for the list of copyable annotations.
    */
-  _getFolderCopyTransaction:
-  function PUIU__getFolderCopyTransaction(aData, aContainer, aIndex)
-  {
-    function getChildItemsTransactions(aChildren)
-    {
+  _getFolderCopyTransaction(aData, aContainer, aIndex) {
+    function getChildItemsTransactions(aRoot) {
       let transactions = [];
       let index = aIndex;
-      aChildren.forEach(function (node, i) {
+      for (let i = 0; i < aRoot.childCount; ++i) {
+        let child = aRoot.getChild(i);
+        // Temporary hacks until we switch to PlacesTransactions.jsm.
+        let isLivemark =
+          PlacesUtils.annotations.itemHasAnnotation(child.itemId,
+                                                    PlacesUtils.LMANNO_FEEDURI);
+        let [node] = PlacesUtils.unwrapNodes(
+          PlacesUtils.wrapNode(child, PlacesUtils.TYPE_X_MOZ_PLACE, isLivemark),
+          PlacesUtils.TYPE_X_MOZ_PLACE
+        );
+
         // Make sure that items are given the correct index, this will be
         // passed by the transaction manager to the backend for the insertion.
         // Insertion behaves differently for DEFAULT_INDEX (append).
@@ -238,19 +241,21 @@ this.PlacesUIUtils = {
         else {
           throw new Error("Unexpected item under a bookmarks folder");
         }
-      });
+      }
       return transactions;
     }
 
-    if (aContainer == PlacesUtils.tagsFolderId) { // Copying a tag folder.
+    if (aContainer == PlacesUtils.tagsFolderId) { // Copying into a tag folder.
       let transactions = [];
-      if (aData.children) {
-        aData.children.forEach(function(aChild) {
+      if (!aData.livemark && aData.type == PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER) {
+        let {root} = PlacesUtils.getFolderContents(aData.id, false, false);
+        let urls = PlacesUtils.getURLsForContainerNode(root);
+        root.containerOpen = false;
+        for (let { uri } of urls) {
           transactions.push(
-            new PlacesTagURITransaction(PlacesUtils._uri(aChild.uri),
-                                        [aData.title])
+            new PlacesTagURITransaction(NetUtil.newURI(uri), [aData.title])
           );
-        });
+        }
       }
       return new PlacesAggregatedTransaction("addTags", transactions);
     }
@@ -259,7 +264,10 @@ this.PlacesUIUtils = {
       return this._getLivemarkCopyTransaction(aData, aContainer, aIndex);
     }
 
-    let transactions = getChildItemsTransactions(aData.children);
+    let {root} = PlacesUtils.getFolderContents(aData.id, false, false);
+    let transactions = getChildItemsTransactions(root);
+    root.containerOpen = false;
+
     if (aData.dateAdded) {
       transactions.push(
         new PlacesEditItemDateAddedTransaction(null, aData.dateAdded)
@@ -274,7 +282,7 @@ this.PlacesUIUtils = {
     let annos = [];
     if (aData.annos) {
       annos = aData.annos.filter(function (aAnno) {
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1;
+        return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
 
@@ -315,7 +323,7 @@ this.PlacesUIUtils = {
         else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
           siteURI = PlacesUtils._uri(aAnno.value);
         }
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1
+        return this._copyableAnnotations.includes(aAnno.name)
       }, this);
     }
 
@@ -403,11 +411,11 @@ this.PlacesUIUtils = {
    *          move/insert command.
    */
   getTransactionForData: function(aData, aType, aNewParentGuid, aIndex, aCopy) {
-    if (this.SUPPORTED_FLAVORS.indexOf(aData.type) == -1)
+    if (!this.SUPPORTED_FLAVORS.includes(aData.type))
       throw new Error(`Unsupported '${aData.type}' data type`);
 
     if ("itemGuid" in aData) {
-      if (this.PLACES_FLAVORS.indexOf(aData.type) == -1)
+      if (!this.PLACES_FLAVORS.includes(aData.type))
         throw new Error (`itemGuid unexpectedly set on ${aData.type} data`);
 
       let info = { guid: aData.itemGuid
@@ -455,21 +463,17 @@ this.PlacesUIUtils = {
   showBookmarkDialog:
   function PUIU_showBookmarkDialog(aInfo, aParentWindow) {
     // Preserve size attributes differently based on the fact the dialog has
-    // a folder picker or not.  If the picker is visible, the dialog should
-    // be resizable since it may not show enough content for the folders
-    // hierarchy.
+    // a folder picker or not, since it needs more horizontal space than the
+    // other controls.
     let hasFolderPicker = !("hiddenRows" in aInfo) ||
-                          aInfo.hiddenRows.indexOf("folderPicker") == -1;
-    // Use a different chrome url, since this allows to persist different sizes,
-    // based on resizability of the dialog.
+                          !aInfo.hiddenRows.includes("folderPicker");
+    // Use a different chrome url to persist different sizes.
     let dialogURL = hasFolderPicker ?
                     "chrome://browser/content/places/bookmarkProperties2.xul" :
                     "chrome://browser/content/places/bookmarkProperties.xul";
 
-    let features =
-      "centerscreen,chrome,modal,resizable=" + (hasFolderPicker ? "yes" : "no");
-
-    aParentWindow.openDialog(dialogURL, "",  features, aInfo);
+    let features = "centerscreen,chrome,modal,resizable=yes";
+    aParentWindow.openDialog(dialogURL, "", features, aInfo);
     return ("performed" in aInfo && aInfo.performed);
   },
 
@@ -779,15 +783,33 @@ this.PlacesUIUtils = {
     browserWindow.gBrowser.loadTabs(urls, loadInBackground, false);
   },
 
+  openLiveMarkNodesInTabs:
+  function PUIU_openLiveMarkNodesInTabs(aNode, aEvent, aView) {
+    let window = aView.ownerWindow;
+
+    PlacesUtils.livemarks.getLivemark({id: aNode.itemId})
+      .then(aLivemark => {
+        urlsToOpen = [];
+
+        let nodes = aLivemark.getNodesForContainer(aNode);
+        for (let node of nodes) {
+          urlsToOpen.push({uri: node.uri, isBookmark: false});
+        }
+
+        if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+          this._openTabset(urlsToOpen, aEvent, window);
+        }
+      }, Cu.reportError);
+  },
+
   openContainerNodeInTabs:
   function PUIU_openContainerInTabs(aNode, aEvent, aView) {
     let window = aView.ownerWindow;
 
     let urlsToOpen = PlacesUtils.getURLsForContainerNode(aNode);
-    if (!this._confirmOpenInTabs(urlsToOpen.length, window))
-      return;
-
-    this._openTabset(urlsToOpen, aEvent, window);
+    if (this._confirmOpenInTabs(urlsToOpen.length, window)) {
+      this._openTabset(urlsToOpen, aEvent, window);
+    }
   },
 
   openURINodesInTabs: function PUIU_openURINodesInTabs(aNodes, aEvent, aView) {
@@ -856,6 +878,7 @@ this.PlacesUIUtils = {
       }
 
       aWindow.openUILinkIn(aNode.uri, aWhere, {
+        allowPopups: aNode.uri.startsWith("javascript:"),
         inBackground: Services.prefs.getBoolPref("browser.tabs.loadBookmarksInBackground"),
         private: aPrivate,
       });
@@ -1022,7 +1045,7 @@ this.PlacesUIUtils = {
 
         // Check that all queries have valid parents.
         let parentId = bs.getFolderIdForItem(query.itemId);
-        if (items.indexOf(parentId) == -1 && parentId != leftPaneRoot) {
+        if (!items.includes(parentId) && parentId != leftPaneRoot) {
           // The parent is not part of the left pane, bail out and create a new
           // left pane root.
           corrupt = true;
@@ -1200,16 +1223,7 @@ this.PlacesUIUtils = {
   shouldShowTabsFromOtherComputersMenuitem: function() {
     let weaveOK = Weave.Status.checkSetup() != Weave.CLIENT_NOT_CONFIGURED &&
                   Weave.Svc.Prefs.get("firstSync", "") != "notReady";
-    let cloudSyncOK = CloudSync && CloudSync.ready && CloudSync().tabsReady && CloudSync().tabs.hasRemoteTabs();
-    return weaveOK || cloudSyncOK;
-  },
-
-  shouldEnableTabsFromOtherComputersMenuitem: function() {
-    let weaveEnabled = Weave.Service.isLoggedIn &&
-                       Weave.Service.engineManager.get("tabs") &&
-                       Weave.Service.engineManager.get("tabs").enabled;
-    let cloudSyncEnabled = CloudSync && CloudSync.ready && CloudSync().tabsReady && CloudSync().tabs.hasRemoteTabs();
-    return weaveEnabled || cloudSyncEnabled;
+    return weaveOK;
   },
 
   /**
@@ -1416,71 +1430,68 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
   PlacesUtils;
 
   return {
-    aggregateTransactions: function(aName, aTransactions)
+    aggregateTransactions: (aName, aTransactions) =>
       new PlacesAggregatedTransaction(aName, aTransactions),
 
-    createFolder: function(aName, aContainer, aIndex, aAnnotations,
-                           aChildItemsTransactions)
+    createFolder: (aName, aContainer, aIndex, aAnnotations,
+                   aChildItemsTransactions) =>
       new PlacesCreateFolderTransaction(aName, aContainer, aIndex, aAnnotations,
                                         aChildItemsTransactions),
 
-    createItem: function(aURI, aContainer, aIndex, aTitle, aKeyword,
-                         aAnnotations, aChildTransactions)
+    createItem: (aURI, aContainer, aIndex, aTitle, aKeyword,
+                 aAnnotations, aChildTransactions) =>
       new PlacesCreateBookmarkTransaction(aURI, aContainer, aIndex, aTitle,
                                           aKeyword, aAnnotations,
                                           aChildTransactions),
 
-    createSeparator: function(aContainer, aIndex)
+    createSeparator: (aContainer, aIndex) =>
       new PlacesCreateSeparatorTransaction(aContainer, aIndex),
 
-    createLivemark: function(aFeedURI, aSiteURI, aName, aContainer, aIndex,
-                             aAnnotations)
+    createLivemark: (aFeedURI, aSiteURI, aName, aContainer, aIndex,
+                     aAnnotations) =>
       new PlacesCreateLivemarkTransaction(aFeedURI, aSiteURI, aName, aContainer,
                                           aIndex, aAnnotations),
 
-    moveItem: function(aItemId, aNewContainer, aNewIndex)
+    moveItem: (aItemId, aNewContainer, aNewIndex) =>
       new PlacesMoveItemTransaction(aItemId, aNewContainer, aNewIndex),
 
-    removeItem: function(aItemId)
+    removeItem: (aItemId) =>
       new PlacesRemoveItemTransaction(aItemId),
 
-    editItemTitle: function(aItemId, aNewTitle)
+    editItemTitle: (aItemId, aNewTitle) =>
       new PlacesEditItemTitleTransaction(aItemId, aNewTitle),
 
-    editBookmarkURI: function(aItemId, aNewURI)
+    editBookmarkURI: (aItemId, aNewURI) =>
       new PlacesEditBookmarkURITransaction(aItemId, aNewURI),
 
-    setItemAnnotation: function(aItemId, aAnnotationObject)
+    setItemAnnotation: (aItemId, aAnnotationObject) =>
       new PlacesSetItemAnnotationTransaction(aItemId, aAnnotationObject),
 
-    setPageAnnotation: function(aURI, aAnnotationObject)
+    setPageAnnotation: (aURI, aAnnotationObject) =>
       new PlacesSetPageAnnotationTransaction(aURI, aAnnotationObject),
 
-    editBookmarkKeyword: function(aItemId, aNewKeyword)
+    editBookmarkKeyword: (aItemId, aNewKeyword) =>
       new PlacesEditBookmarkKeywordTransaction(aItemId, aNewKeyword),
 
-    editBookmarkPostData: function(aItemId, aPostData)
-      new PlacesEditBookmarkPostDataTransaction(aItemId, aPostData),
-
-    editLivemarkSiteURI: function(aLivemarkId, aSiteURI)
+    editLivemarkSiteURI: (aLivemarkId, aSiteURI) =>
       new PlacesEditLivemarkSiteURITransaction(aLivemarkId, aSiteURI),
 
-    editLivemarkFeedURI: function(aLivemarkId, aFeedURI)
+    editLivemarkFeedURI: (aLivemarkId, aFeedURI) =>
       new PlacesEditLivemarkFeedURITransaction(aLivemarkId, aFeedURI),
 
-    editItemDateAdded: function(aItemId, aNewDateAdded)
+    editItemDateAdded: (aItemId, aNewDateAdded) =>
       new PlacesEditItemDateAddedTransaction(aItemId, aNewDateAdded),
 
-    editItemLastModified: function(aItemId, aNewLastModified)
+    editItemLastModified: (aItemId, aNewLastModified) =>
       new PlacesEditItemLastModifiedTransaction(aItemId, aNewLastModified),
 
-    sortFolderByName: function(aFolderId)
+    sortFolderByName: (aFolderId) =>
       new PlacesSortFolderByNameTransaction(aFolderId),
 
-    tagURI: function(aURI, aTags)
+    tagURI: (aURI, aTags) =>
       new PlacesTagURITransaction(aURI, aTags),
 
-    untagURI: function(aURI, aTags)
+    untagURI: (aURI, aTags) =>
       new PlacesUntagURITransaction(aURI, aTags),
 
     /**
@@ -1524,49 +1535,53 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
     ////////////////////////////////////////////////////////////////////////////
     //// nsITransactionManager forwarders.
 
-    beginBatch: function()
+    beginBatch: () =>
       PlacesUtils.transactionManager.beginBatch(null),
 
-    endBatch: function()
+    endBatch: () =>
       PlacesUtils.transactionManager.endBatch(false),
 
-    doTransaction: function(txn)
+    doTransaction: (txn) =>
       PlacesUtils.transactionManager.doTransaction(txn),
 
-    undoTransaction: function()
+    undoTransaction: () =>
       PlacesUtils.transactionManager.undoTransaction(),
 
-    redoTransaction: function()
+    redoTransaction: () =>
       PlacesUtils.transactionManager.redoTransaction(),
 
-    get numberOfUndoItems()
-      PlacesUtils.transactionManager.numberOfUndoItems,
-    get numberOfRedoItems()
-      PlacesUtils.transactionManager.numberOfRedoItems,
-    get maxTransactionCount()
-      PlacesUtils.transactionManager.maxTransactionCount,
-    set maxTransactionCount(val)
-      PlacesUtils.transactionManager.maxTransactionCount = val,
+    get numberOfUndoItems() {
+      return PlacesUtils.transactionManager.numberOfUndoItems;
+    },
+    get numberOfRedoItems() {
+      return PlacesUtils.transactionManager.numberOfRedoItems;
+    },
+    get maxTransactionCount() {
+      return PlacesUtils.transactionManager.maxTransactionCount;
+    },
+    set maxTransactionCount(val) {
+      PlacesUtils.transactionManager.maxTransactionCount = val;
+    },
 
-    clear: function()
+    clear: () =>
       PlacesUtils.transactionManager.clear(),
 
-    peekUndoStack: function()
+    peekUndoStack: () =>
       PlacesUtils.transactionManager.peekUndoStack(),
 
-    peekRedoStack: function()
+    peekRedoStack: () =>
       PlacesUtils.transactionManager.peekRedoStack(),
 
-    getUndoStack: function()
+    getUndoStack: () =>
       PlacesUtils.transactionManager.getUndoStack(),
 
-    getRedoStack: function()
+    getRedoStack: () =>
       PlacesUtils.transactionManager.getRedoStack(),
 
-    AddListener: function(aListener)
+    AddListener: (aListener) =>
       PlacesUtils.transactionManager.AddListener(aListener),
 
-    RemoveListener: function(aListener)
+    RemoveListener: (aListener) =>
       PlacesUtils.transactionManager.RemoveListener(aListener)
   }
 });

@@ -26,8 +26,8 @@ CatapultEngine.prototype = {
 
 Service.engineManager.register(CatapultEngine);
 
-let scheduler = new SyncScheduler(Service);
-let clientsEngine = Service.clientsEngine;
+var scheduler = new SyncScheduler(Service);
+var clientsEngine = Service.clientsEngine;
 
 function sync_httpd_setup() {
   let global = new ServerWBO("global", {
@@ -956,11 +956,22 @@ add_identity_test(this, function test_loginError_fatal_clearsTriggers() {
   Svc.Obs.add("weave:service:login:error", function onLoginError() {
     Svc.Obs.remove("weave:service:login:error", onLoginError);
     Utils.nextTick(function aLittleBitAfterLoginError() {
-      do_check_eq(Status.login, LOGIN_FAILED_LOGIN_REJECTED);
 
-      do_check_eq(scheduler.nextSync, 0);
-      do_check_eq(scheduler.syncTimer, null);
+      if (isConfiguredWithLegacyIdentity()) {
+        // for the "legacy" identity, a 401 on info/collections means the
+        // password is wrong, so we enter a "login rejected" state.
+        do_check_eq(Status.login, LOGIN_FAILED_LOGIN_REJECTED);
 
+        do_check_eq(scheduler.nextSync, 0);
+        do_check_eq(scheduler.syncTimer, null);
+      } else {
+        // For the FxA identity, a 401 on info/collections means a transient
+        // error, probably due to an inability to fetch a token.
+        do_check_eq(Status.login, LOGIN_FAILED_NETWORK_ERROR);
+        // syncs should still be scheduled.
+        do_check_true(scheduler.nextSync > Date.now());
+        do_check_true(scheduler.syncTimer.delay > 0);
+      }
       cleanUpAndGo(server).then(deferred.resolve);
     });
   });

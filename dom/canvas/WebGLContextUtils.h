@@ -7,38 +7,13 @@
 #define WEBGL_CONTEXT_UTILS_H_
 
 #include "WebGLContext.h"
-#include "WebGLStrongTypes.h"
+
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/BindingUtils.h"
 
+#include "WebGLStrongTypes.h"
+
 namespace mozilla {
-
-bool IsGLDepthFormat(TexInternalFormat webGLFormat);
-bool IsGLDepthStencilFormat(TexInternalFormat webGLFormat);
-bool FormatHasAlpha(TexInternalFormat webGLFormat);
-
-void
-DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
-                                         TexInternalFormat internalformat,
-                                         GLenum* const out_driverInternalFormat,
-                                         GLenum* const out_driverFormat,
-                                         GLenum* const out_driverType);
-TexInternalFormat
-EffectiveInternalFormatFromInternalFormatAndType(TexInternalFormat internalformat,
-                                                 TexType type);
-TexInternalFormat
-EffectiveInternalFormatFromUnsizedInternalFormatAndType(TexInternalFormat internalformat,
-                                                        TexType type);
-void
-UnsizedInternalFormatAndTypeFromEffectiveInternalFormat(TexInternalFormat effectiveinternalformat,
-                                                        TexInternalFormat* const out_internalformat,
-                                                        TexType* const out_type);
-TexType TypeFromInternalFormat(TexInternalFormat internalformat);
-
-TexInternalFormat
-UnsizedInternalFormatFromInternalFormat(TexInternalFormat internalformat);
-
-size_t GetBitsPerTexel(TexInternalFormat effectiveinternalformat);
 
 // For use with the different texture calls, i.e.
 //   TexImage2D, CopyTex[Sub]Image2D, ...
@@ -53,6 +28,9 @@ size_t GetBitsPerTexel(TexInternalFormat effectiveinternalformat);
 //
 // Returns GL_NONE if passed an invalid texture image target
 TexTarget TexImageTargetToTexTarget(TexImageTarget texImageTarget);
+
+// Helper function to create a JS::Value from a C string
+JS::Value StringValue(JSContext* cx, const char* str, ErrorResult& rv);
 
 struct GLComponents
 {
@@ -86,7 +64,7 @@ WebGLContext::WebGLObjectAsJSValue(JSContext* cx, const WebGLObjectType* object,
     if (!object)
         return JS::NullValue();
 
-    MOZ_ASSERT(this == object->Context());
+    MOZ_ASSERT(this == object->mContext);
     JS::Rooted<JS::Value> v(cx);
     JS::Rooted<JSObject*> wrapper(cx, GetWrapper());
     JSAutoCompartment ac(cx, wrapper);

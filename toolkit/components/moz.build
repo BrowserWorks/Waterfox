@@ -10,6 +10,7 @@ if CONFIG['MOZ_ENABLE_XREMOTE']:
 
 DIRS += [
     'aboutcache',
+    'aboutcheckerboard',
     'aboutmemory',
     'addoncompat',
     'alerts',
@@ -22,13 +23,16 @@ DIRS += [
     'crashmonitor',
     'diskspacewatcher',
     'downloads',
+    'extensions',
     'exthelper',
     'filepicker',
     'filewatcher',
     'finalizationwitness',
     'formautofill',
     'find',
+    'gfx',
     'jsdownloads',
+    'lz4',
     'mediasniffer',
     'microformats',
     'osfile',
@@ -36,11 +40,13 @@ DIRS += [
     'passwordmgr',
     'perf',
     'places',
+    'privatebrowsing',
     'processsingleton',
     'promiseworker',
     'prompts',
     'protobuf',
     'reader',
+    'remotebrowserutils',
     'reflect',
     'sqlite',
     'startup',
@@ -49,13 +55,18 @@ DIRS += [
     'thumbnails',
     'timermanager',
     'typeaheadfind',
+    'utils',
     'urlformatter',
     'viewconfig',
-    'viewsource',
     'workerloader',
-    'workerlz4',
     'xulstore'
 ]
+
+if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
+    DIRS += ['viewsource'];
+
+    if CONFIG['NS_PRINTING']:
+        DIRS += ['printing']
 
 if CONFIG['MOZ_CRASHREPORTER']:
     DIRS += ['crashes']
@@ -72,9 +83,6 @@ if CONFIG['MOZ_FEEDS']:
 if CONFIG['MOZ_HELP_VIEWER']:
     DIRS += ['help']
 
-if CONFIG['NS_PRINTING']:
-    DIRS += ['printing']
-
 if CONFIG['MOZ_XUL']:
     DIRS += ['autocomplete', 'satchel']
 
@@ -84,8 +92,7 @@ if CONFIG['MOZ_TOOLKIT_SEARCH']:
 if CONFIG['MOZ_URL_CLASSIFIER']:
     DIRS += ['url-classifier']
 
-if CONFIG['MOZ_CAPTIVEDETECT']:
-    DIRS += ['captivedetect']
+DIRS += ['captivedetect']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != "gonk" and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DIRS += ['terminator']
@@ -98,7 +105,8 @@ if CONFIG['NIGHTLY_BUILD']: # Bug 1136927 - Performance Monitoring is not ready 
 
 DIRS += ['build']
 
-EXTRA_COMPONENTS += [
-    'nsDefaultCLH.js',
-    'nsDefaultCLH.manifest',
-]
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+    EXTRA_COMPONENTS += [
+        'nsDefaultCLH.js',
+        'nsDefaultCLH.manifest',
+    ]

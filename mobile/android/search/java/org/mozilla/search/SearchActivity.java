@@ -11,7 +11,6 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserContract.SearchHistory;
 import org.mozilla.gecko.distribution.Distribution;
-import org.mozilla.gecko.health.BrowserHealthRecorder;
 import org.mozilla.search.autocomplete.SearchBar;
 import org.mozilla.search.autocomplete.SuggestionsFragment;
 import org.mozilla.search.providers.SearchEngine;
@@ -19,6 +18,7 @@ import org.mozilla.search.providers.SearchEngineManager;
 import org.mozilla.search.providers.SearchEngineManager.SearchEngineCallback;
 
 import android.content.AsyncQueryHandler;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -92,6 +92,16 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
     private int cardPaddingX;
     private int cardPaddingY;
 
+    /**
+     * An empty implementation of AsyncQueryHandler to avoid the "HandlerLeak" warning from Android
+     * Lint. See also {@see org.mozilla.gecko.util.WeakReferenceHandler}.
+     */
+    private static class AsyncQueryHandlerImpl extends AsyncQueryHandler {
+        public AsyncQueryHandlerImpl(final ContentResolver that) {
+            super(that);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         GeckoAppShell.ensureCrashHandling();
@@ -108,7 +118,7 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
         // Initialize the fragments with the selected search engine.
         searchEngineManager.getEngine(this);
 
-        queryHandler = new AsyncQueryHandler(getContentResolver()) {};
+        queryHandler = new AsyncQueryHandlerImpl(getContentResolver());
 
         searchBar = (SearchBar) findViewById(R.id.search_bar);
         searchBar.setOnClickListener(new View.OnClickListener() {
@@ -244,7 +254,7 @@ public class SearchActivity extends Locales.LocaleAwareFragmentActivity
         storeQuery(query);
 
         try {
-            BrowserHealthRecorder.recordSearchDelayed("activity", engine.getIdentifier());
+            //BrowserHealthRecorder.recordSearchDelayed("activity", engine.getIdentifier());
         } catch (Exception e) {
             // This should never happen: it'll only throw if the
             // search location is wrong. But let's not tempt fate.

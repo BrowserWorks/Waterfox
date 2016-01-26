@@ -24,13 +24,14 @@ namespace mozilla {
 class WaveDecoder : public MediaDecoder
 {
 public:
-  virtual MediaDecoder* Clone() {
+  explicit WaveDecoder(MediaDecoderOwner* aOwner) : MediaDecoder(aOwner) {}
+  MediaDecoder* Clone(MediaDecoderOwner* aOwner) override {
     if (!IsWaveEnabled()) {
       return nullptr;
     }
-    return new WaveDecoder();
+    return new WaveDecoder(aOwner);
   }
-  virtual MediaDecoderStateMachine* CreateStateMachine();
+  MediaDecoderStateMachine* CreateStateMachine() override;
 };
 
 } // namespace mozilla

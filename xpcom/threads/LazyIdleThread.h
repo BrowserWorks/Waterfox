@@ -45,6 +45,7 @@ public:
   NS_DECL_NSITIMERCALLBACK
   NS_DECL_NSITHREADOBSERVER
   NS_DECL_NSIOBSERVER
+  using nsIEventTarget::Dispatch;
 
   enum ShutdownMethod
   {
@@ -162,7 +163,9 @@ private:
    * Idle observer. Called when the thread is about to be shut down. Released
    * only when Shutdown() is called.
    */
-  nsIObserver* mIdleObserver;
+  nsIObserver* MOZ_UNSAFE_REF("See the documentation for SetWeakIdleObserver for "
+                              "how the owner of LazyIdleThread should manage the "
+                              "lifetime information of this field") mIdleObserver;
 
   /**
    * Temporary storage for events that happen to be dispatched while we're in

@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/PlacesUtils.jsm");
 Cu.import("resource:///modules/PlacesUIUtils.jsm");
 Cu.import("resource://services-common/utils.js");
 
-let PlacesQueries = function () {
+var PlacesQueries = function () {
 }
 
 PlacesQueries.prototype = {
@@ -30,7 +30,7 @@ PlacesQueries.prototype = {
   }
 };
 
-let PlacesWrapper = function () {
+var PlacesWrapper = function () {
 }
 
 PlacesWrapper.prototype = {
@@ -75,23 +75,6 @@ PlacesWrapper.prototype = {
 
     this.asyncQuery(query, ["guid"])
         .then(getGuid, deferred.reject)
-        .then(deferred.resolve, deferred.reject);
-
-    return deferred.promise;
-  },
-
-  setGuidForLocalId: function (localId, guid) {
-    let deferred = Promise.defer();
-
-    let stmt = "UPDATE moz_bookmarks " +
-               "SET guid = :guid " +
-               "WHERE id = :item_id";
-    let query = this.placesQueries.getQuery(stmt);
-
-    query.params.guid = guid;
-    query.params.item_id = localId;
-
-    this.asyncQuery(query)
         .then(deferred.resolve, deferred.reject);
 
     return deferred.promise;
@@ -157,7 +140,7 @@ PlacesWrapper.prototype = {
       function (items) {
         let previousIds = folderCache.getChildren(folder);
         let currentIds = new Set();
-        for each (let item in items) {
+        for (let item of items) {
           currentIds.add(item.id);
         }
         let newIds = new Set();
@@ -205,7 +188,7 @@ PlacesWrapper.prototype = {
     this.asyncQuery(query, ["item_id"])
         .then(function (items) {
                 let results = [];
-                for each(let item in items) {
+                for (let item of items) {
                   results.push(item.item_id);
                 }
                 deferred.resolve(results);
@@ -228,7 +211,7 @@ PlacesWrapper.prototype = {
     this.asyncQuery(query, ["name", "content"])
         .then(function (results) {
                 let annos = {};
-                for each(let result in results) {
+                for (let result of results) {
                   annos[result.name] = result.content;
                 }
                 deferred.resolve(annos);
@@ -364,7 +347,7 @@ PlacesWrapper.prototype = {
         let row;
         while ((row = results.getNextRow()) != null) {
           let item = {};
-          for each (let name in names) {
+          for (let name of names) {
             item[name] = row.getResultByName(name);
           }
           this.results.push(item);

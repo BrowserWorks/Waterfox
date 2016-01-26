@@ -6,12 +6,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ScrollbarSampler",
                                   "resource:///modules/ScrollbarSampler.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Pocket",
-                                  "resource:///modules/Pocket.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
                                   "resource://gre/modules/ShortcutUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
 
 /**
  * Maintains the state and dispatches events for the main menu panel.
@@ -19,7 +19,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
 
 const PanelUI = {
   /** Panel events that we listen for. **/
-  get kEvents() ["popupshowing", "popupshown", "popuphiding", "popuphidden"],
+  get kEvents() {
+    return ["popupshowing", "popupshown", "popuphiding", "popuphidden"];
+  },
   /**
    * Used for lazily getting and memoizing elements from the document. Lazy
    * getters are set in init, and memoizing happens after the first retrieval.
@@ -166,6 +168,8 @@ const PanelUI = {
         document.getAnonymousElementByAttribute(anchor, "class",
                                                 "toolbarbutton-icon");
       this.panel.openPopup(iconAnchor || anchor);
+    }, (reason) => {
+      console.error("Error showing the PanelUI menu", reason);
     });
 
     return deferred.promise;
@@ -224,7 +228,7 @@ const PanelUI = {
     if (this._readyPromise) {
       return this._readyPromise;
     }
-    this._readyPromise = Task.spawn(function() {
+    this._readyPromise = Task.spawn(function*() {
       if (!this._initialized) {
         let delayedStartupDeferred = Promise.defer();
         let delayedStartupObserver = (aSubject, aTopic, aData) => {
@@ -325,6 +329,7 @@ const PanelUI = {
       evt.initCustomEvent("ViewShowing", true, true, viewNode);
       viewNode.dispatchEvent(evt);
       if (evt.defaultPrevented) {
+        aAnchor.open = false;
         return;
       }
 
@@ -486,12 +491,14 @@ const PanelUI = {
   },
 
   _updateQuitTooltip: function() {
-#ifndef XP_WIN
-#ifdef XP_MACOSX
-    let tooltipId = "quit-button.tooltiptext.mac";
-#else
-    let tooltipId = "quit-button.tooltiptext.linux2";
-#endif
+    if (AppConstants.platform == "win") {
+      return;
+    }
+
+    let tooltipId = AppConstants.platform == "macosx" ?
+                    "quit-button.tooltiptext.mac" :
+                    "quit-button.tooltiptext.linux2";
+
     let brands = Services.strings.createBundle("chrome://branding/locale/brand.properties");
     let stringArgs = [brands.GetStringFromName("brandShortName")];
 
@@ -500,7 +507,6 @@ const PanelUI = {
     let tooltipString = CustomizableUI.getLocalizedProperty({x: tooltipId}, "x", stringArgs);
     let quitButton = document.getElementById("PanelUI-quit");
     quitButton.setAttribute("tooltiptext", tooltipString);
-#endif
   },
 
   _overlayScrollListenerBoundFn: null,
@@ -510,24 +516,18 @@ const PanelUI = {
   },
 };
 
+XPCOMUtils.defineConstant(this, "PanelUI", PanelUI);
+
 /**
  * Gets the currently selected locale for display.
  * @return  the selected locale or "en-US" if none is selected
  */
 function getLocale() {
-  const PREF_SELECTED_LOCALE = "general.useragent.locale";
   try {
-    let locale = Services.prefs.getComplexValue(PREF_SELECTED_LOCALE,
-                                                Ci.nsIPrefLocalizedString);
-    if (locale)
-      return locale;
+    let chromeRegistry = Cc["@mozilla.org/chrome/chrome-registry;1"]
+                           .getService(Ci.nsIXULChromeRegistry);
+    return chromeRegistry.getSelectedLocale("browser");
+  } catch (ex) {
+    return "en-US";
   }
-  catch (e) { }
-
-  try {
-    return Services.prefs.getCharPref(PREF_SELECTED_LOCALE);
-  }
-  catch (e) { }
-
-  return "en-US";
 }

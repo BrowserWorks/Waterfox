@@ -34,8 +34,8 @@
 namespace mozilla {
 namespace dom {
 class EventTarget;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsWebBrowser;
 class ChromeTooltipListener;
@@ -101,6 +101,8 @@ protected:
   void AddToWatcher();
   void RemoveFromWatcher();
 
+  void EnsureContentTreeOwner();
+
   // These helper functions return the correct instances of the requested
   // interfaces.  If the object passed to SetWebBrowserChrome() implements
   // nsISupportsWeakReference, then these functions call QueryReferent on
@@ -125,11 +127,14 @@ protected:
   // the objects that listen for chrome events like context menus and tooltips.
   // They are separate objects to avoid circular references between |this|
   // and the DOM.
-  nsRefPtr<ChromeTooltipListener> mChromeTooltipListener;
-  nsRefPtr<ChromeContextMenuListener> mChromeContextMenuListener;
+  RefPtr<ChromeTooltipListener> mChromeTooltipListener;
+  RefPtr<ChromeContextMenuListener> mChromeContextMenuListener;
+
+  RefPtr<nsDocShellTreeOwner> mContentTreeOwner;
 
   nsCOMPtr<nsIPrompt> mPrompter;
   nsCOMPtr<nsIAuthPrompt> mAuthPrompter;
+  nsCOMPtr<nsITabParent> mPrimaryTabParent;
 };
 
 

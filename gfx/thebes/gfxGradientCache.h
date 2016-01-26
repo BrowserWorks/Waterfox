@@ -21,7 +21,7 @@ public:
                      nsTArray<gfx::GradientStop>& aStops,
                      gfx::ExtendMode aExtend);
 
-    static gfx::GradientStops*
+    static already_AddRefed<gfx::GradientStops>
     GetOrCreateGradientStops(const gfx::DrawTarget *aDT,
                              nsTArray<gfx::GradientStop>& aStops,
                              gfx::ExtendMode aExtend);
@@ -30,7 +30,7 @@ public:
     static void Shutdown();
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif

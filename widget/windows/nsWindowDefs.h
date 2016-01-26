@@ -36,6 +36,11 @@
 // If a popup window is being activated, we try to reactivate the previous
 // window with this message.
 #define MOZ_WM_REACTIVATE                 (WM_APP+0x0314)
+// If TSFTextStore needs to notify TSF/TIP of layout change later, this
+// message is posted.
+#define MOZ_WM_NOTIY_TSF_OF_LAYOUT_CHANGE (WM_APP+0x0315)
+// Internal message used in correcting backwards clock skew
+#define MOZ_WM_SKEWFIX                    (WM_APP+0x0316)
 
 // Internal message for ensuring the file picker is visible on multi monitor
 // systems, and when the screen resolution changes.
@@ -183,6 +188,10 @@
 #define TABLET_INK_TOUCH     0x00000080
 #define MOUSE_INPUT_SOURCE() WinUtils::GetMouseInputSource()
 
+// Messages for fullscreen transition window
+#define WM_FULLSCREEN_TRANSITION_BEFORE     (WM_USER + 0)
+#define WM_FULLSCREEN_TRANSITION_AFTER      (WM_USER + 1)
+
 /**************************************************************
  *
  * SECTION: enums
@@ -213,11 +222,12 @@ typedef enum
  * touchpad scrolling or screen readers.
  */
 const uint32_t kMaxClassNameLength   = 40;
-const char kClassNameHidden[]        = "MozillaHiddenWindowClass";
-const char kClassNameGeneral[]       = "MozillaWindowClass";
-const char kClassNameDialog[]        = "MozillaDialogClass";
-const char kClassNameDropShadow[]    = "MozillaDropShadowWindowClass";
-const char kClassNameTemp[]          = "MozillaTempWindowClass";
+const wchar_t kClassNameHidden[]     = L"MozillaHiddenWindowClass";
+const wchar_t kClassNameGeneral[]    = L"MozillaWindowClass";
+const wchar_t kClassNameDialog[]     = L"MozillaDialogClass";
+const wchar_t kClassNameDropShadow[] = L"MozillaDropShadowWindowClass";
+const wchar_t kClassNameTemp[]       = L"MozillaTempWindowClass";
+const wchar_t kClassNameTransition[] = L"MozillaTransitionWindowClass";
 
 /**************************************************************
  *

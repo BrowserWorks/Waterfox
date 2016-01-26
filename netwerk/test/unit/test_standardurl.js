@@ -50,7 +50,7 @@ function test_setEmptyPath()
      ["http://example.com:80/a", "http://example.com/tests/dom/tests"],
     ].map(pairToURLs);
 
-  for each (var [provided, target] in pairs)
+  for (var [provided, target] of pairs)
   {
     symmetricEquality(false, target, provided);
 
@@ -77,7 +77,7 @@ function test_setQuery()
      ["http://example.com/?f", "http://example.com/?foo"],
     ].map(pairToURLs);
 
-  for each (var [provided, target] in pairs) {
+  for (var [provided, target] of pairs) {
     symmetricEquality(false, provided, target);
 
     provided.query = "foo";
@@ -135,7 +135,7 @@ function test_setRef()
      ["http://example.com:80/a", "xxxxxxxxxxxxxx", "http://example.com:80/a#xxxxxxxxxxxxxx"],
     ];
 
-  for each (var [before, ref, result] in tests)
+  for (var [before, ref, result] of tests)
   {
     /* Test1: starting with empty ref */
     var a = stringToURL(before);
@@ -220,8 +220,9 @@ function test_clearedSpec()
   symmetricEquality(true, url, ref);
 }
 
-function test_escapeQueryBrackets()
+function test_escapeBrackets()
 {
+  // Query
   var url = stringToURL("http://example.com/?a[x]=1");
   do_check_eq(url.spec, "http://example.com/?a[x]=1");
 
@@ -233,6 +234,14 @@ function test_escapeQueryBrackets()
 
   url = stringToURL("http://[2001::1]/?a%5Bx%5D=1");
   do_check_eq(url.spec, "http://[2001::1]/?a%5Bx%5D=1");
+
+  // Path
+  url = stringToURL("http://example.com/brackets[x]/test");
+  do_check_eq(url.spec, "http://example.com/brackets[x]/test");
+
+  url = stringToURL("http://example.com/a%5Bx%5D/test");
+  do_check_eq(url.spec, "http://example.com/a%5Bx%5D/test");
+
 }
 
 function test_apostropheEncoding()
@@ -243,6 +252,27 @@ function test_apostropheEncoding()
   do_check_eq(url.spec, "http://example.com/dir'/file'.ext'");
 }
 
+function test_accentEncoding()
+{
+  var url = stringToURL("http://example.com/?hello=`");
+  do_check_eq(url.spec, "http://example.com/?hello=`");
+  do_check_eq(url.query, "hello=`");
+
+  url = stringToURL("http://example.com/?hello=%2C");
+  do_check_eq(url.spec, "http://example.com/?hello=%2C");
+  do_check_eq(url.query, "hello=%2C");
+}
+
+function test_percentDecoding()
+{
+  var url = stringToURL("http://%70%61%73%74%65%62%69%6E.com");
+  do_check_eq(url.spec, "http://pastebin.com/");
+
+  // We shouldn't unescape characters that are not allowed in the hostname.
+  url = stringToURL("http://example.com%0a%23.google.com/");
+  do_check_eq(url.spec, "http://example.com%0a%23.google.com/");
+}
+
 function run_test()
 {
   test_setEmptyPath();
@@ -251,6 +281,8 @@ function run_test()
   test_ipv6();
   test_ipv6_fail();
   test_clearedSpec();
-  test_escapeQueryBrackets();
+  test_escapeBrackets();
   test_apostropheEncoding();
+  test_accentEncoding();
+  test_percentDecoding();
 }

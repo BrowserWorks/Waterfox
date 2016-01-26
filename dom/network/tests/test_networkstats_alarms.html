@@ -147,9 +147,53 @@ var steps = [
       ok(false, "getAllAlarms() shouldn't fail.");
     }
   },
+  // Bug 1209654 - Test threshold value will overflow or not for 2^32.
+  function () {
+    ok(true, "Calling addAlarm() with threshold greater than 4GiB");
+
+    req = navigator.mozNetworkStats
+                   .addAlarm(new window.MozNetworkStatsInterface(wifi), 5000000000);
+
+    req.onsuccess = function () {
+      ok(true, "Succeeded to add alarm. AlarmId: " + req.result);
+      next();
+    };
+    req.onerror = function () {
+      ok(false, "addAlarm() shouldn't fail.");
+    };
+  },
+  function () {
+    ok(true, "Calling getAllAlarms() and check threshold.");
+
+    req = navigator.mozNetworkStats.getAllAlarms();
+
+    req.onsuccess = function () {
+      ok(Array.isArray(req.result) && req.result[0].threshold == 5000000000,
+         "Succeeded to check threshold.");
+      next();
+    };
+
+    req.onerror = function () {
+      ok(false, "getAllAlarms() shouldn't fail.");
+    }
+  },
+  // Bug 1209654 - Test threshold value will overflow or not for signed long.
+  function () {
+    ok(true, "Calling addAlarm() with threshold 3 Gib");
+
+    req = navigator.mozNetworkStats
+                   .addAlarm(new window.MozNetworkStatsInterface(wifi), 3000000000);
+
+    req.onsuccess = function () {
+      ok(true, "Succeeded to add alarm. AlarmId: " + req.result);
+      next();
+    };
+    req.onerror = function () {
+      ok(false, "addAlarm() shouldn't fail.");
+    };
+  },
   function () {
     ok(true, "all done!\n");
-    SpecialPowers.removePermission("networkstats-manage", document);
     SimpleTest.finish();
     return;
   }
@@ -170,21 +214,23 @@ function next() {
 
 SimpleTest.waitForExplicitFinish();
 
-SpecialPowers.addPermission("networkstats-manage", true, document);
 SpecialPowers.pushPrefEnv({'set': [["dom.mozNetworkStats.enabled", true]]},
                           function() {
-  ok(SpecialPowers.hasPermission("networkstats-manage", document),
-     "Has permission 'networkstats-manage'.");
+  SpecialPowers.pushPermissions([{ 'type': 'networkstats-manage', 'allow': 1, 'context': window.document }],
+                                function() {
+    ok(SpecialPowers.hasPermission("networkstats-manage", document),
+       "Has permission 'networkstats-manage'.");
 
-  ok(SpecialPowers.getBoolPref("dom.mozNetworkStats.enabled"),
-     "Preference 'dom.mozNetworkStats.enabled' is true.");
+    ok(SpecialPowers.getBoolPref("dom.mozNetworkStats.enabled"),
+       "Preference 'dom.mozNetworkStats.enabled' is true.");
 
-  ok('mozNetworkStats' in navigator, "navigator.mozNetworkStats should exist");
+    ok('mozNetworkStats' in navigator, "navigator.mozNetworkStats should exist");
 
-  ok(navigator.mozNetworkStats instanceof SpecialPowers.Ci.nsIDOMMozNetworkStatsManager,
-     "navigator.mozNetworkStats should be a nsIDOMMozNetworkStatsManager object");
+    ok(navigator.mozNetworkStats instanceof SpecialPowers.Ci.nsIDOMMozNetworkStatsManager,
+       "navigator.mozNetworkStats should be a nsIDOMMozNetworkStatsManager object");
 
-  test();
+    test();
+  });
 });
 
 </script>

@@ -123,7 +123,9 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'CocoaFileUtils.mm',
     ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CC']:
+    CFLAGS += ['-Wshadow']
+    CXXFLAGS += ['-Wshadow']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -132,4 +134,4 @@ FINAL_LIBRARY = 'xul'
 if CONFIG['OS_ARCH'] == 'Linux' and 'lib64' in CONFIG['libdir']:
     DEFINES['HAVE_USR_LIB64_DIR'] = True
 
-GENERATED_INCLUDES += ['..']
+LOCAL_INCLUDES += ['!..']

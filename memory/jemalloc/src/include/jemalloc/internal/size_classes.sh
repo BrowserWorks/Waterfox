@@ -167,6 +167,8 @@ size_classes() {
           lg_large_minclass=$((${lg_grp} + 2))
         fi
       fi
+      # Final written value is correct:
+      huge_maxclass="((((size_t)1) << ${lg_grp}) + (((size_t)${ndelta}) << ${lg_delta}))"
       index=$((${index} + 1))
       ndelta=$((${ndelta} + 1))
     done
@@ -185,6 +187,7 @@ size_classes() {
   # - lookup_maxclass
   # - small_maxclass
   # - lg_large_minclass
+  # - huge_maxclass
 }
 
 cat <<EOF
@@ -198,7 +201,8 @@ cat <<EOF
  *
  *   LG_SIZE_CLASS_GROUP: Lg of size class count for each size doubling.
  *   SIZE_CLASSES: Complete table of
- *                 SC(index, lg_delta, size, bin, lg_delta_lookup) tuples.
+ *                 SC(index, lg_grp, lg_delta, ndelta, bin, lg_delta_lookup)
+ *                 tuples.
  *     index: Size class index.
  *     lg_grp: Lg group base size (no deltas added).
  *     lg_delta: Lg delta to previous size class.
@@ -214,6 +218,7 @@ cat <<EOF
  *   LOOKUP_MAXCLASS: Maximum size class included in lookup table.
  *   SMALL_MAXCLASS: Maximum small size class.
  *   LG_LARGE_MINCLASS: Lg of minimum large size class.
+ *   HUGE_MAXCLASS: Maximum (huge) size class.
  */
 
 #define	LG_SIZE_CLASS_GROUP	${lg_g}
@@ -237,6 +242,7 @@ for lg_z in ${lg_zarr} ; do
         echo "#define	LOOKUP_MAXCLASS		${lookup_maxclass}"
         echo "#define	SMALL_MAXCLASS		${small_maxclass}"
         echo "#define	LG_LARGE_MINCLASS	${lg_large_minclass}"
+        echo "#define	HUGE_MAXCLASS		${huge_maxclass}"
         echo "#endif"
         echo
       done

@@ -6,39 +6,31 @@
 
 #include "nsEventQueue.h"
 #include "nsAutoPtr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsThreadUtils.h"
 #include "prthread.h"
 #include "mozilla/ChaosMode.h"
 
 using namespace mozilla;
 
-static PRLogModuleInfo*
-GetLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsEventQueue");
-  }
-  return sLog;
-}
+static LazyLogModule sEventQueueLog("nsEventQueue");
 #ifdef LOG
 #undef LOG
 #endif
-#define LOG(args) PR_LOG(GetLog(), PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(sEventQueueLog, mozilla::LogLevel::Debug, args)
 
-nsEventQueue::nsEventQueue()
-  : mReentrantMonitor("nsEventQueue.mReentrantMonitor")
-  , mHead(nullptr)
+nsEventQueue::nsEventQueue(Mutex& aLock)
+  : mHead(nullptr)
   , mTail(nullptr)
   , mOffsetHead(0)
   , mOffsetTail(0)
+  , mEventsAvailable(aLock, "[nsEventQueue.mEventsAvailable]")
 {
 }
 
 nsEventQueue::~nsEventQueue()
 {
-  // It'd be nice to be able to assert that no one else is holding the monitor,
+  // It'd be nice to be able to assert that no one else is holding the lock,
   // but NSPR doesn't really expose APIs for it.
   NS_ASSERTION(IsEmpty(),
                "Non-empty event queue being destroyed; events being leaked.");
@@ -49,33 +41,30 @@ nsEventQueue::~nsEventQueue()
 }
 
 bool
-nsEventQueue::GetEvent(bool aMayWait, nsIRunnable** aResult)
+nsEventQueue::GetEvent(bool aMayWait, nsIRunnable** aResult,
+                       MutexAutoLock& aProofOfLock)
 {
-  {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-
-    while (IsEmpty()) {
-      if (!aMayWait) {
-        if (aResult) {
-          *aResult = nullptr;
-        }
-        return false;
+  while (IsEmpty()) {
+    if (!aMayWait) {
+      if (aResult) {
+        *aResult = nullptr;
       }
-      LOG(("EVENTQ(%p): wait begin\n", this));
-      mon.Wait();
-      LOG(("EVENTQ(%p): wait end\n", this));
+      return false;
     }
+    LOG(("EVENTQ(%p): wait begin\n", this));
+    mEventsAvailable.Wait();
+    LOG(("EVENTQ(%p): wait end\n", this));
+  }
 
-    if (aResult) {
-      *aResult = mHead->mEvents[mOffsetHead++];
+  if (aResult) {
+    *aResult = mHead->mEvents[mOffsetHead++];
 
-      // Check if mHead points to empty Page
-      if (mOffsetHead == EVENTS_PER_PAGE) {
-        Page* dead = mHead;
-        mHead = mHead->mNext;
-        FreePage(dead);
-        mOffsetHead = 0;
-      }
+    // Check if mHead points to empty Page
+    if (mOffsetHead == EVENTS_PER_PAGE) {
+      Page* dead = mHead;
+      mHead = mHead->mNext;
+      FreePage(dead);
+      mOffsetHead = 0;
     }
   }
 
@@ -83,21 +72,9 @@ nsEventQueue::GetEvent(bool aMayWait, nsIRunnable** aResult)
 }
 
 void
-nsEventQueue::PutEvent(nsIRunnable* aRunnable)
+nsEventQueue::PutEvent(already_AddRefed<nsIRunnable>&& aRunnable,
+                       MutexAutoLock& aProofOfLock)
 {
-  // Avoid calling AddRef+Release while holding our monitor.
-  nsCOMPtr<nsIRunnable> event(aRunnable);
-
-  if (ChaosMode::isActive(ChaosMode::ThreadScheduling)) {
-    // With probability 0.5, yield so other threads have a chance to
-    // dispatch events to this queue first.
-    if (ChaosMode::randomUint32LessThan(2)) {
-      PR_Sleep(PR_INTERVAL_NO_WAIT);
-    }
-  }
-
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-
   if (!mHead) {
     mHead = NewPage();
     MOZ_ASSERT(mHead);
@@ -114,17 +91,24 @@ nsEventQueue::PutEvent(nsIRunnable* aRunnable)
     mOffsetTail = 0;
   }
 
-  event.swap(mTail->mEvents[mOffsetTail]);
+  nsIRunnable*& queueLocation = mTail->mEvents[mOffsetTail];
+  MOZ_ASSERT(!queueLocation);
+  queueLocation = aRunnable.take();
   ++mOffsetTail;
   LOG(("EVENTQ(%p): notify\n", this));
-  mon.NotifyAll();
+  mEventsAvailable.Notify();
+}
+
+void
+nsEventQueue::PutEvent(nsIRunnable* aRunnable, MutexAutoLock& aProofOfLock)
+{
+  nsCOMPtr<nsIRunnable> event(aRunnable);
+  PutEvent(event.forget(), aProofOfLock);
 }
 
 size_t
-nsEventQueue::Count()
+nsEventQueue::Count(MutexAutoLock& aProofOfLock)
 {
-  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-
   // It is obvious count is 0 when the queue is empty.
   if (!mHead) {
     return 0;

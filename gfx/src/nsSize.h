@@ -14,7 +14,6 @@
 #define NS_MAXSIZE nscoord_MAX
 
 typedef mozilla::gfx::IntSize nsIntSize;
-typedef nsIntSize gfxIntSize;
 
 struct nsSize : public mozilla::gfx::BaseSize<nscoord, nsSize> {
   typedef mozilla::gfx::BaseSize<nscoord, nsSize> Super;
@@ -22,9 +21,9 @@ struct nsSize : public mozilla::gfx::BaseSize<nscoord, nsSize> {
   nsSize() : Super() {}
   nsSize(nscoord aWidth, nscoord aHeight) : Super(aWidth, aHeight) {}
 
-  inline nsIntSize ScaleToNearestPixels(float aXScale, float aYScale,
+  inline mozilla::gfx::IntSize ScaleToNearestPixels(float aXScale, float aYScale,
                                         nscoord aAppUnitsPerPixel) const;
-  inline nsIntSize ToNearestPixels(nscoord aAppUnitsPerPixel) const;
+  inline mozilla::gfx::IntSize ToNearestPixels(nscoord aAppUnitsPerPixel) const;
 
   /**
    * Return this size scaled to a different appunits per pixel (APP) ratio.
@@ -35,16 +34,16 @@ struct nsSize : public mozilla::gfx::BaseSize<nscoord, nsSize> {
     ScaleToOtherAppUnits(int32_t aFromAPP, int32_t aToAPP) const;
 };
 
-inline nsIntSize
+inline mozilla::gfx::IntSize
 nsSize::ScaleToNearestPixels(float aXScale, float aYScale,
                              nscoord aAppUnitsPerPixel) const
 {
-  return nsIntSize(
+  return mozilla::gfx::IntSize(
       NSToIntRoundUp(NSAppUnitsToDoublePixels(width, aAppUnitsPerPixel) * aXScale),
       NSToIntRoundUp(NSAppUnitsToDoublePixels(height, aAppUnitsPerPixel) * aYScale));
 }
 
-inline nsIntSize
+inline mozilla::gfx::IntSize
 nsSize::ToNearestPixels(nscoord aAppUnitsPerPixel) const
 {
   return ScaleToNearestPixels(1.0f, 1.0f, aAppUnitsPerPixel);

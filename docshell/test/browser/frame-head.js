@@ -4,9 +4,9 @@
 // Functions that are automatically loaded as frame scripts for
 // timeline tests.
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
-let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-let { Promise } = Cu.import('resource://gre/modules/Promise.jsm', {});
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+var { Promise } = Cu.import('resource://gre/modules/Promise.jsm', {});
 
 Cu.import("resource://gre/modules/Timer.jsm");
 
@@ -70,6 +70,10 @@ this.timelineContentTest = function(tests) {
       setup(docShell);
       info("Waiting for new markers on the docShell");
       let markers = yield onMarkers;
+
+      // Cycle collection markers are non-deterministic, and none of these tests
+      // expect them to show up.
+      markers = markers.filter(m => m.name.indexOf("nsCycleCollector") === -1);
 
       info("Running the test check function");
       check(markers);

@@ -31,7 +31,7 @@ Gamepad::UpdateTimestamp()
   if(newWindow) {
     nsPerformance* perf = newWindow->GetPerformance();
     if (perf) {
-      mTimestamp =  perf->GetDOMTiming()->TimeStampToDOMHighRes(TimeStamp::Now());
+      mTimestamp =  perf->Now();
     }
   }
 }
@@ -46,7 +46,8 @@ Gamepad::Gamepad(nsISupports* aParent,
     mMapping(aMapping),
     mConnected(true),
     mButtons(aNumButtons),
-    mAxes(aNumAxes)
+    mAxes(aNumAxes),
+    mTimestamp(0)
 {
   for (unsigned i = 0; i < aNumButtons; i++) {
     mButtons.InsertElementAt(i, new GamepadButton(mParent));
@@ -114,7 +115,7 @@ Gamepad::SyncState(Gamepad* aOther)
 already_AddRefed<Gamepad>
 Gamepad::Clone(nsISupports* aParent)
 {
-  nsRefPtr<Gamepad> out =
+  RefPtr<Gamepad> out =
     new Gamepad(aParent, mID, mIndex, mMapping,
                 mButtons.Length(), mAxes.Length());
   out->SyncState(this);

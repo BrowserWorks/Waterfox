@@ -23,8 +23,6 @@ const GONK_TELEPHONYSERVICE_CONTRACTID =
 
 const GONK_TELEPHONYSERVICE_CID =
   Components.ID("{67d26434-d063-4d28-9f48-5b3189788155}");
-const MOBILECALLFORWARDINGOPTIONS_CID =
-  Components.ID("{79b5988b-9436-48d8-a652-88fa033f146c}");
 const TELEPHONYCALLINFO_CID =
   Components.ID("{d9e8b358-a02c-4cf3-9fc7-816c2e8d46e4}");
 
@@ -54,7 +52,187 @@ const DIAL_ERROR_RADIO_NOT_AVAILABLE = RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE;
 
 const TONES_GAP_DURATION = 70;
 
-let DEBUG;
+const EMERGENCY_CALL_DEFAULT_CLIENT_ID = 0;
+
+// Consts for MMI.
+// MMI procedure as defined in TS.22.030 6.5.2
+const MMI_PROCEDURE_ACTIVATION = "*";
+const MMI_PROCEDURE_DEACTIVATION = "#";
+const MMI_PROCEDURE_INTERROGATION = "*#";
+const MMI_PROCEDURE_REGISTRATION = "**";
+const MMI_PROCEDURE_ERASURE = "##";
+
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_ACTIVATION", MMI_PROCEDURE_ACTIVATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_DEACTIVATION", MMI_PROCEDURE_DEACTIVATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_INTERROGATION", MMI_PROCEDURE_INTERROGATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_REGISTRATION", MMI_PROCEDURE_REGISTRATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_ERASURE", MMI_PROCEDURE_ERASURE);
+
+// MMI call forwarding service codes as defined in TS.22.030 Annex B
+const MMI_SC_CFU = "21";
+const MMI_SC_CF_BUSY = "67";
+const MMI_SC_CF_NO_REPLY = "61";
+const MMI_SC_CF_NOT_REACHABLE = "62";
+const MMI_SC_CF_ALL = "002";
+const MMI_SC_CF_ALL_CONDITIONAL = "004";
+
+// MMI service codes for PIN/PIN2/PUK/PUK2 management as defined in TS.22.030
+// sec 6.6
+const MMI_SC_PIN = "04";
+const MMI_SC_PIN2 = "042";
+const MMI_SC_PUK = "05";
+const MMI_SC_PUK2 = "052";
+
+// MMI service code for IMEI presentation as defined in TS.22.030 sec 6.7
+const MMI_SC_IMEI = "06";
+
+// MMI call waiting service code
+const MMI_SC_CALL_WAITING = "43";
+
+// MMI service code for registration new password as defined in TS 22.030 6.5.4
+const MMI_SC_CHANGE_PASSWORD = "03";
+const MMI_ZZ_BARRING_SERVICE = "330";
+
+// MMI call barring service codes
+const MMI_SC_BAOC = "33";
+const MMI_SC_BAOIC = "331";
+const MMI_SC_BAOICxH = "332";
+const MMI_SC_BAIC = "35";
+const MMI_SC_BAICr = "351";
+const MMI_SC_BA_ALL = "330";
+const MMI_SC_BA_MO = "333";
+const MMI_SC_BA_MT = "353";
+
+// MMI called line presentation service codes
+const MMI_SC_CLIP = "30";
+const MMI_SC_CLIR = "31";
+
+// MMI service code key strings.
+const MMI_KS_SC_CALL_BARRING = "scCallBarring";
+const MMI_KS_SC_CALL_FORWARDING = "scCallForwarding";
+const MMI_KS_SC_CLIP = "scClip";
+const MMI_KS_SC_CLIR = "scClir";
+const MMI_KS_SC_PWD = "scPwd";
+const MMI_KS_SC_CALL_WAITING = "scCallWaiting";
+const MMI_KS_SC_PIN = "scPin";
+const MMI_KS_SC_PIN2 = "scPin2";
+const MMI_KS_SC_PUK = "scPuk";
+const MMI_KS_SC_PUK2 = "scPuk2";
+const MMI_KS_SC_CHANGE_PASSWORD = "scChangePassword";
+const MMI_KS_SC_IMEI = "scImei";
+const MMI_KS_SC_USSD = "scUssd";
+const MMI_KS_SC_CALL = "scCall";
+
+// MMI error messages key strings.
+const MMI_ERROR_KS_ERROR = "emMmiError";
+const MMI_ERROR_KS_NOT_SUPPORTED = "emMmiErrorNotSupported";
+const MMI_ERROR_KS_INVALID_ACTION = "emMmiErrorInvalidAction";
+const MMI_ERROR_KS_MISMATCH_PIN = "emMmiErrorMismatchPin";
+const MMI_ERROR_KS_MISMATCH_PASSWORD = "emMmiErrorMismatchPassword";
+const MMI_ERROR_KS_BAD_PIN = "emMmiErrorBadPin";
+const MMI_ERROR_KS_BAD_PUK = "emMmiErrorBadPuk";
+const MMI_ERROR_KS_INVALID_PIN = "emMmiErrorInvalidPin";
+const MMI_ERROR_KS_INVALID_PASSWORD = "emMmiErrorInvalidPassword";
+const MMI_ERROR_KS_NEEDS_PUK = "emMmiErrorNeedsPuk";
+const MMI_ERROR_KS_SIM_BLOCKED = "emMmiErrorSimBlocked";
+
+// MMI status message.
+const MMI_SM_KS_PASSWORD_CHANGED = "smPasswordChanged";
+const MMI_SM_KS_PIN_CHANGED = "smPinChanged";
+const MMI_SM_KS_PIN2_CHANGED = "smPin2Changed";
+const MMI_SM_KS_PIN_UNBLOCKED = "smPinUnblocked";
+const MMI_SM_KS_PIN2_UNBLOCKED = "smPin2Unblocked";
+const MMI_SM_KS_SERVICE_ENABLED = "smServiceEnabled";
+const MMI_SM_KS_SERVICE_ENABLED_FOR = "smServiceEnabledFor";
+const MMI_SM_KS_SERVICE_DISABLED = "smServiceDisabled";
+const MMI_SM_KS_SERVICE_REGISTERED = "smServiceRegistered";
+const MMI_SM_KS_SERVICE_ERASED = "smServiceErased";
+const MMI_SM_KS_SERVICE_INTERROGATED = "smServiceInterrogated";
+const MMI_SM_KS_SERVICE_NOT_PROVISIONED = "smServiceNotProvisioned";
+const MMI_SM_KS_CLIR_PERMANENT = "smClirPermanent";
+const MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON = "smClirDefaultOnNextCallOn";
+const MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF = "smClirDefaultOnNextCallOff";
+const MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON = "smClirDefaultOffNextCallOn";
+const MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF = "smClirDefaultOffNextCallOff";
+const MMI_SM_KS_CALL_CONTROL = "smCallControl";
+
+// MMI Service class
+const MMI_KS_SERVICE_CLASS_VOICE = "serviceClassVoice";
+const MMI_KS_SERVICE_CLASS_DATA = "serviceClassData";
+const MMI_KS_SERVICE_CLASS_FAX = "serviceClassFax";
+const MMI_KS_SERVICE_CLASS_SMS = "serviceClassSms";
+const MMI_KS_SERVICE_CLASS_DATA_SYNC = "serviceClassDataSync";
+const MMI_KS_SERVICE_CLASS_DATA_ASYNC = "serviceClassDataAsync";
+const MMI_KS_SERVICE_CLASS_PACKET = "serviceClassPacket";
+const MMI_KS_SERVICE_CLASS_PAD = "serviceClassPad";
+
+// States of USSD Session : DONE -> ONGOING [-> CANCELLING] -> DONE
+const USSD_SESSION_DONE = "DONE";
+const USSD_SESSION_ONGOING = "ONGOING";
+const USSD_SESSION_CANCELLING = "CANCELLING";
+
+const MMI_PROC_TO_CF_ACTION = {};
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_ACTIVATION] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_ENABLE;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_DEACTIVATION] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_DISABLE;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_INTERROGATION] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_QUERY_STATUS;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_REGISTRATION] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_REGISTRATION;
+MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_ERASURE] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_ERASURE;
+
+const MMI_SC_TO_CF_REASON = {};
+MMI_SC_TO_CF_REASON[MMI_SC_CFU] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_UNCONDITIONAL;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_BUSY] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_MOBILE_BUSY;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_NO_REPLY] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_NO_REPLY;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_NOT_REACHABLE] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_NOT_REACHABLE;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_ALL] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_ALL_CALL_FORWARDING;
+MMI_SC_TO_CF_REASON[MMI_SC_CF_ALL_CONDITIONAL] = Ci.nsIMobileConnection.CALL_FORWARD_REASON_ALL_CONDITIONAL_CALL_FORWARDING;
+
+const MMI_SC_TO_LOCK_TYPE = {};
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PIN] = Ci.nsIIcc.CARD_LOCK_TYPE_PIN;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PIN2] = Ci.nsIIcc.CARD_LOCK_TYPE_PIN2;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PUK] = Ci.nsIIcc.CARD_LOCK_TYPE_PUK;
+MMI_SC_TO_LOCK_TYPE[MMI_SC_PUK2] = Ci.nsIIcc.CARD_LOCK_TYPE_PUK2;
+
+const MMI_PROC_TO_CLIR_ACTION = {};
+MMI_PROC_TO_CLIR_ACTION[MMI_PROCEDURE_ACTIVATION] = Ci.nsIMobileConnection.CLIR_INVOCATION;
+MMI_PROC_TO_CLIR_ACTION[MMI_PROCEDURE_DEACTIVATION] = Ci.nsIMobileConnection.CLIR_SUPPRESSION;
+
+const MMI_SC_TO_CB_PROGRAM = {};
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOC] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_ALL_OUTGOING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOIC] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAOICxH] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAIC] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_ALL_INCOMING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BAICr] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_INCOMING_ROAMING;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_ALL] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_ALL_SERVICE;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_MO] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_OUTGOING_SERVICE;
+MMI_SC_TO_CB_PROGRAM[MMI_SC_BA_MT] = Ci.nsIMobileConnection.CALL_BARRING_PROGRAM_INCOMING_SERVICE;
+
+const CF_ACTION_TO_STATUS_MESSAGE = {};
+CF_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CALL_FORWARD_ACTION_ENABLE] = MMI_SM_KS_SERVICE_ENABLED;
+CF_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CALL_FORWARD_ACTION_DISABLE] = MMI_SM_KS_SERVICE_DISABLED;
+CF_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CALL_FORWARD_ACTION_REGISTRATION] = MMI_SM_KS_SERVICE_REGISTERED;
+CF_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CALL_FORWARD_ACTION_ERASURE] = MMI_SM_KS_SERVICE_ERASED;
+
+const LOCK_TYPE_TO_STATUS_MESSAGE = {};
+LOCK_TYPE_TO_STATUS_MESSAGE[Ci.nsIIcc.CARD_LOCK_TYPE_PIN] = MMI_SM_KS_PIN_CHANGED;
+LOCK_TYPE_TO_STATUS_MESSAGE[Ci.nsIIcc.CARD_LOCK_TYPE_PIN2] = MMI_SM_KS_PIN2_CHANGED;
+LOCK_TYPE_TO_STATUS_MESSAGE[Ci.nsIIcc.CARD_LOCK_TYPE_PUK] = MMI_SM_KS_PIN_UNBLOCKED;
+LOCK_TYPE_TO_STATUS_MESSAGE[Ci.nsIIcc.CARD_LOCK_TYPE_PUK2] = MMI_SM_KS_PIN2_UNBLOCKED;
+
+const CLIR_ACTION_TO_STATUS_MESSAGE = {};
+CLIR_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CLIR_INVOCATION] = MMI_SM_KS_SERVICE_ENABLED;
+CLIR_ACTION_TO_STATUS_MESSAGE[Ci.nsIMobileConnection.CLIR_SUPPRESSION] = MMI_SM_KS_SERVICE_DISABLED;
+
+const MMI_KS_SERVICE_CLASS_MAPPING = {};
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE] = MMI_KS_SERVICE_CLASS_VOICE;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA] = MMI_KS_SERVICE_CLASS_DATA;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_FAX] = MMI_KS_SERVICE_CLASS_FAX;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_SMS] = MMI_KS_SERVICE_CLASS_SMS;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_SYNC] = MMI_KS_SERVICE_CLASS_DATA_SYNC;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_ASYNC] = MMI_KS_SERVICE_CLASS_DATA_ASYNC;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_PACKET] = MMI_KS_SERVICE_CLASS_PACKET;
+MMI_KS_SERVICE_CLASS_MAPPING[Ci.nsIMobileConnection.ICC_SERVICE_CLASS_PAD] = MMI_KS_SERVICE_CLASS_PAD;
+
+var DEBUG;
 function debug(s) {
   dump("TelephonyService: " + s + "\n");
 }
@@ -88,6 +266,12 @@ XPCOMUtils.defineLazyServiceGetter(this, "gGonkMobileConnectionService",
                                    "@mozilla.org/mobileconnection/mobileconnectionservice;1",
                                    "nsIGonkMobileConnectionService");
 
+/* global gIccService */
+XPCOMUtils.defineLazyServiceGetter(this, "gIccService",
+                                   "@mozilla.org/icc/iccservice;1",
+                                   "nsIIccService");
+
+
 /* global PhoneNumberUtils */
 XPCOMUtils.defineLazyModuleGetter(this, "PhoneNumberUtils",
                                   "resource://gre/modules/PhoneNumberUtils.jsm");
@@ -95,30 +279,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PhoneNumberUtils",
 /* global DialNumberUtils */
 XPCOMUtils.defineLazyModuleGetter(this, "DialNumberUtils",
                                   "resource://gre/modules/DialNumberUtils.jsm");
-
-function MobileCallForwardingOptions(aOptions) {
-  for (let key in aOptions) {
-    this[key] = aOptions[key];
-  }
-}
-MobileCallForwardingOptions.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileCallForwardingOptions]),
-  classID: MOBILECALLFORWARDINGOPTIONS_CID,
-  classInfo: XPCOMUtils.generateCI({
-    classID:          MOBILECALLFORWARDINGOPTIONS_CID,
-    classDescription: "MobileCallForwardingOptions",
-    interfaces:       [Ci.nsIMobileCallForwardingOptions]
-  }),
-
-  // nsIMobileForwardingOptions
-
-  active: false,
-  action: nsIMobileConnection.CALL_FORWARD_ACTION_UNKNOWN,
-  reason: nsIMobileConnection.CALL_FORWARD_REASON_UNKNOWN,
-  number: null,
-  timeSeconds: -1,
-  serviceClass: nsIMobileConnection.ICC_SERVICE_CLASS_NONE
-};
 
 function TelephonyCallInfo(aCall) {
   this.clientId = aCall.clientId;
@@ -201,7 +361,8 @@ MobileConnectionListener.prototype = {
   notifyClirModeChanged: function(mode) {},
   notifyLastKnownNetworkChanged: function() {},
   notifyLastKnownHomeNetworkChanged: function() {},
-  notifyNetworkSelectionModeChanged: function() {}
+  notifyNetworkSelectionModeChanged: function() {},
+  notifyDeviceIdentitiesChanged: function() {}
 };
 
 function TelephonyService() {
@@ -211,8 +372,8 @@ function TelephonyService() {
   this._isDialing = false;
   this._cachedDialRequest = null;
   this._currentCalls = {};
-  this._currentConferenceState = nsITelephonyService.CALL_STATE_UNKNOWN;
   this._audioStates = [];
+  this._ussdSessions = [];
 
   this._cdmaCallWaitingNumber = null;
 
@@ -226,6 +387,7 @@ function TelephonyService() {
 
   for (let i = 0; i < this._numClients; ++i) {
     this._audioStates[i] = nsITelephonyAudioService.PHONE_STATE_NORMAL;
+    this._ussdSessions[i] = USSD_SESSION_DONE;
     this._currentCalls[i] = {};
     this._enumerateCallsForClient(i);
   }
@@ -247,6 +409,15 @@ TelephonyService.prototype = {
   // a timer to bound the lock's life cycle to avoid exhausting the battery.
   _callRingWakeLock: null,
   _callRingWakeLockTimer: null,
+
+  /**
+   * USSD session flags.
+   * Only one USSD session may exist at a time, and the session is assumed
+   * to exist until:
+   *    a) There's a call to cancelUSSD()
+   *    b) Receiving a session end unsolicited event.
+   */
+  _ussdSessions: null,
 
   _acquireCallRingWakeLock: function() {
     if (!this._callRingWakeLock) {
@@ -403,10 +574,6 @@ TelephonyService.prototype = {
     }
   },
 
-  _rulesToCallForwardingOptions: function(aRules) {
-    return aRules.map(rule => new MobileCallForwardingOptions(rule));
-  },
-
   _updateDebugFlag: function() {
     try {
       DEBUG = RIL.DEBUG_RIL ||
@@ -451,7 +618,7 @@ TelephonyService.prototype = {
    *        MMI full object.
    */
   _isTemporaryCLIR: function(aMmi) {
-    return (aMmi && aMmi.serviceCode === RIL.MMI_SC_CLIR) && aMmi.dialNumber;
+    return (aMmi && aMmi.serviceCode === MMI_SC_CLIR) && aMmi.dialNumber;
   },
 
   /**
@@ -464,12 +631,12 @@ TelephonyService.prototype = {
     // In temporary mode, MMI_PROCEDURE_ACTIVATION means allowing CLI
     // presentation, i.e. CLIR_SUPPRESSION. See TS 22.030, Annex B.
     switch (aProcedure) {
-      case RIL.MMI_PROCEDURE_ACTIVATION:
-        return RIL.CLIR_SUPPRESSION;
-      case RIL.MMI_PROCEDURE_DEACTIVATION:
-        return RIL.CLIR_INVOCATION;
+      case MMI_PROCEDURE_ACTIVATION:
+        return Ci.nsIMobileConnection.CLIR_SUPPRESSION;
+      case MMI_PROCEDURE_DEACTIVATION:
+        return Ci.nsIMobileConnection.CLIR_INVOCATION;
       default:
-        return RIL.CLIR_DEFAULT;
+        return Ci.nsIMobileConnection.CLIR_DEFAULT;
     }
   },
 
@@ -557,6 +724,26 @@ TelephonyService.prototype = {
   },
 
   /**
+   * Select a proper client for dialing emergency call.
+   *
+   * @return clientId
+   */
+  _getClientIdForEmergencyCall: function() {
+    // Select the client with sim card first.
+    for (let cid = 0; cid < this._numClients; ++cid) {
+      let icc = gIccService.getIccByServiceId(cid);
+      let cardState = icc ? icc.cardState : Ci.nsIIcc.CARD_STATE_UNKONWN;
+      if (cardState !== Ci.nsIIcc.CARD_STATE_UNDETECTED &&
+          cardState !== Ci.nsIIcc.CARD_STATE_UNKNOWN) {
+        return cid;
+      }
+    }
+
+    // Use the defualt client if no card presents.
+    return EMERGENCY_CALL_DEFAULT_CLIENT_ID;
+  },
+
+  /**
    * Dial number. Perform call setup or SS procedure accordingly.
    *
    * @see 3GPP TS 22.030 Figure 3.5.3.2
@@ -633,27 +820,27 @@ TelephonyService.prototype = {
   // Handling of supplementary services within a call as 3GPP TS 22.030 6.5.5
   _dialInCallMMI: function(aClientId, aNumber, aCallback) {
     let mmiCallback = {
-      notifyError: () => aCallback.notifyDialMMIError(RIL.MMI_ERROR_KS_ERROR),
-      notifySuccess: () => aCallback.notifyDialMMISuccess(RIL.MMI_SM_KS_CALL_CONTROL)
+      notifyError: () => aCallback.notifyDialMMIError(MMI_ERROR_KS_ERROR),
+      notifySuccess: () => aCallback.notifyDialMMISuccess(MMI_SM_KS_CALL_CONTROL)
     };
 
     if (aNumber === "0") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._hangUpBackground(aClientId, mmiCallback);
     } else if (aNumber === "1") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._hangUpForeground(aClientId, mmiCallback);
     } else if (aNumber[0] === "1" && aNumber.length === 2) {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this.hangUpCall(aClientId, parseInt(aNumber[1]), mmiCallback);
     } else if (aNumber === "2") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._switchActiveCall(aClientId, mmiCallback);
     } else if (aNumber[0] === "2" && aNumber.length === 2) {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._separateCallGsm(aClientId, parseInt(aNumber[1]), mmiCallback);
     } else if (aNumber === "3") {
-      aCallback.notifyDialMMI(RIL.MMI_KS_SC_CALL);
+      aCallback.notifyDialMMI(MMI_KS_SC_CALL);
       this._conferenceCallGsm(aClientId, mmiCallback);
     } else {
       this._dialCall(aClientId, aNumber, undefined, aCallback);
@@ -701,7 +888,7 @@ TelephonyService.prototype = {
 
     if (isEmergency) {
       // Automatically select a proper clientId for emergency call.
-      aClientId = gRadioInterfaceLayer.getClientIdForEmergencyCall() ;
+      aClientId = this._getClientIdForEmergencyCall() ;
       if (aClientId === -1) {
         if (DEBUG) debug("Error: No client is avaialble for emergency call.");
         aCallback.notifyError(DIAL_ERROR_INVALID_STATE_ERROR);
@@ -844,124 +1031,667 @@ TelephonyService.prototype = {
    *        Parsed MMI structure.
    * @param aCallback
    *        A nsITelephonyDialCallback object.
-   * @param aStartNewSession
-   *        True to start a new session for ussd request.
    */
   _dialMMI: function(aClientId, aMmi, aCallback) {
     let mmiServiceCode = aMmi ?
-      this._serviceCodeToKeyString(aMmi.serviceCode) : RIL.MMI_KS_SC_USSD;
+      this._serviceCodeToKeyString(aMmi.serviceCode) : MMI_KS_SC_USSD;
 
     aCallback.notifyDialMMI(mmiServiceCode);
 
-    this._sendToRilWorker(aClientId, "sendMMI",
-                          { mmi: aMmi }, response => {
-      if (DEBUG) debug("MMI response: " + JSON.stringify(response));
+    if (mmiServiceCode !== MMI_KS_SC_IMEI && !this._isRadioOn(aClientId)) {
+      aCallback.notifyDialMMIError(DIAL_ERROR_RADIO_NOT_AVAILABLE);
+      return;
+    }
 
-      if (response.errorMsg) {
-        if (response.additionalInformation != null) {
-          aCallback.notifyDialMMIErrorWithInfo(response.errorMsg,
-                                               response.additionalInformation);
-        } else {
-          aCallback.notifyDialMMIError(response.errorMsg);
-        }
-        return;
-      }
+    // We check if the MMI service code is supported and in that case we
+    // trigger the appropriate RIL request if possible.
+    switch (mmiServiceCode) {
+      // Call Forwarding
+      case MMI_KS_SC_CALL_FORWARDING:
+        this._callForwardingMMI(aClientId, aMmi, aCallback);
+        break;
 
-      // We expect to have an IMEI at this point if the request was supposed
-      // to query for the IMEI, so getting a successful reply from the RIL
-      // without containing an actual IMEI number is considered an error.
-      if (mmiServiceCode === RIL.MMI_KS_SC_IMEI &&
-          !response.statusMessage) {
-        aCallback.notifyDialMMIError(RIL.GECKO_ERROR_GENERIC_FAILURE);
-        return;
-      }
+      // Change the current ICC PIN number.
+      case MMI_KS_SC_PIN:
+      // Change the current ICC PIN2 number.
+      case MMI_KS_SC_PIN2:
+        this._iccChangeLockMMI(aClientId, aMmi, aCallback);
+        break;
 
-      // MMI query call forwarding options request returns a set of rules that
-      // will be exposed in the form of an array of MozCallForwardingOptions
-      // instances.
-      if (mmiServiceCode === RIL.MMI_KS_SC_CALL_FORWARDING) {
-        if (response.isSetCallForward) {
-          gGonkMobileConnectionService.notifyCFStateChanged(aClientId,
-                                                            response.action,
-                                                            response.reason,
-                                                            response.number,
-                                                            response.timeSeconds,
-                                                            response.serviceClass);
-        }
+      // Unblock ICC PUK.
+      case MMI_KS_SC_PUK:
+      // Unblock ICC PUN2.
+      case MMI_KS_SC_PUK2:
+        this._iccUnlockMMI(aClientId, aMmi, aCallback);
+        break;
 
-        if (response.additionalInformation != null) {
-          let callForwardingOptions =
-            this._rulesToCallForwardingOptions(response.additionalInformation);
-          aCallback.notifyDialMMISuccessWithCallForwardingOptions(
-            response.statusMessage, callForwardingOptions.length, callForwardingOptions);
+      // IMEI
+      case MMI_KS_SC_IMEI:
+        this._getImeiMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // CLIP
+      case MMI_KS_SC_CLIP:
+        this._clipMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // CLIR (non-temporary ones)
+      case MMI_KS_SC_CLIR:
+        this._clirMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Change call barring password
+      case MMI_KS_SC_CHANGE_PASSWORD:
+        this._callBarringPasswordMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Call barring
+      case MMI_KS_SC_CALL_BARRING:
+        this._callBarringMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Call waiting
+      case MMI_KS_SC_CALL_WAITING:
+        this._callWaitingMMI(aClientId, aMmi, aCallback);
+        break;
+
+      // Handle unknown MMI code as USSD.
+      default:
+        if (this._ussdSessions[aClientId] == USSD_SESSION_ONGOING) {
+          // Cancel the previous ussd session first.
+          this._cancelUSSDInternal(aClientId, aResponse => {
+            // Fail to cancel ussd session, report error instead of sending ussd
+            // request.
+            if (aResponse.errorMsg) {
+              aCallback.notifyDialMMIError(aResponse.errorMsg);
+              return;
+            }
+            this._sendUSSDInternal(aClientId, aMmi.fullMMI,
+                                   this._defaultMMICallbackHandler.bind(this, aCallback));
+          });
           return;
         }
-      }
+        this._sendUSSDInternal(aClientId, aMmi.fullMMI,
+                               this._defaultMMICallbackHandler.bind(this, aCallback));
+        break;
+    }
+  },
 
-      // No additional information
-      if (response.additionalInformation === undefined) {
-        aCallback.notifyDialMMISuccess(response.statusMessage);
-        return;
-      }
+  /**
+   * Handle call forwarding MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callForwardingMMI: function(aClientId, aMmi, aCallback) {
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    let action = MMI_PROC_TO_CF_ACTION[aMmi.procedure];
+    let reason = MMI_SC_TO_CF_REASON[aMmi.serviceCode];
 
-      // Additional information is an integer.
-      if (!isNaN(parseInt(response.additionalInformation, 10))) {
-        aCallback.notifyDialMMISuccessWithInteger(
-          response.statusMessage, response.additionalInformation);
-        return;
-      }
+    if (action === Ci.nsIMobileConnection.CALL_FORWARD_ACTION_QUERY_STATUS) {
+      connection.getCallForwarding(reason, {
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+        notifyGetCallForwardingSuccess: function(aCount, aResults) {
+          aCallback.notifyDialMMISuccessWithCallForwardingOptions(
+            MMI_SM_KS_SERVICE_INTERROGATED, aCount, aResults);
+        },
+        notifyError: function(aErrorMsg) {
+          aCallback.notifyDialMMIError(aErrorMsg);
+        },
+      });
+    } else {
+      let number = aMmi.sia;
+      let serviceClass = this._siToServiceClass(aMmi.sib);
+      let timeSeconds = aMmi.sic;
+      connection.setCallForwarding(action, reason, number, timeSeconds,
+        serviceClass, {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifySuccess: function() {
+            aCallback.notifyDialMMISuccess(CF_ACTION_TO_STATUS_MESSAGE[action]);
+          },
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+    }
+  },
 
-      // Additional information is an array of strings.
-      let array = response.additionalInformation;
-      if (Array.isArray(array) && array.length > 0 && typeof array[0] === "string") {
-        aCallback.notifyDialMMISuccessWithStrings(response.statusMessage,
-                                                  array.length, array);
-        return;
-      }
+  /**
+   * Handle icc change lock MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _iccChangeLockMMI: function(aClientId, aMmi, aCallback) {
+    let errorMsg = this._getIccLockMMIError(aMmi);
+    if (errorMsg) {
+      aCallback.notifyDialMMIError(errorMsg);
+      return;
+    }
 
-      aCallback.notifyDialMMISuccess(response.statusMessage);
+    let icc = gIccService.getIccByServiceId(aClientId);
+    let lockType = MMI_SC_TO_LOCK_TYPE[aMmi.serviceCode];
+
+    icc.changeCardLockPassword(lockType, aMmi.sia, aMmi.sib, {
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIIccCallback]),
+      notifySuccess: function() {
+        aCallback.notifyDialMMISuccess(LOCK_TYPE_TO_STATUS_MESSAGE[lockType]);
+      },
+      notifyCardLockError: function(aErrorMsg, aRetryCount) {
+        if (aRetryCount <= 0) {
+          if (lockType === Ci.nsIIcc.CARD_LOCK_TYPE_PIN) {
+            aErrorMsg = MMI_ERROR_KS_NEEDS_PUK;
+          }
+
+          aCallback.notifyDialMMIError(aErrorMsg);
+          return;
+        }
+
+        aCallback.notifyDialMMIErrorWithInfo(MMI_ERROR_KS_BAD_PIN,
+                                             aRetryCount);
+      },
     });
+  },
+
+  /**
+   * Handle icc unlock lock MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _iccUnlockMMI: function(aClientId, aMmi, aCallback) {
+    let errorMsg = this._getIccLockMMIError(aMmi);
+    if (errorMsg) {
+      aCallback.notifyDialMMIError(errorMsg);
+      return;
+    }
+
+    let icc = gIccService.getIccByServiceId(aClientId);
+    let lockType = MMI_SC_TO_LOCK_TYPE[aMmi.serviceCode];
+
+    icc.unlockCardLock(lockType, aMmi.sia, aMmi.sib, {
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIIccCallback]),
+      notifySuccess: function() {
+        aCallback.notifyDialMMISuccess(LOCK_TYPE_TO_STATUS_MESSAGE[lockType]);
+      },
+      notifyCardLockError: function(aErrorMsg, aRetryCount) {
+        if (aRetryCount <= 0) {
+          if (lockType === Ci.nsIIcc.CARD_LOCK_TYPE_PUK) {
+            aErrorMsg = MMI_ERROR_KS_SIM_BLOCKED;
+          }
+
+          aCallback.notifyDialMMIError(aErrorMsg);
+          return;
+        }
+
+        aCallback.notifyDialMMIErrorWithInfo(MMI_ERROR_KS_BAD_PUK,
+                                             aRetryCount);
+      },
+    });
+  },
+
+  /**
+   * Handle IMEI MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _getImeiMMI: function(aClientId, aMmi, aCallback) {
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    if (!connection.deviceIdentities || !connection.deviceIdentities.imei) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_GENERIC_FAILURE);
+      return;
+    }
+
+    aCallback.notifyDialMMISuccess(connection.deviceIdentities.imei);
+  },
+
+  /**
+   * Handle CLIP MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _clipMMI: function(aClientId, aMmi, aCallback) {
+    if (aMmi.procedure !== MMI_PROCEDURE_INTERROGATION) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
+      return;
+    }
+
+    this._sendToRilWorker(aClientId, "queryCLIP", {}, aResponse => {
+      if (aResponse.errorMsg) {
+        aCallback.notifyDialMMIError(aResponse.errorMsg);
+        return;
+      }
+
+      // aResponse.provisioned informs about the called party receives the
+      // calling party's address information:
+      // 0 for CLIP not provisioned
+      // 1 for CLIP provisioned
+      // 2 for unknown
+      switch (aResponse.provisioned) {
+        case 0:
+          aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
+          break;
+        case 1:
+          aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_ENABLED);
+          break;
+        default:
+          aCallback.notifyDialMMIError(MMI_ERROR_KS_ERROR);
+          break;
+      }
+    });
+  },
+
+  /**
+   * Handle CLIR MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _clirMMI: function(aClientId, aMmi, aCallback) {
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    switch (aMmi.procedure) {
+      case MMI_PROCEDURE_INTERROGATION:
+        connection.getCallingLineIdRestriction({
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifyGetClirStatusSuccess: function(aN, aM) {
+            let errorMsg;
+            let statusMessage;
+            // TS 27.007 +CLIR parameter 'm'.
+            switch (aM) {
+              // CLIR not provisioned.
+              case 0:
+                statusMessage = MMI_SM_KS_SERVICE_NOT_PROVISIONED;
+                break;
+              // CLIR provisioned in permanent mode.
+              case 1:
+                statusMessage = MMI_SM_KS_CLIR_PERMANENT;
+                break;
+              // Unknown (e.g. no network, etc.).
+              case 2:
+                errorMsg = MMI_ERROR_KS_ERROR;
+                break;
+              // CLIR temporary mode presentation restricted.
+              case 3:
+                // TS 27.007 +CLIR parameter 'n'.
+                switch (aN) {
+                  // Default.
+                  case 0:
+                  // CLIR invocation.
+                  case 1:
+                    statusMessage = MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_ON;
+                    break;
+                  // CLIR suppression.
+                  case 2:
+                    statusMessage = MMI_SM_KS_CLIR_DEFAULT_ON_NEXT_CALL_OFF;
+                    break;
+                  default:
+                    errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+                    break;
+                }
+                break;
+              // CLIR temporary mode presentation allowed.
+              case 4:
+                // TS 27.007 +CLIR parameter 'n'.
+                switch (aN) {
+                  // Default.
+                  case 0:
+                  // CLIR suppression.
+                  case 2:
+                    statusMessage = MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_OFF;
+                    break;
+                  // CLIR invocation.
+                  case 1:
+                    statusMessage = MMI_SM_KS_CLIR_DEFAULT_OFF_NEXT_CALL_ON;
+                    break;
+                  default:
+                    errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+                    break;
+                }
+                break;
+              default:
+                errorMsg = RIL.GECKO_ERROR_GENERIC_FAILURE;
+                break;
+            }
+
+            if (errorMsg) {
+              aCallback.notifyDialMMIError(errorMsg);
+              return;
+            }
+
+            aCallback.notifyDialMMISuccess(statusMessage);
+          },
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION: {
+        let clirMode = MMI_PROC_TO_CLIR_ACTION[aMmi.procedure];
+        connection.setCallingLineIdRestriction(clirMode, {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifySuccess: function() {
+            aCallback.notifyDialMMISuccess(CLIR_ACTION_TO_STATUS_MESSAGE[clirMode]);
+          },
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      }
+      default:
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
+  },
+
+  /**
+   * Handle change call barring password MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callBarringPasswordMMI: function(aClientId, aMmi, aCallback) {
+    if (aMmi.procedure !== MMI_PROCEDURE_REGISTRATION &&
+        aMmi.procedure !== MMI_PROCEDURE_ACTIVATION) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_INVALID_ACTION);
+      return;
+    }
+
+    if (aMmi.sia !== "" && aMmi.sia !== MMI_ZZ_BARRING_SERVICE) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
+      return;
+    }
+
+    let validPassword = aSi => /^[0-9]{4}$/.test(aSi);
+    if (!validPassword(aMmi.sib) || !validPassword(aMmi.sic) ||
+        !validPassword(aMmi.pwd)) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_INVALID_PASSWORD);
+      return;
+    }
+
+    if (aMmi.sic !== aMmi.pwd) {
+      aCallback.notifyDialMMIError(MMI_ERROR_KS_MISMATCH_PASSWORD);
+      return;
+    }
+
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    connection.changeCallBarringPassword(aMmi.sib, aMmi.sic, {
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+      notifySuccess: function() {
+        aCallback.notifyDialMMISuccess(MMI_SM_KS_PASSWORD_CHANGED);
+      },
+      notifyError: function(aErrorMsg) {
+        aCallback.notifyDialMMIError(aErrorMsg);
+      },
+    });
+  },
+
+  /**
+   * Handle call barring MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callBarringMMI: function(aClientId, aMmi, aCallback) {
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    let program = MMI_SC_TO_CB_PROGRAM[aMmi.serviceCode];
+    let password = aMmi.sia || "";
+    let serviceClass = this._siToServiceClass(aMmi.sib);
+
+    switch (aMmi.procedure) {
+      case MMI_PROCEDURE_INTERROGATION:
+        connection.getCallBarring(program, password, serviceClass, {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifyGetCallBarringSuccess: function(aProgram, aEnabled, aServiceClass) {
+            if (!aEnabled) {
+              aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
+              return;
+            }
+
+            let services = this._serviceClassToStringArray(aServiceClass);
+            aCallback.notifyDialMMISuccessWithStrings(MMI_SM_KS_SERVICE_ENABLED_FOR,
+                                                      services.length, services);
+          }.bind(this),
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION: {
+        let enabled = (aMmi.procedure === MMI_PROCEDURE_ACTIVATION);
+        connection.setCallBarring(program, enabled, password, serviceClass, {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifySuccess: function() {
+            aCallback.notifyDialMMISuccess(
+              enabled ? MMI_SM_KS_SERVICE_ENABLED
+                      : MMI_SM_KS_SERVICE_DISABLED
+            );
+          },
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      }
+      default:
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
+  },
+
+  /**
+   * Handle call waiting MMI code.
+   *
+   * @param aClientId
+   *        Client id.
+   * @param aMmi
+   *        Parsed MMI structure.
+   * @param aCallback
+   *        A nsITelephonyDialCallback object.
+   */
+  _callWaitingMMI: function(aClientId, aMmi, aCallback) {
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+
+    switch (aMmi.procedure) {
+      case MMI_PROCEDURE_INTERROGATION:
+        connection.getCallWaiting({
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifyGetCallWaitingSuccess: function(aServiceClass) {
+            if (aServiceClass === Ci.nsIMobileConnection.ICC_SERVICE_CLASS_NONE) {
+              aCallback.notifyDialMMISuccess(MMI_SM_KS_SERVICE_DISABLED);
+              return;
+            }
+
+            let services = this._serviceClassToStringArray(aServiceClass);
+            aCallback.notifyDialMMISuccessWithStrings(MMI_SM_KS_SERVICE_ENABLED_FOR,
+                                                      services.length, services);
+          }.bind(this),
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      case MMI_PROCEDURE_ACTIVATION:
+      case MMI_PROCEDURE_DEACTIVATION: {
+        let enabled = (aMmi.procedure === MMI_PROCEDURE_ACTIVATION);
+        let serviceClass = this._siToServiceClass(aMmi.sia);
+        connection.setCallWaiting(enabled, serviceClass, {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionCallback]),
+          notifySuccess: function() {
+            aCallback.notifyDialMMISuccess(
+              enabled ? MMI_SM_KS_SERVICE_ENABLED
+                      : MMI_SM_KS_SERVICE_DISABLED
+            );
+          },
+          notifyError: function(aErrorMsg) {
+            aCallback.notifyDialMMIError(aErrorMsg);
+          },
+        });
+        break;
+      }
+      default:
+        aCallback.notifyDialMMIError(MMI_ERROR_KS_NOT_SUPPORTED);
+        break;
+    }
   },
 
   _serviceCodeToKeyString: function(aServiceCode) {
     switch (aServiceCode) {
-      case RIL.MMI_SC_CFU:
-      case RIL.MMI_SC_CF_BUSY:
-      case RIL.MMI_SC_CF_NO_REPLY:
-      case RIL.MMI_SC_CF_NOT_REACHABLE:
-      case RIL.MMI_SC_CF_ALL:
-      case RIL.MMI_SC_CF_ALL_CONDITIONAL:
-        return RIL.MMI_KS_SC_CALL_FORWARDING;
-      case RIL.MMI_SC_PIN:
-        return RIL.MMI_KS_SC_PIN;
-      case RIL.MMI_SC_PIN2:
-        return RIL.MMI_KS_SC_PIN2;
-      case RIL.MMI_SC_PUK:
-        return RIL.MMI_KS_SC_PUK;
-      case RIL.MMI_SC_PUK2:
-        return RIL.MMI_KS_SC_PUK2;
-      case RIL.MMI_SC_IMEI:
-        return RIL.MMI_KS_SC_IMEI;
-      case RIL.MMI_SC_CLIP:
-        return RIL.MMI_KS_SC_CLIP;
-      case RIL.MMI_SC_CLIR:
-        return RIL.MMI_KS_SC_CLIR;
-      case RIL.MMI_SC_BAOC:
-      case RIL.MMI_SC_BAOIC:
-      case RIL.MMI_SC_BAOICxH:
-      case RIL.MMI_SC_BAIC:
-      case RIL.MMI_SC_BAICr:
-      case RIL.MMI_SC_BA_ALL:
-      case RIL.MMI_SC_BA_MO:
-      case RIL.MMI_SC_BA_MT:
-        return RIL.MMI_KS_SC_CALL_BARRING;
-      case RIL.MMI_SC_CALL_WAITING:
-        return RIL.MMI_KS_SC_CALL_WAITING;
-      case RIL.MMI_SC_CHANGE_PASSWORD:
-        return RIL.MMI_KS_SC_CHANGE_PASSWORD;
+      case MMI_SC_CFU:
+      case MMI_SC_CF_BUSY:
+      case MMI_SC_CF_NO_REPLY:
+      case MMI_SC_CF_NOT_REACHABLE:
+      case MMI_SC_CF_ALL:
+      case MMI_SC_CF_ALL_CONDITIONAL:
+        return MMI_KS_SC_CALL_FORWARDING;
+      case MMI_SC_PIN:
+        return MMI_KS_SC_PIN;
+      case MMI_SC_PIN2:
+        return MMI_KS_SC_PIN2;
+      case MMI_SC_PUK:
+        return MMI_KS_SC_PUK;
+      case MMI_SC_PUK2:
+        return MMI_KS_SC_PUK2;
+      case MMI_SC_IMEI:
+        return MMI_KS_SC_IMEI;
+      case MMI_SC_CLIP:
+        return MMI_KS_SC_CLIP;
+      case MMI_SC_CLIR:
+        return MMI_KS_SC_CLIR;
+      case MMI_SC_BAOC:
+      case MMI_SC_BAOIC:
+      case MMI_SC_BAOICxH:
+      case MMI_SC_BAIC:
+      case MMI_SC_BAICr:
+      case MMI_SC_BA_ALL:
+      case MMI_SC_BA_MO:
+      case MMI_SC_BA_MT:
+        return MMI_KS_SC_CALL_BARRING;
+      case MMI_SC_CALL_WAITING:
+        return MMI_KS_SC_CALL_WAITING;
+      case MMI_SC_CHANGE_PASSWORD:
+        return MMI_KS_SC_CHANGE_PASSWORD;
       default:
-        return RIL.MMI_KS_SC_USSD;
+        return MMI_KS_SC_USSD;
     }
+  },
+
+  /**
+   * Helper for translating basic service group to service class parameter.
+   */
+  _siToServiceClass: function(aSi) {
+    if (!aSi) {
+      return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_NONE;
+    }
+
+    let serviceCode = parseInt(aSi, 10);
+    switch (serviceCode) {
+      case 10:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_SMS +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_FAX +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE;
+      case 11:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE;
+      case 12:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_SMS +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_FAX;
+      case 13:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_FAX;
+      case 16:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_SMS;
+      case 19:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_FAX +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE;
+      case 21:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_PAD +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_ASYNC;
+      case 22:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_PACKET +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_SYNC;
+      case 25:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_ASYNC;
+      case 26:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_DATA_SYNC +
+               Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE;
+      case 99:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_PACKET;
+      default:
+        return Ci.nsIMobileConnection.ICC_SERVICE_CLASS_NONE;
+    }
+  },
+
+  _serviceClassToStringArray: function(aServiceClass) {
+    let services = [];
+    for (let mask = Ci.nsIMobileConnection.ICC_SERVICE_CLASS_VOICE;
+         mask <= Ci.nsIMobileConnection.ICC_SERVICE_CLASS_MAX;
+         mask <<= 1) {
+      if (mask & aServiceClass) {
+        services.push(MMI_KS_SERVICE_CLASS_MAPPING[mask]);
+      }
+    }
+    return services;
+  },
+
+  _getIccLockMMIError: function(aMmi) {
+    // As defined in TS.122.030 6.6.2 to change the ICC PIN we should expect
+    // an MMI code of the form **04*OLD_PIN*NEW_PIN*NEW_PIN#, where old PIN
+    // should be entered as the SIA parameter and the new PIN as SIB and
+    // SIC.
+    if (aMmi.procedure !== MMI_PROCEDURE_REGISTRATION) {
+      return MMI_ERROR_KS_INVALID_ACTION;
+    }
+
+    if (!aMmi.sia || !aMmi.sib || !aMmi.sic) {
+      return MMI_ERROR_KS_ERROR;
+    }
+
+    if (aMmi.sia.length < 4 || aMmi.sia.length > 8 ||
+        aMmi.sib.length < 4 || aMmi.sib.length > 8 ||
+        aMmi.sic.length < 4 || aMmi.sic.length > 8) {
+      return MMI_ERROR_KS_INVALID_PIN;
+    }
+
+    if (aMmi.sib != aMmi.sic) {
+      return MMI_ERROR_KS_MISMATCH_PIN;
+    }
+
+    return null;
   },
 
   /**
@@ -977,6 +1707,14 @@ TelephonyService.prototype = {
       aCallback.notifyError(aResponse.errorMsg);
     } else {
       aCallback.notifySuccess();
+    }
+  },
+
+  _defaultMMICallbackHandler: function(aCallback, aResponse) {
+    if (aResponse.errorMsg) {
+      aCallback.notifyDialMMIError(aResponse.errorMsg);
+    } else {
+      aCallback.notifyDialMMISuccess("");
     }
   },
 
@@ -1185,6 +1923,41 @@ TelephonyService.prototype = {
       return;
     }
 
+    // After hangup a single call, gecko has to resume the held call or conference.
+    if (!call.isConference) {
+      let heldCalls = this._getCallsWithState(aClientId, nsITelephonyService.CALL_STATE_HELD);
+
+      if (heldCalls.length) {
+        if (call.state === nsITelephonyService.CALL_STATE_CONNECTED) {
+          // For a foreground call, ril has a request to do two actions together.
+          this._hangUpForeground(aClientId, aCallback);
+        } else {
+          // Otherwise, gecko should send out two consecutive requests by itself.
+          this._sendToRilWorker(aClientId, "hangUpCall", { callIndex: aCallIndex }, response => {
+            if (response.errorMsg) {
+              aCallback.notifyError(response.errorMsg);
+            } else {
+              aCallback.notifySuccess();
+
+              let emptyCallback = {
+                QueryInterface: XPCOMUtils.generateQI([Ci.nsITelephonyCallback]),
+                notifySuccess: () => {},
+                notifyError: () => {}
+              };
+
+              if (heldCalls.length === 1) {
+                this.resumeCall(aClientId, heldCalls[0].callIndex, emptyCallback);
+              } else {
+                this.resumeConference(aClientId, emptyCallback);
+              }
+            }
+          });
+        }
+
+        return;
+      }
+    }
+
     call.hangUpLocal = true;
     this._sendToRilWorker(aClientId, "hangUpCall", { callIndex: aCallIndex },
                           this._defaultCallbackHandler.bind(this, aCallback));
@@ -1280,7 +2053,6 @@ TelephonyService.prototype = {
         calls.push(call);
       }
       this._handleCallStateChanged(aClientId, calls);
-      this._handleConferenceCallStateChanged(nsITelephonyService.CALL_STATE_CONNECTED);
 
       aCallback.notifySuccess();
     });
@@ -1324,7 +2096,6 @@ TelephonyService.prototype = {
     parentCall.isSwitchable = true;
     parentCall.isMergeable = true;
     this._handleCallStateChanged(aClientId, [childCall, parentCall]);
-    this._handleConferenceCallStateChanged(nsITelephonyService.CALL_STATE_UNKNOWN);
   },
 
   // See 3gpp2, S.R0006-522-A v1.0. Table 4, XID 6S.
@@ -1368,11 +2139,24 @@ TelephonyService.prototype = {
       return;
     }
 
-    let foreground = this._currentConferenceState == nsITelephonyService.CALL_STATE_CONNECTED;
-    this._sendToRilWorker(aClientId,
-                          foreground ? "hangUpForeground" : "hangUpBackground",
-                          null,
-                          this._defaultCallbackHandler.bind(this, aCallback));
+    // Find a conference call, and send the corresponding request to RIL worker.
+    for (let index in this._currentCalls[aClientId]) {
+      let call = this._currentCalls[aClientId][index];
+      if (!call.isConference) {
+        continue;
+      }
+
+      let command = call.state === nsITelephonyService.CALL_STATE_CONNECTED ?
+                    "hangUpForeground" : "hangUpBackground";
+      this._sendToRilWorker(aClientId, command, null,
+                            this._defaultCallbackHandler.bind(this, aCallback));
+      return;
+    }
+
+    // There is no conference call.
+    if (DEBUG) debug("hangUpConference: " +
+                     "No conference call in modem[" + aClientId + "].");
+    aCallback.notifyError(RIL.GECKO_ERROR_GENERIC_FAILURE);
   },
 
   _switchConference: function(aClientId, aCallback) {
@@ -1394,13 +2178,33 @@ TelephonyService.prototype = {
   },
 
   sendUSSD: function(aClientId, aUssd, aCallback) {
-    this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd },
-                          this._defaultCallbackHandler.bind(this, aCallback));
+    this._sendUSSDInternal(aClientId, aUssd,
+                           this._defaultCallbackHandler.bind(this, aCallback));
+  },
+
+  _sendUSSDInternal: function(aClientId, aUssd, aCallback) {
+    this._ussdSessions[aClientId] = USSD_SESSION_ONGOING;
+    this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd }, aResponse => {
+      if (aResponse.errorMsg) {
+        this._ussdSessions[aClientId] = USSD_SESSION_DONE;
+      }
+      aCallback(aResponse);
+    });
   },
 
   cancelUSSD: function(aClientId, aCallback) {
-    this._sendToRilWorker(aClientId, "cancelUSSD", {},
-                          this._defaultCallbackHandler.bind(this, aCallback));
+    this._cancelUSSDInternal(aClientId,
+                             this._defaultCallbackHandler.bind(this, aCallback));
+  },
+
+  _cancelUSSDInternal: function(aClientId, aCallback) {
+    this._ussdSessions[aClientId] = USSD_SESSION_CANCELLING;
+    this._sendToRilWorker(aClientId, "cancelUSSD", {}, aResponse => {
+      if (aResponse.errorMsg) {
+        this._ussdSessions[aClientId] = USSD_SESSION_ONGOING;
+      }
+      aCallback(aResponse);
+    });
   },
 
   get microphoneMuted() {
@@ -1449,10 +2253,9 @@ TelephonyService.prototype = {
                              aFailCause = RIL.GECKO_CALL_ERROR_NORMAL_CALL_CLEARING) {
     if (DEBUG) debug("_disconnectCalls: " + JSON.stringify(aCalls));
 
-    // Child cannot live without parent. Let's find all the calls that need to
-    // be disconnected.
+    // In addition to the disconnected call itself, its decedent calls should be
+    // treated as disconnected calls as well.
     let disconnectedCalls = aCalls.slice();
-
     for (let call in aCalls) {
       while (call.childId) {
         call = this._currentCalls[aClientId][call.childId];
@@ -1461,7 +2264,7 @@ TelephonyService.prototype = {
     }
 
     // Store unique value in the list.
-    disconnectedCalls = [...Set(disconnectedCalls)];
+    disconnectedCalls = [...new Set(disconnectedCalls)];
 
     let callsForStateChanged = [];
 
@@ -1469,8 +2272,8 @@ TelephonyService.prototype = {
       call.state = nsITelephonyService.CALL_STATE_DISCONNECTED;
       call.disconnectedReason = aFailCause;
 
-      if (call.parentId) {
-        let parentCall = this._currentCalls[aClientId][call.parentId];
+      let parentCall = this._currentCalls[aClientId][call.parentId];
+      if (parentCall) {
         delete parentCall.childId;
       }
 
@@ -1575,12 +2378,6 @@ TelephonyService.prototype = {
 
     this._handleCallStateChanged(aClientId, [...changedCalls]);
 
-    // Should handle conferenceCallStateChange after callStateChanged and
-    // callDisconnected.
-    if (newConferenceState != this._currentConferenceState) {
-      this._handleConferenceCallStateChanged(newConferenceState);
-    }
-
     this._updateAudioState(aClientId);
 
     // Handle cached dial request.
@@ -1599,6 +2396,10 @@ TelephonyService.prototype = {
    */
   _handleCallStateChanged: function(aClientId, aCalls) {
     if (DEBUG) debug("handleCallStateChanged: " + JSON.stringify(aCalls));
+
+    if (aCalls.length === 0) {
+      return;
+    }
 
     if (aCalls.some(call => call.state == nsITelephonyService.CALL_STATE_DIALING)) {
       gTelephonyMessenger.notifyNewCall();
@@ -1656,16 +2457,31 @@ TelephonyService.prototype = {
                              [aClientId, callIndex, notification]);
   },
 
-  _handleConferenceCallStateChanged: function(aState) {
-    if (DEBUG) debug("handleConferenceCallStateChanged: " + aState);
-    this._currentConferenceState = aState;
-    this._notifyAllListeners("conferenceCallStateChanged", [aState]);
-  },
-
   notifyUssdReceived: function(aClientId, aMessage, aSessionEnded) {
     if (DEBUG) {
       debug("notifyUssdReceived for " + aClientId + ": " +
             aMessage + " (sessionEnded : " + aSessionEnded + ")");
+    }
+
+    let oldSession = this._ussdSessions[aClientId];
+    this._ussdSessions[aClientId] =
+      aSessionEnded ? USSD_SESSION_DONE : USSD_SESSION_ONGOING;
+
+    // We suppress the empty message only when the session is not changed and
+    // is not alive. See Bug 1057455, 1198676.
+    // Moreover, we should allow a notification initiated by network
+    // in which further response is not required.
+    // See |5.2.2 Actions at the UE| in 3GPP TS 22.090:
+    // "
+    //  The network may explicitly indicate to the UE that a response
+    //  from the user is required. ...
+    //  If the network does not indicate that a response is required,
+    //  then the normal MMI procedures on the UE continue to apply.
+    // "
+    if (oldSession != USSD_SESSION_ONGOING &&
+        this._ussdSessions[aClientId] != USSD_SESSION_ONGOING &&
+        !aMessage) {
+      return;
     }
 
     gTelephonyMessenger.notifyUssdReceived(aClientId, aMessage, aSessionEnded);
@@ -1695,37 +2511,4 @@ TelephonyService.prototype = {
   }
 };
 
-/**
- * This implements nsISystemMessagesWrapper.wrapMessage(), which provides a
- * plugable way to wrap a "ussd-received" type system message.
- *
- * Please see SystemMessageManager.js to know how it customizes the wrapper.
- */
-function USSDReceivedWrapper() {
-  if (DEBUG) debug("USSDReceivedWrapper()");
-}
-USSDReceivedWrapper.prototype = {
-  // nsISystemMessagesWrapper implementation.
-  wrapMessage: function(aMessage, aWindow) {
-    if (DEBUG) debug("wrapMessage: " + JSON.stringify(aMessage));
-
-    let session = aMessage.sessionEnded ? null :
-      new aWindow.USSDSession(aMessage.serviceId);
-
-    let event = new aWindow.USSDReceivedEvent("ussdreceived", {
-      serviceId: aMessage.serviceId,
-      message: aMessage.message,
-      session: session
-    });
-
-    return event;
-  },
-
-  classDescription: "USSDReceivedWrapper",
-  classID: Components.ID("{d03684ed-ede4-4210-8206-f4f32772d9f5}"),
-  contractID: "@mozilla.org/dom/system-messages/wrapper/ussd-received;1",
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsISystemMessagesWrapper])
-};
-
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([TelephonyService,
-                                                    USSDReceivedWrapper]);
+this.NSGetFactory = XPCOMUtils.generateNSGetFactory([TelephonyService]);

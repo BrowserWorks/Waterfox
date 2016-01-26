@@ -166,7 +166,7 @@ var AccessFuTest = {
         AccessFuTest.nextTest();
       } else {
         // Run all test functions synchronously.
-        [testFunc() for (testFunc of gTestFuncs)]; // jshint ignore:line
+        gTestFuncs.forEach(testFunc => testFunc());
         AccessFuTest.finish();
       }
     });
@@ -389,6 +389,20 @@ var ContentMessages = {
         adjustRange: true
       }
     }
+  },
+
+  androidScrollForward: function adjustUp() {
+    return {
+      name: 'AccessFu:AndroidScroll',
+      json: { origin: 'top', direction: 'forward' }
+    };
+  },
+
+  androidScrollBackward: function adjustDown() {
+    return {
+      name: 'AccessFu:AndroidScroll',
+      json: { origin: 'top', direction: 'backward' }
+    };
   },
 
   focusSelector: function focusSelector(aSelector, aBlur) {
@@ -616,6 +630,18 @@ function ExpectedCheckAction(aChecked, aOptions) {
 }
 
 ExpectedCheckAction.prototype = Object.create(ExpectedPresent.prototype);
+
+function ExpectedSwitchAction(aSwitched, aOptions) {
+  ExpectedPresent.call(this, {
+    eventType: 'action',
+    data: [{ string: aSwitched ? 'onAction' : 'offAction' }]
+  }, [{
+    eventType: AndroidEvent.VIEW_CLICKED,
+    checked: aSwitched
+  }], aOptions);
+}
+
+ExpectedSwitchAction.prototype = Object.create(ExpectedPresent.prototype);
 
 function ExpectedNameChange(aName, aOptions) {
   ExpectedPresent.call(this, {

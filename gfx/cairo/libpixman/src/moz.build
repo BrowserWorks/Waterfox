@@ -58,6 +58,9 @@ SOURCES += [
     'pixman.c',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
     '../../cairo/src',
@@ -79,18 +82,12 @@ use_vmx = False
 use_arm_simd_gcc = False
 use_arm_neon_gcc = False
 if '86' in CONFIG['OS_TEST']:
-    if '64' in CONFIG['OS_TEST']:
-        if CONFIG['GNU_CC']:
-            use_sse2 = True
-    else:
+    use_sse2 = True
+    if '64' not in CONFIG['OS_TEST']:
         if CONFIG['_MSC_VER']:
             use_mmx = True
-        if CONFIG['HAVE_GCC_ALIGN_ARG_POINTER']:
-            use_sse2 = True
     if CONFIG['GNU_CC']:
         use_mmx = True
-    if CONFIG['_MSC_VER']:
-        use_sse2 = True
 elif 'ppc' in CONFIG['OS_TEST']:
     if CONFIG['GNU_CC']:
         use_vmx = True
@@ -139,15 +136,24 @@ if use_arm_neon_gcc:
     SOURCES['pixman-arm-neon.c'].flags += ['-mfpu=neon']
 
 # Suppress warnings in third-party code.
-if CONFIG['GNU_CC']:
+if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
     CFLAGS += [
         '-Wno-address',
-        '-Wno-sign-compare',
         '-Wno-missing-field-initializers',
+        '-Wno-sign-compare',
+        '-Wno-unused',                      # too many unused warnings; ignore
     ]
-    if CONFIG['CLANG_CXX']:
-        CFLAGS += [
-            '-Wno-incompatible-pointer-types',
-            '-Wno-tautological-compare',
-            '-Wno-tautological-constant-out-of-range-compare',
-        ]
+if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-incompatible-pointer-types',
+        '-Wno-tautological-compare',
+        '-Wno-tautological-constant-out-of-range-compare',
+    ]
+if CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-unused-variable',
+    ]
+
+# See bug 386897.
+if CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
+    CFLAGS += ['-O2']

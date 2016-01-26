@@ -10,7 +10,6 @@
 #include "nsIDOMDocument.h"
 #include "nsIDOMDocumentFragment.h"
 #include "nsIDocumentTransformer.h"
-#include "nsNetUtil.h"
 #include "nsCharsetSource.h"
 #include "nsIPrincipal.h"
 #include "txURIUtils.h"
@@ -76,11 +75,16 @@ txMozillaTextOutput::endDocument(nsresult aResult)
 {
     NS_ENSURE_TRUE(mDocument && mTextParent, NS_ERROR_FAILURE);
 
-    nsRefPtr<nsTextNode> text = new nsTextNode(mDocument->NodeInfoManager());
+    RefPtr<nsTextNode> text = new nsTextNode(mDocument->NodeInfoManager());
     
     text->SetText(mText, false);
     nsresult rv = mTextParent->AppendChildTo(text, true);
     NS_ENSURE_SUCCESS(rv, rv);
+
+    // This should really be handled by nsIDocument::EndLoad
+    MOZ_ASSERT(mDocument->GetReadyStateEnum() ==
+               nsIDocument::READYSTATE_LOADING, "Bad readyState");
+    mDocument->SetReadyStateInternal(nsIDocument::READYSTATE_INTERACTIVE);
 
     if (NS_SUCCEEDED(aResult)) {
         nsCOMPtr<nsITransformObserver> observer = do_QueryReferent(mObserver);
@@ -135,6 +139,10 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
     nsresult rv = NS_NewXMLDocument(getter_AddRefs(mDocument),
                                     aLoadedAsData);
     NS_ENSURE_SUCCESS(rv, rv);
+    // This should really be handled by nsIDocument::BeginLoad
+    MOZ_ASSERT(mDocument->GetReadyStateEnum() ==
+               nsIDocument::READYSTATE_UNINITIALIZED, "Bad readyState");
+    mDocument->SetReadyStateInternal(nsIDocument::READYSTATE_LOADING);
     nsCOMPtr<nsIDocument> source = do_QueryInterface(aSourceDocument);
     NS_ENSURE_STATE(source);
     bool hasHadScriptObject = false;
@@ -176,10 +184,9 @@ txMozillaTextOutput::createResultDocument(nsIDOMDocument* aSourceDocument,
             RegisterNameSpace(NS_LITERAL_STRING(kTXNameSpaceURI), namespaceID);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        rv = mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
-                                   nsGkAtoms::transformiix, namespaceID,
-                                   getter_AddRefs(mTextParent));
-        NS_ENSURE_SUCCESS(rv, rv);
+        mTextParent =
+          mDocument->CreateElem(nsDependentAtomString(nsGkAtoms::result),
+                                nsGkAtoms::transformiix, namespaceID);
 
 
         rv = mDocument->AppendChildTo(mTextParent, true);

@@ -28,6 +28,9 @@
 #include <android/log.h>
 #endif
 
+template<typename T> class nsTHashtable;
+template<typename T> class nsPtrHashKey;
+
 // WARNING: this takes into account the private, special-message-type
 // enum in ipc_channel.h.  They need to be kept in sync.
 namespace {
@@ -38,23 +41,25 @@ namespace {
 // protocol 0.  Oops!  We can get away with this until protocol 0
 // starts approaching its 65,536th message.
 enum {
-    CHANNEL_OPENED_MESSAGE_TYPE = kuint16max - 5,
-    SHMEM_DESTROYED_MESSAGE_TYPE = kuint16max - 4,
-    SHMEM_CREATED_MESSAGE_TYPE = kuint16max - 3,
-    GOODBYE_MESSAGE_TYPE       = kuint16max - 2
+    CHANNEL_OPENED_MESSAGE_TYPE = kuint16max - 6,
+    SHMEM_DESTROYED_MESSAGE_TYPE = kuint16max - 5,
+    SHMEM_CREATED_MESSAGE_TYPE = kuint16max - 4,
+    GOODBYE_MESSAGE_TYPE       = kuint16max - 3,
+    CANCEL_MESSAGE_TYPE        = kuint16max - 2,
 
     // kuint16max - 1 is used by ipc_channel.h.
 };
-}
+
+} // namespace
 
 namespace mozilla {
 namespace dom {
 class ContentParent;
-}
+} // namespace dom
 
 namespace net {
 class NeckoParent;
-}
+} // namespace net
 
 namespace ipc {
 
@@ -126,19 +131,15 @@ class ProtocolCloneContext
   typedef mozilla::dom::ContentParent ContentParent;
   typedef mozilla::net::NeckoParent NeckoParent;
 
-  ContentParent* mContentParent;
+  RefPtr<ContentParent> mContentParent;
   NeckoParent* mNeckoParent;
 
 public:
-  ProtocolCloneContext()
-    : mContentParent(nullptr)
-    , mNeckoParent(nullptr)
-  {}
+  ProtocolCloneContext();
 
-  void SetContentParent(ContentParent* aContentParent)
-  {
-    mContentParent = aContentParent;
-  }
+  ~ProtocolCloneContext();
+
+  void SetContentParent(ContentParent* aContentParent);
 
   ContentParent* GetContentParent() { return mContentParent; }
 
@@ -151,7 +152,7 @@ public:
 };
 
 template<class ListenerT>
-class /*NS_INTERFACE_CLASS*/ IProtocolManager
+class IProtocolManager
 {
 public:
     enum ActorDestroyReason {
@@ -204,6 +205,9 @@ public:
                   ProtocolCloneContext* aCtx) = 0;
 };
 
+template<class PFooSide>
+class Endpoint;
+
 /**
  * All top-level protocols should inherit this class.
  *
@@ -214,6 +218,8 @@ class IToplevelProtocol : private LinkedListElement<IToplevelProtocol>
 {
     friend class LinkedList<IToplevelProtocol>;
     friend class LinkedListElement<IToplevelProtocol>;
+
+    template<class PFooSide> friend class Endpoint;
 
 protected:
     explicit IToplevelProtocol(ProtocolId aProtoId);
@@ -236,6 +242,8 @@ public:
     ProtocolId GetProtocolId() const { return mProtocolId; }
 
     void GetOpenedActors(nsTArray<IToplevelProtocol*>& aActors);
+
+    virtual MessageChannel* GetIPCChannel() = 0;
 
     // This Unsafe version should only be used when all other threads are
     // frozen, since it performs no locking. It also takes a stack-allocated
@@ -298,7 +306,7 @@ FatalError(const char* aProtocolName, const char* aMsg,
 
 struct PrivateIPDLInterface {};
 
-bool
+nsresult
 Bridge(const PrivateIPDLInterface&,
        MessageChannel*, base::ProcessId, MessageChannel*, base::ProcessId,
        ProtocolId, ProtocolId);
@@ -326,7 +334,184 @@ DuplicateHandle(HANDLE aSourceHandle,
                 DWORD aOptions);
 #endif
 
+/**
+ * An endpoint represents one end of a partially initialized IPDL channel. To
+ * set up a new top-level protocol:
+ *
+ * Endpoint<PFooParent> parentEp;
+ * Endpoint<PFooChild> childEp;
+ * nsresult rv;
+ * rv = PFoo::CreateEndpoints(parentPid, childPid, &parentEp, &childEp);
+ *
+ * You're required to pass in parentPid and childPid, which are the pids of the
+ * processes in which the parent and child endpoints will be used.
+ *
+ * Endpoints can be passed in IPDL messages or sent to other threads using
+ * PostTask. Once an Endpoint has arrived at its destination process and thread,
+ * you need to create the top-level actor and bind it to the endpoint:
+ *
+ * FooParent* parent = new FooParent();
+ * bool rv1 = parentEp.Bind(parent, processActor);
+ * bool rv2 = parent->SendBar(...);
+ *
+ * (See Bind below for an explanation of processActor.) Once the actor is bound
+ * to the endpoint, it can send and receive messages.
+ */
+template<class PFooSide>
+class Endpoint
+{
+public:
+    typedef base::ProcessId ProcessId;
+
+    Endpoint()
+      : mValid(false)
+    {}
+
+    Endpoint(const PrivateIPDLInterface&,
+             mozilla::ipc::Transport::Mode aMode,
+             TransportDescriptor aTransport,
+             ProcessId aMyPid,
+             ProcessId aOtherPid,
+             ProtocolId aProtocolId)
+      : mValid(true)
+      , mMode(aMode)
+      , mTransport(aTransport)
+      , mMyPid(aMyPid)
+      , mOtherPid(aOtherPid)
+      , mProtocolId(aProtocolId)
+    {}
+
+    Endpoint(Endpoint&& aOther)
+      : mValid(aOther.mValid)
+      , mMode(aOther.mMode)
+      , mTransport(aOther.mTransport)
+      , mMyPid(aOther.mMyPid)
+      , mOtherPid(aOther.mOtherPid)
+      , mProtocolId(aOther.mProtocolId)
+    {
+        aOther.mValid = false;
+    }
+
+    Endpoint& operator=(Endpoint&& aOther)
+    {
+        mValid = aOther.mValid;
+        mMode = aOther.mMode;
+        mTransport = aOther.mTransport;
+        mMyPid = aOther.mMyPid;
+        mOtherPid = aOther.mOtherPid;
+        mProtocolId = aOther.mProtocolId;
+
+        aOther.mValid = false;
+        return *this;
+    }
+
+    ~Endpoint() {
+        if (mValid) {
+            CloseDescriptor(mTransport);
+        }
+    }
+
+    // This method binds aActor to this endpoint. After this call, the actor can
+    // be used to send and receive messages. The endpoint becomes invalid. The
+    // |aProcessActor| parameter is used to associate protocols with content
+    // processes. In practice, this parameter should always be a ContentParent
+    // or ContentChild, depending on which process you are in. It is used to
+    // find all the channels that need to be "frozen" or "revived" when creating
+    // or cloning the Nuwa process.
+    bool Bind(PFooSide* aActor, IToplevelProtocol* aProcessActor)
+    {
+        MOZ_RELEASE_ASSERT(mValid);
+        MOZ_RELEASE_ASSERT(mMyPid == base::GetCurrentProcId());
+
+        Transport* t = mozilla::ipc::OpenDescriptor(mTransport, mMode);
+        if (!t) {
+            return false;
+        }
+        if (!aActor->Open(t, mOtherPid, XRE_GetIOMessageLoop(),
+                          mMode == Transport::MODE_SERVER ? ParentSide : ChildSide)) {
+            return false;
+        }
+        mValid = false;
+        aActor->SetTransport(t);
+        if (aProcessActor) {
+            aProcessActor->AddOpenedActor(aActor);
+        }
+        return true;
+    }
+
+
+private:
+    friend struct IPC::ParamTraits<Endpoint<PFooSide>>;
+
+    Endpoint(const Endpoint&) = delete;
+    Endpoint& operator=(const Endpoint&) = delete;
+
+    bool mValid;
+    mozilla::ipc::Transport::Mode mMode;
+    TransportDescriptor mTransport;
+    ProcessId mMyPid, mOtherPid;
+    ProtocolId mProtocolId;
+};
+
+// This function is used internally to create a pair of Endpoints. See the
+// comment above Endpoint for a description of how it might be used.
+template<class PFooParent, class PFooChild>
+nsresult
+CreateEndpoints(const PrivateIPDLInterface& aPrivate,
+                base::ProcessId aParentDestPid,
+                base::ProcessId aChildDestPid,
+                ProtocolId aProtocol,
+                ProtocolId aChildProtocol,
+                Endpoint<PFooParent>* aParentEndpoint,
+                Endpoint<PFooChild>* aChildEndpoint)
+{
+  MOZ_RELEASE_ASSERT(aParentDestPid);
+  MOZ_RELEASE_ASSERT(aChildDestPid);
+
+  TransportDescriptor parentTransport, childTransport;
+  nsresult rv;
+  if (NS_FAILED(rv = CreateTransport(aParentDestPid, &parentTransport, &childTransport))) {
+    return rv;
+  }
+
+  *aParentEndpoint = Endpoint<PFooParent>(aPrivate, mozilla::ipc::Transport::MODE_SERVER,
+                                          parentTransport, aParentDestPid, aChildDestPid, aProtocol);
+
+  *aChildEndpoint = Endpoint<PFooChild>(aPrivate, mozilla::ipc::Transport::MODE_CLIENT,
+                                        childTransport, aChildDestPid, aParentDestPid, aChildProtocol);
+
+  return NS_OK;
+}
+
 } // namespace ipc
+
+template<typename Protocol>
+using ManagedContainer = nsTHashtable<nsPtrHashKey<Protocol>>;
+
+template<typename Protocol>
+Protocol*
+LoneManagedOrNullAsserts(const ManagedContainer<Protocol>& aManagees)
+{
+    if (aManagees.IsEmpty()) {
+        return nullptr;
+    }
+    MOZ_ASSERT(aManagees.Count() == 1);
+    return aManagees.ConstIter().Get()->GetKey();
+}
+
+// appId's are for B2G only currently, where managees.Count() == 1. This is
+// not guaranteed currently in Desktop, so for paths used for desktop,
+// don't assert there's one managee.
+template<typename Protocol>
+Protocol*
+SingleManagedOrNull(const ManagedContainer<Protocol>& aManagees)
+{
+    if (aManagees.Count() != 1) {
+        return nullptr;
+    }
+    return aManagees.ConstIter().Get()->GetKey();
+}
+
 } // namespace mozilla
 
 
@@ -355,6 +540,52 @@ struct ParamTraits<mozilla::ipc::ActorHandle>
     static void Log(const paramType& aParam, std::wstring* aLog)
     {
         aLog->append(StringPrintf(L"(%d)", aParam.mId));
+    }
+};
+
+template<class PFooSide>
+struct ParamTraits<mozilla::ipc::Endpoint<PFooSide>>
+{
+    typedef mozilla::ipc::Endpoint<PFooSide> paramType;
+
+    static void Write(Message* aMsg, const paramType& aParam)
+    {
+        MOZ_RELEASE_ASSERT(aParam.mValid);
+
+        IPC::WriteParam(aMsg, static_cast<uint32_t>(aParam.mMode));
+
+        // We duplicate the descriptor so that our own file descriptor remains
+        // valid after the write. An alternative would be to set
+        // aParam.mTransport.mValid to false, but that won't work because aParam
+        // is const.
+        mozilla::ipc::TransportDescriptor desc = mozilla::ipc::DuplicateDescriptor(aParam.mTransport);
+        IPC::WriteParam(aMsg, desc);
+
+        IPC::WriteParam(aMsg, aParam.mMyPid);
+        IPC::WriteParam(aMsg, aParam.mOtherPid);
+        IPC::WriteParam(aMsg, static_cast<uint32_t>(aParam.mProtocolId));
+    }
+
+    static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+    {
+        MOZ_RELEASE_ASSERT(!aResult->mValid);
+        aResult->mValid = true;
+        uint32_t mode, protocolId;
+        if (!IPC::ReadParam(aMsg, aIter, &mode) ||
+            !IPC::ReadParam(aMsg, aIter, &aResult->mTransport) ||
+            !IPC::ReadParam(aMsg, aIter, &aResult->mMyPid) ||
+            !IPC::ReadParam(aMsg, aIter, &aResult->mOtherPid) ||
+            !IPC::ReadParam(aMsg, aIter, &protocolId)) {
+            return false;
+        }
+        aResult->mMode = Channel::Mode(mode);
+        aResult->mProtocolId = mozilla::ipc::ProtocolId(protocolId);
+        return true;
+    }
+
+    static void Log(const paramType& aParam, std::wstring* aLog)
+    {
+        aLog->append(StringPrintf(L"Endpoint"));
     }
 };
 

@@ -10,6 +10,8 @@
 #include "jit/shared/CodeGenerator-shared.h"
 #include "jit/Disassembler.h"
 
+#include "jit/MacroAssembler-inl.h"
+
 namespace js {
 namespace jit {
 
@@ -87,6 +89,14 @@ ToFloatRegister(const LDefinition* def)
     return ToFloatRegister(*def->output());
 }
 
+static inline FloatRegister
+ToTempFloatRegisterOrInvalid(const LDefinition* def)
+{
+    if (def->isBogusTemp())
+        return InvalidFloatReg;
+    return ToFloatRegister(def);
+}
+
 static inline AnyRegister
 ToAnyRegister(const LAllocation& a)
 {
@@ -140,6 +150,98 @@ GetTempValue(Register type, Register payload)
 #else
 #error "Unknown"
 #endif
+}
+
+int32_t
+CodeGeneratorShared::ArgToStackOffset(int32_t slot) const
+{
+    return masm.framePushed() +
+           (gen->compilingAsmJS() ? sizeof(AsmJSFrame) : sizeof(JitFrameLayout)) +
+           slot;
+}
+
+int32_t
+CodeGeneratorShared::CalleeStackOffset() const
+{
+    return masm.framePushed() + JitFrameLayout::offsetOfCalleeToken();
+}
+
+int32_t
+CodeGeneratorShared::SlotToStackOffset(int32_t slot) const
+{
+    MOZ_ASSERT(slot > 0 && slot <= int32_t(graph.localSlotCount()));
+    int32_t offset = masm.framePushed() - frameInitialAdjustment_ - slot;
+    MOZ_ASSERT(offset >= 0);
+    return offset;
+}
+
+int32_t
+CodeGeneratorShared::StackOffsetToSlot(int32_t offset) const
+{
+    // See: SlotToStackOffset. This is used to convert pushed arguments
+    // to a slot index that safepoints can use.
+    //
+    // offset = framePushed - frameInitialAdjustment - slot
+    // offset + slot = framePushed - frameInitialAdjustment
+    // slot = framePushed - frameInitialAdjustement - offset
+    return masm.framePushed() - frameInitialAdjustment_ - offset;
+}
+
+// For argument construction for calls. Argslots are Value-sized.
+int32_t
+CodeGeneratorShared::StackOffsetOfPassedArg(int32_t slot) const
+{
+    // A slot of 0 is permitted only to calculate %esp offset for calls.
+    MOZ_ASSERT(slot >= 0 && slot <= int32_t(graph.argumentSlotCount()));
+    int32_t offset = masm.framePushed() -
+                     graph.paddedLocalSlotsSize() -
+                     (slot * sizeof(Value));
+
+    // Passed arguments go below A function's local stack storage.
+    // When arguments are being pushed, there is nothing important on the stack.
+    // Therefore, It is safe to push the arguments down arbitrarily.  Pushing
+    // by sizeof(Value) is desirable since everything on the stack is a Value.
+    // Note that paddedLocalSlotCount() aligns to at least a Value boundary
+    // specifically to support this.
+    MOZ_ASSERT(offset >= 0);
+    MOZ_ASSERT(offset % sizeof(Value) == 0);
+    return offset;
+}
+
+int32_t
+CodeGeneratorShared::ToStackOffset(LAllocation a) const
+{
+    if (a.isArgument())
+        return ArgToStackOffset(a.toArgument()->index());
+    return SlotToStackOffset(a.toStackSlot()->slot());
+}
+
+int32_t
+CodeGeneratorShared::ToStackOffset(const LAllocation* a) const
+{
+    return ToStackOffset(*a);
+}
+
+Operand
+CodeGeneratorShared::ToOperand(const LAllocation& a)
+{
+    if (a.isGeneralReg())
+        return Operand(a.toGeneralReg()->reg());
+    if (a.isFloatReg())
+        return Operand(a.toFloatReg()->reg());
+    return Operand(masm.getStackPointer(), ToStackOffset(&a));
+}
+
+Operand
+CodeGeneratorShared::ToOperand(const LAllocation* a)
+{
+    return ToOperand(*a);
+}
+
+Operand
+CodeGeneratorShared::ToOperand(const LDefinition* def)
+{
+    return ToOperand(def->output());
 }
 
 void
@@ -201,7 +303,7 @@ CodeGeneratorShared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, b
       case Scalar::Int16:
         if (kind == HeapAccess::Load)
             kind = HeapAccess::LoadSext32;
-        // FALL THROUGH
+        MOZ_FALLTHROUGH;
       case Scalar::Uint8:
       case Scalar::Uint16:
       case Scalar::Int32:
@@ -239,7 +341,7 @@ CodeGeneratorShared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, b
 #endif
 }
 
-} // ion
-} // js
+} // namespace jit
+} // namespace js
 
 #endif /* jit_shared_CodeGenerator_shared_inl_h */

@@ -8,6 +8,7 @@ UNIFIED_SOURCES += [
     'TestArray.cpp',
     'TestFileUtils.cpp',
     'TestGCPostBarriers.cpp',
+    'TestNsDeque.cpp',
     'TestThreadUtils.cpp',
 ]
 
@@ -15,6 +16,7 @@ LOCAL_INCLUDES = [
     '../..',
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul-gtest'
+
+if CONFIG['CLANG_CXX']:
+    CXXFLAGS += ['-Wshadow']

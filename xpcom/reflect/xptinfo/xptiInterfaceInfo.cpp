@@ -190,6 +190,9 @@ xptiInterfaceEntry::GetConstantCount(uint16_t* count)
     if(!EnsureResolved())
         return NS_ERROR_UNEXPECTED;
 
+    if(!count)
+        return NS_ERROR_UNEXPECTED;
+
     *count = mConstantBaseIndex + 
              mDescriptor->num_constants;
     return NS_OK;
@@ -395,7 +398,7 @@ xptiInterfaceEntry::GetShimForParam(uint16_t methodIndex,
     }
 
     const char* shimName = mTypelib->GetEntryNameAt(interfaceIndex - 1);
-    nsRefPtr<ShimInterfaceInfo> shim =
+    RefPtr<ShimInterfaceInfo> shim =
         ShimInterfaceInfo::MaybeConstruct(shimName, nullptr);
     return shim.forget();
 }
@@ -408,7 +411,7 @@ xptiInterfaceEntry::GetInfoForParam(uint16_t methodIndex,
     xptiInterfaceEntry* entry;
     nsresult rv = GetEntryForParam(methodIndex, param, &entry);
     if (NS_FAILED(rv)) {
-        nsRefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
+        RefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
         if (!shim) {
             return rv;
         }
@@ -429,7 +432,7 @@ xptiInterfaceEntry::GetIIDForParam(uint16_t methodIndex,
     xptiInterfaceEntry* entry;
     nsresult rv = GetEntryForParam(methodIndex, param, &entry);
     if (NS_FAILED(rv)) {
-        nsRefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
+        RefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
         if (!shim) {
             return rv;
         }
@@ -447,7 +450,7 @@ xptiInterfaceEntry::GetIIDForParamNoAlloc(uint16_t methodIndex,
     xptiInterfaceEntry* entry;
     nsresult rv = GetEntryForParam(methodIndex, param, &entry);
     if (NS_FAILED(rv)) {
-        nsRefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
+        RefPtr<ShimInterfaceInfo> shim = GetShimForParam(methodIndex, param);
         if (!shim) {
             return rv;
         }
@@ -600,16 +603,14 @@ xptiInterfaceEntry::GetInterfaceIsArgNumberForParam(uint16_t methodIndex,
     return NS_OK;
 }
 
-/* bool isIID (in nsIIDPtr IID); */
-nsresult 
-xptiInterfaceEntry::IsIID(const nsIID * IID, bool *_retval)
+nsresult
+xptiInterfaceEntry::IsIID(const nsIID * iid, bool *_retval)
 {
     // It is not necessary to Resolve because this info is read from manifest.
-    *_retval = mIID.Equals(*IID);
+    *_retval = mIID.Equals(*iid);
     return NS_OK;
 }
 
-/* void getNameShared ([shared, retval] out string name); */
 nsresult 
 xptiInterfaceEntry::GetNameShared(const char **name)
 {
@@ -618,7 +619,6 @@ xptiInterfaceEntry::GetNameShared(const char **name)
     return NS_OK;
 }
 
-/* void getIIDShared ([shared, retval] out nsIIDPtrShared iid); */
 nsresult 
 xptiInterfaceEntry::GetIIDShared(const nsIID * *iid)
 {
@@ -627,7 +627,6 @@ xptiInterfaceEntry::GetIIDShared(const nsIID * *iid)
     return NS_OK;
 }
 
-/* bool hasAncestor (in nsIIDPtr iid); */
 nsresult 
 xptiInterfaceEntry::HasAncestor(const nsIID * iid, bool *_retval)
 {
@@ -665,7 +664,7 @@ xptiInterfaceEntry::InterfaceInfo()
         mInfo = new xptiInterfaceInfo(this);
     }
     
-    nsRefPtr<xptiInterfaceInfo> info = mInfo;
+    RefPtr<xptiInterfaceInfo> info = mInfo;
     return info.forget();
 }
     

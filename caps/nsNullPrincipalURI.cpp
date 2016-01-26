@@ -11,7 +11,6 @@
 
 #include "mozilla/ipc/URIParams.h"
 
-#include "nsNetUtil.h"
 #include "nsEscape.h"
 #include "nsCRT.h"
 #include "nsIUUIDGenerator.h"
@@ -55,7 +54,7 @@ nsNullPrincipalURI::Init()
 already_AddRefed<nsNullPrincipalURI>
 nsNullPrincipalURI::Create()
 {
-  nsRefPtr<nsNullPrincipalURI> uri = new nsNullPrincipalURI();
+  RefPtr<nsNullPrincipalURI> uri = new nsNullPrincipalURI();
   nsresult rv = uri->Init();
   NS_ENSURE_SUCCESS(rv, nullptr);
   return uri.forget();
@@ -85,6 +84,12 @@ nsNullPrincipalURI::GetAsciiHost(nsACString &_host)
 {
   _host.Truncate();
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNullPrincipalURI::GetAsciiHostPort(nsACString &_hostport)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
@@ -269,12 +274,11 @@ NS_IMETHODIMP
 nsNullPrincipalURI::Equals(nsIURI *aOther, bool *_equals)
 {
   *_equals = false;
-  nsNullPrincipalURI *otherURI;
+  RefPtr<nsNullPrincipalURI> otherURI;
   nsresult rv = aOther->QueryInterface(kNullPrincipalURIImplementationCID,
-                                       (void **)&otherURI);
+                                       getter_AddRefs(otherURI));
   if (NS_SUCCEEDED(rv)) {
     *_equals = mPath == otherURI->mPath;
-    NS_RELEASE(otherURI);
   }
   return NS_OK;
 }

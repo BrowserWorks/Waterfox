@@ -9,13 +9,14 @@
 
 #include "mozilla/HashFunctions.h"
 #include "mozilla/PodOperations.h"
-#include "mozilla/UniquePtr.h"
 
 #include "jsutil.h"
 #include "NamespaceImports.h"
 
 #include "gc/Rooting.h"
 #include "js/RootingAPI.h"
+#include "js/UniquePtr.h"
+#include "vm/Printer.h"
 #include "vm/Unicode.h"
 
 class JSAutoByteString;
@@ -122,11 +123,21 @@ InitStringClass(JSContext* cx, HandleObject obj);
 extern const char*
 ValueToPrintable(JSContext* cx, const Value&, JSAutoByteString* bytes, bool asSource = false);
 
-extern mozilla::UniquePtr<char[], JS::FreePolicy>
+extern UniqueChars
 DuplicateString(ExclusiveContext* cx, const char* s);
 
-extern mozilla::UniquePtr<char16_t[], JS::FreePolicy>
+extern UniqueTwoByteChars
 DuplicateString(ExclusiveContext* cx, const char16_t* s);
+
+/*
+ * These variants do not report OOMs, you must arrange for OOMs to be reported
+ * yourself.
+ */
+extern UniqueChars
+DuplicateString(const char* s);
+
+extern UniqueTwoByteChars
+DuplicateString(const char16_t* s);
 
 /*
  * Convert a non-string value to a string, returning null after reporting an
@@ -217,6 +228,10 @@ StringHasPattern(JSLinearString* text, const char16_t* pat, uint32_t patlen);
 
 extern int
 StringFindPattern(JSLinearString* text, JSLinearString* pat, size_t start);
+
+/* Return true if the string contains a pattern at |start|. */
+extern bool
+HasSubstringAt(JSLinearString* text, JSLinearString* pat, size_t start);
 
 template <typename CharT>
 extern bool
@@ -336,17 +351,18 @@ extern bool
 str_charCodeAt(JSContext* cx, unsigned argc, Value* vp);
 /*
  * Convert one UCS-4 char and write it into a UTF-8 buffer, which must be at
- * least 6 bytes long.  Return the number of UTF-8 bytes of data written.
+ * least 4 bytes long.  Return the number of UTF-8 bytes of data written.
  */
-extern int
+extern uint32_t
 OneUcs4ToUtf8Char(uint8_t* utf8Buffer, uint32_t ucs4Char);
 
 extern size_t
-PutEscapedStringImpl(char* buffer, size_t size, FILE* fp, JSLinearString* str, uint32_t quote);
+PutEscapedStringImpl(char* buffer, size_t size, GenericPrinter* out, JSLinearString* str,
+                     uint32_t quote);
 
 template <typename CharT>
 extern size_t
-PutEscapedStringImpl(char* buffer, size_t bufferSize, FILE* fp, const CharT* chars,
+PutEscapedStringImpl(char* buffer, size_t bufferSize, GenericPrinter* out, const CharT* chars,
                      size_t length, uint32_t quote);
 
 /*
@@ -379,6 +395,18 @@ PutEscapedString(char* buffer, size_t bufferSize, const CharT* chars, size_t len
     return n;
 }
 
+inline bool
+EscapedStringPrinter(GenericPrinter& out, JSLinearString* str, uint32_t quote)
+{
+    return PutEscapedStringImpl(nullptr, 0, &out, str, quote) != size_t(-1);
+}
+
+inline bool
+EscapedStringPrinter(GenericPrinter& out, const char* chars, size_t length, uint32_t quote)
+{
+    return PutEscapedStringImpl(nullptr, 0, &out, chars, length, quote) != size_t(-1);
+}
+
 /*
  * Write str into file escaping any non-printable or non-ASCII character.
  * If quote is not 0, it must be a single or double quote character that
@@ -387,13 +415,19 @@ PutEscapedString(char* buffer, size_t bufferSize, const CharT* chars, size_t len
 inline bool
 FileEscapedString(FILE* fp, JSLinearString* str, uint32_t quote)
 {
-    return PutEscapedStringImpl(nullptr, 0, fp, str, quote) != size_t(-1);
+    Fprinter out(fp);
+    bool res = EscapedStringPrinter(out, str, quote);
+    out.finish();
+    return res;
 }
 
 inline bool
 FileEscapedString(FILE* fp, const char* chars, size_t length, uint32_t quote)
 {
-    return PutEscapedStringImpl(nullptr, 0, fp, chars, length, quote) != size_t(-1);
+    Fprinter out(fp);
+    bool res = EscapedStringPrinter(out, chars, length, quote);
+    out.finish();
+    return res;
 }
 
 bool
@@ -408,13 +442,13 @@ str_split(JSContext* cx, unsigned argc, Value* vp);
 JSObject*
 str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep);
 
-bool
-str_replace_regexp_raw(JSContext* cx, HandleString string, HandleObject regexp,
-                       HandleString replacement, MutableHandleValue rval);
+JSString *
+str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
+                        HandleString replacement);
 
-bool
+JSString*
 str_replace_string_raw(JSContext* cx, HandleString string, HandleString pattern,
-                       HandleString replacement, MutableHandleValue rval);
+                       HandleString replacement);
 
 extern bool
 StringConstructor(JSContext* cx, unsigned argc, Value* vp);

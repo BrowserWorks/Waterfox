@@ -134,7 +134,7 @@ protected:
 
   // Interface for SVGMatrix's use
   friend class dom::SVGMatrix;
-  const bool IsAnimVal() const {
+  bool IsAnimVal() const {
     return mIsAnimValItem;
   }
   const gfxMatrix& Matrixgfx() const {
@@ -165,7 +165,7 @@ private:
     return HasOwner() ? InternalItem() : *mTransform;
   }
 
-  nsRefPtr<DOMSVGTransformList> mList;
+  RefPtr<DOMSVGTransformList> mList;
 
   // Bounds for the following are checked in the ctor, so be sure to update
   // that if you change the capacity of any of the following.

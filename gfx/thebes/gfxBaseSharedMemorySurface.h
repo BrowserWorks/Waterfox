@@ -57,7 +57,7 @@ public:
     template<class ShmemAllocator>
     static already_AddRefed<Sub>
     Create(ShmemAllocator* aAllocator,
-           const gfxIntSize& aSize,
+           const mozilla::gfx::IntSize& aSize,
            gfxImageFormat aFormat,
            SharedMemory::SharedMemoryType aShmType = SharedMemory::TYPE_BASIC)
     {
@@ -74,14 +74,14 @@ public:
     Open(const Shmem& aShmem)
     {
         SharedImageInfo* shmInfo = GetShmInfoPtr(aShmem);
-        gfxIntSize size(shmInfo->width, shmInfo->height);
+        mozilla::gfx::IntSize size(shmInfo->width, shmInfo->height);
         if (!gfxASurface::CheckSurfaceSize(size))
             return nullptr;
-       
-        gfxImageFormat format = (gfxImageFormat)shmInfo->format;
+
+        gfxImageFormat format = shmInfo->format;
         long stride = gfxImageSurface::ComputeStride(size, format);
 
-        nsRefPtr<Sub> s =
+        RefPtr<Sub> s =
             new Sub(size,
                     stride,
                     format,
@@ -93,7 +93,7 @@ public:
     template<class ShmemAllocator>
     static already_AddRefed<Sub>
     CreateUnsafe(ShmemAllocator* aAllocator,
-                 const gfxIntSize& aSize,
+                 const mozilla::gfx::IntSize& aSize,
                  gfxImageFormat aFormat,
                  SharedMemory::SharedMemoryType aShmType = SharedMemory::TYPE_BASIC)
     {
@@ -110,7 +110,7 @@ public:
     }
 
 protected:
-    gfxBaseSharedMemorySurface(const gfxIntSize& aSize, long aStride, 
+    gfxBaseSharedMemorySurface(const mozilla::gfx::IntSize& aSize, long aStride, 
                                gfxImageFormat aFormat, 
                                const Shmem& aShmem)
       : Base(aShmem.get<unsigned char>(), aSize, aStride, aFormat)
@@ -152,7 +152,7 @@ private:
         return shmInfo->readCount;
     }
 
-    static size_t GetAlignedSize(const gfxIntSize& aSize, long aStride)
+    static size_t GetAlignedSize(const mozilla::gfx::IntSize& aSize, long aStride)
     {
         #define MOZ_ALIGN_WORD(x) (((x) + 3) & ~3)
         return MOZ_ALIGN_WORD(sizeof(SharedImageInfo) + aSize.height * aStride);
@@ -161,7 +161,7 @@ private:
     template<class ShmemAllocator, bool Unsafe>
     static already_AddRefed<Sub>
     Create(ShmemAllocator* aAllocator,
-           const gfxIntSize& aSize,
+           const mozilla::gfx::IntSize& aSize,
            gfxImageFormat aFormat,
            SharedMemory::SharedMemoryType aShmType)
     {
@@ -179,7 +179,7 @@ private:
                 return nullptr;
         }
 
-        nsRefPtr<Sub> s =
+        RefPtr<Sub> s =
             new Sub(aSize, stride, aFormat, shmem);
         if (s->CairoStatus() != 0) {
             aAllocator->DeallocShmem(shmem);

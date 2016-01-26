@@ -12,14 +12,15 @@ XPCOMUtils.defineLazyGetter(this, "FxAccountsCommon", function () {
 XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
                                   "resource://gre/modules/WebChannel.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsWebChannel",
-  "resource://gre/modules/FxAccountsWebChannel.jsm");
+// FxAccountsWebChannel isn't explicitly exported by FxAccountsWebChannel.jsm
+// but we can get it here via a backstage pass.
+var {FxAccountsWebChannel} = Components.utils.import("resource://gre/modules/FxAccountsWebChannel.jsm", {});
 
 const TEST_HTTP_PATH = "http://example.com";
 const TEST_BASE_URL = TEST_HTTP_PATH + "/browser/browser/base/content/test/general/browser_fxa_web_channel.html";
 const TEST_CHANNEL_ID = "account_updates_test";
 
-let gTests = [
+var gTests = [
   {
     desc: "FxA Web Channel - should receive message about profile changes",
     run: function* () {
@@ -117,6 +118,62 @@ let gTests = [
         url: properUrl
       }, function* () {
         yield promiseEcho;
+      });
+    }
+  },
+  {
+    desc: "fxa web channel - logout messages should notify the fxAccounts object",
+    run: function* () {
+      let promiseLogout = new Promise((resolve, reject) => {
+        let logout = (uid) => {
+          Assert.equal(uid, 'uid');
+
+          client.tearDown();
+          resolve();
+        };
+
+        let client = new FxAccountsWebChannel({
+          content_uri: TEST_HTTP_PATH,
+          channel_id: TEST_CHANNEL_ID,
+          helpers: {
+            logout: logout
+          }
+        });
+      });
+
+      yield BrowserTestUtils.withNewTab({
+        gBrowser: gBrowser,
+        url: TEST_BASE_URL + "?logout"
+      }, function* () {
+        yield promiseLogout;
+      });
+    }
+  },
+  {
+    desc: "fxa web channel - delete messages should notify the fxAccounts object",
+    run: function* () {
+      let promiseDelete = new Promise((resolve, reject) => {
+        let logout = (uid) => {
+          Assert.equal(uid, 'uid');
+
+          client.tearDown();
+          resolve();
+        };
+
+        let client = new FxAccountsWebChannel({
+          content_uri: TEST_HTTP_PATH,
+          channel_id: TEST_CHANNEL_ID,
+          helpers: {
+            logout: logout
+          }
+        });
+      });
+
+      yield BrowserTestUtils.withNewTab({
+        gBrowser: gBrowser,
+        url: TEST_BASE_URL + "?delete"
+      }, function* () {
+        yield promiseDelete;
       });
     }
   }

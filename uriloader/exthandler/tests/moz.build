@@ -4,11 +4,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-FAIL_ON_WARNINGS = True
-
 MOCHITEST_MANIFESTS += ['mochitest/mochitest.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell.ini']
+
+BROWSER_CHROME_MANIFESTS += ['mochitest/browser.ini']
 
 # The encoding test is already implemented in the Downloads API by a set of
 # test cases with the string "content_encoding" in their names.

@@ -125,7 +125,21 @@ public class SDKProcessor {
         System.out.println("SDK processing complete in " + (e - s) + "ms");
     }
 
-    private static Member[] sortAndFilterMembers(Member[] members) {
+    private static int getAPIVersion(Class<?> cls, Member m) {
+        if (m instanceof Method || m instanceof Constructor) {
+            return sApiLookup.getCallVersion(
+                    cls.getName().replace('.', '/'),
+                    Utils.getMemberName(m),
+                    Utils.getSignature(m));
+        } else if (m instanceof Field) {
+            return sApiLookup.getFieldVersion(
+                    Utils.getClassDescriptor(m.getDeclaringClass()), m.getName());
+        } else {
+            throw new IllegalArgumentException("expected member to be Method, Constructor, or Field");
+        }
+    }
+
+    private static Member[] sortAndFilterMembers(Class<?> cls, Member[] members) {
         Arrays.sort(members, new Comparator<Member>() {
             @Override
             public int compare(Member a, Member b) {
@@ -135,24 +149,31 @@ public class SDKProcessor {
 
         ArrayList<Member> list = new ArrayList<>();
         for (Member m : members) {
-            int version = 0;
-
-            if (m instanceof Method || m instanceof Constructor) {
-                version = sApiLookup.getCallVersion(
-                        Utils.getClassDescriptor(m.getDeclaringClass()),
-                        m.getName(),
-                        Utils.getSignature(m));
-            } else if (m instanceof Field) {
-                version = sApiLookup.getFieldVersion(
-                        Utils.getClassDescriptor(m.getDeclaringClass()), m.getName());
-            } else {
-                throw new IllegalArgumentException("expected member to be Method, Constructor, or Field");
+            // Sometimes (e.g. Bundle) has methods that moved to/from a superclass in a later SDK
+            // version, so we check for both classes and see if we can find a minimum SDK version.
+            int version = getAPIVersion(cls, m);
+            final int version2 = getAPIVersion(m.getDeclaringClass(), m);
+            if (version2 > 0 && version2 < version) {
+                version = version2;
             }
-
             if (version > sMaxSdkVersion) {
                 System.out.println("Skipping " + m.getDeclaringClass().getName() + "." + m.getName() +
                     ", version " + version + " > " + sMaxSdkVersion);
                 continue;
+            }
+
+            // Sometimes (e.g. KeyEvent) a field can appear in both a class and a superclass. In
+            // that case we want to filter out the version that appears in the superclass, or
+            // we'll have bindings with duplicate names.
+            try {
+                if (m instanceof Field && !m.equals(cls.getField(m.getName()))) {
+                    // m is a field in a superclass that has been hidden by
+                    // a field with the same name in a subclass.
+                    System.out.println("Skipping " + m.getName() +
+                                       " from " + m.getDeclaringClass());
+                    continue;
+                }
+            } catch (final NoSuchFieldException e) {
             }
 
             list.add(m);
@@ -168,9 +189,9 @@ public class SDKProcessor {
 
         CodeGenerator generator = new CodeGenerator(new ClassWithOptions(clazz, generatedName));
 
-        generator.generateMembers(sortAndFilterMembers(clazz.getDeclaredConstructors()));
-        generator.generateMembers(sortAndFilterMembers(clazz.getDeclaredMethods()));
-        generator.generateMembers(sortAndFilterMembers(clazz.getDeclaredFields()));
+        generator.generateMembers(sortAndFilterMembers(clazz, clazz.getConstructors()));
+        generator.generateMembers(sortAndFilterMembers(clazz, clazz.getMethods()));
+        generator.generateMembers(sortAndFilterMembers(clazz, clazz.getFields()));
 
         headerFile.append(generator.getHeaderFileContents());
         implementationFile.append(generator.getWrapperFileContents());

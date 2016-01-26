@@ -24,7 +24,7 @@ namespace mozilla {
 
 namespace gl {
 class SharedSurface;
-}
+} // namespace gl
 
 namespace layers {
 
@@ -51,9 +51,9 @@ protected:
   void UpdateTarget(gfx::DrawTarget* aDestTarget = nullptr);
 
   RefPtr<gfx::SourceSurface> mSurface;
-  nsRefPtr<gl::GLContext> mGLContext;
+  RefPtr<gl::GLContext> mGLContext;
   GLuint mCanvasFrontbufferTexID;
-  mozilla::RefPtr<mozilla::gfx::DrawTarget> mDrawTarget;
+  RefPtr<PersistentBufferProvider> mBufferProvider;
 
   UniquePtr<gl::SharedSurface> mGLFrontbuffer;
 
@@ -68,7 +68,7 @@ protected:
   void DiscardTempSurface();
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

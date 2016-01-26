@@ -16,23 +16,34 @@ CppUnitTests([
     'TestCountZeroes',
     'TestEndian',
     'TestEnumSet',
+    'TestFastBernoulliTrial',
     'TestFloatingPoint',
+    'TestFunction',
+    'TestInitializerList',
     'TestIntegerPrintfMacros',
+    'TestIntegerRange',
     'TestJSONWriter',
+    'TestLinkedList',
     'TestMacroArgs',
     'TestMacroForEach',
+    'TestMathAlgorithms',
     'TestMaybe',
     'TestPair',
     'TestRefPtr',
     'TestRollingMean',
+    'TestScopeExit',
     'TestSegmentedVector',
     'TestSHA1',
     'TestSplayTree',
+    'TestTemplateLib',
+    'TestTuple',
     'TestTypedEnum',
     'TestTypeTraits',
     'TestUniquePtr',
+    'TestVariant',
     'TestVector',
     'TestWeakPtr',
+    'TestXorShift128PlusRNG',
 ])
 
 if not CONFIG['MOZ_ASAN']:
@@ -50,8 +61,6 @@ if CONFIG['_MSC_VER']:
     '-wd4275', # non dll-interface class used as base for dll-interface class
     '-wd4530', # C++ exception handler used, but unwind semantics are not enabled
   ]
-
-FAIL_ON_WARNINGS = True
 
 USE_LIBS += [
     'mfbt',

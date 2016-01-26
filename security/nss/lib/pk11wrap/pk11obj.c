@@ -25,6 +25,8 @@ SECItem *
 PK11_BlockData(SECItem *data,unsigned long size) {
     SECItem *newData;
 
+    if (size == 0u) return NULL;
+
     newData = (SECItem *)PORT_Alloc(sizeof(SECItem));
     if (newData == NULL) return NULL;
 
@@ -666,6 +668,18 @@ SECStatus
 PK11_Verify(SECKEYPublicKey *key, const SECItem *sig, const SECItem *hash,
 	    void *wincx)
 {
+    CK_MECHANISM_TYPE mech = PK11_MapSignKeyType(key->keyType);
+    return PK11_VerifyWithMechanism(key, mech, NULL, sig, hash, wincx);
+}
+
+/*
+ * Verify a signature from its hash using the given algorithm.
+ */
+SECStatus
+PK11_VerifyWithMechanism(SECKEYPublicKey *key, CK_MECHANISM_TYPE mechanism,
+                         const SECItem *param, const SECItem *sig,
+                         const SECItem *hash, void *wincx)
+{
     PK11SlotInfo *slot = key->pkcs11Slot;
     CK_OBJECT_HANDLE id = key->pkcs11ID;
     CK_MECHANISM mech = {0, NULL, 0 };
@@ -673,7 +687,11 @@ PK11_Verify(SECKEYPublicKey *key, const SECItem *sig, const SECItem *hash,
     CK_SESSION_HANDLE session;
     CK_RV crv;
 
-    mech.mechanism = PK11_MapSignKeyType(key->keyType);
+    mech.mechanism = mechanism;
+    if (param) {
+        mech.pParameter = param->data;
+        mech.ulParameterLen = param->len;
+    }
 
     if (slot == NULL) {
 	unsigned int length =  0;
@@ -737,6 +755,17 @@ PK11_Verify(SECKEYPublicKey *key, const SECItem *sig, const SECItem *hash,
 SECStatus
 PK11_Sign(SECKEYPrivateKey *key, SECItem *sig, const SECItem *hash)
 {
+    CK_MECHANISM_TYPE mech = PK11_MapSignKeyType(key->keyType);
+    return PK11_SignWithMechanism(key, mech, NULL, sig, hash);
+}
+
+/*
+ * Sign a hash using the given algorithm.
+ */
+SECStatus
+PK11_SignWithMechanism(SECKEYPrivateKey *key, CK_MECHANISM_TYPE mechanism,
+                       const SECItem *param, SECItem *sig, const SECItem *hash)
+{
     PK11SlotInfo *slot = key->pkcs11Slot;
     CK_MECHANISM mech = {0, NULL, 0 };
     PRBool owner = PR_TRUE;
@@ -745,7 +774,11 @@ PK11_Sign(SECKEYPrivateKey *key, SECItem *sig, const SECItem *hash)
     CK_ULONG len;
     CK_RV crv;
 
-    mech.mechanism = PK11_MapSignKeyType(key->keyType);
+    mech.mechanism = mechanism;
+    if (param) {
+        mech.pParameter = param->data;
+        mech.ulParameterLen = param->len;
+    }
 
     if (SECKEY_HAS_ATTRIBUTE_SET(key,CKA_PRIVATE)) {
 	PK11_HandlePasswordCheck(slot, key->wincx);
@@ -1577,7 +1610,7 @@ PK11_WriteRawAttribute(PK11ObjectType objType, void *objSpec,
 				CK_ATTRIBUTE_TYPE attrType, SECItem *item)
 {
     PK11SlotInfo *slot = NULL;
-    CK_OBJECT_HANDLE handle;
+    CK_OBJECT_HANDLE handle = 0;
     CK_ATTRIBUTE setTemplate;
     CK_RV crv;
     CK_SESSION_HANDLE rwsession;
@@ -1630,7 +1663,7 @@ PK11_ReadRawAttribute(PK11ObjectType objType, void *objSpec,
 				CK_ATTRIBUTE_TYPE attrType, SECItem *item)
 {
     PK11SlotInfo *slot = NULL;
-    CK_OBJECT_HANDLE handle;
+    CK_OBJECT_HANDLE handle = 0;
 
     switch (objType) {
     case PK11_TypeGeneric:
@@ -1781,7 +1814,6 @@ PK11_MatchItem(PK11SlotInfo *slot, CK_OBJECT_HANDLE searchID,
     int tsize = sizeof(theTemplate)/sizeof(theTemplate[0]);
     /* if you change the array, change the variable below as well */
     CK_OBJECT_HANDLE peerID;
-    CK_OBJECT_HANDLE parent;
     PLArenaPool *arena;
     CK_RV crv;
 
@@ -1810,7 +1842,6 @@ PK11_MatchItem(PK11SlotInfo *slot, CK_OBJECT_HANDLE searchID,
     /*
      * issue the find
      */
-    parent = *(CK_OBJECT_CLASS *)(keyclass->pValue);
     *(CK_OBJECT_CLASS *)(keyclass->pValue) = matchclass;
 
     peerID = pk11_FindObjectByTemplate(slot,theTemplate,tsize);

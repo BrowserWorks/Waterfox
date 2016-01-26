@@ -15,7 +15,7 @@
 // themselves. When OCSP hard-fail is enabled, connections will be terminated.
 // Otherwise, they will succeed.
 
-let gSocketListener = {
+var gSocketListener = {
   onSocketAccepted: function(serverSocket, socketTransport) {
     socketTransport.setTimeout(Ci.nsISocketTransport.TIMEOUT_CONNECT, 30);
     socketTransport.setTimeout(Ci.nsISocketTransport.TIMEOUT_READ_WRITE, 30);
@@ -26,8 +26,9 @@ let gSocketListener = {
 
 function run_test() {
   do_get_profile();
+  Services.prefs.setIntPref("security.OCSP.enabled", 1);
 
-  add_tls_server_setup("OCSPStaplingServer");
+  add_tls_server_setup("OCSPStaplingServer", "ocsp_certs");
 
   let socket = Cc["@mozilla.org/network/server-socket;1"]
                  .createInstance(Ci.nsIServerSocket);
@@ -69,15 +70,18 @@ function add_tests_in_mode(useHardFail) {
     // Windows XP). See Bug 1121117.
     const FUZZ_MS = 300;
     if (useHardFail) {
-      do_check_true(timeDifference + FUZZ_MS > 10000);
+      ok(timeDifference + FUZZ_MS > 10000,
+         "Automatic OCSP timeout should be about 10s for hard-fail");
     } else {
-      do_check_true(timeDifference + FUZZ_MS > 2000);
+      ok(timeDifference + FUZZ_MS > 2000,
+         "Automatic OCSP timeout should be about 2s for soft-fail");
     }
     // Make sure we didn't wait too long.
     // (Unfortunately, we probably can't have a tight upper bound on
     // how long is too long for this test, because we might be running
     // on slow hardware.)
-    do_check_true(timeDifference < 60000);
+    ok(timeDifference < 60000,
+       "Automatic OCSP timeout shouldn't be more than 60s");
     clearOCSPCache();
     run_next_test();
   });

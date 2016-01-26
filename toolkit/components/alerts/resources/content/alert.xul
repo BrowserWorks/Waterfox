@@ -15,7 +15,7 @@
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="alert:alert"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
-        xhtml:role="alert"
+        role="alert"
         pack="start"
         onload="onAlertLoad();"
         onclick="onAlertClick();"
@@ -23,25 +23,41 @@
 
   <script type="application/javascript" src="chrome://global/content/alerts/alert.js"/>
 
-  <box id="alertBox" class="alertBox">
+  <vbox id="alertBox" class="alertBox">
+    <box id="alertTitleBox">
+      <label id="alertTitleLabel" class="alertTitle plain" crop="end"/>
+      <vbox class="alertCloseBox">
+        <toolbarbutton class="alertCloseButton close-icon"
+                       tooltiptext="&closeAlert.tooltip;"
+                       onclick="event.stopPropagation();"
+                       oncommand="onAlertClose();"/>
+      </vbox>
+    </box>
     <box>
       <hbox id="alertImageBox" class="alertImageBox" align="center" pack="center">
         <image id="alertImage"/>
       </hbox>
 
       <vbox id="alertTextBox" class="alertTextBox">
-        <label id="alertTitleLabel" class="alertTitle plain"/>
         <label id="alertTextLabel" class="alertText plain"/>
+        <spacer flex="1"/>
+        <box id="alertFooter">
+          <label id="alertSourceLabel" class="alertSource plain"/>
+          <button type="menu" id="alertSettings" tooltiptext="&settings.label;">
+            <menupopup position="after_end">
+              <menuitem id="doNotDisturbMenuItem"
+                        oncommand="doNotDisturb();"/>
+              <menuseparator/>
+              <menuitem id="disableForOriginMenuItem"
+                        oncommand="disableForOrigin();"/>
+              <menuitem id="openSettingsMenuItem"
+                        oncommand="openSettings();"/>
+            </menupopup>
+          </button>
+        </box>
       </vbox>
     </box>
-
-    <vbox class="alertCloseBox">
-      <toolbarbutton class="alertCloseButton close-icon"
-                     tooltiptext="&closeAlert.tooltip;"
-                     onclick="event.stopPropagation();"
-                     oncommand="close();"/>
-    </vbox>
-  </box>
+  </vbox>
 
   <!-- This method is called inline because we want to make sure we establish the width
        and height of the alert before we fire the onload handler. -->

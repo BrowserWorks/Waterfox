@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import logging
 import re
 import os
 import shutil
@@ -12,7 +13,6 @@ import traceback
 from devicemanager import DeviceManager, DMError
 from mozprocess import ProcessHandler
 import mozfile
-import mozlog
 
 
 class DeviceManagerADB(DeviceManager):
@@ -23,19 +23,20 @@ class DeviceManagerADB(DeviceManager):
     port.
     """
 
-    _haveRootShell = False
-    _haveSu = False
+    _haveRootShell = None
+    _haveSu = None
+    _suModifier = None
+    _lsModifier = None
     _useZip = False
     _logcatNeedsRoot = False
     _pollingInterval = 0.01
     _packageName = None
     _tempDir = None
     connected = False
-    default_timeout = 300
 
     def __init__(self, host=None, port=5555, retryLimit=5, packageName='fennec',
                  adbPath='adb', deviceSerial=None, deviceRoot=None,
-                 logLevel=mozlog.ERROR, autoconnect=True, runAdbAsRoot=False,
+                 logLevel=logging.ERROR, autoconnect=True, runAdbAsRoot=False,
                  serverHost=None, serverPort=None, **kwargs):
         DeviceManager.__init__(self, logLevel=logLevel,
                                deviceRoot=deviceRoot)
@@ -102,17 +103,22 @@ class DeviceManagerADB(DeviceManager):
         # always. :(
 
         # If requested to run as root, check that we can actually do that
-        if root and not self._haveRootShell and not self._haveSu:
-            raise DMError("Shell command '%s' requested to run as root but root "
-                          "is not available on this device. Root your device or "
-                          "refactor the test/harness to not require root." %
-                          self._escapedCommandLine(cmd))
+        if root:
+            if self._haveRootShell is None and self._haveSu is None:
+                self._checkForRoot()
+            if not self._haveRootShell and not self._haveSu:
+                raise DMError(
+                    "Shell command '%s' requested to run as root but root "
+                    "is not available on this device. Root your device or "
+                    "refactor the test/harness to not require root." %
+                    self._escapedCommandLine(cmd))
 
         # Getting the return code is more complex than you'd think because adb
         # doesn't actually return the return code from a process, so we have to
         # capture the output to get it
-        if root and not self._haveRootShell:
-            cmdline = "su -c \"%s\"" % self._escapedCommandLine(cmd)
+        if root and self._haveSu:
+            cmdline = "su %s \"%s\"" % (self._suModifier,
+                                        self._escapedCommandLine(cmd))
         else:
             cmdline = self._escapedCommandLine(cmd)
         cmdline += "; echo $?"
@@ -134,11 +140,11 @@ class DeviceManagerADB(DeviceManager):
             args.extend(['-s', self._deviceSerial])
         args.extend(["shell", cmdline])
 
-        def _raise():
-            raise DMError("Timeout exceeded for shell call")
+        def _timeout():
+            self._logger.error("Timeout exceeded for shell call '%s'" % ' '.join(args))
 
         self._logger.debug("shell - command: %s" % ' '.join(args))
-        proc = ProcessHandler(args, processOutputLine=self._log, onTimeout=_raise)
+        proc = ProcessHandler(args, processOutputLine=self._log, onTimeout=_timeout)
 
         if not timeout:
             # We are asserting that all commands will complete in this time unless otherwise specified
@@ -175,12 +181,12 @@ class DeviceManagerADB(DeviceManager):
           dev:<character device name>
           jdwp:<process pid> (remote only)
         """
-        if not self._checkCmd(['forward', local, remote]) == 0:
+        if not self._checkCmd(['forward', local, remote], timeout=self.short_timeout) == 0:
             raise DMError("Failed to forward socket connection.")
 
     def remount(self):
         "Remounts the /system partition on the device read-write."
-        return self._checkCmd(['remount'])
+        return self._checkCmd(['remount'], timeout=self.short_timeout)
 
     def devices(self):
         "Return a list of connected devices as (serial, status) tuples."
@@ -217,7 +223,7 @@ class DeviceManagerADB(DeviceManager):
             raise DMError("Error pushing file %s -> %s; output: %s" % (localname, destname, proc.output))
 
     def mkDir(self, name):
-        result = self._runCmd(["shell", "mkdir", name]).output
+        result = self._runCmd(["shell", "mkdir", name], timeout=self.short_timeout).output
         if len(result) and 'read-only file system' in result[0].lower():
             raise DMError("Error creating directory: read only file system")
 
@@ -242,7 +248,7 @@ class DeviceManagerADB(DeviceManager):
                 data = self._runCmd(["shell", "unzip", "-o", remoteZip,
                                      "-d", remoteDir]).output[0]
                 self._checkCmd(["shell", "rm", remoteZip],
-                               retryLimit=retryLimit, timeout=timeout)
+                               retryLimit=retryLimit, timeout=self.short_timeout)
                 if re.search("unzip: exiting", data) or re.search("Operation not permitted", data):
                     raise Exception("unzip failed, or permissions error")
             except:
@@ -260,7 +266,9 @@ class DeviceManagerADB(DeviceManager):
             mozfile.remove(tmpDir)
 
     def dirExists(self, remotePath):
-        data = self._runCmd(["shell", "ls", "-a", remotePath + '/']).output
+        self._detectLsModifier()
+        data = self._runCmd(["shell", "ls", self._lsModifier, remotePath + '/'],
+                            timeout=self.short_timeout).output
 
         if len(data) == 1:
             res = data[0]
@@ -269,7 +277,9 @@ class DeviceManagerADB(DeviceManager):
         return True
 
     def fileExists(self, filepath):
-        data = self._runCmd(["shell", "ls", "-a", filepath]).output
+        self._detectLsModifier()
+        data = self._runCmd(["shell", "ls", self._lsModifier, filepath],
+                            timeout=self.short_timeout).output
         if len(data) == 1:
             foundpath = data[0].decode('utf-8').rstrip()
             if foundpath == filepath:
@@ -278,22 +288,24 @@ class DeviceManagerADB(DeviceManager):
 
     def removeFile(self, filename):
         if self.fileExists(filename):
-            self._checkCmd(["shell", "rm", filename])
+            self._checkCmd(["shell", "rm", filename], timeout=self.short_timeout)
 
     def removeDir(self, remoteDir):
         if self.dirExists(remoteDir):
-            self._checkCmd(["shell", "rm", "-r", remoteDir])
+            self._checkCmd(["shell", "rm", "-r", remoteDir], timeout=self.short_timeout)
         else:
             self.removeFile(remoteDir.strip())
 
     def moveTree(self, source, destination):
-        self._checkCmd(["shell", "mv", source, destination])
+        self._checkCmd(["shell", "mv", source, destination], timeout=self.short_timeout)
 
     def copyTree(self, source, destination):
         self._checkCmd(["shell", "dd", "if=%s" % source, "of=%s" % destination])
 
     def listFiles(self, rootdir):
-        data = self._runCmd(["shell", "ls", "-a", rootdir]).output
+        self._detectLsModifier()
+        data = self._runCmd(["shell", "ls", self._lsModifier, rootdir],
+                            timeout=self.short_timeout).output
         data[:] = [item.rstrip('\r\n') for item in data]
         if (len(data) == 1):
             if (data[0] == rootdir):
@@ -306,13 +318,17 @@ class DeviceManagerADB(DeviceManager):
                 return []
             if (data[0].find("opendir failed") != -1):
                 return []
+            if (data[0].find("Device or resource busy") != -1):
+                return []
         return data
 
     def getProcessList(self):
-        p = self._runCmd(["shell", "ps"])
+        ret = []
+        p = self._runCmd(["shell", "ps"], timeout=self.short_timeout)
+        if not p or not p.output or len(p.output) < 1:
+            return ret
         # first line is the headers
         p.output.pop(0)
-        ret = []
         for proc in p.output:
             els = proc.split()
             # We need to figure out if this is "user pid name" or
@@ -394,7 +410,7 @@ class DeviceManagerADB(DeviceManager):
                 if sig:
                     args.append("-%d" % sig)
                 args.append(str(pid))
-                p = self._runCmd(args)
+                p = self._runCmd(args, timeout=self.short_timeout)
                 if p.returncode != 0:
                     raise DMError("Error killing process "
                                   "'%s': %s" % (appname, p.output))
@@ -456,8 +472,9 @@ class DeviceManagerADB(DeviceManager):
         # we must determine the device root ourselves
         paths = [('/storage/sdcard0', 'tests'),
                  ('/storage/sdcard1', 'tests'),
-                 ('/sdcard', 'tests'),
+                 ('/storage/sdcard', 'tests'),
                  ('/mnt/sdcard', 'tests'),
+                 ('/sdcard', 'tests'),
                  ('/data/local', 'tests')]
         for (basePath, subPath) in paths:
             if self.dirExists(basePath):
@@ -486,13 +503,13 @@ class DeviceManagerADB(DeviceManager):
             self._checkCmd(["wait-for-device"])
             if self._runAdbAsRoot:
                 self._adb_root()
-            self._checkCmd(["shell", "ls", "/sbin"])
+            self._checkCmd(["shell", "ls", "/sbin"], timeout=self.short_timeout)
 
     def updateApp(self, appBundlePath, **kwargs):
         return self._runCmd(["install", "-r", appBundlePath]).output
 
     def getCurrentTime(self):
-        timestr = str(self._runCmd(["shell", "date", "+%s"]).output[0])
+        timestr = str(self._runCmd(["shell", "date", "+%s"], timeout=self.short_timeout).output[0])
         if (not timestr or not timestr.isdigit()):
             raise DMError("Unable to get current time using date (got: '%s')" % timestr)
         return int(timestr)*1000
@@ -501,11 +518,11 @@ class DeviceManagerADB(DeviceManager):
         directive = directive or "all"
         ret = {}
         if directive == "id" or directive == "all":
-            ret["id"] = self._runCmd(["get-serialno"]).output[0]
+            ret["id"] = self._runCmd(["get-serialno"], timeout=self.short_timeout).output[0]
         if directive == "os" or directive == "all":
-            ret["os"] = self.shellCheckOutput(["getprop", "ro.build.display.id"])
+            ret["os"] = self.shellCheckOutput(["getprop", "ro.build.display.id"], timeout=self.short_timeout)
         if directive == "uptime" or directive == "all":
-            uptime = self.shellCheckOutput(["uptime"])
+            uptime = self.shellCheckOutput(["uptime"], timeout=self.short_timeout)
             if not uptime:
                 raise DMError("error getting uptime")
             m = re.match("up time: ((\d+) days, )*(\d{2}):(\d{2}):(\d{2})", uptime)
@@ -514,10 +531,10 @@ class DeviceManagerADB(DeviceManager):
                     [int(g or 0) for g in m.groups()[1:]])
             ret["uptime"] = uptime
         if directive == "process" or directive == "all":
-            data = self.shellCheckOutput(["ps"])
+            data = self.shellCheckOutput(["ps"], timeout=self.short_timeout)
             ret["process"] = data.split('\n')
         if directive == "systime" or directive == "all":
-            ret["systime"] = self.shellCheckOutput(["date"])
+            ret["systime"] = self.shellCheckOutput(["date"], timeout=self.short_timeout)
         if directive == "memtotal" or directive == "all":
             meminfo = {}
             for line in self.pullFile("/proc/meminfo").splitlines():
@@ -525,7 +542,7 @@ class DeviceManagerADB(DeviceManager):
                 meminfo[key] = value.strip()
             ret["memtotal"] = meminfo["MemTotal"]
         if directive == "disk" or directive == "all":
-            data = self.shellCheckOutput(["df", "/data", "/system", "/sdcard"])
+            data = self.shellCheckOutput(["df", "/data", "/system", "/sdcard"], timeout=self.short_timeout)
             ret["disk"] = data.split('\n')
         self._logger.debug("getInfo: %s" % ret)
         return ret
@@ -539,9 +556,10 @@ class DeviceManagerADB(DeviceManager):
         self.uninstallApp(appName)
         self.reboot()
 
-    def _runCmd(self, args, retryLimit=None):
+    def _runCmd(self, args, timeout=None, retryLimit=None):
         """
         Runs a command using adb
+        If timeout is specified, the process is killed after <timeout> seconds.
 
         returns: instance of ProcessHandler
         """
@@ -555,11 +573,17 @@ class DeviceManagerADB(DeviceManager):
             finalArgs.extend(['-s', self._deviceSerial])
         finalArgs.extend(args)
         self._logger.debug("_runCmd - command: %s" % ' '.join(finalArgs))
+        if not timeout:
+            timeout = self.default_timeout
+
+        def _timeout():
+            self._logger.error("Timeout exceeded for _runCmd call '%s'" % ' '.join(finalArgs))
+
         retries = 0
         while retries < retryLimit:
             proc = ProcessHandler(finalArgs, storeOutput=True,
-                    processOutputLine=self._log)
-            proc.run()
+                    processOutputLine=self._log, onTimeout=_timeout)
+            proc.run(timeout=timeout)
             proc.returncode = proc.wait()
             if proc.returncode == None:
                 proc.kill()
@@ -591,10 +615,13 @@ class DeviceManagerADB(DeviceManager):
             # time unless otherwise specified
             timeout = self.default_timeout
 
+        def _timeout():
+            self._logger.error("Timeout exceeded for _checkCmd call '%s'" % ' '.join(finalArgs))
+
         timeout = int(timeout)
         retries = 0
         while retries < retryLimit:
-            proc = ProcessHandler(finalArgs, processOutputLine=self._log)
+            proc = ProcessHandler(finalArgs, processOutputLine=self._log, onTimeout=_timeout)
             proc.run(timeout=timeout)
             ret_code = proc.wait()
             if ret_code == None:
@@ -613,12 +640,12 @@ class DeviceManagerADB(DeviceManager):
                 if (self.dirExists(remoteEntry)):
                     self.chmodDir(remoteEntry)
                 else:
-                    self._checkCmd(["shell", "chmod", mask, remoteEntry])
+                    self._checkCmd(["shell", "chmod", mask, remoteEntry], timeout=self.short_timeout)
                     self._logger.info("chmod %s" % remoteEntry)
-            self._checkCmd(["shell", "chmod", mask, remoteDir])
+            self._checkCmd(["shell", "chmod", mask, remoteDir], timeout=self.short_timeout)
             self._logger.debug("chmod %s" % remoteDir)
         else:
-            self._checkCmd(["shell", "chmod", mask, remoteDir.strip()])
+            self._checkCmd(["shell", "chmod", mask, remoteDir.strip()], timeout=self.short_timeout)
             self._logger.debug("chmod %s" % remoteDir.strip())
 
     def _verifyADB(self):
@@ -630,7 +657,7 @@ class DeviceManagerADB(DeviceManager):
                 raise DMError("invalid adb path, or adb not executable: %s" % self._adbPath)
 
         try:
-            self._checkCmd(["version"])
+            self._checkCmd(["version"], timeout=self.short_timeout)
         except os.error, err:
             raise DMError("unable to execute ADB (%s): ensure Android SDK is installed and adb is in your $PATH" % err)
 
@@ -649,14 +676,21 @@ class DeviceManagerADB(DeviceManager):
                 raise DMError("bad status for device %s: %s" % (self._deviceSerial, deviceStatus))
 
         # Check to see if we can connect to device and run a simple command
-        if not self._checkCmd(["shell", "echo"]) == 0:
+        if not self._checkCmd(["shell", "echo"], timeout=self.short_timeout) == 0:
             raise DMError("unable to connect to device")
 
     def _checkForRoot(self):
+        self._haveRootShell = False
+        self._haveSu = False
+        # If requested to attempt to run adbd as root, do so before
+        # checking whether adbs is running as root.
+        if self._runAdbAsRoot:
+            self._adb_root()
+
         # Check whether we _are_ root by default (some development boards work
         # this way, this is also the result of some relatively rare rooting
         # techniques)
-        proc = self._runCmd(["shell", "id"])
+        proc = self._runCmd(["shell", "id"], timeout=self.short_timeout)
         if proc.output and 'uid=0(root)' in proc.output[0]:
             self._haveRootShell = True
             # if this returns true, we don't care about su
@@ -664,22 +698,30 @@ class DeviceManagerADB(DeviceManager):
 
         # if root shell is not available, check if 'su' can be used to gain
         # root
-        proc = self._runCmd(["shell", "su", "-c", "id"])
+        def su_id(su_modifier, timeout):
+            proc = self._runCmd(["shell", "su", su_modifier, "id"],
+                                timeout=timeout)
 
-        # wait for response for maximum of 15 seconds, in case su prompts for a
-        # password or triggers the Android SuperUser prompt
-        start_time = time.time()
-        retcode = None
-        while (time.time() - start_time) <= 15 and retcode is None:
-            retcode = proc.poll()
-        if retcode is None: # still not terminated, kill
-            proc.kill()
+            # wait for response for maximum of 15 seconds, in case su
+            # prompts for a password or triggers the Android SuperUser
+            # prompt
+            start_time = time.time()
+            retcode = None
+            while (time.time() - start_time) <= 15 and retcode is None:
+                retcode = proc.poll()
+            if retcode is None: # still not terminated, kill
+                proc.kill()
 
-        if proc.output and 'uid=0(root)' in proc.output[0]:
+            if proc.output and 'uid=0(root)' in proc.output[0]:
+                return True
+            return False
+
+        if su_id('0', self.short_timeout):
             self._haveSu = True
-
-        if self._runAdbAsRoot:
-            self._adb_root()
+            self._suModifier = '0'
+        elif su_id('-c', self.short_timeout):
+            self._haveSu = True
+            self._suModifier = '-c'
 
     def _isUnzipAvailable(self):
         data = self._runCmd(["shell", "unzip"]).output
@@ -720,3 +762,20 @@ class DeviceManagerADB(DeviceManager):
             self._checkCmd(["wait-for-device"])
             if self.processInfo("adbd")[2] != "root":
                 raise DMError("We tried rebooting adbd as root, however, it failed.")
+
+    def _detectLsModifier(self):
+        if self._lsModifier is None:
+            # Check if busybox -1A is required in order to get one
+            # file per line.
+            output = self._runCmd(["shell", "ls", "-1A", "/"],
+                         timeout=self.short_timeout).output
+            output = ' '.join(output)
+            if 'error: device not found' in output:
+                raise DMError(output)
+            if "Unknown option '-1'. Aborting." in output:
+                self._lsModifier = "-a"
+            elif "No such file or directory" in output:
+                self._lsModifier = "-a"
+            else:
+                self._lsModifier = "-1A"
+

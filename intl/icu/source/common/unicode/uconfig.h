@@ -1,6 +1,6 @@
 /*  
 **********************************************************************
-*   Copyright (C) 2002-2013, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  uconfig.h
@@ -135,6 +135,15 @@
 #endif
 
 /**
+ * \def UCONFIG_ENABLE_PLUGINS
+ * Determines whether to enable ICU plugins.
+ * @internal
+ */
+#ifndef UCONFIG_ENABLE_PLUGINS
+#define UCONFIG_ENABLE_PLUGINS 0
+#endif
+
+/**
  * \def U_ENABLE_DYLOAD
  * Whether to enable Dynamic loading in ICU.
  * @internal
@@ -151,7 +160,6 @@
 #ifndef U_CHECK_DYLOAD
 #define U_CHECK_DYLOAD 1
 #endif
-
 
 /**
  * \def U_DEFAULT_SHOW_DRAFT
@@ -185,7 +193,8 @@
 #ifdef U_LIB_SUFFIX_C_NAME_STRING
     /* Use the predefined value. */
 #elif defined(U_LIB_SUFFIX_C_NAME)
-#   define U_LIB_SUFFIX_C_NAME_STRING #U_LIB_SUFFIX_C_NAME
+#   define CONVERT_TO_STRING(s) #s
+#   define U_LIB_SUFFIX_C_NAME_STRING CONVERT_TO_STRING(U_LIB_SUFFIX_C_NAME)
 #else
 #   define U_LIB_SUFFIX_C_NAME_STRING ""
 #endif
@@ -199,7 +208,7 @@
  * It does not turn off legacy conversion because that is necessary
  * for ICU to work on EBCDIC platforms (for the default converter).
  * If you want "only collation" and do not build for EBCDIC,
- * then you can define UCONFIG_NO_LEGACY_CONVERSION 1 as well.
+ * then you can define UCONFIG_NO_CONVERSION or UCONFIG_NO_LEGACY_CONVERSION to 1 as well.
  *
  * @stable ICU 2.4
  */
@@ -245,6 +254,10 @@
 #   define UCONFIG_NO_FILE_IO 0
 #endif
 
+#if UCONFIG_NO_FILE_IO && defined(U_TIMEZONE_FILES_DIR) 
+#   error Contradictory file io switches in uconfig.h.
+#endif
+
 /**
  * \def UCONFIG_NO_CONVERSION
  * ICU will not completely build with this switch turned on.
@@ -262,6 +275,21 @@
 
 #if UCONFIG_NO_CONVERSION
 #   define UCONFIG_NO_LEGACY_CONVERSION 1
+#endif
+
+/**
+ * \def UCONFIG_ONLY_HTML_CONVERSION
+ * This switch turns off all of the converters NOT listed in
+ * the HTML encoding standard:
+ * http://www.w3.org/TR/encoding/#names-and-labels
+ *
+ * This is not possible on EBCDIC platforms
+ * because they need ibm-37 or ibm-1047 default converters.
+ *
+ * @draft ICU 55
+ */
+#ifndef UCONFIG_ONLY_HTML_CONVERSION
+#   define UCONFIG_ONLY_HTML_CONVERSION 0
 #endif
 
 /**
@@ -407,6 +435,16 @@
  */
 #ifndef UCONFIG_FORMAT_FASTPATHS_49
 #   define UCONFIG_FORMAT_FASTPATHS_49 1
+#endif
+
+/**
+ * \def UCONFIG_NO_FILTERED_BREAK_ITERATION
+ * This switch turns off filtered break iteration code.
+ *
+ * @internal
+ */
+#ifndef UCONFIG_NO_FILTERED_BREAK_ITERATION
+#   define UCONFIG_NO_FILTERED_BREAK_ITERATION 0
 #endif
 
 #endif

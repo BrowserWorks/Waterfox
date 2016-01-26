@@ -6,7 +6,7 @@
 
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
-if toolkit in ('cocoa', 'qt', 'android', 'gonk'):
+if toolkit in ('cocoa', 'qt', 'android', 'gonk', 'uikit'):
     DIRS += [toolkit]
 if toolkit in ('qt', 'android', 'gonk', 'gtk2', 'gtk3'):
     EXPORTS += ['nsIPrintDialogService.h']
@@ -15,7 +15,6 @@ if toolkit == 'windows':
     DIRS += ['windows']
 
     XPIDL_SOURCES += [
-        'nsIGfxInfo2.idl',
         'nsIJumpListBuilder.idl',
         'nsIJumpListItem.idl',
         'nsIPrintSettingsWin.idl',
@@ -26,11 +25,11 @@ if toolkit == 'windows':
         'nsITaskbarProgress.idl',
         'nsITaskbarTabPreview.idl',
         'nsITaskbarWindowPreview.idl',
+        'nsIWindowsUIUtils.idl',
         'nsIWinTaskbar.idl',
     ]
 elif toolkit == 'cocoa':
     XPIDL_SOURCES += [
-        'nsIGfxInfo2.idl',
         'nsIMacDockSupport.idl',
         'nsIMacWebAppUtils.idl',
         'nsIStandaloneNativeMenu.idl',
@@ -66,6 +65,7 @@ XPIDL_SOURCES += [
     'nsIClipboardHelper.idl',
     'nsIClipboardOwner.idl',
     'nsIColorPicker.idl',
+    'nsIDisplayInfo.idl',
     'nsIDragService.idl',
     'nsIDragSession.idl',
     'nsIFilePicker.idl',
@@ -95,6 +95,7 @@ EXPORTS += [
     'InputData.h',
     'nsBaseScreen.h',
     'nsBaseWidget.h',
+    'nsDeviceContextSpecProxy.h',
     'nsIDeviceContextSpec.h',
     'nsIPluginWidget.h',
     'nsIRollupListener.h',
@@ -109,9 +110,11 @@ EXPORTS += [
 EXPORTS.mozilla += [
     'BasicEvents.h',
     'CommandList.h',
+    'ContentCache.h',
     'ContentEvents.h',
     'EventClassList.h',
     'EventForwards.h',
+    'EventMessageList.h',
     'FontRange.h',
     'LookAndFeel.h',
     'MiscEvents.h',
@@ -126,11 +129,13 @@ EXPORTS.mozilla += [
 ]
 
 EXPORTS.mozilla.widget += [
+    'IMEData.h',
     'PuppetBidiKeyboard.h',
     'WidgetMessageUtils.h',
 ]
 
 UNIFIED_SOURCES += [
+    'ContentCache.cpp',
     'ContentHelper.cpp',
     'GfxDriverInfo.cpp',
     'GfxInfoBase.cpp',
@@ -144,6 +149,7 @@ UNIFIED_SOURCES += [
     'nsClipboardProxy.cpp',
     'nsColorPickerProxy.cpp',
     'nsContentProcessWidgetFactory.cpp',
+    'nsDeviceContextSpecProxy.cpp',
     'nsDragServiceProxy.cpp',
     'nsFilePickerProxy.cpp',
     'nsHTMLFormatConverter.cpp',
@@ -198,8 +204,8 @@ if toolkit in ('cocoa', 'windows'):
         'nsBaseClipboard.cpp',
     ]
 
-if toolkit in ('qt', 'gtk2', 'gtk3', 'cocoa', 'windows',
-                                    'android', 'gonk'):
+if toolkit in {'qt', 'gtk2', 'gtk3', 'cocoa', 'windows',
+               'android', 'gonk', 'uikit'}:
     UNIFIED_SOURCES += [
         'nsBaseFilePicker.cpp',
     ]
@@ -208,11 +214,13 @@ if toolkit in ('qt', 'gtk2', 'gtk3', 'windows', 'cocoa'):
     UNIFIED_SOURCES += [
         'nsNativeTheme.cpp',
     ]
+if toolkit == 'gtk3':
+    XPIDL_SOURCES += [
+        'nsIApplicationChooser.idl',
+    ]
 
 if not CONFIG['MOZ_B2G']:
     DEFINES['MOZ_CROSS_PROCESS_IME'] = True
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

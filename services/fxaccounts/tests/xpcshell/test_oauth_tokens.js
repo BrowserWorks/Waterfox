@@ -8,6 +8,7 @@ Cu.import("resource://gre/modules/FxAccountsClient.jsm");
 Cu.import("resource://gre/modules/FxAccountsCommon.js");
 Cu.import("resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
 Cu.import("resource://services-common/utils.js");
+var {AccountState} = Cu.import("resource://gre/modules/FxAccounts.jsm", {});
 
 function promiseNotification(topic) {
   return new Promise(resolve => {
@@ -20,24 +21,40 @@ function promiseNotification(topic) {
 }
 
 // Just enough mocks so we can avoid hawk and storage.
-let MockStorage = function() {
-  this.data = null;
-};
-MockStorage.prototype = Object.freeze({
-  set: function (contents) {
-    this.data = contents;
-    return Promise.resolve(null);
+function MockStorageManager() {
+}
+
+MockStorageManager.prototype = {
+  promiseInitialized: Promise.resolve(),
+
+  initialize(accountData) {
+    this.accountData = accountData;
   },
-  get: function () {
-    return Promise.resolve(this.data);
-  },
-  getOAuthTokens() {
-    return Promise.resolve(null);
-  },
-  setOAuthTokens(contents) {
+
+  finalize() {
     return Promise.resolve();
   },
-});
+
+  getAccountData() {
+    return Promise.resolve(this.accountData);
+  },
+
+  updateAccountData(updatedFields) {
+    for (let [name, value] of Iterator(updatedFields)) {
+      if (value == null) {
+        delete this.accountData[name];
+      } else {
+        this.accountData[name] = value;
+      }
+    }
+    return Promise.resolve();
+  },
+
+  deleteAccountData() {
+    this.accountData = null;
+    return Promise.resolve();
+  }
+}
 
 function MockFxAccountsClient() {
   this._email = "nobody@example.com";
@@ -50,6 +67,10 @@ function MockFxAccountsClient() {
   };
 
   this.signOut = function() { return Promise.resolve(); };
+  this.registerDevice = function() { return Promise.resolve(); };
+  this.updateDevice = function() { return Promise.resolve(); };
+  this.signOutAndDestroyDevice = function() { return Promise.resolve(); };
+  this.getDeviceList = function() { return Promise.resolve(); };
 
   FxAccountsClient.apply(this);
 }
@@ -62,13 +83,21 @@ function MockFxAccounts(mockGrantClient) {
   return new FxAccounts({
     fxAccountsClient: new MockFxAccountsClient(),
     getAssertion: () => Promise.resolve("assertion"),
-    signedInUserStorage: new MockStorage(),
+    newAccountState(credentials) {
+      // we use a real accountState but mocked storage.
+      let storage = new MockStorageManager();
+      storage.initialize(credentials);
+      return new AccountState(storage);
+    },
     _destroyOAuthToken: function(tokenData) {
       // somewhat sad duplication of _destroyOAuthToken, but hard to avoid.
       return mockGrantClient.destroyToken(tokenData.token).then( () => {
         Services.obs.notifyObservers(null, "testhelper-fxa-revoke-complete", null);
       });
     },
+    _getDeviceName() {
+      return "mock device name";
+    }
   });
 }
 
@@ -116,7 +145,7 @@ MockFxAccountsOAuthGrantClient.prototype = {
   activeTokens: null,
 }
 
-add_task(function testRevoke() {
+add_task(function* testRevoke() {
   let client = new MockFxAccountsOAuthGrantClient();
   let tokenOptions = { scope: "test-scope", client: client };
   let fxa = yield createMockFxA(client);
@@ -143,7 +172,7 @@ add_task(function testRevoke() {
   notEqual(token1, token2, "got a different token");
 });
 
-add_task(function testSignOutDestroysTokens() {
+add_task(function* testSignOutDestroysTokens() {
   let client = new MockFxAccountsOAuthGrantClient();
   let fxa = yield createMockFxA(client);
 
@@ -168,7 +197,7 @@ add_task(function testSignOutDestroysTokens() {
   equal(client.activeTokens.size, 0);
 });
 
-add_task(function testTokenRaces() {
+add_task(function* testTokenRaces() {
   // Here we do 2 concurrent fetches each for 2 different token scopes (ie,
   // 4 token fetches in total).
   // This should provoke a potential race in the token fetching but we should

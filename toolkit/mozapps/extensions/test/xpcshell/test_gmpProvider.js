@@ -3,14 +3,19 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-let GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm");
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var GMPScope = Cu.import("resource://gre/modules/addons/GMPProvider.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
+Cu.import("resource://gre/modules/UpdateUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "pluginsBundle",
   () => Services.strings.createBundle("chrome://global/locale/plugins.properties"));
 
-let gMockAddons = new Map();
-let gMockEmeAddons = new Map();
+XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
+                                  "resource://gre/modules/FileUtils.jsm");
+
+var gMockAddons = new Map();
+var gMockEmeAddons = new Map();
 
 for (let plugin of GMPScope.GMP_PLUGINS) {
   let mockAddon = Object.freeze({
@@ -19,6 +24,8 @@ for (let plugin of GMPScope.GMP_PLUGINS) {
       isInstalled: false,
       nameId: plugin.name,
       descriptionId: plugin.description,
+      missingKey: plugin.missingKey,
+      missingFilesKey: plugin.missingFilesKey,
   });
   gMockAddons.set(mockAddon.id, mockAddon);
   if (mockAddon.id.indexOf("gmp-eme-") == 0) {
@@ -26,9 +33,9 @@ for (let plugin of GMPScope.GMP_PLUGINS) {
   }
 }
 
-let gInstalledAddonId = "";
-let gPrefs = Services.prefs;
-let gGetKey = GMPScope.GMPPrefs.getPrefKey;
+var gInstalledAddonId = "";
+var gPrefs = Services.prefs;
+var gGetKey = GMPScope.GMPPrefs.getPrefKey;
 
 function MockGMPInstallManager() {
 }
@@ -216,11 +223,38 @@ add_task(function* test_autoUpdatePrefPersistance() {
   }
 });
 
+function createMockPluginFilesIfNeeded(aFile, aPluginId) {
+  function createFile(aFileName) {
+    let f = aFile.clone();
+    f.append(aFileName);
+    if (!f.exists()) {
+      f.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
+    }
+  };
+
+  let id = aPluginId.substring(4);
+  let libName = AppConstants.DLL_PREFIX + id + AppConstants.DLL_SUFFIX;
+
+  createFile(libName);
+  createFile(id + ".info");
+  if (aPluginId == "gmp-eme-adobe")
+    createFile(id + ".voucher");
+}
+
+// Array.includes() is only in Nightly channel, so polyfill so we don't fail
+// on other branches.
+if (![].includes) {
+  Array.prototype.includes = function(element) {
+    return Object(this).indexOf(element) != -1;
+  }
+}
+
 add_task(function* test_pluginRegistration() {
   const TEST_VERSION = "1.2.3.4";
 
+  let profD = do_get_profile();
   for (let addon of gMockAddons.values()) {
-    let file = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    let file = profD.clone();
     file.append(addon.id);
     file.append(TEST_VERSION);
 
@@ -229,18 +263,83 @@ add_task(function* test_pluginRegistration() {
     let clearPaths = () => { addedPaths = []; removedPaths = []; }
 
     let MockGMPService = {
-      addPluginDirectory: path => addedPaths.push(path),
-      removePluginDirectory: path => removedPaths.push(path),
-      removeAndDeletePluginDirectory: path => removedPaths.push(path),
+      addPluginDirectory: path => {
+        if (!addedPaths.includes(path)) {
+          addedPaths.push(path);
+        }
+      },
+      removePluginDirectory: path => {
+        if (!removedPaths.includes(path)) {
+          removedPaths.push(path);
+        }
+      },
+      removeAndDeletePluginDirectory: path => {
+        if (!removedPaths.includes(path)) {
+          removedPaths.push(path);
+        }
+      },
+    };
+
+    let reportedKeys = {};
+
+    let MockTelemetry = {
+      getHistogramById: key => {
+        return {
+          add: value => {
+            reportedKeys[key] = value;
+          }
+        }
+      }
     };
 
     GMPScope.gmpService = MockGMPService;
+    GMPScope.telemetryService = MockTelemetry;
     gPrefs.setBoolPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_ENABLED, addon.id), true);
 
-    // Check that the plugin gets registered after startup.
+    // Test that plugin registration fails if the plugin dynamic library and
+    // info files are not present.
     gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id),
-                      TEST_VERSION);
+                       TEST_VERSION);
     clearPaths();
+    yield promiseRestartManager();
+    Assert.equal(addedPaths.indexOf(file.path), -1);
+    Assert.deepEqual(removedPaths, [file.path]);
+
+    // Test that the GMPProvider tried to report via telemetry that the
+    // addon's lib files are missing.
+    Assert.strictEqual(reportedKeys[addon.missingKey], true);
+    Assert.strictEqual(reportedKeys[addon.missingFilesKey],
+                       addon.missingFilesKey != "VIDEO_ADOBE_GMP_MISSING_FILES"
+                       ? (1+2) : (1+2+4));
+    reportedKeys = {};
+
+    // Create dummy GMP library/info files, and test that plugin registration
+    // succeeds during startup, now that we've added GMP info/lib files.
+    createMockPluginFilesIfNeeded(file, addon.id);
+
+    gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id),
+                       TEST_VERSION);
+    clearPaths();
+    yield promiseRestartManager();
+    Assert.notEqual(addedPaths.indexOf(file.path), -1);
+    Assert.deepEqual(removedPaths, []);
+
+    // Test that the GMPProvider tried to report via telemetry that the
+    // addon's lib files are NOT missing.
+    Assert.strictEqual(reportedKeys[addon.missingFilesKey], 0);
+
+    // Setting the ABI to something invalid should cause plugin to be removed at startup.
+    clearPaths();
+    gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_ABI, addon.id), "invalid-ABI");
+    yield promiseRestartManager();
+    Assert.equal(addedPaths.indexOf(file.path), -1);
+    Assert.deepEqual(removedPaths, [file.path]);
+
+    // Setting the ABI to expected ABI should cause registration at startup.
+    clearPaths();
+    gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id),
+                       TEST_VERSION);
+    gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_ABI, addon.id), UpdateUtils.ABI);
     yield promiseRestartManager();
     Assert.notEqual(addedPaths.indexOf(file.path), -1);
     Assert.deepEqual(removedPaths, []);
@@ -259,7 +358,7 @@ add_task(function* test_pluginRegistration() {
 
     // Changing the pref mid-session should cause unregistration and registration.
     gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id),
-                      TEST_VERSION);
+                       TEST_VERSION);
     clearPaths();
     const TEST_VERSION_2 = "5.6.7.8";
     let file2 = Services.dirsvc.get("ProfD", Ci.nsIFile);
@@ -272,7 +371,7 @@ add_task(function* test_pluginRegistration() {
 
     // Disabling the plugin should cause unregistration.
     gPrefs.setCharPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id),
-                      TEST_VERSION);
+                       TEST_VERSION);
     clearPaths();
     gPrefs.setBoolPref(gGetKey(GMPScope.GMPPrefs.KEY_PLUGIN_ENABLED, addon.id), false);
     Assert.deepEqual(addedPaths, []);

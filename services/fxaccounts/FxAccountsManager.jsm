@@ -62,7 +62,8 @@ this.FxAccountsManager = {
 
     return {
       email: this._activeSession.email,
-      verified: this._activeSession.verified
+      verified: this._activeSession.verified,
+      profile: this._activeSession.profile,
     }
   },
 
@@ -99,7 +100,7 @@ this.FxAccountsManager = {
     return this._fxAccounts.getAccountsClient();
   },
 
-  _signInSignUp: function(aMethod, aEmail, aPassword) {
+  _signInSignUp: function(aMethod, aEmail, aPassword, aFetchKeys) {
     if (Services.io.offline) {
       return this._error(ERROR_OFFLINE);
     }
@@ -127,7 +128,7 @@ this.FxAccountsManager = {
             user: this._user
           });
         }
-        return client[aMethod](aEmail, aPassword);
+        return client[aMethod](aEmail, aPassword, aFetchKeys);
       }
     ).then(
       user => {
@@ -156,12 +157,31 @@ this.FxAccountsManager = {
             this._activeSession = user;
             log.debug("User signed in: " + JSON.stringify(this._user) +
                       " - Account created " + (aMethod == "signUp"));
-            return Promise.resolve({
-              accountCreated: aMethod === "signUp",
-              user: this._user
+
+            // There is no way to obtain the key fetch token afterwards
+            // without login out the user and asking her to log in again.
+            // Also, key fetch tokens are designed to be short-lived, so
+            // we need to fetch kB as soon as we have the key fetch token.
+            if (aFetchKeys) {
+              this._fxAccounts.getKeys();
+            }
+
+            return this._fxAccounts.getSignedInUserProfile().catch(error => {
+              // Not fetching the profile is sad but the FxA logs will already
+              // have noise.
+              return null;
             });
           }
-        );
+        ).then(profile => {
+          if (profile) {
+            this._activeSession.profile = profile;
+          }
+
+          return Promise.resolve({
+            accountCreated: aMethod === "signUp",
+            user: this._user
+          });
+        });
       },
       reason => { return this._serverError(reason); }
     );
@@ -213,7 +233,7 @@ this.FxAccountsManager = {
         }
       );
     }
-    return Promise.reject(reason);
+    return Promise.reject(reason.message ? { error: reason.message } : reason);
   },
 
   _getAssertion: function(aAudience, aPrincipal) {
@@ -351,12 +371,12 @@ this.FxAccountsManager = {
 
   // -- API --
 
-  signIn: function(aEmail, aPassword) {
-    return this._signInSignUp("signIn", aEmail, aPassword);
+  signIn: function(aEmail, aPassword, aFetchKeys) {
+    return this._signInSignUp("signIn", aEmail, aPassword, aFetchKeys);
   },
 
-  signUp: function(aEmail, aPassword) {
-    return this._signInSignUp("signUp", aEmail, aPassword);
+  signUp: function(aEmail, aPassword, aFetchKeys) {
+    return this._signInSignUp("signUp", aEmail, aPassword, aFetchKeys);
   },
 
   signOut: function() {
@@ -411,10 +431,23 @@ this.FxAccountsManager = {
         // we kick off verification before returning what we have.
         if (!user.verified) {
           this.verificationStatus(user);
+          // Trying to get the profile for unverified users will fail, so we
+          // don't even try in that case.
+          log.debug("Account ", this._user);
+          return Promise.resolve(this._user);
         }
 
-        log.debug("Account " + JSON.stringify(this._user));
-        return Promise.resolve(this._user);
+        return this._fxAccounts.getSignedInUserProfile().then(profile => {
+          if (profile) {
+            this._activeSession.profile = profile;
+          }
+          log.debug("Account ", this._user);
+          return Promise.resolve(this._user);
+        }).catch(error => {
+          // FxAccounts logs already inform about the error.
+          log.debug("Account ", this._user);
+          return Promise.resolve(this._user);
+        });
       }
     );
   },
@@ -477,6 +510,13 @@ this.FxAccountsManager = {
         if (this._activeSession.verified != data.verified) {
           this._activeSession.verified = data.verified;
           this._fxAccounts.setSignedInUser(this._activeSession);
+          this._fxAccounts.getSignedInUserProfile().then(profile => {
+            if (profile) {
+              this._activeSession.profile = profile;
+            }
+          }).catch(error => {
+            // FxAccounts logs already inform about the error.
+          });
         }
         log.debug(JSON.stringify(this._user));
       },
@@ -510,14 +550,9 @@ this.FxAccountsManager = {
       return this._error(ERROR_INVALID_AUDIENCE);
     }
 
-    let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                   .getService(Ci.nsIScriptSecurityManager);
-    let uri = Services.io.newURI(aPrincipal.origin, null, null);
+    let principal = aPrincipal;
     log.debug("FxAccountsManager.getAssertion() aPrincipal: ",
-              aPrincipal.origin, aPrincipal.appId,
-              aPrincipal.isInBrowserElement);
-    let principal = secMan.getAppCodebasePrincipal(uri,
-      aPrincipal.appId, aPrincipal.isInBrowserElement);
+              principal.origin, principal.appId, principal.isInBrowserElement);
 
     return this.getAccount().then(
       user => {
@@ -582,8 +617,37 @@ this.FxAccountsManager = {
         return this._uiRequest(UI_REQUEST_SIGN_IN_FLOW, aAudience, principal);
       }
     );
-  }
+  },
 
+  getKeys: function() {
+    let syncEnabled = false;
+    try {
+      syncEnabled = Services.prefs.getBoolPref("services.sync.enabled");
+    } catch(e) {
+      dump("Sync is disabled, so you won't get the keys. " + e + "\n");
+    }
+
+    if (!syncEnabled) {
+      return Promise.reject(ERROR_SYNC_DISABLED);
+    }
+
+    return this.getAccount().then(
+      user => {
+        if (!user) {
+          log.debug("No signed in user");
+          return Promise.resolve(null);
+        }
+
+        if (!user.verified) {
+          return this._error(ERROR_UNVERIFIED_ACCOUNT, {
+            user: user
+          });
+        }
+
+        return this._fxAccounts.getKeys();
+      }
+    );
+  }
 };
 
 FxAccountsManager.init();

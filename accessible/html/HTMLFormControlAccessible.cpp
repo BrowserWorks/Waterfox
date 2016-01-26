@@ -134,7 +134,7 @@ HTMLRadioButtonAccessible::GetPositionAndSizeInternal(int32_t* aPosInSet,
   nsAutoString name;
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::name, name);
 
-  nsRefPtr<nsContentList> inputElms;
+  RefPtr<nsContentList> inputElms;
 
   nsCOMPtr<nsIFormControl> formControlNode(do_QueryInterface(mContent));
   dom::Element* formElm = formControlNode->GetFormElement();
@@ -486,7 +486,10 @@ HTMLTextFieldAccessible::IsWidget() const
 Accessible*
 HTMLTextFieldAccessible::ContainerWidget() const
 {
-  return mParent && mParent->Role() == roles::AUTOCOMPLETE ? mParent : nullptr;
+  if (!mParent || mParent->Role() != roles::AUTOCOMPLETE) {
+    return nullptr;
+  }
+  return mParent;
 }
 
 
@@ -526,7 +529,7 @@ HTMLFileInputAccessible::HandleAccEvent(AccEvent* aEvent)
        event->GetState() == states::INVALID)) {
     Accessible* button = GetChildAt(0);
     if (button && button->Role() == roles::PUSHBUTTON) {
-      nsRefPtr<AccStateChangeEvent> childEvent =
+      RefPtr<AccStateChangeEvent> childEvent =
         new AccStateChangeEvent(button, event->GetState(),
                                 event->IsStateEnabled(), event->FromUserInput());
       nsEventShell::FireEvent(childEvent);

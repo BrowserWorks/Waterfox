@@ -30,7 +30,7 @@ public:
   virtual SurfaceType GetType() const { return SurfaceType::CAIRO; }
   virtual IntSize GetSize() const;
   virtual SurfaceFormat GetFormat() const;
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface();
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface();
 
   cairo_surface_t* GetSurface() const;
 
@@ -64,7 +64,7 @@ private:
   cairo_surface_t* mImageSurface;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif // _MOZILLA_GFX_OP_SOURCESURFACE_CAIRO_H

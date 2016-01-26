@@ -23,10 +23,17 @@ class LayerComposite;
 
 class LayerScope {
 public:
-    static void SendEffectChain(gl::GLContext* aGLContext,
-                                const EffectChain& aEffectChain,
-                                int aWidth,
-                                int aHeight);
+    static void DrawBegin();
+    static void SetRenderOffset(float aX, float aY);
+    static void SetLayerTransform(const gfx::Matrix4x4& aMatrix);
+    static void SetDrawRects(size_t aRects,
+                             const gfx::Rect* aLayerRects,
+                             const gfx::Rect* aTextureRects);
+    static void DrawEnd(gl::GLContext* aGLContext,
+                        const EffectChain& aEffectChain,
+                        int aWidth,
+                        int aHeight);
+
     static void SendLayer(LayerComposite* aLayer,
                           int aWidth,
                           int aHeight);
@@ -35,6 +42,8 @@ public:
     static void CleanLayer();
     static void SetHWComposed();
 
+    static void SetPixelScale(double devPixelsPerCSSPixel);
+    static void ContentChanged(TextureHost *host);
 private:
     static void Init();
 };
@@ -50,7 +59,7 @@ private:
     static void EndFrame();
 };
 
-} /* layers */
-} /* mozilla */
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_LAYERSCOPE_H */

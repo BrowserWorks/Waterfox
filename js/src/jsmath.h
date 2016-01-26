@@ -9,32 +9,9 @@
 
 #include "mozilla/MemoryReporting.h"
 
-#include "NamespaceImports.h"
+#include <cmath>
 
-#ifndef M_PI
-# define M_PI            3.14159265358979323846
-#endif
-#ifndef M_E
-# define M_E             2.7182818284590452354
-#endif
-#ifndef M_LOG2E
-# define M_LOG2E         1.4426950408889634074
-#endif
-#ifndef M_LOG10E
-# define M_LOG10E        0.43429448190325182765
-#endif
-#ifndef M_LN2
-# define M_LN2           0.69314718055994530942
-#endif
-#ifndef M_LN10
-# define M_LN10          2.30258509299404568402
-#endif
-#ifndef M_SQRT2
-# define M_SQRT2         1.41421356237309504880
-#endif
-#ifndef M_SQRT1_2
-# define M_SQRT1_2       0.70710678118654752440
-#endif
+#include "NamespaceImports.h"
 
 namespace js {
 
@@ -80,6 +57,25 @@ class MathCache
         return e.out = f(x);
     }
 
+    bool isCached(double x, MathFuncId id, double *r, unsigned *index) {
+        *index = hash(x, id);
+        Entry& e = table[*index];
+        if (e.in == x && e.id == id) {
+            *r = e.out;
+            return true;
+        }
+        return false;
+    }
+
+    void store(MathFuncId id, double x, double v, unsigned index) {
+        Entry &e = table[index];
+        if (e.in == x && e.id == id)
+            return;
+        e.in = x;
+        e.id = id;
+        e.out = v;
+    }
+
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
 };
 
@@ -90,22 +86,13 @@ class MathCache
 extern JSObject*
 InitMathClass(JSContext* cx, HandleObject obj);
 
+// Fill |seed[0]| and |seed[1]| with random bits, suitable for
+// seeding a XorShift128+ random number generator.
 extern void
-random_initState(uint64_t* rngState);
+GenerateXorShift128PlusSeed(mozilla::Array<uint64_t, 2>& seed);
 
 extern uint64_t
 random_next(uint64_t* rngState, int bits);
-
-static const double RNG_DSCALE = double(1LL << 53);
-
-inline double
-random_nextDouble(uint64_t* rng)
-{
-    return double((random_next(rng, 26) << 27) + random_next(rng, 27)) / RNG_DSCALE;
-}
-
-extern double
-math_random_no_outparam(JSContext* cx);
 
 extern bool
 math_random(JSContext* cx, unsigned argc, js::Value* vp);
@@ -142,8 +129,17 @@ extern bool
 minmax_impl(JSContext* cx, bool max, js::HandleValue a, js::HandleValue b,
             js::MutableHandleValue res);
 
+extern void
+math_sincos_uncached(double x, double *sin, double *cos);
+
+extern void
+math_sincos_impl(MathCache* mathCache, double x, double *sin, double *cos);
+
 extern bool
 math_sqrt_handle(JSContext* cx, js::HandleValue number, js::MutableHandleValue result);
+
+extern bool
+math_imul_handle(JSContext* cx, HandleValue lhs, HandleValue rhs, MutableHandleValue res);
 
 extern bool
 math_imul(JSContext* cx, unsigned argc, js::Value* vp);

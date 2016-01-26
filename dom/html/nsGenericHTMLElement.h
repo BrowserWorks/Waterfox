@@ -7,6 +7,7 @@
 #define nsGenericHTMLElement_h___
 
 #include "mozilla/Attributes.h"
+#include "mozilla/EventForwards.h"
 #include "nsMappedAttributeElement.h"
 #include "nsIDOMHTMLElement.h"
 #include "nsNameSpaceManager.h"  // for kNameSpaceID_None
@@ -39,8 +40,8 @@ namespace dom {
 class HTMLFormElement;
 class HTMLPropertiesCollection;
 class HTMLMenuElement;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 typedef nsMappedAttributeElement nsGenericHTMLElementBase;
 
@@ -215,6 +216,13 @@ public:
     }
     return false;
   }
+
+  /**
+   * Returns the count of descendants (inclusive of this node) in
+   * the uncomposed document that are explicitly set as editable.
+   */
+  uint32_t EditableInclusiveDescendantCount();
+
   mozilla::dom::HTMLMenuElement* GetContextMenu() const;
   bool Spellcheck();
   void SetSpellcheck(bool aSpellcheck, mozilla::ErrorResult& aError)
@@ -232,6 +240,9 @@ public:
   {
     mScrollgrab = aValue;
   }
+
+  void GetInnerText(mozilla::dom::DOMString& aValue, mozilla::ErrorResult& aError);
+  void SetInnerText(const nsAString& aValue);
 
   /**
    * Determine whether an attribute is an event (onclick, etc.)
@@ -329,7 +340,7 @@ public:
    * Pass a reference to the image request, since the method may change the
    * value and we want to use the updated value.
    */
-  nsSize GetWidthHeightForImage(nsRefPtr<imgRequestProxy>& aImageRequest);
+  nsSize GetWidthHeightForImage(RefPtr<imgRequestProxy>& aImageRequest);
 
   // XPIDL methods
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
@@ -401,7 +412,7 @@ public:
   NS_IMETHOD GetItemId(nsAString& aId) final override {
     nsString id;
     GetItemId(id);
-    aId.Assign(aId);
+    aId.Assign(id);
     return NS_OK;
   }
   NS_IMETHOD SetItemId(const nsAString& aId) final override {
@@ -589,7 +600,7 @@ public:
   virtual bool IsHTMLFocusable(bool aWithMouse,
                                bool *aIsFocusable,
                                int32_t *aTabIndex);
-  virtual void PerformAccesskey(bool aKeyCausesActivation,
+  virtual bool PerformAccesskey(bool aKeyCausesActivation,
                                 bool aIsTrustedEvent) override;
 
   /**
@@ -711,6 +722,10 @@ public:
   static bool ParseImageAttribute(nsIAtom* aAttribute,
                                     const nsAString& aString,
                                     nsAttrValue& aResult);
+
+  static bool ParseReferrerAttribute(const nsAString& aString,
+                                     nsAttrValue& aResult);
+
   /**
    * Convert a frameborder string to value (yes/no/1/0)
    *
@@ -945,10 +960,16 @@ public:
   static inline bool
   ShouldExposeIdAsHTMLDocumentProperty(Element* aElement)
   {
-    return aElement->IsAnyOfHTMLElements(nsGkAtoms::img,
-                                         nsGkAtoms::applet,
-                                         nsGkAtoms::embed,
-                                         nsGkAtoms::object);
+    if (aElement->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                      nsGkAtoms::embed,
+                                      nsGkAtoms::object)) {
+      return true;
+    }
+
+    // Per spec, <img> is exposed by id only if it also has a nonempty
+    // name (which doesn't have to match the id or anything).
+    // HasName() is true precisely when name is nonempty.
+    return aElement->IsHTMLElement(nsGkAtoms::img) && aElement->HasName();
   }
 
   static bool
@@ -1011,7 +1032,7 @@ protected:
    * Returns INVALID_STATE_ERR and nulls *aURI if aURISpec is empty
    * and the document's URI matches the element's base URI.
    */
-  nsresult NewURIFromString(const nsAutoString& aURISpec, nsIURI** aURI);
+  nsresult NewURIFromString(const nsAString& aURISpec, nsIURI** aURI);
 
   void GetHTMLAttr(nsIAtom* aName, nsAString& aResult) const
   {
@@ -1229,8 +1250,8 @@ private:
 namespace mozilla {
 namespace dom {
 class HTMLFieldSetElement;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #define FORM_ELEMENT_FLAG_BIT(n_) NODE_FLAG_BIT(ELEMENT_TYPE_SPECIFIC_BITS_OFFSET + (n_))
 
@@ -1351,7 +1372,7 @@ protected:
   virtual ~nsGenericHTMLFormElement();
 
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 const nsAttrValueOrString* aValue,
+                                 nsAttrValueOrString* aValue,
                                  bool aNotify) override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
@@ -1397,7 +1418,8 @@ protected:
                               void* aData);
 
   // Returns true if the event should not be handled from PreHandleEvent
-  bool IsElementDisabledForEvents(uint32_t aMessage, nsIFrame* aFrame);
+  bool IsElementDisabledForEvents(mozilla::EventMessage aMessage,
+                                  nsIFrame* aFrame);
 
   // The focusability state of this form control.  eUnfocusable means that it
   // shouldn't be focused at all, eInactiveWindow means it's in an inactive
@@ -1742,6 +1764,7 @@ NS_DECLARE_NS_NEW_HTML_ELEMENT(Mod)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Data)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(DataList)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Div)
+NS_DECLARE_NS_NEW_HTML_ELEMENT(ExtApp)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(FieldSet)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Font)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Form)

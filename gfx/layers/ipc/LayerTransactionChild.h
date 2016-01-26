@@ -20,7 +20,7 @@ namespace mozilla {
 namespace layout {
 class RenderFrameChild;
 class ShadowLayerForwarder;
-}
+} // namespace layout
 
 namespace layers {
 
@@ -65,6 +65,7 @@ protected:
   virtual bool DeallocPCompositableChild(PCompositableChild* actor) override;
 
   virtual PTextureChild* AllocPTextureChild(const SurfaceDescriptor& aSharedData,
+                                            const LayersBackend& aLayersBackend,
                                             const TextureFlags& aFlags) override;
   virtual bool DeallocPTextureChild(PTextureChild* actor) override;
 

@@ -40,7 +40,7 @@ NS_ProxyRelease(nsIEventTarget* aTarget, nsCOMPtr<T>& aDoomed,
  */
 template<class T>
 inline NS_HIDDEN_(nsresult)
-NS_ProxyRelease(nsIEventTarget* aTarget, nsRefPtr<T>& aDoomed,
+NS_ProxyRelease(nsIEventTarget* aTarget, RefPtr<T>& aDoomed,
                 bool aAlwaysProxy = false)
 {
   T* raw = nullptr;
@@ -57,13 +57,69 @@ NS_ProxyRelease(nsIEventTarget* aTarget, nsRefPtr<T>& aDoomed,
  *        the doomed object; the object to be released on the target thread.
  * @param aAlwaysProxy
  *        normally, if NS_ProxyRelease is called on the target thread, then the
- *        doomed object will released directly.  however, if this parameter is
+ *        doomed object will be released directly. However, if this parameter is
  *        true, then an event will always be posted to the target thread for
  *        asynchronous release.
  */
 nsresult
 NS_ProxyRelease(nsIEventTarget* aTarget, nsISupports* aDoomed,
                 bool aAlwaysProxy = false);
+
+/**
+ * Ensure that a nsCOMPtr is released on the main thread.
+ *
+ * @see NS_ReleaseOnMainThread( nsISupports*, bool)
+ */
+template<class T>
+inline NS_HIDDEN_(nsresult)
+NS_ReleaseOnMainThread(nsCOMPtr<T>& aDoomed,
+                       bool aAlwaysProxy = false)
+{
+  T* raw = nullptr;
+  aDoomed.swap(raw);
+  return NS_ReleaseOnMainThread(raw, aAlwaysProxy);
+}
+
+/**
+ * Ensure that a nsRefPtr is released on the main thread.
+ *
+ * @see NS_ReleaseOnMainThread(nsISupports*, bool)
+ */
+template<class T>
+inline NS_HIDDEN_(nsresult)
+NS_ReleaseOnMainThread(RefPtr<T>& aDoomed,
+                       bool aAlwaysProxy = false)
+{
+  T* raw = nullptr;
+  aDoomed.swap(raw);
+  return NS_ReleaseOnMainThread(raw, aAlwaysProxy);
+}
+
+/**
+ * Ensures that the delete of a nsISupports object occurs on the main thread.
+ *
+ * @param aDoomed
+ *        the doomed object; the object to be released on the main thread.
+ * @param aAlwaysProxy
+ *        normally, if NS_ReleaseOnMainThread is called on the main thread,
+ *        then the doomed object will be released directly. However, if this
+ *        parameter is true, then an event will always be posted to the main
+ *        thread for asynchronous release.
+ */
+inline nsresult
+NS_ReleaseOnMainThread(nsISupports* aDoomed,
+                       bool aAlwaysProxy = false)
+{
+  // NS_ProxyRelease treats a null event target as "the current thread".  So a
+  // handle on the main thread is only necessary when we're not already on the
+  // main thread or the release must happen asynchronously.
+  nsCOMPtr<nsIThread> mainThread;
+  if (!NS_IsMainThread() || aAlwaysProxy) {
+    NS_GetMainThread(getter_AddRefs(mainThread));
+  }
+
+  return NS_ProxyRelease(mainThread, aDoomed, aAlwaysProxy);
+}
 
 /**
  * Class to safely handle main-thread-only pointers off the main thread.
@@ -88,7 +144,7 @@ NS_ProxyRelease(nsIEventTarget* aTarget, nsISupports* aDoomed,
  * to the holder anywhere they please. These references are meant to be opaque
  * when accessed off-main-thread (assertions enforce this).
  *
- * The semantics of nsRefPtr<nsMainThreadPtrHolder<T> > would be cumbersome, so
+ * The semantics of RefPtr<nsMainThreadPtrHolder<T> > would be cumbersome, so
  * we also introduce nsMainThreadPtrHandle<T>, which is conceptually identical
  * to the above (though it includes various convenience methods). The basic
  * pattern is as follows.
@@ -177,7 +233,7 @@ private:
 template<class T>
 class nsMainThreadPtrHandle
 {
-  nsRefPtr<nsMainThreadPtrHolder<T>> mPtr;
+  RefPtr<nsMainThreadPtrHolder<T>> mPtr;
 
 public:
   nsMainThreadPtrHandle() : mPtr(nullptr) {}

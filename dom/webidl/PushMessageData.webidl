@@ -7,11 +7,15 @@
  * https://w3c.github.io/push-api/
  */
 
-[Exposed=ServiceWorker]
+[Func="nsContentUtils::PushEnabled",
+ Exposed=ServiceWorker]
 interface PushMessageData
 {
+    [Throws]
     ArrayBuffer arrayBuffer();
+    [Throws]
     Blob        blob();
-    object      json();
+    [Throws]
+    any         json();
     USVString   text();
 };

@@ -15,12 +15,13 @@ struct JSPrincipals;
 
 interface nsIURI;
 interface nsIContentSecurityPolicy;
+interface nsIDOMDocument;
 
 [ptr] native JSContext(JSContext);
 [ptr] native JSPrincipals(JSPrincipals);
 [ptr] native PrincipalArray(nsTArray<nsCOMPtr<nsIPrincipal> >);
 
-[scriptable, builtinclass, uuid(264fe8ca-c382-11e4-95a6-782bcbaebb28)]
+[scriptable, builtinclass, uuid(d0391e86-1ad7-4ab0-bb7c-14d6d9967369)]
 interface nsIPrincipal : nsISerializable
 {
     /**
@@ -60,19 +61,12 @@ interface nsIPrincipal : nsISerializable
 
     /**
      * The domain URI to which this principal pertains.
-     * This is congruent with HTMLDocument.domain, and may be null.
+     * This is null unless script successfully sets document.domain to our URI
+     * or a superdomain of our URI.
      * Setting this has no effect on the URI.
+     * See https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy#Changing_origin
      */
     [noscript] attribute nsIURI domain;
-
-    /**
-     * The origin of this principal's codebase URI.
-     * An origin is defined as: scheme + host + port.
-     */
-    // XXXcaa this should probably be turned into an nsIURI.
-    // The system principal's origin should be some caps namespace
-    // with a chrome URI.  All of chrome should probably be the same.
-    readonly attribute string origin;
 
     /**
      * Returns whether the other principal is equal to or weaker than this
@@ -139,8 +133,48 @@ interface nsIPrincipal : nsISerializable
 
     /**
      * A Content Security Policy associated with this principal.
+     *
+     * Use this function to query the associated CSP with this principal.
      */
-    [noscript] attribute nsIContentSecurityPolicy csp;
+    [noscript] readonly attribute nsIContentSecurityPolicy csp;
+
+    /*
+     * Use this function to query a CSP associated with this principal.
+     * If no CSP is associated with this principal then one is created
+     * internally and setRequestContext is called on the CSP using aDocument.
+     *
+     * Please note if aDocument is null, then setRequestContext on the
+     * CSP object is called using the current principal.
+     */
+    [noscript] nsIContentSecurityPolicy ensureCSP(in nsIDOMDocument aDocument);
+
+    /**
+     * A speculative Content Security Policy associated with this
+     * principal. Set during speculative loading (preloading) and
+     * used *only* for preloads.
+     *
+     * If you want to query the CSP associated with that principal,
+     * then this is *not* what you want. Instead query 'csp'.
+     */
+    [noscript] readonly attribute nsIContentSecurityPolicy preloadCsp;
+
+    /*
+     * Use this function to query a speculative CSP associated with this
+     * principal. If no speculative CSP is associated with this principal
+     * then one is created internally and setRequestContext is called on
+     * the CSP using aDocument.
+     *
+     * Please note if aDocument is null, then setRequestContext on the
+     * speculative CSP object is called using the current principal.
+     */
+    [noscript] nsIContentSecurityPolicy ensurePreloadCSP(in nsIDOMDocument aDocument);
+
+    /**
+     * The CSP of the principal in JSON notation.
+     * Note, that the CSP itself is not exposed to JS, but script
+     * should be able to obtain a JSON representation of the CSP.
+     */
+    readonly attribute AString cspJSON;
 
     /**
      * Returns the jar prefix of the principal.
@@ -156,6 +190,55 @@ interface nsIPrincipal : nsISerializable
      * it might be crypto-hashed at some point.
      */
     readonly attribute AUTF8String jarPrefix;
+
+    /**
+     * A dictionary of the non-default origin attributes associated with this
+     * nsIPrincipal.
+     *
+     * Attributes are tokens that are taken into account when determining whether
+     * two principals are same-origin - if any attributes differ, the principals
+     * are cross-origin, even if the scheme, host, and port are the same.
+     * Attributes should also be considered for all security and bucketing decisions,
+     * even those which make non-standard comparisons (like cookies, which ignore
+     * scheme, or quotas, which ignore subdomains).
+     *
+     * If you're looking for an easy-to-use canonical stringification of the origin
+     * attributes, see |originSuffix| below.
+     */
+    [implicit_jscontext]
+    readonly attribute jsval originAttributes;
+
+    /**
+     * A canonical representation of the origin for this principal. This
+     * consists of a base string (which, for codebase principals, is of the
+     * format scheme://host:port), concatenated with |originAttributes| (see
+     * below).
+     *
+     * We maintain the invariant that principalA.equals(principalB) if and only
+     * if principalA.origin == principalB.origin.
+     */
+    readonly attribute ACString origin;
+
+    /**
+     * The base part of |origin| without the concatenation with |originSuffix|.
+     * This doesn't have the important invariants described above with |origin|,
+     * and as such should only be used for legacy situations.
+     */
+    readonly attribute ACString originNoSuffix;
+
+    /**
+     * A string of the form !key1=value1&key2=value2, where each pair represents
+     * an attribute with a non-default value. If all attributes have default
+     * values, this is the empty string.
+     *
+     * The value of .originSuffix is automatically serialized into .origin, so any
+     * consumers using that are automatically origin-attribute-aware. Consumers with
+     * special requirements must inspect and compare .originSuffix manually.
+     *
+     * originsuffix are intended to be a replacement for jarPrefix, which will
+     * eventually be removed.
+     */
+    readonly attribute AUTF8String originSuffix;
 
     /**
      * The base domain of the codebase URI to which this principal pertains
@@ -213,6 +296,13 @@ interface nsIPrincipal : nsISerializable
     [infallible] readonly attribute unsigned long appId;
 
     /**
+     * Gets the id of the user context this principal is inside.  If this
+     * principal is inside the default userContext, this returns
+     * nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID.
+     */
+    [infallible] readonly attribute unsigned long userContextId;
+
+    /**
      * Returns true iff the principal is inside a browser element.  (<iframe
      * mozbrowser mozapp> does not count as a browser element.)
      */
@@ -226,10 +316,25 @@ interface nsIPrincipal : nsISerializable
     [infallible] readonly attribute boolean unknownAppId;
 
     /**
-     * Returns true iff this principal is a null principal (corresponding to an
+     * Returns true iff this is a null principal (corresponding to an
      * unknown, hence assumed minimally privileged, security context).
      */
     [infallible] readonly attribute boolean isNullPrincipal;
+
+    /**
+     * Returns true iff this principal corresponds to a codebase origin.
+     */
+    [infallible] readonly attribute boolean isCodebasePrincipal;
+
+    /**
+     * Returns true iff this is an expanded principal.
+     */
+    [infallible] readonly attribute boolean isExpandedPrincipal;
+
+    /**
+     * Returns true iff this is the system principal.
+     */
+    [infallible] readonly attribute boolean isSystemPrincipal;
 
     /**
      * Returns true if this principal's origin is recognized as being on the

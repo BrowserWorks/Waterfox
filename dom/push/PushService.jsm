@@ -5,564 +5,479 @@
 
 "use strict";
 
-// Don't modify this, instead set dom.push.debug.
-let gDebuggingEnabled = true;
-
-function debug(s) {
-  if (gDebuggingEnabled)
-    dump("-*- PushService.jsm: " + s + "\n");
-}
-
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
+const {PushDB} = Cu.import("resource://gre/modules/PushDB.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/IndexedDBHelper.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
-Cu.importGlobalProperties(["indexedDB"]);
 
-XPCOMUtils.defineLazyServiceGetter(this, "gDNSService",
-                                   "@mozilla.org/network/dns-service;1",
-                                   "nsIDNSService");
+const {PushServiceWebSocket} = Cu.import("resource://gre/modules/PushServiceWebSocket.jsm");
+const {PushServiceHttp2} = Cu.import("resource://gre/modules/PushServiceHttp2.jsm");
+const {PushCrypto} = Cu.import("resource://gre/modules/PushCrypto.jsm");
+
+// Currently supported protocols: WebSocket.
+const CONNECTION_PROTOCOLS = [PushServiceWebSocket, PushServiceHttp2];
 
 XPCOMUtils.defineLazyModuleGetter(this, "AlarmService",
                                   "resource://gre/modules/AlarmService.jsm");
 
-#ifdef MOZ_B2G
-XPCOMUtils.defineLazyServiceGetter(this, "gPowerManagerService",
-                                   "@mozilla.org/power/powermanagerservice;1",
-                                   "nsIPowerManagerService");
-#endif
+XPCOMUtils.defineLazyServiceGetter(this, "gContentSecurityManager",
+                                   "@mozilla.org/contentsecuritymanager;1",
+                                   "nsIContentSecurityManager");
 
-var threadManager = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager);
+XPCOMUtils.defineLazyServiceGetter(this, "gPushNotifier",
+                                   "@mozilla.org/push/Notifier;1",
+                                   "nsIPushNotifier");
 
 this.EXPORTED_SYMBOLS = ["PushService"];
 
+XPCOMUtils.defineLazyGetter(this, "console", () => {
+  let {ConsoleAPI} = Cu.import("resource://gre/modules/Console.jsm", {});
+  return new ConsoleAPI({
+    maxLogLevelPref: "dom.push.loglevel",
+    prefix: "PushService",
+  });
+});
+
 const prefs = new Preferences("dom.push.");
-// Set debug first so that all debugging actually works.
-gDebuggingEnabled = prefs.get("debug");
 
-const kPUSHDB_DB_NAME = "pushapi";
-const kPUSHDB_DB_VERSION = 1; // Change this if the IndexedDB format changes
-const kPUSHDB_STORE_NAME = "pushapi";
+const PUSH_SERVICE_UNINIT = 0;
+const PUSH_SERVICE_INIT = 1; // No serverURI
+const PUSH_SERVICE_ACTIVATING = 2;//activating db
+const PUSH_SERVICE_CONNECTION_DISABLE = 3;
+const PUSH_SERVICE_ACTIVE_OFFLINE = 4;
+const PUSH_SERVICE_RUNNING = 5;
 
-const kUDP_WAKEUP_WS_STATUS_CODE = 4774;  // WebSocket Close status code sent
-                                          // by server to signal that it can
-                                          // wake client up using UDP.
-
-const kCHILD_PROCESS_MESSAGES = ["Push:Register", "Push:Unregister",
-                                 "Push:Registration"];
-
-const kWS_MAX_WENTDOWN = 2;
-
-// This is a singleton
-this.PushDB = function PushDB() {
-  debug("PushDB()");
-
-  // set the indexeddb database
-  this.initDBHelper(kPUSHDB_DB_NAME, kPUSHDB_DB_VERSION,
-                    [kPUSHDB_STORE_NAME]);
-};
-
-this.PushDB.prototype = {
-  __proto__: IndexedDBHelper.prototype,
-
-  upgradeSchema: function(aTransaction, aDb, aOldVersion, aNewVersion) {
-    debug("PushDB.upgradeSchema()");
-
-    let objectStore = aDb.createObjectStore(kPUSHDB_STORE_NAME,
-                                            { keyPath: "channelID" });
-
-    // index to fetch records based on endpoints. used by unregister
-    objectStore.createIndex("pushEndpoint", "pushEndpoint", { unique: true });
-
-    // index to fetch records per scope, so we can identify endpoints
-    // associated with an app.
-    objectStore.createIndex("scope", "scope", { unique: true });
-  },
-
-  /*
-   * @param aChannelRecord
-   *        The record to be added.
-   * @param aSuccessCb
-   *        Callback function to invoke with result ID.
-   * @param aErrorCb [optional]
-   *        Callback function to invoke when there was an error.
-   */
-  put: function(aChannelRecord, aSuccessCb, aErrorCb) {
-    debug("put()" + JSON.stringify(aChannelRecord));
-
-    this.newTxn(
-      "readwrite",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        debug("Going to put " + aChannelRecord.channelID);
-        aStore.put(aChannelRecord).onsuccess = function setTxnResult(aEvent) {
-          debug("Request successful. Updated record ID: " +
-                aEvent.target.result);
-        };
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  /*
-   * @param aChannelID
-   *        The ID of record to be deleted.
-   * @param aSuccessCb
-   *        Callback function to invoke with result.
-   * @param aErrorCb [optional]
-   *        Callback function to invoke when there was an error.
-   */
-  delete: function(aChannelID, aSuccessCb, aErrorCb) {
-    debug("delete()");
-
-    this.newTxn(
-      "readwrite",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        debug("Going to delete " + aChannelID);
-        aStore.delete(aChannelID);
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  clearAll: function clear(aSuccessCb, aErrorCb) {
-    this.newTxn(
-      "readwrite",
-      kPUSHDB_STORE_NAME,
-      function (aTxn, aStore) {
-        debug("Going to clear all!");
-        aStore.clear();
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  getByPushEndpoint: function(aPushEndpoint, aSuccessCb, aErrorCb) {
-    debug("getByPushEndpoint()");
-
-    this.newTxn(
-      "readonly",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        aTxn.result = undefined;
-
-        let index = aStore.index("pushEndpoint");
-        index.get(aPushEndpoint).onsuccess = function setTxnResult(aEvent) {
-          aTxn.result = aEvent.target.result;
-          debug("Fetch successful " + aEvent.target.result);
-        }
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  getByChannelID: function(aChannelID, aSuccessCb, aErrorCb) {
-    debug("getByChannelID()");
-
-    this.newTxn(
-      "readonly",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        aTxn.result = undefined;
-
-        aStore.get(aChannelID).onsuccess = function setTxnResult(aEvent) {
-          aTxn.result = aEvent.target.result;
-          debug("Fetch successful " + aEvent.target.result);
-        }
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-
-  getByScope: function(aScope, aSuccessCb, aErrorCb) {
-    debug("getByScope() " + aScope);
-
-    this.newTxn(
-      "readonly",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        aTxn.result = undefined;
-
-        let index = aStore.index("scope");
-        index.get(aScope).onsuccess = function setTxnResult(aEvent) {
-          aTxn.result = aEvent.target.result;
-          debug("Fetch successful " + aEvent.target.result);
-        }
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  getAllChannelIDs: function(aSuccessCb, aErrorCb) {
-    debug("getAllChannelIDs()");
-
-    this.newTxn(
-      "readonly",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        aStore.mozGetAll().onsuccess = function(event) {
-          aTxn.result = event.target.result;
-        }
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  },
-
-  drop: function(aSuccessCb, aErrorCb) {
-    debug("drop()");
-    this.newTxn(
-      "readwrite",
-      kPUSHDB_STORE_NAME,
-      function txnCb(aTxn, aStore) {
-        aStore.clear();
-      },
-      aSuccessCb,
-      aErrorCb
-    );
-  }
-};
+// Telemetry failure to send push notification to Service Worker reasons.
+// Key not found in local database.
+const kDROP_NOTIFICATION_REASON_KEY_NOT_FOUND = 0;
+// User cleared history.
+const kDROP_NOTIFICATION_REASON_NO_HISTORY = 1;
+// Version of message received not newer than previous one.
+const kDROP_NOTIFICATION_REASON_NO_VERSION_INCREMENT = 2;
+// Subscription has expired.
+const kDROP_NOTIFICATION_REASON_EXPIRED = 3;
 
 /**
- * A proxy between the PushService and the WebSocket. The listener is used so
- * that the PushService can silence messages from the WebSocket by setting
- * PushWebSocketListener._pushService to null. This is required because
- * a WebSocket can continue to send messages or errors after it has been
- * closed but the PushService may not be interested in these. It's easier to
- * stop listening than to have checks at specific points.
- */
-this.PushWebSocketListener = function(pushService) {
-  this._pushService = pushService;
-}
+ * State is change only in couple of functions:
+ *   init - change state to PUSH_SERVICE_INIT if state was PUSH_SERVICE_UNINIT
+ *   changeServerURL - change state to PUSH_SERVICE_ACTIVATING if serverURL
+ *                     present or PUSH_SERVICE_INIT if not present.
+ *   changeStateConnectionEnabledEvent - it is call on pref change or during
+ *                                       the service activation and it can
+ *                                       change state to
+ *                                       PUSH_SERVICE_CONNECTION_DISABLE
+ *   changeStateOfflineEvent - it is called when offline state changes or during
+ *                             the service activation and it change state to
+ *                             PUSH_SERVICE_ACTIVE_OFFLINE or
+ *                             PUSH_SERVICE_RUNNING.
+ *   uninit - change state to PUSH_SERVICE_UNINIT.
+ **/
 
-this.PushWebSocketListener.prototype = {
-  onStart: function(context) {
-    if (!this._pushService)
-        return;
-    this._pushService._wsOnStart(context);
-  },
-
-  onStop: function(context, statusCode) {
-    if (!this._pushService)
-        return;
-    this._pushService._wsOnStop(context, statusCode);
-  },
-
-  onAcknowledge: function(context, size) {
-    // EMPTY
-  },
-
-  onBinaryMessageAvailable: function(context, message) {
-    // EMPTY
-  },
-
-  onMessageAvailable: function(context, message) {
-    if (!this._pushService)
-        return;
-    this._pushService._wsOnMessageAvailable(context, message);
-  },
-
-  onServerClose: function(context, aStatusCode, aReason) {
-    if (!this._pushService)
-        return;
-    this._pushService._wsOnServerClose(context, aStatusCode, aReason);
-  }
-}
-
-// websocket states
-// websocket is off
-const STATE_SHUT_DOWN = 0;
-// Websocket has been opened on client side, waiting for successful open.
-// (_wsOnStart)
-const STATE_WAITING_FOR_WS_START = 1;
-// Websocket opened, hello sent, waiting for server reply (_handleHelloReply).
-const STATE_WAITING_FOR_HELLO = 2;
-// Websocket operational, handshake completed, begin protocol messaging.
-const STATE_READY = 3;
+// This is for starting and stopping service.
+const STARTING_SERVICE_EVENT = 0;
+const CHANGING_SERVICE_EVENT = 1;
+const STOPPING_SERVICE_EVENT = 2;
+const UNINIT_EVENT = 3;
 
 /**
- * The implementation of the SimplePush system. This runs in the B2G parent
- * process and is started on boot. It uses WebSockets to communicate with the
- * server and PushDB (IndexedDB) for persistence.
+ * The implementation of the push system. It uses WebSockets
+ * (PushServiceWebSocket) to communicate with the server and PushDB (IndexedDB)
+ * for persistence.
  */
 this.PushService = {
+  _service: null,
+  _state: PUSH_SERVICE_UNINIT,
+  _db: null,
+  _options: null,
+  _alarmID: null,
+  _visibleNotifications: new Map(),
+
+  // Callback that is called after attempting to
+  // reduce the quota for a record. Used for testing purposes.
+  _updateQuotaTestCallback: null,
+
+  // When serverURI changes (this is used for testing), db is cleaned up and a
+  // a new db is started. This events must be sequential.
+  _stateChangeProcessQueue: null,
+  _stateChangeProcessEnqueue: function(op) {
+    if (!this._stateChangeProcessQueue) {
+      this._stateChangeProcessQueue = Promise.resolve();
+    }
+
+    this._stateChangeProcessQueue = this._stateChangeProcessQueue
+                                    .then(op)
+                                    .catch(_ => {});
+  },
+
+  // Pending request. If a worker try to register for the same scope again, do
+  // not send a new registration request. Therefore we need queue of pending
+  // register requests. This is the list of scopes which pending registration.
+  _pendingRegisterRequest: {},
+  _notifyActivated: null,
+  _activated: null,
+  _checkActivated: function() {
+    if (this._state < PUSH_SERVICE_ACTIVATING) {
+      return Promise.reject(new Error("Push service not active"));
+    } else if (this._state > PUSH_SERVICE_ACTIVATING) {
+      return Promise.resolve();
+    } else {
+      return (this._activated) ? this._activated :
+                                 this._activated = new Promise((res, rej) =>
+                                   this._notifyActivated = {resolve: res,
+                                                            reject: rej});
+    }
+  },
+
+  _makePendingKey: function(aPageRecord) {
+    return aPageRecord.scope + "|" + aPageRecord.originAttributes;
+  },
+
+  _lookupOrPutPendingRequest: function(aPageRecord) {
+    let key = this._makePendingKey(aPageRecord);
+    if (this._pendingRegisterRequest[key]) {
+      return this._pendingRegisterRequest[key];
+    }
+
+    return this._pendingRegisterRequest[key] = this._registerWithServer(aPageRecord);
+  },
+
+  _deletePendingRequest: function(aPageRecord) {
+    let key = this._makePendingKey(aPageRecord);
+    if (this._pendingRegisterRequest[key]) {
+      delete this._pendingRegisterRequest[key];
+    }
+  },
+
+  _setState: function(aNewState) {
+    console.debug("setState()", "new state", aNewState, "old state", this._state);
+
+    if (this._state == aNewState) {
+      return;
+    }
+
+    if (this._state == PUSH_SERVICE_ACTIVATING) {
+      // It is not important what is the new state as soon as we leave
+      // PUSH_SERVICE_ACTIVATING
+      this._state = aNewState;
+      if (this._notifyActivated) {
+        if (aNewState < PUSH_SERVICE_ACTIVATING) {
+          this._notifyActivated.reject(new Error("Push service not active"));
+        } else {
+          this._notifyActivated.resolve();
+        }
+      }
+      this._notifyActivated = null;
+      this._activated = null;
+    }
+    this._state = aNewState;
+  },
+
+  _changeStateOfflineEvent: function(offline, calledFromConnEnabledEvent) {
+    console.debug("changeStateOfflineEvent()", offline);
+
+    if (this._state < PUSH_SERVICE_ACTIVE_OFFLINE &&
+        this._state != PUSH_SERVICE_ACTIVATING &&
+        !calledFromConnEnabledEvent) {
+      return;
+    }
+
+    if (offline) {
+      if (this._state == PUSH_SERVICE_RUNNING) {
+        this._service.disconnect();
+      }
+      this._setState(PUSH_SERVICE_ACTIVE_OFFLINE);
+    } else {
+      if (this._state == PUSH_SERVICE_RUNNING) {
+        // PushService was not in the offline state, but got notification to
+        // go online (a offline notification has not been sent).
+        // Disconnect first.
+        this._service.disconnect();
+      }
+      this._db.getAllUnexpired()
+        .then(records => {
+          if (records.length > 0) {
+            // if there are request waiting
+            this._service.connect(records);
+          }
+        });
+      this._setState(PUSH_SERVICE_RUNNING);
+    }
+  },
+
+  _changeStateConnectionEnabledEvent: function(enabled) {
+    console.debug("changeStateConnectionEnabledEvent()", enabled);
+
+    if (this._state < PUSH_SERVICE_CONNECTION_DISABLE &&
+        this._state != PUSH_SERVICE_ACTIVATING) {
+      return;
+    }
+
+    if (enabled) {
+      this._changeStateOfflineEvent(Services.io.offline, true);
+    } else {
+      if (this._state == PUSH_SERVICE_RUNNING) {
+        this._service.disconnect();
+      }
+      this._setState(PUSH_SERVICE_CONNECTION_DISABLE);
+    }
+  },
+
   observe: function observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       /*
-       * We need to call uninit() on shutdown to clean up things that modules aren't very good
-       * at automatically cleaning up, so we don't get shutdown leaks on browser shutdown.
+       * We need to call uninit() on shutdown to clean up things that modules
+       * aren't very good at automatically cleaning up, so we don't get shutdown
+       * leaks on browser shutdown.
        */
       case "xpcom-shutdown":
         this.uninit();
         break;
       case "network-active-changed":         /* On B2G. */
       case "network:offline-status-changed": /* On desktop. */
-        // In case of network-active-changed, always disconnect existing
-        // connections. In case of offline-status changing from offline to
-        // online, it is likely that these statements will be no-ops.
-        if (this._udpServer) {
-          this._udpServer.close();
-          // Set to null since this is checked in _listenForUDPWakeup()
-          this._udpServer = null;
-        }
-
-        this._shutdownWS();
-
-        // Try to connect if network-active-changed or the offline-status
-        // changed to online.
-        if (aTopic === "network-active-changed" || aData === "online") {
-          this._startListeningIfChannelsPresent();
-        }
+        this._stateChangeProcessEnqueue(_ =>
+          this._changeStateOfflineEvent(aData === "offline", false)
+        );
         break;
+
       case "nsPref:changed":
         if (aData == "dom.push.serverURL") {
-          debug("dom.push.serverURL changed! websocket. new value " +
+          console.debug("observe: dom.push.serverURL changed for websocket",
                 prefs.get("serverURL"));
-          this._shutdownWS();
+          this._stateChangeProcessEnqueue(_ =>
+            this._changeServerURL(prefs.get("serverURL"),
+                                  CHANGING_SERVICE_EVENT)
+          );
+
         } else if (aData == "dom.push.connection.enabled") {
-          if (prefs.get("connection.enabled")) {
-            this._startListeningIfChannelsPresent();
-          } else {
-            this._shutdownWS();
-          }
-        } else if (aData == "dom.push.debug") {
-          gDebuggingEnabled = prefs.get("debug");
+          this._stateChangeProcessEnqueue(_ =>
+            this._changeStateConnectionEnabledEvent(prefs.get("connection.enabled"))
+          );
         }
         break;
-      case "timer-callback":
-        if (aSubject == this._requestTimeoutTimer) {
-          if (Object.keys(this._pendingRequests).length == 0) {
-            this._requestTimeoutTimer.cancel();
-          }
 
-          // Set to true if at least one request timed out.
-          let requestTimedOut = false;
-          for (let channelID in this._pendingRequests) {
-            let duration = Date.now() - this._pendingRequests[channelID].ctime;
-
-            // If any of the registration requests time out, all the ones after it
-            // also made to fail, since we are going to be disconnecting the socket.
-            if (requestTimedOut || duration > this._requestTimeout) {
-              debug("Request timeout: Removing " + channelID);
-              requestTimedOut = true;
-              this._pendingRequests[channelID]
-                .deferred.reject({status: 0, error: "TimeoutError"});
-
-              delete this._pendingRequests[channelID];
-              for (let i = this._requestQueue.length - 1; i >= 0; --i) {
-                let [, data] = this._requestQueue[i];
-                if (data && data.channelID == channelID) {
-                  this._requestQueue.splice(i, 1);
-                }
-              }
-            }
-          }
-
-          // The most likely reason for a registration request timing out is
-          // that the socket has disconnected. Best to reconnect.
-          if (requestTimedOut) {
-            this._shutdownWS();
-            this._reconnectAfterBackoff();
-          }
-        }
+      case "idle-daily":
+        this._dropExpiredRegistrations();
         break;
-      case "webapps-clear-data":
-        debug("webapps-clear-data");
 
-        let data = aSubject.QueryInterface(Ci.mozIApplicationClearPrivateDataParams);
-        if (!data) {
-          debug("webapps-clear-data: Failed to get information about application");
-          return;
-        }
+      case "perm-changed":
+        this._onPermissionChange(aSubject, aData).catch(error => {
+          console.error("onPermissionChange: Error updating registrations:",
+            error);
+        })
+        break;
 
-        // TODO 1149274.  We should support site permissions as well as a way to go from manifest
-        // url to 'all scopes registered for push in this app'
-        let appsService = Cc["@mozilla.org/AppsService;1"]
-                            .getService(Ci.nsIAppsService);
-        let scope = appsService.getScopeByLocalId(data.appId);
-        if (!scope) {
-          debug("webapps-clear-data: No scope found for " + data.appId);
-          return;
-        }
-
-        this._db.getByScope(scope, function(record) {
-          this._db.delete(records.channelID, null, function() {
-              debug("webapps-clear-data: " + scope +
-                    " Could not delete entry " + records.channelID);
-
-            // courtesy, but don't establish a connection
-            // just for it
-            if (this._ws) {
-              debug("Had a connection, so telling the server");
-              this._send("unregister", {channelID: records.channelID});
-            }
-          }.bind(this), function() {
-            debug("webapps-clear-data: Error in getByScope(" + scope + ")");
-          });
+      case "clear-origin-data":
+        this._clearOriginData(aData).catch(error => {
+          console.error("clearOriginData: Error clearing origin data:", error);
         });
-
         break;
     }
   },
 
-  get _UAID() {
-    return prefs.get("userAgentID");
+  _clearOriginData: function(data) {
+    console.log("clearOriginData()");
+
+    if (!data) {
+      return Promise.resolve();
+    }
+
+    let pattern = JSON.parse(data);
+    return this._db.clearIf(record => {
+      if (!record.matchesOriginAttributes(pattern)) {
+        return false;
+      }
+      this._backgroundUnregister(record);
+      return true;
+    });
   },
 
-  set _UAID(newID) {
-    if (typeof(newID) !== "string") {
-      debug("Got invalid, non-string UAID " + newID +
-            ". Not updating userAgentID");
+  /**
+   * Sends an unregister request to the server in the background. If the
+   * service is not connected, this function is a no-op.
+   *
+   * @param {PushRecord} record The record to unregister.
+   */
+  _backgroundUnregister: function(record) {
+    console.debug("backgroundUnregister()");
+
+    if (!this._service.isConnected() || !record) {
       return;
     }
-    debug("New _UAID: " + newID);
-    prefs.set("userAgentID", newID);
+
+    console.debug("backgroundUnregister: Notifying server", record);
+    this._sendUnregister(record).catch(e => {
+      console.error("backgroundUnregister: Error notifying server", e);
+    });
   },
 
-  // keeps requests buffered if the websocket disconnects or is not connected
-  _requestQueue: [],
-  _ws: null,
-  _pendingRequests: {},
-  _currentState: STATE_SHUT_DOWN,
-  _requestTimeout: 0,
-  _requestTimeoutTimer: null,
-  _retryFailCount: 0,
-
-  /**
-   * According to the WS spec, servers should immediately close the underlying
-   * TCP connection after they close a WebSocket. This causes wsOnStop to be
-   * called with error NS_BASE_STREAM_CLOSED. Since the client has to keep the
-   * WebSocket up, it should try to reconnect. But if the server closes the
-   * WebSocket because it will wake up the client via UDP, then the client
-   * shouldn't re-establish the connection. If the server says that it will
-   * wake up the client over UDP, this is set to true in wsOnServerClose. It is
-   * checked in wsOnStop.
-   */
-  _willBeWokenUpByUDP: false,
-
-  /**
-   * Holds if the adaptive ping is enabled. This is read on init().
-   * If adaptive ping is enabled, a new ping is calculed each time we receive
-   * a pong message, trying to maximize network resources while minimizing
-   * cellular signalling storms.
-   */
-  _adaptiveEnabled: false,
-
-  /**
-   * This saves a flag about if we need to recalculate a new ping, based on:
-   *   1) the gap between the maximum working ping and the first ping that
-   *      gives an error (timeout) OR
-   *   2) we have reached the pref of the maximum value we allow for a ping
-   *      (dom.push.adaptive.upperLimit)
-   */
-  _recalculatePing: true,
-
-  /**
-   * This map holds a (pingInterval, triedTimes) of each pingInterval tried.
-   * It is used to check if the pingInterval has been tested enough to know that
-   * is incorrect and is above the limit the network allow us to keep the
-   * connection open.
-   */
-  _pingIntervalRetryTimes: {},
-
-  /**
-   * Holds the lastGoodPingInterval for our current connection.
-   */
-  _lastGoodPingInterval: 0,
-
-  /**
-   * Maximum ping interval that we can reach.
-   */
-  _upperLimit: 0,
-
-  /**
-   * Count the times WebSocket goes down without receiving Pings
-   * so we can re-enable the ping recalculation algorithm
-   */
-  _wsWentDownCounter: 0,
-
-  /**
-   * Sends a message to the Push Server through an open websocket.
-   * typeof(msg) shall be an object
-   */
-  _wsSendMessage: function(msg) {
-    if (!this._ws) {
-      debug("No WebSocket initialized. Cannot send a message.");
-      return;
+  // utility function used to add/remove observers in startObservers() and
+  // stopObservers()
+  getNetworkStateChangeEventName: function() {
+    try {
+      Cc["@mozilla.org/network/manager;1"].getService(Ci.nsINetworkManager);
+      return "network-active-changed";
+    } catch (e) {
+      return "network:offline-status-changed";
     }
-    msg = JSON.stringify(msg);
-    debug("Sending message: " + msg);
-    this._ws.sendMsg(msg);
   },
 
+  _findService: function(serverURL) {
+    console.debug("findService()");
+
+    let uri;
+    let service;
+
+    if (!serverURL) {
+      console.warn("findService: No dom.push.serverURL found");
+      return [];
+    }
+
+    try {
+      uri = Services.io.newURI(serverURL, null, null);
+    } catch (e) {
+      console.warn("findService: Error creating valid URI from",
+        "dom.push.serverURL", serverURL);
+      return [];
+    }
+
+    if (!gContentSecurityManager.isURIPotentiallyTrustworthy(uri)) {
+      console.warn("findService: Untrusted server URI", uri.spec);
+      return [];
+    }
+
+    for (let connProtocol of CONNECTION_PROTOCOLS) {
+      if (connProtocol.validServerURI(uri)) {
+        service = connProtocol;
+        break;
+      }
+    }
+    return [service, uri];
+  },
+
+  _changeServerURL: function(serverURI, event) {
+    console.debug("changeServerURL()");
+
+    switch(event) {
+      case UNINIT_EVENT:
+        return this._stopService(event);
+
+      case STARTING_SERVICE_EVENT:
+      {
+        let [service, uri] = this._findService(serverURI);
+        if (!service) {
+          this._setState(PUSH_SERVICE_INIT);
+          return Promise.resolve();
+        }
+        return this._startService(service, uri)
+          .then(_ => this._stateChangeProcessEnqueue(_ =>
+            this._changeStateConnectionEnabledEvent(prefs.get("connection.enabled")))
+          );
+      }
+      case CHANGING_SERVICE_EVENT:
+        let [service, uri] = this._findService(serverURI);
+        if (service) {
+          if (this._state == PUSH_SERVICE_INIT) {
+            this._setState(PUSH_SERVICE_ACTIVATING);
+            // The service has not been running - start it.
+            return this._startService(service, uri)
+              .then(_ => this._stateChangeProcessEnqueue(_ =>
+                this._changeStateConnectionEnabledEvent(prefs.get("connection.enabled")))
+              );
+
+          } else {
+            this._setState(PUSH_SERVICE_ACTIVATING);
+            // If we already had running service - stop service, start the new
+            // one and check connection.enabled and offline state(offline state
+            // check is called in changeStateConnectionEnabledEvent function)
+            return this._stopService(CHANGING_SERVICE_EVENT)
+              .then(_ =>
+                 this._startService(service, uri)
+              )
+              .then(_ => this._stateChangeProcessEnqueue(_ =>
+                this._changeStateConnectionEnabledEvent(prefs.get("connection.enabled")))
+              );
+
+          }
+        } else {
+          if (this._state == PUSH_SERVICE_INIT) {
+            return Promise.resolve();
+
+          } else {
+            // The new serverUri is empty or misconfigured - stop service.
+            this._setState(PUSH_SERVICE_INIT);
+            return this._stopService(STOPPING_SERVICE_EVENT);
+          }
+        }
+    }
+  },
+
+  /**
+   * PushService initialization is divided into 4 parts:
+   * init() - start listening for xpcom-shutdown and serverURL changes.
+   *          state is change to PUSH_SERVICE_INIT
+   * startService() - if serverURL is present this function is called. It starts
+   *                  listening for broadcasted messages, starts db and
+   *                  PushService connection (WebSocket).
+   *                  state is change to PUSH_SERVICE_ACTIVATING.
+   * startObservers() - start other observers.
+   * changeStateConnectionEnabledEvent  - checks prefs and offline state.
+   *                                      It changes state to:
+   *                                        PUSH_SERVICE_RUNNING,
+   *                                        PUSH_SERVICE_ACTIVE_OFFLINE or
+   *                                        PUSH_SERVICE_CONNECTION_DISABLE.
+   */
   init: function(options = {}) {
-    debug("init()");
-    if (this._started) {
+    console.debug("init()");
+
+    if (this._state > PUSH_SERVICE_UNINIT) {
       return;
     }
 
-    // Override the backing store for testing.
-    this._db = options.db;
-    if (!this._db) {
-      this._db = new PushDB();
-    }
-
-    // Override the default WebSocket factory function. The returned object
-    // must be null or satisfy the nsIWebSocketChannel interface. Used by
-    // the tests to provide a mock WebSocket implementation.
-    if (options.makeWebSocket) {
-      this._makeWebSocket = options.makeWebSocket;
-    }
-
-    // Override the default UDP socket factory function. The returned object
-    // must be null or satisfy the nsIUDPSocket interface. Used by the
-    // UDP tests.
-    if (options.makeUDPSocket) {
-      this._makeUDPSocket = options.makeUDPSocket;
-    }
-
-    this._networkInfo = options.networkInfo;
-    if (!this._networkInfo) {
-      this._networkInfo = PushNetworkInfo;
-    }
-
-    var globalMM = Cc["@mozilla.org/globalmessagemanager;1"]
-               .getService(Ci.nsIFrameScriptLoader);
-
-    globalMM.loadFrameScript("chrome://global/content/PushServiceChildPreload.js", true);
-
-    let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
-                 .getService(Ci.nsIMessageBroadcaster);
-
-    kCHILD_PROCESS_MESSAGES.forEach(function addMessage(msgName) {
-        ppmm.addMessageListener(msgName, this);
-    }.bind(this));
-
-    this._alarmID = null;
-
-    this._requestTimeout = prefs.get("requestTimeout");
-    this._adaptiveEnabled = prefs.get('adaptive.enabled');
-    this._upperLimit = prefs.get('adaptive.upperLimit');
-
-    this._startListeningIfChannelsPresent();
+    this._setState(PUSH_SERVICE_ACTIVATING);
 
     Services.obs.addObserver(this, "xpcom-shutdown", false);
-    Services.obs.addObserver(this, "webapps-clear-data", false);
+
+    if (options.serverURI) {
+      // this is use for xpcshell test.
+
+      let [service, uri] = this._findService(options.serverURI);
+      if (!service) {
+        this._setState(PUSH_SERVICE_INIT);
+        return;
+      }
+
+      // Start service.
+      this._startService(service, uri, options).then(_ => {
+        // Before completing the activation check prefs. This will first check
+        // connection.enabled pref and then check offline state.
+        this._changeStateConnectionEnabledEvent(prefs.get("connection.enabled"));
+      });
+
+    } else {
+      // This is only used for testing. Different tests require connecting to
+      // slightly different URLs.
+      prefs.observe("serverURL", this);
+
+      this._stateChangeProcessEnqueue(_ =>
+        this._changeServerURL(prefs.get("serverURL"), STARTING_SERVICE_EVENT));
+    }
+  },
+
+  _startObservers: function() {
+    console.debug("startObservers()");
+
+    if (this._state != PUSH_SERVICE_ACTIVATING) {
+      return;
+    }
+
+    Services.obs.addObserver(this, "clear-origin-data", false);
 
     // On B2G the NetworkManager interface fires a network-active-changed
     // event.
@@ -572,8 +487,8 @@ this.PushService = {
     // network, and not care about all interface changes.
     // network-active-changed is not fired when the network goes offline, but
     // socket connections time out. The check for Services.io.offline in
-    // _beginWSSetup() prevents unnecessary retries.  When the network comes
-    // back online, network-active-changed is fired.
+    // PushServiceWebSocket._beginWSSetup() prevents unnecessary retries.  When
+    // the network comes back online, network-active-changed is fired.
     //
     // On non-B2G platforms, the offline-status-changed event is used to know
     // when to (dis)connect. It may not fire if the underlying OS changes
@@ -582,387 +497,123 @@ this.PushService = {
     // On B2G both events fire, one after the other, when the network goes
     // online, so we explicitly check for the presence of NetworkManager and
     // don't add an observer for offline-status-changed on B2G.
-    this._networkStateChangeEventName = this._networkInfo.getNetworkStateChangeEventName();
+    this._networkStateChangeEventName = this.getNetworkStateChangeEventName();
     Services.obs.addObserver(this, this._networkStateChangeEventName, false);
 
-    // This is only used for testing. Different tests require connecting to
-    // slightly different URLs.
-    prefs.observe("serverURL", this);
     // Used to monitor if the user wishes to disable Push.
     prefs.observe("connection.enabled", this);
-    // Debugging
-    prefs.observe("debug", this);
 
-    this._started = true;
+    // Prunes expired registrations and notifies dormant service workers.
+    Services.obs.addObserver(this, "idle-daily", false);
+
+    // Prunes registrations for sites for which the user revokes push
+    // permissions.
+    Services.obs.addObserver(this, "perm-changed", false);
   },
 
-  _shutdownWS: function() {
-    debug("shutdownWS()");
-    this._currentState = STATE_SHUT_DOWN;
-    this._willBeWokenUpByUDP = false;
+  _startService: function(service, serverURI, options = {}) {
+    console.debug("startService()");
 
-    if (this._wsListener)
-      this._wsListener._pushService = null;
-    try {
-        this._ws.close(0, null);
-    } catch (e) {}
-    this._ws = null;
+    if (this._state != PUSH_SERVICE_ACTIVATING) {
+      return Promise.reject();
+    }
 
-    this._waitingForPong = false;
-    this._stopAlarm();
-    this._cancelPendingRequests();
+    this._service = service;
+
+    this._db = options.db;
+    if (!this._db) {
+      this._db = this._service.newPushDB();
+    }
+
+    return this._service.init(options, this, serverURI)
+      .then(() => {
+        this._startObservers();
+        return this._dropExpiredRegistrations();
+      });
+  },
+
+  /**
+   * PushService uninitialization is divided into 3 parts:
+   * stopObservers() - stot observers started in startObservers.
+   * stopService() - It stops listening for broadcasted messages, stops db and
+   *                 PushService connection (WebSocket).
+   *                 state is changed to PUSH_SERVICE_INIT.
+   * uninit() - stop listening for xpcom-shutdown and serverURL changes.
+   *            state is change to PUSH_SERVICE_UNINIT
+   */
+  _stopService: function(event) {
+    console.debug("stopService()");
+
+    if (this._state < PUSH_SERVICE_ACTIVATING) {
+      return;
+    }
+
+    this.stopAlarm();
+    this._stopObservers();
+
+    this._service.disconnect();
+    this._service.uninit();
+    this._service = null;
+    this.stopAlarm();
+
+    if (!this._db) {
+      return Promise.resolve();
+    }
+    if (event == UNINIT_EVENT) {
+      // If it is uninitialized just close db.
+      this._db.close();
+      this._db = null;
+      return Promise.resolve();
+    }
+
+    return this.dropUnexpiredRegistrations()
+       .then(_ => {
+         this._db.close();
+         this._db = null;
+       }, err => {
+         this._db.close();
+         this._db = null;
+       });
+  },
+
+  _stopObservers: function() {
+    console.debug("stopObservers()");
+
+    if (this._state < PUSH_SERVICE_ACTIVATING) {
+      return;
+    }
+
+    prefs.ignore("connection.enabled", this);
+
+    Services.obs.removeObserver(this, this._networkStateChangeEventName);
+    Services.obs.removeObserver(this, "clear-origin-data");
+    Services.obs.removeObserver(this, "idle-daily");
+    Services.obs.removeObserver(this, "perm-changed");
   },
 
   uninit: function() {
-    if (!this._started)
+    console.debug("uninit()");
+
+    if (this._state == PUSH_SERVICE_UNINIT) {
       return;
+    }
 
-    debug("uninit()");
+    this._setState(PUSH_SERVICE_UNINIT);
 
-    prefs.ignore("debug", this);
-    prefs.ignore("connection.enabled", this);
     prefs.ignore("serverURL", this);
-    Services.obs.removeObserver(this, this._networkStateChangeEventName);
-    Services.obs.removeObserver(this, "webapps-clear-data", false);
-    Services.obs.removeObserver(this, "xpcom-shutdown", false);
+    Services.obs.removeObserver(this, "xpcom-shutdown");
 
-    if (this._db) {
-      this._db.close();
-      this._db = null;
-    }
-
-    if (this._udpServer) {
-      this._udpServer.close();
-      this._udpServer = null;
-    }
-
-    // All pending requests (ideally none) are dropped at this point. We
-    // shouldn't have any applications performing registration/unregistration
-    // or receiving notifications.
-    this._shutdownWS();
-
-    // At this point, profile-change-net-teardown has already fired, so the
-    // WebSocket has been closed with NS_ERROR_ABORT (if it was up) and will
-    // try to reconnect. Stop the timer.
-    this._stopAlarm();
-
-    if (this._requestTimeoutTimer) {
-      this._requestTimeoutTimer.cancel();
-    }
-
-    this._started = false;
-    debug("shutdown complete!");
-  },
-
-  /**
-   * How retries work:  The goal is to ensure websocket is always up on
-   * networks not supporting UDP. So the websocket should only be shutdown if
-   * onServerClose indicates UDP wakeup.  If WS is closed due to socket error,
-   * _reconnectAfterBackoff() is called.  The retry alarm is started and when
-   * it times out, beginWSSetup() is called again.
-   *
-   * On a successful connection, the alarm is cancelled in
-   * wsOnMessageAvailable() when the ping alarm is started.
-   *
-   * If we are in the middle of a timeout (i.e. waiting), but
-   * a register/unregister is called, we don't want to wait around anymore.
-   * _sendRequest will automatically call beginWSSetup(), which will cancel the
-   * timer. In addition since the state will have changed, even if a pending
-   * timer event comes in (because the timer fired the event before it was
-   * cancelled), so the connection won't be reset.
-   */
-  _reconnectAfterBackoff: function() {
-    debug("reconnectAfterBackoff()");
-    //Calculate new ping interval
-    this._calculateAdaptivePing(true /* wsWentDown */);
-
-    // Calculate new timeout, but cap it to pingInterval.
-    let retryTimeout = prefs.get("retryBaseInterval") *
-                       Math.pow(2, this._retryFailCount);
-    retryTimeout = Math.min(retryTimeout, prefs.get("pingInterval"));
-
-    this._retryFailCount++;
-
-    debug("Retry in " + retryTimeout + " Try number " + this._retryFailCount);
-    this._setAlarm(retryTimeout);
-  },
-
-  /**
-   * We need to calculate a new ping based on:
-   *  1) Latest good ping
-   *  2) A safe gap between 1) and the calculated new ping (which is
-   *  by default, 1 minute)
-   *
-   * This is for 3G networks, whose connections keepalives differ broadly,
-   * for example:
-   *  1) Movistar Spain: 29 minutes
-   *  2) VIVO Brazil: 5 minutes
-   *  3) Movistar Colombia: XXX minutes
-   *
-   * So a fixed ping is not good for us for two reasons:
-   *  1) We might lose the connection, so we need to reconnect again (wasting
-   *  resources)
-   *  2) We use a lot of network signaling just for pinging.
-   *
-   * This algorithm tries to search the best value between a disconnection and a
-   * valid ping, to ensure better battery life and network resources usage.
-   *
-   * The value is saved in dom.push.pingInterval
-   * @param wsWentDown [Boolean] if the WebSocket was closed or it is still alive
-   *
-   */
-  _calculateAdaptivePing: function(wsWentDown) {
-    debug('_calculateAdaptivePing()');
-    if (!this._adaptiveEnabled) {
-      debug('Adaptive ping is disabled');
-      return;
-    }
-
-    if (this._retryFailCount > 0) {
-      debug('Push has failed to connect to the Push Server ' +
-        this._retryFailCount + ' times. ' +
-        'Do not calculate a new pingInterval now');
-      return;
-    }
-
-    if (!wsWentDown) {
-      debug('Setting websocket down counter to 0');
-      this._wsWentDownCounter = 0;
-    }
-
-    if (!this._recalculatePing && !wsWentDown) {
-      debug('We do not need to recalculate the ping now, based on previous data');
-      return;
-    }
-
-    // Save actual state of the network
-    let ns = this._networkInfo.getNetworkInformation();
-
-    if (ns.ip) {
-      // mobile
-      debug('mobile');
-      let oldNetwork = prefs.get('adaptive.mobile');
-      let newNetwork = 'mobile-' + ns.mcc + '-' + ns.mnc;
-
-      // Mobile networks differ, reset all intervals and pings
-      if (oldNetwork !== newNetwork) {
-        // Network differ, reset all values
-        debug('Mobile networks differ. Old network is ' + oldNetwork +
-              ' and new is ' + newNetwork);
-        prefs.set('adaptive.mobile', newNetwork);
-        //We reset the upper bound member
-        this._recalculatePing = true;
-        this._pingIntervalRetryTimes = {};
-
-        // Put default values
-        let defaultPing = prefs.get('pingInterval.default');
-        prefs.set('pingInterval', defaultPing);
-        this._lastGoodPingInterval = defaultPing;
-
-      } else {
-        // Mobile network is the same, let's just update things
-        prefs.set('pingInterval', prefs.get('pingInterval.mobile'));
-        this._lastGoodPingInterval = prefs.get('adaptive.lastGoodPingInterval.mobile');
-      }
-
-    } else {
-      // wifi
-      debug('wifi');
-      prefs.set('pingInterval', prefs.get('pingInterval.wifi'));
-      this._lastGoodPingInterval = prefs.get('adaptive.lastGoodPingInterval.wifi');
-    }
-
-    let nextPingInterval;
-    let lastTriedPingInterval = prefs.get('pingInterval');
-
-    if (!this._recalculatePing && wsWentDown) {
-      debug('Websocket disconnected without ping adaptative algorithm running');
-      this._wsWentDownCounter++;
-      if (this._wsWentDownCounter > kWS_MAX_WENTDOWN) {
-        debug('Too many disconnects. Reenabling ping adaptative algoritm');
-        this._wsWentDownCounter = 0;
-        this._recalculatePing = true;
-        this._lastGoodPingInterval = Math.floor(lastTriedPingInterval / 2);
-        nextPingInterval = this._lastGoodPingInterval;
-        prefs.set('pingInterval', nextPingInterval);
-        this._save(ns, nextPingInterval);
-        return;
-      }
-
-      debug('We do not need to recalculate the ping, based on previous data');
-    }
-
-    if (wsWentDown) {
-      debug('The WebSocket was disconnected, calculating next ping');
-
-      // If we have not tried this pingInterval yet, initialize
-      this._pingIntervalRetryTimes[lastTriedPingInterval] =
-           (this._pingIntervalRetryTimes[lastTriedPingInterval] || 0) + 1;
-
-       // Try the pingInterval at least 3 times, just to be sure that the
-       // calculated interval is not valid.
-       if (this._pingIntervalRetryTimes[lastTriedPingInterval] < 2) {
-         debug('pingInterval= ' + lastTriedPingInterval + ' tried only ' +
-           this._pingIntervalRetryTimes[lastTriedPingInterval] + ' times');
-         return;
-       }
-
-       // Latest ping was invalid, we need to lower the limit to limit / 2
-       nextPingInterval = Math.floor(lastTriedPingInterval / 2);
-
-      // If the new ping interval is close to the last good one, we are near
-      // optimum, so stop calculating.
-      if (nextPingInterval - this._lastGoodPingInterval < prefs.get('adaptive.gap')) {
-        debug('We have reached the gap, we have finished the calculation');
-        debug('nextPingInterval=' + nextPingInterval);
-        debug('lastGoodPing=' + this._lastGoodPingInterval);
-        nextPingInterval = this._lastGoodPingInterval;
-        this._recalculatePing = false;
-      } else {
-        debug('We need to calculate next time');
-        this._recalculatePing = true;
-      }
-
-    } else {
-      debug('The WebSocket is still up');
-      this._lastGoodPingInterval = lastTriedPingInterval;
-      nextPingInterval = Math.floor(lastTriedPingInterval * 1.5);
-    }
-
-    // Check if we have reached the upper limit
-    if (this._upperLimit < nextPingInterval) {
-      debug('Next ping will be bigger than the configured upper limit, capping interval');
-      this._recalculatePing = false;
-      this._lastGoodPingInterval = lastTriedPingInterval;
-      nextPingInterval = lastTriedPingInterval;
-    }
-
-    debug('Setting the pingInterval to ' + nextPingInterval);
-    prefs.set('pingInterval', nextPingInterval);
-
-    this._save(ns, nextPingInterval);
-  },
-
-  _save: function(ns, nextPingInterval){
-    //Save values for our current network
-    if (ns.ip) {
-      prefs.set('pingInterval.mobile', nextPingInterval);
-      prefs.set('adaptive.lastGoodPingInterval.mobile', this._lastGoodPingInterval);
-    } else {
-      prefs.set('pingInterval.wifi', nextPingInterval);
-      prefs.set('adaptive.lastGoodPingInterval.wifi', this._lastGoodPingInterval);
-    }
-  },
-
-  _getServerURI: function() {
-    let serverURL = prefs.get("serverURL");
-    if (!serverURL) {
-      debug("No dom.push.serverURL found!");
-      return;
-    }
-
-    let uri;
-    try {
-      uri = Services.io.newURI(serverURL, null, null);
-    } catch(e) {
-      debug("Error creating valid URI from dom.push.serverURL (" +
-            serverURL + ")");
-      return;
-    }
-    return uri;
-  },
-
-  _makeWebSocket: function(uri) {
-    if (!prefs.get("connection.enabled")) {
-      debug("_makeWebSocket: connection.enabled is not set to true. Aborting.");
-      return null;
-    }
-
-    if (Services.io.offline) {
-      debug("Network is offline.");
-      return null;
-    }
-
-    let socket;
-    if (uri.scheme === "wss") {
-      socket = Cc["@mozilla.org/network/protocol;1?name=wss"]
-                 .createInstance(Ci.nsIWebSocketChannel);
-    }
-    else if (uri.scheme === "ws") {
-      if (uri.host != "localhost") {
-        debug("Push over an insecure connection (ws://) is not allowed!");
-        return null;
-      }
-      socket = Cc["@mozilla.org/network/protocol;1?name=ws"]
-                 .createInstance(Ci.nsIWebSocketChannel);
-    }
-    else {
-      debug("Unsupported websocket scheme " + uri.scheme);
-      return null;
-    }
-
-    socket.initLoadInfo(null, // aLoadingNode
-                        Services.scriptSecurityManager.getSystemPrincipal(),
-                        null, // aTriggeringPrincipal
-                        Ci.nsILoadInfo.SEC_NORMAL,
-                        Ci.nsIContentPolicy.TYPE_WEBSOCKET);
-
-    return socket;
-  },
-
-  _beginWSSetup: function() {
-    debug("beginWSSetup()");
-    if (this._currentState != STATE_SHUT_DOWN) {
-      debug("_beginWSSetup: Not in shutdown state! Current state " +
-            this._currentState);
-      return;
-    }
-
-    // Stop any pending reconnects scheduled for the near future.
-    this._stopAlarm();
-
-    let uri = this._getServerURI();
-    if (!uri) {
-      return;
-    }
-    let socket = this._makeWebSocket(uri);
-    if (!socket) {
-      return;
-    }
-    this._ws = socket.QueryInterface(Ci.nsIWebSocketChannel);
-
-    debug("serverURL: " + uri.spec);
-    this._wsListener = new PushWebSocketListener(this);
-    this._ws.protocol = "push-notification";
-
-    try {
-      // Grab a wakelock before we open the socket to ensure we don't go to sleep
-      // before connection the is opened.
-      this._ws.asyncOpen(uri, uri.spec, this._wsListener, null);
-      this._acquireWakeLock();
-      this._currentState = STATE_WAITING_FOR_WS_START;
-    } catch(e) {
-      debug("Error opening websocket. asyncOpen failed!");
-      this._shutdownWS();
-      this._reconnectAfterBackoff();
-    }
-  },
-
-  _startListeningIfChannelsPresent: function() {
-    // Check to see if we need to do anything.
-    if (this._requestQueue.length > 0) {
-      this._beginWSSetup();
-      return;
-    }
-    this._db.getAllChannelIDs(function(channelIDs) {
-      if (channelIDs.length > 0) {
-        this._beginWSSetup();
-      }
-    }.bind(this));
+    this._stateChangeProcessEnqueue(_ =>
+            this._changeServerURL("", UNINIT_EVENT));
+    console.debug("uninit: shutdown complete!");
   },
 
   /** |delay| should be in milliseconds. */
-  _setAlarm: function(delay) {
+  setAlarm: function(delay) {
+    if (this._state <= PUSH_SERVICE_ACTIVATING) {
+      return;
+    }
+
     // Bug 909270: Since calls to AlarmService.add() are async, calls must be
     // 'queued' to ensure only one alarm is ever active.
     if (this._settingAlarm) {
@@ -974,7 +625,7 @@ this.PushService = {
     }
 
     // Stop any existing alarm.
-    this._stopAlarm();
+    this.stopAlarm();
 
     this._settingAlarm = true;
     AlarmService.add(
@@ -982,598 +633,444 @@ this.PushService = {
         date: new Date(Date.now() + delay),
         ignoreTimezone: true
       },
-      this._onAlarmFired.bind(this),
-      function onSuccess(alarmID) {
+      () => {
+        if (this._state > PUSH_SERVICE_ACTIVATING) {
+          this._service.onAlarmFired();
+        }
+      }, (alarmID) => {
         this._alarmID = alarmID;
-        debug("Set alarm " + delay + " in the future " + this._alarmID);
+        console.debug("setAlarm: Set alarm", delay, "in the future",
+          this._alarmID);
         this._settingAlarm = false;
 
         if (this._waitingForAlarmSet) {
           this._waitingForAlarmSet = false;
-          this._setAlarm(this._queuedAlarmDelay);
+          this.setAlarm(this._queuedAlarmDelay);
         }
-      }.bind(this)
-    )
+      }
+    );
   },
 
-  _stopAlarm: function() {
+  stopAlarm: function() {
     if (this._alarmID !== null) {
-      debug("Stopped existing alarm " + this._alarmID);
+      console.debug("stopAlarm: Stopped existing alarm", this._alarmID);
       AlarmService.remove(this._alarmID);
       this._alarmID = null;
     }
   },
 
   /**
-   * There is only one alarm active at any time. This alarm has 3 intervals
-   * corresponding to 3 tasks.
+   * Drops all active registrations and notifies the associated service
+   * workers. This function is called when the user switches Push servers,
+   * or when the server invalidates all existing registrations.
    *
-   * 1) Reconnect on ping timeout.
-   *    If we haven't received any messages from the server by the time this
-   *    alarm fires, the connection is closed and PushService tries to
-   *    reconnect, repurposing the alarm for (3).
-   *
-   * 2) Send a ping.
-   *    The protocol sends a ping ({}) on the wire every pingInterval ms. Once
-   *    it sends the ping, the alarm goes to task (1) which is waiting for
-   *    a pong. If data is received after the ping is sent,
-   *    _wsOnMessageAvailable() will reset the ping alarm (which cancels
-   *    waiting for the pong). So as long as the connection is fine, pong alarm
-   *    never fires.
-   *
-   * 3) Reconnect after backoff.
-   *    The alarm is set by _reconnectAfterBackoff() and increases in duration
-   *    every time we try and fail to connect.  When it triggers, websocket
-   *    setup begins again. On successful socket setup, the socket starts
-   *    receiving messages. The alarm now goes to (2) where it monitors the
-   *    WebSocket by sending a ping.  Since incoming data is a sign of the
-   *    connection being up, the ping alarm is reset every time data is
-   *    received.
+   * We ignore expired registrations because they're already handled in other
+   * code paths. Registrations that expired after exceeding their quotas are
+   * evicted at startup, or on the next `idle-daily` event. Registrations that
+   * expired because the user revoked the notification permission are evicted
+   * once the permission is reinstated.
    */
-  _onAlarmFired: function() {
-    // Conditions are arranged in decreasing specificity.
-    // i.e. when _waitingForPong is true, other conditions are also true.
-    if (this._waitingForPong) {
-      debug("Did not receive pong in time. Reconnecting WebSocket.");
-      this._shutdownWS();
-      this._reconnectAfterBackoff();
-    }
-    else if (this._currentState == STATE_READY) {
-      // Send a ping.
-      // Bypass the queue; we don't want this to be kept pending.
-      // Watch out for exception in case the socket has disconnected.
-      // When this happens, we pretend the ping was sent and don't specially
-      // handle the exception, as the lack of a pong will lead to the socket
-      // being reset.
-      try {
-        this._wsSendMessage({});
-      } catch (e) {
+  dropUnexpiredRegistrations: function() {
+    let subscriptionChanges = [];
+    return this._db.clearIf(record => {
+      if (record.isExpired()) {
+        return false;
       }
-
-      this._waitingForPong = true;
-      this._setAlarm(prefs.get("requestTimeout"));
-    }
-    else if (this._alarmID !== null) {
-      debug("reconnect alarm fired.");
-      // Reconnect after back-off.
-      // The check for a non-null _alarmID prevents a situation where the alarm
-      // fires, but _shutdownWS() is called from another code-path (e.g.
-      // network state change) and we don't want to reconnect.
-      //
-      // It also handles the case where _beginWSSetup() is called from another
-      // code-path.
-      //
-      // alarmID will be non-null only when no shutdown/connect is
-      // called between _reconnectAfterBackoff() setting the alarm and the
-      // alarm firing.
-
-      // Websocket is shut down. Backoff interval expired, try to connect.
-      this._beginWSSetup();
-    }
-  },
-
-  _acquireWakeLock: function() {
-#ifdef MOZ_B2G
-    // Disable the wake lock on non-B2G platforms to work around bug 1154492.
-    if (!this._socketWakeLock) {
-      debug("Acquiring Socket Wakelock");
-      this._socketWakeLock = gPowerManagerService.newWakeLock("cpu");
-    }
-    if (!this._socketWakeLockTimer) {
-      debug("Creating Socket WakeLock Timer");
-      this._socketWakeLockTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-    }
-
-    debug("Setting Socket WakeLock Timer");
-    this._socketWakeLockTimer
-      .initWithCallback(this._releaseWakeLock.bind(this),
-                        // Allow the same time for socket setup as we do for
-                        // requests after the setup. Fudge it a bit since
-                        // timers can be a little off and we don't want to go
-                        // to sleep just as the socket connected.
-                        this._requestTimeout + 1000,
-                        Ci.nsITimer.TYPE_ONE_SHOT);
-#endif
-  },
-
-  _releaseWakeLock: function() {
-#ifdef MOZ_B2G
-    debug("Releasing Socket WakeLock");
-    if (this._socketWakeLockTimer) {
-      this._socketWakeLockTimer.cancel();
-    }
-    if (this._socketWakeLock) {
-      this._socketWakeLock.unlock();
-      this._socketWakeLock = null;
-    }
-#endif
-  },
-
-  /**
-   * Protocol handler invoked by server message.
-   */
-  _handleHelloReply: function(reply) {
-    debug("handleHelloReply()");
-    if (this._currentState != STATE_WAITING_FOR_HELLO) {
-      debug("Unexpected state " + this._currentState +
-            "(expected STATE_WAITING_FOR_HELLO)");
-      this._shutdownWS();
-      return;
-    }
-
-    if (typeof reply.uaid !== "string") {
-      debug("No UAID received or non string UAID received");
-      this._shutdownWS();
-      return;
-    }
-
-    if (reply.uaid === "") {
-      debug("Empty UAID received!");
-      this._shutdownWS();
-      return;
-    }
-
-    // To avoid sticking extra large values sent by an evil server into prefs.
-    if (reply.uaid.length > 128) {
-      debug("UAID received from server was too long: " +
-            reply.uaid);
-      this._shutdownWS();
-      return;
-    }
-
-    function finishHandshake() {
-      this._UAID = reply.uaid;
-      this._currentState = STATE_READY;
-      this._processNextRequestInQueue();
-    }
-
-    // By this point we've got a UAID from the server that we are ready to
-    // accept.
-    //
-    // If we already had a valid UAID before, we have to ask apps to
-    // re-register.
-    if (this._UAID && this._UAID != reply.uaid) {
-      debug("got new UAID: all re-register");
-
-      this._notifyAllAppsRegister()
-          .then(this._dropRegistration.bind(this))
-          .then(finishHandshake.bind(this));
-
-      return;
-    }
-
-    // otherwise we are good to go
-    finishHandshake.bind(this)();
-  },
-
-  /**
-   * Protocol handler invoked by server message.
-   */
-  _handleRegisterReply: function(reply) {
-    debug("handleRegisterReply()");
-    if (typeof reply.channelID !== "string" ||
-        typeof this._pendingRequests[reply.channelID] !== "object")
-      return;
-
-    let tmp = this._pendingRequests[reply.channelID];
-    delete this._pendingRequests[reply.channelID];
-    if (Object.keys(this._pendingRequests).length == 0 &&
-        this._requestTimeoutTimer)
-      this._requestTimeoutTimer.cancel();
-
-    if (reply.status == 200) {
-      tmp.deferred.resolve(reply);
-    } else {
-      tmp.deferred.reject(reply);
-    }
-  },
-
-  /**
-   * Protocol handler invoked by server message.
-   */
-  _handleNotificationReply: function(reply) {
-    debug("handleNotificationReply()");
-    if (typeof reply.updates !== 'object') {
-      debug("No 'updates' field in response. Type = " + typeof reply.updates);
-      return;
-    }
-
-    debug("Reply updates: " + reply.updates.length);
-    for (let i = 0; i < reply.updates.length; i++) {
-      let update = reply.updates[i];
-      debug("Update: " + update.channelID + ": " + update.version);
-      if (typeof update.channelID !== "string") {
-        debug("Invalid update literal at index " + i);
-        continue;
-      }
-
-      if (update.version === undefined) {
-        debug("update.version does not exist");
-        continue;
-      }
-
-      let version = update.version;
-
-      if (typeof version === "string") {
-        version = parseInt(version, 10);
-      }
-
-      if (typeof version === "number" && version >= 0) {
-        // FIXME(nsm): this relies on app update notification being infallible!
-        // eventually fix this
-        this._receivedUpdate(update.channelID, version);
-        this._sendAck(update.channelID, version);
-      }
-    }
-  },
-
-  // FIXME(nsm): batch acks for efficiency reasons.
-  _sendAck: function(channelID, version) {
-    debug("sendAck()");
-    this._send('ack', {
-      updates: [{channelID: channelID, version: version}]
+      subscriptionChanges.push(record);
+      return true;
+    }).then(() => {
+      this.notifySubscriptionChanges(subscriptionChanges);
     });
   },
 
-  /*
-   * Must be used only by request/response style calls over the websocket.
+  _notifySubscriptionChangeObservers: function(record) {
+    if (!record) {
+      return;
+    }
+
+    Services.telemetry.getHistogramById("PUSH_API_NOTIFY_REGISTRATION_LOST").add();
+    gPushNotifier.notifySubscriptionChange(record.scope, record.principal);
+  },
+
+  /**
+   * Drops a registration and notifies the associated service worker. If the
+   * registration does not exist, this function is a no-op.
+   *
+   * @param {String} keyID The registration ID to remove.
+   * @returns {Promise} Resolves once the worker has been notified.
    */
-  _sendRequest: function(action, data) {
-    debug("sendRequest() " + action);
-    if (typeof data.channelID !== "string") {
-      debug("Received non-string channelID");
-      return Promise.reject({error: "Received non-string channelID"});
-    }
-
-    if (Object.keys(this._pendingRequests).length == 0) {
-      // start the timer since we now have at least one request
-      if (!this._requestTimeoutTimer)
-        this._requestTimeoutTimer = Cc["@mozilla.org/timer;1"]
-                                      .createInstance(Ci.nsITimer);
-      this._requestTimeoutTimer.init(this,
-                                     this._requestTimeout,
-                                     Ci.nsITimer.TYPE_REPEATING_SLACK);
-    }
-
-    let deferred;
-    let request = this._pendingRequests[data.channelID];
-    if (request) {
-      // If a request is already pending for this channel ID, assume it's a
-      // retry. Use the existing deferred, but update the send time and re-send
-      // the request.
-      deferred = request.deferred;
-    } else {
-      deferred = Promise.defer();
-      request = this._pendingRequests[data.channelID] = {deferred};
-    }
-    request.ctime = Date.now();
-
-    this._send(action, data);
-    return deferred.promise;
+  dropRegistrationAndNotifyApp: function(aKeyID) {
+    return this._db.delete(aKeyID)
+      .then(record => this._notifySubscriptionChangeObservers(record));
   },
 
-  _send: function(action, data) {
-    debug("send()");
-    this._requestQueue.push([action, data]);
-    debug("Queued " + action);
-    this._processNextRequestInQueue();
+  /**
+   * Replaces an existing registration and notifies the associated service
+   * worker.
+   *
+   * @param {String} aOldKey The registration ID to replace.
+   * @param {PushRecord} aNewRecord The new record.
+   * @returns {Promise} Resolves once the worker has been notified.
+   */
+  updateRegistrationAndNotifyApp: function(aOldKey, aNewRecord) {
+    return this.updateRecordAndNotifyApp(aOldKey, _ => aNewRecord);
+  },
+  /**
+   * Updates a registration and notifies the associated service worker.
+   *
+   * @param {String} keyID The registration ID to update.
+   * @param {Function} updateFunc Returns the updated record.
+   * @returns {Promise} Resolves with the updated record once the worker
+   *  has been notified.
+   */
+  updateRecordAndNotifyApp: function(aKeyID, aUpdateFunc) {
+    return this._db.update(aKeyID, aUpdateFunc)
+      .then(record => {
+        this._notifySubscriptionChangeObservers(record);
+        return record;
+      });
   },
 
-  _processNextRequestInQueue: function() {
-    debug("_processNextRequestInQueue()");
-
-    if (this._requestQueue.length == 0) {
-      debug("Request queue empty");
-      return;
-    }
-
-    if (this._currentState != STATE_READY) {
-      if (!this._started) {
-        // The component hasn't been initialized yet. Return early; init()
-        // will dequeue all pending requests.
-        return;
-      }
-      if (!this._ws) {
-        // This will end up calling processNextRequestInQueue().
-        this._beginWSSetup();
-      }
-      else {
-        // We have a socket open so we are just waiting for hello to finish.
-        // That will call processNextRequestInQueue().
-      }
-      return;
-    }
-
-    let [action, data] = this._requestQueue.shift();
-    data.messageType = action;
-    if (!this._ws) {
-      // If our websocket is not ready and our state is STATE_READY we may as
-      // well give up all assumptions about the world and start from scratch
-      // again.  Discard the message itself, let the timeout notify error to
-      // the app.
-      debug("This should never happen!");
-      this._shutdownWS();
-    }
-
-    this._wsSendMessage(data);
-    // Process the next one as soon as possible.
-    setTimeout(this._processNextRequestInQueue.bind(this), 0);
-  },
-
-  _receivedUpdate: function(aChannelID, aLatestVersion) {
-    debug("Updating: " + aChannelID + " -> " + aLatestVersion);
-
-    let compareRecordVersionAndNotify = function(aPushRecord) {
-      debug("compareRecordVersionAndNotify()");
-      if (!aPushRecord) {
-        debug("No record for channel ID " + aChannelID);
-        return;
-      }
-
-      if (aPushRecord.version == null ||
-          aPushRecord.version < aLatestVersion) {
-        debug("Version changed, notifying app and updating DB");
-        aPushRecord.version = aLatestVersion;
-        aPushRecord.pushCount = aPushRecord.pushCount + 1;
-        aPushRecord.lastPush = new Date().getTime();
-        this._notifyApp(aPushRecord);
-        this._updatePushRecord(aPushRecord)
-          .then(
-            null,
-            function(e) {
-              debug("Error updating push record");
-            }
-          );
-      }
-      else {
-        debug("No significant version change: " + aLatestVersion);
-      }
-    }
-
-    let recoverNoSuchChannelID = function(aChannelIDFromServer) {
-      debug("Could not get channelID " + aChannelIDFromServer + " from DB");
-    }
-
-    this._db.getByChannelID(aChannelID,
-                            compareRecordVersionAndNotify.bind(this),
-                            recoverNoSuchChannelID.bind(this));
-  },
-
-  // Fires a push-register system message to all applications that have
-  // registration.
-  _notifyAllAppsRegister: function() {
-    debug("notifyAllAppsRegister()");
-    return new Promise((resolve, reject) => {
-      // records are objects describing the registration as stored in IndexedDB.
-      this._db.getAllChannelIDs(records => {
-        let scopes = new Set();
-        for (let record of records) {
-          scopes.add(record.scope);
-        }
-        let globalMM = Cc['@mozilla.org/globalmessagemanager;1'].getService(Ci.nsIMessageListenerManager);
-        for (let scope of scopes) {
-          // Notify XPCOM observers.
-          Services.obs.notifyObservers(
-            null,
-            "push-subscription-change",
-            scope
-          );
-          globalMM.broadcastAsyncMessage('pushsubscriptionchanged', scope);
-        }
-        resolve();
-      }, reject);
+  notifySubscriptionChanges: function(records) {
+    records.forEach(record => {
+      this._notifySubscriptionChangeObservers(record);
     });
   },
 
-  _notifyApp: function(aPushRecord) {
-    if (!aPushRecord || !aPushRecord.scope) {
-      debug("notifyApp() something is undefined.  Dropping notification: "
-        + JSON.stringify(aPushRecord) );
-      return;
+  ensureCrypto: function(record) {
+    if (record.authenticationSecret &&
+        record.p256dhPublicKey &&
+        record.p256dhPrivateKey) {
+      return Promise.resolve(record);
     }
 
-    debug("notifyApp() " + aPushRecord.scope);
-    let scopeURI = Services.io.newURI(aPushRecord.scope, null, null);
-    // Notify XPCOM observers.
-    let notification = Cc["@mozilla.org/push/ObserverNotification;1"]
-                         .createInstance(Ci.nsIPushObserverNotification);
-    notification.pushEndpoint = aPushRecord.pushEndpoint;
-    notification.version = aPushRecord.version;
-    notification.data = "";
-    notification.lastPush = aPushRecord.lastPush;
-    notification.pushCount = aPushRecord.pushCount;
+    let keygen = Promise.resolve([]);
+    if (!record.p256dhPublicKey || !record.p256dhPrivateKey) {
+      keygen = PushCrypto.generateKeys();
+    }
+    // We do not have a encryption key. so we need to generate it. This
+    // is only going to happen on db upgrade from version 4 to higher.
+    return keygen
+      .then(([pubKey, privKey]) => {
+        return this.updateRecordAndNotifyApp(record.keyID, record => {
+          if (!record.p256dhPublicKey || !record.p256dhPrivateKey) {
+            record.p256dhPublicKey = pubKey;
+            record.p256dhPrivateKey = privKey;
+          }
+          if (!record.authenticationSecret) {
+            record.authenticationSecret = PushCrypto.generateAuthenticationSecret();
+          }
+          return record;
+        });
+      }, error => {
+        return this.dropRegistrationAndNotifyApp(record.keyID).then(
+          () => Promise.reject(error));
+      });
+  },
 
-    Services.obs.notifyObservers(
-      notification,
-      "push-notification",
-      aPushRecord.scope
-    );
+  _recordDidNotNotify: function(reason) {
+    Services.telemetry.
+      getHistogramById("PUSH_API_NOTIFICATION_RECEIVED_BUT_DID_NOT_NOTIFY").
+      add(reason);
+  },
+
+  /**
+   * Dispatches an incoming message to a service worker, recalculating the
+   * quota for the associated push registration. If the quota is exceeded,
+   * the registration and message will be dropped, and the worker will not
+   * be notified.
+   *
+   * @param {String} keyID The push registration ID.
+   * @param {String} message The message contents.
+   * @param {Object} cryptoParams The message encryption settings.
+   * @param {Function} updateFunc A function that receives the existing
+   *  registration record as its argument, and returns a new record. If the
+   *  function returns `null` or `undefined`, the record will not be updated.
+   *  `PushServiceWebSocket` uses this to drop incoming updates with older
+   *  versions.
+   */
+  receivedPushMessage: function(keyID, message, cryptoParams, updateFunc) {
+    console.debug("receivedPushMessage()");
+    Services.telemetry.getHistogramById("PUSH_API_NOTIFICATION_RECEIVED").add();
+
+    let shouldNotify = false;
+    return this.getByKeyID(keyID).then(record => {
+      if (!record) {
+        this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_KEY_NOT_FOUND);
+        throw new Error("No record for key ID " + keyID);
+      }
+      return record.getLastVisit();
+    }).then(lastVisit => {
+      // As a special case, don't notify the service worker if the user
+      // cleared their history.
+      shouldNotify = isFinite(lastVisit);
+      if (!shouldNotify) {
+          this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_NO_HISTORY);
+      }
+      return this._db.update(keyID, record => {
+        let newRecord = updateFunc(record);
+        if (!newRecord) {
+          this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_NO_VERSION_INCREMENT);
+          return null;
+        }
+        // Because `unregister` is advisory only, we can still receive messages
+        // for stale Simple Push registrations from the server. To work around
+        // this, we check if the record has expired before *and* after updating
+        // the quota.
+        if (newRecord.isExpired()) {
+          console.error("receivedPushMessage: Ignoring update for expired key ID",
+            keyID);
+          return null;
+        }
+        newRecord.receivedPush(lastVisit);
+        return newRecord;
+      });
+    }).then(record => {
+      var notified = false;
+      if (!record) {
+        return notified;
+      }
+      let decodedPromise;
+      if (cryptoParams) {
+        decodedPromise = PushCrypto.decodeMsg(
+          message,
+          record.p256dhPrivateKey,
+          record.p256dhPublicKey,
+          cryptoParams.dh,
+          cryptoParams.salt,
+          cryptoParams.rs,
+          cryptoParams.auth ? record.authenticationSecret : null
+        );
+      } else {
+        decodedPromise = Promise.resolve(null);
+      }
+      return decodedPromise.then(message => {
+        if (shouldNotify) {
+          notified = this._notifyApp(record, message);
+        }
+        // Update quota after the delay, at which point
+        // we check for visible notifications.
+        setTimeout(() => this._updateQuota(keyID),
+          prefs.get("quotaUpdateDelay"));
+        return notified;
+      }, error => {
+        console.error("receivedPushMessage: Error decrypting message", error);
+      });
+    }).catch(error => {
+      console.error("receivedPushMessage: Error notifying app", error);
+    });
+  },
+
+  _updateQuota: function(keyID) {
+    console.debug("updateQuota()");
+
+    this._db.update(keyID, record => {
+      // Record may have expired from an earlier quota update.
+      if (record.isExpired()) {
+        console.debug(
+          "updateQuota: Trying to update quota for expired record", record);
+        return null;
+      }
+      // If there are visible notifications, don't apply the quota penalty
+      // for the message.
+      if (record.uri && !this._visibleNotifications.has(record.uri.prePath)) {
+        record.reduceQuota();
+      }
+      return record;
+    }).then(record => {
+      if (record && record.isExpired()) {
+        this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_EXPIRED);
+        // Drop the registration in the background. If the user returns to the
+        // site, the service worker will be notified on the next `idle-daily`
+        // event.
+        this._backgroundUnregister(record);
+      }
+      if (this._updateQuotaTestCallback) {
+        // Callback so that test may be notified when the quota update is complete.
+        this._updateQuotaTestCallback();
+      }
+    }).catch(error => {
+      console.debug("updateQuota: Error while trying to update quota", error);
+    });
+  },
+
+  notificationForOriginShown(origin) {
+    console.debug("notificationForOriginShown()", origin);
+    let count;
+    if (this._visibleNotifications.has(origin)) {
+      count = this._visibleNotifications.get(origin);
+    } else {
+      count = 0;
+    }
+    this._visibleNotifications.set(origin, count + 1);
+  },
+
+  notificationForOriginClosed(origin) {
+    console.debug("notificationForOriginClosed()", origin);
+    let count;
+    if (this._visibleNotifications.has(origin)) {
+      count = this._visibleNotifications.get(origin);
+    } else {
+      console.debug("notificationForOriginClosed: closing notification that has not been shown?");
+      return;
+    }
+    if (count > 1) {
+      this._visibleNotifications.set(origin, count - 1);
+    } else {
+      this._visibleNotifications.delete(origin);
+    }
+  },
+
+  _notifyApp: function(aPushRecord, message) {
+    if (!aPushRecord || !aPushRecord.scope ||
+        aPushRecord.originAttributes === undefined) {
+      console.error("notifyApp: Invalid record", aPushRecord);
+      return false;
+    }
+
+    console.debug("notifyApp()", aPushRecord.scope);
 
     // If permission has been revoked, trash the message.
-    if(Services.perms.testExactPermission(scopeURI, "push") != Ci.nsIPermissionManager.ALLOW_ACTION) {
-      debug("Does not have permission for push.")
-      return;
+    if (!aPushRecord.hasPermission()) {
+      console.warn("notifyApp: Missing push permission", aPushRecord);
+      return false;
     }
 
-    // TODO data.
-    let data = {
-      payload: "Short as life is, we make it still shorter by the careless waste of time.",
-      scope: aPushRecord.scope
-    };
+    let payload = ArrayBuffer.isView(message) ?
+                  new Uint8Array(message.buffer) : message;
 
-    let globalMM = Cc['@mozilla.org/globalmessagemanager;1']
-                 .getService(Ci.nsIMessageListenerManager);
-    globalMM.broadcastAsyncMessage('push', data);
-  },
-
-  _updatePushRecord: function(aPushRecord) {
-    debug("updatePushRecord()");
-    let deferred = Promise.defer();
-    this._db.put(aPushRecord, deferred.resolve, deferred.reject);
-    return deferred.promise;
-  },
-
-  _dropRegistration: function() {
-    let deferred = Promise.defer();
-    this._db.drop(deferred.resolve, deferred.reject);
-    return deferred.promise;
-  },
-
-  receiveMessage: function(aMessage) {
-    debug("receiveMessage(): " + aMessage.name);
-
-    if (kCHILD_PROCESS_MESSAGES.indexOf(aMessage.name) == -1) {
-      debug("Invalid message from child " + aMessage.name);
-      return;
+    if (aPushRecord.quotaApplies()) {
+      // Don't record telemetry for chrome push messages.
+      Services.telemetry.getHistogramById("PUSH_API_NOTIFY").add();
     }
 
-    let mm = aMessage.target.QueryInterface(Ci.nsIMessageSender);
-    let json = aMessage.data;
-    this[aMessage.name.slice("Push:".length).toLowerCase()](json, mm);
+    if (payload) {
+      gPushNotifier.notifyPushWithData(aPushRecord.scope,
+                                       aPushRecord.principal,
+                                       payload.length, payload);
+    } else {
+      gPushNotifier.notifyPush(aPushRecord.scope, aPushRecord.principal);
+    }
+
+    return true;
+  },
+
+  getByKeyID: function(aKeyID) {
+    return this._db.getByKeyID(aKeyID);
+  },
+
+  getAllUnexpired: function() {
+    return this._db.getAllUnexpired();
+  },
+
+  _sendRequest: function(action, aRecord) {
+    if (this._state == PUSH_SERVICE_CONNECTION_DISABLE) {
+      return Promise.reject(new Error("Push service disabled"));
+    } else if (this._state == PUSH_SERVICE_ACTIVE_OFFLINE) {
+      if (this._service.serviceType() == "WebSocket" && action == "unregister") {
+        return Promise.resolve();
+      }
+      return Promise.reject(new Error("Push service offline"));
+    }
+    return this._service.request(action, aRecord);
   },
 
   /**
    * Called on message from the child process. aPageRecord is an object sent by
    * navigator.push, identifying the sending page and other fields.
    */
-  _registerWithServer: function(channelID, aPageRecord) {
-    debug("registerWithServer()");
+  _registerWithServer: function(aPageRecord) {
+    console.debug("registerWithServer()", aPageRecord);
 
-    return this._sendRequest("register", {channelID: channelID})
-      .then(
-        this._onRegisterSuccess.bind(this, aPageRecord, channelID),
-        this._onRegisterError.bind(this)
-      );
+    Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_ATTEMPT").add();
+    return this._sendRequest("register", aPageRecord)
+      .then(record => this._onRegisterSuccess(record),
+            err => this._onRegisterError(err))
+      .then(record => {
+        this._deletePendingRequest(aPageRecord);
+        return record.toSubscription();
+      }, err => {
+        this._deletePendingRequest(aPageRecord);
+        throw err;
+     });
   },
 
-  _generateID: function() {
-    let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
-                          .getService(Ci.nsIUUIDGenerator);
-    // generateUUID() gives a UUID surrounded by {...}, slice them off.
-    return uuidGenerator.generateUUID().toString().slice(1, -1);
-  },
-
-  _register: function(aPageRecord) {
-    let recordPromise = new Promise((resolve, reject) =>
-      this._db.getByScope(aPageRecord.scope, resolve, reject));
-
-    return recordPromise.then(
-      pushRecord => {
-        if (pushRecord == null) {
-          let channelID = this._generateID();
-          return this._registerWithServer(channelID, aPageRecord);
-        }
-        return pushRecord;
-      },
-      error => {
-        debug("getByScope failed");
-        throw "Database error";
-      }
-    );
-  },
-
-  register: function(aPageRecord, aMessageManager) {
-    debug("register(): " + JSON.stringify(aPageRecord));
-
-    this._register(aPageRecord).then(
-      function(aPageRecord, aMessageManager, pushRecord) {
-        let message = {
-          requestID: aPageRecord.requestID,
-          pushEndpoint: pushRecord.pushEndpoint
-        };
-        aMessageManager.sendAsyncMessage("PushService:Register:OK", message);
-      }.bind(this, aPageRecord, aMessageManager),
-      function(error) {
-        let message = {
-          requestID: aPageRecord.requestID,
-          error
-        };
-        aMessageManager.sendAsyncMessage("PushService:Register:KO", message);
-      }
-    );
+  _sendUnregister: function(aRecord) {
+    Services.telemetry.getHistogramById("PUSH_API_UNSUBSCRIBE_ATTEMPT").add();
+    return this._sendRequest("unregister", aRecord).then(function(v) {
+      Services.telemetry.getHistogramById("PUSH_API_UNSUBSCRIBE_SUCCEEDED").add();
+      return v;
+    }).catch(function(e) {
+      Services.telemetry.getHistogramById("PUSH_API_UNSUBSCRIBE_FAILED").add();
+      return Promise.reject(e);
+    });
   },
 
   /**
    * Exceptions thrown in _onRegisterSuccess are caught by the promise obtained
-   * from _sendRequest, causing the promise to be rejected instead.
+   * from _service.request, causing the promise to be rejected instead.
    */
-  _onRegisterSuccess: function(aPageRecord, generatedChannelID, data) {
-    debug("_onRegisterSuccess()");
+  _onRegisterSuccess: function(aRecord) {
+    console.debug("_onRegisterSuccess()");
 
-    if (typeof data.channelID !== "string") {
-      debug("Invalid channelID " + data.channelID);
-      throw "Invalid channelID received";
-    }
-    else if (data.channelID != generatedChannelID) {
-      debug("Server replied with different channelID " + data.channelID +
-            " than what UA generated " + generatedChannelID);
-      throw "Server sent 200 status code but different channelID";
-    }
-
-    try {
-      Services.io.newURI(data.pushEndpoint, null, null);
-    }
-    catch (e) {
-      debug("Invalid pushEndpoint " + data.pushEndpoint);
-      throw "Invalid pushEndpoint " + data.pushEndpoint;
-    }
-
-    let record = {
-      channelID: data.channelID,
-      pushEndpoint: data.pushEndpoint,
-      pageURL: aPageRecord.pageURL,
-      scope: aPageRecord.scope,
-      pushCount: 0,
-      lastPush: 0,
-      version: null
-    };
-
-    debug("scope in _onRegisterSuccess: " + aPageRecord.scope)
-
-    return this._updatePushRecord(record)
-      .then(
-        function() {
-          return record;
-        },
-        function(error) {
-          // Unable to save.
-          this._send("unregister", {channelID: record.channelID});
-          throw error;
-        }.bind(this)
-      );
+    return this._db.put(aRecord)
+      .then(record => {
+        Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_SUCCEEDED").add();
+        return record;
+      })
+      .catch(error => {
+        Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_FAILED").add()
+        // Unable to save. Destroy the subscription in the background.
+        this._backgroundUnregister(aRecord);
+        throw error;
+      });
   },
 
   /**
    * Exceptions thrown in _onRegisterError are caught by the promise obtained
-   * from _sendRequest, causing the promise to be rejected instead.
+   * from _service.request, causing the promise to be rejected instead.
    */
   _onRegisterError: function(reply) {
-    debug("_onRegisterError()");
+    console.debug("_onRegisterError()");
+    Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_FAILED").add()
     if (!reply.error) {
-      debug("Called without valid error message!");
-      throw "Registration error";
+      console.warn("onRegisterError: Called without valid error message!",
+        reply);
+      throw new Error("Registration error");
     }
     throw reply.error;
+  },
+
+  notificationsCleared() {
+    this._visibleNotifications.clear();
+  },
+
+  _getByPageRecord(pageRecord) {
+    return this._checkActivated().then(_ =>
+      this._db.getByIdentifiers(pageRecord)
+    );
+  },
+
+  register: function(aPageRecord) {
+    console.debug("register()", aPageRecord);
+
+    return this._getByPageRecord(aPageRecord)
+      .then(record => {
+        if (!record) {
+          return this._lookupOrPutPendingRequest(aPageRecord);
+        }
+        if (record.isExpired()) {
+          return record.quotaChanged().then(isChanged => {
+            if (isChanged) {
+              // If the user revisited the site, drop the expired push
+              // registration and re-register.
+              return this.dropRegistrationAndNotifyApp(record.keyID);
+            }
+            throw new Error("Push subscription expired");
+          }).then(_ => this._lookupOrPutPendingRequest(aPageRecord));
+        }
+        return record.toSubscription();
+      });
   },
 
   /**
@@ -1587,476 +1084,245 @@ this.PushService = {
    * watching The important part of the transaction in this case is left to the
    * app, to tell its server of the unregistration.  Even if the request to the
    * PushServer were to fail, it would not affect correctness of the protocol,
-   * and the server GC would just clean up the channelID eventually.  Since the
-   * appserver doesn't ping it, no data is lost.
+   * and the server GC would just clean up the channelID/subscription
+   * eventually.  Since the appserver doesn't ping it, no data is lost.
    *
    * If rather we were to unregister at the server and update the database only
    * on success: If the server receives the unregister, and deletes the
-   * channelID, but the response is lost because of network failure, the
-   * application is never informed. In addition the application may retry the
-   * unregister when it fails due to timeout at which point the server will say
-   * it does not know of this unregistration.  We'll have to make the
-   * registration/unregistration phases have retries and attempts to resend
-   * messages from the server, and have the client acknowledge. On a server,
-   * data is cheap, reliable notification is not.
+   * channelID/subscription, but the response is lost because of network
+   * failure, the application is never informed. In addition the application may
+   * retry the unregister when it fails due to timeout (websocket) or any other
+   * reason at which point the server will say it does not know of this
+   * unregistration.  We'll have to make the registration/unregistration phases
+   * have retries and attempts to resend messages from the server, and have the
+   * client acknowledge. On a server, data is cheap, reliable notification is
+   * not.
    */
-  _unregister: function(aPageRecord) {
-    debug("unregisterWithServer()");
+  unregister: function(aPageRecord) {
+    console.debug("unregister()", aPageRecord);
 
-    let deferred = Promise.defer();
-    let fail = function(error) {
-      debug("unregister() fail() error " + error);
-      deferred.reject(error);
-    };
+    return this._getByPageRecord(aPageRecord)
+      .then(record => {
+        if (record === undefined) {
+          return false;
+        }
 
-    if (!aPageRecord.scope) {
-      fail("NotFoundError");
-      return deferred.promise;
-    }
-
-    this._db.getByScope(aPageRecord.scope, function(record) {
-      // If the endpoint didn't exist, let's just fail.
-      if (record === undefined) {
-        fail("NotFoundError");
-        return;
-      }
-
-      this._db.delete(record.channelID, function() {
-        // Let's be nice to the server and try to inform it, but we don't care
-        // about the reply.
-        this._send("unregister", {channelID: record.channelID});
-        deferred.resolve();
-      }.bind(this), fail);
-    }.bind(this), fail);
-
-    return deferred.promise;
+        return Promise.all([
+          this._sendUnregister(record),
+          this._db.delete(record.keyID),
+        ]).then(() => true);
+      });
   },
 
-  unregister: function(aPageRecord, aMessageManager) {
-    debug("unregister() " + JSON.stringify(aPageRecord));
-
-    this._unregister(aPageRecord).then(
-      () => {
-        aMessageManager.sendAsyncMessage("PushService:Unregister:OK", {
-          requestID: aPageRecord.requestID,
-          pushEndpoint: aPageRecord.pushEndpoint
-        });
-      },
-      error => {
-        aMessageManager.sendAsyncMessage("PushService:Unregister:KO", {
-          requestID: aPageRecord.requestID,
-          error
-        });
-      }
-    );
+  clear: function(info) {
+    if (info.domain == "*") {
+      return this._clearAll();
+    }
+    return this._clearForDomain(info.domain);
   },
 
   _clearAll: function _clearAll() {
-    return new Promise((resolve, reject) => {
-      this._db.clearAll(() => resolve(),
-                        () => reject("Database error"));
-    });
+    return this._checkActivated()
+      .then(_ => this._db.drop())
+      .catch(_ => Promise.resolve());
   },
-  
-  /**
-   * Called on message from the child process
-   */
-  _registration: function(aPageRecord) {
-    return new Promise((resolve, reject) => {
-      if (!aPageRecord.scope) {
-        reject("Database error");
-        return;
-      }
-      this._db.getByScope(aPageRecord.scope,
-        pushRecord => {
-          let registration = null;
-          if (pushRecord) {
-            registration = {
-              pushEndpoint: pushRecord.pushEndpoint,
-              version: pushRecord.version,
-              lastPush: pushRecord.lastPush,
-              pushCount: pushRecord.pushCount
-            };
+
+  _clearForDomain: function(domain) {
+    /**
+     * Copied from ForgetAboutSite.jsm.
+     *
+     * Returns true if the string passed in is part of the root domain of the
+     * current string.  For example, if this is "www.mozilla.org", and we pass in
+     * "mozilla.org", this will return true.  It would return false the other way
+     * around.
+     */
+    function hasRootDomain(str, aDomain)
+    {
+      let index = str.indexOf(aDomain);
+      // If aDomain is not found, we know we do not have it as a root domain.
+      if (index == -1)
+        return false;
+
+      // If the strings are the same, we obviously have a match.
+      if (str == aDomain)
+        return true;
+
+      // Otherwise, we have aDomain as our root domain iff the index of aDomain is
+      // aDomain.length subtracted from our length and (since we do not have an
+      // exact match) the character before the index is a dot or slash.
+      let prevChar = str[index - 1];
+      return (index == (str.length - aDomain.length)) &&
+             (prevChar == "." || prevChar == "/");
+    }
+
+    let clear = (db, domain) => {
+      db.clearIf(record => {
+        return record.uri && hasRootDomain(record.uri.prePath, domain);
+      });
+    }
+
+    return this._checkActivated()
+      .then(_ => clear(this._db, domain))
+      .catch(e => {
+        console.warn("clearForDomain: Error forgetting about domain", e);
+        return Promise.resolve();
+      });
+  },
+
+  registration: function(aPageRecord) {
+    console.debug("registration()");
+
+    return this._getByPageRecord(aPageRecord)
+      .then(record => {
+        if (!record) {
+          return null;
+        }
+        if (record.isExpired()) {
+          return record.quotaChanged().then(isChanged => {
+            if (isChanged) {
+              return this.dropRegistrationAndNotifyApp(record.keyID).then(_ => null);
+            }
+            return null;
+          });
+        }
+        return record.toSubscription();
+      });
+  },
+
+  _dropExpiredRegistrations: function() {
+    console.debug("dropExpiredRegistrations()");
+
+    return this._db.getAllExpired().then(records => {
+      return Promise.all(records.map(record =>
+        record.quotaChanged().then(isChanged => {
+          if (isChanged) {
+            // If the user revisited the site, drop the expired push
+            // registration and notify the associated service worker.
+            return this.dropRegistrationAndNotifyApp(record.keyID);
           }
-          resolve(registration);
-        },
-        () => reject("Database error")
-      );
+        }).catch(error => {
+          console.error("dropExpiredRegistrations: Error dropping registration",
+            record.keyID, error);
+        })
+      ));
     });
   },
 
-  registration: function(aPageRecord, aMessageManager) {
-    debug("registration()");
+  _onPermissionChange: function(subject, data) {
+    console.debug("onPermissionChange()");
 
-    return this._registration(aPageRecord).then(
-      registration => {
-        aMessageManager.sendAsyncMessage("PushService:Registration:OK", {
-          requestID: aPageRecord.requestID,
-          registration
-        });
-      },
-      error => {
-        aMessageManager.sendAsyncMessage("PushService:Registration:KO", {
-          requestID: aPageRecord.requestID,
-          error
-        });
-      }
+    if (data == "cleared") {
+      // If the permission list was cleared, drop all registrations
+      // that are subject to quota.
+      return this._db.clearIf(record => {
+        if (record.quotaApplies()) {
+          if (!record.isExpired()) {
+            // Drop the registration in the background.
+            this._backgroundUnregister(record);
+          }
+          return true;
+        }
+        return false;
+      });
+    }
+
+    let permission = subject.QueryInterface(Ci.nsIPermission);
+    if (permission.type != "desktop-notification") {
+      return Promise.resolve();
+    }
+
+    return this._updatePermission(permission, data);
+  },
+
+  _updatePermission: function(permission, type) {
+    console.debug("updatePermission()");
+
+    let isAllow = permission.capability ==
+                  Ci.nsIPermissionManager.ALLOW_ACTION;
+    let isChange = type == "added" || type == "changed";
+
+    if (isAllow && isChange) {
+      // Permission set to "allow". Drop all expired registrations for this
+      // site, notify the associated service workers, and reset the quota
+      // for active registrations.
+      return this._reduceByPrincipal(
+        permission.principal,
+        (subscriptionChanges, record, cursor) => {
+          this._permissionAllowed(subscriptionChanges, record, cursor);
+          return subscriptionChanges;
+        },
+        []
+      ).then(subscriptionChanges => {
+        this.notifySubscriptionChanges(subscriptionChanges);
+      });
+    } else if (isChange || (isAllow && type == "deleted")) {
+      // Permission set to "block" or "always ask," or "allow" permission
+      // removed. Expire all registrations for this site.
+      return this._reduceByPrincipal(
+        permission.principal,
+        (memo, record, cursor) => this._permissionDenied(record, cursor)
+      );
+    }
+
+    return Promise.resolve();
+  },
+
+  _reduceByPrincipal: function(principal, callback, initialValue) {
+    return this._db.reduceByOrigin(
+      principal.URI.prePath,
+      ChromeUtils.originAttributesToSuffix(principal.originAttributes),
+      callback,
+      initialValue
     );
   },
 
-  // begin Push protocol handshake
-  _wsOnStart: function(context) {
-    debug("wsOnStart()");
-    this._releaseWakeLock();
-
-    if (this._currentState != STATE_WAITING_FOR_WS_START) {
-      debug("NOT in STATE_WAITING_FOR_WS_START. Current state " +
-            this._currentState + ". Skipping");
-      return;
-    }
-
-    // Since we've had a successful connection reset the retry fail count.
-    this._retryFailCount = 0;
-
-    let data = {
-      messageType: "hello",
-    }
-
-    if (this._UAID)
-      data["uaid"] = this._UAID;
-
-    function sendHelloMessage(ids) {
-      // On success, ids is an array, on error its not.
-      data["channelIDs"] = ids.map ?
-                           ids.map(function(el) { return el.channelID; }) : [];
-      this._wsSendMessage(data);
-      this._currentState = STATE_WAITING_FOR_HELLO;
-    }
-
-    this._networkInfo.getNetworkState((networkState) => {
-      if (networkState.ip) {
-        // Opening an available UDP port.
-        this._listenForUDPWakeup();
-
-        // Host-port is apparently a thing.
-        data["wakeup_hostport"] = {
-          ip: networkState.ip,
-          port: this._udpServer && this._udpServer.port
-        };
-
-        data["mobilenetwork"] = {
-          mcc: networkState.mcc,
-          mnc: networkState.mnc,
-          netid: networkState.netid
-        };
-      }
-
-      this._db.getAllChannelIDs(sendHelloMessage.bind(this),
-                                sendHelloMessage.bind(this));
-    });
-  },
-
   /**
-   * This statusCode is not the websocket protocol status code, but the TCP
-   * connection close status code.
+   * The update function called for each registration record if the push
+   * permission is revoked. We only expire the record so we can notify the
+   * service worker as soon as the permission is reinstated. If we just
+   * deleted the record, the worker wouldn't be notified until the next visit
+   * to the site.
    *
-   * If we do not explicitly call ws.close() then statusCode is always
-   * NS_BASE_STREAM_CLOSED, even on a successful close.
+   * @param {PushRecord} record The record to expire.
+   * @param {IDBCursor} cursor The IndexedDB cursor.
    */
-  _wsOnStop: function(context, statusCode) {
-    debug("wsOnStop()");
-    this._releaseWakeLock();
+  _permissionDenied: function(record, cursor) {
+    console.debug("permissionDenied()");
 
-    if (statusCode != Cr.NS_OK &&
-        !(statusCode == Cr.NS_BASE_STREAM_CLOSED && this._willBeWokenUpByUDP)) {
-      debug("Socket error " + statusCode);
-      this._reconnectAfterBackoff();
-    }
-
-    // Bug 896919. We always shutdown the WebSocket, even if we need to
-    // reconnect. This works because _reconnectAfterBackoff() is "async"
-    // (there is a minimum delay of the pref retryBaseInterval, which by default
-    // is 5000ms), so that function will open the WebSocket again.
-    this._shutdownWS();
-  },
-
-  _wsOnMessageAvailable: function(context, message) {
-    debug("wsOnMessageAvailable() " + message);
-
-    this._waitingForPong = false;
-
-    let reply = undefined;
-    try {
-      reply = JSON.parse(message);
-    } catch(e) {
-      debug("Parsing JSON failed. text : " + message);
+    if (!record.quotaApplies() || record.isExpired()) {
+      // Ignore already-expired records.
       return;
     }
-
-    // If we are not waiting for a hello message, reset the retry fail count
-    if (this._currentState != STATE_WAITING_FOR_HELLO) {
-      debug('Reseting _retryFailCount and _pingIntervalRetryTimes');
-      this._retryFailCount = 0;
-      this._pingIntervalRetryTimes = {};
-    }
-
-    let doNotHandle = false;
-    if ((message === '{}') ||
-        (reply.messageType === undefined) ||
-        (reply.messageType === "ping") ||
-        (typeof reply.messageType != "string")) {
-      debug('Pong received');
-      this._calculateAdaptivePing(false);
-      doNotHandle = true;
-    }
-
-    // Reset the ping timer.  Note: This path is executed at every step of the
-    // handshake, so this alarm does not need to be set explicitly at startup.
-    this._setAlarm(prefs.get("pingInterval"));
-
-    // If it is a ping, do not handle the message.
-    if (doNotHandle) {
-      return;
-    }
-
-    // A whitelist of protocol handlers. Add to these if new messages are added
-    // in the protocol.
-    let handlers = ["Hello", "Register", "Notification"];
-
-    // Build up the handler name to call from messageType.
-    // e.g. messageType == "register" -> _handleRegisterReply.
-    let handlerName = reply.messageType[0].toUpperCase() +
-                      reply.messageType.slice(1).toLowerCase();
-
-    if (handlers.indexOf(handlerName) == -1) {
-      debug("No whitelisted handler " + handlerName + ". messageType: " +
-            reply.messageType);
-      return;
-    }
-
-    let handler = "_handle" + handlerName + "Reply";
-
-    if (typeof this[handler] !== "function") {
-      debug("Handler whitelisted but not implemented! " + handler);
-      return;
-    }
-
-    this[handler](reply);
+    // Drop the registration in the background.
+    this._backgroundUnregister(record);
+    record.setQuota(0);
+    cursor.update(record);
   },
 
   /**
-   * The websocket should never be closed. Since we don't call ws.close(),
-   * _wsOnStop() receives error code NS_BASE_STREAM_CLOSED (see comment in that
-   * function), which calls reconnect and re-establishes the WebSocket
-   * connection.
+   * The update function called for each registration record if the push
+   * permission is granted. If the record has expired, it will be dropped;
+   * otherwise, its quota will be reset to the default value.
    *
-   * If the server said it'll use UDP for wakeup, we set _willBeWokenUpByUDP
-   * and stop reconnecting in _wsOnStop().
+   * @param {Array} subscriptionChanges A list of records whose associated
+   *  service workers should be notified once the transaction has committed.
+   * @param {PushRecord} record The record to update.
+   * @param {IDBCursor} cursor The IndexedDB cursor.
    */
-  _wsOnServerClose: function(context, aStatusCode, aReason) {
-    debug("wsOnServerClose() " + aStatusCode + " " + aReason);
+  _permissionAllowed: function(subscriptionChanges, record, cursor) {
+    console.debug("permissionAllowed()");
 
-    // Switch over to UDP.
-    if (aStatusCode == kUDP_WAKEUP_WS_STATUS_CODE) {
-      debug("Server closed with promise to wake up");
-      this._willBeWokenUpByUDP = true;
-      // TODO: there should be no pending requests
-    }
-  },
-
-  /**
-   * Rejects all pending requests with errors.
-   */
-  _cancelPendingRequests: function() {
-    for (let channelID in this._pendingRequests) {
-      let request = this._pendingRequests[channelID];
-      delete this._pendingRequests[channelID];
-      request.deferred.reject({status: 0, error: "AbortError"});
-    }
-  },
-
-  _makeUDPSocket: function() {
-    return Cc["@mozilla.org/network/udp-socket;1"]
-             .createInstance(Ci.nsIUDPSocket);
-  },
-
-  /**
-   * This method should be called only if the device is on a mobile network!
-   */
-  _listenForUDPWakeup: function() {
-    debug("listenForUDPWakeup()");
-
-    if (this._udpServer) {
-      debug("UDP Server already running");
+    if (!record.quotaApplies()) {
       return;
     }
-
-    if (!prefs.get("udp.wakeupEnabled")) {
-      debug("UDP support disabled");
+    if (record.isExpired()) {
+      // If the registration has expired, drop and notify the worker
+      // unconditionally.
+      subscriptionChanges.push(record);
+      cursor.delete();
       return;
     }
-
-    let socket = this._makeUDPSocket();
-    if (!socket) {
-      return;
-    }
-    this._udpServer = socket.QueryInterface(Ci.nsIUDPSocket);
-    this._udpServer.init(-1, false, Services.scriptSecurityManager.getSystemPrincipal());
-    this._udpServer.asyncListen(this);
-    debug("listenForUDPWakeup listening on " + this._udpServer.port);
-
-    return this._udpServer.port;
+    record.resetQuota();
+    cursor.update(record);
   },
-
-  /**
-   * Called by UDP Server Socket. As soon as a ping is recieved via UDP,
-   * reconnect the WebSocket and get the actual data.
-   */
-  onPacketReceived: function(aServ, aMessage) {
-    debug("Recv UDP datagram on port: " + this._udpServer.port);
-    this._beginWSSetup();
-  },
-
-  /**
-   * Called by UDP Server Socket if the socket was closed for some reason.
-   *
-   * If this happens, we reconnect the WebSocket to not miss out on
-   * notifications.
-   */
-  onStopListening: function(aServ, aStatus) {
-    debug("UDP Server socket was shutdown. Status: " + aStatus);
-    this._udpServer = undefined;
-    this._beginWSSetup();
-  }
-};
-
-let PushNetworkInfo = {
-  /**
-   * Returns information about MCC-MNC and the IP of the current connection.
-   */
-  getNetworkInformation: function() {
-    debug("getNetworkInformation()");
-
-    try {
-      if (!prefs.get("udp.wakeupEnabled")) {
-        debug("UDP support disabled, we do not send any carrier info");
-        throw new Error("UDP disabled");
-      }
-
-      let nm = Cc["@mozilla.org/network/manager;1"].getService(Ci.nsINetworkManager);
-      if (nm.active && nm.active.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
-        let iccService = Cc["@mozilla.org/icc/iccservice;1"].getService(Ci.nsIIccService);
-        // TODO: Bug 927721 - PushService for multi-sim
-        // In Multi-sim, there is more than one client in iccService. Each
-        // client represents a icc handle. To maintain backward compatibility
-        // with single sim, we always use client 0 for now. Adding support
-        // for multiple sim will be addressed in bug 927721, if needed.
-        let clientId = 0;
-        let icc = iccService.getIccByServiceId(clientId);
-        let iccInfo = icc && icc.iccInfo;
-        if (iccInfo) {
-          debug("Running on mobile data");
-
-          let ips = {};
-          let prefixLengths = {};
-          nm.active.getAddresses(ips, prefixLengths);
-
-          return {
-            mcc: iccInfo.mcc,
-            mnc: iccInfo.mnc,
-            ip:  ips.value[0]
-          }
-        }
-      }
-    } catch (e) {
-      debug("Error recovering mobile network information: " + e);
-    }
-
-    debug("Running on wifi");
-    return {
-      mcc: 0,
-      mnc: 0,
-      ip: undefined
-    };
-  },
-
-  /**
-   * Get mobile network information to decide if the client is capable of being
-   * woken up by UDP (which currently just means having an mcc and mnc along
-   * with an IP, and optionally a netid).
-   */
-  getNetworkState: function(callback) {
-    debug("getNetworkState()");
-
-    if (typeof callback !== 'function') {
-      throw new Error("No callback method. Aborting push agent !");
-    }
-
-    var networkInfo = this.getNetworkInformation();
-
-    if (networkInfo.ip) {
-      this._getMobileNetworkId(networkInfo, function(netid) {
-        debug("Recovered netID = " + netid);
-        callback({
-          mcc: networkInfo.mcc,
-          mnc: networkInfo.mnc,
-          ip:  networkInfo.ip,
-          netid: netid
-        });
-      });
-    } else {
-      callback(networkInfo);
-    }
-  },
-
-  // utility function used to add/remove observers in init() and shutdown()
-  getNetworkStateChangeEventName: function() {
-    try {
-      Cc["@mozilla.org/network/manager;1"].getService(Ci.nsINetworkManager);
-      return "network-active-changed";
-    } catch (e) {
-      return "network:offline-status-changed";
-    }
-  },
-
-  /*
-   * Get the mobile network ID (netid)
-   *
-   * @param networkInfo
-   *        Network information object { mcc, mnc, ip, port }
-   * @param callback
-   *        Callback function to invoke with the netid or null if not found
-   */
-  _getMobileNetworkId: function(networkInfo, callback) {
-    if (typeof callback !== 'function') {
-      return;
-    }
-
-    function queryDNSForDomain(domain) {
-      debug("[_getMobileNetworkId:queryDNSForDomain] Querying DNS for " +
-        domain);
-      let netIDDNSListener = {
-        onLookupComplete: function(aRequest, aRecord, aStatus) {
-          if (aRecord) {
-            let netid = aRecord.getNextAddrAsString();
-            debug("[_getMobileNetworkId:queryDNSForDomain] NetID found: " +
-              netid);
-            callback(netid);
-          } else {
-            debug("[_getMobileNetworkId:queryDNSForDomain] NetID not found");
-            callback(null);
-          }
-        }
-      };
-      gDNSService.asyncResolve(domain, 0, netIDDNSListener,
-        threadManager.currentThread);
-      return [];
-    }
-
-    debug("[_getMobileNetworkId:queryDNSForDomain] Getting mobile network ID");
-
-    let netidAddress = "wakeup.mnc" + ("00" + networkInfo.mnc).slice(-3) +
-      ".mcc" + ("00" + networkInfo.mcc).slice(-3) + ".3gppnetwork.org";
-    queryDNSForDomain(netidAddress, callback);
-  }
 };

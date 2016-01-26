@@ -14,6 +14,9 @@
 namespace mozilla {
 namespace dom {
 
+class DetailedPromise;
+class TestGMPVideoDecoder;
+
 class MediaKeySystemAccessManager final : public nsIObserver
 {
 public:
@@ -24,25 +27,25 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(MediaKeySystemAccessManager, nsIObserver)
   NS_DECL_NSIOBSERVER
 
-  void Request(Promise* aPromise,
+  void Request(DetailedPromise* aPromise,
                const nsAString& aKeySystem,
-               const Optional<Sequence<MediaKeySystemOptions>>& aOptions);
+               const Sequence<MediaKeySystemConfiguration>& aConfig);
 
   void Shutdown();
 
   struct PendingRequest {
-    PendingRequest(Promise* aPromise,
-      const nsAString& aKeySystem,
-      const Sequence<MediaKeySystemOptions>& aOptions,
-      nsITimer* aTimer);
+    PendingRequest(DetailedPromise* aPromise,
+                   const nsAString& aKeySystem,
+                   const Sequence<MediaKeySystemConfiguration>& aConfig,
+                   nsITimer* aTimer);
     PendingRequest(const PendingRequest& aOther);
     ~PendingRequest();
     void CancelTimer();
-    void RejectPromise();
+    void RejectPromise(const nsCString& aReason);
 
-    nsRefPtr<Promise> mPromise;
+    RefPtr<DetailedPromise> mPromise;
     const nsString mKeySystem;
-    const Sequence<MediaKeySystemOptions> mOptions;
+    const Sequence<MediaKeySystemConfiguration> mConfigs;
     nsCOMPtr<nsITimer> mTimer;
   };
 
@@ -53,18 +56,18 @@ private:
     Subsequent
   };
 
-  void Request(Promise* aPromise,
+  void Request(DetailedPromise* aPromise,
                const nsAString& aKeySystem,
-               const Sequence<MediaKeySystemOptions>& aOptions,
+               const Sequence<MediaKeySystemConfiguration>& aConfig,
                RequestType aType);
 
   ~MediaKeySystemAccessManager();
 
   bool EnsureObserversAdded();
 
-  bool AwaitInstall(Promise* aPromise,
+  bool AwaitInstall(DetailedPromise* aPromise,
                     const nsAString& aKeySystem,
-                    const Sequence<MediaKeySystemOptions>& aOptions);
+                    const Sequence<MediaKeySystemConfiguration>& aConfig);
 
   void RetryRequest(PendingRequest& aRequest);
 

@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from .base import MachError
 
@@ -60,6 +60,11 @@ class MachRegistrar(object):
 
         if handler.pass_context and not context:
             raise Exception('mach command class requires context.')
+
+        if context:
+            prerun = getattr(context, 'pre_dispatch_handler', None)
+            if prerun:
+                prerun(context, handler, args=kwargs)
 
         if handler.pass_context:
             instance = cls(context)

@@ -2,8 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-const AM_Cc = Components.classes;
-const AM_Ci = Components.interfaces;
+var AM_Cc = Components.classes;
+var AM_Ci = Components.interfaces;
 
 const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
 const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
@@ -30,13 +30,18 @@ Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "HttpServer",
+                                  "resource://testing-common/httpd.js");
+
 // We need some internal bits of AddonManager
-let AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
-let AddonManager = AMscope.AddonManager;
-let AddonManagerInternal = AMscope.AddonManagerInternal;
+var AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
+var AddonManager = AMscope.AddonManager;
+var AddonManagerInternal = AMscope.AddonManagerInternal;
 // Mock out AddonManager's reference to the AsyncShutdown module so we can shut
 // down AddonManager from the test
-let MockAsyncShutdown = {
+var MockAsyncShutdown = {
   hook: null,
   status: null,
   profileBeforeChange: {
@@ -61,6 +66,180 @@ var gUrlToFileMap = {};
 
 var TEST_UNPACKED = false;
 
+// Map resource://xpcshell-data/ to the data directory
+var resHandler = Services.io.getProtocolHandler("resource")
+                         .QueryInterface(AM_Ci.nsISubstitutingProtocolHandler);
+// Allow non-existent files because of bug 1207735
+var dataURI = NetUtil.newURI(do_get_file("data", true));
+resHandler.setSubstitution("xpcshell-data", dataURI);
+
+function isManifestRegistered(file) {
+  let manifests = Components.manager.getManifestLocations();
+  for (let i = 0; i < manifests.length; i++) {
+    let manifest = manifests.queryElementAt(i, AM_Ci.nsIURI);
+
+    // manifest is the url to the manifest file either in an XPI or a directory.
+    // We want the location of the XPI or directory itself.
+    if (manifest instanceof AM_Ci.nsIJARURI) {
+      manifest = manifest.JARFile.QueryInterface(AM_Ci.nsIFileURL).file;
+    }
+    else if (manifest instanceof AM_Ci.nsIFileURL) {
+      manifest = manifest.file.parent;
+    }
+    else {
+      continue;
+    }
+
+    if (manifest.equals(file))
+      return true;
+  }
+  return false;
+}
+
+// Listens to messages from bootstrap.js telling us what add-ons were started
+// and stopped etc. and performs some sanity checks that only installed add-ons
+// are started etc.
+this.BootstrapMonitor = {
+  inited: false,
+
+  // Contain the current state of add-ons in the system
+  installed: new Map(),
+  started: new Map(),
+
+  // Contain the last state of shutdown and uninstall calls for an add-on
+  stopped: new Map(),
+  uninstalled: new Map(),
+
+  startupPromises: [],
+  installPromises: [],
+
+  init() {
+    this.inited = true;
+    Services.obs.addObserver(this, "bootstrapmonitor-event", false);
+  },
+
+  shutdownCheck() {
+    if (!this.inited)
+      return;
+
+    do_check_eq(this.started.size, 0);
+  },
+
+  clear(id) {
+    this.installed.delete(id);
+    this.started.delete(id);
+    this.stopped.delete(id);
+    this.uninstalled.delete(id);
+  },
+
+  promiseAddonStartup(id) {
+    return new Promise(resolve => {
+      this.startupPromises.push(resolve);
+    });
+  },
+
+  promiseAddonInstall(id) {
+    return new Promise(resolve => {
+      this.installPromises.push(resolve);
+    });
+  },
+
+  checkMatches(cached, current) {
+    do_check_neq(cached, undefined);
+    do_check_eq(current.data.version, cached.data.version);
+    do_check_eq(current.data.installPath, cached.data.installPath);
+    do_check_eq(current.data.resourceURI, cached.data.resourceURI);
+  },
+
+  checkAddonStarted(id, version = undefined) {
+    let started = this.started.get(id);
+    do_check_neq(started, undefined);
+    if (version != undefined)
+      do_check_eq(started.data.version, version);
+
+    // Chrome should be registered by now
+    let installPath = new FileUtils.File(started.data.installPath);
+    let isRegistered = isManifestRegistered(installPath);
+    do_check_true(isRegistered);
+  },
+
+  checkAddonNotStarted(id) {
+    do_check_false(this.started.has(id));
+  },
+
+  checkAddonInstalled(id, version = undefined) {
+    let installed = this.installed.get(id);
+    do_check_neq(installed, undefined);
+    if (version != undefined)
+      do_check_eq(installed.data.version, version);
+  },
+
+  checkAddonNotInstalled(id) {
+    do_check_false(this.installed.has(id));
+  },
+
+  observe(subject, topic, data) {
+    let info = JSON.parse(data);
+    let id = info.data.id;
+    let installPath = new FileUtils.File(info.data.installPath);
+
+    // If this is the install event the add-ons shouldn't already be installed
+    if (info.event == "install") {
+      this.checkAddonNotInstalled(id);
+
+      this.installed.set(id, info);
+
+      for (let resolve of this.installPromises)
+        resolve();
+      this.installPromises = [];
+    }
+    else {
+      this.checkMatches(this.installed.get(id), info);
+    }
+
+    // If this is the shutdown event than the add-on should already be started
+    if (info.event == "shutdown") {
+      this.checkMatches(this.started.get(id), info);
+
+      this.started.delete(id);
+      this.stopped.set(id, info);
+
+      // Chrome should still be registered at this point
+      let isRegistered = isManifestRegistered(installPath);
+      do_check_true(isRegistered);
+
+      // XPIProvider doesn't bother unregistering chrome on app shutdown but
+      // since we simulate restarts we must do so manually to keep the registry
+      // consistent.
+      if (info.reason == 2 /* APP_SHUTDOWN */)
+        Components.manager.removeBootstrappedManifestLocation(installPath);
+    }
+    else {
+      this.checkAddonNotStarted(id);
+    }
+
+    if (info.event == "uninstall") {
+      // Chrome should be unregistered at this point
+      let isRegistered = isManifestRegistered(installPath);
+      do_check_false(isRegistered);
+
+      this.installed.delete(id);
+      this.uninstalled.set(id, info)
+    }
+    else if (info.event == "startup") {
+      this.started.set(id, info);
+
+      // Chrome should be registered at this point
+      let isRegistered = isManifestRegistered(installPath);
+      do_check_true(isRegistered);
+
+      for (let resolve of this.startupPromises)
+        resolve();
+      this.startupPromises = [];
+    }
+  }
+}
+
 function isNightlyChannel() {
   var channel = "default";
   try {
@@ -83,6 +262,7 @@ function createAppInfo(id, name, version, platformVersion) {
     platformBuildID: "2007010101",
 
     // nsIXULRuntime
+    browserTabsRemoteAutostart: false,
     inSafeMode: false,
     logConsoleErrors: true,
     OS: "XPCShell",
@@ -191,11 +371,11 @@ function do_get_file_hash(aFile, aAlgorithm) {
   crypto.updateFromStream(fis, aFile.fileSize);
 
   // return the two-digit hexadecimal code for a byte
-  function toHexString(charCode)
-    ("0" + charCode.toString(16)).slice(-2);
+  let toHexString = charCode => ("0" + charCode.toString(16)).slice(-2);
 
   let binary = crypto.finish(false);
-  return aAlgorithm + ":" + [toHexString(binary.charCodeAt(i)) for (i in binary)].join("")
+  let hash = Array.from(binary, c => toHexString(c.charCodeAt(0)));
+  return aAlgorithm + ":" + hash.join("");
 }
 
 /**
@@ -378,7 +558,7 @@ function do_check_icons(aActual, aExpected) {
 
 // Record the error (if any) from trying to save the XPI
 // database at shutdown time
-let gXPISaveError = null;
+var gXPISaveError = null;
 
 /**
  * Starts up the add-on manager as if it was started by the application.
@@ -466,6 +646,7 @@ function promiseShutdownManager() {
   return MockAsyncShutdown.hook()
     .then(null, err => hookErr = err)
     .then( () => {
+      BootstrapMonitor.shutdownCheck();
       gInternalManager = null;
 
       // Load the add-ons list as it was after application shutdown
@@ -563,7 +744,7 @@ function check_startup_changes(aType, aIds) {
   var ids = aIds.slice(0);
   ids.sort();
   var changes = AddonManager.getStartupChanges(aType);
-  changes = changes.filter(function(aEl) /@tests.mozilla.org$/.test(aEl));
+  changes = changes.filter(aEl => /@tests.mozilla.org$/.test(aEl));
   changes.sort();
 
   do_check_eq(JSON.stringify(ids), JSON.stringify(changes));
@@ -770,6 +951,62 @@ function writeInstallRDFForExtension(aData, aDir, aId, aExtraFile) {
 }
 
 /**
+ * Writes a manifest.json manifest into an extension using the properties passed
+ * in a JS object.
+ *
+ * @param   aManifest
+ *          The data to write
+ * @param   aDir
+ *          The install directory to add the extension to
+ * @param   aId
+ *          An optional string to override the default installation aId
+ * @return  A file pointing to where the extension was installed
+ */
+function writeWebManifestForExtension(aData, aDir, aId = undefined) {
+  if (!aId)
+    aId = aData.applications.gecko.id;
+
+  if (TEST_UNPACKED) {
+    let dir = aDir.clone();
+    dir.append(aId);
+    if (!dir.exists())
+      dir.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+    let file = dir.clone();
+    file.append("manifest.json");
+    if (file.exists())
+      file.remove(true);
+
+    let data = JSON.stringify(aData);
+    let fos = AM_Cc["@mozilla.org/network/file-output-stream;1"].
+              createInstance(AM_Ci.nsIFileOutputStream);
+    fos.init(file,
+             FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE,
+             FileUtils.PERMS_FILE, 0);
+    fos.write(data, data.length);
+    fos.close();
+
+    return dir;
+  }
+  else {
+    let file = aDir.clone();
+    file.append(aId + ".xpi");
+
+    let stream = AM_Cc["@mozilla.org/io/string-input-stream;1"].
+                 createInstance(AM_Ci.nsIStringInputStream);
+    stream.setData(JSON.stringify(aData), -1);
+    let zipW = AM_Cc["@mozilla.org/zipwriter;1"].
+               createInstance(AM_Ci.nsIZipWriter);
+    zipW.open(file, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE);
+    zipW.addEntryStream("manifest.json", 0, AM_Ci.nsIZipWriter.COMPRESSION_NONE,
+                        stream, false);
+    zipW.close();
+
+    return file;
+  }
+}
+
+/**
  * Writes an install.rdf manifest into a packed extension using the properties passed
  * in a JS object. The objects should contain a property for each property to
  * appear in the RDF. The object may contain an array of objects with id,
@@ -829,7 +1066,7 @@ function writeInstallRDFToXPIFile(aData, aFile, aExtraFile) {
   zipW.close();
 }
 
-let temp_xpis = [];
+var temp_xpis = [];
 /**
  * Creates an XPI file for some manifest data in the temporary directory and
  * returns the nsIFile for it. The file will be deleted when the test completes.
@@ -847,6 +1084,26 @@ function createTempXPIFile(aData) {
 
   temp_xpis.push(file);
   writeInstallRDFToXPIFile(aData, file);
+  return file;
+}
+
+/**
+ * Creates an XPI file for some WebExtension data in the temporary directory and
+ * returns the nsIFile for it. The file will be deleted when the test completes.
+ *
+ * @param   aData
+ *          The object holding data about the add-on, as expected by
+ *          |Extension.generateXPI|.
+ * @return  A file pointing to the created XPI file
+ */
+function createTempWebExtensionFile(aData) {
+  if (!aData.id) {
+    const uuidGenerator = AM_Cc["@mozilla.org/uuid-generator;1"].getService(AM_Ci.nsIUUIDGenerator);
+    aData.id = uuidGenerator.generateUUID().number;
+  }
+
+  let file = Extension.generateXPI(aData.id, aData);
+  temp_xpis.push(file);
   return file;
 }
 
@@ -877,7 +1134,9 @@ function promiseSetExtensionModifiedTime(aPath, aTime) {
     try {
       let iterator = new OS.File.DirectoryIterator(aPath);
       entries = yield iterator.nextBatch();
-    } catch (ex if ex instanceof OS.File.Error) {
+    } catch (ex) {
+      if (!(ex instanceof OS.File.Error))
+        throw ex;
       return;
     } finally {
       if (iterator) {
@@ -970,7 +1229,7 @@ function getFileForAddon(aDir, aId) {
 function registerDirectory(aKey, aDir) {
   var dirProvider = {
     getFile: function(aProp, aPersistent) {
-      aPersistent.value = true;
+      aPersistent.value = false;
       if (aProp == aKey)
         return aDir.clone();
       return null;
@@ -1108,9 +1367,13 @@ const AddonListener = {
 const InstallListener = {
   onNewInstall: function(install) {
     if (install.state != AddonManager.STATE_DOWNLOADED &&
+        install.state != AddonManager.STATE_DOWNLOAD_FAILED &&
         install.state != AddonManager.STATE_AVAILABLE)
       do_throw("Bad install state " + install.state);
-    do_check_eq(install.error, 0);
+    if (install.state != AddonManager.STATE_DOWNLOAD_FAILED)
+      do_check_eq(install.error, 0);
+    else
+      do_check_neq(install.error, 0);
     do_check_eq("onNewInstall", getExpectedInstall());
     return check_test_completed(arguments);
   },
@@ -1202,7 +1465,9 @@ function check_test_completed(aArgs) {
   if (gExpectedInstalls instanceof Array &&
       gExpectedInstalls.length > 0)
     return undefined;
-  else for each (let installList in gExpectedInstalls) {
+
+  for (let id in gExpectedInstalls) {
+    let installList = gExpectedInstalls[id];
     if (installList.length > 0)
       return undefined;
   }
@@ -1224,6 +1489,23 @@ function ensure_test_completed() {
   gExpectedEvents = {};
   if (gExpectedInstalls)
     do_check_eq(gExpectedInstalls.length, 0);
+}
+
+/**
+ * Returns a promise that resolves when the given add-on event is fired. The
+ * resolved value is an array of arguments passed for the event.
+ */
+function promiseAddonEvent(event) {
+  return new Promise(resolve => {
+    let listener = {
+      [event]: function(...args) {
+        AddonManager.removeAddonListener(listener);
+        resolve(args);
+      }
+    }
+
+    AddonManager.addAddonListener(listener);
+  });
 }
 
 /**
@@ -1364,7 +1646,7 @@ if ("nsIWindowsRegKey" in AM_Ci) {
    * This is a mock nsIWindowsRegistry implementation. It only implements the
    * methods that the extension manager requires.
    */
-  function MockWindowsRegKey() {
+  var MockWindowsRegKey = function MockWindowsRegKey() {
   }
 
   MockWindowsRegKey.prototype = {
@@ -1414,11 +1696,11 @@ if ("nsIWindowsRegKey" in AM_Ci) {
 const gProfD = do_get_profile();
 
 const EXTENSIONS_DB = "extensions.json";
-let gExtensionsJSON = gProfD.clone();
+var gExtensionsJSON = gProfD.clone();
 gExtensionsJSON.append(EXTENSIONS_DB);
 
 const EXTENSIONS_INI = "extensions.ini";
-let gExtensionsINI = gProfD.clone();
+var gExtensionsINI = gProfD.clone();
 gExtensionsINI.append(EXTENSIONS_INI);
 
 // Enable more extensive EM logging
@@ -1462,6 +1744,12 @@ const gTmpD = gProfD.clone();
 gTmpD.append("temp");
 gTmpD.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 registerDirectory("TmpD", gTmpD);
+
+// Create a replacement app directory for the tests.
+const gAppDirForAddons = gProfD.clone();
+gAppDirForAddons.append("appdir-addons");
+gAppDirForAddons.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+registerDirectory("XREAddonAppDir", gAppDirForAddons);
 
 // Write out an empty blocklist.xml file to the profile to ensure nothing
 // is blocklisted by default
@@ -1526,6 +1814,10 @@ do_register_cleanup(function addon_cleanup() {
   }
   dirEntries.close();
 
+  try {
+    gAppDirForAddons.remove(true);
+  } catch (ex) { do_print("Got exception removing addon app dir, " + ex); }
+
   var testDir = gProfD.clone();
   testDir.append("extensions");
   testDir.append("trash");
@@ -1544,6 +1836,30 @@ do_register_cleanup(function addon_cleanup() {
     Services.prefs.clearUserPref(PREF_EM_STRICT_COMPATIBILITY);
   } catch (e) {}
 });
+
+/**
+ * Creates a new HttpServer for testing, and begins listening on the
+ * specified port. Automatically shuts down the server when the test
+ * unit ends.
+ *
+ * @param port
+ *        The port to listen on. If omitted, listen on a random
+ *        port. The latter is the preferred behavior.
+ *
+ * @return HttpServer
+ */
+function createHttpServer(port = -1) {
+  let server = new HttpServer();
+  server.start(port);
+
+  do_register_cleanup(() => {
+    return new Promise(resolve => {
+      server.stop(resolve);
+    });
+  });
+
+  return server;
+}
 
 /**
  * Handler function that responds with the interpolated
@@ -1573,7 +1889,7 @@ function interpolateAndServeFile(request, response) {
 
     response.write(data);
   } catch (e) {
-    do_throw("Exception while serving interpolated file.");
+    do_throw(`Exception while serving interpolated file: ${e}\n${e.stack}`);
   } finally {
     cstream.close(); // this closes fstream as well
   }
@@ -1718,19 +2034,122 @@ function promiseAddonByID(aId) {
  */
 function promiseFindAddonUpdates(addon, reason = AddonManager.UPDATE_WHEN_PERIODIC_UPDATE) {
   return new Promise((resolve, reject) => {
+    let result = {};
     addon.findUpdates({
-      install: null,
-
-      onUpdateAvailable: function(addon, install) {
-        this.install = install;
+      onNoCompatibilityUpdateAvailable: function(addon2) {
+        if ("compatibilityUpdate" in result) {
+          do_throw("Saw multiple compatibility update events");
+        }
+        equal(addon, addon2, "onNoCompatibilityUpdateAvailable");
+        result.compatibilityUpdate = false;
       },
 
-      onUpdateFinished: function(addon, error) {
-        if (error == AddonManager.UPDATE_STATUS_NO_ERROR)
-          resolve(this.install);
-        else
-          reject(error);
+      onCompatibilityUpdateAvailable: function(addon2) {
+        if ("compatibilityUpdate" in result) {
+          do_throw("Saw multiple compatibility update events");
+        }
+        equal(addon, addon2, "onCompatibilityUpdateAvailable");
+        result.compatibilityUpdate = true;
+      },
+
+      onNoUpdateAvailable: function(addon2) {
+        if ("updateAvailable" in result) {
+          do_throw("Saw multiple update available events");
+        }
+        equal(addon, addon2, "onNoUpdateAvailable");
+        result.updateAvailable = false;
+      },
+
+      onUpdateAvailable: function(addon2, install) {
+        if ("updateAvailable" in result) {
+          do_throw("Saw multiple update available events");
+        }
+        equal(addon, addon2, "onUpdateAvailable");
+        result.updateAvailable = install;
+      },
+
+      onUpdateFinished: function(addon2, error) {
+        equal(addon, addon2, "onUpdateFinished");
+        if (error == AddonManager.UPDATE_STATUS_NO_ERROR) {
+          resolve(result);
+        } else {
+          result.error = error;
+          reject(result);
+        }
       }
     }, reason);
   });
+}
+
+/**
+ * Monitors console output for the duration of a task, and returns a promise
+ * which resolves to a tuple containing a list of all console messages
+ * generated during the task's execution, and the result of the task itself.
+ *
+ * @param {function} aTask
+ *                   The task to run while monitoring console output. May be
+ *                   either a generator function, per Task.jsm, or an ordinary
+ *                   function which returns promose.
+ * @return {Promise<[Array<nsIConsoleMessage>, *]>}
+ */
+var promiseConsoleOutput = Task.async(function*(aTask) {
+  const DONE = "=== xpcshell test console listener done ===";
+
+  let listener, messages = [];
+  let awaitListener = new Promise(resolve => {
+    listener = msg => {
+      if (msg == DONE) {
+        resolve();
+      } else {
+        msg instanceof Components.interfaces.nsIScriptError;
+        messages.push(msg);
+      }
+    }
+  });
+
+  Services.console.registerListener(listener);
+  try {
+    let result = yield aTask();
+
+    Services.console.logStringMessage(DONE);
+    yield awaitListener;
+
+    return { messages, result };
+  }
+  finally {
+    Services.console.unregisterListener(listener);
+  }
+});
+
+/**
+ * Creates an extension proxy file.
+ * See: https://developer.mozilla.org/en-US/Add-ons/Setting_up_extension_development_environment#Firefox_extension_proxy_file
+ * @param   aDir
+ *          The directory to add the proxy file to.
+ * @param   aAddon
+ *          An nsIFile for the add-on file that this is a proxy file for.
+ * @param   aId
+ *          A string to use for the add-on ID.
+ * @return  An nsIFile for the proxy file.
+ */
+function writeProxyFileToDir(aDir, aAddon, aId) {
+  let dir = aDir.clone();
+
+  if (!dir.exists())
+    dir.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  let file = dir.clone();
+  file.append(aId);
+
+  let addonPath = aAddon.path;
+
+  let fos = AM_Cc["@mozilla.org/network/file-output-stream;1"].
+            createInstance(AM_Ci.nsIFileOutputStream);
+  fos.init(file,
+           FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE,
+           FileUtils.PERMS_FILE, 0);
+  fos.write(addonPath, addonPath.length);
+  fos.close();
+
+  return file;
 }

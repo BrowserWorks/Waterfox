@@ -123,10 +123,8 @@ protected:
   nsCOMPtr<nsIAutoCompleteInput> mInput;
 
   nsCOMArray<nsIAutoCompleteSearch> mSearches;
+  // This is used as a sparse array, always use SafeObjectAt to access it.
   nsCOMArray<nsIAutoCompleteResult> mResults;
-  // Caches the match counts for the current ongoing results to allow
-  // incremental results to keep the rowcount up to date.
-  nsTArray<uint32_t> mMatchCounts;
   // Temporarily keeps the results alive while invoking startSearch() for each
   // search.  This is needed to allow the searches to reuse the previous result,
   // since otherwise the first search clears mResults.
@@ -139,8 +137,19 @@ protected:
   nsString mSearchString;
   nsString mPlaceholderCompletionString;
   bool mDefaultIndexCompleted;
-  bool mBackspaced;
   bool mPopupClosedByCompositionStart;
+
+  // Whether autofill is allowed for the next search. May be retrieved by the
+  // search through the "prohibit-autofill" searchParam.
+  bool mProhibitAutoFill;
+
+  // Indicates whether the user cleared the autofilled part, returning to the
+  // originally entered search string.
+  bool mUserClearedAutoFill;
+
+  // Indicates whether clearing the autofilled string should issue a new search.
+  bool mClearingAutoFillSearchesAgain;
+
   enum CompositionState {
     eCompositionState_None,
     eCompositionState_Composing,

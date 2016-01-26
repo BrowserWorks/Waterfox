@@ -18,12 +18,10 @@
     var testVideoAudio = createMediaElement('video', 'testVideoAudio');
     var constraints = {video: true, audio: true};
 
-    getUserMedia(constraints).then(aStream => {
-      checkMediaStreamTracks(constraints, aStream);
-
-      var playback = new LocalMediaStreamPlayback(testVideoAudio, aStream);
+    return getUserMedia(constraints).then(stream => {
+      var playback = new LocalMediaStreamPlayback(testVideoAudio, stream);
       return playback.playMedia(false);
-    }).then(() => SimpleTest.finish(), generateErrorCallback());
+    });
   });
 
 </script>

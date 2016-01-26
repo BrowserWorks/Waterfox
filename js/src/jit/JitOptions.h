@@ -23,6 +23,7 @@ static const uint32_t MAX_MAIN_THREAD_LOCALS_AND_ARGS = 256;
 // Possible register allocators which may be used.
 enum IonRegisterAllocator {
     RegisterAllocator_Backtracking,
+    RegisterAllocator_Testbed,
     RegisterAllocator_Stupid
 };
 
@@ -31,12 +32,14 @@ LookupRegisterAllocator(const char* name)
 {
     if (!strcmp(name, "backtracking"))
         return mozilla::Some(RegisterAllocator_Backtracking);
+    if (!strcmp(name, "testbed"))
+        return mozilla::Some(RegisterAllocator_Testbed);
     if (!strcmp(name, "stupid"))
         return mozilla::Some(RegisterAllocator_Stupid);
     return mozilla::Nothing();
 }
 
-struct JitOptions
+struct DefaultJitOptions
 {
     bool checkGraphConsistency;
 #ifdef CHECK_OSIPOINT_REGISTERS
@@ -44,20 +47,23 @@ struct JitOptions
 #endif
     bool checkRangeAnalysis;
     bool runExtraChecks;
-    bool disableScalarReplacement;
-    bool disableEagerSimdUnbox;
-    bool disableGvn;
-    bool disableLicm;
-    bool disableInlining;
-    bool disableEdgeCaseAnalysis;
-    bool disableRangeAnalysis;
-    bool disableSink;
-    bool disableLoopUnrolling;
-    bool disableEaa;
     bool disableAma;
+    bool disableEaa;
+    bool disableEagerSimdUnbox;
+    bool disableEdgeCaseAnalysis;
+    bool disableGvn;
+    bool disableInlining;
+    bool disableLicm;
+    bool disableLoopUnrolling;
+    bool disablePgo;
+    bool disableInstructionReordering;
+    bool disableRangeAnalysis;
+    bool disableScalarReplacement;
+    bool disableSharedStubs;
+    bool disableSincos;
+    bool disableSink;
     bool eagerCompilation;
-    mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
-    mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
+    bool forceInlineCaches;
     bool limitScriptSize;
     bool osr;
     uint32_t baselineWarmUpThreshold;
@@ -66,8 +72,13 @@ struct JitOptions
     uint32_t maxStackArgs;
     uint32_t osrPcMismatchesBeforeRecompile;
     uint32_t smallFunctionMaxBytecodeLength_;
+    mozilla::Maybe<uint32_t> forcedDefaultIonWarmUpThreshold;
+    mozilla::Maybe<IonRegisterAllocator> forcedRegisterAllocator;
 
-    JitOptions();
+    // The options below affect the rest of the VM, and not just the JIT.
+    bool disableUnboxedObjects;
+
+    DefaultJitOptions();
     bool isSmallFunction(JSScript* script) const;
     void setEagerCompilation();
     void setCompilerWarmUpThreshold(uint32_t warmUpThreshold);
@@ -75,7 +86,7 @@ struct JitOptions
     void enableGvn(bool val);
 };
 
-extern JitOptions js_JitOptions;
+extern DefaultJitOptions JitOptions;
 
 } // namespace jit
 } // namespace js

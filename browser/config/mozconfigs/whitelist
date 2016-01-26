@@ -10,6 +10,7 @@ all_platforms = ['win64', 'win32', 'linux32', 'linux64', 'macosx-universal']
 for platform in all_platforms:
     whitelist['nightly'][platform] = [
         'ac_add_options --enable-update-channel=nightly',
+        'ac_add_options --with-branding=browser/branding/nightly',
         'ac_add_options --enable-profiling',
         'mk_add_options CLIENT_PY_ARGS="--hg-options=\'--verbose --time\' --hgtool=../tools/buildfarm/utils/hgtool.py --skip-chatzilla --skip-comm --skip-inspector --tinderbox-print"'
     ]
@@ -18,10 +19,6 @@ for platform in ['linux32', 'linux64', 'macosx-universal']:
     whitelist['nightly'][platform] += [
         'mk_add_options MOZ_MAKE_FLAGS="-j4"',
     ]
-
-for platform in ['linux32', 'linux64', 'macosx-universal', 'win32', 'win64']:
-    whitelist['nightly'][platform] += ['ac_add_options --enable-signmar']
-    whitelist['nightly'][platform] += ['ac_add_options --enable-js-diagnostics']
 
 whitelist['nightly']['linux32'] += [
     'CXX=$REAL_CXX',
@@ -43,6 +40,7 @@ whitelist['nightly']['linux64'] += [
     'STRIP_FLAGS="--strip-debug"',
     'ac_add_options --with-ccache=/usr/bin/ccache',
     '. "$topsrcdir/build/mozconfig.cache"',
+    '. "$topsrcdir/build/unix/mozconfig.rust"',
 ]
 
 whitelist['nightly']['macosx-universal'] += [
@@ -55,6 +53,7 @@ whitelist['nightly']['macosx-universal'] += [
     'ac_add_options --disable-install-strip',
     'ac_add_options --enable-instruments',
     'ac_add_options --enable-dtrace',
+    '. "$topsrcdir/build/macosx/mozconfig.rust"',
 ]
 
 whitelist['nightly']['win32'] += [
@@ -76,6 +75,11 @@ for platform in all_platforms:
         'ac_add_options --enable-official-branding',
         'mk_add_options MOZ_MAKE_FLAGS="-j4"',
         'export BUILDING_RELEASE=1',
+        'if [ -n "$ENABLE_RELEASE_PROMOTION" ]; then',
+        'MOZ_AUTOMATION_UPLOAD_SYMBOLS=1',
+        'MOZ_AUTOMATION_UPDATE_PACKAGING=1',
+        'fi',
+        'MOZ_AUTOMATION_SDK=${MOZ_AUTOMATION_SDK-1}',
     ]
 whitelist['release']['win32'] += ['mk_add_options MOZ_PGO=1']
 whitelist['release']['win64'] += ['mk_add_options MOZ_PGO=1']

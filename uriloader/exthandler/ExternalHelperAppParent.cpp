@@ -32,6 +32,7 @@ NS_IMPL_ISUPPORTS_INHERITED(ExternalHelperAppParent,
                             nsIRequest,
                             nsIChannel,
                             nsIMultiPartChannel,
+                            nsIPrivateBrowsingChannel,
                             nsIResumableChannel,
                             nsIStreamListener)
 
@@ -84,6 +85,11 @@ ExternalHelperAppParent::Init(ContentParent *parent,
     TabParent* tabParent = TabParent::GetFrom(aBrowser);
     if (tabParent->GetOwnerElement())
       window = do_QueryInterface(tabParent->GetOwnerElement()->OwnerDoc()->GetWindow());
+
+    bool isPrivate = false;
+    nsCOMPtr<nsILoadContext> loadContext = tabParent->GetLoadContext();
+    loadContext->GetUsePrivateBrowsing(&isPrivate);
+    SetPrivate(isPrivate);
   }
 
   helperAppService->DoContent(aMimeContentType, this, window,
@@ -101,7 +107,7 @@ void
 ExternalHelperAppParent::Delete()
 {
   if (!mIPCClosed) {
-    unused << Send__delete__(this);
+    Unused << Send__delete__(this);
   }
 }
 
@@ -154,7 +160,7 @@ ExternalHelperAppParent::RecvDivertToParentUsing(PChannelDiverterParent* diverte
   auto p = static_cast<mozilla::net::ChannelDiverterParent*>(diverter);
   p->DivertTo(this);
   mDiverted = true;
-  unused << p->Send__delete__(p);
+  Unused << p->Send__delete__(p);
   return true;
 }
 
@@ -228,7 +234,7 @@ NS_IMETHODIMP
 ExternalHelperAppParent::Cancel(nsresult aStatus)
 {
   mStatus = aStatus;
-  unused << SendCancel(aStatus);
+  Unused << SendCancel(aStatus);
   return NS_OK;
 }
 
@@ -275,8 +281,20 @@ ExternalHelperAppParent::Open(nsIInputStream **aResult)
 }
 
 NS_IMETHODIMP
+ExternalHelperAppParent::Open2(nsIInputStream** aStream)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 ExternalHelperAppParent::AsyncOpen(nsIStreamListener *aListener,
                                    nsISupports *aContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::AsyncOpen2(nsIStreamListener *aListener)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -384,7 +402,9 @@ ExternalHelperAppParent::SetContentCharset(const nsACString& aContentCharset)
 NS_IMETHODIMP
 ExternalHelperAppParent::GetContentDisposition(uint32_t *aContentDisposition)
 {
-  if (mContentDispositionHeader.IsEmpty())
+  // NB: mContentDisposition may or may not be set to a non UINT32_MAX value in
+  // nsExternalHelperAppService::DoContentContentProcessHelper
+  if (mContentDispositionHeader.IsEmpty() && mContentDisposition == UINT32_MAX)
     return NS_ERROR_NOT_AVAILABLE;
 
   *aContentDisposition = mContentDisposition;
@@ -477,6 +497,18 @@ ExternalHelperAppParent::GetPartID(uint32_t* aPartID)
 
 NS_IMETHODIMP
 ExternalHelperAppParent::GetIsLastPart(bool* aIsLastPart)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetPreamble(nsACString & aPreamble)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetOriginalResponseHeader(nsACString & aOriginalResponseHeader)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

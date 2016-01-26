@@ -18,7 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "AboutHomeUtils",
   "resource:///modules/AboutHome.jsm");
 
 const TEST_CONTENT_HELPER = "chrome://mochitests/content/browser/browser/base/content/test/general/aboutHome_content_script.js";
-let gRightsVersion = Services.prefs.getIntPref("browser.rights.version");
+var gRightsVersion = Services.prefs.getIntPref("browser.rights.version");
 
 registerCleanupFunction(function() {
   // Ensure we don't pollute prefs for next tests.
@@ -28,7 +28,7 @@ registerCleanupFunction(function() {
   Services.prefs.clearUserPref("browser.rights." + gRightsVersion + ".shown");
 });
 
-let gTests = [
+var gTests = [
 
 {
   desc: "Check that clearing cookies does not clear storage",
@@ -78,66 +78,55 @@ let gTests = [
   }
 },
 
-// Disabled on Linux for intermittent issues with FHR, see Bug 945667.
 {
   desc: "Check that performing a search fires a search event and records to " +
-        "Firefox Health Report.",
+        "Telemetry.",
   setup: function () { },
   run: function* () {
-    // Skip this test on Linux.
-    if (navigator.platform.indexOf("Linux") == 0) {
-      return Promise.resolve();
-    }
-
-    try {
-      let cm = Cc["@mozilla.org/categorymanager;1"].getService(Ci.nsICategoryManager);
-      cm.getCategoryEntry("healthreport-js-provider-default", "SearchesProvider");
-    } catch (ex) {
-      // Health Report disabled, or no SearchesProvider.
-      return Promise.resolve();
-    }
 
     let engine = yield promiseNewEngine("searchSuggestionEngine.xml");
     // Make this actually work in healthreport by giving it an ID:
-    engine.wrappedJSObject._identifier = 'org.mozilla.testsearchsuggestions';
+    Object.defineProperty(engine.wrappedJSObject, "identifier",
+                          {value: "org.mozilla.testsearchsuggestions"});
 
-    let promise = promiseBrowserAttributes(gBrowser.selectedTab);
+    let p = promiseContentSearchChange(engine.name);
     Services.search.currentEngine = engine;
-    yield promise;
+    yield p;
 
     let numSearchesBefore = 0;
     let searchEventDeferred = Promise.defer();
     let doc = gBrowser.contentDocument;
-    let engineName = doc.documentElement.getAttribute("searchEngineName");
+    let engineName = gBrowser.contentWindow.wrappedJSObject.gContentSearchController.defaultEngine.name;
     is(engine.name, engineName, "Engine name in DOM should match engine we just added");
-    let mm = gBrowser.selectedBrowser.messageManager;
-
-    mm.loadFrameScript(TEST_CONTENT_HELPER, false);
-
-    mm.addMessageListener("AboutHomeTest:CheckRecordedSearch", function (msg) {
-      let data = JSON.parse(msg.data);
-      is(data.engineName, engineName, "Detail is search engine name");
-
-      getNumberOfSearches(engineName).then(num => {
-        is(num, numSearchesBefore + 1, "One more search recorded.");
-        searchEventDeferred.resolve();
-      });
-    });
 
     // Get the current number of recorded searches.
-    let searchStr = "a search";
-    getNumberOfSearches(engineName).then(num => {
-      numSearchesBefore = num;
+    let histogramKey = engine.identifier + ".abouthome";
+    try {
+      let hs = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS").snapshot();
+      if (histogramKey in hs) {
+        numSearchesBefore = hs[histogramKey].sum;
+      }
+    } catch (ex) {
+      // No searches performed yet, not a problem, |numSearchesBefore| is 0.
+    }
 
-      info("Perform a search.");
-      doc.getElementById("searchText").value = searchStr;
-      doc.getElementById("searchSubmit").click();
-    });
+    // Perform a search to increase the SEARCH_COUNT histogram.
+    let searchStr = "a search";
+    info("Perform a search.");
+    doc.getElementById("searchText").value = searchStr;
+    doc.getElementById("searchSubmit").click();
 
     let expectedURL = Services.search.currentEngine.
                       getSubmission(searchStr, null, "homepage").
                       uri.spec;
-    let loadPromise = waitForDocLoadAndStopIt(expectedURL);
+    let loadPromise = waitForDocLoadAndStopIt(expectedURL).then(() => {
+      // Make sure the SEARCH_COUNTS histogram has the right key and count.
+      let hs = Services.telemetry.getKeyedHistogramById("SEARCH_COUNTS").snapshot();
+      Assert.ok(histogramKey in hs, "histogram with key should be recorded");
+      Assert.equal(hs[histogramKey].sum, numSearchesBefore + 1,
+                   "histogram sum should be incremented");
+      searchEventDeferred.resolve();
+    });
 
     try {
       yield Promise.all([searchEventDeferred.promise, loadPromise]);
@@ -236,11 +225,11 @@ let gTests = [
 {
   desc: "Check POST search engine support",
   setup: function() {},
-  run: function()
+  run: function* ()
   {
     let deferred = Promise.defer();
     let currEngine = Services.search.defaultEngine;
-    let searchObserver = function search_observer(aSubject, aTopic, aData) {
+    let searchObserver = Task.async(function* search_observer(aSubject, aTopic, aData) {
       let engine = aSubject.QueryInterface(Ci.nsISearchEngine);
       info("Observer: " + aData + " for " + engine.name);
 
@@ -255,24 +244,15 @@ let gTests = [
       let document = gBrowser.selectedBrowser.contentDocument;
       let searchText = document.getElementById("searchText");
 
-      // We're about to change the search engine. Once the change has
-      // propagated to the about:home content, we want to perform a search.
-      let mutationObserver = new MutationObserver(function (mutations) {
-        for (let mutation of mutations) {
-          if (mutation.attributeName == "searchEngineName") {
-            searchText.value = needle;
-            searchText.focus();
-            EventUtils.synthesizeKey("VK_RETURN", {});
-          }
-        }
-      });
-      mutationObserver.observe(document.documentElement, { attributes: true });
-
-      // Change the search engine, triggering the observer above.
+      let p = promiseContentSearchChange(engine.name);
       Services.search.defaultEngine = engine;
+      yield p;
+
+      searchText.value = needle;
+      searchText.focus();
+      EventUtils.synthesizeKey("VK_RETURN", {});
 
       registerCleanupFunction(function() {
-        mutationObserver.disconnect();
         Services.search.removeEngine(engine);
         Services.search.defaultEngine = currEngine;
       });
@@ -286,13 +266,13 @@ let gTests = [
            "Search text should arrive correctly");
         deferred.resolve();
       });
-    };
+    });
     Services.obs.addObserver(searchObserver, "browser-search-engine-modified", false);
     registerCleanupFunction(function () {
       Services.obs.removeObserver(searchObserver, "browser-search-engine-modified");
     });
     Services.search.addEngine("http://test:80/browser/browser/base/content/test/general/POSTSearchEngine.xml",
-                              Ci.nsISearchEngine.DATA_XML, null, false);
+                              null, null, false);
     return deferred.promise;
   }
 },
@@ -335,8 +315,7 @@ let gTests = [
 },
 
 {
-  // See browser_searchSuggestionUI.js for comprehensive content search
-  // suggestion UI tests.
+  // See browser_contentSearchUI.js for comprehensive content search UI tests.
   desc: "Search suggestion smoke test",
   setup: function() {},
   run: function()
@@ -344,12 +323,12 @@ let gTests = [
     return Task.spawn(function* () {
       // Add a test engine that provides suggestions and switch to it.
       let engine = yield promiseNewEngine("searchSuggestionEngine.xml");
-      let promise = promiseBrowserAttributes(gBrowser.selectedTab);
+      let p = promiseContentSearchChange(engine.name);
       Services.search.currentEngine = engine;
-      yield promise;
+      yield p;
 
       // Avoid intermittent failures.
-      gBrowser.contentWindow.wrappedJSObject.gSearchSuggestionController.remoteTimeout = 5000;
+      gBrowser.contentWindow.wrappedJSObject.gContentSearchController.remoteTimeout = 5000;
 
       // Type an X in the search input.
       let input = gBrowser.contentDocument.getElementById("searchText");
@@ -377,6 +356,10 @@ let gTests = [
       EventUtils.synthesizeKey("a", { accelKey: true });
       EventUtils.synthesizeKey("VK_DELETE", {});
       ok(table.hidden, "Search suggestion table hidden");
+
+      try {
+        Services.search.removeEngine(engine);
+      } catch (ex) { }
     });
   }
 },
@@ -386,6 +369,12 @@ let gTests = [
   run: function()
   {
     return Task.spawn(function* () {
+      // Add a test engine that provides suggestions and switch to it.
+      let engine = yield promiseNewEngine("searchSuggestionEngine.xml");
+      let p = promiseContentSearchChange(engine.name);
+      Services.search.currentEngine = engine;
+      yield p;
+
       // Start composition and type "x"
       let input = gBrowser.contentDocument.getElementById("searchText");
       input.focus();
@@ -401,9 +390,11 @@ let gTests = [
         caret: { start: 1, length: 0 }
       }, gBrowser.contentWindow);
 
+      let searchController =
+        gBrowser.contentWindow.wrappedJSObject.gContentSearchController;
+
       // Wait for the search suggestions to become visible.
-      let table =
-        gBrowser.contentDocument.getElementById("searchSuggestionTable");
+      let table = searchController._suggestionsList;
       let deferred = Promise.defer();
       let observer = new MutationObserver(() => {
         if (input.getAttribute("aria-expanded") == "true") {
@@ -424,11 +415,33 @@ let gTests = [
                         uri.spec;
       let loadPromise = waitForDocLoadAndStopIt(expectedURL);
       let row = table.children[1];
-      EventUtils.sendMouseEvent({ type: "mousedown" }, row, gBrowser.contentWindow);
+      // ContentSearchUIController looks at the current selectedIndex when
+      // performing a search. Synthesizing the mouse event on the suggestion
+      // doesn't actually mouseover the suggestion and trigger it to be flagged
+      // as selected, so we manually select it first.
+      searchController.selectedIndex = 1;
+      EventUtils.synthesizeMouseAtCenter(row, {button: 0}, gBrowser.contentWindow);
       yield loadPromise;
-      ok(input.value == "xbar", "Suggestion is selected");
+      ok(input.value == "x", "Input value did not change");
     });
   }
+},
+{
+  desc: "Pressing any key should focus the search box in the page, and send the key to it",
+  setup: function () {},
+  run: Task.async(function* () {
+    let doc = gBrowser.selectedBrowser.contentDocument;
+    let logo = doc.getElementById("brandLogo");
+    let searchInput = doc.getElementById("searchText");
+
+    EventUtils.synthesizeMouseAtCenter(logo, {});
+    isnot(searchInput, doc.activeElement, "Search input should not be the active element.");
+
+    EventUtils.synthesizeKey("a", {});
+    yield promiseWaitForCondition(() => doc.activeElement === searchInput);
+    is(searchInput, doc.activeElement, "Search input should be the active element.");
+    is(searchInput.value, "a", "Search input should be 'a'.");
+  })
 },
 {
   desc: "Cmd+k should focus the search box in the page when the search box in the toolbar is absent",
@@ -467,35 +480,43 @@ let gTests = [
   })
 },
 {
-  desc: "Sync button should open about:accounts page with `abouthome` entrypoint",
+  desc: "Sync button should open about:preferences#sync",
   setup: function () {},
   run: Task.async(function* () {
     let syncButton = gBrowser.selectedBrowser.contentDocument.getElementById("sync");
+    let oldOpenPrefs = window.openPreferences;
+    let openPrefsPromise = new Promise(resolve => {
+      window.openPreferences = function (pane, params) {
+        resolve({ pane: pane, params: params });
+      };
+    });
+
     yield EventUtils.synthesizeMouseAtCenter(syncButton, {}, gBrowser.contentWindow);
 
-    yield promiseTabLoadEvent(gBrowser.selectedTab, null, "load");
-    is(gBrowser.currentURI.spec, "about:accounts?entrypoint=abouthome",
-      "Entry point should be `abouthome`.");
+    let result = yield openPrefsPromise;
+    window.openPreferences = oldOpenPrefs;
+
+    is(result.pane, "paneSync", "openPreferences should be called with paneSync");
+    is(result.params.urlParams.entrypoint, "abouthome", "openPreferences should be called with abouthome entrypoint");
   })
 },
 {
-  desc: "Clicking the icon should open the popup",
+  desc: "Pressing Space while the Addons button is focussed should activate it",
   setup: function () {},
   run: Task.async(function* () {
-    let doc = gBrowser.selectedBrowser.contentDocument;
-    let searchIcon = doc.getElementById("searchIcon");
-    let panel = window.document.getElementById("abouthome-search-panel");
+    // Skip this test on Mac, because Space doesn't activate the button there.
+    if (navigator.platform.indexOf("Mac") == 0) {
+      return Promise.resolve();
+    }
 
-    info("Waiting for popup to open");
-    EventUtils.synthesizeMouseAtCenter(searchIcon, {}, gBrowser.selectedBrowser.contentWindow);
-    yield promiseWaitForEvent(panel, "popupshown");
-    info("Saw popup open");
-
-    let promise = promisePrefsOpen();
-    let item = window.document.getElementById("abouthome-search-panel-manage");
-    EventUtils.synthesizeMouseAtCenter(item, {});
-
-    yield promise;
+    info("Waiting for about:addons tab to open...");
+    let promiseTabOpened = BrowserTestUtils.waitForNewTab(gBrowser, "about:addons");
+    let addOnsButton = gBrowser.selectedBrowser.contentDocument.getElementById("addons");
+    addOnsButton.focus();
+    EventUtils.synthesizeKey(" ", {});
+    let tab = yield promiseTabOpened;
+    is(tab.linkedBrowser.currentURI.spec, "about:addons", "Should have seen the about:addons tab");
+    yield BrowserTestUtils.removeTab(tab);
   })
 }
 
@@ -576,90 +597,6 @@ function promiseSetupSnippetsMap(aTab, aSetupFn)
   return deferred.promise;
 }
 
-/**
- * Waits for the attributes being set by browser.js.
- *
- * @param aTab
- *        The tab containing about:home.
- * @return {Promise} resolved when the attributes are ready.
- */
-function promiseBrowserAttributes(aTab)
-{
-  let deferred = Promise.defer();
-
-  let docElt = aTab.linkedBrowser.contentDocument.documentElement;
-  let observer = new MutationObserver(function (mutations) {
-    for (let mutation of mutations) {
-      info("Got attribute mutation: " + mutation.attributeName +
-                                    " from " + mutation.oldValue);
-      // Now we just have to wait for the last attribute.
-      if (mutation.attributeName == "searchEngineName") {
-        info("Remove attributes observer");
-        observer.disconnect();
-        // Must be sure to continue after the page mutation observer.
-        executeSoon(function() deferred.resolve());
-        break;
-      }
-    }
-  });
-  info("Add attributes observer");
-  observer.observe(docElt, { attributes: true });
-
-  return deferred.promise;
-}
-
-/**
- * Retrieves the number of about:home searches recorded for the current day.
- *
- * @param aEngineName
- *        name of the setup search engine.
- *
- * @return {Promise} Returns a promise resolving to the number of searches.
- */
-function getNumberOfSearches(aEngineName) {
-  let reporter = Components.classes["@mozilla.org/datareporting/service;1"]
-                                   .getService()
-                                   .wrappedJSObject
-                                   .healthReporter;
-  ok(reporter, "Health Reporter instance available.");
-
-  return reporter.onInit().then(function onInit() {
-    let provider = reporter.getProvider("org.mozilla.searches");
-    ok(provider, "Searches provider is available.");
-
-    let m = provider.getMeasurement("counts", 3);
-    return m.getValues().then(data => {
-      let now = new Date();
-      let yday = new Date(now);
-      yday.setDate(yday.getDate() - 1);
-
-      // Add the number of searches recorded yesterday to the number of searches
-      // recorded today. This makes the test not fail intermittently when it is
-      // run at midnight and we accidentally compare the number of searches from
-      // different days. Tests are always run with an empty profile so there
-      // are no searches from yesterday, normally. Should the test happen to run
-      // past midnight we make sure to count them in as well.
-      return getNumberOfSearchesByDate(aEngineName, data, now) +
-             getNumberOfSearchesByDate(aEngineName, data, yday);
-    });
-  });
-}
-
-function getNumberOfSearchesByDate(aEngineName, aData, aDate) {
-  if (aData.days.hasDay(aDate)) {
-    let id = Services.search.getEngineByName(aEngineName).identifier;
-
-    let day = aData.days.getDay(aDate);
-    let field = id + ".abouthome";
-
-    if (day.has(field)) {
-      return day.get(field) || 0;
-    }
-  }
-
-  return 0; // No records found.
-}
-
 function waitForLoad(cb) {
   let browser = gBrowser.selectedBrowser;
   browser.addEventListener("load", function listener() {
@@ -681,41 +618,32 @@ function promiseWaitForEvent(node, type, capturing) {
   });
 }
 
-let promisePrefsOpen = Task.async(function*() {
-  if (Services.prefs.getBoolPref("browser.preferences.inContent")) {
-    info("Waiting for the preferences tab to open...");
-    let event = yield promiseWaitForEvent(gBrowser.tabContainer, "TabOpen", true);
-    let tab = event.target;
-    yield promiseTabLoadEvent(tab);
-    is(tab.linkedBrowser.currentURI.spec, "about:preferences#search", "Should have seen the prefs tab");
-    gBrowser.removeTab(tab);
-  } else {
-    info("Waiting for the preferences window to open...");
-    yield new Promise(resolve => {
-      let winWatcher = Cc["@mozilla.org/embedcomp/window-watcher;1"].
-                       getService(Ci.nsIWindowWatcher);
-      winWatcher.registerNotification(function onWin(subj, topic, data) {
-        if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
-          subj.addEventListener("load", function onLoad() {
-            subj.removeEventListener("load", onLoad);
-            is(subj.document.documentURI, "chrome://browser/content/preferences/preferences.xul", "Should have seen the prefs window");
-            winWatcher.unregisterNotification(onWin);
-            executeSoon(() => {
-              subj.close();
-              resolve();
-            });
-          });
-        }
-      });
-    });
-  }
+var promisePrefsOpen = Task.async(function*() {
+  info("Waiting for the preferences tab to open...");
+  let event = yield promiseWaitForEvent(gBrowser.tabContainer, "TabOpen", true);
+  let tab = event.target;
+  yield promiseTabLoadEvent(tab);
+  is(tab.linkedBrowser.currentURI.spec, "about:preferences#search", "Should have seen the prefs tab");
+  gBrowser.removeTab(tab);
 });
+
+function promiseContentSearchChange(newEngineName) {
+  return new Promise(resolve => {
+    content.addEventListener("ContentSearchService", function listener(aEvent) {
+      if (aEvent.detail.type == "CurrentState" &&
+          gBrowser.contentWindow.wrappedJSObject.gContentSearchController.defaultEngine.name == newEngineName) {
+        content.removeEventListener("ContentSearchService", listener);
+        resolve();
+      }
+    });
+  });
+}
 
 function promiseNewEngine(basename) {
   info("Waiting for engine to be added: " + basename);
   let addDeferred = Promise.defer();
   let url = getRootDirectory(gTestPath) + basename;
-  Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "", false, {
+  Services.search.addEngine(url, null, "", false, {
     onSuccess: function (engine) {
       info("Search engine added: " + basename);
       registerCleanupFunction(() => {

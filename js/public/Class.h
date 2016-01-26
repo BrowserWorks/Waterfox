@@ -46,7 +46,44 @@ template <typename T>
 class AutoVectorRooter;
 typedef AutoVectorRooter<jsid> AutoIdVector;
 
-/*
+/**
+ * The answer to a successful query as to whether an object is an Array per
+ * ES6's internal |IsArray| operation (as exposed by |Array.isArray|).
+ */
+enum class IsArrayAnswer
+{
+    Array,
+    NotArray,
+    RevokedProxy
+};
+
+/**
+ * ES6 7.2.2.
+ *
+ * Returns false on failure, otherwise returns true and sets |*isArray|
+ * indicating whether the object passes ECMAScript's IsArray test.  This is the
+ * same test performed by |Array.isArray|.
+ *
+ * This is NOT the same as asking whether |obj| is an Array or a wrapper around
+ * one.  If |obj| is a proxy created by |Proxy.revocable()| and has been
+ * revoked, or if |obj| is a proxy whose target (at any number of hops) is a
+ * revoked proxy, this method throws a TypeError and returns false.
+ */
+extern JS_PUBLIC_API(bool)
+IsArray(JSContext* cx, HandleObject obj, bool* isArray);
+
+/**
+ * Identical to IsArray above, but the nature of the object (if successfully
+ * determined) is communicated via |*answer|.  In particular this method
+ * returns true and sets |*answer = IsArrayAnswer::RevokedProxy| when called on
+ * a revoked proxy.
+ *
+ * Most users will want the overload above, not this one.
+ */
+extern JS_PUBLIC_API(bool)
+IsArray(JSContext* cx, HandleObject obj, IsArrayAnswer* answer);
+
+/**
  * Per ES6, the [[DefineOwnProperty]] internal method has three different
  * possible outcomes:
  *
@@ -82,7 +119,7 @@ typedef AutoVectorRooter<jsid> AutoIdVector;
 class ObjectOpResult
 {
   private:
-    /*
+    /**
      * code_ is either one of the special codes OkCode or Uninitialized, or
      * an error code. For now the error codes are private to the JS engine;
      * they're defined in js/src/js.msg.
@@ -142,6 +179,9 @@ class ObjectOpResult
     JS_PUBLIC_API(bool) failCantDeleteWindowElement();
     JS_PUBLIC_API(bool) failCantDeleteWindowNamedProperty();
     JS_PUBLIC_API(bool) failCantPreventExtensions();
+    JS_PUBLIC_API(bool) failCantSetProto();
+    JS_PUBLIC_API(bool) failNoNamedSetter();
+    JS_PUBLIC_API(bool) failNoIndexedSetter();
 
     uint32_t failureCode() const {
         MOZ_ASSERT(!ok());
@@ -212,126 +252,148 @@ class ObjectOpResult
     }
 };
 
-}
+} // namespace JS
 
 // JSClass operation signatures.
 
-// Get a property named by id in obj.  Note the jsid id type -- id may
-// be a string (Unicode property identifier) or an int (element index).  The
-// *vp out parameter, on success, is the new property value after the action.
+/**
+ * Get a property named by id in obj.  Note the jsid id type -- id may
+ * be a string (Unicode property identifier) or an int (element index).  The
+ * *vp out parameter, on success, is the new property value after the action.
+ */
 typedef bool
 (* JSGetterOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
                JS::MutableHandleValue vp);
 
-// Add a property named by id to obj.
+/** Add a property named by id to obj. */
 typedef bool
 (* JSAddPropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id, JS::HandleValue v);
 
-// Set a property named by id in obj, treating the assignment as strict
-// mode code if strict is true. Note the jsid id type -- id may be a string
-// (Unicode property identifier) or an int (element index). The *vp out
-// parameter, on success, is the new property value after the
-// set.
+/**
+ * Set a property named by id in obj, treating the assignment as strict
+ * mode code if strict is true. Note the jsid id type -- id may be a string
+ * (Unicode property identifier) or an int (element index). The *vp out
+ * parameter, on success, is the new property value after the
+ * set.
+ */
 typedef bool
 (* JSSetterOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
                JS::MutableHandleValue vp, JS::ObjectOpResult& result);
 
-// Delete a property named by id in obj.
-//
-// If an error occurred, return false as per normal JSAPI error practice.
-//
-// If no error occurred, but the deletion attempt wasn't allowed (perhaps
-// because the property was non-configurable), call result.fail() and
-// return true.  This will cause |delete obj[id]| to evaluate to false in
-// non-strict mode code, and to throw a TypeError in strict mode code.
-//
-// If no error occurred and the deletion wasn't disallowed (this is *not* the
-// same as saying that a deletion actually occurred -- deleting a non-existent
-// property, or an inherited property, is allowed -- it's just pointless),
-// call result.succeed() and return true.
+/**
+ * Delete a property named by id in obj.
+ *
+ * If an error occurred, return false as per normal JSAPI error practice.
+ *
+ * If no error occurred, but the deletion attempt wasn't allowed (perhaps
+ * because the property was non-configurable), call result.fail() and
+ * return true.  This will cause |delete obj[id]| to evaluate to false in
+ * non-strict mode code, and to throw a TypeError in strict mode code.
+ *
+ * If no error occurred and the deletion wasn't disallowed (this is *not* the
+ * same as saying that a deletion actually occurred -- deleting a non-existent
+ * property, or an inherited property, is allowed -- it's just pointless),
+ * call result.succeed() and return true.
+ */
 typedef bool
 (* JSDeletePropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
                        JS::ObjectOpResult& result);
 
-// The type of ObjectOps::enumerate. This callback overrides a portion of SpiderMonkey's default
-// [[Enumerate]] internal method. When an ordinary object is enumerated, that object and each object
-// on its prototype chain is tested for an enumerate op, and those ops are called in order.
-// The properties each op adds to the 'properties' vector are added to the set of values the
-// for-in loop will iterate over. All of this is nonstandard.
-//
-// An object is "enumerated" when it's the target of a for-in loop or JS_Enumerate().
-// All other property inspection, including Object.keys(obj), goes through [[OwnKeys]].
-//
-// The callback's job is to populate 'properties' with all property keys that the for-in loop
-// should visit.
+/**
+ * The type of ObjectOps::enumerate. This callback overrides a portion of
+ * SpiderMonkey's default [[Enumerate]] internal method. When an ordinary object
+ * is enumerated, that object and each object on its prototype chain is tested
+ * for an enumerate op, and those ops are called in order. The properties each
+ * op adds to the 'properties' vector are added to the set of values the for-in
+ * loop will iterate over. All of this is nonstandard.
+ *
+ * An object is "enumerated" when it's the target of a for-in loop or
+ * JS_Enumerate(). The callback's job is to populate 'properties' with the
+ * object's property keys. If `enumerableOnly` is true, the callback should only
+ * add enumerable properties.
+ */
 typedef bool
-(* JSNewEnumerateOp)(JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& properties);
+(* JSNewEnumerateOp)(JSContext* cx, JS::HandleObject obj, JS::AutoIdVector& properties,
+                     bool enumerableOnly);
 
-// The old-style JSClass.enumerate op should define all lazy properties not
-// yet reflected in obj.
+/**
+ * The old-style JSClass.enumerate op should define all lazy properties not
+ * yet reflected in obj.
+ */
 typedef bool
 (* JSEnumerateOp)(JSContext* cx, JS::HandleObject obj);
 
-// Resolve a lazy property named by id in obj by defining it directly in obj.
-// Lazy properties are those reflected from some peer native property space
-// (e.g., the DOM attributes for a given node reflected as obj) on demand.
-//
-// JS looks for a property in an object, and if not found, tries to resolve
-// the given id. *resolvedp should be set to true iff the property was
-// was defined on |obj|.
-//
+/**
+ * The type of ObjectOps::funToString.  This callback allows an object to
+ * provide a custom string to use when Function.prototype.toString is invoked on
+ * that object.  A null return value means OOM.
+ */
+typedef JSString*
+(* JSFunToStringOp)(JSContext* cx, JS::HandleObject obj, unsigned indent);
+
+/**
+ * Resolve a lazy property named by id in obj by defining it directly in obj.
+ * Lazy properties are those reflected from some peer native property space
+ * (e.g., the DOM attributes for a given node reflected as obj) on demand.
+ *
+ * JS looks for a property in an object, and if not found, tries to resolve
+ * the given id. *resolvedp should be set to true iff the property was defined
+ * on |obj|.
+ */
 typedef bool
 (* JSResolveOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
                 bool* resolvedp);
 
-// A class with a resolve hook can optionally have a mayResolve hook. This hook
-// must have no side effects and must return true for a given id if the resolve
-// hook may resolve this id. This is useful when we're doing a "pure" lookup: if
-// mayResolve returns false, we know we don't have to call the effectful resolve
-// hook.
-//
-// maybeObj, if non-null, is the object on which we're doing the lookup. This
-// can be nullptr: during JIT compilation we sometimes know the Class but not
-// the object.
+/**
+ * A class with a resolve hook can optionally have a mayResolve hook. This hook
+ * must have no side effects and must return true for a given id if the resolve
+ * hook may resolve this id. This is useful when we're doing a "pure" lookup: if
+ * mayResolve returns false, we know we don't have to call the effectful resolve
+ * hook.
+ *
+ * maybeObj, if non-null, is the object on which we're doing the lookup. This
+ * can be nullptr: during JIT compilation we sometimes know the Class but not
+ * the object.
+ */
 typedef bool
 (* JSMayResolveOp)(const JSAtomState& names, jsid id, JSObject* maybeObj);
 
-// Convert obj to the given type, returning true with the resulting value in
-// *vp on success, and returning false on error or exception.
-typedef bool
-(* JSConvertOp)(JSContext* cx, JS::HandleObject obj, JSType type,
-                JS::MutableHandleValue vp);
-
-// Finalize obj, which the garbage collector has determined to be unreachable
-// from other live objects or from GC roots.  Obviously, finalizers must never
-// store a reference to obj.
+/**
+ * Finalize obj, which the garbage collector has determined to be unreachable
+ * from other live objects or from GC roots.  Obviously, finalizers must never
+ * store a reference to obj.
+ */
 typedef void
 (* JSFinalizeOp)(JSFreeOp* fop, JSObject* obj);
 
-// Finalizes external strings created by JS_NewExternalString.
+/** Finalizes external strings created by JS_NewExternalString. */
 struct JSStringFinalizer {
     void (*finalize)(const JSStringFinalizer* fin, char16_t* chars);
 };
 
-// Check whether v is an instance of obj.  Return false on error or exception,
-// true on success with true in *bp if v is an instance of obj, false in
-// *bp otherwise.
+/**
+ * Check whether v is an instance of obj.  Return false on error or exception,
+ * true on success with true in *bp if v is an instance of obj, false in
+ * *bp otherwise.
+ */
 typedef bool
 (* JSHasInstanceOp)(JSContext* cx, JS::HandleObject obj, JS::MutableHandleValue vp,
                     bool* bp);
 
-// Function type for trace operation of the class called to enumerate all
-// traceable things reachable from obj's private data structure. For each such
-// thing, a trace implementation must call one of the JS_Call*Tracer variants
-// on the thing.
-//
-// JSTraceOp implementation can assume that no other threads mutates object
-// state. It must not change state of the object or corresponding native
-// structures. The only exception for this rule is the case when the embedding
-// needs a tight integration with GC. In that case the embedding can check if
-// the traversal is a part of the marking phase through calling
-// JS_IsGCMarkingTracer and apply a special code like emptying caches or
-// marking its native structures.
+/**
+ * Function type for trace operation of the class called to enumerate all
+ * traceable things reachable from obj's private data structure. For each such
+ * thing, a trace implementation must call one of the JS_Call*Tracer variants
+ * on the thing.
+ *
+ * JSTraceOp implementation can assume that no other threads mutates object
+ * state. It must not change state of the object or corresponding native
+ * structures. The only exception for this rule is the case when the embedding
+ * needs a tight integration with GC. In that case the embedding can check if
+ * the traversal is a part of the marking phase through calling
+ * JS_IsGCMarkingTracer and apply a special code like emptying caches or
+ * marking its native structures.
+ */
 typedef void
 (* JSTraceOp)(JSTracer* trc, JSObject* obj);
 
@@ -355,7 +417,7 @@ typedef bool
 typedef bool
 (* HasPropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* foundp);
 typedef bool
-(* GetPropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleObject receiver, JS::HandleId id,
+(* GetPropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleValue receiver, JS::HandleId id,
                   JS::MutableHandleValue vp);
 typedef bool
 (* SetPropertyOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id, JS::HandleValue v,
@@ -404,22 +466,13 @@ class JS_FRIEND_API(ElementAdder)
 
     GetBehavior getBehavior() const { return getBehavior_; }
 
-    void append(JSContext* cx, JS::HandleValue v);
+    bool append(JSContext* cx, JS::HandleValue v);
     void appendHole();
 };
 
 typedef bool
 (* GetElementsOp)(JSContext* cx, JS::HandleObject obj, uint32_t begin, uint32_t end,
                   ElementAdder* adder);
-
-// A generic type for functions mapping an object to another object, or null
-// if an error or exception was thrown on cx.
-typedef JSObject*
-(* ObjectOp)(JSContext* cx, JS::HandleObject obj);
-
-// Hook to map an object to its inner object. Infallible.
-typedef JSObject*
-(* InnerObjectOp)(JSObject* obj);
 
 typedef void
 (* FinalizeOp)(FreeOp* fop, JSObject* obj);
@@ -436,17 +489,16 @@ typedef void
     JSEnumerateOp       enumerate;                                            \
     JSResolveOp         resolve;                                              \
     JSMayResolveOp      mayResolve;                                           \
-    JSConvertOp         convert;                                              \
     FinalizeOpType      finalize;                                             \
     JSNative            call;                                                 \
     JSHasInstanceOp     hasInstance;                                          \
     JSNative            construct;                                            \
     JSTraceOp           trace
 
-// Callback for the creation of constructor and prototype objects.
+/** Callback for the creation of constructor and prototype objects. */
 typedef JSObject* (*ClassObjectCreationOp)(JSContext* cx, JSProtoKey key);
 
-// Callback for custom post-processing after class initialization via ClassSpec.
+/** Callback for custom post-processing after class initialization via ClassSpec. */
 typedef bool (*FinishClassInitOp)(JSContext* cx, JS::HandleObject ctor,
                                   JS::HandleObject proto);
 
@@ -454,21 +506,27 @@ const size_t JSCLASS_CACHED_PROTO_WIDTH = 6;
 
 struct ClassSpec
 {
-    ClassObjectCreationOp createConstructor;
-    ClassObjectCreationOp createPrototype;
-    const JSFunctionSpec* constructorFunctions;
-    const JSPropertySpec* constructorProperties;
-    const JSFunctionSpec* prototypeFunctions;
-    const JSPropertySpec* prototypeProperties;
-    FinishClassInitOp finishInit;
+    // All properties except flags should be accessed through accessor.
+    ClassObjectCreationOp createConstructor_;
+    ClassObjectCreationOp createPrototype_;
+    const JSFunctionSpec* constructorFunctions_;
+    const JSPropertySpec* constructorProperties_;
+    const JSFunctionSpec* prototypeFunctions_;
+    const JSPropertySpec* prototypeProperties_;
+    FinishClassInitOp finishInit_;
     uintptr_t flags;
 
     static const size_t ParentKeyWidth = JSCLASS_CACHED_PROTO_WIDTH;
 
     static const uintptr_t ParentKeyMask = (1 << ParentKeyWidth) - 1;
     static const uintptr_t DontDefineConstructor = 1 << ParentKeyWidth;
+    static const uintptr_t IsDelegated = 1 << (ParentKeyWidth + 1);
 
-    bool defined() const { return !!createConstructor; }
+    bool defined() const { return !!createConstructor_; }
+
+    bool delegated() const {
+        return (flags & IsDelegated);
+    }
 
     bool dependent() const {
         MOZ_ASSERT(defined());
@@ -484,20 +542,58 @@ struct ClassSpec
         MOZ_ASSERT(defined());
         return !(flags & DontDefineConstructor);
     }
+
+    const ClassSpec* delegatedClassSpec() const {
+        MOZ_ASSERT(delegated());
+        return reinterpret_cast<ClassSpec*>(createConstructor_);
+    }
+
+    ClassObjectCreationOp createConstructorHook() const {
+        if (delegated())
+            return delegatedClassSpec()->createConstructorHook();
+        return createConstructor_;
+    }
+    ClassObjectCreationOp createPrototypeHook() const {
+        if (delegated())
+            return delegatedClassSpec()->createPrototypeHook();
+        return createPrototype_;
+    }
+    const JSFunctionSpec* constructorFunctions() const {
+        if (delegated())
+            return delegatedClassSpec()->constructorFunctions();
+        return constructorFunctions_;
+    }
+    const JSPropertySpec* constructorProperties() const {
+        if (delegated())
+            return delegatedClassSpec()->constructorProperties();
+        return constructorProperties_;
+    }
+    const JSFunctionSpec* prototypeFunctions() const {
+        if (delegated())
+            return delegatedClassSpec()->prototypeFunctions();
+        return prototypeFunctions_;
+    }
+    const JSPropertySpec* prototypeProperties() const {
+        if (delegated())
+            return delegatedClassSpec()->prototypeProperties();
+        return prototypeProperties_;
+    }
+    FinishClassInitOp finishInitHook() const {
+        if (delegated())
+            return delegatedClassSpec()->finishInitHook();
+        return finishInit_;
+    }
 };
 
 struct ClassExtension
 {
-    ObjectOp            outerObject;
-    InnerObjectOp       innerObject;
-
-    /*
+    /**
      * isWrappedNative is true only if the class is an XPCWrappedNative.
      * WeakMaps use this to override the wrapper disposal optimization.
      */
     bool                isWrappedNative;
 
-    /*
+    /**
      * If an object is used as a key in a weakmap, it may be desirable for the
      * garbage collector to keep that object around longer than it otherwise
      * would. A common case is when the key is a wrapper around an object in
@@ -510,7 +606,7 @@ struct ClassExtension
      */
     JSWeakmapKeyDelegateOp weakmapKeyDelegateOp;
 
-    /*
+    /**
      * Optional hook called when an object is moved by a compacting GC.
      *
      * There may exist weak pointers to an object that are not traced through
@@ -524,8 +620,12 @@ struct ClassExtension
     JSObjectMovedOp objectMovedOp;
 };
 
-#define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
-#define JS_NULL_CLASS_EXT   {nullptr,nullptr,false,nullptr,nullptr}
+inline ClassObjectCreationOp DELEGATED_CLASSSPEC(const ClassSpec* spec) {
+    return reinterpret_cast<ClassObjectCreationOp>(const_cast<ClassSpec*>(spec));
+}
+
+#define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
+#define JS_NULL_CLASS_EXT   {false,nullptr}
 
 struct ObjectOps
 {
@@ -540,7 +640,7 @@ struct ObjectOps
     UnwatchOp           unwatch;
     GetElementsOp       getElements;
     JSNewEnumerateOp    enumerate;
-    ObjectOp            thisObject;
+    JSFunToStringOp     funToString;
 };
 
 #define JS_NULL_OBJECT_OPS                                                    \
@@ -556,14 +656,16 @@ typedef void (*JSClassInternal)();
 struct JSClass {
     JS_CLASS_MEMBERS(JSFinalizeOp);
 
-    void*               reserved[25];
+    void*               reserved[23];
 };
 
 #define JSCLASS_HAS_PRIVATE             (1<<0)  // objects have private slot
+#define JSCLASS_DELAY_METADATA_CALLBACK (1<<1)  // class's initialization code
+                                                // will call
+                                                // SetNewObjectMetadata itself
 #define JSCLASS_PRIVATE_IS_NSISUPPORTS  (1<<3)  // private is (nsISupports*)
 #define JSCLASS_IS_DOMJSCLASS           (1<<4)  // objects are DOM
-#define JSCLASS_IMPLEMENTS_BARRIERS     (1<<5)  // Correctly implements GC read
-                                                // and write barriers
+// Bit 5 is unused.
 #define JSCLASS_EMULATES_UNDEFINED      (1<<6)  // objects of this class act
                                                 // like the value undefined,
                                                 // in some contexts
@@ -616,7 +718,8 @@ struct JSClass {
 // the beginning of every global object's slots for use by the
 // application.
 #define JSCLASS_GLOBAL_APPLICATION_SLOTS 5
-#define JSCLASS_GLOBAL_SLOT_COUNT      (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 3 + 30)
+#define JSCLASS_GLOBAL_SLOT_COUNT                                             \
+    (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 3 + 36)
 #define JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(n)                                    \
     (JSCLASS_IS_GLOBAL | JSCLASS_HAS_RESERVED_SLOTS(JSCLASS_GLOBAL_SLOT_COUNT + (n)))
 #define JSCLASS_GLOBAL_FLAGS                                                  \
@@ -627,7 +730,7 @@ struct JSClass {
 
 // Fast access to the original value of each standard class's prototype.
 #define JSCLASS_CACHED_PROTO_SHIFT      (JSCLASS_HIGH_FLAGS_SHIFT + 10)
-#define JSCLASS_CACHED_PROTO_MASK       JS_BITMASK(JSCLASS_CACHED_PROTO_WIDTH)
+#define JSCLASS_CACHED_PROTO_MASK       JS_BITMASK(js::JSCLASS_CACHED_PROTO_WIDTH)
 #define JSCLASS_HAS_CACHED_PROTO(key)   (uint32_t(key) << JSCLASS_CACHED_PROTO_SHIFT)
 #define JSCLASS_CACHED_PROTO_KEY(clasp) ((JSProtoKey)                         \
                                          (((clasp)->flags                     \
@@ -651,8 +754,8 @@ struct Class
      * Objects of this class aren't native objects. They don't have Shapes that
      * describe their properties and layout. Classes using this flag must
      * provide their own property behavior, either by being proxy classes (do
-     * this) or by overriding all the ObjectOps except getElements, watch,
-     * unwatch, and thisObject (don't do this).
+     * this) or by overriding all the ObjectOps except getElements, watch and
+     * unwatch (don't do this).
      */
     static const uint32_t NON_NATIVE = JSCLASS_INTERNAL_FLAG2;
 
@@ -685,6 +788,10 @@ struct Class
         return flags & JSCLASS_IS_DOMJSCLASS;
     }
 
+    bool shouldDelayMetadataCallback() const {
+        return flags & JSCLASS_DELAY_METADATA_CALLBACK;
+    }
+
     static size_t offsetOfFlags() { return offsetof(Class, flags); }
 };
 
@@ -705,8 +812,6 @@ static_assert(offsetof(JSClass, enumerate) == offsetof(Class, enumerate),
 static_assert(offsetof(JSClass, resolve) == offsetof(Class, resolve),
               "Class and JSClass must be consistent");
 static_assert(offsetof(JSClass, mayResolve) == offsetof(Class, mayResolve),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, convert) == offsetof(Class, convert),
               "Class and JSClass must be consistent");
 static_assert(offsetof(JSClass, finalize) == offsetof(Class, finalize),
               "Class and JSClass must be consistent");
@@ -733,7 +838,7 @@ Valueify(const JSClass* c)
     return (const Class*)c;
 }
 
-/*
+/**
  * Enumeration describing possible values of the [[Class]] internal property
  * value of objects.
  */
@@ -742,23 +847,9 @@ enum ESClassValue {
     ESClass_Boolean, ESClass_RegExp, ESClass_ArrayBuffer, ESClass_SharedArrayBuffer,
     ESClass_Date, ESClass_Set, ESClass_Map,
 
-    // Special snowflake for the ES6 IsArray method.
-    // Please don't use it without calling that function.
-    ESClass_IsArray
+    /** None of the above. */
+    ESClass_Other
 };
-
-/*
- * Return whether the given object has the given [[Class]] internal property
- * value. Beware, this query says nothing about the js::Class of the JSObject
- * so the caller must not assume anything about obj's representation (e.g., obj
- * may be a proxy).
- */
-inline bool
-ObjectClassIs(JSObject& obj, ESClassValue classValue, JSContext* cx);
-
-/* Just a helper that checks v.isObject before calling ObjectClassIs. */
-inline bool
-IsObjectWithClass(const JS::Value& v, ESClassValue classValue, JSContext* cx);
 
 /* Fills |vp| with the unboxed value for boxed types, or undefined otherwise. */
 inline bool

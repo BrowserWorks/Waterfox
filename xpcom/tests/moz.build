@@ -15,11 +15,6 @@ TEST_DIRS += [
 if CONFIG['OS_ARCH'] == 'WINNT':
     TEST_DIRS += ['windows']
 
-if CONFIG['DEHYDRA_PATH']:
-    TEST_DIRS += ['static-checker']
-
-FAIL_ON_WARNINGS = True
-
 EXPORTS.testing += [
     'TestHarness.h',
 ]
@@ -58,7 +53,6 @@ GeckoCppUnitTests([
     'TestCOMArray',
     'TestCOMPtr',
     'TestCOMPtrEq',
-    'TestDeque',
     'TestFile',
     'TestHashtables',
     'TestID',
@@ -66,7 +60,6 @@ GeckoCppUnitTests([
     'TestObserverArray',
     'TestObserverService',
     'TestPipe',
-    'TestPLDHash',
     'TestStringAPI',
     'TestTArray',
     'TestTextFormatter',
@@ -77,11 +70,6 @@ if CONFIG['MOZ_MEMORY']:
     GeckoCppUnitTests([
         'TestJemalloc',
     ])
-
-# XXX Make these tests work in libxul builds.
-#CPP_UNIT_TESTS += [
-#    'TestAtoms',
-#]
 
 # FIXME: bug 577500 TestStaticAtoms fails when run in dist/bin
 #CPP_UNIT_TESTS += [
@@ -101,6 +89,9 @@ XPIDL_SOURCES += [
     'NotXPCOMTest.idl',
 ]
 
+# Don't add our test-only .xpt files to the normal manifests
+XPIDL_NO_MANIFEST = True
+
 LOCAL_INCLUDES += [
     '../ds',
 ]
@@ -108,3 +99,6 @@ LOCAL_INCLUDES += [
 RESOURCE_FILES += [
     'test.properties',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

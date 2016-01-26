@@ -12,7 +12,7 @@ const FRAME_SCRIPTS = [
   ROOT + "content-forms.js"
 ];
 
-let mm = Cc["@mozilla.org/globalmessagemanager;1"]
+var mm = Cc["@mozilla.org/globalmessagemanager;1"]
            .getService(Ci.nsIMessageListenerManager);
 
 for (let script of FRAME_SCRIPTS) {
@@ -25,16 +25,14 @@ registerCleanupFunction(() => {
   }
 });
 
-let tmp = {};
-Cu.import("resource://gre/modules/Promise.jsm", tmp);
-Cu.import("resource://gre/modules/Task.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionStore.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionSaver.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/SessionFile.jsm", tmp);
-Cu.import("resource:///modules/sessionstore/TabState.jsm", tmp);
-let {Promise, Task, SessionStore, SessionSaver, SessionFile, TabState} = tmp;
+const {Promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const {SessionStore} = Cu.import("resource:///modules/sessionstore/SessionStore.jsm", {});
+const {SessionSaver} = Cu.import("resource:///modules/sessionstore/SessionSaver.jsm", {});
+const {SessionFile} = Cu.import("resource:///modules/sessionstore/SessionFile.jsm", {});
+const {TabState} = Cu.import("resource:///modules/sessionstore/TabState.jsm", {});
+const {TabStateFlusher} = Cu.import("resource:///modules/sessionstore/TabStateFlusher.jsm", {});
 
-let ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
+const ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
 
 // Some tests here assume that all restored tabs are loaded without waiting for
 // the user to bring them to the foreground. We ensure this by resetting the
@@ -270,7 +268,7 @@ function promiseRecoveryFileContents() {
   });
 }
 
-let promiseForEachSessionRestoreFile = Task.async(function*(cb) {
+var promiseForEachSessionRestoreFile = Task.async(function*(cb) {
   for (let key of SessionFile.Paths.loadOrder) {
     let data = "";
     try {
@@ -284,14 +282,7 @@ let promiseForEachSessionRestoreFile = Task.async(function*(cb) {
 });
 
 function promiseBrowserLoaded(aBrowser, ignoreSubFrames = true) {
-  return new Promise(resolve => {
-    aBrowser.messageManager.addMessageListener("ss-test:loadEvent", function onLoad(msg) {
-      if (!ignoreSubFrames || !msg.data.subframe) {
-        aBrowser.messageManager.removeMessageListener("ss-test:loadEvent", onLoad);
-        resolve();
-      }
-    });
-  });
+  return BrowserTestUtils.browserLoaded(aBrowser, !ignoreSubFrames);
 }
 
 function whenWindowLoaded(aWindow, aCallback = next) {
@@ -321,7 +312,7 @@ function BrowserWindowIterator() {
   }
 }
 
-let gWebProgressListener = {
+var gWebProgressListener = {
   _callback: null,
 
   setCallback: function (aCallback) {
@@ -352,7 +343,7 @@ registerCleanupFunction(function () {
   gWebProgressListener.unsetCallback();
 });
 
-let gProgressListener = {
+var gProgressListener = {
   _callback: null,
 
   setCallback: function (callback) {
@@ -409,7 +400,7 @@ function promiseAllButPrimaryWindowClosed() {
     }
   }
 
-  return Promise.all(windows.map(promiseWindowClosed));
+  return Promise.all(windows.map(BrowserTestUtils.closeWindow));
 }
 
 // Forget all closed windows.
@@ -437,39 +428,25 @@ function whenNewWindowLoaded(aOptions, aCallback) {
   }
 
   let win = openDialog(getBrowserURL(), "", "chrome,all,dialog=no" + features, url);
-  whenDelayedStartupFinished(win, () => aCallback(win));
-  return win;
+  let delayedStartup = promiseDelayedStartupFinished(win);
+
+  let browserLoaded = new Promise(resolve => {
+    if (url == "about:blank") {
+      resolve();
+      return;
+    }
+
+    win.addEventListener("load", function onLoad() {
+      win.removeEventListener("load", onLoad);
+      let browser = win.gBrowser.selectedBrowser;
+      promiseBrowserLoaded(browser).then(resolve);
+    });
+  });
+
+  Promise.all([delayedStartup, browserLoaded]).then(() => aCallback(win));
 }
 function promiseNewWindowLoaded(aOptions) {
   return new Promise(resolve => whenNewWindowLoaded(aOptions, resolve));
-}
-
-/**
- * Chrome windows aren't closed synchronously. Provide a helper method to close
- * a window and wait until we received the "domwindowclosed" notification for it.
- */
-function promiseWindowClosed(win) {
-  let promise = new Promise(resolve => {
-    Services.obs.addObserver(function obs(subject, topic) {
-      if (subject == win) {
-        Services.obs.removeObserver(obs, topic);
-        resolve();
-      }
-    }, "domwindowclosed", false);
-  });
-
-  win.close();
-  return promise;
-}
-
-function runInContent(browser, func, arg, callback = null) {
-  let deferred = Promise.defer();
-
-  let mm = browser.messageManager;
-  mm.sendAsyncMessage("ss-test:run", {code: func.toSource()}, {arg: arg});
-  mm.addMessageListener("ss-test:runFinished", ({data}) => deferred.resolve(data));
-
-  return deferred.promise;
 }
 
 /**
@@ -533,3 +510,46 @@ for (let name of FORM_HELPERS) {
 function promiseRemoveTab(tab) {
   return BrowserTestUtils.removeTab(tab);
 }
+
+// Write DOMSessionStorage data to the given browser.
+function modifySessionStorage(browser, data, options = {}) {
+  return ContentTask.spawn(browser, [data, options], function* ([data, options]) {
+    let frame = content;
+    if (options && "frameIndex" in options) {
+      frame = content.frames[options.frameIndex];
+    }
+
+    let keys = new Set(Object.keys(data));
+    let storage = frame.sessionStorage;
+
+    return new Promise(resolve => {
+      addEventListener("MozSessionStorageChanged", function onStorageChanged(event) {
+        if (event.storageArea == storage) {
+          keys.delete(event.key);
+        }
+
+        if (keys.size == 0) {
+          removeEventListener("MozSessionStorageChanged", onStorageChanged, true);
+          resolve();
+        }
+      }, true);
+
+      for (let key of keys) {
+        frame.sessionStorage[key] = data[key];
+      }
+    });
+  });
+}
+
+function pushPrefs(...aPrefs) {
+  return new Promise(resolve => {
+    SpecialPowers.pushPrefEnv({"set": aPrefs}, resolve);
+  });
+}
+
+function popPrefs() {
+  return new Promise(resolve => {
+    SpecialPowers.popPrefEnv(resolve);
+  });
+}
+

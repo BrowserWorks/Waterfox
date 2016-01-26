@@ -7,6 +7,7 @@
 #define mozilla_net_SpdyStream31_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAHttpTransaction.h"
 
 namespace mozilla { namespace net {
@@ -42,9 +43,9 @@ public:
   bool HasRegisteredID() { return mStreamID != 0; }
 
   nsAHttpTransaction *Transaction() { return mTransaction; }
-  virtual nsILoadGroupConnectionInfo *LoadGroupConnectionInfo()
+  virtual nsISchedulingContext *SchedulingContext()
   {
-    return mTransaction ? mTransaction->LoadGroupConnectionInfo() : nullptr;
+    return mTransaction ? mTransaction->SchedulingContext() : nullptr;
   }
 
   void Close(nsresult reason);
@@ -165,7 +166,7 @@ private:
   // in the SpdySession31 mStreamTransactionHash so it is important to
   // keep a reference to it as long as this stream is a member of that hash.
   // (i.e. don't change it or release it after it is set in the ctor).
-  nsRefPtr<nsAHttpTransaction> mTransaction;
+  RefPtr<nsAHttpTransaction> mTransaction;
 
   // The underlying socket transport object is needed to propogate some events
   nsISocketTransport         *mSocketTransport;
@@ -205,7 +206,7 @@ private:
 
   // The InlineFrame and associated data is used for composing control
   // frames and data frame headers.
-  nsAutoArrayPtr<uint8_t>      mTxInlineFrame;
+  UniquePtr<uint8_t[]>         mTxInlineFrame;
   uint32_t                     mTxInlineFrameSize;
   uint32_t                     mTxInlineFrameUsed;
 
@@ -224,7 +225,7 @@ private:
   uint32_t             mDecompressBufferSize;
   uint32_t             mDecompressBufferUsed;
   uint32_t             mDecompressedBytes;
-  nsAutoArrayPtr<char> mDecompressBuffer;
+  UniquePtr<char[]>    mDecompressBuffer;
 
   // Track the content-length of a request body so that we can
   // place the fin flag on the last data packet instead of waiting
@@ -277,6 +278,7 @@ private:
   bool mPlainTextTunnel;
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_SpdyStream31_h

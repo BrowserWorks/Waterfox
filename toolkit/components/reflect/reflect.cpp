@@ -48,12 +48,12 @@ Module::Call(nsIXPConnectWrappedNative* wrapper,
   if (!global)
     return NS_ERROR_NOT_AVAILABLE;
 
-  *_retval = !!JS_InitReflect(cx, global);
+  *_retval = JS_InitReflectParse(cx, global);
   return NS_OK;
 }
 
-}
-}
+} // namespace reflect
+} // namespace mozilla
 
 NS_DEFINE_NAMED_CID(JSREFLECT_CID);
 

@@ -8,12 +8,16 @@
 #define WebSocketLog_h
 
 #include "base/basictypes.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "mozilla/net/NeckoChild.h"
 
-extern PRLogModuleInfo* webSocketLog;
+namespace mozilla {
+namespace net {
+extern LazyLogModule webSocketLog;
+}
+}
 
 #undef LOG
-#define LOG(args) PR_LOG(webSocketLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(mozilla::net::webSocketLog, mozilla::LogLevel::Debug, args)
 
 #endif

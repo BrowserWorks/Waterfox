@@ -29,6 +29,8 @@
 using namespace mozilla;
 
 #define MAX_PREVIEW_SIZE 180
+// bug 1184009
+#define MAX_PREVIEW_SOURCE_SIZE 4096
 
 nsIFile *nsFilePicker::mPrevDisplayDirectory = nullptr;
 
@@ -95,13 +97,16 @@ UpdateFilePreviewWidget(GtkFileChooser *file_chooser,
   GdkPixbufFormat *preview_format = gdk_pixbuf_get_file_info(image_filename,
                                                              &preview_width,
                                                              &preview_height);
-  if (!preview_format) {
+  if (!preview_format ||
+      preview_width <= 0 || preview_height <= 0 ||
+      preview_width > MAX_PREVIEW_SOURCE_SIZE ||
+      preview_height > MAX_PREVIEW_SOURCE_SIZE) {
     g_free(image_filename);
     gtk_file_chooser_set_preview_widget_active(file_chooser, FALSE);
     return;
   }
 
-  GdkPixbuf *preview_pixbuf;
+  GdkPixbuf *preview_pixbuf = nullptr;
   // Only scale down images that are too big
   if (preview_width > MAX_PREVIEW_SIZE || preview_height > MAX_PREVIEW_SIZE) {
     preview_pixbuf = gdk_pixbuf_new_from_file_at_size(image_filename,
@@ -163,9 +168,12 @@ MakeCaseInsensitiveShellGlob(const char* aPattern) {
 NS_IMPL_ISUPPORTS(nsFilePicker, nsIFilePicker)
 
 nsFilePicker::nsFilePicker()
-  : mSelectedType(0),
-    mRunning(false),
-    mAllowURLs(false)
+  : mSelectedType(0)
+  , mRunning(false)
+  , mAllowURLs(false)
+#if (MOZ_WIDGET_GTK == 3)
+  , mFileChooserDelegate(nullptr)
+#endif
 {
 }
 
@@ -431,6 +439,27 @@ nsFilePicker::Open(nsIFilePickerShownCallback *aCallback)
     } else {
       nsAutoCString directory;
       defaultPath->GetNativePath(directory);
+
+#if (MOZ_WIDGET_GTK == 3)
+      // Workaround for problematic refcounting in GTK3 before 3.16.
+      // We need to keep a reference to the dialog's internal delegate.
+      // Otherwise, if our dialog gets destroyed, we'll lose the dialog's
+      // delegate by the time this gets processed in the event loop.
+      // See: https://bugzilla.mozilla.org/show_bug.cgi?id=1166741
+      GtkDialog *dialog = GTK_DIALOG(file_chooser);
+      GtkContainer *area = GTK_CONTAINER(gtk_dialog_get_content_area(dialog));
+      gtk_container_forall(area, [](GtkWidget *widget,
+                                    gpointer data) {
+          if (GTK_IS_FILE_CHOOSER_WIDGET(widget)) {
+            auto result = static_cast<GtkFileChooserWidget**>(data);
+            *result = GTK_FILE_CHOOSER_WIDGET(widget);
+          }
+      }, &mFileChooserDelegate);
+
+      if (mFileChooserDelegate)
+        g_object_ref(mFileChooserDelegate);
+#endif
+
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(file_chooser),
                                           directory.get());
     }
@@ -547,6 +576,21 @@ nsFilePicker::Done(GtkWidget* file_chooser, gint response)
   // count will not be decremented again if GtkWindow's reference has already
   // been released.
   gtk_widget_destroy(file_chooser);
+
+#if (MOZ_WIDGET_GTK == 3)
+      if (mFileChooserDelegate) {
+        // Properly deref our acquired reference. We call this after
+        // gtk_widget_destroy() to try and ensure that pending file info
+        // queries caused by updating the current folder have been cancelled.
+        // However, we do not know for certain when the callback will run after
+        // cancelled.
+        g_idle_add([](gpointer data) -> gboolean {
+            g_object_unref(data);
+            return G_SOURCE_REMOVE;
+        }, mFileChooserDelegate);
+        mFileChooserDelegate = nullptr;
+      }
+#endif
 
   if (mCallback) {
     mCallback->Done(result);

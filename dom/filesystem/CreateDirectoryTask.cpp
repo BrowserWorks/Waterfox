@@ -6,7 +6,6 @@
 
 #include "CreateDirectoryTask.h"
 
-#include "DOMError.h"
 #include "mozilla/dom/Directory.h"
 #include "mozilla/dom/FileSystemBase.h"
 #include "mozilla/dom/FileSystemUtils.h"
@@ -39,7 +38,7 @@ CreateDirectoryTask::CreateDirectoryTask(
   FileSystemRequestParent* aParent)
   : FileSystemTaskBase(aFileSystem, aParam, aParent)
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFileSystem);
@@ -56,7 +55,7 @@ already_AddRefed<Promise>
 CreateDirectoryTask::GetPromise()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  return nsRefPtr<Promise>(mPromise).forget();
+  return RefPtr<Promise>(mPromise).forget();
 }
 
 FileSystemParams
@@ -84,7 +83,7 @@ CreateDirectoryTask::SetSuccessRequestResult(const FileSystemResponseValue& aVal
 nsresult
 CreateDirectoryTask::Work()
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(!NS_IsMainThread(), "Only call on worker thread!");
 
@@ -121,13 +120,11 @@ CreateDirectoryTask::HandlerCallback()
   }
 
   if (HasError()) {
-    nsRefPtr<DOMError> domError = new DOMError(mFileSystem->GetWindow(),
-      mErrorValue);
-    mPromise->MaybeRejectBrokenly(domError);
+    mPromise->MaybeReject(mErrorValue);
     mPromise = nullptr;
     return;
   }
-  nsRefPtr<Directory> dir = new Directory(mFileSystem, mTargetRealPath);
+  RefPtr<Directory> dir = new Directory(mFileSystem, mTargetRealPath);
   mPromise->MaybeResolve(dir);
   mPromise = nullptr;
 }

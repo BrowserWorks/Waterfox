@@ -21,6 +21,8 @@
 #include "nsReadLine.h"
 #include "nsIClassInfoImpl.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "mozilla/unused.h"
+#include "mozilla/FileUtils.h"
 #include "nsNetCID.h"
 #include "nsXULAppAPI.h"
 
@@ -202,6 +204,11 @@ nsresult
 nsFileStreamBase::Read(char* aBuf, uint32_t aCount, uint32_t* aResult)
 {
     nsresult rv = DoPendingOpen();
+    if (rv == NS_ERROR_FILE_NOT_FOUND) {
+      // Don't warn if this is just a deferred file not found.
+      return rv;
+    }
+
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (!mFD) {
@@ -489,6 +496,11 @@ NS_IMETHODIMP
 nsFileInputStream::Read(char* aBuf, uint32_t aCount, uint32_t* _retval)
 {
     nsresult rv = nsFileStreamBase::Read(aBuf, aCount, _retval);
+    if (rv == NS_ERROR_FILE_NOT_FOUND) {
+      // Don't warn if this is a deffered file not found.
+      return rv;
+    }
+
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Check if we're at the end of file and need to close
@@ -622,7 +634,7 @@ nsFileInputStream::Deserialize(const InputStreamParams& aParams,
 
     mBehaviorFlags = params.behaviorFlags();
 
-    if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    if (!XRE_IsParentProcess()) {
         // A child process shouldn't close when it reads the end because it will
         // not be able to reopen the file later.
         mBehaviorFlags &= ~nsIFileInputStream::CLOSE_ON_EOF;
@@ -854,6 +866,20 @@ nsFileOutputStream::Init(nsIFile* file, int32_t ioFlags, int32_t perm,
 
     return MaybeOpen(file, ioFlags, perm,
                      mBehaviorFlags & nsIFileOutputStream::DEFER_OPEN);
+}
+
+NS_IMETHODIMP
+nsFileOutputStream::Preallocate(int64_t aLength)
+{
+    if (!mFD) {
+        return NS_ERROR_NOT_INITIALIZED;
+    }
+
+    if (!mozilla::fallocate(mFD, aLength)) {
+        return NS_ERROR_FAILURE;
+    }
+
+    return NS_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

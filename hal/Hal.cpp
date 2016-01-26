@@ -22,6 +22,7 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "WindowIdentifier.h"
+#include "nsJSUtils.h"
 #include "mozilla/dom/ScreenOrientation.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
@@ -90,6 +91,8 @@ AssertMainProcess()
   MOZ_ASSERT(GeckoProcessType_Default == XRE_GetProcessType());
 }
 
+#if !defined(MOZ_WIDGET_GONK)
+
 bool
 WindowIsActive(nsIDOMWindow* aWindow)
 {
@@ -102,6 +105,8 @@ WindowIsActive(nsIDOMWindow* aWindow)
   return !document->Hidden();
 }
 
+#endif // !defined(MOZ_WIDGET_GONK)
+
 StaticAutoPtr<WindowIdentifier::IDArrayType> gLastIDToVibrate;
 
 void InitLastIDToVibrate()
@@ -110,7 +115,7 @@ void InitLastIDToVibrate()
   ClearOnShutdown(&gLastIDToVibrate);
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 Vibrate(const nsTArray<uint32_t>& pattern, nsIDOMWindow* window)
@@ -123,6 +128,7 @@ Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier &id)
 {
   AssertMainThread();
 
+#if !defined(MOZ_WIDGET_GONK)
   // Only active windows may start vibrations.  If |id| hasn't gone
   // through the IPC layer -- that is, if our caller is the outside
   // world, not hal_proxy -- check whether the window is active.  If
@@ -133,6 +139,7 @@ Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier &id)
     HAL_LOG("Vibrate: Window is inactive, dropping vibrate.");
     return;
   }
+#endif // !defined(MOZ_WIDGET_GONK)
 
   if (!InSandbox()) {
     if (!gLastIDToVibrate) {
@@ -141,7 +148,7 @@ Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier &id)
     *gLastIDToVibrate = id.AsArray();
   }
 
-  // Don't forward our ID if we are not in the sandbox, because hal_impl 
+  // Don't forward our ID if we are not in the sandbox, because hal_impl
   // doesn't need it, and we don't want it to be tempted to read it.  The
   // empty identifier will assert if it's used.
   PROXY_IF_SANDBOXED(Vibrate(pattern, InSandbox() ? id : WindowIdentifier()));
@@ -176,7 +183,7 @@ CancelVibrate(const WindowIdentifier &id)
   // the same window.  All other cancellation requests are ignored.
 
   if (InSandbox() || (gLastIDToVibrate && *gLastIDToVibrate == id.AsArray())) {
-    // Don't forward our ID if we are not in the sandbox, because hal_impl 
+    // Don't forward our ID if we are not in the sandbox, because hal_impl
     // doesn't need it, and we don't want it to be tempted to read it.  The
     // empty identifier will assert if it's used.
     PROXY_IF_SANDBOXED(CancelVibrate(InSandbox() ? id : WindowIdentifier()));
@@ -202,7 +209,6 @@ public:
   void RemoveObserver(Observer<InfoType>* aObserver) {
     bool removed = mObservers && mObservers->RemoveObserver(aObserver);
     if (!removed) {
-      NS_WARNING("RemoveObserver() called for unregistered observer");
       return;
     }
 
@@ -486,17 +492,18 @@ UnregisterSystemTimezoneChangeObserver(SystemTimezoneChangeObserver* aObserver)
 void
 NotifySystemTimezoneChange(const SystemTimezoneChangeInformation& aSystemTimezoneChangeInfo)
 {
+  nsJSUtils::ResetTimeZone();
   sSystemTimezoneChangeObservers.BroadcastInformation(aSystemTimezoneChangeInfo);
 }
 
-void 
+void
 AdjustSystemClock(int64_t aDeltaMilliseconds)
 {
   AssertMainThread();
   PROXY_IF_SANDBOXED(AdjustSystemClock(aDeltaMilliseconds));
 }
 
-void 
+void
 SetTimezone(const nsCString& aTimezoneSpec)
 {
   AssertMainThread();
@@ -535,7 +542,7 @@ static SensorObserverList* gSensorObservers = nullptr;
 static SensorObserverList &
 GetSensorObservers(SensorType sensor_type) {
   MOZ_ASSERT(sensor_type < NUM_SENSOR_TYPE);
-  
+
   if(!gSensorObservers) {
     gSensorObservers = new SensorObserverList[NUM_SENSOR_TYPE];
   }
@@ -547,7 +554,7 @@ RegisterSensorObserver(SensorType aSensor, ISensorObserver *aObserver) {
   SensorObserverList &observers = GetSensorObservers(aSensor);
 
   AssertMainThread();
-  
+
   observers.AddObserver(aObserver);
   if(observers.Length() == 1) {
     EnableSensorNotifications(aSensor);
@@ -583,7 +590,7 @@ NotifySensorChange(const SensorData &aSensorData) {
   SensorObserverList &observers = GetSensorObservers(aSensorData.sensor());
 
   AssertMainThread();
-  
+
   observers.Broadcast(aSensorData);
 }
 
@@ -710,7 +717,7 @@ NotifyScreenConfigurationChange(const ScreenConfiguration& aScreenConfiguration)
 }
 
 bool
-LockScreenOrientation(const dom::ScreenOrientation& aOrientation)
+LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation)
 {
   AssertMainThread();
   RETURN_PROXY_IF_SANDBOXED(LockScreenOrientation(aOrientation), false);
@@ -753,7 +760,7 @@ static SwitchObserverList *sSwitchObserverLists = nullptr;
 
 static SwitchObserverList&
 GetSwitchObserverList(SwitchDevice aDevice) {
-  MOZ_ASSERT(0 <= aDevice && aDevice < NUM_SWITCH_DEVICE); 
+  MOZ_ASSERT(0 <= aDevice && aDevice < NUM_SWITCH_DEVICE);
   if (sSwitchObserverLists == nullptr) {
     sSwitchObserverLists = new SwitchObserverList[NUM_SWITCH_DEVICE];
   }
@@ -888,8 +895,6 @@ ProcessPriorityToString(ProcessPriority aPriority)
     return "FOREGROUND_KEYBOARD";
   case PROCESS_PRIORITY_BACKGROUND_PERCEIVABLE:
     return "BACKGROUND_PERCEIVABLE";
-  case PROCESS_PRIORITY_BACKGROUND_HOMESCREEN:
-    return "BACKGROUND_HOMESCREEN";
   case PROCESS_PRIORITY_BACKGROUND:
     return "BACKGROUND";
   case PROCESS_PRIORITY_UNKNOWN:
@@ -1145,7 +1150,7 @@ GetFMBandSettings(FMRadioCountry aCountry) {
     default:
       MOZ_ASSERT(0);
       break;
-    };
+    }
     return settings;
 }
 
@@ -1187,6 +1192,24 @@ bool IsHeadphoneEventFromInputDev()
 {
   AssertMainThread();
   RETURN_PROXY_IF_SANDBOXED(IsHeadphoneEventFromInputDev(), false);
+}
+
+nsresult StartSystemService(const char* aSvcName, const char* aArgs)
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(StartSystemService(aSvcName, aArgs), NS_ERROR_FAILURE);
+}
+
+void StopSystemService(const char* aSvcName)
+{
+  AssertMainThread();
+  PROXY_IF_SANDBOXED(StopSystemService(aSvcName));
+}
+
+bool SystemServiceIsRunning(const char* aSvcName)
+{
+  AssertMainThread();
+  RETURN_PROXY_IF_SANDBOXED(SystemServiceIsRunning(aSvcName), false);
 }
 
 } // namespace hal

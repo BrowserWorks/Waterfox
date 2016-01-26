@@ -19,7 +19,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gServiceWorkerManager",
                                   "nsIServiceWorkerManager");
 
 function debug(aMsg) {
-  //dump("AboutServiceWorkers - " + aMsg + "\n");
+  dump("AboutServiceWorkers - " + aMsg + "\n");
 }
 
 function serializeServiceWorkerInfo(aServiceWorkerInfo) {
@@ -29,18 +29,12 @@ function serializeServiceWorkerInfo(aServiceWorkerInfo) {
 
   let result = {};
 
-  Object.keys(aServiceWorkerInfo).forEach(property => {
-    if (typeof aServiceWorkerInfo[property] == "function") {
-      return;
-    }
-    if (property === "principal") {
-      result.principal = {
-        origin: aServiceWorkerInfo.principal.origin,
-        appId: aServiceWorkerInfo.principal.appId,
-        isInBrowser: aServiceWorkerInfo.principal.isInBrowser
-      };
-      return;
-    }
+  result.principal = {
+    origin: aServiceWorkerInfo.principal.originNoSuffix,
+    originAttributes: aServiceWorkerInfo.principal.originAttributes
+  };
+
+  ["scope", "scriptSpec"].forEach(property => {
     result[property] = aServiceWorkerInfo[property];
   });
 
@@ -110,9 +104,9 @@ this.AboutServiceWorkers = {
         let registrations = [];
 
         for (let i = 0; i < data.length; i++) {
-          let info = data.queryElementAt(i, Ci.nsIServiceWorkerInfo);
+          let info = data.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
           if (!info) {
-            dump("AboutServiceWorkers: Invalid nsIServiceWorkerInfo " +
+            dump("AboutServiceWorkers: Invalid nsIServiceWorkerRegistrationInfo " +
                  "interface.\n");
             continue;
           }
@@ -130,26 +124,38 @@ this.AboutServiceWorkers = {
           self.sendError(message.id, "MissingScope");
           return;
         }
-        gServiceWorkerManager.softUpdate(message.scope);
+
+        if (!message.principal ||
+            !message.principal.originAttributes) {
+          self.sendError(message.id, "MissingOriginAttributes");
+          return;
+        }
+
+        gServiceWorkerManager.propagateSoftUpdate(
+          message.principal.originAttributes,
+          message.scope
+        );
+
         self.sendResult(message.id, true);
         break;
 
       case "unregister":
         if (!message.principal ||
             !message.principal.origin ||
-            !message.principal.appId) {
-          self.sendError("MissingPrincipal");
+            !message.principal.originAttributes ||
+            !message.principal.originAttributes.appId ||
+            (message.principal.originAttributes.inBrowser == null)) {
+          self.sendError(message.id, "MissingPrincipal");
           return;
         }
 
-        let principal = Services.scriptSecurityManager.getAppCodebasePrincipal(
+        let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+          // TODO: Bug 1196652. use originNoSuffix
           Services.io.newURI(message.principal.origin, null, null),
-          message.principal.appId,
-          message.principal.isInBrowser
-        );
+          message.principal.originAttributes);
 
         if (!message.scope) {
-          self.sendError("MissingScope");
+          self.sendError(message.id, "MissingScope");
           return;
         }
 
@@ -166,9 +172,9 @@ this.AboutServiceWorkers = {
             Ci.nsIServiceWorkerUnregisterCallback
           ])
         };
-        gServiceWorkerManager.unregister(principal,
-                                         serviceWorkerUnregisterCallback,
-                                         message.scope);
+        gServiceWorkerManager.propagateUnregister(principal,
+                                                  serviceWorkerUnregisterCallback,
+                                                  message.scope);
         break;
     }
   }

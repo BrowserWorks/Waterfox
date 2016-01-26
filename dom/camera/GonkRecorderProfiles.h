@@ -112,7 +112,7 @@ class GonkRecorderProfile
 {
 public:
   static nsresult GetAll(uint32_t aCameraId,
-                         nsTArray<nsRefPtr<ICameraControl::RecorderProfile>>& aProfiles);
+                         nsTArray<RefPtr<ICameraControl::RecorderProfile>>& aProfiles);
 
 #ifdef MOZ_WIDGET_GONK
   // Configures the specified recorder using the specified profile.
@@ -142,9 +142,6 @@ protected:
   static already_AddRefed<GonkRecorderProfile> CreateProfile(uint32_t aCameraId,
                                                              int aQuality);
   static ProfileHashtable* GetProfileHashtable(uint32_t aCameraId);
-  static PLDHashOperator Enumerate(const nsAString& aProfileName,
-                                   GonkRecorderProfile* aProfile,
-                                   void* aUserArg);
 
   uint32_t mCameraId;
   int mQuality;

@@ -12,55 +12,21 @@
 
 #include "nsGBKToUnicode.h"
 #include "gbku.h"
-
-//------------------------------------------------------------
-// nsGB18030Unique2BytesToUnicode
-//------------------------------------------------------------
-class nsGB18030Unique2BytesToUnicode : public nsTableDecoderSupport 
-{
-public:
-  nsGB18030Unique2BytesToUnicode();
-  virtual ~nsGB18030Unique2BytesToUnicode() 
-    { }
-protected:
-};
+#include "nsUnicodeDecodeHelper.h"
 
 static const uint16_t g_utGB18030Unique2Bytes[] = {
 #include "gb18030uniq2b.ut"
-};
-nsGB18030Unique2BytesToUnicode::nsGB18030Unique2BytesToUnicode() 
-  : nsTableDecoderSupport(u2BytesCharset, nullptr,
-        (uMappingTable*) &g_utGB18030Unique2Bytes, 1) 
-{
-}
-
-//------------------------------------------------------------
-// nsGB18030Unique4BytesToUnicode
-//------------------------------------------------------------
-class nsGB18030Unique4BytesToUnicode : public nsTableDecoderSupport 
-{
-public:
-  nsGB18030Unique4BytesToUnicode();
-  virtual ~nsGB18030Unique4BytesToUnicode() 
-    { }
-protected:
 };
 
 static const uint16_t g_utGB18030Unique4Bytes[] = {
 #include "gb180304bytes.ut"
 };
-nsGB18030Unique4BytesToUnicode::nsGB18030Unique4BytesToUnicode() 
-  : nsTableDecoderSupport(u4BytesGB18030Charset, nullptr,
-        (uMappingTable*) &g_utGB18030Unique4Bytes, 1) 
-{
-}
-
 
 //----------------------------------------------------------------------
-// Class nsGBKToUnicode [implementation]
+// Class nsGB18030ToUnicode [implementation]
 
 //----------------------------------------------------------------------
-// Subclassing of nsTablesDecoderSupport class [implementation]
+// Subclassing of nsBufferDecoderSupport class [implementation]
 
 #define LEGAL_GBK_MULTIBYTE_FIRST_BYTE(c)  \
       (UINT8_IN_RANGE(0x81, (c), 0xFE))
@@ -138,8 +104,13 @@ NS_IMETHODIMP nsGB18030ToUnicode::ConvertNoBuff(const char* aSrc,
            if ( ! FIRST_BYTE_IS_SURROGATE(aSrc[0])) 
            {
              // let's call the delegated 4 byte gb18030 converter to convert it
-             if(! Try4BytesDecoder(aSrc, aDest))
+             if (!Try4BytesDecoder(aSrc, aDest)) {
                *aDest = UCS2_NO_MAPPING;
+             }
+             // Swapped character in GB18030-2005
+             if (*aDest == 0x1E3F) {
+               *aDest = 0xE7C7;
+             }
            } else {
               // let's try supplement mapping
              if ( (iDestlen+1) < (*aDestLength) )
@@ -207,14 +178,6 @@ NS_IMETHODIMP nsGB18030ToUnicode::ConvertNoBuff(const char* aSrc,
   return rv;
 }
 
-void nsGB18030ToUnicode::CreateExtensionDecoder()
-{
-  mExtensionDecoder = new nsGB18030Unique2BytesToUnicode();
-}
-void nsGB18030ToUnicode::Create4BytesDecoder()
-{
-  m4BytesDecoder = new nsGB18030Unique4BytesToUnicode();
-}
 bool nsGB18030ToUnicode::DecodeToSurrogate(const char* aSrc, char16_t* aOut)
 {
   NS_ASSERTION(FIRST_BYTE_IS_SURROGATE(aSrc[0]),       "illegal first byte");
@@ -250,43 +213,32 @@ bool nsGB18030ToUnicode::DecodeToSurrogate(const char* aSrc, char16_t* aOut)
 }
 bool nsGB18030ToUnicode::TryExtensionDecoder(const char* aSrc, char16_t* aOut)
 {
-  if(!mExtensionDecoder)
-    CreateExtensionDecoder();
-  NS_ASSERTION(mExtensionDecoder, "cannot creqte 2 bytes unique converter");
-  if(mExtensionDecoder)
-  {
-    nsresult res = mExtensionDecoder->Reset();
-    NS_ASSERTION(NS_SUCCEEDED(res), "2 bytes unique conversoin reset failed");
-    int32_t len = 2;
-    int32_t dstlen = 1;
-    res = mExtensionDecoder->Convert(aSrc,&len, aOut, &dstlen); 
-    NS_ASSERTION(NS_FAILED(res) || ((len==2) && (dstlen == 1)), 
-       "some strange conversion result");
-     // if we failed, we then just use the 0xfffd 
-     // therefore, we ignore the res here. 
-    if(NS_SUCCEEDED(res)) 
-      return true;
-  }
-  return  false;
+  int32_t len = 2;
+  int32_t dstlen = 1;
+  nsresult res =
+    nsUnicodeDecodeHelper::ConvertByTable(aSrc, &len, aOut, &dstlen,
+                                          u2BytesCharset, nullptr,
+                                          (uMappingTable*) &g_utGB18030Unique2Bytes,
+                                          false);
+  NS_ASSERTION(NS_FAILED(res) || ((len==2) && (dstlen == 1)),
+               "some strange conversion result");
+  // if we failed, we then just use the 0xfffd
+  // therefore, we ignore the res here.
+  return NS_SUCCEEDED(res);
 }
 
 bool nsGB18030ToUnicode::Try4BytesDecoder(const char* aSrc, char16_t* aOut)
 {
-  if(!m4BytesDecoder)
-    Create4BytesDecoder();
-  if(m4BytesDecoder)
-  {
-    nsresult res = m4BytesDecoder->Reset();
-    NS_ASSERTION(NS_SUCCEEDED(res), "4 bytes unique conversoin reset failed");
-    int32_t len = 4;
-    int32_t dstlen = 1;
-    res = m4BytesDecoder->Convert(aSrc,&len, aOut, &dstlen); 
-    NS_ASSERTION(NS_FAILED(res) || ((len==4) && (dstlen == 1)), 
-       "some strange conversion result");
-     // if we failed, we then just use the 0xfffd 
-     // therefore, we ignore the res here. 
-    if(NS_SUCCEEDED(res)) 
-      return true;
-  }
-  return  false;
+  int32_t len = 4;
+  int32_t dstlen = 1;
+  nsresult res =
+    nsUnicodeDecodeHelper::ConvertByTable(aSrc, &len, aOut, &dstlen,
+                                          u4BytesGB18030Charset, nullptr,
+                                          (uMappingTable*) &g_utGB18030Unique4Bytes,
+                                          false); 
+  NS_ASSERTION(NS_FAILED(res) || ((len==4) && (dstlen == 1)),
+               "some strange conversion result");
+  // if we failed, we then just use the 0xfffd
+  // therefore, we ignore the res here.
+  return NS_SUCCEEDED(res);
 }

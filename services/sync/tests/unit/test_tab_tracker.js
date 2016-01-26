@@ -5,7 +5,7 @@ Cu.import("resource://services-sync/engines/tabs.js");
 Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 
-let clientsEngine = Service.clientsEngine;
+var clientsEngine = Service.clientsEngine;
 
 function fakeSvcWinMediator() {
   // actions on windows are captured in logs
@@ -15,7 +15,9 @@ function fakeSvcWinMediator() {
     getEnumerator: function() {
       return {
         cnt: 2,
-        hasMoreElements: function() this.cnt-- > 0,
+        hasMoreElements: function() {
+          return this.cnt-- > 0;
+        },
         getNext: function() {
           let elt = {addTopics: [], remTopics: []};
           logs.push(elt);
@@ -51,7 +53,7 @@ function run_test() {
   logs = fakeSvcWinMediator();
   Svc.Obs.notify("weave:engine:start-tracking");
   do_check_eq(logs.length, 2);
-  for each (let log in logs) {
+  for (let log of logs) {
     do_check_eq(log.addTopics.length, 5);
     do_check_true(log.addTopics.indexOf("pageshow") >= 0);
     do_check_true(log.addTopics.indexOf("TabOpen") >= 0);
@@ -65,7 +67,7 @@ function run_test() {
   logs = fakeSvcWinMediator();
   Svc.Obs.notify("weave:engine:stop-tracking");
   do_check_eq(logs.length, 2);
-  for each (let log in logs) {
+  for (let log of logs) {
     do_check_eq(log.addTopics.length, 0);
     do_check_eq(log.remTopics.length, 5);
     do_check_true(log.remTopics.indexOf("pageshow") >= 0);
@@ -76,7 +78,7 @@ function run_test() {
   }
 
   _("Test tab listener");
-  for each (let evttype in ["TabOpen", "TabClose", "TabSelect"]) {
+  for (let evttype of ["TabOpen", "TabClose", "TabSelect"]) {
     // Pretend we just synced.
     tracker.clearChangedIDs();
     do_check_false(tracker.modified);

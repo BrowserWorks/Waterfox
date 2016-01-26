@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const gHttpTestRoot = "http://127.0.0.1:8888/" + RELATIVE_DIR + "/";
-let gManagerWindow;
-let gTestPluginId;
-let gPluginBrowser;
+var gManagerWindow;
+var gTestPluginId;
+var gPluginBrowser;
 
 function updateBlocklist(aCallback) {
   var blocklistNotifier = Cc["@mozilla.org/extensions/blocklist;1"]
@@ -96,7 +96,7 @@ function part5() {
   let testPlugin = gPluginBrowser.contentDocument.getElementById("test");
   ok(testPlugin, "part5: should have a plugin element in the page");
   let objLoadingContent = testPlugin.QueryInterface(Ci.nsIObjectLoadingContent);
-  let condition = function() objLoadingContent.activated;
+  let condition = () => objLoadingContent.activated;
   waitForCondition(condition, part6, "part5: waited too long for plugin to activate");
 }
 
@@ -161,7 +161,7 @@ function part9() {
   let testPlugin = gPluginBrowser.contentDocument.getElementById("test");
   ok(testPlugin, "part9: should have a plugin element in the page");
   let objLoadingContent = testPlugin.QueryInterface(Ci.nsIObjectLoadingContent);
-  let condition = function() objLoadingContent.activated;
+  let condition = () => objLoadingContent.activated;
   waitForCondition(condition, part10, "part9: waited too long for plugin to activate");
 }
 

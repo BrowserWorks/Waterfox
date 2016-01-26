@@ -5,9 +5,9 @@
 
 "use strict";
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "ContentClick" ];
 
@@ -15,7 +15,7 @@ Cu.import("resource:///modules/PlacesUIUtils.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let ContentClick = {
+var ContentClick = {
   init: function() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("Content:Click", this);
@@ -64,7 +64,7 @@ let ContentClick = {
     // This part is based on handleLinkClick.
     var where = window.whereToOpenLink(json);
     if (where == "current")
-      return false;
+      return;
 
     // Todo(903022): code for where == save
 
@@ -80,7 +80,7 @@ let ContentClick = {
     // visits across frames should be preserved.
     try {
       if (!PrivateBrowsingUtils.isWindowPrivate(window))
-        PlacesUIUtils.markPageAsFollowedLink(href);
+        PlacesUIUtils.markPageAsFollowedLink(json.href);
     } catch (ex) { /* Skip invalid URIs. */ }
   }
 };

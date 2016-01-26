@@ -38,6 +38,7 @@ class HTMLLIAccessible;
 class HyperTextAccessible;
 class ImageAccessible;
 class KeyBinding;
+class OuterDocAccessible;
 class ProxyAccessible;
 class Relation;
 class RootAccessible;
@@ -81,6 +82,8 @@ enum ENameValueFlag {
 struct GroupPos
 {
   GroupPos() : level(0), posInSet(0), setSize(0) { }
+  GroupPos(int32_t aLevel, int32_t aPosInSet, int32_t aSetSize) :
+    level(aLevel), posInSet(aPosInSet), setSize(aSetSize) { }
 
   int32_t level;
   int32_t posInSet;
@@ -157,6 +160,8 @@ public:
     return DOMNode.forget();
   }
   nsIContent* GetContent() const { return mContent; }
+  mozilla::dom::Element* Elm() const
+    { return mContent && mContent->IsElement() ? mContent->AsElement() : nullptr; }
 
   /**
    * Return node type information of DOM node associated with the accessible.
@@ -529,11 +534,6 @@ public:
   virtual void SetSelected(bool aSelect);
 
   /**
-   * Extend selection to this accessible.
-   */
-  void ExtendSelection() { };
-
-  /**
    * Select the accessible within its container.
    */
   void TakeSelection();
@@ -618,6 +618,19 @@ public:
     MOZ_ASSERT(IsProxy());
     return mBits.proxy;
   }
+  uint32_t ProxyInterfaces() const
+  {
+    MOZ_ASSERT(IsProxy());
+    return mInt.mProxyInterfaces;
+  }
+  void SetProxyInterfaces(uint32_t aInterfaces)
+  {
+    MOZ_ASSERT(IsProxy());
+    mInt.mProxyInterfaces = aInterfaces;
+  }
+
+  bool IsOuterDoc() const { return mType == eOuterDocType; }
+  OuterDocAccessible* AsOuterDoc();
 
   bool IsProgress() const { return mType == eProgressType; }
 
@@ -745,6 +758,12 @@ public:
    */
   virtual already_AddRefed<nsIURI> AnchorURIAt(uint32_t aAnchorIndex);
 
+  /**
+   * Returns a text point for the accessible element.
+   */
+  void ToTextPoint(HyperTextAccessible** aContainer, int32_t* aOffset,
+                   bool aIsBefore = true) const;
+
   //////////////////////////////////////////////////////////////////////////////
   // SelectAccessible
 
@@ -845,7 +864,7 @@ public:
   bool IsDefunct() const { return mStateFlags & eIsDefunct; }
 
   /**
-   * Return true if the accessible is no longer in the document.
+   * Return false if the accessible is no longer in the document.
    */
   bool IsInDocument() const { return !(mStateFlags & eIsNotInDocument); }
 
@@ -894,6 +913,19 @@ public:
   }
 
   /**
+   * Get/set repositioned bit indicating that the accessible was moved in
+   * the accessible tree, i.e. the accessible tree structure differs from DOM.
+   */
+  bool IsRelocated() const { return mStateFlags & eRelocated; }
+  void SetRelocated(bool aRelocated)
+  {
+    if (aRelocated)
+      mStateFlags |= eRelocated;
+    else
+      mStateFlags &= ~eRelocated;
+  }
+
+  /**
    * Return true if this accessible has a parent whose name depends on this
    * accessible.
    */
@@ -908,7 +940,6 @@ public:
   void SetARIAHidden(bool aIsDefined);
 
 protected:
-
   virtual ~Accessible();
 
   /**
@@ -939,8 +970,8 @@ protected:
   /**
    * Set accessible parent and index in parent.
    */
-  virtual void BindToParent(Accessible* aParent, uint32_t aIndexInParent);
-  virtual void UnbindFromParent();
+  void BindToParent(Accessible* aParent, uint32_t aIndexInParent);
+  void UnbindFromParent();
 
   /**
    * Return sibling accessible at the given offset.
@@ -984,8 +1015,9 @@ protected:
     eSubtreeMutating = 1 << 6, // subtree is being mutated
     eIgnoreDOMUIEvent = 1 << 7, // don't process DOM UI events for a11y events
     eSurvivingInUpdate = 1 << 8, // parent drops children to recollect them
+    eRelocated = 1 << 9, // accessible was moved in tree
 
-    eLastStateFlag = eSurvivingInUpdate
+    eLastStateFlag = eRelocated
   };
 
   /**
@@ -1095,12 +1127,12 @@ protected:
   nsCOMPtr<nsIContent> mContent;
   DocAccessible* mDoc;
 
-  nsRefPtr<Accessible> mParent;
-  nsTArray<nsRefPtr<Accessible> > mChildren;
+  RefPtr<Accessible> mParent;
+  nsTArray<RefPtr<Accessible> > mChildren;
   int32_t mIndexInParent;
 
   static const uint8_t kChildrenFlagsBits = 2;
-  static const uint8_t kStateFlagsBits = 9;
+  static const uint8_t kStateFlagsBits = 10;
   static const uint8_t kContextFlagsBits = 2;
   static const uint8_t kTypeBits = 6;
   static const uint8_t kGenericTypesBits = 14;
@@ -1122,7 +1154,11 @@ protected:
   friend class AutoTreeMutation;
 
   nsAutoPtr<mozilla::a11y::EmbeddedObjCollector> mEmbeddedObjCollector;
-  int32_t mIndexOfEmbeddedChild;
+  union {
+    int32_t mIndexOfEmbeddedChild;
+    uint32_t mProxyInterfaces;
+  } mInt;
+
   friend class EmbeddedObjCollector;
 
   union

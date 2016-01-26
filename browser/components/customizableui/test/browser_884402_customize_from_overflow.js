@@ -1,10 +1,10 @@
 "use strict";
 
-let overflowPanel = document.getElementById("widget-overflow");
+var overflowPanel = document.getElementById("widget-overflow");
 
 const isOSX = (Services.appinfo.OS === "Darwin");
 
-let originalWindowWidth;
+var originalWindowWidth;
 registerCleanupFunction(function() {
   overflowPanel.removeAttribute("animate");
   window.resizeTo(originalWindowWidth, window.outerHeight);
@@ -12,7 +12,7 @@ registerCleanupFunction(function() {
 
 // Right-click on an item within the overflow panel should
 // show a context menu with options to move it.
-add_task(function() {
+add_task(function*() {
 
   overflowPanel.setAttribute("animate", "false");
 

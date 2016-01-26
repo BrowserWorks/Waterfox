@@ -6,18 +6,23 @@
 #include "ScaledFontMac.h"
 #ifdef USE_SKIA
 #include "PathSkia.h"
-#include "skia/SkPaint.h"
-#include "skia/SkPath.h"
-#include "skia/SkTypeface_mac.h"
+#include "skia/include/core/SkPaint.h"
+#include "skia/include/core/SkPath.h"
+#include "skia/include/ports/SkTypeface_mac.h"
 #endif
 #include "DrawTargetCG.h"
 #include <vector>
 #include <dlfcn.h>
+#ifdef MOZ_WIDGET_UIKIT
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
+#ifdef MOZ_WIDGET_COCOA
 // prototype for private API
 extern "C" {
 CGPathRef CGFontGetGlyphPath(CGFontRef fontRef, CGAffineTransform *textTransform, int unknown, CGGlyph glyph);
 };
+#endif
 
 
 namespace mozilla {
@@ -76,16 +81,17 @@ SkTypeface* ScaledFontMac::GetSkTypeface()
 // Note: cairo dlsyms it. We could do that but maybe it's
 // safe just to use?
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 ScaledFontMac::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget)
 {
   if (aTarget->GetBackendType() == BackendType::COREGRAPHICS ||
       aTarget->GetBackendType() == BackendType::COREGRAPHICS_ACCELERATED) {
+#ifdef MOZ_WIDGET_COCOA
       CGMutablePathRef path = CGPathCreateMutable();
-
       for (unsigned int i = 0; i < aBuffer.mNumGlyphs; i++) {
           // XXX: we could probably fold both of these transforms together to avoid extra work
           CGAffineTransform flip = CGAffineTransformMakeScale(1, -1);
+
           CGPathRef glyphPath = ::CGFontGetGlyphPath(mFont, &flip, 0, aBuffer.mGlyphs[i].mIndex);
 
           CGAffineTransform matrix = CGAffineTransformMake(mSize, 0, 0, mSize,
@@ -94,9 +100,13 @@ ScaledFontMac::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aT
           CGPathAddPath(path, &matrix, glyphPath);
           CGPathRelease(glyphPath);
       }
-      TemporaryRef<Path> ret = new PathCG(path, FillRule::FILL_WINDING);
+      RefPtr<Path> ret = new PathCG(path, FillRule::FILL_WINDING);
       CGPathRelease(path);
-      return ret;
+      return ret.forget();
+#else
+      //TODO: probably want CTFontCreatePathForGlyph
+      MOZ_CRASH("GFX: This needs implemented 1");
+#endif
   }
   return ScaledFontBase::GetPathForGlyphs(aBuffer, aTarget);
 }
@@ -108,7 +118,7 @@ ScaledFontMac::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBui
     ScaledFontBase::CopyGlyphsToBuilder(aBuffer, aBuilder, aBackendType, aTransformHint);
     return;
   }
-
+#ifdef MOZ_WIDGET_COCOA
   PathBuilderCG *pathBuilderCG =
     static_cast<PathBuilderCG*>(aBuilder);
   // XXX: check builder type
@@ -123,6 +133,10 @@ ScaledFontMac::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBui
     CGPathAddPath(pathBuilderCG->mCGPath, &matrix, glyphPath);
     CGPathRelease(glyphPath);
   }
+#else
+    //TODO: probably want CTFontCreatePathForGlyph
+    MOZ_CRASH("GFX: This needs implemented 2");
+#endif
 }
 
 uint32_t
@@ -270,5 +284,5 @@ ScaledFontMac::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
 
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

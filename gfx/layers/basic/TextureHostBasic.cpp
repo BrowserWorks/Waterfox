@@ -7,6 +7,9 @@
 #ifdef XP_MACOSX
 #include "MacIOSurfaceTextureHostBasic.h"
 #endif
+#ifdef MOZ_WIDGET_GONK
+#include "GrallocTextureHostBasic.h"
+#endif
 
 using namespace mozilla::gl;
 using namespace mozilla::gfx;
@@ -14,7 +17,7 @@ using namespace mozilla::gfx;
 namespace mozilla {
 namespace layers {
 
-TemporaryRef<TextureHost>
+already_AddRefed<TextureHost>
 CreateTextureHostBasic(const SurfaceDescriptor& aDesc,
                        ISurfaceAllocator* aDeallocator,
                        TextureFlags aFlags)
@@ -23,12 +26,18 @@ CreateTextureHostBasic(const SurfaceDescriptor& aDesc,
   if (aDesc.type() == SurfaceDescriptor::TSurfaceDescriptorMacIOSurface) {
     const SurfaceDescriptorMacIOSurface& desc =
       aDesc.get_SurfaceDescriptorMacIOSurface();
-    RefPtr<TextureHost> result = new MacIOSurfaceTextureHostBasic(aFlags, desc);
-    return result;
+    return MakeAndAddRef<MacIOSurfaceTextureHostBasic>(aFlags, desc);
   }
+#endif
+#ifdef MOZ_WIDGET_GONK
+  if (aDesc.type() == SurfaceDescriptor::TSurfaceDescriptorGralloc) {
+      const SurfaceDescriptorGralloc& desc =
+        aDesc.get_SurfaceDescriptorGralloc();
+    return MakeAndAddRef<GrallocTextureHostBasic>(aFlags, desc);
+    }
 #endif
   return CreateBackendIndependentTextureHost(aDesc, aDeallocator, aFlags);
 }
 
 } // namespace layers
-} // namespace gfx
+} // namespace mozilla

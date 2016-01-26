@@ -6,6 +6,7 @@
 
 #include "SoftwareVsyncSource.h"
 #include "base/task.h"
+#include "gfxPlatform.h"
 #include "nsThreadUtils.h"
 
 SoftwareVsyncSource::SoftwareVsyncSource()
@@ -27,7 +28,7 @@ SoftwareDisplay::SoftwareDisplay()
 {
   // Mimic 60 fps
   MOZ_ASSERT(NS_IsMainThread());
-  const double rate = 1000 / 60.0;
+  const double rate = 1000.0 / (double) gfxPlatform::GetSoftwareVsyncRate();
   mVsyncRate = mozilla::TimeDuration::FromMilliseconds(rate);
   mVsyncThread = new base::Thread("SoftwareVsyncThread");
   MOZ_RELEASE_ASSERT(mVsyncThread->Start(), "Could not start software vsync thread");
@@ -109,6 +110,12 @@ SoftwareDisplay::NotifyVsync(mozilla::TimeStamp aVsyncTimestamp)
   // Prevent skew by still scheduling based on the original
   // vsync timestamp
   ScheduleNextVsync(aVsyncTimestamp);
+}
+
+mozilla::TimeDuration
+SoftwareDisplay::GetVsyncRate()
+{
+  return mVsyncRate;
 }
 
 void

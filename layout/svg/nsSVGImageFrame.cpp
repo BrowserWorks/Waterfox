@@ -208,11 +208,6 @@ nsSVGImageFrame::AttributeChanged(int32_t         aNameSpaceID,
   }
   if (aNameSpaceID == kNameSpaceID_XLink &&
       aAttribute == nsGkAtoms::href) {
-
-    // Prevent setting image.src by exiting early
-    if (nsContentUtils::IsImageSrcSetDisabled()) {
-      return NS_OK;
-    }
     SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
 
     if (element->mStringAttributes[SVGImageElement::HREF].IsExplicitlySet()) {
@@ -340,7 +335,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      aContext.PushGroup(gfxContentType::COLOR_ALPHA);
+      aContext.PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity);
     }
 
     nscoord appUnitsPerDevPx = PresContext()->AppUnitsPerDevPixel();
@@ -404,9 +399,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      aContext.PopGroupToSource();
-      aContext.SetOperator(gfxContext::OPERATOR_OVER);
-      aContext.Paint(opacity);
+      aContext.PopGroupAndBlend();
     }
     // gfxContextAutoSaveRestore goes out of scope & cleans up our gfxContext
   }

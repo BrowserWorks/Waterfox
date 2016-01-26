@@ -23,12 +23,14 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'jar'
 
 EXPORTS += [
+    'InterceptedJARChannel.h',
     'nsJARURI.h',
     'nsZipArchive.h',
     'zipstruct.h',
 ]
 
 UNIFIED_SOURCES += [
+    'InterceptedJARChannel.cpp',
     'nsJARProtocolHandler.cpp',
     'nsJARURI.cpp',
 ]
@@ -42,8 +44,9 @@ SOURCES += [
     'nsZipArchive.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

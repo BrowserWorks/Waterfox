@@ -10,6 +10,7 @@
 #include "base/message_loop.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/Vector.h"
 #include "FrameMetrics.h"
 #include "nsISupportsImpl.h"
 
@@ -42,14 +43,11 @@ public:
   }
 
   /**
-   * Get the deferred tasks in |mDeferredTasks|. See |mDeferredTasks|
-   * for more information.
-   * Clears |mDeferredTasks|.
+   * Get the deferred tasks in |mDeferredTasks| and place them in |aTasks|. See
+   * |mDeferredTasks| for more information.  Clears |mDeferredTasks|.
    */
   Vector<Task*> TakeDeferredTasks() {
-    Vector<Task*> result;
-    mDeferredTasks.swap(result);
-    return result;
+    return Move(mDeferredTasks);
   }
 
   /**

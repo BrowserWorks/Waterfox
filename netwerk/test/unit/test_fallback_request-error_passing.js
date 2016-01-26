@@ -1,5 +1,6 @@
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 var httpServer = null;
 // Need to randomize, because apparently no one clears our cache
@@ -10,18 +11,10 @@ XPCOMUtils.defineLazyGetter(this, "randomURI", function() {
 });
 
 var cacheUpdateObserver = null;
+var systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
 
 function make_channel(url, callback, ctx) {
-  var ios = Cc["@mozilla.org/network/io-service;1"].
-            getService(Ci.nsIIOService);
-  return ios.newChannel2(url,
-                         "",
-                         null,
-                         null,      // aLoadingNode
-                         Services.scriptSecurityManager.getSystemPrincipal(),
-                         null,      // aTriggeringPrincipal
-                         Ci.nsILoadInfo.SEC_NORMAL,
-                         Ci.nsIContentPolicy.TYPE_OTHER);
+  return NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
 }
 
 function make_uri(url) {
@@ -79,10 +72,10 @@ function run_test()
 
   var pm = Cc["@mozilla.org/permissionmanager;1"]
     .getService(Ci.nsIPermissionManager);
+  var ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
+              .getService(Ci.nsIScriptSecurityManager);
   var uri = make_uri("http://localhost:" + httpServer.identity.primaryPort);
-  var principal = Cc["@mozilla.org/scriptsecuritymanager;1"]
-                    .getService(Ci.nsIScriptSecurityManager)
-                    .getNoAppCodebasePrincipal(uri);
+  var principal = ssm.createCodebasePrincipal(uri, {});
 
   if (pm.testPermissionFromPrincipal(principal, "offline-app") != 0) {
     dump("Previous test failed to clear offline-app permission!  Expect failures.\n");
@@ -104,7 +97,7 @@ function run_test()
       var chan = make_channel(randomURI);
       var chanac = chan.QueryInterface(Ci.nsIApplicationCacheChannel);
       chanac.chooseApplicationCache = true;
-      chan.asyncOpen(new ChannelListener(finish_test), null);
+      chan.asyncOpen2(new ChannelListener(finish_test));
     });
   }}
 
@@ -119,6 +112,7 @@ function run_test()
                              httpServer.identity.primaryPort + "/manifest"),
                     make_uri("http://localhost:" +
                              httpServer.identity.primaryPort + "/masterEntry"),
+                    systemPrincipal,
                     null);
 
   do_test_pending();

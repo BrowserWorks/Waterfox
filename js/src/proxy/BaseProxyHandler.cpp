@@ -12,6 +12,8 @@
 
 using namespace js;
 
+using JS::IsArrayAnswer;
+
 bool
 BaseProxyHandler::enter(JSContext* cx, HandleObject wrapper, HandleId id, Action act,
                         bool* bp) const
@@ -65,7 +67,7 @@ BaseProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* b
 }
 
 bool
-BaseProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+BaseProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                       HandleId id, MutableHandleValue vp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);
@@ -154,15 +156,26 @@ js::SetPropertyIgnoringNamedGetter(JSContext* cx, HandleObject obj, HandleId id,
             return CallJSSetterOp(cx, setter, receiverObj, id, &valCopy, result);
         }
 
-        // Steps 5.c-d. Adapt for SpiderMonkey by using HasOwnProperty instead
-        // of the standard [[GetOwnProperty]].
-        bool existingDescriptor;
-        if (!HasOwnProperty(cx, receiverObj, id, &existingDescriptor))
+        // Steps 5.c-d.
+        Rooted<PropertyDescriptor> existingDescriptor(cx);
+        if (!GetOwnPropertyDescriptor(cx, receiverObj, id, &existingDescriptor))
             return false;
 
-        // Steps 5.e-f.
+        // Step 5.e.
+        if (existingDescriptor.object()) {
+            // Step 5.e.i.
+            if (existingDescriptor.isAccessorDescriptor())
+                return result.fail(JSMSG_OVERWRITING_ACCESSOR);
+
+            // Step 5.e.ii.
+            if (!existingDescriptor.writable())
+                return result.fail(JSMSG_READ_ONLY);
+        }
+
+
+        // Steps 5.e.iii-iv. and 5.f.i.
         unsigned attrs =
-            existingDescriptor
+            existingDescriptor.object()
             ? JSPROP_IGNORE_ENUMERATE | JSPROP_IGNORE_READONLY | JSPROP_IGNORE_PERMANENT
             : JSPROP_ENUMERATE;
 
@@ -280,15 +293,8 @@ BaseProxyHandler::boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHan
 }
 
 bool
-BaseProxyHandler::defaultValue(JSContext* cx, HandleObject proxy, JSType hint,
-                               MutableHandleValue vp) const
-{
-    return OrdinaryToPrimitive(cx, proxy, hint, vp);
-}
-
-bool
 BaseProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                             CallArgs args) const
+                             const CallArgs& args) const
 {
     ReportIncompatible(cx, args);
     return false;
@@ -301,14 +307,23 @@ BaseProxyHandler::hasInstance(JSContext* cx, HandleObject proxy, MutableHandleVa
     assertEnteredPolicy(cx, proxy, JSID_VOID, GET);
     RootedValue val(cx, ObjectValue(*proxy.get()));
     ReportValueError(cx, JSMSG_BAD_INSTANCEOF_RHS,
-                     JSDVG_SEARCH_STACK, val, js::NullPtr());
+                     JSDVG_SEARCH_STACK, val, nullptr);
     return false;
 }
 
 bool
-BaseProxyHandler::objectClassIs(HandleObject proxy, ESClassValue classValue, JSContext* cx) const
+BaseProxyHandler::getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                  ESClassValue* classValue) const
 {
-    return false;
+    *classValue = ESClass_Other;
+    return true;
+}
+
+bool
+BaseProxyHandler::isArray(JSContext* cx, HandleObject proxy, IsArrayAnswer* answer) const
+{
+    *answer = IsArrayAnswer::NotArray;
+    return true;
 }
 
 void

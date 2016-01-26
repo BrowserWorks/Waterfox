@@ -10,6 +10,7 @@
 #include "LayersLogging.h"                              // for Stringify
 #include "mozilla/gfx/Point.h"                          // for Point4D
 #include "mozilla/layers/APZThreadUtils.h"              // for AssertOnCompositorThread
+#include "mozilla/layers/APZUtils.h"                    // for CompleteAsyncTransform
 #include "mozilla/layers/AsyncCompositionManager.h"     // for ViewTransform::operator Matrix4x4()
 #include "nsPrintfCString.h"                            // for nsPrintfCString
 #include "UnitTransforms.h"                             // for ViewAs
@@ -18,22 +19,31 @@ namespace mozilla {
 namespace layers {
 
 HitTestingTreeNode::HitTestingTreeNode(AsyncPanZoomController* aApzc,
-                                       bool aIsPrimaryHolder)
+                                       bool aIsPrimaryHolder,
+                                       uint64_t aLayersId)
   : mApzc(aApzc)
   , mIsPrimaryApzcHolder(aIsPrimaryHolder)
+  , mLayersId(aLayersId)
+  , mScrollViewId(FrameMetrics::NULL_SCROLL_ID)
+  , mScrollDir(Layer::NONE)
+  , mScrollSize(0)
   , mOverride(EventRegionsOverride::NoOverride)
 {
-  if (mIsPrimaryApzcHolder) {
+if (mIsPrimaryApzcHolder) {
     MOZ_ASSERT(mApzc);
   }
+  MOZ_ASSERT(!mApzc || mApzc->GetLayersId() == mLayersId);
 }
 
 void
-HitTestingTreeNode::RecycleWith(AsyncPanZoomController* aApzc)
+HitTestingTreeNode::RecycleWith(AsyncPanZoomController* aApzc,
+                                uint64_t aLayersId)
 {
   MOZ_ASSERT(!mIsPrimaryApzcHolder);
   Destroy(); // clear out tree pointers
   mApzc = aApzc;
+  mLayersId = aLayersId;
+  MOZ_ASSERT(!mApzc || mApzc->GetLayersId() == mLayersId);
   // The caller is expected to call SetHitTestData to repopulate the hit-test
   // fields.
 }
@@ -57,6 +67,8 @@ HitTestingTreeNode::Destroy()
     }
     mApzc = nullptr;
   }
+
+  mLayersId = 0;
 }
 
 void
@@ -76,6 +88,30 @@ HitTestingTreeNode::SetLastChild(HitTestingTreeNode* aChild)
       aChild->SetApzcParent(parent);
     }
   }
+}
+
+void
+HitTestingTreeNode::SetScrollbarData(FrameMetrics::ViewID aScrollViewId, Layer::ScrollDirection aDir, int32_t aScrollSize)
+{
+  mScrollViewId = aScrollViewId;
+  mScrollDir = aDir;
+  mScrollSize = aScrollSize;;
+}
+
+bool
+HitTestingTreeNode::MatchesScrollDragMetrics(const AsyncDragMetrics& aDragMetrics) const
+{
+  return ((mScrollDir == Layer::HORIZONTAL &&
+           aDragMetrics.mDirection == AsyncDragMetrics::HORIZONTAL) ||
+          (mScrollDir == Layer::VERTICAL &&
+           aDragMetrics.mDirection == AsyncDragMetrics::VERTICAL)) &&
+         mScrollViewId == aDragMetrics.mViewId;
+}
+
+int32_t
+HitTestingTreeNode::GetScrollSize() const
+{
+  return mScrollSize;
 }
 
 void
@@ -147,15 +183,34 @@ HitTestingTreeNode::GetNearestContainingApzc() const
   return nullptr;
 }
 
+AsyncPanZoomController*
+HitTestingTreeNode::GetNearestContainingApzcWithSameLayersId() const
+{
+  for (const HitTestingTreeNode* n = this;
+       n && n->mLayersId == mLayersId;
+       n = n->GetParent()) {
+    if (n->GetApzc()) {
+      return n->GetApzc();
+    }
+  }
+  return nullptr;
+}
+
 bool
 HitTestingTreeNode::IsPrimaryHolder() const
 {
   return mIsPrimaryApzcHolder;
 }
 
+uint64_t
+HitTestingTreeNode::GetLayersId() const
+{
+  return mLayersId;
+}
+
 void
 HitTestingTreeNode::SetHitTestData(const EventRegions& aRegions,
-                                   const gfx::Matrix4x4& aTransform,
+                                   const CSSTransformMatrix& aTransform,
                                    const Maybe<ParentLayerIntRegion>& aClipRegion,
                                    const EventRegionsOverride& aOverride)
 {
@@ -176,14 +231,12 @@ Maybe<LayerPoint>
 HitTestingTreeNode::Untransform(const ParentLayerPoint& aPoint) const
 {
   // convert into Layer coordinate space
-  gfx::Matrix4x4 localTransform = mTransform;
-  if (mApzc) {
-    localTransform = localTransform * mApzc->GetCurrentAsyncTransformWithOverscroll();
-  }
-  gfx::Point4D point = localTransform.Inverse().ProjectPoint(aPoint.ToUnknownPoint());
-  return point.HasPositiveWCoord()
-        ? Some(ViewAs<LayerPixel>(point.As2DPoint()))
-        : Nothing();
+  LayerToParentLayerMatrix4x4 transform = mTransform *
+      CompleteAsyncTransform(
+        mApzc
+      ? mApzc->GetCurrentAsyncTransformWithOverscroll()
+      : AsyncTransformComponentMatrix());
+  return UntransformBy(transform.Inverse(), aPoint);
 }
 
 HitTestResult
@@ -229,7 +282,8 @@ HitTestingTreeNode::Dump(const char* aPrefix) const
     mPrevSibling->Dump(aPrefix);
   }
   printf_stderr("%sHitTestingTreeNode (%p) APZC (%p) g=(%s) %s%sr=(%s) t=(%s) c=(%s)\n",
-    aPrefix, this, mApzc.get(), mApzc ? Stringify(mApzc->GetGuid()).c_str() : "",
+    aPrefix, this, mApzc.get(),
+    mApzc ? Stringify(mApzc->GetGuid()).c_str() : nsPrintfCString("l=%" PRIu64, mLayersId).get(),
     (mOverride & EventRegionsOverride::ForceDispatchToContent) ? "fdtc " : "",
     (mOverride & EventRegionsOverride::ForceEmptyHitRegion) ? "fehr " : "",
     Stringify(mEventRegions).c_str(), Stringify(mTransform).c_str(),

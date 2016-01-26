@@ -36,7 +36,7 @@ public:
   virtual ~WebrtcOMXH264VideoEncoder();
 
   // Implement VideoEncoder interface.
-  virtual const uint64_t PluginID() override { return 0; }
+  virtual uint64_t PluginID() const override { return 0; }
 
   virtual int32_t InitEncode(const webrtc::VideoCodec* aCodecSettings,
                              int32_t aNumOfCores,
@@ -51,7 +51,7 @@ public:
   virtual int32_t Release() override;
 
   virtual int32_t SetChannelParameters(uint32_t aPacketLossRate,
-                                       int aRoundTripTimeMs) override;
+                                       int64_t aRoundTripTimeMs) override;
 
   virtual int32_t SetRates(uint32_t aBitRate, uint32_t aFrameRate) override;
 
@@ -82,7 +82,7 @@ public:
   virtual ~WebrtcOMXH264VideoDecoder();
 
   // Implement VideoDecoder interface.
-  virtual const uint64_t PluginID() override { return 0; }
+  virtual uint64_t PluginID() const override { return 0; }
 
   virtual int32_t InitDecode(const webrtc::VideoCodec* aCodecSettings,
                              int32_t aNumOfCores) override;

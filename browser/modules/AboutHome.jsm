@@ -4,9 +4,9 @@
 
 "use strict";
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 this.EXPORTED_SYMBOLS = [ "AboutHomeUtils", "AboutHome" ];
 
@@ -89,19 +89,16 @@ XPCOMUtils.defineLazyGetter(AboutHomeUtils, "snippetsURL", function() {
  * about:home needs to do something chrome-privileged, it sends a
  * message that's handled here.
  */
-let AboutHome = {
+var AboutHome = {
   MESSAGES: [
     "AboutHome:RestorePreviousSession",
     "AboutHome:Downloads",
     "AboutHome:Bookmarks",
     "AboutHome:History",
-    "AboutHome:Apps",
     "AboutHome:Addons",
     "AboutHome:Sync",
     "AboutHome:Settings",
     "AboutHome:RequestUpdate",
-    "AboutHome:Search",
-    "AboutHome:OpenSearchPanel",
   ],
 
   init: function() {
@@ -109,16 +106,6 @@ let AboutHome = {
 
     for (let msg of this.MESSAGES) {
       mm.addMessageListener(msg, this);
-    }
-
-    Services.obs.addObserver(this, "browser-search-engine-modified", false);
-  },
-
-  observe: function(aEngine, aTopic, aVerb) {
-    switch (aTopic) {
-      case "browser-search-engine-modified":
-        this.sendAboutHomeData(null);
-        break;
     }
   },
 
@@ -139,15 +126,11 @@ let AboutHome = {
         break;
 
       case "AboutHome:Bookmarks":
-        window.PlacesCommandHook.showPlacesOrganizer("AllBookmarks");
+        window.PlacesCommandHook.showPlacesOrganizer("UnfiledBookmarks");
         break;
 
       case "AboutHome:History":
         window.PlacesCommandHook.showPlacesOrganizer("History");
-        break;
-
-      case "AboutHome:Apps":
-        window.BrowserOpenApps();
         break;
 
       case "AboutHome:Addons":
@@ -155,21 +138,7 @@ let AboutHome = {
         break;
 
       case "AboutHome:Sync":
-        let weave = Cc["@mozilla.org/weave/service;1"]
-                      .getService(Ci.nsISupports)
-                      .wrappedJSObject;
-
-        if (weave.fxAccountsEnabled) {
-          fxAccounts.getSignedInUser().then(userData => {
-            if (userData) {
-              window.openPreferences("paneSync");
-            } else {
-              window.loadURI("about:accounts?entrypoint=abouthome");
-            }
-          });
-        } else {
-          window.openPreferences("paneSync");
-        }
+        window.openPreferences("paneSync", { urlParams: { entrypoint: "abouthome" } });
         break;
 
       case "AboutHome:Settings":
@@ -178,50 +147,6 @@ let AboutHome = {
 
       case "AboutHome:RequestUpdate":
         this.sendAboutHomeData(aMessage.target);
-        break;
-
-      case "AboutHome:Search":
-        let data;
-        try {
-          data = JSON.parse(aMessage.data.searchData);
-        } catch(ex) {
-          Cu.reportError(ex);
-          break;
-        }
-
-        Services.search.init(function(status) {
-          if (!Components.isSuccessCode(status)) {
-            return;
-          }
-
-          let engine = Services.search.currentEngine;
-          if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
-            window.BrowserSearch.recordSearchInHealthReport(engine, "abouthome", data.selection);
-          }
-
-          // Trigger a search through nsISearchEngine.getSubmission()
-          let submission = engine.getSubmission(data.searchTerms, null, "homepage");
-          let where = data.useNewTab ? "tabshifted" : "current";
-          window.openUILinkIn(submission.uri.spec, where, false,
-                              submission.postData);
-
-          // Used for testing
-          let mm = aMessage.target.messageManager;
-          mm.sendAsyncMessage("AboutHome:SearchTriggered", aMessage.data.searchData);
-        });
-
-        break;
-
-      case "AboutHome:OpenSearchPanel":
-        let panel = window.document.getElementById("abouthome-search-panel");
-        let anchor = aMessage.objects.anchor;
-        panel.hidden = false;
-        panel.openPopup(anchor);
-        anchor.setAttribute("active", "true");
-        panel.addEventListener("popuphidden", function onHidden() {
-          panel.removeEventListener("popuphidden", onHidden);
-          anchor.removeAttribute("active");
-        });
         break;
     }
   },
@@ -235,24 +160,11 @@ let AboutHome = {
     let ss = wrapper.SessionStore;
 
     ss.promiseInitialized.then(function() {
-      let deferred = Promise.defer();
-
-      Services.search.init(function (status){
-        if (!Components.isSuccessCode(status)) {
-          deferred.reject(status);
-        } else {
-          deferred.resolve(Services.search.defaultEngine.name);
-        }
-      });
-
-      return deferred.promise;
-    }).then(function(engineName) {
       let data = {
         showRestoreLastSession: ss.canRestoreLastSession,
         snippetsURL: AboutHomeUtils.snippetsURL,
         showKnowYourRights: AboutHomeUtils.showKnowYourRights,
         snippetsVersion: AboutHomeUtils.snippetsVersion,
-        defaultEngineName: engineName
       };
 
       if (AboutHomeUtils.showKnowYourRights) {
@@ -270,14 +182,5 @@ let AboutHome = {
     }).then(null, function onError(x) {
       Cu.reportError("Error in AboutHome.sendAboutHomeData: " + x);
     });
-  },
-
-  /**
-   * Focuses the search input in the page with the given message manager.
-   * @param  messageManager
-   *         The MessageManager object of the selected browser.
-   */
-  focusInput: function (messageManager) {
-    messageManager.sendAsyncMessage("AboutHome:FocusInput");
   }
 };

@@ -35,6 +35,7 @@
 #include "nsString.h"               // for nsDependentString
 #include "nsTArray.h"                   // for nsTArray, nsTArray_Impl
 #include "nsThreadUtils.h"              // for NS_IsMainThread
+#include "mozilla/gfx/Logging.h"
 
 #if !XP_MACOSX
 #include "gfxPDFSurface.h"
@@ -313,30 +314,10 @@ nsDeviceContext::SetDPI()
 {
     float dpi = -1.0f;
 
-    // PostScript, PDF and Mac (when printing) all use 72 dpi
-    // Use a printing DC to determine the other dpi values
-    if (mPrintingSurface) {
-        switch (mPrintingSurface->GetType()) {
-        case gfxSurfaceType::PDF:
-        case gfxSurfaceType::PS:
-        case gfxSurfaceType::Quartz:
-            dpi = 72.0f;
-            break;
-#ifdef XP_WIN
-        case gfxSurfaceType::Win32:
-        case gfxSurfaceType::Win32Printing: {
-            HDC dc = reinterpret_cast<gfxWindowsSurface*>(mPrintingSurface.get())->GetDC();
-            int32_t OSVal = GetDeviceCaps(dc, LOGPIXELSY);
-            dpi = 144.0f;
-            mPrintingScale = float(OSVal) / dpi;
-            break;
-        }
-#endif
-        default:
-            NS_NOTREACHED("Unexpected printing surface type");
-            break;
-        }
-
+    // Use the printing DC to determine DPI values, if we have one.
+    if (mDeviceContextSpec) {
+        dpi = mDeviceContextSpec->GetDPI();
+        mPrintingScale = mDeviceContextSpec->GetPrintingScale();
         mAppUnitsPerDevPixelAtUnitFullZoom =
             NS_lround((AppUnitsPerCSSPixel() * 96) / dpi);
     } else {
@@ -393,7 +374,9 @@ nsDeviceContext::Init(nsIWidget *aWidget)
 already_AddRefed<gfxContext>
 nsDeviceContext::CreateRenderingContext()
 {
-    nsRefPtr<gfxASurface> printingSurface = mPrintingSurface;
+    MOZ_ASSERT(mWidth > 0 && mHeight > 0);
+
+    RefPtr<gfxASurface> printingSurface = mPrintingSurface;
 #ifdef XP_MACOSX
     // CreateRenderingContext() can be called (on reflow) after EndPage()
     // but before BeginPage().  On OS X (and only there) mPrintingSurface
@@ -410,13 +393,39 @@ nsDeviceContext::CreateRenderingContext()
       gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(printingSurface,
                                                              gfx::IntSize(mWidth, mHeight));
 
+    // This can legitimately happen - CreateDrawTargetForSurface will fail
+    // to create a draw target if the size is too large, for instance.
+    if (!dt) {
+        gfxCriticalNote << "Failed to create draw target in device context sized " << mWidth << "x" << mHeight << " and pointers " << hexa(mPrintingSurface) << " and " << hexa(printingSurface);
+        return nullptr;
+    }
+
+    RefPtr<DrawEventRecorder> recorder;
+    nsresult rv = mDeviceContextSpec->GetDrawEventRecorder(getter_AddRefs(recorder));
+    if (NS_SUCCEEDED(rv) && recorder) {
+      dt = gfx::Factory::CreateRecordingDrawTarget(recorder, dt);
+    }
+
 #ifdef XP_MACOSX
     dt->AddUserData(&gfxContext::sDontUseAsSourceKey, dt, nullptr);
 #endif
     dt->AddUserData(&sDisablePixelSnapping, (void*)0x1, nullptr);
 
-    nsRefPtr<gfxContext> pContext = new gfxContext(dt);
-    pContext->SetMatrix(gfxMatrix::Scaling(mPrintingScale, mPrintingScale));
+    RefPtr<gfxContext> pContext = new gfxContext(dt);
+
+    gfxMatrix transform;
+    if (printingSurface->GetRotateForLandscape()) {
+      // Rotate page 90 degrees to draw landscape page on portrait paper
+      IntSize size = printingSurface->GetSize();
+      transform.Translate(gfxPoint(0, size.width));
+      gfxMatrix rotate(0, -1,
+                       1,  0,
+                       0,  0);
+      transform = rotate * transform;
+    }
+    transform.Scale(mPrintingScale, mPrintingScale);
+
+    pContext->SetMatrix(transform);
     return pContext.forget();
 }
 
@@ -494,25 +503,25 @@ nsDeviceContext::InitForPrinting(nsIDeviceContextSpec *aDevice)
 
     Init(nullptr);
 
-    CalcPrintingSize();
+    if (!CalcPrintingSize()) {
+        return NS_ERROR_FAILURE;
+    }
 
     return NS_OK;
 }
 
 nsresult
 nsDeviceContext::BeginDocument(const nsAString& aTitle,
-                               char16_t*       aPrintToFileName,
+                               const nsAString& aPrintToFileName,
                                int32_t          aStartPage,
                                int32_t          aEndPage)
 {
-    static const char16_t kEmpty[] = { '\0' };
-    nsresult rv;
+    nsresult rv = mPrintingSurface->BeginPrinting(aTitle, aPrintToFileName);
 
-    rv = mPrintingSurface->BeginPrinting(aTitle,
-                                         nsDependentString(aPrintToFileName ? aPrintToFileName : kEmpty));
-
-    if (NS_SUCCEEDED(rv) && mDeviceContextSpec)
-        rv = mDeviceContextSpec->BeginDocument(aTitle, aPrintToFileName, aStartPage, aEndPage);
+    if (NS_SUCCEEDED(rv) && mDeviceContextSpec) {
+      rv = mDeviceContextSpec->BeginDocument(aTitle, aPrintToFileName,
+                                             aStartPage, aEndPage);
+    }
 
     return rv;
 }
@@ -649,6 +658,8 @@ nsDeviceContext::FindScreen(nsIScreen** outScreen)
         return;
     }
 
+    CheckDPIChange();
+
     if (mWidget->GetOwningTabChild()) {
         mScreenManager->ScreenForNativeWidget((void *)mWidget->GetOwningTabChild(),
                                               outScreen);
@@ -662,72 +673,22 @@ nsDeviceContext::FindScreen(nsIScreen** outScreen)
     }
 }
 
-void
+bool
 nsDeviceContext::CalcPrintingSize()
 {
-    if (!mPrintingSurface)
-        return;
-
-    bool inPoints = true;
-
-    gfxSize size(0, 0);
-    switch (mPrintingSurface->GetType()) {
-    case gfxSurfaceType::Image:
-        inPoints = false;
-        size = reinterpret_cast<gfxImageSurface*>(mPrintingSurface.get())->GetSize();
-        break;
-
-#if defined(MOZ_PDF_PRINTING)
-    case gfxSurfaceType::PDF:
-        inPoints = true;
-        size = reinterpret_cast<gfxPDFSurface*>(mPrintingSurface.get())->GetSize();
-        break;
-#endif
-
-#ifdef MOZ_WIDGET_GTK
-    case gfxSurfaceType::PS:
-        inPoints = true;
-        size = reinterpret_cast<gfxPSSurface*>(mPrintingSurface.get())->GetSize();
-        break;
-#endif
-
-#ifdef XP_MACOSX
-    case gfxSurfaceType::Quartz:
-        inPoints = true; // this is really only true when we're printing
-        size = reinterpret_cast<gfxQuartzSurface*>(mPrintingSurface.get())->GetSize();
-        break;
-#endif
-
-#ifdef XP_WIN
-    case gfxSurfaceType::Win32:
-    case gfxSurfaceType::Win32Printing:
-        {
-            inPoints = false;
-            HDC dc = reinterpret_cast<gfxWindowsSurface*>(mPrintingSurface.get())->GetDC();
-            if (!dc)
-                dc = GetDC((HWND)mWidget->GetNativeData(NS_NATIVE_WIDGET));
-            size.width = NSFloatPixelsToAppUnits(::GetDeviceCaps(dc, HORZRES)/mPrintingScale, AppUnitsPerDevPixel());
-            size.height = NSFloatPixelsToAppUnits(::GetDeviceCaps(dc, VERTRES)/mPrintingScale, AppUnitsPerDevPixel());
-            mDepth = (uint32_t)::GetDeviceCaps(dc, BITSPIXEL);
-            if (dc != reinterpret_cast<gfxWindowsSurface*>(mPrintingSurface.get())->GetDC())
-                ReleaseDC((HWND)mWidget->GetNativeData(NS_NATIVE_WIDGET), dc);
-            break;
-        }
-#endif
-
-    default:
-        NS_ERROR("trying to print to unknown surface type");
+    if (!mPrintingSurface) {
+        return (mWidth > 0 && mHeight > 0);
     }
 
-    if (inPoints) {
-        // For printing, CSS inches and physical inches are identical
-        // so it doesn't matter which we use here
-        mWidth = NSToCoordRound(float(size.width) * AppUnitsPerPhysicalInch() / 72);
-        mHeight = NSToCoordRound(float(size.height) * AppUnitsPerPhysicalInch() / 72);
-    } else {
-        mWidth = NSToIntRound(size.width);
-        mHeight = NSToIntRound(size.height);
-    }
+    gfxSize size = mPrintingSurface->GetSize();
+    // For printing, CSS inches and physical inches are identical
+    // so it doesn't matter which we use here
+    mWidth = NSToCoordRound(size.width * AppUnitsPerPhysicalInch()
+                            / POINTS_PER_INCH_FLOAT);
+    mHeight = NSToCoordRound(size.height * AppUnitsPerPhysicalInch()
+                             / POINTS_PER_INCH_FLOAT);
+
+    return (mWidth > 0 && mHeight > 0);
 }
 
 bool nsDeviceContext::CheckDPIChange() {

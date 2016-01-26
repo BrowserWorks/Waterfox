@@ -1,16 +1,16 @@
-const Cu = Components.utils;
+var Cu = Components.utils;
 
 const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 
 // Load a duplicated copy of the jsm to prevent messing with the currently running one
-let scope = {};
+var scope = {};
 Services.scriptloader.loadSubScript("resource://gre/modules/SystemAppProxy.jsm", scope);
 const { SystemAppProxy } = scope;
 
-let frame;
-let customEventTarget;
+var frame;
+var customEventTarget;
 
-let index = -1;
+var index = -1;
 function next() {
   index++;
   if (index >= steps.length) {
@@ -26,11 +26,12 @@ function next() {
 
 // Listen for events received by the system app document
 // to ensure that we receive all of them, in an expected order and time
-let isLoaded = false;
-let n = 0;
+var isLoaded = false;
+var isReady = false;
+var n = 0;
 function listener(event) {
   if (!isLoaded) {
-    assert.ok(false, "Received event before the iframe is ready");
+    assert.ok(false, "Received event before the iframe is loaded");
     return;
   }
   n++;
@@ -41,16 +42,34 @@ function listener(event) {
     assert.equal(event.type, "custom");
     assert.equal(event.detail.name, "second");
 
-    next(); // call checkEventDispatching
+    next(); // call checkEventPendingBeforeLoad
   } else if (n == 3) {
+    if (!isReady) {
+      assert.ok(false, "Received event before the iframe is loaded");
+      return;
+    }
+
     assert.equal(event.type, "custom");
     assert.equal(event.detail.name, "third");
   } else if (n == 4) {
+    if (!isReady) {
+      assert.ok(false, "Received event before the iframe is loaded");
+      return;
+    }
+
     assert.equal(event.type, "mozChromeEvent");
     assert.equal(event.detail.name, "fourth");
+
+    next(); // call checkEventDispatching
   } else if (n == 5) {
     assert.equal(event.type, "custom");
     assert.equal(event.detail.name, "fifth");
+  } else if (n === 6) {
+    assert.equal(event.type, "mozChromeEvent");
+    assert.equal(event.detail.name, "sixth");
+  } else if (n === 7) {
+    assert.equal(event.type, "custom");
+    assert.equal(event.detail.name, "seventh");
     assert.equal(event.target, customEventTarget);
 
     next(); // call checkEventListening();
@@ -60,7 +79,7 @@ function listener(event) {
 }
 
 
-let steps = [
+var steps = [
   function waitForWebapps() {
     // We are using webapps API later in this test and we need to ensure
     // it is fully initialized before trying to use it
@@ -72,8 +91,8 @@ let steps = [
 
   function earlyEvents() {
     // Immediately try to send events
-    SystemAppProxy.dispatchEvent({ name: "first" });
-    SystemAppProxy._sendCustomEvent("custom", { name: "second" });
+    SystemAppProxy._sendCustomEvent("mozChromeEvent", { name: "first" }, true);
+    SystemAppProxy._sendCustomEvent("custom", { name: "second" }, true);
     next();
   },
 
@@ -110,7 +129,7 @@ let steps = [
       // Declare that the iframe is now loaded.
       // That should dispatch early events
       isLoaded = true;
-      SystemAppProxy.setIsReady();
+      SystemAppProxy.setIsLoaded();
       assert.ok(true, "Frame declared as loaded");
 
       let gotFrame = SystemAppProxy.getFrame();
@@ -123,13 +142,24 @@ let steps = [
     frame.setAttribute("src", "data:text/html,system app");
   },
 
+  function checkEventPendingBeforeLoad() {
+    // Frame is loaded but not ready,
+    // these events should queue before the System app is ready.
+    SystemAppProxy._sendCustomEvent("custom", { name: "third" });
+    SystemAppProxy.dispatchEvent({ name: "fourth" });
+
+    isReady = true;
+    SystemAppProxy.setIsReady();
+    // Once this 4th event is received, we will run checkEventDispatching
+  },
+
   function checkEventDispatching() {
     // Send events after the iframe is ready,
     // they should be dispatched right away
-    SystemAppProxy._sendCustomEvent("custom", { name: "third" });
-    SystemAppProxy.dispatchEvent({ name: "fourth" });
-    SystemAppProxy._sendCustomEvent("custom", { name: "fifth" }, false, customEventTarget);
-    // Once this 5th event is received, we will run checkEventListening
+    SystemAppProxy._sendCustomEvent("custom", { name: "fifth" });
+    SystemAppProxy.dispatchEvent({ name: "sixth" });
+    SystemAppProxy._sendCustomEvent("custom", { name: "seventh" }, false, customEventTarget);
+    // Once this 7th event is received, we will run checkEventListening
   },
 
   function checkEventListening() {

@@ -11,12 +11,11 @@ this.EXPORTED_SYMBOLS = [
   "TokenServerClientServerError",
 ];
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/rest.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/observers.js");
 
 const PREF_LOG_LEVEL = "services.common.log.logger.tokenserverclient";
@@ -32,6 +31,9 @@ const PREF_LOG_LEVEL = "services.common.log.logger.tokenserverclient";
 this.TokenServerClientError = function TokenServerClientError(message) {
   this.name = "TokenServerClientError";
   this.message = message || "Client error.";
+  // Without explicitly setting .stack, all stacks from these errors will point
+  // to the "new Error()" call a few lines down, which isn't helpful.
+  this.stack = Error().stack;
 }
 TokenServerClientError.prototype = new Error();
 TokenServerClientError.prototype.constructor = TokenServerClientError;
@@ -40,6 +42,11 @@ TokenServerClientError.prototype._toStringFields = function() {
 }
 TokenServerClientError.prototype.toString = function() {
   return this.name + "(" + JSON.stringify(this._toStringFields()) + ")";
+}
+TokenServerClientError.prototype.toJSON = function() {
+  let result = this._toStringFields();
+  result["name"] = this.name;
+  return result;
 }
 
 /**
@@ -52,6 +59,7 @@ this.TokenServerClientNetworkError =
  function TokenServerClientNetworkError(error) {
   this.name = "TokenServerClientNetworkError";
   this.error = error;
+  this.stack = Error().stack;
 }
 TokenServerClientNetworkError.prototype = new TokenServerClientError();
 TokenServerClientNetworkError.prototype.constructor =
@@ -96,6 +104,7 @@ this.TokenServerClientServerError =
   this.name = "TokenServerClientServerError";
   this.message = message || "Server error.";
   this.cause = cause;
+  this.stack = Error().stack;
 }
 TokenServerClientServerError.prototype = new TokenServerClientError();
 TokenServerClientServerError.prototype.constructor =
@@ -275,8 +284,7 @@ TokenServerClient.prototype = {
         try {
           cb(error, result);
         } catch (ex) {
-          self._log.warn("Exception when calling user-supplied callback: " +
-                         CommonUtils.exceptionStr(ex));
+          self._log.warn("Exception when calling user-supplied callback", ex);
         }
 
         cb = null;
@@ -285,8 +293,7 @@ TokenServerClient.prototype = {
       try {
         client._processTokenResponse(this.response, callCallback);
       } catch (ex) {
-        this._log.warn("Error processing token server response: " +
-                       CommonUtils.exceptionStr(ex));
+        this._log.warn("Error processing token server response", ex);
 
         let error = new TokenServerClientError(ex);
         error.response = this.response;

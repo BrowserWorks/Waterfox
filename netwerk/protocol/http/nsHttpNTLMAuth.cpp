@@ -9,7 +9,9 @@
 #include "nsHttpNTLMAuth.h"
 #include "nsIAuthModule.h"
 #include "nsCOMPtr.h"
+#include "nsServiceManagerUtils.h"
 #include "plbase64.h"
+#include "plstr.h"
 #include "prnetdb.h"
 
 //-----------------------------------------------------------------------------
@@ -19,6 +21,7 @@
 #include "nsIHttpAuthenticableChannel.h"
 #include "nsIURI.h"
 #ifdef XP_WIN
+#include "nsIChannel.h"
 #include "nsIX509Cert.h"
 #include "nsISSLStatus.h"
 #include "nsISSLStatusProvider.h"
@@ -103,7 +106,7 @@ IsNonFqdn(nsIURI *uri)
         return false;
 
     // return true if host does not contain a dot and is not an ip address
-    return !host.IsEmpty() && host.FindChar('.') == kNotFound &&
+    return !host.IsEmpty() && !host.Contains('.') &&
            PR_StringToNetAddr(host.BeginReading(), &addr) != PR_SUCCESS;
 }
 
@@ -483,5 +486,5 @@ nsHttpNTLMAuth::GetAuthFlags(uint32_t *flags)
     return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

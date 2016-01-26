@@ -280,7 +280,9 @@ Logger.prototype = {
   },
 
   _parent: null,
-  get parent() this._parent,
+  get parent() {
+    return this._parent;
+  },
   set parent(parent) {
     if (this._parent == parent) {
       return;
@@ -865,7 +867,7 @@ FileAppender.prototype = {
   __proto__: Appender.prototype,
 
   _openFile: function () {
-    return Task.spawn(function _openFile() {
+    return Task.spawn(function* _openFile() {
       try {
         this._file = yield OS.File.open(this._path,
                                         {truncate: true});

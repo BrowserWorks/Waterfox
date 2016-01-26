@@ -27,7 +27,7 @@ NS_NewSVGFilterFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGFilterFrame)
 
-class MOZ_STACK_CLASS nsSVGFilterFrame::AutoFilterReferencer
+class MOZ_RAII nsSVGFilterFrame::AutoFilterReferencer
 {
 public:
   explicit AutoFilterReferencer(nsSVGFilterFrame *aFrame MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -86,7 +86,7 @@ nsSVGFilterFrame::GetFilterContent(nsIContent *aDefault)
   for (nsIContent* child = mContent->GetFirstChild();
        child;
        child = child->GetNextSibling()) {
-    nsRefPtr<nsSVGFE> primitive;
+    RefPtr<nsSVGFE> primitive;
     CallQueryInterface(child, (nsSVGFE**)getter_AddRefs(primitive));
     if (primitive) {
       return static_cast<SVGFilterElement *>(mContent);

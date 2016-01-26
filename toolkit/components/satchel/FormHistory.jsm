@@ -91,6 +91,7 @@ const Cr = Components.results;
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "uuidService",
                                    "@mozilla.org/uuid-generator;1",
@@ -101,14 +102,9 @@ const DAY_IN_MS  = 86400000; // 1 day in milliseconds
 const MAX_SEARCH_TOKENS = 10;
 const NOOP = function noop() {};
 
-let supportsDeletedTable =
-#ifdef ANDROID
-  true;
-#else
-  false;
-#endif
+var supportsDeletedTable = AppConstants.platform == "android";
 
-let Prefs = {
+var Prefs = {
   initialized: false,
 
   get debug() { this.ensureInitialized(); return this._debug; },
@@ -371,7 +367,7 @@ function generateGUID() {
  * Database creation and access
  */
 
-let _dbConnection = null;
+var _dbConnection = null;
 XPCOMUtils.defineLazyGetter(this, "dbConnection", function() {
   let dbFile;
 
@@ -382,7 +378,9 @@ XPCOMUtils.defineLazyGetter(this, "dbConnection", function() {
 
     _dbConnection = Services.storage.openUnsharedDatabase(dbFile);
     dbInit();
-  } catch (e if e.result == Cr.NS_ERROR_FILE_CORRUPTED) {
+  } catch (e) {
+    if (e.result != Cr.NS_ERROR_FILE_CORRUPTED)
+      throw e;
     dbCleanup(dbFile);
     _dbConnection = Services.storage.openUnsharedDatabase(dbFile);
     dbInit();
@@ -392,7 +390,7 @@ XPCOMUtils.defineLazyGetter(this, "dbConnection", function() {
 });
 
 
-let dbStmts = new Map();
+var dbStmts = new Map();
 
 /*
  * dbCreateAsyncStatement
@@ -465,7 +463,7 @@ function dbCreate() {
   log("Creating DB -- tables");
   for (let name in dbSchema.tables) {
     let table = dbSchema.tables[name];
-    let tSQL = [[col, table[col]].join(" ") for (col in table)].join(", ");
+    let tSQL = Object.keys(table).map(col => [col, table[col]].join(" ")).join(", ");
     log("Creating table " + name + " with " + tSQL);
     _dbConnection.createTable(name, tSQL);
   }
@@ -532,7 +530,7 @@ var Migrators = {
   dbMigrateToVersion4: function dbMigrateToVersion4() {
     if (!_dbConnection.tableExists("moz_deleted_formhistory")) {
       let table = dbSchema.tables["moz_deleted_formhistory"];
-      let tSQL = [[col, table[col]].join(" ") for (col in table)].join(", ");
+      let tSQL = Object.keys(table).map(col => [col, table[col]].join(" ")).join(", ");
       _dbConnection.createTable("moz_deleted_formhistory", tSQL);
     }
   }
@@ -548,7 +546,7 @@ function dbAreExpectedColumnsPresent() {
   for (let name in dbSchema.tables) {
     let table = dbSchema.tables[name];
     let query = "SELECT " +
-                [col for (col in table)].join(", ") +
+                Object.keys(table).join(", ") +
                 " FROM " + name;
     try {
       let stmt = _dbConnection.createStatement(query);
@@ -601,7 +599,7 @@ function dbClose(aShutdown) {
   dbStmts = new Map();
 
   let closed = false;
-  _dbConnection.asyncClose(function () closed = true);
+  _dbConnection.asyncClose(() => closed = true);
 
   if (!aShutdown) {
     let thread = Services.tm.currentThread;
@@ -773,7 +771,9 @@ function expireOldEntriesVacuum(aExpireTime, aBeginningCount) {
 }
 
 this.FormHistory = {
-  get enabled() Prefs.enabled,
+  get enabled() {
+    return Prefs.enabled;
+  },
 
   search : function formHistorySearch(aSelectTerms, aSearchData, aCallbacks) {
     // if no terms selected, select everything

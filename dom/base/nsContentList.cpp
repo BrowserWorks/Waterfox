@@ -30,7 +30,7 @@
 // Form related includes
 #include "nsIDOMHTMLFormElement.h"
 
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 #ifdef DEBUG_CONTENT_LIST
 #include "nsIContentIterator.h"
@@ -197,8 +197,9 @@ NS_GetContentList(nsINode* aRootNode,
 {
   NS_ASSERTION(aRootNode, "content list has to have a root");
 
-  nsRefPtr<nsContentList> list;
-  nsContentListKey hashKey(aRootNode, aMatchNameSpaceId, aTagname);
+  RefPtr<nsContentList> list;
+  nsContentListKey hashKey(aRootNode, aMatchNameSpaceId, aTagname,
+                           aRootNode->OwnerDoc()->IsHTMLDocument());
   uint32_t recentlyUsedCacheIndex = RecentlyUsedCacheIndex(hashKey);
   nsContentList* cachedList = sRecentlyUsedContentLists[recentlyUsedCacheIndex];
   if (cachedList && cachedList->MatchesKey(hashKey)) {
@@ -210,8 +211,8 @@ NS_GetContentList(nsINode* aRootNode,
   {
     ContentListHashtableHashKey,
     ContentListHashtableMatchEntry,
-    PL_DHashMoveEntryStub,
-    PL_DHashClearEntryStub
+    PLDHashTable::MoveEntryStub,
+    PLDHashTable::ClearEntryStub
   };
 
   // Initialize the hashtable if needed.
@@ -220,10 +221,9 @@ NS_GetContentList(nsINode* aRootNode,
       new PLDHashTable(&hash_table_ops, sizeof(ContentListHashEntry));
   }
 
-  ContentListHashEntry *entry = nullptr;
   // First we look in our hashtable.  Then we create a content list if needed
-  entry = static_cast<ContentListHashEntry *>
-    (PL_DHashTableAdd(gContentListHashTable, &hashKey, fallible));
+  auto entry = static_cast<ContentListHashEntry*>
+                          (gContentListHashTable->Add(&hashKey, fallible));
   if (entry)
     list = entry->mContentList;
 
@@ -308,14 +308,14 @@ GetFuncStringContentList(nsINode* aRootNode,
 {
   NS_ASSERTION(aRootNode, "content list has to have a root");
 
-  nsRefPtr<nsCacheableFuncStringContentList> list;
+  RefPtr<nsCacheableFuncStringContentList> list;
 
   static const PLDHashTableOps hash_table_ops =
   {
     FuncStringContentListHashtableHashKey,
     FuncStringContentListHashtableMatchEntry,
-    PL_DHashMoveEntryStub,
-    PL_DHashClearEntryStub
+    PLDHashTable::MoveEntryStub,
+    PLDHashTable::ClearEntryStub
   };
 
   // Initialize the hashtable if needed.
@@ -329,8 +329,8 @@ GetFuncStringContentList(nsINode* aRootNode,
   if (gFuncStringContentListHashTable) {
     nsFuncStringCacheKey hashKey(aRootNode, aFunc, aString);
 
-    entry = static_cast<FuncStringContentListHashEntry *>
-      (PL_DHashTableAdd(gFuncStringContentListHashTable, &hashKey, fallible));
+    entry = static_cast<FuncStringContentListHashEntry*>
+      (gFuncStringContentListHashTable->Add(&hashKey, fallible));
     if (entry) {
       list = entry->mContentList;
 #ifdef DEBUG
@@ -399,7 +399,8 @@ nsContentList::nsContentList(nsINode* aRootNode,
     mData(nullptr),
     mState(LIST_DIRTY),
     mDeep(aDeep),
-    mFuncMayDependOnAttr(false)
+    mFuncMayDependOnAttr(false),
+    mIsHTMLDocument(aRootNode->OwnerDoc()->IsHTMLDocument())
 {
   NS_ASSERTION(mRootNode, "Must have root");
   if (nsGkAtoms::_asterisk == mHTMLMatchAtom) {
@@ -439,7 +440,8 @@ nsContentList::nsContentList(nsINode* aRootNode,
     mState(LIST_DIRTY),
     mMatchAll(false),
     mDeep(aDeep),
-    mFuncMayDependOnAttr(aFuncMayDependOnAttr)
+    mFuncMayDependOnAttr(aFuncMayDependOnAttr),
+    mIsHTMLDocument(false)
 {
   NS_ASSERTION(mRootNode, "Must have root");
   mRootNode->AddMutationObserver(this);
@@ -525,8 +527,9 @@ nsContentList::NamedItem(const nsAString& aName, bool aDoFlush)
     nsIContent *content = mElements[i];
     // XXX Should this pass eIgnoreCase?
     if (content &&
-        (content->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
-                              name, eCaseMatters) ||
+        ((content->IsHTMLElement() &&
+          content->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
+                               name, eCaseMatters)) ||
          content->AttrValueIs(kNameSpaceID_None, nsGkAtoms::id,
                               name, eCaseMatters))) {
       return content->AsElement();
@@ -575,9 +578,10 @@ nsContentList::GetSupportedNames(unsigned aFlags, nsTArray<nsString>& aNames)
     }
   }
 
-  aNames.SetCapacity(atoms.Length());
-  for (uint32_t i = 0; i < atoms.Length(); ++i) {
-    aNames.AppendElement(nsDependentAtomString(atoms[i]));
+  uint32_t atomsLen = atoms.Length();
+  nsString* names = aNames.AppendElements(atomsLen);
+  for (uint32_t i = 0; i < atomsLen; ++i) {
+    atoms[i]->ToString(names[i]);
   }
 }
 
@@ -659,7 +663,8 @@ nsContentList::Item(uint32_t aIndex)
 void
 nsContentList::AttributeChanged(nsIDocument *aDocument, Element* aElement,
                                 int32_t aNameSpaceID, nsIAtom* aAttribute,
-                                int32_t aModType)
+                                int32_t aModType,
+                                const nsAttrValue* aOldValue)
 {
   NS_PRECONDITION(aElement, "Must have a content node to work with");
   
@@ -839,7 +844,7 @@ nsContentList::Match(Element *aElement)
   if (!mXMLMatchAtom)
     return false;
 
-  mozilla::dom::NodeInfo *ni = aElement->NodeInfo();
+  NodeInfo *ni = aElement->NodeInfo();
  
   bool unknown = mMatchNameSpaceId == kNameSpaceID_Unknown;
   bool wildcard = mMatchNameSpaceId == kNameSpaceID_Wildcard;
@@ -850,14 +855,14 @@ nsContentList::Match(Element *aElement)
   if (toReturn)
     return toReturn;
 
-  bool matchHTML = aElement->GetNameSpaceID() == kNameSpaceID_XHTML &&
-    aElement->OwnerDoc()->IsHTMLDocument();
- 
+  bool matchHTML =
+    mIsHTMLDocument && aElement->GetNameSpaceID() == kNameSpaceID_XHTML;
+
   if (unknown) {
     return matchHTML ? ni->QualifiedNameEquals(mHTMLMatchAtom) :
                        ni->QualifiedNameEquals(mXMLMatchAtom);
   }
-  
+
   if (wildcard) {
     return matchHTML ? ni->Equals(mHTMLMatchAtom) :
                        ni->Equals(mXMLMatchAtom);
@@ -962,7 +967,7 @@ nsContentList::RemoveFromHashtable()
   }
   
   nsDependentAtomString str(mXMLMatchAtom);
-  nsContentListKey key(mRootNode, mMatchNameSpaceId, str);
+  nsContentListKey key(mRootNode, mMatchNameSpaceId, str, mIsHTMLDocument);
   uint32_t recentlyUsedCacheIndex = RecentlyUsedCacheIndex(key);
   if (sRecentlyUsedContentLists[recentlyUsedCacheIndex] == this) {
     sRecentlyUsedContentLists[recentlyUsedCacheIndex] = nullptr;
@@ -971,7 +976,7 @@ nsContentList::RemoveFromHashtable()
   if (!gContentListHashTable)
     return;
 
-  PL_DHashTableRemove(gContentListHashTable, &key);
+  gContentListHashTable->Remove(&key);
 
   if (gContentListHashTable->EntryCount() == 0) {
     delete gContentListHashTable;
@@ -1012,7 +1017,7 @@ nsCacheableFuncStringContentList::RemoveFromFuncStringHashtable()
   }
 
   nsFuncStringCacheKey key(mRootNode, mFunc, mString);
-  PL_DHashTableRemove(gFuncStringContentListHashTable, &key);
+  gFuncStringContentListHashTable->Remove(&key);
 
   if (gFuncStringContentListHashTable->EntryCount() == 0) {
     delete gFuncStringContentListHashTable;

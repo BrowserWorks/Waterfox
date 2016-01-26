@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+requestLongerTimeout(2);
+
 // This file tests message ports and semantics of the frameworker which aren't
 // directly related to the sandbox.  See also browser_frameworker_sandbox.js.
 
@@ -24,7 +26,7 @@ function test() {
   runTests(tests);
 }
 
-let tests = {
+var tests = {
   testSimple: function(cbnext) {
     let run = function() {
       onconnect = function(e) {
@@ -217,7 +219,7 @@ let tests = {
     let expected_data = false;
     worker.port.onmessage = function(e) {
       is(e.data.topic, "ready");
-      for each (let attr in ['appName', 'appVersion', 'platform', 'userAgent']) {
+      for (let attr of ['appName', 'appVersion', 'platform', 'userAgent']) {
         // each attribute must be a string with length > 0.
         is(typeof e.data.data[attr], "string");
         ok(e.data.data[attr].length > 0);

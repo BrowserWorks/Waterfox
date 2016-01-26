@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-pref("startup.homepage_override_url","");
-pref("startup.homepage_welcome_url","https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/firstrun/");
+pref("startup.homepage_override_url", "");
+pref("startup.homepage_welcome_url", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/firstrun/");
+pref("startup.homepage_welcome_url.additional", "");
 // The time interval between checks for a new version (in seconds)
 pref("app.update.interval", 28800); // 8 hours
 // The time interval between the downloading of mar file chunks in the
@@ -25,6 +26,14 @@ pref("app.update.url.details", "https://www.mozilla.org/firefox/aurora/");
 // without checking for an update.  This assumes that
 // app.update.checkInstallTime is true.
 pref("app.update.checkInstallTime.days", 2);
+
+// Give the user x seconds to reboot before showing a badge on the hamburger
+// button. default=4 days
+pref("app.update.badgeWaitTime", 345600);
+
+// code usage depends on contracts, please contact the Firefox module owner if you have questions
+pref("browser.search.param.yahoo-fr", "moz35");
+pref("browser.search.param.yahoo-fr-ja", "mozff");
 
 // Number of usages of the web console or scratchpad.
 // If this is less than 5, then pasting code into the web console or scratchpad is disabled

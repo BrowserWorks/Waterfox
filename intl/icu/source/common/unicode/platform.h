@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2013, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -121,10 +121,16 @@
 #define U_PF_QNX 3700
 /** Linux is a Unix-like operating system. @internal */
 #define U_PF_LINUX 4000
+/**
+ * Native Client is pretty close to Linux.
+ * See https://developer.chrome.com/native-client and
+ *  http://www.chromium.org/nativeclient
+ *  @internal
+ */
+#define U_PF_BROWSER_NATIVE_CLIENT 4020
 /** Android is based on Linux. @internal */
 #define U_PF_ANDROID 4050
-/** "Classic" Mac OS (1984-2001) @internal */
-#define U_PF_CLASSIC_MACOS 8000
+/* Maximum value for Linux-based platform is 4499 */
 /** z/OS is the successor to OS/390 which was the successor to MVS. @internal */
 #define U_PF_OS390 9000
 /** "IBM i" is the current name of what used to be i5/OS and earlier OS/400. @internal */
@@ -142,6 +148,8 @@
 #   define U_PLATFORM U_PF_ANDROID
     /* Android wchar_t support depends on the API level. */
 #   include <android/api-level.h>
+#elif defined(__native_client__)
+#   define U_PLATFORM U_PF_BROWSER_NATIVE_CLIENT
 #elif defined(linux) || defined(__linux__) || defined(__linux)
 #   define U_PLATFORM U_PF_LINUX
 #elif defined(__APPLE__) && defined(__MACH__)
@@ -152,6 +160,9 @@
 #       define U_PLATFORM U_PF_DARWIN
 #   endif
 #elif defined(BSD) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__MirBSD__)
+#   if defined(__FreeBSD__)
+#       include <sys/endian.h>
+#   endif
 #   define U_PLATFORM U_PF_BSD
 #elif defined(sun) || defined(__sun)
     /* Check defined(__SVR4) || defined(__svr4__) to distinguish Solaris from SunOS? */
@@ -169,8 +180,6 @@
 #   define U_PLATFORM U_PF_HPUX
 #elif defined(sgi) || defined(__sgi)
 #   define U_PLATFORM U_PF_IRIX
-#elif defined(macintosh)
-#   define U_PLATFORM U_PF_CLASSIC_MACOS
 #elif defined(__QNX__) || defined(__QNXNTO__)
 #   define U_PLATFORM U_PF_QNX
 #elif defined(__TOS_MVS__)
@@ -230,7 +239,7 @@
  */
 #ifdef U_PLATFORM_IMPLEMENTS_POSIX
     /* Use the predefined value. */
-#elif U_PLATFORM_USES_ONLY_WIN32_API || U_PLATFORM == U_PF_CLASSIC_MACOS
+#elif U_PLATFORM_USES_ONLY_WIN32_API
 #   define U_PLATFORM_IMPLEMENTS_POSIX 0
 #else
 #   define U_PLATFORM_IMPLEMENTS_POSIX 1
@@ -243,7 +252,7 @@
  */
 #ifdef U_PLATFORM_IS_LINUX_BASED
     /* Use the predefined value. */
-#elif U_PF_LINUX <= U_PLATFORM && U_PLATFORM <= U_PF_ANDROID
+#elif U_PF_LINUX <= U_PLATFORM && U_PLATFORM <= 4499
 #   define U_PLATFORM_IS_LINUX_BASED 1
 #else
 #   define U_PLATFORM_IS_LINUX_BASED 0
@@ -423,6 +432,15 @@
 #ifndef __has_attribute
 #    define __has_attribute(x) 0
 #endif
+#ifndef __has_builtin
+#    define __has_builtin(x) 0
+#endif
+#ifndef __has_feature
+#    define __has_feature(x) 0
+#endif
+#ifndef __has_extension
+#    define __has_extension(x) 0
+#endif
 
 /**
  * \def U_MALLOC_ATTR
@@ -446,6 +464,61 @@
 #else
 #   define U_ALLOC_SIZE_ATTR(X)
 #   define U_ALLOC_SIZE_ATTR2(X,Y)
+#endif
+
+/**
+ * \def U_CPLUSPLUS_VERSION
+ * 0 if no C++; 1, 11, 14, ... if C++.
+ * Support for specific features cannot always be determined by the C++ version alone.
+ * @internal
+ */
+#ifdef U_CPLUSPLUS_VERSION
+#   if U_CPLUSPLUS_VERSION != 0 && !defined(__cplusplus)
+#       undef U_CPLUSPLUS_VERSION
+#       define U_CPLUSPLUS_VERSION 0
+#   endif
+    /* Otherwise use the predefined value. */
+#elif !defined(__cplusplus)
+#   define U_CPLUSPLUS_VERSION 0
+#elif __cplusplus >= 201402L
+#   define U_CPLUSPLUS_VERSION 14
+#elif __cplusplus >= 201103L
+#   define U_CPLUSPLUS_VERSION 11
+#else
+    // C++98 or C++03
+#   define U_CPLUSPLUS_VERSION 1
+#endif
+
+/**
+ * \def U_HAVE_RVALUE_REFERENCES
+ * Set to 1 if the compiler supports rvalue references.
+ * C++11 feature, necessary for move constructor & move assignment.
+ * @internal
+ */
+#ifdef U_HAVE_RVALUE_REFERENCES
+    /* Use the predefined value. */
+#elif U_CPLUSPLUS_VERSION >= 11 || __has_feature(cxx_rvalue_references) \
+        || defined(__GXX_EXPERIMENTAL_CXX0X__) \
+        || (defined(_MSC_VER) && _MSC_VER >= 1600)  /* Visual Studio 2010 */
+#   define U_HAVE_RVALUE_REFERENCES 1
+#else
+#   define U_HAVE_RVALUE_REFERENCES 0
+#endif
+
+/**
+ * \def U_NOEXCEPT
+ * "noexcept" if supported, otherwise empty.
+ * Some code, especially STL containers, uses move semantics of objects only
+ * if the move constructor and the move operator are declared as not throwing exceptions.
+ * @internal
+ */
+#ifdef U_NOEXCEPT
+    /* Use the predefined value. */
+#elif U_CPLUSPLUS_VERSION >= 11 || __has_feature(cxx_noexcept) || __has_extension(cxx_noexcept) \
+        || (defined(_MSC_VER) && _MSC_VER >= 1900)  /* Visual Studio 2015 */
+#   define U_NOEXCEPT noexcept
+#else
+#   define U_NOEXCEPT
 #endif
 
 /** @} */
@@ -579,7 +652,7 @@
  */
 #ifdef U_SIZEOF_WCHAR_T
     /* Use the predefined value. */
-#elif (U_PLATFORM == U_PF_ANDROID && __ANDROID_API__ < 9) || U_PLATFORM == U_PF_CLASSIC_MACOS
+#elif (U_PLATFORM == U_PF_ANDROID && __ANDROID_API__ < 9)
     /*
      * Classic Mac OS and Mac OS X before 10.3 (Panther) did not support wchar_t or wstring.
      * Newer Mac OS X has size 4.
@@ -664,7 +737,7 @@
      * does not support u"abc" string literals.
      * C++11 and C11 require support for UTF-16 literals
      */
-#   if (defined(__cplusplus) && __cplusplus >= 201103L) || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
+#   if U_CPLUSPLUS_VERSION >= 11 || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
 #       define U_HAVE_CHAR16_T 1
 #   else
 #       define U_HAVE_CHAR16_T 0

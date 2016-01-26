@@ -1,0 +1,15 @@
+// Parent config file for all devtools browser mochitest files.
+{
+  "extends": [
+    "../testing/mochitest/browser.eslintrc"
+  ],
+  // All globals made available in the test environment.
+  "globals": {
+    "DevToolsUtils": true,
+    "gDevTools": true,
+    "once": true,
+    "synthesizeKeyFromKeyTag": true,
+    "TargetFactory": true,
+    "waitForTick": true,
+  }
+}

@@ -9,7 +9,7 @@
 #include "mozilla/layout/PVsyncParent.h"
 #include "mozilla/VsyncDispatcher.h"
 #include "nsCOMPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 class nsIThread;
 
@@ -17,7 +17,7 @@ namespace mozilla {
 
 namespace ipc {
 class BackgroundParentImpl;
-}
+} // namespace ipc
 
 namespace layout {
 
@@ -36,6 +36,7 @@ private:
   virtual ~VsyncParent();
 
   virtual bool NotifyVsync(TimeStamp aTimeStamp) override;
+  virtual bool RecvRequestVsyncRate() override;
 
   virtual bool RecvObserve() override;
   virtual bool RecvUnobserve() override;
@@ -46,10 +47,10 @@ private:
   bool mObservingVsync;
   bool mDestroyed;
   nsCOMPtr<nsIThread> mBackgroundThread;
-  nsRefPtr<RefreshTimerVsyncDispatcher> mVsyncDispatcher;
+  RefPtr<RefreshTimerVsyncDispatcher> mVsyncDispatcher;
 };
 
-} //layout
-} //mozilla
+} // namespace layout
+} // namespace mozilla
 
 #endif  //mozilla_layout_ipc_VsyncParent_h

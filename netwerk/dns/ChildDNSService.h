@@ -49,10 +49,11 @@ private:
   bool mDisablePrefetch;
 
   // We need to remember pending dns requests to be able to cancel them.
-  nsClassHashtable<nsCStringHashKey, nsTArray<nsRefPtr<DNSRequestChild>>> mPendingRequests;
+  nsClassHashtable<nsCStringHashKey, nsTArray<RefPtr<DNSRequestChild>>> mPendingRequests;
   Mutex mPendingRequestsLock;
 };
 
 } // namespace net
 } // namespace mozilla
+
 #endif // mozilla_net_ChildDNSService_h

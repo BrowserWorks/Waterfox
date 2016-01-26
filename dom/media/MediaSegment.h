@@ -49,6 +49,12 @@ typedef MediaTime StreamTime;
 const StreamTime STREAM_TIME_MAX = MEDIA_TIME_MAX;
 
 /**
+ * Media time relative to the start of the graph timeline.
+ */
+typedef MediaTime GraphTime;
+const GraphTime GRAPH_TIME_MAX = MEDIA_TIME_MAX;
+
+/**
  * A MediaSegment is a chunk of media data sequential in time. Different
  * types of data have different subclasses of MediaSegment, all inheriting
  * from MediaSegmentBase.
@@ -143,11 +149,11 @@ protected:
  */
 template <class C, class Chunk> class MediaSegmentBase : public MediaSegment {
 public:
-  virtual MediaSegment* CreateEmptyClone() const override
+  MediaSegment* CreateEmptyClone() const override
   {
     return new C();
   }
-  virtual void AppendFrom(MediaSegment* aSource) override
+  void AppendFrom(MediaSegment* aSource) override
   {
     NS_ASSERTION(aSource->GetType() == C::StaticType(), "Wrong type");
     AppendFromInternal(static_cast<C*>(aSource));
@@ -156,8 +162,8 @@ public:
   {
     AppendFromInternal(aSource);
   }
-  virtual void AppendSlice(const MediaSegment& aSource,
-                           StreamTime aStart, StreamTime aEnd) override
+  void AppendSlice(const MediaSegment& aSource,
+                   StreamTime aStart, StreamTime aEnd) override
   {
     NS_ASSERTION(aSource.GetType() == C::StaticType(), "Wrong type");
     AppendSliceInternal(static_cast<const C&>(aSource), aStart, aEnd);
@@ -170,7 +176,7 @@ public:
    * Replace the first aDuration ticks with null media data, because the data
    * will not be required again.
    */
-  virtual void ForgetUpTo(StreamTime aDuration) override
+  void ForgetUpTo(StreamTime aDuration) override
   {
     if (mChunks.IsEmpty() || aDuration <= 0) {
       return;
@@ -188,7 +194,7 @@ public:
     mChunks.InsertElementAt(0)->SetNull(aDuration);
     mDuration += aDuration;
   }
-  virtual void FlushAfter(StreamTime aNewEnd) override
+  void FlushAfter(StreamTime aNewEnd) override
   {
     if (mChunks.IsEmpty()) {
       return;
@@ -211,7 +217,7 @@ public:
     }
     mDuration = aNewEnd;
   }
-  virtual void InsertNullDataAtStart(StreamTime aDuration) override
+  void InsertNullDataAtStart(StreamTime aDuration) override
   {
     if (aDuration <= 0) {
       return;
@@ -226,7 +232,7 @@ public:
 #endif
     mDuration += aDuration;
   }
-  virtual void AppendNullData(StreamTime aDuration) override
+  void AppendNullData(StreamTime aDuration) override
   {
     if (aDuration <= 0) {
       return;
@@ -238,7 +244,7 @@ public:
     }
     mDuration += aDuration;
   }
-  virtual void ReplaceWithDisabled() override
+  void ReplaceWithDisabled() override
   {
     if (GetType() != AUDIO) {
       MOZ_CRASH("Disabling unknown segment type");
@@ -247,7 +253,7 @@ public:
     Clear();
     AppendNullData(duration);
   }
-  virtual void Clear() override
+  void Clear() override
   {
     mDuration = 0;
     mChunks.Clear();
@@ -278,6 +284,26 @@ public:
     uint32_t mIndex;
   };
 
+  Chunk* FindChunkContaining(StreamTime aOffset, StreamTime* aStart = nullptr)
+  {
+    if (aOffset < 0) {
+      return nullptr;
+    }
+    StreamTime offset = 0;
+    for (uint32_t i = 0; i < mChunks.Length(); ++i) {
+      Chunk& c = mChunks[i];
+      StreamTime nextOffset = offset + c.GetDuration();
+      if (aOffset < nextOffset) {
+        if (aStart) {
+          *aStart = offset;
+        }
+        return &c;
+      }
+      offset = nextOffset;
+    }
+    return nullptr;
+  }
+
   void RemoveLeading(StreamTime aDuration)
   {
     RemoveLeading(aDuration, 0);
@@ -289,16 +315,16 @@ public:
   }
 #endif
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
-    size_t amount = mChunks.SizeOfExcludingThis(aMallocSizeOf);
+    size_t amount = mChunks.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < mChunks.Length(); i++) {
       amount += mChunks[i].SizeOfExcludingThisIfUnshared(aMallocSizeOf);
     }
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -319,7 +345,7 @@ protected:
       mChunks[mChunks.Length() - 1].mDuration += aSource->mChunks[0].mDuration;
       aSource->mChunks.RemoveElementAt(0);
     }
-    mChunks.MoveElementsFrom(aSource->mChunks);
+    mChunks.AppendElements(Move(aSource->mChunks));
   }
 
   void AppendSliceInternal(const MediaSegmentBase<C, Chunk>& aSource,
@@ -348,26 +374,6 @@ protected:
     c->mDuration = aDuration;
     mDuration += aDuration;
     return c;
-  }
-
-  Chunk* FindChunkContaining(StreamTime aOffset, StreamTime* aStart = nullptr)
-  {
-    if (aOffset < 0) {
-      return nullptr;
-    }
-    StreamTime offset = 0;
-    for (uint32_t i = 0; i < mChunks.Length(); ++i) {
-      Chunk& c = mChunks[i];
-      StreamTime nextOffset = offset + c.GetDuration();
-      if (aOffset < nextOffset) {
-        if (aStart) {
-          *aStart = offset;
-        }
-        return &c;
-      }
-      offset = nextOffset;
-    }
-    return nullptr;
   }
 
   Chunk* GetLastChunk()
@@ -425,6 +431,6 @@ protected:
 #endif
 };
 
-}
+} // namespace mozilla
 
 #endif /* MOZILLA_MEDIASEGMENT_H_ */

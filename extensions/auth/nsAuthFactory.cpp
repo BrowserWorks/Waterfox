@@ -113,7 +113,7 @@ nsSambaNTLMAuthConstructor(nsISupports *outer, REFNSIID iid, void **result)
   if (outer)
     return NS_ERROR_NO_AGGREGATION;
 
-  nsRefPtr<nsAuthSambaNTLM> auth = new nsAuthSambaNTLM();
+  RefPtr<nsAuthSambaNTLM> auth = new nsAuthSambaNTLM();
   if (!auth)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -220,7 +220,6 @@ static const mozilla::Module::ContractIDEntry kAuthContracts[] = {
 };
 
 //-----------------------------------------------------------------------------
-#if defined( PR_LOGGING )
 PRLogModuleInfo *gNegotiateLog;
 
 // setup nspr logging ...
@@ -230,9 +229,6 @@ InitNegotiateAuth()
   gNegotiateLog = PR_NewLogModule("negotiateauth");
   return NS_OK;
 }
-#else
-#define InitNegotiateAuth nullptr
-#endif
 
 static void
 DestroyNegotiateAuth()

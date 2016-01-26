@@ -9,11 +9,16 @@
 #include "mozilla/Mutex.h"
 #include "nsIChannel.h"
 #include "nsIURI.h"
+#include "nsISeekableStream.h"
 #include "nsIStreamingProtocolController.h"
 #include "nsIStreamListener.h"
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
+#include "Intervals.h"
 #include "MediaCache.h"
+#include "MediaData.h"
+#include "MediaResourceCallback.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
 #include "nsThreadUtils.h"
@@ -22,7 +27,11 @@
 // For HTTP seeking, if number of bytes needing to be
 // seeked forward is less than this value then a read is
 // done rather than a byte range request.
-static const int64_t SEEK_VS_READ_THRESHOLD = 32*1024;
+//
+// If we assume a 100Mbit connection, and assume reissuing an HTTP seek causes
+// a delay of 200ms, then in that 200ms we could have simply read ahead 2MB. So
+// setting SEEK_VS_READ_THRESHOLD to 1MB sounds reasonable.
+static const int64_t SEEK_VS_READ_THRESHOLD = 1 * 1024 * 1024;
 
 static const uint32_t HTTP_REQUESTED_RANGE_NOT_SATISFIABLE_CODE = 416;
 
@@ -36,7 +45,6 @@ class nsIPrincipal;
 
 namespace mozilla {
 
-class MediaDecoder;
 class MediaChannelStatistics;
 
 /**
@@ -54,7 +62,12 @@ class MediaChannelStatistics;
  */
 class MediaChannelStatistics {
 public:
-  MediaChannelStatistics() { Reset(); }
+  MediaChannelStatistics()
+    : mAccumulatedBytes(0)
+    , mIsStarted(false)
+  {
+    Reset();
+  }
 
   explicit MediaChannelStatistics(MediaChannelStatistics * aCopyFrom)
   {
@@ -121,86 +134,11 @@ private:
   bool         mIsStarted;
 };
 
-// Forward declaration for use in MediaByteRange.
-class TimestampedMediaByteRange;
-
 // Represents a section of contiguous media, with a start and end offset.
 // Used to denote ranges of data which are cached.
-class MediaByteRange {
-public:
-  MediaByteRange() : mStart(0), mEnd(0) {}
 
-  MediaByteRange(int64_t aStart, int64_t aEnd)
-    : mStart(aStart), mEnd(aEnd)
-  {
-    NS_ASSERTION(mStart <= mEnd, "Range should end after start!");
-  }
-
-  explicit MediaByteRange(TimestampedMediaByteRange& aByteRange);
-
-  bool IsNull() const {
-    return mStart == 0 && mEnd == 0;
-  }
-
-  bool operator==(const MediaByteRange& aRange) const {
-    return mStart == aRange.mStart && mEnd == aRange.mEnd;
-  }
-
-  // Clears byte range values.
-  void Clear() {
-    mStart = 0;
-    mEnd = 0;
-  }
-
-  bool Contains(const MediaByteRange& aByteRange) const {
-    return aByteRange.mStart >= mStart && aByteRange.mEnd <= mEnd;
-  }
-
-  MediaByteRange Extents(const MediaByteRange& aByteRange) const
-  {
-    if (IsNull()) {
-      return aByteRange;
-    }
-    return MediaByteRange(std::min(mStart, aByteRange.mStart),
-                          std::max(mEnd, aByteRange.mEnd));
-  }
-
-  int64_t Length() { return mEnd - mStart; }
-
-  int64_t mStart, mEnd;
-};
-
-// Represents a section of contiguous media, with a start and end offset, and
-// a timestamp representing the start time.
-class TimestampedMediaByteRange : public MediaByteRange {
-public:
-  TimestampedMediaByteRange() : MediaByteRange(), mStartTime(-1) {}
-
-  TimestampedMediaByteRange(int64_t aStart, int64_t aEnd, int64_t aStartTime)
-    : MediaByteRange(aStart, aEnd), mStartTime(aStartTime)
-  {
-    NS_ASSERTION(aStartTime >= 0, "Start time should not be negative!");
-  }
-
-  bool IsNull() const {
-    return MediaByteRange::IsNull() && mStartTime == -1;
-  }
-
-  // Clears byte range values.
-  void Clear() {
-    MediaByteRange::Clear();
-    mStartTime = -1;
-  }
-
-  // In usecs.
-  int64_t mStartTime;
-};
-
-inline MediaByteRange::MediaByteRange(TimestampedMediaByteRange& aByteRange)
-  : mStart(aByteRange.mStart), mEnd(aByteRange.mEnd)
-{
-  NS_ASSERTION(mStart < mEnd, "Range should end after start!");
-}
+typedef media::Interval<int64_t> MediaByteRange;
+typedef media::IntervalSet<int64_t> MediaByteRangeSet;
 
 class RtspMediaResource;
 
@@ -262,7 +200,7 @@ public:
   // Create a new stream of the same type that refers to the same URI
   // with a new channel. Any cached data associated with the original
   // stream should be accessible in the new stream too.
-  virtual already_AddRefed<MediaResource> CloneData(MediaDecoder* aDecoder) = 0;
+  virtual already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aCallback) = 0;
   // Set statistics to be recorded to the object passed in.
   virtual void RecordStatisticsTo(MediaChannelStatistics *aStatistics) { }
 
@@ -273,47 +211,42 @@ public:
   // the media plays continuously. The cache can't guess this itself
   // because it doesn't know when the decoder was paused, buffering, etc.
   virtual void SetPlaybackRate(uint32_t aBytesPerSecond) = 0;
-  // Read up to aCount bytes from the stream. The buffer must have
-  // enough room for at least aCount bytes. Stores the number of
-  // actual bytes read in aBytes (0 on end of file).
-  // May read less than aCount bytes if the number of
-  // available bytes is less than aCount. Always check *aBytes after
-  // read, and call again if necessary.
-  virtual nsresult Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes) = 0;
   // Read up to aCount bytes from the stream. The read starts at
   // aOffset in the stream, seeking to that location initially if
   // it is not the current stream offset. The remaining arguments,
   // results and requirements are the same as per the Read method.
   virtual nsresult ReadAt(int64_t aOffset, char* aBuffer,
                           uint32_t aCount, uint32_t* aBytes) = 0;
-  // Seek to the given bytes offset in the stream. aWhence can be
-  // one of:
-  //   NS_SEEK_SET
-  //   NS_SEEK_CUR
-  //   NS_SEEK_END
-  //
-  // In the Http strategy case the cancel will cause the http
-  // channel's listener to close the pipe, forcing an i/o error on any
-  // blocked read. This will allow the decode thread to complete the
-  // event.
-  //
-  // In the case of a seek in progress, the byte range request creates
-  // a new listener. This is done on the main thread via seek
-  // synchronously dispatching an event. This avoids the issue of us
-  // closing the listener but an outstanding byte range request
-  // creating a new one. They run on the same thread so no explicit
-  // synchronisation is required. The byte range request checks for
-  // the cancel flag and does not create a new channel or listener if
-  // we are cancelling.
-  //
-  // The default strategy does not do any seeking - the only issue is
-  // a blocked read which it handles by causing the listener to close
-  // the pipe, as per the http case.
-  //
-  // The file strategy doesn't block for any great length of time so
-  // is fine for a no-op cancel.
-  virtual nsresult Seek(int32_t aWhence, int64_t aOffset) = 0;
+  // This method returns nullptr if anything fails.
+  // Otherwise, it returns an owned buffer.
+  // MediaReadAt may return fewer bytes than requested if end of stream is
+  // encountered. There is no need to call it again to get more data.
+  virtual already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount)
+  {
+    RefPtr<MediaByteBuffer> bytes = new MediaByteBuffer();
+    bool ok = bytes->SetLength(aCount, fallible);
+    NS_ENSURE_TRUE(ok, nullptr);
+    char* curr = reinterpret_cast<char*>(bytes->Elements());
+    const char* start = curr;
+    while (aCount > 0) {
+      uint32_t bytesRead;
+      nsresult rv = ReadAt(aOffset, curr, aCount, &bytesRead);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      if (!bytesRead) {
+        break;
+      }
+      aOffset += bytesRead;
+      aCount -= bytesRead;
+      curr += bytesRead;
+    }
+    bytes->SetLength(curr - start);
+    return bytes.forget();
+  }
+
   // Report the current offset in bytes from the start of the stream.
+  // This is used to approximate where we currently are in the playback of a
+  // media.
+  // A call to ReadAt will update this position.
   virtual int64_t Tell() = 0;
   // Moves any existing channel loads into or out of background. Background
   // loads don't block the load event. This also determines whether or not any
@@ -348,6 +281,15 @@ public:
   // Returns true if all the data from aOffset to the end of the stream
   // is in cache. If the end of the stream is not known, we return false.
   virtual bool IsDataCachedToEndOfResource(int64_t aOffset) = 0;
+  // Returns true if we are expecting any more data to arrive
+  // sometime in the not-too-distant future, either from the network or from
+  // an appendBuffer call on a MediaSource element.
+  virtual bool IsExpectingMoreData()
+  {
+    // MediaDecoder::mDecoderPosition is roughly the same as Tell() which
+    // returns a position updated by latest Read() or ReadAt().
+    return !IsDataCachedToEndOfResource(Tell()) && !IsSuspended();
+  }
   // Returns true if this stream is suspended by the cache because the
   // cache is full. If true then the decoder should try to start consuming
   // data, otherwise we may not be able to make progress.
@@ -375,7 +317,7 @@ public:
    * Create a resource, reading data from the channel. Call on main thread only.
    * The caller must follow up by calling resource->Open().
    */
-  static already_AddRefed<MediaResource> Create(MediaDecoder* aDecoder, nsIChannel* aChannel);
+  static already_AddRefed<MediaResource> Create(MediaResourceCallback* aCallback, nsIChannel* aChannel);
 
   /**
    * Open the stream. This creates a stream listener and returns it in
@@ -388,7 +330,7 @@ public:
    * in the media cache. Stream should be pinned during call and while
    * aRanges is being used.
    */
-  virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) = 0;
+  virtual nsresult GetCachedRanges(MediaByteRangeSet& aRanges) = 0;
 
   // Ensure that the media cache writes any data held in its partial block.
   // Called on the main thread only.
@@ -427,6 +369,8 @@ public:
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
+  const nsCString& GetContentURL() const { return EmptyCString(); }
+
 protected:
   virtual ~MediaResource() {};
 
@@ -436,35 +380,39 @@ private:
 
 class BaseMediaResource : public MediaResource {
 public:
-  virtual nsIURI* URI() const override { return mURI; }
-  virtual void SetLoadInBackground(bool aLoadInBackground) override;
+  nsIURI* URI() const override { return mURI; }
+  void SetLoadInBackground(bool aLoadInBackground) override;
 
-  virtual size_t SizeOfExcludingThis(
-                  MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Might be useful to track in the future:
     // - mChannel
     // - mURI (possibly owned, looks like just a ref from mChannel)
     // Not owned:
-    // - mDecoder
+    // - mCallback
     size_t size = MediaResource::SizeOfExcludingThis(aMallocSizeOf);
     size += mContentType.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
 
     return size;
   }
 
-  virtual size_t SizeOfIncludingThis(
-                  MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
+  // Returns the url of the resource. Safe to call from any thread?
+  const nsCString& GetContentURL() const
+  {
+    return mContentURL;
+  }
+
 protected:
-  BaseMediaResource(MediaDecoder* aDecoder,
+  BaseMediaResource(MediaResourceCallback* aCallback,
                     nsIChannel* aChannel,
                     nsIURI* aURI,
                     const nsACString& aContentType) :
-    mDecoder(aDecoder),
+    mCallback(aCallback),
     mChannel(aChannel),
     mURI(aURI),
     mContentType(aContentType),
@@ -472,13 +420,14 @@ protected:
   {
     MOZ_COUNT_CTOR(BaseMediaResource);
     NS_ASSERTION(!mContentType.IsEmpty(), "Must know content type");
+    mURI->GetSpec(mContentURL);
   }
   virtual ~BaseMediaResource()
   {
     MOZ_COUNT_DTOR(BaseMediaResource);
   }
 
-  virtual const nsCString& GetContentType() const override
+  const nsCString& GetContentType() const override
   {
     return mContentType;
   }
@@ -492,10 +441,7 @@ protected:
   // on the main thread. This is called automatically after every read.
   void DispatchBytesConsumed(int64_t aNumBytes, int64_t aOffset);
 
-  // This is not an nsCOMPointer to prevent a circular reference
-  // between the decoder to the media stream object. The stream never
-  // outlives the lifetime of the decoder.
-  MediaDecoder* mDecoder;
+  RefPtr<MediaResourceCallback> mCallback;
 
   // Channel used to download the media data. Must be accessed
   // from the main thread only.
@@ -508,13 +454,57 @@ protected:
   // Content-Type of the channel. This is copied from the nsIChannel when the
   // MediaResource is created. This is constant, so accessing from any thread
   // is safe.
-  const nsAutoCString mContentType;
+  const nsCString mContentType;
+
+  // Copy of the url of the channel resource.
+  nsCString mContentURL;
 
   // True if SetLoadInBackground() has been called with
   // aLoadInBackground = true, i.e. when the document load event is not
   // blocked by this resource, and all channel loads will be in the
   // background.
   bool mLoadInBackground;
+};
+
+
+/**
+ * This class is responsible for managing the suspend count and report suspend
+ * status of channel.
+ **/
+class ChannelSuspendAgent {
+public:
+  explicit ChannelSuspendAgent(nsIChannel* aChannel)
+  : mChannel(aChannel),
+    mSuspendCount(0),
+    mIsChannelSuspended(false)
+  {}
+
+  // True when the channel has been suspended or needs to be suspended.
+  bool IsSuspended();
+
+  // Return true when the channel is logically suspended, i.e. the suspend
+  // count goes from 0 to 1.
+  bool Suspend();
+
+  // Return true only when the suspend count is equal to zero.
+  bool Resume();
+
+  // Call after opening channel, set channel and check whether the channel
+  // needs to be suspended.
+  void NotifyChannelOpened(nsIChannel* aChannel);
+
+  // Call before closing channel, reset the channel internal status if needed.
+  void NotifyChannelClosing();
+
+  // Check whether we need to suspend the channel.
+  void UpdateSuspendedStatusIfNeeded();
+private:
+  // Only suspends channel but not changes the suspend count.
+  void SuspendInternal();
+
+  nsIChannel* mChannel;
+  Atomic<uint32_t> mSuspendCount;
+  bool mIsChannelSuspended;
 };
 
 /**
@@ -528,7 +518,7 @@ protected:
 class ChannelMediaResource : public BaseMediaResource
 {
 public:
-  ChannelMediaResource(MediaDecoder* aDecoder,
+  ChannelMediaResource(MediaResourceCallback* aDecoder,
                        nsIChannel* aChannel,
                        nsIURI* aURI,
                        const nsACString& aContentType);
@@ -564,21 +554,21 @@ public:
 
   // Ensure that the media cache writes any data held in its partial block.
   // Called on the main thread.
-  virtual void FlushCache() override;
+  void FlushCache() override;
 
   // Notify that the last data byte range was loaded.
-  virtual void NotifyLastByteRange() override;
+  void NotifyLastByteRange() override;
 
   // Main thread
-  virtual nsresult Open(nsIStreamListener** aStreamListener) override;
-  virtual nsresult Close() override;
-  virtual void     Suspend(bool aCloseImmediately) override;
-  virtual void     Resume() override;
-  virtual already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
+  nsresult Open(nsIStreamListener** aStreamListener) override;
+  nsresult Close() override;
+  void     Suspend(bool aCloseImmediately) override;
+  void     Resume() override;
+  already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
   // Return true if the stream has been closed.
-  bool IsClosed() const { return mCacheStream.IsClosed(); }
-  virtual bool     CanClone() override;
-  virtual already_AddRefed<MediaResource> CloneData(MediaDecoder* aDecoder) override;
+  bool     IsClosed() const { return mCacheStream.IsClosed(); }
+  bool     CanClone() override;
+  already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aDecoder) override;
   // Set statistics to be recorded to the object passed in. If not called,
   // |ChannelMediaResource| will create it's own statistics objects in |Open|.
   void RecordStatisticsTo(MediaChannelStatistics *aStatistics) override {
@@ -588,32 +578,30 @@ public:
       mChannelStatistics = aStatistics;
     }
   }
-  virtual nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
-  virtual void     EnsureCacheUpToDate() override;
+  nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
+  void     EnsureCacheUpToDate() override;
 
   // Other thread
-  virtual void     SetReadMode(MediaCacheStream::ReadMode aMode) override;
-  virtual void     SetPlaybackRate(uint32_t aBytesPerSecond) override;
-  virtual nsresult Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes) override;
-  virtual nsresult ReadAt(int64_t offset, char* aBuffer,
-                          uint32_t aCount, uint32_t* aBytes) override;
-  virtual nsresult Seek(int32_t aWhence, int64_t aOffset) override;
-  virtual int64_t  Tell() override;
+  void     SetReadMode(MediaCacheStream::ReadMode aMode) override;
+  void     SetPlaybackRate(uint32_t aBytesPerSecond) override;
+  nsresult ReadAt(int64_t offset, char* aBuffer,
+                  uint32_t aCount, uint32_t* aBytes) override;
+  already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) override;
+  int64_t Tell() override;
 
   // Any thread
-  virtual void    Pin() override;
-  virtual void    Unpin() override;
-  virtual double  GetDownloadRate(bool* aIsReliable) override;
-  virtual int64_t GetLength() override;
-  virtual int64_t GetNextCachedData(int64_t aOffset) override;
-  virtual int64_t GetCachedDataEnd(int64_t aOffset) override;
-  virtual bool    IsDataCachedToEndOfResource(int64_t aOffset) override;
-  virtual bool    IsSuspendedByCache() override;
-  virtual bool    IsSuspended() override;
-  virtual bool    IsTransportSeekable() override;
+  void    Pin() override;
+  void    Unpin() override;
+  double  GetDownloadRate(bool* aIsReliable) override;
+  int64_t GetLength() override;
+  int64_t GetNextCachedData(int64_t aOffset) override;
+  int64_t GetCachedDataEnd(int64_t aOffset) override;
+  bool    IsDataCachedToEndOfResource(int64_t aOffset) override;
+  bool    IsSuspendedByCache() override;
+  bool    IsSuspended() override;
+  bool    IsTransportSeekable() override;
 
-  virtual size_t SizeOfExcludingThis(
-                      MallocSizeOf aMallocSizeOf) const override {
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override {
     // Might be useful to track in the future:
     //   - mListener (seems minor)
     //   - mChannelStatistics (seems minor)
@@ -625,8 +613,7 @@ public:
     return size;
   }
 
-  virtual size_t SizeOfIncludingThis(
-                      MallocSizeOf aMallocSizeOf) const override {
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
@@ -647,11 +634,11 @@ public:
     void Revoke() { mResource = nullptr; }
 
   private:
-    nsRefPtr<ChannelMediaResource> mResource;
+    RefPtr<ChannelMediaResource> mResource;
   };
   friend class Listener;
 
-  virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) override;
+  nsresult GetCachedRanges(MediaByteRangeSet& aRanges) override;
 
 protected:
   // These are called on the main thread by Listener.
@@ -688,21 +675,12 @@ protected:
                                       uint32_t aCount,
                                       uint32_t *aWriteCount);
 
-  // Suspend the channel only if the channels is currently downloading data.
-  // If it isn't we set a flag, mIgnoreResume, so that PossiblyResume knows
-  // whether to acutually resume or not.
-  void PossiblySuspend();
-
-  // Resume from a suspend if we actually suspended (See PossiblySuspend).
-  void PossiblyResume();
-
   // Main thread access only
   int64_t            mOffset;
-  nsRefPtr<Listener> mListener;
+  RefPtr<Listener> mListener;
   // A data received event for the decoder that has been dispatched but has
   // not yet been processed.
   nsRevocableEventPtr<nsRunnableMethod<ChannelMediaResource, void, false> > mDataReceivedEvent;
-  uint32_t           mSuspendCount;
   // When this flag is set, if we get a network error we should silently
   // reopen the stream.
   bool               mReopenOnError;
@@ -715,7 +693,7 @@ protected:
 
   // This lock protects mChannelStatistics
   Mutex               mLock;
-  nsRefPtr<MediaChannelStatistics> mChannelStatistics;
+  RefPtr<MediaChannelStatistics> mChannelStatistics;
 
   // True if we couldn't suspend the stream and we therefore don't want
   // to resume later. This is usually due to the channel not being in the
@@ -728,6 +706,8 @@ protected:
   // True if the stream can seek into unbuffered ranged, i.e. if the
   // connection supports byte range requests.
   bool mIsTransportSeekable;
+
+  ChannelSuspendAgent mSuspendAgent;
 };
 
 /**
@@ -737,7 +717,7 @@ protected:
  * us.
  */
 template<class T>
-class MOZ_STACK_CLASS AutoPinned {
+class MOZ_RAII AutoPinned {
  public:
   explicit AutoPinned(T* aResource MOZ_GUARD_OBJECT_NOTIFIER_PARAM) : mResource(aResource) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
@@ -755,6 +735,99 @@ class MOZ_STACK_CLASS AutoPinned {
 private:
   T* mResource;
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+/*
+ * MediaResourceIndex provides a way to access MediaResource objects.
+ * Read, Seek and Tell must only be called on non-main threads.
+ * In the case of the Ogg Decoder they are called on the Decode thread for
+ * example. You must ensure that no threads are calling these methods once
+ * the MediaResource has been Closed.
+ */
+
+class MediaResourceIndex
+{
+public:
+  explicit MediaResourceIndex(MediaResource* aResource)
+    : mResource(aResource)
+    , mOffset(0)
+  {}
+
+  // Read up to aCount bytes from the stream. The buffer must have
+  // enough room for at least aCount bytes. Stores the number of
+  // actual bytes read in aBytes (0 on end of file).
+  // May read less than aCount bytes if the number of
+  // available bytes is less than aCount. Always check *aBytes after
+  // read, and call again if necessary.
+  nsresult Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes);
+  // Seek to the given bytes offset in the stream. aWhence can be
+  // one of:
+  //   NS_SEEK_SET
+  //   NS_SEEK_CUR
+  //   NS_SEEK_END
+  //
+  // In the Http strategy case the cancel will cause the http
+  // channel's listener to close the pipe, forcing an i/o error on any
+  // blocked read. This will allow the decode thread to complete the
+  // event.
+  //
+  // In the case of a seek in progress, the byte range request creates
+  // a new listener. This is done on the main thread via seek
+  // synchronously dispatching an event. This avoids the issue of us
+  // closing the listener but an outstanding byte range request
+  // creating a new one. They run on the same thread so no explicit
+  // synchronisation is required. The byte range request checks for
+  // the cancel flag and does not create a new channel or listener if
+  // we are cancelling.
+  //
+  // The default strategy does not do any seeking - the only issue is
+  // a blocked read which it handles by causing the listener to close
+  // the pipe, as per the http case.
+  //
+  // The file strategy doesn't block for any great length of time so
+  // is fine for a no-op cancel.
+  nsresult Seek(int32_t aWhence, int64_t aOffset);
+  // Report the current offset in bytes from the start of the stream.
+  int64_t Tell() const { return mOffset; }
+
+  // Return the underlying MediaResource.
+  MediaResource* GetResource() const { return mResource; }
+
+  // Read up to aCount bytes from the stream. The read starts at
+  // aOffset in the stream, seeking to that location initially if
+  // it is not the current stream offset.
+  // Unlike MediaResource::ReadAt, ReadAt only returns fewer bytes than
+  // requested if end of stream or an error is encountered. There is no need to
+  // call it again to get more data.
+  // *aBytes will contain the number of bytes copied, even if an error occurred.
+  // ReadAt doesn't have an impact on the offset returned by Tell().
+  nsresult ReadAt(int64_t aOffset, char* aBuffer,
+                  uint32_t aCount, uint32_t* aBytes) const;
+
+  // Convenience methods, directly calling the MediaResource method of the same
+  // name.
+  // Those functions do not update the MediaResource offset as returned
+  // by Tell().
+
+  // This method returns nullptr if anything fails.
+  // Otherwise, it returns an owned buffer.
+  // MediaReadAt may return fewer bytes than requested if end of stream is
+  // encountered. There is no need to call it again to get more data.
+  already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) const
+  {
+    return mResource->MediaReadAt(aOffset, aCount);
+  }
+  // Get the length of the stream in bytes. Returns -1 if not known.
+  // This can change over time; after a seek operation, a misbehaving
+  // server may give us a resource of a different length to what it had
+  // reported previously --- or it may just lie in its Content-Length
+  // header and give us more or less data than it reported. We will adjust
+  // the result of GetLength to reflect the data that's actually arriving.
+  int64_t GetLength() const { return mResource->GetLength(); }
+
+private:
+  RefPtr<MediaResource> mResource;
+  int64_t mOffset;
 };
 
 } // namespace mozilla

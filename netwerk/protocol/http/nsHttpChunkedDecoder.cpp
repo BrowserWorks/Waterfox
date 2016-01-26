@@ -8,6 +8,7 @@
 #include <errno.h>
 #include "nsHttpChunkedDecoder.h"
 #include <algorithm>
+#include "plstr.h"
 
 namespace mozilla {
 namespace net {
@@ -159,5 +160,5 @@ nsHttpChunkedDecoder::ParseChunkRemaining(char *buf,
     return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

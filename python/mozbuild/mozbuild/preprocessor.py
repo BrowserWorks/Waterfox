@@ -24,7 +24,6 @@ value :
 
 import sys
 import os
-import os.path
 import re
 from optparse import OptionParser
 import errno
@@ -275,7 +274,7 @@ class Preprocessor:
             self.key = MSG
             RuntimeError.__init__(self, (self.file, self.line, self.key, context))
 
-    def __init__(self, line_endings='\n', defines=None, marker='#'):
+    def __init__(self, defines=None, marker='#'):
         self.context = Context()
         for k,v in {'FILE': '',
                     'LINE': 0,
@@ -289,7 +288,6 @@ class Preprocessor:
         #  2: #else found
         self.ifStates = []
         self.checkLineNumbers = False
-        self.writtenLines = 0
         self.filters = []
         self.cmds = {}
         for cmd, level in {'define': 0,
@@ -312,25 +310,26 @@ class Preprocessor:
             self.cmds[cmd] = (level, getattr(self, 'do_' + cmd))
         self.out = sys.stdout
         self.setMarker(marker)
-        self.LE = line_endings
         self.varsubst = re.compile('@(?P<VAR>\w+)@', re.U)
         self.includes = set()
         self.silenceMissingDirectiveWarnings = False
         if defines:
             self.context.update(defines)
 
-    def warnUnused(self, file):
+    def failUnused(self, file):
+        msg = None
         if self.actionLevel == 0 and not self.silenceMissingDirectiveWarnings:
-            sys.stderr.write('{0}: WARNING: no preprocessor directives found\n'.format(file))
+            msg = 'no preprocessor directives found'
         elif self.actionLevel == 1:
-            sys.stderr.write('{0}: WARNING: no useful preprocessor directives found\n'.format(file))
-        pass
-
-    def setLineEndings(self, aLE):
-        """
-        Set the line endings to be used for output.
-        """
-        self.LE = {'cr': '\x0D', 'lf': '\x0A', 'crlf': '\x0D\x0A'}[aLE]
+            msg = 'no useful preprocessor directives found'
+        if msg:
+            class Fake(object): pass
+            fake = Fake()
+            fake.context = {
+                'FILE': file,
+                'LINE': None,
+            }
+            raise Preprocessor.Error(fake, msg, None)
 
     def setMarker(self, aMarker):
         """
@@ -374,7 +373,6 @@ class Preprocessor:
         rv = Preprocessor()
         rv.context.update(self.context)
         rv.setMarker(self.marker)
-        rv.LE = self.LE
         rv.out = self.out
         return rv
 
@@ -387,7 +385,7 @@ class Preprocessor:
         self.out = output
 
         self.do_include(input, False)
-        self.warnUnused(input.name)
+        self.failUnused(input.name)
 
         if depfile:
             mk = Makefile()
@@ -412,6 +410,11 @@ class Preprocessor:
             aLine = f[1](aLine)
         return aLine
 
+    def noteLineInfo(self):
+        # Record the current line and file. Called once before transitioning
+        # into or out of an included file and after writing each line.
+        self.line_info = self.context['FILE'], self.context['LINE']
+
     def write(self, aLine):
         """
         Internal method for handling output.
@@ -419,20 +422,19 @@ class Preprocessor:
         if not self.out:
             return
 
+        next_line, next_file = self.context['LINE'], self.context['FILE']
         if self.checkLineNumbers:
-            self.writtenLines += 1
-            ln = self.context['LINE']
-            if self.writtenLines != ln:
-                self.out.write('//@line {line} "{file}"{le}'.format(line=ln,
-                                                                    file=self.context['FILE'],
-                                                                    le=self.LE))
-                self.writtenLines = ln
+            expected_file, expected_line = self.line_info
+            expected_line += 1
+            if (expected_line != next_line or
+                expected_file and expected_file != next_file):
+                self.out.write('//@line {line} "{file}"\n'.format(line=next_line,
+                                                                  file=next_file))
+        self.noteLineInfo()
+
         filteredLine = self.applyFilters(aLine)
         if filteredLine != aLine:
             self.actionLevel = 2
-        # ensure our line ending. Only need to handle \n, as we're reading
-        # with universal line ending support, at least for files.
-        filteredLine = re.sub('\n', self.LE, filteredLine)
         self.out.write(filteredLine)
 
     def handleCommandLine(self, args, defaultToStdin = False):
@@ -454,7 +456,6 @@ class Preprocessor:
         options, args = p.parse_args(args=args)
         out = self.out
         depfile = None
-        includes = options.I
 
         if options.output:
             out = get_output_file(options.output)
@@ -473,10 +474,9 @@ class Preprocessor:
                 raise Preprocessor.Error(self, "--depend requires the "
                                                "mozbuild.makeutil module", None)
             depfile = get_output_file(options.depend)
-        includes.extend(args)
 
-        if includes:
-            for f in includes:
+        if args:
+            for f in args:
                 with open(f, 'rU') as input:
                     self.processFile(input=input, output=out)
             if depfile:
@@ -491,9 +491,6 @@ class Preprocessor:
     def getCommandLineParser(self, unescapeDefines = False):
         escapedValue = re.compile('".*"$')
         numberValue = re.compile('\d+$')
-        def handleE(option, opt, value, parser):
-            for k,v in os.environ.iteritems():
-                self.context[k] = v
         def handleD(option, opt, value, parser):
             vals = value.split('=', 1)
             if len(vals) == 1:
@@ -508,17 +505,11 @@ class Preprocessor:
             del self.context[value]
         def handleF(option, opt, value, parser):
             self.do_filter(value)
-        def handleLE(option, opt, value, parser):
-            self.setLineEndings(value)
         def handleMarker(option, opt, value, parser):
             self.setMarker(value)
         def handleSilenceDirectiveWarnings(option, opt, value, parse):
             self.setSilenceDirectiveWarnings(True)
         p = OptionParser()
-        p.add_option('-I', action='append', type="string", default = [],
-                     metavar="FILENAME", help='Include file')
-        p.add_option('-E', action='callback', callback=handleE,
-                     help='Import the environment into the defined variables')
         p.add_option('-D', action='callback', callback=handleD, type="string",
                      metavar="VAR[=VAL]", help='Define a variable')
         p.add_option('-U', action='callback', callback=handleU, type="string",
@@ -530,9 +521,6 @@ class Preprocessor:
                      'instead of stdout')
         p.add_option('--depend', type="string", default=None, metavar="FILENAME",
                      help='Generate dependencies in the given file')
-        p.add_option('--line-endings', action='callback', callback=handleLE,
-                     type="string", metavar="[cr|lr|crlf]",
-                     help='Use the specified line endings [Default: OS dependent]')
         p.add_option('--marker', action='callback', callback=handleMarker,
                      type="string",
                      help='Use the specified marker instead of #')
@@ -564,7 +552,6 @@ class Preprocessor:
                 self.actionLevel = 2
         elif self.disableLevel == 0 and not self.comment.match(aLine):
             self.write(aLine)
-        pass
 
     # Instruction handlers
     # These are named do_'instruction name' and take one argument
@@ -689,7 +676,7 @@ class Preprocessor:
         lst.append('\n') # add back the newline
         self.write(reduce(lambda x, y: x+y, lst, ''))
     def do_literal(self, args):
-        self.write(args + self.LE)
+        self.write(args + '\n')
     def do_filter(self, args):
         filters = [f for f in args.split(' ') if hasattr(self, 'filter_' + f)]
         if len(filters) == 0:
@@ -753,7 +740,6 @@ class Preprocessor:
         Files should be opened, and will be closed after processing.
         """
         isName = type(args) == str or type(args) == unicode
-        oldWrittenLines = self.writtenLines
         oldCheckLineNumbers = self.checkLineNumbers
         self.checkLineNumbers = False
         if isName:
@@ -772,6 +758,8 @@ class Preprocessor:
         oldFile = self.context['FILE']
         oldLine = self.context['LINE']
         oldDir = self.context['DIRECTORY']
+        self.noteLineInfo()
+
         if args.isatty():
             # we're stdin, use '-' and '' for file and dir
             self.context['FILE'] = '-'
@@ -782,15 +770,15 @@ class Preprocessor:
             self.context['FILE'] = abspath
             self.context['DIRECTORY'] = os.path.dirname(abspath)
         self.context['LINE'] = 0
-        self.writtenLines = 0
+
         for l in args:
             self.context['LINE'] += 1
             self.handleLine(l)
         if isName:
             args.close()
+
         self.context['FILE'] = oldFile
         self.checkLineNumbers = oldCheckLineNumbers
-        self.writtenLines = oldWrittenLines
         self.context['LINE'] = oldLine
         self.context['DIRECTORY'] = oldDir
     def do_includesubst(self, args):
@@ -802,13 +790,13 @@ class Preprocessor:
 
 def preprocess(includes=[sys.stdin], defines={},
                output = sys.stdout,
-               line_endings='\n', marker='#'):
-    pp = Preprocessor(line_endings=line_endings,
-                      defines=defines,
+               marker='#'):
+    pp = Preprocessor(defines=defines,
                       marker=marker)
     for f in includes:
         with open(f, 'rU') as input:
             pp.processFile(input=input, output=output)
+    return pp.includes
 
 
 # Keep this module independently executable.

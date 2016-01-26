@@ -102,7 +102,7 @@ UDPSocket::Constructor(const GlobalObject& aGlobal,
     }
   }
 
-  nsRefPtr<UDPSocket> socket = new UDPSocket(ownerWindow, remoteAddress, remotePort);
+  RefPtr<UDPSocket> socket = new UDPSocket(ownerWindow, remoteAddress, remotePort);
   aRv = socket->Init(localAddress, localPort, addressReuse, loopback);
 
   if (NS_WARN_IF(aRv.Failed())) {
@@ -118,6 +118,8 @@ UDPSocket::UDPSocket(nsPIDOMWindow* aOwner,
   : DOMEventTargetHelper(aOwner)
   , mRemoteAddress(aRemoteAddress)
   , mRemotePort(aRemotePort)
+  , mAddressReuse(false)
+  , mLoopback(false)
   , mReadyState(SocketReadyState::Opening)
 {
   MOZ_ASSERT(aOwner);
@@ -152,7 +154,7 @@ UDPSocket::Close()
 {
   MOZ_ASSERT(mClosed);
 
-  nsRefPtr<Promise> promise = mClosed;
+  RefPtr<Promise> promise = mClosed;
 
   if (mReadyState == SocketReadyState::Closed) {
     return promise.forget();
@@ -318,8 +320,10 @@ UDPSocket::Send(const StringOrBlobOrArrayBufferOrArrayBufferView& aData,
   nsCString remoteAddress;
   if (aRemoteAddress.WasPassed()) {
     remoteAddress = NS_ConvertUTF16toUTF8(aRemoteAddress.Value());
+    UDPSOCKET_LOG(("%s: Send to %s", __FUNCTION__, remoteAddress.get()));
   } else if (!mRemoteAddress.IsVoid()) {
     remoteAddress = mRemoteAddress;
+    UDPSOCKET_LOG(("%s: Send to %s", __FUNCTION__, remoteAddress.get()));
   } else {
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return false;
@@ -339,7 +343,7 @@ UDPSocket::Send(const StringOrBlobOrArrayBufferOrArrayBufferView& aData,
   if (aData.IsBlob()) {
     Blob& blob = aData.GetAsBlob();
 
-    aRv = blob.GetInternalStream(getter_AddRefs(stream));
+    blob.GetInternalStream(getter_AddRefs(stream), aRv);
     if (NS_WARN_IF(aRv.Failed())) {
       return false;
     }
@@ -413,6 +417,7 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
     PRNetAddr prAddr;
     PR_InitializeNetAddr(PR_IpAddrAny, aLocalPort, &prAddr);
     PR_StringToNetAddr(NS_ConvertUTF16toUTF8(aLocalAddress).BeginReading(), &prAddr);
+    UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, NS_ConvertUTF16toUTF8(aLocalAddress).get(), aLocalPort));
 
     mozilla::net::NetAddr addr;
     PRNetAddrToNetAddr(&prAddr, &addr);
@@ -555,7 +560,7 @@ UDPSocket::Init(const nsString& aLocalAddress,
       }
 
       nsresult rv;
-      if (XRE_GetProcessType() != GeckoProcessType_Default) {
+      if (!XRE_IsParentProcess()) {
         rv = mSocket->InitRemote(mSocket->mLocalAddress, localPort);
       } else {
         rv = mSocket->InitLocal(mSocket->mLocalAddress, localPort);
@@ -569,7 +574,7 @@ UDPSocket::Init(const nsString& aLocalAddress,
     }
 
   private:
-    nsRefPtr<UDPSocket> mSocket;
+    RefPtr<UDPSocket> mSocket;
   };
 
   nsCOMPtr<nsIRunnable> runnable = new OpenSocketRunnable(this);
@@ -625,7 +630,7 @@ UDPSocket::DispatchReceivedData(const nsACString& aRemoteAddress,
   init.mRemotePort = aRemotePort;
   init.mData = jsData;
 
-  nsRefPtr<UDPMessageEvent> udpEvent =
+  RefPtr<UDPMessageEvent> udpEvent =
     UDPMessageEvent::Constructor(this, NS_LITERAL_STRING("message"), init);
 
   if (NS_WARN_IF(!udpEvent)) {
@@ -634,7 +639,7 @@ UDPSocket::DispatchReceivedData(const nsACString& aRemoteAddress,
 
   udpEvent->SetTrusted(true);
 
-  nsRefPtr<AsyncEventDispatcher> asyncDispatcher = new AsyncEventDispatcher(this, udpEvent);
+  RefPtr<AsyncEventDispatcher> asyncDispatcher = new AsyncEventDispatcher(this, udpEvent);
 
   return asyncDispatcher->PostDOMEvent();
 }
@@ -730,6 +735,15 @@ UDPSocket::CallListenerOpened()
   }
 
   mOpened->MaybeResolve(JS::UndefinedHandleValue);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+UDPSocket::CallListenerConnected()
+{
+  // This shouldn't be called here.
+  MOZ_CRASH();
 
   return NS_OK;
 }

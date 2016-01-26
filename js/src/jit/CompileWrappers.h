@@ -85,6 +85,7 @@ class CompileRuntime
     const MathCache* maybeGetMathCache();
 
     const Nursery& gcNursery();
+    void setMinorGCShouldCancelIonCompilations();
 };
 
 class CompileZone
@@ -101,6 +102,8 @@ class CompileZone
     const void* addressOfFreeListLast(gc::AllocKind allocKind);
 };
 
+class JitCompartment;
+
 class CompileCompartment
 {
     JSCompartment* compartment();
@@ -112,6 +115,7 @@ class CompileCompartment
     CompileRuntime* runtime();
 
     const void* addressOfEnumerators();
+    const void* addressOfRandomNumberGenerator();
 
     const JitCompartment* jitCompartment();
 

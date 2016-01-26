@@ -394,7 +394,7 @@ void NotifyScreenConfigurationChange(const hal::ScreenConfiguration& aScreenConf
  * Lock the screen orientation to the specific orientation.
  * @return Whether the lock has been accepted.
  */
-bool LockScreenOrientation(const dom::ScreenOrientation& aOrientation);
+bool LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation);
 
 /**
  * Unlock the screen orientation.
@@ -639,6 +639,21 @@ uint32_t GetTotalSystemMemoryLevel();
  * Determine whether the headphone switch event is from input device
  */
 bool IsHeadphoneEventFromInputDev();
+
+/**
+ * Start the system service with the specified name and arguments.
+ */
+nsresult StartSystemService(const char* aSvcName, const char* aArgs);
+
+/**
+ * Stop the system service with the specified name.
+ */
+void StopSystemService(const char* aSvcName);
+
+/**
+ * Determine whether the system service with the specified name is running.
+ */
+bool SystemServiceIsRunning(const char* aSvcName);
 
 } // namespace MOZ_HAL_NAMESPACE
 } // namespace mozilla

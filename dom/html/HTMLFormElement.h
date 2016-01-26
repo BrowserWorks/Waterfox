@@ -431,7 +431,7 @@ protected:
     }
   };
 
-  nsRefPtr<FormPasswordEventDispatcher> mFormPasswordEventDispatcher;
+  RefPtr<FormPasswordEventDispatcher> mFormPasswordEventDispatcher;
 
   class RemoveElementRunnable;
   friend class RemoveElementRunnable;
@@ -448,11 +448,11 @@ protected:
     }
 
   private:
-    nsRefPtr<HTMLFormElement> mForm;
+    RefPtr<HTMLFormElement> mForm;
   };
 
   nsresult DoSubmitOrReset(WidgetEvent* aEvent,
-                           int32_t aMessage);
+                           EventMessage aMessage);
   nsresult DoReset();
 
   // Async callback to handle removal of our default submit
@@ -561,7 +561,7 @@ protected:
   // Data members
   //
   /** The list of controls (form.elements as well as stuff not in elements) */
-  nsRefPtr<HTMLFormControlsCollection> mControls;
+  RefPtr<HTMLFormControlsCollection> mControls;
   /** The currently selected radio button of each group */
   nsRefPtrHashtable<nsStringCaseInsensitiveHashKey, HTMLInputElement> mSelectedRadioButtons;
   /** The number of required radio button of each group */

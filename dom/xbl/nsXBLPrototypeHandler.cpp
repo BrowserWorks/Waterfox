@@ -305,7 +305,7 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
   MOZ_ASSERT(!js::IsCrossCompartmentWrapper(genericHandler));
 
   // Build a scope chain in the XBL scope.
-  nsRefPtr<Element> targetElement = do_QueryObject(scriptTarget);
+  RefPtr<Element> targetElement = do_QueryObject(scriptTarget);
   JS::AutoObjectVector scopeChain(cx);
   ok = nsJSUtils::GetScopeChainForElement(cx, targetElement, scopeChain);
   NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
@@ -315,8 +315,8 @@ nsXBLPrototypeHandler::ExecuteHandler(EventTarget* aTarget,
                                                           scopeChain));
   NS_ENSURE_TRUE(bound, NS_ERROR_FAILURE);
 
-  nsRefPtr<EventHandlerNonNull> handlerCallback =
-    new EventHandlerNonNull(bound, /* aIncumbentGlobal = */ nullptr);
+  RefPtr<EventHandlerNonNull> handlerCallback =
+    new EventHandlerNonNull(nullptr, bound, /* aIncumbentGlobal = */ nullptr);
 
   TypedEventHandler typedHandler(handlerCallback);
 
@@ -459,6 +459,10 @@ nsXBLPrototypeHandler::DispatchXBLCommand(EventTarget* aTarget, nsIDOMEvent* aEv
   else
     controller = GetController(aTarget); // We're attached to the receiver possibly.
 
+  // We are the default action for this command.
+  // Stop any other default action from executing.
+  aEvent->PreventDefault();
+
   if (mEventName == nsGkAtoms::keypress &&
       mDetail == nsIDOMKeyEvent::DOM_VK_SPACE &&
       mMisc == 1) {
@@ -491,10 +495,6 @@ nsXBLPrototypeHandler::DispatchXBLCommand(EventTarget* aTarget, nsIDOMEvent* aEv
       }
     }
   }
-
-  // We are the default action for this command.
-  // Stop any other default action from executing.
-  aEvent->PreventDefault();
   
   if (controller)
     controller->DoCommand(command.get());
@@ -572,9 +572,10 @@ nsXBLPrototypeHandler::GetController(EventTarget* aTarget)
   }
 
   if (!controllers) {
-    nsCOMPtr<nsIDOMWindow> domWindow(do_QueryInterface(aTarget));
-    if (domWindow)
+    nsCOMPtr<nsPIDOMWindow> domWindow(do_QueryInterface(aTarget));
+    if (domWindow) {
       domWindow->GetControllers(getter_AddRefs(controllers));
+    }
   }
 
   // Return the first controller.
@@ -908,7 +909,7 @@ nsXBLPrototypeHandler::ModifiersMatchMask(
                          nsIDOMUIEvent* aEvent,
                          const IgnoreModifierState& aIgnoreModifierState)
 {
-  WidgetInputEvent* inputEvent = aEvent->GetInternalNSEvent()->AsInputEvent();
+  WidgetInputEvent* inputEvent = aEvent->AsEvent()->GetInternalNSEvent()->AsInputEvent();
   NS_ENSURE_TRUE(inputEvent, false);
 
   if (mKeyMask & cMetaMask) {

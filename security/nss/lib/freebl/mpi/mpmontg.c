@@ -47,7 +47,7 @@ mp_err s_mp_redc(mp_int *T, mp_mont_modulus *mmm)
   for (i = 0; i < MP_USED(&mmm->N); ++i ) {
     mp_digit m_i = MP_DIGIT(T, i) * mmm->n0prime;
     /* T += N * m_i * (MP_RADIX ** i); */
-    MP_CHECKOK( s_mp_mul_d_add_offset(&mmm->N, m_i, T, i) );
+    s_mp_mul_d_add_offset(&mmm->N, m_i, T, i);
   }
   s_mp_clamp(T);
 
@@ -371,12 +371,12 @@ mp_err mp_exptmod_i(const mp_int *   montBase,
 
   MP_CHECKOK( mp_init_copy(&oddPowers[0], montBase) );
 
-  mp_init_size(&power2, nLen + 2 * MP_USED(montBase) + 2);
+  MP_CHECKOK( mp_init_size(&power2, nLen + 2 * MP_USED(montBase) + 2) );
   MP_CHECKOK( mp_sqr(montBase, &power2) );	/* power2 = montBase ** 2 */
   MP_CHECKOK( s_mp_redc(&power2, mmm) );
 
   for (i = 1; i < odd_ints; ++i) {
-    mp_init_size(oddPowers + i, nLen + 2 * MP_USED(&power2) + 2);
+    MP_CHECKOK( mp_init_size(oddPowers + i, nLen + 2 * MP_USED(&power2) + 2) );
     MP_CHECKOK( mp_mul(oddPowers + (i - 1), &power2, oddPowers + i) );
     MP_CHECKOK( s_mp_redc(oddPowers + i, mmm) );
   }

@@ -53,9 +53,6 @@
 // forcefully.
 #define ADDITIONAL_WAIT_BEFORE_CRASH_MS 3000
 
-// One second, in ticks.
-#define TICK_DURATION 1000
-
 namespace mozilla {
 
 namespace {
@@ -130,6 +127,7 @@ RunWatchdog(void* arg)
   options = nullptr;
 
   const uint32_t timeToLive = crashAfterTicks;
+  const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
   while (true) {
     //
     // We do not want to sleep for the entire duration,
@@ -141,7 +139,7 @@ RunWatchdog(void* arg)
     // we have lost at most one second, which is much
     // more reasonable.
     //
-    PR_Sleep(TICK_DURATION);
+    PR_Sleep(ticksDuration);
 
     if (gHeartbeat++ < timeToLive) {
       continue;
@@ -222,8 +220,8 @@ void RunWriter(void* arg)
   tmpFilePath.AppendLiteral(".tmp");
 
   // Cleanup any file leftover from a previous run
-  unused << PR_Delete(tmpFilePath.get());
-  unused << PR_Delete(destinationPath.get());
+  Unused << PR_Delete(tmpFilePath.get());
+  Unused << PR_Delete(destinationPath.get());
 
   while (true) {
     //
@@ -316,7 +314,7 @@ static ShutdownStep sShutdownSteps[] = {
   ShutdownStep("xpcom-shutdown"),
 };
 
-} // anonymous namespace
+} // namespace
 
 NS_IMPL_ISUPPORTS(nsTerminator, nsIObserver)
 
@@ -378,7 +376,8 @@ nsTerminator::StartWatchdog()
   }
 
   UniquePtr<Options> options(new Options());
-  options->crashAfterTicks = crashAfterMS / TICK_DURATION;
+  const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
+  options->crashAfterTicks = crashAfterMS / ticksDuration;
 
   DebugOnly<PRThread*> watchdogThread = CreateSystemThread(RunWatchdog,
                                                 options.release());
@@ -530,7 +529,7 @@ nsTerminator::UpdateCrashReport(const char* aTopic)
   // In case of crash, we wish to know where in shutdown we are
   nsAutoCString report(aTopic);
 
-  unused << CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("ShutdownProgress"),
+  Unused << CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("ShutdownProgress"),
                                                report);
 #endif // defined(MOZ_CRASH_REPORTER)
 }

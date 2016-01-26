@@ -39,7 +39,7 @@ DirectProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId i
 {
     assertEnteredPolicy(cx, proxy, id, SET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return StandardDefineProperty(cx, target, id, desc, result);
+    return DefineProperty(cx, target, id, desc, result);
 }
 
 bool
@@ -81,13 +81,23 @@ bool
 DirectProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     assertEnteredPolicy(cx, proxy, JSID_VOID, CALL);
+
     RootedValue target(cx, proxy->as<ProxyObject>().private_());
-    return InvokeConstructor(cx, target, args.length(), args.array(), args.rval());
+    if (!IsConstructor(target)) {
+        ReportValueError(cx, JSMSG_NOT_CONSTRUCTOR, JSDVG_IGNORE_STACK, target, nullptr);
+        return false;
+    }
+
+    ConstructArgs cargs(cx);
+    if (!FillArgumentsFromArraylike(cx, cargs, args))
+        return false;
+
+    return Construct(cx, target, cargs, args.newTarget(), args.rval());
 }
 
 bool
 DirectProxyHandler::nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                               CallArgs args) const
+                               const CallArgs& args) const
 {
     args.setThis(ObjectValue(*args.thisv().toObject().as<ProxyObject>().target()));
     if (!test(args.thisv())) {
@@ -144,11 +154,18 @@ DirectProxyHandler::isExtensible(JSContext* cx, HandleObject proxy, bool* extens
 }
 
 bool
-DirectProxyHandler::objectClassIs(HandleObject proxy, ESClassValue classValue,
-                                  JSContext* cx) const
+DirectProxyHandler::getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                    ESClassValue* classValue) const
 {
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return ObjectClassIs(target, classValue, cx);
+    return GetBuiltinClass(cx, target, classValue);
+}
+
+bool
+DirectProxyHandler::isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const
+{
+    RootedObject target(cx, proxy->as<ProxyObject>().target());
+    return IsArray(cx, target, answer);
 }
 
 const char*
@@ -207,7 +224,7 @@ DirectProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool*
 }
 
 bool
-DirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+DirectProxyHandler::get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                         HandleId id, MutableHandleValue vp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);

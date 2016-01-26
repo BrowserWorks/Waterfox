@@ -6,7 +6,7 @@
 
 #include "xpcAccessibleTextRange.h"
 
-#include "TextRange.h"
+#include "TextRange-inl.h"
 #include "xpcAccessibleDocument.h"
 
 #include "nsIMutableArray.h"
@@ -99,7 +99,7 @@ xpcAccessibleTextRange::Compare(nsIAccessibleTextRange* aOtherRange,
                                 bool* aResult)
 {
 
-  nsRefPtr<xpcAccessibleTextRange> xpcRange(do_QueryObject(aOtherRange));
+  RefPtr<xpcAccessibleTextRange> xpcRange(do_QueryObject(aOtherRange));
   if (!xpcRange || !aResult)
     return NS_ERROR_INVALID_ARG;
 
@@ -113,7 +113,7 @@ xpcAccessibleTextRange::CompareEndPoints(uint32_t aEndPoint,
                                          uint32_t aOtherRangeEndPoint,
                                          int32_t* aResult)
 {
-  nsRefPtr<xpcAccessibleTextRange> xpcRange(do_QueryObject(aOtherRange));
+  RefPtr<xpcAccessibleTextRange> xpcRange(do_QueryObject(aOtherRange));
   if (!xpcRange || !aResult)
     return NS_ERROR_INVALID_ARG;
 
@@ -167,6 +167,16 @@ xpcAccessibleTextRange::MoveEnd(uint32_t aUnit, int32_t aCount)
 NS_IMETHODIMP
 xpcAccessibleTextRange::Normalize(uint32_t aUnit)
 {
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+xpcAccessibleTextRange::Crop(nsIAccessible* aContainer, bool* aSuccess)
+{
+  Accessible* container = aContainer->ToInternalAccessible();
+  NS_ENSURE_TRUE(container, NS_ERROR_INVALID_ARG);
+
+  *aSuccess = mRange.Crop(container);
   return NS_OK;
 }
 

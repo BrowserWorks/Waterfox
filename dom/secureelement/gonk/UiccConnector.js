@@ -18,9 +18,9 @@
 "use strict";
 
 /* globals Components, XPCOMUtils, SE, dump, libcutils, Services,
-   iccProvider, iccService, SEUtils */
+   iccService, SEUtils */
 
-const { interfaces: Ci, utils: Cu } = Components;
+const { interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -33,7 +33,7 @@ XPCOMUtils.defineLazyGetter(this, "SE", function() {
 });
 
 // set to true in se_consts.js to see debug messages
-let DEBUG = SE.DEBUG_CONNECTOR;
+var DEBUG = SE.DEBUG_CONNECTOR;
 function debug(s) {
   if (DEBUG) {
     dump("-*- UiccConnector: " + s + "\n");
@@ -42,10 +42,6 @@ function debug(s) {
 
 XPCOMUtils.defineLazyModuleGetter(this, "SEUtils",
                                   "resource://gre/modules/SEUtils.jsm");
-
-XPCOMUtils.defineLazyServiceGetter(this, "iccProvider",
-                                   "@mozilla.org/ril/content-helper;1",
-                                   "nsIIccProvider");
 
 XPCOMUtils.defineLazyServiceGetter(this, "iccService",
                                    "@mozilla.org/icc/iccservice;1",
@@ -65,7 +61,7 @@ const PREFERRED_UICC_CLIENTID =
   libcutils.property_get("ro.moz.se.def_client_id", "0");
 
 /**
- * 'UiccConnector' object is a wrapper over iccProvider's channel management
+ * 'UiccConnector' object is a wrapper over iccService's channel management
  * related interfaces that implements nsISecureElementConnector interface.
  */
 function UiccConnector() {
@@ -73,7 +69,8 @@ function UiccConnector() {
 }
 
 UiccConnector.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsISecureElementConnector]),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsISecureElementConnector,
+                                         Ci.nsIIccListener]),
   classID: UICCCONNECTOR_CID,
   classInfo: XPCOMUtils.generateCI({
     classID: UICCCONNECTOR_CID,
@@ -84,6 +81,7 @@ UiccConnector.prototype = {
                  Ci.nsIObserver]
   }),
 
+  _SEListeners: [],
   _isPresent: false,
 
   _init: function() {
@@ -113,8 +111,18 @@ UiccConnector.prototype = {
     ];
 
     let cardState = iccService.getIccByServiceId(PREFERRED_UICC_CLIENTID).cardState;
-    this._isPresent = cardState !== null &&
+    let uiccPresent = cardState !== null &&
                       uiccNotReadyStates.indexOf(cardState) == -1;
+
+    if (this._isPresent === uiccPresent) {
+      return;
+    }
+
+    debug("Uicc presence changed " + this._isPresent + " -> " + uiccPresent);
+    this._isPresent = uiccPresent;
+    this._SEListeners.forEach((listener) => {
+      listener.notifySEPresenceChanged(SE.TYPE_UICC, this._isPresent);
+    });
   },
 
   // See GP Spec, 11.1.4 Class Byte Coding
@@ -162,8 +170,8 @@ UiccConnector.prototype = {
 
   _doIccExchangeAPDU: function(channel, cla, ins, p1, p2, p3,
                                data, appendResp, callback) {
-    iccProvider.iccExchangeAPDU(PREFERRED_UICC_CLIENTID, channel, cla & 0xFC,
-                                ins, p1, p2, p3, data, {
+    let icc = iccService.getIccByServiceId(PREFERRED_UICC_CLIENTID);
+    icc.iccExchangeAPDU(channel, cla & 0xFC, ins, p1, p2, p3, data, {
       notifyExchangeAPDUResponse: (sw1, sw2, response) => {
         debug("sw1 : " + sw1 + ", sw2 : " + sw2 + ", response : " + response);
 
@@ -230,7 +238,8 @@ UiccConnector.prototype = {
     // some erroneous conditions such as gecko restart /, crash it can read
     // the persistent storage to check if there are any held resources
     // (opened channels) and close them.
-    iccProvider.iccOpenChannel(PREFERRED_UICC_CLIENTID, aid, {
+    let icc = iccService.getIccByServiceId(PREFERRED_UICC_CLIENTID);
+    icc.iccOpenChannel(aid, {
       notifyOpenChannelSuccess: (channel) => {
         this._doGetOpenResponse(channel, 0x00, function(result) {
           if (callback) {
@@ -287,7 +296,8 @@ UiccConnector.prototype = {
       return;
     }
 
-    iccProvider.iccCloseChannel(PREFERRED_UICC_CLIENTID, channel, {
+    let icc = iccService.getIccByServiceId(PREFERRED_UICC_CLIENTID);
+    icc.iccCloseChannel(channel, {
       notifyCloseChannelSuccess: function() {
         debug("closeChannel successfully closed the channel # : " + channel);
         if (callback) {
@@ -305,6 +315,23 @@ UiccConnector.prototype = {
     });
   },
 
+  registerListener: function(listener) {
+    if (this._SEListeners.indexOf(listener) !== -1) {
+      throw Cr.NS_ERROR_UNEXPECTED;
+    }
+
+    this._SEListeners.push(listener);
+    // immediately notify listener about the current state
+    listener.notifySEPresenceChanged(SE.TYPE_UICC, this._isPresent);
+  },
+
+  unregisterListener: function(listener) {
+    let idx = this._SEListeners.indexOf(listener);
+    if (idx !== -1) {
+      this._SEListeners.splice(idx, 1);
+    }
+  },
+
   /**
    * nsIIccListener interface methods.
    */
@@ -315,6 +342,7 @@ UiccConnector.prototype = {
   notifyIccInfoChanged: function() {},
 
   notifyCardStateChanged: function() {
+    debug("Card state changed, updating UICC presence.");
     this._updatePresenceState();
   },
 

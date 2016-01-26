@@ -9,10 +9,11 @@
 #include "DOMError.h"
 #include "nsThreadUtils.h"
 #include "DOMCursor.h"
-#include "nsIDOMEvent.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/Event.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "jsfriendapi.h"
 
 using mozilla::dom::AnyCallback;
 using mozilla::dom::DOMError;
@@ -20,11 +21,18 @@ using mozilla::dom::DOMRequest;
 using mozilla::dom::DOMRequestService;
 using mozilla::dom::DOMCursor;
 using mozilla::dom::Promise;
-using mozilla::AutoSafeJSContext;
+using mozilla::dom::AutoJSAPI;
 
 DOMRequest::DOMRequest(nsPIDOMWindow* aWindow)
   : DOMEventTargetHelper(aWindow->IsInnerWindow() ?
                            aWindow : aWindow->GetCurrentInnerWindow())
+  , mResult(JS::UndefinedValue())
+  , mDone(false)
+{
+}
+
+DOMRequest::DOMRequest(nsIGlobalObject* aGlobal)
+  : DOMEventTargetHelper(aGlobal)
   , mResult(JS::UndefinedValue())
   , mDone(false)
 {
@@ -185,13 +193,8 @@ DOMRequest::FireEvent(const nsAString& aType, bool aBubble, bool aCancelable)
     return;
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  nsresult rv = event->InitEvent(aType, aBubble, aCancelable);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  event->InitEvent(aType, aBubble, aCancelable);
   event->SetTrusted(true);
 
   bool dummy;
@@ -204,14 +207,16 @@ DOMRequest::RootResultVal()
   mozilla::HoldJSObjects(this);
 }
 
-already_AddRefed<Promise>
+void
 DOMRequest::Then(JSContext* aCx, AnyCallback* aResolveCallback,
-                 AnyCallback* aRejectCallback, mozilla::ErrorResult& aRv)
+                 AnyCallback* aRejectCallback,
+                 JS::MutableHandle<JS::Value> aRetval,
+                 mozilla::ErrorResult& aRv)
 {
   if (!mPromise) {
     mPromise = Promise::Create(DOMEventTargetHelper::GetParentObject(), aRv);
     if (aRv.Failed()) {
-      return nullptr;
+      return;
     }
     if (mDone) {
       // Since we create mPromise lazily, it's possible that the DOMRequest object
@@ -226,7 +231,10 @@ DOMRequest::Then(JSContext* aCx, AnyCallback* aResolveCallback,
     }
   }
 
-  return mPromise->Then(aCx, aResolveCallback, aRejectCallback, aRv);
+  // Just use the global of the Promise itself as the callee global.
+  JS::Rooted<JSObject*> global(aCx, mPromise->GetWrapper());
+  global = js::GetGlobalForObjectCrossCompartment(global);
+  mPromise->Then(aCx, global, aResolveCallback, aRejectCallback, aRetval, aRv);
 }
 
 NS_IMPL_ISUPPORTS(DOMRequestService, nsIDOMRequestService)
@@ -235,6 +243,7 @@ NS_IMETHODIMP
 DOMRequestService::CreateRequest(nsIDOMWindow* aWindow,
                                  nsIDOMDOMRequest** aRequest)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(aWindow));
   NS_ENSURE_STATE(win);
   NS_ADDREF(*aRequest = new DOMRequest(win));
@@ -306,13 +315,9 @@ public:
   Dispatch(DOMRequest* aRequest,
            const JS::Value& aResult)
   {
-    NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
     mozilla::ThreadsafeAutoSafeJSContext cx;
-    nsRefPtr<FireSuccessAsyncTask> asyncTask = new FireSuccessAsyncTask(cx, aRequest, aResult);
-    if (NS_FAILED(NS_DispatchToMainThread(asyncTask))) {
-      NS_WARNING("Failed to dispatch to main thread!");
-      return NS_ERROR_FAILURE;
-    }
+    RefPtr<FireSuccessAsyncTask> asyncTask = new FireSuccessAsyncTask(cx, aRequest, aResult);
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(asyncTask)));
     return NS_OK;
   }
 
@@ -323,13 +328,8 @@ public:
     return NS_OK;
   }
 
-  ~FireSuccessAsyncTask()
-  {
-    NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
-  }
-
 private:
-  nsRefPtr<DOMRequest> mReq;
+  RefPtr<DOMRequest> mReq;
   JS::PersistentRooted<JS::Value> mResult;
 };
 
@@ -350,7 +350,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<DOMRequest> mReq;
+  RefPtr<DOMRequest> mReq;
   nsString mError;
 };
 
@@ -369,10 +369,7 @@ DOMRequestService::FireErrorAsync(nsIDOMDOMRequest* aRequest,
   NS_ENSURE_STATE(aRequest);
   nsCOMPtr<nsIRunnable> asyncTask =
     new FireErrorAsyncTask(static_cast<DOMRequest*>(aRequest), aError);
-  if (NS_FAILED(NS_DispatchToMainThread(asyncTask))) {
-    NS_WARNING("Failed to dispatch to main thread!");
-    return NS_ERROR_FAILURE;
-  }
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(asyncTask)));
   return NS_OK;
 }
 

@@ -10,12 +10,12 @@ using namespace mozilla;
 namespace mozilla {
   namespace layer {
     class Image;
-  }
-}
+  } // namespace layer
+} // namespace mozilla
 
 TEST(VideoSegment, TestAppendFrameForceBlack)
 {
-  nsRefPtr<layers::Image> testImage = nullptr;
+  RefPtr<layers::Image> testImage = nullptr;
 
   VideoSegment segment;
   segment.AppendFrame(testImage.forget(),
@@ -33,7 +33,7 @@ TEST(VideoSegment, TestAppendFrameForceBlack)
 
 TEST(VideoSegment, TestAppendFrameNotForceBlack)
 {
-  nsRefPtr<layers::Image> testImage = nullptr;
+  RefPtr<layers::Image> testImage = nullptr;
 
   VideoSegment segment;
   segment.AppendFrame(testImage.forget(),

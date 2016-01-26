@@ -53,8 +53,8 @@ private:
   void NotifyListener();
   void MaybeNotifyListener();
 
-  nsRefPtr<CacheFile>      mFile;
-  nsRefPtr<CacheFileChunk> mChunk;
+  RefPtr<CacheFile>        mFile;
+  RefPtr<CacheFileChunk> mChunk;
   int64_t                  mPos;
   bool                     mClosed;
   nsresult                 mStatus;
@@ -67,7 +67,7 @@ private:
 };
 
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

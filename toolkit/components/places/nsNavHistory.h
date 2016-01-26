@@ -475,7 +475,7 @@ private:
 protected:
 
   // Database handle.
-  nsRefPtr<mozilla::places::Database> mDB;
+  RefPtr<mozilla::places::Database> mDB;
 
   /**
    * Decays frecency and inputhistory values.  Runs on idle-daily.
@@ -509,7 +509,7 @@ protected:
    */
   static void expireNowTimerCallback(nsITimer* aTimer, void* aClosure);
 
-  nsresult ConstructQueryString(const nsCOMArray<nsNavHistoryQuery>& aQueries, 
+  nsresult ConstructQueryString(const nsCOMArray<nsNavHistoryQuery>& aQueries,
                                 nsNavHistoryQueryOptions* aOptions,
                                 nsCString& queryString,
                                 bool& aParamsPresent,

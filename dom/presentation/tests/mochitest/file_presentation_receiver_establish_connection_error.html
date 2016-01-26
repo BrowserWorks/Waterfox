@@ -1,0 +1,76 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test for connection establishing errors of B2G Presentation API at receiver side</title>
+</head>
+<body>
+<div id="content"></div>
+<script type="application/javascript;version=1.7">
+
+"use strict";
+
+function is(a, b, msg) {
+  window.parent.postMessage((a === b ? 'OK ' : 'KO ') + msg, '*');
+}
+
+function ok(a, msg) {
+  window.parent.postMessage((a ? 'OK ' : 'KO ') + msg, '*');
+}
+
+function info(msg) {
+  window.parent.postMessage('INFO ' + msg, '*');
+}
+
+function command(msg) {
+  window.parent.postMessage('COMMAND ' + JSON.stringify(msg), '*');
+}
+
+function finish() {
+  window.parent.postMessage('DONE', '*');
+}
+
+var connection;
+
+function testConnectionAvailable() {
+  return new Promise(function(aResolve, aReject) {
+    ok(navigator.presentation, "navigator.presentation should be available.");
+    ok(navigator.presentation.receiver, "navigator.presentation.receiver should be available.");
+
+    navigator.presentation.receiver.getConnection().then(
+      function(aConnection) {
+        connection = aConnection;
+
+        ok(connection.id, "Connection ID should be set: " + connection.id);
+        is(connection.state, "closed", "Connection state at receiver side should be closed by default.");
+        aResolve();
+      },
+      function(aError) {
+        ok(false, "Error occurred when getting the connection: " + aError);
+        finish();
+        aReject();
+      }
+    );
+  });
+}
+
+function testUnexpectedControlChannelClose() {
+  return new Promise(function(aResolve, aReject) {
+    connection.onstatechange = function() {
+      connection.onstatechange = null;
+      is(connection.state, "terminated", "Connection state should become terminated.");
+      aResolve();
+    };
+
+    // Trigger the control channel to be closed with error code.
+    command({ name: 'trigger-control-channel-close', data: 0x80004004 /* NS_ERROR_ABORT */ });
+  });
+}
+
+testConnectionAvailable().
+then(testUnexpectedControlChannelClose).
+then(finish);
+
+</script>
+</body>
+</html>

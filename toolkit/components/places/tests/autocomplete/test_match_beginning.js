@@ -8,11 +8,11 @@
  */
 
 // Define some shared uris and titles (each page needs its own uri)
-let kURIs = [
+var kURIs = [
   "http://x.com/y",
   "https://y.com/x",
 ];
-let kTitles = [
+var kTitles = [
   "a b",
   "b a",
 ];
@@ -22,11 +22,11 @@ addPageBook(1, 1);
 
 // Provide for each test: description; search terms; array of gPages indices of
 // pages that should match; optional function to be run before the test
-let gTests = [
+var gTests = [
   // Tests after this one will match at the beginning
   ["0: Match at the beginning of titles",
    "a", [0],
-   function() setBehavior(3)],
+   () => setBehavior(3)],
   ["1: Match at the beginning of titles",
    "b", [1]],
   ["2: Match at the beginning of urls",
@@ -37,7 +37,7 @@ let gTests = [
   // Tests after this one will match against word boundaries and anywhere
   ["4: Sanity check that matching anywhere finds more",
    "a", [0,1],
-   function() setBehavior(1)],
+   () => setBehavior(1)],
 ];
 
 function setBehavior(aType) {

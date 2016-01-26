@@ -16,7 +16,7 @@ const SETTINGS_DEBUG_ENABLED = "geolocation.debugging.enabled";
 const SETTINGS_CHANGED_TOPIC = "mozsettings-changed";
 const SETTINGS_WIFI_ENABLED = "wifi.enabled";
 
-let gLoggingEnabled = false;
+var gLoggingEnabled = false;
 
 /*
    The gLocationRequestTimeout controls how long we wait on receiving an update
@@ -29,10 +29,10 @@ let gLoggingEnabled = false;
    data and xhr it to the location server.
 */
 
-let gLocationRequestTimeout = 5000;
+var gLocationRequestTimeout = 5000;
 
-let gWifiScanningEnabled = true;
-let gCellScanningEnabled = false;
+var gWifiScanningEnabled = true;
+var gCellScanningEnabled = false;
 
 function LOG(aMsg) {
   if (gLoggingEnabled) {
@@ -127,8 +127,8 @@ function CachedRequest(loc, cellInfo, wifiList) {
   };
  }
 
-let gCachedRequest = null;
-let gDebugCacheReasoning = ""; // for logging the caching logic
+var gCachedRequest = null;
+var gDebugCacheReasoning = ""; // for logging the caching logic
 
 // This function serves two purposes:
 // 1) do we have a cached request
@@ -444,7 +444,7 @@ WifiGeoPositionProvider.prototype = {
               break;
             // CDMA cases to be handled in bug 1010282
           };
-          result.push({ radio: radioTechFamily,
+          result.push({ radioType: radioTechFamily,
                       mobileCountryCode: voice.network.mcc,
                       mobileNetworkCode: voice.network.mnc,
                       locationAreaCode: cell.gsmLocationAreaCode,
@@ -505,6 +505,12 @@ WifiGeoPositionProvider.prototype = {
     xhr.responseType = "json";
     xhr.mozBackgroundRequest = true;
     xhr.channel.loadFlags = Ci.nsIChannel.LOAD_ANONYMOUS;
+    xhr.timeout = Services.prefs.getIntPref("geo.wifi.xhr.timeout");
+    xhr.ontimeout = (function() {
+      LOG("Location request XHR timed out.")
+      this.notifyListener("notifyError",
+                          [POSITION_UNAVAILABLE]);
+    }).bind(this);
     xhr.onerror = (function() {
       this.notifyListener("notifyError",
                           [POSITION_UNAVAILABLE]);

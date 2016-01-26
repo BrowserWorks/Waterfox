@@ -46,23 +46,24 @@ class IDBRequest
 protected:
   // mSourceAsObjectStore and mSourceAsIndex are exclusive and one must always
   // be set. mSourceAsCursor is sometimes set also.
-  nsRefPtr<IDBObjectStore> mSourceAsObjectStore;
-  nsRefPtr<IDBIndex> mSourceAsIndex;
-  nsRefPtr<IDBCursor> mSourceAsCursor;
+  RefPtr<IDBObjectStore> mSourceAsObjectStore;
+  RefPtr<IDBIndex> mSourceAsIndex;
+  RefPtr<IDBCursor> mSourceAsCursor;
 
-  nsRefPtr<IDBTransaction> mTransaction;
+  RefPtr<IDBTransaction> mTransaction;
 
 #ifdef DEBUG
   PRThread* mOwningThread;
 #endif
 
   JS::Heap<JS::Value> mResultVal;
-  nsRefPtr<DOMError> mError;
+  RefPtr<DOMError> mError;
 
   nsString mFilename;
   uint64_t mLoggingSerialNumber;
   nsresult mErrorCode;
   uint32_t mLineNo;
+  uint32_t mColumn;
   bool mHaveResultOrErrorCode;
 
 public:
@@ -82,7 +83,7 @@ public:
          IDBTransaction* aTransaction);
 
   static void
-  CaptureCaller(nsAString& aFilename, uint32_t* aLineNo);
+  CaptureCaller(nsAString& aFilename, uint32_t* aLineNo, uint32_t* aColumn);
 
   static uint64_t
   NextSerialNumber();
@@ -130,7 +131,8 @@ public:
   GetError(ErrorResult& aRv);
 
   void
-  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo) const;
+  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo,
+                    uint32_t* aColumn) const;
 
   bool
   IsPending() const
@@ -227,9 +229,11 @@ class IDBOpenDBRequest final
   class WorkerFeature;
 
   // Only touched on the owning thread.
-  nsRefPtr<IDBFactory> mFactory;
+  RefPtr<IDBFactory> mFactory;
 
   nsAutoPtr<WorkerFeature> mWorkerFeature;
+
+  const bool mFileHandleDisabled;
 
 public:
   static already_AddRefed<IDBOpenDBRequest>
@@ -240,6 +244,12 @@ public:
   static already_AddRefed<IDBOpenDBRequest>
   CreateForJS(IDBFactory* aFactory,
               JS::Handle<JSObject*> aScriptOwner);
+
+  bool
+  IsFileHandleDisabled() const
+  {
+    return mFileHandleDisabled;
+  }
 
   void
   SetTransaction(IDBTransaction* aTransaction);
@@ -268,7 +278,9 @@ public:
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
-  IDBOpenDBRequest(IDBFactory* aFactory, nsPIDOMWindow* aOwner);
+  IDBOpenDBRequest(IDBFactory* aFactory,
+                   nsPIDOMWindow* aOwner,
+                   bool aFileHandleDisabled);
 
   ~IDBOpenDBRequest();
 };

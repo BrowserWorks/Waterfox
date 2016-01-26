@@ -34,19 +34,19 @@ WebGLUtil = (function() {
   // ---------------------------------------------------------------------------
   // WebGL helpers
 
-  function getWebGL(canvasId, requireConformant) {
+  function getWebGL(canvasId, requireConformant, attributes) {
     // `requireConformant` will default to falsey if it is not supplied.
 
     var canvas = document.getElementById(canvasId);
 
     var gl = null;
     try {
-      gl = canvas.getContext('webgl');
+      gl = canvas.getContext('webgl', attributes);
     } catch(e) {}
 
     if (!gl && !requireConformant) {
       try {
-        gl = canvas.getContext('experimental-webgl');
+        gl = canvas.getContext('experimental-webgl', attributes);
       } catch(e) {}
     }
 
@@ -59,25 +59,13 @@ WebGLUtil = (function() {
   }
 
   function withWebGL2(canvasId, callback, onFinished) {
-    var prefArrArr = [
-      ['webgl.force-enabled', true],
-      ['webgl.disable-angle', true],
-      ['webgl.enable-prototype-webgl2', true],
-    ];
-    var prefEnv = {'set': prefArrArr};
-    SpecialPowers.pushPrefEnv(prefEnv, function() {
+    var run = function() {
       var canvas = document.getElementById(canvasId);
 
       var gl = null;
       try {
         gl = canvas.getContext('webgl2');
       } catch(e) {}
-
-      if (!gl) {
-        try {
-          gl = canvas.getContext('experimental-webgl2');
-        } catch(e) {}
-      }
 
       if (!gl) {
         todo(false, 'WebGL2 is not supported');
@@ -93,7 +81,21 @@ WebGLUtil = (function() {
 
       callback(gl);
       onFinished();
-    });
+    };
+
+    try {
+      var prefArrArr = [
+        ['webgl.force-enabled', true],
+        ['webgl.disable-angle', true],
+        ['webgl.bypass-shader-validation', true],
+        ['webgl.enable-prototype-webgl2', true],
+      ];
+      var prefEnv = {'set': prefArrArr};
+      SpecialPowers.pushPrefEnv(prefEnv, run);
+    } catch (e) {
+      warning('No SpecialPowers, but trying WebGL2 anyway...');
+      run();
+    }
   }
 
   function getContentFromElem(elem) {

@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let tabState = {
+var tabState = {
   entries: [{url: "about:robots", children: [{url: "about:mozilla"}]}]
 };
 
@@ -57,5 +57,5 @@ function whenChildCount(aEntry, aChildCount, aCallback) {
   if (aEntry.childCount == aChildCount)
     aCallback();
   else
-    setTimeout(function () whenChildCount(aEntry, aChildCount, aCallback), 100);
+    setTimeout(() => whenChildCount(aEntry, aChildCount, aCallback), 100);
 }

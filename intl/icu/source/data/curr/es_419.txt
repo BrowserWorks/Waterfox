@@ -1,0 +1,55 @@
+﻿// ***************************************************************************
+// *
+// * Copyright (C) 2015 International Business Machines
+// * Corporation and others. All Rights Reserved.
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/es_419.xml
+// *
+// ***************************************************************************
+es_419{
+    Currencies{
+        AMD{
+            "AMD",
+            "dram armenio",
+        }
+        CAD{
+            "CAD",
+            "dólar canadiense",
+        }
+        ERN{
+            "ERN",
+            "nafka",
+        }
+        EUR{
+            "EUR",
+            "euro",
+        }
+        THB{
+            "THB",
+            "bat",
+        }
+        USD{
+            "USD",
+            "dólar estadounidense",
+        }
+        VND{
+            "VND",
+            "dong",
+        }
+    }
+    Currencies%narrow{
+        EGP{"E£"}
+        VEF{"BsF"}
+    }
+    CurrencyPlurals{
+        BGN{
+            one{"lev búlgaro"}
+            other{"leva búlgaros"}
+        }
+        XXX{
+            one{"(unidad de moneda desconocida)"}
+            other{"(moneda desconocida)"}
+        }
+    }
+    Version{"2.1.19.14"}
+}

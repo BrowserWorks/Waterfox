@@ -185,24 +185,28 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
-                                  "resource://gre/modules/devtools/Console.jsm");
+                                  "resource://gre/modules/Console.jsm");
 
 Components.utils.importGlobalProperties(["URL"]);
 
-let TransactionsHistory = [];
+var TransactionsHistory = [];
 TransactionsHistory.__proto__ = {
   __proto__: Array.prototype,
 
   // The index of the first undo entry (if any) - See the documentation
   // at the top of this file.
   _undoPosition: 0,
-  get undoPosition() this._undoPosition,
+  get undoPosition() {
+    return this._undoPosition;
+  },
 
   // Handy shortcuts
-  get topUndoEntry() this.undoPosition < this.length ?
-                     this[this.undoPosition] : null,
-  get topRedoEntry() this.undoPosition > 0 ?
-                     this[this.undoPosition - 1] : null,
+  get topUndoEntry() {
+    return this.undoPosition < this.length ? this[this.undoPosition] : null;
+  },
+  get topRedoEntry() {
+    return this.undoPosition > 0 ? this[this.undoPosition - 1] : null;
+  },
 
   // Outside of this module, the API of transactions is inaccessible, and so
   // are any internal properties.  To achieve that, transactions are proxified
@@ -219,7 +223,9 @@ TransactionsHistory.__proto__ = {
    */
   proxifyTransaction: function (aRawTransaction) {
     let proxy = Object.freeze({
-      transact() TransactionsManager.transact(this)
+      transact() {
+        return TransactionsManager.transact(this);
+      }
     });
     this.proxifiedToRaw.set(proxy, aRawTransaction);
     return proxy;
@@ -232,8 +238,9 @@ TransactionsHistory.__proto__ = {
    * @return true if aValue is the proxy object for some transaction, false
    * otherwise.
    */
-  isProxifiedTransactionObject:
-  function (aValue) this.proxifiedToRaw.has(aValue),
+  isProxifiedTransactionObject(aValue) {
+    return this.proxifiedToRaw.has(aValue);
+  },
 
   /**
    * Get the raw transaction for the given proxy.
@@ -242,7 +249,9 @@ TransactionsHistory.__proto__ = {
    * @return the transaction proxified by aProxy; |undefined| is returned if
    * aProxy is not a proxified transaction.
    */
-  getRawTransaction(aProxy) this.proxifiedToRaw.get(aProxy),
+  getRawTransaction(aProxy) {
+    return this.proxifiedToRaw.get(aProxy);
+  },
 
   /**
    * Add a transaction either as a new entry, if forced or if there are no undo
@@ -299,7 +308,7 @@ TransactionsHistory.__proto__ = {
 };
 
 
-let PlacesTransactions = {
+var PlacesTransactions = {
   /**
    * @see Batches in the module documentation.
    */
@@ -340,7 +349,9 @@ let PlacesTransactions = {
    * @note All undo manager operations are queued. This means that transactions
    * history may change by the time your request is fulfilled.
    */
-  undo() TransactionsManager.undo(),
+  undo() {
+    return TransactionsManager.undo();
+  },
 
   /**
    * Asynchronously redo the transaction immediately before the current undo
@@ -351,7 +362,9 @@ let PlacesTransactions = {
    * @note All undo manager operations are queued. This means that transactions
    * history may change by the time your request is fulfilled.
    */
-  redo() TransactionsManager.redo(),
+  redo() {
+    return TransactionsManager.redo();
+  },
 
   /**
    * Asynchronously clear the undo, redo, or all entries from the transactions
@@ -367,13 +380,16 @@ let PlacesTransactions = {
    * @note All undo manager operations are queued. This means that transactions
    * history may change by the time your request is fulfilled.
    */
-  clearTransactionsHistory(aUndoEntries = true, aRedoEntries = true)
-    TransactionsManager.clearTransactionsHistory(aUndoEntries, aRedoEntries),
+  clearTransactionsHistory(aUndoEntries = true, aRedoEntries = true) {
+    return TransactionsManager.clearTransactionsHistory(aUndoEntries, aRedoEntries);
+  },
 
   /**
    * The numbers of entries in the transactions history.
    */
-  get length() TransactionsHistory.length,
+  get length() {
+    return TransactionsHistory.length;
+  },
 
   /**
    * Get the transaction history entry at a given index.  Each entry consists
@@ -400,17 +416,23 @@ let PlacesTransactions = {
    * Entries past this point
    * Entries at and past this point are redo entries.
    */
-  get undoPosition() TransactionsHistory.undoPosition,
+  get undoPosition() {
+    return TransactionsHistory.undoPosition;
+  },
 
   /**
    * Shortcut for accessing the top undo entry in the transaction history.
    */
-  get topUndoEntry() TransactionsHistory.topUndoEntry,
+  get topUndoEntry() {
+    return TransactionsHistory.topUndoEntry;
+  },
 
   /**
    * Shortcut for accessing the top redo entry in the transaction history.
    */
-  get topRedoEntry() TransactionsHistory.topRedoEntry
+  get topRedoEntry() {
+    return TransactionsHistory.topRedoEntry;
+  }
 };
 
 /**
@@ -461,10 +483,12 @@ Enqueuer.prototype = {
   /**
    * The promise for this queue.
    */
-  get promise() this._promise
+  get promise() {
+    return this._promise;
+  }
 };
 
-let TransactionsManager = {
+var TransactionsManager = {
   // See the documentation at the top of this file. |transact| calls are not
   // serialized with |batch| calls.
   _mainEnqueuer: new Enqueuer(),
@@ -656,8 +680,8 @@ function DefineTransaction(aRequiredProps = [], aOptionalProps = []) {
       let input = DefineTransaction.verifyInput(aInput, aRequiredProps,
                                                 aOptionalProps);
       let executeArgs = [this,
-                         ...[input[prop] for (prop of aRequiredProps)],
-                         ...[input[prop] for (prop of aOptionalProps)]];
+                         ...aRequiredProps.map(prop => input[prop]),
+                         ...aOptionalProps.map(prop => input[prop])];
       this.execute = Function.bind.apply(this.execute, executeArgs);
     }
     return TransactionsHistory.proxifyTransaction(this);
@@ -701,7 +725,7 @@ DefineTransaction.annotationObjectValidate = function (obj) {
       checkProperty("value", false, isPrimitive) ) {
     // Nothing else should be set
     let validKeys = ["name", "value", "flags", "expires"];
-    if (Object.keys(obj).every( (k) => validKeys.indexOf(k) != -1 ))
+    if (Object.keys(obj).every( (k) => validKeys.includes(k)))
       return obj;
   }
   throw new Error("Invalid annotation object");
@@ -761,7 +785,7 @@ function (aName, aBasePropertyName) {
 
       // This also takes care of abandoning the global scope of the input
       // array (through Array.prototype).
-      return [for (e of aValue) baseProp.validateValue(e)];
+      return aValue.map(baseProp.validateValue);
     },
 
     // We allow setting either the array property itself (e.g. urls), or a
@@ -1016,8 +1040,8 @@ function* createItemsFromBookmarksTree(aBookmarksTree, aRestoring = false,
     }
     if (annos.length > 0) {
       if (!aRestoring && aExcludingAnnotations.length > 0) {
-        annos = [for(a of annos)
-                 if (aExcludingAnnotations.indexOf(a.name) == -1) a];
+        annos = annos.filter(a => !aExcludingAnnotations.includes(a.name));
+
       }
 
       PlacesUtils.setAnnotationsForItem(itemId, annos);
@@ -1043,7 +1067,7 @@ function* createItemsFromBookmarksTree(aBookmarksTree, aRestoring = false,
  * are also documented there.
  *****************************************************************************/
 
-let PT = PlacesTransactions;
+var PT = PlacesTransactions;
 
 /**
  * Transaction for creating a bookmark.
@@ -1071,7 +1095,7 @@ PT.NewBookmark.prototype = Object.seal({
           PlacesUtils.setAnnotationsForItem(itemId, aAnnos);
         if (aTags.length > 0) {
           let currentTags = PlacesUtils.tagging.getTagsForURI(aURI);
-          aTags = [t for (t of aTags) if (currentTags.indexOf(t) == -1)];
+          aTags = aTags.filter(t => !currentTags.includes(t));
           PlacesUtils.tagging.tagURI(aURI, aTags);
         }
 
@@ -1243,8 +1267,7 @@ PT.EditUrl.prototype = Object.seal({
         PlacesUtils.tagging.untagURI(oldURI, oldURITags);
 
       let currentNewURITags = PlacesUtils.tagging.getTagsForURI(aURI);
-      newURIAdditionalTags = [t for (t of oldURITags)
-                              if (currentNewURITags.indexOf(t) == -1)];
+      newURIAdditionalTags = oldURITags.filter(t => !currentNewURITags.includes(t));
       if (newURIAdditionalTags)
         PlacesUtils.tagging.tagURI(aURI, newURIAdditionalTags);
     }
@@ -1410,7 +1433,11 @@ PT.Remove.prototype = {
                         guid + "). Ex: " + ex);
       }
     }
-    let toRestore = [for (guid of aGuids) yield promiseBookmarksTree(guid)];
+
+    let toRestore = [];
+    for (let guid of aGuids) {
+      toRestore.push(yield promiseBookmarksTree(guid));
+    }
 
     let removeThem = Task.async(function* () {
       for (let guid of aGuids) {
@@ -1481,7 +1508,7 @@ PT.Tag.prototype = {
       }
       else {
         let currentTags = PlacesUtils.tagging.getTagsForURI(currentURI);
-        let newTags = [t for (t of aTags) if (currentTags.indexOf(t) == -1)];
+        let newTags = aTags.filter(t => !currentTags.includes(t));
         PlacesUtils.tagging.tagURI(currentURI, newTags);
         onUndo.unshift(() => {
           PlacesUtils.tagging.untagURI(currentURI, newTags);
@@ -1522,7 +1549,7 @@ PT.Untag.prototype = {
       let tagsToRemove;
       let tagsSet = PlacesUtils.tagging.getTagsForURI(currentURI);
       if (aTags.length > 0)
-        tagsToRemove = [t for (t of aTags) if (tagsSet.indexOf(t) != -1)];
+        tagsToRemove = aTags.filter(t => tagsSet.includes(t));
       else
         tagsToRemove = tagsSet;
       PlacesUtils.tagging.untagURI(currentURI, tagsToRemove);

@@ -109,8 +109,8 @@ public:
                            nsEventStatus* aStatus);
 
   /**
-   * DispatchLegacyMouseScrollEvents() dispatches NS_MOUSE_SCROLL event and
-   * NS_MOUSE_PIXEL_SCROLL event for compatiblity with old Gecko.
+   * DispatchLegacyMouseScrollEvents() dispatches eLegacyMouseLineOrPageScroll
+   * event and eLegacyMousePixelScroll event for compatibility with old Gecko.
    */
   void DispatchLegacyMouseScrollEvents(nsIFrame* aTargetFrame,
                                        WidgetWheelEvent* aEvent,
@@ -147,6 +147,12 @@ public:
   void OnStopObservingContent(IMEContentObserver* aIMEContentObserver);
 
   /**
+   * TryToFlushPendingNotificationsToIME() suggests flushing pending
+   * notifications to IME to IMEContentObserver.
+   */
+  void TryToFlushPendingNotificationsToIME();
+
+  /**
    * Register accesskey on the given element. When accesskey is activated then
    * the element will be notified via nsIContent::PerformAccesskey() method.
    *
@@ -173,6 +179,15 @@ public:
 
   static void GetAccessKeyLabelPrefix(dom::Element* aElement, nsAString& aPrefix);
 
+  bool HandleAccessKey(nsPresContext* aPresContext,
+                       nsTArray<uint32_t>& aAccessCharCodes,
+                       bool aIsTrusted,
+                       int32_t aModifierMask)
+  {
+    return HandleAccessKey(aPresContext, aAccessCharCodes, aIsTrusted,
+                           nullptr, eAccessKeyProcessingNormal, aModifierMask);
+  }
+
   nsresult SetCursor(int32_t aCursor, imgIContainer* aContainer,
                      bool aHaveHotspot, float aHotspotX, float aHotspotY,
                      nsIWidget* aWidget, bool aLockCursor); 
@@ -180,8 +195,9 @@ public:
   static void StartHandlingUserInput()
   {
     ++sUserInputEventDepth;
+    ++sUserInputCounter;
     if (sUserInputEventDepth == 1) {
-      sHandlingInputStart = TimeStamp::Now();
+      sLatestUserInputStart = sHandlingInputStart = TimeStamp::Now();
     }
   }
 
@@ -194,16 +210,37 @@ public:
   }
 
   /**
-   * Returns true if the current code is being executed as a result of user input.
-   * This includes timers or anything else that is initiated from user input.
-   * However, mouse over events are not counted as user input, nor are
-   * page load events. If this method is called from asynchronously executed code,
-   * such as during layout reflows, it will return false. If more time has elapsed
-   * since the user input than is specified by the
-   * dom.event.handling-user-input-time-limit pref (default 1 second), this
-   * function also returns false.
+   * Returns true if the current code is being executed as a result of
+   * user input.  This includes anything that is initiated by user,
+   * with the exception of page load events or mouse over events. If
+   * this method is called from asynchronously executed code, such as
+   * during layout reflows, it will return false. If more time has
+   * elapsed since the user input than is specified by the
+   * dom.event.handling-user-input-time-limit pref (default 1 second),
+   * this function also returns false.
    */
   static bool IsHandlingUserInput();
+
+  /**
+   * Get the number of user inputs handled since process start. This
+   * includes anything that is initiated by user, with the exception
+   * of page load events or mouse over events.
+   */
+  static uint64_t UserInputCount()
+  {
+    return sUserInputCounter;
+  }
+
+  /**
+   * Get the timestamp at which the latest user input was handled.
+   *
+   * Guaranteed to be monotonic. Until the first user input, return
+   * the epoch.
+   */
+  static TimeStamp LatestUserInputStart()
+  {
+    return sLatestUserInputStart;
+  }
 
   nsPresContext* GetPresContext() { return mPresContext; }
 
@@ -227,9 +264,10 @@ public:
   // Returns true if the given WidgetWheelEvent will resolve to a scroll action.
   static bool WheelEventIsScrollAction(WidgetWheelEvent* aEvent);
 
-  // Returns true if user prefs for wheel deltas apply to the given
-  // WidgetWheelEvent.
-  static bool WheelEventNeedsDeltaMultipliers(WidgetWheelEvent* aEvent);
+  // Returns user-set multipliers for a wheel event.
+  static void GetUserPrefsForWheelEvent(WidgetWheelEvent* aEvent,
+                                        double* aOutMultiplierX,
+                                        double* aOutMultiplierY);
 
   // Returns whether or not a frame can be vertically scrolled with a mouse
   // wheel (as opposed to, say, a selection or touch scroll).
@@ -241,7 +279,7 @@ public:
   // locked. This is used by dom::Event::GetScreenCoords() to make mouse
   // events' screen coord appear frozen at the last mouse position while
   // the pointer is locked.
-  static LayoutDeviceIntPoint sLastScreenPoint;
+  static CSSIntPoint sLastScreenPoint;
 
   // Holds the point in client coords of the last mouse event. Used by
   // dom::Event::GetClientCoords() to make mouse events' client coords appear
@@ -303,13 +341,14 @@ protected:
    * if it goes away during the event).
    */
   nsIFrame* DispatchMouseOrPointerEvent(WidgetMouseEvent* aMouseEvent,
-                                        uint32_t aMessage,
+                                        EventMessage aMessage,
                                         nsIContent* aTargetContent,
                                         nsIContent* aRelatedContent);
   /**
    * Synthesize DOM pointerover and pointerout events
    */
-  void GeneratePointerEnterExit(uint32_t aMessage, WidgetMouseEvent* aEvent);
+  void GeneratePointerEnterExit(EventMessage aMessage,
+                                WidgetMouseEvent* aEvent);
   /**
    * Synthesize DOM and frame mouseover and mouseout events from this
    * MOUSE_MOVE or MOUSE_EXIT event.
@@ -351,7 +390,7 @@ protected:
    */
   void FireDragEnterOrExit(nsPresContext* aPresContext,
                            WidgetDragEvent* aDragEvent,
-                           uint32_t aMsg,
+                           EventMessage aMessage,
                            nsIContent* aRelatedTarget,
                            nsIContent* aTargetContent,
                            nsWeakFrame& aTargetFrame);
@@ -361,11 +400,8 @@ protected:
    */
   void UpdateDragDataTransfer(WidgetDragEvent* dragEvent);
 
-  nsresult SetClickCount(nsPresContext* aPresContext,
-                         WidgetMouseEvent* aEvent,
-                         nsEventStatus* aStatus);
-  nsresult CheckForAndDispatchClick(nsPresContext* aPresContext,
-                                    WidgetMouseEvent* aEvent,
+  nsresult SetClickCount(WidgetMouseEvent* aEvent, nsEventStatus* aStatus);
+  nsresult CheckForAndDispatchClick(WidgetMouseEvent* aEvent,
                                     nsEventStatus* aStatus);
   void EnsureDocument(nsPresContext* aPresContext);
   void FlushPendingEvents(nsPresContext* aPresContext);
@@ -387,8 +423,8 @@ protected:
    * set to the docshell associated with |this|), until something matches.
    *
    * @param aPresContext the presentation context
-   * @param aEvent the key event
-   * @param aStatus the event status
+   * @param aAccessCharCodes list of charcode candidates
+   * @param aIsTrusted true if triggered by a trusted key event
    * @param aBubbledFrom is used by an ancestor to avoid calling HandleAccessKey()
    *        on the child the call originally came from, i.e. this is the child
    *        that recursively called us in its Up phase. The initial caller
@@ -398,12 +434,12 @@ protected:
    *        processing children and Up when recursively calling its ancestor.
    * @param aModifierMask modifier mask for the key event
    */
-  void HandleAccessKey(nsPresContext* aPresContext,
-                       WidgetKeyboardEvent* aEvent,
-                       nsEventStatus* aStatus,
-                       nsIDocShellTreeItem* aBubbledFrom,
-                       ProcessingAccessKeyState aAccessKeyState,
-                       int32_t aModifierMask);
+  bool HandleAccessKey(nsPresContext* aPresContext,
+                     nsTArray<uint32_t>& aAccessCharCodes,
+                     bool aIsTrusted,
+                     nsIDocShellTreeItem* aBubbledFrom,
+                     ProcessingAccessKeyState aAccessKeyState,
+                     int32_t aModifierMask);
 
   bool ExecuteAccessKey(nsTArray<uint32_t>& aAccessCharCodes,
                           bool aIsTrustedEvent);
@@ -433,7 +469,9 @@ protected:
      * Returns whether or not ApplyUserPrefsToDelta() would change the delta
      * values of an event.
      */
-    bool HasUserPrefsForDelta(WidgetWheelEvent* aEvent);
+    void GetUserPrefsForEvent(WidgetWheelEvent* aEvent,
+                              double* aOutMultiplierX,
+                              double* aOutMultiplierY);
 
     /**
      * If ApplyUserPrefsToDelta() changed the delta values with customized
@@ -451,7 +489,10 @@ protected:
       ACTION_SCROLL,
       ACTION_HISTORY,
       ACTION_ZOOM,
-      ACTION_LAST = ACTION_ZOOM
+      ACTION_LAST = ACTION_ZOOM,
+      // Following actions are used only by internal processing.  So, cannot
+      // specified by prefs.
+      ACTION_SEND_TO_PLUGIN
     };
     Action ComputeActionFor(WidgetWheelEvent* aEvent);
 
@@ -607,10 +648,11 @@ protected:
   // COMPUTE_*.
   enum
   {
-    PREFER_MOUSE_WHEEL_TRANSACTION               = 1,
-    PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_X_AXIS = 2,
-    PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_Y_AXIS = 4,
-    START_FROM_PARENT                            = 8
+    PREFER_MOUSE_WHEEL_TRANSACTION               = 0x00000001,
+    PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_X_AXIS = 0x00000002,
+    PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_Y_AXIS = 0x00000004,
+    START_FROM_PARENT                            = 0x00000008,
+    INCLUDE_PLUGIN_AS_TARGET                     = 0x00000010
   };
   enum ComputeScrollTargetOptions
   {
@@ -620,10 +662,13 @@ protected:
     // Default action prefers the scrolled element immediately before if it's
     // still under the mouse cursor.  Otherwise, it prefers the nearest
     // scrollable ancestor which will be scrolled actually.
+    // When this is specified, the result may be nsPluginFrame.  In such case,
+    // the frame doesn't have nsIScrollableFrame interface.
     COMPUTE_DEFAULT_ACTION_TARGET                =
       (PREFER_MOUSE_WHEEL_TRANSACTION |
        PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_X_AXIS |
-       PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_Y_AXIS),
+       PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_Y_AXIS |
+       INCLUDE_PLUGIN_AS_TARGET),
     // Look for the nearest scrollable ancestor which can be scrollable with
     // aEvent.
     COMPUTE_SCROLLABLE_ANCESTOR_ALONG_X_AXIS     =
@@ -631,15 +676,15 @@ protected:
     COMPUTE_SCROLLABLE_ANCESTOR_ALONG_Y_AXIS     =
       (PREFER_ACTUAL_SCROLLABLE_TARGET_ALONG_Y_AXIS | START_FROM_PARENT)
   };
-  nsIScrollableFrame* ComputeScrollTarget(nsIFrame* aTargetFrame,
-                                          WidgetWheelEvent* aEvent,
-                                          ComputeScrollTargetOptions aOptions);
+  nsIFrame* ComputeScrollTarget(nsIFrame* aTargetFrame,
+                                WidgetWheelEvent* aEvent,
+                                ComputeScrollTargetOptions aOptions);
 
-  nsIScrollableFrame* ComputeScrollTarget(nsIFrame* aTargetFrame,
-                                          double aDirectionX,
-                                          double aDirectionY,
-                                          WidgetWheelEvent* aEvent,
-                                          ComputeScrollTargetOptions aOptions);
+  nsIFrame* ComputeScrollTarget(nsIFrame* aTargetFrame,
+                                double aDirectionX,
+                                double aDirectionY,
+                                WidgetWheelEvent* aEvent,
+                                ComputeScrollTargetOptions aOptions);
 
   /**
    * GetScrollAmount() returns the scroll amount in app uints of one line or
@@ -808,9 +853,6 @@ protected:
   nsresult DoContentCommandEvent(WidgetContentCommandEvent* aEvent);
   nsresult DoContentCommandScrollEvent(WidgetContentCommandEvent* aEvent);
 
-  void DoQuerySelectedText(WidgetQueryContentEvent* aEvent);
-
-  bool RemoteQueryContentEvent(WidgetEvent* aEvent);
   dom::TabParent *GetCrossProcessTarget();
   bool IsTargetCrossProcess(WidgetGUIEvent* aEvent);
 
@@ -822,6 +864,8 @@ protected:
 
   void ReleaseCurrentIMEContentObserver();
 
+  void HandleQueryContentEvent(WidgetQueryContentEvent* aEvent);
+
 private:
   static inline void DoStateChange(dom::Element* aElement,
                                    EventStates aState, bool aAddState);
@@ -832,13 +876,14 @@ private:
                                   EventStates aState,
                                   bool aAddState);
   static PLDHashOperator ResetLastOverForContent(const uint32_t& aIdx,
-                                                 nsRefPtr<OverOutElementsWrapper>& aChunk,
+                                                 RefPtr<OverOutElementsWrapper>& aChunk,
                                                  void* aClosure);
   void PostHandleKeyboardEvent(WidgetKeyboardEvent* aKeyboardEvent,
                                nsEventStatus& aStatus,
                                bool dispatchedToContentProcess);
 
   int32_t     mLockCursor;
+  bool mLastFrameConsumedSetCursor;
 
   // Last mouse event refPoint (the offset from the widget's origin in
   // device pixels) when mouse was locked, used to restore mouse position
@@ -887,7 +932,7 @@ private:
   nsPresContext* mPresContext;      // Not refcnted
   nsCOMPtr<nsIDocument> mDocument;   // Doesn't necessarily need to be owner
 
-  nsRefPtr<IMEContentObserver> mIMEContentObserver;
+  RefPtr<IMEContentObserver> mIMEContentObserver;
 
   uint32_t mLClickCount;
   uint32_t mMClickCount;
@@ -895,10 +940,15 @@ private:
 
   bool m_haveShutdown;
 
-  // Time at which we began handling user input.
+  // Time at which we began handling user input. Reset to the epoch
+  // once we have finished handling user input.
   static TimeStamp sHandlingInputStart;
 
-  nsRefPtr<OverOutElementsWrapper> mMouseEnterLeaveHelper;
+  // Time at which we began handling the latest user input. Not reset
+  // at the end of the input.
+  static TimeStamp sLatestUserInputStart;
+
+  RefPtr<OverOutElementsWrapper> mMouseEnterLeaveHelper;
   nsRefPtrHashtable<nsUint32HashKey, OverOutElementsWrapper> mPointersEnterLeaveHelper;
 
 public:
@@ -906,6 +956,16 @@ public:
   // Array for accesskey support
   nsCOMArray<nsIContent> mAccessKeys;
 
+  // The number of user inputs handled since process start. This
+  // includes anything that is initiated by user, with the exception
+  // of page load events or mouse over events.
+  static uint64_t sUserInputCounter;
+
+  // The current depth of user inputs. This includes anything that is
+  // initiated by user, with the exception of page load events or
+  // mouse over events. Incremented whenever we start handling a user
+  // input, decremented when we have finished handling a user
+  // input. This depth is *not* reset in case of nested event loops.
   static int32_t sUserInputEventDepth;
   
   static bool sNormalLMouseEventInProcess;
@@ -957,7 +1017,7 @@ private:
 // has no frame. This is required for Web compatibility.
 #define NS_EVENT_NEEDS_FRAME(event) \
     (!(event)->HasPluginActivationEventMessage() && \
-     (event)->message != NS_MOUSE_CLICK && \
-     (event)->message != NS_MOUSE_DOUBLECLICK)
+     (event)->mMessage != eMouseClick && \
+     (event)->mMessage != eMouseDoubleClick)
 
 #endif // mozilla_EventStateManager_h_

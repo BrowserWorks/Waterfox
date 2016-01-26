@@ -23,9 +23,9 @@
 #endif /* _WIN32 */
 
 #include "plstr.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "plbase64.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prprf.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/PContent.h"
@@ -80,9 +80,9 @@ static bool         gShouldCleanupDeadNodes = false;
 
 
 static PLDHashTableOps     pref_HashTableOps = {
-    PL_DHashStringKey,
+    PLDHashTable::HashStringKey,
     matchPrefEntry,
-    PL_DHashMoveEntryStub,
+    PLDHashTable::MoveEntryStub,
     clearPrefEntry,
     nullptr,
 };
@@ -147,7 +147,7 @@ static nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, u
 
 #define PREF_HASHTABLE_INITIAL_LENGTH   1024
 
-nsresult PREF_Init()
+void PREF_Init()
 {
     if (!gHashTable) {
         gHashTable = new PLDHashTable(&pref_HashTableOps,
@@ -157,7 +157,6 @@ nsresult PREF_Init()
         PL_INIT_ARENA_POOL(&gPrefNameArena, "PrefNameArena",
                            PREFNAME_ARENA_SIZE);
     }
-    return NS_OK;
 }
 
 /* Frees the callback list. */
@@ -319,79 +318,59 @@ pref_SetPref(const dom::PrefSetting& aPref)
     return rv;
 }
 
-PLDHashOperator
-pref_savePref(PLDHashTable *table, PLDHashEntryHdr *heh, uint32_t i, void *arg)
+UniquePtr<char*[]>
+pref_savePrefs(PLDHashTable* aTable)
 {
-    pref_saveArgs *argData = static_cast<pref_saveArgs *>(arg);
-    PrefHashEntry *pref = static_cast<PrefHashEntry *>(heh);
+    auto savedPrefs = MakeUnique<char*[]>(aTable->EntryCount());
+    memset(savedPrefs.get(), 0, aTable->EntryCount() * sizeof(char*));
 
-    PR_ASSERT(pref);
-    if (!pref)
-        return PL_DHASH_NEXT;
+    int32_t j = 0;
+    for (auto iter = aTable->Iter(); !iter.Done(); iter.Next()) {
+        auto pref = static_cast<PrefHashEntry*>(iter.Get());
 
-    nsAutoCString prefValue;
-    nsAutoCString prefPrefix;
-    prefPrefix.AssignLiteral("user_pref(\"");
+        nsAutoCString prefValue;
+        nsAutoCString prefPrefix;
+        prefPrefix.AssignLiteral("user_pref(\"");
 
-    // where we're getting our pref from
-    PrefValue* sourcePref;
+        // where we're getting our pref from
+        PrefValue* sourcePref;
 
-    if (PREF_HAS_USER_VALUE(pref) &&
-        (pref_ValueChanged(pref->defaultPref,
-                           pref->userPref,
-                           (PrefType) PREF_TYPE(pref)) ||
-         !(pref->flags & PREF_HAS_DEFAULT) ||
-         pref->flags & PREF_STICKY_DEFAULT)) {
-        sourcePref = &pref->userPref;
-    } else {
-        if (argData->saveTypes == SAVE_ALL_AND_DEFAULTS) {
-            prefPrefix.AssignLiteral("pref(\"");
-            sourcePref = &pref->defaultPref;
-        }
-        else
+        if (PREF_HAS_USER_VALUE(pref) &&
+            (pref_ValueChanged(pref->defaultPref,
+                               pref->userPref,
+                               (PrefType) PREF_TYPE(pref)) ||
+             !(pref->flags & PREF_HAS_DEFAULT) ||
+             pref->flags & PREF_STICKY_DEFAULT)) {
+            sourcePref = &pref->userPref;
+        } else {
             // do not save default prefs that haven't changed
-            return PL_DHASH_NEXT;
+            continue;
+        }
+
+        // strings are in quotes!
+        if (pref->flags & PREF_STRING) {
+            prefValue = '\"';
+            str_escape(sourcePref->stringVal, prefValue);
+            prefValue += '\"';
+
+        } else if (pref->flags & PREF_INT) {
+            prefValue.AppendInt(sourcePref->intVal);
+
+        } else if (pref->flags & PREF_BOOL) {
+            prefValue = (sourcePref->boolVal) ? "true" : "false";
+        }
+
+        nsAutoCString prefName;
+        str_escape(pref->key, prefName);
+
+        savedPrefs[j++] = ToNewCString(prefPrefix +
+                                       prefName +
+                                       NS_LITERAL_CSTRING("\", ") +
+                                       prefValue +
+                                       NS_LITERAL_CSTRING(");"));
     }
 
-    // strings are in quotes!
-    if (pref->flags & PREF_STRING) {
-        prefValue = '\"';
-        str_escape(sourcePref->stringVal, prefValue);
-        prefValue += '\"';
-    }
-
-    else if (pref->flags & PREF_INT)
-        prefValue.AppendInt(sourcePref->intVal);
-
-    else if (pref->flags & PREF_BOOL)
-        prefValue = (sourcePref->boolVal) ? "true" : "false";
-
-    nsAutoCString prefName;
-    str_escape(pref->key, prefName);
-
-    argData->prefArray[i] = ToNewCString(prefPrefix +
-                                         prefName +
-                                         NS_LITERAL_CSTRING("\", ") +
-                                         prefValue +
-                                         NS_LITERAL_CSTRING(");"));
-
-    return PL_DHASH_NEXT;
-}
-
-PLDHashOperator
-pref_GetPrefs(PLDHashTable *table,
-              PLDHashEntryHdr *heh,
-              uint32_t i,
-              void *arg)
-{
-    if (heh) {
-        PrefHashEntry *entry = static_cast<PrefHashEntry *>(heh);
-        dom::PrefSetting *pref =
-            static_cast<InfallibleTArray<dom::PrefSetting>*>(arg)->AppendElement();
-
-        pref_GetPrefFromEntry(entry, pref);
-    }
-    return PL_DHASH_NEXT;
+    return savedPrefs;
 }
 
 static void
@@ -555,23 +534,6 @@ nsresult PREF_GetBoolPref(const char *pref_name, bool * return_value, bool get_d
     return rv;
 }
 
-/* Delete a branch. Used for deleting mime types */
-static PLDHashOperator
-pref_DeleteItem(PLDHashTable *table, PLDHashEntryHdr *heh, uint32_t i, void *arg)
-{
-    PrefHashEntry* he = static_cast<PrefHashEntry*>(heh);
-    const char *to_delete = (const char *) arg;
-    int len = strlen(to_delete);
-
-    /* note if we're deleting "ldap" then we want to delete "ldap.xxx"
-        and "ldap" (if such a leaf node exists) but not "ldap_1.xxx" */
-    if (to_delete && (PL_strncmp(he->key, to_delete, (uint32_t) len) == 0 ||
-        (len-1 == (int)strlen(he->key) && PL_strncmp(he->key, to_delete, (uint32_t)(len-1)) == 0)))
-        return PL_DHASH_REMOVE;
-
-    return PL_DHASH_NEXT;
-}
-
 nsresult
 PREF_DeleteBranch(const char *branch_name)
 {
@@ -594,8 +556,22 @@ PREF_DeleteBranch(const char *branch_name)
     if ((len > 1) && branch_name[len - 1] != '.')
         branch_dot += '.';
 
-    PL_DHashTableEnumerate(gHashTable, pref_DeleteItem,
-                           (void*) branch_dot.get());
+    /* Delete a branch. Used for deleting mime types */
+    const char *to_delete = branch_dot.get();
+    MOZ_ASSERT(to_delete);
+    len = strlen(to_delete);
+    for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+        auto entry = static_cast<PrefHashEntry*>(iter.Get());
+
+        /* note if we're deleting "ldap" then we want to delete "ldap.xxx"
+            and "ldap" (if such a leaf node exists) but not "ldap_1.xxx" */
+        if (PL_strncmp(entry->key, to_delete, (uint32_t) len) == 0 ||
+            (len-1 == (int)strlen(entry->key) &&
+             PL_strncmp(entry->key, to_delete, (uint32_t)(len-1)) == 0)) {
+            iter.Remove();
+        }
+    }
+
     gDirty = true;
     return NS_OK;
 }
@@ -613,33 +589,13 @@ PREF_ClearUserPref(const char *pref_name)
         pref->flags &= ~PREF_USERSET;
 
         if (!(pref->flags & PREF_HAS_DEFAULT)) {
-            PL_DHashTableRemove(gHashTable, pref_name);
+            gHashTable->RemoveEntry(pref);
         }
 
         pref_DoCallback(pref_name);
         gDirty = true;
     }
     return NS_OK;
-}
-
-static PLDHashOperator
-pref_ClearUserPref(PLDHashTable *table, PLDHashEntryHdr *he, uint32_t,
-                   void *arg)
-{
-    PrefHashEntry *pref = static_cast<PrefHashEntry*>(he);
-
-    PLDHashOperator nextOp = PL_DHASH_NEXT;
-
-    if (PREF_HAS_USER_VALUE(pref))
-    {
-        pref->flags &= ~PREF_USERSET;
-
-        if (!(pref->flags & PREF_HAS_DEFAULT)) {
-            nextOp = PL_DHASH_REMOVE;
-        }
-        static_cast<std::vector<std::string>*>(arg)->push_back(std::string(pref->key));
-    }
-    return nextOp;
 }
 
 nsresult
@@ -653,7 +609,18 @@ PREF_ClearAllUserPrefs()
         return NS_ERROR_NOT_INITIALIZED;
 
     std::vector<std::string> prefStrings;
-    PL_DHashTableEnumerate(gHashTable, pref_ClearUserPref, static_cast<void*>(&prefStrings));
+    for (auto iter = gHashTable->Iter(); !iter.Done(); iter.Next()) {
+        auto pref = static_cast<PrefHashEntry*>(iter.Get());
+
+        if (PREF_HAS_USER_VALUE(pref)) {
+            prefStrings.push_back(std::string(pref->key));
+
+            pref->flags &= ~PREF_USERSET;
+            if (!(pref->flags & PREF_HAS_DEFAULT)) {
+                iter.Remove();
+            }
+        }
+    }
 
     for (std::string& prefString : prefStrings) {
         pref_DoCallback(prefString.c_str());
@@ -730,13 +697,13 @@ static void pref_SetValue(PrefValue* existingValue, uint16_t *existingFlags,
     }
 }
 
-PrefHashEntry* pref_HashTableLookup(const void *key)
+PrefHashEntry* pref_HashTableLookup(const char *key)
 {
 #ifndef MOZ_B2G
     MOZ_ASSERT(NS_IsMainThread());
 #endif
 
-    return static_cast<PrefHashEntry*>(PL_DHashTableSearch(gHashTable, key));
+    return static_cast<PrefHashEntry*>(gHashTable->Search(key));
 }
 
 nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t flags)
@@ -748,9 +715,7 @@ nsresult pref_HashPref(const char *key, PrefValue value, PrefType type, uint32_t
     if (!gHashTable)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    PrefHashEntry* pref = static_cast<PrefHashEntry*>
-        (PL_DHashTableAdd(gHashTable, key, fallible));
-
+    auto pref = static_cast<PrefHashEntry*>(gHashTable->Add(key, fallible));
     if (!pref)
         return NS_ERROR_OUT_OF_MEMORY;
 

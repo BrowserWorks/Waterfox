@@ -18,7 +18,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <title>&certerror.pagetitle;</title>
+    <title>&certerror.pagetitle1;</title>
     <link rel="stylesheet" href="chrome://browser/skin/aboutCertError.css" type="text/css" media="all" />
     <link rel="stylesheet" href="chrome://browser/content/certerror/aboutCertError.css" type="text/css" media="all" />
     <!-- This page currently uses the same favicon as neterror.xhtml.
@@ -51,6 +51,19 @@
         return decodeURIComponent(matches[1]);
       }
 
+      function toggleVisibility(id)
+      {
+        var node = document.getElementById(id);
+        node.style.visibility = node.style.visibility == "" ? "hidden" : "";
+        // Toggling the advanced panel must ensure that the debugging
+        // information panel is hidden as well, since it's opened by the
+        // error code link in the advanced panel.
+        if (id == "advancedPanel") {
+          var div = document.getElementById("certificateErrorDebugInformation");
+          div.style.display = "none";
+        }
+      }
+
       function getDescription()
       {
         var url = document.documentURI;
@@ -66,31 +79,46 @@
 
       function initPage()
       {
-        // Replace the "#1" string in the intro with the hostname.  Trickier
-        // than it might seem since we want to preserve the <b> tags, but
-        // not allow for any injection by just using innerHTML.  Instead,
-        // just find the right target text node.
-        var intro = document.getElementById('introContentP1');
-        function replaceWithHost(node) {
-          if (node.textContent == "#1")
-            node.textContent = location.host;
-          else
-            for(var i = 0; i < node.childNodes.length; i++)
-              replaceWithHost(node.childNodes[i]);
-        };
-        replaceWithHost(intro);
+        for (let host of document.querySelectorAll(".hostname")) {
+          host.textContent = document.location.hostname;
+        }
 
         var cssClass = getCSSClass();
         if (cssClass == "expertBadCert") {
-          toggle('technicalContent');
-          toggle('expertContent');
+          toggleVisibility('advancedPanel');
         }
+
+        var checkbox = document.getElementById("automaticallyReportInFuture");
+        checkbox.addEventListener("change", function ({target: {checked}}) {
+          document.dispatchEvent(new CustomEvent("AboutCertErrorSetAutomatic", {
+            detail: checked,
+            bubbles: true
+          }));
+        });
+
+        var retryBtn = document.getElementById("reportCertificateErrorRetry");
+        retryBtn.addEventListener("click", function () {
+          document.dispatchEvent(new CustomEvent("AboutCertErrorSendReport", {
+            bubbles: true
+          }));
+        });
+
+        addEventListener("AboutCertErrorOptions", function (event) {
+          var options = JSON.parse(event.detail);
+          if (options && options.enabled) {
+            // Display error reporting UI
+            document.getElementById("certificateErrorReporting").style.display = "block";
+
+            // set the checkbox
+            checkbox.checked = !!options.automatic;
+          }
+        }, true, true);
 
         // Disallow overrides if this is a Strict-Transport-Security
         // host and the cert is bad (STS Spec section 7.3) or if the
         // certerror is in a frame (bug 633691).
         if (cssClass == "badStsCert" || window != top) {
-          document.getElementById("expertContent").setAttribute("hidden", "true");
+          document.getElementById("exceptionDialogButton").setAttribute("hidden", "true");
         }
         if (cssClass != "badStsCert") {
           document.getElementById("badStsCertExplanation").setAttribute("hidden", "true");
@@ -100,16 +128,22 @@
         if (tech)
           tech.textContent = getDescription();
 
-        addDomainErrorLink();
+        var event = new CustomEvent("AboutCertErrorLoad", {bubbles:true});
+        document.getElementById("advancedButton").dispatchEvent(event);
+
+        addDomainErrorLinks();
       }
 
-      /* In the case of SSL error pages about domain mismatch, see if
+      /* Try to preserve the links contained in the error description, like
+         the error code.
+
+         Also, in the case of SSL error pages about domain mismatch, see if
          we can hyperlink the user to the correct site.  We don't want
          to do this generically since it allows MitM attacks to redirect
          users to a site under attacker control, but in certain cases
          it is safe (and helpful!) to do so.  Bug 402210
       */
-      function addDomainErrorLink() {
+      function addDomainErrorLinks() {
         // Rather than textContent, we need to treat description as HTML
         var sd = document.getElementById("technicalContentText");
         if (sd) {
@@ -117,30 +151,56 @@
 
           // sanitize description text - see bug 441169
 
-          // First, find the index of the <a> tag we care about, being careful not to
-          // use an over-greedy regex
-          var re = /<a id="cert_domain_link" title="([^"]+)">/;
-          var result = re.exec(desc);
-          if(!result)
+          // First, find the index of the <a> tags we care about, being
+          // careful not to use an over-greedy regex.
+          var codeRe = /<a id="errorCode" title="([^"]+)">/;
+          var codeResult = codeRe.exec(desc);
+          var domainRe = /<a id="cert_domain_link" title="([^"]+)">/;
+          var domainResult = domainRe.exec(desc);
+
+          // The order of these links in the description is fixed in
+          // TransportSecurityInfo.cpp:formatOverridableCertErrorMessage.
+          var firstResult = domainResult;
+          if(!domainResult)
+            firstResult = codeResult;
+          if (!firstResult)
             return;
 
           // Remove sd's existing children
           sd.textContent = "";
 
-          // Everything up to the link should be text content
-          sd.appendChild(document.createTextNode(desc.slice(0, result.index)));
+          // Everything up to the first link should be text content.
+          sd.appendChild(document.createTextNode(desc.slice(0, firstResult.index)));
 
-          // Now create the link itself
-          var anchorEl = document.createElement("a");
-          anchorEl.setAttribute("id", "cert_domain_link");
-          anchorEl.setAttribute("title", result[1]);
-          anchorEl.appendChild(document.createTextNode(result[1]));
-          sd.appendChild(anchorEl);
+          // Now create the actual links.
+          if (domainResult) {
+            createLink(sd, "cert_domain_link", domainResult[1])
+            // Append text for anything between the two links.
+            sd.appendChild(document.createTextNode(desc.slice(desc.indexOf("</a>") + "</a>".length, codeResult.index)));
+          }
+          createLink(sd, "errorCode", codeResult[1])
 
-          // Finally, append text for anything after the closing </a>
-          sd.appendChild(document.createTextNode(desc.slice(desc.indexOf("</a>") + "</a>".length)));
+          // Finally, append text for anything after the last closing </a>.
+          sd.appendChild(document.createTextNode(desc.slice(desc.lastIndexOf("</a>") + "</a>".length)));
         }
 
+        // Initialize the error code link embedded in the error message to
+        // display debug information about the cert error.
+        var errorCode = document.getElementById("errorCode");
+        if (errorCode) {
+          errorCode.href = "#technicalInformation";
+          errorCode.addEventListener("click", () => {
+            var div = document.getElementById("certificateErrorDebugInformation");
+            if (div.style.display == "block") {
+              div.style.display = "none";
+            } else {
+              div.style.display = "block";
+              div.scrollIntoView(true);
+            }
+          }, false);
+        }
+
+        // Then initialize the cert domain link.
         var link = document.getElementById('cert_domain_link');
         if (!link)
           return;
@@ -167,7 +227,7 @@
          * domain names are famous for having '.' characters in them,
          * which would allow spurious and possibly hostile matches.
          */
-        if (endsWith(okHost, "." + thisHost))
+        if (okHost.endsWith("." + thisHost))
           link.href = proto + okHost;
 
         /* case #2:
@@ -175,71 +235,79 @@
          *
          * The certificate is only valid for garage.maemo.org
          */
-        if (endsWith(thisHost, "." + okHost))
+        if (thisHost.endsWith("." + okHost))
           link.href = proto + okHost;
 
         // If we set a link, meaning there's something helpful for
         // the user here, expand the section by default
         if (link.href && getCSSClass() != "expertBadCert")
-          toggle("technicalContent");
+          toggleVisibility("advancedPanel");
       }
 
-      function endsWith(haystack, needle) {
-        return haystack.slice(-needle.length) == needle;
-      }
-
-      function toggle(id) {
-        var el = document.getElementById(id);
-        if (el.getAttribute("collapsed"))
-          el.removeAttribute("collapsed");
-        else
-          el.setAttribute("collapsed", true);
+      function createLink(el, id, text) {
+        var anchorEl = document.createElement("a");
+        anchorEl.setAttribute("id", id);
+        anchorEl.setAttribute("title", text);
+        anchorEl.appendChild(document.createTextNode(text));
+        el.appendChild(anchorEl);
       }
     ]]></script>
   </head>
 
   <body dir="&locale.dir;">
-
     <!-- PAGE CONTAINER (for styling purposes only) -->
     <div id="errorPageContainer">
 
       <!-- Error Title -->
       <div id="errorTitle">
-        <h1 id="errorTitleText">&certerror.longpagetitle;</h1>
+        <h1 id="errorTitleText">&certerror.longpagetitle1;</h1>
       </div>
 
       <!-- LONG CONTENT (the section most likely to require scrolling) -->
       <div id="errorLongContent">
-        <div id="introContent">
-          <p id="introContentP1">&certerror.introPara1;</p>
-          <p>&certerror.introPara2;</p>
+
+        <!-- Short Description -->
+        <div id="errorShortDesc">
+          <p>&certerror.introPara;</p>
         </div>
-
-        <div id="whatShouldIDoContent">
-          <h2>&certerror.whatShouldIDo.heading;</h2>
-          <div id="whatShouldIDoContentText">
-            <p>&certerror.whatShouldIDo.content;</p>
-            <p id="badStsCertExplanation">&certerror.whatShouldIDo.badStsCertExplanation;</p>
-            <button id='getMeOutOfHereButton'>&certerror.getMeOutOfHere.label;</button>
-          </div>
-        </div>
-
-        <!-- The following sections can be unhidden by default by setting the
-             "browser.xul.error_pages.expert_bad_cert" pref to true -->
-        <h2 id="technicalContent" class="expander" collapsed="true">
-          <button onclick="toggle('technicalContent');">&certerror.technical.heading;</button>
-        </h2>
-        <p id="technicalContentText"/>
-
-        <h2 id="expertContent" class="expander" collapsed="true">
-          <button onclick="toggle('expertContent');">&certerror.expert.heading;</button>
-        </h2>
+        <p id="badStsCertExplanation">&certerror.whatShouldIDo.badStsCertExplanation;</p>
         <div>
-          <p>&certerror.expert.content;</p>
-          <p>&certerror.expert.contentPara2;</p>
-          <button id='exceptionDialogButton'>&certerror.addException.label;</button>
+          <p><a href="https://support.mozilla.org/kb/what-does-your-connection-is-not-secure-mean" id="learnMoreLink" target="new">&certerror.learnMore;</a></p>
+        </div>
+
+        <div id="buttonContainer">
+          <button id="returnButton" autocomplete="off" autofocus="true">&certerror.returnToPreviousPage.label;</button>
+          <div id="buttonSpacer"></div>
+          <button id="advancedButton" autocomplete="off" onclick="toggleVisibility('advancedPanel');" autofocus="true">&certerror.advanced.label;</button>
         </div>
       </div>
+
+      <!-- UI for option to report certificate errors to Mozilla. -->
+      <div id="certificateErrorReporting">
+        <p>
+          <input type="checkbox" id="automaticallyReportInFuture" />
+          <label for="automaticallyReportInFuture" id="automaticallyReportInFuture">&errorReporting.automatic;</label>
+
+          <span id="reportingState">
+            <button id="reportCertificateErrorRetry">&errorReporting.tryAgain;</button>
+            <span id="reportSendingMessage">&errorReporting.sending;</span>
+            <span id="reportSentMessage">&errorReporting.sent;</span>
+          </span>
+        </p>
+      </div>
+
+      <!-- Advanced panel, which is hidden by default -->
+      <div id="advancedPanel" style="visibility: hidden;">
+        <p id="technicalContentText"/>
+        <button id="exceptionDialogButton">&certerror.addException.label;</button>
+      </div>
+    </div>
+
+    <div id="certificateErrorDebugInformation">
+      <a name="technicalInformation"></a>
+      <button id="copyToClipboard">&certerror.copyToClipboard.label;</button>
+      <div id="certificateErrorText"/>
+      <button id="copyToClipboard">&certerror.copyToClipboard.label;</button>
     </div>
 
     <!--

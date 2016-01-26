@@ -9,7 +9,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let MMDB = {};
+var MMDB = {};
 Cu.import("resource://gre/modules/MobileMessageDB.jsm", MMDB);
 
 const GONK_MOBILEMESSAGEDATABASESERVICE_CONTRACTID =
@@ -110,11 +110,12 @@ MobileMessageDatabaseService.prototype = {
 
   createMessageCursor: function(aHasStartDate, aStartDate, aHasEndDate,
                                 aEndDate, aNumbers, aNumbersCount, aDelivery,
-                                aHasRead, aRead, aThreadId, aReverse, aCallback) {
+                                aHasRead, aRead, aHasThreadId, aThreadId,
+                                aReverse, aCallback) {
     return this.mmdb.createMessageCursor(aHasStartDate, aStartDate, aHasEndDate,
                                          aEndDate, aNumbers, aNumbersCount,
-                                         aDelivery, aHasRead, aRead, aThreadId,
-                                         aReverse, aCallback);
+                                         aDelivery, aHasRead, aRead, aHasThreadId,
+                                         aThreadId, aReverse, aCallback);
   },
 
   markMessageRead: function(aMessageId, aValue, aSendReadReport, aRequest) {

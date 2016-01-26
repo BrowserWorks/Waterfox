@@ -24,11 +24,8 @@ SOURCES += [
 EXTRA_COMPONENTS += [
     'BrowserFeeds.manifest',
     'FeedConverter.js',
-    'WebContentConverter.js',
-]
-
-EXTRA_PP_COMPONENTS += [
     'FeedWriter.js',
+    'WebContentConverter.js',
 ]
 
 FINAL_LIBRARY = 'browsercomps'
@@ -40,7 +37,8 @@ LOCAL_INCLUDES += [
     '../build',
 ]
 
-FAIL_ON_WARNINGS = True
-
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'RSS Discovery and Preview')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

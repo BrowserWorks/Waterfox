@@ -5,14 +5,34 @@
 
 #include "nsISupports.idl"
 
+%{C++
+#include "nsCOMPtr.h"
+%}
+
 interface nsIURI;
 interface nsIChannel;
 interface nsILoadInfo;
 
 /**
+ * nsIProtocolHandlerWithDynamicFlags
+ *
+ * Protocols that wish to return different flags depending on the URI should
+ * implement this interface.
+ */
+[scriptable, builtinclass, uuid(65a8e823-0591-4fc0-a56a-03265e0a4ce8)]
+interface nsIProtocolHandlerWithDynamicFlags : nsISupports
+{
+    /*
+     * Returns protocol flags for the given URI, which may be different from the
+     * flags for another URI of the same scheme.
+     */
+    unsigned long getFlagsForURI(in nsIURI aURI);
+};
+
+/**
  * nsIProtocolHandler
  */
-[scriptable, uuid(a7aad716-e72c-435d-82f1-7582dffae661)]
+[scriptable, uuid(a87210e6-7c8c-41f7-864d-df809015193e)]
 interface nsIProtocolHandler : nsISupports
 {
     /**
@@ -31,6 +51,15 @@ interface nsIProtocolHandler : nsISupports
      * Returns the protocol specific flags (see flag definitions below).  
      */
     readonly attribute unsigned long protocolFlags;
+
+%{C++
+  // Helper method to get the protocol flags in the right way.
+  nsresult DoGetProtocolFlags(nsIURI* aURI, uint32_t* aFlags)
+  {
+      nsCOMPtr<nsIProtocolHandlerWithDynamicFlags> dh = do_QueryInterface(this);
+      return dh ? dh->GetFlagsForURI(aURI, aFlags) : GetProtocolFlags(aFlags);
+  }
+%}
 
     /**
      * Makes a URI object that is suitable for loading by this protocol,
@@ -259,7 +288,18 @@ interface nsIProtocolHandler : nsISupports
      */
     const unsigned long URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT = (1<<18);
 
+    /**
+     * This URI may be fetched and the contents are visible to anyone. This is
+     * semantically equivalent to the resource being served with all-access CORS
+     * headers.
+     */
+    const unsigned long URI_FETCHABLE_BY_ANYONE = (1 << 19);
 
+    /**
+     * If this flag is set, then the origin for this protocol is the full URI
+     * spec, not just the scheme + host + port.
+     */
+    const unsigned long ORIGIN_IS_FULL_SPEC = (1 << 20);
 };
 
 %{C++
@@ -270,4 +310,6 @@ interface nsIProtocolHandler : nsISupports
 /**
  * For example, "@mozilla.org/network/protocol;1?name=http"
  */
+
+#define IS_ORIGIN_IS_FULL_SPEC_DEFINED 1
 %}

@@ -667,12 +667,12 @@ function run_single_abi_tests(decl, abi, t, toprimitive,
 
   let setter_t = ctypes.FunctionType(abi, t, [t]).ptr;
   let setter = decl(setter_t, "set_");
-  for each (let i in set_tests)
+  for (let i of set_tests)
     do_check_eq(toprimitive(setter(i)), i);
 
   let sum_t = ctypes.FunctionType(abi, t, [t, t]).ptr;
   let sum = decl(sum_t, "sum_");
-  for each (let a in sum_tests)
+  for (let a of sum_tests)
     do_check_eq(toprimitive(sum(a[0], a[1])), a[2]);
 
   let sum_alignb_t = ctypes.FunctionType(abi, t,
@@ -681,7 +681,7 @@ function run_single_abi_tests(decl, abi, t, toprimitive,
   let sum_alignf_t = ctypes.FunctionType(abi, t,
     [ctypes.float, t, ctypes.float, t, ctypes.float]).ptr;
   let sum_alignf = decl(sum_alignf_t, "sum_alignf_");
-  for each (let a in sum_tests) {
+  for (let a of sum_tests) {
     do_check_eq(toprimitive(sum_alignb(0, a[0], 0, a[1], 0)), a[2]);
     do_check_eq(toprimitive(sum_alignb(1, a[0], 1, a[1], 1)), a[2]);
     do_check_eq(toprimitive(sum_alignf(0, a[0], 0, a[1], 0)), a[2]);
@@ -691,7 +691,7 @@ function run_single_abi_tests(decl, abi, t, toprimitive,
   let sum_many_t = ctypes.FunctionType(abi, t,
     [t, t, t, t, t, t, t, t, t, t, t, t, t, t, t, t, t, t]).ptr;
   let sum_many = decl(sum_many_t, "sum_many_");
-  for each (let a in sum_many_tests)
+  for (let a of sum_many_tests)
     do_check_eq(
       toprimitive(sum_many(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7],
                            a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15],
@@ -975,7 +975,7 @@ function run_float_tests(library, t, name, size) {
   function test_roundtrip(t, val)
   {
     let f1 = t(val);
-    eval("let f2 = " + f1.toSource());
+    eval("var f2 = " + f1.toSource());
     do_check_eq(f1.value, f2.value);
   }
   vals = [Infinity, -Infinity, -0, 0, 1, -1, 1/3, -1/3, 1/4, -1/4,
@@ -1281,7 +1281,7 @@ function run_char16_tests(library, t, name, limits) {
 }
 
 // Test the class and prototype hierarchy for a given type constructor 'c'.
-function run_type_ctor_class_tests(c, t, t2, props, fns, instanceProps, instanceFns, specialProps)
+function run_type_ctor_class_tests(c, t, t2, props=[], fns=[], instanceProps=[], instanceFns=[], specialProps=[])
 {
   // Test that classes and prototypes are set up correctly on the type ctor 'c'.
   do_check_class(c, "Function");
@@ -1292,15 +1292,15 @@ function run_type_ctor_class_tests(c, t, t2, props, fns, instanceProps, instance
   do_check_true(c.prototype.constructor === c);
 
   // Check that 'c.prototype' has the correct properties and functions.
-  for each (let p in props)
+  for (let p of props)
     do_check_true(c.prototype.hasOwnProperty(p));
-  for each (let f in fns)
+  for (let f of fns)
     do_check_true(c.prototype.hasOwnProperty(f));
 
   // Check that the shared properties and functions on 'c.prototype' throw.
-  for each (let p in props)
+  for (let p of props)
     do_check_throws(function() { c.prototype[p]; }, TypeError);
-  for each (let f in fns)
+  for (let f of fns)
     do_check_throws(function() { c.prototype[f](); }, Error);
 
   // Test that classes and prototypes are set up correctly on a constructed
@@ -1326,28 +1326,28 @@ function run_type_ctor_class_tests(c, t, t2, props, fns, instanceProps, instance
 
   // Check that 't.prototype.__proto__' has the correct properties and
   // functions.
-  for each (let p in instanceProps)
+  for (let p of instanceProps)
     do_check_true(t.prototype.__proto__.hasOwnProperty(p));
-  for each (let f in instanceFns)
+  for (let f of instanceFns)
     do_check_true(t.prototype.__proto__.hasOwnProperty(f));
 
   // Check that the shared properties and functions on 't.prototype.__proto__'
   // (and thus also 't.prototype') throw.
-  for each (let p in instanceProps) {
+  for (let p of instanceProps) {
     do_check_throws(function() { t.prototype.__proto__[p]; }, TypeError);
     do_check_throws(function() { t.prototype[p]; }, TypeError);
   }
-  for each (let f in instanceFns) {
+  for (let f of instanceFns) {
     do_check_throws(function() { t.prototype.__proto__[f]() }, Error);
     do_check_throws(function() { t.prototype[f]() }, Error);
   }
 
   // Check that 't.prototype' has the correct special properties.
-  for each (let p in specialProps)
+  for (let p of specialProps)
     do_check_true(t.prototype.hasOwnProperty(p));
 
   // Check that the shared special properties on 't.prototype' throw.
-  for each (let p in specialProps)
+  for (let p of specialProps)
     do_check_throws(function() { t.prototype[p]; }, Error);
 
   // Make sure we can access 'prototype' on a CTypeProto.
@@ -1582,7 +1582,7 @@ function run_StructType_tests() {
 
   do_check_eq(s.toSource(), "s_t(4, {\"a\": 7, \"b\": 2}, 10)");
   do_check_eq(s.toSource(), s.toString());
-  eval("let s2 = " + s.toSource());
+  eval("var s2 = " + s.toSource());
   do_check_true(s2.constructor === s_t);
   do_check_eq(s.b.b, s2.b.b);
 
@@ -1753,6 +1753,13 @@ function run_PointerType_tests() {
   let z = ctypes.int32_t.array(0)().address();
   do_check_eq(z.contents.length, 0);
 
+  // TODO: Somehow, somewhere we should check that:
+  //
+  //  (a) ArrayBuffer and TypedArray can be passed by pointer to a C function
+  //  (b) SharedArrayBuffer and TypedArray on SAB can NOT be passed in that
+  //      way (at least not at the moment).
+
+  // Set up conversion tests on AB, SAB, TA
   let c_arraybuffer = new ArrayBuffer(256);
   let typed_array_samples =
        [
@@ -1766,7 +1773,19 @@ function run_PointerType_tests() {
          [new Float64Array(c_arraybuffer), ctypes.float64_t]
         ];
 
-  // Check that you can convert ArrayBuffer or typed array to a C array
+  if (typeof SharedArrayBuffer !== "undefined") {
+    let c_shared_arraybuffer = new SharedArrayBuffer(256);
+    typed_array_samples.push([new Int8Array(c_shared_arraybuffer), ctypes.int8_t],
+                             [new Uint8Array(c_shared_arraybuffer), ctypes.uint8_t],
+                             [new Int16Array(c_shared_arraybuffer), ctypes.int16_t],
+                             [new Uint16Array(c_shared_arraybuffer), ctypes.uint16_t],
+                             [new Int32Array(c_shared_arraybuffer), ctypes.int32_t],
+                             [new Uint32Array(c_shared_arraybuffer), ctypes.uint32_t],
+                             [new Float32Array(c_shared_arraybuffer), ctypes.float32_t],
+                             [new Float64Array(c_shared_arraybuffer), ctypes.float64_t])
+  }
+
+  // Check that you can convert (Shared)ArrayBuffer or typed array to a C array
   for (let i = 0; i < typed_array_samples.length; ++i) {
     for (let j = 0; j < typed_array_samples.length; ++j) {
       let view = typed_array_samples[i][0];
@@ -1774,7 +1793,9 @@ function run_PointerType_tests() {
       let number_of_items = c_arraybuffer.byteLength / item_type.size;
       let array_type = item_type.array(number_of_items);
 
-      if (i != j) {
+      // Int8Array on unshared memory is interconvertible with Int8Array on
+      // shared memory, etc.
+      if (i % 8 != j % 8) {
         do_print("Checking that typed array " + (view.constructor.name) +
                  " can NOT be converted to " + item_type + " array");
         do_check_throws(function() { array_type(view); }, TypeError);
@@ -1812,7 +1833,7 @@ function run_PointerType_tests() {
     }
   }
 
-  // Check that you can't use an ArrayBuffer or a typed array as a pointer
+  // Check that you can't use a (Shared)ArrayBuffer or a typed array as a pointer
   for (let i = 0; i < typed_array_samples.length; ++i) {
     for (let j = 0; j < typed_array_samples.length; ++j) {
       let view = typed_array_samples[i][0];
@@ -2060,7 +2081,7 @@ function run_ArrayType_tests() {
   c.value = [1, 2, 3, 4, 5, 6];
   do_check_eq(c.toSource(), "ctypes.int32_t.array(6)([1, 2, 3, 4, 5, 6])");
   do_check_eq(c.toSource(), c.toString());
-  eval("let c2 = " + c.toSource());
+  eval("var c2 = " + c.toSource());
   do_check_eq(c2.constructor.name, "int32_t[6]");
   do_check_eq(c2.length, 6);
   do_check_eq(c2[3], c[3]);

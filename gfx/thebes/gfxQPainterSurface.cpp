@@ -19,17 +19,17 @@ gfxQPainterSurface::gfxQPainterSurface(QPainter *painter)
     Init (csurf);
 }
 
-gfxQPainterSurface::gfxQPainterSurface(const gfxIntSize& size, gfxImageFormat format)
+gfxQPainterSurface::gfxQPainterSurface(const mozilla::gfx::IntSize& size, gfxImageFormat format)
 {
-    cairo_surface_t *csurf = cairo_qt_surface_create_with_qimage ((cairo_format_t) format,
-                                                                        size.width,
-                                                                        size.height);
+    cairo_format_t cformat = GfxFormatToCairoFormat(format);
+    cairo_surface_t *csurf =
+        cairo_qt_surface_create_with_qimage(cformat, size.width, size.height);
     mPainter = cairo_qt_surface_get_qpainter (csurf);
 
     Init (csurf);
 }
 
-gfxQPainterSurface::gfxQPainterSurface(const gfxIntSize& size, gfxContentType content)
+gfxQPainterSurface::gfxQPainterSurface(const mozilla::gfx::IntSize& size, gfxContentType content)
 {
     cairo_surface_t *csurf = cairo_qt_surface_create_with_qpixmap ((cairo_content_t) content,
                                                                          size.width,
@@ -71,7 +71,7 @@ gfxQPainterSurface::GetAsImageSurface()
 
     assert(cairo_surface_get_type(isurf) == CAIRO_SURFACE_TYPE_IMAGE);
 
-    nsRefPtr<gfxImageSurface> asurf = new gfxImageSurface(isurf);
+    RefPtr<gfxImageSurface> asurf = new gfxImageSurface(isurf);
     asurf->SetOpaqueRect(GetOpaqueRect());
     return asurf.forget();
 }

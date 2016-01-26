@@ -6,6 +6,7 @@
 
 #include "DataStore.h"
 
+#include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DataStore.h"
 #include "mozilla/dom/DataStoreBinding.h"
 #include "mozilla/dom/Promise.h"
@@ -38,7 +39,7 @@ WorkerNavigator::Create(bool aOnLine)
   const RuntimeService::NavigatorProperties& properties =
     rts->GetNavigatorProperties();
 
-  nsRefPtr<WorkerNavigator> navigator =
+  RefPtr<WorkerNavigator> navigator =
     new WorkerNavigator(properties, aOnLine);
 
   return navigator.forget();
@@ -94,11 +95,11 @@ public:
 #define WORKER_DATA_STORES_TAG JS_SCTAG_USER_MIN
 
 static JSObject*
-GetDataStoresStructuredCloneCallbacksRead(JSContext* aCx,
-                                          JSStructuredCloneReader* aReader,
-                                          uint32_t aTag,
-                                          uint32_t aData,
-                                          void* aClosure)
+GetDataStoresProxyCloneCallbacksRead(JSContext* aCx,
+                                     JSStructuredCloneReader* aReader,
+                                     const PromiseWorkerProxy* aProxy,
+                                     uint32_t aTag,
+                                     uint32_t aData)
 {
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(aCx);
   MOZ_ASSERT(workerPrivate);
@@ -121,20 +122,24 @@ GetDataStoresStructuredCloneCallbacksRead(JSContext* aCx,
   // Protect workerStoreObj from moving GC during ~nsRefPtr.
   JS::Rooted<JSObject*> workerStoreObj(aCx, nullptr);
   {
-    nsRefPtr<WorkerDataStore> workerStore =
+    RefPtr<WorkerDataStore> workerStore =
       new WorkerDataStore(workerPrivate->GlobalScope());
     nsMainThreadPtrHandle<DataStore> backingStore(dataStoreholder);
 
     // When we're on the worker thread, prepare a DataStoreChangeEventProxy.
-    nsRefPtr<DataStoreChangeEventProxy> eventProxy =
+    RefPtr<DataStoreChangeEventProxy> eventProxy =
       new DataStoreChangeEventProxy(workerPrivate, workerStore);
 
     // Add the DataStoreChangeEventProxy as an event listener on the main thread.
-    nsRefPtr<DataStoreAddEventListenerRunnable> runnable =
+    RefPtr<DataStoreAddEventListenerRunnable> runnable =
       new DataStoreAddEventListenerRunnable(workerPrivate,
                                             backingStore,
                                             eventProxy);
-    runnable->Dispatch(aCx);
+    ErrorResult rv;
+    runnable->Dispatch(rv);
+    if (rv.MaybeSetPendingException(aCx)) {
+      return nullptr;
+    }
 
     // Point WorkerDataStore to DataStore.
     workerStore->SetBackingDataStore(backingStore);
@@ -143,7 +148,7 @@ GetDataStoresStructuredCloneCallbacksRead(JSContext* aCx,
     if (!global) {
       MOZ_ASSERT(false, "cannot get global!");
     } else {
-      workerStoreObj = workerStore->WrapObject(aCx, JS::NullPtr());
+      workerStoreObj = workerStore->WrapObject(aCx, nullptr);
       if (!JS_WrapObject(aCx, &workerStoreObj)) {
         MOZ_ASSERT(false, "cannot wrap object for workerStoreObj!");
         workerStoreObj = nullptr;
@@ -155,15 +160,12 @@ GetDataStoresStructuredCloneCallbacksRead(JSContext* aCx,
 }
 
 static bool
-GetDataStoresStructuredCloneCallbacksWrite(JSContext* aCx,
-                                           JSStructuredCloneWriter* aWriter,
-                                           JS::Handle<JSObject*> aObj,
-                                           void* aClosure)
+GetDataStoresProxyCloneCallbacksWrite(JSContext* aCx,
+                                      JSStructuredCloneWriter* aWriter,
+                                      PromiseWorkerProxy* aProxy,
+                                      JS::Handle<JSObject*> aObj)
 {
   AssertIsOnMainThread();
-
-  PromiseWorkerProxy* proxy = static_cast<PromiseWorkerProxy*>(aClosure);
-  NS_ASSERTION(proxy, "must have proxy!");
 
   if (!JS_WriteUint32Pair(aWriter, WORKER_DATA_STORES_TAG, 0)) {
     MOZ_ASSERT(false, "cannot write pair for WORKER_DATA_STORES_TAG!");
@@ -180,7 +182,7 @@ GetDataStoresStructuredCloneCallbacksWrite(JSContext* aCx,
   }
 
   // We keep the data store alive here.
-  proxy->StoreISupports(store);
+  aProxy->StoreISupports(store);
 
   // Construct the nsMainThreadPtrHolder pointing to the data store.
   nsMainThreadPtrHolder<DataStore>* dataStoreholder =
@@ -195,17 +197,17 @@ GetDataStoresStructuredCloneCallbacksWrite(JSContext* aCx,
   return true;
 }
 
-static const JSStructuredCloneCallbacks kGetDataStoresStructuredCloneCallbacks = {
-  GetDataStoresStructuredCloneCallbacksRead,
-  GetDataStoresStructuredCloneCallbacksWrite,
-  nullptr
+static const PromiseWorkerProxy::PromiseWorkerProxyStructuredCloneCallbacks
+kGetDataStoresCloneCallbacks= {
+  GetDataStoresProxyCloneCallbacksRead,
+  GetDataStoresProxyCloneCallbacksWrite
 };
 
 // A WorkerMainThreadRunnable to run WorkerNavigator::GetDataStores(...) on the
 // main thread.
 class NavigatorGetDataStoresRunnable final : public WorkerMainThreadRunnable
 {
-  nsRefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
+  RefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
   const nsString mName;
   const nsString mOwner;
   ErrorResult& mRv;
@@ -228,19 +230,18 @@ public:
     mPromiseWorkerProxy =
       PromiseWorkerProxy::Create(aWorkerPrivate,
                                  aWorkerPromise,
-                                 &kGetDataStoresStructuredCloneCallbacks);
+                                 &kGetDataStoresCloneCallbacks);
   }
 
-  bool Dispatch(JSContext* aCx)
+  void Dispatch(ErrorResult& aRv)
   {
     if (mPromiseWorkerProxy) {
-      return WorkerMainThreadRunnable::Dispatch(aCx);
+      WorkerMainThreadRunnable::Dispatch(aRv);
     }
 
     // If the creation of mProxyWorkerProxy failed, the worker is terminating.
     // In this case we don't want to dispatch the runnable and we should stop
     // the promise chain here.
-    return true;
   }
 
 
@@ -264,7 +265,7 @@ protected:
       return false;
     }
 
-    nsRefPtr<Promise> promise =
+    RefPtr<Promise> promise =
       Navigator::GetDataStores(window, mName, mOwner, mRv);
     promise->AppendNativeHandler(mPromiseWorkerProxy);
     return true;
@@ -281,14 +282,17 @@ WorkerNavigator::GetDataStores(JSContext* aCx,
   MOZ_ASSERT(workerPrivate);
   workerPrivate->AssertIsOnWorkerThread();
 
-  nsRefPtr<Promise> promise = Promise::Create(workerPrivate->GlobalScope(), aRv);
+  RefPtr<Promise> promise = Promise::Create(workerPrivate->GlobalScope(), aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  nsRefPtr<NavigatorGetDataStoresRunnable> runnable =
+  RefPtr<NavigatorGetDataStoresRunnable> runnable =
     new NavigatorGetDataStoresRunnable(workerPrivate, promise, aName, aOwner, aRv);
-  runnable->Dispatch(aCx);
+  runnable->Dispatch(aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   return promise.forget();
 }
@@ -381,20 +385,18 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 void
-WorkerNavigator::GetUserAgent(nsString& aUserAgent) const
+WorkerNavigator::GetUserAgent(nsString& aUserAgent, ErrorResult& aRv) const
 {
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
 
-  nsRefPtr<GetUserAgentRunnable> runnable =
+  RefPtr<GetUserAgentRunnable> runnable =
     new GetUserAgentRunnable(workerPrivate, aUserAgent);
 
-  if (!runnable->Dispatch(workerPrivate->GetJSContext())) {
-    JS_ReportPendingException(workerPrivate->GetJSContext());
-  }
+  runnable->Dispatch(aRv);
 }
 
 END_WORKERS_NAMESPACE

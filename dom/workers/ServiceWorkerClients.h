@@ -30,13 +30,16 @@ public:
   explicit ServiceWorkerClients(ServiceWorkerGlobalScope* aWorkerScope);
 
   already_AddRefed<Promise>
+  Get(const nsAString& aClientId, ErrorResult& aRv);
+
+  already_AddRefed<Promise>
   MatchAll(const ClientQueryOptions& aOptions, ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  OpenWindow(const nsAString& aUrl);
+  OpenWindow(const nsAString& aUrl, ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  Claim();
+  Claim(ErrorResult& aRv);
 
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
@@ -52,7 +55,7 @@ private:
   {
   }
 
-  nsRefPtr<ServiceWorkerGlobalScope> mWorkerScope;
+  RefPtr<ServiceWorkerGlobalScope> mWorkerScope;
 };
 
 } // namespace workers

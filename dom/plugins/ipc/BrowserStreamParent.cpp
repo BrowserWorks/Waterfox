@@ -9,6 +9,7 @@
 #include "PluginInstanceParent.h"
 #include "nsNPAPIPlugin.h"
 
+#include "mozilla/UniquePtr.h"
 #include "mozilla/unused.h"
 
 // How much data are we willing to send across the wire
@@ -55,7 +56,7 @@ BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
   if (mState == DEFERRING_DESTROY) {
     // We've been asked to destroy ourselves before init was complete.
     mState = DYING;
-    unused << SendNPP_DestroyStream(mDeferredDestroyReason);
+    Unused << SendNPP_DestroyStream(mDeferredDestroyReason);
     return true;
   }
 
@@ -73,7 +74,7 @@ BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
 
   if (error != NPERR_NO_ERROR) {
     surrogate->DestroyAsyncStream(mStream);
-    unused << PBrowserStreamParent::Send__delete__(this);
+    Unused << PBrowserStreamParent::Send__delete__(this);
   }
 
   return true;
@@ -109,7 +110,7 @@ BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
   if (ranges.Length() > INT32_MAX)
     return false;
 
-  nsAutoArrayPtr<NPByteRange> rp(new NPByteRange[ranges.Length()]);
+  UniquePtr<NPByteRange[]> rp(new NPByteRange[ranges.Length()]);
   for (uint32_t i = 0; i < ranges.Length(); ++i) {
     rp[i].offset = ranges[i].offset;
     rp[i].length = ranges[i].length;
@@ -117,7 +118,7 @@ BrowserStreamParent::AnswerNPN_RequestRead(const IPCByteRanges& ranges,
   }
   rp[ranges.Length() - 1].next = nullptr;
 
-  *result = mNPP->mNPNIface->requestread(mStream, rp);
+  *result = mNPP->mNPNIface->requestread(mStream, rp.get());
   return true;
 }
 
@@ -134,7 +135,7 @@ BrowserStreamParent::RecvNPN_DestroyStream(const NPReason& reason)
   default:
     NS_ERROR("Unexpected state");
     return false;
-  };
+  }
 
   mNPP->mNPNIface->destroystream(mNPP->mNPP, mStream, reason);
   return true;
@@ -151,7 +152,7 @@ BrowserStreamParent::NPP_DestroyStream(NPReason reason)
     mDeferredDestroyReason = reason;
   } else {
     mState = DYING;
-    unused << SendNPP_DestroyStream(reason);
+    Unused << SendNPP_DestroyStream(reason);
   }
 }
 
@@ -213,7 +214,7 @@ BrowserStreamParent::StreamAsFile(const char* fname)
     nsNPAPIPlugin::RetainStream(mStream, getter_AddRefs(mStreamPeer));
   }
 
-  unused << SendNPP_StreamAsFile(nsCString(fname));
+  Unused << SendNPP_StreamAsFile(nsCString(fname));
   return;
 }
 

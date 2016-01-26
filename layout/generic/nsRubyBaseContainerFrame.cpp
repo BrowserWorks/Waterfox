@@ -13,7 +13,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/WritingModes.h"
-#include "nsContentUtils.h"
+#include "nsLayoutUtils.h"
 #include "nsLineLayout.h"
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
@@ -63,7 +63,7 @@ nsRubyBaseContainerFrame::GetFrameName(nsAString& aResult) const
 
 static gfxBreakPriority
 LineBreakBefore(nsIFrame* aFrame,
-                nsRenderingContext* aRenderingContext,
+                DrawTarget* aDrawTarget,
                 nsIFrame* aLineContainerFrame,
                 const nsLineList::iterator* aLine)
 {
@@ -79,8 +79,7 @@ LineBreakBefore(nsIFrame* aFrame,
 
     auto textFrame = static_cast<nsTextFrame*>(child);
     gfxSkipCharsIterator iter =
-      textFrame->EnsureTextRun(nsTextFrame::eInflated,
-                               aRenderingContext->ThebesContext(),
+      textFrame->EnsureTextRun(nsTextFrame::eInflated, aDrawTarget,
                                aLineContainerFrame, aLine);
     iter.SetOriginalOffset(textFrame->GetContentOffset());
     uint32_t pos = iter.GetSkippedOffset();
@@ -128,9 +127,18 @@ GetIsLineBreakAllowed(nsIFrame* aFrame, bool aIsLineBreakable,
   *aAllowLineBreak = allowLineBreak;
 }
 
+/**
+ * @param aBaseISizeData is an in/out param. This method updates the
+ * `skipWhitespace` and `trailingWhitespace` fields of the struct with
+ * the base level frame. Note that we don't need to do the same thing
+ * for ruby text frames, because they are text run container themselves
+ * (see nsTextFrame.cpp:BuildTextRuns), and thus no whitespace collapse
+ * happens across the boundary of those frames.
+ */
 static nscoord
 CalculateColumnPrefISize(nsRenderingContext* aRenderingContext,
-                         const RubyColumnEnumerator& aEnumerator)
+                         const RubyColumnEnumerator& aEnumerator,
+                         nsIFrame::InlineIntrinsicISizeData* aBaseISizeData)
 {
   nscoord max = 0;
   uint32_t levelCount = aEnumerator.GetLevelCount();
@@ -138,9 +146,22 @@ CalculateColumnPrefISize(nsRenderingContext* aRenderingContext,
     nsIFrame* frame = aEnumerator.GetFrameAtLevel(i);
     if (frame) {
       nsIFrame::InlinePrefISizeData data;
+      if (i == 0) {
+        data.SetLineContainer(aBaseISizeData->LineContainer());
+        data.skipWhitespace = aBaseISizeData->skipWhitespace;
+        data.trailingWhitespace = aBaseISizeData->trailingWhitespace;
+      } else {
+        // The line container of ruby text frames is their parent,
+        // ruby text container frame.
+        data.SetLineContainer(frame->GetParent());
+      }
       frame->AddInlinePrefISize(aRenderingContext, &data);
       MOZ_ASSERT(data.prevLines == 0, "Shouldn't have prev lines");
       max = std::max(max, data.currentLine);
+      if (i == 0) {
+        aBaseISizeData->skipWhitespace = data.skipWhitespace;
+        aBaseISizeData->trailingWhitespace = data.trailingWhitespace;
+      }
     }
   }
   return max;
@@ -160,11 +181,16 @@ nsRubyBaseContainerFrame::AddInlineMinISize(
       // Since spans are not breakable internally, use our pref isize
       // directly if there is any span.
       nsIFrame::InlinePrefISizeData data;
+      data.SetLineContainer(aData->LineContainer());
+      data.skipWhitespace = aData->skipWhitespace;
+      data.trailingWhitespace = aData->trailingWhitespace;
       AddInlinePrefISize(aRenderingContext, &data);
       aData->currentLine += data.currentLine;
       if (data.currentLine > 0) {
         aData->atStartOfLine = false;
       }
+      aData->skipWhitespace = data.skipWhitespace;
+      aData->trailingWhitespace = data.trailingWhitespace;
       return;
     }
   }
@@ -181,14 +207,16 @@ nsRubyBaseContainerFrame::AddInlineMinISize(
         nsIFrame* baseFrame = enumerator.GetFrameAtLevel(0);
         if (baseFrame) {
           gfxBreakPriority breakPriority =
-            LineBreakBefore(baseFrame, aRenderingContext, nullptr, nullptr);
+            LineBreakBefore(baseFrame, aRenderingContext->GetDrawTarget(),
+                            nullptr, nullptr);
           if (breakPriority != gfxBreakPriority::eNoBreak) {
-            aData->OptionallyBreak(aRenderingContext);
+            aData->OptionallyBreak();
           }
         }
       }
       firstFrame = false;
-      nscoord isize = CalculateColumnPrefISize(aRenderingContext, enumerator);
+      nscoord isize = CalculateColumnPrefISize(aRenderingContext,
+                                               enumerator, aData);
       aData->currentLine += isize;
       if (isize > 0) {
         aData->atStartOfLine = false;
@@ -208,7 +236,7 @@ nsRubyBaseContainerFrame::AddInlinePrefISize(
     RubyColumnEnumerator enumerator(
       static_cast<nsRubyBaseContainerFrame*>(frame), textContainers);
     for (; !enumerator.AtEnd(); enumerator.Next()) {
-      sum += CalculateColumnPrefISize(aRenderingContext, enumerator);
+      sum += CalculateColumnPrefISize(aRenderingContext, enumerator, aData);
     }
   }
   for (uint32_t i = 0, iend = textContainers.Length(); i < iend; i++) {
@@ -554,7 +582,7 @@ nsRubyBaseContainerFrame::ReflowOneColumn(const ReflowState& aReflowState,
       aReflowState.mAllowLineBreak : aReflowState.mAllowInitialLineBreak;
     if (allowBreakBefore) {
       gfxBreakPriority breakPriority = LineBreakBefore(
-        aColumn.mBaseFrame, baseReflowState.rendContext,
+        aColumn.mBaseFrame, baseReflowState.rendContext->GetDrawTarget(),
         baseReflowState.mLineLayout->LineContainerFrame(),
         baseReflowState.mLineLayout->GetLine());
       if (breakPriority != gfxBreakPriority::eNoBreak) {
@@ -581,10 +609,7 @@ nsRubyBaseContainerFrame::ReflowOneColumn(const ReflowState& aReflowState,
 
   nsAutoString baseText;
   if (aColumn.mBaseFrame) {
-    if (!nsContentUtils::GetNodeTextContent(aColumn.mBaseFrame->GetContent(),
-                                            true, baseText)) {
-      NS_RUNTIMEABORT("OOM");
-    }
+    nsLayoutUtils::GetFrameTextContent(aColumn.mBaseFrame, baseText);
   }
 
   // Reflow text frames
@@ -592,10 +617,8 @@ nsRubyBaseContainerFrame::ReflowOneColumn(const ReflowState& aReflowState,
     nsRubyTextFrame* textFrame = aColumn.mTextFrames[i];
     if (textFrame) {
       nsAutoString annotationText;
-      if (!nsContentUtils::GetNodeTextContent(textFrame->GetContent(),
-                                              true, annotationText)) {
-        NS_RUNTIMEABORT("OOM");
-      }
+      nsLayoutUtils::GetFrameTextContent(textFrame, annotationText);
+
       // Per CSS Ruby spec, the content comparison for auto-hiding
       // takes place prior to white spaces collapsing (white-space)
       // and text transformation (text-transform), and ignores elements

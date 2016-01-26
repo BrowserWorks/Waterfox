@@ -41,7 +41,7 @@ enum class ImageFormat {
   SHARED_RGB,
 
   /**
-   * The CAIRO_SURFACE format creates a CairoImage. All backends should
+   * The CAIRO_SURFACE format creates a SourceSurfaceImage. All backends should
    * support this format, because video rendering sometimes requires it.
    *
    * This format is useful even though a PaintedLayer could be used.
@@ -86,7 +86,12 @@ enum class ImageFormat {
   /**
    * A share handle to a ID3D11Texture2D.
    */
-  D3D11_SHARE_HANDLE_TEXTURE
+  D3D11_SHARE_HANDLE_TEXTURE,
+
+  /**
+   * A wrapper around a drawable TextureClient.
+   */
+  TEXTURE_WRAPPER
 };
 
 enum class StereoMode {
@@ -97,6 +102,6 @@ enum class StereoMode {
   TOP_BOTTOM
 };
 
-} // namespace
+} // namespace mozilla
 
 #endif

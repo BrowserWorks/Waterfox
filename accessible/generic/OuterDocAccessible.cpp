@@ -8,6 +8,8 @@
 #include "Accessible-inl.h"
 #include "nsAccUtils.h"
 #include "DocAccessible-inl.h"
+#include "mozilla/a11y/DocAccessibleParent.h"
+#include "mozilla/dom/TabParent.h"
 #include "Role.h"
 #include "States.h"
 
@@ -26,6 +28,7 @@ OuterDocAccessible::
   OuterDocAccessible(nsIContent* aContent, DocAccessible* aDoc) :
   AccessibleWrap(aContent, aDoc)
 {
+  mType = eOuterDocType;
 }
 
 OuterDocAccessible::~OuterDocAccessible()
@@ -180,4 +183,14 @@ OuterDocAccessible::CacheChildren()
     if (innerDoc)
       GetAccService()->GetDocAccessible(innerDoc);
   }
+}
+
+ProxyAccessible*
+OuterDocAccessible::RemoteChildDoc() const
+{
+  dom::TabParent* tab = dom::TabParent::GetFrom(GetContent());
+  if (!tab)
+    return nullptr;
+
+  return tab->GetTopLevelDocAccessible();
 }

@@ -9,19 +9,18 @@
 #include "ReadbackLayer.h"              // for ReadbackLayer, ReadbackSink
 #include "UnitTransforms.h"             // for ViewAs
 #include "Units.h"                      // for ParentLayerIntRect
-#include "gfxColor.h"                   // for gfxRGBA
 #include "gfxContext.h"                 // for gfxContext
 #include "gfxUtils.h"
 #include "gfxRect.h"                    // for gfxRect
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/BaseRect.h"       // for BaseRect
+#include "mozilla/gfx/Point.h"          // for Intsize
 #include "nsAutoPtr.h"                  // for nsRefPtr, nsAutoPtr
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for gfxContext::Release, etc
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsRegion.h"                   // for nsIntRegion
-#include "nsSize.h"                     // for nsIntSize
 
 using namespace mozilla::gfx;
 
@@ -64,7 +63,7 @@ FindBackgroundLayer(ReadbackLayer* aLayer, nsIntPoint* aOffset)
 
     nsIntPoint backgroundOffset(int32_t(backgroundTransform._31), int32_t(backgroundTransform._32));
     IntRect rectInBackground(transformOffset - backgroundOffset, aLayer->GetSize());
-    const nsIntRegion& visibleRegion = l->GetEffectiveVisibleRegion();
+    const nsIntRegion visibleRegion = l->GetEffectiveVisibleRegion().ToUnknownRegion();
     if (!visibleRegion.Intersects(rectInBackground))
       continue;
     // Since l is present in the background, from here on we either choose l
@@ -73,9 +72,11 @@ FindBackgroundLayer(ReadbackLayer* aLayer, nsIntPoint* aOffset)
       return nullptr;
 
     if (l->GetEffectiveOpacity() != 1.0 ||
-        l->GetMaskLayer() ||
+        l->HasMaskLayers() ||
         !(l->GetContentFlags() & Layer::CONTENT_OPAQUE))
+    {
       return nullptr;
+    }
 
     // cliprects are post-transform
     const Maybe<ParentLayerIntRect>& clipRect = l->GetEffectiveClipRect();
@@ -111,17 +112,16 @@ ReadbackProcessor::BuildUpdatesForLayer(ReadbackLayer* aLayer)
     if (aLayer->mBackgroundColor != colorLayer->GetColor()) {
       aLayer->mBackgroundLayer = nullptr;
       aLayer->mBackgroundColor = colorLayer->GetColor();
-      NS_ASSERTION(aLayer->mBackgroundColor.a == 1.0,
+      NS_ASSERTION(aLayer->mBackgroundColor.a == 1.f,
                    "Color layer said it was opaque!");
-      nsRefPtr<gfxContext> ctx =
+      RefPtr<DrawTarget> dt =
           aLayer->mSink->BeginUpdate(aLayer->GetRect(),
                                      aLayer->AllocateSequenceNumber());
-      if (ctx) {
+      if (dt) {
         ColorPattern color(ToDeviceColor(aLayer->mBackgroundColor));
-        nsIntSize size = aLayer->GetSize();
-        ctx->GetDrawTarget()->FillRect(Rect(0, 0, size.width, size.height),
-                                       color);
-        aLayer->mSink->EndUpdate(ctx, aLayer->GetRect());
+        IntSize size = aLayer->GetSize();
+        dt->FillRect(Rect(0, 0, size.width, size.height), color);
+        aLayer->mSink->EndUpdate(aLayer->GetRect());
       }
     }
   } else {
@@ -133,7 +133,7 @@ ReadbackProcessor::BuildUpdatesForLayer(ReadbackLayer* aLayer)
         offset != aLayer->mBackgroundLayerOffset) {
       aLayer->mBackgroundLayer = paintedLayer;
       aLayer->mBackgroundLayerOffset = offset;
-      aLayer->mBackgroundColor = gfxRGBA(0,0,0,0);
+      aLayer->mBackgroundColor = Color();
       paintedLayer->SetUsedForReadback(true);
     } else {
       nsIntRegion invalid;
@@ -183,5 +183,5 @@ ReadbackProcessor::~ReadbackProcessor()
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

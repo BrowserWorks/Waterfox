@@ -1,0 +1,224 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the Toolbox strings -->
+<!-- LOCALIZATION NOTE : FILE Do not translate key -->
+
+<!ENTITY closeCmd.key  "W">
+<!ENTITY toggleToolbox.key  "I">
+<!ENTITY toggleToolboxF12.keycode          "VK_F12">
+<!ENTITY toggleToolboxF12.keytext          "F12">
+
+<!ENTITY toolboxCloseButton.tooltip    "Close Developer Tools">
+<!ENTITY toolboxOptionsButton.key      "O">
+<!ENTITY toolboxNextTool.key           "]">
+<!ENTITY toolboxPreviousTool.key       "[">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey, fullZoomEnlargeCmd.commandkey2,
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey,
+fullZoomReduceCmd.commandkey2, fullZoomResetCmd.commandkey,
+and fullZoomResetCmd.commandkey2 should all match the corresponding
+values from browser.dtd.  -->
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY toolboxReload.key             "r">
+<!-- This key is used with the accel+shift modifiers to minimize the toolbox -->
+<!ENTITY toolboxToggleMinimize.key     "U">
+
+<!ENTITY toolboxToggle.key             "d">
+<!-- LOCALIZATION NOTE (toolboxFramesButton): This is the label for
+  -  the iframes menu list that appears only when the document has some.
+  -  It allows you to switch the context of the whole toolbox. -->
+<!ENTITY toolboxFramesTooltip          "Select an iframe as the currently targeted document">
+
+<!-- LOCALIZATION NOTE (browserToolboxErrorMessage): This is the label
+  -  shown next to error details when the Browser Toolbox is unable to open. -->
+<!ENTITY browserToolboxErrorMessage          "Error opening Browser Toolbox:">
+
+<!-- LOCALIZATION NOTE (options.context.advancedSettings): This is the label for
+  -  the heading of the advanced settings group in the options panel. -->
+<!ENTITY options.context.advancedSettings "Advanced settings">
+
+<!-- LOCALIZATION NOTE (options.context.inspector): This is the label for
+  -  the heading of the Inspector group in the options panel. -->
+<!ENTITY options.context.inspector "Inspector">
+
+<!-- LOCALIZATION NOTE (options.showUserAgentStyles.label): This is the label
+  -  for the checkbox option to show user agent styles in the Inspector
+  -  panel. -->
+<!ENTITY options.showUserAgentStyles.label "Show Browser Styles">
+<!ENTITY options.showUserAgentStyles.tooltip "Turning this on will show default styles that are loaded by the browser.">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.label): This is the label for a
+  -  dropdown list that controls the default color unit used in the inspector.
+  -  This label is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.label "Default color unit">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.accesskey): This is the access
+  -  key for a dropdown list that controls the default color unit used in the
+  -  inspector. This is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.accesskey "U">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.authored): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.authored "As Authored">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hex): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hex "Hex">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.hsl): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.hsl "HSL(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.rgb): This is used in the
+  -  'Default color unit' dropdown list and is visible in the options panel. -->
+<!ENTITY options.defaultColorUnit.rgb "RGB(A)">
+
+<!-- LOCALIZATION NOTE (options.defaultColorUnit.name): This is used in
+  -  the 'Default color unit' dropdown list and is visible in the options panel.
+  -  -->
+<!ENTITY options.defaultColorUnit.name "Color Names">
+
+<!-- LOCALIZATION NOTE (options.context.triggersPageRefresh): This is the
+  -  triggers page refresh footnote under the advanced settings group in the
+  -  options panel and is used for settings that trigger page reload. -->
+<!ENTITY options.context.triggersPageRefresh  "* Current session only, reloads the page">
+
+<!-- LOCALIZATION NOTE (options.enableChrome.label4): This is the label for the
+  -  checkbox that toggles chrome debugging, i.e. devtools.chrome.enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableChrome.label5    "Enable browser chrome and add-on debugging toolboxes">
+<!ENTITY options.enableChrome.tooltip3  "Turning this option on will allow you to use various developer tools in browser context (via Tools > Web Developer > Browser Toolbox) and debug add-ons from the Add-ons Manager">
+
+<!-- LOCALIZATION NOTE (options.enableRemote.label3): This is the label for the
+  -  checkbox that toggles remote debugging, i.e. devtools.debugger.remote-enabled
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableRemote.label3    "Enable remote debugging">
+<!ENTITY options.enableRemote.tooltip   "Turning this option on will allow the developer tools to debug remote Firefox instance like Firefox OS">
+
+<!-- LOCALIZATION NOTE (options.enableWorkers.label): This is the label for the
+  -  checkbox that toggles worker debugging, i.e. devtools.debugger.workers
+  -  boolean preference in about:config, in the options panel. -->
+<!ENTITY options.enableWorkers.label    "Enable worker debugging (in development)">
+<!ENTITY options.enableWorkers.tooltip  "Turning this option on will allow the developer tools to debug workers">
+
+<!-- LOCALIZATION NOTE (options.disableJavaScript.label,
+  -  options.disableJavaScript.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles JavaScript on or off. -->
+<!ENTITY options.disableJavaScript.label     "Disable JavaScript *">
+<!ENTITY options.disableJavaScript.tooltip   "Turning this option on will disable JavaScript for the current tab. If the tab or the toolbox is closed then this setting will be forgotten.">
+
+<!-- LOCALIZATION NOTE (options.disableCache.label2,
+  -  options.disableCache.tooltip2): This is the options panel label and
+  -  tooltip for the checkbox that toggles the cache on or off. -->
+<!ENTITY options.disableCache.label2     "Disable Cache (when toolbox is open)">
+<!ENTITY options.disableCache.tooltip2   "Turning this option on will disable the cache for all tabs that have the toolbox open.">
+
+<!-- LOCALIZATION NOTE (options.enableServiceWorkersHTTP.label,
+  -  options.enableServiceWorkersHTTP.tooltip): This is the options panel label and
+  -  tooltip for the checkbox that toggles the service workers testing features on or off. This option enables service workers over HTTP. -->
+<!ENTITY options.enableServiceWorkersHTTP.label     "Enable Service Workers over HTTP (when toolbox is open)">
+<!ENTITY options.enableServiceWorkersHTTP.tooltip   "Turning this option on will enable the service workers over HTTP for all tabs that have the toolbox open.">
+
+<!-- LOCALIZATION NOTE (options.selectDefaultTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tools. -->
+<!ENTITY options.selectDefaultTools.label     "Default Firefox Developer Tools">
+
+<!-- LOCALIZATION NOTE (options.selectAdditionalTools.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the developer tools
+  -  added by add-ons. This heading is hidden when there is no developer tool
+  -  installed by add-ons. -->
+<!ENTITY options.selectAdditionalTools.label  "Developer Tools installed by add-ons">
+
+<!-- LOCALIZATION NOTE (options.selectEnabledToolboxButtons.label): This is the label for
+  -  the heading of group of checkboxes corresponding to the default developer
+  -  tool buttons. -->
+<!ENTITY options.selectEnabledToolboxButtons.label     "Available Toolbox Buttons">
+
+<!-- LOCALIZATION NOTE (options.toolNotSupported.label): This is the label for
+  -  the explanation of the * marker on a tool which is currently not supported
+  -  for the target of the toolbox. -->
+<!ENTITY options.toolNotSupported.label  "* Not supported for current toolbox target">
+
+<!-- LOCALIZATION NOTE (options.selectDevToolsTheme.label2): This is the label for
+  -  the heading of the radiobox corresponding to the theme of the developer
+  -  tools. -->
+<!ENTITY options.selectDevToolsTheme.label2   "Themes">
+
+<!-- LOCALIZATION NOTE (options.usedeveditiontheme.*) Options under the
+  -  toolbox for enabling and disabling the Developer Edition browser theme. -->
+<!ENTITY options.usedeveditiontheme.label   "Use Developer Edition browser theme">
+<!ENTITY options.usedeveditiontheme.tooltip "Toggles the Developer Edition browser theme.">
+
+<!-- LOCALIZATION NOTE (options.webconsole.label): This is the label for the
+  -  heading of the group of Web Console preferences in the options panel. -->
+<!ENTITY options.webconsole.label            "Web Console">
+
+<!-- LOCALIZATION NOTE (options.timestampMessages.label): This is the
+   - label for the checkbox that toggles timestamps in the Web Console -->
+<!ENTITY options.timestampMessages.label      "Enable timestamps">
+<!ENTITY options.timestampMessages.tooltip    "If you enable this option commands and output in the Web Console will display a timestamp">
+
+<!-- LOCALIZATION NOTE (options.styleeditor.label): This is the label for the
+  -  heading of the group of Style Editor preferences in the options
+  -  panel. -->
+<!ENTITY options.styleeditor.label            "Style Editor">
+
+<!-- LOCALIZATION NOTE (options.stylesheetSourceMaps.label): This is the
+   - label for the checkbox that toggles showing original sources in the Style Editor -->
+<!ENTITY options.stylesheetSourceMaps.label      "Show original sources">
+<!ENTITY options.stylesheetSourceMaps.tooltip    "Show original sources (e.g. Sass files) in the Style Editor and Inspector">
+
+<!-- LOCALIZATION NOTE (options.stylesheetAutocompletion.label): This is the
+   - label for the checkbox that toggles autocompletion of css in the Style Editor -->
+<!ENTITY options.stylesheetAutocompletion.label      "Autocomplete CSS">
+<!ENTITY options.stylesheetAutocompletion.tooltip    "Autocomplete CSS properties, values and selectors in Style Editor as you type">
+
+<!-- LOCALIZATION NOTE (options.commonprefs): This is the label for the heading
+      of all preferences that affect both the Web Console and the Network
+      Monitor -->
+<!ENTITY options.commonPrefs.label           "Common Preferences">
+
+<!-- LOCALIZATION NOTE (options.enablePersistentLogs.label): This is the
+  -  label for the checkbox that toggles persistent logs in the Web Console and
+  -  network monitor,  i.e. devtools.webconsole.persistlog a boolean preference in
+  -  about:config, in the options panel. -->
+<!ENTITY options.enablePersistentLogs.label    "Enable persistent logs">
+<!ENTITY options.enablePersistentLogs.tooltip  "If you enable this option the Web Console and Network Monitor will not clear the output each time you navigate to a new page">
+
+<!-- LOCALIZATION NOTE (options.showPlatformData.label): This is the
+  -  label for the checkbox that toggles the display of the platform data in the,
+  -  Profiler i.e. devtools.profiler.ui.show-platform-data a boolean preference
+  -  in about:config, in the options panel. -->
+<!ENTITY options.showPlatformData.label    "Show Gecko platform data">
+<!ENTITY options.showPlatformData.tooltip  "If you enable this option the JavaScript Profiler reports will include
+Gecko platform symbols">
+
+<!-- LOCALIZATION NOTE (options.sourceeditor.*): Options under the editor
+  -  section. -->
+
+<!ENTITY options.sourceeditor.label                     "Editor Preferences">
+<!ENTITY options.sourceeditor.detectindentation.label   "Detect indentation">
+<!ENTITY options.sourceeditor.detectindentation.tooltip "Guess indentation based on source content">
+<!ENTITY options.sourceeditor.autoclosebrackets.label   "Autoclose brackets">
+<!ENTITY options.sourceeditor.autoclosebrackets.tooltip "Automatically insert closing brackets">
+<!ENTITY options.sourceeditor.expandtab.label           "Indent using spaces">
+<!ENTITY options.sourceeditor.expandtab.tooltip         "Use spaces instead of the tab character">
+<!ENTITY options.sourceeditor.tabsize.label             "Tab size">
+<!ENTITY options.sourceeditor.tabsize.accesskey         "T">
+<!ENTITY options.sourceeditor.keybinding.label          "Keybindings">
+<!ENTITY options.sourceeditor.keybinding.accesskey      "K">
+<!ENTITY options.sourceeditor.keybinding.default.label  "Default">
+

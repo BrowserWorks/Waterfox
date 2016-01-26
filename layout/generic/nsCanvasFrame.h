@@ -14,7 +14,6 @@
 #include "nsIScrollPositionListener.h"
 #include "nsDisplayList.h"
 #include "nsIAnonymousContentCreator.h"
-#include "nsIDOMEventListener.h"
 
 class nsPresContext;
 class nsRenderingContext;
@@ -83,23 +82,6 @@ public:
   virtual nsresult CreateAnonymousContent(nsTArray<ContentInfo>& aElements) override;
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements, uint32_t aFilter) override;
 
-  // Touch caret handle function
-  mozilla::dom::Element* GetTouchCaretElement() const
-  {
-     return mTouchCaretElement;
-  }
-
-  // Selection Caret Handle function
-  mozilla::dom::Element* GetSelectionCaretsStartElement() const
-  {
-    return mSelectionCaretsStartElement;
-  }
-
-  mozilla::dom::Element* GetSelectionCaretsEndElement() const
-  {
-    return mSelectionCaretsEndElement;
-  }
-
   mozilla::dom::Element* GetCustomContentContainer() const
   {
     return mCustomContentContainer;
@@ -126,7 +108,7 @@ public:
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
-  void PaintFocus(nsRenderingContext& aRenderingContext, nsPoint aPt);
+  void PaintFocus(mozilla::gfx::DrawTarget* aRenderingContext, nsPoint aPt);
 
   // nsIScrollPositionListener
   virtual void ScrollPositionWillChange(nscoord aX, nscoord aY) override;
@@ -165,28 +147,7 @@ protected:
   bool                      mDoPaintFocus;
   bool                      mAddedScrollPositionListener;
 
-  nsCOMPtr<mozilla::dom::Element> mTouchCaretElement;
-  nsCOMPtr<mozilla::dom::Element> mSelectionCaretsStartElement;
-  nsCOMPtr<mozilla::dom::Element> mSelectionCaretsEndElement;
   nsCOMPtr<mozilla::dom::Element> mCustomContentContainer;
-
-  class DummyTouchListener final : public nsIDOMEventListener
-  {
-  public:
-    NS_DECL_ISUPPORTS
-
-    NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) override
-    {
-      return NS_OK;
-    }
-  private:
-    ~DummyTouchListener() {}
-  };
-
-  /**
-   * A no-op touch-listener used for APZ purposes.
-   */
-  nsRefPtr<DummyTouchListener> mDummyTouchListener;
 };
 
 /**
@@ -195,11 +156,10 @@ protected:
  * We can also paint an "extra background color" behind the normal
  * background.
  */
-class nsDisplayCanvasBackgroundColor : public nsDisplayItem {
+class nsDisplayCanvasBackgroundColor : public nsDisplaySolidColorBase {
 public:
   nsDisplayCanvasBackgroundColor(nsDisplayListBuilder* aBuilder, nsIFrame *aFrame)
-    : nsDisplayItem(aBuilder, aFrame)
-    , mColor(NS_RGBA(0,0,0,0))
+    : nsDisplaySolidColorBase(aBuilder, aFrame, NS_RGBA(0,0,0,0))
   {
   }
 
@@ -207,19 +167,6 @@ public:
                                  nsRegion* aVisibleRegion) override
   {
     return NS_GET_A(mColor) > 0;
-  }
-  virtual nsRegion GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
-                                   bool* aSnap) override
-  {
-    if (NS_GET_A(mColor) == 255) {
-      return nsRegion(GetBounds(aBuilder, aSnap));
-    }
-    return nsRegion();
-  }
-  virtual bool IsUniform(nsDisplayListBuilder* aBuilder, nscolor* aColor) override
-  {
-    *aColor = mColor;
-    return true;
   }
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
@@ -234,19 +181,6 @@ public:
     aOutFrames->AppendElement(mFrame);
   }
 
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override
-  {
-    return new nsDisplayItemBoundsGeometry(this, aBuilder);
-  }
-
-  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                         const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion* aInvalidRegion) override
-  {
-    const nsDisplayItemBoundsGeometry* geometry = static_cast<const nsDisplayItemBoundsGeometry*>(aGeometry);
-    ComputeInvalidationRegionDifference(aBuilder, geometry, aInvalidRegion);
-  }
-
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
 
@@ -259,9 +193,6 @@ public:
 #ifdef MOZ_DUMP_PAINTING
   virtual void WriteDebugInfo(std::stringstream& aStream) override;
 #endif
-
-private:
-  nscolor mColor;
 };
 
 class nsDisplayCanvasBackgroundImage : public nsDisplayBackgroundImage {
@@ -269,7 +200,11 @@ public:
   nsDisplayCanvasBackgroundImage(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                                  uint32_t aLayer, const nsStyleBackground* aBg)
     : nsDisplayBackgroundImage(aBuilder, aFrame, aLayer, aBg)
-  {}
+  {
+    if (ShouldFixToViewport(aBuilder)) {
+      mAnimatedGeometryRoot = aBuilder->FindAnimatedGeometryRootFor(this);
+    }
+  }
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override;
 
@@ -279,7 +214,7 @@ public:
     mFrame->Properties().Delete(nsIFrame::CachedBackgroundImageDT());
   }
 
-  virtual bool ShouldFixToViewport(LayerManager* aManager) override
+  virtual bool ShouldFixToViewport(nsDisplayListBuilder* aBuilder) override
   {
     // Put background-attachment:fixed canvas background images in their own
     // compositing layer. Since we know their background painting area can't

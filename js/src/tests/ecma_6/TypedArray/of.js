@@ -7,22 +7,35 @@ const constructors = [
     Int32Array,
     Uint32Array,
     Float32Array,
-    Float64Array
-];
+    Float64Array ];
+
+if (typeof SharedArrayBuffer != "undefined")
+    constructors.push(sharedConstructor(Int8Array),
+		      sharedConstructor(Uint8Array),
+		      sharedConstructor(Int16Array),
+		      sharedConstructor(Uint16Array),
+		      sharedConstructor(Int32Array),
+		      sharedConstructor(Uint32Array),
+		      sharedConstructor(Float32Array),
+		      sharedConstructor(Float64Array));
 
 for (var constructor of constructors) {
     assertEq(constructor.of.length, 0);
 
-    assertDeepEq(Object.getOwnPropertyDescriptor(constructor.__proto__, "of"), {
-        value: constructor.of,
-        writable: true,
-        enumerable: false,
-        configurable: true
-    });
+    if (!isSharedConstructor(constructor)) {
+	assertDeepEq(Object.getOwnPropertyDescriptor(constructor.__proto__, "of"), {
+            value: constructor.of,
+            writable: true,
+            enumerable: false,
+            configurable: true
+	});
+    }
 
     // Basic tests.
-    assertEq(constructor.of().constructor, constructor);
-    assertEq(constructor.of() instanceof constructor, true);
+    if (!isSharedConstructor(constructor)) {
+	assertEq(constructor.of().constructor, constructor);
+	assertEq(constructor.of() instanceof constructor, true);
+    }
     assertDeepEq(constructor.of(10), new constructor([10]));
     assertDeepEq(constructor.of(1, 2, 3), new constructor([1, 2, 3]));
     assertDeepEq(constructor.of("1", "2", "3"), new constructor([1, 2, 3]));
@@ -44,7 +57,7 @@ for (var constructor of constructors) {
     assertEq(hits, 1);
 
     // Behavior across compartments.
-    if (typeof newGlobal === "function") {
+    if (typeof newGlobal === "function" && !isSharedConstructor(constructor)) {
         var newC = newGlobal()[constructor.name];
         assertEq(newC.of() instanceof newC, true);
         assertEq(newC.of() instanceof constructor, false);
@@ -60,14 +73,20 @@ for (var constructor of constructors) {
         }, TypeError);
     });
 
-    // FIXME: Should throw if `this` is a method definition or a getter/setter function, see bug 1059908.
-    constructor.of.call({method() {}}.method);
-    constructor.of.call(Object.getOwnPropertyDescriptor({get getter() {}}, "getter").get);
+    // Throw if `this` is a method definition or a getter/setter function.
+    assertThrowsInstanceOf(() => {
+        constructor.of.call({method() {}}.method);
+    }, TypeError);
+    assertThrowsInstanceOf(() => {
+        constructor.of.call(Object.getOwnPropertyDescriptor({get getter() {}}, "getter").get);
+    }, TypeError);
 
-    // Generators are also legal constructors.
-    assertEq(constructor.of.call(function*(len) {
+    // Generators are not legal constructors.
+    assertThrowsInstanceOf(() => {
+      constructor.of.call(function*(len) {
         return len;
-    }, "a", "b", "c").next().value, 3);
+      }, "a")
+    }, TypeError);
 
     // An exception might be thrown in a strict assignment to the new object's indexed properties.
     assertThrowsInstanceOf(() => {

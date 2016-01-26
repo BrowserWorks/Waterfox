@@ -5,37 +5,105 @@ MARIONETTE_CONTEXT = "chrome";
 
 const SETTINGS_KEY_DATA_ENABLED = "ril.data.enabled";
 const SETTINGS_KEY_DATA_APN_SETTINGS  = "ril.data.apnSettings";
+const SETTINGS_KEY_WIFI_ENABLED = "wifi.enabled";
 
 const TOPIC_CONNECTION_STATE_CHANGED = "network-connection-state-changed";
 const TOPIC_NETWORK_ACTIVE_CHANGED = "network-active-changed";
 
-const NETWORK_STATE_UNKNOWN = Ci.nsINetworkInterface.NETWORK_STATE_UNKNOWN;
-const NETWORK_STATE_CONNECTING = Ci.nsINetworkInterface.NETWORK_STATE_CONNECTING;
-const NETWORK_STATE_CONNECTED = Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED;
-const NETWORK_STATE_DISCONNECTING = Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTING;
-const NETWORK_STATE_DISCONNECTED = Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED;
+const NETWORK_STATE_UNKNOWN = Ci.nsINetworkInfo.NETWORK_STATE_UNKNOWN;
+const NETWORK_STATE_CONNECTING = Ci.nsINetworkInfo.NETWORK_STATE_CONNECTING;
+const NETWORK_STATE_CONNECTED = Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED;
+const NETWORK_STATE_DISCONNECTING = Ci.nsINetworkInfo.NETWORK_STATE_DISCONNECTING;
+const NETWORK_STATE_DISCONNECTED = Ci.nsINetworkInfo.NETWORK_STATE_DISCONNECTED;
 
-const NETWORK_TYPE_MOBILE = Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE;
-const NETWORK_TYPE_MOBILE_MMS = Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_MMS;
-const NETWORK_TYPE_MOBILE_SUPL = Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_SUPL;
-const NETWORK_TYPE_MOBILE_IMS = Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_IMS;
-const NETWORK_TYPE_MOBILE_DUN = Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN;
+const NETWORK_TYPE_MOBILE = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE;
+const NETWORK_TYPE_MOBILE_MMS = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_MMS;
+const NETWORK_TYPE_MOBILE_SUPL = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_SUPL;
+const NETWORK_TYPE_MOBILE_IMS = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_IMS;
+const NETWORK_TYPE_MOBILE_DUN = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_DUN;
+const NETWORK_TYPE_MOBILE_FOTA = Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_FOTA;
 
 const networkTypes = [
   NETWORK_TYPE_MOBILE,
   NETWORK_TYPE_MOBILE_MMS,
   NETWORK_TYPE_MOBILE_SUPL,
   NETWORK_TYPE_MOBILE_IMS,
-  NETWORK_TYPE_MOBILE_DUN
+  NETWORK_TYPE_MOBILE_DUN,
+  NETWORK_TYPE_MOBILE_FOTA
 ];
 
-let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
+var Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
 
-let ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
+var ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
 ok(ril, "ril.constructor is " + ril.constructor);
 
-let radioInterface = ril.getRadioInterface(0);
+var radioInterface = ril.getRadioInterface(0);
 ok(radioInterface, "radioInterface.constructor is " + radioInterface.constrctor);
+
+var _pendingEmulatorShellCmdCount = 0;
+var _pendingEmulatorCmdCount = 0;
+
+/**
+ * Send emulator shell command with safe guard.
+ *
+ * We should only call |finish()| after all emulator shell command transactions
+ * end, so here comes with the pending counter.  Resolve when the emulator
+ * shell gives response. Never reject.
+ *
+ * Fulfill params:
+ *   result -- an array of emulator shell response lines.
+ *
+ * @param aCommands
+ *        A string array commands to be passed to emulator through adb shell.
+ *
+ * @return A deferred promise.
+ */
+function runEmulatorShellCmdSafe(aCommands) {
+  return new Promise(function(aResolve, aReject) {
+    ++_pendingEmulatorShellCmdCount;
+    runEmulatorShell(aCommands, function(aResult) {
+      --_pendingEmulatorShellCmdCount;
+
+      log("Emulator shell response: " + JSON.stringify(aResult));
+      aResolve(aResult);
+    });
+  });
+}
+
+/**
+ * Send emulator command with safe guard.
+ *
+ * We should only call |finish()| after all emulator command transactions
+ * end, so here comes with the pending counter.  Resolve when the emulator
+ * gives positive response, and reject otherwise.
+ *
+ * Fulfill params:
+ *   result -- an array of emulator response lines.
+ * Reject params:
+ *   result -- an array of emulator response lines.
+ *
+ * @param aCommand
+ *        A string command to be passed to emulator through its telnet console.
+ *
+ * @return A deferred promise.
+ */
+function runEmulatorCmdSafe(aCommand) {
+  log(aCommand);
+  return new Promise(function(aResolve, aReject) {
+    ++_pendingEmulatorCmdCount;
+    runEmulatorCmd(aCommand, function(aResult) {
+      --_pendingEmulatorCmdCount;
+
+      log("Emulator console response: " + JSON.stringify(aResult));
+      if (Array.isArray(aResult) &&
+          aResult[aResult.length - 1] === "OK") {
+        aResolve(aResult);
+      } else {
+        aReject(aResult);
+      }
+    });
+  });
+}
 
 /**
  * Get mozSettings value specified by @aKey.
@@ -128,10 +196,38 @@ function waitForObserverEvent(aTopic) {
 }
 
 /**
+ * Wait for one named event.
+ *
+ * Resolve if that named event occurs.  Never reject.
+ *
+ * Fulfill params: the DOMEvent passed.
+ *
+ * @param aEventTarget
+ *        An EventTarget object.
+ * @param aEventName
+ *        A string event name.
+ * @param aMatchFun [optional]
+ *        A matching function returns true or false to filter the event.
+ *
+ * @return A deferred promise.
+ */
+function waitForTargetEvent(aEventTarget, aEventName, aMatchFun) {
+  return new Promise(function(aResolve, aReject) {
+    aEventTarget.addEventListener(aEventName, function onevent(aEvent) {
+      if (!aMatchFun || aMatchFun(aEvent)) {
+        aEventTarget.removeEventListener(aEventName, onevent);
+        ok(true, "Event '" + aEventName + "' got.");
+        aResolve(aEvent);
+      }
+    });
+  });
+}
+
+/**
  * Set the default data connection enabling state, wait for
  * "network-connection-state-changed" event and verify state.
  *
- * Fulfill params: (none)
+ * Fulfill params: instance of nsIRilNetworkInfo of the network connected.
  *
  * @param aEnabled
  *        A boolean state.
@@ -142,25 +238,27 @@ function setDataEnabledAndWait(aEnabled) {
   let promises = [];
   promises.push(waitForObserverEvent(TOPIC_CONNECTION_STATE_CHANGED)
     .then(function(aSubject) {
-      ok(aSubject instanceof Ci.nsIRilNetworkInterface,
-         "subject should be an instance of nsIRILNetworkInterface");
+      ok(aSubject instanceof Ci.nsIRilNetworkInfo,
+         "subject should be an instance of nsIRilNetworkInfo");
       is(aSubject.type, NETWORK_TYPE_MOBILE,
          "subject.type should be " + NETWORK_TYPE_MOBILE);
       is(aSubject.state,
-         aEnabled ? Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED
-                  : Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED,
+         aEnabled ? Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED
+                  : Ci.nsINetworkInfo.NETWORK_STATE_DISCONNECTED,
          "subject.state should be " + aEnabled ? "CONNECTED" : "DISCONNECTED");
+
+      return aSubject;
     }));
   promises.push(setSettings(SETTINGS_KEY_DATA_ENABLED, aEnabled));
 
-  return Promise.all(promises);
+  return Promise.all(promises).then(aValues => aValues[0]);
 }
 
 /**
  * Setup a certain type of data connection, wait for
  * "network-connection-state-changed" event and verify state.
  *
- * Fulfill params: (none)
+ * Fulfill params: instance of nsIRilNetworkInfo of the network connected.
  *
  * @param aNetworkType
  *        The mobile network type to setup.
@@ -173,16 +271,18 @@ function setupDataCallAndWait(aNetworkType) {
   let promises = [];
   promises.push(waitForObserverEvent(TOPIC_CONNECTION_STATE_CHANGED)
     .then(function(aSubject) {
-      ok(aSubject instanceof Ci.nsIRilNetworkInterface,
-         "subject should be an instance of nsIRILNetworkInterface");
+      ok(aSubject instanceof Ci.nsIRilNetworkInfo,
+         "subject should be an instance of nsIRilNetworkInfo");
       is(aSubject.type, aNetworkType,
          "subject.type should be " + aNetworkType);
-      is(aSubject.state, Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED,
+      is(aSubject.state, Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED,
          "subject.state should be CONNECTED");
+
+      return aSubject;
     }));
   promises.push(radioInterface.setupDataCallByType(aNetworkType));
 
-  return Promise.all(promises);
+  return Promise.all(promises).then(aValues => aValues[0]);
 }
 
 /**
@@ -202,16 +302,29 @@ function deactivateDataCallAndWait(aNetworkType) {
   let promises = [];
   promises.push(waitForObserverEvent(TOPIC_CONNECTION_STATE_CHANGED)
     .then(function(aSubject) {
-      ok(aSubject instanceof Ci.nsIRilNetworkInterface,
-         "subject should be an instance of nsIRILNetworkInterface");
+      ok(aSubject instanceof Ci.nsIRilNetworkInfo,
+         "subject should be an instance of nsIRilNetworkInfo");
       is(aSubject.type, aNetworkType,
          "subject.type should be " + aNetworkType);
-      is(aSubject.state, Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED,
+      is(aSubject.state, Ci.nsINetworkInfo.NETWORK_STATE_DISCONNECTED,
          "subject.state should be DISCONNECTED");
     }));
   promises.push(radioInterface.deactivateDataCallByType(aNetworkType));
 
   return Promise.all(promises);
+}
+
+/**
+ * Wait for pending emulator transactions and call |finish()|.
+ */
+function cleanUp() {
+  // Use ok here so that we have at least one test run.
+  ok(true, ":: CLEANING UP ::");
+
+  waitFor(finish, function() {
+    return _pendingEmulatorShellCmdCount === 0 &&
+           _pendingEmulatorCmdCount === 0;
+  });
 }
 
 /**
@@ -225,8 +338,8 @@ function deactivateDataCallAndWait(aNetworkType) {
 function startTestBase(aTestCaseMain) {
   Promise.resolve()
     .then(aTestCaseMain)
-    .then(finish, function(aException) {
+    .then(cleanUp, function(aException) {
       ok(false, "promise rejects during test: " + aException);
-      finish();
+      cleanUp();
     });
 }

@@ -32,7 +32,6 @@ REPOSITORY_PATH_PREFIX = 'python/mozboot'
 
 REPOSITORY_PATHS = [
     'mozboot/__init__.py',
-    'mozboot/android-ndk.rb',
     'mozboot/android.py',
     'mozboot/archlinux.py',
     'mozboot/base.py',
@@ -44,7 +43,6 @@ REPOSITORY_PATHS = [
     'mozboot/gentoo.py',
     'mozboot/openbsd.py',
     'mozboot/osx.py',
-    'mozboot/ubuntu.py',
 ]
 
 TEMPDIR = None

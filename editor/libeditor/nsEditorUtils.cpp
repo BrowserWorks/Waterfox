@@ -5,7 +5,7 @@
 
 #include "nsEditorUtils.h"
 
-#include "mozilla/dom/OwningNonNull.h"
+#include "mozilla/OwningNonNull.h"
 #include "mozilla/dom/Selection.h"
 #include "nsComponentManagerUtils.h"
 #include "nsError.h"
@@ -31,9 +31,11 @@ using namespace mozilla::dom;
  * nsAutoSelectionReset
  *****************************************************************************/
 
-nsAutoSelectionReset::nsAutoSelectionReset(Selection* aSel, nsEditor* aEd)
+nsAutoSelectionReset::nsAutoSelectionReset(Selection* aSel, nsEditor* aEd
+                                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
   : mSel(nullptr), mEd(nullptr)
-{ 
+{
+  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
   if (!aSel || !aEd) return;    // not much we can do, bail.
   if (aEd->ArePreservingSelection()) return;   // we already have initted mSavedSel, so this must be nested call.
   mSel = aSel;
@@ -66,23 +68,24 @@ nsAutoSelectionReset::Abort()
  * some helper classes for iterating the dom tree
  *****************************************************************************/
 
-nsDOMIterator::nsDOMIterator(nsRange& aRange)
+nsDOMIterator::nsDOMIterator(nsINode& aNode MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
 {
-  MOZ_ASSERT(aRange.GetStartParent(), "Invalid range");
-  mIter = NS_NewContentIterator();
-  DebugOnly<nsresult> res = mIter->Init(&aRange);
-  MOZ_ASSERT(NS_SUCCEEDED(res));
-}
-
-nsDOMIterator::nsDOMIterator(nsINode& aNode)
-{
+  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
   mIter = NS_NewContentIterator();
   DebugOnly<nsresult> res = mIter->Init(&aNode);
   MOZ_ASSERT(NS_SUCCEEDED(res));
 }
 
-nsDOMIterator::nsDOMIterator()
+nsresult
+nsDOMIterator::Init(nsRange& aRange)
 {
+  mIter = NS_NewContentIterator();
+  return mIter->Init(&aRange);
+}
+
+nsDOMIterator::nsDOMIterator(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
+{
+  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
 }
 
 nsDOMIterator::~nsDOMIterator()
@@ -103,11 +106,16 @@ nsDOMIterator::AppendList(const nsBoolDomIterFunctor& functor,
   }
 }
 
-nsDOMSubtreeIterator::nsDOMSubtreeIterator(nsRange& aRange)
+nsDOMSubtreeIterator::nsDOMSubtreeIterator(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
+  : nsDOMIterator(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_TO_PARENT)
+{
+}
+
+nsresult
+nsDOMSubtreeIterator::Init(nsRange& aRange)
 {
   mIter = NS_NewContentSubtreeIterator();
-  DebugOnly<nsresult> res = mIter->Init(&aRange);
-  MOZ_ASSERT(NS_SUCCEEDED(res));
+  return mIter->Init(&aRange);
 }
 
 nsDOMSubtreeIterator::~nsDOMSubtreeIterator()
@@ -175,7 +183,7 @@ nsEditorHookUtils::GetHookEnumeratorFromDocument(nsIDOMDocument *aDoc,
 }
 
 bool
-nsEditorHookUtils::DoInsertionHook(nsIDOMDocument *aDoc, nsIDOMEvent *aDropEvent,  
+nsEditorHookUtils::DoInsertionHook(nsIDOMDocument *aDoc, nsIDOMEvent *aDropEvent,
                                    nsITransferable *aTrans)
 {
   nsCOMPtr<nsISimpleEnumerator> enumerator;

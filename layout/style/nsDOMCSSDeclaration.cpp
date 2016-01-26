@@ -19,6 +19,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "nsContentUtils.h"
 #include "nsQueryObject.h"
+#include "mozilla/layers/ScrollLinkedEffectDetector.h"
 
 using namespace mozilla;
 
@@ -77,6 +78,23 @@ NS_IMETHODIMP
 nsDOMCSSDeclaration::SetPropertyValue(const nsCSSProperty aPropID,
                                       const nsAString& aValue)
 {
+  switch (aPropID) {
+    case eCSSProperty_background_position:
+    case eCSSProperty_transform:
+    case eCSSProperty_top:
+    case eCSSProperty_left:
+    case eCSSProperty_bottom:
+    case eCSSProperty_right:
+    case eCSSProperty_margin_top:
+    case eCSSProperty_margin_left:
+    case eCSSProperty_margin_bottom:
+    case eCSSProperty_margin_right:
+      mozilla::layers::ScrollLinkedEffectDetector::PositioningPropertyMutated();
+      break;
+    default:
+      break;
+  }
+
   if (aValue.IsEmpty()) {
     // If the new value of the property is an empty string we remove the
     // property.
@@ -107,7 +125,7 @@ nsDOMCSSDeclaration::SetCssText(const nsAString& aCssText)
   // to ensure that it exists, or else SetCSSDeclaration may crash.
   css::Declaration* olddecl = GetCSSDeclaration(eOperation_Modify);
   if (!olddecl) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   CSSParsingEnvironment env;
@@ -123,7 +141,7 @@ nsDOMCSSDeclaration::SetCssText(const nsAString& aCssText)
   // rule (see stack in bug 209575).
   mozAutoDocConditionalContentUpdateBatch autoUpdate(DocToUpdate(), true);
 
-  nsAutoPtr<css::Declaration> decl(new css::Declaration());
+  RefPtr<css::Declaration> decl(new css::Declaration());
   decl->InitializeEmpty();
   nsCSSParser cssParser(env.mCSSLoader);
   bool changed;
@@ -134,7 +152,7 @@ nsDOMCSSDeclaration::SetCssText(const nsAString& aCssText)
     return result;
   }
 
-  return SetCSSDeclaration(decl.forget());
+  return SetCSSDeclaration(decl);
 }
 
 NS_IMETHODIMP
@@ -292,9 +310,8 @@ nsDOMCSSDeclaration::RemoveProperty(const nsAString& aPropertyName,
 nsDOMCSSDeclaration::GetCSSParsingEnvironmentForRule(css::Rule* aRule,
                                                      CSSParsingEnvironment& aCSSParseEnv)
 {
-  nsIStyleSheet* sheet = aRule ? aRule->GetStyleSheet() : nullptr;
-  nsRefPtr<CSSStyleSheet> cssSheet(do_QueryObject(sheet));
-  if (!cssSheet) {
+  CSSStyleSheet* sheet = aRule ? aRule->GetStyleSheet() : nullptr;
+  if (!sheet) {
     aCSSParseEnv.mPrincipal = nullptr;
     return;
   }
@@ -302,7 +319,7 @@ nsDOMCSSDeclaration::GetCSSParsingEnvironmentForRule(css::Rule* aRule,
   nsIDocument* document = sheet->GetOwningDocument();
   aCSSParseEnv.mSheetURI = sheet->GetSheetURI();
   aCSSParseEnv.mBaseURI = sheet->GetBaseURI();
-  aCSSParseEnv.mPrincipal = cssSheet->Principal();
+  aCSSParseEnv.mPrincipal = sheet->Principal();
   aCSSParseEnv.mCSSLoader = document ? document->CSSLoader() : nullptr;
 }
 
@@ -313,7 +330,7 @@ nsDOMCSSDeclaration::ParsePropertyValue(const nsCSSProperty aPropID,
 {
   css::Declaration* olddecl = GetCSSDeclaration(eOperation_Modify);
   if (!olddecl) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   CSSParsingEnvironment env;
@@ -328,16 +345,13 @@ nsDOMCSSDeclaration::ParsePropertyValue(const nsCSSProperty aPropID,
   // between when we mutate the declaration and when we set the new
   // rule (see stack in bug 209575).
   mozAutoDocConditionalContentUpdateBatch autoUpdate(DocToUpdate(), true);
-  css::Declaration* decl = olddecl->EnsureMutable();
+  RefPtr<css::Declaration> decl = olddecl->EnsureMutable();
 
   nsCSSParser cssParser(env.mCSSLoader);
   bool changed;
   cssParser.ParseProperty(aPropID, aPropValue, env.mSheetURI, env.mBaseURI,
                           env.mPrincipal, decl, &changed, aIsImportant);
   if (!changed) {
-    if (decl != olddecl) {
-      delete decl;
-    }
     // Parsing failed -- but we don't throw an exception for that.
     return NS_OK;
   }
@@ -354,7 +368,7 @@ nsDOMCSSDeclaration::ParseCustomPropertyValue(const nsAString& aPropertyName,
 
   css::Declaration* olddecl = GetCSSDeclaration(eOperation_Modify);
   if (!olddecl) {
-    return NS_ERROR_FAILURE;
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   CSSParsingEnvironment env;
@@ -369,7 +383,7 @@ nsDOMCSSDeclaration::ParseCustomPropertyValue(const nsAString& aPropertyName,
   // between when we mutate the declaration and when we set the new
   // rule (see stack in bug 209575).
   mozAutoDocConditionalContentUpdateBatch autoUpdate(DocToUpdate(), true);
-  css::Declaration* decl = olddecl->EnsureMutable();
+  RefPtr<css::Declaration> decl = olddecl->EnsureMutable();
 
   nsCSSParser cssParser(env.mCSSLoader);
   bool changed;
@@ -379,9 +393,6 @@ nsDOMCSSDeclaration::ParseCustomPropertyValue(const nsAString& aPropertyName,
                           env.mBaseURI, env.mPrincipal, decl,
                           &changed, aIsImportant);
   if (!changed) {
-    if (decl != olddecl) {
-      delete decl;
-    }
     // Parsing failed -- but we don't throw an exception for that.
     return NS_OK;
   }
@@ -392,8 +403,8 @@ nsDOMCSSDeclaration::ParseCustomPropertyValue(const nsAString& aPropertyName,
 nsresult
 nsDOMCSSDeclaration::RemoveProperty(const nsCSSProperty aPropID)
 {
-  css::Declaration* decl = GetCSSDeclaration(eOperation_RemoveProperty);
-  if (!decl) {
+  css::Declaration* olddecl = GetCSSDeclaration(eOperation_RemoveProperty);
+  if (!olddecl) {
     return NS_OK; // no decl, so nothing to remove
   }
 
@@ -404,7 +415,7 @@ nsDOMCSSDeclaration::RemoveProperty(const nsCSSProperty aPropID)
   // rule (see stack in bug 209575).
   mozAutoDocConditionalContentUpdateBatch autoUpdate(DocToUpdate(), true);
 
-  decl = decl->EnsureMutable();
+  RefPtr<css::Declaration> decl = olddecl->EnsureMutable();
   decl->RemoveProperty(aPropID);
   return SetCSSDeclaration(decl);
 }
@@ -415,8 +426,8 @@ nsDOMCSSDeclaration::RemoveCustomProperty(const nsAString& aPropertyName)
   MOZ_ASSERT(Substring(aPropertyName, 0,
                        CSS_CUSTOM_NAME_PREFIX_LENGTH).EqualsLiteral("--"));
 
-  css::Declaration* decl = GetCSSDeclaration(eOperation_RemoveProperty);
-  if (!decl) {
+  css::Declaration* olddecl = GetCSSDeclaration(eOperation_RemoveProperty);
+  if (!olddecl) {
     return NS_OK; // no decl, so nothing to remove
   }
 
@@ -427,29 +438,8 @@ nsDOMCSSDeclaration::RemoveCustomProperty(const nsAString& aPropertyName)
   // rule (see stack in bug 209575).
   mozAutoDocConditionalContentUpdateBatch autoUpdate(DocToUpdate(), true);
 
-  decl = decl->EnsureMutable();
+  RefPtr<css::Declaration> decl = olddecl->EnsureMutable();
   decl->RemoveVariableDeclaration(Substring(aPropertyName,
                                             CSS_CUSTOM_NAME_PREFIX_LENGTH));
   return SetCSSDeclaration(decl);
-}
-
-bool IsCSSPropertyExposedToJS(nsCSSProperty aProperty, JSContext* cx, JSObject* obj)
-{
-  nsCSSProps::EnabledState enabledState = nsCSSProps::eEnabledForAllContent;
-
-  // Optimization: we skip checking properties of the JSContext
-  // in the majority case where the property does not have the
-  // CSS_PROPERTY_ALWAYS_ENABLED_IN_PRIVILEGED_CONTENT flag.
-  bool isEnabledInChromeOrCertifiedApp
-    = nsCSSProps::PropHasFlags(aProperty,
-                               CSS_PROPERTY_ALWAYS_ENABLED_IN_CHROME_OR_CERTIFIED_APP);
-
-  if (isEnabledInChromeOrCertifiedApp) {
-    if (dom::IsInCertifiedApp(cx, obj) ||
-        nsContentUtils::ThreadsafeIsCallerChrome())
-    {
-      enabledState |= nsCSSProps::eEnabledInChromeOrCertifiedApp;
-    }
-  }
-  return nsCSSProps::IsEnabled(aProperty, enabledState);
 }

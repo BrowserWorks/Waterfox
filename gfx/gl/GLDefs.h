@@ -44,9 +44,20 @@
 #define LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA                0x8C93
 #define LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA            0x87EE
 
+// EGL_ANDROID_image_crop
+#define LOCAL_EGL_IMAGE_CROP_LEFT_ANDROID               0x3148
+#define LOCAL_EGL_IMAGE_CROP_TOP_ANDROID                0x3149
+#define LOCAL_EGL_IMAGE_CROP_RIGHT_ANDROID              0x314A
+#define LOCAL_EGL_IMAGE_CROP_BOTTOM_ANDROID             0x314B
+
 // Others
 #define LOCAL_EGL_PRESERVED_RESOURCES                   0x3030
 #define LOCAL_EGL_CONTEXT_RESET_NOTIFICATION_STRATEGY_EXT 0x3138
+
+// ANGLE_platform_angle_d3d
+#define LOCAL_EGL_PLATFORM_ANGLE_ANGLE                  0x3201
+#define LOCAL_EGL_PLATFORM_ANGLE_TYPE_ANGLE             0x3202
+#define LOCAL_EGL_PLATFORM_ANGLE_TYPE_D3D11_WARP_ANGLE  0x3206
 
 #define LOCAL_GL_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB 0x8256
 #define LOCAL_GL_CONTEXT_LOST                           0x9242
@@ -58,5 +69,10 @@
 
 #define LOCAL_EGL_D3D11_ELSE_D3D9_DISPLAY_ANGLE         ((EGLNativeDisplayType)-2)
 #define LOCAL_EGL_D3D11_ONLY_DISPLAY_ANGLE              ((EGLNativeDisplayType)-3)
+
+// WGL_NV_DX_interop
+#define LOCAL_WGL_ACCESS_READ_ONLY                           0x0000
+#define LOCAL_WGL_ACCESS_READ_WRITE                          0x0001
+#define LOCAL_WGL_ACCESS_WRITE_DISCARD                       0x0002
 
 #endif

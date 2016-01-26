@@ -11,23 +11,13 @@
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* gMediaDecoderLog;
-#endif
-
 NS_IMPL_ISUPPORTS0(BufferDecoder)
 
 BufferDecoder::BufferDecoder(MediaResource* aResource)
-  : mReentrantMonitor("BufferDecoder")
-  , mResource(aResource)
+  : mResource(aResource)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(BufferDecoder);
-#ifdef PR_LOGGING
-  if (!gMediaDecoderLog) {
-    gMediaDecoderLog = PR_NewLogModule("MediaDecoder");
-  }
-#endif
 }
 
 BufferDecoder::~BufferDecoder()
@@ -37,37 +27,10 @@ BufferDecoder::~BufferDecoder()
 }
 
 void
-BufferDecoder::BeginDecoding(MediaTaskQueue* aTaskQueueIdentity)
+BufferDecoder::BeginDecoding(TaskQueue* aTaskQueueIdentity)
 {
   MOZ_ASSERT(!mTaskQueueIdentity && aTaskQueueIdentity);
   mTaskQueueIdentity = aTaskQueueIdentity;
-}
-
-ReentrantMonitor&
-BufferDecoder::GetReentrantMonitor()
-{
-  return mReentrantMonitor;
-}
-
-bool
-BufferDecoder::IsShutdown() const
-{
-  // BufferDecoder cannot be shut down.
-  return false;
-}
-
-bool
-BufferDecoder::OnStateMachineTaskQueue() const
-{
-  // BufferDecoder doesn't have the concept of a state machine.
-  return true;
-}
-
-bool
-BufferDecoder::OnDecodeTaskQueue() const
-{
-  MOZ_ASSERT(mTaskQueueIdentity, "Forgot to call BeginDecoding?");
-  return mTaskQueueIdentity->IsCurrentThreadIn();
 }
 
 MediaResource*
@@ -77,39 +40,8 @@ BufferDecoder::GetResource() const
 }
 
 void
-BufferDecoder::NotifyBytesConsumed(int64_t aBytes, int64_t aOffset)
-{
-  // ignore
-}
-
-void
 BufferDecoder::NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
                                    uint32_t aDropped)
-{
-  // ignore
-}
-
-int64_t
-BufferDecoder::GetMediaDuration()
-{
-  // unknown
-  return -1;
-}
-
-void
-BufferDecoder::SetMediaDuration(int64_t aDuration)
-{
-  // ignore
-}
-
-void
-BufferDecoder::UpdateEstimatedMediaDuration(int64_t aDuration)
-{
-  // ignore
-}
-
-void
-BufferDecoder::SetMediaSeekable(bool aMediaSeekable)
 {
   // ignore
 }
@@ -126,66 +58,6 @@ BufferDecoder::GetImageContainer()
 {
   // no image container
   return nullptr;
-}
-
-bool
-BufferDecoder::IsTransportSeekable()
-{
-  return false;
-}
-
-bool
-BufferDecoder::IsMediaSeekable()
-{
-  return false;
-}
-
-void
-BufferDecoder::MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags, MediaDecoderEventVisibility aEventVisibility)
-{
-  // ignore
-}
-
-void
-BufferDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo, MediaDecoderEventVisibility aEventVisibility)
-{
-  // ignore
-}
-
-void
-BufferDecoder::QueueMetadata(int64_t aTime, nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags)
-{
-  // ignore
-}
-
-void
-BufferDecoder::RemoveMediaTracks()
-{
-  // ignore
-}
-
-void
-BufferDecoder::SetMediaEndTime(int64_t aTime)
-{
-  // ignore
-}
-
-void
-BufferDecoder::OnReadMetadataCompleted()
-{
-  // ignore
-}
-
-void
-BufferDecoder::NotifyWaitingForResourcesStatusChanged()
-{
-  // ignore
-}
-
-void
-BufferDecoder::NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset)
-{
-  // ignore
 }
 
 MediaDecoderOwner*

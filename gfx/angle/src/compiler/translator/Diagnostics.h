@@ -4,18 +4,19 @@
 // found in the LICENSE file.
 //
 
-#ifndef COMPILER_DIAGNOSTICS_H_
-#define COMPILER_DIAGNOSTICS_H_
+#ifndef COMPILER_TRANSLATOR_DIAGNOSTICS_H_
+#define COMPILER_TRANSLATOR_DIAGNOSTICS_H_
 
+#include "common/angleutils.h"
 #include "compiler/preprocessor/DiagnosticsBase.h"
 
 class TInfoSink;
 
-class TDiagnostics : public pp::Diagnostics
+class TDiagnostics : public pp::Diagnostics, angle::NonCopyable
 {
   public:
     TDiagnostics(TInfoSink& infoSink);
-    virtual ~TDiagnostics();
+    ~TDiagnostics() override;
 
     TInfoSink& infoSink() { return mInfoSink; }
 
@@ -28,12 +29,8 @@ class TDiagnostics : public pp::Diagnostics
                    const std::string& token,
                    const std::string& extra);
 
-    void writeDebug(const std::string& str);
-
   protected:
-    virtual void print(ID id,
-                       const pp::SourceLocation& loc,
-                       const std::string& text);
+    void print(ID id, const pp::SourceLocation &loc, const std::string &text) override;
 
   private:
     TInfoSink& mInfoSink;
@@ -41,4 +38,4 @@ class TDiagnostics : public pp::Diagnostics
     int mNumWarnings;
 };
 
-#endif  // COMPILER_DIAGNOSTICS_H_
+#endif  // COMPILER_TRANSLATOR_DIAGNOSTICS_H_

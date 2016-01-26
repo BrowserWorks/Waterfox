@@ -7,6 +7,7 @@
 
 #include "mozilla/dom/Selection.h"      // local var
 #include "mozilla/dom/Text.h"           // mTextNode
+#include "mozilla/Preferences.h"        // nsCaret Visibility
 #include "nsAString.h"                  // params
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
 #include "nsEditor.h"                   // mEditor
@@ -17,6 +18,10 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+
+/*static*/ bool
+IMETextTxn::sCaretsExtendedVisibility = false;
+
 
 IMETextTxn::IMETextTxn(Text& aTextNode, uint32_t aOffset,
                        uint32_t aReplaceLength,
@@ -32,6 +37,12 @@ IMETextTxn::IMETextTxn(Text& aTextNode, uint32_t aOffset,
   , mEditor(aEditor)
   , mFixed(false)
 {
+  static bool addedPrefs = false;
+  if (!addedPrefs) {
+    mozilla::Preferences::AddBoolVarCache(&sCaretsExtendedVisibility,
+                                          "layout.accessiblecaret.extendedvisibility");
+    addedPrefs = true;
+  }
 }
 
 IMETextTxn::~IMETextTxn()
@@ -79,7 +90,7 @@ IMETextTxn::UndoTransaction()
 {
   // Get the selection first so we'll fail before making any changes if we
   // can't get it
-  nsRefPtr<Selection> selection = mEditor.GetSelection();
+  RefPtr<Selection> selection = mEditor.GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NOT_INITIALIZED);
 
   nsresult res = mTextNode->DeleteData(mOffset, mStringToInsert.Length());
@@ -106,7 +117,7 @@ IMETextTxn::Merge(nsITransaction* aTransaction, bool* aDidMerge)
   }
 
   // If aTransaction is another IMETextTxn then absorb it
-  nsRefPtr<IMETextTxn> otherTxn = do_QueryObject(aTransaction);
+  RefPtr<IMETextTxn> otherTxn = do_QueryObject(aTransaction);
   if (otherTxn) {
     // We absorb the next IME transaction by adopting its insert string
     mStringToInsert = otherTxn->mStringToInsert;
@@ -155,7 +166,19 @@ ToSelectionType(uint32_t aTextRangeType)
 nsresult
 IMETextTxn::SetSelectionForRanges()
 {
-  nsRefPtr<Selection> selection = mEditor.GetSelection();
+  return SetIMESelection(mEditor, mTextNode, mOffset,
+                         mStringToInsert.Length(), mRanges);
+}
+
+// static
+nsresult
+IMETextTxn::SetIMESelection(nsEditor& aEditor,
+                            Text* aTextNode,
+                            uint32_t aOffsetInNode,
+                            uint32_t aLengthOfCompositionString,
+                            const TextRangeArray* aRanges)
+{
+  RefPtr<Selection> selection = aEditor.GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NOT_INITIALIZED);
 
   nsresult rv = selection->StartBatchChanges();
@@ -170,7 +193,7 @@ IMETextTxn::SetSelectionForRanges()
   };
 
   nsCOMPtr<nsISelectionController> selCon;
-  mEditor.GetSelectionController(getter_AddRefs(selCon));
+  aEditor.GetSelectionController(getter_AddRefs(selCon));
   NS_ENSURE_TRUE(selCon, NS_ERROR_NOT_INITIALIZED);
 
   for (uint32_t i = 0; i < ArrayLength(kIMESelections); ++i) {
@@ -186,19 +209,18 @@ IMETextTxn::SetSelectionForRanges()
 
   // Set caret position and selection of IME composition with TextRangeArray.
   bool setCaret = false;
-  uint32_t countOfRanges = mRanges ? mRanges->Length() : 0;
+  uint32_t countOfRanges = aRanges ? aRanges->Length() : 0;
 
 #ifdef DEBUG
   // Bounds-checking on debug builds
-  uint32_t maxOffset = mTextNode->Length();
+  uint32_t maxOffset = aTextNode->Length();
 #endif
 
-  // The mStringToInsert may be truncated if maxlength attribute value doesn't
-  // allow input of all text of this composition. So, we can get actual length
-  // of the inserted string from it.
-  uint32_t insertedLength = mStringToInsert.Length();
+  // NOTE: composition string may be truncated when it's committed and
+  //       maxlength attribute value doesn't allow input of all text of this
+  //       composition.
   for (uint32_t i = 0; i < countOfRanges; ++i) {
-    const TextRange& textRange = mRanges->ElementAt(i);
+    const TextRange& textRange = aRanges->ElementAt(i);
 
     // Caret needs special handling since its length may be 0 and if it's not
     // specified explicitly, we need to handle it ourselves later.
@@ -206,12 +228,18 @@ IMETextTxn::SetSelectionForRanges()
       NS_ASSERTION(!setCaret, "The ranges already has caret position");
       NS_ASSERTION(!textRange.Length(), "nsEditor doesn't support wide caret");
       int32_t caretOffset = static_cast<int32_t>(
-        mOffset + std::min(textRange.mStartOffset, insertedLength));
+        aOffsetInNode +
+          std::min(textRange.mStartOffset, aLengthOfCompositionString));
       MOZ_ASSERT(caretOffset >= 0 &&
                  static_cast<uint32_t>(caretOffset) <= maxOffset);
-      rv = selection->Collapse(mTextNode, caretOffset);
+      rv = selection->Collapse(aTextNode, caretOffset);
       setCaret = setCaret || NS_SUCCEEDED(rv);
-      NS_ASSERTION(setCaret, "Failed to collapse normal selection");
+      if (NS_WARN_IF(!setCaret)) {
+        continue;
+      }
+      // If caret range is specified explicitly, we should show the caret if
+      // it should be so.
+      aEditor.HideCaret(false);
       continue;
     }
 
@@ -221,17 +249,19 @@ IMETextTxn::SetSelectionForRanges()
       continue;
     }
 
-    nsRefPtr<nsRange> clauseRange;
+    RefPtr<nsRange> clauseRange;
     int32_t startOffset = static_cast<int32_t>(
-      mOffset + std::min(textRange.mStartOffset, insertedLength));
+      aOffsetInNode +
+        std::min(textRange.mStartOffset, aLengthOfCompositionString));
     MOZ_ASSERT(startOffset >= 0 &&
                static_cast<uint32_t>(startOffset) <= maxOffset);
     int32_t endOffset = static_cast<int32_t>(
-      mOffset + std::min(textRange.mEndOffset, insertedLength));
+      aOffsetInNode +
+        std::min(textRange.mEndOffset, aLengthOfCompositionString));
     MOZ_ASSERT(endOffset >= startOffset &&
                static_cast<uint32_t>(endOffset) <= maxOffset);
-    rv = nsRange::CreateRange(mTextNode, startOffset,
-                              mTextNode, endOffset,
+    rv = nsRange::CreateRange(aTextNode, startOffset,
+                              aTextNode, endOffset,
                               getter_AddRefs(clauseRange));
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to create a DOM range for a clause of composition");
@@ -271,15 +301,23 @@ IMETextTxn::SetSelectionForRanges()
   // If the ranges doesn't include explicit caret position, let's set the
   // caret to the end of composition string.
   if (!setCaret) {
-    int32_t caretOffset = static_cast<int32_t>(mOffset + insertedLength);
+    int32_t caretOffset =
+      static_cast<int32_t>(aOffsetInNode + aLengthOfCompositionString);
     MOZ_ASSERT(caretOffset >= 0 &&
                static_cast<uint32_t>(caretOffset) <= maxOffset);
-    rv = selection->Collapse(mTextNode, caretOffset);
+    rv = selection->Collapse(aTextNode, caretOffset);
     NS_ASSERTION(NS_SUCCEEDED(rv),
                  "Failed to set caret at the end of composition string");
+
+    // If caret range isn't specified explicitly, we should hide the caret.
+    // Hiding the caret benefits a Windows build (see bug 555642 comment #6),
+    // but causes loss of Fennec AccessibleCaret visibility during Caret drag.
+    if (!sCaretsExtendedVisibility) {
+      aEditor.HideCaret(true);
+    }
   }
 
-  rv = selection->EndBatchChanges();
+  rv = selection->EndBatchChangesInternal();
   NS_ASSERTION(NS_SUCCEEDED(rv), "Failed to end batch changes");
 
   return rv;

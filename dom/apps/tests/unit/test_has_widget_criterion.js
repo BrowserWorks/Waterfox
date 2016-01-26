@@ -1,10 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-
 Cu.import("resource:///modules/AppsUtils.jsm");
-Cu.import("resource:///modules/Services.jsm");
 
 add_test(function test_has_widget_criterion() {
 
@@ -13,7 +10,7 @@ add_test(function test_has_widget_criterion() {
   let resolve = (aPage)=>{
     let filepath = AppsUtils.getFilePath(aPage);
 
-    return Services.io.newURI(baseUri.resolve(filepath), null, null);
+    return baseUri.resolve(filepath);
   };
 
   let widgetPages = ['/widget.html',

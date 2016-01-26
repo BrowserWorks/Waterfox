@@ -9,13 +9,37 @@ DIRS += ['interfaces', 'provider']
 XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell/xpcshell.ini']
 MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']
 
-EXPORTS.mozilla.dom.presentation += [
+EXPORTS.mozilla.dom += [
+    'ipc/PresentationChild.h',
+    'ipc/PresentationIPCService.h',
+    'ipc/PresentationParent.h',
+    'Presentation.h',
+    'PresentationAvailability.h',
+    'PresentationCallbacks.h',
+    'PresentationConnection.h',
     'PresentationDeviceManager.h',
+    'PresentationReceiver.h',
+    'PresentationRequest.h',
+    'PresentationService.h',
+    'PresentationSessionInfo.h',
+    'PresentationSessionTransport.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
+    'ipc/PresentationChild.cpp',
+    'ipc/PresentationIPCService.cpp',
+    'ipc/PresentationParent.cpp',
+    'Presentation.cpp',
+    'PresentationAvailability.cpp',
+    'PresentationCallbacks.cpp',
+    'PresentationConnection.cpp',
     'PresentationDeviceManager.cpp',
+    'PresentationReceiver.cpp',
+    'PresentationRequest.cpp',
+    'PresentationService.cpp',
+    'PresentationSessionInfo.cpp',
     'PresentationSessionRequest.cpp',
+    'PresentationSessionTransport.cpp',
 ]
 
 EXTRA_COMPONENTS += [
@@ -23,12 +47,24 @@ EXTRA_COMPONENTS += [
     'PresentationDeviceInfoManager.manifest',
 ]
 
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    EXTRA_COMPONENTS += [
+        'PresentationNetworkHelper.js',
+        'PresentationNetworkHelper.manifest',
+    ]
+
 EXTRA_JS_MODULES += [
     'PresentationDeviceInfoManager.jsm',
 ]
 
-FAIL_ON_WARNINGS = True
+IPDL_SOURCES += [
+    'ipc/PPresentation.ipdl',
+    'ipc/PPresentationRequest.ipdl'
+]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

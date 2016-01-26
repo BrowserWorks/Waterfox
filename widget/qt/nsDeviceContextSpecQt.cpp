@@ -10,7 +10,7 @@
 #define SET_PRINTER_FEATURES_VIA_PREFS 1
 #define PRINTERFEATURES_PREF "print.tmp.printerfeatures"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "plstr.h"
 
@@ -35,7 +35,7 @@
 static PRLogModuleInfo* DeviceContextSpecQtLM =
     PR_NewLogModule("DeviceContextSpecQt");
 /* Macro to make lines shorter */
-#define DO_PR_DEBUG_LOG(x) PR_LOG(DeviceContextSpecQtLM, PR_LOG_DEBUG, x)
+#define DO_PR_DEBUG_LOG(x) MOZ_LOG(DeviceContextSpecQtLM, mozilla::LogLevel::Debug, x)
 
 nsDeviceContextSpecQt::nsDeviceContextSpecQt()
 {
@@ -104,7 +104,7 @@ NS_IMETHODIMP nsDeviceContextSpecQt::GetSurfaceForPrinter(
     int16_t format;
     mPrintSettings->GetOutputFormat(&format);
 
-    nsRefPtr<gfxASurface> surface;
+    RefPtr<gfxASurface> surface;
     gfxSize surfaceSize(width, height);
 
     if (format == nsIPrintSettings::kOutputFormatNative) {
@@ -151,7 +151,7 @@ NS_IMETHODIMP nsDeviceContextSpecQt::Init(nsIWidget* aWidget,
 
 NS_IMETHODIMP nsDeviceContextSpecQt::BeginDocument(
         const nsAString& aTitle,
-        char16_t* aPrintToFileName,
+        const nsAString& aPrintToFileName,
         int32_t aStartPage,
         int32_t aEndPage)
 {

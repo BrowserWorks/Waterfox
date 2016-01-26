@@ -23,20 +23,65 @@
 
 #include "CanvasUtils.h"
 #include "mozilla/gfx/Matrix.h"
+#include "WebGL2Context.h"
 
 using namespace mozilla::gfx;
 
 namespace mozilla {
 namespace CanvasUtils {
 
+bool
+GetCanvasContextType(const nsAString& str, dom::CanvasContextType* const out_type)
+{
+  if (str.EqualsLiteral("2d")) {
+    *out_type = dom::CanvasContextType::Canvas2D;
+    return true;
+  }
+
+  if (str.EqualsLiteral("experimental-webgl")) {
+    *out_type = dom::CanvasContextType::WebGL1;
+    return true;
+  }
+
+#ifdef MOZ_WEBGL_CONFORMANT
+  if (str.EqualsLiteral("webgl")) {
+    /* WebGL 1.0, $2.1 "Context Creation":
+     *   If the user agent supports both the webgl and experimental-webgl
+     *   canvas context types, they shall be treated as aliases.
+     */
+    *out_type = dom::CanvasContextType::WebGL1;
+    return true;
+  }
+#endif
+
+  if (WebGL2Context::IsSupported()) {
+    if (str.EqualsLiteral("webgl2")) {
+      *out_type = dom::CanvasContextType::WebGL2;
+      return true;
+    }
+  }
+
+  if (str.EqualsLiteral("bitmaprenderer")) {
+    *out_type = dom::CanvasContextType::ImageBitmap;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * This security check utility might be called from an source that never taints
+ * others. For example, while painting a CanvasPattern, which is created from an
+ * ImageBitmap, onto a canvas. In this case, the caller could set the CORSUsed
+ * true in order to pass this check and leave the aPrincipal to be a nullptr
+ * since the aPrincipal is not going to be used.
+ */
 void
 DoDrawImageSecurityCheck(dom::HTMLCanvasElement *aCanvasElement,
                          nsIPrincipal *aPrincipal,
                          bool forceWriteOnly,
                          bool CORSUsed)
 {
-    NS_PRECONDITION(aPrincipal, "Must have a principal here");
-
     // Callers should ensure that mCanvasElement is non-null before calling this
     if (!aCanvasElement) {
         NS_WARNING("DoDrawImageSecurityCheck called without canvas element!");
@@ -55,6 +100,8 @@ DoDrawImageSecurityCheck(dom::HTMLCanvasElement *aCanvasElement,
     // No need to do a security check if the image used CORS for the load
     if (CORSUsed)
         return;
+
+    NS_PRECONDITION(aPrincipal, "Must have a principal here");
 
     if (aCanvasElement->NodePrincipal()->Subsumes(aPrincipal)) {
         // This canvas has access to that image anyway

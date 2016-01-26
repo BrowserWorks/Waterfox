@@ -27,7 +27,7 @@
  */
 
 #include "DynamicsCompressor.h"
-#include "AudioSegment.h"
+#include "AudioBlock.h"
 
 #include <cmath>
 #include "AudioNodeEngine.h"
@@ -55,22 +55,22 @@ DynamicsCompressor::DynamicsCompressor(float sampleRate, unsigned numberOfChanne
 size_t DynamicsCompressor::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
     size_t amount = aMallocSizeOf(this);
-    amount += m_preFilterPacks.SizeOfExcludingThis(aMallocSizeOf);
+    amount += m_preFilterPacks.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < m_preFilterPacks.Length(); i++) {
         if (m_preFilterPacks[i]) {
             amount += m_preFilterPacks[i]->sizeOfIncludingThis(aMallocSizeOf);
         }
     }
 
-    amount += m_postFilterPacks.SizeOfExcludingThis(aMallocSizeOf);
+    amount += m_postFilterPacks.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < m_postFilterPacks.Length(); i++) {
         if (m_postFilterPacks[i]) {
             amount += m_postFilterPacks[i]->sizeOfIncludingThis(aMallocSizeOf);
         }
     }
 
-    amount += m_sourceChannels.SizeOfExcludingThis(aMallocSizeOf);
-    amount += m_destinationChannels.SizeOfExcludingThis(aMallocSizeOf);
+    amount += aMallocSizeOf(m_sourceChannels.get());
+    amount += aMallocSizeOf(m_destinationChannels.get());
     amount += m_compressor.sizeOfExcludingThis(aMallocSizeOf);
     return amount;
 }
@@ -148,14 +148,14 @@ void DynamicsCompressor::setEmphasisParameters(float gain, float anchorFreq, flo
     setEmphasisStageParameters(3, gain, anchorFreq / (filterStageRatio * filterStageRatio * filterStageRatio));
 }
 
-void DynamicsCompressor::process(const AudioChunk* sourceChunk, AudioChunk* destinationChunk, unsigned framesToProcess)
+void DynamicsCompressor::process(const AudioBlock* sourceChunk, AudioBlock* destinationChunk, unsigned framesToProcess)
 {
     // Though numberOfChannels is retrived from destinationBus, we still name it numberOfChannels instead of numberOfDestinationChannels.
     // It's because we internally match sourceChannels's size to destinationBus by channel up/down mix. Thus we need numberOfChannels
     // to do the loop work for both m_sourceChannels and m_destinationChannels.
 
-    unsigned numberOfChannels = destinationChunk->mChannelData.Length();
-    unsigned numberOfSourceChannels = sourceChunk->mChannelData.Length();
+    unsigned numberOfChannels = destinationChunk->ChannelCount();
+    unsigned numberOfSourceChannels = sourceChunk->ChannelCount();
 
     MOZ_ASSERT(numberOfChannels == m_numberOfChannels && numberOfSourceChannels);
 
@@ -308,8 +308,8 @@ void DynamicsCompressor::setNumberOfChannels(unsigned numberOfChannels)
         m_postFilterPacks.AppendElement(new ZeroPoleFilterPack4());
     }
 
-    m_sourceChannels = new const float* [numberOfChannels];
-    m_destinationChannels = new float* [numberOfChannels];
+    m_sourceChannels = mozilla::MakeUnique<const float* []>(numberOfChannels);
+    m_destinationChannels = mozilla::MakeUnique<float* []>(numberOfChannels);
 
     m_compressor.setNumberOfChannels(numberOfChannels);
     m_numberOfChannels = numberOfChannels;

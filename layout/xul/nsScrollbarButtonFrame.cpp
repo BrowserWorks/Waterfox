@@ -52,27 +52,29 @@ nsScrollbarButtonFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  switch (aEvent->message) {
-    case NS_MOUSE_BUTTON_DOWN:
+  switch (aEvent->mMessage) {
+    case eMouseDown:
       mCursorOnThis = true;
       // if we didn't handle the press ourselves, pass it on to the superclass
       if (HandleButtonPress(aPresContext, aEvent, aEventStatus)) {
         return NS_OK;
       }
       break;
-    case NS_MOUSE_BUTTON_UP:
+    case eMouseUp:
       HandleRelease(aPresContext, aEvent, aEventStatus);
       break;
-    case NS_MOUSE_OUT:
+    case eMouseOut:
       mCursorOnThis = false;
       break;
-    case NS_MOUSE_MOVE: {
+    case eMouseMove: {
       nsPoint cursor =
         nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
       nsRect frameRect(nsPoint(0, 0), GetSize());
       mCursorOnThis = frameRect.Contains(cursor);
       break;
     }
+    default:
+      break;
   }
 
   return nsButtonBoxFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
@@ -220,16 +222,14 @@ void nsScrollbarButtonFrame::Notify()
 }
 
 void
-nsScrollbarButtonFrame::MouseClicked(nsPresContext* aPresContext,
-                                     WidgetGUIEvent* aEvent) 
+nsScrollbarButtonFrame::MouseClicked(WidgetGUIEvent* aEvent)
 {
-  nsButtonBoxFrame::MouseClicked(aPresContext, aEvent);
+  nsButtonBoxFrame::MouseClicked(aEvent);
   //MouseClicked();
 }
 
 nsresult
-nsScrollbarButtonFrame::GetChildWithTag(nsPresContext* aPresContext,
-                                        nsIAtom* atom, nsIFrame* start,
+nsScrollbarButtonFrame::GetChildWithTag(nsIAtom* atom, nsIFrame* start,
                                         nsIFrame*& result)
 {
   // recursively search our children
@@ -250,7 +250,7 @@ nsScrollbarButtonFrame::GetChildWithTag(nsPresContext* aPresContext,
     }
 
      // recursive search the child
-     GetChildWithTag(aPresContext, atom, childFrame, result);
+     GetChildWithTag(atom, childFrame, result);
      if (result != nullptr) 
        return NS_OK;
 

@@ -74,6 +74,8 @@
                 "./src/net/nr_socket.h",
                 #"./src/net/nr_socket_local.c",
                 "./src/net/nr_socket_local.h",
+                "./src/net/nr_socket_multi_tcp.c",
+                "./src/net/nr_socket_multi_tcp.h",
                 "./src/net/transport_addr.c",
                 "./src/net/transport_addr.h",
                 "./src/net/transport_addr_reg.c",
@@ -86,6 +88,8 @@
                 # STUN
                 "./src/stun/addrs.c",
                 "./src/stun/addrs.h",
+                "./src/stun/ifaddrs-android.c",
+                "./src/stun/ifaddrs-android.h",
                 "./src/stun/nr_socket_turn.c",
                 "./src/stun/nr_socket_turn.h",
                 "./src/stun/nr_socket_buffered_stun.c",
@@ -143,10 +147,9 @@
 
           'conditions' : [
               ## Mac and BSDs
-              [ 'OS == "mac"', {
+              [ 'OS == "mac" or OS == "ios"', {
                 'defines' : [
                     'DARWIN',
-                    'HAVE_XLOCALE',
                 ],
               }],
               [ 'os_bsd == 1', {
@@ -154,7 +157,7 @@
                     'BSD',
                 ],
               }],
-              [ 'OS == "mac" or os_bsd == 1', {
+              [ 'OS == "mac" or OS == "ios" or os_bsd == 1', {
                 'cflags_mozilla': [
                     '-Wall',
                     '-Wno-parentheses',

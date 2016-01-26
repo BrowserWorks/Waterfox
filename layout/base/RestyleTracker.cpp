@@ -11,12 +11,14 @@
 #include "RestyleTracker.h"
 
 #include "GeckoProfiler.h"
+#include "nsDocShell.h"
 #include "nsFrameManager.h"
 #include "nsIDocument.h"
 #include "nsStyleChangeList.h"
 #include "RestyleManager.h"
 #include "RestyleTrackerInlines.h"
 #include "nsTransitionManager.h"
+#include "mozilla/RestyleTimelineMarker.h"
 
 namespace mozilla {
 
@@ -56,7 +58,7 @@ RestyleTracker::Document() const {
 
 struct LaterSiblingCollector {
   RestyleTracker* tracker;
-  nsTArray< nsRefPtr<dom::Element> >* elements;
+  nsTArray< RefPtr<dom::Element> >* elements;
 };
 
 static PLDHashOperator
@@ -82,7 +84,7 @@ CollectLaterSiblings(nsISupports* aElement,
 }
 
 struct RestyleEnumerateData : RestyleTracker::Hints {
-  nsRefPtr<dom::Element> mElement;
+  RefPtr<dom::Element> mElement;
 #if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
   UniquePtr<ProfilerBacktrace> mBacktrace;
 #endif
@@ -122,7 +124,7 @@ CollectRestyles(nsISupports* aElement,
                (element->GetFlattenedTreeParent() &&
                 (!element->GetFlattenedTreeParent()->GetPrimaryFrame() ||
                  element->GetFlattenedTreeParent()->GetPrimaryFrame()->IsLeaf() ||
-                 element->GetCurrentDoc()->GetShell()->FrameManager()
+                 element->GetCrossShadowCurrentDoc()->GetShell()->FrameManager()
                    ->GetDisplayContentsStyleFor(element))) ||
                // Or not reachable due to an async reinsert we have
                // pending?  If so, we'll have a reframe hint around.
@@ -136,13 +138,17 @@ CollectRestyles(nsISupports* aElement,
   // Unset the restyle bits now, so if they get readded later as we
   // process we won't clobber that adding of the bit.
   element->UnsetFlags(collector->tracker->RestyleBit() |
-                      collector->tracker->RootBit());
+                      collector->tracker->RootBit() |
+                      collector->tracker->ConditionalDescendantsBit());
 
   RestyleEnumerateData** restyleArrayPtr = collector->restyleArrayPtr;
   RestyleEnumerateData* currentRestyle = *restyleArrayPtr;
   currentRestyle->mElement = element;
   currentRestyle->mRestyleHint = aData->mRestyleHint;
   currentRestyle->mChangeHint = aData->mChangeHint;
+  // We can move aData since we'll be clearing mPendingRestyles after
+  // we finish enumerating it.
+  currentRestyle->mRestyleHintData = Move(aData->mRestyleHintData);
 #if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
   currentRestyle->mBacktrace = Move(aData->mBacktrace);
 #endif
@@ -160,7 +166,8 @@ CollectRestyles(nsISupports* aElement,
 inline void
 RestyleTracker::ProcessOneRestyle(Element* aElement,
                                   nsRestyleHint aRestyleHint,
-                                  nsChangeHint aChangeHint)
+                                  nsChangeHint aChangeHint,
+                                  const RestyleHintData& aRestyleHintData)
 {
   NS_PRECONDITION((aRestyleHint & eRestyle_LaterSiblings) == 0,
                   "Someone should have handled this before calling us");
@@ -185,7 +192,7 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
     }
 #endif
     mRestyleManager->RestyleElement(aElement, primaryFrame, aChangeHint,
-                                    *this, aRestyleHint);
+                                    *this, aRestyleHint, aRestyleHintData);
   } else if (aChangeHint &&
              (primaryFrame ||
               (aChangeHint & nsChangeHint_ReconstructFrame))) {
@@ -199,8 +206,27 @@ RestyleTracker::ProcessOneRestyle(Element* aElement,
 void
 RestyleTracker::DoProcessRestyles()
 {
-  PROFILER_LABEL("RestyleTracker", "ProcessRestyles",
-    js::ProfileEntry::Category::CSS);
+  nsAutoCString docURL;
+  if (profiler_is_active()) {
+    nsIURI *uri = Document()->GetDocumentURI();
+    if (uri) {
+      uri->GetSpec(docURL);
+    } else {
+      docURL = "N/A";
+    }
+  }
+  PROFILER_LABEL_PRINTF("RestyleTracker", "ProcessRestyles",
+                        js::ProfileEntry::Category::CSS, "(%s)", docURL.get());
+
+  nsDocShell* docShell = static_cast<nsDocShell*>(mRestyleManager->PresContext()->GetDocShell());
+  RefPtr<TimelineConsumers> timelines = TimelineConsumers::Get();
+  bool isTimelineRecording = timelines && timelines->HasConsumer(docShell);
+
+  // Create a AnimationsWithDestroyedFrame during restyling process to
+  // stop animations on elements that have no frame at the end of the
+  // restyling process.
+  RestyleManager::AnimationsWithDestroyedFrame
+    animationsWithDestroyedFrame(mRestyleManager);
 
   // Create a ReframingStyleContexts struct on the stack and put it in our
   // mReframingStyleContexts for almost all of the remaining scope of
@@ -239,7 +265,7 @@ RestyleTracker::DoProcessRestyles()
     while (mPendingRestyles.Count()) {
       if (mHaveLaterSiblingRestyles) {
         // Convert them to individual restyles on all the later siblings
-        nsAutoTArray<nsRefPtr<Element>, RESTYLE_ARRAY_STACKSIZE> laterSiblingArr;
+        nsAutoTArray<RefPtr<Element>, RESTYLE_ARRAY_STACKSIZE> laterSiblingArr;
         LaterSiblingCollector siblingCollector = { this, &laterSiblingArr };
         mPendingRestyles.Enumerate(CollectLaterSiblings, &siblingCollector);
         for (uint32_t i = 0; i < laterSiblingArr.Length(); ++i) {
@@ -287,7 +313,7 @@ RestyleTracker::DoProcessRestyles()
         // Make sure to pop the element off our restyle root array, so
         // that we can freely append to the array as we process this
         // element.
-        nsRefPtr<Element> element;
+        RefPtr<Element> element;
         element.swap(mRestyleRoots[rootCount - 1]);
         mRestyleRoots.RemoveElementAt(rootCount - 1);
 
@@ -311,14 +337,27 @@ RestyleTracker::DoProcessRestyles()
           continue;
         }
 
+        if (isTimelineRecording) {
+          timelines->AddMarkerForDocShell(docShell, Move(
+            MakeUnique<RestyleTimelineMarker>(
+              data->mRestyleHint, MarkerTracingType::START)));
+        }
+
 #if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
         Maybe<GeckoProfilerTracingRAII> profilerRAII;
         if (profiler_feature_active("restyle")) {
           profilerRAII.emplace("Paint", "Styles", Move(data->mBacktrace));
         }
 #endif
-        ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint);
+        ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint,
+                          data->mRestyleHintData);
         AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
+
+        if (isTimelineRecording) {
+          timelines->AddMarkerForDocShell(docShell, Move(
+            MakeUnique<RestyleTimelineMarker>(
+              data->mRestyleHint, MarkerTracingType::END)));
+        }
       }
 
       if (mHaveLaterSiblingRestyles) {
@@ -359,13 +398,29 @@ RestyleTracker::DoProcessRestyles()
             profilerRAII.emplace("Paint", "Styles", Move(currentRestyle->mBacktrace));
           }
 #endif
+          if (isTimelineRecording) {
+            timelines->AddMarkerForDocShell(docShell, Move(
+              MakeUnique<RestyleTimelineMarker>(
+                currentRestyle->mRestyleHint, MarkerTracingType::START)));
+          }
+
           ProcessOneRestyle(currentRestyle->mElement,
                             currentRestyle->mRestyleHint,
-                            currentRestyle->mChangeHint);
+                            currentRestyle->mChangeHint,
+                            currentRestyle->mRestyleHintData);
+
+          if (isTimelineRecording) {
+            timelines->AddMarkerForDocShell(docShell, Move(
+              MakeUnique<RestyleTimelineMarker>(
+                currentRestyle->mRestyleHint, MarkerTracingType::END)));
+          }
         }
       }
     }
   }
+
+  // mPendingRestyles is now empty.
+  mHaveSelectors = false;
 
   mRestyleManager->EndProcessingRestyles();
 }
@@ -407,7 +462,7 @@ RestyleTracker::GetRestyleData(Element* aElement, nsAutoPtr<RestyleData>& aData)
 
 void
 RestyleTracker::AddRestyleRootsIfAwaitingRestyle(
-                                   const nsTArray<nsRefPtr<Element>>& aElements)
+                                   const nsTArray<RefPtr<Element>>& aElements)
 {
   // The RestyleData for a given element has stored in mDescendants
   // the list of descendants we need to end up restyling.  Since we
@@ -430,6 +485,25 @@ RestyleTracker::AddRestyleRootsIfAwaitingRestyle(
       mRestyleRoots.AppendElement(element);
     }
   }
+}
+
+void
+RestyleTracker::ClearSelectors()
+{
+  if (!mHaveSelectors) {
+    return;
+  }
+  for (auto it = mPendingRestyles.Iter(); !it.Done(); it.Next()) {
+    RestyleData* data = it.Data();
+    if (data->mRestyleHint & eRestyle_SomeDescendants) {
+      data->mRestyleHint =
+        (data->mRestyleHint & ~eRestyle_SomeDescendants) | eRestyle_Subtree;
+      data->mRestyleHintData.mSelectorsForDescendants.Clear();
+    } else {
+      MOZ_ASSERT(data->mRestyleHintData.mSelectorsForDescendants.IsEmpty());
+    }
+  }
+  mHaveSelectors = false;
 }
 
 } // namespace mozilla

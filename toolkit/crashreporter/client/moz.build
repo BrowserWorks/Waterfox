@@ -42,6 +42,7 @@ elif CONFIG['OS_ARCH'] == 'Darwin':
     OS_LIBS += ['-framework Cocoa']
     USE_LIBS += [
         'breakpad_common_s',
+        'breakpad_logging',
         'breakpad_mac_common_s',
     ]
 elif CONFIG['OS_ARCH'] == 'SunOS':
@@ -64,6 +65,8 @@ if CONFIG['MOZ_ENABLE_GTK']:
     ]
     OS_LIBS += CONFIG['TK_LIBS']
     OS_LIBS += CONFIG['MOZ_GTHREAD_LIBS']
+    CXXFLAGS += CONFIG['TK_CFLAGS']
+    CXXFLAGS += CONFIG['MOZ_GTHREAD_CFLAGS']
 
 RCINCLUDE = 'crashreporter.rc'
 

@@ -8,9 +8,11 @@
 #define mozilla_dom_SpeechSynthesis_h
 
 #include "nsCOMPtr.h"
-#include "nsString.h"
-#include "nsWrapperCache.h"
+#include "nsIObserver.h"
 #include "nsRefPtrHashtable.h"
+#include "nsString.h"
+#include "nsWeakReference.h"
+#include "nsWrapperCache.h"
 #include "js/TypeDecls.h"
 
 #include "SpeechSynthesisUtterance.h"
@@ -23,24 +25,29 @@ namespace dom {
 
 class nsSpeechTask;
 
-class SpeechSynthesis final : public nsISupports,
-                              public nsWrapperCache
+class SpeechSynthesis final : public nsIObserver
+                            , public nsWrapperCache
+                            , public nsSupportsWeakReference
 {
 public:
   explicit SpeechSynthesis(nsPIDOMWindow* aParent);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(SpeechSynthesis)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(SpeechSynthesis,
+                                                         nsIObserver)
+  NS_DECL_NSIOBSERVER
 
   nsIDOMWindow* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool Pending() const;
 
   bool Speaking() const;
 
   bool Paused() const;
+
+  bool HasEmptyQueue() const;
 
   void Speak(SpeechSynthesisUtterance& aUtterance);
 
@@ -52,7 +59,9 @@ public:
 
   void OnEnd(const nsSpeechTask* aTask);
 
-  void GetVoices(nsTArray< nsRefPtr<SpeechSynthesisVoice> >& aResult);
+  void GetVoices(nsTArray< RefPtr<SpeechSynthesisVoice> >& aResult);
+
+  void ForceEnd();
 
 private:
   virtual ~SpeechSynthesis();
@@ -61,14 +70,17 @@ private:
 
   nsCOMPtr<nsPIDOMWindow> mParent;
 
-  nsTArray<nsRefPtr<SpeechSynthesisUtterance> > mSpeechQueue;
+  nsTArray<RefPtr<SpeechSynthesisUtterance> > mSpeechQueue;
 
-  nsRefPtr<nsSpeechTask> mCurrentTask;
+  RefPtr<nsSpeechTask> mCurrentTask;
 
   nsRefPtrHashtable<nsStringHashKey, SpeechSynthesisVoice> mVoiceCache;
+
+  bool mHoldQueue;
+
+  uint64_t mInnerID;
 };
 
 } // namespace dom
 } // namespace mozilla
-
 #endif

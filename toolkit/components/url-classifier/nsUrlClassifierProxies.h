@@ -46,7 +46,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCOMPtr<nsIPrincipal> mPrincipal;
     nsCString mLookupTables;
     nsCOMPtr<nsIUrlClassifierCallback> mCB;
@@ -64,7 +64,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCOMPtr<nsIUrlClassifierCallback> mCB;
   };
 
@@ -82,7 +82,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCOMPtr<nsIUrlClassifierUpdateObserver> mUpdater;
     nsCString mTables;
   };
@@ -99,7 +99,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCString mTable;
   };
 
@@ -115,7 +115,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     nsCString mUpdateChunk;
   };
 
@@ -131,7 +131,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
      mozilla::safebrowsing::CacheResultArray *mEntries;
   };
 
@@ -147,7 +147,7 @@ public:
     NS_DECL_NSIRUNNABLE
 
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
     mozilla::safebrowsing::PrefixArray *mEntries;
   };
 
@@ -166,11 +166,29 @@ public:
 
     NS_DECL_NSIRUNNABLE
   private:
-    nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
 
     nsCString mSpec;
     nsCString mTables;
     mozilla::safebrowsing::LookupResultArray* mResults;
+  };
+
+  class SetLastUpdateTimeRunnable : public nsRunnable
+  {
+  public:
+    SetLastUpdateTimeRunnable(nsUrlClassifierDBServiceWorker* aTarget,
+                              const nsACString& table,
+                              uint64_t updateTime)
+      : mTarget(aTarget),
+        mTable(table),
+        mUpdateTime(updateTime)
+    { }
+
+    NS_DECL_NSIRUNNABLE
+  private:
+    RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+    nsCString mTable;
+    uint64_t mUpdateTime;
   };
 
 public:
@@ -181,7 +199,7 @@ public:
 private:
   ~UrlClassifierDBServiceWorkerProxy() {}
 
-  nsRefPtr<nsUrlClassifierDBServiceWorker> mTarget;
+  RefPtr<nsUrlClassifierDBServiceWorker> mTarget;
 };
 
 // The remaining classes here are all proxies to the main thread

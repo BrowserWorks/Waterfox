@@ -19,7 +19,7 @@
 #include "mozilla/LinkedList.h"
 #include "nsAutoPtr.h"
 #include "mozilla/TimeStamp.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 class nsPACMan;
 class nsISystemProxySettings;
@@ -78,7 +78,7 @@ public:
   nsString                   mAppOrigin;
 
 private:
-  nsRefPtr<nsPACManCallback> mCallback;
+  RefPtr<nsPACManCallback> mCallback;
   bool                       mOnMainThreadOnly;
 };
 
@@ -241,8 +241,8 @@ private:
 
 namespace mozilla {
 namespace net {
-PRLogModuleInfo* GetProxyLog();
-}
-}
+extern LazyLogModule gProxyLog;
+} // namespace net
+} // namespace mozilla
 
 #endif  // nsPACMan_h__

@@ -82,7 +82,7 @@ add_task(function* test_3() {
   is(curState.windows[2].isPrivate, true, "Window 2 is private");
   is(curState.selectedWindow, 4, "Last window opened is the one selected");
 
-  yield promiseWindowClosed(normalWindow);
+  yield BrowserTestUtils.closeWindow(normalWindow);
 
   // Pin and unpin a tab before checking the written state so that
   // the list of restoring windows gets cleared. Otherwise the
@@ -109,8 +109,9 @@ add_task(function* test_3() {
   forgetClosedWindows();
 });
 
-function promiseTabLoad(win, url) {
+function* promiseTabLoad(win, url) {
   let browser = win.gBrowser.selectedBrowser;
   browser.loadURI(url);
-  return promiseBrowserLoaded(browser).then(() => TabState.flush(browser));
+  yield promiseBrowserLoaded(browser);
+  yield TabStateFlusher.flush(browser);
 }

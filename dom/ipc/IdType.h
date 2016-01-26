@@ -11,7 +11,7 @@
 
 namespace IPC {
 template<typename T> struct ParamTraits;
-}
+} // namespace IPC
 
 namespace mozilla {
 namespace dom {
@@ -22,7 +22,6 @@ class TabParent;
 template<typename T>
 class IdType
 {
-
   friend struct IPC::ParamTraits<IdType<T>>;
 
 public:
@@ -69,6 +68,6 @@ struct ParamTraits<mozilla::dom::IdType<T>>
   }
 };
 
-}
+} // namespace IPC
 
-#endif
+#endif // mozilla_dom_IdType_h

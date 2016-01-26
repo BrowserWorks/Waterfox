@@ -10,7 +10,7 @@
 #include "ArchiveZipEvent.h"
 
 #include "nsIURI.h"
-#include "nsNetUtil.h"
+#include "nsNetCID.h"
 
 #include "mozilla/dom/ArchiveReaderBinding.h"
 #include "mozilla/dom/BindingDeclarations.h"
@@ -37,11 +37,11 @@ ArchiveReader::Constructor(const GlobalObject& aGlobal,
   nsAutoCString encoding;
   if (!EncodingUtils::FindEncodingForLabelNoReplacement(aOptions.mEncoding,
                                                         encoding)) {
-    aError.ThrowRangeError(MSG_ENCODING_NOT_SUPPORTED, &aOptions.mEncoding);
+    aError.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(aOptions.mEncoding);
     return nullptr;
   }
 
-  nsRefPtr<ArchiveReader> reader =
+  RefPtr<ArchiveReader> reader =
     new ArchiveReader(aBlob, window, encoding);
   return reader.forget();
 }
@@ -95,8 +95,12 @@ nsresult
 ArchiveReader::GetInputStream(nsIInputStream** aInputStream)
 {
   // Getting the input stream
-  mBlobImpl->GetInternalStream(aInputStream);
-  NS_ENSURE_TRUE(*aInputStream, NS_ERROR_UNEXPECTED);
+  ErrorResult rv;
+  mBlobImpl->GetInternalStream(aInputStream, rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return rv.StealNSResult();
+  }
+
   return NS_OK;
 }
 
@@ -120,7 +124,7 @@ ArchiveReader::OpenArchive()
   NS_ASSERTION(target, "Must have stream transport service");
 
   // Here a Event to make everything async:
-  nsRefPtr<ArchiveReaderEvent> event;
+  RefPtr<ArchiveReaderEvent> event;
 
   /* FIXME: If we want to support more than 1 format we should check the content type here: */
   event = new ArchiveReaderZipEvent(this, mEncoding);
@@ -136,7 +140,7 @@ ArchiveReader::OpenArchive()
 
 // Data received from the dispatched event:
 void
-ArchiveReader::Ready(nsTArray<nsRefPtr<File>>& aFileList,
+ArchiveReader::Ready(nsTArray<RefPtr<File>>& aFileList,
                      nsresult aStatus)
 {
   mStatus = READY;
@@ -147,7 +151,7 @@ ArchiveReader::Ready(nsTArray<nsRefPtr<File>>& aFileList,
 
   // Propagate the results:
   for (uint32_t index = 0; index < mRequests.Length(); ++index) {
-    nsRefPtr<ArchiveRequest> request = mRequests[index];
+    RefPtr<ArchiveRequest> request = mRequests[index];
     RequestReady(request);
   }
 
@@ -167,7 +171,7 @@ ArchiveReader::RequestReady(ArchiveRequest* aRequest)
 already_AddRefed<ArchiveRequest>
 ArchiveReader::GetFilenames()
 {
-  nsRefPtr<ArchiveRequest> request = GenerateArchiveRequest();
+  RefPtr<ArchiveRequest> request = GenerateArchiveRequest();
   request->OpGetFilenames();
 
   return request.forget();
@@ -176,7 +180,7 @@ ArchiveReader::GetFilenames()
 already_AddRefed<ArchiveRequest>
 ArchiveReader::GetFile(const nsAString& filename)
 {
-  nsRefPtr<ArchiveRequest> request = GenerateArchiveRequest();
+  RefPtr<ArchiveRequest> request = GenerateArchiveRequest();
   request->OpGetFile(filename);
 
   return request.forget();
@@ -185,7 +189,7 @@ ArchiveReader::GetFile(const nsAString& filename)
 already_AddRefed<ArchiveRequest>
 ArchiveReader::GetFiles()
 {
-  nsRefPtr<ArchiveRequest> request = GenerateArchiveRequest();
+  RefPtr<ArchiveRequest> request = GenerateArchiveRequest();
   request->OpGetFiles();
 
   return request.forget();

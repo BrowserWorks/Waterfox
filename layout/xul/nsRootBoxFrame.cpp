@@ -119,7 +119,7 @@ nsRootBoxFrame::nsRootBoxFrame(nsStyleContext* aContext):
   mPopupSetFrame = nullptr;
 
   nsCOMPtr<nsBoxLayout> layout;
-  NS_NewStackLayout(PresContext()->PresShell(), layout);
+  NS_NewStackLayout(layout);
   SetLayoutManager(layout);
 }
 
@@ -205,7 +205,7 @@ nsRootBoxFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
-  if (aEvent->message == NS_MOUSE_BUTTON_UP) {
+  if (aEvent->mMessage == eMouseUp) {
     nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
   }
 

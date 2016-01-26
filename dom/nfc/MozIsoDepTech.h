@@ -41,10 +41,10 @@ private:
   MozIsoDepTech(nsPIDOMWindow* aWindow, MozNFCTag& aNFCTag);
   virtual ~MozIsoDepTech();
 
-  nsRefPtr<nsPIDOMWindow> mWindow;
-  nsRefPtr<MozNFCTag> mTag;
+  RefPtr<nsPIDOMWindow> mWindow;
+  RefPtr<MozNFCTag> mTag;
 
-  static const NFCTechType mTechnology;
+  static const NFCTechType sTechnology;
 };
 
 } // namespace dom

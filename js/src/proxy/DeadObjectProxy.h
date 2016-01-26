@@ -40,16 +40,15 @@ class DeadObjectProxy : public BaseProxyHandler
     /* SpiderMonkey extensions. */
     // BaseProxyHandler::getPropertyDescriptor will throw by calling getOwnPropertyDescriptor.
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                            CallArgs args) const override;
+                            const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
                              bool* bp) const override;
-    virtual bool objectClassIs(HandleObject obj, ESClassValue classValue,
-                               JSContext* cx) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                 ESClassValue* classValue) const override;
+    virtual bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const override;
     virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
-    virtual bool defaultValue(JSContext* cx, HandleObject obj, JSType hint,
-                              MutableHandleValue vp) const override;
 
     static const char family;
     static const DeadObjectProxy singleton;

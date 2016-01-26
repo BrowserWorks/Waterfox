@@ -17,8 +17,10 @@ namespace dom {
 struct ThreeDPoint;
 class AudioParamTimeline;
 class DelayNodeEngine;
-}
+struct AudioTimelineEvent;
+} // namespace dom
 
+class AudioBlock;
 class AudioNodeStream;
 
 /**
@@ -31,12 +33,19 @@ class ThreadSharedFloatArrayBufferList final : public ThreadSharedObject
 {
 public:
   /**
-   * Construct with null data.
+   * Construct with null channel data pointers.
    */
   explicit ThreadSharedFloatArrayBufferList(uint32_t aCount)
   {
     mContents.SetLength(aCount);
   }
+  /**
+   * Create with buffers suitable for transfer to
+   * JS_NewArrayBufferWithContents().  The buffer contents are uninitialized
+   * and so should be set using GetDataForWrite().
+   */
+  static already_AddRefed<ThreadSharedFloatArrayBufferList>
+  Create(uint32_t aChannelCount, size_t aLength, const mozilla::fallible_t&);
 
   struct Storage final
   {
@@ -58,7 +67,7 @@ public:
     }
     void* mDataToFree;
     void (*mFree)(void*);
-    const float* mSampleData;
+    float* mSampleData;
   };
 
   /**
@@ -69,12 +78,21 @@ public:
    * This can be called on any thread.
    */
   const float* GetData(uint32_t aIndex) const { return mContents[aIndex].mSampleData; }
+  /**
+   * This can be called on any thread, but only when the calling thread is the
+   * only owner.
+   */
+  float* GetDataForWrite(uint32_t aIndex)
+  {
+    MOZ_ASSERT(!IsShared());
+    return mContents[aIndex].mSampleData;
+  }
 
   /**
    * Call this only during initialization, before the object is handed to
    * any other thread.
    */
-  void SetData(uint32_t aIndex, void* aDataToFree, void (*aFreeFunc)(void*), const float* aData)
+  void SetData(uint32_t aIndex, void* aDataToFree, void (*aFreeFunc)(void*), float* aData)
   {
     Storage* s = &mContents[aIndex];
     if (s->mFree) {
@@ -93,10 +111,10 @@ public:
    */
   void Clear() { mContents.Clear(); }
 
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = ThreadSharedObject::SizeOfExcludingThis(aMallocSizeOf);
-    amount += mContents.SizeOfExcludingThis(aMallocSizeOf);
+    amount += mContents.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < mContents.Length(); i++) {
       amount += mContents[i].SizeOfExcludingThis(aMallocSizeOf);
     }
@@ -104,25 +122,20 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
 private:
-  AutoFallibleTArray<Storage,2> mContents;
+  nsAutoTArray<Storage, 2> mContents;
 };
-
-/**
- * Allocates an AudioChunk with fresh buffers of WEBAUDIO_BLOCK_SIZE float samples.
- * AudioChunk::mChannelData's entries can be cast to float* for writing.
- */
-void AllocateAudioBlock(uint32_t aChannelCount, AudioChunk* aChunk);
 
 /**
  * aChunk must have been allocated by AllocateAudioBlock.
  */
-void WriteZeroesToAudioBlock(AudioChunk* aChunk, uint32_t aStart, uint32_t aLength);
+void WriteZeroesToAudioBlock(AudioBlock* aChunk, uint32_t aStart,
+                             uint32_t aLength);
 
 /**
  * Copy with scale. aScale == 1.0f should be optimized.
@@ -240,11 +253,10 @@ class AudioNodeEngine
 {
 public:
   // This should be compatible with AudioNodeStream::OutputChunks.
-  typedef nsAutoTArray<AudioChunk, 1> OutputChunks;
+  typedef nsAutoTArray<AudioBlock, 1> OutputChunks;
 
   explicit AudioNodeEngine(dom::AudioNode* aNode)
     : mNode(aNode)
-    , mNodeMutex("AudioNodeEngine::mNodeMutex")
     , mInputCount(aNode ? aNode->NumberOfInputs() : 1)
     , mOutputCount(aNode ? aNode->NumberOfOutputs() : 0)
   {
@@ -271,11 +283,10 @@ public:
   {
     NS_ERROR("Invalid SetInt32Parameter index");
   }
-  virtual void SetTimelineParameter(uint32_t aIndex,
-                                    const dom::AudioParamTimeline& aValue,
-                                    TrackRate aSampleRate)
+  virtual void RecvTimelineEvent(uint32_t aIndex,
+                                 dom::AudioTimelineEvent& aValue)
   {
-    NS_ERROR("Invalid SetTimelineParameter index");
+    NS_ERROR("Invalid RecvTimelineEvent index");
   }
   virtual void SetThreeDPointParameter(uint32_t aIndex,
                                        const dom::ThreeDPoint& aValue)
@@ -298,23 +309,24 @@ public:
    * aInput is guaranteed to have float sample format (if it has samples at all)
    * and to have been resampled to the sampling rate for the stream, and to have
    * exactly WEBAUDIO_BLOCK_SIZE samples.
-   * *aFinished is set to false by the caller. If the callee sets it to true,
-   * we'll finish the stream and not call this again.
+   * *aFinished is set to false by the caller. The callee must not set this to
+   * true unless silent output is produced. If set to true, we'll finish the
+   * stream, consider this input inactive on any downstream nodes, and not
+   * call this again.
    */
   virtual void ProcessBlock(AudioNodeStream* aStream,
-                            const AudioChunk& aInput,
-                            AudioChunk* aOutput,
-                            bool* aFinished)
-  {
-    MOZ_ASSERT(mInputCount <= 1 && mOutputCount <= 1);
-    *aOutput = aInput;
-  }
+                            GraphTime aFrom,
+                            const AudioBlock& aInput,
+                            AudioBlock* aOutput,
+                            bool* aFinished);
   /**
    * Produce the next block of audio samples, before input is provided.
    * ProcessBlock() will be called later, and it then should not change
    * aOutput.  This is used only for DelayNodeEngine in a feedback loop.
    */
-  virtual void ProduceBlockBeforeInput(AudioChunk* aOutput)
+  virtual void ProduceBlockBeforeInput(AudioNodeStream* aStream,
+                                       GraphTime aFrom,
+                                       AudioBlock* aOutput)
   {
     NS_NOTREACHED("ProduceBlockBeforeInput called on wrong engine\n");
   }
@@ -337,24 +349,18 @@ public:
   virtual void ProcessBlocksOnPorts(AudioNodeStream* aStream,
                                     const OutputChunks& aInput,
                                     OutputChunks& aOutput,
-                                    bool* aFinished)
-  {
-    MOZ_ASSERT(mInputCount > 1 || mOutputCount > 1);
-    // Only produce one output port, and drop all other input ports.
-    aOutput[0] = aInput[0];
-  }
+                                    bool* aFinished);
 
-  Mutex& NodeMutex() { return mNodeMutex;}
+  // IsActive() returns true if the engine needs to continue processing an
+  // unfinished stream even when it has silent or no input connections.  This
+  // includes tail-times and when sources have been scheduled to start.  If
+  // returning false, then the stream can be suspended.
+  virtual bool IsActive() const { return false; }
 
   bool HasNode() const
   {
+    MOZ_ASSERT(NS_IsMainThread());
     return !!mNode;
-  }
-
-  dom::AudioNode* Node() const
-  {
-    mNodeMutex.AssertCurrentThreadOwns();
-    return mNode;
   }
 
   dom::AudioNode* NodeMainThread() const
@@ -367,7 +373,6 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_ASSERT(mNode != nullptr);
-    mNodeMutex.AssertCurrentThreadOwns();
     mNode = nullptr;
   }
 
@@ -389,7 +394,7 @@ public:
                            AudioNodeSizes& aUsage) const
   {
     aUsage.mEngine = SizeOfIncludingThis(aMallocSizeOf);
-    if (HasNode()) {
+    if (mNode) {
       aUsage.mDomNode = mNode->SizeOfIncludingThis(aMallocSizeOf);
       aUsage.mNodeType = mNode->NodeType();
     }
@@ -397,11 +402,10 @@ public:
 
 private:
   dom::AudioNode* mNode;
-  Mutex mNodeMutex;
   const uint16_t mInputCount;
   const uint16_t mOutputCount;
 };
 
-}
+} // namespace mozilla
 
 #endif /* MOZILLA_AUDIONODEENGINE_H_ */

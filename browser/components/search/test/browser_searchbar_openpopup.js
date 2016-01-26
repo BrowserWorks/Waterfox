@@ -411,9 +411,9 @@ add_no_popup_task(function* search_go_doesnt_open_popup() {
 
   gURLBar.focus();
   textbox.value = "foo";
-  searchbar.inputChanged();
+  searchbar.updateGoButtonVisibility();
 
-  let promise = promiseOnLoad();
+  let promise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
   EventUtils.synthesizeMouseAtCenter(goButton, {});
   yield promise;
 

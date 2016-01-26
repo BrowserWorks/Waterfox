@@ -34,7 +34,6 @@ class ErrorResult;
 
 namespace dom {
 
-class AsyncVerifyRedirectCallbackFwr;
 struct EventSourceInit;
 
 class EventSource final : public DOMEventTargetHelper
@@ -44,8 +43,6 @@ class EventSource final : public DOMEventTargetHelper
                         , public nsIInterfaceRequestor
                         , public nsSupportsWeakReference
 {
-friend class AsyncVerifyRedirectCallbackFwr;
-
 public:
   explicit EventSource(nsPIDOMWindow* aOwnerWindow);
   NS_DECL_ISUPPORTS_INHERITED
@@ -145,7 +142,6 @@ protected:
   nsresult ResetEvent();
   nsresult DispatchCurrentMessageEvent();
   nsresult ParseCharacter(char16_t aChr);
-  bool CheckCanRequestSrc(nsIURI* aSrc = nullptr);  // if null, it tests mSrc
   nsresult CheckHealthOfRequestCallback(nsIRequest *aRequestCallback);
   nsresult OnRedirectVerifyCallback(nsresult result);
 
@@ -233,13 +229,6 @@ protected:
 
   nsCOMPtr<nsILoadGroup> mLoadGroup;
 
-  /**
-   * The notification callbacks the channel had initially.
-   * We want to forward things here as needed.
-   */
-  nsCOMPtr<nsIInterfaceRequestor> mNotificationCallbacks;
-  nsCOMPtr<nsIChannelEventSink>   mChannelEventSink;
-
   nsCOMPtr<nsIHttpChannel> mHttpChannel;
 
   nsCOMPtr<nsITimer> mTimer;
@@ -250,18 +239,16 @@ protected:
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsString mOrigin;
 
-  uint32_t mRedirectFlags;
-  nsCOMPtr<nsIAsyncVerifyRedirectCallback> mRedirectCallback;
-  nsCOMPtr<nsIChannel> mNewRedirectChannel;
-
   // Event Source owner information:
   // - the script file name
-  // - source code line number where the Event Source object was constructed.
+  // - source code line number and column number where the Event Source object
+  //   was constructed.
   // - the ID of the inner window where the script lives. Note that this may not
   //   be the same as the Event Source owner window.
   // These attributes are used for error reporting.
   nsString mScriptFile;
   uint32_t mScriptLine;
+  uint32_t mScriptColumn;
   uint64_t mInnerWindowID;
 
 private:

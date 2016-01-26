@@ -11,6 +11,9 @@
 #endif
 #include "testing/TestHarness.h"
 #include "prenv.h"
+#ifdef XP_WIN
+#include "mozilla/ipc/WindowsMessageLoop.h"
+#endif
 
 using ::testing::EmptyTestEventListener;
 using ::testing::InitGoogleTest;
@@ -34,6 +37,8 @@ public:
     printf("TEST-%s | GTest unit test: %s\n",
            aUnitTest.Passed() ? "PASS" : "UNEXPECTED-FAIL",
            aUnitTest.Passed() ? "passed" : "failed");
+    printf("Passed: %d\n", aUnitTest.successful_test_count());
+    printf("Failed: %d\n", aUnitTest.failed_test_count());
   }
   virtual void OnTestStart(const TestInfo& aTestInfo) override {
     mTestInfo = &aTestInfo;
@@ -84,6 +89,9 @@ int RunGTestFunc()
 
   ScopedXPCOM xpcom("GTest");
 
+#ifdef XP_WIN
+  mozilla::ipc::windows::InitUIThread();
+#endif
 #ifdef MOZ_CRASHREPORTER
   nsCOMPtr<nsICrashReporter> crashreporter;
   char *crashreporterStr = PR_GetEnv("MOZ_CRASHREPORTER");
@@ -121,4 +129,4 @@ public:
   }
 } InitRunGTest;
 
-}
+} // namespace mozilla

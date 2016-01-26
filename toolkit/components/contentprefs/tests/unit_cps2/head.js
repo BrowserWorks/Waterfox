@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { interfaces: Ci, classes: Cc, results: Cr, utils: Cu } = Components;
+var { interfaces: Ci, classes: Cc, results: Cr, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -62,7 +62,7 @@ function runAsyncTests(tests, dontResetBefore = false) {
   });
 
   tests.forEach(function (test) {
-    function gen() {
+    function* gen() {
       do_print("Running " + test.name);
       yield test();
       yield reset();
@@ -196,7 +196,7 @@ function prefOK(actual, expected, strict) {
     equal(actual.value, expected.value);
 }
 
-function getOK(args, expectedVal, expectedGroup, strict) {
+function* getOK(args, expectedVal, expectedGroup, strict) {
   if (args.length == 2)
     args.push(undefined);
   let expectedPrefs = expectedVal === undefined ? [] :
@@ -206,7 +206,7 @@ function getOK(args, expectedVal, expectedGroup, strict) {
   yield getOKEx("getByDomainAndName", args, expectedPrefs, strict);
 }
 
-function getSubdomainsOK(args, expectedGroupValPairs) {
+function* getSubdomainsOK(args, expectedGroupValPairs) {
   if (args.length == 2)
     args.push(undefined);
   let expectedPrefs = expectedGroupValPairs.map(function ([group, val]) {
@@ -215,7 +215,7 @@ function getSubdomainsOK(args, expectedGroupValPairs) {
   yield getOKEx("getBySubdomainAndName", args, expectedPrefs);
 }
 
-function getGlobalOK(args, expectedVal) {
+function* getGlobalOK(args, expectedVal) {
   if (args.length == 1)
     args.push(undefined);
   let expectedPrefs = expectedVal === undefined ? [] :
@@ -223,10 +223,10 @@ function getGlobalOK(args, expectedVal) {
   yield getOKEx("getGlobal", args, expectedPrefs);
 }
 
-function getOKEx(methodName, args, expectedPrefs, strict, context) {
+function* getOKEx(methodName, args, expectedPrefs, strict, context) {
   let actualPrefs = [];
   args.push(makeCallback({
-    handleResult: function (pref) actualPrefs.push(pref)
+    handleResult: pref => actualPrefs.push(pref)
   }));
   yield cps[methodName].apply(cps, args);
   arraysOfArraysOK([actualPrefs], [expectedPrefs], function (actual, expected) {
@@ -343,7 +343,7 @@ function dbOK(expectedRows) {
     handleResult: function (results) {
       let row = null;
       while (row = results.getNextRow()) {
-        actualRows.push(cols.map(function (c) row.getResultByName(c)));
+        actualRows.push(cols.map(c => row.getResultByName(c)));
       }
     },
     handleError: function (err) {
@@ -368,7 +368,7 @@ function on(event, names, dontRemove) {
   names.forEach(function (name) {
     let obs = {};
     ["onContentPrefSet", "onContentPrefRemoved"].forEach(function (meth) {
-      obs[meth] = function () do_throw(meth + " should not be called");
+      obs[meth] = () => do_throw(meth + " should not be called");
     });
     obs["onContentPref" + event] = function () {
       args[name].push(Array.slice(arguments));
@@ -381,7 +381,7 @@ function on(event, names, dontRemove) {
 
   do_execute_soon(function () {
     if (!dontRemove)
-      names.forEach(function (n) cps.removeObserverForName(n, observers[n]));
+      names.forEach(n => cps.removeObserverForName(n, observers[n]));
     next(args);
   });
 }

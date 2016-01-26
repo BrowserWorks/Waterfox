@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -109,7 +109,7 @@ HistoryDownload.prototype = {
       this.canceled = false;
 
       // These properties may be updated if the user interface is refreshed.
-      this.exists = false;
+      this.target.exists = false;
       this.target.size = undefined;
     }
   },
@@ -220,16 +220,22 @@ HistoryDownloadElementShell.prototype = {
       this._updateUI();
     }
   },
-  get active() !!this._active,
+  get active() {
+    return !!this._active;
+  },
 
   /**
    * Overrides the base getter to return the Download or HistoryDownload object
    * for displaying information and executing commands in the user interface.
    */
-  get download() this._sessionDownload || this._historyDownload,
+  get download() {
+    return this._sessionDownload || this._historyDownload;
+  },
 
   _sessionDownload: null,
-  get sessionDownload() this._sessionDownload,
+  get sessionDownload() {
+    return this._sessionDownload;
+  },
   set sessionDownload(aValue) {
     if (this._sessionDownload != aValue) {
       if (!aValue && !this._historyDownload) {
@@ -245,7 +251,9 @@ HistoryDownloadElementShell.prototype = {
   },
 
   _historyDownload: null,
-  get historyDownload() this._historyDownload,
+  get historyDownload() {
+    return this._historyDownload;
+  },
   set historyDownload(aValue) {
     if (this._historyDownload != aValue) {
       if (!aValue && !this._sessionDownload) {
@@ -550,9 +558,13 @@ function DownloadsPlacesView(aRichListBox, aActive = true) {
 }
 
 DownloadsPlacesView.prototype = {
-  get associatedElement() this._richlistbox,
+  get associatedElement() {
+    return this._richlistbox;
+  },
 
-  get active() this._active,
+  get active() {
+    return this._active;
+  },
   set active(val) {
     this._active = val;
     if (this._active)
@@ -930,7 +942,9 @@ DownloadsPlacesView.prototype = {
   },
 
   _place: "",
-  get place() this._place,
+  get place() {
+    return this._place;
+  },
   set place(val) {
     // Don't reload everything if we don't have to.
     if (this._place == val) {
@@ -955,7 +969,9 @@ DownloadsPlacesView.prototype = {
   },
 
   _result: null,
-  get result() this._result,
+  get result() {
+    return this._result;
+  },
   set result(val) {
     if (this._result == val) {
       return val;
@@ -990,7 +1006,9 @@ DownloadsPlacesView.prototype = {
     return selectedNodes.length == 1 ? selectedNodes[0] : null;
   },
 
-  get hasSelection() this.selectedNodes.length > 0,
+  get hasSelection() {
+    return this.selectedNodes.length > 0;
+  },
 
   containerStateChanged(aNode, aOldState, aNewState) {
     this.invalidateContainer(aNode)
@@ -1085,9 +1103,13 @@ DownloadsPlacesView.prototype = {
   nodeURIChanged() {},
   batching() {},
 
-  get controller() this._richlistbox.controller,
+  get controller() {
+    return this._richlistbox.controller;
+  },
 
-  get searchTerm() this._searchTerm,
+  get searchTerm() {
+    return this._searchTerm;
+  },
   set searchTerm(aValue) {
     if (this._searchTerm != aValue) {
       for (let element of this._richlistbox.childNodes) {
@@ -1208,7 +1230,7 @@ DownloadsPlacesView.prototype = {
 
     Cc["@mozilla.org/widget/clipboardhelper;1"]
       .getService(Ci.nsIClipboardHelper)
-      .copyString(urls.join("\n"), document);
+      .copyString(urls.join("\n"));
   },
 
   _getURLFromClipboardData() {
@@ -1270,11 +1292,11 @@ DownloadsPlacesView.prototype = {
         goUpdateCommand("downloadsCmd_clearDownloads");
         break;
       default: {
-        // Slicing the array to get a freezed list of selected items. Otherwise,
-        // the selectedItems array is live and doCommand may alter the selection
-        // while we are trying to do one particular action, like removing items
-        // from history.
-        let selectedElements = this._richlistbox.selectedItems.slice();
+        // Cloning the nodelist into an array to get a frozen list of selected items.
+        // Otherwise, the selectedItems nodelist is live and doCommand may alter the
+        // selection while we are trying to do one particular action, like removing
+        // items from history.
+        let selectedElements = [... this._richlistbox.selectedItems];
         for (let element of selectedElements) {
           element._shell.doCommand(aCommand);
         }

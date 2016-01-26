@@ -4,7 +4,7 @@
 
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
-const Ci = Components.interfaces;
+var Ci = Components.interfaces;
 
 // This verifies that duplicate plugins are coalesced and maintain their ID
 // across restarts.
@@ -15,7 +15,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/home/mozilla/.plugins/dupplugin1.so"
 }, {
   name: "Duplicate Plugin 1",
@@ -23,8 +25,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
-  filename: "",
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/usr/lib/plugins/dupplugin1.so"
 }, {
   name: "Duplicate Plugin 2",
@@ -32,7 +35,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/home/mozilla/.plugins/dupplugin2.so"
 }, {
   name: "Duplicate Plugin 2",
@@ -40,8 +45,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
-  filename: "",
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/usr/lib/plugins/dupplugin2.so"
 }, {
   name: "Non-duplicate Plugin", // 3
@@ -49,7 +55,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/home/mozilla/.plugins/dupplugin3.so"
 }, {
   name: "Non-duplicate Plugin", // 4
@@ -57,8 +65,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
-  filename: "",
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/usr/lib/plugins/dupplugin4.so"
 }, {
   name: "Another Non-duplicate Plugin", // 5
@@ -66,7 +75,9 @@ var PLUGINS = [{
   version: "1",
   blocklisted: false,
   enabledState: Ci.nsIPluginTag.STATE_ENABLED,
-  get disabled() this.enabledState == Ci.nsIPluginTag.STATE_DISABLED,
+  get disabled() {
+    return this.enabledState == Ci.nsIPluginTag.STATE_DISABLED;
+  },
   filename: "/home/mozilla/.plugins/dupplugin5.so"
 }];
 

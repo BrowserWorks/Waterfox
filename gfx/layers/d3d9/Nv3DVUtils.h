@@ -75,12 +75,12 @@ public:
 private:
 
   /* Nv3DVStreaming interface pointer */
-  nsRefPtr<INv3DVStreaming> m3DVStreaming;
+  RefPtr<INv3DVStreaming> m3DVStreaming;
 
 };
 
 
-} /* layers */
-} /* mozilla */
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_NV3DVUTILS_H */

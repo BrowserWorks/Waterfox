@@ -18,8 +18,6 @@ XPCOMUtils.defineLazyModuleGetter(this, 'Logger',
   'resource://gre/modules/accessibility/Utils.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Presentation',
   'resource://gre/modules/accessibility/Presentation.jsm');
-XPCOMUtils.defineLazyModuleGetter(this, 'TraversalRules',
-  'resource://gre/modules/accessibility/TraversalRules.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Roles',
   'resource://gre/modules/accessibility/Constants.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'Events',
@@ -79,7 +77,7 @@ this.EventManager.prototype = {
     Logger.debug('EventManager.stop');
     AccessibilityEventObserver.removeListener(this);
     try {
-      this._preDialogPosition.clear();
+      this._preDialogPosition = new WeakMap();
       this.webProgress.removeProgressListener(this);
       this.removeEventListener('wheel', this, true);
       this.removeEventListener('scroll', this, true);
@@ -174,10 +172,17 @@ this.EventManager.prototype = {
         let event = aEvent.QueryInterface(Ci.nsIAccessibleStateChangeEvent);
         let state = Utils.getState(event);
         if (state.contains(States.CHECKED)) {
-          this.present(
-            Presentation.
-              actionInvoked(aEvent.accessible,
-                            event.isEnabled ? 'check' : 'uncheck'));
+          if (aEvent.accessible.role === Roles.SWITCH) {
+            this.present(
+              Presentation.
+                actionInvoked(aEvent.accessible,
+                              event.isEnabled ? 'on' : 'off'));
+          } else {
+            this.present(
+              Presentation.
+                actionInvoked(aEvent.accessible,
+                              event.isEnabled ? 'check' : 'uncheck'));
+          }
         } else if (state.contains(States.SELECTED)) {
           this.present(
             Presentation.
@@ -282,8 +287,12 @@ this.EventManager.prototype = {
       case Events.DOCUMENT_LOAD_COMPLETE:
       {
         let position = this.contentControl.vc.position;
+        // Check if position is in the subtree of the DOCUMENT_LOAD_COMPLETE
+        // event's dialog accesible or accessible document
+        let subtreeRoot = aEvent.accessible.role === Roles.DIALOG ?
+          aEvent.accessible : aEvent.accessibleDocument;
         if (aEvent.accessible === aEvent.accessibleDocument ||
-            (position && Utils.isInSubtree(position, aEvent.accessible))) {
+            (position && Utils.isInSubtree(position, subtreeRoot))) {
           // Do not automove into the document if the virtual cursor is already
           // positioned inside it.
           break;
@@ -293,6 +302,7 @@ this.EventManager.prototype = {
         break;
       }
       case Events.VALUE_CHANGE:
+      case Events.TEXT_VALUE_CHANGE:
       {
         let position = this.contentControl.vc.position;
         let target = aEvent.accessible;
@@ -608,7 +618,7 @@ const AccessibilityEventObserver = {
     }
     Services.obs.removeObserver(this, 'accessible-event');
     // Clean up all registered event managers.
-    this.eventManagers.clear();
+    this.eventManagers = new WeakMap();
     this.listenerCount = 0;
     this.started = false;
   },

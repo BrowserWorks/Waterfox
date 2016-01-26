@@ -11,14 +11,9 @@ if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['MOZ_ASAN']:
 else:
     GeckoProgram(CONFIG['MOZ_APP_NAME'], msvcrt='static')
 
-JS_PREFERENCE_FILES += [
+JS_PREFERENCE_PP_FILES += [
     'profile/firefox.js',
 ]
-
-if CONFIG['LIBXUL_SDK']:
-    PREF_JS_EXPORTS += [
-        'profile/channel-prefs.js',
-    ]
 
 SOURCES += [
     'nsBrowserApp.cpp',
@@ -26,18 +21,12 @@ SOURCES += [
 
 FINAL_TARGET_FILES += ['blocklist.xml']
 FINAL_TARGET_FILES.defaults.profile += ['profile/prefs.js']
+FINAL_TARGET_FILES.defaults += ['permissions']
 
 DEFINES['APP_VERSION'] = CONFIG['MOZ_APP_VERSION']
 
-for var in ('MOZILLA_OFFICIAL', 'LIBXUL_SDK'):
-    if CONFIG[var]:
-        DEFINES[var] = True
-
-GENERATED_INCLUDES += [
-    '/build',
-]
-
 LOCAL_INCLUDES += [
+    '!/build',
     '/toolkit/xre',
     '/xpcom/base',
     '/xpcom/build',
@@ -60,6 +49,9 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     RCINCLUDE = 'splash.rc'
     DEFINES['MOZ_PHOENIX'] = True
 
+for cdm in CONFIG['MOZ_EME_MODULES']:
+    DEFINES['MOZ_%s_EME' % cdm.upper()] = True
+
 # Control the default heap size.
 # This is the heap returned by GetProcessHeap().
 # As we use the CRT heap, the default size is too large and wastes VM.
@@ -79,6 +71,5 @@ if CONFIG['MOZ_LINKER']:
 if CONFIG['HAVE_CLOCK_MONOTONIC']:
     OS_LIBS += CONFIG['REALTIME_LIBS']
 
-JAR_MANIFESTS += ['jar.mn']
-
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "signaling/src/sdp/SdpAttribute.h"
+#include "signaling/src/sdp/SdpHelper.h"
 
 #include <iomanip>
 
@@ -146,10 +147,654 @@ void SdpIdentityAttribute::Serialize(std::ostream& os) const
 }
 #endif
 
+// Class to help with omitting a leading delimiter for the first item in a list
+class SkipFirstDelimiter
+{
+  public:
+    explicit SkipFirstDelimiter(const std::string& delim) :
+      mDelim(delim),
+      mFirst(true)
+    {}
+
+    std::ostream& print(std::ostream& os)
+    {
+      if (!mFirst) {
+        os << mDelim;
+      }
+      mFirst = false;
+      return os;
+    }
+
+  private:
+    std::string mDelim;
+    bool mFirst;
+};
+
+static std::ostream& operator<<(std::ostream& os, SkipFirstDelimiter& delim)
+{
+  return delim.print(os);
+}
+
+void
+SdpImageattrAttributeList::XYRange::Serialize(std::ostream& os) const
+{
+  if (discreteValues.size() == 0) {
+    os << "[" << min << ":";
+    if (step != 1) {
+      os << step << ":";
+    }
+    os << max << "]";
+  } else if (discreteValues.size() == 1) {
+    os << discreteValues.front();
+  } else {
+    os << "[";
+    SkipFirstDelimiter comma(",");
+    for (auto value : discreteValues) {
+      os << comma << value;
+    }
+    os << "]";
+  }
+}
+
+static unsigned char
+PeekChar(std::istream& is, std::string* error)
+{
+  int next = is.peek();
+  if (next == EOF) {
+    *error = "Truncated";
+    return 0;
+  }
+
+  return next;
+}
+
+static bool
+SkipChar(std::istream& is, unsigned char c, std::string* error)
+{
+  if (PeekChar(is, error) != c) {
+    *error = "Expected \'";
+    error->push_back(c);
+    error->push_back('\'');
+    return false;
+  }
+
+  is.get();
+  return true;
+}
+
+template<typename T>
+bool
+GetUnsigned(std::istream& is, T min, T max, T* value, std::string* error)
+{
+  if (PeekChar(is, error) == '-') {
+    *error = "Value is less than 0";
+    return false;
+  }
+
+  is >> std::noskipws >> *value;
+
+  if (is.fail()) {
+    *error = "Malformed";
+    return false;
+  }
+
+  if (*value < min) {
+    *error = "Value too small";
+    return false;
+  }
+
+  if (*value > max) {
+    *error = "Value too large";
+    return false;
+  }
+
+  return true;
+}
+
+static bool
+GetXYValue(std::istream& is, uint32_t* value, std::string* error)
+{
+  return GetUnsigned<uint32_t>(is, 1, 999999, value, error);
+}
+
+bool
+SdpImageattrAttributeList::XYRange::ParseDiscreteValues(std::istream& is,
+                                                        std::string* error)
+{
+  do {
+    uint32_t value;
+    if (!GetXYValue(is, &value, error)) {
+      return false;
+    }
+    discreteValues.push_back(value);
+  } while (SkipChar(is, ',', error));
+
+  return SkipChar(is, ']', error);
+}
+
+bool
+SdpImageattrAttributeList::XYRange::ParseAfterMin(std::istream& is,
+                                                  std::string* error)
+{
+  // We have already parsed "[320:", and now expect another uint
+  uint32_t value;
+  if (!GetXYValue(is, &value, error)) {
+    return false;
+  }
+
+  if (SkipChar(is, ':', error)) {
+    // Range with step eg [320:16:640]
+    step = value;
+    // Now |value| should be the max
+    if (!GetXYValue(is, &value, error)) {
+      return false;
+    }
+  }
+
+  max = value;
+  if (min >= max) {
+    *error = "Min is not smaller than max";
+    return false;
+  }
+
+  return SkipChar(is, ']', error);
+}
+
+bool
+SdpImageattrAttributeList::XYRange::ParseAfterBracket(std::istream& is,
+                                                      std::string* error)
+{
+  // Either a range, or a list of discrete values
+  // [320:640], [320:16:640], or [320,640]
+  uint32_t value;
+  if (!GetXYValue(is, &value, error)) {
+    return false;
+  }
+
+  if (SkipChar(is, ':', error)) {
+    // Range - [640:480] or [640:16:480]
+    min = value;
+    return ParseAfterMin(is, error);
+  }
+
+  if (SkipChar(is, ',', error)) {
+    discreteValues.push_back(value);
+    return ParseDiscreteValues(is, error);
+  }
+
+  *error = "Expected \':\' or \',\'";
+  return false;
+}
+
+bool
+SdpImageattrAttributeList::XYRange::Parse(std::istream& is, std::string* error)
+{
+  if (SkipChar(is, '[', error)) {
+    return ParseAfterBracket(is, error);
+  }
+
+  // Single discrete value
+  uint32_t value;
+  if (!GetXYValue(is, &value, error)) {
+    return false;
+  }
+  discreteValues.push_back(value);
+
+  return true;
+}
+
+static bool
+GetSPValue(std::istream& is, float* value, std::string* error)
+{
+  return GetUnsigned<float>(is, 0.1f, 9.9999f, value, error);
+}
+
+static bool
+GetQValue(std::istream& is, float* value, std::string* error)
+{
+  return GetUnsigned<float>(is, 0.0f, 1.0f, value, error);
+}
+
+bool
+SdpImageattrAttributeList::SRange::ParseDiscreteValues(std::istream& is,
+                                                        std::string* error)
+{
+  do {
+    float value;
+    if (!GetSPValue(is, &value, error)) {
+      return false;
+    }
+    discreteValues.push_back(value);
+  } while (SkipChar(is, ',', error));
+
+  return SkipChar(is, ']', error);
+}
+
+bool
+SdpImageattrAttributeList::SRange::ParseAfterMin(std::istream& is,
+                                                  std::string* error)
+{
+  if (!GetSPValue(is, &max, error)) {
+    return false;
+  }
+
+  if (min >= max) {
+    *error = "Min is not smaller than max";
+    return false;
+  }
+
+  return SkipChar(is, ']', error);
+}
+
+bool
+SdpImageattrAttributeList::SRange::ParseAfterBracket(std::istream& is,
+                                                     std::string* error)
+{
+  // Either a range, or a list of discrete values
+  float value;
+  if (!GetSPValue(is, &value, error)) {
+    return false;
+  }
+
+  if (SkipChar(is, '-', error)) {
+    min = value;
+    return ParseAfterMin(is, error);
+  }
+
+  if (SkipChar(is, ',', error)) {
+    discreteValues.push_back(value);
+    return ParseDiscreteValues(is, error);
+  }
+
+  *error = "Expected either \'-\' or \',\'";
+  return false;
+}
+
+bool
+SdpImageattrAttributeList::SRange::Parse(std::istream& is, std::string* error)
+{
+  if (SkipChar(is, '[', error)) {
+    return ParseAfterBracket(is, error);
+  }
+
+  // Single discrete value
+  float value;
+  if (!GetSPValue(is, &value, error)) {
+    return false;
+  }
+  discreteValues.push_back(value);
+  return true;
+}
+
+bool
+SdpImageattrAttributeList::PRange::Parse(std::istream& is, std::string* error)
+{
+  if (!SkipChar(is, '[', error)) {
+    return false;
+  }
+
+  if (!GetSPValue(is, &min, error)) {
+    return false;
+  }
+
+  if (!SkipChar(is, '-', error)) {
+    return false;
+  }
+
+  if (!GetSPValue(is, &max, error)) {
+    return false;
+  }
+
+  if (min >= max) {
+    *error = "min must be smaller than max";
+    return false;
+  }
+
+  if (!SkipChar(is, ']', error)) {
+    return false;
+  }
+  return true;
+}
+
+void
+SdpImageattrAttributeList::SRange::Serialize(std::ostream& os) const
+{
+  os << std::setprecision(4) << std::fixed;
+  if (discreteValues.size() == 0) {
+    os << "[" << min << "-" << max << "]";
+  } else if (discreteValues.size() == 1) {
+    os << discreteValues.front();
+  } else {
+    os << "[";
+    SkipFirstDelimiter comma(",");
+    for (auto value : discreteValues) {
+      os << comma << value;
+    }
+    os << "]";
+  }
+}
+
+void
+SdpImageattrAttributeList::PRange::Serialize(std::ostream& os) const
+{
+  os << std::setprecision(4) << std::fixed;
+  os << "[" << min << "-" << max << "]";
+}
+
+static std::string ParseToken(std::istream& is,
+                              const std::string& delims,
+                              std::string* error)
+{
+  std::string token;
+  while (is) {
+    unsigned char c = PeekChar(is, error);
+    if (!c || (delims.find(c) != std::string::npos)) {
+      break;
+    }
+    token.push_back(std::tolower(is.get()));
+  }
+  return token;
+}
+
+static std::string ParseKey(std::istream& is, std::string* error)
+{
+  std::string token = ParseToken(is, "=", error);
+  if (!SkipChar(is, '=', error)) {
+    return "";
+  }
+  return token;
+}
+
+static bool SkipBraces(std::istream& is, std::string* error)
+{
+  if (PeekChar(is, error) != '[') {
+    *error = "Expected \'[\'";
+    return false;
+  }
+
+  size_t braceCount = 0;
+  do {
+    switch (PeekChar(is, error)) {
+      case '[':
+        ++braceCount;
+        break;
+      case ']':
+        --braceCount;
+        break;
+      default:
+        break;
+    }
+    is.get();
+  } while (braceCount && is);
+
+  if (!is) {
+    *error = "Expected closing brace";
+    return false;
+  }
+
+  return true;
+}
+
+// Assumptions:
+// 1. If the value contains '[' or ']', they are balanced.
+// 2. The value contains no ',' outside of brackets.
+static bool SkipValue(std::istream& is, std::string* error)
+{
+  while (is) {
+    switch (PeekChar(is, error)) {
+      case ',':
+      case ']':
+        return true;
+      case '[':
+        if (!SkipBraces(is, error)) {
+          return false;
+        }
+        break;
+      default:
+        is.get();
+    }
+  }
+
+  *error = "No closing \']\' on set";
+  return false;
+}
+
+bool
+SdpImageattrAttributeList::Set::Parse(std::istream& is, std::string* error)
+{
+  if (!SkipChar(is, '[', error)) {
+    return false;
+  }
+
+  if (ParseKey(is, error) != "x") {
+    *error = "Expected x=";
+    return false;
+  }
+
+  if (!xRange.Parse(is, error)) {
+    return false;
+  }
+
+  if (!SkipChar(is, ',', error)) {
+    return false;
+  }
+
+  if (ParseKey(is, error) != "y") {
+    *error = "Expected y=";
+    return false;
+  }
+
+  if (!yRange.Parse(is, error)) {
+    return false;
+  }
+
+  qValue = 0.5f; // default
+
+  bool gotSar = false;
+  bool gotPar = false;
+  bool gotQ = false;
+
+  while (SkipChar(is, ',', error)) {
+    std::string key = ParseKey(is, error);
+    if (key.empty()) {
+      *error = "Expected key-value";
+      return false;
+    }
+
+    if (key == "sar") {
+      if (gotSar) {
+        *error = "Extra sar parameter";
+        return false;
+      }
+      gotSar = true;
+      if (!sRange.Parse(is, error)) {
+        return false;
+      }
+    } else if (key == "par") {
+      if (gotPar) {
+        *error = "Extra par parameter";
+        return false;
+      }
+      gotPar = true;
+      if (!pRange.Parse(is, error)) {
+        return false;
+      }
+    } else if (key == "q") {
+      if (gotQ) {
+        *error = "Extra q parameter";
+        return false;
+      }
+      gotQ = true;
+      if (!GetQValue(is, &qValue, error)) {
+        return false;
+      }
+    } else {
+      if (!SkipValue(is, error)) {
+        return false;
+      }
+    }
+  }
+
+  return SkipChar(is, ']', error);
+}
+
+void
+SdpImageattrAttributeList::Set::Serialize(std::ostream& os) const
+{
+  os << "[x=";
+  xRange.Serialize(os);
+  os << ",y=";
+  yRange.Serialize(os);
+  if (sRange.IsSet()) {
+    os << ",sar=";
+    sRange.Serialize(os);
+  }
+  if (pRange.IsSet()) {
+    os << ",par=";
+    pRange.Serialize(os);
+  }
+  if (qValue >= 0) {
+    os << std::setprecision(2) << std::fixed << ",q=" << qValue;
+  }
+  os << "]";
+}
+
+bool
+SdpImageattrAttributeList::Imageattr::ParseSets(std::istream& is,
+                                                std::string* error)
+{
+  std::string type = ParseToken(is, " \t", error);
+
+  bool* isAll = nullptr;
+  std::vector<Set>* sets = nullptr;
+
+  if (type == "send") {
+    isAll = &sendAll;
+    sets = &sendSets;
+  } else if (type == "recv") {
+    isAll = &recvAll;
+    sets = &recvSets;
+  } else {
+    *error = "Unknown type, must be either send or recv";
+    return false;
+  }
+
+  if (*isAll || !sets->empty()) {
+    *error = "Multiple send or recv set lists";
+    return false;
+  }
+
+  is >> std::ws;
+  if (SkipChar(is, '*', error)) {
+    *isAll = true;
+    return true;
+  }
+
+  do {
+    Set set;
+    if (!set.Parse(is, error)) {
+      return false;
+    }
+
+    sets->push_back(set);
+    is >> std::ws;
+  } while (PeekChar(is, error) == '[');
+
+  return true;
+}
+
+bool
+SdpImageattrAttributeList::Imageattr::Parse(std::istream& is,
+                                            std::string* error)
+{
+  if (!SkipChar(is, '*', error)) {
+    uint16_t value;
+    if (!GetUnsigned<uint16_t>(is, 0, UINT16_MAX, &value, error)) {
+      return false;
+    }
+    pt = Some(value);
+  }
+
+  is >> std::ws;
+  if (!ParseSets(is, error)) {
+    return false;
+  }
+
+  // There might be a second one
+  is >> std::ws;
+  if (is.eof()) {
+    return true;
+  }
+
+  if (!ParseSets(is, error)) {
+    return false;
+  }
+
+  is >> std::ws;
+  if (!is.eof()) {
+    *error = "Trailing characters";
+    return false;
+  }
+
+  return true;
+}
+
+void
+SdpImageattrAttributeList::Imageattr::Serialize(std::ostream& os) const
+{
+  if (pt.isSome()) {
+    os << *pt;
+  } else {
+    os << "*";
+  }
+
+  if (sendAll) {
+    os << " send *";
+  } else if (!sendSets.empty()) {
+    os << " send";
+    for (auto& set : sendSets) {
+      os << " ";
+      set.Serialize(os);
+    }
+  }
+
+  if (recvAll) {
+    os << " recv *";
+  } else if (!recvSets.empty()) {
+    os << " recv";
+    for (auto& set : recvSets) {
+      os << " ";
+      set.Serialize(os);
+    }
+  }
+}
+
 void
 SdpImageattrAttributeList::Serialize(std::ostream& os) const
 {
-  MOZ_ASSERT(false, "Serializer not yet implemented");
+  for (auto& imageattr : mImageattrs) {
+    os << "a=" << mType << ":";
+    imageattr.Serialize(os);
+    os << CRLF;
+  }
+}
+
+bool
+SdpImageattrAttributeList::PushEntry(const std::string& raw,
+                                     std::string* error,
+                                     size_t* errorPos)
+{
+  std::istringstream is(raw);
+
+  Imageattr imageattr;
+  if (!imageattr.Parse(is, error)) {
+    is.clear();
+    *errorPos = is.tellg();
+    return false;
+  }
+
+  mImageattrs.push_back(imageattr);
+  return true;
 }
 
 void
@@ -191,11 +836,230 @@ SdpRemoteCandidatesAttribute::Serialize(std::ostream& os) const
   os << CRLF;
 }
 
+bool
+SdpRidAttributeList::Rid::ParseParameters(std::istream& is, std::string* error)
+{
+  if (!PeekChar(is, error)) {
+    // No parameters
+    return true;
+  }
+
+  do {
+    is >> std::ws;
+    std::string key = ParseKey(is, error);
+    if (key.empty()) {
+      return false; // Illegal trailing cruft
+    }
+
+    // This allows pt= to appear anywhere, instead of only at the beginning, but
+    // this ends up being significantly less code.
+    if (key == "pt") {
+      if (!ParseFormats(is, error)) {
+        return false;
+      }
+    } else if (key == "max-width") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxWidth, error)) {
+        return false;
+      }
+    } else if (key == "max-height") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxHeight, error)) {
+        return false;
+      }
+    } else if (key == "max-fps") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxFps, error)) {
+        return false;
+      }
+    } else if (key == "max-fs") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxFs, error)) {
+        return false;
+      }
+    } else if (key == "max-br") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxBr, error)) {
+        return false;
+      }
+    } else if (key == "max-pps") {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxPps, error)) {
+        return false;
+      }
+    } else if (key == "depend") {
+      if (!ParseDepend(is, error)) {
+        return false;
+      }
+    } else {
+      (void) ParseToken(is, ";", error);
+    }
+  } while (SkipChar(is, ';', error));
+  return true;
+}
+
+bool
+SdpRidAttributeList::Rid::ParseDepend(
+    std::istream& is,
+    std::string* error)
+{
+  do {
+    std::string id = ParseToken(is, ",;", error);
+    if (id.empty()) {
+      return false;
+    }
+    dependIds.push_back(id);
+  } while(SkipChar(is, ',', error));
+
+  return true;
+}
+
+bool
+SdpRidAttributeList::Rid::ParseFormats(
+    std::istream& is,
+    std::string* error)
+{
+  do {
+    uint16_t fmt;
+    if (!GetUnsigned<uint16_t>(is, 0, 127, &fmt, error)) {
+      return false;
+    }
+    formats.push_back(fmt);
+  } while (SkipChar(is, ',', error));
+
+  return true;
+}
+
+void
+SdpRidAttributeList::Rid::SerializeParameters(std::ostream& os) const
+{
+  if (!HasParameters()) {
+    return;
+  }
+
+  os << " ";
+
+  SkipFirstDelimiter semic(";");
+
+  if (!formats.empty()) {
+    os << semic << "pt=";
+    SkipFirstDelimiter comma(",");
+    for (uint16_t fmt : formats) {
+      os << comma << fmt;
+    }
+  }
+
+  if (constraints.maxWidth) {
+    os << semic << "max-width=" << constraints.maxWidth;
+  }
+
+  if (constraints.maxHeight) {
+    os << semic << "max-height=" << constraints.maxHeight;
+  }
+
+  if (constraints.maxFps) {
+    os << semic << "max-fps=" << constraints.maxFps;
+  }
+
+  if (constraints.maxFs) {
+    os << semic << "max-fs=" << constraints.maxFs;
+  }
+
+  if (constraints.maxBr) {
+    os << semic << "max-br=" << constraints.maxBr;
+  }
+
+  if (constraints.maxPps) {
+    os << semic << "max-pps=" << constraints.maxPps;
+  }
+
+  if (!dependIds.empty()) {
+    os << semic << "depend=";
+    SkipFirstDelimiter comma(",");
+    for (const std::string& id : dependIds) {
+      os << comma << id;
+    }
+  }
+}
+
+bool
+SdpRidAttributeList::Rid::Parse(std::istream& is, std::string* error)
+{
+  id = ParseToken(is, " ", error);
+  if (id.empty()) {
+    return false;
+  }
+
+  is >> std::ws;
+  std::string directionToken = ParseToken(is, " ", error);
+  if (directionToken == "send") {
+    direction = sdp::kSend;
+  } else if (directionToken == "recv") {
+    direction = sdp::kRecv;
+  } else {
+    *error = "Invalid direction, must be either send or recv";
+    return false;
+  }
+
+  return ParseParameters(is, error);
+}
+
+void
+SdpRidAttributeList::Rid::Serialize(std::ostream& os) const
+{
+  os << id << " " << direction;
+  SerializeParameters(os);
+}
+
+bool
+SdpRidAttributeList::Rid::HasFormat(const std::string& format) const
+{
+  uint16_t formatAsInt;
+  if (!SdpHelper::GetPtAsInt(format, &formatAsInt)) {
+    return false;
+  }
+
+  if (formats.empty()) {
+    return true;
+  }
+
+  return (std::find(formats.begin(), formats.end(), formatAsInt) !=
+         formats.end());
+}
+
+void
+SdpRidAttributeList::Serialize(std::ostream& os) const
+{
+  for (const Rid& rid : mRids) {
+    os << "a=" << mType << ":";
+    rid.Serialize(os);
+    os << CRLF;
+  }
+}
+
+bool
+SdpRidAttributeList::PushEntry(const std::string& raw,
+                               std::string* error,
+                               size_t* errorPos)
+{
+  std::istringstream is(raw);
+
+  Rid rid;
+  if (!rid.Parse(is, error)) {
+    is.clear();
+    *errorPos = is.tellg();
+    return false;
+  }
+
+  mRids.push_back(rid);
+  return true;
+}
+
 void
 SdpRtcpAttribute::Serialize(std::ostream& os) const
 {
   os << "a=" << mType << ":" << mPort;
-  if (mNetType != sdp::kNetTypeNone && mAddrType != sdp::kAddrTypeNone) {
+  if (!mAddress.empty()) {
     os << " " << mNetType << " " << mAddrType << " " << mAddress;
   }
   os << CRLF;
@@ -263,11 +1127,8 @@ void
 SdpSctpmapAttributeList::Serialize(std::ostream& os) const
 {
   for (auto i = mSctpmaps.begin(); i != mSctpmaps.end(); ++i) {
-    os << "a=" << mType << ":" << i->pt << " " << i->name;
-    if (i->streams) {
-      os << " " << i->streams;
-    }
-    os << CRLF;
+    os << "a=" << mType << ":" << i->pt << " " << i->name << " " << i->streams
+      << CRLF;
   }
 }
 
@@ -275,6 +1136,173 @@ void
 SdpSetupAttribute::Serialize(std::ostream& os) const
 {
   os << "a=" << mType << ":" << mRole << CRLF;
+}
+
+void
+SdpSimulcastAttribute::Version::Serialize(std::ostream& os) const
+{
+  SkipFirstDelimiter comma(",");
+  for (const std::string& choice : choices) {
+    os << comma << choice;
+  }
+}
+
+bool
+SdpSimulcastAttribute::Version::Parse(std::istream& is, std::string* error)
+{
+  do {
+    std::string value = ParseToken(is, ",; ", error);
+    if (value.empty()) {
+      return false;
+    }
+    choices.push_back(value);
+  } while (SkipChar(is, ',', error));
+
+  return true;
+}
+
+bool
+SdpSimulcastAttribute::Version::GetChoicesAsFormats(
+    std::vector<uint16_t>* formats) const
+{
+  for (const std::string& choice : choices) {
+    uint16_t format;
+    if (!SdpHelper::GetPtAsInt(choice, &format) || (format > 127)) {
+      return false;
+    }
+    formats->push_back(format);
+  }
+
+  return true;
+}
+
+void
+SdpSimulcastAttribute::Versions::Serialize(std::ostream& os) const
+{
+  switch (type) {
+    case kRid:
+      os << "rid=";
+      break;
+    case kPt:
+      os << "pt=";
+      break;
+  }
+
+  SkipFirstDelimiter semic(";");
+  for (const Version& version : *this) {
+    if (!version.IsSet()) {
+      continue;
+    }
+    os << semic;
+    version.Serialize(os);
+  }
+}
+
+bool
+SdpSimulcastAttribute::Versions::Parse(std::istream& is, std::string* error)
+{
+  std::string rawType = ParseKey(is, error);
+  if (rawType.empty()) {
+    return false;
+  }
+
+  if (rawType == "pt") {
+    type = kPt;
+  } else if (rawType == "rid") {
+    type = kRid;
+  } else {
+    *error = "Unknown simulcast identification type ";
+    error->append(rawType);
+    return false;
+  }
+
+  do {
+    Version version;
+    if (!version.Parse(is, error)) {
+      return false;
+    }
+
+    if (type == kPt) {
+      std::vector<uint16_t> formats;
+      if (!version.GetChoicesAsFormats(&formats)) {
+        *error = "Invalid payload type";
+        return false;
+      }
+    }
+
+    push_back(version);
+  } while(SkipChar(is, ';', error));
+
+  return true;
+}
+
+void
+SdpSimulcastAttribute::Serialize(std::ostream& os) const
+{
+  MOZ_ASSERT(sendVersions.IsSet() || recvVersions.IsSet());
+
+  os << "a=" << mType << ":";
+
+  if (sendVersions.IsSet()) {
+    os << " send ";
+    sendVersions.Serialize(os);
+  }
+
+  if (recvVersions.IsSet()) {
+    os << " recv ";
+    recvVersions.Serialize(os);
+  }
+
+  os << CRLF;
+}
+
+bool
+SdpSimulcastAttribute::Parse(std::istream& is, std::string* error)
+{
+  bool gotRecv = false;
+  bool gotSend = false;
+
+  while (true) {
+    is >> std::ws;
+    std::string token = ParseToken(is, " \t", error);
+    if (token.empty()) {
+      break;
+    }
+
+    if (token == "send") {
+      if (gotSend) {
+        *error = "Already got a send list";
+        return false;
+      }
+      gotSend = true;
+
+      is >> std::ws;
+      if (!sendVersions.Parse(is, error)) {
+        return false;
+      }
+    } else if (token == "recv") {
+      if (gotRecv) {
+        *error = "Already got a recv list";
+        return false;
+      }
+      gotRecv = true;
+
+      is >> std::ws;
+      if (!recvVersions.Parse(is, error)) {
+        return false;
+      }
+    } else {
+      *error = "Type must be either 'send' or 'recv'";
+      return false;
+    }
+  }
+
+  if (!gotSend && !gotRecv) {
+    *error = "Empty simulcast attribute";
+    return false;
+  }
+
+  return true;
 }
 
 void
@@ -411,6 +1439,8 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
       return true;
     case kRemoteCandidatesAttribute:
       return true;
+    case kRidAttribute:
+      return true;
     case kRtcpAttribute:
       return true;
     case kRtcpFbAttribute:
@@ -428,6 +1458,8 @@ SdpAttribute::IsAllowedAtMediaLevel(AttributeType type)
     case kSendrecvAttribute:
       return true;
     case kSetupAttribute:
+      return true;
+    case kSimulcastAttribute:
       return true;
     case kSsrcAttribute:
       return true;
@@ -491,6 +1523,8 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return true;
     case kRemoteCandidatesAttribute:
       return false;
+    case kRidAttribute:
+      return false;
     case kRtcpAttribute:
       return false;
     case kRtcpFbAttribute:
@@ -509,6 +1543,8 @@ SdpAttribute::IsAllowedAtSessionLevel(AttributeType type)
       return true;
     case kSetupAttribute:
       return true;
+    case kSimulcastAttribute:
+      return false;
     case kSsrcAttribute:
       return false;
     case kSsrcGroupAttribute:
@@ -569,6 +1605,8 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "recvonly";
     case kRemoteCandidatesAttribute:
       return "remote-candidates";
+    case kRidAttribute:
+      return "rid";
     case kRtcpAttribute:
       return "rtcp";
     case kRtcpFbAttribute:
@@ -587,6 +1625,8 @@ SdpAttribute::GetAttributeTypeString(AttributeType type)
       return "sendrecv";
     case kSetupAttribute:
       return "setup";
+    case kSimulcastAttribute:
+      return "simulcast";
     case kSsrcAttribute:
       return "ssrc";
     case kSsrcGroupAttribute:

@@ -26,7 +26,7 @@ public:
   NS_FORWARD_TO_EVENT
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(OfflineAudioCompletionEvent, Event)
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void InitEvent(AudioBuffer* aRenderedBuffer)
   {
@@ -43,11 +43,11 @@ protected:
   virtual ~OfflineAudioCompletionEvent();
 
 private:
-  nsRefPtr<AudioBuffer> mRenderedBuffer;
+  RefPtr<AudioBuffer> mRenderedBuffer;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

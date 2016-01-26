@@ -55,7 +55,8 @@
 #include "nsISimpleEnumerator.h"
 #include "nsStringAPI.h"
 #include "nsNetUtil.h"
-#include "prlog.h"
+#include "nsServiceManagerUtils.h"
+#include "NetwerkTestLogging.h"
 
 using namespace mozilla;
 
@@ -65,7 +66,7 @@ namespace TestProtocols {
 // set NSPR_LOG_MODULES=Test:5
 //
 static PRLogModuleInfo *gTestLog = nullptr;
-#define LOG(args) PR_LOG(gTestLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gTestLog, mozilla::LogLevel::Debug, args)
 
 static NS_DEFINE_CID(kIOServiceCID,              NS_IOSERVICE_CID);
 
@@ -310,7 +311,7 @@ TestAuthPrompt::PromptUsernameAndPassword(const char16_t *dialogTitle,
     int n;
 
     printf("Enter username: ");
-    unused << fgets(buf, sizeof(buf), stdin);
+    Unused << fgets(buf, sizeof(buf), stdin);
     n = strlen(buf);
     buf[n-1] = '\0'; // trim trailing newline
     *user = NS_StringCloneData(NS_ConvertUTF8toUTF16(buf));
@@ -807,7 +808,7 @@ nsresult LoadURLFromConsole()
 {
     char buffer[1024];
     printf("Enter URL (\"q\" to start): ");
-    unused << scanf("%s", buffer);
+    Unused << scanf("%s", buffer);
     if (buffer[0]=='q') 
         gAskUserForInput = false;
     else
@@ -815,7 +816,7 @@ nsresult LoadURLFromConsole()
     return NS_OK;
 }
 
-} // namespace
+} // namespace TestProtocols
 
 using namespace TestProtocols;
 

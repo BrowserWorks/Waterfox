@@ -34,7 +34,7 @@ CDATASection::IsNodeOfType(uint32_t aFlags) const
 nsGenericDOMDataNode*
 CDATASection::CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo, bool aCloneText) const
 {
-  nsRefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
   CDATASection *it = new CDATASection(ni.forget());
   if (it && aCloneText) {
     it->mText = mText;
@@ -65,5 +65,5 @@ CDATASection::DumpContent(FILE* out, int32_t aIndent,
 }
 #endif
 
-} // namespace mozilla
 } // namespace dom
+} // namespace mozilla

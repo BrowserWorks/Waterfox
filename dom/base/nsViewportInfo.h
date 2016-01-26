@@ -12,27 +12,25 @@
 /**
  * Default values for the nsViewportInfo class.
  */
-static const mozilla::LayoutDeviceToScreenScale kViewportMinScale(0.0f);
+static const mozilla::LayoutDeviceToScreenScale kViewportMinScale(0.1f);
 static const mozilla::LayoutDeviceToScreenScale kViewportMaxScale(10.0f);
 static const mozilla::CSSIntSize kViewportMinSize(200, 40);
 static const mozilla::CSSIntSize kViewportMaxSize(10000, 10000);
-static const int32_t  kViewportDefaultScreenWidth = 980;
 
 /**
  * Information retrieved from the <meta name="viewport"> tag. See
- * nsContentUtils::GetViewportInfo for more information on this functionality.
+ * nsIDocument::GetViewportInfo for more information on this functionality.
  */
 class MOZ_STACK_CLASS nsViewportInfo
 {
   public:
     nsViewportInfo(const mozilla::ScreenIntSize& aDisplaySize,
                    const mozilla::CSSToScreenScale& aDefaultZoom,
-                   bool aAllowZoom,
-                   bool aAllowDoubleTapZoom) :
+                   bool aAllowZoom) :
+      mDefaultZoomValid(true),
       mDefaultZoom(aDefaultZoom),
       mAutoSize(true),
-      mAllowZoom(aAllowZoom),
-      mAllowDoubleTapZoom(aAllowDoubleTapZoom)
+      mAllowZoom(aAllowZoom)
     {
         mSize = mozilla::ScreenSize(aDisplaySize) / mDefaultZoom;
         mozilla::CSSToLayoutDeviceScale pixelRatio(1.0f);
@@ -46,40 +44,40 @@ class MOZ_STACK_CLASS nsViewportInfo
                    const mozilla::CSSToScreenScale& aMaxZoom,
                    const mozilla::CSSSize& aSize,
                    bool aAutoSize,
-                   bool aAllowZoom,
-                   bool aAllowDoubleTapZoom) :
+                   bool aAllowZoom) :
+                     mDefaultZoomValid(true),
                      mDefaultZoom(aDefaultZoom),
                      mMinZoom(aMinZoom),
                      mMaxZoom(aMaxZoom),
                      mSize(aSize),
                      mAutoSize(aAutoSize),
-                     mAllowZoom(aAllowZoom),
-                     mAllowDoubleTapZoom(aAllowDoubleTapZoom)
+                     mAllowZoom(aAllowZoom)
     {
       ConstrainViewportValues();
     }
 
-    mozilla::CSSToScreenScale GetDefaultZoom() { return mDefaultZoom; }
-    void SetDefaultZoom(const mozilla::CSSToScreenScale& aDefaultZoom);
-    mozilla::CSSToScreenScale GetMinZoom() { return mMinZoom; }
-    mozilla::CSSToScreenScale GetMaxZoom() { return mMaxZoom; }
+    bool IsDefaultZoomValid() const { return mDefaultZoomValid; }
+    mozilla::CSSToScreenScale GetDefaultZoom() const { return mDefaultZoom; }
+    mozilla::CSSToScreenScale GetMinZoom() const { return mMinZoom; }
+    mozilla::CSSToScreenScale GetMaxZoom() const { return mMaxZoom; }
 
-    mozilla::CSSSize GetSize() { return mSize; }
+    mozilla::CSSSize GetSize() const { return mSize; }
 
-    bool IsAutoSizeEnabled() { return mAutoSize; }
-    bool IsZoomAllowed() { return mAllowZoom; }
-    bool IsDoubleTapZoomAllowed() { return mAllowDoubleTapZoom; }
-
-    void SetAllowDoubleTapZoom(bool aAllowDoubleTapZoom) { mAllowDoubleTapZoom = aAllowDoubleTapZoom; }
+    bool IsAutoSizeEnabled() const { return mAutoSize; }
+    bool IsZoomAllowed() const { return mAllowZoom; }
 
   private:
 
     /**
      * Constrain the viewport calculations from the
-     * nsContentUtils::GetViewportInfo() function in order to always return
+     * nsIDocument::GetViewportInfo() function in order to always return
      * sane minimum/maximum values.
      */
     void ConstrainViewportValues();
+
+    // If the default zoom was specified and was between the min and max
+    // zoom values.
+    bool mDefaultZoomValid;
 
     // Default zoom indicates the level at which the display is 'zoomed in'
     // initially for the user, upon loading of the page.
@@ -102,11 +100,6 @@ class MOZ_STACK_CLASS nsViewportInfo
 
     // Whether or not the user can zoom in and out on the page. Default is true.
     bool mAllowZoom;
-
-    // Whether or not the user can double-tap to zoom in. When this is disabled
-    // we can dispatch click events faster on a single tap because we don't have
-    // to wait to detect the double-tap
-    bool mAllowDoubleTapZoom;
 };
 
 #endif

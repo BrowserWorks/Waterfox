@@ -40,9 +40,17 @@ partial interface HTMLCanvasElement {
   File mozGetAsFile(DOMString name, optional DOMString? type = null);
   [ChromeOnly, Throws]
   nsISupports? MozGetIPCContext(DOMString contextId);
-  [ChromeOnly]
-  void mozFetchAsStream(nsIInputStreamCallback callback, optional DOMString? type = null);
            attribute PrintCallback? mozPrintCallback;
+
+  [Throws, UnsafeInPrerendering, Pref="canvas.capturestream.enabled"]
+  CanvasCaptureMediaStream captureStream(optional double frameRate);
+};
+
+// For OffscreenCanvas
+// Reference: https://wiki.whatwg.org/wiki/OffscreenCanvas
+partial interface HTMLCanvasElement {
+  [Pref="gfx.offscreencanvas.enabled", Throws]
+  OffscreenCanvas transferControlToOffscreen();
 };
 
 [ChromeOnly]

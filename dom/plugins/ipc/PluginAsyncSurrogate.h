@@ -21,6 +21,7 @@
 namespace mozilla {
 namespace plugins {
 
+struct ParentNPObject;
 class PluginInstanceParent;
 class PluginModuleParent;
 
@@ -59,7 +60,7 @@ public:
   virtual PluginInstanceParent*
   GetInstance() { return nullptr; }
 
-  NPP GetNPP() { return mInstance; }
+  NPP GetNPP();
 
   bool GetPropertyHelper(NPObject* aObject, NPIdentifier aName,
                          bool* aHasProperty, bool* aHasMethod,
@@ -140,7 +141,7 @@ private:
   PluginModuleParent*             mParent;
   // These values are used to construct the plugin instance
   nsCString                       mMimeType;
-  NPP                             mInstance;
+  mozilla::WeakPtr<nsNPAPIPluginInstance> mInstance;
   uint16_t                        mMode;
   InfallibleTArray<nsCString>     mNames;
   InfallibleTArray<nsCString>     mValues;
@@ -167,8 +168,8 @@ struct AsyncNPObject : NPObject
 
   NPObject* GetRealObject();
 
-  nsRefPtr<PluginAsyncSurrogate>  mSurrogate;
-  NPObject*                       mRealObject;
+  RefPtr<PluginAsyncSurrogate>  mSurrogate;
+  ParentNPObject*                 mRealObject;
 };
 
 class MOZ_STACK_CLASS PushSurrogateAcceptCalls

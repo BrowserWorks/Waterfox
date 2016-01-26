@@ -209,8 +209,8 @@ BookmarkImporter.prototype = {
       let uri = NetUtil.newURI(spec);
       let channel = NetUtil.newChannel({
         uri,
-        loadingPrincipal: Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri),
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_DATAREQUEST
+        loadingPrincipal: Services.scriptSecurityManager.createCodebasePrincipal(uri, {}),
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_XMLHTTPREQUEST
       });
       let streamLoader = Cc["@mozilla.org/network/stream-loader;1"]
                            .createInstance(Ci.nsIStreamLoader);
@@ -276,7 +276,7 @@ BookmarkImporter.prototype = {
             let childIds = [];
             for (let i = 0; i < root.childCount; i++) {
               let childId = root.getChild(i).itemId;
-              if (excludeItems.indexOf(childId) == -1 &&
+              if (!excludeItems.includes(childId) &&
                   childId != PlacesUtils.tagsFolderId) {
                 childIds.push(childId);
               }
@@ -462,9 +462,16 @@ BookmarkImporter.prototype = {
           this._importPromises.push(kwPromise);
         }
         if (aData.tags) {
-          let tags = aData.tags.split(",");
-          if (tags.length)
-            PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
+          let tags = aData.tags.split(",").filter(aTag =>
+            aTag.length <= Ci.nsITaggingService.MAX_TAG_LENGTH);
+          if (tags.length) {
+            try {
+              PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
+            } catch (ex) {
+              // Invalid tag child, skip it.
+              Cu.reportError(`Unable to set tags "${tags.join(", ")}" for ${aData.uri}: ${ex}`);
+            }
+          }
         }
         if (aData.charset) {
           PlacesUtils.annotations.setPageAnnotation(
@@ -478,10 +485,12 @@ BookmarkImporter.prototype = {
             // Create a fake faviconURI to use (FIXME: bug 523932)
             let faviconURI = NetUtil.newURI("fake-favicon-uri:" + aData.uri);
             PlacesUtils.favicons.replaceFaviconDataFromDataURL(
-              faviconURI, aData.icon, 0);
+              faviconURI, aData.icon, 0,
+              Services.scriptSecurityManager.getSystemPrincipal());
             PlacesUtils.favicons.setAndFetchFaviconForPage(
               NetUtil.newURI(aData.uri), faviconURI, false,
-              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+              Services.scriptSecurityManager.getSystemPrincipal());
           } catch (ex) {
             Components.utils.reportError("Failed to import favicon data:" + ex);
           }
@@ -490,7 +499,8 @@ BookmarkImporter.prototype = {
           try {
             PlacesUtils.favicons.setAndFetchFaviconForPage(
               NetUtil.newURI(aData.uri), NetUtil.newURI(aData.iconUri), false,
-              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+              Services.scriptSecurityManager.getSystemPrincipal());
           } catch (ex) {
             Components.utils.reportError("Failed to import favicon URI:" + ex);
           }

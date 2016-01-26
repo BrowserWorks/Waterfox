@@ -10,7 +10,6 @@
 #include "mozilla/layers/Compositor.h"
 #include "mozilla/layers/Effects.h"
 #include "mozilla/TimeStamp.h"
-#include "gfxColor.h"
 #include "gfxPrefs.h"
 #include <math.h>
 #include "GeckoProfiler.h"
@@ -96,15 +95,11 @@ public:
   {}
 
   void DrawFrame(Compositor* aCompositor, const gfx::Rect& aScreenRect, size_t aStep) {
-    float red;
     float tmp;
-    red = modf(aStep * 0.03f, &tmp);
+    float red = modff(aStep * 0.03f, &tmp);
     EffectChain effects;
-    gfxRGBA color(red, 0.4f, 0.4f, 1.0f);
-    effects.mPrimaryEffect = new EffectSolidColor(gfx::Color(color.r,
-                                                             color.g,
-                                                             color.b,
-                                                             color.a));
+    effects.mPrimaryEffect =
+        new EffectSolidColor(gfx::Color(red, 0.4f, 0.4f, 1.0f));
 
     const gfx::Rect& rect = aScreenRect;
     const gfx::Rect& clipRect = aScreenRect;
@@ -129,16 +124,11 @@ public:
     DrawFrameTrivialQuad(aCompositor, aScreenRect, aStep, effects);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
-      float red;
+  already_AddRefed<Effect> CreateEffect(size_t i) {
       float tmp;
-      red = modf(i * 0.03f, &tmp);
+      float red = modff(i * 0.03f, &tmp);
       EffectChain effects;
-      gfxRGBA color(red, 0.4f, 0.4f, 1.0f);
-      return new EffectSolidColor(gfx::Color(color.r,
-                                             color.g,
-                                             color.b,
-                                             color.a));
+      return MakeAndAddRef<EffectSolidColor>(gfx::Color(red, 0.4f, 0.4f, 1.0f));
   }
 };
 
@@ -155,16 +145,11 @@ public:
     DrawFrameStressQuad(aCompositor, aScreenRect, aStep, effects);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
-      float red;
+  already_AddRefed<Effect> CreateEffect(size_t i) {
       float tmp;
-      red = modf(i * 0.03f, &tmp);
+      float red = modff(i * 0.03f, &tmp);
       EffectChain effects;
-      gfxRGBA color(red, 0.4f, 0.4f, 1.0f);
-      return new EffectSolidColor(gfx::Color(color.r,
-                                             color.g,
-                                             color.b,
-                                             color.a));
+      return MakeAndAddRef<EffectSolidColor>(gfx::Color(red, 0.4f, 0.4f, 1.0f));
   }
 };
 
@@ -240,9 +225,8 @@ public:
     free(mBuf);
   }
 
-  TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
-    return effect;
+  already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
   }
 };
 
@@ -284,9 +268,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT, true);
   }
 };
 
@@ -327,9 +310,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
   }
 };
 
@@ -369,9 +351,8 @@ public:
     free(mBuf);
   }
 
-  virtual TemporaryRef<Effect> CreateEffect(size_t i) {
-    RefPtr<TexturedEffect> effect = CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
-    return effect;
+  virtual already_AddRefed<Effect> CreateEffect(size_t i) {
+    return CreateTexturedEffect(SurfaceFormat::B8G8R8A8, mTexture, Filter::POINT);
   }
 };
 #endif
@@ -449,5 +430,6 @@ void CompositorBench(Compositor* aCompositor, const gfx::Rect& aScreenRect)
 
 } // namespace layers
 } // namespace mozilla
+
 #endif
 

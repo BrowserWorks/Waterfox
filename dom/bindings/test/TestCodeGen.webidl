@@ -7,6 +7,7 @@
 typedef long myLong;
 typedef TestInterface AnotherNameForTestInterface;
 typedef TestInterface? NullableTestInterface;
+typedef CustomEventInit TestDictionaryTypedef;
 
 interface TestExternalInterface;
 
@@ -54,6 +55,7 @@ callback interface TestCallbackInterface {
   void passVariadicNullableTypedArray(Float32Array?... arg);
   Uint8Array receiveUint8Array();
   attribute Uint8Array uint8ArrayAttr;
+  Promise<void> receivePromise();
 };
 
 callback interface TestSingleOperationCallbackInterface {
@@ -128,6 +130,8 @@ interface OnlyForUseInConstructor {
  Constructor(TestInterface? iface),
  Constructor(long arg1, IndirectlyImplementedInterface iface),
  Constructor(Date arg1),
+ Constructor(ArrayBuffer arrayBuf),
+ Constructor(Uint8Array typedArr),
  // Constructor(long arg1, long arg2, (TestInterface or OnlyForUseInConstructor) arg3),
  AvailableIn=CertifiedApps,
  NamedConstructor=Test,
@@ -674,6 +678,17 @@ interface TestInterface {
   Date receiveDate();
   Date? receiveNullableDate();
 
+  // Promise types
+  void passPromise(Promise<any> arg);
+  void passNullablePromise(Promise<any>? arg);
+  void passOptionalPromise(optional Promise<any> arg);
+  void passOptionalNullablePromise(optional Promise<any>? arg);
+  void passOptionalNullablePromiseWithDefaultValue(optional Promise<any>? arg = null);
+  void passPromiseSequence(sequence<Promise<any>> arg);
+  void passNullablePromiseSequence(sequence<Promise<any>?> arg);
+  Promise<any> receivePromise();
+  Promise<any> receiveAddrefedPromise();
+
   // binaryNames tests
   void methodRenamedFrom();
   [BinaryName="otherMethodRenamedTo"]
@@ -1019,6 +1034,10 @@ dictionary Dict : ParentDict {
   required object requiredObject;
 
   CustomEventInit customEventInit;
+  TestDictionaryTypedef dictionaryTypedef;
+
+  Promise<void> promise;
+  sequence<Promise<void>> promiseSequence;
 };
 
 dictionary ParentDict : GrandparentDict {
@@ -1141,3 +1160,12 @@ interface TestCppKeywordNamedMethodsInterface {
   long volatile();
 };
 
+[Deprecated="GetAttributeNode", Constructor()]
+interface TestDeprecatedInterface {
+  static void alsoDeprecated();
+};
+
+
+[Constructor(Promise<void> promise)]
+interface TestInterfaceWithPromiseConstructorArg {
+};

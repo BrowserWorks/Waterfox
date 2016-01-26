@@ -21,6 +21,8 @@
 
 #include "nsITimer.h"
 
+#include "Units.h"
+
 class nsIWidget;
 
 // XUL popups can be in several different states. When opening a popup, the
@@ -86,6 +88,12 @@ enum FlipType {
   FlipType_Slide = 3    // allow the arrow to "slide" instead of resizing
 };
 
+enum MenuPopupAnchorType {
+  MenuPopupAnchorType_Node = 0, // anchored to a node
+  MenuPopupAnchorType_Point = 1, // unanchored and positioned at a screen point
+  MenuPopupAnchorType_Rect = 2, // anchored at a screen rectangle
+};
+
 // values are selected so that the direction can be flipped just by
 // changing the sign
 #define POPUPALIGNMENT_NONE 0
@@ -116,13 +124,6 @@ enum FlipType {
 #define POPUPPOSITION_HFLIP(v) (v ^ 1)
 #define POPUPPOSITION_VFLIP(v) (v ^ 2)
 
-// XXX, kyle.yuan@sun.com, there are 4 definitions for the same purpose:
-//  nsMenuPopupFrame.h, nsListControlFrame.cpp, listbox.xml, tree.xml
-//  need to find a good place to put them together.
-//  if someone changes one, please also change the other.
-
-#define CONTEXT_MENU_OFFSET_PIXELS 2
-
 nsIFrame* NS_NewMenuPopupFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
 
 class nsView;
@@ -148,7 +149,7 @@ protected:
 
 private:
   nsCOMPtr<nsIContent> mPopup;
-  nsRefPtr<nsPresContext> mPresContext;
+  RefPtr<nsPresContext> mPresContext;
 };
 
 class nsMenuPopupFrame final : public nsBoxFrame, public nsMenuParent,
@@ -165,7 +166,9 @@ public:
   virtual nsMenuFrame* GetCurrentMenuItem() override;
   NS_IMETHOD SetCurrentMenuItem(nsMenuFrame* aMenuItem) override;
   virtual void CurrentMenuIsBeingDestroyed() override;
-  NS_IMETHOD ChangeMenuItem(nsMenuFrame* aMenuItem, bool aSelectFirstItem) override;
+  NS_IMETHOD ChangeMenuItem(nsMenuFrame* aMenuItem,
+                            bool aSelectFirstItem,
+                            bool aFromKey) override;
 
   // as popups are opened asynchronously, the popup pending state is used to
   // prevent multiple requests from attempting to open the same popup twice
@@ -242,11 +245,11 @@ public:
 
   nsView* GetRootViewForPopup(nsIFrame* aStartFrame);
 
-  // set the position of the popup either relative to the anchor aAnchorFrame
-  // (or the frame for mAnchorContent if aAnchorFrame is null) or at a specific
-  // point if a screen position (mScreenXPos and mScreenYPos) are set. The popup
-  // will be adjusted so that it is on screen. If aIsMove is true, then the popup
-  // is being moved, and should not be flipped.
+  // Set the position of the popup either relative to the anchor aAnchorFrame
+  // (or the frame for mAnchorContent if aAnchorFrame is null), anchored at a
+  // rectangle, or at a specific point if a screen position is set. The popup
+  // will be adjusted so that it is on screen. If aIsMove is true, then the
+  // popup is being moved, and should not be flipped.
   nsresult SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aSizedToPopup);
 
   bool HasGeneratedChildren() { return mGeneratedChildren; }
@@ -283,7 +286,13 @@ public:
                        nsIContent* aTriggerContent,
                        const nsAString& aPosition,
                        int32_t aXPos, int32_t aYPos,
+                       MenuPopupAnchorType aAnchorType,
                        bool aAttributesOverride);
+
+  void InitializePopupAtRect(nsIContent* aTriggerContent,
+                             const nsAString& aPosition,
+                             const nsIntRect& aRect,
+                             bool aAttributesOverride);
 
   /**
    * @param aIsContextMenu if true, then the popup is
@@ -300,7 +309,7 @@ public:
                                       int32_t aXPos, int32_t aYPos);
 
   // indicate that the popup should be opened
-  void ShowPopup(bool aIsContextMenu, bool aSelectFirstItem);
+  void ShowPopup(bool aIsContextMenu);
   // indicate that the popup should be hidden. The new state should either be
   // ePopupClosed or ePopupInvisible.
   void HidePopup(bool aDeselectMenu, nsPopupState aNewState);
@@ -326,11 +335,13 @@ public:
 
   void EnsureMenuItemIsVisible(nsMenuFrame* aMenuFrame);
 
-  // Move the popup to the screen coordinate (aLeft, aTop) in CSS pixels.
+  void ChangeByPage(bool aIsUp);
+
+  // Move the popup to the screen coordinate |aPos| in CSS pixels.
   // If aUpdateAttrs is true, and the popup already has left or top attributes,
   // then those attributes are updated to the new location.
   // The frame may be destroyed by this method.
-  void MoveTo(int32_t aLeft, int32_t aTop, bool aUpdateAttrs);
+  void MoveTo(const mozilla::CSSIntPoint& aPos, bool aUpdateAttrs);
 
   void MoveToAnchor(nsIContent* aAnchorContent,
                     const nsAString& aPosition,
@@ -351,8 +362,11 @@ public:
   // For non-toplevel popups (which will always be panels), we will also
   // constrain them to the available screen rect, ie they will not fall
   // underneath the taskbar, dock or other fixed OS elements.
-  nsRect GetConstraintRect(const nsRect& aAnchorRect, const nsRect& aRootScreenRect,
-                           nsPopupLevel aPopupLevel);
+  // This operates in device pixels.
+  mozilla::LayoutDeviceIntRect
+  GetConstraintRect(const mozilla::LayoutDeviceIntRect& aAnchorRect,
+                    const mozilla::LayoutDeviceIntRect& aRootScreenRect,
+                    nsPopupLevel aPopupLevel);
 
   // Determines whether the given edges of the popup may be moved, where
   // aHorizontalSide and aVerticalSide are one of the NS_SIDE_* constants, or
@@ -369,16 +383,19 @@ public:
                       mozilla::LayoutDeviceIntPoint& aChange);
 
   // Return true if the popup is positioned relative to an anchor.
-  bool IsAnchored() const { return mScreenXPos == -1 && mScreenYPos == -1; }
+  bool IsAnchored() const { return mAnchorType != MenuPopupAnchorType_Point; }
 
   // Return the anchor if there is one.
   nsIContent* GetAnchor() const { return mAnchorContent; }
 
-  // Return the screen coordinates of the popup, or (-1, -1) if anchored.
-  // This position is in CSS pixels.
-  nsIntPoint ScreenPosition() const { return nsIntPoint(mScreenXPos, mScreenYPos); }
+  // Return the screen coordinates in CSS pixels of the popup,
+  // or (-1, -1, 0, 0) if anchored.
+  nsIntRect GetScreenAnchorRect() const { return mScreenRect; }
 
-  nsIntPoint GetLastClientOffset() const { return mLastClientOffset; }
+  mozilla::LayoutDeviceIntPoint GetLastClientOffset() const
+  {
+    return mLastClientOffset;
+  }
 
   // Return the alignment of the popup
   int8_t GetAlignmentPosition() const;
@@ -492,7 +509,7 @@ protected:
 
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
 
-  nsRefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
+  RefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
 
   // A popup's preferred size may be different than its actual size stored in
   // mRect in the case where the popup was resized because it was too large
@@ -505,8 +522,7 @@ protected:
   // override mXPos and mYPos.
   int32_t mXPos;
   int32_t mYPos;
-  int32_t mScreenXPos;
-  int32_t mScreenYPos;
+  nsIntRect mScreenRect;
 
   // If the panel prefers to "slide" rather than resize, then the arrow gets
   // positioned at this offset (along either the x or y axis, depending on
@@ -516,7 +532,7 @@ protected:
   // The value of the client offset of our widget the last time we positioned
   // ourselves. We store this so that we can detect when it changes but the
   // position of our widget didn't change.
-  nsIntPoint mLastClientOffset;
+  mozilla::LayoutDeviceIntPoint mLastClientOffset;
 
   nsPopupType mPopupType; // type of popup
   nsPopupState mPopupState; // open state of the popup
@@ -567,6 +583,9 @@ protected:
   // the flip modes that were used when the popup was opened
   bool mHFlip;
   bool mVFlip;
+
+  // How the popup is anchored.
+  MenuPopupAnchorType mAnchorType;
 
   static int8_t sDefaultLevelIsTop;
 

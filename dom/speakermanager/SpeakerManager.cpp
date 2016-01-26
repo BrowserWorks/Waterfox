@@ -5,15 +5,18 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "SpeakerManager.h"
-#include "nsIDOMClassInfo.h"
-#include "nsIDOMEvent.h"
-#include "nsIDOMEventListener.h"
-#include "SpeakerManagerService.h"
-#include "nsIPermissionManager.h"
-#include "nsIInterfaceRequestorUtils.h"
-#include "nsIDocShell.h"
-#include "AudioChannelService.h"
+
 #include "mozilla/Services.h"
+
+#include "mozilla/dom/Event.h"
+
+#include "AudioChannelService.h"
+#include "nsIDocShell.h"
+#include "nsIDOMClassInfo.h"
+#include "nsIDOMEventListener.h"
+#include "nsIInterfaceRequestorUtils.h"
+#include "nsIPermissionManager.h"
+#include "SpeakerManagerService.h"
 
 namespace mozilla {
 namespace dom {
@@ -86,19 +89,8 @@ SpeakerManager::DispatchSimpleEvent(const nsAString& aStr)
     return;
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to create the error event!!!");
-    return;
-  }
-  rv = event->InitEvent(aStr, false, false);
-
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to init the error event!!!");
-    return;
-  }
-
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  event->InitEvent(aStr, false, false);
   event->SetTrusted(true);
 
   rv = DispatchDOMEvent(nullptr, event, nullptr, nullptr);
@@ -161,7 +153,7 @@ SpeakerManager::Constructor(const GlobalObject& aGlobal, ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<SpeakerManager> object = new SpeakerManager();
+  RefPtr<SpeakerManager> object = new SpeakerManager();
   object->Init(ownerWindow);
   return object.forget();
 }
@@ -201,8 +193,8 @@ SpeakerManager::HandleEvent(nsIDOMEvent* aEvent)
   // currently playing in the app itself, if application switch to
   // the background, we switch 'speakerforced' to false.
   if (!mVisible && mForcespeaker) {
-    AudioChannelService* audioChannelService =
-      AudioChannelService::GetOrCreateAudioChannelService();
+    RefPtr<AudioChannelService> audioChannelService =
+      AudioChannelService::GetOrCreate();
     if (audioChannelService && !audioChannelService->AnyAudioChannelIsActive()) {
       service->ForceSpeaker(false, mVisible);
     }

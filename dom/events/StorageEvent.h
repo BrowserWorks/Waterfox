@@ -14,8 +14,8 @@
 #include "mozilla/dom/StorageEventBinding.h"
 
 // Helper for EventDispatcher.
-nsresult NS_NewDOMStorageEvent(nsIDOMEvent** aDOMEvent,
-                               mozilla::dom::EventTarget* aOwner);
+already_AddRefed<mozilla::dom::StorageEvent>
+NS_NewDOMStorageEvent(mozilla::dom::EventTarget* aOwner);
 
 namespace mozilla {
 namespace dom {
@@ -37,7 +37,7 @@ protected:
   nsString mOldValue;
   nsString mNewValue;
   nsString mUrl;
-  nsRefPtr<DOMStorage> mStorageArea;
+  RefPtr<DOMStorage> mStorageArea;
 
 public:
   virtual StorageEvent* AsStorageEvent();
@@ -57,8 +57,7 @@ public:
                         const nsAString& aOldValue,
                         const nsAString& aNewValue,
                         const nsAString& aURL,
-                        DOMStorage* aStorageArea,
-                        ErrorResult& aRv);
+                        DOMStorage* aStorageArea);
 
   void GetKey(nsString& aRetVal) const
   {

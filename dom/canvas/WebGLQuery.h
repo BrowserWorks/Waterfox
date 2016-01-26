@@ -8,7 +8,9 @@
 
 #include "mozilla/LinkedList.h"
 #include "nsWrapperCache.h"
+
 #include "WebGLObjectModel.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
 
@@ -21,9 +23,22 @@ class WebGLQuery final
 public:
     explicit WebGLQuery(WebGLContext* webgl);
 
+    class AvailableRunnable final : public nsRunnable
+    {
+    public:
+        explicit AvailableRunnable(WebGLQuery* query) : mQuery(query) { }
+
+        NS_IMETHOD Run() override {
+            mQuery->mCanBeAvailable = true;
+            return NS_OK;
+        }
+    private:
+        const RefPtr<WebGLQuery> mQuery;
+    };
+
     bool IsActive() const;
 
-    bool HasEverBeenActive() {
+    bool HasEverBeenActive() const {
         return mType != 0;
     }
 
@@ -32,15 +47,17 @@ public:
 
     // nsWrapperCache
     WebGLContext* GetParentObject() const {
-        return Context();
+        return mContext;
     }
 
     // NS
-    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLQuery)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLQuery)
 
+    // Track whether the event loop has spun
+    bool mCanBeAvailable;
 
 private:
     ~WebGLQuery() {

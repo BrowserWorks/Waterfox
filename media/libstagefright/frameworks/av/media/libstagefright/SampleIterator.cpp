@@ -83,7 +83,9 @@ status_t SampleIterator::seekTo(uint32_t sampleIndex) {
         }
     }
 
-    CHECK(sampleIndex < mStopChunkSampleIndex);
+    if (sampleIndex >= mStopChunkSampleIndex) {
+        return ERROR_MALFORMED;
+    }
 
     uint32_t chunk =
         (sampleIndex - mFirstChunkSampleIndex) / mSamplesPerChunk
@@ -116,8 +118,15 @@ status_t SampleIterator::seekTo(uint32_t sampleIndex) {
         }
     }
 
+    if (mCurrentChunkSampleSizes.size() != mSamplesPerChunk) {
+        return ERROR_MALFORMED;
+    }
+
     uint32_t chunkRelativeSampleIndex =
         (sampleIndex - mFirstChunkSampleIndex) % mSamplesPerChunk;
+
+    // This can never happen unless % operator is buggy.
+    CHECK(chunkRelativeSampleIndex < mSamplesPerChunk);
 
     mCurrentSampleOffset = mCurrentChunkOffset;
     for (uint32_t i = 0; i < chunkRelativeSampleIndex; ++i) {
@@ -173,7 +182,7 @@ status_t SampleIterator::findChunkRange(uint32_t sampleIndex) {
             mStopChunkSampleIndex =
                 mFirstChunkSampleIndex
                     + (mStopChunk - mFirstChunk) * mSamplesPerChunk;
-        } else {
+        } else if (mSamplesPerChunk) {
             mStopChunk = 0xffffffff;
             mStopChunkSampleIndex = 0xffffffff;
         }

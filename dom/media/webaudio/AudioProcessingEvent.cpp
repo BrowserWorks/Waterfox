@@ -51,7 +51,7 @@ AudioProcessingEvent::LazilyCreateBuffer(uint32_t aNumberOfChannels,
   }
   JSContext* cx = jsapi.cx();
 
-  nsRefPtr<AudioBuffer> buffer =
+  RefPtr<AudioBuffer> buffer =
     AudioBuffer::Create(mNode->Context(), aNumberOfChannels,
                         mNode->BufferSize(),
                         mNode->Context()->SampleRate(), cx, aRv);
@@ -59,6 +59,6 @@ AudioProcessingEvent::LazilyCreateBuffer(uint32_t aNumberOfChannels,
   return buffer.forget();
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 

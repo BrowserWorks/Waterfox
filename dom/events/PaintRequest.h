@@ -89,13 +89,16 @@ public:
   PaintRequest* IndexedGetter(uint32_t aIndex, bool& aFound)
   {
     aFound = aIndex < mArray.Length();
-    return aFound ? mArray.ElementAt(aIndex) : nullptr;
+    if (!aFound) {
+      return nullptr;
+    }
+    return mArray.ElementAt(aIndex);
   }
 
 private:
   ~PaintRequestList() {}
 
-  nsTArray< nsRefPtr<PaintRequest> > mArray;
+  nsTArray< RefPtr<PaintRequest> > mArray;
   nsCOMPtr<nsIDOMEvent> mParent;
 };
 

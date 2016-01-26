@@ -10,9 +10,13 @@
  */
 
 #include <stdio.h>
+#include <string>
+#include <vector>
 
 #include "mozilla/ArrayUtils.h"
 
+#include "base64.h"
+#include "cert.h"
 #include "nspr.h"
 #include "nss.h"
 #include "plarenas.h"
@@ -35,6 +39,8 @@ struct OCSPResponseName
 
 const static OCSPResponseName kOCSPResponseNameList[] = {
   { "good",            ORTGood },          // the certificate is good
+  { "good-delegated",  ORTDelegatedIncluded}, // the certificate is good, using
+                                           // a delegated signer
   { "revoked",         ORTRevoked},        // the certificate has been revoked
   { "unknown",         ORTUnknown},        // the responder doesn't know if the
                                            //   cert is good
@@ -64,9 +70,8 @@ const static OCSPResponseName kOCSPResponseNameList[] = {
                                            // two years old
 };
 
-
 bool
-stringToOCSPResponseType(const char* respText,
+StringToOCSPResponseType(const char* respText,
                          /*out*/ OCSPResponseType* OCSPType)
 {
   if (!OCSPType) {
@@ -105,8 +110,6 @@ WriteResponse(const char* filename, const SECItem* item)
   return true;
 }
 
-
-
 int
 main(int argc, char* argv[])
 {
@@ -118,12 +121,9 @@ main(int argc, char* argv[])
                           argv[0]);
     exit(EXIT_FAILURE);
   }
-  const char* dbdir = argv[1];
-
-  SECStatus rv;
-  rv = NSS_Init(dbdir);
+  SECStatus rv = InitializeNSS(argv[1]);
   if (rv != SECSuccess) {
-    PrintPRError("Failed to initialize NSS");
+    PR_fprintf(PR_STDERR, "Failed to initialize NSS\n");
     exit(EXIT_FAILURE);
   }
   PLArenaPool* arena = PORT_NewArena(256 * argc);
@@ -139,15 +139,15 @@ main(int argc, char* argv[])
     const char* filename      = argv[i + 3];
 
     OCSPResponseType ORT;
-    if (!stringToOCSPResponseType(ocspTypeText, &ORT)) {
+    if (!StringToOCSPResponseType(ocspTypeText, &ORT)) {
       PR_fprintf(PR_STDERR, "Cannot generate OCSP response of type %s\n",
                  ocspTypeText);
       exit(EXIT_FAILURE);
     }
 
-    ScopedCERTCertificate cert;
-    cert = PK11_FindCertFromNickname(certNick, nullptr);
+    ScopedCERTCertificate cert(PK11_FindCertFromNickname(certNick, nullptr));
     if (!cert) {
+      PrintPRError("PK11_FindCertFromNickname failed");
       PR_fprintf(PR_STDERR, "Failed to find certificate with nick '%s'\n",
                  certNick);
       exit(EXIT_FAILURE);

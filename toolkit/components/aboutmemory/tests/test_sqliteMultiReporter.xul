@@ -16,13 +16,15 @@
   // Test for bug 708248, where the SQLite memory multi-reporter was
   // crashing when a DB was closed.
 
-  // Nb: this test is all JS and so should be done with an xpcshell test,
-  // but bug 671753 is preventing the memory-reporter-manager from being
-  // accessed from xpcshell.
+  // Nb: this test is all JS and chould be done with an xpcshell test,
+  // but all the other memory reporter tests are mochitests, so it's easier
+  // if this one is too.
 
   const Cc = Components.classes;
   const Ci = Components.interfaces;
   const Cu = Components.utils;
+
+  SimpleTest.waitForExplicitFinish();
 
   // Make a fake DB file.
   let file = Cc["@mozilla.org/file/directory_service;1"].
@@ -40,11 +42,12 @@
   // them.  It shouldn't crash.
   let mgr = Cc["@mozilla.org/memory-reporter-manager;1"].
             getService(Ci.nsIMemoryReporterManager);
-  mgr.getReportsForThisProcess(function(){}, null, /* anonymize = */ false);
-
-  // If we haven't crashed, we've passed, but the test harness requires that
-  // we explicitly check something.
-  ok(true, "didn't crash");
+  mgr.getReports(function(){}, null,
+    () => {
+      ok(true, "didn't crash");
+      SimpleTest.finish();
+    }, null,
+    /* anonymize = */ false);
 
   ]]>
   </script>

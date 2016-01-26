@@ -48,6 +48,20 @@ nsProxyInfo::GetResolveFlags(uint32_t *result)
 }
 
 NS_IMETHODIMP
+nsProxyInfo::GetUsername(nsACString &result)
+{
+  result = mUsername;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsProxyInfo::GetPassword(nsACString &result)
+{
+  result = mPassword;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsProxyInfo::GetFailoverTimeout(uint32_t *result)
 {
   *result = mTimeout;
@@ -80,7 +94,7 @@ namespace mozilla {
   extern const char kProxyType_SOCKS4[];
   extern const char kProxyType_SOCKS5[];
   extern const char kProxyType_DIRECT[];
-}
+} // namespace mozilla
 
 bool
 nsProxyInfo::IsDirect()

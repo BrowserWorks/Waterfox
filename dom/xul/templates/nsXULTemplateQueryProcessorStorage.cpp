@@ -9,7 +9,7 @@
 #include "nsUnicharUtils.h"
 
 #include "nsArrayUtils.h"
-#include "nsIVariant.h"
+#include "nsVariant.h"
 #include "nsAppDirectoryServiceDefs.h"
 
 #include "nsIURI.h"
@@ -79,10 +79,6 @@ nsXULTemplateResultSetStorage::GetNext(nsISupports **aResult)
 {
     nsXULTemplateResultStorage* result =
         new nsXULTemplateResultStorage(this);
-
-    if (!result)
-        return NS_ERROR_OUT_OF_MEMORY;
-
     *aResult = result;
     NS_ADDREF(result);
     return NS_OK;
@@ -110,7 +106,7 @@ nsXULTemplateResultSetStorage::FillColumnValues(nsCOMArray<nsIVariant>& aArray)
     int32_t count = mColumnNames.Count();
 
     for (int32_t c = 0; c < count; c++) {
-        nsCOMPtr<nsIWritableVariant> value = do_CreateInstance("@mozilla.org/variant;1");
+        RefPtr<nsVariant> value = new nsVariant();
 
         int32_t type;
         mStatement->GetTypeOfIndex(c, &type);
@@ -290,7 +286,7 @@ nsXULTemplateQueryProcessorStorage::CompileQuery(nsIXULTemplateBuilder* aBuilder
     nsAutoString sqlQuery;
 
     // Let's get all text nodes (which should be the query) 
-    if (!nsContentUtils::GetNodeTextContent(queryContent, false, sqlQuery)) {
+    if (!nsContentUtils::GetNodeTextContent(queryContent, false, sqlQuery, fallible)) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
 
@@ -308,7 +304,7 @@ nsXULTemplateQueryProcessorStorage::CompileQuery(nsIXULTemplateBuilder* aBuilder
 
         if (child->NodeInfo()->Equals(nsGkAtoms::param, kNameSpaceID_XUL)) {
             nsAutoString value;
-            if (!nsContentUtils::GetNodeTextContent(child, false, value)) {
+            if (!nsContentUtils::GetNodeTextContent(child, false, value, fallible)) {
               return NS_ERROR_OUT_OF_MEMORY;
             }
 
@@ -405,10 +401,6 @@ nsXULTemplateQueryProcessorStorage::GenerateResults(nsISupports* aDatasource,
 
     nsXULTemplateResultSetStorage* results =
         new nsXULTemplateResultSetStorage(statement);
-
-    if (!results)
-        return NS_ERROR_OUT_OF_MEMORY;
-
     *aResults = results;
     NS_ADDREF(*aResults);
 
@@ -431,9 +423,6 @@ nsXULTemplateQueryProcessorStorage::TranslateRef(nsISupports* aDatasource,
 {
     nsXULTemplateResultStorage* result =
         new nsXULTemplateResultStorage(nullptr);
-    if (!result)
-        return NS_ERROR_OUT_OF_MEMORY;
-
     *aRef = result;
     NS_ADDREF(*aRef);
     return NS_OK;

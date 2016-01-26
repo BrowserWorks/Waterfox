@@ -8,7 +8,8 @@
 #include "nsCOMPtr.h"
 #include "nsIChannel.h"
 #include "nsIIOService.h"
-#include "nsNetUtil.h"
+#include "nsIStandardURL.h"
+#include "nsIURL.h"
 #include "android/log.h"
 #include "nsBaseChannel.h"
 #include "AndroidBridge.h"
@@ -68,7 +69,7 @@ class AndroidChannel : public nsBaseChannel
 private:
     AndroidChannel(nsIURI *aURI, jni::Object::Param aConnection) {
         mConnection = aConnection;
-        mURI = aURI;
+        SetURI(aURI);
 
         auto type = widget::GeckoAppShell::ConnectionGetMimeType(mConnection);
         if (type) {

@@ -25,7 +25,7 @@ public:
   {
   }
   template<size_t S>
-  ByteReader(const nsAutoTArray<uint8_t, S>& aData)
+  explicit ByteReader(const nsAutoTArray<uint8_t, S>& aData)
     : mPtr(aData.Elements()), mRemaining(aData.Length()), mLength(aData.Length())
   {
   }
@@ -33,7 +33,7 @@ public:
     : mPtr(aData.Elements()), mRemaining(aData.Length()), mLength(aData.Length())
   {
   }
-  explicit ByteReader(const MediaByteBuffer* aData)
+  explicit ByteReader(const mozilla::MediaByteBuffer* aData)
     : mPtr(aData->Elements()), mRemaining(aData->Length()), mLength(aData->Length())
   {
   }
@@ -101,6 +101,8 @@ public:
   {
     return (uint32_t)ReadU24();
   }
+
+  bool CanRead32() { return mRemaining >= 4; }
 
   uint32_t ReadU32()
   {

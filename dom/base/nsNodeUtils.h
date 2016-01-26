@@ -18,8 +18,8 @@ class nsCycleCollectionTraversalCallback;
 namespace mozilla {
 namespace dom {
 class Animation;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsNodeUtils
 {
@@ -48,12 +48,15 @@ public:
    * @param aNameSpaceID  Namespace of changing attribute
    * @param aAttribute    Local-name of changing attribute
    * @param aModType      Type of change (add/change/removal)
+   * @param aNewValue     The parsed new value, but only if BeforeSetAttr
+   *                      preparsed it!!!
    * @see nsIMutationObserver::AttributeWillChange
    */
   static void AttributeWillChange(mozilla::dom::Element* aElement,
                                   int32_t aNameSpaceID,
                                   nsIAtom* aAttribute,
-                                  int32_t aModType);
+                                  int32_t aModType,
+                                  const nsAttrValue* aNewValue);
 
   /**
    * Send AttributeChanged notifications to nsIMutationObservers.
@@ -61,12 +64,16 @@ public:
    * @param aNameSpaceID  Namespace of changed attribute
    * @param aAttribute    Local-name of changed attribute
    * @param aModType      Type of change (add/change/removal)
+   * @param aOldValue     If the old value was StoresOwnData() (or absent),
+   *                      that value, otherwise null
    * @see nsIMutationObserver::AttributeChanged
    */
   static void AttributeChanged(mozilla::dom::Element* aElement,
                                int32_t aNameSpaceID,
                                nsIAtom* aAttribute,
-                               int32_t aModType);
+                               int32_t aModType,
+                               const nsAttrValue* aOldValue);
+
   /**
    * Send AttributeSetToCurrentValue notifications to nsIMutationObservers.
    * @param aElement      Element whose data changed
@@ -88,6 +95,15 @@ public:
   static void ContentAppended(nsIContent* aContainer,
                               nsIContent* aFirstNewContent,
                               int32_t aNewIndexInContainer);
+
+  /**
+   * Send NativeAnonymousChildList notifications to nsIMutationObservers
+   * @param aContent             Anonymous node that's been added or removed
+   * @param aIsRemove            True if it's a removal, false if an addition
+   * @see nsIMutationObserver::NativeAnonymousChildListChange
+   */
+  static void NativeAnonymousChildListChange(nsIContent* aContent,
+                                             bool aIsRemove);
 
   /**
    * Send ContentInserted notifications to nsIMutationObservers
@@ -126,6 +142,8 @@ public:
     }
   }
 
+  static mozilla::dom::Element*
+    GetTargetForAnimation(const mozilla::dom::Animation* aAnimation);
   static void AnimationAdded(mozilla::dom::Animation* aAnimation);
   static void AnimationChanged(mozilla::dom::Animation* aAnimation);
   static void AnimationRemoved(mozilla::dom::Animation* aAnimation);
@@ -160,7 +178,7 @@ public:
                         nsINode **aResult)
   {
     return CloneAndAdopt(aNode, true, aDeep, aNewNodeInfoManager,
-                         JS::NullPtr(), aNodesWithProperties, nullptr, aResult);
+                         nullptr, aNodesWithProperties, nullptr, aResult);
   }
 
   /**
@@ -169,7 +187,7 @@ public:
   static nsresult Clone(nsINode *aNode, bool aDeep, nsINode **aResult)
   {
     nsCOMArray<nsINode> dummyNodeWithProperties;
-    return CloneAndAdopt(aNode, true, aDeep, nullptr, JS::NullPtr(),
+    return CloneAndAdopt(aNode, true, aDeep, nullptr, nullptr,
                          dummyNodeWithProperties, aNode->GetParent(), aResult);
   }
 

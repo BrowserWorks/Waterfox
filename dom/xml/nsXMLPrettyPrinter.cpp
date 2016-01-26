@@ -5,14 +5,13 @@
  
 #include "nsXMLPrettyPrinter.h"
 #include "nsContentUtils.h"
-#include "nsIDOMCSSStyleDeclaration.h"
+#include "nsICSSDeclaration.h"
 #include "nsIDOMDocumentXBL.h"
 #include "nsIObserver.h"
 #include "nsIXSLTProcessor.h"
 #include "nsSyncLoadService.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDOMElement.h"
-#include "nsIDOMDocument.h"
 #include "nsIServiceManager.h"
 #include "nsNetUtil.h"
 #include "mozilla/dom/Element.h"
@@ -23,7 +22,7 @@
 #include "mozilla/Preferences.h"
 #include "nsIDocument.h"
 #include "nsVariant.h"
-#include "nsIDOMCustomEvent.h"
+#include "mozilla/dom/CustomEvent.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -55,22 +54,24 @@ nsXMLPrettyPrinter::PrettyPrint(nsIDocument* aDocument,
 
     // check if we're in an invisible iframe
     nsPIDOMWindow *internalWin = aDocument->GetWindow();
-    nsCOMPtr<nsIDOMElement> frameElem;
+    nsCOMPtr<Element> frameElem;
     if (internalWin) {
-        internalWin->GetFrameElement(getter_AddRefs(frameElem));
+        frameElem = internalWin->GetFrameElementInternal();
     }
 
     if (frameElem) {
-        nsCOMPtr<nsIDOMCSSStyleDeclaration> computedStyle;
-        nsCOMPtr<nsIDOMDocument> frameOwnerDoc;
-        frameElem->GetOwnerDocument(getter_AddRefs(frameOwnerDoc));
-        if (frameOwnerDoc) {
-            nsCOMPtr<nsIDOMWindow> window;
-            frameOwnerDoc->GetDefaultView(getter_AddRefs(window));
-            if (window) {
-                window->GetComputedStyle(frameElem,
-                                         EmptyString(),
-                                         getter_AddRefs(computedStyle));
+        nsCOMPtr<nsICSSDeclaration> computedStyle;
+        if (nsIDocument* frameOwnerDoc = frameElem->OwnerDoc()) {
+            nsCOMPtr<nsIDOMWindow> window = frameOwnerDoc->GetDefaultView();
+            nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(window);
+            if (piWindow) {
+                piWindow = piWindow->GetCurrentInnerWindow();
+
+                ErrorResult dummy;
+                computedStyle = piWindow->GetComputedStyle(*frameElem,
+                                                           EmptyString(),
+                                                           dummy);
+                dummy.SuppressException();
             }
         }
 
@@ -101,7 +102,9 @@ nsXMLPrettyPrinter::PrettyPrint(nsIDocument* aDocument,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIDOMDocument> xslDocument;
-    rv = nsSyncLoadService::LoadDocument(xslUri, nsContentUtils::GetSystemPrincipal(),
+    rv = nsSyncLoadService::LoadDocument(xslUri, nsIContentPolicy::TYPE_XSLT,
+                                         nsContentUtils::GetSystemPrincipal(),
+                                         nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                          nullptr, true, mozilla::net::RP_Default,
                                          getter_AddRefs(xslDocument));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -149,29 +152,26 @@ nsXMLPrettyPrinter::PrettyPrint(nsIDocument* aDocument,
         GetSystemPrincipal(getter_AddRefs(sysPrincipal));
 
     // Load the bindings.
-    nsRefPtr<nsXBLBinding> unused;
+    RefPtr<nsXBLBinding> unused;
     bool ignored;
     rv = xblService->LoadBindings(rootCont, bindingUri, sysPrincipal,
                                   getter_AddRefs(unused), &ignored);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Fire an event at the bound element to pass it |resultFragment|.
-    nsCOMPtr<nsIDOMEvent> domEvent;
-    rv = NS_NewDOMCustomEvent(getter_AddRefs(domEvent), rootCont,
-                              nullptr, nullptr);
-    NS_ENSURE_SUCCESS(rv, rv);
-    nsCOMPtr<nsIDOMCustomEvent> customEvent = do_QueryInterface(domEvent);
-    MOZ_ASSERT(customEvent);
+    RefPtr<CustomEvent> event =
+      NS_NewDOMCustomEvent(rootCont, nullptr, nullptr);
+    MOZ_ASSERT(event);
     nsCOMPtr<nsIWritableVariant> resultFragmentVariant = new nsVariant();
     rv = resultFragmentVariant->SetAsISupports(resultFragment);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
-    rv = customEvent->InitCustomEvent(NS_LITERAL_STRING("prettyprint-dom-created"),
-                                      /* bubbles = */ false, /* cancelable = */ false,
-                                      /* detail = */ resultFragmentVariant);
+    rv = event->InitCustomEvent(NS_LITERAL_STRING("prettyprint-dom-created"),
+                                /* bubbles = */ false, /* cancelable = */ false,
+                                /* detail = */ resultFragmentVariant);
     NS_ENSURE_SUCCESS(rv, rv);
-    customEvent->SetTrusted(true);
+    event->SetTrusted(true);
     bool dummy;
-    rv = rootCont->DispatchEvent(domEvent, &dummy);
+    rv = rootCont->DispatchEvent(event, &dummy);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Observe the document so we know when to switch to "normal" view
@@ -218,7 +218,8 @@ nsXMLPrettyPrinter::AttributeChanged(nsIDocument* aDocument,
                                      Element* aElement,
                                      int32_t aNameSpaceID,
                                      nsIAtom* aAttribute,
-                                     int32_t aModType)
+                                     int32_t aModType,
+                                     const nsAttrValue* aOldValue)
 {
     MaybeUnhook(aElement);
 }

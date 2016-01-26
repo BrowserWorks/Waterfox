@@ -9,10 +9,13 @@
  */
 
 #include "nsILayoutDebugger.h"
+
+#include "nsAttrValue.h"
 #include "nsFrame.h"
 #include "nsDisplayList.h"
 #include "FrameLayerBuilder.h"
 #include "nsPrintfCString.h"
+#include "DisplayItemScrollClip.h"
 
 #include <stdio.h>
 
@@ -33,15 +36,6 @@ public:
   NS_IMETHOD SetShowEventTargetFrameBorder(bool aEnable) override;
 
   NS_IMETHOD GetShowEventTargetFrameBorder(bool* aResult) override;
-
-  NS_IMETHOD GetContentSize(nsIDocument* aDocument,
-                            int32_t* aSizeInBytesResult) override;
-
-  NS_IMETHOD GetFrameSize(nsIPresShell* aPresentation,
-                          int32_t* aSizeInBytesResult) override;
-
-  NS_IMETHOD GetStyleSize(nsIPresShell* aPresentation,
-                          int32_t* aSizeInBytesResult) override;
 
 protected:
   virtual ~nsLayoutDebugger();
@@ -96,29 +90,6 @@ nsLayoutDebugger::GetShowEventTargetFrameBorder(bool* aResult)
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsLayoutDebugger::GetContentSize(nsIDocument* aDocument,
-                                 int32_t* aSizeInBytesResult)
-{
-  *aSizeInBytesResult = 0;
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsLayoutDebugger::GetFrameSize(nsIPresShell* aPresentation,
-                               int32_t* aSizeInBytesResult)
-{
-  *aSizeInBytesResult = 0;
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsLayoutDebugger::GetStyleSize(nsIPresShell* aPresentation,
-                               int32_t* aSizeInBytesResult)
-{
-  *aSizeInBytesResult = 0;
-  return NS_ERROR_FAILURE;
-}
 #endif
 
 std::ostream& operator<<(std::ostream& os, const nsPrintfCString& rhs) {
@@ -162,15 +133,14 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   }
   bool snap;
   nsRect rect = aItem->GetBounds(aBuilder, &snap);
-  nsRect layerRect = rect -
-    nsLayoutUtils::GetAnimatedGeometryRootFor(aItem, aBuilder, nullptr)->
-      GetOffsetToCrossDoc(aItem->ReferenceFrame());
+  nsRect layerRect = rect - (*aItem->GetAnimatedGeometryRoot())->GetOffsetToCrossDoc(aItem->ReferenceFrame());
   nscolor color;
   nsRect vis = aItem->GetVisibleRect();
   nsRect component = aItem->GetComponentAlphaBounds(aBuilder);
   nsDisplayList* list = aItem->GetChildren();
   const DisplayItemClip& clip = aItem->GetClip();
   nsRegion opaque = aItem->GetOpaqueRegion(aBuilder, &snap);
+
 #ifdef MOZ_DUMP_PAINTING
   if (aDumpHtml && aItem->Painted()) {
     nsCString string(aItem->Name());
@@ -179,7 +149,8 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
     aStream << nsPrintfCString("<a href=\"javascript:ViewImage('%s')\">", string.BeginReading());
   }
 #endif
-  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) layerBounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) %s",
+
+  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) layerBounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) scrollClip(%s)%s ref=0x%p agr=0x%p",
           aItem->Name(), aItem, (void*)f, NS_ConvertUTF16toUTF8(contentData).get(),
           (aItem->ZIndex() ? nsPrintfCString("z=%d ", aItem->ZIndex()).get() : ""),
           rect.x, rect.y, rect.width, rect.height,
@@ -187,14 +158,16 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
           vis.x, vis.y, vis.width, vis.height,
           component.x, component.y, component.width, component.height,
           clip.ToString().get(),
-          aItem->IsUniform(aBuilder, &color) ? " uniform" : "");
+          DisplayItemScrollClip::ToString(aItem->ScrollClip()).get(),
+          aItem->IsUniform(aBuilder, &color) ? " uniform" : "",
+          aItem->ReferenceFrame(), aItem->GetAnimatedGeometryRoot()->mFrame);
 
   nsRegionRectIterator iter(opaque);
   for (const nsRect* r = iter.Next(); r; r = iter.Next()) {
     aStream << nsPrintfCString(" (opaque %d,%d,%d,%d)", r->x, r->y, r->width, r->height);
   }
 
-  if (aItem->ShouldFixToViewport(nullptr)) {
+  if (aItem->ShouldFixToViewport(aBuilder)) {
     aStream << " fixed";
   }
 
@@ -234,6 +207,14 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   }
 #endif
   aStream << "\n";
+#ifdef MOZ_DUMP_PAINTING
+  if (aDumpHtml && aItem->Painted()) {
+    nsCString string(aItem->Name());
+    string.Append('-');
+    string.AppendInt((uint64_t)aItem);
+    aStream << nsPrintfCString("<br><img id=\"%s\">\n", string.BeginReading());
+  }
+#endif
 
   if (aDumpSublist && list) {
     PrintDisplayListTo(aBuilder, *list, aStream, aIndent+1, aDumpHtml);
@@ -261,16 +242,6 @@ PrintDisplayListTo(nsDisplayListBuilder* aBuilder, const nsDisplayList& aList,
   if (aDumpHtml) {
     aStream << "</ul>";
   }
-}
-
-void
-nsFrame::PrintDisplayItem(nsDisplayListBuilder* aBuilder,
-                          nsDisplayItem* aItem,
-                          std::stringstream& aStream,
-                          bool aDumpSublist,
-                          bool aDumpHtml)
-{
-  PrintDisplayItemTo(aBuilder, aItem, aStream, 0, aDumpSublist, aDumpHtml);
 }
 
 void

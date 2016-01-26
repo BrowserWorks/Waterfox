@@ -9,16 +9,13 @@
 from __future__ import print_function
 import os, posixpath, sys, tempfile, traceback, time
 import subprocess
-from subprocess import Popen, PIPE
-from threading import Thread
-import signal
+from collections import namedtuple
 import StringIO
 
-try:
-    from multiprocessing import Process, Manager, cpu_count
-    HAVE_MULTIPROCESSING = True
-except ImportError:
-    HAVE_MULTIPROCESSING = False
+if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
+    from tasks_unix import run_all_tests
+else:
+    from tasks_win import run_all_tests
 
 from progressbar import ProgressBar, NullProgressBar
 from results import TestOutput
@@ -28,6 +25,7 @@ JS_DIR = os.path.dirname(os.path.dirname(TESTS_LIB_DIR))
 TOP_SRC_DIR = os.path.dirname(os.path.dirname(JS_DIR))
 TEST_DIR = os.path.join(JS_DIR, 'jit-test', 'tests')
 LIB_DIR = os.path.join(JS_DIR, 'jit-test', 'lib') + os.path.sep
+MODULE_DIR = os.path.join(JS_DIR, 'jit-test', 'modules') + os.path.sep
 JS_CACHE_DIR = os.path.join(JS_DIR, 'jit-test', '.js-cache')
 JS_TESTS_DIR = posixpath.join(JS_DIR, 'tests')
 
@@ -78,7 +76,7 @@ def js_quote(quote, s):
 
 os.path.relpath = _relpath
 
-class Test:
+class JitTest:
 
     VALGRIND_CMD = []
     paths = (d for d in os.environ['PATH'].split(os.pathsep))
@@ -116,11 +114,18 @@ class Test:
         self.tz_pacific = False # True means force Pacific time for the test
         self.test_also_noasmjs = False # True means run with and without asm.js
                                        # enabled.
+        self.test_also = [] # List of other configurations to test with.
+        self.test_join = [] # List of other configurations to test with all existing variants.
         self.expect_error = '' # Errors to expect and consider passing
         self.expect_status = 0 # Exit status to expect from shell
+        self.is_module = False
+        self.test_reflect_stringify = None  # Reflect.stringify implementation to test
+
+        # Expected by the test runner. Always true for jit-tests.
+        self.enable = True
 
     def copy(self):
-        t = Test(self.path)
+        t = JitTest(self.path)
         t.jitflags = self.jitflags[:]
         t.slow = self.slow
         t.allow_oom = self.allow_oom
@@ -129,8 +134,13 @@ class Test:
         t.valgrind = self.valgrind
         t.tz_pacific = self.tz_pacific
         t.test_also_noasmjs = self.test_also_noasmjs
+        t.test_also = self.test_also
+        t.test_join = self.test_join
         t.expect_error = self.expect_error
         t.expect_status = self.expect_status
+        t.test_reflect_stringify = self.test_reflect_stringify
+        t.enable = True
+        t.is_module = self.is_module
         return t
 
     def copy_and_extend_jitflags(self, variant):
@@ -139,12 +149,14 @@ class Test:
         return t
 
     def copy_variants(self, variants):
-        # If the tests are flagged with the |jit-test| test-also-noasmjs flags,
-        # then we duplicate the variants such that the test can be used both
-        # with the interpreter and asmjs.  This is a simple way to check for
-        # differential behaviour.
-        if self.test_also_noasmjs:
-            variants = variants + [['--no-asmjs']]
+        # Append variants to be tested in addition to the current set of tests.
+        variants = variants + self.test_also
+
+        # For each existing variant, duplicates it for each list of options in
+        # test_join.  This will multiply the number of variants by 2 for set of
+        # options.
+        for join_opts in self.test_join:
+            variants = variants + [ opts + join_opts for opts in variants ];
 
         # For each list of jit flags, make a copy of the test.
         return [self.copy_and_extend_jitflags(v) for v in variants]
@@ -201,11 +213,20 @@ class Test:
                     elif name == 'tz-pacific':
                         test.tz_pacific = True
                     elif name == 'test-also-noasmjs':
-                        test.test_also_noasmjs = options.can_test_also_noasmjs
+                        if options.can_test_also_noasmjs:
+                            test.test_also.append(['--no-asmjs'])
+                    elif name.startswith('test-also='):
+                        test.test_also.append([name[len('test-also='):]])
+                    elif name.startswith('test-join='):
+                        test.test_join.append([name[len('test-join='):]])
                     elif name == 'ion-eager':
                         test.jitflags.append('--ion-eager')
+                    elif name == 'baseline-eager':
+                        test.jitflags.append('--baseline-eager')
                     elif name == 'dump-bytecode':
                         test.jitflags.append('--dump-bytecode')
+                    elif name == 'module':
+                        test.is_module = True
                     elif name.startswith('--'):
                         # // |jit-test| --ion-gvn=off; --no-sse4
                         test.jitflags.append(name)
@@ -216,9 +237,13 @@ class Test:
         if options.valgrind_all:
             test.valgrind = True
 
+        if options.test_reflect_stringify is not None:
+            test.expect_error = ''
+            test.expect_status = 0
+
         return test
 
-    def command(self, prefix, libdir, remote_prefix=None):
+    def command(self, prefix, libdir, moduledir, remote_prefix=None):
         path = self.path
         if remote_prefix:
             path = self.path.replace(TEST_DIR, remote_prefix)
@@ -242,11 +267,25 @@ class Test:
 
         # We may have specified '-a' or '-d' twice: once via --jitflags, once
         # via the "|jit-test|" line.  Remove dups because they are toggles.
-        cmd = prefix + ['--js-cache', Test.CacheDir]
-        cmd += list(set(self.jitflags)) + ['-e', expr, '-f', path]
+        cmd = prefix + ['--js-cache', JitTest.CacheDir]
+        cmd += list(set(self.jitflags)) + ['-e', expr]
+        if self.is_module:
+            cmd += ['--module-load-path', moduledir]
+            cmd += ['--module', path]
+        elif self.test_reflect_stringify is None:
+            cmd += ['-f', path]
+        else:
+            cmd += ['--', self.test_reflect_stringify, "--check", path]
         if self.valgrind:
             cmd = self.VALGRIND_CMD + cmd
         return cmd
+
+    # The test runner expects this to be set to give to get_command.
+    js_cmd_prefix = None
+    def get_command(self, prefix):
+        """Shim for the test runner."""
+        return self.command(prefix, LIB_DIR, MODULE_DIR)
+
 
 def find_tests(substring=None):
     ans = []
@@ -266,128 +305,12 @@ def find_tests(substring=None):
                 ans.append(test)
     return ans
 
-def tmppath(token):
-    fd, path = tempfile.mkstemp(prefix=token)
-    os.close(fd)
-    return path
-
-def read_and_unlink(path):
-    f = open(path)
-    d = f.read()
-    f.close()
-    os.unlink(path)
-    return d
-
-def th_run_cmd(cmdline, options, l):
-    # close_fds is not supported on Windows and will cause a ValueError.
-    if sys.platform != 'win32':
-        options["close_fds"] = True
-    p = Popen(cmdline, stdin=PIPE, stdout=PIPE, stderr=PIPE, **options)
-
-    l[0] = p
-    out, err = p.communicate()
-    l[1] = (out, err, p.returncode)
-
-def run_timeout_cmd(cmdline, options, timeout=60.0):
-    l = [None, None]
-    timed_out = False
-    th = Thread(target=th_run_cmd, args=(cmdline, options, l))
-
-    # If our SIGINT handler is set to SIG_IGN (ignore)
-    # then we are running as a child process for parallel
-    # execution and we must ensure to kill our child
-    # when we are signaled to exit.
-    sigint_handler = signal.getsignal(signal.SIGINT)
-    sigterm_handler = signal.getsignal(signal.SIGTERM)
-    if sigint_handler == signal.SIG_IGN:
-        def handleChildSignal(sig, frame):
-            try:
-                if sys.platform != 'win32':
-                    os.kill(l[0].pid, signal.SIGKILL)
-                else:
-                    import ctypes
-                    ctypes.windll.kernel32.TerminateProcess(int(l[0]._handle),
-                                                            -1)
-            except OSError:
-                pass
-            if sig == signal.SIGTERM:
-                sys.exit(0)
-        signal.signal(signal.SIGINT, handleChildSignal)
-        signal.signal(signal.SIGTERM, handleChildSignal)
-
-    th.start()
-    th.join(timeout)
-    while th.isAlive():
-        if l[0] is not None:
-            try:
-                # In Python 3, we could just do l[0].kill().
-                if sys.platform != 'win32':
-                    os.kill(l[0].pid, signal.SIGKILL)
-                else:
-                    import ctypes
-                    ctypes.windll.kernel32.TerminateProcess(int(l[0]._handle),
-                                                            -1)
-                time.sleep(.1)
-                timed_out = True
-            except OSError:
-                # Expecting a "No such process" error
-                pass
-    th.join()
-
-    # Restore old signal handlers
-    if sigint_handler == signal.SIG_IGN:
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-        signal.signal(signal.SIGTERM, sigterm_handler)
-
-    (out, err, code) = l[1]
-
-    return (out, err, code, timed_out)
-
-def run_cmd(cmdline, env, timeout):
-    return run_timeout_cmd(cmdline, {'env': env}, timeout)
-
-def run_cmd_avoid_stdio(cmdline, env, timeout):
-    stdoutPath, stderrPath = tmppath('jsstdout'), tmppath('jsstderr')
-    env['JS_STDOUT'] = stdoutPath
-    env['JS_STDERR'] = stderrPath
-    _, __, code = run_timeout_cmd(cmdline, {'env': env}, timeout)
-    return read_and_unlink(stdoutPath), read_and_unlink(stderrPath), code
-
-def run_test(test, prefix, options):
-    cmd = test.command(prefix, LIB_DIR)
-    if options.show_cmd:
-        print(subprocess.list2cmdline(cmd))
-
-    if options.avoid_stdio:
-        run = run_cmd_avoid_stdio
-    else:
-        run = run_cmd
-
-    env = os.environ.copy()
-    if test.tz_pacific:
-        env['TZ'] = 'PST8PDT'
-
-    # Ensure interpreter directory is in shared library path.
-    pathvar = ''
-    if sys.platform.startswith('linux'):
-        pathvar = 'LD_LIBRARY_PATH'
-    elif sys.platform.startswith('darwin'):
-        pathvar = 'DYLD_LIBRARY_PATH'
-    elif sys.platform.startswith('win'):
-        pathvar = 'PATH'
-    if pathvar:
-        bin_dir = os.path.dirname(cmd[0])
-        if pathvar in env:
-            env[pathvar] = '{}{}{}'.format(bin_dir, os.pathsep, env[pathvar])
-        else:
-            env[pathvar] = bin_dir
-
-    out, err, code, timed_out = run(cmd, env, options.timeout)
-    return TestOutput(test, cmd, out, err, code, None, timed_out)
-
 def run_test_remote(test, device, prefix, options):
+    if options.test_reflect_stringify:
+        raise ValueError("can't run Reflect.stringify tests remotely")
     cmd = test.command(prefix,
                        posixpath.join(options.remote_test_root, 'lib/'),
+                       posixpath.join(options.remote_test_root, 'modules/'),
                        posixpath.join(options.remote_test_root, 'tests'))
     if options.show_cmd:
         print(subprocess.list2cmdline(cmd))
@@ -502,124 +425,6 @@ def print_automation_format(ok, res):
     for line in res.err.splitlines():
         print("INFO stderr         2> " + line.strip())
 
-def wrap_parallel_run_test(test, prefix, resultQueue, options):
-    # Ignore SIGINT in the child
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    result = run_test(test, prefix, options)
-    resultQueue.put(result)
-    return result
-
-def run_tests_parallel(tests, prefix, options):
-    # This queue will contain the results of the various tests run.
-    # We could make this queue a global variable instead of using
-    # a manager to share, but this will not work on Windows.
-    queue_manager = Manager()
-    async_test_result_queue = queue_manager.Queue()
-
-    # This queue will be used by the result process to indicate
-    # that it has received a result and we can start a new process
-    # on our end. The advantage is that we don't have to sleep and
-    # check for worker completion ourselves regularly.
-    notify_queue = queue_manager.Queue()
-
-    # This queue will contain the return value of the function
-    # processing the test results.
-    total_tests = len(tests) * options.repeat
-    result_process_return_queue = queue_manager.Queue()
-    result_process = Process(target=process_test_results_parallel,
-                             args=(async_test_result_queue,
-                                   result_process_return_queue,
-                                   notify_queue, total_tests, options))
-    result_process.start()
-
-    # Ensure that a SIGTERM is handled the same way as SIGINT
-    # to terminate all child processes.
-    sigint_handler = signal.getsignal(signal.SIGINT)
-    signal.signal(signal.SIGTERM, sigint_handler)
-
-    worker_processes = []
-
-    def remove_completed_workers(workers):
-        new_workers = []
-        for worker in workers:
-            if worker.is_alive():
-                new_workers.append(worker)
-            else:
-                worker.join()
-        return new_workers
-
-    try:
-        testcnt = 0
-        # Initially start as many jobs as allowed to run parallel
-        # Always enqueue at least one to avoid a curious deadlock
-        for i in range(max(1, min(options.max_jobs, total_tests))):
-            notify_queue.put(True)
-
-        # For every item in the notify queue, start one new worker.
-        # Every completed worker adds a new item to this queue.
-        while notify_queue.get():
-            if testcnt < total_tests:
-                # Start one new worker
-                test = tests[testcnt % len(tests)]
-                worker_process = Process(target=wrap_parallel_run_test,
-                                         args=(test, prefix,
-                                               async_test_result_queue,
-                                               options))
-                worker_processes.append(worker_process)
-                worker_process.start()
-                testcnt += 1
-
-                # Collect completed workers
-                worker_processes = remove_completed_workers(worker_processes)
-            else:
-                break
-
-        # Wait for all processes to terminate
-        while len(worker_processes) > 0:
-            worker_processes = remove_completed_workers(worker_processes)
-
-        # Signal completion to result processor, then wait for it to complete
-        # on its own
-        async_test_result_queue.put(None)
-        result_process.join()
-
-        # Return what the result process has returned to us
-        return result_process_return_queue.get()
-    except (Exception, KeyboardInterrupt) as e:
-        # Print the exception if it's not an interrupt,
-        # might point to a bug or other faulty condition
-        if not isinstance(e, KeyboardInterrupt):
-            traceback.print_exc()
-
-        for worker in worker_processes:
-            try:
-                worker.terminate()
-            except:
-                pass
-
-        result_process.terminate()
-
-    return False
-
-def get_parallel_results(async_test_result_queue, notify_queue):
-    while True:
-        async_test_result = async_test_result_queue.get()
-
-        # Check if we are supposed to terminate
-        if async_test_result == None:
-            return
-
-        # Notify parent that we got a result
-        notify_queue.put(True)
-
-        yield async_test_result
-
-def process_test_results_parallel(async_test_result_queue, return_queue,
-                                  notify_queue, num_tests, options):
-    gen = get_parallel_results(async_test_result_queue, notify_queue)
-    ok = process_test_results(gen, num_tests, options)
-    return_queue.put(ok)
-
 def print_test_summary(num_tests, failures, complete, doing, options):
     if failures:
         if options.write_failures:
@@ -672,8 +477,19 @@ def print_test_summary(num_tests, failures, complete, doing, options):
 
     return not failures
 
-def process_test_results(results, num_tests, options):
-    pb = NullProgressBar()
+def create_progressbar(num_tests, options):
+    if not options.hide_progress and not options.show_cmd \
+       and ProgressBar.conservative_isatty():
+        fmt = [
+            {'value': 'PASS',    'color': 'green'},
+            {'value': 'FAIL',    'color': 'red'},
+            {'value': 'TIMEOUT', 'color': 'blue'},
+            {'value': 'SKIP',    'color': 'brightgray'},
+        ]
+        return ProgressBar(num_tests, fmt)
+    return NullProgressBar()
+
+def process_test_results(results, num_tests, pb, options):
     failures = []
     timeouts = 0
     complete = False
@@ -683,16 +499,6 @@ def process_test_results(results, num_tests, options):
         pb.finish(True)
         complete = True
         return print_test_summary(num_tests, failures, complete, doing, options)
-
-    if not options.hide_progress and not options.show_cmd \
-       and ProgressBar.conservative_isatty():
-        fmt = [
-            {'value': 'PASS',    'color': 'green'},
-            {'value': 'FAIL',    'color': 'red'},
-            {'value': 'TIMEOUT', 'color': 'blue'},
-            {'value': 'SKIP',    'color': 'brightgray'},
-        ]
-        pb = ProgressBar(num_tests, fmt)
 
     try:
         for i, res in enumerate(results):
@@ -741,14 +547,24 @@ def process_test_results(results, num_tests, options):
     pb.finish(True)
     return print_test_summary(num_tests, failures, complete, doing, options)
 
-def get_serial_results(tests, prefix, options):
-    for i in xrange(0, options.repeat):
-        for test in tests:
-            yield run_test(test, prefix, options)
-
 def run_tests(tests, prefix, options):
-    gen = get_serial_results(tests, prefix, options)
-    ok = process_test_results(gen, len(tests) * options.repeat, options)
+    # The jstests tasks runner requires the following options. The names are
+    # taken from the jstests options processing code, which are frequently
+    # subtly different from the options jit-tests expects. As such, we wrap
+    # them here, as needed.
+    AdaptorOptions = namedtuple("AdaptorOptions", [
+        "worker_count", "passthrough", "timeout", "output_fp",
+        "hide_progress", "run_skipped", "show_cmd"])
+    shim_options = AdaptorOptions(options.max_jobs, False, options.timeout,
+                                  sys.stdout, False, True, options.show_cmd)
+
+    # The test runner wants the prefix as a static on the Test class.
+    JitTest.js_cmd_prefix = prefix
+
+    num_tests = len(tests) * options.repeat
+    pb = create_progressbar(num_tests, options)
+    gen = run_all_tests(tests, prefix, pb, shim_options)
+    ok = process_test_results(gen, num_tests, pb, options)
     return ok
 
 def get_remote_results(tests, device, prefix, options):
@@ -818,8 +634,8 @@ def run_tests_remote(tests, prefix, options):
     push_progs(options, dm, [prefix[0]])
     dm.chmodDir(options.remote_test_root)
 
-    Test.CacheDir = posixpath.join(options.remote_test_root, '.js-cache')
-    dm.mkDir(Test.CacheDir)
+    JitTest.CacheDir = posixpath.join(options.remote_test_root, '.js-cache')
+    dm.mkDir(JitTest.CacheDir)
 
     dm.pushDir(JS_TESTS_DIR, posixpath.join(jit_tests_dir, 'tests'),
                timeout=600)
@@ -829,8 +645,10 @@ def run_tests_remote(tests, prefix, options):
     prefix[0] = os.path.join(options.remote_test_root, 'js')
 
     # Run all tests.
+    num_tests = len(tests) * options.repeat
+    pb = create_progressbar(num_tests, options)
     gen = get_remote_results(tests, dm, prefix, options)
-    ok = process_test_results(gen, len(tests) * options.repeat, options)
+    ok = process_test_results(gen, num_tests, pb, options)
     return ok
 
 def platform_might_be_android():

@@ -7,7 +7,7 @@
 
 #ifdef USE_SKIA
 #include "PathSkia.h"
-#include "skia/SkPaint.h"
+#include "skia/include/core/SkPaint.h"
 #endif
 
 #ifdef USE_CAIRO
@@ -45,6 +45,33 @@ ScaledFontBase::ScaledFontBase(Float aSize)
 #endif
 }
 
+#ifdef USE_CAIRO_SCALED_FONT
+bool
+ScaledFontBase::PopulateCairoScaledFont()
+{
+  cairo_font_face_t* cairoFontFace = GetCairoFontFace();
+  if (!cairoFontFace) {
+    return false;
+  }
+
+  cairo_matrix_t sizeMatrix;
+  cairo_matrix_t identityMatrix;
+
+  cairo_matrix_init_scale(&sizeMatrix, mSize, mSize);
+  cairo_matrix_init_identity(&identityMatrix);
+
+  cairo_font_options_t *fontOptions = cairo_font_options_create();
+
+  mScaledFont = cairo_scaled_font_create(cairoFontFace, &sizeMatrix,
+    &identityMatrix, fontOptions);
+
+  cairo_font_options_destroy(fontOptions);
+  cairo_font_face_destroy(cairoFontFace);
+
+  return (cairo_scaled_font_status(mScaledFont) == CAIRO_STATUS_SUCCESS);
+}
+#endif
+
 #ifdef USE_SKIA
 SkPath
 ScaledFontBase::GetSkiaPathForGlyphs(const GlyphBuffer &aBuffer)
@@ -74,13 +101,13 @@ ScaledFontBase::GetSkiaPathForGlyphs(const GlyphBuffer &aBuffer)
 }
 #endif
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 ScaledFontBase::GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget)
 {
 #ifdef USE_SKIA
   if (aTarget->GetBackendType() == BackendType::SKIA) {
     SkPath path = GetSkiaPathForGlyphs(aBuffer);
-    return new PathSkia(path, FillRule::FILL_WINDING);
+    return MakeAndAddRef<PathSkia>(path, FillRule::FILL_WINDING);
   }
 #endif
 #ifdef USE_CAIRO
@@ -165,7 +192,7 @@ ScaledFontBase::CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBu
   }
 #endif
 
-  MOZ_CRASH("The specified backend type is not supported by CopyGlyphsToBuilder");
+  MOZ_CRASH("GFX: The specified backend type is not supported by CopyGlyphsToBuilder");
 }
 
 #ifdef USE_CAIRO_SCALED_FONT
@@ -185,5 +212,5 @@ ScaledFontBase::SetCairoScaledFont(cairo_scaled_font_t* font)
 }
 #endif
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

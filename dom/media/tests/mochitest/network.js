@@ -19,12 +19,13 @@ function isNetworkReady() {
           SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_MMS_INTERFACES |
           SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_SUPL_INTERFACES |
           SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_IMS_INTERFACES |
-          SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_DUN_INTERFACES);
+          SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_DUN_INTERFACES |
+          SpecialPowers.Ci.nsINetworkInterfaceListService.LIST_NOT_INCLUDE_FOTA_INTERFACES);
     var num = itfList.getNumberOfInterface();
     for (var i = 0; i < num; i++) {
       var ips = {};
       var prefixLengths = {};
-      var length = itfList.getInterface(i).getAddresses(ips, prefixLengths);
+      var length = itfList.getInterfaceInfo(i).getAddresses(ips, prefixLengths);
 
       for (var j = 0; j < length; j++) {
         var ip = ips.value[j];

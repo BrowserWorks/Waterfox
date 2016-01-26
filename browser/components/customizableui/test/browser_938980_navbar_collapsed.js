@@ -4,12 +4,14 @@
 
 "use strict";
 
-let bookmarksToolbar = document.getElementById("PersonalToolbar");
-let navbar = document.getElementById("nav-bar");
-let tabsToolbar = document.getElementById("TabsToolbar");
+requestLongerTimeout(2);
+
+var bookmarksToolbar = document.getElementById("PersonalToolbar");
+var navbar = document.getElementById("nav-bar");
+var tabsToolbar = document.getElementById("TabsToolbar");
 
 // Customization reset should restore visibility to default-visible toolbars.
-add_task(function() {
+add_task(function*() {
   is(navbar.collapsed, false, "Test should start with navbar visible");
   setToolbarVisibility(navbar, false);
   is(navbar.collapsed, true, "navbar should be hidden now");
@@ -20,7 +22,7 @@ add_task(function() {
 });
 
 // Customization reset should restore collapsed-state to default-collapsed toolbars.
-add_task(function() {
+add_task(function*() {
   ok(CustomizableUI.inDefaultState, "Everything should be in its default state");
 
   is(bookmarksToolbar.collapsed, true, "Test should start with bookmarks toolbar collapsed");
@@ -36,7 +38,7 @@ add_task(function() {
 
   yield startCustomizing();
   gCustomizeMode.reset();
-  yield waitForCondition(function() !gCustomizeMode.resetting);
+  yield waitForCondition(() => !gCustomizeMode.resetting);
   yield endCustomizing();
 
   is(bookmarksToolbar.collapsed, true, "Customization reset should restore collapsed-state to the bookmarks toolbar");
@@ -46,7 +48,7 @@ add_task(function() {
 });
 
 // Check that the menubar will be collapsed by resetting, if the platform supports it.
-add_task(function() {
+add_task(function*() {
   let menubar = document.getElementById("toolbar-menubar");
   const canMenubarCollapse = CustomizableUI.isToolbarDefaultCollapsed(menubar.id);
   if (!canMenubarCollapse) {
@@ -60,7 +62,7 @@ add_task(function() {
 
   yield startCustomizing();
   gCustomizeMode.reset();
-  yield waitForCondition(function() !gCustomizeMode.resetting);
+  yield waitForCondition(() => !gCustomizeMode.resetting);
 
   is(menubar.getAttribute("autohide"), "true", "The menubar should have autohide=true after reset in customization mode");
   is(menubar.getBoundingClientRect().height, 0, "The menubar should have height=0 after reset in customization mode");
@@ -72,7 +74,7 @@ add_task(function() {
 });
 
 // Customization reset should restore collapsed-state to default-collapsed toolbars.
-add_task(function() {
+add_task(function*() {
   ok(CustomizableUI.inDefaultState, "Everything should be in its default state");
   ok(bookmarksToolbar.collapsed, "bookmarksToolbar should be collapsed");
   ok(!tabsToolbar.collapsed, "TabsToolbar should not be collapsed");
@@ -88,7 +90,7 @@ add_task(function() {
   ok(!tabsToolbar.collapsed, "TabsToolbar should not be collapsed");
 
   gCustomizeMode.reset();
-  yield waitForCondition(function() !gCustomizeMode.resetting);
+  yield waitForCondition(() => !gCustomizeMode.resetting);
 
   ok(bookmarksToolbar.collapsed, "The bookmarksToolbar should be collapsed after reset");
   ok(!tabsToolbar.collapsed, "TabsToolbar should not be collapsed");
@@ -98,7 +100,7 @@ add_task(function() {
 });
 
 // Check that the menubar will be collapsed by resetting, if the platform supports it.
-add_task(function() {
+add_task(function*() {
   let menubar = document.getElementById("toolbar-menubar");
   const canMenubarCollapse = CustomizableUI.isToolbarDefaultCollapsed(menubar.id);
   if (!canMenubarCollapse) {

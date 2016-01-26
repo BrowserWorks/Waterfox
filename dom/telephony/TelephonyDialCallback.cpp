@@ -56,10 +56,10 @@ TelephonyDialCallback::NotifyDialCallSuccess(uint32_t aClientId,
                                              uint32_t aCallIndex,
                                              const nsAString& aNumber)
 {
-  nsRefPtr<TelephonyCallId> id = mTelephony->CreateCallId(aNumber);
-  nsRefPtr<TelephonyCall> call =
+  RefPtr<TelephonyCallId> id = mTelephony->CreateCallId(aNumber);
+  RefPtr<TelephonyCall> call =
       mTelephony->CreateCall(id, aClientId, aCallIndex,
-                             nsITelephonyService::CALL_STATE_DIALING);
+                             TelephonyCallState::Dialing);
 
   mPromise->MaybeResolve(call);
   return NS_OK;
@@ -121,8 +121,10 @@ TelephonyDialCallback::NotifyDialMMISuccessWithStrings(const nsAString& aStatusM
   result.mStatusMessage.Assign(aStatusMessage);
 
   nsTArray<nsString> additionalInformation;
+  nsString* infos = additionalInformation.AppendElements(aCount);
   for (uint32_t i = 0; i < aCount; i++) {
-    additionalInformation.AppendElement(nsDependentString(aAdditionalInformation[i]));
+    infos[i].Rebind(aAdditionalInformation[i],
+                    nsCharTraits<char16_t>::length(aAdditionalInformation[i]));
   }
 
   JS::Rooted<JS::Value> jsAdditionalInformation(cx);

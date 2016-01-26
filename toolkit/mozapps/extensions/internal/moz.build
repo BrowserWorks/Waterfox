@@ -12,7 +12,11 @@ EXTRA_JS_MODULES.addons += [
     'Content.js',
     'GMPProvider.jsm',
     'LightweightThemeImageOptimizer.jsm',
+    'ProductAddonChecker.jsm',
     'SpellCheckDictionaryBootstrap.js',
+    'WebExtensionBootstrap.js',
+    'XPIProvider.jsm',
+    'XPIProviderUtils.js',
 ]
 
 # Don't ship unused providers on Android
@@ -22,18 +26,11 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     ]
 
 EXTRA_PP_JS_MODULES.addons += [
-    'XPIProvider.jsm',
-    'XPIProviderUtils.js',
+    'AddonConstants.jsm',
 ]
 
-# This is used in multiple places, so is defined here to avoid it getting
-# out of sync.
-DEFINES['MOZ_EXTENSIONS_DB_SCHEMA'] = 17
+if CONFIG['MOZ_ADDON_SIGNING']:
+    DEFINES['MOZ_ADDON_SIGNING'] = 1
 
-# Additional debugging info is exposed in debug builds
-if CONFIG['MOZ_EM_DEBUG']:
-    DEFINES['MOZ_EM_DEBUG'] = 1
-
-# Add-on signing cannot be preffed off in official beta, release or esr builds
-if CONFIG['MOZ_UPDATE_CHANNEL'] in ('beta', 'release', 'esr') and CONFIG['MOZ_OFFICIAL_BRANDING']:
+if CONFIG['MOZ_REQUIRE_SIGNING']:
     DEFINES['MOZ_REQUIRE_SIGNING'] = 1

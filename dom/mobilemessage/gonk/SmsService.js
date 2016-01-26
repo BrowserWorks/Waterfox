@@ -9,7 +9,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
-let RIL = {};
+var RIL = {};
 Cu.import("resource://gre/modules/ril_consts.js", RIL);
 
 const GONK_SMSSERVICE_CONTRACTID = "@mozilla.org/sms/gonksmsservice;1";
@@ -32,6 +32,7 @@ const kSmsSentObserverTopic              = "sms-sent";
 const kSmsFailedObserverTopic            = "sms-failed";
 const kSmsDeliverySuccessObserverTopic   = "sms-delivery-success";
 const kSmsDeliveryErrorObserverTopic     = "sms-delivery-error";
+const kSmsDeletedObserverTopic           = "sms-deleted";
 
 const DOM_MOBILE_MESSAGE_DELIVERY_RECEIVED = "received";
 const DOM_MOBILE_MESSAGE_DELIVERY_SENDING  = "sending";
@@ -75,6 +76,21 @@ XPCOMUtils.defineLazyGetter(this, "gWAP", function() {
   return ns;
 });
 
+XPCOMUtils.defineLazyGetter(this, "gSmsSendingSchedulers", function() {
+  return {
+    _schedulers: [],
+    getSchedulerByServiceId: function(aServiceId) {
+      let scheduler = this._schedulers[aServiceId];
+      if (!scheduler) {
+        scheduler = this._schedulers[aServiceId] =
+          new SmsSendingScheduler(aServiceId);
+      }
+
+      return scheduler;
+    }
+  };
+});
+
 XPCOMUtils.defineLazyServiceGetter(this, "gCellBroadcastService",
                                    "@mozilla.org/cellbroadcast/cellbroadcastservice;1",
                                    "nsIGonkCellBroadcastService");
@@ -103,7 +119,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gSmsMessenger",
                                    "@mozilla.org/ril/system-messenger-helper;1",
                                    "nsISmsMessenger");
 
-let DEBUG = RIL.DEBUG_RIL;
+var DEBUG = RIL.DEBUG_RIL;
 function debug(s) {
   dump("SmsService: " + s);
 }
@@ -273,10 +289,88 @@ SmsService.prototype = {
     return index;
   },
 
+  _notifySendingError: function(aErrorCode, aSendingMessage, aSilent, aRequest) {
+    if (aSilent || aErrorCode === Ci.nsIMobileMessageCallback.NOT_FOUND_ERROR) {
+      // There is no way to modify nsISmsMessage attributes as they
+      // are read only so we just create a new sms instance to send along
+      // with the notification.
+      aRequest.notifySendMessageFailed(aErrorCode,
+        gMobileMessageService.createSmsMessage(aSendingMessage.id,
+                                               aSendingMessage.threadId,
+                                               aSendingMessage.iccId,
+                                               DOM_MOBILE_MESSAGE_DELIVERY_ERROR,
+                                               RIL.GECKO_SMS_DELIVERY_STATUS_ERROR,
+                                               aSendingMessage.sender,
+                                               aSendingMessage.receiver,
+                                               aSendingMessage.body,
+                                               aSendingMessage.messageClass,
+                                               aSendingMessage.timestamp,
+                                               0,
+                                               0,
+                                               aSendingMessage.read));
+
+      if (!aSilent) {
+        Services.obs.notifyObservers(aSendingMessage, kSmsFailedObserverTopic, null);
+      }
+      return;
+    }
+
+    gMobileMessageDatabaseService
+      .setMessageDeliveryByMessageId(aSendingMessage.id,
+                                     null,
+                                     DOM_MOBILE_MESSAGE_DELIVERY_ERROR,
+                                     RIL.GECKO_SMS_DELIVERY_STATUS_ERROR,
+                                     null,
+                                     (aRv, aDomMessage) => {
+      let smsMessage = null;
+      try {
+        smsMessage = aDomMessage.QueryInterface(Ci.nsISmsMessage);
+      } catch (e) {}
+      // TODO bug 832140 handle !Components.isSuccessCode(aRv)
+      this._broadcastSmsSystemMessage(
+        Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, smsMessage);
+      aRequest.notifySendMessageFailed(aErrorCode, smsMessage);
+      Services.obs.notifyObservers(smsMessage, kSmsFailedObserverTopic, null);
+    });
+  },
+
+  /**
+   * Schedule the sending request.
+   */
+  _scheduleSending: function(aServiceId, aDomMessage, aSilent, aOptions, aRequest) {
+    gSmsSendingSchedulers.getSchedulerByServiceId(aServiceId)
+      .schedule({
+        messageId: aDomMessage.id,
+        onSend: () => {
+          if (DEBUG) {
+            debug("onSend: messageId=" + aDomMessage.id +
+                  ", serviceId=" + aServiceId);
+          }
+          this._sendToTheAir(aServiceId,
+                             aDomMessage,
+                             aSilent,
+                             aOptions,
+                             aRequest);
+        },
+        onCancel: (aErrorCode) => {
+          if (DEBUG) debug("onCancel: " + aErrorCode);
+          this._notifySendingError(aErrorCode, aDomMessage, aSilent, aRequest);
+        }
+      });
+  },
+
+  /**
+   * Send a SMS message to the modem.
+   */
   _sendToTheAir: function(aServiceId, aDomMessage, aSilent, aOptions, aRequest) {
     // Keep current SMS message info for sent/delivered notifications
     let sentMessage = aDomMessage;
     let requestStatusReport = aOptions.requestStatusReport;
+
+    // Retry count for GECKO_ERROR_SMS_SEND_FAIL_RETRY
+    if (!aOptions.retryCount) {
+      aOptions.retryCount = 0;
+    }
 
     gRadioInterfaces[aServiceId].sendWorkerMessage("sendSMS",
                                                    aOptions,
@@ -288,50 +382,25 @@ SmsService.prototype = {
           error = Ci.nsIMobileMessageCallback.NO_SIGNAL_ERROR;
         } else if (aResponse.errorMsg === RIL.GECKO_ERROR_FDN_CHECK_FAILURE) {
           error = Ci.nsIMobileMessageCallback.FDN_CHECK_ERROR;
+        } else if (aResponse.errorMsg === RIL.GECKO_ERROR_SMS_SEND_FAIL_RETRY &&
+          aOptions.retryCount < RIL.SMS_RETRY_MAX) {
+          aOptions.retryCount++;
+          this._scheduleSending(aServiceId,
+                                aDomMessage,
+                                aSilent,
+                                aOptions,
+                                aRequest);
+          return;
         }
 
-        if (aSilent) {
-          // There is no way to modify nsIDOMMozSmsMessage attributes as they
-          // are read only so we just create a new sms instance to send along
-          // with the notification.
-          aRequest.notifySendMessageFailed(
-            error,
-            gMobileMessageService.createSmsMessage(sentMessage.id,
-                                                   sentMessage.threadId,
-                                                   sentMessage.iccId,
-                                                   DOM_MOBILE_MESSAGE_DELIVERY_ERROR,
-                                                   RIL.GECKO_SMS_DELIVERY_STATUS_ERROR,
-                                                   sentMessage.sender,
-                                                   sentMessage.receiver,
-                                                   sentMessage.body,
-                                                   sentMessage.messageClass,
-                                                   sentMessage.timestamp,
-                                                   0,
-                                                   0,
-                                                   sentMessage.read));
-          return false;
-        }
-
-        gMobileMessageDatabaseService
-          .setMessageDeliveryByMessageId(aDomMessage.id,
-                                         null,
-                                         DOM_MOBILE_MESSAGE_DELIVERY_ERROR,
-                                         RIL.GECKO_SMS_DELIVERY_STATUS_ERROR,
-                                         null,
-                                         (aRv, aDomMessage) => {
-          // TODO bug 832140 handle !Components.isSuccessCode(aRv)
-          this._broadcastSmsSystemMessage(
-            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aDomMessage);
-          aRequest.notifySendMessageFailed(error, aDomMessage);
-          Services.obs.notifyObservers(aDomMessage, kSmsFailedObserverTopic, null);
-        });
+        this._notifySendingError(error, sentMessage, aSilent, aRequest);
         return false;
       } // End of send failure.
 
       // Message was sent to SMSC.
       if (!aResponse.deliveryStatus) {
         if (aSilent) {
-          // There is no way to modify nsIDOMMozSmsMessage attributes as they
+          // There is no way to modify nsISmsMessage attributes as they
           // are read only so we just create a new sms instance to send along
           // with the notification.
           aRequest.notifyMessageSent(
@@ -359,17 +428,21 @@ SmsService.prototype = {
                                          sentMessage.deliveryStatus,
                                          null,
                                          (aRv, aDomMessage) => {
+          let smsMessage = null;
+          try {
+            smsMessage = aDomMessage.QueryInterface(Ci.nsISmsMessage);
+          } catch (e) {}
           // TODO bug 832140 handle !Components.isSuccessCode(aRv)
 
           if (requestStatusReport) {
             // Update the sentMessage and wait for the status report.
-            sentMessage = aDomMessage;
+            sentMessage = smsMessage;
           }
 
           this._broadcastSmsSystemMessage(
-            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT, aDomMessage);
-          aRequest.notifyMessageSent(aDomMessage);
-          Services.obs.notifyObservers(aDomMessage, kSmsSentObserverTopic, null);
+            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT, smsMessage);
+          aRequest.notifyMessageSent(smsMessage);
+          Services.obs.notifyObservers(smsMessage, kSmsSentObserverTopic, null);
         });
 
         // Keep this callback if we have status report waiting.
@@ -385,6 +458,10 @@ SmsService.prototype = {
                                        aResponse.deliveryStatus,
                                        null,
                                        (aRv, aDomMessage) => {
+        let smsMessage = null;
+        try {
+          smsMessage = aDomMessage.QueryInterface(Ci.nsISmsMessage);
+        } catch (e) {}
         // TODO bug 832140 handle !Components.isSuccessCode(aRv)
 
         let [topic, notificationType] =
@@ -396,10 +473,10 @@ SmsService.prototype = {
 
         // Broadcasting a "sms-delivery-success/sms-delivery-error" system
         // message to open apps.
-        this._broadcastSmsSystemMessage(notificationType, aDomMessage);
+        this._broadcastSmsSystemMessage(notificationType, smsMessage);
 
         // Notifying observers the delivery status is updated.
-        Services.obs.notifyObservers(aDomMessage, topic, null);
+        Services.obs.notifyObservers(smsMessage, topic, null);
       });
 
       // Send transaction has ended completely.
@@ -414,7 +491,7 @@ SmsService.prototype = {
    * @param aNotificationType
    *        Ci.nsISmsMessenger.NOTIFICATION_TYPE_*.
    * @param aDomMessage
-   *        The nsIDOMMozSmsMessage object.
+   *        The nsISmsMessage object.
    */
   _broadcastSmsSystemMessage: function(aNotificationType, aDomMessage) {
     if (DEBUG) debug("Broadcasting the SMS system message: " + aNotificationType);
@@ -484,12 +561,35 @@ SmsService.prototype = {
       options.receivedSegments = 0;
       options.segments = [];
     } else if (options.segments[seq]) {
-      // Duplicated segment?
-      if (DEBUG) {
-        debug("Got duplicated segment no." + seq +
-              " of a multipart SMS: " + JSON.stringify(aSegment));
+      if (options.encoding == Ci.nsIGonkSmsService.SMS_MESSAGE_ENCODING_8BITS_ALPHABET &&
+          options.encoding == aSegment.encoding &&
+          options.segments[seq].length == aSegment.data.length &&
+          options.segments[seq].every(function(aElement, aIndex) {
+            return aElement == aSegment.data[aIndex];
+          })) {
+        if (DEBUG) {
+          debug("Got duplicated binary segment no: " + seq);
+        }
+        return null;
       }
-      return null;
+
+      if (options.encoding != Ci.nsIGonkSmsService.SMS_MESSAGE_ENCODING_8BITS_ALPHABET &&
+          aSegment.encoding != Ci.nsIGonkSmsService.SMS_MESSAGE_ENCODING_8BITS_ALPHABET &&
+          options.segments[seq] == aSegment.body) {
+        if (DEBUG) {
+          debug("Got duplicated text segment no: " + seq);
+        }
+        return null;
+      }
+
+      // Update mandatory properties to ensure that the segments could be
+      // concatenated properly.
+      options.encoding = aSegment.encoding;
+      options.originatorPort = aSegment.originatorPort;
+      options.destinationPort = aSegment.destinationPort;
+      options.teleservice = aSegment.teleservice;
+      // Decrease the counter for this collided segment.
+      options.receivedSegments--;
     }
 
     if (options.receivedSegments > 0) {
@@ -711,6 +811,10 @@ SmsService.prototype = {
     }
 
     let notifyReceived = (aRv, aDomMessage) => {
+      let smsMessage = null;
+      try {
+        smsMessage = aDomMessage.QueryInterface(Ci.nsISmsMessage);
+      } catch (e) {}
       let success = Components.isSuccessCode(aRv);
 
       this._sendAckSms(aRv, aMessage, aServiceId);
@@ -725,8 +829,8 @@ SmsService.prototype = {
       }
 
       this._broadcastSmsSystemMessage(
-        Ci.nsISmsMessenger.NOTIFICATION_TYPE_RECEIVED, aDomMessage);
-      Services.obs.notifyObservers(aDomMessage, kSmsReceivedObserverTopic, null);
+        Ci.nsISmsMessenger.NOTIFICATION_TYPE_RECEIVED, smsMessage);
+      Services.obs.notifyObservers(smsMessage, kSmsReceivedObserverTopic, null);
     };
 
     if (aMessage.messageClass != RIL.GECKO_SMS_MESSAGE_CLASSES[RIL.PDU_DCS_MSG_CLASS_0]) {
@@ -872,20 +976,25 @@ SmsService.prototype = {
       iccId: this._getIccId(aServiceId)
     };
 
-    let saveSendingMessageCallback = (aRv, aSendingMessage) => {
+    let saveSendingMessageCallback = (aRv, aDomMessage) => {
+      let smsMessage = null;
+      try {
+        smsMessage = aDomMessage.QueryInterface(Ci.nsISmsMessage);
+      } catch (e) {}
+
       if (!Components.isSuccessCode(aRv)) {
         if (DEBUG) debug("Error! Fail to save sending message! aRv = " + aRv);
         this._broadcastSmsSystemMessage(
-          Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aSendingMessage);
+          Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, smsMessage);
         aRequest.notifySendMessageFailed(
           gMobileMessageDatabaseService.translateCrErrorToMessageCallbackError(aRv),
-          aSendingMessage);
-        Services.obs.notifyObservers(aSendingMessage, kSmsFailedObserverTopic, null);
+          smsMessage);
+        Services.obs.notifyObservers(smsMessage, kSmsFailedObserverTopic, null);
         return;
       }
 
       if (!aSilent) {
-        Services.obs.notifyObservers(aSendingMessage, kSmsSendingObserverTopic, null);
+        Services.obs.notifyObservers(smsMessage, kSmsSendingObserverTopic, null);
       }
 
       let connection =
@@ -906,28 +1015,12 @@ SmsService.prototype = {
         errorCode = Ci.nsIMobileMessageCallback.NO_SIM_CARD_ERROR;
       }
       if (errorCode) {
-        if (aSilent) {
-          aRequest.notifySendMessageFailed(errorCode, aSendingMessage);
-          return;
-        }
-
-        gMobileMessageDatabaseService
-          .setMessageDeliveryByMessageId(aSendingMessage.id,
-                                         null,
-                                         DOM_MOBILE_MESSAGE_DELIVERY_ERROR,
-                                         RIL.GECKO_SMS_DELIVERY_STATUS_ERROR,
-                                         null,
-                                         (aRv, aDomMessage) => {
-          // TODO bug 832140 handle !Components.isSuccessCode(aRv)
-          this._broadcastSmsSystemMessage(
-            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aDomMessage);
-          aRequest.notifySendMessageFailed(errorCode, aDomMessage);
-          Services.obs.notifyObservers(aDomMessage, kSmsFailedObserverTopic, null);
-        });
+        this._notifySendingError(errorCode, smsMessage, aSilent, aRequest);
         return;
       }
 
-      this._sendToTheAir(aServiceId, aSendingMessage, aSilent, options, aRequest);
+      this._scheduleSending(aServiceId, smsMessage, aSilent, options,
+        aRequest);
     }; // End of |saveSendingMessageCallback|.
 
     // Don't save message into DB for silent SMS.
@@ -982,7 +1075,9 @@ SmsService.prototype = {
                                                    null,
                                                    (aResponse) => {
       if (!aResponse.errorMsg) {
-        aRequest.notifyGetSmscAddress(aResponse.smscAddress);
+        aRequest.notifyGetSmscAddress(aResponse.smscAddress,
+                                      aResponse.typeOfNumber,
+                                      aResponse.numberPlanIdentification);
       } else {
         aRequest.notifyGetSmscAddressFailed(
           Ci.nsIMobileMessageCallback.NOT_FOUND_ERROR);
@@ -1145,6 +1240,179 @@ function getEnabledGsmTableTuplesFromMcc() {
   }
 
   return tuples;
+};
+
+function SmsSendingScheduler(aServiceId) {
+  this._serviceId = aServiceId;
+  this._queue = [];
+
+  Services.obs.addObserver(this, kSmsDeletedObserverTopic, false);
+  Services.obs.addObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
+}
+SmsSendingScheduler.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIMobileConnectionListener]),
+
+  _serviceId: 0,
+  _isObservingMoboConn: false,
+  _queue: null,
+
+  /**
+   * Ensure the handler is listening on MobileConnection events.
+   */
+  _ensureMoboConnObserverRegistration: function() {
+    if (!this._isObservingMoboConn) {
+      let connection =
+        gMobileConnectionService.getItemByServiceId(this._serviceId);
+      if (connection) {
+        connection.registerListener(this);
+        this._isObservingMoboConn = true;
+      }
+    }
+  },
+
+  /**
+   * Ensure the handler is not listening on MobileConnection events.
+   */
+  _ensureMoboConnObserverUnregistration: function() {
+    if (this._isObservingMoboConn) {
+      let connection =
+        gMobileConnectionService.getItemByServiceId(this._serviceId);
+      if (connection) {
+        connection.unregisterListener(this);
+        this._isObservingMoboConn = false;
+      }
+    }
+  },
+
+  /**
+   * Schedule a sending request.
+   *
+   * @param aSendingRequest
+   *        An object with the following properties:
+   *        - messageId
+   *          The messageId in MobileMessageDB.
+   *        - onSend
+   *          The callback to invoke to trigger a sending or retry.
+   *        - onCancel
+   *          The callback to invoke when the request is canceled and won't
+   *          retry.
+   */
+  schedule: function(aSendingRequest) {
+    if (aSendingRequest) {
+      if (DEBUG) {
+        debug("scheduling message: messageId=" + aSendingRequest.messageId +
+              ", serviceId=" + this._serviceId);
+      }
+      this._ensureMoboConnObserverRegistration();
+      this._queue.push(aSendingRequest)
+
+      // Keep the queue in order to guarantee the sending order matches user
+      // expectation.
+      this._queue.sort(function(a, b) {
+        return a.messageId - b.messageId;
+      });
+    }
+
+    this.send();
+  },
+
+  /**
+   * Send all requests in the queue if voice connection is available.
+   */
+  send: function() {
+    let connection =
+      gMobileConnectionService.getItemByServiceId(this._serviceId);
+
+    // If the voice connection is temporarily unavailable, pend the request.
+    let voiceInfo = connection && connection.voice;
+    let voiceConnected = voiceInfo && voiceInfo.connected;
+    if (!voiceConnected) {
+      if (DEBUG) {
+        debug("Voice connection is temporarily unavailable. Skip sending.");
+      }
+      return;
+    }
+
+    let snapshot = this._queue;
+    this._queue = [];
+    let req;
+    while ((req = snapshot.shift())) {
+      req.onSend();
+    }
+
+    // The sending / retry could fail and being re-scheduled immediately.
+    // Only unregister listener when the queue is empty after retries.
+    if (this._queue.length === 0) {
+      this._ensureMoboConnObserverUnregistration();
+    }
+  },
+
+  /**
+   * nsIObserver interface.
+   */
+  observe: function(aSubject, aTopic, aData) {
+    switch (aTopic) {
+      case kSmsDeletedObserverTopic:
+        let deletedInfo = aSubject.QueryInterface(Ci.nsIDeletedMessageInfo);
+        if (DEBUG) {
+          debug("Observe " + kSmsDeletedObserverTopic + ": " +
+            JSON.stringify(deletedInfo));
+        }
+
+        if (deletedInfo && deletedInfo.deletedMessageIds) {
+          for (let i = 0; i < this._queue.length; i++) {
+            let id = this._queue[i].messageId;
+            if (deletedInfo.deletedMessageIds.includes(id)) {
+              if (DEBUG) debug("Deleting message with id=" + id);
+              this._queue.splice(i, 1)[0].onCancel(
+                Ci.nsIMobileMessageCallback.NOT_FOUND_ERROR);
+            }
+          }
+        }
+        break;
+      case NS_XPCOM_SHUTDOWN_OBSERVER_ID:
+        this._ensureMoboConnObserverUnregistration();
+        Services.obs.removeObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID);
+        Services.obs.removeObserver(this, kSmsDeletedObserverTopic);
+
+        // Cancel all pending requests and clear the queue.
+        for (let req of this._queue) {
+          req.onCancel(Ci.nsIMobileMessageCallback.NO_SIGNAL_ERROR);
+        }
+        this._queue = [];
+        break;
+    }
+  },
+
+  /**
+   * nsIMobileConnectionListener implementation.
+   */
+  notifyVoiceChanged: function() {
+    let connection = gMobileConnectionService.getItemByServiceId(this._serviceId);
+    let voiceInfo = connection && connection.voice;
+    let voiceConnected = voiceInfo && voiceInfo.connected;
+    if (voiceConnected) {
+      if (DEBUG) {
+        debug("Voice connected. Resend pending requests.");
+      }
+
+      this.send();
+    }
+  },
+
+  // Unused nsIMobileConnectionListener methods.
+  notifyDataChanged: function() {},
+  notifyDataError: function(message) {},
+  notifyCFStateChanged: function(action, reason, number, timeSeconds, serviceClass) {},
+  notifyEmergencyCbModeChanged: function(active, timeoutMs) {},
+  notifyOtaStatusChanged: function(status) {},
+  notifyRadioStateChanged: function() {},
+  notifyClirModeChanged: function(mode) {},
+  notifyLastKnownNetworkChanged: function() {},
+  notifyLastKnownHomeNetworkChanged: function() {},
+  notifyNetworkSelectionModeChanged: function() {},
+  notifyDeviceIdentitiesChanged: function() {}
+
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([SmsService]);

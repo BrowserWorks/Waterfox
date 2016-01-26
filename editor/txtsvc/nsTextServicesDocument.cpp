@@ -211,7 +211,7 @@ nsTextServicesDocument::InitWithEditor(nsIEditor *aEditor)
   return result;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsTextServicesDocument::GetDocument(nsIDOMDocument **aDoc)
 {
   NS_ENSURE_TRUE(aDoc, NS_ERROR_NULL_POINTER);
@@ -264,7 +264,7 @@ NS_IMETHODIMP
 nsTextServicesDocument::ExpandRangeToWordBoundaries(nsIDOMRange *aRange)
 {
   NS_ENSURE_ARG_POINTER(aRange);
-  nsRefPtr<nsRange> range = static_cast<nsRange*>(aRange);
+  RefPtr<nsRange> range = static_cast<nsRange*>(aRange);
 
   // Get the end points of the range.
 
@@ -524,12 +524,12 @@ nsTextServicesDocument::LastSelectedBlock(TSDBlockSelectionStatus *aSelStatus,
     return result;
   }
 
-  nsRefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
 
   bool isCollapsed = selection->IsCollapsed();
 
   nsCOMPtr<nsIContentIterator> iter;
-  nsRefPtr<nsRange> range;
+  RefPtr<nsRange> range;
   nsCOMPtr<nsIDOMNode>         parent;
   int32_t                      i, rangeCount, offset;
 
@@ -1158,8 +1158,8 @@ nsTextServicesDocument::DeleteSelection()
 
   // We don't allow deletion during a collapsed selection!
   nsCOMPtr<nsIEditor> editor (do_QueryReferent(mEditor));
-  NS_ASSERTION(editor, "DeleteSelection called without an editor present!"); 
-  NS_ASSERTION(SelectionIsValid(), "DeleteSelection called without a valid selection!"); 
+  NS_ASSERTION(editor, "DeleteSelection called without an editor present!");
+  NS_ASSERTION(SelectionIsValid(), "DeleteSelection called without a valid selection!");
 
   if (!editor || !SelectionIsValid())
     return NS_ERROR_FAILURE;
@@ -1459,7 +1459,7 @@ nsTextServicesDocument::InsertText(const nsString *aText)
   nsresult result = NS_OK;
 
   nsCOMPtr<nsIEditor> editor (do_QueryReferent(mEditor));
-  NS_ASSERTION(editor, "InsertText called without an editor present!"); 
+  NS_ASSERTION(editor, "InsertText called without an editor present!");
 
   if (!editor || !SelectionIsValid())
     return NS_ERROR_FAILURE;
@@ -1618,7 +1618,7 @@ nsTextServicesDocument::InsertText(const nsString *aText)
     itEntry->mLength += strLength;
 
     mSelStartIndex = mSelEndIndex = i;
-          
+
     result = mSelCon->GetSelection(nsISelectionController::SELECTION_NORMAL, getter_AddRefs(selection));
 
     if (NS_FAILED(result))
@@ -1629,7 +1629,7 @@ nsTextServicesDocument::InsertText(const nsString *aText)
     }
 
     result = selection->Collapse(itEntry->mNode, itEntry->mNodeOffset + itEntry->mLength);
-        
+
     if (NS_FAILED(result))
     {
       editor->EndTransaction();
@@ -1711,7 +1711,7 @@ nsTextServicesDocument::InsertText(const nsString *aText)
     }
 
     result = DeleteSelection();
-  
+
     if (NS_FAILED(result))
     {
       editor->EndTransaction();
@@ -1782,7 +1782,7 @@ nsTextServicesDocument::DidDeleteNode(nsIDOMNode *aChild, nsresult aResult)
     // next valid text node in the offset table, and if there
     // wasn't a next, it would've set mIteratorStatus to eIsDone.
 
-    NS_ERROR("DeleteNode called for current iterator node."); 
+    NS_ERROR("DeleteNode called for current iterator node.");
   }
 
   int32_t tcount = mOffsetTable.Length();
@@ -1964,7 +1964,7 @@ nsTextServicesDocument::CreateContentIterator(nsRange* aRange,
   // Create a nsFilteredContentIterator
   // This class wraps the ContentIterator in order to give itself a chance
   // to filter out certain content nodes
-  nsRefPtr<nsFilteredContentIterator> filter = new nsFilteredContentIterator(mTxtSvcFilter);
+  RefPtr<nsFilteredContentIterator> filter = new nsFilteredContentIterator(mTxtSvcFilter);
 
   nsresult result = filter->Init(aRange);
   if (NS_FAILED(result)) {
@@ -2033,7 +2033,7 @@ nsTextServicesDocument::CreateDocumentContentRange(nsRange** aRange)
   nsCOMPtr<nsINode> nativeNode = do_QueryInterface(node);
   NS_ENSURE_STATE(nativeNode);
 
-  nsRefPtr<nsRange> range = new nsRange(nativeNode);
+  RefPtr<nsRange> range = new nsRange(nativeNode);
 
   rv = range->SelectNodeContents(node);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2055,7 +2055,7 @@ nsTextServicesDocument::CreateDocumentContentRootToNodeOffsetRange(
   if (aOffset < 0)
     return NS_ERROR_FAILURE;
 
-  nsCOMPtr<nsIDOMNode> bodyNode; 
+  nsCOMPtr<nsIDOMNode> bodyNode;
   nsresult rv = GetDocumentContentRootNode(getter_AddRefs(bodyNode));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(bodyNode, NS_ERROR_NULL_POINTER);
@@ -2095,7 +2095,7 @@ nsTextServicesDocument::CreateDocumentContentIterator(nsIContentIterator **aIter
 
   NS_ENSURE_TRUE(aIterator, NS_ERROR_NULL_POINTER);
 
-  nsRefPtr<nsRange> range;
+  RefPtr<nsRange> range;
 
   result = CreateDocumentContentRange(getter_AddRefs(range));
 
@@ -2217,9 +2217,9 @@ bool
 nsTextServicesDocument::DidSkip(nsIContentIterator* aFilteredIter)
 {
   // We can assume here that the Iterator is a nsFilteredContentIterator because
-  // all the iterator are created in CreateContentIterator which create a 
+  // all the iterator are created in CreateContentIterator which create a
   // nsFilteredContentIterator
-  // So if the iterator bailed on one of the "filtered" content nodes then we 
+  // So if the iterator bailed on one of the "filtered" content nodes then we
   // consider that to be a block and bail with true
   if (aFilteredIter) {
     nsFilteredContentIterator* filter = static_cast<nsFilteredContentIterator *>(aFilteredIter);
@@ -2431,7 +2431,7 @@ nsTextServicesDocument::SetSelectionInternal(int32_t aOffset, int32_t aLength, b
   for (i = mOffsetTable.Length() - 1; !eNode && i >= 0; i--)
   {
     entry = mOffsetTable[i];
-    
+
     if (entry->mIsValid)
     {
       if (entry->mIsInsertedText)
@@ -2527,7 +2527,7 @@ nsTextServicesDocument::GetCollapsedSelection(nsITextServicesDocument::TSDBlockS
   NS_ENSURE_SUCCESS(result, result);
   NS_ENSURE_TRUE(domSelection, NS_ERROR_FAILURE);
 
-  nsRefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
 
   // The calling function should have done the GetIsCollapsed()
   // check already. Just assume it's collapsed!
@@ -2552,7 +2552,7 @@ nsTextServicesDocument::GetCollapsedSelection(nsITextServicesDocument::TSDBlockS
   int32_t eStartOffset = eStart->mNodeOffset;
   int32_t eEndOffset   = eEnd->mNodeOffset + eEnd->mLength;
 
-  nsRefPtr<nsRange> range = selection->GetRangeAt(0);
+  RefPtr<nsRange> range = selection->GetRangeAt(0);
   NS_ENSURE_STATE(range);
 
   nsCOMPtr<nsIDOMNode> domParent;
@@ -2736,7 +2736,7 @@ nsTextServicesDocument::GetUncollapsedSelection(nsITextServicesDocument::TSDBloc
 {
   nsresult result;
 
-  nsRefPtr<nsRange> range;
+  RefPtr<nsRange> range;
   OffsetEntry *entry;
 
   nsCOMPtr<nsISelection> domSelection;
@@ -2745,7 +2745,7 @@ nsTextServicesDocument::GetUncollapsedSelection(nsITextServicesDocument::TSDBloc
   NS_ENSURE_SUCCESS(result, result);
   NS_ENSURE_TRUE(domSelection, NS_ERROR_FAILURE);
 
-  nsRefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+  RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
 
   // It is assumed that the calling function has made sure that the
   // selection is not collapsed, and that the input params to this
@@ -2896,7 +2896,7 @@ nsTextServicesDocument::GetUncollapsedSelection(nsITextServicesDocument::TSDBloc
   NS_ENSURE_SUCCESS(result, result);
 
   // Find the first text node in the range.
-  
+
   bool found;
   nsCOMPtr<nsIContent> content;
 
@@ -3156,7 +3156,7 @@ nsTextServicesDocument::FirstTextNodeInCurrentBlock(nsIContentIterator *iter)
     if (DidSkip(iter))
       break;
   }
-  
+
   if (last)
     iter->PositionAt(last);
 
@@ -3324,7 +3324,7 @@ nsTextServicesDocument::CreateOffsetTable(nsTArray<OffsetEntry*> *aOffsetTable,
   // If we have an aIterRange, retrieve the endpoints so
   // they can be used in the while loop below to trim entries
   // for text nodes that are partially selected by aIterRange.
-  
+
   nsCOMPtr<nsIDOMNode> rngStartNode, rngEndNode;
   int32_t rngStartOffset = 0, rngEndOffset = 0;
 
@@ -3612,14 +3612,14 @@ nsTextServicesDocument::FindWordBounds(nsTArray<OffsetEntry*> *aOffsetTable,
   }
 
   // Strip out the NBSPs at the ends
-  while ((res.mBegin <= res.mEnd) && (IS_NBSP_CHAR(str[res.mBegin]))) 
+  while ((res.mBegin <= res.mEnd) && (IS_NBSP_CHAR(str[res.mBegin])))
     res.mBegin++;
   if (str[res.mEnd] == (unsigned char)0x20)
   {
     uint32_t realEndWord = res.mEnd - 1;
-    while ((realEndWord > res.mBegin) && (IS_NBSP_CHAR(str[realEndWord]))) 
+    while ((realEndWord > res.mBegin) && (IS_NBSP_CHAR(str[realEndWord])))
       realEndWord--;
-    if (realEndWord < res.mEnd - 1) 
+    if (realEndWord < res.mEnd - 1)
       res.mEnd = realEndWord + 1;
   }
 

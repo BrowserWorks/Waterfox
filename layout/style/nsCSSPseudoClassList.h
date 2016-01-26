@@ -122,6 +122,9 @@ CSS_PSEUDO_CLASS(mozWindowInactive, ":-moz-window-inactive", 0, "")
 // according to HTML integer attribute parsing rules.
 CSS_PSEUDO_CLASS(mozTableBorderNonzero, ":-moz-table-border-nonzero", 0, "")
 
+// Matches HTML frame/iframe elements which are mozbrowser.
+CSS_PSEUDO_CLASS(mozBrowserFrame, ":-moz-browser-frame", 0, "")
+
 // Matches whatever the contextual reference elements are for the
 // matching operation.
 CSS_PSEUDO_CLASS(scope, ":scope", 0, "layout.css.scope-pseudo.enabled")
@@ -179,8 +182,6 @@ CSS_STATE_PSEUDO_CLASS(mozTypeUnsupportedPlatform, ":-moz-type-unsupported-platf
                        NS_EVENT_STATE_TYPE_UNSUPPORTED_PLATFORM)
 CSS_STATE_PSEUDO_CLASS(mozHandlerClickToPlay, ":-moz-handler-clicktoplay", 0, "",
                        NS_EVENT_STATE_TYPE_CLICK_TO_PLAY)
-CSS_STATE_PSEUDO_CLASS(mozHandlerPlayPreview, ":-moz-handler-playpreview", 0, "",
-                       NS_EVENT_STATE_TYPE_PLAY_PREVIEW)
 CSS_STATE_PSEUDO_CLASS(mozHandlerVulnerableUpdatable, ":-moz-handler-vulnerable-updatable", 0, "",
                        NS_EVENT_STATE_VULNERABLE_UPDATABLE)
 CSS_STATE_PSEUDO_CLASS(mozHandlerVulnerableNoUpdate, ":-moz-handler-vulnerable-no-update", 0, "",

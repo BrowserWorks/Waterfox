@@ -42,8 +42,8 @@ HashChildren(Shape* kid1, Shape* kid2)
         return nullptr;
     }
 
-    JS_ALWAYS_TRUE(hash->putNew(StackShape(kid1), kid1));
-    JS_ALWAYS_TRUE(hash->putNew(StackShape(kid2), kid2));
+    hash->putNewInfallible(StackShape(kid1), kid1);
+    hash->putNewInfallible(StackShape(kid2), kid2);
     return hash;
 }
 
@@ -126,7 +126,7 @@ Shape::removeChild(Shape* child)
 }
 
 Shape*
-PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, StackShape& unrootedChild)
+PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, Handle<StackShape> child)
 {
     RootedShape parent(cx, parentArg);
     MOZ_ASSERT(parent);
@@ -144,10 +144,10 @@ PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, StackShape& unroo
     KidsPointer* kidp = &parent->kids;
     if (kidp->isShape()) {
         Shape* kid = kidp->toShape();
-        if (kid->matches(unrootedChild))
+        if (kid->matches(child))
             existingShape = kid;
     } else if (kidp->isHash()) {
-        if (KidsHash::Ptr p = kidp->toHash()->lookup(unrootedChild))
+        if (KidsHash::Ptr p = kidp->toHash()->lookup(child))
             existingShape = *p;
     } else {
         /* If kidp->isNull(), we always insert. */
@@ -181,7 +181,7 @@ PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, StackShape& unroo
     if (existingShape)
         return existingShape;
 
-    Shape* shape = Shape::new_(cx, unrootedChild, parent->numFixedSlots());
+    Shape* shape = Shape::new_(cx, child, parent->numFixedSlots());
     if (!shape)
         return nullptr;
 
@@ -312,24 +312,43 @@ Shape::fixupAfterMovingGC()
 void
 Shape::fixupGetterSetterForBarrier(JSTracer* trc)
 {
-    // Relocating the getterObj or setterObj will change our location in our
-    // parent's KidsHash, so remove ourself first if we're going to get moved.
+    if (!hasGetterValue() && !hasSetterValue())
+        return;
+
+    JSObject* priorGetter = asAccessorShape().getterObj;
+    JSObject* priorSetter = asAccessorShape().setterObj;
+    if (!priorGetter && !priorSetter)
+        return;
+
+    JSObject* postGetter = priorGetter;
+    JSObject* postSetter = priorSetter;
+    if (priorGetter)
+        TraceManuallyBarrieredEdge(trc, &postGetter, "getterObj");
+    if (priorSetter)
+        TraceManuallyBarrieredEdge(trc, &postSetter, "setterObj");
+    if (priorGetter == postGetter && priorSetter == postSetter)
+        return;
+
     if (parent && !parent->inDictionary() && parent->kids.isHash()) {
+        // Relocating the getterObj or setterObj will have changed our location
+        // in our parent's KidsHash, so take care to update it.  We must do this
+        // before we update the shape itself, since the shape is used to match
+        // the original entry in the hash set.
+
+        StackShape original(this);
+        StackShape updated(this);
+        updated.rawGetter = reinterpret_cast<GetterOp>(postGetter);
+        updated.rawSetter = reinterpret_cast<SetterOp>(postSetter);
+
         KidsHash* kh = parent->kids.toHash();
-        MOZ_ASSERT(kh->lookup(StackShape(this)));
-        kh->remove(StackShape(this));
+        MOZ_ALWAYS_TRUE(kh->rekeyAs(original, updated, this));
     }
 
-    if (hasGetterObject())
-        TraceManuallyBarrieredEdge(trc, &asAccessorShape().getterObj, "getterObj");
-    if (hasSetterObject())
-        TraceManuallyBarrieredEdge(trc, &asAccessorShape().setterObj, "setterObj");
+    asAccessorShape().getterObj = postGetter;
+    asAccessorShape().setterObj = postSetter;
 
-    if (parent && !parent->inDictionary() && parent->kids.isHash()) {
-        KidsHash* kh = parent->kids.toHash();
-        MOZ_ASSERT(!kh->lookup(StackShape(this)));
-        MOZ_ALWAYS_TRUE(kh->putNew(StackShape(this), this));
-    }
+    MOZ_ASSERT_IF(parent && !parent->inDictionary() && parent->kids.isHash(),
+                  parent->kids.toHash()->has(StackShape(this)));
 }
 
 #ifdef DEBUG

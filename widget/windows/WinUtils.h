@@ -35,6 +35,8 @@
 #include "nsIThread.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/EventForwards.h"
+#include "mozilla/UniquePtr.h"
 
 /**
  * NS_INLINE_DECL_IUNKNOWN_REFCOUNTING should be used for defining and
@@ -123,16 +125,25 @@ public:
 };
 #endif
 
-class WinUtils {
+class WinUtils
+{
 public:
+
+  static bool IsPerMonitorDPIAware();
   /**
    * Functions to convert between logical pixels as used by most Windows APIs
    * and physical (device) pixels.
    */
-  static double LogToPhysFactor();
-  static double PhysToLogFactor();
-  static int32_t LogToPhys(double aValue);
-  static double PhysToLog(int32_t aValue);
+  static double LogToPhysFactor(HMONITOR aMonitor);
+  static double LogToPhysFactor(HWND aWnd) {
+    return LogToPhysFactor(::MonitorFromWindow(aWnd, MONITOR_DEFAULTTOPRIMARY));
+  }
+  static double LogToPhysFactor(HDC aDC) {
+    return LogToPhysFactor(::WindowFromDC(aDC));
+  }
+  static int32_t LogToPhys(HMONITOR aMonitor, double aValue);
+  static HMONITOR GetPrimaryMonitor();
+  static HMONITOR MonitorFromRect(const gfx::Rect& rect);
 
   /**
    * Logging helpers that dump output to prlog module 'Widget', console, and
@@ -307,7 +318,7 @@ public:
    */
   static uint16_t GetMouseInputSource();
 
-  static bool GetIsMouseFromTouch(uint32_t aEventType);
+  static bool GetIsMouseFromTouch(EventMessage aEventType);
 
   /**
    * SHCreateItemFromParsingName() calls native SHCreateItemFromParsingName()
@@ -355,7 +366,8 @@ public:
    * Helper used in invalidating flash plugin windows owned
    * by low rights flash containers.
    */
-  static void InvalidatePluginAsWorkaround(nsIWidget *aWidget, const nsIntRect &aRect);
+  static void InvalidatePluginAsWorkaround(nsIWidget* aWidget,
+                                           const LayoutDeviceIntRect& aRect);
 
   /**
    * Returns true if the context or IME state is enabled.  Otherwise, false.
@@ -370,7 +382,22 @@ public:
   static void SetupKeyModifiersSequence(nsTArray<KeyPair>* aArray,
                                         uint32_t aModifiers);
 
-  // dwmapi.dll function typedefs and declarations
+  /**
+  * Does device have touch support
+  */
+  static uint32_t IsTouchDeviceSupportPresent();
+
+  /**
+  * The maximum number of simultaneous touch contacts supported by the device.
+  * In the case of devices with multiple digitizers (e.g. multiple touch screens),
+  * the value will be the maximum of the set of maximum supported contacts by
+  * each individual digitizer.
+  */
+  static uint32_t GetMaxTouchPoints();
+
+  /**
+  * dwmapi.dll function typedefs and declarations
+  */
   typedef HRESULT (WINAPI*DwmExtendFrameIntoClientAreaProc)(HWND hWnd, const MARGINS *pMarInset);
   typedef HRESULT (WINAPI*DwmIsCompositionEnabledProc)(BOOL *pfEnabled);
   typedef HRESULT (WINAPI*DwmSetIconicThumbnailProc)(HWND hWnd, HBITMAP hBitmap, DWORD dwSITFlags);
@@ -442,17 +469,15 @@ public:
 
   // Warning: AsyncEncodeAndWriteIcon assumes ownership of the aData buffer passed in
   AsyncEncodeAndWriteIcon(const nsAString &aIconPath,
-                          uint8_t *aData, uint32_t aDataLen, uint32_t aStride,
-                          uint32_t aWidth, uint32_t aHeight,
+                          UniquePtr<uint8_t[]> aData,
+                          uint32_t aStride, uint32_t aWidth, uint32_t aHeight,
                           const bool aURLShortcut);
 
 private:
   virtual ~AsyncEncodeAndWriteIcon();
 
   nsAutoString mIconPath;
-  nsAutoArrayPtr<uint8_t> mBuffer;
-  HMODULE sDwmDLL;
-  uint32_t mBufferLength;
+  UniquePtr<uint8_t[]> mBuffer;
   uint32_t mStride;
   uint32_t mWidth;
   uint32_t mHeight;
@@ -514,8 +539,6 @@ public:
 
   static int32_t GetICOCacheSecondsTimeout();
 };
-
-
 
 } // namespace widget
 } // namespace mozilla

@@ -17,6 +17,7 @@ Library('dombindings_test_s')
 EXTRA_COMPONENTS += [
     'TestInterfaceJS.js',
     'TestInterfaceJS.manifest',
+    'TestInterfaceJSMaplike.js'
 ]
 
 MOCHITEST_MANIFESTS += ['mochitest.ini']
@@ -40,8 +41,13 @@ WEBIDL_EXAMPLE_INTERFACES += [
     'TestExampleProxyInterface',
 ]
 
-GENERATED_INCLUDES += ['..']
+# Bug 932082 tracks having bindings use namespaced includes.
 LOCAL_INCLUDES += [
+    '!/dist/include/mozilla/dom',
+]
+
+LOCAL_INCLUDES += [
+    '!..',
     '/dom/bindings',
     '/js/xpconnect/src',
     '/js/xpconnect/wrappers',

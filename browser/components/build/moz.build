@@ -24,10 +24,14 @@ LOCAL_INCLUDES += [
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     OS_LIBS += [
+        'esent',
         'ole32',
         'shell32',
         'shlwapi',
         'version',
+    ]
+    DELAYLOAD_DLLS += [
+        'esent.dll',
     ]
 
 # Mac: Need to link with CoreFoundation for Mac Migrators (PList reading code)
@@ -35,4 +39,5 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'gtk2', 'gtk3'):
     OS_LIBS += CONFIG['TK_LIBS']
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

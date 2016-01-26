@@ -13,6 +13,7 @@
 #include "nsString.h"
 #include "nsError.h"
 #include "nsTArray.h"
+#include "mozilla/UniquePtr.h"
 
 // http version codes
 #define NS_HTTP_VERSION_UNKNOWN  0
@@ -30,7 +31,7 @@ namespace net {
         // SPDY_VERSION_2 = 2, REMOVED
         // SPDY_VERSION_3 = 3, REMOVED
         SPDY_VERSION_31 = 4,
-        HTTP_VERSION_2 = 5,
+        HTTP_VERSION_2 = 5
 
         // leave room for official versions. telem goes to 48
         // 24 was a internal spdy/3.1
@@ -39,16 +40,11 @@ namespace net {
         // 27 was http/2-draft09, h2-10, and h2-11
         // 28 was http/2-draft12
         // 29 was http/2-draft13
-        // 30 was also h2-14. They're effectively the same, -15 added an
-        // error code. So, we advertise all, but our "default position" is -16.
-        HTTP_VERSION_2_DRAFT_15 = 30,
-        HTTP_VERSION_2_DRAFT_16 = 31
+        // 30 was h2-14 and h2-15
+        // 31 was h2-16
     };
 
 typedef uint8_t nsHttpVersion;
-
-#define HTTP_VERSION_2_DRAFT_LATEST HTTP_VERSION_2_DRAFT_16
-#define HTTP2_DRAFT_LATEST_TOKEN "h2-16"
 
 //-----------------------------------------------------------------------------
 // http connection capabilities
@@ -172,6 +168,9 @@ struct nsHttp
     // Return whether the HTTP status code represents a permanent redirect
     static bool IsPermanentRedirect(uint32_t httpStatus);
 
+    // Returns the APLN token which represents the used protocol version.
+    static const char* GetProtocolVersion(uint32_t pv);
+
     // Declare all atoms
     //
     // The atom names and values are stored in nsHttpAtomList.h and are brought
@@ -201,9 +200,9 @@ PRTimeToSeconds(PRTime t_usec)
 #define HTTP_LWS " \t"
 #define HTTP_HEADER_VALUE_SEPS HTTP_LWS ","
 
-void EnsureBuffer(nsAutoArrayPtr<char> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<char[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize);
-void EnsureBuffer(nsAutoArrayPtr<uint8_t> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<uint8_t[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize);
 
 // h2=":443"; ma=60; single
@@ -256,7 +255,7 @@ private:
 };
 
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // nsHttp_h__

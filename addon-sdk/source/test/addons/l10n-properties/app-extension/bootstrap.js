@@ -26,32 +26,26 @@ const appInfo = Cc["@mozilla.org/xre/app-info;1"].
 const vc = Cc["@mozilla.org/xpcom/version-comparator;1"].
            getService(Ci.nsIVersionComparator);
 
-const { Services } = Cu.import("resource://gre/modules/Services.jsm");
+const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm");
 
 const REASON = [ 'unknown', 'startup', 'shutdown', 'enable', 'disable',
                  'install', 'uninstall', 'upgrade', 'downgrade' ];
 
 const bind = Function.call.bind(Function.bind);
 
-let loader = null;
-let unload = null;
-let cuddlefishSandbox = null;
-let nukeTimer = null;
+var loader = null;
+var unload = null;
+var cuddlefishSandbox = null;
+var nukeTimer = null;
 
 // Utility function that synchronously reads local resource from the given
 // `uri` and returns content string.
 function readURI(uri) {
-  let ioservice = Cc['@mozilla.org/network/io-service;1'].
-    getService(Ci.nsIIOService);
-  let channel = ioservice.newChannel2(uri,
-                                      'UTF-8',
-                                      null,
-                                      null,      // aLoadingNode
-                                      Services.scriptSecurityManager.getSystemPrincipal(),
-                                      null,      // aTriggeringPrincipal
-                                      Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_OTHER);
-  let stream = channel.open();
+  let channel = NetUtil.newChannel({
+    uri: NetUtil.newURI(uri, "UTF-8"),
+    loadUsingSystemPrincipal: true
+  });
+  let stream = channel.open2();
 
   let cstream = Cc['@mozilla.org/intl/converter-input-stream;1'].
     createInstance(Ci.nsIConverterInputStream);

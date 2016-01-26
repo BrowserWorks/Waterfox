@@ -12,9 +12,21 @@ if CONFIG['MOZ_CRASHREPORTER']:
         'dwarf2reader.cc',
         'functioninfo.cc',
     ]
+    HOST_CXXFLAGS += [
+        '-O2',
+        '-g',
+    ]
     LOCAL_INCLUDES += [
         '../..',
     ]
 
 # need static lib
 FORCE_STATIC_LIB = True
+
+# This code is only compiled for build-time tools,
+# so enabling RTTI should be fine.
+HOST_CXXFLAGS += [
+    '-frtti',
+    '-funsigned-char',
+]
+

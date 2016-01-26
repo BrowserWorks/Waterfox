@@ -5,15 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 SOURCES += [
+    '!moc_nsQtNetworkManager.cpp',
     'nsQtNetworkLinkService.cpp',
     'nsQtNetworkManager.cpp',
 ]
-
-GENERATED_SOURCES += [
-    'moc_nsQtNetworkManager.cpp',
-]
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
@@ -21,3 +16,6 @@ LOCAL_INCLUDES += [
 ]
 
 CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

@@ -12,7 +12,7 @@
 function getIdentityAssertion(fpArray) {
   var Cu = SpecialPowers.Cu;
   var rtcid = Cu.import('resource://gre/modules/media/IdpSandbox.jsm');
-  var sandbox = new rtcid.IdpSandbox('example.com', 'idp.js', window.document);
+  var sandbox = new rtcid.IdpSandbox('example.com', 'idp.js', window);
   return sandbox.start()
     .then(idp => SpecialPowers.wrap(idp)
                    .generateAssertion(JSON.stringify({ fingerprint: fpArray }),
@@ -51,9 +51,9 @@ function fingerprintSdp(fingerprints) {
 // This function synthesizes that SDP and tries to set it.
 function testMultipleFingerprints() {
   // this one fails setRemoteDescription if the identity is not good
-  var pcStrict = new mozRTCPeerConnection({ peerIdentity: 'someone@example.com'});
+  var pcStrict = new RTCPeerConnection({ peerIdentity: 'someone@example.com'});
   // this one will be manually tweaked to have two fingerprints
-  var pcDouble = new mozRTCPeerConnection({});
+  var pcDouble = new RTCPeerConnection({});
 
   var offer, match, fingerprints;
 
@@ -86,7 +86,7 @@ function testMultipleFingerprints() {
           fingerprintSdp(fingerprints.slice(1)) +
           offer.sdp.slice(match.index);
 
-      var desc = new mozRTCSessionDescription({ type: 'offer', sdp: sdp });
+      var desc = new RTCSessionDescription({ type: 'offer', sdp: sdp });
       return pcStrict.setRemoteDescription(desc);
     })
     .then(() => {
@@ -105,8 +105,7 @@ function testMultipleFingerprints() {
 
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPrefEnv({
-  set: [ [ 'dom.messageChannel.enabled', true ],
-         [ 'media.peerconnection.identity.enabled', true ] ]
+  set: [ [ 'media.peerconnection.identity.enabled', true ] ]
 }, testMultipleFingerprints);
 </script>
   </body>

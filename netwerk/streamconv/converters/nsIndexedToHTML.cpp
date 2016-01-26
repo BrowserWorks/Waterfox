@@ -8,6 +8,7 @@
 #include "nsNetUtil.h"
 #include "netCore.h"
 #include "nsStringStream.h"
+#include "nsIFile.h"
 #include "nsIFileURL.h"
 #include "nsEscape.h"
 #include "nsIDirIndex.h"
@@ -23,6 +24,7 @@
 #include "nsITextToSubURI.h"
 #include "nsXPIDLString.h"
 #include <algorithm>
+#include "nsIChannel.h"
 
 NS_IMPL_ISUPPORTS(nsIndexedToHTML,
                   nsIDirIndexListener,
@@ -541,15 +543,23 @@ nsIndexedToHTML::DoOnStartRequest(nsIRequest* request, nsISupports *aContext,
     // trying to play nice and escaping the quotes.  See bug
     // 358128.
 
-    if (baseUri.FindChar('"') == kNotFound)
+    if (!baseUri.Contains('"'))
     {
         // Great, the baseUri does not contain a char that
         // will prematurely close the string.  Go ahead an
-        // add a base href.
-        buffer.AppendLiteral("<base href=\"");
-        nsAdoptingCString htmlEscapedUri(nsEscapeHTML(baseUri.get()));
-        buffer.Append(htmlEscapedUri);
-        buffer.AppendLiteral("\" />\n");
+        // add a base href, but only do so if we're not
+        // dealing with a resource URI.
+        nsCOMPtr<nsIURI> originalUri;
+        rv = channel->GetOriginalURI(getter_AddRefs(originalUri));
+        bool wasResource = false;
+        if (NS_FAILED(rv) ||
+            NS_FAILED(originalUri->SchemeIs("resource", &wasResource)) ||
+            !wasResource) {
+            buffer.AppendLiteral("<base href=\"");
+            nsAdoptingCString htmlEscapedUri(nsEscapeHTML(baseUri.get()));
+            buffer.Append(htmlEscapedUri);
+            buffer.AppendLiteral("\" />\n");
+        }
     }
     else
     {
@@ -698,7 +708,7 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest *aRequest,
 
     // Adjust the length in case unescaping shortened the string.
     loc.Truncate(nsUnescapeCount(loc.BeginWriting()));
-    if (loc.First() == PRUnichar('.'))
+    if (loc.First() == char16_t('.'))
         pushBuffer.AppendLiteral(" class=\"hidden-object\"");
 
     pushBuffer.AppendLiteral(">\n <td sortable-data=\"");

@@ -197,7 +197,7 @@ const EXPIRATION_QUERIES = {
   },
 
   // Finds orphan URIs in the database.
-  // Notice we won't notify single removed URIs on removeAllPages, so we don't
+  // Notice we won't notify single removed URIs on History.clear(), so we don't
   // run this query in such a case, but just delete URIs.
   // This could run in the middle of adding a visit or bookmark to a new page.
   // In such a case since it is async, could end up expiring the orphan page
@@ -721,7 +721,9 @@ nsPlacesExpiration.prototype = {
     }
     return aNewStatus;
   },
-  get status() this._status,
+  get status() {
+    return this._status;
+  },
 
   _isIdleObserver: false,
   _expireOnIdle: false,
@@ -746,7 +748,9 @@ nsPlacesExpiration.prototype = {
       this._expireOnIdle = aExpireOnIdle;
     return this._expireOnIdle;
   },
-  get expireOnIdle() this._expireOnIdle,
+  get expireOnIdle() {
+    return this._expireOnIdle;
+  },
 
   _loadPrefs: function PEX__loadPrefs() {
     // Get the user's limit, if it was set.
@@ -878,7 +882,8 @@ nsPlacesExpiration.prototype = {
    */
   _finalizeInternalStatements: function PEX__finalizeInternalStatements()
   {
-    for each (let stmt in this._cachedStatements) {
+    for (let queryType in this._cachedStatements) {
+      let stmt = this._cachedStatements[queryType];
       stmt.finalize();
     }
   },
@@ -1014,5 +1019,5 @@ nsPlacesExpiration.prototype = {
 ////////////////////////////////////////////////////////////////////////////////
 //// Module Registration
 
-let components = [nsPlacesExpiration];
+var components = [nsPlacesExpiration];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);

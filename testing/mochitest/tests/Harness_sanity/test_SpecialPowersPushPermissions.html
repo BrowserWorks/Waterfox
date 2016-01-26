@@ -17,6 +17,20 @@ const ACCESS_SESSION = SpecialPowers.Ci.nsICookiePermission.ACCESS_SESSION;
 const ACCESS_ALLOW_FIRST_PARTY_ONLY = SpecialPowers.Ci.nsICookiePermission.ACCESS_ALLOW_FIRST_PARTY_ONLY;
 const ACCESS_LIMIT_THIRD_PARTY = SpecialPowers.Ci.nsICookiePermission.ACCESS_LIMIT_THIRD_PARTY;
 
+const EXPIRE_TIME = SpecialPowers.Ci.nsIPermissionManager.EXPIRE_TIME;
+// expire Setting:
+//     start                 expire time point
+//   ----|------------------------|-----------
+//       <------------------------>
+//                 PERIOD
+var start;
+// PR_Now() that called in nsPermissionManager to get the system time
+// is sometimes 100ms~600s more than Date.now() on Android 4.3 API11.
+// Thus, the PERIOD should be larger than 600ms in this test.
+const PERIOD = 900;
+var gScript = SpecialPowers.loadChromeScript(SimpleTest.getTestFileURL('specialPowers_framescript.js'));
+SimpleTest.requestFlakyTimeout("untriaged");
+
 function starttest(){
   SpecialPowers.addPermission("pPROMPT", PROMPT_ACTION, document);
   SpecialPowers.addPermission("pALLOW", ALLOW_ACTION, document);
@@ -136,11 +150,88 @@ function test6() {
     dump('/**** pTHIRDPARTY still set ****/\n');
     setTimeout(test6, 0);
   } else {
-    SimpleTest.finish();
+    test7();
   }
+}
+
+function test7() {
+  afterPermissionChanged('pEXPIRE', 'deleted', test8);
+  afterPermissionChanged('pEXPIRE', 'added', permissionPollingCheck);
+  start = Number(Date.now());
+  SpecialPowers.addPermission('pEXPIRE',
+                              true,
+                              document,
+                              EXPIRE_TIME,
+                              (start + PERIOD + getPlatformInfo().timeCompensation));
+}
+
+function test8() {
+  afterPermissionChanged('pEXPIRE', 'deleted', SimpleTest.finish);
+  afterPermissionChanged('pEXPIRE', 'added', permissionPollingCheck);
+  start = Number(Date.now());
+  SpecialPowers.pushPermissions([
+    { 'type': 'pEXPIRE',
+      'allow': true,
+      'expireType': EXPIRE_TIME,
+      'expireTime': (start + PERIOD + getPlatformInfo().timeCompensation),
+      'context': document
+    }], function() {
+      info("Wait for permission-changed signal!");
+    }
+  );
+}
+
+function afterPermissionChanged(type, op, callback) {
+  // handle the message from specialPowers_framescript.js
+  gScript.addMessageListener('perm-changed', function onChange(msg) {
+    if (msg.type == type && msg.op == op) {
+      gScript.removeMessageListener('perm-changed', onChange);
+      callback();
+    }
+  });
+}
+
+function permissionPollingCheck() {
+  var now = Number(Date.now());
+  if (now < (start + PERIOD)) {
+    if (SpecialPowers.testPermission('pEXPIRE', ALLOW_ACTION, document)) {
+      // To make sure that permission will be expired in next round,
+      // the next permissionPollingCheck calling will be fired 100ms later after
+      // permission is out-of-period.
+      setTimeout(permissionPollingCheck, PERIOD + 100);
+      return;
+    }
+
+    errorHandler('unexpired permission should be allowed!');
+  }
+
+  // The permission is already expired!
+  if (SpecialPowers.testPermission('pEXPIRE', ALLOW_ACTION, document)) {
+    errorHandler('expired permission should be removed!');
+  }
+}
+
+function getPlatformInfo() {
+  var version = SpecialPowers.Services.sysinfo.getProperty('version');
+  version = parseFloat(version);
+
+  // PR_Now() that called in nsPermissionManager to get the system time and
+  // Date.now() are out of sync on win32 platform(XP/win7). The PR_Now() is
+  // 15~20ms less than Date.now(). Unfortunately, this time skew can't be
+  // avoided, so it needs to add a time buffer to compensate.
+  // Version 5.1 is win XP, 6.1 is win7
+  if (navigator.platform.startsWith('Win32') && (version <= 6.1)) {
+    return { platform: "Win32", timeCompensation: -100 };
+  }
+
+  return { platform: "NoMatter", timeCompensation: 0 };
+}
+
+function errorHandler(msg) {
+  ok(false, msg);
+  SimpleTest.finish();
 }
 </script>
 </pre>
 </body>
 </html>
-

@@ -21,7 +21,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=934368
 <pre id="test">
 <script class="testbody" type="application/javascript;version=1.7">
 
-devicestorage_setup();
+devicestorage_setup(function () {
 
 let gStorage = null;
 let gTestCount = 0;
@@ -88,58 +88,12 @@ let gTestCases = [
   }
 ];
 
-function createTestFiles(storage, callback) {
-  function createTestFile(path) {
-    return new Promise(function(resolve, reject) {
-      function addNamed() {
-        var req = storage.addNamed(createRandomBlob("image/png"), path);
-
-        req.onsuccess = function() {
-          ok(true, path + " was created.");
-          resolve();
-        };
-
-        req.onerror = function(e) {
-          ok(false, "Failed to create " + path + ': ' + e.target.error.name);
-          reject();
-        };
-      }
-
-      // Bug 980136. Check if the file exists before we create.
-      var req = storage.get(path);
-
-      req.onsuccess = function() {
-        ok(true, path + " exists. Do not need to create.");
-        resolve();
-      };
-
-      req.onerror = function(e) {
-        ok(true, path + " does not exists: " + e.target.error.name);
-        addNamed();
-      };
-    });
-  }
-
-  let arr = [];
-
-  ["sub1/sub2/a.png", "sub/b.png"].forEach(function(path) {
-    arr.push(createTestFile(path));
-  });
-
-  Promise.all(arr).then(function() {
-    callback();
-  }, function() {
-    ok(false, "Failed to created test files.");
-    devicestorage_cleanup();
-  });
-}
-
-function runTest() {
+function runNextTests() {
   gTestCount = 0;
-  createTestFiles(gStorage, function() {
+  function runTests() {
     function cbError(e) {
       ok(false, "Should not arrive at cbError! Error: " + e.name);
-      devicestorage_cleanup();
+      SimpleTest.finish();
     }
 
     function cbSuccess(r) {
@@ -162,9 +116,15 @@ function runTest() {
         testNextRemove();
       }, function() {
         ok(false, "Failed to get test files.");
-        devicestorage_cleanup();
+        SimpleTest.finish();
       });
     }, cbError);
+  };
+  createTestFiles(gStorage, ["sub1/sub2/a.png", "sub/b.png"]).then(function() {
+    runTests();
+  }, function() {
+    ok(false, "Failed to created test files.");
+    SimpleTest.finish();
   });
 }
 
@@ -192,24 +152,25 @@ function testNextRemove() {
   if (gRemoveDeep) {
     // Test "remove" after "removeDeep".
     gRemoveDeep = false;
-    runTest();
+    runNextTests();
     return;
   }
 
-  devicestorage_cleanup();
+  SimpleTest.finish();
 }
 
 ok(navigator.getDeviceStorage, "Should have getDeviceStorage.");
 
-let gStorage = navigator.getDeviceStorage("pictures");
+gStorage = navigator.getDeviceStorage("pictures");
 ok(gStorage, "Should have gotten a storage.");
 
 // Test "removeDeep" first.
 gRemoveDeep = true;
-runTest();
+runNextTests();
+
+});
 
 </script>
 </pre>
 </body>
 </html>
-

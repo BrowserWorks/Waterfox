@@ -26,9 +26,9 @@ public:
   void Shutdown();
 
 protected:
-  virtual bool RecvSetTimer(const uint32_t& aTimerId,
-                            const uint32_t& aTimeoutMs) override;
-  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
+  bool RecvSetTimer(const uint32_t& aTimerId,
+                    const uint32_t& aTimeoutMs) override;
+  void ActorDestroy(ActorDestroyReason aWhy) override;
 
 private:
   ~GMPTimerParent() {}
@@ -43,12 +43,9 @@ private:
       MOZ_COUNT_DTOR(Context);
     }
     nsCOMPtr<nsITimer> mTimer;
-    nsRefPtr<GMPTimerParent> mParent; // Note: live timers keep the GMPTimerParent alive.
+    RefPtr<GMPTimerParent> mParent; // Note: live timers keep the GMPTimerParent alive.
     uint32_t mId;
   };
-
-  static PLDHashOperator
-  CancelTimers(nsPtrHashKey<Context>* aContext, void* aClosure);
 
   void TimerExpired(Context* aContext);
 

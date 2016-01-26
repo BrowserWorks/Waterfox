@@ -21,7 +21,7 @@
 
 #include "nsXPCOMStrings.h"
 #include "nsISupportsImpl.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 
 /**
@@ -1218,7 +1218,7 @@ public:
     NS_UTF16ToCString(aStr, NS_CSTRING_ENCODING_UTF8, *this);
   }
 
-  explicit NS_ConvertUTF16toUTF8(const char16_t* aData,
+  explicit NS_ConvertUTF16toUTF8(const char16ptr_t aData,
                                  uint32_t aLength = UINT32_MAX)
   {
     NS_UTF16ToCString(nsDependentString(aData, aLength),
@@ -1239,7 +1239,7 @@ public:
     NS_UTF16ToCString(aStr, NS_CSTRING_ENCODING_ASCII, *this);
   }
 
-  explicit NS_LossyConvertUTF16toASCII(const char16_t* aData,
+  explicit NS_LossyConvertUTF16toASCII(const char16ptr_t aData,
                                        uint32_t aLength = UINT32_MAX)
   {
     NS_UTF16ToCString(nsDependentString(aData, aLength),

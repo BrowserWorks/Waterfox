@@ -5,22 +5,108 @@ fails == grid-whitespace-handling-1b.xhtml grid-whitespace-handling-1-ref.xhtml
 == grid-whitespace-handling-2.xhtml  grid-whitespace-handling-2-ref.xhtml
 == grid-placement-definite-001.html grid-placement-definite-001-ref.html
 == grid-placement-definite-002.html grid-placement-definite-002-ref.html
+== grid-placement-definite-003.html grid-placement-definite-003-ref.html
+== grid-placement-negative-lines-001.html grid-placement-negative-lines-001-ref.html
 == grid-placement-auto-row-sparse-001.html grid-placement-auto-row-sparse-001-ref.html
 == grid-placement-auto-row-dense-001.html grid-placement-auto-row-dense-001-ref.html
 == grid-placement-auto-col-sparse-001.html grid-placement-auto-col-sparse-001-ref.html
 == grid-placement-auto-col-dense-001.html grid-placement-auto-col-dense-001-ref.html
+== grid-placement-implicit-named-areas-001.html grid-placement-implicit-named-areas-001-ref.html
+== grid-placement-named-lines-001.html grid-placement-named-lines-001-ref.html
+== grid-placement-named-lines-002.html grid-placement-named-lines-002-ref.html
+== grid-placement-named-lines-003.html grid-placement-named-lines-003-ref.html
 == grid-track-sizing-001.html grid-track-sizing-001-ref.html
+== grid-track-sizing-002.html grid-track-sizing-002-ref.html
 == grid-abspos-items-001.html grid-abspos-items-001-ref.html
 == grid-abspos-items-002.html grid-abspos-items-002-ref.html
+== grid-abspos-items-003.html grid-abspos-items-003-ref.html
+== grid-abspos-items-004.html grid-abspos-items-004-ref.html
+== grid-abspos-items-005.html grid-abspos-items-005-ref.html
+== grid-abspos-items-006.html grid-abspos-items-006-ref.html
+== grid-abspos-items-007.html grid-abspos-items-007-ref.html
+== grid-abspos-items-008.html grid-abspos-items-008-ref.html
+== grid-abspos-items-009.html grid-abspos-items-009-ref.html
+== grid-abspos-items-010.html grid-abspos-items-010-ref.html
+== grid-abspos-items-011.html grid-abspos-items-011-ref.html
+== grid-abspos-items-012.html grid-abspos-items-012-ref.html
+== grid-abspos-items-013.html grid-abspos-items-013-ref.html
+== grid-abspos-items-014.html grid-abspos-items-014-ref.html
+== grid-abspos-items-015.html grid-abspos-items-015-ref.html
 == grid-order-abspos-items-001.html grid-order-abspos-items-001-ref.html
 == grid-order-placement-auto-001.html grid-order-placement-auto-001-ref.html
 == grid-order-placement-definite-001.html grid-order-placement-definite-001-ref.html
 skip-if(Android) == grid-placement-definite-implicit-001.html grid-placement-definite-implicit-001-ref.html
 == grid-placement-definite-implicit-002.html grid-placement-definite-implicit-002-ref.html
-skip-if(Android) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html
+skip-if(Android) fuzzy-if(winWidget,1,32) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html
 == grid-placement-abspos-implicit-001.html grid-placement-abspos-implicit-001-ref.html
 pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-definite-001.html rtl-grid-placement-definite-001-ref.html
 pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-auto-row-sparse-001.html rtl-grid-placement-auto-row-sparse-001-ref.html
 pref(layout.css.vertical-text.enabled,true) == vlr-grid-placement-auto-row-sparse-001.html vlr-grid-placement-auto-row-sparse-001-ref.html
 pref(layout.css.vertical-text.enabled,true) == vrl-grid-placement-auto-row-sparse-001.html vrl-grid-placement-auto-row-sparse-001-ref.html
 == grid-relpos-items-001.html grid-relpos-items-001-ref.html
+== grid-item-sizing-percent-001.html grid-item-sizing-percent-001-ref.html
+== grid-item-sizing-px-001.html grid-item-sizing-percent-001-ref.html
+== grid-item-dir-001.html grid-item-dir-001-ref.html
+fuzzy-if(winWidget,70,130) fuzzy-if(cocoaWidget,85,180) == grid-col-max-sizing-max-content-001.html grid-col-max-sizing-max-content-001-ref.html
+fuzzy-if(winWidget,70,130) fuzzy-if(cocoaWidget,85,180) == grid-col-max-sizing-max-content-002.html grid-col-max-sizing-max-content-002-ref.html
+== grid-min-max-content-sizing-001.html grid-min-max-content-sizing-001-ref.html
+== grid-min-max-content-sizing-002.html grid-min-max-content-sizing-002-ref.html
+fuzzy-if(winWidget,1,36) == grid-auto-min-sizing-definite-001.html grid-auto-min-sizing-definite-001-ref.html
+== grid-auto-min-sizing-intrinsic-001.html grid-auto-min-sizing-intrinsic-001-ref.html
+== grid-auto-min-sizing-intrinsic-002.html grid-auto-min-sizing-intrinsic-002-ref.html
+== grid-auto-min-sizing-intrinsic-003.html grid-auto-min-sizing-intrinsic-003-ref.html
+== grid-auto-min-sizing-intrinsic-004.html grid-auto-min-sizing-intrinsic-004-ref.html
+== grid-auto-min-sizing-percent-001.html grid-auto-min-sizing-percent-001-ref.html
+== grid-track-intrinsic-sizing-001.html grid-track-intrinsic-sizing-001-ref.html
+== grid-track-intrinsic-sizing-002.html grid-track-intrinsic-sizing-002-ref.html
+== grid-track-intrinsic-sizing-003.html grid-track-intrinsic-sizing-003-ref.html
+== grid-track-intrinsic-sizing-004.html grid-track-intrinsic-sizing-004-ref.html
+== grid-max-sizing-flex-001.html grid-max-sizing-flex-001-ref.html
+== grid-max-sizing-flex-002.html grid-max-sizing-flex-002-ref.html
+== grid-max-sizing-flex-003.html grid-max-sizing-flex-003-ref.html
+== grid-max-sizing-flex-004.html grid-max-sizing-flex-004-ref.html
+== grid-max-sizing-flex-005.html grid-max-sizing-flex-005-ref.html
+== grid-max-sizing-flex-006.html grid-max-sizing-flex-006-ref.html
+== grid-flex-min-sizing-001.html grid-flex-min-sizing-001-ref.html
+== grid-flex-min-sizing-002.html grid-flex-min-sizing-002-ref.html
+== grid-item-align-001.html grid-item-align-001-ref.html
+== grid-item-align-002.html grid-item-align-002-ref.html
+== grid-item-align-003.html grid-item-align-003-ref.html
+== grid-item-justify-001.html grid-item-justify-001-ref.html
+== grid-item-justify-002.html grid-item-justify-002-ref.html
+== grid-item-stretch-001.html grid-item-stretch-001-ref.html
+== grid-align-content-001.html grid-align-content-001-ref.html
+== grid-justify-content-001.html grid-justify-content-001-ref.html
+== grid-justify-content-002.html grid-justify-content-002-ref.html
+== grid-justify-content-003.html grid-justify-content-003-ref.html
+== grid-column-gap-001.html grid-column-gap-001-ref.html
+== grid-column-gap-002.html grid-column-gap-002-ref.html
+== grid-column-gap-003.html grid-column-gap-003-ref.html
+== grid-row-gap-001.html grid-row-gap-001-ref.html
+== grid-row-gap-002.html grid-row-gap-002-ref.html
+== grid-row-gap-003.html grid-row-gap-003-ref.html
+== grid-row-gap-004.html grid-row-gap-004-ref.html
+== grid-container-overflow-001.html grid-container-overflow-001-ref.html
+== grid-item-margin-left-auto-001.html grid-item-margin-left-auto-001-ref.html
+== grid-item-margin-left-auto-002.html grid-item-margin-left-auto-002-ref.html
+== grid-item-margin-left-auto-003.html grid-item-margin-left-auto-003-ref.html
+== grid-item-margin-left-auto-004.html grid-item-margin-left-auto-004-ref.html
+== grid-item-margin-left-right-auto-001.html grid-item-margin-left-right-auto-001-ref.html
+== grid-item-margin-left-right-auto-002.html grid-item-margin-left-right-auto-002-ref.html
+== grid-item-margin-left-right-auto-003.html grid-item-margin-left-right-auto-003-ref.html
+== grid-item-margin-left-right-auto-004.html grid-item-margin-left-right-auto-004-ref.html
+== grid-item-margin-right-auto-001.html grid-item-margin-right-auto-001-ref.html
+== grid-item-margin-right-auto-002.html grid-item-margin-right-auto-002-ref.html
+== grid-item-margin-right-auto-003.html grid-item-margin-right-auto-003-ref.html
+== grid-item-margin-right-auto-004.html grid-item-margin-right-auto-004-ref.html
+== grid-container-min-max-width-height-001.html grid-container-min-max-width-height-001-ref.html
+== grid-clamping-001.html grid-clamping-001-ref.html
+== grid-clamping-002.html grid-clamping-002-ref.html
+== grid-repeat-auto-fill-fit-001.html grid-repeat-auto-fill-fit-001-ref.html
+== grid-repeat-auto-fill-fit-002.html grid-repeat-auto-fill-fit-002-ref.html
+== grid-repeat-auto-fill-fit-003.html grid-repeat-auto-fill-fit-003-ref.html
+== grid-repeat-auto-fill-fit-004.html grid-repeat-auto-fill-fit-004-ref.html
+== grid-repeat-auto-fill-fit-005.html grid-repeat-auto-fill-fit-005-ref.html
+== grid-repeat-auto-fill-fit-006.html grid-repeat-auto-fill-fit-006-ref.html
+== grid-repeat-auto-fill-fit-007.html grid-repeat-auto-fill-fit-007-ref.html
+== grid-repeat-auto-fill-fit-008.html grid-repeat-auto-fill-fit-008-ref.html

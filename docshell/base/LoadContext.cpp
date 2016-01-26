@@ -5,8 +5,36 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Assertions.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/LoadContext.h"
+#include "mozilla/dom/ScriptSettings.h" // for AutoJSAPI
+#include "nsContentUtils.h"
+#include "xpcpublic.h"
 
+bool
+nsILoadContext::GetOriginAttributes(mozilla::DocShellOriginAttributes& aAttrs)
+{
+  mozilla::dom::AutoJSAPI jsapi;
+  bool ok = jsapi.Init(xpc::PrivilegedJunkScope());
+  NS_ENSURE_TRUE(ok, false);
+  JS::Rooted<JS::Value> v(jsapi.cx());
+  nsresult rv = GetOriginAttributes(&v);
+  NS_ENSURE_SUCCESS(rv, false);
+  NS_ENSURE_TRUE(v.isObject(), false);
+  JS::Rooted<JSObject*> obj(jsapi.cx(), &v.toObject());
+
+  // If we're JS-implemented, the object will be left in a different (System-Principaled)
+  // scope, so we may need to enter its compartment.
+  MOZ_ASSERT(nsContentUtils::IsSystemPrincipal(nsContentUtils::ObjectPrincipal(obj)));
+  JSAutoCompartment ac(jsapi.cx(), obj);
+
+  mozilla::DocShellOriginAttributes attrs;
+  ok = attrs.Init(jsapi.cx(), v);
+  NS_ENSURE_TRUE(ok, false);
+  aAttrs = attrs;
+  return true;
+}
+  
 namespace mozilla {
 
 NS_IMPL_ISUPPORTS(LoadContext, nsILoadContext, nsIInterfaceRequestor)
@@ -22,9 +50,8 @@ LoadContext::LoadContext(nsIPrincipal* aPrincipal,
   , mIsNotNull(true)
 #endif
 {
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aPrincipal->GetAppId(&mAppId)));
-  MOZ_ALWAYS_TRUE(
-    NS_SUCCEEDED(aPrincipal->GetIsInBrowserElement(&mIsInBrowserElement)));
+  PrincipalOriginAttributes poa = BasePrincipal::Cast(aPrincipal)->OriginAttributesRef();
+  mOriginAttributes.InheritFromDocToChildDocShell(poa);
 
   if (!aOptionalBase) {
     return;
@@ -151,7 +178,7 @@ LoadContext::GetIsInBrowserElement(bool* aIsInBrowserElement)
 
   NS_ENSURE_ARG_POINTER(aIsInBrowserElement);
 
-  *aIsInBrowserElement = mIsInBrowserElement;
+  *aIsInBrowserElement = mOriginAttributes.mInBrowser;
   return NS_OK;
 }
 
@@ -162,7 +189,18 @@ LoadContext::GetAppId(uint32_t* aAppId)
 
   NS_ENSURE_ARG_POINTER(aAppId);
 
-  *aAppId = mAppId;
+  *aAppId = mOriginAttributes.mAppId;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadContext::GetOriginAttributes(JS::MutableHandleValue aAttrs)
+{
+  JSContext* cx = nsContentUtils::GetCurrentJSContext();
+  MOZ_ASSERT(cx);
+
+  bool ok = ToJSValue(cx, mOriginAttributes, aAttrs);
+  NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
   return NS_OK;
 }
 

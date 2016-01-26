@@ -5,8 +5,18 @@
 #aboutDialogContainer {
   background-image: url("chrome://branding/content/about-background.png");
   background-repeat: no-repeat;
-  background-color: #000;
+  background-color: rgb(10,17,37);
   color: #fff;
+}
+
+/* Use inverted spinner icon on the dark background */
+.update-throbber {
+  list-style-image: url("chrome://global/skin/icons/loading-inverted.png");
+}
+@media (min-resolution: 1.1dppx) {
+  .update-throbber {
+    list-style-image: url("chrome://global/skin/icons/loading-inverted@2x.png");
+  }
 }
 
 .text-link {

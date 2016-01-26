@@ -26,6 +26,7 @@
 #include "nsContentUtils.h"
 #include "nsUTF8Utils.h"
 #include "mozilla/TextEvents.h"
+#include "mozilla/dom/Event.h"
 
 using namespace mozilla;
 
@@ -165,7 +166,7 @@ nsMenuBarFrame::FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent)
 
   nsAutoTArray<uint32_t, 10> accessKeys;
   WidgetKeyboardEvent* nativeKeyEvent =
-    aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
+    aKeyEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent();
   if (nativeKeyEvent)
     nsContentUtils::GetAccessKeyCandidates(nativeKeyEvent, accessKeys);
   if (accessKeys.IsEmpty() && charCode)
@@ -190,7 +191,7 @@ nsMenuBarFrame::FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent)
     nsIContent* current = currFrame->GetContent();
 
     // See if it's a menu item.
-    if (nsXULPopupManager::IsValidMenuItem(PresContext(), current, false)) {
+    if (nsXULPopupManager::IsValidMenuItem(current, false)) {
       // Get the shortcut attribute.
       nsAutoString shortcutKey;
       current->GetAttr(kNameSpaceID_None, nsGkAtoms::accesskey, shortcutKey);
@@ -317,7 +318,8 @@ private:
 
 NS_IMETHODIMP
 nsMenuBarFrame::ChangeMenuItem(nsMenuFrame* aMenuItem,
-                               bool aSelectFirstItem)
+                               bool aSelectFirstItem,
+                               bool aFromKey)
 {
   if (mCurrentMenu == aMenuItem)
     return NS_OK;
@@ -418,6 +420,7 @@ nsMenuBarFrame::DestroyFrom(nsIFrame* aDestructRoot)
   mTarget->RemoveEventListener(NS_LITERAL_STRING("mousedown"), mMenuBarListener, false);
   mTarget->RemoveEventListener(NS_LITERAL_STRING("blur"), mMenuBarListener, true);
 
+  mMenuBarListener->OnDestroyMenuBarFrame();
   mMenuBarListener = nullptr;
 
   nsBoxFrame::DestroyFrom(aDestructRoot);

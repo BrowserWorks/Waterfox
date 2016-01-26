@@ -3,9 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+/*globals LoadContextInfo, FormHistory, Accounts */
+
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -15,6 +17,10 @@ Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Downloads.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
+Cu.import("resource://gre/modules/Accounts.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "DownloadIntegration",
+                                  "resource://gre/modules/DownloadIntegration.jsm");
 
 function dump(a) {
   Services.console.logStringMessage(a);
@@ -197,6 +203,7 @@ Sanitizer.prototype = {
       clear: Task.async(function* () {
         let list = yield Downloads.getList(Downloads.ALL);
         let downloads = yield list.getAll();
+        var finalizePromises = [];
 
         // Logic copied from DownloadList.removeFinished. Ideally, we would
         // just use that method directly, but we want to be able to remove the
@@ -213,16 +220,19 @@ Sanitizer.prototype = {
             // This works even if the download state has changed meanwhile.  We
             // don't need to wait for the procedure to be complete before
             // processing the other downloads in the list.
-            download.finalize(true).then(null, Cu.reportError);
+            finalizePromises.push(download.finalize(true).then(() => null, Cu.reportError));
 
             // Delete the downloaded files themselves.
-            OS.File.remove(download.target.path).then(null, ex => {
+            OS.File.remove(download.target.path).then(() => null, ex => {
               if (!(ex instanceof OS.File.Error && ex.becauseNoSuchFile)) {
                 Cu.reportError(ex);
               }
             });
           }
         }
+
+        yield Promise.all(finalizePromises);
+        yield DownloadIntegration.forceSave();
       }),
 
       get canClear()
@@ -266,7 +276,25 @@ Sanitizer.prototype = {
       {
         return true;
       }
+    },
+
+    syncedTabs: {
+      clear: function ()
+      {
+        return Messaging.sendRequestForResult({ type: "Sanitize:ClearSyncedTabs" })
+          .catch(e => Cu.reportError("Java-side synced tabs clearing failed: " + e));
+      },
+
+      canClear: function(aCallback)
+      {
+        Accounts.anySyncAccountsExist().then(aCallback)
+          .catch(function(err) {
+            Cu.reportError("Java-side synced tabs clearing failed: " + err)
+            aCallback(false);
+          });
+      }
     }
+
   }
 };
 

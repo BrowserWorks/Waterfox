@@ -87,7 +87,7 @@ nsLookAndFeel::NativeGetColor(ColorID aID, nscolor &aColor)
     nsresult rv = NS_OK;
 
     if (!mInitializedSystemColors) {
-        if (XRE_GetProcessType() == GeckoProcessType_Default)
+        if (XRE_IsParentProcess())
             rv = GetSystemColors();
         else
             rv = CallRemoteGetSystemColors();
@@ -415,6 +415,11 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
         case eIntID_ScrollbarButtonAutoRepeatBehavior:
             aResult = 0;
             break;
+        
+        case eIntID_ContextMenuOffsetVertical:
+        case eIntID_ContextMenuOffsetHorizontal:
+            aResult = 2;
+            break;
 
         default:
             aResult = 0;
@@ -469,7 +474,7 @@ bool
 nsLookAndFeel::GetEchoPasswordImpl()
 {
     if (!mInitializedShowPassword) {
-        if (XRE_GetProcessType() == GeckoProcessType_Default) {
+        if (XRE_IsParentProcess()) {
             mShowPassword = widget::GeckoAppShell::GetShowPasswordSetting();
         } else {
             ContentChild::GetSingleton()->SendGetShowPasswordSetting(&mShowPassword);

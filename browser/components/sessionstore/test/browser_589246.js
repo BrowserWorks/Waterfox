@@ -5,21 +5,21 @@
 // Mirrors WINDOW_ATTRIBUTES IN nsSessionStore.js
 const WINDOW_ATTRIBUTES = ["width", "height", "screenX", "screenY", "sizemode"];
 
-let stateBackup = ss.getBrowserState();
+var stateBackup = ss.getBrowserState();
 
-let originalWarnOnClose = gPrefService.getBoolPref("browser.tabs.warnOnClose");
-let originalStartupPage = gPrefService.getIntPref("browser.startup.page");
-let originalWindowType = document.documentElement.getAttribute("windowtype");
+var originalWarnOnClose = gPrefService.getBoolPref("browser.tabs.warnOnClose");
+var originalStartupPage = gPrefService.getIntPref("browser.startup.page");
+var originalWindowType = document.documentElement.getAttribute("windowtype");
 
-let gotLastWindowClosedTopic = false;
-let shouldPinTab = false;
-let shouldOpenTabs = false;
-let shouldCloseTab = false;
-let testNum = 0;
-let afterTestCallback;
+var gotLastWindowClosedTopic = false;
+var shouldPinTab = false;
+var shouldOpenTabs = false;
+var shouldCloseTab = false;
+var testNum = 0;
+var afterTestCallback;
 
 // Set state so we know the closed windows content
-let testState = {
+var testState = {
   windows: [
     { tabs: [{ entries: [{ url: "http://example.org" }] }] }
   ],
@@ -29,7 +29,7 @@ let testState = {
 // We'll push a set of conditions and callbacks into this array
 // Ideally we would also test win/linux under a complete set of conditions, but
 // the tests for osx mirror the other set of conditions possible on win/linux.
-let tests = [];
+var tests = [];
 
 // the third & fourth test share a condition check, keep it DRY
 function checkOSX34Generator(num) {
@@ -40,7 +40,7 @@ function checkOSX34Generator(num) {
     expectedState[0].tabs.shift();
     // size attributes are stripped out in _prepDataForDeferredRestore in nsSessionStore.
     // This isn't the best approach, but neither is comparing JSON strings
-    WINDOW_ATTRIBUTES.forEach(function (attr) delete expectedState[0][attr]);
+    WINDOW_ATTRIBUTES.forEach(attr => delete expectedState[0][attr]);
 
     is(aCurState, JSON.stringify(expectedState),
        "test #" + num + ": closedWindowState is as expected");
@@ -234,8 +234,9 @@ function onWindowUnloaded() {
 
 function afterTestCleanup(aNewWin) {
   executeSoon(function() {
-    aNewWin.close();
-    document.documentElement.setAttribute("windowtype", originalWindowType);
-    runNextTestOrFinish();
+    BrowserTestUtils.closeWindow(aNewWin).then(() => {
+      document.documentElement.setAttribute("windowtype", originalWindowType);
+      runNextTestOrFinish();
+    });
   });
 }

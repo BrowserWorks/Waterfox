@@ -15,11 +15,15 @@
 
 #include "nsTHashtable.h"
 #include "nsDataHashtable.h"
+#include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 
 class nsIDOMWindow;
 
 namespace mozilla {
+
+class OriginAttributesPattern;
+
 namespace dom {
 
 const DOMStorage::StorageType SessionStorage = DOMStorage::SessionStorage;
@@ -37,9 +41,11 @@ public:
   // Reads the preference for DOM storage quota
   static uint32_t GetQuota();
   // Gets (but not ensures) cache for the given scope
-  DOMStorageCache* GetCache(const nsACString& aScope) const;
+  DOMStorageCache* GetCache(const nsACString& aOriginSuffix, const nsACString& aOriginNoSuffix);
   // Returns object keeping usage cache for the scope.
-  already_AddRefed<DOMStorageUsage> GetScopeUsage(const nsACString& aScope);
+  already_AddRefed<DOMStorageUsage> GetOriginUsage(const nsACString& aOriginNoSuffix);
+
+  static nsCString CreateOrigin(const nsACString& aOriginSuffix, const nsACString& aOriginNoSuffix);
 
 protected:
   explicit DOMStorageManager(DOMStorage::StorageType aType);
@@ -47,7 +53,9 @@ protected:
 
 private:
   // DOMStorageObserverSink, handler to various chrome clearing notification
-  virtual nsresult Observe(const char* aTopic, const nsACString& aScopePrefix) override;
+  virtual nsresult Observe(const char* aTopic,
+                           const nsAString& aOriginAttributesPattern,
+                           const nsACString& aOriginScope) override;
 
   // Since nsTHashtable doesn't like multiple inheritance, we have to aggregate
   // DOMStorageCache into the entry.
@@ -73,12 +81,13 @@ private:
     // weak ref only since cache references its manager.
     DOMStorageCache* mCache;
     // hard ref when this is sessionStorage to keep it alive forever.
-    nsRefPtr<DOMStorageCache> mCacheRef;
+    RefPtr<DOMStorageCache> mCacheRef;
   };
 
   // Ensures cache for a scope, when it doesn't exist it is created and initalized,
   // this also starts preload of persistent data.
-  already_AddRefed<DOMStorageCache> PutCache(const nsACString& aScope,
+  already_AddRefed<DOMStorageCache> PutCache(const nsACString& aOriginSuffix,
+                                             const nsACString& aOriginNoSuffix,
                                              nsIPrincipal* aPrincipal);
 
   // Helper for creation of DOM storage objects
@@ -89,8 +98,10 @@ private:
                               bool aPrivate,
                               nsIDOMStorage** aRetval);
 
-  // Scope->cache map
-  nsTHashtable<DOMStorageCacheHashKey> mCaches;
+  // Suffix->origin->cache map
+  typedef nsTHashtable<DOMStorageCacheHashKey> CacheOriginHashtable;
+  nsClassHashtable<nsCStringHashKey, CacheOriginHashtable> mCaches;
+
   const DOMStorage::StorageType mType;
 
   // If mLowDiskSpace is true it indicates a low device storage situation and
@@ -99,12 +110,13 @@ private:
   bool mLowDiskSpace;
   bool IsLowDiskSpace() const { return mLowDiskSpace; };
 
-  static PLDHashOperator ClearCacheEnumerator(DOMStorageCacheHashKey* aCache,
-                                              void* aClosure);
+  void ClearCaches(uint32_t aUnloadFlags,
+                   const OriginAttributesPattern& aPattern,
+                   const nsACString& aKeyPrefix);
 
 protected:
   // Keeps usage cache objects for eTLD+1 scopes we have touched.
-  nsDataHashtable<nsCStringHashKey, nsRefPtr<DOMStorageUsage> > mUsages;
+  nsDataHashtable<nsCStringHashKey, RefPtr<DOMStorageUsage> > mUsages;
 
   friend class DOMStorageCache;
   // Releases cache since it is no longer referrered by any DOMStorage object.
@@ -126,6 +138,9 @@ public:
   // Global getter of localStorage manager service
   static DOMLocalStorageManager* Self() { return sSelf; }
 
+  // Like Self, but creates an instance if we're not yet initialized.
+  static DOMLocalStorageManager* Ensure();
+
 private:
   static DOMLocalStorageManager* sSelf;
 };
@@ -136,7 +151,7 @@ public:
   DOMSessionStorageManager();
 };
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla
 
 #endif /* nsDOMStorageManager_h__ */

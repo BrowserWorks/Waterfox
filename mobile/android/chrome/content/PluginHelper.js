@@ -28,16 +28,6 @@ var PluginHelper = {
                                                        [uri.host], 1);
     let buttons = [
       {
-        label: Strings.browser.GetStringFromName("clickToPlayPlugins.activate"),
-        callback: function(aChecked) {
-          // If the user checked "Don't ask again", make a permanent exception
-          if (aChecked)
-            Services.perms.add(uri, "plugins", Ci.nsIPermissionManager.ALLOW_ACTION);
-
-          PluginHelper.playAllPlugins(aTab.browser.contentWindow);
-        }
-      },
-      {
         label: Strings.browser.GetStringFromName("clickToPlayPlugins.dontActivate"),
         callback: function(aChecked) {
           // If the user checked "Don't ask again", make a permanent exception
@@ -46,6 +36,17 @@ var PluginHelper = {
 
           // Other than that, do nothing
         }
+      },
+      {
+        label: Strings.browser.GetStringFromName("clickToPlayPlugins.activate"),
+        callback: function(aChecked) {
+          // If the user checked "Don't ask again", make a permanent exception
+          if (aChecked)
+            Services.perms.add(uri, "plugins", Ci.nsIPermissionManager.ALLOW_ACTION);
+
+          PluginHelper.playAllPlugins(aTab.browser.contentWindow);
+        },
+        positive: true
       }
     ];
 
@@ -84,17 +85,6 @@ var PluginHelper = {
     let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
     if (!objLoadingContent.activated)
       objLoadingContent.playPlugin();
-  },
-
-  stopPlayPreview: function(plugin, playPlugin) {
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    if (objLoadingContent.activated)
-      return;
-
-    if (playPlugin)
-      objLoadingContent.playPlugin();
-    else
-      objLoadingContent.cancelPlayPreview();
   },
 
   getPluginPreference: function getPluginPreference() {
@@ -211,54 +201,6 @@ var PluginHelper = {
         break;
       }
 
-      case "PluginPlayPreview": {
-        let previewContent = doc.getAnonymousElementByAttribute(plugin, "class", "previewPluginContent");
-        let pluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-        let mimeType = PluginHelper.getPluginMimeType(plugin);
-        let playPreviewInfo = pluginHost.getPlayPreviewInfo(mimeType);
-
-        if (!playPreviewInfo.ignoreCTP) {
-          // Check if plugins have already been activated for this page, or if
-          // the user has set a permission to always play plugins on the site
-          if (aTab.clickToPlayPluginsActivated ||
-              Services.perms.testPermission(aTab.browser.currentURI, "plugins") ==
-              Services.perms.ALLOW_ACTION) {
-            PluginHelper.playPlugin(plugin);
-            return;
-          }
-
-          // Always show door hanger for play preview plugins
-          PluginHelper.delayAndShowDoorHanger(aTab);
-        }
-
-        let iframe = previewContent.getElementsByClassName("previewPluginContentFrame")[0];
-        if (!iframe) {
-          // lazy initialization of the iframe
-          iframe = doc.createElementNS("http://www.w3.org/1999/xhtml", "iframe");
-          iframe.className = "previewPluginContentFrame";
-          previewContent.appendChild(iframe);
-        }
-        iframe.src = playPreviewInfo.redirectURL;
-
-        // MozPlayPlugin event can be dispatched from the extension chrome
-        // code to replace the preview content with the native plugin
-        previewContent.addEventListener("MozPlayPlugin", function playPluginHandler(e) {
-          if (!e.isTrusted)
-            return;
-
-          previewContent.removeEventListener("MozPlayPlugin", playPluginHandler, true);
-
-          let playPlugin = !aEvent.detail;
-          PluginHelper.stopPlayPreview(plugin, playPlugin);
-
-          // cleaning up: removes overlay iframe from the DOM
-          let iframe = previewContent.getElementsByClassName("previewPluginContentFrame")[0];
-          if (iframe)
-            previewContent.removeChild(iframe);
-        }, true);
-        break;
-      }
-
       case "PluginNotFound": {
         // On devices where we don't support Flash, there will be a
         // "Learn More..." link in the missing plugin error message.
@@ -282,8 +224,6 @@ var PluginHelper = {
         return "PluginNotFound";
       case Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY:
         return "PluginClickToPlay";
-      case Ci.nsIObjectLoadingContent.PLUGIN_PLAY_PREVIEW:
-        return "PluginPlayPreview";
       default:
         // Not all states map to a handler
         return null;

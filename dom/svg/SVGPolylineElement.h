@@ -26,14 +26,14 @@ protected:
                                               already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));
 
   // nsSVGPathGeometryElement methods:
-  virtual mozilla::TemporaryRef<Path> BuildPath(PathBuilder* aBuilder) override;
+  virtual already_AddRefed<Path> BuildPath(PathBuilder* aBuilder) override;
 
 public:
   // nsIContent interface
   virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 };
 
-} // namespace mozilla
 } // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_SVGPolylineElement_h

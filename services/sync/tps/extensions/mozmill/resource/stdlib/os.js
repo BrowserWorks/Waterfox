@@ -4,9 +4,9 @@
 
 var EXPORTED_SYMBOLS = ['listDirectory', 'getFileForPath', 'abspath', 'getPlatform'];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -37,7 +37,7 @@ function abspath(rel, file) {
     file = file.parent;
   }
 
-  for each(var p in relSplit) {
+  for (var p of relSplit) {
     if (p == '..') {
       file = file.parent;
     } else if (p == '.') {

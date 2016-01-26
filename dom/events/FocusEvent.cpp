@@ -17,7 +17,7 @@ FocusEvent::FocusEvent(EventTarget* aOwner,
                        nsPresContext* aPresContext,
                        InternalFocusEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent : new InternalFocusEvent(false, NS_FOCUS_CONTENT))
+            aEvent ? aEvent : new InternalFocusEvent(false, eFocus))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -27,7 +27,6 @@ FocusEvent::FocusEvent(EventTarget* aOwner,
   }
 }
 
-/* readonly attribute nsIDOMEventTarget relatedTarget; */
 NS_IMETHODIMP
 FocusEvent::GetRelatedTarget(nsIDOMEventTarget** aRelatedTarget)
 {
@@ -64,7 +63,7 @@ FocusEvent::Constructor(const GlobalObject& aGlobal,
                         ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<FocusEvent> e = new FocusEvent(t, nullptr, nullptr);
+  RefPtr<FocusEvent> e = new FocusEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
   aRv = e->InitFocusEvent(aType, aParam.mBubbles, aParam.mCancelable, aParam.mView,
                           aParam.mDetail, aParam.mRelatedTarget);
@@ -78,14 +77,11 @@ FocusEvent::Constructor(const GlobalObject& aGlobal,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMFocusEvent(nsIDOMEvent** aInstancePtrResult,
-                    EventTarget* aOwner,
+already_AddRefed<FocusEvent>
+NS_NewDOMFocusEvent(EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     InternalFocusEvent* aEvent)
 {
-  FocusEvent* it = new FocusEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<FocusEvent> it = new FocusEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

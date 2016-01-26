@@ -12,30 +12,38 @@ XPIDL_MODULE = 'MobileComponents'
 
 EXTRA_COMPONENTS += [
     'AboutRedirector.js',
-    'ActivitiesGlue.js',
     'AddonUpdateService.js',
+    'AndroidActivitiesGlue.js',
     'BlocklistPrompt.js',
     'BrowserCLH.js',
     'ColorPicker.js',
     'ContentDispatchChooser.js',
-    'ContentPermissionPrompt.js',
     'DirectoryProvider.js',
-    'FilePicker.js',
-    'HelperAppDialog.js',
+    'ImageBlockingPolicy.js',
     'LoginManagerPrompter.js',
     'NSSDialogService.js',
-    'PromptService.js',
-    'SessionStore.js',
-    'SiteSpecificUserAgent.js',
     'Snippets.js',
     'TabSource.js',
-    'WebappsUpdateTimer.js',
     'XPIDialogService.js',
 ]
 
-if CONFIG['MOZ_PAY']:
+if not CONFIG['MOZ_B2GDROID']:
     EXTRA_COMPONENTS += [
-        'PaymentProviderStrategy.js',
+        'ContentPermissionPrompt.js',
+        'FilePicker.js',
+        'HelperAppDialog.js',
+        'PromptService.js',
+        'SessionStore.js',
+        'SiteSpecificUserAgent.js',
+        'WebappsUpdateTimer.js',
+    ]
+
+if CONFIG['MOZ_PAY']:
+    if not CONFIG['MOZ_B2GDROID']:
+        EXTRA_COMPONENTS += [
+            'PaymentProviderStrategy.js',
+        ]
+    EXTRA_COMPONENTS += [
         'PaymentsUI.js'
     ]
 

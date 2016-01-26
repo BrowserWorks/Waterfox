@@ -212,6 +212,8 @@ cairo-mask-extends-bug.patch: bug 918671, sometimes when building a mask we woul
 
 ft-no-subpixel-if-surface-disables.patch: bug 929451, don't use subpixel aa for ft fonts on surfaces that don't support it
 
+win32-printing-axis-swap.patch: bug 1205854, workaround for Windows printer drivers that can't handle swapped X and Y axes
+
 ==== pixman patches ====
 
 pixman-android-cpu-detect.patch: Add CPU detection support for Android, where we can't reliably access /proc/self/auxv.
@@ -241,6 +243,8 @@ pixman-enable-altivec-acceleration.patch: enable building the altivec accelerati
 win32-d3dsurface9.patch: Create a win32 d3d9 surface to support LockRect
 
 win32-avoid-extend-pad-fallback: Avoid falling back to pixman when using EXTEND_PAD
+
+support-new-style-atomic-primitives.patch: Support the __atomic_* primitives for atomic operations
 
 ==== disable printing patch ====
 

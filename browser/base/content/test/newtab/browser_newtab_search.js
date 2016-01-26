@@ -66,7 +66,7 @@ function runTests() {
   yield;
 }
 
-let runTaskifiedTests = Task.async(function* () {
+var runTaskifiedTests = Task.async(function* () {
   let oldCurrentEngine = Services.search.currentEngine;
 
   yield addNewTabPageTabPromise();
@@ -75,13 +75,6 @@ let runTaskifiedTests = Task.async(function* () {
   // this listener at the end of the test.
   info("Adding search event listener");
   getContentWindow().addEventListener(SERVICE_EVENT_NAME, searchEventListener);
-
-  let panel = searchPanel();
-  is(panel.state, "closed", "Search panel should be closed initially");
-
-  // The panel's animation often is not finished when the test clicks on panel
-  // children, which makes the test click the wrong children, so disable it.
-  panel.setAttribute("animate", "false");
 
   // Add the engine without any logos and switch to it.
   let noLogoEngine = yield promiseNewSearchEngine(ENGINE_NO_LOGO);
@@ -113,19 +106,6 @@ let runTaskifiedTests = Task.async(function* () {
   yield promiseSearchEvents(["CurrentEngine"]);
   yield checkCurrentEngine(ENGINE_1X_2X_LOGO);
 
-  // Click the logo to open the search panel.
-  yield Promise.all([
-    promisePanelShown(panel),
-    promiseClick(logoImg()),
-  ]);
-
-  let manageBox = $("manage");
-  ok(!!manageBox, "The Manage Engines box should be present in the document");
-  is(panel.childNodes.length, 1, "Search panel should only contain the Manage Engines entry");
-  is(panel.childNodes[0], manageBox, "Search panel should contain the Manage Engines entry");
-
-  panel.hidePopup();
-
   // Add the engine that provides search suggestions and switch to it.
   let suggestionEngine = yield promiseNewSearchEngine(ENGINE_SUGGESTIONS);
   Services.search.currentEngine = suggestionEngine;
@@ -133,7 +113,7 @@ let runTaskifiedTests = Task.async(function* () {
   yield checkCurrentEngine(ENGINE_SUGGESTIONS);
 
   // Avoid intermittent failures.
-  gSearch()._suggestionController.remoteTimeout = 5000;
+  gSearch().remoteTimeout = 5000;
 
   // Type an X in the search input.  This is only a smoke test.  See
   // browser_searchSuggestionUI.js for comprehensive content search suggestion
@@ -257,7 +237,7 @@ function promiseNewSearchEngine({name: basename, numLogos}) {
   // Wait for addEngine().
   let addDeferred = Promise.defer();
   let url = getRootDirectory(gTestPath) + basename;
-  Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "", false, {
+  Services.search.addEngine(url, null, "", false, {
     onSuccess: function (engine) {
       info("Search engine added: " + basename);
       gNewEngines.push(engine);
@@ -302,27 +282,16 @@ function blobToBase64(blob) {
   });
 }
 
-let checkCurrentEngine = Task.async(function* ({name: basename, logoPrefix1x, logoPrefix2x}) {
+var checkCurrentEngine = Task.async(function* ({name: basename, logoPrefix1x, logoPrefix2x}) {
   let engine = Services.search.currentEngine;
   ok(engine.name.includes(basename),
      "Sanity check: current engine: engine.name=" + engine.name +
      " basename=" + basename);
 
   // gSearch.currentEngineName
-  is(gSearch().currentEngineName, engine.name,
+  is(gSearch().defaultEngine.name, engine.name,
      "currentEngineName: " + engine.name);
 });
-
-function promisePanelShown(panel) {
-  let deferred = Promise.defer();
-  info("Waiting for popupshown");
-  panel.addEventListener("popupshown", function onEvent() {
-    panel.removeEventListener("popupshown", onEvent);
-    is(panel.state, "open", "Panel state");
-    deferred.resolve();
-  });
-  return deferred.promise;
-}
 
 function promiseClick(node) {
   let deferred = Promise.defer();
@@ -334,16 +303,12 @@ function promiseClick(node) {
   return deferred.promise;
 }
 
-function searchPanel() {
-  return $("panel");
-}
-
 function logoImg() {
   return $("logo");
 }
 
 function gSearch() {
-  return getContentWindow().gSearch;
+  return getContentWindow().gSearch._contentSearchController;
 }
 
 /**

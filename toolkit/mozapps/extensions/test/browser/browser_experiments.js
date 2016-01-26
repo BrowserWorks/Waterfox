@@ -4,16 +4,16 @@
 
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
-let {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
-let {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
+var {AddonTestUtils} = Components.utils.import("resource://testing-common/AddonManagerTesting.jsm", {});
+var {HttpServer} = Components.utils.import("resource://testing-common/httpd.js", {});
 
-let gManagerWindow;
-let gCategoryUtilities;
-let gExperiments;
-let gHttpServer;
+var gManagerWindow;
+var gCategoryUtilities;
+var gExperiments;
+var gHttpServer;
 
-let gSavedManifestURI;
-let gIsEnUsLocale;
+var gSavedManifestURI;
+var gIsEnUsLocale;
 
 const SEC_IN_ONE_DAY = 24 * 60 * 60;
 const MS_IN_ONE_DAY  = SEC_IN_ONE_DAY * 1000;
@@ -98,6 +98,7 @@ add_task(function* initializeState() {
 
   registerCleanupFunction(() => {
     Services.prefs.clearUserPref("experiments.enabled");
+    Services.prefs.clearUserPref("toolkit.telemetry.enabled");
     if (gHttpServer) {
       gHttpServer.stop(() => {});
       if (gSavedManifestURI !== undefined) {
@@ -294,6 +295,7 @@ add_task(function* testActivateExperiment() {
   // We need to remove the cache file to help ensure consistent state.
   yield OS.File.remove(gExperiments._cacheFilePath);
 
+  Services.prefs.setBoolPref("toolkit.telemetry.enabled", true);
   Services.prefs.setBoolPref("experiments.enabled", true);
 
   info("Initializing experiments service.");
@@ -331,7 +333,7 @@ add_task(function* testActivateExperiment() {
   is_element_visible(el, "Experiment info is visible on experiment tab.");
 });
 
-add_task(function testDeactivateExperiment() {
+add_task(function* testDeactivateExperiment() {
   if (!gExperiments) {
     return;
   }
@@ -379,7 +381,7 @@ add_task(function testDeactivateExperiment() {
   is_element_hidden(el, "Preferences button is not visible.");
 });
 
-add_task(function testActivateRealExperiments() {
+add_task(function* testActivateRealExperiments() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
@@ -426,8 +428,8 @@ add_task(function testActivateRealExperiments() {
   is_element_hidden(el, "warning-container should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "pending-container");
   is_element_hidden(el, "pending-container should be hidden.");
-  el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "version");
-  is_element_hidden(el, "version should be hidden.");
+  let { version } = yield get_tooltip_info(item);
+  Assert.equal(version, undefined, "version should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "disabled-postfix");
   is_element_hidden(el, "disabled-postfix should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "update-postfix");
@@ -459,8 +461,8 @@ add_task(function testActivateRealExperiments() {
   is_element_hidden(el, "warning-container should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "pending-container");
   is_element_hidden(el, "pending-container should be hidden.");
-  el = item.ownerDocument.getAnonymousElementByAttribute(item, "anonid", "version");
-  is_element_hidden(el, "version should be hidden.");
+  ({ version } = yield get_tooltip_info(item));
+  Assert.equal(version, undefined, "version should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "disabled-postfix");
   is_element_hidden(el, "disabled-postfix should be hidden.");
   el = item.ownerDocument.getAnonymousElementByAttribute(item, "class", "update-postfix");
@@ -532,7 +534,7 @@ add_task(function testActivateRealExperiments() {
   }
 });
 
-add_task(function testDetailView() {
+add_task(function* testDetailView() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
@@ -635,6 +637,8 @@ add_task(function* testCleanup() {
     yield OS.File.remove(gExperiments._cacheFilePath);
     yield gExperiments.uninit();
     yield gExperiments.init();
+
+    Services.prefs.clearUserPref("toolkit.telemetry.enabled");
   }
 
   // Check post-conditions.

@@ -187,7 +187,7 @@ ParseClockValue(RangedPtr<const char16_t>& aIter,
           !ParseColon(iter, aEnd)) {
         return false;
       }
-      // intentional fall through
+      MOZ_FALLTHROUGH;
     case PARTIAL_CLOCK_VALUE:
       if (!ParseSecondsOrMinutes(iter, aEnd, minutes) ||
           !ParseColon(iter, aEnd) ||
@@ -416,7 +416,7 @@ ParseElementBaseTimeValueSpec(const nsAString& aSpec,
   bool requiresUnescaping;
   MoveToNextToken(tokenEnd, end, true, requiresUnescaping);
 
-  nsRefPtr<nsIAtom> atom =
+  RefPtr<nsIAtom> atom =
     ConvertTokenToAtom(Substring(start.get(), tokenEnd.get()),
                        requiresUnescaping);
   if (atom == nullptr) {
@@ -478,7 +478,7 @@ ParseElementBaseTimeValueSpec(const nsAString& aSpec,
   return true;
 }
 
-} // end anonymous namespace block
+} // namespace
 
 //------------------------------------------------------------------------------
 // Implementation
@@ -535,7 +535,8 @@ nsSMILParserUtils::ParseKeySplines(const nsAString& aSpec,
         !aKeySplines.AppendElement(nsSMILKeySpline(values[0],
                                                    values[1],
                                                    values[2],
-                                                   values[3]))) {
+                                                   values[3]),
+                                   fallible)) {
       return false;
     }
   }
@@ -563,7 +564,7 @@ nsSMILParserUtils::ParseSemicolonDelimitedProgressList(const nsAString& aSpec,
       return false;
     }
 
-    if (!aArray.AppendElement(value)) {
+    if (!aArray.AppendElement(value, fallible)) {
       return false;
     }
     previousValue = value;
@@ -594,7 +595,7 @@ public:
                                              tmpPreventCachingOfSandwich)))
       return false;
 
-    if (!mValuesArray->AppendElement(newValue)) {
+    if (!mValuesArray->AppendElement(newValue, fallible)) {
       return false;
     }
     if (tmpPreventCachingOfSandwich) {

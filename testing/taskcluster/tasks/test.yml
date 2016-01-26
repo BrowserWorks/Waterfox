@@ -3,7 +3,7 @@ task:
   created: '{{now}}'
   deadline: '{{#from_now}}24 hours{{/from_now}}'
   metadata:
-    source: http://todo.com/soon
+    source: '{{source}}'
     owner: mozilla-taskcluster-maintenance@mozilla.com
   tags:
     createdForUser: {{owner}}
@@ -12,37 +12,24 @@ task:
   schedulerId: task-graph-scheduler
 
   scopes:
-    - 'docker-worker:image:{{#docker_image}}tester{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner/test-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner/test-c4-2xlarge'
-    - 'docker-worker:cache:tc-vcs'
-    - 'docker-worker:cache:linux-cache'
+    - 'docker-worker:feature:allowPtrace'
 
   payload:
     image: '{{#docker_image}}tester{{/docker_image}}'
     maxRunTime: 3600
-    cache:
-      # So pip installs are cached...
-      linux-cache: /home/worker/.cache
-      tc-vcs: '/home/worker/.tc-vcs'
     env:
-      GAIA_HEAD_REPOSITORY: '{{{gaia_head_repository}}}'
-      GAIA_BASE_REPOSITORY: '{{{gaia_base_repository}}}'
-      GAIA_REF: '{{{gaia_ref}}}'
-      GAIA_REV: '{{{gaia_rev}}}'
-      MOZHARNESS_REPOSITORY: '{{mozharness_repository}}'
-      MOZHARNESS_REV: '{{mozharness_rev}}'
       MOZILLA_BUILD_URL: '{{build_url}}'
+      MOZHARNESS_URL: '{{mozharness_url}}'
 
     # All builds share a common artifact directory for ease of uploading.
     artifacts:
       'public/logs/':
         type: directory
-        path: '/home/worker/build/upload/logs/'
+        path: '/home/worker/workspace/build/upload/logs/'
         expires: '{{#from_now}}1 year{{/from_now}}'
       'public/test_info/':
         type: directory
-        path: '/home/worker/build/blobber_upload_dir/'
+        path: '/home/worker/workspace/build/blobber_upload_dir/'
         expires: '{{#from_now}}1 year{{/from_now}}'
 
   extra:

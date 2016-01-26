@@ -12,7 +12,7 @@
 #include "nsEventQueue.h"
 #include "nsCOMPtr.h"
 #include "prinrval.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinit.h"
 #include "nsIObserver.h"
 #include "mozilla/Mutex.h"
@@ -28,9 +28,16 @@ struct PRPollDesc;
 //
 // set NSPR_LOG_MODULES=nsSocketTransport:5
 //
-extern PRLogModuleInfo *gSocketTransportLog;
-#define SOCKET_LOG(args)     PR_LOG(gSocketTransportLog, PR_LOG_DEBUG, args)
-#define SOCKET_LOG_ENABLED() PR_LOG_TEST(gSocketTransportLog, PR_LOG_DEBUG)
+extern mozilla::LazyLogModule gSocketTransportLog;
+#define SOCKET_LOG(args)     MOZ_LOG(gSocketTransportLog, mozilla::LogLevel::Debug, args)
+#define SOCKET_LOG_ENABLED() MOZ_LOG_TEST(gSocketTransportLog, mozilla::LogLevel::Debug)
+
+//
+// set NSPR_LOG_MODULES=UDPSocket:5
+//
+extern mozilla::LazyLogModule gUDPSocketLog;
+#define UDPSOCKET_LOG(args)     MOZ_LOG(gUDPSocketLog, mozilla::LogLevel::Debug, args)
+#define UDPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gUDPSocketLog, mozilla::LogLevel::Debug)
 
 //-----------------------------------------------------------------------------
 
@@ -52,8 +59,8 @@ static const int32_t kDefaultTCPKeepCount =
 #else
                                               4;  // Specifiable in Linux.
 #endif
-}
-}
+} // namespace net
+} // namespace mozilla
 
 //-----------------------------------------------------------------------------
 
@@ -74,6 +81,7 @@ public:
     NS_DECL_NSITHREADOBSERVER
     NS_DECL_NSIRUNNABLE
     NS_DECL_NSIOBSERVER 
+    using nsIEventTarget::Dispatch;
 
     nsSocketTransportService();
 
@@ -102,6 +110,9 @@ public:
 
     // Returns true if keepalives are enabled in prefs.
     bool IsKeepaliveEnabled() { return mKeepaliveEnabledPref; }
+
+    bool IsTelemetryEnabled() { return mTelemetryEnabledPref; }
+    PRIntervalTime MaxTimeForPrClosePref() {return mMaxTimeForPrClosePref; }
 protected:
 
     virtual ~nsSocketTransportService();
@@ -209,6 +220,7 @@ private:
     // pending socket queue - see NotifyWhenCanAttachSocket
     //-------------------------------------------------------------------------
 
+    mozilla::Mutex mEventQueueLock;
     nsEventQueue mPendingSocketQ; // queue of nsIRunnable objects
 
     // Preference Monitor for SendBufferSize and Keepalive prefs.
@@ -223,10 +235,10 @@ private:
     // True if TCP keepalive is enabled globally.
     bool        mKeepaliveEnabledPref;
 
-    bool                   mServeMultipleEventsPerPollIter;
     mozilla::Atomic<bool>  mServingPendingQueue;
-    int32_t                mMaxTimePerPollIter;
-    bool                   mTelemetryEnabledPref;
+    mozilla::Atomic<int32_t, mozilla::Relaxed> mMaxTimePerPollIter;
+    mozilla::Atomic<bool, mozilla::Relaxed>  mTelemetryEnabledPref;
+    mozilla::Atomic<PRIntervalTime, mozilla::Relaxed> mMaxTimeForPrClosePref;
 
     void OnKeepaliveEnabledPrefChange();
     void NotifyKeepaliveEnabledPrefChange(SocketContext *sock);
@@ -249,6 +261,6 @@ private:
 };
 
 extern nsSocketTransportService *gSocketTransportService;
-extern PRThread                 *gSocketThread;
+extern mozilla::Atomic<PRThread*, mozilla::Relaxed> gSocketThread;
 
 #endif // !nsSocketTransportService_h__

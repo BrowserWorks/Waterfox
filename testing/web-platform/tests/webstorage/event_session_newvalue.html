@@ -1,25 +1,23 @@
 <!DOCTYPE HTML>
 <html>
  <head>
-  <title>Web Storage</title>
+  <title>WebStorage Test: sessionStorage event - newValue</title>
   <script src="/resources/testharness.js"></script>
   <script src="/resources/testharnessreport.js"></script>
-  <script>
-      function fail(msg) {
-          t.step(function() {
-              assert_unreached(msg);
-          });
-          t.done();
-      }
-  </script>
  </head>
  <body>
     <h1>event_session_newValue</h1>
     <div id="log"></div>
     <script>
-        test(function() {
+        async_test(function(t) {
             sessionStorage.clear();
-            var t = async_test("newvalue property test of session event");
+            t.add_cleanup(function() { sessionStorage.clear() });
+
+            self.fail = t.step_func(function(msg) {
+                assert_unreached(msg);
+                t.done();
+            });
+
             var expected = ['user1', 'user2', null]
             function onStorageEvent(event) {
                 t.step(function() {
@@ -30,13 +28,13 @@
                 }
             }
 
-            window.addEventListener('storage', onStorageEvent, false);
+            window.addEventListener('storage', t.step_func(onStorageEvent), false);
 
             var el = document.createElement("iframe");
             el.setAttribute('id', 'ifrm');
-            el.setAttribute('src', 'iframe/session_change_item_iframe.html');
+            el.setAttribute('src', 'resources/session_change_item_iframe.html');
             document.body.appendChild(el);
-        });
+        }, "newvalue property test of session event - Session event is fired due to an invocation of the setItem(), clear() methods.");
     </script>
  </body>
 </html>

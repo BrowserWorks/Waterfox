@@ -42,7 +42,7 @@ public:
     CreateFontEntry(const nsAString& aFontName,
                     uint16_t aWeight,
                     int16_t aStretch,
-                    bool aItalic,
+                    uint8_t aStyle,
                     const uint8_t* aFontData,
                     uint32_t aLength);
 
@@ -125,12 +125,12 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic);
+                                          uint8_t aStyle);
 
     virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
                                            uint16_t aWeight,
                                            int16_t aStretch,
-                                           bool aItalic,
+                                           uint8_t aStyle,
                                            const uint8_t* aFontData,
                                            uint32_t aLength);
 
@@ -140,7 +140,7 @@ public:
         return static_cast<gfxFT2FontList*>(gfxPlatformFontList::PlatformFontList());
     }
 
-    virtual void GetFontFamilyList(nsTArray<nsRefPtr<gfxFontFamily> >& aFamilyArray);
+    virtual void GetFontFamilyList(nsTArray<RefPtr<gfxFontFamily> >& aFamilyArray);
 
 protected:
     typedef enum {
@@ -185,7 +185,7 @@ protected:
     nsTHashtable<nsStringHashKey> mSkipSpaceLookupCheckFamilies;
 
 private:
-    nsRefPtrHashtable<nsStringHashKey, gfxFontFamily> mHiddenFontFamilies;
+    FontFamilyTable mHiddenFontFamilies;
 };
 
 #endif /* GFX_FT2FONTLIST_H */

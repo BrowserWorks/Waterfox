@@ -27,6 +27,7 @@
 
 #include "ds/Sort.h"
 #include "gc/Heap.h"
+#include "jit/InlinableNatives.h"
 #include "js/Class.h"
 #include "js/Conversions.h"
 #include "vm/ArgumentsObject.h"
@@ -42,6 +43,7 @@
 #include "vm/Interpreter-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/Runtime-inl.h"
+#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::gc;
@@ -52,16 +54,52 @@ using mozilla::CeilingLog2;
 using mozilla::CheckedInt;
 using mozilla::DebugOnly;
 using mozilla::IsNaN;
-using mozilla::UniquePtr;
 
 using JS::AutoCheckCannotGC;
+using JS::IsArrayAnswer;
 using JS::ToUint32;
+
+bool
+JS::IsArray(JSContext* cx, HandleObject obj, IsArrayAnswer* answer)
+{
+    if (obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>()) {
+        *answer = IsArrayAnswer::Array;
+        return true;
+    }
+
+    if (obj->is<ProxyObject>())
+        return Proxy::isArray(cx, obj, answer);
+
+    *answer = IsArrayAnswer::NotArray;
+    return true;
+}
+
+bool
+JS::IsArray(JSContext* cx, HandleObject obj, bool* isArray)
+{
+    IsArrayAnswer answer;
+    if (!IsArray(cx, obj, &answer))
+        return false;
+
+    if (answer == IsArrayAnswer::RevokedProxy) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
+        return false;
+    }
+
+    *isArray = answer == IsArrayAnswer::Array;
+    return true;
+}
 
 bool
 js::GetLengthProperty(JSContext* cx, HandleObject obj, uint32_t* lengthp)
 {
     if (obj->is<ArrayObject>()) {
         *lengthp = obj->as<ArrayObject>().length();
+        return true;
+    }
+
+    if (obj->is<UnboxedArrayObject>()) {
+        *lengthp = obj->as<UnboxedArrayObject>().length();
         return true;
     }
 
@@ -77,12 +115,13 @@ js::GetLengthProperty(JSContext* cx, HandleObject obj, uint32_t* lengthp)
     if (!GetProperty(cx, obj, obj, cx->names().length, &value))
         return false;
 
-    if (value.isInt32()) {
-        *lengthp = uint32_t(value.toInt32()); // uint32_t cast does ToUint32
-        return true;
+    bool overflow;
+    if (!ToLengthClamped(cx, value, lengthp, &overflow)) {
+        if (!overflow)
+            return false;
+        *lengthp = UINT32_MAX;
     }
-
-    return ToUint32(cx, value, lengthp);
+    return true;
 }
 
 /*
@@ -208,14 +247,13 @@ AssertGreaterThanZero(uint32_t index)
 {
 }
 
-template <typename IndexType>
 static bool
 GetElement(JSContext* cx, HandleObject obj, HandleObject receiver,
-           IndexType index, bool* hole, MutableHandleValue vp)
+           uint32_t index, bool* hole, MutableHandleValue vp)
 {
     AssertGreaterThanZero(index);
-    if (obj->isNative() && index < obj->as<NativeObject>().getDenseInitializedLength()) {
-        vp.set(obj->as<NativeObject>().getDenseElement(uint32_t(index)));
+    if (index < GetAnyBoxedOrUnboxedInitializedLength(obj)) {
+        vp.set(GetAnyBoxedOrUnboxedDenseElement(obj, uint32_t(index)));
         if (!vp.isMagic(JS_ELEMENTS_HOLE)) {
             *hole = false;
             return true;
@@ -238,14 +276,24 @@ GetElement(JSContext* cx, HandleObject obj, IndexType index, bool* hole, Mutable
     return GetElement(cx, obj, obj, index, hole, vp);
 }
 
-void
+bool
 ElementAdder::append(JSContext* cx, HandleValue v)
 {
     MOZ_ASSERT(index_ < length_);
-    if (resObj_)
-        resObj_->as<NativeObject>().setDenseElementWithType(cx, index_++, v);
-    else
-        vp_[index_++] = v;
+    if (resObj_) {
+        DenseElementResult result =
+            SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, resObj_, index_, v.address(), 1);
+        if (result == DenseElementResult::Failure)
+            return false;
+        if (result == DenseElementResult::Incomplete) {
+            if (!DefineElement(cx, resObj_, index_, v))
+                return false;
+        }
+    } else {
+        vp_[index_] = v;
+    }
+    index_++;
+    return true;
 }
 
 void
@@ -253,12 +301,9 @@ ElementAdder::appendHole()
 {
     MOZ_ASSERT(getBehavior_ == ElementAdder::CheckHasElemPreserveHoles);
     MOZ_ASSERT(index_ < length_);
-    if (resObj_) {
-        MOZ_ASSERT(resObj_->as<NativeObject>().getDenseElement(index_).isMagic(JS_ELEMENTS_HOLE));
-        index_++;
-    } else {
-        vp_[index_++].setMagic(JS_ELEMENTS_HOLE);
-    }
+    if (!resObj_)
+        vp_[index_].setMagic(JS_ELEMENTS_HOLE);
+    index_++;
 }
 
 bool
@@ -282,26 +327,44 @@ js::GetElementsWithAdder(JSContext* cx, HandleObject obj, HandleObject receiver,
             if (!GetElement(cx, obj, receiver, i, &val))
                 return false;
         }
-        adder->append(cx, val);
+        if (!adder->append(cx, val))
+            return false;
     }
 
     return true;
 }
 
+template <JSValueType Type>
+DenseElementResult
+GetBoxedOrUnboxedDenseElements(JSObject* aobj, uint32_t length, Value* vp)
+{
+    MOZ_ASSERT(!ObjectMayHaveExtraIndexedProperties(aobj));
+
+    if (length > GetBoxedOrUnboxedInitializedLength<Type>(aobj))
+        return DenseElementResult::Incomplete;
+
+    for (size_t i = 0; i < length; i++) {
+        vp[i] = GetBoxedOrUnboxedDenseElement<Type>(aobj, i);
+
+        // No other indexed properties so hole => undefined.
+        if (vp[i].isMagic(JS_ELEMENTS_HOLE))
+            vp[i] = UndefinedValue();
+    }
+
+    return DenseElementResult::Success;
+}
+
+DefineBoxedOrUnboxedFunctor3(GetBoxedOrUnboxedDenseElements,
+                             JSObject*, uint32_t, Value*);
+
 bool
 js::GetElements(JSContext* cx, HandleObject aobj, uint32_t length, Value* vp)
 {
-    if (aobj->is<ArrayObject>() &&
-        length <= aobj->as<ArrayObject>().getDenseInitializedLength() &&
-        !ObjectMayHaveExtraIndexedProperties(aobj))
-    {
-        /* No other indexed properties so hole = undefined */
-        const Value* srcbeg = aobj->as<ArrayObject>().getDenseElements();
-        const Value* srcend = srcbeg + length;
-        const Value* src = srcbeg;
-        for (Value* dst = vp; src < srcend; ++dst, ++src)
-            *dst = src->isMagic(JS_ELEMENTS_HOLE) ? UndefinedValue() : *src;
-        return true;
+    if (!ObjectMayHaveExtraIndexedProperties(aobj)) {
+        GetBoxedOrUnboxedDenseElementsFunctor functor(aobj, length, vp);
+        DenseElementResult result = CallBoxedOrUnboxedSpecialization(functor, aobj);
+        if (result != DenseElementResult::Incomplete)
+            return result == DenseElementResult::Success;
     }
 
     if (aobj->is<ArgumentsObject>()) {
@@ -325,39 +388,19 @@ js::GetElements(JSContext* cx, HandleObject aobj, uint32_t length, Value* vp)
     return true;
 }
 
-/*
- * Set the value of the property at the given index to v assuming v is rooted.
- */
+// Set the value of the property at the given index to v. The behavior of this
+// function is currently incoherent and it sometimes defines the property
+// instead. See bug 1163091.
 static bool
 SetArrayElement(JSContext* cx, HandleObject obj, double index, HandleValue v)
 {
     MOZ_ASSERT(index >= 0);
 
-    if (obj->is<ArrayObject>() && !obj->isIndexed()) {
-        Rooted<ArrayObject*> arr(cx, &obj->as<ArrayObject>());
-        /* Predicted/prefetched code should favor the remains-dense case. */
-        NativeObject::EnsureDenseResult result = NativeObject::ED_SPARSE;
-        do {
-            if (index > uint32_t(-1))
-                break;
-            uint32_t idx = uint32_t(index);
-            if (idx >= arr->length() && !arr->lengthIsWritable()) {
-                JS_ReportErrorFlagsAndNumber(cx, JSREPORT_ERROR, GetErrorMessage, nullptr,
-                                             JSMSG_CANT_REDEFINE_ARRAY_LENGTH);
-                return false;
-            }
-            result = arr->ensureDenseElements(cx, idx, 1);
-            if (result != NativeObject::ED_OK)
-                break;
-            if (idx >= arr->length())
-                arr->setLengthInt32(idx + 1);
-            arr->setDenseElementWithType(cx, idx, v);
-            return true;
-        } while (false);
-
-        if (result == NativeObject::ED_FAILED)
-            return false;
-        MOZ_ASSERT(result == NativeObject::ED_SPARSE);
+    if ((obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>()) && !obj->isIndexed() && index <= UINT32_MAX) {
+        DenseElementResult result =
+            SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, uint32_t(index), v.address(), 1);
+        if (result != DenseElementResult::Incomplete)
+            return result == DenseElementResult::Success;
     }
 
     RootedId id(cx);
@@ -568,7 +611,14 @@ js::ArraySetLength(JSContext* cx, Handle<ArrayObject*> arr, HandleId id,
         // that element must prevent any deletions below it.  Bug 586842 should
         // fix this inefficiency by moving indexed storage to be entirely
         // separate from non-indexed storage.
-        if (!arr->isIndexed()) {
+        // A second reason for this optimization to be invalid is an active
+        // for..in iteration over the array. Keys deleted before being reached
+        // during the iteration must not be visited, and suppressing them here
+        // would be too costly.
+        ObjectGroup* arrGroup = arr->getGroup(cx);
+        if (!arr->isIndexed() &&
+            !MOZ_UNLIKELY(!arrGroup || arrGroup->hasAllFlags(OBJECT_FLAG_ITERATED)))
+        {
             if (!arr->maybeCopyElementsForWrite(cx))
                 return false;
 
@@ -765,6 +815,16 @@ array_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
     return true;
 }
 
+static inline bool
+ObjectMayHaveExtraIndexedOwnProperties(JSObject* obj)
+{
+    return (!obj->isNative() && !obj->is<UnboxedArrayObject>()) ||
+           obj->isIndexed() ||
+           obj->is<TypedArrayObject>() ||
+           ClassMayResolveId(*obj->runtimeFromAnyThread()->commonNames,
+                             obj->getClass(), INT_TO_JSID(0), obj);
+}
+
 bool
 js::ObjectMayHaveExtraIndexedProperties(JSObject* obj)
 {
@@ -774,29 +834,13 @@ js::ObjectMayHaveExtraIndexedProperties(JSObject* obj)
      * and indexed properties or elements along its prototype chain.
      */
 
-    MOZ_ASSERT(obj->isNative());
-
-    if (obj->isIndexed())
+    if (ObjectMayHaveExtraIndexedOwnProperties(obj))
         return true;
 
-    /*
-     * Walk up the prototype chain and see if this indexed element already
-     * exists. If we hit the end of the prototype chain, it's safe to set the
-     * element on the original object.
-     */
     while ((obj = obj->getProto()) != nullptr) {
-        /*
-         * If the prototype is a non-native object (possibly a dense array), or
-         * a native object (possibly a slow array) that has indexed properties,
-         * return true.
-         */
-        if (!obj->isNative())
+        if (ObjectMayHaveExtraIndexedOwnProperties(obj))
             return true;
-        if (obj->isIndexed())
-            return true;
-        if (obj->as<NativeObject>().getDenseInitializedLength() > 0)
-            return true;
-        if (IsAnyTypedArray(obj))
+        if (GetAnyBoxedOrUnboxedInitializedLength(obj) != 0)
             return true;
     }
 
@@ -925,6 +969,72 @@ struct StringSeparatorOp
     }
 };
 
+template <typename SeparatorOp, JSValueType Type>
+static DenseElementResult
+ArrayJoinDenseKernel(JSContext* cx, SeparatorOp sepOp, HandleObject obj, uint32_t length,
+                     StringBuffer& sb, uint32_t* numProcessed)
+{
+    // This loop handles all elements up to initializedLength. If
+    // length > initLength we rely on the second loop to add the
+    // other elements.
+    MOZ_ASSERT(*numProcessed == 0);
+    uint32_t initLength = Min<uint32_t>(GetBoxedOrUnboxedInitializedLength<Type>(obj), length);
+    while (*numProcessed < initLength) {
+        if (!CheckForInterrupt(cx))
+            return DenseElementResult::Failure;
+
+        const Value& elem = GetBoxedOrUnboxedDenseElement<Type>(obj, *numProcessed);
+
+        if (elem.isString()) {
+            if (!sb.append(elem.toString()))
+                return DenseElementResult::Failure;
+        } else if (elem.isNumber()) {
+            if (!NumberValueToStringBuffer(cx, elem, sb))
+                return DenseElementResult::Failure;
+        } else if (elem.isBoolean()) {
+            if (!BooleanToStringBuffer(elem.toBoolean(), sb))
+                return DenseElementResult::Failure;
+        } else if (elem.isObject() || elem.isSymbol()) {
+            /*
+             * Object stringifying could modify the initialized length or make
+             * the array sparse. Delegate it to a separate loop to keep this
+             * one tight.
+             *
+             * Symbol stringifying is a TypeError, so into the slow path
+             * with those as well.
+             */
+            break;
+        } else {
+            MOZ_ASSERT(elem.isMagic(JS_ELEMENTS_HOLE) || elem.isNullOrUndefined());
+        }
+
+        if (++(*numProcessed) != length && !sepOp(cx, sb))
+            return DenseElementResult::Failure;
+    }
+
+    return DenseElementResult::Incomplete;
+}
+
+template <typename SeparatorOp>
+struct ArrayJoinDenseKernelFunctor {
+    JSContext* cx;
+    SeparatorOp sepOp;
+    HandleObject obj;
+    uint32_t length;
+    StringBuffer& sb;
+    uint32_t* numProcessed;
+
+    ArrayJoinDenseKernelFunctor(JSContext* cx, SeparatorOp sepOp, HandleObject obj,
+                                uint32_t length, StringBuffer& sb, uint32_t* numProcessed)
+      : cx(cx), sepOp(sepOp), obj(obj), length(length), sb(sb), numProcessed(numProcessed)
+    {}
+
+    template <JSValueType Type>
+    DenseElementResult operator()() {
+        return ArrayJoinDenseKernel<SeparatorOp, Type>(cx, sepOp, obj, length, sb, numProcessed);
+    }
+};
+
 template <bool Locale, typename SeparatorOp>
 static bool
 ArrayJoinKernel(JSContext* cx, SeparatorOp sepOp, HandleObject obj, uint32_t length,
@@ -932,43 +1042,11 @@ ArrayJoinKernel(JSContext* cx, SeparatorOp sepOp, HandleObject obj, uint32_t len
 {
     uint32_t i = 0;
 
-    if (!Locale && obj->is<ArrayObject>() && !ObjectMayHaveExtraIndexedProperties(obj)) {
-        // This loop handles all elements up to initializedLength. If
-        // length > initLength we rely on the second loop to add the
-        // other elements.
-        uint32_t initLength = obj->as<ArrayObject>().getDenseInitializedLength();
-        while (i < initLength) {
-            if (!CheckForInterrupt(cx))
-                return false;
-
-            const Value& elem = obj->as<ArrayObject>().getDenseElement(i);
-
-            if (elem.isString()) {
-                if (!sb.append(elem.toString()))
-                    return false;
-            } else if (elem.isNumber()) {
-                if (!NumberValueToStringBuffer(cx, elem, sb))
-                    return false;
-            } else if (elem.isBoolean()) {
-                if (!BooleanToStringBuffer(elem.toBoolean(), sb))
-                    return false;
-            } else if (elem.isObject() || elem.isSymbol()) {
-                /*
-                 * Object stringifying could modify the initialized length or make
-                 * the array sparse. Delegate it to a separate loop to keep this
-                 * one tight.
-                 *
-                 * Symbol stringifying is a TypeError, so into the slow path
-                 * with those as well.
-                 */
-                break;
-            } else {
-                MOZ_ASSERT(elem.isMagic(JS_ELEMENTS_HOLE) || elem.isNullOrUndefined());
-            }
-
-            if (++i != length && !sepOp(cx, sb))
-                return false;
-        }
+    if (!Locale && !ObjectMayHaveExtraIndexedProperties(obj)) {
+        ArrayJoinDenseKernelFunctor<SeparatorOp> functor(cx, sepOp, obj, length, sb, &i);
+        DenseElementResult result = CallBoxedOrUnboxedSpecialization(functor, obj);
+        if (result == DenseElementResult::Failure)
+            return false;
     }
 
     if (i != length) {
@@ -982,11 +1060,10 @@ ArrayJoinKernel(JSContext* cx, SeparatorOp sepOp, HandleObject obj, uint32_t len
                 return false;
             if (!hole && !v.isNullOrUndefined()) {
                 if (Locale) {
-                    JSObject* robj = ToObject(cx, v);
-                    if (!robj)
+                    RootedValue fun(cx);
+                    if (!GetProperty(cx, v, cx->names().toLocaleString, &fun))
                         return false;
-                    RootedId id(cx, NameToId(cx->names().toLocaleString));
-                    if (!robj->callMethod(cx, id, 0, nullptr, &v))
+                    if (!Invoke(cx, v, fun, 0, nullptr, &v))
                         return false;
                 }
                 if (!ValueToStringBuffer(cx, v, sb))
@@ -1002,78 +1079,13 @@ ArrayJoinKernel(JSContext* cx, SeparatorOp sepOp, HandleObject obj, uint32_t len
 }
 
 template <bool Locale>
-JSString*
-js::ArrayJoin(JSContext* cx, HandleObject obj, HandleLinearString sepstr, uint32_t length)
+bool
+ArrayJoin(JSContext* cx, CallArgs& args)
 {
     // This method is shared by Array.prototype.join and
     // Array.prototype.toLocaleString. The steps in ES5 are nearly the same, so
     // the annotations in this function apply to both toLocaleString and join.
 
-    // Steps 1 to 6, should be done by the caller.
-
-    // Step 6 is implicit in the loops below.
-
-    // An optimized version of a special case of steps 7-11: when length==1 and
-    // the 0th element is a string, ToString() of that element is a no-op and
-    // so it can be immediately returned as the result.
-    if (length == 1 && !Locale && obj->is<ArrayObject>() &&
-        obj->as<ArrayObject>().getDenseInitializedLength() == 1)
-    {
-        const Value& elem0 = obj->as<ArrayObject>().getDenseElement(0);
-        if (elem0.isString()) {
-            return elem0.toString();
-        }
-    }
-
-    StringBuffer sb(cx);
-    if (sepstr->hasTwoByteChars() && !sb.ensureTwoByteChars())
-        return nullptr;
-
-    // The separator will be added |length - 1| times, reserve space for that
-    // so that we don't have to unnecessarily grow the buffer.
-    size_t seplen = sepstr->length();
-    CheckedInt<uint32_t> res = CheckedInt<uint32_t>(seplen) * (length - 1);
-    if (length > 0 && !res.isValid()) {
-        ReportAllocationOverflow(cx);
-        return nullptr;
-    }
-
-    if (length > 0 && !sb.reserve(res.value()))
-        return nullptr;
-
-    // Various optimized versions of steps 7-10.
-    if (seplen == 0) {
-        EmptySeparatorOp op;
-        if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
-            return nullptr;
-    } else if (seplen == 1) {
-        char16_t c = sepstr->latin1OrTwoByteChar(0);
-        if (c <= JSString::MAX_LATIN1_CHAR) {
-            CharSeparatorOp<Latin1Char> op(c);
-            if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
-                return nullptr;
-        } else {
-            CharSeparatorOp<char16_t> op(c);
-            if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
-                return nullptr;
-        }
-    } else {
-        StringSeparatorOp op(sepstr);
-        if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
-            return nullptr;
-    }
-
-    // Step 11
-    JSString* str = sb.finishString();
-    if (!str)
-        return nullptr;
-    return str;
-}
-
-template <bool Locale>
-bool
-ArrayJoin(JSContext* cx, CallArgs& args)
-{
     // Step 1
     RootedObject obj(cx, ToObject(cx, args.thisv()));
     if (!obj)
@@ -1096,7 +1108,7 @@ ArrayJoin(JSContext* cx, CallArgs& args)
     // Steps 4 and 5
     RootedLinearString sepstr(cx);
     if (!Locale && args.hasDefined(0)) {
-        JSString* s = ToString<CanGC>(cx, args[0]);
+        JSString *s = ToString<CanGC>(cx, args[0]);
         if (!s)
             return false;
         sepstr = s->ensureLinear(cx);
@@ -1106,49 +1118,63 @@ ArrayJoin(JSContext* cx, CallArgs& args)
         sepstr = cx->names().comma;
     }
 
-    // Step 6 to 11
-    JSString* res = js::ArrayJoin<Locale>(cx, obj, sepstr, length);
-    if (!res)
-        return false;
+    // Step 6 is implicit in the loops below.
 
-    args.rval().setString(res);
-    return true;
-}
-
-/* ES5 15.4.4.2. NB: The algorithm here differs from the one in ES3. */
-static bool
-array_toString(JSContext* cx, unsigned argc, Value* vp)
-{
-    JS_CHECK_RECURSION(cx, return false);
-
-    CallArgs args = CallArgsFromVp(argc, vp);
-    RootedObject obj(cx, ToObject(cx, args.thisv()));
-    if (!obj)
-        return false;
-
-    RootedValue join(cx, args.calleev());
-    if (!GetProperty(cx, obj, obj, cx->names().join, &join))
-        return false;
-
-    if (!IsCallable(join)) {
-        JSString* str = JS_BasicObjectToString(cx, obj);
-        if (!str)
-            return false;
-        args.rval().setString(str);
-        return true;
+    // An optimized version of a special case of steps 7-11: when length==1 and
+    // the 0th element is a string, ToString() of that element is a no-op and
+    // so it can be immediately returned as the result.
+    if (length == 1 && !Locale && GetAnyBoxedOrUnboxedInitializedLength(obj) == 1) {
+        Value elem0 = GetAnyBoxedOrUnboxedDenseElement(obj, 0);
+        if (elem0.isString()) {
+            args.rval().set(elem0);
+            return true;
+        }
     }
 
-    InvokeArgs args2(cx);
-    if (!args2.init(0))
+    StringBuffer sb(cx);
+    if (sepstr->hasTwoByteChars() && !sb.ensureTwoByteChars())
         return false;
 
-    args2.setCallee(join);
-    args2.setThis(ObjectValue(*obj));
-
-    /* Do the call. */
-    if (!Invoke(cx, args2))
+    // The separator will be added |length - 1| times, reserve space for that
+    // so that we don't have to unnecessarily grow the buffer.
+    size_t seplen = sepstr->length();
+    CheckedInt<uint32_t> res = CheckedInt<uint32_t>(seplen) * (length - 1);
+    if (length > 0 && !res.isValid()) {
+        ReportAllocationOverflow(cx);
         return false;
-    args.rval().set(args2.rval());
+    }
+
+    if (length > 0 && !sb.reserve(res.value()))
+        return false;
+
+    // Various optimized versions of steps 7-10.
+    if (seplen == 0) {
+        EmptySeparatorOp op;
+        if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
+            return false;
+    } else if (seplen == 1) {
+        char16_t c = sepstr->latin1OrTwoByteChar(0);
+        if (c <= JSString::MAX_LATIN1_CHAR) {
+            CharSeparatorOp<Latin1Char> op(c);
+            if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
+                return false;
+        } else {
+            CharSeparatorOp<char16_t> op(c);
+            if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
+                return false;
+        }
+    } else {
+        StringSeparatorOp op(sepstr);
+        if (!ArrayJoinKernel<Locale>(cx, op, obj, length, sb))
+            return false;
+    }
+
+    // Step 11
+    JSString *str = sb.finishString();
+    if (!str)
+        return false;
+
+    args.rval().setString(str);
     return true;
 }
 
@@ -1172,35 +1198,11 @@ js::array_join(JSContext* cx, unsigned argc, Value* vp)
     return ArrayJoin<false>(cx, args);
 }
 
-static inline bool
-InitArrayTypes(JSContext* cx, ObjectGroup* group, JSObject* obj,
-               const Value* vector, unsigned count)
-{
-    if (!group->unknownProperties()) {
-        AutoEnterAnalysis enter(cx);
-
-        HeapTypeSet* types = group->getProperty(cx, obj, JSID_VOID);
-        if (!types)
-            return false;
-
-        for (unsigned i = 0; i < count; i++) {
-            if (vector[i].isMagic(JS_ELEMENTS_HOLE))
-                continue;
-            types->addType(cx, TypeSet::GetValueType(vector[i]));
-        }
-    }
-    return true;
-}
-
-enum ShouldUpdateTypes
-{
-    UpdateTypes = true,
-    DontUpdateTypes = false
-};
-
 /* vector must point to rooted memory. */
 static bool
-InitArrayElements(JSContext* cx, HandleObject obj, uint32_t start, uint32_t count, const Value* vector, ShouldUpdateTypes updateTypes)
+InitArrayElements(JSContext* cx, HandleObject obj, uint32_t start,
+                  uint32_t count, const Value* vector,
+                  ShouldUpdateTypes updateTypes = ShouldUpdateTypes::Update)
 {
     MOZ_ASSERT(count <= MAX_ARRAY_INDEX);
 
@@ -1210,45 +1212,13 @@ InitArrayElements(JSContext* cx, HandleObject obj, uint32_t start, uint32_t coun
     ObjectGroup* group = obj->getGroup(cx);
     if (!group)
         return false;
-    if (updateTypes && !InitArrayTypes(cx, group, obj, vector, count))
-        return false;
 
-    /*
-     * Optimize for dense arrays so long as adding the given set of elements
-     * wouldn't otherwise make the array slow or exceed a non-writable array
-     * length.
-     */
-    do {
-        if (!obj->is<ArrayObject>())
-            break;
-        if (ObjectMayHaveExtraIndexedProperties(obj))
-            break;
-
-        HandleArrayObject arr = obj.as<ArrayObject>();
-
-        if (arr->shouldConvertDoubleElements())
-            break;
-
-        if (!arr->lengthIsWritable() && start + count > arr->length())
-            break;
-
-        NativeObject::EnsureDenseResult result = arr->ensureDenseElements(cx, start, count);
-        if (result != NativeObject::ED_OK) {
-            if (result == NativeObject::ED_FAILED)
-                return false;
-            MOZ_ASSERT(result == NativeObject::ED_SPARSE);
-            break;
-        }
-
-        uint32_t newlen = start + count;
-        if (newlen > arr->length())
-            arr->setLengthInt32(newlen);
-
-        MOZ_ASSERT(count < UINT32_MAX / sizeof(Value));
-        arr->copyDenseElements(start, vector, count);
-        MOZ_ASSERT_IF(count != 0, !arr->getDenseElement(newlen - 1).isMagic(JS_ELEMENTS_HOLE));
-        return true;
-    } while (false);
+    if (!ObjectMayHaveExtraIndexedProperties(obj)) {
+        DenseElementResult result =
+            SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, start, vector, count, updateTypes);
+        if (result != DenseElementResult::Incomplete)
+            return result == DenseElementResult::Success;
+    }
 
     const Value* end = vector + count;
     while (vector < end && start <= MAX_ARRAY_INDEX) {
@@ -1279,6 +1249,64 @@ InitArrayElements(JSContext* cx, HandleObject obj, uint32_t start, uint32_t coun
     return true;
 }
 
+template <JSValueType Type>
+DenseElementResult
+ArrayReverseDenseKernel(JSContext* cx, HandleObject obj, uint32_t length)
+{
+    /* An empty array or an array with no elements is already reversed. */
+    if (length == 0 || GetBoxedOrUnboxedInitializedLength<Type>(obj) == 0)
+        return DenseElementResult::Success;
+
+    if (Type == JSVAL_TYPE_MAGIC) {
+        /*
+         * It's actually surprisingly complicated to reverse an array due to the
+         * orthogonality of array length and array capacity while handling
+         * leading and trailing holes correctly.  Reversing seems less likely to
+         * be a common operation than other array mass-mutation methods, so for
+         * now just take a probably-small memory hit (in the absence of too many
+         * holes in the array at its start) and ensure that the capacity is
+         * sufficient to hold all the elements in the array if it were full.
+         */
+        DenseElementResult result = obj->as<NativeObject>().ensureDenseElements(cx, length, 0);
+        if (result != DenseElementResult::Success)
+            return result;
+
+        /* Fill out the array's initialized length to its proper length. */
+        obj->as<NativeObject>().ensureDenseInitializedLength(cx, length, 0);
+    } else {
+        // Unboxed arrays can only be reversed here if their initialized length
+        // matches their actual length. Otherwise the reversal will place holes
+        // at the beginning of the array, which we don't support.
+        if (length != obj->as<UnboxedArrayObject>().initializedLength())
+            return DenseElementResult::Incomplete;
+    }
+
+    RootedValue origlo(cx), orighi(cx);
+
+    uint32_t lo = 0, hi = length - 1;
+    for (; lo < hi; lo++, hi--) {
+        origlo = GetBoxedOrUnboxedDenseElement<Type>(obj, lo);
+        orighi = GetBoxedOrUnboxedDenseElement<Type>(obj, hi);
+        SetBoxedOrUnboxedDenseElementNoTypeChange<Type>(obj, lo, orighi);
+        if (orighi.isMagic(JS_ELEMENTS_HOLE) &&
+            !SuppressDeletedProperty(cx, obj, INT_TO_JSID(lo)))
+        {
+            return DenseElementResult::Failure;
+        }
+        SetBoxedOrUnboxedDenseElementNoTypeChange<Type>(obj, hi, origlo);
+        if (origlo.isMagic(JS_ELEMENTS_HOLE) &&
+            !SuppressDeletedProperty(cx, obj, INT_TO_JSID(hi)))
+        {
+            return DenseElementResult::Failure;
+        }
+    }
+
+    return DenseElementResult::Success;
+}
+
+DefineBoxedOrUnboxedFunctor3(ArrayReverseDenseKernel,
+                             JSContext*, HandleObject, uint32_t);
+
 static bool
 array_reverse(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1291,69 +1319,19 @@ array_reverse(JSContext* cx, unsigned argc, Value* vp)
     if (!GetLengthProperty(cx, obj, &len))
         return false;
 
-    do {
-        if (!obj->is<ArrayObject>())
-            break;
-        if (ObjectMayHaveExtraIndexedProperties(obj))
-            break;
-
-        HandleArrayObject arr = obj.as<ArrayObject>();
-
-        /* An empty array or an array with no elements is already reversed. */
-        if (len == 0 || arr->getDenseCapacity() == 0) {
+    if (!ObjectMayHaveExtraIndexedProperties(obj)) {
+        ArrayReverseDenseKernelFunctor functor(cx, obj, len);
+        DenseElementResult result = CallBoxedOrUnboxedSpecialization(functor, obj);
+        if (result != DenseElementResult::Incomplete) {
+            /*
+             * Per ECMA-262, don't update the length of the array, even if the new
+             * array has trailing holes (and thus the original array began with
+             * holes).
+             */
             args.rval().setObject(*obj);
-            return true;
+            return result == DenseElementResult::Success;
         }
-
-        /*
-         * It's actually surprisingly complicated to reverse an array due to the
-         * orthogonality of array length and array capacity while handling
-         * leading and trailing holes correctly.  Reversing seems less likely to
-         * be a common operation than other array mass-mutation methods, so for
-         * now just take a probably-small memory hit (in the absence of too many
-         * holes in the array at its start) and ensure that the capacity is
-         * sufficient to hold all the elements in the array if it were full.
-         */
-        NativeObject::EnsureDenseResult result =
-            arr->ensureDenseElements(cx, len, 0);
-        if (result != NativeObject::ED_OK) {
-            if (result == NativeObject::ED_FAILED)
-                return false;
-            MOZ_ASSERT(result == NativeObject::ED_SPARSE);
-            break;
-        }
-
-        /* Fill out the array's initialized length to its proper length. */
-        arr->ensureDenseInitializedLength(cx, len, 0);
-
-        RootedValue origlo(cx), orighi(cx);
-
-        uint32_t lo = 0, hi = len - 1;
-        for (; lo < hi; lo++, hi--) {
-            origlo = arr->getDenseElement(lo);
-            orighi = arr->getDenseElement(hi);
-            arr->setDenseElement(lo, orighi);
-            if (orighi.isMagic(JS_ELEMENTS_HOLE) &&
-                !SuppressDeletedProperty(cx, arr, INT_TO_JSID(lo)))
-            {
-                return false;
-            }
-            arr->setDenseElement(hi, origlo);
-            if (origlo.isMagic(JS_ELEMENTS_HOLE) &&
-                !SuppressDeletedProperty(cx, arr, INT_TO_JSID(hi)))
-            {
-                return false;
-            }
-        }
-
-        /*
-         * Per ECMA-262, don't update the length of the array, even if the new
-         * array has trailing holes (and thus the original array began with
-         * holes).
-         */
-        args.rval().setObject(*arr);
-        return true;
-    } while (false);
+    }
 
     RootedValue lowval(cx), hival(cx);
     for (uint32_t i = 0, half = len / 2; i < half; i++) {
@@ -1648,7 +1626,8 @@ enum ComparatorMatchResult {
     Match_RightMinusLeft
 };
 
-} /* namespace anonymous */
+} // namespace
+
 
 /*
  * Specialize behavior for comparator functions with particular common bytecode
@@ -1665,7 +1644,7 @@ MatchNumericComparator(JSContext* cx, const Value& v)
         return Match_None;
 
     JSFunction* fun = &obj.as<JSFunction>();
-    if (!fun->isInterpreted())
+    if (!fun->isInterpreted() || fun->isClassConstructor())
         return Match_None;
 
     JSScript* script = fun->getOrCreateScript(cx);
@@ -1761,7 +1740,7 @@ SortLexicographically(JSContext* cx, AutoValueVector* vec, size_t len)
     Vector<StringifiedElement, 0, TempAllocPolicy> strElements(cx);
 
     /* MergeSort uses the upper half as scratch space. */
-    if (!strElements.reserve(2 * len))
+    if (!strElements.resize(2 * len))
         return false;
 
     /* Convert Values to strings. */
@@ -1773,13 +1752,9 @@ SortLexicographically(JSContext* cx, AutoValueVector* vec, size_t len)
         if (!ValueToStringBuffer(cx, (*vec)[i], sb))
             return false;
 
-        StringifiedElement el = { cursor, sb.length(), i };
-        strElements.infallibleAppend(el);
+        strElements[i] = { cursor, sb.length(), i };
         cursor = sb.length();
     }
-
-    /* Resize strElements so we can perform MergeSort. */
-    JS_ALWAYS_TRUE(strElements.resize(2 * len));
 
     /* Sort Values in vec alphabetically. */
     return MergeSortByKey(strElements.begin(), len, strElements.begin() + len,
@@ -1800,7 +1775,7 @@ SortNumerically(JSContext* cx, AutoValueVector* vec, size_t len, ComparatorMatch
     Vector<NumericElement, 0, TempAllocPolicy> numElements(cx);
 
     /* MergeSort uses the upper half as scratch space. */
-    if (!numElements.reserve(2 * len))
+    if (!numElements.resize(2 * len))
         return false;
 
     /* Convert Values to numerics. */
@@ -1812,12 +1787,8 @@ SortNumerically(JSContext* cx, AutoValueVector* vec, size_t len, ComparatorMatch
         if (!ToNumber(cx, (*vec)[i], &dv))
             return false;
 
-        NumericElement el = { dv, i };
-        numElements.infallibleAppend(el);
+        numElements[i] = { dv, i };
     }
-
-    /* Resize strElements so we can perform MergeSort. */
-    JS_ALWAYS_TRUE(numElements.resize(2 * len));
 
     /* Sort Values in vec numerically. */
     return MergeSortByKey(numElements.begin(), len, numElements.begin() + len,
@@ -1845,6 +1816,43 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
     RootedObject obj(cx, ToObject(cx, args.thisv()));
     if (!obj)
         return false;
+
+    ComparatorMatchResult comp = MatchNumericComparator(cx, fval);
+    if (comp == Match_Failure)
+        return false;
+
+    if (!fval.isNull() && comp == Match_None) {
+        /*
+         * Non-optimized user supplied comparators perform much better when
+         * called from within a self-hosted sorting function.
+         */
+        RootedAtom selfHostedSortAtom(cx, Atomize(cx, "ArraySort", 9));
+        RootedPropertyName selfHostedSortName(cx, selfHostedSortAtom->asPropertyName());
+        RootedValue selfHostedSortValue(cx);
+
+        if (!GlobalObject::getIntrinsicValue(cx, cx->global(), selfHostedSortName,
+            &selfHostedSortValue)) {
+            return false;
+        }
+
+        MOZ_ASSERT(selfHostedSortValue.isObject());
+        MOZ_ASSERT(selfHostedSortValue.toObject().is<JSFunction>());
+
+        InvokeArgs iargs(cx);
+
+        if (!iargs.init(1))
+            return false;
+
+        iargs.setCallee(selfHostedSortValue);
+        iargs.setThis(args.thisv());
+        iargs[0].set(fval);
+
+        if (!Invoke(cx, iargs))
+            return false;
+
+        args.rval().set(iargs.rval());
+        return true;
+    }
 
     uint32_t len;
     if (!GetLengthProperty(cx, obj, &len))
@@ -1946,31 +1954,17 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
                     return false;
             }
         } else {
-            ComparatorMatchResult comp = MatchNumericComparator(cx, fval);
-            if (comp == Match_Failure)
-                return false;
-
-            if (comp != Match_None) {
-                if (allInts) {
-                    JS_ALWAYS_TRUE(vec.resize(n * 2));
-                    if (!MergeSort(vec.begin(), n, vec.begin() + n, SortComparatorInt32s[comp]))
-                        return false;
-                } else {
-                    if (!SortNumerically(cx, &vec, n, comp))
-                        return false;
-                }
-            } else {
-                FastInvokeGuard fig(cx, fval);
+            if (allInts) {
                 JS_ALWAYS_TRUE(vec.resize(n * 2));
-                if (!MergeSort(vec.begin(), n, vec.begin() + n,
-                               SortComparatorFunction(cx, fval, fig)))
-                {
+                if (!MergeSort(vec.begin(), n, vec.begin() + n, SortComparatorInt32s[comp]))
                     return false;
-                }
+            } else {
+                if (!SortNumerically(cx, &vec, n, comp))
+                    return false;
             }
         }
 
-        if (!InitArrayElements(cx, obj, 0, uint32_t(n), vec.begin(), DontUpdateTypes))
+        if (!InitArrayElements(cx, obj, 0, uint32_t(n), vec.begin(), ShouldUpdateTypes::DontUpdate))
             return false;
     }
 
@@ -2026,40 +2020,33 @@ js::array_push(JSContext* cx, unsigned argc, Value* vp)
     if (!GetLengthProperty(cx, obj, &length))
         return false;
 
-    /* Fast path for native objects with dense elements. */
-    do {
-        if (!obj->isNative() || IsAnyTypedArray(obj.get()))
-            break;
+    if (!ObjectMayHaveExtraIndexedProperties(obj)) {
+        DenseElementResult result =
+            SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, length,
+                                                      args.array(), args.length());
+        if (result != DenseElementResult::Incomplete) {
+            if (result == DenseElementResult::Failure)
+                return false;
 
-        if (obj->is<ArrayObject>() && !obj->as<ArrayObject>().lengthIsWritable())
-            break;
-
-        if (ObjectMayHaveExtraIndexedProperties(obj))
-            break;
-
-        uint32_t argCount = args.length();
-        NativeObject::EnsureDenseResult result =
-            obj->as<NativeObject>().ensureDenseElements(cx, length, argCount);
-        if (result == NativeObject::ED_FAILED)
-            return false;
-
-        if (result == NativeObject::ED_OK) {
-            for (uint32_t i = 0, index = length; i < argCount; index++, i++)
-                obj->as<NativeObject>().setDenseElementWithType(cx, index, args[i]);
-            uint32_t newlength = length + argCount;
+            uint32_t newlength = length + args.length();
             args.rval().setNumber(newlength);
-            if (obj->is<ArrayObject>()) {
-                obj->as<ArrayObject>().setLengthInt32(newlength);
-                return true;
-            }
-            return SetLengthProperty(cx, obj, newlength);
-        }
 
-        MOZ_ASSERT(result == NativeObject::ED_SPARSE);
-    } while (false);
+            // SetOrExtendAnyBoxedOrUnboxedDenseElements takes care of updating the
+            // length for boxed and unboxed arrays. Handle updates to the length of
+            // non-arrays here.
+            bool isArray;
+            if (!IsArray(cx, obj, &isArray))
+                return false;
+
+            if (!isArray)
+                return SetLengthProperty(cx, obj, newlength);
+
+            return true;
+        }
+    }
 
     /* Steps 4-5. */
-    if (!InitArrayElements(cx, obj, length, args.length(), args.array(), UpdateTypes))
+    if (!InitArrayElements(cx, obj, length, args.length(), args.array()))
         return false;
 
     /* Steps 6-7. */
@@ -2106,19 +2093,66 @@ js::array_pop(JSContext* cx, unsigned argc, Value* vp)
     return SetLengthProperty(cx, obj, index);
 }
 
-void
-js::ArrayShiftMoveElements(ArrayObject* obj)
+template <JSValueType Type>
+static inline DenseElementResult
+ShiftMoveBoxedOrUnboxedDenseElements(JSObject* obj)
 {
-    MOZ_ASSERT(obj->lengthIsWritable());
+    MOZ_ASSERT(HasBoxedOrUnboxedDenseElements<Type>(obj));
 
     /*
      * At this point the length and initialized length have already been
      * decremented and the result fetched, so just shift the array elements
      * themselves.
      */
-    uint32_t initlen = obj->getDenseInitializedLength();
-    obj->moveDenseElementsNoPreBarrier(0, 1, initlen);
+    size_t initlen = GetBoxedOrUnboxedInitializedLength<Type>(obj);
+    if (Type == JSVAL_TYPE_MAGIC) {
+        obj->as<NativeObject>().moveDenseElementsNoPreBarrier(0, 1, initlen);
+    } else {
+        uint8_t* data = obj->as<UnboxedArrayObject>().elements();
+        size_t elementSize = UnboxedTypeSize(Type);
+        memmove(data, data + elementSize, initlen * elementSize);
+    }
+
+    return DenseElementResult::Success;
 }
+
+DefineBoxedOrUnboxedFunctor1(ShiftMoveBoxedOrUnboxedDenseElements, JSObject*);
+
+void
+js::ArrayShiftMoveElements(JSObject* obj)
+{
+    MOZ_ASSERT_IF(obj->is<ArrayObject>(), obj->as<ArrayObject>().lengthIsWritable());
+
+    ShiftMoveBoxedOrUnboxedDenseElementsFunctor functor(obj);
+    JS_ALWAYS_TRUE(CallBoxedOrUnboxedSpecialization(functor, obj) == DenseElementResult::Success);
+}
+
+template <JSValueType Type>
+DenseElementResult
+ArrayShiftDenseKernel(JSContext* cx, JSObject* obj, Value* rval)
+{
+    if (ObjectMayHaveExtraIndexedProperties(obj))
+        return DenseElementResult::Incomplete;
+
+    size_t initlen = GetBoxedOrUnboxedInitializedLength<Type>(obj);
+    if (initlen == 0)
+        return DenseElementResult::Incomplete;
+
+    *rval = GetBoxedOrUnboxedDenseElement<Type>(obj, 0);
+    if (rval->isMagic(JS_ELEMENTS_HOLE))
+        rval->setUndefined();
+
+    DenseElementResult result = MoveBoxedOrUnboxedDenseElements<Type>(cx, obj, 0, 1, initlen - 1);
+    MOZ_ASSERT(result != DenseElementResult::Incomplete);
+    if (result == DenseElementResult::Failure)
+        return DenseElementResult::Failure;
+
+    SetBoxedOrUnboxedInitializedLength<Type>(cx, obj, initlen - 1);
+    return DenseElementResult::Success;
+}
+
+DefineBoxedOrUnboxedFunctor3(ArrayShiftDenseKernel,
+                             JSContext*, JSObject*, Value*);
 
 /* ES5 15.4.4.9 */
 bool
@@ -2150,27 +2184,19 @@ js::array_shift(JSContext* cx, unsigned argc, Value* vp)
     uint32_t newlen = len - 1;
 
     /* Fast paths. */
-    if (obj->is<ArrayObject>()) {
-        ArrayObject* aobj = &obj->as<ArrayObject>();
-        if (aobj->getDenseInitializedLength() > 0 &&
-            newlen < aobj->getDenseCapacity() &&
-            !ObjectMayHaveExtraIndexedProperties(aobj))
-        {
-            args.rval().set(aobj->getDenseElement(0));
-            if (args.rval().isMagic(JS_ELEMENTS_HOLE))
-                args.rval().setUndefined();
+    ArrayShiftDenseKernelFunctor functor(cx, obj, args.rval().address());
+    DenseElementResult result = CallBoxedOrUnboxedSpecialization(functor, obj);
+    if (result != DenseElementResult::Incomplete) {
+        if (result == DenseElementResult::Failure)
+            return false;
 
-            if (!aobj->maybeCopyElementsForWrite(cx))
-                return false;
+        if (!SetLengthProperty(cx, obj, newlen))
+            return false;
 
-            aobj->moveDenseElements(0, 1, aobj->getDenseInitializedLength() - 1);
-            aobj->setDenseInitializedLength(aobj->getDenseInitializedLength() - 1);
-
-            if (!SetLengthProperty(cx, obj, newlen))
-                return false;
-
-            return SuppressDeletedProperty(cx, obj, INT_TO_JSID(newlen));
-        }
+        RootedId id(cx);
+        if (!IndexToId(cx, newlen, &id))
+            return false;
+        return SuppressDeletedProperty(cx, obj, id);
     }
 
     /* Steps 5, 10. */
@@ -2218,6 +2244,9 @@ js::array_unshift(JSContext* cx, unsigned argc, Value* vp)
     if (args.length() > 0) {
         /* Slide up the array to make room for all args at the bottom. */
         if (length > 0) {
+            // Only include a fast path for boxed arrays. Unboxed arrays can'nt
+            // be optimized here because unshifting temporarily places holes at
+            // the start of the array.
             bool optimized = false;
             do {
                 if (!obj->is<ArrayObject>())
@@ -2227,12 +2256,11 @@ js::array_unshift(JSContext* cx, unsigned argc, Value* vp)
                 ArrayObject* aobj = &obj->as<ArrayObject>();
                 if (!aobj->lengthIsWritable())
                     break;
-                NativeObject::EnsureDenseResult result =
-                    aobj->ensureDenseElements(cx, length, args.length());
-                if (result != NativeObject::ED_OK) {
-                    if (result == NativeObject::ED_FAILED)
+                DenseElementResult result = aobj->ensureDenseElements(cx, length, args.length());
+                if (result != DenseElementResult::Success) {
+                    if (result == DenseElementResult::Failure)
                         return false;
-                    MOZ_ASSERT(result == NativeObject::ED_SPARSE);
+                    MOZ_ASSERT(result == DenseElementResult::Incomplete);
                     break;
                 }
                 aobj->moveDenseElements(args.length(), 0, length);
@@ -2264,7 +2292,7 @@ js::array_unshift(JSContext* cx, unsigned argc, Value* vp)
         }
 
         /* Copy from args to the bottom of the array. */
-        if (!InitArrayElements(cx, obj, 0, args.length(), args.array(), UpdateTypes))
+        if (!InitArrayElements(cx, obj, 0, args.length(), args.array()))
             return false;
 
         newlen += args.length();
@@ -2277,30 +2305,11 @@ js::array_unshift(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-static inline void
-TryReuseArrayGroup(JSObject* obj, ArrayObject* narr)
-{
-    /*
-     * Try to change the group of a newly created array narr to the same group
-     * as obj. This can only be performed if the original object is an array
-     * and has the same prototype.
-     */
-    MOZ_ASSERT(ObjectGroup::hasDefaultNewGroup(narr->getProto(), &ArrayObject::class_, narr->group()));
-
-    if (obj->is<ArrayObject>() &&
-        !obj->isSingleton() &&
-        !obj->group()->hasUnanalyzedPreliminaryObjects() &&
-        obj->getProto() == narr->getProto())
-    {
-        narr->setGroup(obj->group());
-    }
-}
-
 /*
- * Returns true if this is a dense array whose |count| properties starting from
- * |startingIndex| may be accessed (get, set, delete) directly through its
- * contiguous vector of elements without fear of getters, setters, etc. along
- * the prototype chain, or of enumerators requiring notification of
+ * Returns true if this is a dense or unboxed array whose |count| properties
+ * starting from |startingIndex| may be accessed (get, set, delete) directly
+ * through its contiguous vector of elements without fear of getters, setters,
+ * etc. along the prototype chain, or of enumerators requiring notification of
  * modifications.
  */
 static inline bool
@@ -2311,24 +2320,26 @@ CanOptimizeForDenseStorage(HandleObject arr, uint32_t startingIndex, uint32_t co
         return false;
 
     /* There's no optimizing possible if it's not an array. */
-    if (!arr->is<ArrayObject>())
+    if (!arr->is<ArrayObject>() && !arr->is<UnboxedArrayObject>())
         return false;
 
     /*
      * Don't optimize if the array might be in the midst of iteration.  We
      * rely on this to be able to safely move dense array elements around with
-     * just a memmove (see JSObject::moveDenseArrayElements), without worrying
+     * just a memmove (see NativeObject::moveDenseArrayElements), without worrying
      * about updating any in-progress enumerators for properties implicitly
      * deleted if a hole is moved from one location to another location not yet
      * visited.  See bug 690622.
-     *
-     * Another potential wrinkle: what if the enumeration is happening on an
-     * object which merely has |arr| on its prototype chain?  It turns out this
-     * case can't happen, because any dense array used as the prototype of
-     * another object is first slowified, for type inference's sake.
      */
     ObjectGroup* arrGroup = arr->getGroup(cx);
     if (MOZ_UNLIKELY(!arrGroup || arrGroup->hasAllFlags(OBJECT_FLAG_ITERATED)))
+        return false;
+
+    /*
+     * Another potential wrinkle: what if the enumeration is happening on an
+     * object which merely has |arr| on its prototype chain?
+     */
+    if (arr->isDelegate())
         return false;
 
     /*
@@ -2337,12 +2348,12 @@ CanOptimizeForDenseStorage(HandleObject arr, uint32_t startingIndex, uint32_t co
      * is subsumed by the initializedLength comparison.)
      */
     return !ObjectMayHaveExtraIndexedProperties(arr) &&
-           startingIndex + count <= arr->as<ArrayObject>().getDenseInitializedLength();
+           startingIndex + count <= GetAnyBoxedOrUnboxedInitializedLength(arr);
 }
 
 /* ES5 15.4.4.12. */
-bool
-js::array_splice(JSContext* cx, unsigned argc, Value* vp)
+static bool
+array_splice(JSContext* cx, unsigned argc, Value* vp)
 {
     return array_splice_impl(cx, argc, vp, true);
 }
@@ -2393,19 +2404,20 @@ js::array_splice_impl(JSContext* cx, unsigned argc, Value* vp, bool returnValueI
     MOZ_ASSERT(len - actualStart >= actualDeleteCount);
 
     /* Steps 2, 8-9. */
-    Rooted<ArrayObject*> arr(cx);
+    RootedObject arr(cx);
     if (CanOptimizeForDenseStorage(obj, actualStart, actualDeleteCount, cx)) {
         if (returnValueIsUsed) {
-            arr = NewDenseCopiedArray(cx, actualDeleteCount, obj.as<ArrayObject>(), actualStart);
+            arr = NewFullyAllocatedArrayTryReuseGroup(cx, obj, actualDeleteCount);
             if (!arr)
                 return false;
-            TryReuseArrayGroup(obj, arr);
+            DebugOnly<DenseElementResult> result =
+                CopyAnyBoxedOrUnboxedDenseElements(cx, arr, obj, 0, actualStart, actualDeleteCount);
+            MOZ_ASSERT(result.value == DenseElementResult::Success);
         }
     } else {
-        arr = NewDenseFullyAllocatedArray(cx, actualDeleteCount);
+        arr = NewFullyAllocatedArrayTryReuseGroup(cx, obj, actualDeleteCount);
         if (!arr)
             return false;
-        TryReuseArrayGroup(obj, arr);
 
         RootedValue fromValue(cx);
         for (uint32_t k = 0; k < actualDeleteCount; k++) {
@@ -2429,22 +2441,16 @@ js::array_splice_impl(JSContext* cx, unsigned argc, Value* vp, bool returnValueI
         uint32_t finalLength = len - actualDeleteCount + itemCount;
 
         if (CanOptimizeForDenseStorage(obj, 0, len, cx)) {
-            ArrayObject* aobj = &obj->as<ArrayObject>();
-
-            if (!aobj->maybeCopyElementsForWrite(cx))
+            /* Steps 12(a)-(b). */
+            DenseElementResult result =
+                MoveAnyBoxedOrUnboxedDenseElements(cx, obj, targetIndex, sourceIndex,
+                                                   len - sourceIndex);
+            MOZ_ASSERT(result != DenseElementResult::Incomplete);
+            if (result == DenseElementResult::Failure)
                 return false;
 
-            /* Steps 12(a)-(b). */
-            aobj->moveDenseElements(targetIndex, sourceIndex, len - sourceIndex);
-
-            /*
-             * Update the initialized length. Do so before shrinking so that we
-             * can apply the write barrier to the old slots.
-             */
-            aobj->setDenseInitializedLength(finalLength);
-
             /* Steps 12(c)-(d). */
-            aobj->shrinkElements(cx, finalLength);
+            SetAnyBoxedOrUnboxedInitializedLength(cx, obj, finalLength);
         } else {
             /*
              * This is all very slow if the length is very large. We don't yet
@@ -2507,21 +2513,24 @@ js::array_splice_impl(JSContext* cx, unsigned argc, Value* vp, bool returnValueI
         if (obj->is<ArrayObject>()) {
             Rooted<ArrayObject*> arr(cx, &obj->as<ArrayObject>());
             if (arr->lengthIsWritable()) {
-                NativeObject::EnsureDenseResult res =
+                DenseElementResult result =
                     arr->ensureDenseElements(cx, arr->length(), itemCount - actualDeleteCount);
-                if (res == NativeObject::ED_FAILED)
+                if (result == DenseElementResult::Failure)
                     return false;
             }
         }
 
         if (CanOptimizeForDenseStorage(obj, len, itemCount - actualDeleteCount, cx)) {
-            ArrayObject* aobj = &obj->as<ArrayObject>();
-            if (!aobj->maybeCopyElementsForWrite(cx))
+            DenseElementResult result =
+                MoveAnyBoxedOrUnboxedDenseElements(cx, obj, actualStart + itemCount,
+                                                   actualStart + actualDeleteCount,
+                                                   len - (actualStart + actualDeleteCount));
+            MOZ_ASSERT(result != DenseElementResult::Incomplete);
+            if (result == DenseElementResult::Failure)
                 return false;
-            aobj->moveDenseElements(actualStart + itemCount,
-                                    actualStart + actualDeleteCount,
-                                    len - (actualStart + actualDeleteCount));
-            aobj->setDenseInitializedLength(len + itemCount - actualDeleteCount);
+
+            /* Steps 12(c)-(d). */
+            SetAnyBoxedOrUnboxedInitializedLength(cx, obj, len + itemCount - actualDeleteCount);
         } else {
             RootedValue fromValue(cx);
             for (double k = len - actualDeleteCount; k > actualStart; k--) {
@@ -2567,29 +2576,43 @@ js::array_splice_impl(JSContext* cx, unsigned argc, Value* vp, bool returnValueI
     return true;
 }
 
-bool
-js::array_concat_dense(JSContext* cx, Handle<ArrayObject*> arr1, Handle<ArrayObject*> arr2,
-                       Handle<ArrayObject*> result)
+template <JSValueType TypeOne, JSValueType TypeTwo>
+DenseElementResult
+ArrayConcatDenseKernel(JSContext* cx, JSObject* obj1, JSObject* obj2, JSObject* result)
 {
-    uint32_t initlen1 = arr1->getDenseInitializedLength();
-    MOZ_ASSERT(initlen1 == arr1->length());
+    uint32_t initlen1 = GetBoxedOrUnboxedInitializedLength<TypeOne>(obj1);
+    MOZ_ASSERT(initlen1 == GetAnyBoxedOrUnboxedArrayLength(obj1));
 
-    uint32_t initlen2 = arr2->getDenseInitializedLength();
-    MOZ_ASSERT(initlen2 == arr2->length());
+    uint32_t initlen2 = GetBoxedOrUnboxedInitializedLength<TypeTwo>(obj2);
+    MOZ_ASSERT(initlen2 == GetAnyBoxedOrUnboxedArrayLength(obj2));
 
     /* No overflow here due to nelements limit. */
     uint32_t len = initlen1 + initlen2;
 
-    if (!result->ensureElements(cx, len))
-        return false;
+    MOZ_ASSERT(GetBoxedOrUnboxedInitializedLength<TypeOne>(result) == 0);
 
-    MOZ_ASSERT(!result->getDenseInitializedLength());
-    result->setDenseInitializedLength(len);
+    DenseElementResult rv = EnsureBoxedOrUnboxedDenseElements<TypeOne>(cx, result, len);
+    if (rv != DenseElementResult::Success)
+        return rv;
 
-    result->initDenseElements(0, arr1->getDenseElements(), initlen1);
-    result->initDenseElements(initlen1, arr2->getDenseElements(), initlen2);
-    result->setLengthInt32(len);
-    return true;
+    CopyBoxedOrUnboxedDenseElements<TypeOne, TypeOne>(cx, result, obj1, 0, 0, initlen1);
+    CopyBoxedOrUnboxedDenseElements<TypeOne, TypeTwo>(cx, result, obj2, initlen1, 0, initlen2);
+
+    SetAnyBoxedOrUnboxedArrayLength(cx, result, len);
+    return DenseElementResult::Success;
+}
+
+DefineBoxedOrUnboxedFunctorPair4(ArrayConcatDenseKernel,
+                                 JSContext*, JSObject*, JSObject*, JSObject*);
+
+bool
+js::array_concat_dense(JSContext* cx, HandleObject obj1, HandleObject obj2,
+                       HandleObject result)
+{
+    ArrayConcatDenseKernelFunctor functor(cx, obj1, obj2, result);
+    DenseElementResult rv = CallBoxedOrUnboxedSpecialization(functor, obj1, obj2);
+    MOZ_ASSERT(rv != DenseElementResult::Incomplete);
+    return rv == DenseElementResult::Success;
 }
 
 /*
@@ -2608,23 +2631,81 @@ js::array_concat(JSContext* cx, unsigned argc, Value* vp)
     if (!aobj)
         return false;
 
-    Rooted<ArrayObject*> narr(cx);
+    RootedObject narr(cx);
     uint32_t length;
-    if (aobj->is<ArrayObject>() && !aobj->isIndexed()) {
-        length = aobj->as<ArrayObject>().length();
-        uint32_t initlen = aobj->as<ArrayObject>().getDenseInitializedLength();
-        narr = NewDenseCopiedArray(cx, initlen, aobj.as<ArrayObject>(), 0);
+    bool isArray;
+    if (!IsArray(cx, aobj, &isArray))
+        return false;
+    if (isArray && !ObjectMayHaveExtraIndexedProperties(aobj)) {
+        if (!GetLengthProperty(cx, aobj, &length))
+            return false;
+
+        size_t initlen = GetAnyBoxedOrUnboxedInitializedLength(aobj);
+        narr = NewFullyAllocatedArrayTryReuseGroup(cx, aobj, initlen);
         if (!narr)
             return false;
-        TryReuseArrayGroup(aobj, narr);
-        narr->setLength(cx, length);
+        CopyAnyBoxedOrUnboxedDenseElements(cx, narr, aobj, 0, 0, initlen);
+        SetAnyBoxedOrUnboxedArrayLength(cx, narr, length);
+
         args.rval().setObject(*narr);
         if (argc == 0)
             return true;
         argc--;
         p++;
+
+        if (length == initlen) {
+            while (argc) {
+                HandleValue v = HandleValue::fromMarkedLocation(p);
+                if (!v.isObject())
+                    break;
+                RootedObject obj(cx, &v.toObject());
+
+                // This should be IsConcatSpreadable
+                bool isArray;
+                if (!IsArray(cx, obj, &isArray))
+                    return false;
+                if (!isArray || ObjectMayHaveExtraIndexedProperties(obj))
+                    break;
+
+                uint32_t argLength;
+                if (!GetLengthProperty(cx, obj, &argLength))
+                    return false;
+
+                initlen = GetAnyBoxedOrUnboxedInitializedLength(obj);
+                if (argLength != initlen)
+                    break;
+
+                DenseElementResult result =
+                    EnsureAnyBoxedOrUnboxedDenseElements(cx, narr, length + argLength);
+                if (result == DenseElementResult::Failure)
+                    return false;
+                if (result == DenseElementResult::Incomplete)
+                    break;
+
+                SetAnyBoxedOrUnboxedInitializedLength(cx, narr, length + argLength);
+
+                bool success = true;
+                for (size_t i = 0; i < initlen; i++) {
+                    Value v = GetAnyBoxedOrUnboxedDenseElement(obj, i);
+                    if (!InitAnyBoxedOrUnboxedDenseElement(cx, narr, length + i, v)) {
+                        success = false;
+                        break;
+                    }
+                }
+                if (!success) {
+                    SetAnyBoxedOrUnboxedInitializedLength(cx, narr, length);
+                    break;
+                }
+
+                length += argLength;
+                SetAnyBoxedOrUnboxedArrayLength(cx, narr, length);
+
+                argc--;
+                p++;
+            }
+        }
     } else {
-        narr = NewDenseEmptyArray(cx);
+        narr = NewFullyAllocatedArrayTryReuseGroup(cx, aobj, 0);
         if (!narr)
             return false;
         args.rval().setObject(*narr);
@@ -2639,7 +2720,10 @@ js::array_concat(JSContext* cx, unsigned argc, Value* vp)
         if (v.isObject()) {
             RootedObject obj(cx, &v.toObject());
             // This should be IsConcatSpreadable
-            if (IsArray(obj, cx)) {
+            bool isArray;
+            if (!IsArray(cx, obj, &isArray))
+                return false;
+            if (isArray) {
                 uint32_t alength;
                 if (!GetLengthProperty(cx, obj, &alength))
                     return false;
@@ -2709,8 +2793,8 @@ GetIndexedPropertiesInRange(JSContext* cx, HandleObject obj, uint32_t begin, uin
         }
 
         // Append typed array elements.
-        if (IsAnyTypedArray(pobj)) {
-            uint32_t len = AnyTypedArrayLength(pobj);
+        if (pobj->is<TypedArrayObject>()) {
+            uint32_t len = pobj->as<TypedArrayObject>().length();
             for (uint32_t i = begin; i < len && i < end; i++) {
                 if (!indexes.append(i))
                     return false;
@@ -2813,6 +2897,20 @@ SliceSparse(JSContext* cx, HandleObject obj, uint32_t begin, uint32_t end, Handl
     return true;
 }
 
+template <typename T>
+static inline uint32_t
+NormalizeSliceTerm(T value, uint32_t length)
+{
+    if (value < 0) {
+        value += length;
+        if (value < 0)
+            return 0;
+    } else if (double(value) > double(length)) {
+        return length;
+    }
+    return uint32_t(value);
+}
+
 bool
 js::array_slice(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -2832,74 +2930,49 @@ js::array_slice(JSContext* cx, unsigned argc, Value* vp)
         double d;
         if (!ToInteger(cx, args[0], &d))
             return false;
-        if (d < 0) {
-            d += length;
-            if (d < 0)
-                d = 0;
-        } else if (d > length) {
-            d = length;
-        }
-        begin = (uint32_t)d;
+        begin = NormalizeSliceTerm(d, length);
 
         if (args.hasDefined(1)) {
             if (!ToInteger(cx, args[1], &d))
                 return false;
-            if (d < 0) {
-                d += length;
-                if (d < 0)
-                    d = 0;
-            } else if (d > length) {
-                d = length;
-            }
-            end = (uint32_t)d;
+            end = NormalizeSliceTerm(d, length);
         }
     }
 
     if (begin > end)
         begin = end;
 
-    Rooted<ArrayObject*> narr(cx);
+    if (!ObjectMayHaveExtraIndexedProperties(obj)) {
+        size_t initlen = GetAnyBoxedOrUnboxedInitializedLength(obj);
+        size_t count = 0;
+        if (initlen > begin)
+            count = Min<size_t>(initlen - begin, end - begin);
 
-    if (obj->is<ArrayObject>() && !ObjectMayHaveExtraIndexedProperties(obj)) {
-        narr = NewDenseFullyAllocatedArray(cx, end - begin);
+        RootedObject narr(cx, NewFullyAllocatedArrayTryReuseGroup(cx, obj, count));
         if (!narr)
             return false;
-        TryReuseArrayGroup(obj, narr);
+        SetAnyBoxedOrUnboxedArrayLength(cx, narr, end - begin);
 
-        ArrayObject* aobj = &obj->as<ArrayObject>();
-        if (aobj->getDenseInitializedLength() > begin) {
-            uint32_t numSourceElements = aobj->getDenseInitializedLength() - begin;
-            uint32_t initLength = Min(numSourceElements, end - begin);
-            narr->setDenseInitializedLength(initLength);
-            narr->initDenseElements(0, &aobj->getDenseElement(begin), initLength);
+        if (count) {
+            DebugOnly<DenseElementResult> result =
+                CopyAnyBoxedOrUnboxedDenseElements(cx, narr, obj, 0, begin, count);
+            MOZ_ASSERT(result.value == DenseElementResult::Success);
         }
         args.rval().setObject(*narr);
         return true;
     }
 
-    narr = NewDensePartlyAllocatedArray(cx, end - begin);
+    RootedObject narr(cx, NewPartlyAllocatedArrayTryReuseGroup(cx, obj, end - begin));
     if (!narr)
         return false;
-    TryReuseArrayGroup(obj, narr);
 
     if (js::GetElementsOp op = obj->getOps()->getElements) {
-        // Ensure that we have dense elements, so that ElementAdder::append can
-        // use setDenseElementWithType.
-        NativeObject::EnsureDenseResult result = narr->ensureDenseElements(cx, 0, end - begin);
-        if (result == NativeObject::ED_FAILED)
-             return false;
+        ElementAdder adder(cx, narr, end - begin, ElementAdder::CheckHasElemPreserveHoles);
+        if (!op(cx, obj, begin, end, &adder))
+            return false;
 
-        if (result == NativeObject::ED_OK) {
-            ElementAdder adder(cx, narr, end - begin, ElementAdder::CheckHasElemPreserveHoles);
-            if (!op(cx, obj, begin, end, &adder))
-                return false;
-
-            args.rval().setObject(*narr);
-            return true;
-        }
-
-        // Fallthrough
-        MOZ_ASSERT(result == NativeObject::ED_SPARSE);
+        args.rval().setObject(*narr);
+        return true;
     }
 
     if (obj->isNative() && obj->isIndexed() && end - begin > 1000) {
@@ -2914,88 +2987,56 @@ js::array_slice(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-/* ES5 15.4.4.20. */
-static bool
-array_filter(JSContext* cx, unsigned argc, Value* vp)
+template <JSValueType Type>
+DenseElementResult
+ArraySliceDenseKernel(JSContext* cx, JSObject* obj, int32_t beginArg, int32_t endArg, JSObject* result)
 {
-    CallArgs args = CallArgsFromVp(argc, vp);
+    int32_t length = GetAnyBoxedOrUnboxedArrayLength(obj);
 
-    /* Step 1. */
-    RootedObject obj(cx, ToObject(cx, args.thisv()));
-    if (!obj)
-        return false;
+    uint32_t begin = NormalizeSliceTerm(beginArg, length);
+    uint32_t end = NormalizeSliceTerm(endArg, length);
 
-    /* Step 2-3. */
-    uint32_t len;
-    if (!GetLengthProperty(cx, obj, &len))
-        return false;
+    if (begin > end)
+        begin = end;
 
-    /* Step 4. */
-    if (args.length() == 0) {
-        ReportMissingArg(cx, args.calleev(), 0);
-        return false;
-    }
-    RootedObject callable(cx, ValueToCallable(cx, args[0], args.length() - 1));
-    if (!callable)
-        return false;
-
-    /* Step 5. */
-    RootedValue thisv(cx, args.length() >= 2 ? args[1] : UndefinedValue());
-
-    /* Step 6. */
-    RootedObject arr(cx, NewDenseFullyAllocatedArray(cx, 0));
-    if (!arr)
-        return false;
-    ObjectGroup* newGroup = ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array);
-    if (!newGroup)
-        return false;
-    arr->setGroup(newGroup);
-
-    /* Step 7. */
-    uint32_t k = 0;
-
-    /* Step 8. */
-    uint32_t to = 0;
-
-    /* Step 9. */
-    FastInvokeGuard fig(cx, ObjectValue(*callable));
-    InvokeArgs& args2 = fig.args();
-    RootedValue kValue(cx);
-    while (k < len) {
-        if (!CheckForInterrupt(cx))
-            return false;
-
-        /* Step a, b, and c.i. */
-        bool kNotPresent;
-        if (!GetElement(cx, obj, k, &kNotPresent, &kValue))
-            return false;
-
-        /* Step c.ii-iii. */
-        if (!kNotPresent) {
-            if (!args2.init(3))
-                return false;
-            args2.setCallee(ObjectValue(*callable));
-            args2.setThis(thisv);
-            args2[0].set(kValue);
-            args2[1].setNumber(k);
-            args2[2].setObject(*obj);
-            if (!fig.invoke(cx))
-                return false;
-
-            if (ToBoolean(args2.rval())) {
-                if (!SetArrayElement(cx, arr, to, kValue))
-                    return false;
-                to++;
-            }
+    size_t initlen = GetBoxedOrUnboxedInitializedLength<Type>(obj);
+    if (initlen > begin) {
+        size_t count = Min<size_t>(initlen - begin, end - begin);
+        if (count) {
+            DenseElementResult rv = EnsureBoxedOrUnboxedDenseElements<Type>(cx, result, count);
+            if (rv != DenseElementResult::Success)
+                return rv;
+            CopyBoxedOrUnboxedDenseElements<Type, Type>(cx, result, obj, 0, begin, count);
         }
-
-        /* Step d. */
-        k++;
     }
 
-    /* Step 10. */
-    args.rval().setObject(*arr);
-    return true;
+    SetAnyBoxedOrUnboxedArrayLength(cx, result, end - begin);
+    return DenseElementResult::Success;
+}
+
+DefineBoxedOrUnboxedFunctor5(ArraySliceDenseKernel,
+                             JSContext*, JSObject*, int32_t, int32_t, JSObject*);
+
+JSObject*
+js::array_slice_dense(JSContext* cx, HandleObject obj, int32_t begin, int32_t end,
+                      HandleObject result)
+{
+    if (result) {
+        ArraySliceDenseKernelFunctor functor(cx, obj, begin, end, result);
+        DenseElementResult rv = CallBoxedOrUnboxedSpecialization(functor, result);
+        MOZ_ASSERT(rv != DenseElementResult::Incomplete);
+        return rv == DenseElementResult::Success ? result : nullptr;
+    }
+
+    // Slower path if the JIT wasn't able to allocate an object inline.
+    JS::AutoValueArray<4> argv(cx);
+    argv[0].setUndefined();
+    argv[1].setObject(*obj);
+    argv[2].setInt32(begin);
+    argv[3].setInt32(end);
+    if (!array_slice(cx, 2, argv.begin()))
+        return nullptr;
+    return &argv[0].toObject();
 }
 
 static bool
@@ -3005,7 +3046,8 @@ array_isArray(JSContext* cx, unsigned argc, Value* vp)
     bool isArray = false;
     if (args.get(0).isObject()) {
         RootedObject obj(cx, &args[0].toObject());
-        isArray = IsArray(obj, cx);
+        if (!IsArray(cx, obj, &isArray))
+            return false;
     }
     args.rval().setBoolean(isArray);
     return true;
@@ -3024,16 +3066,12 @@ IsArrayConstructor(const Value& v)
 }
 
 static bool
-ArrayFromCallArgs(JSContext* cx, HandleObjectGroup group, CallArgs& args)
+ArrayFromCallArgs(JSContext* cx, CallArgs& args, HandleObject proto = nullptr)
 {
-    if (!InitArrayTypes(cx, group, nullptr, args.array(), args.length()))
-        return false;
-    JSObject* obj = (args.length() == 0)
-        ? NewDenseEmptyArray(cx)
-        : NewDenseCopiedArray(cx, args.length(), args.array());
+    JSObject* obj = NewCopiedArrayForCallingAllocationSite(cx, args.array(), args.length(), proto);
     if (!obj)
         return false;
-    obj->setGroup(group);
+
     args.rval().setObject(*obj);
     return true;
 }
@@ -3046,22 +3084,22 @@ array_of(JSContext* cx, unsigned argc, Value* vp)
     if (IsArrayConstructor(args.thisv()) || !IsConstructor(args.thisv())) {
         // IsArrayConstructor(this) will usually be true in practice. This is
         // the most common path.
-        RootedObjectGroup group(cx, ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array));
-        if (!group)
-            return false;
-        return ArrayFromCallArgs(cx, group, args);
+        return ArrayFromCallArgs(cx, args);
     }
 
     // Step 4.
     RootedObject obj(cx);
     {
+        ConstructArgs cargs(cx);
+        if (!cargs.init(1))
+            return false;
+        cargs[0].setNumber(args.length());
+
         RootedValue v(cx);
-        Value argv[1] = {NumberValue(args.length())};
-        if (!InvokeConstructor(cx, args.thisv(), 1, argv, &v))
+        if (!Construct(cx, args.thisv(), cargs, args.thisv(), &v))
             return false;
-        obj = ToObject(cx, v);
-        if (!obj)
-            return false;
+
+        obj = &v.toObject();
     }
 
     // Step 8.
@@ -3085,30 +3123,30 @@ static const JSFunctionSpec array_methods[] = {
 #if JS_HAS_TOSOURCE
     JS_FN(js_toSource_str,      array_toSource,     0,0),
 #endif
-    JS_FN(js_toString_str,      array_toString,     0,0),
-    JS_FN(js_toLocaleString_str,array_toLocaleString,0,0),
+    JS_SELF_HOSTED_FN(js_toString_str, "ArrayToString",      0,0),
+    JS_FN(js_toLocaleString_str,       array_toLocaleString, 0,0),
 
     /* Perl-ish methods. */
-    JS_FN("join",               array_join,         1,JSFUN_GENERIC_NATIVE),
+    JS_INLINABLE_FN("join",     array_join,         1,JSFUN_GENERIC_NATIVE, ArrayJoin),
     JS_FN("reverse",            array_reverse,      0,JSFUN_GENERIC_NATIVE),
     JS_FN("sort",               array_sort,         1,JSFUN_GENERIC_NATIVE),
-    JS_FN("push",               array_push,         1,JSFUN_GENERIC_NATIVE),
-    JS_FN("pop",                array_pop,          0,JSFUN_GENERIC_NATIVE),
-    JS_FN("shift",              array_shift,        0,JSFUN_GENERIC_NATIVE),
+    JS_INLINABLE_FN("push",     array_push,         1,JSFUN_GENERIC_NATIVE, ArrayPush),
+    JS_INLINABLE_FN("pop",      array_pop,          0,JSFUN_GENERIC_NATIVE, ArrayPop),
+    JS_INLINABLE_FN("shift",    array_shift,        0,JSFUN_GENERIC_NATIVE, ArrayShift),
     JS_FN("unshift",            array_unshift,      1,JSFUN_GENERIC_NATIVE),
-    JS_FN("splice",             array_splice,       2,JSFUN_GENERIC_NATIVE),
+    JS_INLINABLE_FN("splice",   array_splice,       2,JSFUN_GENERIC_NATIVE, ArraySplice),
 
     /* Pythonic sequence methods. */
-    JS_FN("concat",             array_concat,       1,JSFUN_GENERIC_NATIVE),
-    JS_FN("slice",              array_slice,        2,JSFUN_GENERIC_NATIVE),
+    JS_INLINABLE_FN("concat",   array_concat,       1,JSFUN_GENERIC_NATIVE, ArrayConcat),
+    JS_INLINABLE_FN("slice",    array_slice,        2,JSFUN_GENERIC_NATIVE, ArraySlice),
 
     JS_SELF_HOSTED_FN("lastIndexOf", "ArrayLastIndexOf", 1,0),
     JS_SELF_HOSTED_FN("indexOf",     "ArrayIndexOf",     1,0),
     JS_SELF_HOSTED_FN("forEach",     "ArrayForEach",     1,0),
     JS_SELF_HOSTED_FN("map",         "ArrayMap",         1,0),
+    JS_SELF_HOSTED_FN("filter",      "ArrayFilter",      1,0),
     JS_SELF_HOSTED_FN("reduce",      "ArrayReduce",      1,0),
     JS_SELF_HOSTED_FN("reduceRight", "ArrayReduceRight", 1,0),
-    JS_FN("filter",             array_filter,       1,JSFUN_GENERIC_NATIVE),
     JS_SELF_HOSTED_FN("some",        "ArraySome",        1,0),
     JS_SELF_HOSTED_FN("every",       "ArrayEvery",       1,0),
 
@@ -3124,19 +3162,17 @@ static const JSFunctionSpec array_methods[] = {
     JS_SELF_HOSTED_FN("keys",        "ArrayKeys",        0,0),
 
     /* ES7 additions */
-#ifdef NIGHTLY_BUILD
     JS_SELF_HOSTED_FN("includes",    "ArrayIncludes",    2,0),
-#endif
-
     JS_FS_END
 };
 
 static const JSFunctionSpec array_static_methods[] = {
-    JS_FN("isArray",            array_isArray,      1,0),
+    JS_INLINABLE_FN("isArray",       array_isArray,        1,0, ArrayIsArray),
     JS_SELF_HOSTED_FN("lastIndexOf", "ArrayStaticLastIndexOf", 2,0),
     JS_SELF_HOSTED_FN("indexOf",     "ArrayStaticIndexOf", 2,0),
     JS_SELF_HOSTED_FN("forEach",     "ArrayStaticForEach", 2,0),
     JS_SELF_HOSTED_FN("map",         "ArrayStaticMap",   2,0),
+    JS_SELF_HOSTED_FN("filter",      "ArrayStaticFilter", 2,0),
     JS_SELF_HOSTED_FN("every",       "ArrayStaticEvery", 2,0),
     JS_SELF_HOSTED_FN("some",        "ArrayStaticSome",  2,0),
     JS_SELF_HOSTED_FN("reduce",      "ArrayStaticReduce", 2,0),
@@ -3152,12 +3188,13 @@ bool
 js::ArrayConstructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    RootedObjectGroup group(cx, ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array));
-    if (!group)
+
+    RootedObject proto(cx);
+    if (!GetPrototypeFromCallableConstructor(cx, args, &proto))
         return false;
 
     if (args.length() != 1 || !args[0].isNumber())
-        return ArrayFromCallArgs(cx, group, args);
+        return ArrayFromCallArgs(cx, args, proto);
 
     uint32_t length;
     if (args[0].isInt32()) {
@@ -3176,14 +3213,7 @@ js::ArrayConstructor(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    /*
-     * Allocate up to |EagerAllocationMaxLength| dense elements eagerly, to
-     * avoid reallocating elements when filling the array.
-     */
-    AllocatingBehaviour allocating = (length <= ArrayObject::EagerAllocationMaxLength)
-                                   ? NewArray_FullyAllocating
-                                   : NewArray_PartlyAllocating;
-    RootedObject obj(cx, NewDenseArray(cx, length, group, allocating));
+    JSObject* obj = NewPartlyAllocatedArrayForCallingAllocationSite(cx, length, proto);
     if (!obj)
         return false;
 
@@ -3191,7 +3221,7 @@ js::ArrayConstructor(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-ArrayObject*
+JSObject*
 js::ArrayConstructorOneArg(JSContext* cx, HandleObjectGroup group, int32_t lengthInt)
 {
     if (lengthInt < 0) {
@@ -3200,10 +3230,7 @@ js::ArrayConstructorOneArg(JSContext* cx, HandleObjectGroup group, int32_t lengt
     }
 
     uint32_t length = uint32_t(lengthInt);
-    AllocatingBehaviour allocating = (length <= ArrayObject::EagerAllocationMaxLength)
-                                   ? NewArray_FullyAllocating
-                                   : NewArray_PartlyAllocating;
-    return NewDenseArray(cx, length, group, allocating);
+    return NewPartlyAllocatedArrayTryUseGroup(cx, group, length);
 }
 
 static JSObject*
@@ -3224,10 +3251,13 @@ CreateArrayPrototype(JSContext* cx, JSProtoKey key)
     if (!shape)
         return nullptr;
 
+    AutoSetNewObjectMetadata metadata(cx);
     RootedArrayObject arrayProto(cx, ArrayObject::createArray(cx, gc::AllocKind::OBJECT4,
-                                                              gc::TenuredHeap, shape, group, 0));
+                                                              gc::TenuredHeap, shape, group, 0,
+                                                              metadata));
     if (!arrayProto ||
         !JSObject::setSingleton(cx, arrayProto) ||
+        !arrayProto->setDelegate(cx) ||
         !AddLengthProperty(cx, arrayProto))
     {
         return nullptr;
@@ -3247,7 +3277,7 @@ CreateArrayPrototype(JSContext* cx, JSProtoKey key)
 
 const Class ArrayObject::class_ = {
     "Array",
-    JSCLASS_HAS_CACHED_PROTO(JSProto_Array),
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Array) | JSCLASS_DELAY_METADATA_CALLBACK,
     array_addProperty,
     nullptr, /* delProperty */
     nullptr, /* getProperty */
@@ -3255,14 +3285,13 @@ const Class ArrayObject::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
     nullptr, /* hasInstance */
     nullptr, /* construct */
     nullptr, /* trace */
     {
-        GenericCreateConstructor<ArrayConstructor, 1, gc::AllocKind::FUNCTION>,
+        GenericCreateConstructor<ArrayConstructor, 1, AllocKind::FUNCTION, &jit::JitInfo_Array>,
         CreateArrayPrototype,
         array_static_methods,
         nullptr,
@@ -3291,12 +3320,6 @@ EnsureNewArrayElements(ExclusiveContext* cx, ArrayObject* obj, uint32_t length)
     return true;
 }
 
-static bool
-NewArrayIsCachable(ExclusiveContext* cxArg, NewObjectKind newKind)
-{
-    return cxArg->isJSContext() && newKind == GenericObject;
-}
-
 template <uint32_t maxLength>
 static MOZ_ALWAYS_INLINE ArrayObject*
 NewArray(ExclusiveContext* cxArg, uint32_t length,
@@ -3306,14 +3329,20 @@ NewArray(ExclusiveContext* cxArg, uint32_t length,
     MOZ_ASSERT(CanBeFinalizedInBackground(allocKind, &ArrayObject::class_));
     allocKind = GetBackgroundAllocKind(allocKind);
 
-    bool isCachable = NewArrayIsCachable(cxArg, newKind);
+    RootedObject proto(cxArg, protoArg);
+    if (!proto && !GetBuiltinPrototype(cxArg, JSProto_Array, &proto))
+        return nullptr;
+
+    Rooted<TaggedProto> taggedProto(cxArg, TaggedProto(proto));
+    bool isCachable = NewObjectWithTaggedProtoIsCachable(cxArg, taggedProto, newKind, &ArrayObject::class_);
     if (isCachable) {
         JSContext* cx = cxArg->asJSContext();
         JSRuntime* rt = cx->runtime();
         NewObjectCache& cache = rt->newObjectCache;
         NewObjectCache::EntryIndex entry = -1;
-        if (cache.lookupGlobal(&ArrayObject::class_, cx->global(), allocKind, &entry)) {
+        if (cache.lookupProto(&ArrayObject::class_, proto, allocKind, &entry)) {
             gc::InitialHeap heap = GetInitialHeap(newKind, &ArrayObject::class_);
+            AutoSetNewObjectMetadata metadata(cx);
             JSObject* obj = cache.newObjectFromHit(cx, entry, heap);
             if (obj) {
                 /* Fixup the elements pointer and length, which may be incorrect. */
@@ -3330,10 +3359,6 @@ NewArray(ExclusiveContext* cxArg, uint32_t length,
         }
     }
 
-    RootedObject proto(cxArg, protoArg);
-    if (!proto && !GetBuiltinPrototype(cxArg, JSProto_Array, &proto))
-        return nullptr;
-
     RootedObjectGroup group(cxArg, ObjectGroup::defaultNewGroup(cxArg, &ArrayObject::class_,
                                                                 TaggedProto(proto)));
     if (!group)
@@ -3349,9 +3374,10 @@ NewArray(ExclusiveContext* cxArg, uint32_t length,
     if (!shape)
         return nullptr;
 
+    AutoSetNewObjectMetadata metadata(cxArg);
     RootedArrayObject arr(cxArg, ArrayObject::createArray(cxArg, allocKind,
                                                           GetInitialHeap(newKind, &ArrayObject::class_),
-                                                          shape, group, length));
+                                                          shape, group, length, metadata));
     if (!arr)
         return nullptr;
 
@@ -3368,8 +3394,8 @@ NewArray(ExclusiveContext* cxArg, uint32_t length,
     if (isCachable) {
         NewObjectCache& cache = cxArg->asJSContext()->runtime()->newObjectCache;
         NewObjectCache::EntryIndex entry = -1;
-        cache.lookupGlobal(&ArrayObject::class_, cxArg->global(), allocKind, &entry);
-        cache.fillGlobal(entry, &ArrayObject::class_, cxArg->global(), allocKind, arr);
+        cache.lookupProto(&ArrayObject::class_, proto, allocKind, &entry);
+        cache.fillProto(entry, &ArrayObject::class_, taggedProto, allocKind, arr);
     }
 
     if (maxLength > 0 && !EnsureNewArrayElements(cxArg, arr, std::min(maxLength, length)))
@@ -3380,7 +3406,7 @@ NewArray(ExclusiveContext* cxArg, uint32_t length,
 }
 
 ArrayObject * JS_FASTCALL
-js::NewDenseEmptyArray(JSContext* cx, HandleObject proto /* = NullPtr() */,
+js::NewDenseEmptyArray(JSContext* cx, HandleObject proto /* = nullptr */,
                        NewObjectKind newKind /* = GenericObject */)
 {
     return NewArray<0>(cx, 0, proto, newKind);
@@ -3388,15 +3414,15 @@ js::NewDenseEmptyArray(JSContext* cx, HandleObject proto /* = NullPtr() */,
 
 ArrayObject * JS_FASTCALL
 js::NewDenseFullyAllocatedArray(ExclusiveContext* cx, uint32_t length,
-                                HandleObject proto /* = NullPtr() */,
+                                HandleObject proto /* = nullptr */,
                                 NewObjectKind newKind /* = GenericObject */)
 {
-    return NewArray<NativeObject::NELEMENTS_LIMIT>(cx, length, proto, newKind);
+    return NewArray<UINT32_MAX>(cx, length, proto, newKind);
 }
 
 ArrayObject * JS_FASTCALL
 js::NewDensePartlyAllocatedArray(ExclusiveContext* cx, uint32_t length,
-                                 HandleObject proto /* = NullPtr() */,
+                                 HandleObject proto /* = nullptr */,
                                  NewObjectKind newKind /* = GenericObject */)
 {
     return NewArray<ArrayObject::EagerAllocationMaxLength>(cx, length, proto, newKind);
@@ -3404,74 +3430,19 @@ js::NewDensePartlyAllocatedArray(ExclusiveContext* cx, uint32_t length,
 
 ArrayObject * JS_FASTCALL
 js::NewDenseUnallocatedArray(ExclusiveContext* cx, uint32_t length,
-                             HandleObject proto /* = NullPtr() */,
+                             HandleObject proto /* = nullptr */,
                              NewObjectKind newKind /* = GenericObject */)
 {
     return NewArray<0>(cx, length, proto, newKind);
 }
 
-ArrayObject*
-js::NewDenseArray(ExclusiveContext* cx, uint32_t length, HandleObjectGroup group,
-                  AllocatingBehaviour allocating, bool convertDoubleElements)
-{
-    NewObjectKind newKind = !group ? SingletonObject : GenericObject;
-    if (group && group->shouldPreTenure())
-        newKind = TenuredObject;
-
-    ArrayObject* arr;
-    if (allocating == NewArray_Unallocating) {
-        arr = NewDenseUnallocatedArray(cx, length, NullPtr(), newKind);
-    } else if (allocating == NewArray_PartlyAllocating) {
-        arr = NewDensePartlyAllocatedArray(cx, length, NullPtr(), newKind);
-    } else {
-        MOZ_ASSERT(allocating == NewArray_FullyAllocating);
-        arr = NewDenseFullyAllocatedArray(cx, length, NullPtr(), newKind);
-    }
-    if (!arr)
-        return nullptr;
-
-    if (group)
-        arr->setGroup(group);
-
-    if (convertDoubleElements)
-        arr->setShouldConvertDoubleElements();
-
-    // If the length calculation overflowed, make sure that is marked for the
-    // new group.
-    if (arr->length() > INT32_MAX)
-        arr->setLength(cx, arr->length());
-
-    return arr;
-}
-
-ArrayObject*
-js::NewDenseCopiedArray(JSContext* cx, uint32_t length, HandleArrayObject src,
-                        uint32_t elementOffset, HandleObject proto /* = NullPtr() */)
-{
-    MOZ_ASSERT(!src->isIndexed());
-
-    ArrayObject* arr = NewArray<NativeObject::NELEMENTS_LIMIT>(cx, length, proto);
-    if (!arr)
-        return nullptr;
-
-    MOZ_ASSERT(arr->getDenseCapacity() >= length);
-
-    const Value* vp = src->getDenseElements() + elementOffset;
-    arr->setDenseInitializedLength(vp ? length : 0);
-
-    if (vp)
-        arr->initDenseElements(0, vp, length);
-
-    return arr;
-}
-
 // values must point at already-rooted Value objects
 ArrayObject*
-js::NewDenseCopiedArray(JSContext* cx, uint32_t length, const Value* values,
-                        HandleObject proto /* = NullPtr() */,
+js::NewDenseCopiedArray(ExclusiveContext* cx, uint32_t length, const Value* values,
+                        HandleObject proto /* = nullptr */,
                         NewObjectKind newKind /* = GenericObject */)
 {
-    ArrayObject* arr = NewArray<NativeObject::NELEMENTS_LIMIT>(cx, length, proto);
+    ArrayObject* arr = NewArray<UINT32_MAX>(cx, length, proto, newKind);
     if (!arr)
         return nullptr;
 
@@ -3488,6 +3459,7 @@ js::NewDenseCopiedArray(JSContext* cx, uint32_t length, const Value* values,
 ArrayObject*
 js::NewDenseFullyAllocatedArrayWithTemplate(JSContext* cx, uint32_t length, JSObject* templateObject)
 {
+    AutoSetNewObjectMetadata metadata(cx);
     gc::AllocKind allocKind = GuessArrayGCKind(length);
     MOZ_ASSERT(CanBeFinalizedInBackground(allocKind, &ArrayObject::class_));
     allocKind = GetBackgroundAllocKind(allocKind);
@@ -3497,7 +3469,7 @@ js::NewDenseFullyAllocatedArrayWithTemplate(JSContext* cx, uint32_t length, JSOb
 
     gc::InitialHeap heap = GetInitialHeap(GenericObject, &ArrayObject::class_);
     Rooted<ArrayObject*> arr(cx, ArrayObject::createArray(cx, allocKind,
-                                                           heap, shape, group, length));
+                                                          heap, shape, group, length, metadata));
     if (!arr)
         return nullptr;
 
@@ -3522,6 +3494,180 @@ js::NewDenseCopyOnWriteArray(JSContext* cx, HandleArrayObject templateObject, gc
     return arr;
 }
 
+// Return a new boxed or unboxed array with the specified length and allocated
+// capacity (up to maxLength), using the specified group if possible. If the
+// specified group cannot be used, ensure that the created array at least has
+// the given [[Prototype]].
+template <uint32_t maxLength>
+static inline JSObject*
+NewArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group, size_t length,
+                    NewObjectKind newKind = GenericObject, bool forceAnalyze = false)
+{
+    MOZ_ASSERT(newKind != SingletonObject);
+
+    if (group->maybePreliminaryObjects())
+        group->maybePreliminaryObjects()->maybeAnalyze(cx, group, forceAnalyze);
+
+    if (group->shouldPreTenure() || group->maybePreliminaryObjects())
+        newKind = TenuredObject;
+
+    RootedObject proto(cx, group->proto().toObject());
+    if (group->maybeUnboxedLayout()) {
+        if (length > UnboxedArrayObject::MaximumCapacity)
+            return NewArray<maxLength>(cx, length, proto, newKind);
+        return UnboxedArrayObject::create(cx, group, length, newKind, maxLength);
+    }
+
+    ArrayObject* res = NewArray<maxLength>(cx, length, proto, newKind);
+    if (!res)
+        return nullptr;
+
+    res->setGroup(group);
+
+    // If the length calculation overflowed, make sure that is marked for the
+    // new group.
+    if (res->length() > INT32_MAX)
+        res->setLength(cx, res->length());
+
+    if (PreliminaryObjectArray* preliminaryObjects = group->maybePreliminaryObjects())
+        preliminaryObjects->registerNewObject(res);
+
+    return res;
+}
+
+JSObject*
+js::NewFullyAllocatedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group, size_t length,
+                                      NewObjectKind newKind, bool forceAnalyze)
+{
+    return NewArrayTryUseGroup<UINT32_MAX>(cx, group, length, newKind, forceAnalyze);
+}
+
+JSObject*
+js::NewPartlyAllocatedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group, size_t length)
+{
+    return NewArrayTryUseGroup<ArrayObject::EagerAllocationMaxLength>(cx, group, length);
+}
+
+// Return a new array with the default prototype and specified allocated
+// capacity and length. If possible, try to reuse the group of the input
+// object. The resulting array will either reuse the input object's group or
+// will have unknown property types. Additionally, the result will have the
+// same boxed/unboxed elements representation as the input object, unless
+// |length| is larger than the input object's initialized length (in which case
+// UnboxedArrayObject::MaximumCapacity might be exceeded).
+template <uint32_t maxLength>
+static inline JSObject*
+NewArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
+                      NewObjectKind newKind = GenericObject, bool forceAnalyze = false)
+{
+    if (!obj->is<ArrayObject>() && !obj->is<UnboxedArrayObject>())
+        return NewArray<maxLength>(cx, length, nullptr, newKind);
+
+    if (obj->getProto() != cx->global()->maybeGetArrayPrototype())
+        return NewArray<maxLength>(cx, length, nullptr, newKind);
+
+    RootedObjectGroup group(cx, obj->getGroup(cx));
+    if (!group)
+        return nullptr;
+
+    return NewArrayTryUseGroup<maxLength>(cx, group, length, newKind, forceAnalyze);
+}
+
+JSObject*
+js::NewFullyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
+                                        NewObjectKind newKind, bool forceAnalyze)
+{
+    return NewArrayTryReuseGroup<UINT32_MAX>(cx, obj, length, newKind, forceAnalyze);
+}
+
+JSObject*
+js::NewPartlyAllocatedArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length)
+{
+    return NewArrayTryReuseGroup<ArrayObject::EagerAllocationMaxLength>(cx, obj, length);
+}
+
+JSObject*
+js::NewFullyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length,
+                                                   NewObjectKind newKind, bool forceAnalyze)
+{
+    RootedObjectGroup group(cx, ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array));
+    if (!group)
+        return nullptr;
+    return NewArrayTryUseGroup<UINT32_MAX>(cx, group, length, newKind, forceAnalyze);
+}
+
+JSObject*
+js::NewPartlyAllocatedArrayForCallingAllocationSite(JSContext* cx, size_t length, HandleObject proto)
+{
+    RootedObjectGroup group(cx, ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array, proto));
+    if (!group)
+        return nullptr;
+    return NewArrayTryUseGroup<ArrayObject::EagerAllocationMaxLength>(cx, group, length);
+}
+
+JSObject*
+js::NewCopiedArrayTryUseGroup(ExclusiveContext* cx, HandleObjectGroup group,
+                              const Value* vp, size_t length, NewObjectKind newKind,
+                              ShouldUpdateTypes updateTypes)
+{
+    bool forceAnalyze = false;
+
+    static const size_t EagerPreliminaryObjectAnalysisThreshold = 800;
+
+    // Force analysis to see if an unboxed array can be used when making a
+    // sufficiently large array, to avoid excessive analysis and copying later
+    // on. If this is the first array of its group that is being created, first
+    // make a dummy array with the initial elements of the array we are about
+    // to make, so there is some basis for the unboxed array analysis.
+    if (length > EagerPreliminaryObjectAnalysisThreshold) {
+        if (PreliminaryObjectArrayWithTemplate* objects = group->maybePreliminaryObjects()) {
+            if (objects->empty()) {
+                size_t nlength = Min<size_t>(length, 100);
+                JSObject* obj = NewFullyAllocatedArrayTryUseGroup(cx, group, nlength);
+                if (!obj)
+                    return nullptr;
+                DebugOnly<DenseElementResult> result =
+                    SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, 0, vp, nlength, updateTypes);
+                MOZ_ASSERT(result.value == DenseElementResult::Success);
+            }
+        }
+        forceAnalyze = true;
+    }
+
+    JSObject* obj = NewFullyAllocatedArrayTryUseGroup(cx, group, length, newKind, forceAnalyze);
+    if (!obj)
+        return nullptr;
+
+    DenseElementResult result =
+        SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, 0, vp, length, updateTypes);
+    if (result == DenseElementResult::Failure)
+        return nullptr;
+    if (result == DenseElementResult::Success)
+        return obj;
+
+    MOZ_ASSERT(obj->is<UnboxedArrayObject>());
+    if (!UnboxedArrayObject::convertToNative(cx->asJSContext(), obj))
+        return nullptr;
+
+    result = SetOrExtendBoxedOrUnboxedDenseElements<JSVAL_TYPE_MAGIC>(cx, obj, 0, vp, length,
+                                                                      updateTypes);
+    MOZ_ASSERT(result != DenseElementResult::Incomplete);
+    if (result == DenseElementResult::Failure)
+        return nullptr;
+
+    return obj;
+}
+
+JSObject*
+js::NewCopiedArrayForCallingAllocationSite(JSContext* cx, const Value* vp, size_t length,
+                                           HandleObject proto /* = nullptr */)
+{
+    RootedObjectGroup group(cx, ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array, proto));
+    if (!group)
+        return nullptr;
+    return NewCopiedArrayTryUseGroup(cx, group, vp, length);
+}
+
 #ifdef DEBUG
 bool
 js::ArrayInfo(JSContext* cx, unsigned argc, Value* vp)
@@ -3532,8 +3678,7 @@ js::ArrayInfo(JSContext* cx, unsigned argc, Value* vp)
     for (unsigned i = 0; i < args.length(); i++) {
         RootedValue arg(cx, args[i]);
 
-        UniquePtr<char[], JS::FreePolicy> bytes =
-            DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, arg, NullPtr());
+        UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, arg, nullptr);
         if (!bytes)
             return false;
         if (arg.isPrimitive() ||

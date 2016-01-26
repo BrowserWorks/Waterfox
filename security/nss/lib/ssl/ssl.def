@@ -171,3 +171,26 @@ SSL_SetCanFalseStartCallback;
 ;+    local:
 ;+*;
 ;+};
+;+NSS_3.20 {    # NSS 3.20 release
+;+    global:
+SSL_DHEGroupPrefSet;
+SSL_EnableWeakDHEPrimeGroup;
+;+    local:
+;+*;
+;+};
+;+NSS_3.21 {    # NSS 3.21 release
+;+    global:
+SSL_GetPreliminaryChannelInfo;
+SSL_SignaturePrefSet;
+SSL_SignaturePrefGet;
+SSL_SignatureMaxCount;
+;+    local:
+;+*;
+;+};
+;+NSS_3.22 {    # NSS 3.22 release
+;+    global:
+SSL_PeerSignedCertTimestamps;
+SSL_SetSignedCertTimestamps;
+;+    local:
+;+*;
+;+};

@@ -3,6 +3,8 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import re
+import sys
+import traceback
 
 __all__ = ['parse', 'ParseError', 'ExpressionParser']
 
@@ -21,6 +23,10 @@ __all__ = ['parse', 'ParseError', 'ExpressionParser']
 #       | expr '||' expr
 #       | expr '==' expr
 #       | expr '!=' expr
+#       | expr '<' expr
+#       | expr '>' expr
+#       | expr '<=' expr
+#       | expr '>=' expr
 # literal := BOOL
 #          | INT
 #          | STRING
@@ -62,6 +68,26 @@ class neq_op_token(object):
     "!="
     def led(self, parser, left):
         return left != parser.expression(self.lbp)
+
+class lt_op_token(object):
+    "<"
+    def led(self, parser, left):
+        return left < parser.expression(self.lbp)
+
+class gt_op_token(object):
+    ">"
+    def led(self, parser, left):
+        return left > parser.expression(self.lbp)
+
+class le_op_token(object):
+    "<="
+    def led(self, parser, left):
+        return left <= parser.expression(self.lbp)
+
+class ge_op_token(object):
+    ">="
+    def led(self, parser, left):
+        return left >= parser.expression(self.lbp)
 
 class not_op_token(object):
     "!"
@@ -111,7 +137,8 @@ class string_token(literal_token):
 precedence = [(end_token, rparen_token),
               (or_op_token,),
               (and_op_token,),
-              (eq_op_token, neq_op_token),
+              (lt_op_token, gt_op_token, le_op_token, ge_op_token,
+               eq_op_token, neq_op_token),
               (lparen_token,),
               ]
 for index, rank in enumerate(precedence):
@@ -128,7 +155,7 @@ class ExpressionParser(object):
     The expression language can be described as follows::
 
         EXPRESSION ::= LITERAL | '(' EXPRESSION ')' | '!' EXPRESSION | EXPRESSION OP EXPRESSION
-        OP ::= '==' | '!=' | '&&' | '||'
+        OP ::= '==' | '!=' | '<' | '>' | '<=' | '>=' | '&&' | '||'
         LITERAL ::= BOOL | INT | IDENT | STRING
         BOOL ::= 'true' | 'false'
         INT ::= [0-9]+
@@ -179,6 +206,10 @@ class ExpressionParser(object):
                 (r'("[^"]*")|(\'[^\']*\')', string_token),
                 (r"==", eq_op_token()),
                 (r"!=", neq_op_token()),
+                (r"<=", le_op_token()),
+                (r">=", ge_op_token()),
+                (r"<", lt_op_token()),
+                (r">", gt_op_token()),
                 (r"\|\|", or_op_token()),
                 (r"!", not_op_token()),
                 (r"&&", and_op_token()),
@@ -235,7 +266,9 @@ class ExpressionParser(object):
             self.token = self.iter.next()
             return self.expression()
         except:
-            raise ParseError("could not parse: %s; variables: %s" % (self.text, self.valuemapping))
+            extype, ex, tb = sys.exc_info()
+            formatted = ''.join(traceback.format_exception_only(extype, ex))
+            raise ParseError("could not parse: %s\nexception: %svariables: %s" % (self.text, formatted, self.valuemapping)), None, tb
 
     __call__ = parse
 

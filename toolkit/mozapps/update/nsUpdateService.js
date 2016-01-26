@@ -30,7 +30,6 @@ const PREF_APP_UPDATE_CERT_CHECKATTRS     = "app.update.cert.checkAttributes";
 const PREF_APP_UPDATE_CERT_ERRORS         = "app.update.cert.errors";
 const PREF_APP_UPDATE_CERT_MAXERRORS      = "app.update.cert.maxErrors";
 const PREF_APP_UPDATE_CERT_REQUIREBUILTIN = "app.update.cert.requireBuiltIn";
-const PREF_APP_UPDATE_CUSTOM              = "app.update.custom";
 const PREF_APP_UPDATE_ENABLED             = "app.update.enabled";
 const PREF_APP_UPDATE_IDLETIME            = "app.update.idletime";
 const PREF_APP_UPDATE_INCOMPATIBLE_MODE   = "app.update.incompatible.mode";
@@ -52,11 +51,6 @@ const PREF_APP_UPDATE_SERVICE_ERRORS      = "app.update.service.errors";
 const PREF_APP_UPDATE_SERVICE_MAX_ERRORS  = "app.update.service.maxErrors";
 const PREF_APP_UPDATE_SOCKET_ERRORS       = "app.update.socket.maxErrors";
 const PREF_APP_UPDATE_RETRY_TIMEOUT       = "app.update.socket.retryTimeout";
-
-const PREF_APP_DISTRIBUTION               = "distribution.id";
-const PREF_APP_DISTRIBUTION_VERSION       = "distribution.version";
-
-const PREF_APP_B2G_VERSION                = "b2g.version";
 
 const PREF_EM_HOTFIX_ID                   = "extensions.hotfix.id";
 
@@ -86,7 +80,6 @@ const FILE_UPDATE_ACTIVE  = "active-update.xml";
 const FILE_PERMS_TEST     = "update.test";
 const FILE_LAST_LOG       = "last-update.log";
 const FILE_BACKUP_LOG     = "backup-update.log";
-const FILE_UPDATE_LOCALE  = "update.locale";
 
 const STATE_NONE            = "null";
 const STATE_DOWNLOADING     = "downloading";
@@ -209,8 +202,8 @@ XPCOMUtils.defineLazyGetter(this, "gExtStorage", function aus_gExtStorage() {
   return Services.env.get("EXTERNAL_STORAGE");
 });
 
-XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
-                                  "resource://gre/modules/UpdateChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                  "resource://gre/modules/UpdateUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "gLogEnabled", function aus_gLogEnabled() {
   return getPref("getBoolPref", PREF_APP_UPDATE_LOG, false);
@@ -225,157 +218,6 @@ XPCOMUtils.defineLazyGetter(this, "gCertUtils", function aus_gCertUtils() {
   let temp = { };
   Cu.import("resource://gre/modules/CertUtils.jsm", temp);
   return temp;
-});
-
-XPCOMUtils.defineLazyGetter(this, "gABI", function aus_gABI() {
-  let abi = null;
-  try {
-    abi = Services.appinfo.XPCOMABI;
-  }
-  catch (e) {
-    LOG("gABI - XPCOM ABI unknown: updates are not possible.");
-  }
-
-  if (AppConstants.platform == "macosx") {
-    // Mac universal build should report a different ABI than either macppc
-    // or mactel.
-    let macutils = Cc["@mozilla.org/xpcom/mac-utils;1"].
-                   getService(Ci.nsIMacUtils);
-
-    if (macutils.isUniversalBinary) {
-      abi += "-u-" + macutils.architecturesInBinary;
-    }
-  }
-  return abi;
-});
-
-XPCOMUtils.defineLazyGetter(this, "gOSVersion", function aus_gOSVersion() {
-  let osVersion;
-  try {
-    osVersion = Services.sysinfo.getProperty("name") + " " +
-                Services.sysinfo.getProperty("version");
-  }
-  catch (e) {
-    LOG("gOSVersion - OS Version unknown: updates are not possible.");
-  }
-
-  if (osVersion) {
-    if (AppConstants.platform == "win") {
-      const BYTE = ctypes.uint8_t;
-      const WORD = ctypes.uint16_t;
-      const DWORD = ctypes.uint32_t;
-      const WCHAR = ctypes.char16_t;
-      const BOOL = ctypes.int;
-
-      // This structure is described at:
-      // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
-      const SZCSDVERSIONLENGTH = 128;
-      const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
-          [
-          {dwOSVersionInfoSize: DWORD},
-          {dwMajorVersion: DWORD},
-          {dwMinorVersion: DWORD},
-          {dwBuildNumber: DWORD},
-          {dwPlatformId: DWORD},
-          {szCSDVersion: ctypes.ArrayType(WCHAR, SZCSDVERSIONLENGTH)},
-          {wServicePackMajor: WORD},
-          {wServicePackMinor: WORD},
-          {wSuiteMask: WORD},
-          {wProductType: BYTE},
-          {wReserved: BYTE}
-          ]);
-
-      // This structure is described at:
-      // http://msdn.microsoft.com/en-us/library/ms724958%28v=vs.85%29.aspx
-      const SYSTEM_INFO = new ctypes.StructType('SYSTEM_INFO',
-          [
-          {wProcessorArchitecture: WORD},
-          {wReserved: WORD},
-          {dwPageSize: DWORD},
-          {lpMinimumApplicationAddress: ctypes.voidptr_t},
-          {lpMaximumApplicationAddress: ctypes.voidptr_t},
-          {dwActiveProcessorMask: DWORD.ptr},
-          {dwNumberOfProcessors: DWORD},
-          {dwProcessorType: DWORD},
-          {dwAllocationGranularity: DWORD},
-          {wProcessorLevel: WORD},
-          {wProcessorRevision: WORD}
-          ]);
-
-      let kernel32 = false;
-      try {
-        kernel32 = ctypes.open("Kernel32");
-      } catch (e) {
-        LOG("gOSVersion - Unable to open kernel32! " + e);
-        osVersion += ".unknown (unknown)";
-      }
-
-      if(kernel32) {
-        try {
-          // Get Service pack info
-          try {
-            let GetVersionEx = kernel32.declare("GetVersionExW",
-                                                ctypes.default_abi,
-                                                BOOL,
-                                                OSVERSIONINFOEXW.ptr);
-            let winVer = OSVERSIONINFOEXW();
-            winVer.dwOSVersionInfoSize = OSVERSIONINFOEXW.size;
-
-            if(0 !== GetVersionEx(winVer.address())) {
-              osVersion += "." + winVer.wServicePackMajor +
-                           "." + winVer.wServicePackMinor;
-            } else {
-              LOG("gOSVersion - Unknown failure in GetVersionEX (returned 0)");
-              osVersion += ".unknown";
-            }
-          } catch (e) {
-            LOG("gOSVersion - error getting service pack information. Exception: " + e);
-            osVersion += ".unknown";
-          }
-
-          // Get processor architecture
-          let arch = "unknown";
-          try {
-            let GetNativeSystemInfo = kernel32.declare("GetNativeSystemInfo",
-                                                       ctypes.default_abi,
-                                                       ctypes.void_t,
-                                                       SYSTEM_INFO.ptr);
-            let winSystemInfo = SYSTEM_INFO();
-            // Default to unknown
-            winSystemInfo.wProcessorArchitecture = 0xffff;
-
-            GetNativeSystemInfo(winSystemInfo.address());
-            switch(winSystemInfo.wProcessorArchitecture) {
-              case 9:
-                arch = "x64";
-                break;
-              case 6:
-                arch = "IA64";
-                break;
-              case 0:
-                arch = "x86";
-                break;
-            }
-          } catch (e) {
-            LOG("gOSVersion - error getting processor architecture.  Exception: " + e);
-          } finally {
-            osVersion += " (" + arch + ")";
-          }
-        } finally {
-          kernel32.close();
-        }
-      }
-    }
-
-    try {
-      osVersion += " (" + Services.sysinfo.getProperty("secondaryLibrary") + ")";
-    }
-    catch (e) {
-      // Not all platforms have a secondary widget library, so an error is nothing to worry about.
-    }
-    osVersion = encodeURIComponent(osVersion);
-  }
-  return osVersion;
 });
 
 /**
@@ -495,25 +337,25 @@ function hasUpdateMutex() {
   return !!gUpdateMutexHandle;
 }
 
-XPCOMUtils.defineLazyGetter(this, "gCanApplyUpdates", function aus_gCanApplyUpdates() {
+function getCanApplyUpdates() {
   let useService = false;
   if (shouldUseService()) {
     // No need to perform directory write checks, the maintenance service will
     // be able to write to all directories.
-    LOG("gCanApplyUpdates - bypass the write checks because we'll use the service");
+    LOG("getCanApplyUpdates - bypass the write checks because we'll use the service");
     useService = true;
   }
 
   if (!useService) {
     try {
       let updateTestFile = getUpdateFile([FILE_PERMS_TEST]);
-      LOG("gCanApplyUpdates - testing write access " + updateTestFile.path);
+      LOG("getCanApplyUpdates - testing write access " + updateTestFile.path);
       testWriteAccess(updateTestFile, false);
       if (AppConstants.platform == "macosx") {
         // Check that the application bundle can be written to.
         let appDirTestFile = getAppBaseDir();
         appDirTestFile.append(FILE_PERMS_TEST);
-        LOG("gCanApplyUpdates - testing write access " + appDirTestFile.path);
+        LOG("getCanApplyUpdates - testing write access " + appDirTestFile.path);
         if (appDirTestFile.exists()) {
           appDirTestFile.remove(false);
         }
@@ -522,7 +364,7 @@ XPCOMUtils.defineLazyGetter(this, "gCanApplyUpdates", function aus_gCanApplyUpda
       } else if (AppConstants.platform == "win") {
         // Example windowsVersion:  Windows XP == 5.1
         let windowsVersion = Services.sysinfo.getProperty("version");
-        LOG("gCanApplyUpdates - windowsVersion = " + windowsVersion);
+        LOG("getCanApplyUpdates - windowsVersion = " + windowsVersion);
 
       /**
        * For Vista, updates can be performed to a location requiring admin
@@ -545,13 +387,13 @@ XPCOMUtils.defineLazyGetter(this, "gCanApplyUpdates", function aus_gCanApplyUpda
             // appDir is under Program Files, so check if the user can elevate
             userCanElevate = Services.appinfo.QueryInterface(Ci.nsIWinAppHelper).
                              userCanElevate;
-            LOG("gCanApplyUpdates - on Vista, userCanElevate: " + userCanElevate);
+            LOG("getCanApplyUpdates - on Vista, userCanElevate: " + userCanElevate);
           }
           catch (ex) {
             // When the installation directory is not under Program Files,
             // fall through to checking if write access to the
             // installation directory is available.
-            LOG("gCanApplyUpdates - on Vista, appDir is not under Program Files");
+            LOG("getCanApplyUpdates - on Vista, appDir is not under Program Files");
           }
         }
 
@@ -579,7 +421,7 @@ XPCOMUtils.defineLazyGetter(this, "gCanApplyUpdates", function aus_gCanApplyUpda
           // if we're unable to create the test file this will throw an exception.
           let appDirTestFile = getAppBaseDir();
           appDirTestFile.append(FILE_PERMS_TEST);
-          LOG("gCanApplyUpdates - testing write access " + appDirTestFile.path);
+          LOG("getCanApplyUpdates - testing write access " + appDirTestFile.path);
           if (appDirTestFile.exists()) {
             appDirTestFile.remove(false);
           }
@@ -588,15 +430,15 @@ XPCOMUtils.defineLazyGetter(this, "gCanApplyUpdates", function aus_gCanApplyUpda
         }
       }
     } catch (e) {
-       LOG("gCanApplyUpdates - unable to apply updates. Exception: " + e);
+       LOG("getCanApplyUpdates - unable to apply updates. Exception: " + e);
       // No write privileges to install directory
       return false;
     }
   } // if (!useService)
 
-  LOG("gCanApplyUpdates - able to apply updates");
+  LOG("getCanApplyUpdates - able to apply updates");
   return true;
-});
+}
 
 /**
  * Whether or not the application can stage an update for the current session.
@@ -684,13 +526,13 @@ XPCOMUtils.defineLazyGetter(this, "gCanCheckForUpdates", function aus_gCanCheckF
   }
 
   // If we don't know the binary platform we're updating, we can't update.
-  if (!gABI) {
+  if (!UpdateUtils.ABI) {
     LOG("gCanCheckForUpdates - unable to check for updates, unknown ABI");
     return false;
   }
 
   // If we don't know the OS version we're updating, we can't update.
-  if (!gOSVersion) {
+  if (!UpdateUtils.OSVersion) {
     LOG("gCanCheckForUpdates - unable to check for updates, unknown OS " +
         "version");
     return false;
@@ -1029,18 +871,93 @@ function releaseSDCardMountLock() {
  * @return  true if the service should be used for updates.
  */
 function shouldUseService() {
-  if (AppConstants.MOZ_MAINTENANCE_SERVICE && isServiceInstalled()) {
-    return getPref("getBoolPref",
-                   PREF_APP_UPDATE_SERVICE_ENABLED, false);
+  // This function will return true if the mantenance service should be used if
+  // all of the following conditions are met:
+  // 1) This build was done with the maintenance service enabled
+  // 2) The maintenance service is installed
+  // 3) The pref for using the service is enabled
+  // 4) The Windows version is XP Service Pack 3 or above (for SHA-2 support)
+  // The maintenance service requires SHA-2 support because we sign our binaries
+  // with a SHA-2 certificate and the certificate is verified before the binary
+  // is launched.
+  if (!AppConstants.MOZ_MAINTENANCE_SERVICE || !isServiceInstalled() ||
+      !getPref("getBoolPref", PREF_APP_UPDATE_SERVICE_ENABLED, false) ||
+      !AppConstants.isPlatformAndVersionAtLeast("win", "5.1") /* WinXP */) {
+    return false;
   }
+
+  // If it's newer than XP, then the service pack doesn't matter.
+  if (Services.sysinfo.getProperty("version") != "5.1") {
+    return true;
+  }
+
+  // If the Windows version is XP, we also need to check the service pack.
+  // We'll return false if only < SP3 is installed, or if we can't tell.
+  // Check the service pack level by calling GetVersionEx via ctypes.
+  const BYTE = ctypes.uint8_t;
+  const WORD = ctypes.uint16_t;
+  const DWORD = ctypes.uint32_t;
+  const WCHAR = ctypes.char16_t;
+  const BOOL = ctypes.int;
+  // This structure is described at:
+  // http://msdn.microsoft.com/en-us/library/ms724833%28v=vs.85%29.aspx
+  const SZCSDVERSIONLENGTH = 128;
+  const OSVERSIONINFOEXW = new ctypes.StructType('OSVERSIONINFOEXW',
+  [
+    {dwOSVersionInfoSize: DWORD},
+    {dwMajorVersion: DWORD},
+    {dwMinorVersion: DWORD},
+    {dwBuildNumber: DWORD},
+    {dwPlatformId: DWORD},
+    {szCSDVersion: ctypes.ArrayType(WCHAR, SZCSDVERSIONLENGTH)},
+    {wServicePackMajor: WORD},
+    {wServicePackMinor: WORD},
+    {wSuiteMask: WORD},
+    {wProductType: BYTE},
+    {wReserved: BYTE}
+  ]);
+
+  let kernel32 = false;
+  try {
+    kernel32 = ctypes.open("Kernel32");
+  } catch (e) {
+    Cu.reportError("Unable to open kernel32! " + e);
+    return false;
+  }
+
+  if (kernel32) {
+    try {
+      try {
+        let GetVersionEx = kernel32.declare("GetVersionExW",
+                                            ctypes.default_abi,
+                                            BOOL,
+                                            OSVERSIONINFOEXW.ptr);
+        let winVer = OSVERSIONINFOEXW();
+        winVer.dwOSVersionInfoSize = OSVERSIONINFOEXW.size;
+
+        if (0 !== GetVersionEx(winVer.address())) {
+          return winVer.wServicePackMajor >= 3;
+        } else {
+          Cu.reportError("Unknown failure in GetVersionEX (returned 0)");
+          return false;
+        }
+      } catch (e) {
+        Cu.reportError("Error getting service pack information. Exception: " + e);
+        return false;
+      }
+    } finally {
+      kernel32.close();
+    }
+  }
+
+  // If the service pack check couldn't be done, assume we can't use the service.
   return false;
 }
 
 /**
- * Determines if the service is is installed and enabled or not.
+ * Determines if the service is is installed.
  *
- * @return  true if the service should be used for updates,
- *          is installed and enabled.
+ * @return  true if the service is installed.
  */
 function isServiceInstalled() {
   if (AppConstants.MOZ_MAINTENANCE_SERVICE && AppConstants.platform == "win") {
@@ -1198,58 +1115,6 @@ function cleanupActiveUpdate() {
 
   // Now trash the updates directory, since we're done with it
   cleanUpUpdatesDir();
-}
-
-/**
- * Gets the locale from the update.locale file for replacing %LOCALE% in the
- * update url. The update.locale file can be located in the application
- * directory or the GRE directory with preference given to it being located in
- * the application directory.
- */
-function getLocale() {
-  if (gLocale) {
-    return gLocale;
-  }
-
-  let channel;
-  for (let res of ['app', 'gre']) {
-    channel = Services.io.newChannel2("resource://" + res + "/" + FILE_UPDATE_LOCALE,
-                                      null,
-                                      null,
-                                      null,      // aLoadingNode
-                                      Services.scriptSecurityManager.getSystemPrincipal(),
-                                      null,      // aTriggeringPrincipal
-                                      Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_DATAREQUEST);
-    try {
-      var inputStream = channel.open();
-      gLocale = readStringFromInputStream(inputStream);
-    } catch(e) {}
-    if (gLocale)
-      break;
-  }
-
-  if (!gLocale)
-    throw Components.Exception(FILE_UPDATE_LOCALE + " file doesn't exist in " +
-                               "either the application or GRE directories",
-                               Cr.NS_ERROR_FILE_NOT_FOUND);
-
-  LOG("getLocale - getting locale from file: " + channel.originalURI.spec +
-      ", locale: " + gLocale);
-  return gLocale;
-}
-
-/* Get the distribution pref values, from defaults only */
-function getDistributionPrefValue(aPrefName) {
-  var prefValue = "default";
-
-  try {
-    prefValue = Services.prefs.getDefaultBranch(null).getCharPref(aPrefName);
-  } catch (e) {
-    // use default when pref not found
-  }
-
-  return prefValue;
 }
 
 /**
@@ -2396,7 +2261,7 @@ UpdateService.prototype = {
     // UPDATE_UNABLE_TO_APPLY_EXTERNAL
     // UPDATE_UNABLE_TO_APPLY_NOTIFY
     AUSTLMY.pingGeneric("UPDATE_UNABLE_TO_APPLY_" + this._pingSuffix,
-                        gCanApplyUpdates, true);
+                        getCanApplyUpdates(), true);
     // Histogram IDs:
     // UPDATE_CANNOT_STAGE_EXTERNAL
     // UPDATE_CANNOT_STAGE_NOTIFY
@@ -2485,9 +2350,9 @@ UpdateService.prototype = {
     }
     // The following checks are done here so they can be differentiated from
     // foreground checks.
-    if (!gOSVersion) {
+    if (!UpdateUtils.OSVersion) {
       AUSTLMY.pingCheckCode(this._pingSuffix, AUSTLMY.CHK_NO_OS_VERSION);
-    } else if (!gABI) {
+    } else if (!UpdateUtils.ABI) {
       AUSTLMY.pingCheckCode(this._pingSuffix, AUSTLMY.CHK_NO_OS_ABI);
     } else if (!validUpdateURL) {
       if (overridePrefHasValue) {
@@ -2646,7 +2511,7 @@ UpdateService.prototype = {
       return;
     }
 
-    if (!gCanApplyUpdates) {
+    if (!getCanApplyUpdates()) {
       LOG("UpdateService:_selectAndInstallUpdate - the user is unable to " +
           "apply updates... prompting");
       this._showPrompt(update);
@@ -2856,7 +2721,7 @@ UpdateService.prototype = {
       return;
     }
 
-    if (this._incompatibleAddons.length > 0 || !gCanApplyUpdates) {
+    if (this._incompatibleAddons.length > 0 || !getCanApplyUpdates()) {
       LOG("UpdateService:onUpdateEnded - prompting because there are " +
           "incompatible add-ons");
       if (this._incompatibleAddons.length > 0) {
@@ -2903,7 +2768,7 @@ UpdateService.prototype = {
    * See nsIUpdateService.idl
    */
   get canApplyUpdates() {
-    return gCanApplyUpdates && hasUpdateMutex();
+    return getCanApplyUpdates() && hasUpdateMutex();
   },
 
   /**
@@ -3229,14 +3094,14 @@ UpdateManager.prototype = {
    */
   get activeUpdate() {
     if (this._activeUpdate &&
-        this._activeUpdate.channel != UpdateChannel.get()) {
+        this._activeUpdate.channel != UpdateUtils.UpdateChannel) {
       LOG("UpdateManager:get activeUpdate - channel has changed, " +
           "reloading default preferences to workaround bug 802022");
       // Workaround to get distribution preferences loaded (Bug 774618). This
       // can be removed after bug 802022 is fixed.
       let prefSvc = Services.prefs.QueryInterface(Ci.nsIObserver);
       prefSvc.observe(null, "reload-default-prefs", null);
-      if (this._activeUpdate.channel != UpdateChannel.get()) {
+      if (this._activeUpdate.channel != UpdateUtils.UpdateChannel) {
         // User switched channels, clear out any old active updates and remove
         // partial downloads
         this._activeUpdate = null;
@@ -3474,38 +3339,7 @@ Checker.prototype = {
       return null;
     }
 
-    url = url.replace(/%PRODUCT%/g, Services.appinfo.name);
-    url = url.replace(/%VERSION%/g, Services.appinfo.version);
-    url = url.replace(/%BUILD_ID%/g, Services.appinfo.appBuildID);
-    url = url.replace(/%BUILD_TARGET%/g, Services.appinfo.OS + "_" + gABI);
-    url = url.replace(/%OS_VERSION%/g, gOSVersion);
-    if (/%LOCALE%/.test(url)) {
-      url = url.replace(/%LOCALE%/g, getLocale());
-    }
-    url = url.replace(/%CHANNEL%/g, UpdateChannel.get());
-    url = url.replace(/%PLATFORM_VERSION%/g, Services.appinfo.platformVersion);
-    url = url.replace(/%DISTRIBUTION%/g,
-                      getDistributionPrefValue(PREF_APP_DISTRIBUTION));
-    url = url.replace(/%DISTRIBUTION_VERSION%/g,
-                      getDistributionPrefValue(PREF_APP_DISTRIBUTION_VERSION));
-    url = url.replace(/%CUSTOM%/g, getPref("getCharPref", PREF_APP_UPDATE_CUSTOM, ""));
-    url = url.replace(/\+/g, "%2B");
-
-    if (AppConstants.platform == "gonk") {
-      let sysLibs = {};
-      Cu.import("resource://gre/modules/systemlibs.js", sysLibs);
-      let productDevice = sysLibs.libcutils.property_get("ro.product.device");
-      let buildType = sysLibs.libcutils.property_get("ro.build.type");
-      url = url.replace(/%PRODUCT_MODEL%/g,
-                        sysLibs.libcutils.property_get("ro.product.model"));
-      if (buildType == "user") {
-        url = url.replace(/%PRODUCT_DEVICE%/g, productDevice);
-      } else {
-        url = url.replace(/%PRODUCT_DEVICE%/g, productDevice + "-" + buildType);
-      }
-      url = url.replace(/%B2G_VERSION%/g,
-                        getPref("getCharPref", PREF_APP_B2G_VERSION, null));
-    }
+    url = UpdateUtils.formatUpdateURL(url);
 
     if (force) {
       url += (url.indexOf("?") != -1 ? "&" : "?") + "force=1";
@@ -3597,7 +3431,7 @@ Checker.prototype = {
         continue;
       }
       update.serviceURL = this.getUpdateURL(this._forced);
-      update.channel = UpdateChannel.get();
+      update.channel = UpdateUtils.UpdateChannel;
       updates.push(update);
     }
 
@@ -3634,7 +3468,7 @@ Checker.prototype = {
 
     var prefs = Services.prefs;
     var certs = null;
-    if (!prefs.prefHasUserValue(PREF_APP_UPDATE_URL_OVERRIDE) &&
+    if (!getPref("getCharPref", PREF_APP_UPDATE_URL_OVERRIDE, null) &&
         getPref("getBoolPref", PREF_APP_UPDATE_CERT_CHECKATTRS, true)) {
       certs = gCertUtils.readCertPrefs(PREF_APP_UPDATE_CERTS_BRANCH);
     }
@@ -3831,6 +3665,13 @@ Downloader.prototype = {
     }
 
     LOG("Downloader:_verifyDownload downloaded size == expected size.");
+
+    // The hash check is not necessary when mar signatures are used to verify
+    // the downloaded mar file.
+    if (AppConstants.MOZ_VERIFY_MAR_SIGNATURE) {
+      return true;
+    }
+
     let fileStream = Cc["@mozilla.org/network/file-input-stream;1"].
                      createInstance(Ci.nsIFileInputStream);
     fileStream.init(destination, FileUtils.MODE_RDONLY, FileUtils.PERMS_FILE, 0);
@@ -4568,13 +4409,16 @@ UpdatePrompt.prototype = {
    * See nsIUpdateService.idl
    */
   showUpdateDownloaded: function UP_showUpdateDownloaded(update, background) {
+    if (background && getPref("getBoolPref", PREF_APP_UPDATE_SILENT, false)) {
+      return;
+    }
+    // Trigger the display of the hamburger menu badge.
+    Services.obs.notifyObservers(null, "update-downloaded", update.state);
+
     if (this._getAltUpdateWindow())
       return;
 
     if (background) {
-      if (getPref("getBoolPref", PREF_APP_UPDATE_SILENT, false))
-        return;
-
       var stringsPrefix = "updateDownloaded_" + update.type + ".";
       var title = gUpdateBundle.formatStringFromName(stringsPrefix + "title",
                                                      [update.name], 1);

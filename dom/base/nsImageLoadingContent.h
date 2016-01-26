@@ -17,6 +17,7 @@
 #include "imgIOnloadBlocker.h"
 #include "mozilla/CORSMode.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
 #include "nsIImageLoadingContent.h"
 #include "nsIRequest.h"
@@ -24,6 +25,7 @@
 #include "nsAutoPtr.h"
 #include "nsIContentPolicy.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/net/ReferrerPolicy.h"
 
 class nsIURI;
 class nsIDocument;
@@ -192,15 +194,13 @@ protected:
 
   void ClearBrokenState() { mBroken = false; }
 
-  // Sets blocking state only if the desired state is different from the
-  // current one. See the comment for mBlockingOnload for more information.
-  void SetBlockingOnload(bool aBlocking);
-
   /**
    * Returns the CORS mode that will be used for all future image loads. The
    * default implementation returns CORS_NONE unconditionally.
    */
   virtual mozilla::CORSMode GetCORSMode();
+
+  virtual mozilla::net::ReferrerPolicy GetImageReferrerPolicy();
 
   // Subclasses are *required* to call BindToTree/UnbindFromTree.
   void BindToTree(nsIDocument* aDocument, nsIContent* aParent,
@@ -286,7 +286,7 @@ protected:
    *
    * @param aImageLoadType The ImageLoadType for this request
    */
-   nsRefPtr<imgRequestProxy>& PrepareNextRequest(ImageLoadType aImageLoadType);
+   RefPtr<imgRequestProxy>& PrepareNextRequest(ImageLoadType aImageLoadType);
 
   /**
    * Called when we would normally call PrepareNextRequest(), but the request was
@@ -303,8 +303,8 @@ protected:
    *
    * @param aImageLoadType The ImageLoadType for this request
    */
-  nsRefPtr<imgRequestProxy>& PrepareCurrentRequest(ImageLoadType aImageLoadType);
-  nsRefPtr<imgRequestProxy>& PreparePendingRequest(ImageLoadType aImageLoadType);
+  RefPtr<imgRequestProxy>& PrepareCurrentRequest(ImageLoadType aImageLoadType);
+  RefPtr<imgRequestProxy>& PreparePendingRequest(ImageLoadType aImageLoadType);
 
   /**
    * Switch our pending request to be our current request.
@@ -358,8 +358,8 @@ protected:
                     uint32_t aNonvisibleAction = ON_NONVISIBLE_NO_ACTION);
 
   /* MEMBERS */
-  nsRefPtr<imgRequestProxy> mCurrentRequest;
-  nsRefPtr<imgRequestProxy> mPendingRequest;
+  RefPtr<imgRequestProxy> mCurrentRequest;
+  RefPtr<imgRequestProxy> mPendingRequest;
   uint32_t mCurrentRequestFlags;
   uint32_t mPendingRequestFlags;
 
@@ -398,6 +398,8 @@ private:
    */
   mozilla::EventStates mForcedImageState;
 
+  mozilla::TimeStamp mMostRecentRequestChange;
+
   int16_t mImageBlockingStatus;
   bool mLoadingEnabled : 1;
 
@@ -414,7 +416,6 @@ private:
   bool mBroken : 1;
   bool mUserDisabled : 1;
   bool mSuppressed : 1;
-  bool mFireEventsOnDecode : 1;
 
 protected:
   /**

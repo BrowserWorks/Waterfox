@@ -13,7 +13,7 @@ namespace mozilla {
 namespace net {
 
 /**
- * Parents should extend this class and have a nsRefPtr<OfflineObserver> member.
+ * Parents should extend this class and have a RefPtr<OfflineObserver> member.
  * The constructor should initialize the member to new OfflineObserver(this)
  * and the destructor should call RemoveObserver on the member.
  *
@@ -67,7 +67,7 @@ private:
   DisconnectableParent * mParent;
 };
 
-} // net namespace
-} // mozilla namespace
+} // namespace net
+} // namespace mozilla
 
 #endif // nsOfflineObserver_h__

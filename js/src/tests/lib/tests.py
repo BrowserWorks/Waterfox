@@ -4,6 +4,7 @@
 # metadata, and know how to run the tests and determine failures.
 
 import datetime, os, sys, time
+from contextlib import contextmanager
 from subprocess import Popen, PIPE
 from threading import Thread
 
@@ -15,7 +16,7 @@ JITFLAGS = {
     'all': [
         [], # no flags, normal baseline and ion
         ['--ion-eager', '--ion-offthread-compile=off'], # implies --baseline-eager
-        ['--ion-eager', '--ion-offthread-compile=off',
+        ['--ion-eager', '--ion-offthread-compile=off', '--non-writable-jitcode',
          '--ion-check-range-analysis', '--ion-extra-checks', '--no-sse3', '--no-threads'],
         ['--baseline-eager'],
         ['--baseline-eager', '--no-fpu'],
@@ -45,68 +46,96 @@ def get_jitflags(variant, **kwargs):
         return kwargs['none']
     return JITFLAGS[variant]
 
-def do_run_cmd(cmd):
-    l = [None, None]
-    th_run_cmd(cmd, l)
-    return l[1]
 
-def set_limits():
-    # resource module not supported on all platforms
+def get_environment_overlay(js_shell):
+    """
+    Build a dict of additional environment variables that must be set to run
+    tests successfully.
+    """
+    env = {
+        # Force Pacific time zone to avoid failures in Date tests.
+        'TZ': 'PST8PDT',
+        # Force date strings to English.
+        'LC_TIME': 'en_US.UTF-8',
+        # Tell the shell to disable crash dialogs on windows.
+        'XRE_NO_WINDOWS_CRASH_DIALOG': '1',
+    }
+    # Add the binary's directory to the library search path so that we find the
+    # nspr and icu we built, instead of the platform supplied ones (or none at
+    # all on windows).
+    if sys.platform.startswith('linux'):
+        env['LD_LIBRARY_PATH'] = os.path.dirname(js_shell)
+    elif sys.platform.startswith('darwin'):
+        env['DYLD_LIBRARY_PATH'] = os.path.dirname(js_shell)
+    elif sys.platform.startswith('win'):
+        env['PATH'] = os.path.dirname(js_shell)
+    return env
+
+
+@contextmanager
+def change_env(env_overlay):
+    # Apply the overlaid environment and record the current state.
+    prior_env = {}
+    for key, val in env_overlay.items():
+        prior_env[key] = os.environ.get(key, None)
+        if 'PATH' in key and key in os.environ:
+            os.environ[key] = '{}{}{}'.format(val, os.pathsep, os.environ[key])
+        else:
+            os.environ[key] = val
+
     try:
-        import resource
-        GB = 2**30
-        resource.setrlimit(resource.RLIMIT_AS, (2*GB, 2*GB))
-    except:
-        return
+        # Execute with the new environment.
+        yield
 
-def th_run_cmd(cmd, l):
-    t0 = datetime.datetime.now()
+    finally:
+        # Restore the prior environment.
+        for key, val in prior_env.items():
+            if val is not None:
+                os.environ[key] = val
+            else:
+                del os.environ[key]
 
-    # close_fds and preexec_fn are not supported on Windows and will
-    # cause a ValueError.
-    options = {}
-    if sys.platform != 'win32':
-        options["close_fds"] = True
-        options["preexec_fn"] = set_limits
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, **options)
 
-    l[0] = p
-    out, err = p.communicate()
-    t1 = datetime.datetime.now()
-    dd = t1-t0
-    dt = dd.seconds + 1e-6 * dd.microseconds
-    l[1] = (out, err, p.returncode, dt)
+def get_cpu_count():
+    """
+    Guess at a reasonable parallelism count to set as the default for the
+    current machine and run.
+    """
+    # Python 2.6+
+    try:
+        import multiprocessing
+        return multiprocessing.cpu_count()
+    except (ImportError, NotImplementedError):
+        pass
 
-def run_cmd(cmd, timeout=60.0):
-    if timeout is None:
-        return do_run_cmd(cmd)
+    # POSIX
+    try:
+        res = int(os.sysconf('SC_NPROCESSORS_ONLN'))
+        if res > 0:
+            return res
+    except (AttributeError, ValueError):
+        pass
 
-    l = [None, None]
-    timed_out = False
-    th = Thread(target=th_run_cmd, args=(cmd, l))
-    th.start()
-    th.join(timeout)
-    while th.isAlive():
-        if l[0] is not None:
-            try:
-                # In Python 3, we could just do l[0].kill().
-                import signal
-                if sys.platform != 'win32':
-                    os.kill(l[0].pid, signal.SIGKILL)
-                time.sleep(.1)
-                timed_out = True
-            except OSError:
-                # Expecting a "No such process" error
-                pass
-    th.join()
-    return l[1] + (timed_out,)
+    # Windows
+    try:
+        res = int(os.environ['NUMBER_OF_PROCESSORS'])
+        if res > 0:
+            return res
+    except (KeyError, ValueError):
+        pass
 
-class Test(object):
+    return 1
+
+
+class RefTest(object):
     """A runnable test."""
     def __init__(self, path):
         self.path = path     # str:  path of JS file relative to tests root dir
         self.options = []    # [str]: Extra options to pass to the shell
         self.jitflags = []   # [str]: JIT flags to pass to the shell
+        self.test_reflect_stringify = None  # str or None: path to
+                                            # reflect-stringify.js file to test
+                                            # instead of actually running tests
 
     @staticmethod
     def prefix_command(path):
@@ -115,26 +144,24 @@ class Test(object):
         if path == '':
             return ['-f', 'shell.js']
         head, base = os.path.split(path)
-        return Test.prefix_command(head) \
+        return RefTest.prefix_command(head) \
             + ['-f', os.path.join(path, 'shell.js')]
 
-    def get_command(self, js_cmd_prefix):
+    def get_command(self, prefix):
         dirname, filename = os.path.split(self.path)
-        cmd = js_cmd_prefix + self.jitflags + self.options \
-              + Test.prefix_command(dirname) + ['-f', self.path]
+        cmd = prefix + self.jitflags + self.options \
+              + RefTest.prefix_command(dirname)
+        if self.test_reflect_stringify is not None:
+            cmd += [self.test_reflect_stringify, "--check", self.path]
+        else:
+            cmd += ["-f", self.path]
         return cmd
 
-    def run(self, js_cmd_prefix, timeout=30.0):
-        cmd = self.get_command(js_cmd_prefix)
-        out, err, rc, dt, timed_out = run_cmd(cmd, timeout)
-        return TestOutput(self, cmd, out, err, rc, dt, timed_out)
 
-class TestCase(Test):
+class RefTestCase(RefTest):
     """A test case consisting of a test and an expected result."""
-    js_cmd_prefix = None
-
     def __init__(self, path):
-        Test.__init__(self, path)
+        RefTest.__init__(self, path)
         self.enable = True   # bool: True => run test, False => don't run
         self.expect = True   # bool: expected result, True => pass
         self.random = False  # bool: True => ignore output as 'random'
@@ -163,15 +190,15 @@ class TestCase(Test):
             ans += ', debugMode'
         return ans
 
-    @classmethod
-    def set_js_cmd_prefix(self, js_path, js_args, debugger_prefix):
+    @staticmethod
+    def build_js_cmd_prefix(js_path, js_args, debugger_prefix):
         parts = []
         if debugger_prefix:
             parts += debugger_prefix
         parts.append(js_path)
         if js_args:
             parts += js_args
-        self.js_cmd_prefix = parts
+        return parts
 
     def __cmp__(self, other):
         if self.path == other.path:

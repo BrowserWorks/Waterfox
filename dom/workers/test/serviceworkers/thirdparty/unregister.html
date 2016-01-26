@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<script>
+  navigator.serviceWorker.getRegistration(".").then(function(registration) {
+    if(!registration) {
+      return;
+    }
+    registration.unregister().then(() => {
+      window.parent.postMessage({status: "unregistrationdone"}, "*");
+    });
+  });
+</script>

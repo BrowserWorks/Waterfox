@@ -1,0 +1,44 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+EXPORTS.mozilla += [
+    'AbstractTimelineMarker.h',
+    'AutoGlobalTimelineMarker.h',
+    'AutoTimelineMarker.h',
+    'CompositeTimelineMarker.h',
+    'ConsoleTimelineMarker.h',
+    'DocLoadingTimelineMarker.h',
+    'EventTimelineMarker.h',
+    'JavascriptTimelineMarker.h',
+    'LayerTimelineMarker.h',
+    'MarkersStorage.h',
+    'ObservedDocShell.h',
+    'RestyleTimelineMarker.h',
+    'TimelineConsumers.h',
+    'TimelineMarker.h',
+    'TimelineMarkerEnums.h',
+    'TimestampTimelineMarker.h',
+    'WorkerTimelineMarker.h',
+]
+
+UNIFIED_SOURCES += [
+    'AbstractTimelineMarker.cpp',
+    'AutoGlobalTimelineMarker.cpp',
+    'AutoTimelineMarker.cpp',
+    'MarkersStorage.cpp',
+    'ObservedDocShell.cpp',
+    'TimelineConsumers.cpp',
+    'TimelineMarker.cpp',
+]
+
+FINAL_LIBRARY = 'xul'
+
+LOCAL_INCLUDES += [
+    '/docshell/base'
+]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

@@ -7,9 +7,10 @@
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.importGlobalProperties(['Blob']);
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/wap_consts.js", this);
 
-let DEBUG; // set to true to see debug messages
+var DEBUG; // set to true to see debug messages
 
 // Special ASCII characters
 const NUL = 0;
@@ -20,9 +21,20 @@ const HT = 9;
 const DQUOTE = 34;
 const DEL = 127;
 
+XPCOMUtils.defineConstant(this, "NUL", NUL);
+XPCOMUtils.defineConstant(this, "CR", CR);
+XPCOMUtils.defineConstant(this, "LF", LF);
+XPCOMUtils.defineConstant(this, "SP", SP);
+XPCOMUtils.defineConstant(this, "HT", HT);
+XPCOMUtils.defineConstant(this, "DQUOTE", DQUOTE);
+XPCOMUtils.defineConstant(this, "DEL", DEL);
+
 // Special ASCII character ranges
 const CTLS = 32;
 const ASCIIS = 128;
+
+XPCOMUtils.defineConstant(this, "CTLS", CTLS);
+XPCOMUtils.defineConstant(this, "ASCIIS", ASCIIS);
 
 /**
  * Error class for generic encoding/decoding failures.
@@ -2834,7 +2846,7 @@ this.OMNA_PUSH_APPLICATION_IDS = (function() {
   return ids;
 })();
 
-let debug;
+var debug;
 if (DEBUG) {
   debug = function(s) {
     dump("-@- WspPduHelper: " + s + "\n");

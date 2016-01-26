@@ -9,7 +9,6 @@
 
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Assertions.h"
-#include "js/Class.h"
 #include "js/Id.h"          // must come before js/RootingAPI.h
 #include "js/Value.h"       // must come before js/RootingAPI.h
 #include "js/RootingAPI.h"
@@ -66,6 +65,7 @@ class nsWindowRoot;
  * have to include some JS headers that don't play nicely with the rest of the
  * codebase. Include nsWrapperCacheInlines.h if you need to call those methods.
  */
+
 class nsWrapperCache
 {
 public:
@@ -103,11 +103,18 @@ public:
     return GetWrapperJSObject();
   }
 
+#ifdef DEBUG
+private:
+  static bool HasJSObjectMovedOp(JSObject* aWrapper);
+
+public:
+#endif
+
   void SetWrapper(JSObject* aWrapper)
   {
     MOZ_ASSERT(!PreservingWrapper(), "Clearing a preserved wrapper!");
     MOZ_ASSERT(aWrapper, "Use ClearWrapper!");
-    MOZ_ASSERT(js::HasObjectMovedOp(aWrapper),
+    MOZ_ASSERT(HasJSObjectMovedOp(aWrapper),
                "Object has not provided the hook to update the wrapper if it is moved");
 
     SetWrapperJSObject(aWrapper);
@@ -251,14 +258,15 @@ protected:
   void TraceWrapper(JSTracer* aTrc, const char* name)
   {
     if (mWrapper) {
-      JS_CallObjectTracer(aTrc, &mWrapper, name);
+      js::UnsafeTraceManuallyBarrieredEdge(aTrc, &mWrapper, name);
     }
   }
 
   void PoisonWrapper()
   {
     if (mWrapper) {
-      mWrapper.setToCrashOnTouch();
+      // See setToCrashOnTouch() in RootingAPI.h
+      mWrapper = reinterpret_cast<JSObject*>(1);
     }
   }
 
@@ -280,13 +288,7 @@ private:
     return mWrapper;
   }
 
-  void SetWrapperJSObject(JSObject* aWrapper)
-  {
-    mWrapper = aWrapper;
-    UnsetWrapperFlags(kWrapperFlagsMask & ~WRAPPER_IS_NOT_DOM_BINDING);
-  }
-
-  void TraceWrapperJSObject(JSTracer* aTrc, const char* aName);
+  void SetWrapperJSObject(JSObject* aWrapper);
 
   FlagsType GetWrapperFlags() const
   {
@@ -311,12 +313,14 @@ private:
     mFlags &= ~aFlagsToUnset;
   }
 
-  static void HoldJSObjects(void* aScriptObjectHolder,
-                            nsScriptObjectTracer* aTracer);
+  void HoldJSObjects(void* aScriptObjectHolder,
+                     nsScriptObjectTracer* aTracer);
 
 #ifdef DEBUG
+public:
   void CheckCCWrapperTraversal(void* aScriptObjectHolder,
                                nsScriptObjectTracer* aTracer);
+private:
 #endif // DEBUG
 
   /**
@@ -340,8 +344,8 @@ private:
 
   enum { kWrapperFlagsMask = (WRAPPER_BIT_PRESERVED | WRAPPER_IS_NOT_DOM_BINDING) };
 
-  JS::Heap<JSObject*> mWrapper;
-  FlagsType           mFlags;
+  JSObject* mWrapper;
+  FlagsType mFlags;
 };
 
 enum { WRAPPER_CACHE_FLAGS_BITS_USED = 2 };

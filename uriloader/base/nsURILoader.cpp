@@ -34,7 +34,6 @@
 
 #include "nsXPIDLString.h"
 #include "nsString.h"
-#include "nsNetUtil.h"
 #include "nsThreadUtils.h"
 #include "nsReadableUtils.h"
 #include "nsError.h"
@@ -53,9 +52,9 @@
 
 PRLogModuleInfo* nsURILoader::mLog = nullptr;
 
-#define LOG(args) PR_LOG(nsURILoader::mLog, PR_LOG_DEBUG, args)
-#define LOG_ERROR(args) PR_LOG(nsURILoader::mLog, PR_LOG_ERROR, args)
-#define LOG_ENABLED() PR_LOG_TEST(nsURILoader::mLog, PR_LOG_DEBUG)
+#define LOG(args) MOZ_LOG(nsURILoader::mLog, mozilla::LogLevel::Debug, args)
+#define LOG_ERROR(args) MOZ_LOG(nsURILoader::mLog, mozilla::LogLevel::Error, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(nsURILoader::mLog, mozilla::LogLevel::Debug)
 
 #define NS_PREF_DISABLE_BACKGROUND_HANDLING \
     "security.exthelperapp.disable_background_handling"
@@ -156,7 +155,7 @@ protected:
    * Reference to the URILoader service so we can access its list of
    * nsIURIContentListeners.
    */
-  nsRefPtr<nsURILoader> mURILoader;
+  RefPtr<nsURILoader> mURILoader;
 };
 
 NS_IMPL_ADDREF(nsDocumentOpenInfo)
@@ -625,7 +624,7 @@ nsDocumentOpenInfo::ConvertData(nsIRequest *request,
   // stream is split up into multiple destination streams.  This
   // intermediate instance is used to target these "decoded" streams...
   //
-  nsRefPtr<nsDocumentOpenInfo> nextLink =
+  RefPtr<nsDocumentOpenInfo> nextLink =
     new nsDocumentOpenInfo(m_originalContext, mFlags, mURILoader);
   if (!nextLink) return NS_ERROR_OUT_OF_MEMORY;
 
@@ -873,7 +872,7 @@ nsresult nsURILoader::OpenChannel(nsIChannel* channel,
 
   // we need to create a DocumentOpenInfo object which will go ahead and open
   // the url and discover the content type....
-  nsRefPtr<nsDocumentOpenInfo> loader =
+  RefPtr<nsDocumentOpenInfo> loader =
     new nsDocumentOpenInfo(aWindowContext, aFlags, this);
 
   if (!loader) return NS_ERROR_OUT_OF_MEMORY;
@@ -890,7 +889,7 @@ nsresult nsURILoader::OpenChannel(nsIChannel* channel,
       nsCOMPtr<nsISupports> cookie;
       listener->GetLoadCookie(getter_AddRefs(cookie));
       if (!cookie) {
-        nsRefPtr<nsDocLoader> newDocLoader = new nsDocLoader();
+        RefPtr<nsDocLoader> newDocLoader = new nsDocLoader();
         if (!newDocLoader)
           return NS_ERROR_OUT_OF_MEMORY;
         nsresult rv = newDocLoader->Init();

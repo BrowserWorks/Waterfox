@@ -6,6 +6,7 @@
 (?i)(^|/)TAGS$
 (^|/)ID$
 (^|/)\.DS_Store$
+.*\.egg-info
 
 # Vim swap files.
 ^\.sw.$
@@ -51,8 +52,15 @@ _OPT\.OBJ/
 \.cproject$
 \.settings/
 
-# Ignore the directory that JetBrains IDEs create
+# Ignore the files and directory that JetBrains IDEs create.
 \.idea/
+\.iml$
+
+# Gradle cache.
+^.gradle/
+
+# Local Gradle configuration properties.
+^local.properties$
 
 # Python stuff installed at build time.
 ^python/psutil/.*\.so
@@ -63,8 +71,8 @@ _OPT\.OBJ/
 .git/
 
 # Ignore chrome.manifest files from the devtools loader
-^browser/devtools/chrome.manifest$
-^toolkit/devtools/chrome.manifest$
+^devtools/client/chrome.manifest$
+^devtools/shared/chrome.manifest$
 
 # git checkout of libstagefright
 ^media/libstagefright/android$
@@ -75,12 +83,44 @@ GRTAGS
 GSYMS
 GPATH
 
-# Unit tests for Loop
+# Various items for Loop
 ^browser/components/loop/standalone/content/config\.js$
-^browser/components/loop/standalone/node_modules/
+^browser/extensions/loop/.*/node_modules/
+^browser/extensions/loop/.*\.module-cache
+^browser/extensions/loop/test/coverage/desktop
+^browser/extensions/loop/test/coverage/shared_standalone
+^browser/extensions/loop/test/visual-regression/diff
+^browser/extensions/loop/test/visual-regression/new
+^browser/extensions/loop/test/visual-regression/refs
 
 # Git clone directory for updating web-platform-tests
 ^testing/web-platform/sync/
 
 # Android Gradle artifacts.
 ^mobile/android/gradle/.gradle
+
+# XCode project cruft
+^embedding/ios/GeckoEmbed/GeckoEmbed.xcodeproj/project.xcworkspace/xcuserdata
+^embedding/ios/GeckoEmbed/GeckoEmbed.xcodeproj/xcuserdata
+
+# Ignore mozharness execution files
+^testing/mozharness/logs/
+^testing/mozharness/build/
+
+# Ignore tox generated dir
+.tox/
+
+# Ignore node_modules from eslint-plugin-mozilla
+^testing/eslint-plugin-mozilla/node_modules/
+
+# Ignore talos virtualenv and tp5n files.
+# The tp5n set is supposed to be decompressed at
+# testing/talos/talos/page_load_test/tp5n in order to run tests like tps
+# locally. Similarly, running talos requires a Python package virtual
+# environment. Both the virtual environment and tp5n files end up littering
+# the status command, so we ignore them.
+^testing/talos/.Python
+^testing/talos/bin/
+^testing/talos/include/
+^testing/talos/lib/
+^testing/talos/talos/page_load_test/tp5n/

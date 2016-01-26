@@ -5,12 +5,12 @@
 "use strict";
 
 // Avoid leaks by using tmp for imports...
-let tmp = {};
+var tmp = {};
 Cu.import("resource://gre/modules/Promise.jsm", tmp);
 Cu.import("resource:///modules/CustomizableUI.jsm", tmp);
-let {Promise, CustomizableUI} = tmp;
+var {Promise, CustomizableUI} = tmp;
 
-let ChromeUtils = {};
+var ChromeUtils = {};
 Services.scriptloader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js", ChromeUtils);
 
 Services.prefs.setBoolPref("browser.uiCustomization.skipSourceNodeCheck", true);
@@ -21,21 +21,21 @@ registerCleanupFunction(() => Services.prefs.clearUserPref("browser.uiCustomizat
 CustomizableUI.destroyWidget("e10s-button");
 CustomizableUI.removeWidgetFromArea("e10s-button");
 
-let {synthesizeDragStart, synthesizeDrop} = ChromeUtils;
+var {synthesizeDragStart, synthesizeDrop} = ChromeUtils;
 
 const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const kTabEventFailureTimeoutInMs = 20000;
 
-function createDummyXULButton(id, label) {
+function createDummyXULButton(id, label, win = window) {
   let btn = document.createElementNS(kNSXUL, "toolbarbutton");
   btn.id = id;
   btn.setAttribute("label", label || id);
   btn.className = "toolbarbutton-1 chromeclass-toolbar-additional";
-  window.gNavToolbox.palette.appendChild(btn);
+  win.gNavToolbox.palette.appendChild(btn);
   return btn;
 }
 
-let gAddedToolbars = new Set();
+var gAddedToolbars = new Set();
 
 function createToolbarWithPlacements(id, placements = []) {
   gAddedToolbars.add(id);
@@ -200,7 +200,7 @@ function endCustomizing(aWindow=window) {
 
     // If we stop early enough, this might actually be about:blank.
     if (newTabBrowser.contentDocument.location.href == "about:blank") {
-      return;
+      return null;
     }
 
     // Otherwise, make it be about:blank, and wait for that to be done.
@@ -216,7 +216,7 @@ function endCustomizing(aWindow=window) {
 
 function startCustomizing(aWindow=window) {
   if (aWindow.document.documentElement.getAttribute("customizing") == "true") {
-    return;
+    return null;
   }
   Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", true);
   let deferred = Promise.defer();
@@ -374,7 +374,7 @@ function waitForCondition(aConditionFn, aMaxTries=50, aCheckInterval=100) {
 
 function waitFor(aTimeout=100) {
   let deferred = Promise.defer();
-  setTimeout(function() deferred.resolve(), aTimeout);
+  setTimeout(() => deferred.resolve(), aTimeout);
   return deferred.promise;
 }
 

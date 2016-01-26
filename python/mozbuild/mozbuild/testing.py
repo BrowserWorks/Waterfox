@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 import os
@@ -72,7 +72,8 @@ class TestMetadata(object):
         for path in sorted(self._tests_by_flavor.get(flavor, [])):
             yield self._tests_by_path[path]
 
-    def resolve_tests(self, paths=None, flavor=None, subsuite=None, under_path=None):
+    def resolve_tests(self, paths=None, flavor=None, subsuite=None, under_path=None,
+                      tags=None):
         """Resolve tests from an identifier.
 
         This is a generator of dicts describing each test.
@@ -82,7 +83,8 @@ class TestMetadata(object):
         returned (there may be multiple configurations for a single file). If
         an entry is a directory, or a prefix of a directory containing tests,
         all tests in that directory are returned. If the string appears in a
-        known test file, that test file is considered.
+        known test file, that test file is considered. If the path contains
+        a wildcard pattern, tests matching that pattern are returned.
 
         If ``under_path`` is a string, it will be used to filter out tests that
         aren't in the specified path prefix relative to topsrcdir or the
@@ -94,7 +96,13 @@ class TestMetadata(object):
 
         If ``subsuite`` is a string, it will be used to filter returned tests
         to only be in the subsuite specified.
+
+        If ``tags`` are specified, they will be used to filter returned tests
+        to only those with a matching tag.
         """
+        if tags:
+            tags = set(tags)
+
         def fltr(tests):
             for test in tests:
                 if flavor:
@@ -103,6 +111,9 @@ class TestMetadata(object):
                     continue
 
                 if subsuite and test.get('subsuite') != subsuite:
+                    continue
+
+                if tags and not (tags & set(test.get('tags', '').split())):
                     continue
 
                 if under_path \
@@ -122,6 +133,11 @@ class TestMetadata(object):
         for path in sorted(paths):
             if path is None:
                 candidate_paths |= set(self._tests_by_path.keys())
+                continue
+
+            if '*' in path:
+                candidate_paths |= {p for p in self._tests_by_path
+                                    if mozpath.match(p, path)}
                 continue
 
             # If the path is a directory, or the path is a prefix of a directory
@@ -163,6 +179,12 @@ class TestResolver(MozbuildObject):
                 'mochitest', 'chrome'),
             'mochitest': os.path.join(self.topobjdir, '_tests', 'testing',
                 'mochitest', 'tests'),
+            'webapprt-chrome': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'webapprtChrome'),
+            'webapprt-content': os.path.join(self.topobjdir, '_tests', 'testing',
+                'mochitest', 'webapprtContent'),
+            'web-platform-tests': os.path.join(self.topobjdir, '_tests', 'testing',
+                                               'web-platform'),
             'xpcshell': os.path.join(self.topobjdir, '_tests', 'xpcshell'),
         }
 
@@ -209,3 +231,60 @@ class TestResolver(MozbuildObject):
                     honor_install_to_subdir=True)
             else:
                 yield test
+
+# These definitions provide a single source of truth for modules attempting
+# to get a view of all tests for a build. Used by the emitter to figure out
+# how to read/install manifests and by test dependency annotations in Files()
+# entries to enumerate test flavors.
+
+# While there are multiple test manifests, the behavior is very similar
+# across them. We enforce this by having common handling of all
+# manifests and outputting a single class type with the differences
+# described inside the instance.
+#
+# Keys are variable prefixes and values are tuples describing how these
+# manifests should be handled:
+#
+#    (flavor, install_prefix, package_tests)
+#
+# flavor identifies the flavor of this test.
+# install_prefix is the path prefix of where to install the files in
+#     the tests directory.
+# package_tests indicates whether to package test files into the test
+#     package; suites that compile the test files should not install
+#     them into the test package.
+#
+TEST_MANIFESTS = dict(
+    A11Y=('a11y', 'testing/mochitest', 'a11y', True),
+    BROWSER_CHROME=('browser-chrome', 'testing/mochitest', 'browser', True),
+    ANDROID_INSTRUMENTATION=('instrumentation', 'instrumentation', '.', False),
+    JETPACK_PACKAGE=('jetpack-package', 'testing/mochitest', 'jetpack-package', True),
+    JETPACK_ADDON=('jetpack-addon', 'testing/mochitest', 'jetpack-addon', False),
+
+    # marionette tests are run from the srcdir
+    # TODO(ato): make packaging work as for other test suites
+    MARIONETTE=('marionette', 'marionette', '.', False),
+    MARIONETTE_LOOP=('marionette', 'marionette', '.', False),
+    MARIONETTE_UNIT=('marionette', 'marionette', '.', False),
+    MARIONETTE_UPDATE=('marionette', 'marionette', '.', False),
+    MARIONETTE_WEBAPI=('marionette', 'marionette', '.', False),
+
+    METRO_CHROME=('metro-chrome', 'testing/mochitest', 'metro', True),
+    MOCHITEST=('mochitest', 'testing/mochitest', 'tests', True),
+    MOCHITEST_CHROME=('chrome', 'testing/mochitest', 'chrome', True),
+    MOCHITEST_WEBAPPRT_CONTENT=('webapprt-content', 'testing/mochitest', 'webapprtContent', True),
+    MOCHITEST_WEBAPPRT_CHROME=('webapprt-chrome', 'testing/mochitest', 'webapprtChrome', True),
+    WEBRTC_SIGNALLING_TEST=('steeplechase', 'steeplechase', '.', True),
+    XPCSHELL_TESTS=('xpcshell', 'xpcshell', '.', True),
+)
+
+# Reftests have their own manifest format and are processed separately.
+REFTEST_FLAVORS = ('crashtest', 'reftest')
+
+# Web platform tests have their own manifest format and are processed separately.
+WEB_PATFORM_TESTS_FLAVORS = ('web-platform-tests',)
+
+def all_test_flavors():
+    return ([v[0] for v in TEST_MANIFESTS.values()] +
+            list(REFTEST_FLAVORS) +
+            list(WEB_PATFORM_TESTS_FLAVORS))

@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
-#include "cutils/properties.h"
 #include "android/log.h"
 
 #include "nsWhitespaceTokenizer.h"
@@ -17,16 +16,20 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/Snprintf.h"
+#include "SystemProperty.h"
 
 #define NETD_LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "Gonk", args)
 #define ICS_SYS_USB_RNDIS_MAC "/sys/class/android_usb/android0/f_rndis/ethaddr"
 #define INVALID_SOCKET -1
 #define MAX_RECONNECT_TIMES 10
 
+using mozilla::system::Property;
+
 namespace {
 
-mozilla::RefPtr<mozilla::ipc::NetdClient> gNetdClient;
-mozilla::RefPtr<mozilla::ipc::NetdConsumer> gNetdConsumer;
+RefPtr<mozilla::ipc::NetdClient> gNetdClient;
+RefPtr<mozilla::ipc::NetdConsumer> gNetdConsumer;
 
 class StopNetdConsumer : public nsRunnable {
 public:
@@ -57,7 +60,7 @@ InitRndisAddress()
     return false;
   }
 
-  property_get("ro.serialno", serialno, "1234567890ABCDEF");
+  Property::Get("ro.serialno", serialno, "1234567890ABCDEF");
 
   memset(address, 0, sizeof(address));
   // First byte is 0x02 to signify a locally administered address.
@@ -67,9 +70,9 @@ InitRndisAddress()
     address[i % (kEthernetAddressLength - 1) + 1] ^= serialno[i];
   }
 
-  sprintf(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
-          address[0], address[1], address[2],
-          address[3], address[4], address[5]);
+  snprintf_literal(mac, "%02x:%02x:%02x:%02x:%02x:%02x",
+                   address[0], address[1], address[2],
+                   address[3], address[4], address[5]);
   length = strlen(mac);
   ret = write(fd.get(), mac, length);
   if (ret != length) {
@@ -79,7 +82,7 @@ InitRndisAddress()
   return true;
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 namespace ipc {
@@ -291,12 +294,12 @@ static void
 InitNetdIOThread()
 {
   bool result;
-  char propValue[PROPERTY_VALUE_MAX];
+  char propValue[Property::VALUE_MAX_LENGTH];
 
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(!gNetdClient);
 
-  property_get("ro.build.version.sdk", propValue, "0");
+  Property::Get("ro.build.version.sdk", propValue, "0");
   // Assign rndis address for usb tethering in ICS.
   if (atoi(propValue) >= 15) {
     result = InitRndisAddress();

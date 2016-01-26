@@ -8,14 +8,14 @@ function debug(str) {
   dump("CHROME PERMISSON HANDLER -- " + str + "\n");
 }
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 const { SystemAppProxy } = Cu.import("resource://gre/modules/SystemAppProxy.jsm");
 
-let eventHandler = function(evt) {
+var eventHandler = function(evt) {
   if (!evt.detail || evt.detail.type !== "permission-prompt") {
     return;
   }

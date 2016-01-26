@@ -52,7 +52,7 @@ private:
     void InvalidateCache();
 
     double mContentsScaleFactor;
-    nsRefPtr<nsScreenManagerProxy> mScreenManager;
+    RefPtr<nsScreenManagerProxy> mScreenManager;
     uint32_t mId;
     int32_t mPixelDepth;
     int32_t mColorDepth;
@@ -66,5 +66,6 @@ private:
 
 } // namespace widget
 } // namespace mozilla
+
 #endif
 

@@ -75,13 +75,13 @@ nsSVGPathGeometryElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
 {
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
                                          FillRule aFillRule)
 {
   // We only cache the path if it matches the backend used for screen painting:
   bool cacheable  = aDrawTarget.GetBackendType() ==
-                      gfxPlatform::GetPlatform()->GetContentBackend();
+                    gfxPlatform::GetPlatform()->GetDefaultContentBackend();
 
   // Checking for and returning mCachedPath before checking the pref means
   // that the pref is only live on page reload (or app restart for SVG in
@@ -89,7 +89,8 @@ nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
   // looking at the global variable that the pref's stored in.
   if (cacheable && mCachedPath) {
     if (aDrawTarget.GetBackendType() == mCachedPath->GetBackendType()) {
-      return mCachedPath;
+      RefPtr<Path> path(mCachedPath);
+      return path.forget();
     }
   }
   RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder(aFillRule);
@@ -100,7 +101,7 @@ nsSVGPathGeometryElement::GetOrBuildPath(const DrawTarget& aDrawTarget,
   return path.forget();
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 nsSVGPathGeometryElement::GetOrBuildPathForMeasuring()
 {
   return nullptr;
@@ -111,7 +112,7 @@ nsSVGPathGeometryElement::GetFillRule()
 {
   FillRule fillRule = FillRule::FILL_WINDING; // Equivalent to NS_STYLE_FILL_RULE_NONZERO
 
-  nsRefPtr<nsStyleContext> styleContext =
+  RefPtr<nsStyleContext> styleContext =
     nsComputedDOMStyle::GetStyleContextForElementNoFlush(this, nullptr,
                                                          nullptr);
   

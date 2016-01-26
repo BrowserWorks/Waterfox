@@ -15,7 +15,7 @@ namespace mozilla {
 
 namespace ipc {
   class PBackgroundParent;
-}
+} // namespace ipc
 
 namespace dom {
 namespace cache {
@@ -61,18 +61,18 @@ private:
 
   // set in originating thread at construction, but must be accessed and
   // released on main thread
-  nsRefPtr<ContentParent> mActor;
+  RefPtr<ContentParent> mActor;
 
   const mozilla::ipc::PrincipalInfo mPrincipalInfo;
   nsCOMPtr<nsIThread> mInitiatingThread;
   nsresult mResult;
-  nsRefPtr<ManagerId> mManagerId;
+  RefPtr<ManagerId> mManagerId;
 
 public:
   NS_DECL_NSIRUNNABLE
 };
 
-} // namesapce cache
+} // namespace cache
 } // namespace dom
 } // namespace mozilla
 

@@ -7,13 +7,15 @@
 
 #include "gc/Nursery-inl.h"
 
+#include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Move.h"
+#include "mozilla/unused.h"
 
 #include "jscompartment.h"
+#include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsutil.h"
-#include "prmjtime.h"
 
 #include "gc/GCInternals.h"
 #include "gc/Memory.h"
@@ -23,6 +25,7 @@
 #if defined(DEBUG)
 #include "vm/ScopeObject.h"
 #endif
+#include "vm/Time.h"
 #include "vm/TypedArrayObject.h"
 #include "vm/TypeInference.h"
 
@@ -34,6 +37,7 @@ using namespace js;
 using namespace gc;
 
 using mozilla::ArrayLength;
+using mozilla::DebugOnly;
 using mozilla::PodCopy;
 using mozilla::PodZero;
 
@@ -62,6 +66,9 @@ js::Nursery::init(uint32_t maxNurseryBytes)
         return true;
 
     if (!mallocedBuffers.init())
+        return false;
+
+    if (!cellsWithUid_.init())
         return false;
 
     void* heap = MapAlignedPages(nurserySize(), Alignment);
@@ -110,7 +117,7 @@ js::Nursery::updateDecommittedRegion()
     if (numActiveChunks_ < numNurseryChunks_) {
         // Bug 994054: madvise on MacOS is too slow to make this
         //             optimization worthwhile.
-# ifndef XP_MACOSX
+# ifndef XP_DARWIN
         uintptr_t decommitStart = chunk(numActiveChunks_).start();
         uintptr_t decommitSize = heapEnd() - decommitStart;
         MOZ_ASSERT(decommitStart == AlignBytes(decommitStart, Alignment));
@@ -197,6 +204,7 @@ js::Nursery::allocateObject(JSContext* cx, size_t size, size_t numDynamic, const
     /* If we want external slots, add them. */
     HeapSlot* slots = nullptr;
     if (numDynamic) {
+        MOZ_ASSERT(clasp->isNative());
         slots = static_cast<HeapSlot*>(allocateBuffer(cx->zone(), numDynamic * sizeof(HeapSlot)));
         if (!slots) {
             /*
@@ -231,6 +239,7 @@ js::Nursery::allocate(size_t size)
     position_ = position() + size;
 
     JS_EXTRA_POISON(thing, JS_ALLOCATED_NURSERY_PATTERN, size);
+    MemProfiler::SampleNursery(reinterpret_cast<void*>(thing), size);
     return thing;
 }
 
@@ -246,9 +255,9 @@ js::Nursery::allocateBuffer(Zone* zone, uint32_t nbytes)
     }
 
     void* buffer = zone->pod_malloc<uint8_t>(nbytes);
-    if (buffer) {
-        /* If this put fails, we will only leak the slots. */
-        (void)mallocedBuffers.put(buffer);
+    if (buffer && !mallocedBuffers.putNew(buffer)) {
+        js_free(buffer);
+        return nullptr;
     }
     return buffer;
 }
@@ -273,11 +282,8 @@ js::Nursery::reallocateBuffer(JSObject* obj, void* oldBuffer,
 
     if (!isInside(oldBuffer)) {
         void* newBuffer = obj->zone()->pod_realloc<uint8_t>((uint8_t*)oldBuffer, oldBytes, newBytes);
-        if (newBuffer && oldBytes != newBytes) {
-            removeMallocedBuffer(oldBuffer);
-            /* If this put fails, we will only leak the slots. */
-            (void)mallocedBuffers.put(newBuffer);
-        }
+        if (newBuffer && oldBuffer != newBuffer)
+            MOZ_ALWAYS_TRUE(mallocedBuffers.rekeyAs(oldBuffer, newBuffer, newBuffer));
         return newBuffer;
     }
 
@@ -304,19 +310,24 @@ void
 Nursery::setForwardingPointer(void* oldData, void* newData, bool direct)
 {
     MOZ_ASSERT(isInside(oldData));
-    MOZ_ASSERT(!isInside(newData));
+
+    // Bug 1196210: If a zero-capacity header lands in the last 2 words of the
+    // jemalloc chunk abutting the start of the nursery, the (invalid) newData
+    // pointer will appear to be "inside" the nursery.
+    MOZ_ASSERT(!isInside(newData) || uintptr_t(newData) == heapStart_);
 
     if (direct) {
         *reinterpret_cast<void**>(oldData) = newData;
     } else {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
         if (!forwardedBuffers.initialized() && !forwardedBuffers.init())
-            CrashAtUnhandlableOOM("Nursery::setForwardingPointer");
+            oomUnsafe.crash("Nursery::setForwardingPointer");
 #ifdef DEBUG
         if (ForwardedBufferMap::Ptr p = forwardedBuffers.lookup(oldData))
             MOZ_ASSERT(p->value() == newData);
 #endif
         if (!forwardedBuffers.put(oldData, newData))
-            CrashAtUnhandlableOOM("Nursery::setForwardingPointer");
+            oomUnsafe.crash("Nursery::setForwardingPointer");
     }
 }
 
@@ -378,28 +389,12 @@ js::TenuringTracer::TenuringTracer(JSRuntime* rt, Nursery* nursery)
   , tenuredSize(0)
   , head(nullptr)
   , tail(&head)
-  , savedRuntimeNeedBarrier(rt->needsIncrementalBarrier())
 {
-    rt->gc.incGcNumber();
-
-    // We disable the runtime needsIncrementalBarrier() check so that
-    // pre-barriers do not fire on objects that have been relocated. The
-    // pre-barrier's call to obj->zone() will try to look through shape_,
-    // which is now the relocation magic and will crash. However,
-    // zone->needsIncrementalBarrier() must still be set correctly so that
-    // allocations we make in minor GCs between incremental slices will
-    // allocate their objects marked.
-    rt->setNeedsIncrementalBarrier(false);
 }
 
-js::TenuringTracer::~TenuringTracer()
-{
-    runtime()->setNeedsIncrementalBarrier(savedRuntimeNeedBarrier);
-}
-
-#define TIME_START(name) int64_t timstampStart_##name = enableProfiling_ ? PRMJ_Now() : 0
-#define TIME_END(name) int64_t timstampEnd_##name = enableProfiling_ ? PRMJ_Now() : 0
-#define TIME_TOTAL(name) (timstampEnd_##name - timstampStart_##name)
+#define TIME_START(name) int64_t timestampStart_##name = enableProfiling_ ? PRMJ_Now() : 0
+#define TIME_END(name) int64_t timestampEnd_##name = enableProfiling_ ? PRMJ_Now() : 0
+#define TIME_TOTAL(name) (timestampEnd_##name - timestampStart_##name)
 
 void
 js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList* pretenureGroups)
@@ -423,13 +418,12 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
 
     rt->gc.incMinorGcNumber();
 
-    rt->gc.stats.count(gcstats::STAT_MINOR_GC);
-
+    rt->gc.stats.beginNurseryCollection(reason);
     TraceMinorGCStart();
 
-    TIME_START(total);
+    int64_t timestampStart_total = PRMJ_Now();
 
-    AutoTraceSession session(rt, MinorCollecting);
+    AutoTraceSession session(rt, JS::HeapState::MinorCollecting);
     AutoStopVerifyingBarriers av(rt, false);
     AutoDisableProxyCheck disableStrictProxyChecking(rt);
     mozilla::DebugOnly<AutoEnterOOMUnsafeRegion> oomUnsafeRegion;
@@ -438,6 +432,14 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     TenuringTracer mover(rt, this);
 
     // Mark the store buffer. This must happen first.
+
+    TIME_START(cancelIonCompilations);
+    if (sb.cancelIonCompilations()) {
+        for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
+            jit::StopAllOffThreadCompilations(c);
+    }
+    TIME_END(cancelIonCompilations);
+
     TIME_START(traceValues);
     sb.traceValues(mover);
     TIME_END(traceValues);
@@ -453,14 +455,6 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     TIME_START(traceWholeCells);
     sb.traceWholeCells(mover);
     TIME_END(traceWholeCells);
-
-    TIME_START(traceRelocatableValues);
-    sb.traceRelocatableValues(mover);
-    TIME_END(traceRelocatableValues);
-
-    TIME_START(traceRelocatableCells);
-    sb.traceRelocatableCells(mover);
-    TIME_END(traceRelocatableCells);
 
     TIME_START(traceGenericEntries);
     sb.traceGenericEntries(&mover);
@@ -490,12 +484,10 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     collectToFixedPoint(mover, tenureCounts);
     TIME_END(collectToFP);
 
-    // Update the array buffer object's view lists.
+    // Sweep compartments to update the array buffer object's view lists.
     TIME_START(sweepArrayBufferViewList);
-    for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next()) {
-        if (c->innerViews.needsSweepAfterMinorGC())
-            c->innerViews.sweepAfterMinorGC(rt);
-    }
+    for (CompartmentsIter c(rt, SkipAtoms); !c.done(); c.next())
+        c->sweepAfterMinorGC();
     TIME_END(sweepArrayBufferViewList);
 
     // Update any slot or element pointers whose destination has been tenured.
@@ -503,6 +495,10 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     js::jit::UpdateJitActivationsForMinorGC(rt, &mover);
     forwardedBuffers.finish();
     TIME_END(updateJitActivations);
+
+    TIME_START(objectsTenuredCallback);
+    rt->gc.callObjectsTenuredCallback();
+    TIME_END(objectsTenuredCallback);
 
     // Sweep.
     TIME_START(freeMallocedBuffers);
@@ -543,10 +539,16 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
         for (size_t i = 0; i < ArrayLength(tenureCounts.entries); i++) {
             const TenureCount& entry = tenureCounts.entries[i];
             if (entry.count >= 3000)
-                pretenureGroups->append(entry.group); // ignore alloc failure
+                mozilla::Unused << pretenureGroups->append(entry.group); // ignore alloc failure
         }
     }
     TIME_END(pretenure);
+
+    TIME_START(logPromotionsToTenured);
+    for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {
+        zone->logPromotionsToTenured();
+    }
+    TIME_END(logPromotionsToTenured);
 
     // We ignore gcMaxBytes when allocating for minor collection. However, if we
     // overflowed, we disable the nursery. The next time we allocate, we'll fail
@@ -554,45 +556,56 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
     if (rt->gc.usage.gcBytes() >= rt->gc.tunables.gcMaxBytes())
         disable();
 
-    TIME_END(total);
+    int64_t totalTime = PRMJ_Now() - timestampStart_total;
+    rt->addTelemetry(JS_TELEMETRY_GC_MINOR_US, totalTime);
+    rt->addTelemetry(JS_TELEMETRY_GC_MINOR_REASON, reason);
+    if (totalTime > 1000)
+        rt->addTelemetry(JS_TELEMETRY_GC_MINOR_REASON_LONG, reason);
 
+    rt->gc.stats.endNurseryCollection(reason);
     TraceMinorGCEnd();
 
-    int64_t totalTime = TIME_TOTAL(total);
     if (enableProfiling_ && totalTime >= profileThreshold_) {
-        static bool printedHeader = false;
-        if (!printedHeader) {
-            fprintf(stderr,
-                    "MinorGC: Reason               PRate  Size Time   mkVals mkClls mkSlts mkWCll mkRVal mkRCll mkGnrc ckTbls mkRntm mkDbgr clrNOC collct swpABO updtIn runFin frSlts clrSB  sweep resize pretnr\n");
-            printedHeader = true;
+        struct {
+            const char* name;
+            int64_t time;
+        } PrintList[] = {
+            {"canIon", TIME_TOTAL(cancelIonCompilations)},
+            {"mkVals", TIME_TOTAL(traceValues)},
+            {"mkClls", TIME_TOTAL(traceCells)},
+            {"mkSlts", TIME_TOTAL(traceSlots)},
+            {"mcWCll", TIME_TOTAL(traceWholeCells)},
+            {"mkGnrc", TIME_TOTAL(traceGenericEntries)},
+            {"ckTbls", TIME_TOTAL(checkHashTables)},
+            {"mkRntm", TIME_TOTAL(markRuntime)},
+            {"mkDbgr", TIME_TOTAL(markDebugger)},
+            {"clrNOC", TIME_TOTAL(clearNewObjectCache)},
+            {"collct", TIME_TOTAL(collectToFP)},
+            {" tenCB", TIME_TOTAL(objectsTenuredCallback)},
+            {"swpABO", TIME_TOTAL(sweepArrayBufferViewList)},
+            {"updtIn", TIME_TOTAL(updateJitActivations)},
+            {"frSlts", TIME_TOTAL(freeMallocedBuffers)},
+            {" clrSB", TIME_TOTAL(clearStoreBuffer)},
+            {" sweep", TIME_TOTAL(sweep)},
+            {"resize", TIME_TOTAL(resize)},
+            {"pretnr", TIME_TOTAL(pretenure)},
+            {"logPtT", TIME_TOTAL(logPromotionsToTenured)}
+        };
+        static int printedHeader = 0;
+        if ((printedHeader++ % 200) == 0) {
+            fprintf(stderr, "MinorGC:               Reason  PRate Size    Time");
+            for (auto &entry : PrintList)
+                fprintf(stderr, " %s", entry.name);
+            fprintf(stderr, "\n");
         }
 
 #define FMT " %6" PRIu64
-        fprintf(stderr,
-                "MinorGC: %20s %5.1f%% %4d" FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT FMT "\n",
-                js::gcstats::ExplainReason(reason),
-                promotionRate * 100,
-                numActiveChunks_,
-                totalTime,
-                TIME_TOTAL(traceValues),
-                TIME_TOTAL(traceCells),
-                TIME_TOTAL(traceSlots),
-                TIME_TOTAL(traceWholeCells),
-                TIME_TOTAL(traceRelocatableValues),
-                TIME_TOTAL(traceRelocatableCells),
-                TIME_TOTAL(traceGenericEntries),
-                TIME_TOTAL(checkHashTables),
-                TIME_TOTAL(markRuntime),
-                TIME_TOTAL(markDebugger),
-                TIME_TOTAL(clearNewObjectCache),
-                TIME_TOTAL(collectToFP),
-                TIME_TOTAL(sweepArrayBufferViewList),
-                TIME_TOTAL(updateJitActivations),
-                TIME_TOTAL(freeMallocedBuffers),
-                TIME_TOTAL(clearStoreBuffer),
-                TIME_TOTAL(sweep),
-                TIME_TOTAL(resize),
-                TIME_TOTAL(pretenure));
+        fprintf(stderr, "MinorGC: %20s %5.1f%% %4d " FMT, JS::gcreason::ExplainReason(reason),
+                promotionRate * 100, numActiveChunks_, totalTime);
+        for (auto &entry : PrintList) {
+            fprintf(stderr, FMT, entry.time);
+        }
+        fprintf(stderr, "\n");
 #undef FMT
     }
 }
@@ -642,12 +655,23 @@ js::Nursery::freeMallocedBuffers()
 void
 js::Nursery::waitBackgroundFreeEnd()
 {
+    MOZ_ASSERT(freeMallocedBuffersTask);
     freeMallocedBuffersTask->join();
 }
 
 void
 js::Nursery::sweep()
 {
+    /* Sweep unique id's in all in-use chunks. */
+    for (CellsWithUniqueIdSet::Enum e(cellsWithUid_); !e.empty(); e.popFront()) {
+        JSObject* obj = static_cast<JSObject*>(e.front());
+        if (!IsForwarded(obj))
+            obj->zone()->removeUniqueId(obj);
+        else
+            MOZ_ASSERT(Forwarded(obj)->zone()->hasUniqueId(Forwarded(obj)));
+    }
+    cellsWithUid_.clear();
+
 #ifdef JS_GC_ZEAL
     /* Poison the nursery contents so touching a freed object will crash. */
     JS_POISON((void*)start(), JS_SWEPT_NURSERY_PATTERN, nurserySize());
@@ -666,13 +690,14 @@ js::Nursery::sweep()
 #ifdef JS_CRASH_DIAGNOSTICS
         JS_POISON((void*)start(), JS_SWEPT_NURSERY_PATTERN, allocationEnd() - start());
         for (int i = 0; i < numActiveChunks_; ++i)
-            chunk(i).trailer.runtime = runtime();
+            initChunk(i);
 #endif
         setCurrentChunk(0);
     }
 
     /* Set current start position for isEmpty checks. */
     currentStart_ = position();
+    MemProfiler::SweepNursery(runtime());
 }
 
 void

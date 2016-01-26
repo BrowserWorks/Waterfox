@@ -358,7 +358,7 @@ ProxyAutoConfig::ResolveAddress(const nsCString &aHostName,
   if (!dns)
     return false;
 
-  nsRefPtr<PACResolver> helper = new PACResolver();
+  RefPtr<PACResolver> helper = new PACResolver();
 
   if (NS_FAILED(dns->AsyncResolve(aHostName,
                                   nsIDNSService::RESOLVE_PRIORITY_MEDIUM,
@@ -646,8 +646,8 @@ private:
     JSAutoRequest ar(mContext);
 
     JS::CompartmentOptions options;
-    options.setZone(JS::SystemZone)
-           .setVersion(JSVERSION_LATEST);
+    options.creationOptions().setZone(JS::SystemZone);
+    options.behaviors().setVersion(JSVERSION_LATEST);
     mGlobal = JS_NewGlobalObject(mContext, &sGlobalClass, nullptr,
                                  JS::DontFireOnNewGlobalHook, options);
     NS_ENSURE_TRUE(mGlobal, NS_ERROR_OUT_OF_MEMORY);
@@ -670,7 +670,7 @@ const JSClass JSRuntimeWrapper::sGlobalClass = {
   JSCLASS_GLOBAL_FLAGS,
   nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
-  nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr,
   JS_GlobalObjectTraceHook
 };
 
@@ -1021,5 +1021,5 @@ ProxyAutoConfig::IsInBrowser(const JS::CallArgs &aArgs)
   return true;
 }
 
+} // namespace net
 } // namespace mozilla
-} // namespace mozilla::net

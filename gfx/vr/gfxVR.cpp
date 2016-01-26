@@ -12,125 +12,84 @@
 
 #include "gfxPrefs.h"
 #include "gfxVR.h"
+#if defined(XP_WIN)
 #include "gfxVROculus.h"
+#endif
+#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
+#include "gfxVROculus050.h"
+#endif
 #include "gfxVRCardboard.h"
 
-#include "nsServiceManagerUtils.h"
-#include "nsIScreenManager.h"
+#include "mozilla/unused.h"
+#include "mozilla/layers/Compositor.h"
+#include "mozilla/layers/TextureHost.h"
+
+#ifndef M_PI
+# define M_PI 3.14159265358979323846
+#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
 
-// Dummy nsIScreen implementation, for when we just need to specify a size
-class FakeScreen : public nsIScreen
-{
-public:
-  explicit FakeScreen(const IntRect& aScreenRect)
-    : mScreenRect(aScreenRect)
-  { }
-
-  NS_DECL_ISUPPORTS
-
-  NS_IMETHOD GetRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) override {
-    *l = mScreenRect.x;
-    *t = mScreenRect.y;
-    *w = mScreenRect.width;
-    *h = mScreenRect.height;
-    return NS_OK;
-  }
-  NS_IMETHOD GetAvailRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) override {
-    return GetRect(l, t, w, h);
-  }
-  NS_IMETHOD GetRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) override {
-    return GetRect(l, t, w, h);
-  }
-  NS_IMETHOD GetAvailRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) override {
-    return GetAvailRect(l, t, w, h);
-  }
-
-  NS_IMETHOD GetId(uint32_t* aId) override { *aId = (uint32_t)-1; return NS_OK; }
-  NS_IMETHOD GetPixelDepth(int32_t* aPixelDepth) override { *aPixelDepth = 24; return NS_OK; }
-  NS_IMETHOD GetColorDepth(int32_t* aColorDepth) override { *aColorDepth = 24; return NS_OK; }
-
-  NS_IMETHOD LockMinimumBrightness(uint32_t aBrightness) override { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD UnlockMinimumBrightness(uint32_t aBrightness) override { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD GetRotation(uint32_t* aRotation) override {
-    *aRotation = nsIScreen::ROTATION_0_DEG;
-    return NS_OK;
-  }
-  NS_IMETHOD SetRotation(uint32_t aRotation) override { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) override {
-    *aContentsScaleFactor = 1.0;
-    return NS_OK;
-  }
-
-protected:
-  virtual ~FakeScreen() {}
-
-  IntRect mScreenRect;
-};
-
-NS_IMPL_ISUPPORTS(FakeScreen, nsIScreen)
-
-VRHMDInfo::VRHMDInfo(VRHMDType aType)
-  : mType(aType)
-{
-  MOZ_COUNT_CTOR(VRHMDInfo);
-
-  mDeviceIndex = VRHMDManager::AllocateDeviceIndex();
-  mDeviceName.AssignLiteral("Unknown Device");
-}
-
-
-VRHMDManager::VRHMDManagerArray *VRHMDManager::sManagers = nullptr;
 Atomic<uint32_t> VRHMDManager::sDeviceBase(0);
 
-/* static */ void
-VRHMDManager::ManagerInit()
+VRHMDInfo::VRHMDInfo(VRHMDType aType, bool aUseMainThreadOrientation)
 {
-  if (sManagers)
-    return;
-
-  sManagers = new VRHMDManagerArray();
-
-  nsRefPtr<VRHMDManager> mgr;
-
-  mgr = new VRHMDManagerOculus();
-  if (mgr->PlatformInit())
-    sManagers->AppendElement(mgr);
-
-  mgr = new VRHMDManagerCardboard();
-  if (mgr->PlatformInit())
-    sManagers->AppendElement(mgr);
+  MOZ_COUNT_CTOR(VRHMDInfo);
+  mDeviceInfo.mType = aType;
+  mDeviceInfo.mDeviceID = VRHMDManager::AllocateDeviceID();
+  mDeviceInfo.mUseMainThreadOrientation = aUseMainThreadOrientation;
 }
 
-/* static */ void
-VRHMDManager::ManagerDestroy()
+VRHMDInfo::~VRHMDInfo()
 {
-  if (!sManagers)
-    return;
-
-  for (uint32_t i = 0; i < sManagers->Length(); ++i) {
-    (*sManagers)[i]->Destroy();
-  }
-
-  delete sManagers;
-  sManagers = nullptr;
-}
-
-/* static */ void
-VRHMDManager::GetAllHMDs(nsTArray<nsRefPtr<VRHMDInfo>>& aHMDResult)
-{
-  if (!sManagers)
-    return;
-
-  for (uint32_t i = 0; i < sManagers->Length(); ++i) {
-    (*sManagers)[i]->GetHMDs(aHMDResult);
-  }
+  MOZ_COUNT_DTOR(VRHMDInfo);
 }
 
 /* static */ uint32_t
-VRHMDManager::AllocateDeviceIndex()
+VRHMDManager::AllocateDeviceID()
 {
   return ++sDeviceBase;
+}
+
+VRHMDRenderingSupport::RenderTargetSet::RenderTargetSet()
+  : currentRenderTarget(0)
+{
+}
+
+VRHMDRenderingSupport::RenderTargetSet::~RenderTargetSet()
+{
+}
+
+Matrix4x4
+VRFieldOfView::ConstructProjectionMatrix(float zNear, float zFar, bool rightHanded)
+{
+  float upTan = tan(upDegrees * M_PI / 180.0);
+  float downTan = tan(downDegrees * M_PI / 180.0);
+  float leftTan = tan(leftDegrees * M_PI / 180.0);
+  float rightTan = tan(rightDegrees * M_PI / 180.0);
+
+  float handednessScale = rightHanded ? -1.0 : 1.0;
+
+  float pxscale = 2.0f / (leftTan + rightTan);
+  float pxoffset = (leftTan - rightTan) * pxscale * 0.5;
+  float pyscale = 2.0f / (upTan + downTan);
+  float pyoffset = (upTan - downTan) * pyscale * 0.5;
+
+  Matrix4x4 mobj;
+  float *m = &mobj._11;
+
+  m[0*4+0] = pxscale;
+  m[2*4+0] = pxoffset * handednessScale;
+
+  m[1*4+1] = pyscale;
+  m[2*4+1] = -pyoffset * handednessScale;
+
+  m[2*4+2] = zFar / (zNear - zFar) * -handednessScale;
+  m[3*4+2] = (zFar * zNear) / (zNear - zFar);
+
+  m[2*4+3] = handednessScale;
+  m[3*4+3] = 0.0f;
+
+  return mobj;
 }

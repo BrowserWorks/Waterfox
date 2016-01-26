@@ -14,13 +14,13 @@
 gfxAlphaRecovery::RecoverAlpha(gfxImageSurface* blackSurf,
                                const gfxImageSurface* whiteSurf)
 {
-    gfxIntSize size = blackSurf->GetSize();
+    mozilla::gfx::IntSize size = blackSurf->GetSize();
 
     if (size != whiteSurf->GetSize() ||
-        (blackSurf->Format() != gfxImageFormat::ARGB32 &&
-         blackSurf->Format() != gfxImageFormat::RGB24) ||
-        (whiteSurf->Format() != gfxImageFormat::ARGB32 &&
-         whiteSurf->Format() != gfxImageFormat::RGB24))
+        (blackSurf->Format() != mozilla::gfx::SurfaceFormat::A8R8G8B8_UINT32 &&
+         blackSurf->Format() != mozilla::gfx::SurfaceFormat::X8R8G8B8_UINT32) ||
+        (whiteSurf->Format() != mozilla::gfx::SurfaceFormat::A8R8G8B8_UINT32 &&
+         whiteSurf->Format() != mozilla::gfx::SurfaceFormat::X8R8G8B8_UINT32))
         return false;
 
 #ifdef MOZILLA_MAY_SUPPORT_SSE2

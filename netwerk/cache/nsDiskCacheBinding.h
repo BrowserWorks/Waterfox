@@ -10,7 +10,7 @@
 
 #include "mozilla/MemoryReporting.h"
 #include "nspr.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 #include "nsISupports.h"
 #include "nsCacheEntry.h"
@@ -97,7 +97,7 @@ public:
     nsDiskCacheBindery();
     ~nsDiskCacheBindery();
 
-    nsresult                Init();
+    void                    Init();
     void                    Reset();
 
     nsDiskCacheBinding *    CreateBinding(nsCacheEntry *       entry,
@@ -116,6 +116,8 @@ private:
     static const PLDHashTableOps ops;
     PLDHashTable           table;
     bool                   initialized;
+
+    static const uint32_t kInitialTableLength = 0;
 };
 
 #endif /* _nsDiskCacheBinding_h_ */

@@ -113,16 +113,10 @@ DataStoreDB::CreateFactoryIfNeeded()
     MOZ_ASSERT(xpc);
 
     AutoSafeJSContext cx;
-
-    nsCOMPtr<nsIXPConnectJSObjectHolder> globalHolder;
-    rv = xpc->CreateSandbox(cx, principal, getter_AddRefs(globalHolder));
+    JS::Rooted<JSObject*> global(cx);
+    rv = xpc->CreateSandbox(cx, principal, global.address());
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
-    }
-
-    JS::Rooted<JSObject*> global(cx, globalHolder->GetJSObject());
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return NS_ERROR_UNEXPECTED;
     }
 
     // The CreateSandbox call returns a proxy to the actual sandbox object. We
@@ -249,7 +243,7 @@ DataStoreDB::UpgradeSchema(nsIDOMEvent* aEvent)
   {
     IDBObjectStoreParameters params;
     params.Init(NS_LITERAL_STRING("{ \"autoIncrement\": true }"));
-    nsRefPtr<IDBObjectStore> store =
+    RefPtr<IDBObjectStore> store =
       database->CreateObjectStore(NS_LITERAL_STRING(DATASTOREDB_NAME),
                                   params, error);
     if (NS_WARN_IF(error.Failed())) {
@@ -257,7 +251,7 @@ DataStoreDB::UpgradeSchema(nsIDOMEvent* aEvent)
     }
   }
 
-  nsRefPtr<IDBObjectStore> store;
+  RefPtr<IDBObjectStore> store;
 
   {
     IDBObjectStoreParameters params;
@@ -274,7 +268,7 @@ DataStoreDB::UpgradeSchema(nsIDOMEvent* aEvent)
   {
     IDBIndexParameters params;
     params.Init(NS_LITERAL_STRING("{ \"unique\": true }"));
-    nsRefPtr<IDBIndex> index =
+    RefPtr<IDBIndex> index =
       store->CreateIndex(NS_LITERAL_STRING(DATASTOREDB_REVISION_INDEX),
                          NS_LITERAL_STRING("revisionId"), params, error);
     if (NS_WARN_IF(error.Failed())) {
@@ -307,7 +301,7 @@ DataStoreDB::DatabaseOpened()
     return rv;
   }
 
-  nsRefPtr<VersionChangeListener> listener =
+  RefPtr<VersionChangeListener> listener =
     new VersionChangeListener(mDatabase);
   rv = mDatabase->EventTarget::AddEventListener(
     NS_LITERAL_STRING("versionchange"), listener, false);
@@ -316,9 +310,12 @@ DataStoreDB::DatabaseOpened()
   }
 
   StringOrStringSequence objectStores;
-  objectStores.RawSetAsStringSequence().AppendElements(mObjectStores);
+  if (!objectStores.RawSetAsStringSequence().AppendElements(mObjectStores,
+                                                            fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
-  nsRefPtr<IDBTransaction> txn;
+  RefPtr<IDBTransaction> txn;
   error = mDatabase->Transaction(objectStores,
                                  mTransactionMode,
                                  getter_AddRefs(txn));
@@ -348,7 +345,7 @@ DataStoreDB::Delete()
   }
 
   ErrorResult error;
-  nsRefPtr<IDBOpenDBRequest> request =
+  RefPtr<IDBOpenDBRequest> request =
     mFactory->DeleteDatabase(mDatabaseName, IDBOpenDBOptions(), error);
   if (NS_WARN_IF(error.Failed())) {
     return error.StealNSResult();

@@ -13,66 +13,31 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
                                   "resource://gre/modules/Preferences.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/devtools/Console.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "PerformanceStats",
-                                  "resource://gre/modules/PerformanceStats.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PerformanceWatcher",
+                                  "resource://gre/modules/PerformanceWatcher.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
                                   "@mozilla.org/base/telemetry;1",
                                   Ci.nsITelemetry);
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "IdleService",
+                                   "@mozilla.org/widget/idleservice;1",
+                                   Ci.nsIIdleService);
 
-const FILTERS = ["longestDuration", "totalCPOWTime"];
+/**
+ * Don't notify observers of slow add-ons if at least `SUSPICIOUSLY_MANY_ADDONS`
+ * show up at the same time. We assume that this indicates that the system itself
+ * is busy, and that add-ons are not responsible.
+ */
+let SUSPICIOUSLY_MANY_ADDONS = 5;
 
-let AddonWatcher = {
-  _previousPerformanceIndicators: {},
-
-  /**
-   * Stats, designed to be consumed by clients of AddonWatcher.
-   *
-   */
-  _stats: new Map(),
-  _timer: Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer),
-  _callback: null,
-  /**
-   * The interval at which we poll the available performance information
-   * to find out about possibly slow add-ons, in milliseconds.
-   */
-  _interval: 15000,
-  _ignoreList: null,
-  /**
-   * Initialize and launch the AddonWatcher.
-   *
-   * @param {function} callback A callback, called whenever we determine
-   * that an add-on is causing performance issues. It takes as argument
-   *  {string} addonId The identifier of the add-on known to cause issues.
-   *  {string} reason The reason for which the add-on has been flagged,
-   *     as one of "totalCPOWTime" (the add-on has caused blocking process
-   *     communications, which freeze the UX)
-   *     Use preference "browser.addon-watch.limits.totalCPOWTime" to control
-   *     the maximal amount of CPOW time per watch interval.
-   *
-   *     or "longestDuration" (the add-on has caused user-visible missed frames).
-   *     Use preference "browser.addon-watch.limits.longestDuration" to control
-   *     the longest uninterrupted execution of code of an add-on during a watch
-   *     interval.
-   */
+this.AddonWatcher = {
   init: function(callback) {
-    if (!callback) {
-      return;
-    }
-
-    if (this._callback) {
-      // Already initialized
-      return;
-    }
-
-    this._interval = Preferences.get("browser.addon-watch.interval", 15000);
-    if (this._interval == -1) {
-      // Deactivated by preferences
-      return;
-    }
+    this._initializedTimeStamp = Cu.now();
 
     this._callback = callback;
     try {
@@ -82,129 +47,170 @@ let AddonWatcher = {
       this._ignoreList = new Set();
     }
 
-    // Start monitoring
+    this._warmupPeriod = Preferences.get("browser.addon-watch.warmup-ms", 60 * 1000 /* 1 minute */);
+    this._idleThreshold = Preferences.get("browser.addon-watch.deactivate-after-idle-ms", 3000);
     this.paused = false;
-
-    Services.obs.addObserver(() => {
-      this.uninit();
-    }, "profile-before-change", false);
+    this.callback = callback;
   },
   uninit: function() {
     this.paused = true;
-    this._callback = null;
   },
+  _initializedTimeStamp: 0,
 
-  /**
-   * Interrupt temporarily add-on watching.
-   */
-  set paused(isPaused) {
-    if (!this._callback || this._interval == -1) {
-      return;
+  set callback(callback) {
+    this._callback = callback;
+    if (this._callback == null) {
+      this.paused = true;
     }
-    if (isPaused) {
-      this._timer.cancel();
+  },
+  _callback: null,
+
+  set paused(paused) {
+    if (paused) {
+      if (this._listener) {
+        PerformanceWatcher.removePerformanceListener({addonId: "*"}, this._listener);
+      }
+      this._listener = null;
     } else {
-      PerformanceStats.init();
-      this._timer.initWithCallback(this._checkAddons.bind(this), this._interval, Ci.nsITimer.TYPE_REPEATING_SLACK);
+      this._listener = this._onSlowAddons.bind(this);
+      PerformanceWatcher.addPerformanceListener({addonId: "*"}, this._listener);
     }
-    this._isPaused = isPaused;
   },
   get paused() {
-    return this._isPaused;
+    return !this._listener;
   },
-  _isPaused: true,
+  _listener: null,
 
   /**
-   * Check the performance of add-ons during the latest slice of time.
-   *
-   * We consider that an add-on is causing slowdown if it has executed
-   * without interruption for at least 64ms (4 frames) at least once
-   * during the latest slice, or if it has used any CPOW during the latest
-   * slice.
+   * Provide the following object for each addon:
+   *  {number} occurrences The total number of performance alerts recorded for this addon.
+   *  {number} occurrencesSinceLastNotification The number of performances alerts recorded
+   *     since we last notified the user.
+   *  {number} latestNotificationTimeStamp The timestamp of the latest user notification
+   *     that this add-on is slow.
    */
-  _checkAddons: function() {
-    try {
-      let snapshot = PerformanceStats.getSnapshot();
-
-      let limits = {
-        // By default, warn if we have a total time of 1s of CPOW per 15 seconds
-        totalCPOWTime: Math.round(Preferences.get("browser.addon-watch.limits.totalCPOWTime", 1000000) * this._interval / 15000),
-        // By default, warn if we have skipped 4 consecutive frames
-        // at least once during the latest slice.
-        longestDuration: Math.round(Math.log2(Preferences.get("browser.addon-watch.limits.longestDuration", 128))),
+  _getAlerts: function(addonId) {
+    let alerts = this._alerts.get(addonId);
+    if (!alerts) {
+      alerts = {
+        occurrences: 0,
+        occurrencesSinceLastNotification: 0,
+        latestNotificationTimeStamp: 0,
       };
+      this._alerts.set(addonId, alerts);
+    }
+    return alerts;
+  },
+  _alerts: new Map(),
+  _onSlowAddons: function(addons) {
+    try {
+      if (IdleService.idleTime >= this._idleThreshold) {
+        // The application is idle. Maybe the computer is sleeping, or maybe
+        // the user isn't in front of it. Regardless, the user doesn't care
+        // about things that slow down her browser while she's not using it.
+        return;
+      }
 
-      for (let item of snapshot.componentsData) {
-        let addonId = item.addonId;
-        if (!item.isSystem || !addonId) {
-          // We are only interested in add-ons.
-          continue;
+      if (addons.length > SUSPICIOUSLY_MANY_ADDONS) {
+        // Heuristic: if we are notified of many slow addons at once, the issue
+        // is probably not with the add-ons themselves with the system. We may
+        // for instance be waking up from hibernation, or the system may be
+        // busy swapping.
+        return;
+      }
+
+      let now = Cu.now();
+      if (now - this._initializedTimeStamp < this._warmupPeriod) {
+        // Heuristic: do not report slowdowns during or just after startup.
+        return;
+      }
+
+      // Report immediately to Telemetry, regardless of whether we report to
+      // the user.
+      for (let {source: {addonId}, details} of addons) {
+        Telemetry.getKeyedHistogramById("PERF_MONITORING_SLOW_ADDON_JANK_US").
+          add(addonId, details.highestJank);
+        Telemetry.getKeyedHistogramById("PERF_MONITORING_SLOW_ADDON_CPOW_US").
+          add(addonId, details.highestCPOW);
+      }
+
+      // We expect that users don't care about real-time alerts unless their
+      // browser is going very, very slowly. Therefore, we use the following
+      // heuristic:
+      // - if jank is above freezeThreshold (e.g. 5 seconds), report immediately; otherwise
+      // - if jank is below jankThreshold (e.g. 128ms), disregard; otherwise
+      // - if the latest jank was more than prescriptionDelay (e.g. 5 minutes) ago, reset number of occurrences;
+      // - if we have had fewer than occurrencesBetweenAlerts janks (e.g. 3) since last alert, disregard; otherwise
+      // - if we have displayed an alert for this add-on less than delayBetweenAlerts ago (e.g. 6h), disregard; otherwise
+      // - also, don't report more than highestNumberOfAddonsToReport (e.g. 1) at once.
+      let freezeThreshold = Preferences.get("browser.addon-watch.freeze-threshold-micros", /* 5 seconds */ 5000000);
+      let jankThreshold = Preferences.get("browser.addon-watch.jank-threshold-micros", /* 256 ms == 8 frames*/ 256000);
+      let occurrencesBetweenAlerts = Preferences.get("browser.addon-watch.occurrences-between-alerts", 3);
+      let delayBetweenAlerts = Preferences.get("browser.addon-watch.delay-between-alerts-ms", 6 * 3600 * 1000 /* 6h */);
+      let delayBetweenFreezeAlerts = Preferences.get("browser.addon-watch.delay-between-freeze-alerts-ms", 2 * 60 * 1000 /* 2 min */);
+      let prescriptionDelay = Preferences.get("browser.addon-watch.prescription-delay", 5 * 60 * 1000 /* 5 minutes */);
+      let highestNumberOfAddonsToReport = Preferences.get("browser.addon-watch.max-simultaneous-reports", 1);
+
+      addons = addons.filter(x => x.details.highestJank >= jankThreshold).
+        sort((a, b) => a.details.highestJank - b.details.highestJank);
+
+      for (let {source: {addonId}, details} of addons) {
+        if (highestNumberOfAddonsToReport <= 0) {
+          return;
         }
         if (this._ignoreList.has(addonId)) {
-          // This add-on has been explicitly put in the ignore list
-          // by the user. Don't waste time with it.
-          continue;
-        }
-        let previous = this._previousPerformanceIndicators[addonId];
-        this._previousPerformanceIndicators[addonId] = item;
-
-        if (!previous) {
-          // This is the first time we see the addon, so we are probably
-          // executed right during/after startup. Performance is always
-          // weird during startup, with the JIT warming up, competition
-          // in disk access, etc. so we do not take this as a reason to
-          // display the slow addon warning.
+          // Add-on is ignored.
           continue;
         }
 
-        // Report misbehaviors to Telemetry
-
-        let diff = item.substract(previous);
-        if (diff.longestDuration > 5) {
-          Telemetry.getKeyedHistogramById("MISBEHAVING_ADDONS_JANK_LEVEL").
-            add(addonId, diff.longestDuration);
-        }
-        if (diff.totalCPOWTime > 0) {
-          Telemetry.getKeyedHistogramById("MISBEHAVING_ADDONS_CPOW_TIME_MS").
-            add(addonId, diff.totalCPOWTime / 1000);
+        let alerts = this._getAlerts(addonId);
+        if (now - alerts.latestOccurrence >= prescriptionDelay) {
+          // While this add-on has already caused slownesss, this
+          // was a long time ago, let's forgive.
+          alerts.occurrencesSinceLastNotification = 0;
         }
 
-        // Store misbehaviors for about:performance and other clients
+        alerts.occurrencesSinceLastNotification++;
+        alerts.occurrences++;
 
-        let stats = this._stats.get(addonId);
-        if (!stats) {
-          stats = {
-            peaks: {},
-            alerts: {},
-          };
-          this._stats.set(addonId, stats);
-        }
-
-        // Report misbehaviors to the user.
-
-        for (let filter of FILTERS) {
-          let peak = stats.peaks[filter] || 0;
-          stats.peaks[filter] = Math.max(diff[filter], peak);
-
-          if (limits[filter] <= 0 || diff[filter] <= limits[filter]) {
+        if (details.highestJank < freezeThreshold) {
+          if (alerts.occurrencesSinceLastNotification <= occurrencesBetweenAlerts) {
+            // While the add-on has caused jank at least once, we are only
+            // interested in repeat offenders. Store the data for future use.
             continue;
           }
-
-          stats.alerts[filter] = (stats.alerts[filter] || 0) + 1;
-
-          try {
-            this._callback(addonId, filter);
-          } catch (ex) {
-            Cu.reportError("Error in AddonWatcher._checkAddons callback " + ex);
-            Cu.reportError(ex.stack);
+          if (now - alerts.latestNotificationTimeStamp <= delayBetweenAlerts) {
+            // We have already displayed an alert for this add-on recently.
+            // Wait a little before displaying another one.
+            continue;
+          }
+        } else {
+          // Even in case of freeze, we want to avoid needlessly spamming the user.
+          if (now - alerts.latestNotificationTimeStamp <= delayBetweenFreezeAlerts) {
+            // We have already displayed an alert for this add-on recently.
+            // Wait a little before displaying another one.
+            continue;
           }
         }
+
+        // Ok, time to inform the user.
+        alerts.latestNotificationTimeStamp = now;
+        alerts.occurrencesSinceLastNotification = 0;
+        try {
+          this._callback(addonId);
+        } catch (ex) {
+          Cu.reportError("Error in AddonWatcher callback " + ex);
+          Cu.reportError(Task.Debugging.generateReadableStack(ex.stack));
+        }
+
+        highestNumberOfAddonsToReport--;
       }
     } catch (ex) {
-      Cu.reportError("Error in AddonWatcher._checkAddons " + ex);
-      Cu.reportError(ex.stack);
+      Cu.reportError("Error in AddonWatcher._onSlowAddons " + ex);
+      Cu.reportError(Task.Debugging.generateReadableStack(ex.stack));
     }
   },
+
   ignoreAddonForSession: function(addonid) {
     this._ignoreList.add(addonid);
   },
@@ -220,21 +226,21 @@ let AddonWatcher = {
       Preferences.set("browser.addon-watch.ignore", JSON.stringify([addonid]));
     }
   },
+
   /**
    * The list of alerts for this session.
    *
    * @type {Map<String, Object>} A map associating addonId to
    *  objects with fields
-   *  - {Object} peaks The highest values encountered for each filter.
-   *    - {number} longestDuration
-   *    - {number} totalCPOWTime
-   *  - {Object} alerts The number of alerts for each filter.
-   *    - {number} longestDuration
-   *    - {number} totalCPOWTime
+   *  {number} occurrences The total number of performance alerts recorded for this addon.
+   *  {number} occurrencesSinceLastNotification The number of performances alerts recorded
+   *     since we last notified the user.
+   *  {number} latestNotificationTimeStamp The timestamp of the latest user notification
+   *     that this add-on is slow.
    */
   get alerts() {
     let result = new Map();
-    for (let [k, v] of this._stats) {
+    for (let [k, v] of this._alerts) {
       result.set(k, Cu.cloneInto(v, this));
     }
     return result;

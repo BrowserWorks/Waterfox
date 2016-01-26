@@ -30,7 +30,7 @@ LocationStep::evaluate(txIEvalContext* aContext, txAExprResult** aResult)
     NS_ASSERTION(aContext, "internal error");
     *aResult = nullptr;
 
-    nsRefPtr<txNodeSet> nodes;
+    RefPtr<txNodeSet> nodes;
     nsresult rv = aContext->recycler()->getNodeSet(getter_AddRefs(nodes));
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -42,7 +42,7 @@ LocationStep::evaluate(txIEvalContext* aContext, txAExprResult** aResult)
             if (!walker.moveToParent()) {
                 break;
             }
-            // do not break here
+            MOZ_FALLTHROUGH;
         }
         case ANCESTOR_OR_SELF_AXIS:
         {
@@ -74,7 +74,7 @@ LocationStep::evaluate(txIEvalContext* aContext, txAExprResult** aResult)
             if (mNodeTest->matches(walker.getCurrentPosition(), aContext)) {
                 nodes->append(walker.getCurrentPosition());
             }
-            // do not break here
+            MOZ_FALLTHROUGH;
         }
         case DESCENDANT_AXIS:
         {

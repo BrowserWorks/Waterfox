@@ -25,10 +25,20 @@ UNIFIED_SOURCES += [
     'nsEditorSpellCheck.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 RESOURCE_FILES += [
+    'res/accessiblecaret.png',
+    'res/accessiblecaret@1.5x.png',
+    'res/accessiblecaret@2.25x.png',
+    'res/accessiblecaret@2x.png',
+    'res/accessiblecaret_tilt_left.png',
+    'res/accessiblecaret_tilt_left@1.5x.png',
+    'res/accessiblecaret_tilt_left@2.25x.png',
+    'res/accessiblecaret_tilt_left@2x.png',
+    'res/accessiblecaret_tilt_right.png',
+    'res/accessiblecaret_tilt_right@1.5x.png',
+    'res/accessiblecaret_tilt_right@2.25x.png',
+    'res/accessiblecaret_tilt_right@2x.png',
     'res/EditorOverride.css',
     'res/grabber.gif',
     'res/table-add-column-after-active.gif',
@@ -49,16 +59,4 @@ RESOURCE_FILES += [
     'res/table-remove-row-active.gif',
     'res/table-remove-row-hover.gif',
     'res/table-remove-row.gif',
-    'res/text_caret.png',
-    'res/text_caret@1.5x.png',
-    'res/text_caret@2.25x.png',
-    'res/text_caret@2x.png',
-    'res/text_caret_tilt_left.png',
-    'res/text_caret_tilt_left@1.5x.png',
-    'res/text_caret_tilt_left@2.25x.png',
-    'res/text_caret_tilt_left@2x.png',
-    'res/text_caret_tilt_right.png',
-    'res/text_caret_tilt_right@1.5x.png',
-    'res/text_caret_tilt_right@2.25x.png',
-    'res/text_caret_tilt_right@2x.png',
 ]

@@ -23,6 +23,7 @@
 #include "nsContentUtils.h"
 
 using namespace mozilla;
+using namespace mozilla::image;
 
 //
 // <mtable> -- table or matrix - implementation
@@ -267,6 +268,27 @@ public:
   {
   }
 
+  nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override
+  {
+    return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+  }
+
+  void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
+                                 const nsDisplayItemGeometry* aGeometry,
+                                 nsRegion* aInvalidRegion) override
+  {
+    auto geometry =
+      static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
+  
+    if (aBuilder->ShouldSyncDecodeImages() &&
+        geometry->ShouldInvalidateToSyncDecodeImages()) {
+      bool snap;
+      aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
+    }
+  
+    nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
+  }
+
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
     *aSnap = true;
@@ -289,12 +311,20 @@ public:
     nsMargin overflow = ComputeBorderOverflow(frame, styleBorder);
     bounds.Inflate(overflow);
 
-    nsCSSRendering::PaintBorderWithStyleBorder(mFrame->PresContext(), *aCtx,
-                                               mFrame, mVisibleRect,
-                                               bounds,
-                                               styleBorder,
-                                               mFrame->StyleContext(),
-                                               mFrame->GetSkipSides());
+    PaintBorderFlags flags = aBuilder->ShouldSyncDecodeImages()
+                           ? PaintBorderFlags::SYNC_DECODE_IMAGES
+                           : PaintBorderFlags();
+
+    DrawResult result =
+      nsCSSRendering::PaintBorderWithStyleBorder(mFrame->PresContext(), *aCtx,
+                                                 mFrame, mVisibleRect,
+                                                 bounds,
+                                                 styleBorder,
+                                                 mFrame->StyleContext(),
+                                                 flags,
+                                                 mFrame->GetSkipSides());
+
+    nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
   }
 };
 
@@ -475,7 +505,7 @@ ParseSpacingAttribute(nsMathMLmtableFrame* aFrame, nsIAtom* aAttribute)
   nscoord value2;
   // Set defaults
   float fontSizeInflation = nsLayoutUtils::FontSizeInflationFor(aFrame);
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   nsLayoutUtils::GetFontMetricsForFrame(aFrame, getter_AddRefs(fm),
                                         fontSizeInflation);
   if (nsGkAtoms::rowspacing_ == aAttribute) {
@@ -751,8 +781,7 @@ nsMathMLmtableOuterFrame::AttributeChanged(int32_t  aNameSpaceID,
 }
 
 nsIFrame*
-nsMathMLmtableOuterFrame::GetRowFrameAt(nsPresContext* aPresContext,
-                                        int32_t         aRowIndex)
+nsMathMLmtableOuterFrame::GetRowFrameAt(int32_t aRowIndex)
 {
   int32_t rowCount = GetRowCount();
 
@@ -772,9 +801,7 @@ nsMathMLmtableOuterFrame::GetRowFrameAt(nsPresContext* aPresContext,
     nsIFrame* rgFrame = tableFrame->GetFirstPrincipalChild();
     if (!rgFrame || rgFrame->GetType() != nsGkAtoms::tableRowGroupFrame)
       return nullptr;
-    nsTableIterator rowIter(*rgFrame);
-    nsIFrame* rowFrame = rowIter.First();
-    for ( ; rowFrame; rowFrame = rowIter.Next()) {
+    for (nsIFrame* rowFrame : rgFrame->PrincipalChildList()) {
       if (aRowIndex == 0) {
         DEBUG_VERIFY_THAT_FRAME_IS(rowFrame, TABLE_ROW);
         if (rowFrame->GetType() != nsGkAtoms::tableRowFrame)
@@ -818,14 +845,15 @@ nsMathMLmtableOuterFrame::Reflow(nsPresContext*          aPresContext,
   nscoord blockSize = aDesiredSize.BSize(wm);
   nsIFrame* rowFrame = nullptr;
   if (rowIndex) {
-    rowFrame = GetRowFrameAt(aPresContext, rowIndex);
+    rowFrame = GetRowFrameAt(rowIndex);
     if (rowFrame) {
       // translate the coordinates to be relative to us and in our writing mode
       nsIFrame* frame = rowFrame;
-      LogicalRect frameRect(wm, frame->GetRect(), aReflowState.ComputedWidth());
-      blockSize = frameRect.BSize(wm);
+      LogicalRect rect(wm, frame->GetRect(),
+                       aReflowState.ComputedSizeAsContainerIfConstrained());
+      blockSize = rect.BSize(wm);
       do {
-        dy += frameRect.BStart(wm);
+        dy += rect.BStart(wm);
         frame = frame->GetParent();
       } while (frame != this);
     }
@@ -855,12 +883,12 @@ nsMathMLmtableOuterFrame::Reflow(nsPresContext*          aPresContext,
     case eAlign_axis:
     default: {
       // XXX should instead use style data from the row of reference here ?
-      nsRefPtr<nsFontMetrics> fm;
+      RefPtr<nsFontMetrics> fm;
       nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
                                             nsLayoutUtils::
                                             FontSizeInflationFor(this));
       nscoord axisHeight;
-      GetAxisHeight(*aReflowState.rendContext, fm, axisHeight);
+      GetAxisHeight(aReflowState.rendContext->GetDrawTarget(), fm, axisHeight);
       if (rowFrame) {
         // anchor the table on the axis of the row of reference
         // XXX fallback to baseline because it is a hard problem

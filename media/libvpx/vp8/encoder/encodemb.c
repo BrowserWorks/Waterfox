@@ -258,13 +258,6 @@ static void optimize_b(MACROBLOCK *mb, int ib, int type,
     b = &mb->block[ib];
     d = &mb->e_mbd.block[ib];
 
-    /* Enable this to test the effect of RDO as a replacement for the dynamic
-     *  zero bin instead of an augmentation of it.
-     */
-#if 0
-    vp8_strict_quantize_b(b, d);
-#endif
-
     dequant_ptr = d->dequant;
     coeff_ptr = b->coeff;
     qcoeff_ptr = d->qcoeff;
@@ -513,8 +506,8 @@ static void optimize_mb(MACROBLOCK *x)
     ENTROPY_CONTEXT *ta;
     ENTROPY_CONTEXT *tl;
 
-    vpx_memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
-    vpx_memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
 
     ta = (ENTROPY_CONTEXT *)&t_above;
     tl = (ENTROPY_CONTEXT *)&t_left;
@@ -562,8 +555,8 @@ void vp8_optimize_mby(MACROBLOCK *x)
     if (!x->e_mbd.left_context)
         return;
 
-    vpx_memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
-    vpx_memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
 
     ta = (ENTROPY_CONTEXT *)&t_above;
     tl = (ENTROPY_CONTEXT *)&t_left;
@@ -602,8 +595,8 @@ void vp8_optimize_mbuv(MACROBLOCK *x)
     if (!x->e_mbd.left_context)
         return;
 
-    vpx_memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
-    vpx_memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_above, x->e_mbd.above_context, sizeof(ENTROPY_CONTEXT_PLANES));
+    memcpy(&t_left, x->e_mbd.left_context, sizeof(ENTROPY_CONTEXT_PLANES));
 
     ta = (ENTROPY_CONTEXT *)&t_above;
     tl = (ENTROPY_CONTEXT *)&t_left;

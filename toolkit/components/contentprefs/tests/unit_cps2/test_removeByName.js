@@ -6,9 +6,9 @@ function run_test() {
   runAsyncTests(tests);
 }
 
-let tests = [
+var tests = [
 
-  function nonexistent() {
+  function* nonexistent() {
     yield set("a.com", "foo", 1);
     yield setGlobal("foo", 2);
 
@@ -21,7 +21,7 @@ let tests = [
     yield getGlobalOK(["foo"], 2);
   },
 
-  function names() {
+  function* names() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield setGlobal("foo", 3);
@@ -43,7 +43,7 @@ let tests = [
     yield getOK(["b.com", "bar"], 6);
   },
 
-  function privateBrowsing() {
+  function* privateBrowsing() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield setGlobal("foo", 3);
@@ -76,14 +76,14 @@ let tests = [
     yield getOK(["b.com", "bar"], undefined);
   },
 
-  function erroneous() {
-    do_check_throws(function () cps.removeByName("", null));
-    do_check_throws(function () cps.removeByName(null, null));
-    do_check_throws(function () cps.removeByName("foo", null, "bogus"));
+  function* erroneous() {
+    do_check_throws(() => cps.removeByName("", null));
+    do_check_throws(() => cps.removeByName(null, null));
+    do_check_throws(() => cps.removeByName("foo", null, "bogus"));
     yield true;
   },
 
-  function invalidateCache() {
+  function* invalidateCache() {
     yield set("a.com", "foo", 1);
     yield set("b.com", "foo", 2);
     getCachedOK(["a.com", "foo"], true, 1);

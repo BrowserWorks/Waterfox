@@ -29,7 +29,7 @@ SOURCES += [
     'hb-common.cc', # error: use of undeclared identifier 'strdup'
     'hb-ot-shape-complex-hangul.cc', # error: redefinition of enumerator 'NONE'
     'hb-ot-shape-complex-indic.cc', # error: redefinition of enumerator 'INIT'
-    'hb-ot-shape-complex-sea.cc', # error: redefinition of 'basic_features'
+    'hb-ot-shape-complex-use.cc', # error: redefinition of 'basic_features'
     'hb-ot-shape.cc', # error: functions that differ only in their return type cannot be overloaded
     'hb-shape-plan.cc', # error: redefinition of 'hb_ot_shaper_face_data_ensure'
 ]
@@ -48,6 +48,7 @@ UNIFIED_SOURCES += [
     'hb-ot-shape-complex-myanmar.cc',
     'hb-ot-shape-complex-thai.cc',
     'hb-ot-shape-complex-tibetan.cc',
+    'hb-ot-shape-complex-use-table.cc',
     'hb-ot-shape-fallback.cc',
     'hb-ot-shape-normalize.cc',
     'hb-ot-tag.cc',
@@ -58,6 +59,9 @@ UNIFIED_SOURCES += [
     'hb-warning.cc',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['PACKAGE_VERSION'] = '"moz"'
@@ -65,3 +69,6 @@ DEFINES['PACKAGE_BUGREPORT'] = '"http://bugzilla.mozilla.org/"'
 DEFINES['HAVE_OT'] = 1
 DEFINES['HB_NO_MT'] = True
 DEFINES['HB_NO_UNICODE_FUNCS'] = True
+# Cancel the effect of the -DDEBUG macro if present,
+# because harfbuzz uses that name for its own purposes
+DEFINES['DEBUG'] = False

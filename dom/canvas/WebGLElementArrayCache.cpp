@@ -311,7 +311,8 @@ public:
 
     size_t SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
     {
-        return mallocSizeOf(this) + mTreeData.SizeOfExcludingThis(mallocSizeOf);
+        return mallocSizeOf(this) +
+               mTreeData.ShallowSizeOfExcludingThis(mallocSizeOf);
     }
 };
 
@@ -376,8 +377,8 @@ WebGLElementArrayCacheTree<T>::Update(size_t firstByte, size_t lastByte)
     // Step #0: If needed, resize our tree data storage.
     if (requiredNumLeaves != NumLeaves()) {
         // See class comment for why we the tree storage size is 2 * numLeaves.
-        if (!mTreeData.SetLength(2 * requiredNumLeaves)) {
-            mTreeData.SetLength(0);
+        if (!mTreeData.SetLength(2 * requiredNumLeaves, fallible)) {
+            mTreeData.Clear();
             return false;
         }
         MOZ_ASSERT(NumLeaves() == requiredNumLeaves);
@@ -470,8 +471,8 @@ bool
 WebGLElementArrayCache::BufferData(const void* ptr, size_t byteLength)
 {
     if (mBytes.Length() != byteLength) {
-        if (!mBytes.SetLength(byteLength)) {
-            mBytes.SetLength(0);
+        if (!mBytes.SetLength(byteLength, fallible)) {
+            mBytes.Clear();
             return false;
         }
     }
@@ -487,6 +488,9 @@ WebGLElementArrayCache::BufferSubData(size_t pos, const void* ptr,
     if (!updateByteLength)
         return true;
 
+    // Note, using memcpy on shared racy data is not well-defined, this
+    // will need to use safe-for-races operations when those become available.
+    // See bug 1225033.
     if (ptr)
         memcpy(mBytes.Elements() + pos, ptr, updateByteLength);
     else
@@ -624,7 +628,7 @@ size_t
 WebGLElementArrayCache::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 {
     return mallocSizeOf(this) +
-           mBytes.SizeOfExcludingThis(mallocSizeOf) +
+           mBytes.ShallowSizeOfExcludingThis(mallocSizeOf) +
            SizeOfNullable(mallocSizeOf, mUint8Tree) +
            SizeOfNullable(mallocSizeOf, mUint16Tree) +
            SizeOfNullable(mallocSizeOf, mUint32Tree);

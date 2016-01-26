@@ -14,7 +14,6 @@
 #include "nsCycleCollectionParticipant.h"
 #include "js/TypeDecls.h"
 #include "mozilla/ErrorResult.h"
-#include "mozilla/dom/URLSearchParams.h"
 #include "nsPIDOMWindow.h"
 
 class nsIURI;
@@ -27,7 +26,6 @@ class nsIDocShellLoadInfo;
 
 class nsLocation final : public nsIDOMLocation
                        , public nsWrapperCache
-                       , public mozilla::dom::URLSearchParamsObserver
 {
   typedef mozilla::ErrorResult ErrorResult;
 
@@ -44,21 +42,33 @@ public:
   // nsIDOMLocation
   NS_DECL_NSIDOMLOCATION
 
+  #define THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME() { \
+    if (!CallerSubsumes()) { \
+      aError.Throw(NS_ERROR_DOM_SECURITY_ERR); \
+      return; \
+    } \
+  }
+
   // WebIDL API:
   void Assign(const nsAString& aUrl, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = Assign(aUrl);
   }
+
   void Replace(const nsAString& aUrl, ErrorResult& aError)
   {
     aError = Replace(aUrl);
   }
+
   void Reload(bool aForceget, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = Reload(aForceget);
   }
   void GetHref(nsAString& aHref, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHref(aHref);
   }
   void SetHref(const nsAString& aHref, ErrorResult& aError)
@@ -67,14 +77,17 @@ public:
   }
   void GetOrigin(nsAString& aOrigin, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetOrigin(aOrigin);
   }
   void GetProtocol(nsAString& aProtocol, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetProtocol(aProtocol);
   }
   void SetProtocol(const nsAString& aProtocol, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetProtocol(aProtocol);
   }
   void GetUsername(nsAString& aUsername, ErrorResult& aError);
@@ -83,59 +96,68 @@ public:
   void SetPassword(const nsAString& aPassword, ErrorResult& aError);
   void GetHost(nsAString& aHost, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHost(aHost);
   }
   void SetHost(const nsAString& aHost, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHost(aHost);
   }
   void GetHostname(nsAString& aHostname, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHostname(aHostname);
   }
   void SetHostname(const nsAString& aHostname, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHostname(aHostname);
   }
   void GetPort(nsAString& aPort, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetPort(aPort);
   }
   void SetPort(const nsAString& aPort, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetPort(aPort);
   }
   void GetPathname(nsAString& aPathname, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetPathname(aPathname);
   }
   void SetPathname(const nsAString& aPathname, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetPathname(aPathname);
   }
   void GetSearch(nsAString& aSeach, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetSearch(aSeach);
   }
   void SetSearch(const nsAString& aSeach, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetSearch(aSeach);
   }
 
-  mozilla::dom::URLSearchParams* SearchParams();
-
-  void SetSearchParams(mozilla::dom::URLSearchParams& aSearchParams);
-
   void GetHash(nsAString& aHash, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = GetHash(aHash);
   }
   void SetHash(const nsAString& aHash, ErrorResult& aError)
   {
+    THROW_AND_RETURN_IF_CALLER_DOESNT_SUBSUME();
     aError = SetHash(aHash);
   }
   void Stringify(nsAString& aRetval, ErrorResult& aError)
   {
+    // GetHref checks CallerSubsumes.
     GetHref(aRetval, aError);
   }
   nsPIDOMWindow* GetParentObject() const
@@ -144,17 +166,10 @@ public:
   }
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  // URLSearchParamsObserver
-  void URLSearchParamsUpdated(mozilla::dom::URLSearchParams* aSearchParams) override;
-
 protected:
   virtual ~nsLocation();
 
   nsresult SetSearchInternal(const nsAString& aSearch);
-  void UpdateURLSearchParams();
-  void RemoveURLSearchParams();
-
-  mozilla::dom::URLSearchParams* GetDocShellSearchParams();
 
   // In the case of jar: uris, we sometimes want the place the jar was
   // fetched from as the URI instead of the jar: uri itself.  Pass in
@@ -173,9 +188,7 @@ protected:
 
   nsString mCachedHash;
   nsCOMPtr<nsPIDOMWindow> mInnerWindow;
-  nsRefPtr<mozilla::dom::URLSearchParams> mSearchParams;
   nsWeakPtr mDocShell;
 };
 
 #endif // nsLocation_h__
-

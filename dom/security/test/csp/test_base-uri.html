@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Bug 1045897 - Test CSP base-uri directive</title>
+  <!-- Including SimpleTest.js so we can use waitForExplicitFinish !-->
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+  <p id="display"></p>
+  <div id="content" style="visibility: hidden">
+    <iframe style="width:100%;" id="testframe"></iframe>
+  </div>
+
+<script class="testbody" type="text/javascript">
+
+/*
+ * Description of the test:
+ * We load a page in an iframe (served over http://example.com) that tries to set the 'base'
+ * to (http://mochi.test). We load that page using different policies and verify that
+ * setting the base-uri is correctly blocked by CSP.
+ */
+
+SimpleTest.waitForExplicitFinish();
+
+var tests = [
+  {
+    policy: "base-uri http://mochi.test;",
+    result: "http://mochi.test"
+  },
+  {
+    policy: "base-uri http://example.com;",
+    result: "http://example.com"
+  },
+  {
+    policy: "base-uri https:",
+    result: "http://example.com"
+  },
+  {
+    policy: "base-uri 'none'",
+    result: "http://example.com"
+  }
+];
+
+// initializing to -1 so we start at index 0 when we start the test
+var counter = -1;
+
+function finishTest() {
+  window.removeEventListener("message", receiveMessage, false);
+  SimpleTest.finish();
+}
+
+// a postMessage handler that is used by sandboxed iframes without
+// 'allow-same-origin' to bubble up results back to this main page.
+window.addEventListener("message", receiveMessage, false);
+function receiveMessage(event) {
+  var result = event.data.result;
+  // we only care about the base uri, so instead of comparing the complete uri
+  // we just make sure that the base is correct which is sufficient here.
+  ok(result.startsWith(tests[counter].result), "Restricting base-uri in test " + counter + "!");
+  loadNextTest();
+}
+
+function loadNextTest() {
+  counter++;
+  if (counter == tests.length) {
+    finishTest();
+    return;
+  }
+  var src = "http://example.com/tests/dom/security/test/csp/file_testserver.sjs";
+  // append the file that should be served
+  src += "?file=" + escape("tests/dom/security/test/csp/file_base-uri.html");
+  // append the CSP that should be used to serve the file
+  // please note that we have to include 'unsafe-inline' to permit sending the postMessage
+  src += "&csp=" + escape("script-src 'unsafe-inline'; " + tests[counter].policy);
+  document.getElementById("testframe").src = src;
+}
+
+// start running the tests
+loadNextTest();
+
+</script>
+</body>
+</html>

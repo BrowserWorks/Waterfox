@@ -5,16 +5,12 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- Serves to position the content on the screen (bottom, centered) and provide the drop-shadow -->
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:gecko="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/sharedialog"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipChildren="false"
-    android:clipToPadding="false">
 
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:gecko="http://schemas.android.com/apk/res-auto">
     <LinearLayout
+        android:id="@+id/sharedialog"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
@@ -80,4 +76,19 @@
 
     </LinearLayout>
 
-</FrameLayout>
+    <ImageView
+        android:id="@+id/check"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/overlay_check"
+        android:visibility="invisible"/>
+
+    <!-- This transparent View is used to overlay the
+         entire Activity with an onClickListener. -->
+    <View
+        android:id="@+id/fullscreen_click_target"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:visibility="gone"/>
+</merge>

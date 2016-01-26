@@ -48,12 +48,12 @@ private:
                                    ManagerId* aManagerId) override;
 
   const Namespace mNamespace;
-  nsRefPtr<PrincipalVerifier> mVerifier;
+  RefPtr<PrincipalVerifier> mVerifier;
   nsresult mVerifiedStatus;
-  nsRefPtr<ManagerId> mManagerId;
+  RefPtr<ManagerId> mManagerId;
 };
 
-} // namesapce cache
+} // namespace cache
 } // namespace dom
 } // namespace mozilla
 

@@ -24,7 +24,7 @@ namespace layers {
 // destroyed on the main thread!
 struct ReadbackTask {
   // The texture that we copied the contents of the paintedlayer to.
-  nsRefPtr<ID3D10Texture2D> mReadbackTexture;
+  RefPtr<ID3D10Texture2D> mReadbackTexture;
   // The sink that we're trying to read back to.
   RefPtr<TextureReadbackSink> mSink;
 };
@@ -44,12 +44,13 @@ public:
     mTask->mReadbackTexture->GetDesc(&desc);
 
     D3D10_MAPPED_TEXTURE2D mappedTex;
-    // We know this map will immediately succeed, as we've already mapped this
-    // copied data on our task thread.
+    // Unless there is an error this map should succeed immediately, as we've
+    // recently mapped (and unmapped) this copied data on our task thread.
     HRESULT hr = mTask->mReadbackTexture->Map(0, D3D10_MAP_READ, 0, &mappedTex);
 
     if (FAILED(hr)) {
       mTask->mSink->ProcessReadback(nullptr);
+      return NS_OK;
     }
 
     {

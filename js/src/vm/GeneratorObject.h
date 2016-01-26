@@ -26,11 +26,11 @@ class GeneratorObject : public NativeObject
 
     enum {
         CALLEE_SLOT = 0,
-        THIS_SLOT,
         SCOPE_CHAIN_SLOT,
         ARGS_OBJ_SLOT,
         EXPRESSION_STACK_SLOT,
         YIELD_INDEX_SLOT,
+        NEWTARGET_SLOT,
         RESERVED_SLOTS
     };
 
@@ -80,13 +80,6 @@ class GeneratorObject : public NativeObject
         setFixedSlot(CALLEE_SLOT, ObjectValue(callee));
     }
 
-    const Value& thisValue() const {
-        return getFixedSlot(THIS_SLOT);
-    }
-    void setThisValue(Value& thisv) {
-        setFixedSlot(THIS_SLOT, thisv);
-    }
-
     JSObject& scopeChain() const {
         return getFixedSlot(SCOPE_CHAIN_SLOT).toObject();
     }
@@ -116,6 +109,17 @@ class GeneratorObject : public NativeObject
     void clearExpressionStack() {
         setFixedSlot(EXPRESSION_STACK_SLOT, NullValue());
     }
+
+    bool isConstructing() const {
+        return getFixedSlot(NEWTARGET_SLOT).isObject();
+    }
+    const Value& newTarget() const {
+        return getFixedSlot(NEWTARGET_SLOT);
+    }
+    void setNewTarget(Value newTarget) {
+        setFixedSlot(NEWTARGET_SLOT, newTarget);
+    }
+
 
     // The yield index slot is abused for a few purposes.  It's undefined if
     // it hasn't been set yet (before the initial yield), and null if the
@@ -167,18 +171,15 @@ class GeneratorObject : public NativeObject
     }
     void setClosed() {
         setFixedSlot(CALLEE_SLOT, NullValue());
-        setFixedSlot(THIS_SLOT, NullValue());
         setFixedSlot(SCOPE_CHAIN_SLOT, NullValue());
         setFixedSlot(ARGS_OBJ_SLOT, NullValue());
         setFixedSlot(EXPRESSION_STACK_SLOT, NullValue());
         setFixedSlot(YIELD_INDEX_SLOT, NullValue());
+        setFixedSlot(NEWTARGET_SLOT, NullValue());
     }
 
     static size_t offsetOfCalleeSlot() {
         return getFixedSlotOffset(CALLEE_SLOT);
-    }
-    static size_t offsetOfThisSlot() {
-        return getFixedSlotOffset(THIS_SLOT);
     }
     static size_t offsetOfScopeChainSlot() {
         return getFixedSlotOffset(SCOPE_CHAIN_SLOT);
@@ -191,6 +192,9 @@ class GeneratorObject : public NativeObject
     }
     static size_t offsetOfExpressionStackSlot() {
         return getFixedSlotOffset(EXPRESSION_STACK_SLOT);
+    }
+    static size_t offsetOfNewTargetSlot() {
+        return getFixedSlotOffset(NEWTARGET_SLOT);
     }
 };
 

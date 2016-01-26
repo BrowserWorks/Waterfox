@@ -140,7 +140,7 @@ nsresult nsReadConfig::readConfigFile()
                                   getter_Copies(lockFileName));
 
 
-    PR_LOG(MCD, PR_LOG_DEBUG, ("general.config.filename = %s\n", lockFileName.get()));
+    MOZ_LOG(MCD, LogLevel::Debug, ("general.config.filename = %s\n", lockFileName.get()));
     if (NS_FAILED(rv))
         return rv;
 
@@ -174,11 +174,11 @@ nsresult nsReadConfig::readConfigFile()
 
     int32_t obscureValue = 0;
     (void) defaultPrefBranch->GetIntPref("general.config.obscure_value", &obscureValue);
-    PR_LOG(MCD, PR_LOG_DEBUG, ("evaluating .cfg file %s with obscureValue %d\n", lockFileName.get(), obscureValue));
+    MOZ_LOG(MCD, LogLevel::Debug, ("evaluating .cfg file %s with obscureValue %d\n", lockFileName.get(), obscureValue));
     rv = openAndEvaluateJSFile(lockFileName.get(), obscureValue, true, true);
     if (NS_FAILED(rv))
     {
-      PR_LOG(MCD, PR_LOG_DEBUG, ("error evaluating .cfg file %s %x\n", lockFileName.get(), rv));
+      MOZ_LOG(MCD, LogLevel::Debug, ("error evaluating .cfg file %s %x\n", lockFileName.get(), rv));
       return rv;
     }
     
@@ -260,11 +260,11 @@ nsresult nsReadConfig::openAndEvaluateJSFile(const char *aFileName, int32_t obsc
         rv = NS_NewChannel(getter_AddRefs(channel),
                            uri,
                            nsContentUtils::GetSystemPrincipal(),
-                           nsILoadInfo::SEC_NORMAL,
+                           nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                            nsIContentPolicy::TYPE_OTHER);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        rv = channel->Open(getter_AddRefs(inStr));
+        rv = channel->Open2(getter_AddRefs(inStr));
         NS_ENSURE_SUCCESS(rv, rv);
     }
 

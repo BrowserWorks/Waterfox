@@ -7,29 +7,33 @@
 #define GFX_LAYERSTYPES_H
 
 #include <stdint.h>                     // for uint32_t
-#include "nsPoint.h"                    // for nsIntPoint
-#include "nsRegion.h"
-
-#include "mozilla/TypedEnumBits.h"
 
 #ifdef MOZ_WIDGET_GONK
-#include <ui/GraphicBuffer.h>
+#include <utils/RefBase.h>
+#include "mozilla/layers/GonkNativeHandle.h"
 #endif
+
+#include "Units.h"
+#include "mozilla/gfx/Point.h"          // for IntPoint
+#include "mozilla/TypedEnumBits.h"
+#include "nsRegion.h"
+
 #include <stdio.h>            // FILE
-#include "prlog.h"            // for PR_LOG
+#include "mozilla/Logging.h"            // for PR_LOG
+
 #ifndef MOZ_LAYERS_HAVE_LOG
 #  define MOZ_LAYERS_HAVE_LOG
 #endif
 #define MOZ_LAYERS_LOG(_args)                             \
-  PR_LOG(LayerManager::GetLog(), PR_LOG_DEBUG, _args)
+  MOZ_LOG(LayerManager::GetLog(), LogLevel::Debug, _args)
 #define MOZ_LAYERS_LOG_IF_SHADOWABLE(layer, _args)         \
-  do { if (layer->AsShadowableLayer()) { PR_LOG(LayerManager::GetLog(), PR_LOG_DEBUG, _args); } } while (0)
+  do { if (layer->AsShadowableLayer()) { MOZ_LOG(LayerManager::GetLog(), LogLevel::Debug, _args); } } while (0)
 
 #define INVALID_OVERLAY -1
 
 namespace android {
-class GraphicBuffer;
-}
+class MOZ_EXPORT GraphicBuffer;
+} // namespace android
 
 namespace mozilla {
 namespace layers {
@@ -85,28 +89,19 @@ MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(LayerRenderStateFlags)
 // The 'ifdef MOZ_WIDGET_GONK' sadness here is because we don't want to include
 // android::sp unless we have to.
 struct LayerRenderState {
-  LayerRenderState()
-#ifdef MOZ_WIDGET_GONK
-    : mFlags(LayerRenderStateFlags::LAYER_RENDER_STATE_DEFAULT)
-    , mHasOwnOffset(false)
-    , mSurface(nullptr)
-    , mOverlayId(INVALID_OVERLAY)
-    , mTexture(nullptr)
-#endif
-  {}
+  // Constructors and destructor are defined in LayersTypes.cpp so we don't
+  // have to pull in a definition for GraphicBuffer.h here. In KK at least,
+  // that results in nasty pollution such as libui's hardware.h #defining
+  // 'version_major' and 'version_minor' which conflict with Theora's codec.c...
+  LayerRenderState();
+  LayerRenderState(const LayerRenderState& aOther);
+  ~LayerRenderState();
 
 #ifdef MOZ_WIDGET_GONK
   LayerRenderState(android::GraphicBuffer* aSurface,
-                   const nsIntSize& aSize,
+                   const gfx::IntSize& aSize,
                    LayerRenderStateFlags aFlags,
-                   TextureHost* aTexture)
-    : mFlags(aFlags)
-    , mHasOwnOffset(false)
-    , mSurface(aSurface)
-    , mOverlayId(INVALID_OVERLAY)
-    , mSize(aSize)
-    , mTexture(aTexture)
-  {}
+                   TextureHost* aTexture);
 
   bool OriginBottomLeft() const
   { return bool(mFlags & LayerRenderStateFlags::ORIGIN_BOTTOM_LEFT); }
@@ -119,6 +114,17 @@ struct LayerRenderState {
 
   void SetOverlayId(const int32_t& aId)
   { mOverlayId = aId; }
+
+  void SetSidebandStream(const GonkNativeHandle& aStream)
+  {
+    mSidebandStream = aStream;
+  }
+
+  android::GraphicBuffer* GetGrallocBuffer() const
+  { return mSurface.get(); }
+
+  const GonkNativeHandle& GetSidebandStream()
+  { return mSidebandStream; }
 #endif
 
   void SetOffset(const nsIntPoint& aOffset)
@@ -133,13 +139,16 @@ struct LayerRenderState {
   bool mHasOwnOffset;
   // the location of the layer's origin on mSurface
   nsIntPoint mOffset;
+  // The 'ifdef MOZ_WIDGET_GONK' sadness here is because we don't want to include
+  // android::sp unless we have to.
 #ifdef MOZ_WIDGET_GONK
   // surface to render
   android::sp<android::GraphicBuffer> mSurface;
   int32_t mOverlayId;
   // size of mSurface
-  nsIntSize mSize;
+  gfx::IntSize mSize;
   TextureHost* mTexture;
+  GonkNativeHandle mSidebandStream;
 #endif
 };
 
@@ -221,7 +230,7 @@ struct EventRegions {
     mVerticalPanRegion.MoveBy(aXTrans, aYTrans);
   }
 
-  void Transform(const gfx3DMatrix& aTransform)
+  void Transform(const gfx::Matrix4x4& aTransform)
   {
     mHitRegion.Transform(aTransform);
     mDispatchToContentHitRegion.Transform(aTransform);
@@ -270,7 +279,29 @@ operator|=(EventRegionsOverride& a, EventRegionsOverride b)
   return a;
 }
 
-} // namespace
-} // namespace
+// Flags used as an argument to functions that dump textures.
+enum TextureDumpMode {
+  Compress,      // dump texture with LZ4 compression
+  DoNotCompress  // dump texture uncompressed
+};
+
+// Some specialized typedefs of Matrix4x4Typed.
+typedef gfx::Matrix4x4Typed<LayerPixel, CSSTransformedLayerPixel> CSSTransformMatrix;
+// Several different async transforms can contribute to a layer's transform
+// (specifically, an async animation can contribute a transform, and each APZC
+// that scrolls a layer can contribute async scroll/zoom and overscroll
+// transforms).
+// To try to model this with typed units, we represent individual async
+// transforms as ParentLayer -> ParentLayer transforms (aliased as
+// AsyncTransformComponentMatrix), and we represent the product of all of them
+// as a CSSTransformLayer -> ParentLayer transform (aliased as
+// AsyncTransformMatrix). To create an AsyncTransformMatrix from component
+// matrices, a ViewAs operation is needed. A MultipleAsyncTransforms
+// PixelCastJustification is provided for this purpose.
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel> AsyncTransformComponentMatrix;
+typedef gfx::Matrix4x4Typed<CSSTransformedLayerPixel, ParentLayerPixel> AsyncTransformMatrix;
+
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_LAYERSTYPES_H */

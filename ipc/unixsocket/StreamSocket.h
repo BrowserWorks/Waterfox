@@ -9,62 +9,63 @@
 
 #include "ConnectionOrientedSocket.h"
 
+class MessageLoop;
+
 namespace mozilla {
 namespace ipc {
 
+class StreamSocketConsumer;
 class StreamSocketIO;
 class UnixSocketConnector;
 
-class StreamSocket : public ConnectionOrientedSocket
+class StreamSocket final : public ConnectionOrientedSocket
 {
 public:
-  StreamSocket();
+  /**
+   * Constructs an instance of |StreamSocket|.
+   *
+   * @param aConsumer The consumer for the socket.
+   * @param aIndex An arbitrary index.
+   */
+  StreamSocket(StreamSocketConsumer* aConsumer, int aIndex);
 
   /**
-   * Method to be called whenever data is received. This is only called on the
-   * main thread.
+   * Method to be called whenever data is received. Consumer-thread only.
    *
    * @param aBuffer Data received from the socket.
    */
-  virtual void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer) = 0;
-
-  /**
-   * Convenience function for sending strings to the socket (common in bluetooth
-   * profile usage). Converts to a UnixSocketRawData struct. Can only be called
-   * on originating thread.
-   *
-   * TODO: Move this method into Bluetooth module.
-   *
-   * @param aMessage String to be sent to socket
-   *
-   * @return true if data is queued, false otherwise (i.e. not connected)
-   */
-  bool SendSocketData(const nsACString& aMessage);
+  void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer);
 
   /**
    * Starts a task on the socket that will try to connect to a socket in a
    * non-blocking manner.
    *
    * @param aConnector Connector object for socket type specific functions
-   * @param aAddress Address to connect to.
-   * @param aDelayMs Time delay in milli-seconds.
+   * @param aDelayMs Time delay in milliseconds.
+   * @param aConsumerLoop The socket's consumer thread.
+   * @param aIOLoop The socket's I/O thread.
+   * @return NS_OK on success, or an XPCOM error code otherwise.
+   */
+  nsresult Connect(UnixSocketConnector* aConnector, int aDelayMs,
+                   MessageLoop* aConsumerLoop, MessageLoop* aIOLoop);
+
+  /**
+   * Starts a task on the socket that will try to connect to a socket in a
+   * non-blocking manner.
    *
-   * @return true on connect task started, false otherwise.
+   * @param aConnector Connector object for socket type specific functions
+   * @param aDelayMs Time delay in milliseconds.
+   * @return NS_OK on success, or an XPCOM error code otherwise.
    */
-  bool Connect(UnixSocketConnector* aConnector,
-               const char* aAddress,
-               int aDelayMs = 0);
+  nsresult Connect(UnixSocketConnector* aConnector, int aDelayMs = 0);
 
-  /**
-   * Queues the internal representation of socket for deletion. Can be called
-   * from main thread.
-   */
-  void Close();
+  // Methods for |ConnectionOrientedSocket|
+  //
 
-  /**
-   * Get the current sockaddr for the socket
-   */
-  void GetSocketAddr(nsAString& aAddrStr);
+  nsresult PrepareAccept(UnixSocketConnector* aConnector,
+                         MessageLoop* aConsumerLoop,
+                         MessageLoop* aIOLoop,
+                         ConnectionOrientedSocketIO*& aIO) override;
 
   // Methods for |DataSocket|
   //
@@ -74,18 +75,18 @@ public:
   // Methods for |SocketBase|
   //
 
-  void CloseSocket() override;
+  void Close() override;
+  void OnConnectSuccess() override;
+  void OnConnectError() override;
+  void OnDisconnect() override;
 
 protected:
   virtual ~StreamSocket();
 
-  // Prepares an instance of |StreamSocket| in DISCONNECTED state
-  // for accepting a connection. Subclasses implementing |GetIO|
-  // need to call this method.
-  ConnectionOrientedSocketIO* PrepareAccept(UnixSocketConnector* aConnector);
-
 private:
   StreamSocketIO* mIO;
+  StreamSocketConsumer* mConsumer;
+  int mIndex;
 };
 
 } // namespace ipc

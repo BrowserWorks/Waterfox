@@ -1,5 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,6 +67,7 @@ var NetworkManager = (function NetworkManagerClosure() {
     return array.buffer;
   }
 
+
   NetworkManager.prototype = {
     requestRange: function NetworkManager_requestRange(begin, end, listeners) {
       var args = {
@@ -109,17 +108,11 @@ var NetworkManager = (function NetworkManagerClosure() {
         pendingRequest.expectedStatus = 200;
       }
 
-      if (args.onProgressiveData) {
-        // Some legacy browsers might throw an exception.
-        try {
-          xhr.responseType = 'moz-chunked-arraybuffer';
-        } catch(e) {}
-        if (xhr.responseType === 'moz-chunked-arraybuffer') {
-          pendingRequest.onProgressiveData = args.onProgressiveData;
-          pendingRequest.mozChunked = true;
-        } else {
-          xhr.responseType = 'arraybuffer';
-        }
+      var useMozChunkedLoading = !!args.onProgressiveData;
+      if (useMozChunkedLoading) {
+        xhr.responseType = 'moz-chunked-arraybuffer';
+        pendingRequest.onProgressiveData = args.onProgressiveData;
+        pendingRequest.mozChunked = true;
       } else {
         xhr.responseType = 'arraybuffer';
       }
@@ -222,11 +215,13 @@ var NetworkManager = (function NetworkManagerClosure() {
         });
       } else if (pendingRequest.onProgressiveData) {
         pendingRequest.onDone(null);
-      } else {
+      } else if (chunk) {
         pendingRequest.onDone({
           begin: 0,
           chunk: chunk
         });
+      } else if (pendingRequest.onError) {
+        pendingRequest.onError(xhr.status);
       }
     },
 
@@ -268,4 +263,5 @@ var NetworkManager = (function NetworkManagerClosure() {
 
   return NetworkManager;
 })();
+
 

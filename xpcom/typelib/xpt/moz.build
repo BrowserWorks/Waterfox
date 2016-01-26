@@ -22,10 +22,10 @@ EXPORTS += [
 
 FINAL_LIBRARY = 'xul'
 
-GENERATED_INCLUDES += ['/xpcom/base']
-LOCAL_INCLUDES += ['/xpcom/base']
-
-FAIL_ON_WARNINGS = True
+LOCAL_INCLUDES += [
+    '!/xpcom/base',
+    '/xpcom/base',
+]
 
 if CONFIG['_MSC_VER']:
     CFLAGS += ['-Zl']
@@ -38,3 +38,6 @@ if CONFIG['_MSC_VER']:
 DEFINES['MOZ_NO_MOZALLOC'] = True
 
 DIST_INSTALL = True
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

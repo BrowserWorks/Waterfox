@@ -14,9 +14,10 @@
 #include "nsDOMString.h"
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
-#include "nsNetUtil.h"
+#include "prtime.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIFile.h"
+#include "nsNetUtil.h"
 
 static void GC_gcollect() {}
 

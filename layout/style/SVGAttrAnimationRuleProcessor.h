@@ -20,7 +20,7 @@ namespace mozilla {
 
 namespace dom {
 class Element;
-}
+} // namespace dom
 
 class SVGAttrAnimationRuleProcessor final : public nsIStyleRuleProcessor
 {
@@ -44,7 +44,8 @@ public:
   virtual nsRestyleHint HasStateDependentStyle(PseudoElementStateRuleProcessorData* aData) override;
   virtual bool HasDocumentStateDependentStyle(StateRuleProcessorData* aData) override;
   virtual nsRestyleHint
-    HasAttributeDependentStyle(AttributeRuleProcessorData* aData) override;
+    HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                               RestyleHintData& aRestyleHintDataResult) override;
   virtual bool MediumFeaturesChanged(nsPresContext* aPresContext) override;
   virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf)
     const MOZ_MUST_OVERRIDE override;

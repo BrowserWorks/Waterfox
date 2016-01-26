@@ -110,6 +110,7 @@ void printSecurityInfo(PRFileDesc *fd)
 {
     CERTCertificate * cert;
     const SECItemArray *csa;
+    const SECItem *scts;
     SSL3Statistics * ssl3stats = SSL_GetStatistics();
     SECStatus result;
     SSLChannelInfo    channel;
@@ -129,10 +130,11 @@ void printSecurityInfo(PRFileDesc *fd)
 	       suite.macBits, suite.macAlgorithmName);
 	    FPRINTF(stderr, 
 	    "tstclnt: Server Auth: %d-bit %s, Key Exchange: %d-bit %s\n"
-	    "         Compression: %s\n",
+            "         Compression: %s, Extended Master Secret: %s\n",
 	       channel.authKeyBits, suite.authAlgorithmName,
 	       channel.keaKeyBits,  suite.keaTypeName,
-	       channel.compressionMethodName);
+               channel.compressionMethodName,
+               channel.extendedMasterSecretUsed ? "Yes": "No");
     	}
     }
     cert = SSL_RevealCert(fd);
@@ -161,6 +163,11 @@ void printSecurityInfo(PRFileDesc *fd)
         fprintf(stderr, "Received %d Cert Status items (OCSP stapled data)\n",
                 csa->len);
     }
+    scts = SSL_PeerSignedCertTimestamps(fd);
+    if (scts && scts->len) {
+        fprintf(stderr, "Received a Signed Certificate Timestamp of length"
+                " %u\n", scts->len);
+    }
 }
 
 void
@@ -183,7 +190,7 @@ static void PrintUsageHeader(const char *progName)
 "Usage:  %s -h host [-a 1st_hs_name ] [-a 2nd_hs_name ] [-p port]\n"
                     "[-D | -d certdir] [-C] [-b | -R root-module] \n"
 		    "[-n nickname] [-Bafosvx] [-c ciphers] [-Y]\n"
-                    "[-V [min-version]:[max-version]] [-K] [-T]\n"
+                    "[-V [min-version]:[max-version]] [-K] [-T] [-U]\n"
                     "[-r N] [-w passwd] [-W pwfile] [-q [-t seconds]]\n", 
             progName);
 }
@@ -231,6 +238,8 @@ static void PrintParameterUsage(void)
     fprintf(stderr, "%-20s Enable compression.\n", "-z");
     fprintf(stderr, "%-20s Enable false start.\n", "-g");
     fprintf(stderr, "%-20s Enable the cert_status extension (OCSP stapling).\n", "-T");
+    fprintf(stderr, "%-20s Enable the signed_certificate_timestamp extension.\n", "-U");
+    fprintf(stderr, "%-20s Enable the extended master secret extension (session hash).\n", "-G");
     fprintf(stderr, "%-20s Require fresh revocation info from side channel.\n"
                     "%-20s -F once means: require for server cert only\n"
                     "%-20s -F twice means: require for intermediates, too\n"
@@ -248,6 +257,7 @@ static void PrintParameterUsage(void)
     fprintf(stderr, "%-20s Enforce using an IPv4 destination address\n", "-4");
     fprintf(stderr, "%-20s Enforce using an IPv6 destination address\n", "-6");
     fprintf(stderr, "%-20s (Options -4 and -6 cannot be combined.)\n", "");
+    fprintf(stderr, "%-20s Enable the extended master secret extension [RFC7627]\n", "-G");
 }
 
 static void Usage(const char *progName)
@@ -534,9 +544,9 @@ dumpServerCertificateChain(PRFileDesc *fd)
 	return;
     }
     else if (dumpServerChain == 1) {
-	dumpFunction = SECU_PrintCertificateBasicInfo;
+	dumpFunction = (SECU_PPFunc)SECU_PrintCertificateBasicInfo;
     } else {
-	dumpFunction = SECU_PrintCertificate;
+	dumpFunction = (SECU_PPFunc)SECU_PrintCertificate;
 	if (dumpServerChain > 2) {
 	    dumpCertPEM = PR_TRUE;
 	}
@@ -566,7 +576,7 @@ dumpServerCertificateChain(PRFileDesc *fd)
 						PR_TRUE);
 	}
 	if (foundChain) {
-	    int count = 0;
+	    unsigned int count = 0;
 	    fprintf(stderr, "==== locally found issuer certificate(s): ====\n");
 	    for(count = 0; count < (unsigned int)foundChain->len; count++) {
 		CERTCertificate *c;
@@ -619,7 +629,7 @@ ownAuthCertificate(void *arg, PRFileDesc *fd, PRBool checkSig,
 
     if (!serverCertAuth->shouldPause) {
         CERTCertificate *cert;
-        int i;
+        unsigned int i;
         const SECItemArray *csa;
 
         if (!serverCertAuth->testFreshStatusFromSideChannel) {
@@ -644,8 +654,7 @@ ownAuthCertificate(void *arg, PRFileDesc *fd, PRBool checkSig,
 		if (CERT_CacheOCSPResponseFromSideChannel(
 			serverCertAuth->dbHandle, cert, PR_Now(),
 			&csa->items[i], arg) != SECSuccess) {
-		    PRErrorCode error = PR_GetError();
-		    PORT_Assert(error != 0);
+		    PORT_Assert(PR_GetError() != 0);
 		}
             }
         }
@@ -919,7 +928,9 @@ int main(int argc, char **argv)
     int                enableCompression = 0;
     int                enableFalseStart = 0;
     int                enableCertStatus = 0;
+    int                enableSignedCertTimestamps = 0;
     int                forceFallbackSCSV = 0;
+    int                enableExtendedMasterSecret = 0;
     PRSocketOptionData opt;
     PRNetAddr          addr;
     PRPollDesc         pollset[2];
@@ -968,7 +979,7 @@ int main(int argc, char **argv)
     SSL_VersionRangeGetSupported(ssl_variant_stream, &enabledVersions);
 
     optstate = PL_CreateOptState(argc, argv,
-                                 "46BCDFKM:OR:STV:W:Ya:bc:d:fgh:m:n:op:qr:st:uvw:xz");
+                                 "46BCDFGKM:OR:STUV:W:Ya:bc:d:fgh:m:n:op:qr:st:uvw:xz");
     while ((optstatus = PL_GetNextOpt(optstate)) == PL_OPT_OK) {
 	switch (optstate->option) {
 	  case '?':
@@ -989,6 +1000,8 @@ int main(int argc, char **argv)
                     }
                     serverCertAuth.testFreshStatusFromSideChannel = PR_TRUE;
                     break;
+
+          case 'G': enableExtendedMasterSecret = PR_TRUE; break;
 
 	  case 'I': /* reserved for OCSP multi-stapling */ break;
 
@@ -1018,6 +1031,8 @@ int main(int argc, char **argv)
           case 'S': skipProtoHeader = PR_TRUE;                 break;
 
           case 'T': enableCertStatus = 1;               break;
+
+          case 'U': enableSignedCertTimestamps = 1;               break;
 
           case 'V': if (SECU_ParseSSLVersionRangeString(optstate->value,
                             enabledVersions, enableSSL2,
@@ -1283,7 +1298,7 @@ int main(int argc, char **argv)
 	    int  cipher;
 
 	    if (ndx == ':') {
-		int ctmp;
+		int ctmp = 0;
 
 		cipher = 0;
 		HEXCHAR_TO_INT(*cipherString, ctmp)
@@ -1384,6 +1399,23 @@ int main(int argc, char **argv)
     rv = SSL_OptionSet(s, SSL_ENABLE_OCSP_STAPLING, enableCertStatus);
     if (rv != SECSuccess) {
         SECU_PrintError(progName, "error enabling cert status (OCSP stapling)");
+        return 1;
+    }
+
+    /* enable extended master secret mode */
+    if  (enableExtendedMasterSecret) {
+        rv = SSL_OptionSet(s, SSL_ENABLE_EXTENDED_MASTER_SECRET, PR_TRUE);
+	if (rv != SECSuccess) {
+            SECU_PrintError(progName, "error enabling extended master secret");
+            return 1;
+	}
+    }
+
+    /* enable Signed Certificate Timestamps. */
+    rv = SSL_OptionSet(s, SSL_ENABLE_SIGNED_CERT_TIMESTAMPS,
+              enableSignedCertTimestamps);
+    if (rv != SECSuccess) {
+        SECU_PrintError(progName, "error enabling signed cert timestamps");
         return 1;
     }
 

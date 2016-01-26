@@ -33,7 +33,7 @@ DataStoreRevision::AddRevision(JSContext* aCx,
   MOZ_ASSERT(aStore);
   MOZ_ASSERT(aCallback);
 
-  nsRefPtr<DataStoreService> service = DataStoreService::Get();
+  RefPtr<DataStoreService> service = DataStoreService::Get();
   if (!service) {
     return NS_ERROR_FAILURE;
   }
@@ -98,5 +98,5 @@ DataStoreRevision::HandleEvent(nsIDOMEvent* aEvent)
   return NS_OK;
 }
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla

@@ -50,7 +50,7 @@ SourceSurfaceD2DTarget::GetFormat() const
   return mFormat;
 }
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 SourceSurfaceD2DTarget::GetDataSurface()
 {
   RefPtr<DataSourceSurfaceD2DTarget> dataSurf =
@@ -64,7 +64,12 @@ SourceSurfaceD2DTarget::GetDataSurface()
   desc.BindFlags = 0;
   desc.MiscFlags = 0;
 
-  HRESULT hr = Factory::GetDirect3D10Device()->CreateTexture2D(&desc, nullptr, byRef(dataSurf->mTexture));
+  if (!Factory::GetDirect3D10Device()) {
+    gfxCriticalError() << "Invalid D3D10 device in D2D target surface (GDS)";
+    return nullptr;
+  }
+
+  HRESULT hr = Factory::GetDirect3D10Device()->CreateTexture2D(&desc, nullptr, getter_AddRefs(dataSurf->mTexture));
 
   if (FAILED(hr)) {
     gfxDebug() << "Failed to create staging texture for SourceSurface. Code: " << hexa(hr);
@@ -91,7 +96,12 @@ SourceSurfaceD2DTarget::GetSRView()
     return mSRView;
   }
 
-  HRESULT hr = Factory::GetDirect3D10Device()->CreateShaderResourceView(mTexture, nullptr, byRef(mSRView));
+  if (!Factory::GetDirect3D10Device()) {
+    gfxCriticalError() << "Invalid D3D10 device in D2D target surface (SRV)";
+    return nullptr;
+  }
+
+  HRESULT hr = Factory::GetDirect3D10Device()->CreateShaderResourceView(mTexture, nullptr, getter_AddRefs(mSRView));
 
   if (FAILED(hr)) {
     gfxWarning() << "Failed to create ShaderResourceView. Code: " << hexa(hr);
@@ -114,7 +124,7 @@ SourceSurfaceD2DTarget::DrawTargetWillChange()
   desc.MiscFlags = 0;
 
   // Get a copy of the surface data so the content at snapshot time was saved.
-  Factory::GetDirect3D10Device()->CreateTexture2D(&desc, nullptr, byRef(mTexture));
+  Factory::GetDirect3D10Device()->CreateTexture2D(&desc, nullptr, getter_AddRefs(mTexture));
   Factory::GetDirect3D10Device()->CopyResource(mTexture, oldTexture);
 
   mBitmap = nullptr;
@@ -140,7 +150,7 @@ SourceSurfaceD2DTarget::GetBitmap(ID2D1RenderTarget *aRT)
   IntSize size(desc.Width, desc.Height);
   
   RefPtr<IDXGISurface> surf;
-  hr = mTexture->QueryInterface((IDXGISurface**)byRef(surf));
+  hr = mTexture->QueryInterface((IDXGISurface**)getter_AddRefs(surf));
 
   if (FAILED(hr)) {
     gfxWarning() << "Failed to query interface texture to DXGISurface. Code: " << hexa(hr);
@@ -148,13 +158,13 @@ SourceSurfaceD2DTarget::GetBitmap(ID2D1RenderTarget *aRT)
   }
 
   D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(D2DPixelFormat(mFormat));
-  hr = aRT->CreateSharedBitmap(IID_IDXGISurface, surf, &props, byRef(mBitmap));
+  hr = aRT->CreateSharedBitmap(IID_IDXGISurface, surf, &props, getter_AddRefs(mBitmap));
 
   if (FAILED(hr)) {
     // This seems to happen for SurfaceFormat::A8 sometimes...
     hr = aRT->CreateBitmap(D2D1::SizeU(desc.Width, desc.Height),
                            D2D1::BitmapProperties(D2DPixelFormat(mFormat)),
-                           byRef(mBitmap));
+                           getter_AddRefs(mBitmap));
 
     if (FAILED(hr)) {
       gfxWarning() << "Failed in CreateBitmap. Code: " << hexa(hr);
@@ -173,7 +183,7 @@ SourceSurfaceD2DTarget::GetBitmap(ID2D1RenderTarget *aRT)
       // a rendertarget and from there copying to a bitmap! Terrible!
       RefPtr<IDXGISurface> surface;
 
-      hr = mTexture->QueryInterface((IDXGISurface**)byRef(surface));
+      hr = mTexture->QueryInterface((IDXGISurface**)getter_AddRefs(surface));
 
       if (FAILED(hr)) {
         gfxWarning() << "Failed to QI texture to surface.";
@@ -182,7 +192,7 @@ SourceSurfaceD2DTarget::GetBitmap(ID2D1RenderTarget *aRT)
 
       D2D1_RENDER_TARGET_PROPERTIES props =
         D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2DPixelFormat(mFormat));
-      hr = DrawTargetD2D::factory()->CreateDxgiSurfaceRenderTarget(surface, props, byRef(rt));
+      hr = DrawTargetD2D::factory()->CreateDxgiSurfaceRenderTarget(surface, props, getter_AddRefs(rt));
 
       if (FAILED(hr)) {
         gfxWarning() << "Failed to create D2D render target for texture.";

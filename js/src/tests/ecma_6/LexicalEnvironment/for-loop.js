@@ -51,10 +51,7 @@ isOK("for (let x = 5, y; ; ) ;");
 isOK("for (let [z] = [3]; ; ) ;");
 isError("for (let [z, z]; ; ) ;", SyntaxError); // because missing initializer
 
-// This is wrong!  Per 13.2.1.1, "It is a Syntax Error if the BoundNames of
-// BindingList contains any duplicate entries."  But we don't implement this
-// yet, so it becomes a TypeError at runtime.
-isError("for (let [z, z] = [0, 1]; ; ) ;", TypeError);
+isError("for (let [z, z] = [0, 1]; ; ) ;", SyntaxError);
 
 // A for-loop with lexical declarations, with a mixture of bindings that are and
 // aren't aliased.  (The mixture stress-tests any code that incorrectly assumes
@@ -78,11 +75,7 @@ var outer = "OUTER V IGNORE";
 var save;
 for (let outer = (save = function() { return outer; }); ; )
   break;
-assertEq(save(), "OUTER V IGNORE",
-         "this is actually a bug: fix for(;;) loops to evaluate init RHSes " +
-         "in the block scope containing all the LHS bindings!");
-
-
+assertEq(save(), save);
 
 var funcs = [];
 function t(i, name, expect)

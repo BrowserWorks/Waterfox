@@ -169,7 +169,7 @@ HTMLOptionsCollection::SetOption(uint32_t aIndex,
   } else {
     // Find the option they're talking about and replace it
     // hold a strong reference to follow COM rules.
-    nsRefPtr<HTMLOptionElement> refChild = ItemAsOption(index);
+    RefPtr<HTMLOptionElement> refChild = ItemAsOption(index);
     NS_ENSURE_TRUE(refChild, NS_ERROR_UNEXPECTED);
 
     nsCOMPtr<nsINode> parent = refChild->GetParent();
@@ -309,9 +309,10 @@ HTMLOptionsCollection::GetSupportedNames(unsigned aFlags,
     }
   }
 
-  aNames.SetCapacity(atoms.Length());
-  for (uint32_t i = 0; i < atoms.Length(); ++i) {
-    aNames.AppendElement(nsDependentAtomString(atoms[i]));
+  uint32_t atomsLen = atoms.Length();
+  nsString* names = aNames.AppendElements(atomsLen);
+  for (uint32_t i = 0; i < atomsLen; ++i) {
+    atoms[i]->ToString(names[i]);
   }
 }
 

@@ -53,15 +53,15 @@ function execAsync(aStmt, aOptions, aResults)
   if (aResults == null) {
     resultsExpected = 0;
   }
-  else if (typeof(aResults) == "number") {
+  else if (typeof aResults == "number") {
     resultsExpected = aResults;
   }
-  else if (typeof(aResults) == "function") {
+  else if (typeof aResults == "function") {
     resultsChecker = aResults;
   }
   else { // array
     resultsExpected = aResults.length;
-    resultsChecker = function(aResultNum, aTup, aCaller) {
+    resultsChecker = function (aResultNum, aTup, aCaller) {
       aResults[aResultNum](aTup, aCaller);
     };
   }
@@ -83,7 +83,7 @@ function execAsync(aStmt, aOptions, aResults)
   let completed = false;
 
   let listener = {
-    handleResult: function(aResultSet)
+    handleResult(aResultSet)
     {
       let row, resultsSeenThisCall = 0;
       while ((row = aResultSet.getNextRow()) != null) {
@@ -96,13 +96,13 @@ function execAsync(aStmt, aOptions, aResults)
       if (!resultsSeenThisCall)
         do_throw("handleResult invoked with 0 result rows!");
     },
-    handleError: function(aError)
+    handleError(aError)
     {
       if (errorCodeSeen != false)
         do_throw("handleError called when we already had an error!");
       errorCodeSeen = aError.result;
     },
-    handleCompletion: function(aReason)
+    handleCompletion(aReason)
     {
       if (completed) // paranoia check
         do_throw("Received a second handleCompletion notification!", caller);
@@ -226,8 +226,7 @@ function test_get_data()
   );
   stmt.bindByIndex(0, INTEGER);
   execAsync(stmt, {}, [
-    function(tuple)
-    {
+    function (tuple) {
       do_check_neq(null, tuple);
 
       // Check that it's what we expect
@@ -254,7 +253,7 @@ function test_get_data()
       do_check_eq(BLOB.length, blobByName.length);
       var blobByIndex = tuple.getResultByIndex(3);
       do_check_eq(BLOB.length, blobByIndex.length);
-      for (var i = 0; i < BLOB.length; i++) {
+      for (let i = 0; i < BLOB.length; i++) {
         do_check_eq(BLOB[i], blobByName[i]);
         do_check_eq(BLOB[i], blobByIndex[i]);
       }
@@ -262,7 +261,7 @@ function test_get_data()
       var blob = { value: null };
       tuple.getBlob(3, count, blob);
       do_check_eq(BLOB.length, count.value);
-      for (var i = 0; i < BLOB.length; i++)
+      for (let i = 0; i < BLOB.length; i++)
         do_check_eq(BLOB[i], blob.value[i]);
       do_check_eq(Ci.mozIStorageValueArray.VALUE_TYPE_BLOB,
                   tuple.getTypeOfIndex(3));
@@ -283,7 +282,7 @@ function test_tuple_out_of_bounds()
     "SELECT string FROM test"
   );
   execAsync(stmt, {}, [
-    function(tuple) {
+    function (tuple) {
       do_check_neq(null, tuple);
 
       // Check all out of bounds - should throw
@@ -367,19 +366,13 @@ function test_partial_listener_works()
   );
   stmt.bindByIndex(0, 0);
   stmt.executeAsync({
-    handleResult: function(aResultSet)
-    {
-    }
+    handleResult(aResultSet) {}
   });
   stmt.executeAsync({
-    handleError: function(aError)
-    {
-    }
+    handleError(aError) {}
   });
   stmt.executeAsync({
-    handleCompletion: function(aReason)
-    {
-    }
+    handleCompletion(aReason) {}
   });
   stmt.finalize();
 
@@ -416,7 +409,7 @@ function test_double_cancellation()
   let pendingStatement = execAsync(stmt, {cancel: true});
   // And cancel again - expect an exception
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() pendingStatement.cancel());
+              () => pendingStatement.cancel());
 
   stmt.finalize();
   run_next_test();
@@ -467,8 +460,9 @@ function test_finalized_statement_does_not_crash()
   // we are concerned about a crash here; an error is fine.
   try {
     stmt.executeAsync();
+  } catch (ex) {
+    // Do nothing.
   }
-  catch (ex) {}
 
   // Run the next test.
   run_next_test();
@@ -628,10 +622,10 @@ function test_bind_out_of_bounds_sync_immediate()
 
   // Check variant binding.
   expectError(Cr.NS_ERROR_INVALID_ARG,
-              function() bp.bindByIndex(1, INTEGER));
+              () => bp.bindByIndex(1, INTEGER));
   // Check blob binding.
   expectError(Cr.NS_ERROR_INVALID_ARG,
-              function() bp.bindBlobByIndex(1, BLOB, BLOB.length));
+              () => bp.bindBlobByIndex(1, BLOB, BLOB.length));
 
   stmt.finalize();
   run_next_test();
@@ -675,10 +669,10 @@ function test_bind_no_such_name_sync_immediate()
 
   // Check variant binding.
   expectError(Cr.NS_ERROR_INVALID_ARG,
-              function() bp.bindByName("doesnotexist", INTEGER));
+              () => bp.bindByName("doesnotexist", INTEGER));
   // Check blob binding.
   expectError(Cr.NS_ERROR_INVALID_ARG,
-              function() bp.bindBlobByName("doesnotexist", BLOB, BLOB.length));
+              () => bp.bindBlobByName("doesnotexist", BLOB, BLOB.length));
 
   stmt.finalize();
   run_next_test();
@@ -751,7 +745,7 @@ function test_bind_params_already_locked()
 
   // We should get an error after we call addParams and try to bind again.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() bp.bindByName("int", INTEGER));
+              () => bp.bindByName("int", INTEGER));
 
   stmt.finalize();
   run_next_test();
@@ -774,7 +768,7 @@ function test_bind_params_array_already_locked()
 
   // We should get an error after we have bound the array to the statement.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() array.addParams(bp2));
+              () => array.addParams(bp2));
 
   stmt.finalize();
   run_next_test();
@@ -796,7 +790,7 @@ function test_no_binding_params_from_locked_array()
   // We should not be able to get a new BindingParams object after we have bound
   // to the statement.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() array.newBindingParams());
+              () => array.newBindingParams());
 
   stmt.finalize();
   run_next_test();
@@ -816,7 +810,7 @@ function test_not_right_owning_array()
 
   // We should not be able to add bp to array2 since it was created from array1.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() array2.addParams(bp));
+              () => array2.addParams(bp));
 
   stmt.finalize();
   run_next_test();
@@ -841,7 +835,7 @@ function test_not_right_owning_statement()
 
   // We should not be able to bind array1 since it was created from stmt1.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() stmt2.bindParameters(array1));
+              () => stmt2.bindParameters(array1));
 
   stmt1.finalize();
   stmt2.finalize();
@@ -860,7 +854,7 @@ function test_bind_empty_array()
   // We should not be able to bind this array to the statement because it is
   // empty.
   expectError(Cr.NS_ERROR_UNEXPECTED,
-              function() stmt.bindParameters(paramsArray));
+              () => stmt.bindParameters(paramsArray));
 
   stmt.finalize();
   run_next_test();
@@ -895,7 +889,7 @@ const TEST_PASS_ASYNC = 1;
  * dispatching, some tests are sync/async specific.  These functions are marked
  * with 'syncOnly' or 'asyncOnly' attributes and run_next_test knows what to do.
  */
-let testPass = TEST_PASS_SYNC;
+var testPass = TEST_PASS_SYNC;
 
 /**
  * Create a statement of the type under test per testPass.
@@ -905,14 +899,13 @@ let testPass = TEST_PASS_SYNC;
  * @return a statement of the type under test per testPass.
  */
 function makeTestStatement(aSQL) {
-  if (testPass == TEST_PASS_SYNC)
+  if (testPass == TEST_PASS_SYNC) {
     return getOpenedDatabase().createStatement(aSQL);
-  else
-    return getOpenedDatabase().createAsyncStatement(aSQL);
+  }
+  return getOpenedDatabase().createAsyncStatement(aSQL);
 }
 
-var tests =
-[
+var tests = [
   test_illegal_sql_async_deferred,
   test_create_table,
   test_add_data,
@@ -947,10 +940,10 @@ var tests =
   test_not_right_owning_statement,
   test_multiple_results,
 ];
-let index = 0;
+var index = 0;
 
 const STARTING_UNIQUE_ID = 2;
-let nextUniqueId = STARTING_UNIQUE_ID;
+var nextUniqueId = STARTING_UNIQUE_ID;
 
 function run_next_test()
 {

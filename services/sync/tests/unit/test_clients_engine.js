@@ -12,7 +12,7 @@ Cu.import("resource://testing-common/services/sync/utils.js");
 const MORE_THAN_CLIENTS_TTL_REFRESH = 691200; // 8 days
 const LESS_THAN_CLIENTS_TTL_REFRESH = 86400;  // 1 day
 
-let engine = Service.clientsEngine;
+var engine = Service.clientsEngine;
 
 /**
  * Unpack the record with this ID, and verify that it has the same version that
@@ -328,7 +328,7 @@ add_test(function test_command_validation() {
     ["__UNKNOWN__", [],       false]
   ];
 
-  for each (let [action, args, expectedResult] in testCommands) {
+  for (let [action, args, expectedResult] of testCommands) {
     let remoteId = Utils.makeGUID();
     let rec = new ClientsRec("clients", remoteId);
 

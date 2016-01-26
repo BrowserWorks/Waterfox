@@ -23,7 +23,7 @@ function test_params_enumerate()
   let index = 0;
   for (let name in stmt.params) {
     if (name == "QueryInterface")
-        continue;
+      continue;
     do_check_eq(name, expected[index++]);
   }
 }
@@ -70,7 +70,7 @@ function test_params_gets_sync()
   // Make sure we do not assert in getting the value.
   let originalCount = Object.getOwnPropertyNames(stmt.params).length;
   let expected = ["a", "b", "c"];
-  for each (let name in expected) {
+  for (let name of expected) {
     stmt.params[name];
   }
 
@@ -91,7 +91,7 @@ function test_params_gets_async()
   // Make sure we do not assert in getting the value.
   let originalCount = Object.getOwnPropertyNames(stmt.params).length;
   let expected = ["a", "b", "c"];
-  for each (let name in expected) {
+  for (let name of expected) {
     stmt.params[name];
   }
 
@@ -104,7 +104,7 @@ function test_params_gets_async()
 ////////////////////////////////////////////////////////////////////////////////
 //// Test Runner
 
-let tests = [
+var tests = [
   test_params_enumerate,
   test_params_prototype,
   test_row_prototype,
@@ -123,5 +123,5 @@ function run_test()
   );
 
   // Run the tests.
-  tests.forEach(function(test) test());
+  tests.forEach(test => test());
 }

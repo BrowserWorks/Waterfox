@@ -196,7 +196,7 @@ nsListBoxBodyFrame::Init(nsIContent*       aContent,
       scrollbarFrame->SetScrollbarMediatorContent(GetContent());
     }
   }
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm));
   mRowHeight = fm->MaxHeight();
 }
@@ -699,7 +699,7 @@ nsListBoxBodyFrame::ComputeIntrinsicISize(nsBoxLayoutState& aBoxLayoutState)
   nsCOMPtr<nsIContent> firstRowContent(do_QueryInterface(firstRowEl));
 
   if (firstRowContent) {
-    nsRefPtr<nsStyleContext> styleContext;
+    RefPtr<nsStyleContext> styleContext;
     nsPresContext *presContext = aBoxLayoutState.PresContext();
     styleContext = presContext->StyleSet()->
       ResolveStyleFor(firstRowContent->AsElement(), nullptr);
@@ -727,7 +727,7 @@ nsListBoxBodyFrame::ComputeIntrinsicISize(nsBoxLayoutState& aBoxLayoutState)
             }
           }
 
-          nsRefPtr<nsFontMetrics> fm;
+          RefPtr<nsFontMetrics> fm;
           nsLayoutUtils::GetFontMetricsForStyleContext(styleContext,
                                                        getter_AddRefs(fm));
 
@@ -828,7 +828,7 @@ nsListBoxBodyFrame::InternalPositionChangedCallback()
 nsresult
 nsListBoxBodyFrame::InternalPositionChanged(bool aUp, int32_t aDelta)
 {
-  nsRefPtr<nsPositionChangedEvent> ev =
+  RefPtr<nsPositionChangedEvent> ev =
     new nsPositionChangedEvent(this, aUp, aDelta);
   nsresult rv = NS_DispatchToCurrentThread(ev);
   if (NS_SUCCEEDED(rv)) {
@@ -846,7 +846,7 @@ nsListBoxBodyFrame::DoInternalPositionChangedSync(bool aUp, int32_t aDelta)
   nsWeakFrame weak(this);
   
   // Process all the pending position changes first
-  nsTArray< nsRefPtr<nsPositionChangedEvent> > temp;
+  nsTArray< RefPtr<nsPositionChangedEvent> > temp;
   temp.SwapElements(mPendingPositionChangeEvents);
   for (uint32_t i = 0; i < temp.Length(); ++i) {
     if (weak.IsAlive()) {
@@ -868,7 +868,7 @@ nsListBoxBodyFrame::DoInternalPositionChanged(bool aUp, int32_t aDelta)
   if (aDelta == 0)
     return NS_OK;
 
-  nsRefPtr<nsPresContext> presContext(PresContext());
+  RefPtr<nsPresContext> presContext(PresContext());
   nsBoxLayoutState state(presContext);
 
   // begin timing how long it takes to scroll a row
@@ -1179,8 +1179,7 @@ nsListBoxBodyFrame::GetFirstItemBox(int32_t aOffset, bool* aCreated)
     nsPresContext* presContext = PresContext();
     nsCSSFrameConstructor* fc = presContext->PresShell()->FrameConstructor();
     nsIFrame* topFrame = nullptr;
-    fc->CreateListBoxContent(presContext, this, nullptr, startContent,
-                             &topFrame, isAppend, false, nullptr);
+    fc->CreateListBoxContent(this, nullptr, startContent, &topFrame, isAppend);
     mTopFrame = topFrame;
     if (mTopFrame) {
       if (aCreated)
@@ -1232,8 +1231,8 @@ nsListBoxBodyFrame::GetNextItemBox(nsIFrame* aBox, int32_t aOffset,
       
         nsPresContext* presContext = PresContext();
         nsCSSFrameConstructor* fc = presContext->PresShell()->FrameConstructor();
-        fc->CreateListBoxContent(presContext, this, prevFrame, nextContent,
-                                 &result, isAppend, false, nullptr);
+        fc->CreateListBoxContent(this, prevFrame, nextContent,
+                                 &result, isAppend);
 
         if (result) {
           if (aCreated)
@@ -1339,8 +1338,8 @@ nsListBoxBodyFrame::ListBoxInsertFrames(nsIFrame* aPrevFrame,
 // 
 // Called by nsCSSFrameConstructor when a new listitem content is inserted.
 //
-void 
-nsListBoxBodyFrame::OnContentInserted(nsPresContext* aPresContext, nsIContent* aChildContent)
+void
+nsListBoxBodyFrame::OnContentInserted(nsIContent* aChildContent)
 {
   if (mRowCount >= 0)
     ++mRowCount;

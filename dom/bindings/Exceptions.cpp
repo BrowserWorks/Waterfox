@@ -88,7 +88,7 @@ ThrowExceptionObject(JSContext* aCx, Exception* aException)
 }
 
 bool
-Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
+Throw(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
 {
   if (aRv == NS_ERROR_UNCATCHABLE_EXCEPTION) {
     // Nuke any existing exception on aCx, to make sure we're uncatchable.
@@ -105,7 +105,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
   nsCOMPtr<nsIException> existingException = runtime->GetPendingException();
   if (existingException) {
     nsresult nr;
-    if (NS_SUCCEEDED(existingException->GetResult(&nr)) && 
+    if (NS_SUCCEEDED(existingException->GetResult(&nr)) &&
         aRv == nr) {
       // Reuse the existing exception.
 
@@ -121,7 +121,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
     }
   }
 
-  nsRefPtr<Exception> finalException = CreateException(aCx, aRv, aMessage);
+  RefPtr<Exception> finalException = CreateException(aCx, aRv, aMessage);
 
   MOZ_ASSERT(finalException);
   if (!ThrowExceptionObject(aCx, finalException)) {
@@ -134,7 +134,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
 }
 
 void
-ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv, const char* aMessage)
+ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv)
 {
   MOZ_ASSERT(aRv != NS_ERROR_UNCATCHABLE_EXCEPTION,
              "Doesn't make sense to report uncatchable exceptions!");
@@ -142,13 +142,13 @@ ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv, const char* aMessage)
   if (NS_WARN_IF(!jsapi.InitWithLegacyErrorReporting(aWindow))) {
     return;
   }
+  jsapi.TakeOwnershipOfErrorReporting();
 
-  Throw(jsapi.cx(), aRv, aMessage);
-  (void) JS_ReportPendingException(jsapi.cx());
+  Throw(jsapi.cx(), aRv);
 }
 
 already_AddRefed<Exception>
-CreateException(JSContext* aCx, nsresult aRv, const char* aMessage)
+CreateException(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
 {
   // Do we use DOM exceptions for this error code?
   switch (NS_ERROR_GET_MODULE(aRv)) {
@@ -158,16 +158,18 @@ CreateException(JSContext* aCx, nsresult aRv, const char* aMessage)
   case NS_ERROR_MODULE_DOM_INDEXEDDB:
   case NS_ERROR_MODULE_DOM_FILEHANDLE:
   case NS_ERROR_MODULE_DOM_BLUETOOTH:
-    return DOMException::Create(aRv);
+  case NS_ERROR_MODULE_DOM_ANIM:
+    if (aMessage.IsEmpty()) {
+      return DOMException::Create(aRv);
+    }
+    return DOMException::Create(aRv, aMessage);
   default:
     break;
   }
 
   // If not, use the default.
-  // aMessage can be null, so we can't use nsDependentCString on it.
-  nsRefPtr<Exception> exception =
-    new Exception(nsCString(aMessage), aRv,
-                  EmptyCString(), nullptr, nullptr);
+  RefPtr<Exception> exception =
+    new Exception(aMessage, aRv, EmptyCString(), nullptr, nullptr);
   return exception.forget();
 }
 
@@ -184,7 +186,7 @@ GetCurrentJSStack()
     cx = workers::GetCurrentThreadJSContext();
   }
 
-  if (!cx) {
+  if (!cx || !js::GetContextCompartment(cx)) {
     return nullptr;
   }
 
@@ -352,14 +354,12 @@ NS_IMPL_RELEASE_INHERITED(JSStackFrame, StackFrame)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(JSStackFrame)
 NS_INTERFACE_MAP_END_INHERITING(StackFrame)
 
-/* readonly attribute uint32_t language; */
 NS_IMETHODIMP StackFrame::GetLanguage(uint32_t* aLanguage)
 {
   *aLanguage = mLanguage;
   return NS_OK;
 }
 
-/* readonly attribute string languageName; */
 NS_IMETHODIMP StackFrame::GetLanguageName(nsACString& aLanguageName)
 {
   aLanguageName.AssignLiteral("C++");
@@ -388,7 +388,8 @@ static void
 GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
                     JS::SavedFrameResult (*aPropGetter)(JSContext*,
                                                         JS::Handle<JSObject*>,
-                                                        GetterOutParamType),
+                                                        GetterOutParamType,
+                                                        JS::SavedFrameSelfHosted),
                     bool aIsCached, bool* aCanCache, bool* aUseCachedValue,
                     ReturnType aValue)
 {
@@ -406,10 +407,9 @@ GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
   *aUseCachedValue = false;
   JS::ExposeObjectToActiveJS(stack);
 
-  aPropGetter(aCx, stack, aValue);
+  aPropGetter(aCx, stack, aValue, JS::SavedFrameSelfHosted::Exclude);
 }
 
-/* readonly attribute AString filename; */
 NS_IMETHODIMP JSStackFrame::GetFilename(nsAString& aFilename)
 {
   if (!mStack) {
@@ -454,7 +454,6 @@ NS_IMETHODIMP StackFrame::GetFilename(nsAString& aFilename)
   return NS_OK;
 }
 
-/* readonly attribute AString name; */
 NS_IMETHODIMP JSStackFrame::GetName(nsAString& aFunction)
 {
   if (!mStack) {
@@ -531,7 +530,6 @@ JSStackFrame::GetLineno()
   return line;
 }
 
-/* readonly attribute int32_t lineNumber; */
 NS_IMETHODIMP StackFrame::GetLineNumber(int32_t* aLineNumber)
 {
   *aLineNumber = GetLineno();
@@ -564,21 +562,18 @@ JSStackFrame::GetColNo()
   return col;
 }
 
-/* readonly attribute int32_t columnNumber; */
 NS_IMETHODIMP StackFrame::GetColumnNumber(int32_t* aColumnNumber)
 {
   *aColumnNumber = GetColNo();
   return NS_OK;
 }
 
-/* readonly attribute AUTF8String sourceLine; */
 NS_IMETHODIMP StackFrame::GetSourceLine(nsACString& aSourceLine)
 {
   aSourceLine.Truncate();
   return NS_OK;
 }
 
-/* readonly attribute AString asyncCause; */
 NS_IMETHODIMP JSStackFrame::GetAsyncCause(nsAString& aAsyncCause)
 {
   if (!mStack) {
@@ -629,7 +624,6 @@ NS_IMETHODIMP StackFrame::GetAsyncCause(nsAString& aAsyncCause)
   return NS_OK;
 }
 
-/* readonly attribute nsIStackFrame asyncCaller; */
 NS_IMETHODIMP JSStackFrame::GetAsyncCaller(nsIStackFrame** aAsyncCaller)
 {
   if (!mStack) {
@@ -666,7 +660,6 @@ NS_IMETHODIMP StackFrame::GetAsyncCaller(nsIStackFrame** aAsyncCaller)
   return NS_OK;
 }
 
-/* readonly attribute nsIStackFrame caller; */
 NS_IMETHODIMP JSStackFrame::GetCaller(nsIStackFrame** aCaller)
 {
   if (!mStack) {
@@ -684,15 +677,8 @@ NS_IMETHODIMP JSStackFrame::GetCaller(nsIStackFrame** aCaller)
     return StackFrame::GetCaller(aCaller);
   }
 
-  nsCOMPtr<nsIStackFrame> caller;
-  if (callerObj) {
-      caller = new JSStackFrame(callerObj);
-  } else {
-    // Do we really need this dummy frame?  If so, we should document why... I
-    // guess for symmetry with the "nothing on the stack" case, which returns
-    // a single dummy frame?
-    caller = new StackFrame();
-  }
+  nsCOMPtr<nsIStackFrame> caller =
+    callerObj ? new JSStackFrame(callerObj) : nullptr;
   caller.forget(aCaller);
 
   if (canCache) {
@@ -764,7 +750,6 @@ NS_IMETHODIMP StackFrame::GetFormattedStack(nsAString& aStack)
   return NS_OK;
 }
 
-/* readonly attribute jsval nativeSavedFrame; */
 NS_IMETHODIMP JSStackFrame::GetNativeSavedFrame(JS::MutableHandle<JS::Value> aSavedFrame)
 {
   aSavedFrame.setObjectOrNull(mStack);
@@ -777,7 +762,6 @@ NS_IMETHODIMP StackFrame::GetNativeSavedFrame(JS::MutableHandle<JS::Value> aSave
   return NS_OK;
 }
 
-/* AUTF8String toString (); */
 NS_IMETHODIMP StackFrame::ToString(nsACString& _retval)
 {
   _retval.Truncate();

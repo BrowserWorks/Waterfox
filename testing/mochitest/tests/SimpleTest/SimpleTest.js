@@ -86,8 +86,15 @@ if (typeof(repr) == 'undefined') {
             }
         } catch (e) {
         }
+        var ostring;
         try {
-            var ostring = (o + "");
+            if (o === 0) {
+                ostring = (1 / o > 0) ? "+0" : "-0";
+            } else if (typeof o === "string") {
+                ostring = JSON.stringify(o);
+            } else {
+                ostring = (o + "");
+            }
         } catch (e) {
             return "[" + typeof(o) + "]";
         }
@@ -207,39 +214,12 @@ if (typeof(computedStyle) == 'undefined') {
     };
 }
 
-/**
- * Check for OOP test plugin
-**/
-SimpleTest.testPluginIsOOP = function () {
-    var testPluginIsOOP = false;
-    if (navigator.platform.indexOf("Mac") == 0) {
-        if (SpecialPowers.XPCOMABI.match(/x86-/)) {
-            try {
-                testPluginIsOOP = SpecialPowers.getBoolPref("dom.ipc.plugins.enabled.i386.test.plugin");
-            } catch (e) {
-                testPluginIsOOP = SpecialPowers.getBoolPref("dom.ipc.plugins.enabled.i386");
-            }
-        }
-        else if (SpecialPowers.XPCOMABI.match(/x86_64-/)) {
-            try {
-                testPluginIsOOP = SpecialPowers.getBoolPref("dom.ipc.plugins.enabled.x86_64.test.plugin");
-            } catch (e) {
-                testPluginIsOOP = SpecialPowers.getBoolPref("dom.ipc.plugins.enabled.x86_64");
-            }
-        }
-    }
-    else {
-        testPluginIsOOP = SpecialPowers.getBoolPref("dom.ipc.plugins.enabled");
-    }
-
-    return testPluginIsOOP;
-};
-
 SimpleTest._tests = [];
 SimpleTest._stopOnLoad = true;
 SimpleTest._cleanupFunctions = [];
 SimpleTest.expected = 'pass';
 SimpleTest.num_failed = 0;
+SimpleTest._inChaosMode = false;
 
 SimpleTest.setExpected = function () {
   if (parent.TestRunner) {
@@ -265,19 +245,27 @@ SimpleTest.ok = function (condition, name, diag) {
       var successInfo = {status:"PASS", expected:"PASS", message:"TEST-PASS"};
       var failureInfo = {status:"FAIL", expected:"PASS", message:"TEST-UNEXPECTED-FAIL"};
     }
-    SimpleTest._logResult(test, successInfo, failureInfo);
+
+    var stack = null;
+    if (!condition) {
+      stack = (new Error).stack.replace(/^(.*@)http:\/\/mochi.test:8888\/tests\//gm, '    $1').split('\n');
+      stack.splice(0, 1);
+      stack = stack.join('\n');
+    }
+
+    SimpleTest._logResult(test, successInfo, failureInfo, stack);
     SimpleTest._tests.push(test);
 };
 
 /**
- * Roughly equivalent to ok(a===b, name)
+ * Roughly equivalent to ok(Object.is(a, b), name)
 **/
 SimpleTest.is = function (a, b, name) {
-    var pass = (a === b);
+    // Be lazy and use Object.is til we want to test a browser without it.
+    var pass = Object.is(a, b);
     var diag = pass ? "" : "got " + repr(a) + ", expected " + repr(b)
     SimpleTest.ok(pass, name, diag);
 };
-SimpleTest.ise = SimpleTest.is;
 
 SimpleTest.isfuzzy = function (a, b, epsilon, name) {
   var pass = (a >= b - epsilon) && (a <= b + epsilon);
@@ -286,7 +274,7 @@ SimpleTest.isfuzzy = function (a, b, epsilon, name) {
 };
 
 SimpleTest.isnot = function (a, b, name) {
-    var pass = (a !== b);
+    var pass = !Object.is(a, b);
     var diag = pass ? "" : "didn't expect " + repr(a) + ", but got it";
     SimpleTest.ok(pass, name, diag);
 };
@@ -356,7 +344,7 @@ SimpleTest.requestCompleteLog = function() {
     });
 };
 
-SimpleTest._logResult = function (test, passInfo, failInfo) {
+SimpleTest._logResult = function (test, passInfo, failInfo, stack) {
     var url = SimpleTest._getCurrentTestURL();
     var result = test.result ? passInfo : failInfo;
     var diagnostic = test.diag || null;
@@ -380,7 +368,8 @@ SimpleTest._logResult = function (test, passInfo, failInfo) {
                                                  subtest,
                                                  result.status,
                                                  result.expected,
-                                                 diagnostic);
+                                                 diagnostic,
+                                                 stack);
     } else if (typeof dump === "function") {
         var diagMessage = test.name + (test.diag ? " - " + test.diag : "");
         var debugMsg = [result.message, url, diagMessage].join(' | ');
@@ -404,14 +393,14 @@ SimpleTest.info = function(name, message) {
 **/
 
 SimpleTest.todo_is = function (a, b, name) {
-    var pass = (a === b);
+    var pass = Object.is(a, b);
     var diag = pass ? repr(a) + " should equal " + repr(b)
                     : "got " + repr(a) + ", expected " + repr(b);
     SimpleTest.todo(pass, name, diag);
 };
 
 SimpleTest.todo_isnot = function (a, b, name) {
-    var pass = (a !== b);
+    var pass = !Object.is(a, b);
     var diag = pass ? repr(a) + " should not equal " + repr(b)
                     : "didn't expect " + repr(a) + ", but got it";
     SimpleTest.todo(pass, name, diag);
@@ -897,19 +886,45 @@ SimpleTest.waitForClipboard_polls = 0;
  *        A function called if the expected value isn't found on the clipboard
  *        within 5s. It can also be called if the known value can't be found.
  * @param aFlavor [optional] The flavor to look for.  Defaults to "text/unicode".
+ * @param aTimeout [optional]
+ *        The timeout (in milliseconds) to wait for a clipboard change.
+ *        Defaults to 5000.
+ * @param aExpectFailure [optional]
+ *        If true, fail if the clipboard contents are modified within the timeout
+ *        interval defined by aTimeout.  When aExpectFailure is true, the argument
+ *        aExpectedStringOrValidatorFn must be null, as it won't be used.
+ *        Defaults to false.
  */
 SimpleTest.__waitForClipboardMonotonicCounter = 0;
 SimpleTest.__defineGetter__("_waitForClipboardMonotonicCounter", function () {
   return SimpleTest.__waitForClipboardMonotonicCounter++;
 });
 SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
-                                       aSuccessFn, aFailureFn, aFlavor) {
+                                       aSuccessFn, aFailureFn, aFlavor, aTimeout, aExpectFailure) {
     var requestedFlavor = aFlavor || "text/unicode";
 
-    // Build a default validator function for common string input.
-    var inputValidatorFn = typeof(aExpectedStringOrValidatorFn) == "string"
-        ? function(aData) { return aData == aExpectedStringOrValidatorFn; }
-        : aExpectedStringOrValidatorFn;
+    // The known value we put on the clipboard before running aSetupFn
+    var initialVal = SimpleTest._waitForClipboardMonotonicCounter +
+                     "-waitForClipboard-known-value";
+
+    var inputValidatorFn;
+    if (aExpectFailure) {
+        // If we expect failure, the aExpectedStringOrValidatorFn should be null
+        if (aExpectedStringOrValidatorFn !== null) {
+            SimpleTest.ok(false, "When expecting failure, aExpectedStringOrValidatorFn must be null");
+        }
+
+        inputValidatorFn = function(aData) {
+            return aData != initialVal;
+        };
+    } else {
+        // Build a default validator function for common string input.
+        inputValidatorFn = typeof(aExpectedStringOrValidatorFn) == "string"
+            ? function(aData) { return aData == aExpectedStringOrValidatorFn; }
+            : aExpectedStringOrValidatorFn;
+    }
+
+    var maxPolls = aTimeout ? aTimeout / 100 : 50;
 
     // reset for the next use
     function reset() {
@@ -917,9 +932,9 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
     }
 
     function wait(validatorFn, successFn, failureFn, flavor) {
-        if (++SimpleTest.waitForClipboard_polls > 50) {
+        if (++SimpleTest.waitForClipboard_polls > maxPolls) {
             // Log the failure.
-            SimpleTest.ok(false, "Timed out while polling clipboard for pasted data.");
+            SimpleTest.ok(aExpectFailure, "Timed out while polling clipboard for pasted data");
             reset();
             failureFn();
             return;
@@ -932,7 +947,7 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
             if (preExpectedVal)
                 preExpectedVal = null;
             else
-                SimpleTest.ok(true, "Clipboard has the correct value");
+                SimpleTest.ok(!aExpectFailure, "Clipboard has the given value");
             reset();
             successFn();
         } else {
@@ -941,8 +956,7 @@ SimpleTest.waitForClipboard = function(aExpectedStringOrValidatorFn, aSetupFn,
     }
 
     // First we wait for a known value different from the expected one.
-    var preExpectedVal = SimpleTest._waitForClipboardMonotonicCounter +
-                         "-waitForClipboard-known-value";
+    var preExpectedVal = initialVal;
     SpecialPowers.clipboardCopyString(preExpectedVal);
     wait(function(aData) { return aData  == preExpectedVal; },
          function() {
@@ -966,6 +980,15 @@ SimpleTest.executeSoon = function(aFunc) {
 
 SimpleTest.registerCleanupFunction = function(aFunc) {
     SimpleTest._cleanupFunctions.push(aFunc);
+};
+
+SimpleTest.testInChaosMode = function() {
+    if (SimpleTest._inChaosMode) {
+      // It's already enabled for this test, don't enter twice
+      return;
+    }
+    SpecialPowers.DOMWindowUtils.enterChaosMode();
+    SimpleTest._inChaosMode = true;
 };
 
 /**
@@ -996,7 +1019,14 @@ SimpleTest.finish = function() {
 
     SimpleTest._alreadyFinished = true;
 
+    if (SimpleTest._inChaosMode) {
+        SpecialPowers.DOMWindowUtils.leaveChaosMode();
+        SimpleTest._inChaosMode = false;
+    }
+
     var afterCleanup = function() {
+        SpecialPowers.removeFiles();
+
         if (SpecialPowers.DOMWindowUtils.isTestControllingRefreshes) {
             SimpleTest.ok(false, "test left refresh driver under test control");
             SpecialPowers.DOMWindowUtils.restoreNormalRefresh();
@@ -1097,7 +1127,7 @@ SimpleTest.monitorConsole = function (continuation, msgs, forbidUnexpectedMsgs) 
   }
 
   function msgMatches(msg, pat) {
-    for (k in pat) {
+    for (var k in pat) {
       if (!(k in msg)) {
         return false;
       }
@@ -1466,7 +1496,6 @@ var ok = SimpleTest.ok;
 var is = SimpleTest.is;
 var isfuzzy = SimpleTest.isfuzzy;
 var isnot = SimpleTest.isnot;
-var ise = SimpleTest.ise;
 var todo = SimpleTest.todo;
 var todo_is = SimpleTest.todo_is;
 var todo_isnot = SimpleTest.todo_isnot;

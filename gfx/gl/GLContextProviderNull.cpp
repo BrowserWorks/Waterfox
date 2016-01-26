@@ -9,7 +9,7 @@ namespace mozilla {
 namespace gl {
 
 already_AddRefed<GLContext>
-GLContextProviderNull::CreateForWindow(nsIWidget*)
+GLContextProviderNull::CreateForWindow(nsIWidget*, bool aForceAccelerated)
 {
     return nullptr;
 }
@@ -21,15 +21,15 @@ GLContextProviderNull::CreateWrappingExisting(void*, void*)
 }
 
 already_AddRefed<GLContext>
-GLContextProviderNull::CreateOffscreen(const gfxIntSize&,
+GLContextProviderNull::CreateOffscreen(const gfx::IntSize&,
                                        const SurfaceCaps&,
-                                       bool)
+                                       CreateContextFlags)
 {
     return nullptr;
 }
 
 already_AddRefed<GLContext>
-GLContextProviderNull::CreateHeadless(bool)
+GLContextProviderNull::CreateHeadless(CreateContextFlags)
 {
     return nullptr;
 }

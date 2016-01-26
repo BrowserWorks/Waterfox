@@ -3,54 +3,57 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
-let userAgentID = '5ab1d1df-7a3d-4024-a469-b9e1bb399fad';
+var userAgentID = '5ab1d1df-7a3d-4024-a469-b9e1bb399fad';
 
 function run_test() {
   do_get_profile();
   setPrefs({userAgentID});
-  disableServiceWorkerEvents(
-    'https://example.org/1',
-    'https://example.org/2',
-    'https://example.org/3'
-  );
   run_next_test();
 }
 
 add_task(function* test_notification_ack() {
-  let db = new PushDB();
-  let promiseDB = promisifyDatabase(db);
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
   let records = [{
     channelID: '21668e05-6da8-42c9-b8ab-9cc3f4d5630c',
     pushEndpoint: 'https://example.com/update/1',
     scope: 'https://example.org/1',
-    version: 1
+    originAttributes: '',
+    version: 1,
+    quota: Infinity,
+    systemRecord: true,
   }, {
     channelID: '9a5ff87f-47c9-4215-b2b8-0bdd38b4b305',
     pushEndpoint: 'https://example.com/update/2',
     scope: 'https://example.org/2',
-    version: 2
+    originAttributes: '',
+    version: 2,
+    quota: Infinity,
+    systemRecord: true,
   }, {
     channelID: '5477bfda-22db-45d4-9614-fee369630260',
     pushEndpoint: 'https://example.com/update/3',
     scope: 'https://example.org/3',
-    version: 3
+    originAttributes: '',
+    version: 3,
+    quota: Infinity,
+    systemRecord: true,
   }];
   for (let record of records) {
-    yield promiseDB.put(record);
+    yield db.put(record);
   }
 
-  let notifyPromise = Promise.all([
-    promiseObserverNotification('push-notification'),
-    promiseObserverNotification('push-notification'),
-    promiseObserverNotification('push-notification')
-  ]);
+  let notifyCount = 0;
+  let notifyPromise = promiseObserverNotification('push-message', () =>
+    ++notifyCount == 3);
 
   let acks = 0;
-  let ackDefer = Promise.defer();
+  let ackDone;
+  let ackPromise = new Promise(resolve => ackDone = resolve);
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
@@ -58,11 +61,6 @@ add_task(function* test_notification_ack() {
         onHello(request) {
           equal(request.uaid, userAgentID,
             'Should send matching device IDs in handshake');
-          deepEqual(request.channelIDs.sort(), [
-            '21668e05-6da8-42c9-b8ab-9cc3f4d5630c',
-            '5477bfda-22db-45d4-9614-fee369630260',
-            '9a5ff87f-47c9-4215-b2b8-0bdd38b4b305'
-          ], 'Should send matching channel IDs in handshake');
           this.serverSendMsg(JSON.stringify({
             messageType: 'hello',
             uaid: userAgentID,
@@ -109,7 +107,7 @@ add_task(function* test_notification_ack() {
               channelID: '5477bfda-22db-45d4-9614-fee369630260',
               version: 6
             }], updates, 'Wrong updates for acknowledgement 3');
-            ackDefer.resolve();
+            ackDone();
             break;
 
           default:
@@ -122,6 +120,6 @@ add_task(function* test_notification_ack() {
 
   yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
     'Timed out waiting for notifications');
-  yield waitForPromise(ackDefer.promise, DEFAULT_TIMEOUT,
+  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
     'Timed out waiting for multiple acknowledgements');
 });

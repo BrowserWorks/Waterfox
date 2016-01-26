@@ -62,7 +62,10 @@ public :
   MediaEncoder(ContainerWriter* aWriter,
                AudioTrackEncoder* aAudioEncoder,
                VideoTrackEncoder* aVideoEncoder,
-               const nsAString& aMIMEType)
+               const nsAString& aMIMEType,
+               uint32_t aAudioBitrate,
+               uint32_t aVideoBitrate,
+               uint32_t aBitrate)
     : mWriter(aWriter)
     , mAudioEncoder(aAudioEncoder)
     , mVideoEncoder(aVideoEncoder)
@@ -79,16 +82,18 @@ public :
    * Notified by the control loop of MediaStreamGraph; aQueueMedia is the raw
    * track data in form of MediaSegment.
    */
-  virtual void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
-                                        StreamTime aTrackOffset,
-                                        uint32_t aTrackEvents,
-                                        const MediaSegment& aQueuedMedia) override;
+  void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
+                                StreamTime aTrackOffset,
+                                uint32_t aTrackEvents,
+                                const MediaSegment& aQueuedMedia,
+                                MediaStream* aInputStream,
+                                TrackID aInputTrackID) override;
 
   /**
    * Notified the stream is being removed.
    */
-  virtual void NotifyEvent(MediaStreamGraph* aGraph,
-                           MediaStreamListener::MediaStreamGraphEvent event) override;
+  void NotifyEvent(MediaStreamGraph* aGraph,
+                   MediaStreamListener::MediaStreamGraphEvent event) override;
 
   /**
    * Creates an encoder with a given MIME type. Returns null if we are unable
@@ -96,6 +101,8 @@ public :
    * Ogg+Opus if it is empty.
    */
   static already_AddRefed<MediaEncoder> CreateEncoder(const nsAString& aMIMEType,
+                                                      uint32_t aAudioBitrate, uint32_t aVideoBitrate,
+                                                      uint32_t aBitrate,
                                                       uint8_t aTrackTypes = ContainerWriter::CREATE_AUDIO_TRACK);
   /**
    * Encodes the raw track data and returns the final container data. Assuming
@@ -171,5 +178,6 @@ private:
   }
 };
 
-}
+} // namespace mozilla
+
 #endif

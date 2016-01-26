@@ -1,8 +1,9 @@
 #include "nsISupports.idl"
 
 interface nsIDOMWindow;
+interface nsIPrincipal;
 
-[scriptable, uuid(530db841-1b2c-485a-beeb-f2b1acb9714e)]
+[scriptable, uuid(9cf3b48e-361d-486a-8917-55cf8d00bb41)]
 interface nsIWorkerDebuggerListener : nsISupports
 {
   void onClose();
@@ -10,14 +11,10 @@ interface nsIWorkerDebuggerListener : nsISupports
   void onError(in DOMString filename, in unsigned long lineno,
                in DOMString message);
 
-  void onFreeze();
-
   void onMessage(in DOMString message);
-
-  void onThaw();
 };
 
-[scriptable, builtinclass, uuid(d7c73e54-3c41-4393-9d13-fa2ed4Ba6764)]
+[scriptable, builtinclass, uuid(2fe71e0d-3a39-40a3-b809-8418b72328b4)]
 interface nsIWorkerDebugger : nsISupports
 {
   const unsigned long TYPE_DEDICATED = 0;
@@ -28,7 +25,7 @@ interface nsIWorkerDebugger : nsISupports
 
   readonly attribute bool isChrome;
 
-  readonly attribute bool isFrozen;
+  readonly attribute bool isInitialized;
 
   readonly attribute nsIWorkerDebugger parent;
 
@@ -37,6 +34,10 @@ interface nsIWorkerDebugger : nsISupports
   readonly attribute DOMString url;
 
   readonly attribute nsIDOMWindow window;
+
+  readonly attribute nsIPrincipal principal;
+
+  readonly attribute unsigned long serviceWorkerID;
 
   [implicit_jscontext]
   void initialize(in DOMString url);

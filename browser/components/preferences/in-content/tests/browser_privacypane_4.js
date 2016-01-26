@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+requestLongerTimeout(2);
+
 function test() {
   let loader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
                getService(Ci.mozIJSSubScriptLoader);
@@ -27,8 +29,5 @@ function test() {
     test_custom_retention("alwaysClear", "remember"),
     test_custom_retention("alwaysClear", "custom"),
     test_historymode_retention("remember", "remember"),
-
-    // reset all preferences to their default values once we're done
-    reset_preferences
   ]));
 }

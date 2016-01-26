@@ -5,7 +5,7 @@
 "use strict";
 
 /**
- * JS module implementation of nsIDOMJSWindow.setTimeout and clearTimeout.
+ * JS module implementation of setTimeout and clearTimeout.
  */
 
 this.EXPORTED_SYMBOLS = ["setTimeout", "clearTimeout", "setInterval", "clearInterval"];
@@ -17,9 +17,9 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 // This gives us >=2^30 unique timer IDs, enough for 1 per ms for 12.4 days.
-let gNextId = 1; // setTimeout and setInterval must return a positive integer
+var gNextId = 1; // setTimeout and setInterval must return a positive integer
 
-let gTimerTable = new Map(); // int -> nsITimer
+var gTimerTable = new Map(); // int -> nsITimer
 
 this.setTimeout = function setTimeout(aCallback, aMilliseconds) {
   let id = gNextId++;

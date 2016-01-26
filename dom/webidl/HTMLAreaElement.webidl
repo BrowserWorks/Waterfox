@@ -28,17 +28,12 @@ interface HTMLAreaElement : HTMLElement {
            attribute DOMString ping;
            [SetterThrows]
            attribute DOMString rel;
+           [SetterThrows, Pref="network.http.enablePerElementReferrer"]
+           attribute DOMString referrerPolicy;
   readonly attribute DOMTokenList relList;
-
-  // not implemented.
-  //
-  //       [SetterThrows]
-  //       attribute DOMString hreflang;
-  //       [SetterThrows]
-  //       attribute DOMString type;
 };
-HTMLAreaElement implements URLUtils;
-HTMLAreaElement implements URLUtilsSearchParams;
+
+HTMLAreaElement implements HTMLHyperlinkElementUtils;
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLAreaElement {

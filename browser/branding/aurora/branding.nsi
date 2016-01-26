@@ -20,14 +20,14 @@
 
 # The installer's certificate name and issuer expected by the stub installer
 !define CertNameDownload   "Mozilla Corporation"
-!define CertIssuerDownload "DigiCert Assured ID Code Signing CA-1"
+!define CertIssuerDownload "DigiCert SHA2 Assured ID Code Signing CA"
 
 # Dialog units are used so the UI displays correctly with the system's DPI
 # settings.
 # The dialog units for the bitmap's dimensions should match exactly with the
 # bitmap's width and height in pixels.
-!define APPNAME_BMP_WIDTH_DU 123u
-!define APPNAME_BMP_HEIGHT_DU 56u
+!define APPNAME_BMP_WIDTH_DU 108u
+!define APPNAME_BMP_HEIGHT_DU 48u
 !define INTRO_BLURB_WIDTH_DU "232u"
 !define INTRO_BLURB_EDGE_DU "196u"
 !define INTRO_BLURB_LTR_TOP_DU "16u"

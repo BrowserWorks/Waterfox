@@ -13,11 +13,9 @@ elif CONFIG['TARGET_CPU'].startswith('arm'):
 else:
     cpu = CONFIG['TARGET_CPU']
 
-GENERATED_SOURCES += [
-    "%s.c" % cpu,
+SOURCES += [
+    "!%s.c" % cpu,
 ]
-
-DEFINES['ELFHACK_BUILD'] = True
 
 NO_PGO = True
 

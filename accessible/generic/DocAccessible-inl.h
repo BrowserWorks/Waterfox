@@ -45,7 +45,7 @@ DocAccessible::FireDelayedEvent(AccEvent* aEvent)
 inline void
 DocAccessible::FireDelayedEvent(uint32_t aEventType, Accessible* aTarget)
 {
-  nsRefPtr<AccEvent> event = new AccEvent(aEventType, aTarget);
+  RefPtr<AccEvent> event = new AccEvent(aEventType, aTarget);
   FireDelayedEvent(event);
 }
 
@@ -113,7 +113,7 @@ DocAccessible::NotifyOfLoad(uint32_t aLoadEventType)
   // If the document is loaded completely then network activity was presumingly
   // caused by file loading. Fire busy state change event.
   if (HasLoadState(eCompletelyLoaded) && IsLoadEventTarget()) {
-    nsRefPtr<AccEvent> stateEvent =
+    RefPtr<AccEvent> stateEvent =
       new AccStateChangeEvent(this, states::BUSY, false);
     FireDelayedEvent(stateEvent);
   }
@@ -124,7 +124,7 @@ DocAccessible::MaybeNotifyOfValueChange(Accessible* aAccessible)
 {
   a11y::role role = aAccessible->Role();
   if (role == roles::ENTRY || role == roles::COMBOBOX)
-    FireDelayedEvent(nsIAccessibleEvent::EVENT_VALUE_CHANGE, aAccessible);
+    FireDelayedEvent(nsIAccessibleEvent::EVENT_TEXT_VALUE_CHANGE, aAccessible);
 }
 
 inline Accessible*

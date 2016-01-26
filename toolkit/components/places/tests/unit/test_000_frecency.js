@@ -52,7 +52,7 @@ var matchCount = 0;
 var now = Date.now();
 var prefPrefix = "places.frecency.";
 
-function task_initializeBucket(bucket) {
+function* task_initializeBucket(bucket) {
   let [cutoffName, weightName] = bucket;
   // get pref values
   var weight = 0, cutoff = 0, bonus = 0;
@@ -202,14 +202,14 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_frecency()
+add_task(function* test_frecency()
 {
-  for (let [, bucket] in Iterator(bucketPrefs)) {
+  for (let bucket of bucketPrefs) {
     yield task_initializeBucket(bucket);
   }
 
   // sort results by frecency
-  results.sort(function(a,b) b[1] - a[1]);
+  results.sort((a,b) => b[1] - a[1]);
   // Make sure there's enough results returned
   prefs.setIntPref("browser.urlbar.maxRichResults", results.length);
 
@@ -258,7 +258,7 @@ add_task(function test_frecency()
         // frecency just in the wrong "order" (order of same frecency is
         // undefined), so check if frecency matches. This is okay because we
         // can still ensure the correct number of expected frecencies.
-        let getFrecency = function(aURL) aURL.match(/frecency:(-?\d+)$/)[1];
+        let getFrecency = aURL => aURL.match(/frecency:(-?\d+)$/)[1];
         print("### checking for same frecency between '" + searchURL +
               "' and '" + expectURL + "'");
         do_check_eq(getFrecency(searchURL), getFrecency(expectURL));

@@ -17,12 +17,14 @@
 #include "vpx_ports/x86.h"
 #endif
 #include "vp8/common/onyxc_int.h"
+#include "vp8/common/systemdependent.h"
 
 #if CONFIG_MULTITHREAD
 #if HAVE_UNISTD_H && !defined(__OS2__)
 #include <unistd.h>
 #elif defined(_WIN32)
 #include <windows.h>
+#include <intrin.h>
 typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
 #elif defined(__OS2__)
 #define INCL_DOS

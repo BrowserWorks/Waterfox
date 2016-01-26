@@ -1,16 +1,14 @@
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-
-Components.utils.import("resource:///modules/UITour.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
 function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   taskify(function*() {
     ok(!gBrowser.selectedBrowser.currentURI.spec.startsWith("about:reader"), "Should not be in reader mode at start of test.");
     gContentAPI.toggleReaderMode();

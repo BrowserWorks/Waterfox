@@ -4,9 +4,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-interface MozMmsMessage;
-interface MozSmsMessage;
-
 dictionary SmsSegmentInfo {
   /**
    * The number of total segments for the input string. The value is always
@@ -72,7 +69,7 @@ dictionary MobileMessageFilter
   boolean? read = null;
 
   // Filtering by a message's threadId attribute.
-  [EnforceRange] unsigned long long? threadId = 0;
+  [EnforceRange] unsigned long long? threadId = null;
 };
 
 /**
@@ -115,7 +112,7 @@ dictionary SmscAddress {
 };
 
 [Pref="dom.sms.enabled",
- CheckPermissions="sms",
+ CheckAnyPermissions="sms",
  AvailableIn="CertifiedApps"]
 interface MozMobileMessageManager : EventTarget
 {
@@ -163,18 +160,18 @@ interface MozMobileMessageManager : EventTarget
   [Throws]
   DOMRequest getMessage(long id);
 
-  // The parameter can be either a message id, or a Moz{Mms,Sms}Message, or an
-  // array of Moz{Mms,Sms}Message objects.
+  // The parameter can be either a message id, or a {Mms,Sms}Message, or an
+  // array of {Mms,Sms}Message objects.
   [Throws]
   DOMRequest delete(long id);
   [Throws]
-  DOMRequest delete(MozSmsMessage message);
+  DOMRequest delete(SmsMessage message);
   [Throws]
-  DOMRequest delete(MozMmsMessage message);
+  DOMRequest delete(MmsMessage message);
   [Throws]
-  DOMRequest delete(sequence<(long or MozSmsMessage or MozMmsMessage)> params);
+  DOMRequest delete(sequence<(long or SmsMessage or MmsMessage)> params);
 
-  // Iterates through Moz{Mms,Sms}Message.
+  // Iterates through {Mms,Sms}Message.
   [Throws]
   DOMCursor getMessages(optional MobileMessageFilter filter,
                         optional boolean reverse = false);
@@ -184,17 +181,17 @@ interface MozMobileMessageManager : EventTarget
                              boolean read,
                              optional boolean sendReadReport = false);
 
-  // Iterates through nsIDOMMozMobileMessageThread.
+  // Iterates through MobileMessageThread.
   [Throws]
   DOMCursor getThreads();
 
   [Throws]
   DOMRequest retrieveMMS(long id);
   [Throws]
-  DOMRequest retrieveMMS(MozMmsMessage message);
+  DOMRequest retrieveMMS(MmsMessage message);
 
   [Throws]
-  DOMRequest getSmscAddress(optional unsigned long serviceId);
+  Promise<SmscAddress> getSmscAddress(optional unsigned long serviceId);
 
   /**
    * Set the SMSC address.

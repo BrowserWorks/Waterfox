@@ -10,6 +10,16 @@
 
 namespace mozilla {
 
+WebGLVertexArrayGL::WebGLVertexArrayGL(WebGLContext* webgl)
+    : WebGLVertexArray(webgl)
+    , mIsVAO(false)
+{ }
+
+WebGLVertexArrayGL::~WebGLVertexArrayGL()
+{
+    DeleteOnce();
+}
+
 void
 WebGLVertexArrayGL::DeleteImpl()
 {
@@ -17,20 +27,36 @@ WebGLVertexArrayGL::DeleteImpl()
 
     mContext->MakeContextCurrent();
     mContext->gl->fDeleteVertexArrays(1, &mGLName);
+
+    mIsVAO = false;
 }
 
 void
 WebGLVertexArrayGL::BindVertexArrayImpl()
 {
     mContext->mBoundVertexArray = this;
-
     mContext->gl->fBindVertexArray(mGLName);
+
+    mIsVAO = true;
 }
 
 void
 WebGLVertexArrayGL::GenVertexArray()
 {
     mContext->gl->fGenVertexArrays(1, &mGLName);
+}
+
+bool
+WebGLVertexArrayGL::IsVertexArrayImpl()
+{
+    gl::GLContext* gl = mContext->gl;
+    if (gl->WorkAroundDriverBugs())
+    {
+        return mIsVAO;
+    }
+
+    mContext->MakeContextCurrent();
+    return mContext->gl->fIsVertexArray(mGLName) != 0;
 }
 
 } // namespace mozilla

@@ -7,12 +7,12 @@ const prefs = require("sdk/preferences/service");
 
 const QUOTA_PREF = "extensions.addon-sdk.simple-storage.quota";
 
-let {Cc,Ci} = require("chrome");
+var {Cc,Ci} = require("chrome");
 
 const { Loader } = require("sdk/test/loader");
 const { id } = require("sdk/self");
 
-let storeFile = Cc["@mozilla.org/file/directory_service;1"].
+var storeFile = Cc["@mozilla.org/file/directory_service;1"].
                 getService(Ci.nsIProperties).
                 get("ProfD", Ci.nsIFile);
 storeFile.append("jetpack");
@@ -20,9 +20,11 @@ storeFile.append(id);
 storeFile.append("simple-storage");
 file.mkpath(storeFile.path);
 storeFile.append("store.json");
-let storeFilename = storeFile.path;
+var storeFilename = storeFile.path;
 
-function manager(loader) loader.sandbox("sdk/simple-storage").manager;
+function manager(loader) {
+  return loader.sandbox("sdk/simple-storage").manager;
+}
 
 exports.testSetGet = function (assert, done) {
   // Load the module once, set a value.
@@ -284,7 +286,7 @@ exports.testSetNoSetRead = function (assert, done) {
 
 
 function setGetRoot(assert, done, val, compare) {
-  compare = compare || function (a, b) a === b;
+  compare = compare || ((a, b) => a === b);
 
   // Load the module once, set a value.
   let loader = Loader(module);
@@ -312,7 +314,7 @@ function setGetRootError(assert, done, val, msg) {
              "array, boolean, null, number, object, string");
   let loader = Loader(module);
   let ss = loader.require("sdk/simple-storage");
-  assert.throws(function () ss.storage = val, pred, msg);
+  assert.throws(() => ss.storage = val, pred, msg);
   done();
   loader.unload();
 }

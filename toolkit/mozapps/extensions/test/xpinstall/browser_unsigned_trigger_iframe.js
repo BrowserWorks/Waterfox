@@ -12,15 +12,15 @@ function test() {
   var pm = Services.perms;
   pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
 
-  var triggers = encodeURIComponent(JSON.stringify({
+  var inner_url = encodeURIComponent(TESTROOT + "installtrigger.html?" + encodeURIComponent(JSON.stringify({
     "Unsigned XPI": {
       URL: TESTROOT + "unsigned.xpi",
       IconURL: TESTROOT + "icon.png",
       toString: function() { return this.URL; }
     }
-  }));
+  })));
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.loadURI(TESTROOT + "installtrigger_frame.html?" + triggers);
+  gBrowser.loadURI(TESTROOT + "installtrigger_frame.html?" + inner_url);
 }
 
 function confirm_install(window) {
@@ -40,7 +40,7 @@ function install_ended(install, addon) {
 function finish_test(count) {
   is(count, 1, "1 Add-on should have been successfully installed");
 
-  Services.perms.remove("example.com", "install");
+  Services.perms.remove(makeURI("http://example.com"), "install");
 
   var doc = gBrowser.contentWindow.frames[0].document; // Document of iframe
   is(doc.getElementById("return").textContent, "true", "installTrigger in iframe should have claimed success");

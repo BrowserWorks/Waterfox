@@ -7,9 +7,9 @@
 // input.mozilla.org expects "Firefox for Android" as the product.
 const FEEDBACK_PRODUCT_STRING = "Firefox for Android";
 
-let Cc = Components.classes;
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 const HEARTY_ICON_MDPI = "chrome://browser/skin/images/icon_heart_mdpi.png";
 const HEARTY_ICON_HDPI = "chrome://browser/skin/images/icon_heart_hdpi.png";
 const HEARTY_ICON_XHDPI = "chrome://browser/skin/images/icon_heart_xhdpi.png";
@@ -22,7 +22,7 @@ const FLOATY_ICON_XXHDPI = "chrome://browser/skin/images/icon_floaty_xxhdpi.png"
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Messaging.jsm");
-Cu.import("resource://gre/modules/UpdateChannel.jsm");
+Cu.import("resource://gre/modules/UpdateUtils.jsm");
 document.addEventListener("DOMContentLoaded", init, false);
 
 function dump(a) {
@@ -138,7 +138,7 @@ function sendFeedback(aEvent) {
   data["platform"] = Services.appinfo.OS;
   data["version"] = Services.appinfo.version;
   data["locale"] = Services.locale.getSystemLocale().getCategory("NSILOCALE_CTYPE");
-  data["channel"] = UpdateChannel.get();
+  data["channel"] = UpdateUtils.UpdateChannel;
 
   // Source field is added only when Fennec prompts the user.
   let getParam = window.location.href.split("?");

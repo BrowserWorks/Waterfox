@@ -4,10 +4,10 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://www.w3.org/TR/hr-time/
+ * http://w3c.github.io/hr-time/
  *
- * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
- * liability, trademark and document use rules apply.
+ * Copyright © 2015 W3C® (MIT, ERCIM, Keio, Beihang).
+ * W3C liability, trademark and document use rules apply.
  */
 
 typedef double DOMHighResTimeStamp;
@@ -17,6 +17,9 @@ typedef sequence <PerformanceEntry> PerformanceEntryList;
 interface Performance {
   [DependsOn=DeviceState, Affects=Nothing]
   DOMHighResTimeStamp now();
+
+  [Throws]
+  DOMHighResTimeStamp translateTime(DOMHighResTimeStamp time, (Window or Worker or SharedWorker or ServiceWorker) timeSource);
 };
 
 [Exposed=Window]
@@ -30,13 +33,13 @@ partial interface Performance {
 };
 
 // http://www.w3.org/TR/performance-timeline/#sec-window.performance-attribute
-[Exposed=Window]
+[Exposed=(Window,Worker)]
 partial interface Performance {
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   PerformanceEntryList getEntries();
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   PerformanceEntryList getEntriesByType(DOMString entryType);
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   PerformanceEntryList getEntriesByName(DOMString name, optional DOMString
     entryType);
 };
@@ -44,11 +47,11 @@ partial interface Performance {
 // http://www.w3.org/TR/resource-timing/#extensions-performance-interface
 [Exposed=Window]
 partial interface Performance {
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   void clearResourceTimings();
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   void setResourceTimingBufferSize(unsigned long maxSize);
-  [Pref="dom.enable_resource_timing"]
+  [Func="nsPerformance::IsEnabled"]
   attribute EventHandler onresourcetimingbufferfull;
 };
 
@@ -60,14 +63,15 @@ partial interface Performance {
 };
 
 // http://www.w3.org/TR/user-timing/
-[Exposed=Window]
+[Exposed=(Window,Worker)]
 partial interface Performance {
-  [Pref="dom.enable_user_timing", Throws]
+  [Func="nsPerformance::IsEnabled", Throws]
   void mark(DOMString markName);
-  [Pref="dom.enable_user_timing"]
+  [Func="nsPerformance::IsEnabled"]
   void clearMarks(optional DOMString markName);
-  [Pref="dom.enable_user_timing", Throws]
+  [Func="nsPerformance::IsEnabled", Throws]
   void measure(DOMString measureName, optional DOMString startMark, optional DOMString endMark);
-  [Pref="dom.enable_user_timing"]
+  [Func="nsPerformance::IsEnabled"]
   void clearMeasures(optional DOMString measureName);
 };
+

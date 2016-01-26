@@ -12,19 +12,19 @@
 #include "nsIObserver.h"
 
 class nsISmsService;
-class nsIDOMMozSmsMessage;
-class nsIDOMMozMmsMessage;
-class Promise;
 
 namespace mozilla {
 namespace dom {
 
+class Promise;
 class DOMRequest;
 class DOMCursor;
+class MmsMessage;
 struct MmsParameters;
 struct MmsSendParameters;
 struct MobileMessageFilter;
-class OwningLongOrMozSmsMessageOrMozMmsMessage;
+class OwningLongOrSmsMessageOrMmsMessage;
+class SmsMessage;
 struct SmsSendParameters;
 struct SmscAddress;
 
@@ -64,7 +64,7 @@ public:
   Send(const Sequence<nsString>& aNumbers,
        const nsAString& aText,
        const SmsSendParameters& aSendParams,
-       nsTArray<nsRefPtr<DOMRequest>>& aReturn,
+       nsTArray<RefPtr<DOMRequest>>& aReturn,
        ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
@@ -81,15 +81,15 @@ public:
          ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  Delete(nsIDOMMozSmsMessage* aMessage,
+  Delete(SmsMessage& aMessage,
          ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  Delete(nsIDOMMozMmsMessage* aMessage,
+  Delete(MmsMessage& aMessage,
          ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  Delete(const Sequence<OwningLongOrMozSmsMessageOrMozMmsMessage>& aParams,
+  Delete(const Sequence<OwningLongOrSmsMessageOrMmsMessage>& aParams,
          ErrorResult& aRv);
 
   already_AddRefed<DOMCursor>
@@ -111,10 +111,10 @@ public:
               ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  RetrieveMMS(nsIDOMMozMmsMessage* aMessage,
+  RetrieveMMS(MmsMessage& aMessage,
               ErrorResult& aRv);
 
-  already_AddRefed<DOMRequest>
+  already_AddRefed<Promise>
   GetSmscAddress(const Optional<uint32_t>& aServiceId,
                  ErrorResult& aRv);
 
@@ -159,14 +159,6 @@ private:
 
   nsresult
   DispatchTrustedDeletedEventToSelf(nsISupports* aDeletedInfo);
-
-  /**
-   * Helper to get message ID from SMS/MMS Message object
-   */
-  nsresult
-  GetMessageId(JSContext* aCx,
-               const JS::Value& aMessage,
-               int32_t* aId);
 };
 
 } // namespace dom

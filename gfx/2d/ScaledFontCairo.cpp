@@ -13,8 +13,8 @@
 #endif
 
 #if defined(USE_SKIA) && defined(MOZ_ENABLE_FREETYPE)
-#include "skia/SkTypeface.h"
-#include "skia/SkTypeface_cairo.h"
+#include "skia/include/core/SkTypeface.h"
+#include "skia/include/ports/SkTypeface_cairo.h"
 #endif
 
 #include <string>
@@ -41,25 +41,25 @@ SkTypeface* ScaledFontCairo::GetSkTypeface()
 {
   if (!mTypeface) {
     cairo_font_face_t* fontFace = cairo_scaled_font_get_font_face(mScaledFont);
+    MOZ_ASSERT(cairo_font_face_status(fontFace) == CAIRO_STATUS_SUCCESS);
+
     FT_Face face = cairo_ft_scaled_font_lock_face(mScaledFont);
 
-    int style = SkTypeface::kNormal;
-
-    if (face->style_flags & FT_STYLE_FLAG_ITALIC)
-    style |= SkTypeface::kItalic;
-
-    if (face->style_flags & FT_STYLE_FLAG_BOLD)
-      style |= SkTypeface::kBold;
+    SkFontStyle style(face->style_flags & FT_STYLE_FLAG_BOLD ?
+                        SkFontStyle::kBold_Weight : SkFontStyle::kNormal_Weight,
+                      SkFontStyle::kNormal_Width,
+                      face->style_flags & FT_STYLE_FLAG_ITALIC ?
+                        SkFontStyle::kItalic_Slant : SkFontStyle::kUpright_Slant);
 
     bool isFixedWidth = face->face_flags & FT_FACE_FLAG_FIXED_WIDTH;
     cairo_ft_scaled_font_unlock_face(mScaledFont);
 
-    mTypeface = SkCreateTypefaceFromCairoFont(fontFace, (SkTypeface::Style)style, isFixedWidth);
+    mTypeface = SkCreateTypefaceFromCairoFont(fontFace, style, isFixedWidth);
   }
 
   return mTypeface;
 }
 #endif
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

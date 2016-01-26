@@ -15,6 +15,7 @@ enum eHtml5SpeculativeLoad {
   eSpeculativeLoadUninitialized,
 #endif
   eSpeculativeLoadBase,
+  eSpeculativeLoadCSP,
   eSpeculativeLoadMetaReferrer,
   eSpeculativeLoadImage,
   eSpeculativeLoadOpenPicture,
@@ -24,7 +25,8 @@ enum eHtml5SpeculativeLoad {
   eSpeculativeLoadScriptFromHead,
   eSpeculativeLoadStyle,
   eSpeculativeLoadManifest,
-  eSpeculativeLoadSetDocumentCharset
+  eSpeculativeLoadSetDocumentCharset,
+  eSpeculativeLoadPreconnect
 };
 
 class nsHtml5SpeculativeLoad {
@@ -40,16 +42,25 @@ class nsHtml5SpeculativeLoad {
       mUrl.Assign(aUrl);
     }
 
+    inline void InitMetaCSP(const nsAString& aCSP) {
+      NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
+                      "Trying to reinitialize a speculative load!");
+      mOpCode = eSpeculativeLoadCSP;
+      mMetaCSP.Assign(
+        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(aCSP));
+    }
+
     inline void InitMetaReferrerPolicy(const nsAString& aReferrerPolicy) {
       NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
                       "Trying to reinitialize a speculative load!");
       mOpCode = eSpeculativeLoadMetaReferrer;
-      mMetaReferrerPolicy.Assign(
+      mReferrerPolicy.Assign(
         nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(aReferrerPolicy));
     }
 
     inline void InitImage(const nsAString& aUrl,
                           const nsAString& aCrossOrigin,
+                          const nsAString& aReferrerPolicy,
                           const nsAString& aSrcset,
                           const nsAString& aSizes)
     {
@@ -58,6 +69,8 @@ class nsHtml5SpeculativeLoad {
       mOpCode = eSpeculativeLoadImage;
       mUrl.Assign(aUrl);
       mCrossOrigin.Assign(aCrossOrigin);
+      mReferrerPolicy.Assign(
+        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(aReferrerPolicy));
       mSrcset.Assign(aSrcset);
       mSizes.Assign(aSizes);
     }
@@ -101,6 +114,7 @@ class nsHtml5SpeculativeLoad {
                            const nsAString& aCharset,
                            const nsAString& aType,
                            const nsAString& aCrossOrigin,
+                           const nsAString& aIntegrity,
                            bool aParserInHead)
     {
       NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
@@ -111,10 +125,12 @@ class nsHtml5SpeculativeLoad {
       mCharset.Assign(aCharset);
       mTypeOrCharsetSource.Assign(aType);
       mCrossOrigin.Assign(aCrossOrigin);
+      mIntegrity.Assign(aIntegrity);
     }
 
     inline void InitStyle(const nsAString& aUrl, const nsAString& aCharset,
-                          const nsAString& aCrossOrigin)
+                          const nsAString& aCrossOrigin,
+                          const nsAString& aIntegrity)
     {
       NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
                       "Trying to reinitialize a speculative load!");
@@ -122,6 +138,7 @@ class nsHtml5SpeculativeLoad {
       mUrl.Assign(aUrl);
       mCharset.Assign(aCharset);
       mCrossOrigin.Assign(aCrossOrigin);
+      mIntegrity.Assign(aIntegrity);
     }
 
     /**
@@ -163,12 +180,24 @@ class nsHtml5SpeculativeLoad {
       mTypeOrCharsetSource.Assign((char16_t)aCharsetSource);
     }
 
+    inline void InitPreconnect(const nsAString& aUrl,
+                               const nsAString& aCrossOrigin)
+    {
+      NS_PRECONDITION(mOpCode == eSpeculativeLoadUninitialized,
+                      "Trying to reinitialize a speculative load!");
+      mOpCode = eSpeculativeLoadPreconnect;
+      mUrl.Assign(aUrl);
+      mCrossOrigin.Assign(aCrossOrigin);
+    }
+
     void Perform(nsHtml5TreeOpExecutor* aExecutor);
 
   private:
     eHtml5SpeculativeLoad mOpCode;
     nsString mUrl;
-    nsString mMetaReferrerPolicy;
+    nsString mReferrerPolicy;
+    nsString mMetaCSP;
+
     /**
      * If mOpCode is eSpeculativeLoadStyle or eSpeculativeLoadScript[FromHead]
      * then this is the value of the "charset" attribute. For
@@ -184,9 +213,9 @@ class nsHtml5SpeculativeLoad {
      */
     nsString mTypeOrCharsetSource;
     /**
-     * If mOpCode is eSpeculativeLoadImage or eSpeculativeLoadScript[FromHead],
-     * this is the value of the "crossorigin" attribute.  If the
-     * attribute is not set, this will be a void string.
+     * If mOpCode is eSpeculativeLoadImage or eSpeculativeLoadScript[FromHead]
+     * or eSpeculativeLoadPreconnect this is the value of the "crossorigin"
+     * attribute.  If the attribute is not set, this will be a void string.
      */
     nsString mCrossOrigin;
     /**
@@ -205,6 +234,12 @@ class nsHtml5SpeculativeLoad {
      * attribute.  If the attribute is not set, this will be a void string.
      */
     nsString mMedia;
+    /**
+     * If mOpCode is eSpeculativeLoadScript[FromHead], this is the value of the
+     * "integrity" attribute.  If the attribute is not set, this will be a void
+     * string.
+     */
+    nsString mIntegrity;
 };
 
 #endif // nsHtml5SpeculativeLoad_h

@@ -42,7 +42,8 @@ def browser_kwargs(test_environment, **kwargs):
             "no_backup": kwargs.get("b2g_no_backup", False)}
 
 
-def executor_kwargs(test_type, server_config, cache_manager, **kwargs):
+def executor_kwargs(test_type, server_config, cache_manager, run_info_data,
+                    **kwargs):
     timeout_multiplier = kwargs["timeout_multiplier"]
     if timeout_multiplier is None:
         timeout_multiplier = 2
@@ -191,7 +192,7 @@ class B2GExecutorBrowser(ExecutorBrowser):
 
         import sys, subprocess
 
-        self.device = mozdevice.ADBDevice()
+        self.device = mozdevice.ADBB2G()
         self.device.forward("tcp:%s" % self.marionette_port,
                             "tcp:2828")
         self.executor = None

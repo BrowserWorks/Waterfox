@@ -12,19 +12,6 @@
 ; ; file comment
 ;
 
-; Due to Apple Mac OS X packaging requirements, files that are in the same
-; directory on other platforms must be located in different directories on
-; Mac OS X. The following defines allow specifying the Mac OS X bundle
-; location which also work on other platforms.
-;
-; @BINPATH@
-; Equals Contents/MacOS/ on Mac OS X and is the path to the main binary on other
-; platforms.
-;
-; @RESPATH@
-; Equals Contents/Resources/ on Mac OS X and is equivalent to @BINPATH@ on other
-; platforms.
-
 #filter substitution
 
 #ifdef XP_MACOSX
@@ -32,7 +19,8 @@
 @APPNAME@/Contents/Info.plist
 @APPNAME@/Contents/PkgInfo
 @APPNAME@/Contents/Plug-Ins/
-@RESPATH@
+@RESPATH@/@MOZ_APP_NAME@.icns
+@RESPATH@/@LPROJ_ROOT@.lproj/*
 #endif
 
 [@AB_CD@]
@@ -40,10 +28,6 @@
 @RESPATH@/chrome/@AB_CD@.manifest
 @RESPATH@/@PREF_DIR@/b2g-l10n.js
 @RESPATH@/searchplugins/*
-@RESPATH@/defaults/profile/bookmarks.html
-@RESPATH@/defaults/profile/localstore.rdf
-@RESPATH@/defaults/profile/mimeTypes.rdf
-@RESPATH@/defaults/profile/chrome/*
 #ifdef MOZ_UPDATER
 @RESPATH@/update.locale
 @RESPATH@/updater.ini
@@ -55,12 +39,7 @@
 #endif
 
 [xpcom]
-#ifndef XP_MACOSX
 @RESPATH@/dependentlibs.list
-#endif
-#ifdef GKMEDIAS_SHARED_LIBRARY
-@BINPATH@/@DLL_PREFIX@gkmedias@DLL_SUFFIX@
-#endif
 #ifndef MOZ_STATIC_JS
 @BINPATH@/@DLL_PREFIX@mozjs@DLL_SUFFIX@
 #endif
@@ -94,13 +73,25 @@
 #endif
 #endif
 #endif
+#ifndef MOZ_NATIVE_ICU
+#ifdef MOZ_SHARED_ICU
+#ifdef XP_WIN
+@BINPATH@/icudt@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
+@BINPATH@/icuin@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
+@BINPATH@/icuuc@MOZ_ICU_DBG_SUFFIX@@MOZ_ICU_VERSION@.dll
+#elif defined(XP_MACOSX)
+@BINPATH@/libicudata.@MOZ_ICU_VERSION@.dylib
+@BINPATH@/libicui18n.@MOZ_ICU_VERSION@.dylib
+@BINPATH@/libicuuc.@MOZ_ICU_VERSION@.dylib
+#elif defined(XP_UNIX)
+@BINPATH@/libicudata.so.@MOZ_ICU_VERSION@
+@BINPATH@/libicui18n.so.@MOZ_ICU_VERSION@
+@BINPATH@/libicuuc.so.@MOZ_ICU_VERSION@
+#endif
+#endif
+#endif
 #ifdef MOZ_SHARED_MOZGLUE
 @BINPATH@/@DLL_PREFIX@mozglue@DLL_SUFFIX@
-#endif
-#ifdef MOZ_REPLACE_MALLOC
-#ifndef MOZ_JEMALLOC3
-@BINPATH@/@DLL_PREFIX@replace_jemalloc@DLL_SUFFIX@
-#endif
 #endif
 #ifdef ANDROID
 @RESPATH@/AndroidManifest.xml
@@ -112,7 +103,7 @@
 #endif
 #ifdef MOZ_GTK3
 @BINPATH@/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@mozgtk2@DLL_SUFFIX@
+@BINPATH@/gtk2/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
 #endif
 
 [browser]
@@ -128,12 +119,17 @@
 #ifndef MOZ_FOLD_LIBS
 @BINPATH@/@DLL_PREFIX@mozsqlite3@DLL_SUFFIX@
 #endif
+@BINPATH@/@DLL_PREFIX@lgpllibs@DLL_SUFFIX@
 @RESPATH@/blocklist.xml
 @RESPATH@/ua-update.json
+@RESPATH@/defaults/settings.json
 #ifdef XP_UNIX
 #ifndef XP_MACOSX
 @RESPATH@/run-mozilla.sh
 #endif
+#endif
+#ifdef MOZ_WEBSPEECH_MODELS
+@RESPATH@/models/
 #endif
 
 ; [Components]
@@ -145,34 +141,36 @@
 #endif
 @RESPATH@/components/accessibility.xpt
 #endif
-@BINPATH@/components/appshell.xpt
-@BINPATH@/components/appstartup.xpt
-@BINPATH@/components/autocomplete.xpt
-@BINPATH@/components/autoconfig.xpt
-@BINPATH@/components/browsercompsbase.xpt
-@BINPATH@/components/browser-element.xpt
-@BINPATH@/components/browser-feeds.xpt
-@BINPATH@/components/caps.xpt
-@BINPATH@/components/chardet.xpt
-@BINPATH@/components/chrome.xpt
-@BINPATH@/components/commandhandler.xpt
-@BINPATH@/components/commandlines.xpt
-@BINPATH@/components/composer.xpt
-@BINPATH@/components/content_events.xpt
-@BINPATH@/components/content_geckomediaplugins.xpt
-@BINPATH@/components/content_html.xpt
-@BINPATH@/components/content_xslt.xpt
-@BINPATH@/components/cookie.xpt
-@BINPATH@/components/devtools_security.xpt
-@BINPATH@/components/directory.xpt
-@BINPATH@/components/diskspacewatcher.xpt
-@BINPATH@/components/docshell.xpt
-@BINPATH@/components/dom.xpt
-@BINPATH@/components/dom_activities.xpt
-@BINPATH@/components/dom_apps.xpt
-@BINPATH@/components/dom_audiochannel.xpt
-@BINPATH@/components/dom_base.xpt
-@BINPATH@/components/dom_system.xpt
+@RESPATH@/components/appshell.xpt
+@RESPATH@/components/appstartup.xpt
+@RESPATH@/components/autocomplete.xpt
+@RESPATH@/components/autoconfig.xpt
+@RESPATH@/components/browsercompsbase.xpt
+@RESPATH@/components/browser-element.xpt
+@RESPATH@/components/browser-feeds.xpt
+@RESPATH@/components/caps.xpt
+@RESPATH@/components/chardet.xpt
+@RESPATH@/components/chrome.xpt
+@RESPATH@/components/commandhandler.xpt
+@RESPATH@/components/commandlines.xpt
+@RESPATH@/components/composer.xpt
+@RESPATH@/components/content_events.xpt
+@RESPATH@/components/content_geckomediaplugins.xpt
+@RESPATH@/components/content_html.xpt
+@RESPATH@/components/content_xslt.xpt
+@RESPATH@/components/cookie.xpt
+@RESPATH@/components/devtools_security.xpt
+@RESPATH@/components/directory.xpt
+@RESPATH@/components/diskspacewatcher.xpt
+@RESPATH@/components/docshell.xpt
+@RESPATH@/components/dom.xpt
+@RESPATH@/components/dom_activities.xpt
+@RESPATH@/components/dom_apps.xpt
+@RESPATH@/components/dom_newapps.xpt
+@RESPATH@/components/dom_audiochannel.xpt
+@RESPATH@/components/dom_base.xpt
+@RESPATH@/components/dom_system.xpt
+@RESPATH@/components/dom_workers.xpt
 #ifdef MOZ_WIDGET_GONK
 @RESPATH@/components/dom_wifi.xpt
 @RESPATH@/components/dom_system_gonk.xpt
@@ -185,14 +183,13 @@
 @RESPATH@/components/dom_bluetooth.xpt
 #endif
 #ifdef MOZ_B2G_CAMERA
-@BINPATH@/components/dom_camera.xpt
+@RESPATH@/components/dom_camera.xpt
 #endif
 @RESPATH@/components/dom_canvas.xpt
 @RESPATH@/components/dom_contacts.xpt
 @RESPATH@/components/dom_alarm.xpt
 @RESPATH@/components/dom_core.xpt
 @RESPATH@/components/dom_css.xpt
-@RESPATH@/components/dom_devicestorage.xpt
 @RESPATH@/components/dom_events.xpt
 @RESPATH@/components/dom_geolocation.xpt
 @RESPATH@/components/dom_media.xpt
@@ -271,6 +268,9 @@
 @RESPATH@/components/layout_xul.xpt
 @RESPATH@/components/locale.xpt
 @RESPATH@/components/lwbrk.xpt
+#ifdef MOZ_ENABLE_PROFILER_SPS
+@RESPATH@/components/memory_profiler.xpt
+#endif
 @RESPATH@/components/migration.xpt
 @RESPATH@/components/mimetype.xpt
 @RESPATH@/components/mozfind.xpt
@@ -282,6 +282,7 @@
 @RESPATH@/components/necko_file.xpt
 @RESPATH@/components/necko_ftp.xpt
 @RESPATH@/components/necko_http.xpt
+@RESPATH@/components/necko_mdns.xpt
 @RESPATH@/components/necko_res.xpt
 @RESPATH@/components/necko_socket.xpt
 @RESPATH@/components/necko_strconv.xpt
@@ -302,7 +303,6 @@
 @RESPATH@/components/plugin.xpt
 @RESPATH@/components/pref.xpt
 @RESPATH@/components/prefetch.xpt
-@RESPATH@/components/profile.xpt
 #ifdef MOZ_ENABLE_PROFILER_SPS
 @RESPATH@/components/profiler.xpt
 #endif
@@ -315,9 +315,7 @@
 @RESPATH@/components/services-crypto.xpt
 #endif
 @RESPATH@/components/services-crypto-component.xpt
-#ifdef MOZ_CAPTIVEDETECT
 @RESPATH@/components/captivedetect.xpt
-#endif
 @RESPATH@/components/shellservice.xpt
 @RESPATH@/components/shistory.xpt
 @RESPATH@/components/spellchecker.xpt
@@ -381,6 +379,8 @@
 @RESPATH@/components/ConsoleAPIStorage.js
 @RESPATH@/components/BrowserElementParent.manifest
 @RESPATH@/components/BrowserElementParent.js
+@RESPATH@/components/BrowserElementProxy.manifest
+@RESPATH@/components/BrowserElementProxy.js
 @RESPATH@/components/ContactManager.js
 @RESPATH@/components/ContactManager.manifest
 @RESPATH@/components/PhoneNumberService.js
@@ -395,6 +395,8 @@
 @RESPATH@/components/AlarmsManager.manifest
 @RESPATH@/components/FeedProcessor.manifest
 @RESPATH@/components/FeedProcessor.js
+@RESPATH@/components/PackagedAppUtils.manifest
+@RESPATH@/components/PackagedAppUtils.js
 @RESPATH@/components/BrowserFeeds.manifest
 @RESPATH@/components/FeedConverter.js
 @RESPATH@/components/FeedWriter.js
@@ -415,6 +417,8 @@
 @RESPATH@/components/nsLoginManagerPrompter.js
 @RESPATH@/components/NetworkGeolocationProvider.manifest
 @RESPATH@/components/NetworkGeolocationProvider.js
+@RESPATH@/components/TVSimulatorService.js
+@RESPATH@/components/TVSimulatorService.manifest
 #ifdef MOZ_WEBRTC
 @RESPATH@/components/PeerConnection.js
 @RESPATH@/components/PeerConnection.manifest
@@ -439,6 +443,10 @@
 @RESPATH@/components/TCPPresentationServer.js
 
 #ifdef MOZ_SECUREELEMENT
+@RESPATH@/components/ACEService.js
+@RESPATH@/components/ACEService.manifest
+@RESPATH@/components/GPAccessRulesManager.js
+@RESPATH@/components/GPAccessRulesManager.manifest
 @RESPATH@/components/SecureElement.js
 @RESPATH@/components/SecureElement.manifest
 @RESPATH@/components/UiccConnector.js
@@ -469,8 +477,8 @@
 
 ; Camera
 #ifdef MOZ_B2G_CAMERA
-@BINPATH@/components/CameraTestHardware.js
-@BINPATH@/components/CameraTestHardware.manifest
+@RESPATH@/components/CameraTestHardware.js
+@RESPATH@/components/CameraTestHardware.manifest
 #endif // MOZ_B2G_CAMERA
 
 ; Tethering
@@ -491,13 +499,17 @@
 #if defined(MOZ_WIDGET_GONK) && defined(MOZ_B2G_RIL)
 @RESPATH@/components/CellBroadcastService.js
 @RESPATH@/components/CellBroadcastService.manifest
-@BINPATH@/components/IccService.js
-@BINPATH@/components/IccService.manifest
+@RESPATH@/components/DataCallManager.js
+@RESPATH@/components/DataCallManager.manifest
+@RESPATH@/components/IccService.js
+@RESPATH@/components/IccService.manifest
 @RESPATH@/components/MmsService.js
 @RESPATH@/components/MmsService.manifest
 @RESPATH@/components/MobileMessageDatabaseService.js
 @RESPATH@/components/MobileMessageDatabaseService.manifest
 #ifndef DISABLE_MOZ_RIL_GEOLOC
+@RESPATH@/components/DataCallInterfaceService.js
+@RESPATH@/components/DataCallInterfaceService.manifest
 @RESPATH@/components/MobileConnectionService.js
 @RESPATH@/components/MobileConnectionService.manifest
 @RESPATH@/components/RadioInterfaceLayer.js
@@ -505,12 +517,14 @@
 @RESPATH@/components/SmsService.js
 @RESPATH@/components/SmsService.manifest
 #endif
-@RESPATH@/components/RILContentHelper.js
-@RESPATH@/components/RILContentHelper.manifest
+@RESPATH@/components/StkCmdFactory.js
+@RESPATH@/components/StkCmdFactory.manifest
 @RESPATH@/components/RILSystemMessengerHelper.js
 @RESPATH@/components/RILSystemMessengerHelper.manifest
 @RESPATH@/components/TelephonyAudioService.js
 @RESPATH@/components/TelephonyAudioService.manifest
+@RESPATH@/components/USSDReceivedWrapper.js
+@RESPATH@/components/USSDReceivedWrapper.manifest
 #ifndef DISABLE_MOZ_RIL_GEOLOC
 @RESPATH@/components/TelephonyService.js
 @RESPATH@/components/TelephonyService.manifest
@@ -520,15 +534,16 @@
 #endif // MOZ_WIDGET_GONK && MOZ_B2G_RIL
 
 #ifndef MOZ_WIDGET_GONK
-@RESPATH@/components/extensions.manifest
 @RESPATH@/components/addonManager.js
 @RESPATH@/components/amContentHandler.js
 @RESPATH@/components/amInstallTrigger.js
 @RESPATH@/components/amWebInstallListener.js
-@RESPATH@/components/nsBlocklistService.js
+
 @RESPATH@/components/OopCommandLine.js
 @RESPATH@/components/CommandLine.js
 #endif
+@RESPATH@/components/extensions.manifest
+@RESPATH@/components/nsBlocklistService.js
 @RESPATH@/components/BootstrapCommandLine.js
 
 #ifdef MOZ_UPDATER
@@ -600,9 +615,6 @@
 @RESPATH@/components/DOMSecureElement.manifest
 @RESPATH@/components/DOMSecureElement.js
 #endif
-#ifdef MOZ_ENABLE_DBUS
-@RESPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
-#endif
 @RESPATH@/components/nsINIProcessor.manifest
 @RESPATH@/components/nsINIProcessor.js
 @RESPATH@/components/nsPrompter.manifest
@@ -615,14 +627,8 @@
 #endif
 @RESPATH@/components/servicesComponents.manifest
 @RESPATH@/components/cryptoComponents.manifest
-#ifdef MOZ_SERVICES_HEALTHREPORT
-@RESPATH@/components/HealthReportComponents.manifest
-@RESPATH@/components/HealthReportService.js
-#endif
-#ifdef MOZ_CAPTIVEDETECT
 @RESPATH@/components/CaptivePortalDetectComponents.manifest
 @RESPATH@/components/captivedetect.js
-#endif
 @RESPATH@/components/TelemetryStartup.js
 @RESPATH@/components/TelemetryStartup.manifest
 @RESPATH@/components/XULStore.js
@@ -633,7 +639,11 @@
 @RESPATH@/components/AppsService.manifest
 @RESPATH@/components/Push.js
 @RESPATH@/components/Push.manifest
-@RESPATH@/components/PushNotificationService.js
+#ifdef MOZ_SIMPLEPUSH
+@RESPATH@/components/PushServiceLauncher.js
+#else
+@RESPATH@/components/PushComponents.js
+#endif
 
 @RESPATH@/components/InterAppComm.manifest
 @RESPATH@/components/InterAppCommService.js
@@ -657,11 +667,6 @@
 @RESPATH@/components/ActivityWrapper.js
 @RESPATH@/components/ActivityMessageConfigurator.js
 
-@RESPATH@/components/TCPSocket.js
-@RESPATH@/components/TCPServerSocket.js
-@RESPATH@/components/TCPSocketParentIntermediary.js
-@RESPATH@/components/TCPSocket.manifest
-
 @RESPATH@/components/Payment.js
 @RESPATH@/components/PaymentFlowInfo.js
 @RESPATH@/components/PaymentProvider.js
@@ -678,9 +683,13 @@
 @RESPATH@/components/EngineeringModeAPI.js
 @RESPATH@/components/EngineeringModeService.js
 
+@RESPATH@/components/SystemUpdate.manifest
+@RESPATH@/components/SystemUpdateManager.js
+
 #ifdef MOZ_DEBUG
 @RESPATH@/components/TestInterfaceJS.js
 @RESPATH@/components/TestInterfaceJS.manifest
+@RESPATH@/components/TestInterfaceJSMaplike.js
 #endif
 
 @RESPATH@/components/PACGenerator.js
@@ -696,10 +705,14 @@
 @RESPATH@/components/nsUrlClassifierLib.js
 @RESPATH@/components/url-classifier.xpt
 
-; GNOME hooks
-#ifdef MOZ_ENABLE_GNOME_COMPONENT
-@RESPATH@/components/@DLL_PREFIX@mozgnome@DLL_SUFFIX@
-#endif
+; Private Browsing
+@RESPATH@/components/privatebrowsing.xpt
+@RESPATH@/components/PrivateBrowsing.manifest
+@RESPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
+
+; Signed Packaged Content
+@RESPATH@/components/InstallPackagedWebapp.manifest
+@RESPATH@/components/InstallPackagedWebapp.js
 
 ; ANGLE on Win32
 #ifdef XP_WIN32
@@ -712,9 +725,6 @@
 ; [Browser Chrome Files]
 @RESPATH@/chrome/browser@JAREXT@
 @RESPATH@/chrome/browser.manifest
-@RESPATH@/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/install.rdf
-@RESPATH@/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/icon.png
-@RESPATH@/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/preview.png
 @RESPATH@/chrome/toolkit@JAREXT@
 @RESPATH@/chrome/toolkit.manifest
 #ifdef XP_UNIX
@@ -725,6 +735,12 @@
 #endif
 #endif
 
+; DevTools
+@RESPATH@/chrome/devtools@JAREXT@
+@RESPATH@/chrome/devtools.manifest
+#ifdef MOZ_GRAPHENE
+@RESPATH@/@PREF_DIR@/devtools.js
+#endif
 
 ; shell icons
 #ifdef XP_UNIX
@@ -744,7 +760,6 @@
 @RESPATH@/@PREF_DIR@/channel-prefs.js
 @RESPATH@/greprefs.js
 @RESPATH@/defaults/autoconfig/prefcalls.js
-@RESPATH@/defaults/profile/prefs.js
 
 ; Services (gre) prefs
 #ifdef MOZ_SERVICES_SYNC
@@ -777,18 +792,18 @@
 @RESPATH@/res/table-remove-row-active.gif
 @RESPATH@/res/table-remove-row-hover.gif
 @RESPATH@/res/table-remove-row.gif
-@RESPATH@/res/text_caret.png
-@RESPATH@/res/text_caret@1.5x.png
-@RESPATH@/res/text_caret@2.25x.png
-@RESPATH@/res/text_caret@2x.png
-@RESPATH@/res/text_caret_tilt_left.png
-@RESPATH@/res/text_caret_tilt_left@1.5x.png
-@RESPATH@/res/text_caret_tilt_left@2.25x.png
-@RESPATH@/res/text_caret_tilt_left@2x.png
-@RESPATH@/res/text_caret_tilt_right.png
-@RESPATH@/res/text_caret_tilt_right@1.5x.png
-@RESPATH@/res/text_caret_tilt_right@2.25x.png
-@RESPATH@/res/text_caret_tilt_right@2x.png
+@RESPATH@/res/accessiblecaret.png
+@RESPATH@/res/accessiblecaret@1.5x.png
+@RESPATH@/res/accessiblecaret@2.25x.png
+@RESPATH@/res/accessiblecaret@2x.png
+@RESPATH@/res/accessiblecaret_tilt_left.png
+@RESPATH@/res/accessiblecaret_tilt_left@1.5x.png
+@RESPATH@/res/accessiblecaret_tilt_left@2.25x.png
+@RESPATH@/res/accessiblecaret_tilt_left@2x.png
+@RESPATH@/res/accessiblecaret_tilt_right.png
+@RESPATH@/res/accessiblecaret_tilt_right@1.5x.png
+@RESPATH@/res/accessiblecaret_tilt_right@2.25x.png
+@RESPATH@/res/accessiblecaret_tilt_right@2x.png
 @RESPATH@/res/grabber.gif
 #ifdef XP_MACOSX
 @RESPATH@/res/cursors/*
@@ -810,7 +825,6 @@
 ; [Personal Security Manager]
 ;
 @BINPATH@/@DLL_PREFIX@nssckbi@DLL_SUFFIX@
-@RESPATH@/components/pipboot.xpt
 @RESPATH@/components/pipnss.xpt
 @RESPATH@/components/pippki.xpt
 @BINPATH@/@DLL_PREFIX@nss3@DLL_SUFFIX@
@@ -924,6 +938,8 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/components/SystemMessageGlue.js
 @RESPATH@/components/B2GAppMigrator.js
 @RESPATH@/components/B2GPresentationDevicePrompt.js
+@RESPATH@/components/PresentationRequestUIGlue.js
+@RESPATH@/components/KillSwitch.js
 
 #ifndef MOZ_WIDGET_GONK
 @RESPATH@/components/SimulatorScreen.js
@@ -965,3 +981,10 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/gmp-clearkey/0.1/@DLL_PREFIX@clearkey@DLL_SUFFIX@
 @RESPATH@/gmp-clearkey/0.1/clearkey.info
 #endif
+
+#ifdef PKG_LOCALE_MANIFEST
+#include @PKG_LOCALE_MANIFEST@
+#endif
+
+@RESPATH@/components/simpleServices.js
+@RESPATH@/components/utils.manifest

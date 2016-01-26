@@ -20,8 +20,8 @@
 #ifndef mozilla_EnumeratedRange_h
 #define mozilla_EnumeratedRange_h
 
-#include "mozilla/IntegerRange.h"
 #include "mozilla/IntegerTypeTraits.h"
+#include "mozilla/ReverseIterator.h"
 
 namespace mozilla {
 
@@ -31,20 +31,15 @@ template<typename IntTypeT, typename EnumTypeT>
 class EnumeratedIterator
 {
 public:
-  typedef const EnumTypeT ValueType;
-  typedef typename MakeSigned<IntTypeT>::Type DifferenceType;
-
   template<typename EnumType>
   explicit EnumeratedIterator(EnumType aCurrent)
     : mCurrent(aCurrent) { }
 
   template<typename IntType, typename EnumType>
-  EnumeratedIterator(const EnumeratedIterator<IntType, EnumType>& aOther)
+  explicit EnumeratedIterator(const EnumeratedIterator<IntType, EnumType>& aOther)
     : mCurrent(aOther.mCurrent) { }
 
-  // Since operator* is required to return a reference, we return
-  // a reference to our member here.
-  const EnumTypeT& operator*() const { return mCurrent; }
+  EnumTypeT operator*() const { return mCurrent; }
 
   /* Increment and decrement operators */
 
@@ -69,25 +64,6 @@ public:
     auto ret = *this;
     mCurrent = EnumTypeT(IntTypeT(mCurrent) - IntTypeT(1));
     return ret;
-  }
-
-  EnumeratedIterator operator+(DifferenceType aN) const
-  {
-    return EnumeratedIterator(EnumTypeT(IntTypeT(mCurrent) + aN));
-  }
-  EnumeratedIterator operator-(DifferenceType aN) const
-  {
-    return EnumeratedIterator(EnumTypeT(IntTypeT(mCurrent) - aN));
-  }
-  EnumeratedIterator& operator+=(DifferenceType aN)
-  {
-    mCurrent = EnumTypeT(IntTypeT(mCurrent) + aN);
-    return *this;
-  }
-  EnumeratedIterator& operator-=(DifferenceType aN)
-  {
-    mCurrent = EnumTypeT(IntTypeT(mCurrent) - aN);
-    return *this;
   }
 
   /* Comparison operators */
@@ -195,6 +171,9 @@ private:
 #endif
 
 // Create a range to iterate from aBegin to aEnd, exclusive.
+//
+// (Once we can rely on std::underlying_type, we can remove the IntType
+// template parameter.)
 template<typename IntType, typename EnumType>
 inline detail::EnumeratedRange<IntType, EnumType>
 MakeEnumeratedRange(EnumType aBegin, EnumType aEnd)
@@ -213,11 +192,17 @@ MakeEnumeratedRange(EnumType aBegin, EnumType aEnd)
 
 // Create a range to iterate from EnumType(0) to aEnd, exclusive. EnumType(0)
 // should exist, but note that there is no way for us to ensure that it does!
-template<typename IntType, typename EnumType>
-inline detail::EnumeratedRange<IntType, EnumType>
+// Since the enumeration starts at EnumType(0), we know for sure that the values
+// will be in range of our deduced IntType.
+template<typename EnumType>
+inline detail::EnumeratedRange<
+  typename UnsignedStdintTypeForSize<sizeof(EnumType)>::Type,
+  EnumType>
 MakeEnumeratedRange(EnumType aEnd)
 {
-  return MakeEnumeratedRange<IntType>(EnumType(0), aEnd);
+  return MakeEnumeratedRange<
+    typename UnsignedStdintTypeForSize<sizeof(EnumType)>::Type>(EnumType(0),
+                                                                aEnd);
 }
 
 #ifdef __GNUC__

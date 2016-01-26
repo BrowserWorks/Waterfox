@@ -2,6 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+
+Cu.import("resource://gre/modules/Preferences.jsm");
+
+var CONTEXT_MENU_DELAY_PREF = "ui.click_hold_context_menus.delay";
+var DEFAULT_CONTEXT_MENU_DELAY = 750;  // ms
+
 this.EXPORTED_SYMBOLS = ["ActionChain"];
 
 /**
@@ -18,8 +25,7 @@ this.ActionChain = function(utils, checkForInterrupted) {
   this.scrolling = false;
   // whether to send mouse event
   this.mouseEventsOnly = false;
-  this.checkTimer = Components.classes["@mozilla.org/timer;1"]
-      .createInstance(Components.interfaces.nsITimer);
+  this.checkTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
 
   // callbacks for command completion
   this.onSuccess = null;
@@ -40,7 +46,7 @@ this.ActionChain = function(utils, checkForInterrupted) {
 ActionChain.prototype.dispatchActions = function(
     args,
     touchId,
-    frame,
+    container,
     elementManager,
     callbacks,
     touchProvider) {
@@ -51,16 +57,16 @@ ActionChain.prototype.dispatchActions = function(
   }
 
   this.elementManager = elementManager;
-  let commandArray = elementManager.convertWrappedArguments(args, frame);
+  let commandArray = elementManager.convertWrappedArguments(args, container);
   this.onSuccess = callbacks.onSuccess;
   this.onError = callbacks.onError;
-  this.frame = frame;
+  this.container = container;
 
   if (touchId == null) {
     touchId = this.nextTouchId++;
   }
 
-  if (!frame.document.createTouch) {
+  if (!container.frame.document.createTouch) {
     this.mouseEventsOnly = true;
   }
 
@@ -74,7 +80,7 @@ ActionChain.prototype.dispatchActions = function(
   try {
     this.actions(commandArray, touchId, 0, keyModifiers);
   } catch (e) {
-    this.onError(e);
+    callbacks.onError(e);
     this.resetValues();
   }
 };
@@ -126,7 +132,7 @@ ActionChain.prototype.emitMouseEvent = function(
         type,
         elClientX,
         elClientY,
-        button || 0, 
+        button || 0,
         clickCount || 1,
         mods,
         false,
@@ -141,7 +147,7 @@ ActionChain.prototype.emitMouseEvent = function(
 ActionChain.prototype.resetValues = function() {
   this.onSuccess = null;
   this.onError = null;
-  this.frame = null;
+  this.container = null;
   this.elementManager = null;
   this.touchProvider = null;
   this.mouseEventsOnly = false;
@@ -156,7 +162,7 @@ ActionChain.prototype.resetValues = function() {
  */
 ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
   if (i == chain.length) {
-    this.onSuccess({value: touchId});
+    this.onSuccess(touchId || null);
     this.resetValues();
     return;
   }
@@ -177,17 +183,17 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
 
   switch(command) {
     case "keyDown":
-      this.utils.sendKeyDown(pack[1], keyModifiers, this.frame);
+      this.utils.sendKeyDown(pack[1], keyModifiers, this.container.frame);
       this.actions(chain, touchId, i, keyModifiers);
       break;
 
     case "keyUp":
-      this.utils.sendKeyUp(pack[1], keyModifiers, this.frame);
+      this.utils.sendKeyUp(pack[1], keyModifiers, this.container.frame);
       this.actions(chain, touchId, i, keyModifiers);
       break;
 
     case "click":
-      el = this.elementManager.getKnownElement(pack[1], this.frame);
+      el = this.elementManager.getKnownElement(pack[1], this.container);
       let button = pack[2];
       let clickCount = pack[3];
       c = this.coordinates(el, null, null);
@@ -217,7 +223,7 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
       if ((i != chain.length) && (chain[i][0].indexOf('move') !== -1)) {
         this.scrolling = true;
       }
-      el = this.elementManager.getKnownElement(pack[1], this.frame);
+      el = this.elementManager.getKnownElement(pack[1], this.container);
       c = this.coordinates(el, pack[2], pack[3]);
       touchId = this.generateEvents("press", c.x, c.y, null, el, keyModifiers);
       this.actions(chain, touchId, i, keyModifiers);
@@ -236,7 +242,7 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
       break;
 
     case "move":
-      el = this.elementManager.getKnownElement(pack[1], this.frame);
+      el = this.elementManager.getKnownElement(pack[1], this.container);
       c = this.coordinates(el);
       this.generateEvents("move", c.x, c.y, touchId, null, keyModifiers);
       this.actions(chain, touchId, i, keyModifiers);
@@ -258,10 +264,9 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
         let time = pack[1] * 1000;
 
         // standard waiting time to fire contextmenu
-        let standard = 750;
-        try {
-          standard = Services.prefs.getIntPref("ui.click_hold_context_menus.delay");
-        } catch (e) {}
+        let standard = Preferences.get(
+            CONTEXT_MENU_DELAY_PREF,
+            DEFAULT_CONTEXT_MENU_DELAY);
 
         if (time >= standard && this.isTap) {
           chain.splice(i, 0, ["longPress"], ["wait", (time - standard) / 1000]);
@@ -274,7 +279,7 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
         this.actions(chain, touchId, i, keyModifiers);
       }
       break;
-  
+
     case "cancel":
       this.generateEvents(
           "cancel",
@@ -286,7 +291,7 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
       this.actions(chain, touchId, i, keyModifiers);
       this.scrolling = false;
       break;
-  
+
     case "longPress":
       this.generateEvents(
           "contextmenu",
@@ -297,7 +302,6 @@ ActionChain.prototype.actions = function(chain, touchId, i, keyModifiers) {
           keyModifiers);
       this.actions(chain, touchId, i, keyModifiers);
       break;
-
   }
 };
 
@@ -355,7 +359,7 @@ ActionChain.prototype.getCoordinateInfo = function(el, corx, cory) {
 ActionChain.prototype.generateEvents = function(
     type, x, y, touchId, target, keyModifiers) {
   this.lastCoordinates = [x, y];
-  let doc = this.frame.document;
+  let doc = this.container.frame.document;
 
   switch (type) {
     case "tap":
@@ -450,7 +454,7 @@ ActionChain.prototype.generateEvents = function(
 
     case "contextmenu":
       this.isTap = false;
-      let event = this.frame.document.createEvent("MouseEvents");
+      let event = this.container.frame.document.createEvent("MouseEvents");
       if (this.mouseEventsOnly) {
         target = doc.elementFromPoint(this.lastCoordinates[0], this.lastCoordinates[1]);
       } else {

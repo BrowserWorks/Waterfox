@@ -44,15 +44,12 @@ public:
   nsISupports* GetParentObject() const;
 
   struct HandleChangeData {
-    nsRefPtr<MediaQueryList> mql;
-    nsRefPtr<mozilla::dom::MediaQueryListListener> callback;
+    RefPtr<MediaQueryList> mql;
+    RefPtr<mozilla::dom::MediaQueryListListener> callback;
   };
 
-  typedef FallibleTArray< nsRefPtr<mozilla::dom::MediaQueryListListener> > CallbackList;
-  typedef FallibleTArray<HandleChangeData> NotifyList;
-
   // Appends listeners that need notification to aListenersToNotify
-  void MediumFeaturesChanged(NotifyList &aListenersToNotify);
+  void MediumFeaturesChanged(nsTArray<HandleChangeData>& aListenersToNotify);
 
   bool HasListeners() const { return !mCallbacks.IsEmpty(); }
 
@@ -85,10 +82,10 @@ private:
   // linked list.
   nsCOMPtr<nsIDocument> mDocument;
 
-  nsRefPtr<nsMediaList> mMediaList;
+  RefPtr<nsMediaList> mMediaList;
   bool mMatches;
   bool mMatchesValid;
-  CallbackList mCallbacks;
+  nsTArray<RefPtr<mozilla::dom::MediaQueryListListener>> mCallbacks;
 };
 
 } // namespace dom

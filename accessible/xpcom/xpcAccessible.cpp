@@ -346,7 +346,7 @@ xpcAccessible::GetBounds(int32_t* aX, int32_t* aY,
   *aX = rect.x;
   *aY = rect.y;
   *aWidth = rect.width;
-  *aHeight = rect.height;;
+  *aHeight = rect.height;
 
   return NS_OK;
 }
@@ -495,16 +495,6 @@ xpcAccessible::SetSelected(bool aSelect)
     return NS_ERROR_FAILURE;
 
   Intl()->SetSelected(aSelect);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-xpcAccessible::ExtendSelection()
-{
-  if (!Intl())
-    return NS_ERROR_FAILURE;
-
-  Intl()->ExtendSelection();
   return NS_OK;
 }
 

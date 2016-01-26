@@ -19,9 +19,9 @@
 
 namespace mozilla {
 namespace css {
-class StyleRule;
-}
-}
+class Declaration;
+} // namespace css
+} // namespace mozilla
 
 typedef mozilla::dom::Element nsStyledElementBase;
 
@@ -35,11 +35,11 @@ protected:
   {}
 
 public:
-  // nsIContent interface methods
-  virtual mozilla::css::StyleRule* GetInlineStyleRule() override;
-  virtual nsresult SetInlineStyleRule(mozilla::css::StyleRule* aStyleRule,
-                                      const nsAString* aSerialized,
-                                      bool aNotify) override;
+  // Element interface methods
+  virtual mozilla::css::Declaration* GetInlineStyleDeclaration() override;
+  virtual nsresult SetInlineStyleDeclaration(mozilla::css::Declaration* aDeclaration,
+                                             const nsAString* aSerialized,
+                                             bool aNotify) override;
 
   nsICSSDeclaration* Style();
 

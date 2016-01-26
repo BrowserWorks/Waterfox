@@ -17,7 +17,10 @@
 
 #include "AudioChannelFormat.h"
 #include "GrallocImages.h"
-#include <mozilla/Monitor.h>
+#include "LayersLogging.h"
+#include "libyuv.h"
+#include "mozilla/Monitor.h"
+#include "mozilla/gfx/2D.h"
 #include "mozilla/layers/GrallocTextureClient.h"
 
 using namespace mozilla;
@@ -27,6 +30,7 @@ using namespace mozilla::layers;
 #define INPUT_BUFFER_TIMEOUT_US (5 * 1000ll)
 // AMR NB kbps
 #define AMRNB_BITRATE 12200
+#define EVRC_BITRATE 8755
 
 #define CODEC_ERROR(args...)                                                   \
   do {                                                                         \
@@ -34,6 +38,8 @@ using namespace mozilla::layers;
   } while (0)
 
 namespace android {
+
+const char *MEDIA_MIMETYPE_AUDIO_EVRC = "audio/evrc";
 
 enum BufferState
 {
@@ -45,27 +51,32 @@ enum BufferState
 bool
 OMXCodecReservation::ReserveOMXCodec()
 {
-  if (!mManagerService.get()) {
-    sp<MediaResourceManagerClient::EventListener> listener = this;
-    mClient = new MediaResourceManagerClient(listener);
-
-    mManagerService = mClient->getMediaResourceManagerService();
-    if (!mManagerService.get()) {
-      mClient = nullptr;
-      return true; // not really in use, but not usable
+  if (!mClient) {
+    mClient = new mozilla::MediaSystemResourceClient(mType);
+  } else {
+    if (mOwned) {
+      //CODEC_ERROR("OMX Reservation: (%d) already owned", (int) mType);
+      return true;
     }
+    //CODEC_ERROR("OMX Reservation: (%d) already NOT owned", (int) mType);
   }
-  return (mManagerService->requestMediaResource(mClient, mType, false) == OK); // don't wait
+  mOwned = mClient->AcquireSyncNoWait(); // don't wait if resource is not available
+  //CODEC_ERROR("OMX Reservation: (%d) Acquire was %s", (int) mType, mOwned ? "Successful" : "Failed");
+  return mOwned;
 }
 
 void
 OMXCodecReservation::ReleaseOMXCodec()
 {
-  if (!mManagerService.get() || !mClient.get()) {
+  if (!mClient) {
     return;
   }
-
-  mManagerService->cancelClient(mClient, mType);
+  //CODEC_ERROR("OMX Reservation: Releasing resource: (%d) %s", (int) mType, mOwned ? "Owned" : "Not owned");
+  if (mOwned) {
+    mClient->ReleaseResource();
+    mClient = nullptr;
+    mOwned = false;
+  }
 }
 
 OMXAudioEncoder*
@@ -88,6 +99,16 @@ OMXCodecWrapper::CreateAMRNBEncoder()
   return amr.forget();
 }
 
+OMXAudioEncoder*
+OMXCodecWrapper::CreateEVRCEncoder()
+{
+  nsAutoPtr<OMXAudioEncoder> evrc(new OMXAudioEncoder(CodecType::EVRC_ENC));
+  // Return the object only when media codec is valid.
+  NS_ENSURE_TRUE(evrc->IsValid(), nullptr);
+
+  return evrc.forget();
+}
+
 OMXVideoEncoder*
 OMXCodecWrapper::CreateAVCEncoder()
 {
@@ -102,6 +123,7 @@ OMXCodecWrapper::OMXCodecWrapper(CodecType aCodecType)
   : mCodecType(aCodecType)
   , mStarted(false)
   , mAMRCSDProvided(false)
+  , mEVRCCSDProvided(false)
 {
   ProcessState::self()->startThreadPool();
 
@@ -114,6 +136,8 @@ OMXCodecWrapper::OMXCodecWrapper(CodecType aCodecType)
     mCodec = MediaCodec::CreateByType(mLooper, MEDIA_MIMETYPE_AUDIO_AMR_NB, true);
   } else if (aCodecType == CodecType::AAC_ENC) {
     mCodec = MediaCodec::CreateByType(mLooper, MEDIA_MIMETYPE_AUDIO_AAC, true);
+  } else if (aCodecType == CodecType::EVRC_ENC) {
+    mCodec = MediaCodec::CreateByType(mLooper, MEDIA_MIMETYPE_AUDIO_EVRC, true);
   } else {
     NS_ERROR("Unknown codec type.");
   }
@@ -386,9 +410,70 @@ ConvertGrallocImageToNV12(GrallocImage* aSource, uint8_t* aDestination)
   graphicBuffer->unlock();
 }
 
+static nsresult
+ConvertSourceSurfaceToNV12(const RefPtr<SourceSurface>& aSurface, uint8_t* aDestination)
+{
+  uint32_t width = aSurface->GetSize().width;
+  uint32_t height = aSurface->GetSize().height;
+
+  uint8_t* y = aDestination;
+  int yStride = width;
+
+  uint8_t* uv = y + (yStride * height);
+  int uvStride = width / 2;
+
+  SurfaceFormat format = aSurface->GetFormat();
+
+  if (!aSurface) {
+    CODEC_ERROR("Getting surface %s from image failed", Stringify(format).c_str());
+    return NS_ERROR_FAILURE;
+  }
+
+  RefPtr<DataSourceSurface> data = aSurface->GetDataSurface();
+  if (!data) {
+    CODEC_ERROR("Getting data surface from %s image with %s (%s) surface failed",
+                Stringify(format).c_str(), Stringify(aSurface->GetType()).c_str(),
+                Stringify(aSurface->GetFormat()).c_str());
+    return NS_ERROR_FAILURE;
+  }
+
+  DataSourceSurface::ScopedMap map(data, DataSourceSurface::READ);
+  if (!map.IsMapped()) {
+    CODEC_ERROR("Reading DataSourceSurface from %s image with %s (%s) surface failed",
+                Stringify(format).c_str(), Stringify(aSurface->GetType()).c_str(),
+                Stringify(aSurface->GetFormat()).c_str());
+    return NS_ERROR_FAILURE;
+  }
+
+  int rv;
+  switch (aSurface->GetFormat()) {
+    case SurfaceFormat::B8G8R8A8:
+    case SurfaceFormat::B8G8R8X8:
+      rv = libyuv::ARGBToNV12(static_cast<uint8*>(map.GetData()),
+                              map.GetStride(),
+                              y, yStride,
+                              uv, uvStride,
+                              width, height);
+      break;
+    default:
+      CODEC_ERROR("Unsupported SourceSurface format %s",
+                  Stringify(aSurface->GetFormat()).c_str());
+      NS_ASSERTION(false, "Unsupported SourceSurface format");
+      return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  if (rv != 0) {
+    CODEC_ERROR("%s to I420 conversion failed",
+                Stringify(aSurface->GetFormat()).c_str());
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
 nsresult
 OMXVideoEncoder::Encode(const Image* aImage, int aWidth, int aHeight,
-                        int64_t aTimestamp, int aInputFlags)
+                        int64_t aTimestamp, int aInputFlags, bool* aSendEOS)
 {
   MOZ_ASSERT(mStarted, "Configure() should be called before Encode().");
 
@@ -416,9 +501,10 @@ OMXVideoEncoder::Encode(const Image* aImage, int aWidth, int aHeight,
                      halFormat == GrallocImage::HAL_PIXEL_FORMAT_YCbCr_420_SP_VENUS,
                      NS_ERROR_INVALID_ARG);
     } else {
-      // TODO: support RGB to YUV color conversion.
-      NS_ERROR("Unsupported input image type.");
-      return NS_ERROR_INVALID_ARG;
+      RefPtr<SourceSurface> surface = img->GetAsSourceSurface();
+      NS_ENSURE_TRUE(surface->GetFormat() == SurfaceFormat::B8G8R8A8 ||
+                     surface->GetFormat() == SurfaceFormat::B8G8R8X8,
+                     NS_ERROR_INVALID_ARG);
     }
   }
 
@@ -456,12 +542,22 @@ OMXVideoEncoder::Encode(const Image* aImage, int aWidth, int aHeight,
     } else if (format == ImageFormat::PLANAR_YCBCR) {
       ConvertPlanarYCbCrToNV12(static_cast<PlanarYCbCrImage*>(img)->GetData(),
                                dst);
+    } else {
+      RefPtr<SourceSurface> surface = img->GetAsSourceSurface();
+      nsresult rv = ConvertSourceSurfaceToNV12(surface, dst);
+
+      if (rv != NS_OK) {
+        return NS_ERROR_FAILURE;
+      }
     }
   }
 
   // Queue this input buffer.
   result = mCodec->queueInputBuffer(index, 0, dstSize, aTimestamp, aInputFlags);
 
+  if (aSendEOS && (aInputFlags & BUFFER_EOS) && result == OK) {
+    *aSendEOS = true;
+  }
   return result == OK ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -563,6 +659,10 @@ OMXAudioEncoder::Configure(int aChannels, int aInputSampleRate,
   } else if (mCodecType == AMR_NB_ENC) {
     format->setString("mime", MEDIA_MIMETYPE_AUDIO_AMR_NB);
     format->setInt32("bitrate", AMRNB_BITRATE);
+    format->setInt32("sample-rate", aEncodedSampleRate);
+  } else if (mCodecType == EVRC_ENC) {
+    format->setString("mime", MEDIA_MIMETYPE_AUDIO_EVRC);
+    format->setInt32("bitrate", EVRC_BITRATE);
     format->setInt32("sample-rate", aEncodedSampleRate);
   } else {
     MOZ_ASSERT(false, "Can't support this codec type!!");
@@ -705,7 +805,7 @@ public:
 private:
   uint8_t* GetPointer() { return mData + mOffset; }
 
-  const size_t AvailableSize() { return mCapicity - mOffset; }
+  size_t AvailableSize() const { return mCapicity - mOffset; }
 
   void IncreaseOffset(size_t aValue)
   {
@@ -714,12 +814,12 @@ private:
     mOffset += aValue;
   }
 
-  bool IsEmpty()
+  bool IsEmpty() const
   {
     return (mOffset == 0);
   }
 
-  const size_t GetCapacity()
+  size_t GetCapacity() const
   {
     return mCapicity;
   }
@@ -828,7 +928,8 @@ OMXAudioEncoder::~OMXAudioEncoder()
 }
 
 nsresult
-OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags)
+OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags,
+                        bool* aSendEOS)
 {
 #ifndef MOZ_SAMPLE_TYPE_S16
 #error MediaCodec accepts only 16-bit PCM data.
@@ -883,7 +984,9 @@ OMXAudioEncoder::Encode(AudioSegment& aSegment, int aInputFlags)
   }
   result = buffer.Enqueue(mTimestamp, flags);
   NS_ENSURE_TRUE(result == OK, NS_ERROR_FAILURE);
-
+  if (aSendEOS && (aInputFlags & BUFFER_EOS)) {
+    *aSendEOS = true;
+  }
   return NS_OK;
 }
 
@@ -986,7 +1089,7 @@ OMXCodecWrapper::GetNextEncodedFrame(nsTArray<uint8_t>* aOutputBuf,
       }
     } else if ((mCodecType == AMR_NB_ENC) && !mAMRCSDProvided){
       // OMX AMR codec won't provide csd data, need to generate a fake one.
-      nsRefPtr<EncodedFrame> audiodata = new EncodedFrame();
+      RefPtr<EncodedFrame> audiodata = new EncodedFrame();
       // Decoder config descriptor
       const uint8_t decConfig[] = {
         0x0, 0x0, 0x0, 0x0, // vendor: 4 bytes
@@ -998,6 +1101,18 @@ OMXCodecWrapper::GetNextEncodedFrame(nsTArray<uint8_t>* aOutputBuf,
       aOutputBuf->AppendElements(decConfig, sizeof(decConfig));
       outFlags |= MediaCodec::BUFFER_FLAG_CODECCONFIG;
       mAMRCSDProvided = true;
+    } else if ((mCodecType == EVRC_ENC) && !mEVRCCSDProvided){
+      // OMX EVRC codec won't provide csd data, need to generate a fake one.
+      RefPtr<EncodedFrame> audiodata = new EncodedFrame();
+      // Decoder config descriptor
+      const uint8_t decConfig[] = {
+        0x0, 0x0, 0x0, 0x0, // vendor: 4 bytes
+        0x0,                // decoder version
+        0x01,               // frames per sample
+      };
+      aOutputBuf->AppendElements(decConfig, sizeof(decConfig));
+      outFlags |= MediaCodec::BUFFER_FLAG_CODECCONFIG;
+      mEVRCCSDProvided = true;
     } else {
       AppendFrame(aOutputBuf, omxBuf->data(), omxBuf->size());
     }

@@ -17,11 +17,16 @@
     return navigator.serviceWorker.register("worker_update.js", { scope: "workerUpdate/" });
   }
 
+  var registration;
   function waitForMessages(sw) {
+    registration = sw;
     var p = new Promise(function(resolve, reject) {
       window.onmessage = function(e) {
         if (e.data === "FINISH") {
           ok(true, "The worker has updated itself");
+          resolve();
+        } else if (e.data === "FAIL") {
+          ok(false, "The worker failed to update itself");
           resolve();
         }
       }
@@ -38,6 +43,8 @@
     simpleRegister().then(waitForMessages).catch(function(e) {
       ok(false, "Something went wrong.");
     }).then(function() {
+      return registration.unregister();
+    }).then(function() {
       SimpleTest.finish();
     });
   }
@@ -45,6 +52,7 @@
   SimpleTest.waitForExplicitFinish();
   SpecialPowers.pushPrefEnv({"set": [
     ["dom.serviceWorkers.exemptFromPerDomainMax", true],
+    ["dom.serviceWorkers.interception.enabled", true],
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true]
   ]}, runTest);

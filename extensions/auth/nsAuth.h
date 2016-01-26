@@ -12,9 +12,8 @@ enum pType {
      PACKAGE_TYPE_NTLM
 };
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#if defined( PR_LOGGING )
 //
 // in order to do logging, the following environment variables need to be set:
 // 
@@ -23,9 +22,6 @@ enum pType {
 //
 extern PRLogModuleInfo* gNegotiateLog;
 
-#define LOG(args) PR_LOG(gNegotiateLog, PR_LOG_DEBUG, args)
-#else
-#define LOG(args)
-#endif
+#define LOG(args) MOZ_LOG(gNegotiateLog, mozilla::LogLevel::Debug, args)
 
 #endif /* !defined( nsAuth_h__ ) */

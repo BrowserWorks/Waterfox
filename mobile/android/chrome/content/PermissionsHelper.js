@@ -8,37 +8,37 @@ var PermissionsHelper = {
                     "offline-app", "desktop-notification", "plugins", "native-intent"],
   _permissionStrings: {
     "password": {
-      label: "password.savePassword",
+      label: "password.logins",
       allowed: "password.save",
       denied: "password.dontSave"
     },
     "geolocation": {
-      label: "geolocation.shareLocation",
+      label: "geolocation.location",
       allowed: "geolocation.allow",
       denied: "geolocation.dontAllow"
     },
     "popup": {
-      label: "blockPopups.label",
+      label: "blockPopups.label2",
       allowed: "popup.show",
       denied: "popup.dontShow"
     },
     "indexedDB": {
-      label: "offlineApps.storeOfflineData",
+      label: "offlineApps.offlineData",
       allowed: "offlineApps.allow",
       denied: "offlineApps.dontAllow2"
     },
     "offline-app": {
-      label: "offlineApps.storeOfflineData",
+      label: "offlineApps.offlineData",
       allowed: "offlineApps.allow",
       denied: "offlineApps.dontAllow2"
     },
     "desktop-notification": {
-      label: "desktopNotification.useNotifications",
-      allowed: "desktopNotification.allow",
-      denied: "desktopNotification.dontAllow"
+      label: "desktopNotification.notifications",
+      allowed: "desktopNotification2.allow",
+      denied: "desktopNotification2.dontAllow"
     },
     "plugins": {
-      label: "clickToPlayPlugins.activatePlugins",
+      label: "clickToPlayPlugins.plugins",
       allowed: "clickToPlayPlugins.activate",
       denied: "clickToPlayPlugins.dontActivate"
     },
@@ -51,8 +51,11 @@ var PermissionsHelper = {
 
   observe: function observe(aSubject, aTopic, aData) {
     let uri = BrowserApp.selectedBrowser.currentURI;
+    let check = false;
 
     switch (aTopic) {
+      case "Permissions:Check":
+        check = true;
       case "Permissions:Get":
         let permissions = [];
         for (let i = 0; i < this._permissonTypes.length; i++) {
@@ -63,6 +66,13 @@ var PermissionsHelper = {
           if (value == Services.perms.UNKNOWN_ACTION)
             continue;
 
+          if (check) {
+            Messaging.sendRequest({
+              type: "Permissions:CheckResult",
+              hasPermissions: true
+            });
+            return;
+          }
           // Get the strings that correspond to the permission type
           let typeStrings = this._permissionStrings[type];
           let label = Strings.browser.GetStringFromName(typeStrings["label"]);
@@ -79,18 +89,19 @@ var PermissionsHelper = {
           });
         }
 
+        if (check) {
+          Messaging.sendRequest({
+            type: "Permissions:CheckResult",
+            hasPermissions: false
+          });
+          return;
+        }
+
         // Keep track of permissions, so we know which ones to clear
         this._currentPermissions = permissions;
 
-        let host;
-        try {
-          host = uri.host;
-        } catch(e) {
-          host = uri.spec;
-        }
         Messaging.sendRequest({
           type: "Permissions:Data",
-          host: host,
           permissions: permissions
         });
         break;
@@ -161,7 +172,7 @@ var PermissionsHelper = {
       // Re-set login saving to enabled
       Services.logins.setLoginSavingEnabled(aURI.prePath, true);
     } else {
-      Services.perms.remove(aURI.host, aType);
+      Services.perms.remove(aURI, aType);
       // Clear content prefs set in ContentPermissionPrompt.js
       Cc["@mozilla.org/content-pref/service;1"]
         .getService(Ci.nsIContentPrefService2)

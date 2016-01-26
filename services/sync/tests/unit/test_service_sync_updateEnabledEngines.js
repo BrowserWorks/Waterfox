@@ -41,13 +41,15 @@ function StirlingEngine() {
 StirlingEngine.prototype = {
   __proto__: SteamEngine.prototype,
   // This engine's enabled state is the same as the SteamEngine's.
-  get prefName() "steam"
+  get prefName() {
+    return "steam";
+  }
 };
 Service.engineManager.register(StirlingEngine);
 
 // Tracking info/collections.
-let collectionsHelper = track_collections_helper();
-let upd = collectionsHelper.with_updated_collection;
+var collectionsHelper = track_collections_helper();
+var upd = collectionsHelper.with_updated_collection;
 
 function sync_httpd_setup(handlers) {
 

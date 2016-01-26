@@ -88,7 +88,7 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
     {
     public:
         explicit ModuleEntry(JSContext* aCx)
-          : mozilla::Module(), obj(aCx, nullptr), thisObjectKey(aCx, nullptr)
+          : mozilla::Module(), obj(JS_GetRuntime(aCx)), thisObjectKey(JS_GetRuntime(aCx))
         {
             mVersion = mozilla::Module::kVersion;
             mCIDs = nullptr;
@@ -112,6 +112,9 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                 mozilla::AutoJSContext cx;
                 JSAutoCompartment ac(cx, obj);
 
+                if (JS_HasExtensibleLexicalScope(obj)) {
+                    JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalScope(obj));
+                }
                 JS_SetAllNonReservedSlotsToUndefined(cx, obj);
                 obj = nullptr;
                 thisObjectKey = nullptr;
@@ -145,7 +148,6 @@ class mozJSComponentLoader : public mozilla::ModuleLoader,
                                                 mozilla::MallocSizeOf aMallocSizeOf, void* arg);
 
     // Modules are intentionally leaked, but still cleared.
-    static PLDHashOperator ClearModules(const nsACString& key, ModuleEntry*& entry, void* cx);
     nsDataHashtable<nsCStringHashKey, ModuleEntry*> mModules;
 
     nsClassHashtable<nsCStringHashKey, ModuleEntry> mImports;

@@ -7,7 +7,6 @@
 #ifndef TABMESSAGE_UTILS_H
 #define TABMESSAGE_UTILS_H
 
-#include "AudioChannelCommon.h"
 #include "ipc/IPCMessageUtils.h"
 #include "mozilla/dom/AudioChannelBinding.h"
 #include "nsIDOMEvent.h"
@@ -35,8 +34,8 @@ typedef CrashReporter::ThreadId NativeThreadId;
 typedef int32_t NativeThreadId;
 #endif
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 namespace IPC {
 
@@ -65,16 +64,19 @@ struct ParamTraits<mozilla::dom::AudioChannel>
 {
   typedef mozilla::dom::AudioChannel paramType;
 
-  static bool IsLegalValue(const paramType &aValue) {
+  static bool IsLegalValue(const paramType &aValue)
+  {
     return aValue <= mozilla::dom::AudioChannel::Publicnotification;
   }
 
-  static void Write(Message* aMsg, const paramType& aValue) {
+  static void Write(Message* aMsg, const paramType& aValue)
+  {
     MOZ_ASSERT(IsLegalValue(aValue));
     WriteParam(aMsg, (uint32_t)aValue);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult) {
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
     uint32_t value;
     if(!ReadParam(aMsg, aIter, &value) ||
        !IsLegalValue(paramType(value))) {
@@ -85,18 +87,23 @@ struct ParamTraits<mozilla::dom::AudioChannel>
   }
 
   static void Log(const paramType& aParam, std::wstring* aLog)
-  {
-  }
+  {}
 };
 
 template <>
-struct ParamTraits<mozilla::dom::AudioChannelState>
-  : public ContiguousEnumSerializer<mozilla::dom::AudioChannelState,
-                                    mozilla::dom::AUDIO_CHANNEL_STATE_NORMAL,
-                                    mozilla::dom::AUDIO_CHANNEL_STATE_LAST>
-{ };
+struct ParamTraits<nsEventStatus>
+  : public ContiguousEnumSerializer<nsEventStatus,
+                                    nsEventStatus_eIgnore,
+                                    nsEventStatus_eSentinel>
+{};
 
-}
+template<>
+struct ParamTraits<nsSizeMode>
+  : public ContiguousEnumSerializer<nsSizeMode,
+                                    nsSizeMode_Normal,
+                                    nsSizeMode_Invalid>
+{};
 
+} // namespace IPC
 
-#endif
+#endif // TABMESSAGE_UTILS_H

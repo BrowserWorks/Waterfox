@@ -13,6 +13,7 @@
 #include "nsILoadContext.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIInterfaceRequestor.h"
+#include "nsNetUtil.h"
 
 namespace mozilla {
 namespace net {
@@ -47,7 +48,7 @@ public:
   NS_IMETHOD GetIsChannelPrivate(bool *aResult)
   {
       NS_ENSURE_ARG_POINTER(aResult);
-      *aResult = NS_UsePrivateBrowsing(static_cast<Channel*>(this));
+      *aResult = mPrivateBrowsing;
       return NS_OK;
   }
 
@@ -60,6 +61,21 @@ public:
           *aValue = mPrivateBrowsing;
       }
       return NS_OK;
+  }
+
+  // Must be called every time the channel's callbacks or loadGroup is updated
+  void UpdatePrivateBrowsing()
+  {
+      // once marked as private we never go un-private
+      if (mPrivateBrowsing) {
+          return;
+      }
+
+      nsCOMPtr<nsILoadContext> loadContext;
+      NS_QueryNotificationCallbacks(static_cast<Channel*>(this), loadContext);
+      if (loadContext) {
+          mPrivateBrowsing = loadContext->UsePrivateBrowsing();
+      }
   }
 
   bool CanSetCallbacks(nsIInterfaceRequestor* aCallbacks) const
@@ -98,8 +114,8 @@ protected:
   bool mPrivateBrowsing;
 };
 
-}
-}
+} // namespace net
+} // namespace mozilla
 
 #endif
 

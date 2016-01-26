@@ -55,7 +55,7 @@ HTMLContentElement::BindToTree(nsIDocument* aDocument,
                                nsIContent* aBindingParent,
                                bool aCompileEventHandlers)
 {
-  nsRefPtr<ShadowRoot> oldContainingShadow = GetContainingShadow();
+  RefPtr<ShadowRoot> oldContainingShadow = GetContainingShadow();
 
   nsresult rv = nsGenericHTMLElement::BindToTree(aDocument, aParent,
                                                  aBindingParent,
@@ -86,7 +86,7 @@ HTMLContentElement::BindToTree(nsIDocument* aDocument,
 void
 HTMLContentElement::UnbindFromTree(bool aDeep, bool aNullParent)
 {
-  nsRefPtr<ShadowRoot> oldContainingShadow = GetContainingShadow();
+  RefPtr<ShadowRoot> oldContainingShadow = GetContainingShadow();
 
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 
@@ -293,14 +293,16 @@ HTMLContentElement::Match(nsIContent* aContent)
 already_AddRefed<DistributedContentList>
 HTMLContentElement::GetDistributedNodes()
 {
-  nsRefPtr<DistributedContentList> list = new DistributedContentList(this);
+  RefPtr<DistributedContentList> list = new DistributedContentList(this);
   return list.forget();
 }
 
-NS_IMPL_CYCLE_COLLECTION(DistributedContentList, mParent, mDistributedNodes)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(DistributedContentList, mParent,
+                                      mDistributedNodes)
 
 NS_INTERFACE_TABLE_HEAD(DistributedContentList)
-  NS_INTERFACE_TABLE(DistributedContentList, nsINodeList)
+  NS_WRAPPERCACHE_INTERFACE_TABLE_ENTRY
+  NS_INTERFACE_TABLE(DistributedContentList, nsINodeList, nsIDOMNodeList)
   NS_INTERFACE_TABLE_TO_MAP_SEGUE_CYCLE_COLLECTION(DistributedContentList)
 NS_INTERFACE_MAP_END
 

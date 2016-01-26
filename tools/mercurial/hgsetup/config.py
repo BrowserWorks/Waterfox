@@ -12,49 +12,57 @@ import os
 
 HOST_FINGERPRINTS = {
     'bitbucket.org': '46:de:34:e7:9b:18:cd:7f:ae:fd:8b:e3:bc:f4:1a:5e:38:d7:ac:24',
-    'bugzilla.mozilla.org': '47:13:a2:14:0c:46:45:53:12:0d:e5:36:16:a5:60:26:3e:da:3a:60',
+    'bugzilla.mozilla.org': '7c:7a:c4:6c:91:3b:6b:89:cf:f2:8c:13:b8:02:c4:25:bd:1e:25:17',
     'hg.mozilla.org': 'af:27:b9:34:47:4e:e5:98:01:f6:83:2b:51:c9:aa:d8:df:fb:1a:27',
 }
 
 
-class HgIncludeException(Exception):
-    pass
+def config_file(files):
+    """Select the most appropriate config file from a list."""
+    if not files:
+        return None
+
+    if len(files) > 1:
+        picky = [(os.path.getsize(f), f) for f in files if os.path.isfile(f)]
+        if picky:
+            return max(picky)[1]
+
+    return files[0]
+
+
+class ParseException(Exception):
+    def __init__(self, line, msg):
+        self.line = line
+        super(Exception, self).__init__(msg)
 
 
 class MercurialConfig(object):
     """Interface for manipulating a Mercurial config file."""
 
-    def __init__(self, infiles=None):
+    def __init__(self, path=None):
         """Create a new instance, optionally from an existing hgrc file."""
 
-        if infiles:
-            # If multiple files were specified, figure out which file we're using:
-            if len(infiles) > 1:
-                picky_infiles = filter(os.path.isfile, infiles)
-                if picky_infiles:
-                    picky_infiles = [(os.path.getsize(path), path) for path in picky_infiles]
-                    infiles = [max(picky_infiles)[1]]
-
-            infile = infiles[0]
-            self.config_path = infile
-        else:
-            infile = None
+        self.config_path = path
 
         # Mercurial configuration files allow an %include directive to include
         # other files, this is not supported by ConfigObj, so throw a useful
         # error saying this.
-        if os.path.exists(infile):
-            with codecs.open(infile, 'r', encoding='utf-8') as f:
-                for line in f:
+        if os.path.exists(path):
+            with codecs.open(path, 'r', encoding='utf-8') as f:
+                for i, line in enumerate(f):
                     if line.startswith('%include'):
-                        raise HgIncludeException(
+                        raise ParseException(i + 1,
                             '%include directive is not supported by MercurialConfig')
+                    if line.startswith(';'):
+                        raise ParseException(i + 1,
+                            'semicolon (;) comments are not supported; '
+                            'use # instead')
 
         # write_empty_values is necessary to prevent built-in extensions (which
         # have no value) from being dropped on write.
         # list_values aren't needed by Mercurial and disabling them prevents
         # quotes from being added.
-        self._c = ConfigObj(infile=infile, encoding='utf-8',
+        self._c = ConfigObj(infile=path, encoding='utf-8',
             write_empty_values=True, list_values=False)
 
     @property
@@ -175,14 +183,81 @@ class MercurialConfig(object):
 
     def get_bugzilla_credentials(self):
         if 'bugzilla' not in self._c:
-            return None, None
+            return None, None, None, None, None
 
         b = self._c['bugzilla']
-        return b.get('username', None), b.get('password', None)
+        return (
+            b.get('username', None),
+            b.get('password', None),
+            b.get('userid', None),
+            b.get('cookie', None),
+            b.get('apikey', None),
+        )
 
-    def set_bugzilla_credentials(self, username, password):
+    def set_bugzilla_credentials(self, username, api_key):
         b = self._c.setdefault('bugzilla', {})
         if username:
             b['username'] = username
-        if password:
-            b['password'] = password
+        if api_key:
+            b['apikey'] = api_key
+
+    def clear_legacy_bugzilla_credentials(self):
+        if 'bugzilla' not in self._c:
+            return
+
+        b = self._c['bugzilla']
+        for k in ('password', 'userid', 'cookie'):
+            if k in b:
+                del b[k]
+
+    def have_clonebundles(self):
+        return 'clonebundles' in self._c.get('experimental', {})
+
+    def activate_clonebundles(self):
+        exp = self._c.setdefault('experimental', {})
+        exp['clonebundles'] = 'true'
+
+        # bundleclone is redundant with clonebundles. Remove it if it
+        # is installed.
+        ext = self._c.get('extensions', {})
+        try:
+            del ext['bundleclone']
+        except KeyError:
+            pass
+
+    def have_wip(self):
+        return 'wip' in self._c.get('alias', {})
+
+    def install_wip_alias(self):
+        """hg wip shows a concise view of work in progress."""
+        alias = self._c.setdefault('alias', {})
+        alias['wip'] = 'log --graph --rev=wip --template=wip'
+
+        revsetalias = self._c.setdefault('revsetalias', {})
+        revsetalias['wip'] = ('('
+                'parents(not public()) '
+                'or not public() '
+                'or . '
+                'or (head() and branch(default))'
+            ') and (not obsolete() or unstable()^) '
+            'and not closed()')
+
+        templates = self._c.setdefault('templates', {})
+        templates['wip'] = ("'"
+            # prefix with branch name
+            '{label("log.branch", branches)} '
+            # rev:node
+            '{label("changeset.{phase}", rev)}'
+            '{label("changeset.{phase}", ":")}'
+            '{label("changeset.{phase}", short(node))} '
+            # just the username part of the author, for brevity
+            '{label("grep.user", author|user)}'
+            # tags and bookmarks
+            '{label("log.tag", if(tags," {tags}"))}'
+            '{label("log.tag", if(fxheads," {fxheads}"))} '
+            '{label("log.bookmark", if(bookmarks," {bookmarks}"))}'
+            '\\n'
+            # first line of commit message
+            '{label(ifcontains(rev, revset("."), "desc.here"),desc|firstline)}'
+            "'"
+        )

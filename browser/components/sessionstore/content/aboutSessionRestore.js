@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -54,7 +54,7 @@ window.onload = function() {
 };
 
 function isTreeViewVisible() {
-  let tabList = document.getElementById("tabList");
+  let tabList = document.querySelector(".tree-container");
   return tabList.hasAttribute("available");
 }
 
@@ -70,14 +70,14 @@ function initTreeView() {
   gTreeData = [];
   gStateObject.windows.forEach(function(aWinData, aIx) {
     var winState = {
-      label: winLabel.replace("%S", (aIx + 1)),
+      label: aWinData.tabGroupsMigrationTitle || winLabel.replace("%S", (aIx + 1)),
       open: true,
       checked: true,
       ix: aIx
     };
     winState.tabs = aWinData.tabs.map(function(aTabData) {
       var entry = aTabData.entries[aTabData.index - 1] || { url: "about:blank" };
-      var iconURL = aTabData.attributes && aTabData.attributes.image || null;
+      var iconURL = aTabData.image || null;
       // don't initiate a connection just to fetch a favicon (see bug 462863)
       if (/^https?:/.test(iconURL))
         iconURL = "moz-anno:favicon:" + iconURL;
@@ -99,16 +99,20 @@ function initTreeView() {
 
 // User actions
 function updateTabListVisibility() {
-  let tabList = document.getElementById("tabList");
+  let tabList = document.querySelector(".tree-container");
+  let container = document.querySelector(".container");
   if (document.getElementById("radioRestoreChoose").checked) {
     tabList.setAttribute("available", "true");
+    container.classList.add("restore-chosen");
   } else {
     tabList.removeAttribute("available");
+    container.classList.remove("restore-chosen");
   }
   initTreeView();
 }
 
 function restoreSession() {
+  Services.obs.notifyObservers(null, "sessionstore-initiating-manual-restore", "");
   document.getElementById("errorTryAgain").disabled = true;
 
   if (isTreeViewVisible()) {

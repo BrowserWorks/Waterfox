@@ -59,7 +59,7 @@ protected:
 private:
   void (*mHandler)(nsLinkState);
   bool mRunNextTest;
-  nsRefPtr<Link> mDeathGrip;
+  RefPtr<Link> mDeathGrip;
 };
 
 NS_IMPL_ISUPPORTS(
@@ -117,18 +117,6 @@ Link::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   return 0;
 }
 
-void
-Link::URLSearchParamsUpdated(URLSearchParams* aSearchParams)
-{
-  NS_NOTREACHED("Unexpected call to Link::URLSearchParamsUpdated");
-}
-
-void
-Link::UpdateURLSearchParams()
-{
-  NS_NOTREACHED("Unexpected call to Link::UpdateURLSearchParams");
-}
-
 NS_IMPL_CYCLE_COLLECTION_CLASS(URLSearchParams)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(URLSearchParams)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -145,7 +133,8 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(URLSearchParams)
 NS_INTERFACE_MAP_END
 
 
-URLSearchParams::URLSearchParams()
+URLSearchParams::URLSearchParams(nsISupports* aParent,
+                                 URLSearchParamsObserver* aObserver)
 {
 }
 
@@ -160,22 +149,9 @@ URLSearchParams::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
-URLSearchParams::ParseInput(const nsACString& aInput,
-                            URLSearchParamsObserver* aObserver)
+URLSearchParams::ParseInput(const nsACString& aInput)
 {
   NS_NOTREACHED("Unexpected call to URLSearchParams::ParseInput");
-}
-
-void
-URLSearchParams::AddObserver(URLSearchParamsObserver* aObserver)
-{
-  NS_NOTREACHED("Unexpected call to URLSearchParams::SetObserver");
-}
-
-void
-URLSearchParams::RemoveObserver(URLSearchParamsObserver* aObserver)
-{
-  NS_NOTREACHED("Unexpected call to URLSearchParams::SetObserver");
 }
 
 void
@@ -234,9 +210,9 @@ URLSearchParams::DeleteAll()
 }
 
 void
-URLSearchParams::NotifyObservers(URLSearchParamsObserver* aExceptObserver)
+URLSearchParams::NotifyObserver()
 {
-  NS_NOTREACHED("Unexpected call to URLSearchParams::NotifyObservers");
+  NS_NOTREACHED("Unexpected call to URLSearchParams::NotifyObserver");
 }
 
 } // namespace dom

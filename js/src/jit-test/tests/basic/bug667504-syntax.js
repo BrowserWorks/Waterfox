@@ -1,3 +1,3 @@
-for (var x in x)
-let(x) {}
+for (var x in x) {
 function x() {}
+}

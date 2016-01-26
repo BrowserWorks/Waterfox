@@ -1,10 +1,10 @@
 var namespaces = {
-    "html":"http://www.w3.org/1999/xhtml",
-    "mathml":"http://www.w3.org/1998/Math/MathML",
-    "svg":"http://www.w3.org/2000/svg",
-    "xlink":"http://www.w3.org/1999/xlink",
-    "xml":"http://www.w3.org/XML/1998/namespace",
-    "xmlns":"http://www.w3.org/2000/xmlns/"
+  "html":"http://www.w3.org/1999/xhtml",
+  "mathml":"http://www.w3.org/1998/Math/MathML",
+  "svg":"http://www.w3.org/2000/svg",
+  "xlink":"http://www.w3.org/1999/xlink",
+  "xml":"http://www.w3.org/XML/1998/namespace",
+  "xmlns":"http://www.w3.org/2000/xmlns/"
 };
 
 var prefixes = {};
@@ -73,24 +73,24 @@ function test_serializer(element) {
         lines.push(format("|%s<%s>", indent_spaces, name));
 
         var attributes = Array.prototype.map.call(
-			   element.attributes,
-			   function(attr) {
-			     var name = (attr.namespaceURI ? prefixes[attr.namespaceURI] + " " : "") +
-					  attr.localName;
-			     return [name, attr.value];
-			   });
+         element.attributes,
+         function(attr) {
+           var name = (attr.namespaceURI ? prefixes[attr.namespaceURI] + " " : "") +
+            attr.localName;
+           return [name, attr.value];
+         });
         attributes.sort(function (a, b) {
-			  var x = a[0];
-			  var y = b[0];
-			  if (x === y) {
-	                    return 0;
-			  }
-			  return x > y ? 1 : -1;
-		        });
+                          var x = a[0];
+                          var y = b[0];
+                          if (x === y) {
+                            return 0;
+                          }
+                          return x > y ? 1 : -1;
+                        });
 
         attributes.forEach(
           function(attr) {
-	    var indent_spaces = (new Array(indent + 2)).join(" ");
+            var indent_spaces = (new Array(indent + 2)).join(" ");
             lines.push(format("|%s%s=\"%s\"", indent_spaces, attr[0], attr[1]));
           }
         );
@@ -127,18 +127,23 @@ function get_type() {
   return run_type;
 };
 
-var test_in_data_uri = get_test_func(function (iframe, uri_encoded_input) {
-                                       iframe.src = "data:text/html;charset=utf8," + uri_encoded_input;
+var test_in_blob_uri = get_test_func(function (iframe, uri_encoded_input, t) {
+                                       var b = new Blob([decodeURIComponent(uri_encoded_input)], { type: "text/html" });
+                                       var blobURL = URL.createObjectURL(b);
+                                       iframe.src = blobURL;
+                                       t.add_cleanup(function() {
+                                         URL.revokeObjectURL(blobURL);
+                                       });
                                      });
 
-var test_document_write = get_test_func(function(iframe, uri_encoded_input) {
+var test_document_write = get_test_func(function(iframe, uri_encoded_input, t) {
                                           iframe.contentDocument.open();
                                           var input = decodeURIComponent(uri_encoded_input);
                                           iframe.contentDocument.write(input);
                                           iframe.contentDocument.close();
                                         });
 
-var test_document_write_single = get_test_func(function(iframe, uri_encoded_input) {
+var test_document_write_single = get_test_func(function(iframe, uri_encoded_input, t) {
                                                  iframe.contentDocument.open();
                                                  var input = decodeURIComponent(uri_encoded_input);
                                                  for (var i=0; i< input.length; i++) {
@@ -166,7 +171,7 @@ function get_test_func(inject_func) {
              }
             );
     };
-    inject_func(iframe, uri_encoded_input);
+    inject_func(iframe, uri_encoded_input, t);
   }
   return test_func;
 }
@@ -248,7 +253,7 @@ function init_tests(test_type) {
   var test_funcs = {
     "write":test_document_write,
     "write_single":test_document_write_single,
-    "uri":test_in_data_uri,
+    "uri":test_in_blob_uri,
     "innerHTML":test_fragment
   };
   var tests_started = 0;

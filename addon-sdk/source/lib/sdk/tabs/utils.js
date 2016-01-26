@@ -11,13 +11,16 @@ module.metadata = {
 // NOTE: This file should only deal with xul/native tabs
 
 
-const { Ci } = require('chrome');
+const { Ci, Cu } = require('chrome');
 const { defer } = require("../lang/functional");
 const { windows, isBrowser } = require('../window/utils');
 const { isPrivateBrowsingSupported } = require('../self');
+const { ShimWaiver } = Cu.import("resource://gre/modules/ShimWaiver.jsm");
 
 // Bug 834961: ignore private windows when they are not supported
-function getWindows() windows(null, { includePrivate: isPrivateBrowsingSupported });
+function getWindows() {
+  return windows(null, { includePrivate: isPrivateBrowsingSupported });
+}
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -91,7 +94,7 @@ function getTabs(window) {
     return window.BrowserApp.tabs;
 
   // firefox - default
-  return Array.filter(getTabContainer(window).children, function(t) !t.closing);
+  return Array.filter(getTabContainer(window).children, t => !t.closing);
 }
 exports.getTabs = getTabs;
 
@@ -260,6 +263,16 @@ function getTabForContentWindow(window) {
 }
 exports.getTabForContentWindow = getTabForContentWindow;
 
+// only sdk/selection.js is relying on shims
+function getTabForContentWindowNoShim(window) {
+  function getTabContentWindowNoShim(tab) {
+    let browser = getBrowserForTab(tab);
+    return ShimWaiver.getProperty(browser, "contentWindow");
+  }
+  return getTabs().find(tab => getTabContentWindowNoShim(tab) === window.top) || null;
+}
+exports.getTabForContentWindowNoShim = getTabForContentWindowNoShim;
+
 function getTabURL(tab) {
   return String(getBrowserForTab(tab).currentURI.spec);
 }
@@ -321,7 +334,9 @@ function unpin(tab) {
 }
 exports.unpin = unpin;
 
-function isPinned(tab) !!tab.pinned
+function isPinned(tab) {
+  return !!tab.pinned;
+}
 exports.isPinned = isPinned;
 
 function reload(tab) {

@@ -45,7 +45,7 @@ AlarmHalService::GetInstance()
     ClearOnShutdown(&sSingleton);
   }
 
-  nsRefPtr<AlarmHalService> service = sSingleton.get();
+  RefPtr<AlarmHalService> service = sSingleton.get();
   return service.forget();
 }
 
@@ -116,6 +116,6 @@ AlarmHalService::Notify(const int64_t& aClockDeltaMS)
   mSystemClockChangedCb->OnSystemClockChanged(aClockDeltaMS);
 }
 
-} // alarm
-} // dom
-} // mozilla
+} // namespace alarm
+} // namespace dom
+} // namespace mozilla

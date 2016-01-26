@@ -6,7 +6,7 @@
 #ifndef nsContentSupportMap_h__
 #define nsContentSupportMap_h__
 
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "nsTemplateMatch.h"
 
 /**
@@ -21,15 +21,11 @@
  */
 class nsContentSupportMap {
 public:
-    nsContentSupportMap() { Init(); }
-    ~nsContentSupportMap() { Finish(); }
+    nsContentSupportMap() : mMap(PLDHashTable::StubOps(), sizeof(Entry)) { }
+    ~nsContentSupportMap() { }
 
     nsresult Put(nsIContent* aElement, nsTemplateMatch* aMatch) {
-        if (!mMap.IsInitialized())
-            return NS_ERROR_NOT_INITIALIZED;
-
-        PLDHashEntryHdr* hdr =
-            PL_DHashTableAdd(&mMap, aElement, mozilla::fallible);
+        PLDHashEntryHdr* hdr = mMap.Add(aElement, mozilla::fallible);
         if (!hdr)
             return NS_ERROR_OUT_OF_MEMORY;
 
@@ -41,10 +37,7 @@ public:
     }
 
     bool Get(nsIContent* aElement, nsTemplateMatch** aMatch) {
-        if (!mMap.IsInitialized())
-            return false;
-
-        PLDHashEntryHdr* hdr = PL_DHashTableSearch(&mMap, aElement);
+        PLDHashEntryHdr* hdr = mMap.Search(aElement);
         if (!hdr)
             return false;
 
@@ -53,15 +46,12 @@ public:
         return true;
     }
 
-    nsresult Remove(nsIContent* aElement);
+    void Remove(nsIContent* aElement);
 
-    void Clear() { Finish(); Init(); }
+    void Clear() { mMap.Clear(); }
 
 protected:
     PLDHashTable mMap;
-
-    void Init();
-    void Finish();
 
     struct Entry : public PLDHashEntryHdr {
         nsIContent*      mContent;

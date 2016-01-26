@@ -27,6 +27,25 @@ const BACKOFF_MAX = 8 * 60 * 60 * 1000;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
+
+
+// Log only if browser.safebrowsing.debug is true
+function log(...stuff) {
+  let logging = null;
+  try {
+    logging = Services.prefs.getBoolPref("browser.safebrowsing.debug");
+  } catch(e) {
+    return;
+  }
+  if (!logging) {
+    return;
+  }
+
+  var d = new Date();
+  let msg = "hashcompleter: " + d.toTimeString() + ": " + stuff.join(" ");
+  dump(msg + "\n");
+}
 
 function HashCompleter() {
   // The current HashCompleterRequest in flight. Once it is started, it is set
@@ -219,13 +238,10 @@ HashCompleterRequest.prototype = {
     let loadFlags = Ci.nsIChannel.INHIBIT_CACHING |
                     Ci.nsIChannel.LOAD_BYPASS_CACHE;
 
-    let uri = Services.io.newURI(this.gethashUrl, null, null);
-    let channel = Services.io.newChannelFromURI2(uri,
-                                                 null,      // aLoadingNode
-                                                 Services.scriptSecurityManager.getSystemPrincipal(),
-                                                 null,      // aTriggeringPrincipal
-                                                 Ci.nsILoadInfo.SEC_NORMAL,
-                                                 Ci.nsIContentPolicy.TYPE_OTHER);
+    let channel = NetUtil.newChannel({
+      uri: this.gethashUrl,
+      loadUsingSystemPrincipal: true
+    });
     channel.loadFlags = loadFlags;
 
     // Disable keepalive.
@@ -244,7 +260,7 @@ HashCompleterRequest.prototype = {
     let timeout = Services.prefs.getIntPref(
       "urlclassifier.gethash.timeout_ms");
     this.timer_.initWithCallback(this, timeout, this.timer_.TYPE_ONE_SHOT);
-    channel.asyncOpen(this, null);
+    channel.asyncOpen2(this);
   },
 
   // Returns a string for the request body based on the contents of
@@ -275,6 +291,7 @@ HashCompleterRequest.prototype = {
     body = PARTIAL_LENGTH + ":" + (PARTIAL_LENGTH * prefixes.length) +
            "\n" + prefixes.join("");
 
+    log('Requesting completions for ' + prefixes.length + ' ' + PARTIAL_LENGTH + '-byte prefixes: ' + body);
     return body;
   },
 
@@ -299,6 +316,7 @@ HashCompleterRequest.prototype = {
       return;
     }
 
+    log('Response: ' + this._response);
     let start = 0;
 
     let length = this._response.length;
@@ -328,6 +346,7 @@ HashCompleterRequest.prototype = {
     let addChunk = parseInt(entries[1]);
     let dataLength = parseInt(entries[2]);
 
+    log('Response includes add chunks for ' + list + ': ' + addChunk);
     if (dataLength % COMPLETE_LENGTH != 0 ||
         dataLength == 0 ||
         dataLength > body.length - (newlineIndex + 1)) {
@@ -414,6 +433,7 @@ HashCompleterRequest.prototype = {
         aStatusCode = Cr.NS_ERROR_ABORT;
       }
     }
+    log('Received a ' + httpStatus + ' status code from the gethash server.');
 
     let success = Components.isSuccessCode(aStatusCode);
     // Notify the RequestBackoff once a response is received.

@@ -331,11 +331,13 @@ Type.BOOL = Type('bool')
 Type.INT = Type('int')
 Type.INT32 = Type('int32_t')
 Type.INTPTR = Type('intptr_t')
+Type.NSRESULT = Type('nsresult')
 Type.UINT32 = Type('uint32_t')
 Type.UINT32PTR = Type('uint32_t', ptr=1)
 Type.SIZE = Type('size_t')
 Type.VOID = Type('void')
 Type.VOIDPTR = Type('void', ptr=1)
+Type.AUTO = Type('auto')
 
 class TypeArray(Node):
     def __init__(self, basetype, nmemb):
@@ -365,12 +367,13 @@ class TypeUnion(Node):
         self.components.append(Decl(type, name))
 
 class Typedef(Node):
-    def __init__(self, fromtype, totypename):
+    def __init__(self, fromtype, totypename, templateargs=[]):
         assert isinstance(totypename, str)
         
         Node.__init__(self)
         self.fromtype = fromtype
         self.totypename = totypename
+        self.templateargs = templateargs
 
     def __cmp__(self, o):
         return cmp(self.totypename, o.totypename)

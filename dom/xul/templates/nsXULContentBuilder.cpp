@@ -34,7 +34,7 @@
 #include "nsTextNode.h"
 #include "mozilla/dom/Element.h"
 
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "rdf.h"
 
 using namespace mozilla;
@@ -348,9 +348,6 @@ NS_NewXULContentBuilder(nsISupports* aOuter, REFNSIID aIID, void** aResult)
 
     nsresult rv;
     nsXULContentBuilder* result = new nsXULContentBuilder();
-    if (!result)
-        return NS_ERROR_OUT_OF_MEMORY;
-
     NS_ADDREF(result); // stabilize
 
     rv = result->InitGlobals();
@@ -446,15 +443,15 @@ nsXULContentBuilder::BuildContentFromTemplate(nsIContent *aTemplateNode,
 
     nsresult rv;
 
-    if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
-        PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+    if (MOZ_LOG_TEST(gXULTemplateLog, LogLevel::Debug)) {
+        MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                ("nsXULContentBuilder::BuildContentFromTemplate (is unique: %d)",
                aIsUnique));
 
         nsAutoString id;
         aChild->GetId(id);
 
-        PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+        MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                ("Tags: [Template: %s  Resource: %s  Real: %s] for id %s",
                 nsAtomCString(aTemplateNode->NodeInfo()->NameAtom()).get(),
                 nsAtomCString(aResourceNode->NodeInfo()->NameAtom()).get(),
@@ -523,8 +520,8 @@ nsXULContentBuilder::BuildContentFromTemplate(nsIContent *aTemplateNode,
 
         nsIAtom *tag = tmplKid->NodeInfo()->NameAtom();
 
-        if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
-            PR_LOG(gXULTemplateLog, PR_LOG_DEBUG,
+        if (MOZ_LOG_TEST(gXULTemplateLog, LogLevel::Debug)) {
+            MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                    ("xultemplate[%p]     building %s %s %s",
                     this, nsAtomCString(tag).get(),
                     (isGenerationElement ? "[resource]" : ""),
@@ -618,7 +615,7 @@ nsXULContentBuilder::BuildContentFromTemplate(nsIContent *aTemplateNode,
                 rv = SubstituteText(aChild, attrValue, value);
                 if (NS_FAILED(rv)) return rv;
 
-                nsRefPtr<nsTextNode> content =
+                RefPtr<nsTextNode> content =
                   new nsTextNode(mRoot->NodeInfo()->NodeInfoManager());
 
                 content->SetText(value, false);
@@ -819,7 +816,7 @@ nsXULContentBuilder::AddPersistentAttributes(Element* aTemplateNode,
         nsCOMPtr<nsIAtom> tag;
         int32_t nameSpaceID;
 
-        nsRefPtr<mozilla::dom::NodeInfo> ni =
+        RefPtr<mozilla::dom::NodeInfo> ni =
             aTemplateNode->GetExistingAttrNameFromQName(attribute);
         if (ni) {
             tag = ni->NameAtom();
@@ -939,7 +936,7 @@ nsXULContentBuilder::CreateTemplateAndContainerContents(nsIContent* aElement,
     // and 2) recursive subcontent (if the current element refers to a
     // container result).
 
-    PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Info,
            ("nsXULContentBuilder::CreateTemplateAndContainerContents start - flags: %d",
             mFlags));
 
@@ -975,7 +972,7 @@ nsXULContentBuilder::CreateTemplateAndContainerContents(nsIContent* aElement,
                                     false, true);
     }
 
-    PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+    MOZ_LOG(gXULTemplateLog, LogLevel::Info,
            ("nsXULContentBuilder::CreateTemplateAndContainerContents end"));
 
     return NS_OK;
@@ -1073,10 +1070,10 @@ nsXULContentBuilder::CreateContainerContentsForQuerySet(nsIContent* aElement,
                                                         nsIContent** aContainer,
                                                         int32_t* aNewIndexInContainer)
 {
-    if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
+    if (MOZ_LOG_TEST(gXULTemplateLog, LogLevel::Debug)) {
         nsAutoString id;
         aResult->GetId(id);
-        PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
+        MOZ_LOG(gXULTemplateLog, LogLevel::Debug,
                ("nsXULContentBuilder::CreateContainerContentsForQuerySet start for ref %s\n",
                NS_ConvertUTF16toUTF8(id).get()));
     }
@@ -1354,7 +1351,7 @@ nsXULContentBuilder::CreateElement(int32_t aNameSpaceID,
     if (! doc)
         return NS_ERROR_NOT_INITIALIZED;
 
-    nsRefPtr<mozilla::dom::NodeInfo> nodeInfo =
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo =
         doc->NodeInfoManager()->GetNodeInfo(aTag, nullptr, aNameSpaceID,
                                             nsIDOMNode::ELEMENT_NODE);
 
@@ -1510,7 +1507,8 @@ nsXULContentBuilder::AttributeChanged(nsIDocument* aDocument,
                                       Element*     aElement,
                                       int32_t      aNameSpaceID,
                                       nsIAtom*     aAttribute,
-                                      int32_t      aModType)
+                                      int32_t      aModType,
+                                      const nsAttrValue* aOldValue)
 {
     nsCOMPtr<nsIMutationObserver> kungFuDeathGrip(this);
 
@@ -1536,7 +1534,7 @@ nsXULContentBuilder::AttributeChanged(nsIDocument* aDocument,
 
     // Pass along to the generic template builder.
     nsXULTemplateBuilder::AttributeChanged(aDocument, aElement, aNameSpaceID,
-                                           aAttribute, aModType);
+                                           aAttribute, aModType, aOldValue);
 }
 
 void

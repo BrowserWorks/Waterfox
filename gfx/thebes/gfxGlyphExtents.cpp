@@ -35,21 +35,24 @@ gfxGlyphExtents::~gfxGlyphExtents()
 }
 
 bool
-gfxGlyphExtents::GetTightGlyphExtentsAppUnits(gfxFont *aFont,
-    gfxContext *aContext, uint32_t aGlyphID, gfxRect *aExtents)
+gfxGlyphExtents::GetTightGlyphExtentsAppUnits(gfxFont* aFont,
+    DrawTarget* aDrawTarget, uint32_t aGlyphID, gfxRect* aExtents)
 {
     HashEntry *entry = mTightGlyphExtents.GetEntry(aGlyphID);
     if (!entry) {
-        if (!aContext) {
-            NS_WARNING("Could not get glyph extents (no aContext)");
+        // Some functions higher up in the call chain deliberately pass in a
+        // nullptr DrawTarget, e.g. GetBaselinePosition() passes nullptr to
+        // gfxTextRun::MeasureText() and that nullptr reaches here.
+        if (!aDrawTarget) {
+            NS_WARNING("Could not get glyph extents (no aDrawTarget)");
             return false;
         }
 
-        if (aFont->SetupCairoFont(aContext)) {
+        if (aFont->SetupCairoFont(aDrawTarget)) {
 #ifdef DEBUG_TEXT_RUN_STORAGE_METRICS
             ++gGlyphExtentsSetupLazyTight;
 #endif
-            aFont->SetupGlyphExtents(aContext, aGlyphID, true, this);
+            aFont->SetupGlyphExtents(aDrawTarget, aGlyphID, true, this);
             entry = mTightGlyphExtents.GetEntry(aGlyphID);
         }
         if (!entry) {
@@ -77,7 +80,7 @@ uint32_t
 gfxGlyphExtents::GlyphWidths::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
     uint32_t i;
-    uint32_t size = mBlocks.SizeOfExcludingThis(aMallocSizeOf);
+    uint32_t size = mBlocks.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (i = 0; i < mBlocks.Length(); ++i) {
         uintptr_t bits = mBlocks[i];
         if (bits && !(bits & 0x1)) {
@@ -141,7 +144,7 @@ size_t
 gfxGlyphExtents::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
     return mContainedGlyphWidths.SizeOfExcludingThis(aMallocSizeOf) +
-        mTightGlyphExtents.SizeOfExcludingThis(nullptr, aMallocSizeOf);
+        mTightGlyphExtents.ShallowSizeOfExcludingThis(aMallocSizeOf);
 }
 
 size_t

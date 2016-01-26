@@ -11,6 +11,7 @@
 #include "AbstractMediaDecoder.h"
 #include "AudioChannelService.h"
 #include "MediaStreamSource.h"
+#include "gfxPrefs.h"
 
 #ifdef MOZ_AUDIO_OFFLOAD
 #include <stagefright/Utils.h>
@@ -22,23 +23,19 @@ using namespace android;
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* gMediaDecoderLog;
-#define DECODER_LOG(type, msg) PR_LOG(gMediaDecoderLog, type, msg)
-#else
-#define DECODER_LOG(type, msg)
-#endif
+extern LazyLogModule gMediaDecoderLog;
+#define DECODER_LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
 
 MediaOmxCommonReader::MediaOmxCommonReader(AbstractMediaDecoder *aDecoder)
   : MediaDecoderReader(aDecoder)
+  , mStreamSource(nullptr)
 {
-#ifdef PR_LOGGING
-  if (!gMediaDecoderLog) {
-    gMediaDecoderLog = PR_NewLogModule("MediaDecoder");
-  }
-#endif
-
   mAudioChannel = dom::AudioChannelService::GetDefaultAudioChannel();
+}
+
+bool MediaOmxCommonReader::IsMonoAudioEnabled()
+{
+  return gfxPrefs::MonoAudio();
 }
 
 #ifdef MOZ_AUDIO_OFFLOAD
@@ -66,13 +63,14 @@ void MediaOmxCommonReader::CheckAudioOffload()
   // aren't supported and also duration would be less than a minute
   bool isTypeMusic = mAudioChannel == dom::AudioChannel::Content;
 
-  DECODER_LOG(PR_LOG_DEBUG, ("%s meta %p, no video %d, no streaming %d,"
+  DECODER_LOG(LogLevel::Debug, ("%s meta %p, no video %d, no streaming %d,"
       " channel type %d", __FUNCTION__, meta.get(), hasNoVideo,
       isNotStreaming, mAudioChannel));
 
   if ((meta.get()) && hasNoVideo && isNotStreaming && isTypeMusic &&
-      canOffloadStream(meta, false, false, AUDIO_STREAM_MUSIC)) {
-    DECODER_LOG(PR_LOG_DEBUG, ("Can offload this audio stream"));
+      canOffloadStream(meta, false, false, AUDIO_STREAM_MUSIC) &&
+      !IsMonoAudioEnabled()) {
+    DECODER_LOG(LogLevel::Debug, ("Can offload this audio stream"));
     mDecoder->SetPlatformCanOffloadAudio(true);
   }
 }

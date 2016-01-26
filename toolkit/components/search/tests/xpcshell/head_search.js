@@ -1,7 +1,7 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
@@ -20,6 +20,8 @@ const MODE_RDONLY = FileUtils.MODE_RDONLY;
 const MODE_WRONLY = FileUtils.MODE_WRONLY;
 const MODE_CREATE = FileUtils.MODE_CREATE;
 const MODE_TRUNCATE = FileUtils.MODE_TRUNCATE;
+
+const CACHE_FILENAME = "search.json.mozlz4";
 
 // nsSearchService.js uses Services.appinfo.name to build a salt for a hash.
 var XULRuntime = Components.classesByID["{95d89e3e-a169-41a3-8e56-719978e15b12}"]
@@ -72,6 +74,111 @@ function dumpn(text)
 }
 
 /**
+ * Configure preferences to load engines from
+ * chrome://testsearchplugin/locale/searchplugins/
+ */
+function configureToLoadJarEngines()
+{
+  let defaultBranch = Services.prefs.getDefaultBranch(null);
+
+  let url = "chrome://testsearchplugin/locale/searchplugins/";
+  let resProt = Services.io.getProtocolHandler("resource")
+                        .QueryInterface(Ci.nsIResProtocolHandler);
+  resProt.setSubstitution("search-plugins",
+                          Services.io.newURI(url, null, null));
+
+  // Ensure a test engine exists in the app dir anyway.
+  let dir = Services.dirsvc.get(NS_APP_SEARCH_DIR, Ci.nsIFile);
+  if (!dir.exists())
+    dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+  do_get_file("data/engine-app.xml").copyTo(dir, "app.xml");
+}
+
+/**
+ * Fake the installation of an add-on in the profile, by creating the
+ * directory and registering it with the directory service.
+ */
+function installAddonEngine(name = "engine-addon")
+{
+  const XRE_EXTENSIONS_DIR_LIST = "XREExtDL";
+  const gProfD = do_get_profile().QueryInterface(Ci.nsILocalFile);
+
+  let dir = gProfD.clone();
+  dir.append("extensions");
+  if (!dir.exists())
+    dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  dir.append("search-engine@tests.mozilla.org");
+  dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  do_get_file("data/install.rdf").copyTo(dir, "install.rdf");
+  let addonDir = dir.clone();
+  dir.append("searchplugins");
+  dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+  do_get_file("data/" + name + ".xml").copyTo(dir, "bug645970.xml");
+
+  Services.dirsvc.registerProvider({
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIDirectoryServiceProvider,
+                                           Ci.nsIDirectoryServiceProvider2]),
+
+    getFile: function (prop, persistant) {
+      throw Cr.NS_ERROR_FAILURE;
+    },
+
+    getFiles: function (prop) {
+      let result = [];
+
+      switch (prop) {
+      case XRE_EXTENSIONS_DIR_LIST:
+        result.push(addonDir);
+        break;
+      default:
+        throw Cr.NS_ERROR_FAILURE;
+      }
+
+      return {
+        QueryInterface: XPCOMUtils.generateQI([Ci.nsISimpleEnumerator]),
+        hasMoreElements: () => result.length > 0,
+        getNext: () => result.shift()
+      };
+    }
+  });
+}
+
+/**
+ * Copy the engine-distribution.xml engine to a fake distribution
+ * created in the profile, and registered with the directory service.
+ */
+function installDistributionEngine()
+{
+  const XRE_APP_DISTRIBUTION_DIR = "XREAppDist";
+
+  const gProfD = do_get_profile().QueryInterface(Ci.nsILocalFile);
+
+  let dir = gProfD.clone();
+  dir.append("distribution");
+  dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+  let distDir = dir.clone();
+
+  dir.append("searchplugins");
+  dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  dir.append("common");
+  dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  do_get_file("data/engine-override.xml").copyTo(dir, "bug645970.xml");
+
+  Services.dirsvc.registerProvider({
+    getFile: function(aProp, aPersistent) {
+      aPersistent.value = true;
+      if (aProp == XRE_APP_DISTRIBUTION_DIR)
+        return distDir.clone();
+      return null;
+    }
+  });
+}
+
+/**
  * Clean the profile of any metadata files left from a previous run.
  */
 function removeMetadata()
@@ -100,26 +207,61 @@ function getSearchMetadata()
   return readJSONFile(metadata);
 }
 
-function removeCacheFile()
-{
-  let file = gProfD.clone();
-  file.append("search.json");
-  if (file.exists()) {
-    file.remove(false);
-  }
+function promiseCacheData() {
+  return new Promise(resolve => Task.spawn(function* () {
+    let path = OS.Path.join(OS.Constants.Path.profileDir, CACHE_FILENAME);
+    let bytes = yield OS.File.read(path, {compression: "lz4"});
+    resolve(JSON.parse(new TextDecoder().decode(bytes)));
+  }));
 }
+
+function promiseEngineMetadata() {
+  return new Promise(resolve => Task.spawn(function* () {
+    let cache = yield promiseCacheData();
+    let data = {};
+    for (let engine of cache.engines) {
+      data[engine._shortName] = engine._metaData;
+    }
+    resolve(data);
+  }));
+}
+
+function promiseGlobalMetadata() {
+  return new Promise(resolve => Task.spawn(function* () {
+    let cache = yield promiseCacheData();
+    resolve(cache.metaData);
+  }));
+}
+
+function promiseSaveGlobalMetadata(globalData) {
+  return new Promise(resolve => Task.spawn(function* () {
+    let data = yield promiseCacheData();
+    data.metaData = globalData;
+    yield OS.File.writeAtomic(OS.Path.join(OS.Constants.Path.profileDir, CACHE_FILENAME),
+                              new TextEncoder().encode(JSON.stringify(data)),
+                              {compression: "lz4"});
+    resolve();
+  }));
+}
+
+var forceExpiration = Task.async(function* () {
+  let metadata = yield promiseGlobalMetadata();
+
+  // Make the current geodefaults expire 1s ago.
+  metadata.searchDefaultExpir = Date.now() - 1000;
+  yield promiseSaveGlobalMetadata(metadata);
+});
 
 /**
  * Clean the profile of any cache file left from a previous run.
  */
-function removeCache()
+function removeCacheFile()
 {
   let file = gProfD.clone();
-  file.append("search.json");
+  file.append(CACHE_FILENAME);
   if (file.exists()) {
     file.remove(false);
   }
-
 }
 
 /**
@@ -142,12 +284,20 @@ function isUSTimezone() {
   return UTCOffset >= 150 && UTCOffset <= 600;
 }
 
-/**
- * Waits for metadata being committed.
- * @return {Promise} Resolved when the metadata is committed to disk.
- */
-function promiseAfterCommit() {
-  return waitForSearchNotification("write-metadata-to-disk-complete");
+const kDefaultenginenamePref = "browser.search.defaultenginename";
+const kTestEngineName = "Test search engine";
+const kLocalePref = "general.useragent.locale";
+
+function getDefaultEngineName(isUS) {
+  const nsIPLS = Ci.nsIPrefLocalizedString;
+  // Copy the logic from nsSearchService
+  let pref = kDefaultenginenamePref;
+  if (isUS === undefined)
+    isUS = Services.prefs.getCharPref(kLocalePref) == "en-US" && isUSTimezone();
+  if (isUS) {
+    pref += ".US";
+  }
+  return Services.prefs.getComplexValue(pref, nsIPLS).data;
 }
 
 /**
@@ -208,13 +358,15 @@ if (!isChild) {
   Services.prefs.setIntPref("browser.search.geoip.timeout", 2000);
   // But still disable geoip lookups - tests that need it will re-configure this.
   Services.prefs.setCharPref("browser.search.geoip.url", "");
+  // Also disable region defaults - tests using it will also re-configure it.
+  Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF).setCharPref("geoSpecificDefaults.url", "");
 }
 
 /**
  * After useHttpServer() is called, this string contains the URL of the "data"
  * directory, including the final slash.
  */
-let gDataUrl;
+var gDataUrl;
 
 /**
  * Initializes the HTTP server and ensures that it is terminated when tests end.
@@ -240,13 +392,11 @@ function useHttpServer() {
  *        {
  *          name: Engine name, used to wait for it to be loaded.
  *          xmlFileName: Name of the XML file in the "data" folder.
- *          srcFileName: Name of the SRC file in the "data" folder.
- *          iconFileName: Name of the icon associated to the SRC file.
  *          details: Array containing the parameters of addEngineWithDetails,
  *                   except for the engine name.  Alternative to xmlFileName.
  *        }
  */
-let addTestEngines = Task.async(function* (aItems) {
+var addTestEngines = Task.async(function* (aItems) {
   if (!gDataUrl) {
     do_throw("useHttpServer must be called before addTestEngines.");
   }
@@ -274,11 +424,7 @@ let addTestEngines = Task.async(function* (aItems) {
 
       if (item.xmlFileName) {
         Services.search.addEngine(gDataUrl + item.xmlFileName,
-                                  Ci.nsISearchEngine.DATA_XML, null, false);
-      } else if (item.srcFileName) {
-        Services.search.addEngine(gDataUrl + item.srcFileName,
-                                  Ci.nsISearchEngine.DATA_TEXT,
-                                  gDataUrl + item.iconFileName, false);
+                                  null, null, false);
       } else {
         Services.search.addEngineWithDetails(item.name, ...item.details);
       }
@@ -311,6 +457,49 @@ function installTestEngine() {
   });
 }
 
+/**
+ * Set a localized preference on the default branch
+ * @param aPrefName
+ *        The name of the pref to set.
+ */
+function setLocalizedDefaultPref(aPrefName, aValue) {
+  let value = "data:text/plain," + BROWSER_SEARCH_PREF + aPrefName + "=" + aValue;
+  Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF)
+          .setCharPref(aPrefName, value);
+}
+
+
+/**
+ * Installs two test engines, sets them as default for US vs. general.
+ */
+function setUpGeoDefaults() {
+  removeMetadata();
+  removeCacheFile();
+
+  do_check_false(Services.search.isInitialized);
+
+  let engineDummyFile = gProfD.clone();
+  engineDummyFile.append("searchplugins");
+  engineDummyFile.append("test-search-engine.xml");
+  let engineDir = engineDummyFile.parent;
+  engineDir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  do_get_file("data/engine.xml").copyTo(engineDir, "engine.xml");
+
+  engineDummyFile = gProfD.clone();
+  engineDummyFile.append("searchplugins");
+  engineDummyFile.append("test-search-engine2.xml");
+
+  do_get_file("data/engine2.xml").copyTo(engineDir, "engine2.xml");
+
+  setLocalizedDefaultPref("defaultenginename",    "Test search engine");
+  setLocalizedDefaultPref("defaultenginename.US", "A second test engine");
+
+  do_register_cleanup(function() {
+    removeMetadata();
+    removeCacheFile();
+  });
+}
 
 /**
  * Returns a promise that is resolved when an observer notification from the
@@ -331,6 +520,24 @@ function waitForSearchNotification(aExpectedData) {
       resolve(aSubject);
     }, SEARCH_SERVICE_TOPIC, false);
   });
+}
+
+function asyncInit() {
+  return new Promise(resolve => {
+    Services.search.init(function() {
+      do_check_true(Services.search.isInitialized);
+      resolve();
+    });
+  });
+}
+
+function asyncReInit() {
+  let promise = waitForSearchNotification("reinit-complete");
+
+  Services.search.QueryInterface(Ci.nsIObserver)
+          .observe(null, "nsPref:changed", kLocalePref);
+
+  return promise;
 }
 
 // This "enum" from nsSearchService.js

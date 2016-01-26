@@ -1,3 +1,4 @@
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /*
  * Copyright (C) 2010 The Android Open Source Project
  * Copyright (C) 2012-2013 Mozilla Foundation
@@ -317,21 +318,17 @@ status_t GonkNativeWindow::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
         }
     }  // end lock scope
 
-    sp<GraphicBuffer> graphicBuffer;
     if (alloc) {
-        RefPtr<GrallocTextureClientOGL> textureClient =
-            new GrallocTextureClientOGL(ImageBridgeChild::GetSingleton(),
-                                        gfx::SurfaceFormat::UNKNOWN,
-                                        gfx::BackendType::NONE,
-                                        TextureFlags::DEALLOCATE_CLIENT);
-        textureClient->SetIsOpaque(true);
+        ISurfaceAllocator* allocator = ImageBridgeChild::GetSingleton();
         usage |= GraphicBuffer::USAGE_HW_TEXTURE;
-        bool result = textureClient->AllocateGralloc(IntSize(w, h), format, usage);
-        sp<GraphicBuffer> graphicBuffer = textureClient->GetGraphicBuffer();
-        if (!result || !graphicBuffer.get()) {
-            CNW_LOGE("dequeueBuffer: failed to alloc gralloc buffer");
+        GrallocTextureData* texData = GrallocTextureData::Create(IntSize(w, h), format,
+                                                                 gfx::BackendType::NONE, usage,
+                                                                 allocator);
+        if (!texData) {
             return -ENOMEM;
         }
+
+        RefPtr<TextureClient> textureClient = new TextureClient(texData, TextureFlags::DEALLOCATE_CLIENT, allocator);
 
         { // Scope for the lock
             Mutex::Autolock lock(mMutex);
@@ -344,7 +341,7 @@ status_t GonkNativeWindow::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
             if (updateFormat) {
                 mPixelFormat = format;
             }
-            mSlots[buf].mGraphicBuffer = graphicBuffer;
+            mSlots[buf].mGraphicBuffer = texData->GetGraphicBuffer();
             mSlots[buf].mTextureClient = textureClient;
 
             returnFlags |= ISurfaceTexture::BUFFER_NEEDS_REALLOCATION;
@@ -400,7 +397,7 @@ int GonkNativeWindow::getSlotFromTextureClientLocked(
     return BAD_VALUE;
 }
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 GonkNativeWindow::getTextureClientFromBuffer(ANativeWindowBuffer* buffer)
 {
   int buf = getSlotFromBufferLocked(buffer);
@@ -409,7 +406,8 @@ GonkNativeWindow::getTextureClientFromBuffer(ANativeWindowBuffer* buffer)
     return nullptr;
   }
 
-  return mSlots[buf].mTextureClient;
+  RefPtr<TextureClient> client(mSlots[buf].mTextureClient);
+  return client.forget();
 }
 
 status_t GonkNativeWindow::queueBuffer(int buf, int64_t timestamp,
@@ -462,7 +460,7 @@ status_t GonkNativeWindow::queueBuffer(int buf, int64_t timestamp,
 }
 
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 GonkNativeWindow::getCurrentBuffer() {
   CNW_LOGD("GonkNativeWindow::getCurrentBuffer");
   Mutex::Autolock lock(mMutex);
@@ -487,7 +485,8 @@ GonkNativeWindow::getCurrentBuffer() {
   mDequeueCondition.signal();
 
   mSlots[buf].mTextureClient->SetRecycleCallback(GonkNativeWindow::RecycleCallback, this);
-  return mSlots[buf].mTextureClient;
+  RefPtr<TextureClient> client(mSlots[buf].mTextureClient);
+  return client.forget();
 }
 
 
@@ -496,6 +495,7 @@ GonkNativeWindow::RecycleCallback(TextureClient* client, void* closure) {
   GonkNativeWindow* nativeWindow =
     static_cast<GonkNativeWindow*>(closure);
 
+  MOZ_ASSERT(client && !client->IsDead());
   client->ClearRecycleCallback();
   nativeWindow->returnBuffer(client);
 }

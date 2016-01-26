@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/LoginManagerContent.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
@@ -17,39 +17,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
+                                  "resource://gre/modules/LoginHelper.jsm");
+
+XPCOMUtils.defineLazyGetter(this, "log", () => {
+  let logger = LoginHelper.createLogger("nsLoginManager");
+  return logger.log.bind(logger);
+});
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-var debug = false;
-function log(...pieces) {
-  function generateLogMessage(args) {
-    let strings = ['Login Manager:'];
-
-    args.forEach(function(arg) {
-      if (typeof arg === 'string') {
-        strings.push(arg);
-      } else if (typeof arg === 'undefined') {
-        strings.push('undefined');
-      } else if (arg === null) {
-        strings.push('null');
-      } else {
-        try {
-          strings.push(JSON.stringify(arg, null, 2));
-        } catch(err) {
-          strings.push("<<something>>");
-        }
-      }
-    });
-    return strings.join(' ');
-  }
-
-  if (!debug)
-    return;
-
-  let message = generateLogMessage(pieces);
-  dump(message + "\n");
-  Services.console.logStringMessage(message);
-}
 
 function LoginManager() {
   this.init();
@@ -110,18 +86,13 @@ LoginManager.prototype = {
 
     // Preferences. Add observer so we get notified of changes.
     this._prefBranch = Services.prefs.getBranch("signon.");
-    this._prefBranch.addObserver("", this._observer, false);
-
-    // Get current preference values.
-    debug = this._prefBranch.getBoolPref("debug");
+    this._prefBranch.addObserver("rememberSignons", this._observer, false);
 
     this._remember = this._prefBranch.getBoolPref("rememberSignons");
 
     // Form submit observer checks forms for new logins and pw changes.
     Services.obs.addObserver(this._observer, "xpcom-shutdown", false);
 
-    // TODO: Make this class useful in the child process (in addition to
-    // autoCompleteSearchAsync and fillForm).
     if (Services.appinfo.processType ===
         Services.appinfo.PROCESS_TYPE_DEFAULT) {
       Services.obs.addObserver(this._observer, "passwordmgr-storage-replace",
@@ -179,9 +150,7 @@ LoginManager.prototype = {
         var prefName = data;
         log("got change to", prefName, "preference");
 
-        if (prefName == "debug") {
-          debug = this._pwmgr._prefBranch.getBoolPref("debug");
-        } else if (prefName == "rememberSignons") {
+        if (prefName == "rememberSignons") {
           this._pwmgr._remember =
               this._pwmgr._prefBranch.getBoolPref("rememberSignons");
         } else {
@@ -329,13 +298,12 @@ LoginManager.prototype = {
     var logins = this.findLogins({}, login.hostname, login.formSubmitURL,
                                  login.httpRealm);
 
-    if (logins.some(function(l) login.matches(l, true)))
+    if (logins.some(l => login.matches(l, true)))
       throw new Error("This login already exists.");
 
     log("Adding login");
     return this._storage.addLogin(login);
   },
-
 
   /*
    * removeLogin
@@ -529,69 +497,6 @@ LoginManager.prototype = {
                        })
                        .then(null, Cu.reportError);
   },
-
-
-  /* ------- Internal methods / callbacks for document integration ------- */
-
-
-  /*
-   * _getPasswordOrigin
-   *
-   * Get the parts of the URL we want for identification.
-   */
-  _getPasswordOrigin : function (uriString, allowJS) {
-    var realm = "";
-    try {
-      var uri = Services.io.newURI(uriString, null, null);
-
-      if (allowJS && uri.scheme == "javascript")
-        return "javascript:"
-
-      realm = uri.scheme + "://" + uri.host;
-
-      // If the URI explicitly specified a port, only include it when
-      // it's not the default. (We never want "http://foo.com:80")
-      var port = uri.port;
-      if (port != -1) {
-        var handler = Services.io.getProtocolHandler(uri.scheme);
-        if (port != handler.defaultPort)
-          realm += ":" + port;
-      }
-
-    } catch (e) {
-      // bug 159484 - disallow url types that don't support a hostPort.
-      // (although we handle "javascript:..." as a special case above.)
-      log("Couldn't parse origin for", uriString);
-      realm = null;
-    }
-
-    return realm;
-  },
-
-  _getActionOrigin : function (form) {
-    var uriString = form.action;
-
-    // A blank or missing action submits to where it came from.
-    if (uriString == "")
-      uriString = form.baseURI; // ala bug 297761
-
-    return this._getPasswordOrigin(uriString, true);
-  },
-
-
-  /*
-   * fillForm
-   *
-   * Fill the form with login information if we can find it.
-   */
-  fillForm : function (form) {
-    log("fillForm processing form[ id:", form.id, "]");
-    return LoginManagerContent._asyncFindLogins(form, { showMasterPassword: true })
-                              .then(function({ form, loginsFound }) {
-      return LoginManagerContent._fillForm(form, true, false, false, loginsFound)[0];
-    });
-  },
-
 }; // end of LoginManager implementation
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([LoginManager]);

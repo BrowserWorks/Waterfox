@@ -6,6 +6,7 @@ package org.mozilla.gecko.annotationProcessors.utils;
 
 import org.mozilla.gecko.annotationProcessors.AnnotationInfo;
 import org.mozilla.gecko.annotationProcessors.classloader.AnnotatableEntity;
+import org.mozilla.gecko.annotationProcessors.classloader.ClassWithOptions;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -13,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 /**
@@ -21,17 +23,21 @@ import java.util.Iterator;
  * parameters) and the argument.
  */
 public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
+    private final ClassWithOptions mClass;
     private final Member[] mObjects;
     private AnnotatableEntity mNextReturnValue;
     private int mElementIndex;
 
     private boolean mIterateEveryEntry;
 
-    public GeneratableElementIterator(Class<?> aClass) {
+    public GeneratableElementIterator(ClassWithOptions annotatedClass) {
+        mClass = annotatedClass;
+
+        final Class<?> aClass = annotatedClass.wrappedClass;
         // Get all the elements of this class as AccessibleObjects.
         Member[] aMethods = aClass.getDeclaredMethods();
         Member[] aFields = aClass.getDeclaredFields();
-        Member[] aCtors = aClass.getConstructors();
+        Member[] aCtors = aClass.getDeclaredConstructors();
 
         // Shove them all into one buffer.
         Member[] objs = new Member[aMethods.length + aFields.length + aCtors.length];
@@ -50,13 +56,63 @@ public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
         // Check for "Wrap ALL the things" flag.
         for (Annotation annotation : aClass.getDeclaredAnnotations()) {
             final String annotationTypeName = annotation.annotationType().getName();
-            if (annotationTypeName.equals("org.mozilla.gecko.mozglue.generatorannotations.WrapEntireClassForJNI")) {
+            if (annotationTypeName.equals("org.mozilla.gecko.annotation.WrapForJNI")) {
                 mIterateEveryEntry = true;
                 break;
             }
         }
 
         findNextValue();
+    }
+
+    private Class<?>[] getFilteredInnerClasses() {
+        // Go through all inner classes and see which ones we want to generate.
+        final Class<?>[] candidates = mClass.wrappedClass.getDeclaredClasses();
+        int count = 0;
+
+        for (int i = 0; i < candidates.length; ++i) {
+            final GeneratableElementIterator testIterator
+                    = new GeneratableElementIterator(new ClassWithOptions(candidates[i], null));
+            if (testIterator.hasNext()
+                    || testIterator.getFilteredInnerClasses() != null) {
+                count++;
+                continue;
+            }
+            // Clear out ones that don't match.
+            candidates[i] = null;
+        }
+        return count > 0 ? candidates : null;
+    }
+
+    public ClassWithOptions[] getInnerClasses() {
+        final Class<?>[] candidates = getFilteredInnerClasses();
+        if (candidates == null) {
+            return new ClassWithOptions[0];
+        }
+
+        int count = 0;
+        for (Class<?> candidate : candidates) {
+            if (candidate != null) {
+                count++;
+            }
+        }
+
+        final ClassWithOptions[] ret = new ClassWithOptions[count];
+        count = 0;
+        for (Class<?> candidate : candidates) {
+            if (candidate != null) {
+                ret[count++] = new ClassWithOptions(
+                        candidate, mClass.generatedName + "::" + candidate.getSimpleName());
+            }
+        }
+        assert ret.length == count;
+
+        Arrays.sort(ret, new Comparator<ClassWithOptions>() {
+            @Override public int compare(ClassWithOptions lhs, ClassWithOptions rhs) {
+                return lhs.generatedName.compareTo(rhs.generatedName);
+            }
+        });
+        return ret;
     }
 
     /**
@@ -71,7 +127,7 @@ public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
                 // WrappedJNIMethod has parameters. Use Reflection to obtain them.
                 Class<? extends Annotation> annotationType = annotation.annotationType();
                 final String annotationTypeName = annotationType.getName();
-                if (annotationTypeName.equals("org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI")) {
+                if (annotationTypeName.equals("org.mozilla.gecko.annotation.WrapForJNI")) {
                     String stubName = null;
                     boolean isMultithreadedStub = false;
                     boolean noThrow = false;
@@ -104,15 +160,15 @@ public class GeneratableElementIterator implements Iterator<AnnotatableEntity> {
                         catchException = (Boolean) catchExceptionMethod.invoke(annotation);
 
                     } catch (NoSuchMethodException e) {
-                        System.err.println("Unable to find expected field on WrapElementForJNI annotation. Did the signature change?");
+                        System.err.println("Unable to find expected field on WrapForJNI annotation. Did the signature change?");
                         e.printStackTrace(System.err);
                         System.exit(3);
                     } catch (IllegalAccessException e) {
-                        System.err.println("IllegalAccessException reading fields on WrapElementForJNI annotation. Seems the semantics of Reflection have changed...");
+                        System.err.println("IllegalAccessException reading fields on WrapForJNI annotation. Seems the semantics of Reflection have changed...");
                         e.printStackTrace(System.err);
                         System.exit(4);
                     } catch (InvocationTargetException e) {
-                        System.err.println("InvocationTargetException reading fields on WrapElementForJNI annotation. This really shouldn't happen.");
+                        System.err.println("InvocationTargetException reading fields on WrapForJNI annotation. This really shouldn't happen.");
                         e.printStackTrace(System.err);
                         System.exit(5);
                     }

@@ -3,26 +3,32 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this file,
    - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
 
-<html xmlns="http://www.w3.org/1999/xhtml "
+<html xmlns="http://www.w3.org/1999/xhtml"
       id="shell"
       windowtype="navigator:browser"
 #ifdef ANDROID
       sizemode="fullscreen"
 #endif
+#ifdef MOZ_GRAPHENE
+      macanimationtype="document"
+      fullscreenbutton="true"
+      chromemargin="0,0,0,0"
+#endif
       >
 
 <head>
   <link rel="stylesheet" href="shell.css" type="text/css">
-#ifdef FXOS_SIMULATOR
-  <link rel="stylesheet" href="desktop.css" type="text/css">
-#endif
-
+  <script type="text/javascript">
+  <!-- Add raptor performance marker -->
+  window.performance.mark('gecko-shell-html-load');
+  </script>
   <script type="application/javascript;version=1.8"
           src="chrome://b2g/content/settings.js"> </script>
   <script type="application/javascript;version=1.8"
           src="chrome://b2g/content/shell.js"> </script>
 
-#ifndef MOZ_WIDGET_GONK
+#ifndef ANDROID
+#ifndef MOZ_GRAPHENE
   <!-- various task that has to happen only on desktop -->
   <script type="application/javascript;version=1.8"
           src="chrome://b2g/content/desktop.js"> </script>
@@ -32,6 +38,7 @@
   <!-- this script handles the "runapp" argument for desktop builds -->
   <script type="application/javascript;version=1.8"
           src="chrome://b2g/content/runapp.js"> </script>
+#endif
 #else
   <!-- this file is only loaded on Gonk to manage ADB state -->
   <script type="application/javascript;version=1.8"
@@ -42,23 +49,20 @@
           src="chrome://b2g/content/devtools/debugger.js"> </script>
 </head>
   <body id="container">
-#ifdef FXOS_SIMULATOR
-#ifndef MOZ_MULET
-    <!--
-     Some additional buttons are displayed on desktop to fake hardware buttons.
-    -->
-    <footer id="controls">
-      <button id="home-button"></button>
-      <button id="rotate-button"></button>
-    </footer>
-#endif
-#endif
+#ifndef MOZ_GRAPHENE
 #ifdef MOZ_WIDGET_COCOA
     <!--
      If the document is empty at startup, we don't display the window
      at all on Mac OS...
     -->
     <h1 id="placeholder">wtf mac os!</h1>
+#endif
+#else
+    <div id="titlebar-buttonbox"></div>
+    <div id="installing">
+      <div class="throbber"></div>
+      <div class="message"></div>
+    </div>
 #endif
     <!-- The html:iframe containing the UI is created here. -->
   </body>

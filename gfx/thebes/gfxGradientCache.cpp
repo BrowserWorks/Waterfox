@@ -5,7 +5,7 @@
 
 #include "mozilla/gfx/2D.h"
 #include "nsTArray.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 #include "nsExpirationTracker.h"
 #include "nsClassHashtable.h"
 #include "mozilla/Telemetry.h"
@@ -122,7 +122,8 @@ class GradientCache final : public nsExpirationTracker<GradientCacheData,4>
 {
   public:
     GradientCache()
-      : nsExpirationTracker<GradientCacheData, 4>(MAX_GENERATION_MS)
+      : nsExpirationTracker<GradientCacheData,4>(MAX_GENERATION_MS,
+                                                 "GradientCache")
     {
       srand(time(nullptr));
       mTimerPeriod = rand() % MAX_GENERATION_MS + 1;
@@ -196,9 +197,13 @@ gfxGradientCache::GetGradientStops(const DrawTarget *aDT, nsTArray<GradientStop>
   return nullptr;
 }
 
-GradientStops *
+already_AddRefed<GradientStops>
 gfxGradientCache::GetOrCreateGradientStops(const DrawTarget *aDT, nsTArray<GradientStop>& aStops, ExtendMode aExtend)
 {
+  if (aDT->IsRecording()) {
+    return aDT->CreateGradientStops(aStops.Elements(), aStops.Length(), aExtend);
+  }
+
   RefPtr<GradientStops> gs = GetGradientStops(aDT, aStops, aExtend);
   if (!gs) {
     gs = aDT->CreateGradientStops(aStops.Elements(), aStops.Length(), aExtend);
@@ -212,7 +217,7 @@ gfxGradientCache::GetOrCreateGradientStops(const DrawTarget *aDT, nsTArray<Gradi
       delete cached;
     }
   }
-  return gs;
+  return gs.forget();
 }
 
 void
@@ -230,5 +235,5 @@ gfxGradientCache::Shutdown()
   gGradientCache = nullptr;
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

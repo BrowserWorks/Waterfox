@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsIScriptSecurityManager.h"
+#include "TCPServerSocket.h"
 #include "TCPServerSocketParent.h"
 #include "nsJSUtils.h"
 #include "TCPSocketParent.h"
@@ -15,21 +17,11 @@
 namespace mozilla {
 namespace dom {
 
-static void
-FireInteralError(mozilla::net::PTCPServerSocketParent* aActor,
-                 uint32_t aLineNo)
-{
-  mozilla::unused <<
-      aActor->SendCallbackError(NS_LITERAL_STRING("Internal error"),
-                          NS_LITERAL_STRING(__FILE__), aLineNo, 0);
-}
-
-NS_IMPL_CYCLE_COLLECTION(TCPServerSocketParent, mServerSocket, mIntermediary)
+NS_IMPL_CYCLE_COLLECTION(TCPServerSocketParent, mServerSocket)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(TCPServerSocketParent)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(TCPServerSocketParent)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(TCPServerSocketParent)
-  NS_INTERFACE_MAP_ENTRY(nsITCPServerSocketParent)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
@@ -49,61 +41,55 @@ TCPServerSocketParent::AddIPDLReference()
   this->AddRef();
 }
 
-bool
-TCPServerSocketParent::Init(PNeckoParent* neckoParent, const uint16_t& aLocalPort,
-                            const uint16_t& aBacklog, const nsString& aBinaryType)
+TCPServerSocketParent::TCPServerSocketParent(PNeckoParent* neckoParent,
+                                             uint16_t aLocalPort,
+                                             uint16_t aBacklog,
+                                             bool aUseArrayBuffers)
+: mNeckoParent(neckoParent)
+, mIPCOpen(false)
 {
-  mNeckoParent = neckoParent;
+  mServerSocket = new TCPServerSocket(nullptr, aLocalPort, aUseArrayBuffers, aBacklog);
+  mServerSocket->SetServerBridgeParent(this);
+}
 
-  nsresult rv;
-  mIntermediary = do_CreateInstance("@mozilla.org/tcp-socket-intermediary;1", &rv);
-  if (NS_FAILED(rv)) {
-    FireInteralError(this, __LINE__);
-    return true;
-  }
+TCPServerSocketParent::~TCPServerSocketParent()
+{
+}
 
-  rv = mIntermediary->Listen(this, aLocalPort, aBacklog, aBinaryType, GetAppId(),
-                             GetInBrowser(), getter_AddRefs(mServerSocket));
-  if (NS_FAILED(rv) || !mServerSocket) {
-    FireInteralError(this, __LINE__);
-    return true;
-  }
-  return true;
+void
+TCPServerSocketParent::Init()
+{
+  NS_ENSURE_SUCCESS_VOID(mServerSocket->Init());
 }
 
 uint32_t
 TCPServerSocketParent::GetAppId()
 {
-  uint32_t appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
   const PContentParent *content = Manager()->Manager();
-  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
-  if (browsers.Length() > 0) {
-    TabParent *tab = TabParent::GetFrom(browsers[0]);
-    appId = tab->OwnAppId();
+  if (PBrowserParent* browser = SingleManagedOrNull(content->ManagedPBrowserParent())) {
+    TabParent *tab = TabParent::GetFrom(browser);
+    return tab->OwnAppId();
+  } else {
+    return nsIScriptSecurityManager::UNKNOWN_APP_ID;
   }
-  return appId;
-};
+}
 
 bool
 TCPServerSocketParent::GetInBrowser()
 {
-  bool inBrowser = false;
   const PContentParent *content = Manager()->Manager();
-  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
-  if (browsers.Length() > 0) {
-    TabParent *tab = TabParent::GetFrom(browsers[0]);
-    inBrowser = tab->IsBrowserElement();
+  if (PBrowserParent* browser = SingleManagedOrNull(content->ManagedPBrowserParent())) {
+    TabParent *tab = TabParent::GetFrom(browser);
+    return tab->IsBrowserElement();
+  } else {
+    return false;
   }
-  return inBrowser;
 }
 
-NS_IMETHODIMP
-TCPServerSocketParent::SendCallbackAccept(nsITCPSocketParent *socket)
+nsresult
+TCPServerSocketParent::SendCallbackAccept(TCPSocketParent *socket)
 {
-  TCPSocketParent* _socket = static_cast<TCPSocketParent*>(socket);
-  PTCPSocketParent* _psocket = static_cast<PTCPSocketParent*>(_socket);
-
-  _socket->AddIPDLReference();
+  socket->AddIPDLReference();
 
   nsresult rv;
 
@@ -122,28 +108,16 @@ TCPServerSocketParent::SendCallbackAccept(nsITCPSocketParent *socket)
   }
 
   if (mNeckoParent) {
-    if (mNeckoParent->SendPTCPSocketConstructor(_psocket, host, port)) {
-      mozilla::unused << PTCPServerSocketParent::SendCallbackAccept(_psocket);
+    if (mNeckoParent->SendPTCPSocketConstructor(socket, host, port)) {
+      mozilla::Unused << PTCPServerSocketParent::SendCallbackAccept(socket);
     }
     else {
       NS_ERROR("Sending data from PTCPSocketParent was failed.");
-    };
+    }
   }
   else {
     NS_ERROR("The member value for NeckoParent is wrong.");
   }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TCPServerSocketParent::SendCallbackError(const nsAString& message,
-                                         const nsAString& filename,
-                                         uint32_t lineNumber,
-                                         uint32_t columnNumber)
-{
-  mozilla::unused <<
-    PTCPServerSocketParent::SendCallbackError(nsString(message), nsString(filename),
-                                              lineNumber, columnNumber);
   return NS_OK;
 }
 
@@ -163,14 +137,27 @@ TCPServerSocketParent::ActorDestroy(ActorDestroyReason why)
     mServerSocket = nullptr;
   }
   mNeckoParent = nullptr;
-  mIntermediary = nullptr;
 }
 
 bool
 TCPServerSocketParent::RecvRequestDelete()
 {
-  mozilla::unused << Send__delete__(this);
+  mozilla::Unused << Send__delete__(this);
   return true;
+}
+
+void
+TCPServerSocketParent::OnConnect(TCPServerSocketEvent* event)
+{
+  RefPtr<TCPSocket> socket = event->Socket();
+  socket->SetAppIdAndBrowser(GetAppId(), GetInBrowser());
+
+  RefPtr<TCPSocketParent> socketParent = new TCPSocketParent();
+  socketParent->SetSocket(socket);
+
+  socket->SetSocketBridgeParent(socketParent);
+
+  SendCallbackAccept(socketParent);
 }
 
 } // namespace dom

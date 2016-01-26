@@ -12,8 +12,6 @@
 <!DOCTYPE page [
 <!ENTITY % browserDTD SYSTEM "chrome://browser/locale/browser.dtd">
 %browserDTD;
-<!ENTITY % browserPocketDTD SYSTEM "chrome://browser/content/browser-pocket.dtd">
-%browserPocketDTD;
 <!ENTITY % textcontextDTD SYSTEM "chrome://global/locale/textcontext.dtd">
 %textcontextDTD;
 ]>
@@ -24,6 +22,8 @@
         onload="load()" onunload="unload()">
   <script type="application/javascript" src="chrome://global/content/contentAreaUtils.js"/>
   <script type="application/javascript" src="chrome://browser/content/browser.js"/>
+  <script type="application/javascript" src="chrome://browser/content/browser-places.js"/>
+  <script type="application/javascript" src="chrome://browser/content/browser-social.js"/>
   <script type="application/javascript" src="chrome://global/content/inlineSpellCheckUI.js"/>
   <script type="application/javascript" src="chrome://browser/content/nsContextMenu.js"/>
   <script type="application/javascript" src="chrome://browser/content/web-panels.js"/>

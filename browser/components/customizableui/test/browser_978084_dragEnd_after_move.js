@@ -3,14 +3,14 @@
 
 "use strict";
 
-let draggedItem;
+var draggedItem;
 
 /**
  * Check that customizing-movingItem gets removed on a drop when the item is moved.
  */
 
 // Drop on the palette
-add_task(function() {
+add_task(function*() {
   draggedItem = document.createElement("toolbarbutton");
   draggedItem.id = "test-dragEnd-after-move1";
   draggedItem.setAttribute("label", "Test");
@@ -25,7 +25,7 @@ add_task(function() {
 });
 
 // Drop on a customization target itself
-add_task(function() {
+add_task(function*() {
   draggedItem = document.createElement("toolbarbutton");
   draggedItem.id = "test-dragEnd-after-move2";
   draggedItem.setAttribute("label", "Test");
@@ -40,7 +40,7 @@ add_task(function() {
   yield endCustomizing();
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   yield endCustomizing();
   yield resetCustomization();
 });

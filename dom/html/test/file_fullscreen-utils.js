@@ -1,40 +1,18 @@
-// Remember the window size in non-fullscreen mode.
-var normalSize = new function() {
-  this.w = window.outerWidth;
-  this.h = window.outerHeight;
-}();
 
 // Returns true if the window occupies the entire screen.
 // Note this only returns true once the transition from normal to
 // fullscreen mode is complete.
-function inFullscreenMode() {
-  return window.outerWidth == window.screen.width &&
-         window.outerHeight == window.screen.height;
+function inFullscreenMode(win) {
+  return win.innerWidth == win.screen.width &&
+         win.innerHeight == win.screen.height;
 }
 
 // Returns true if the window is in normal mode, i.e. non fullscreen mode.
 // Note this only returns true once the transition from fullscreen back to
 // normal mode is complete.
-function inNormalMode() {
-  return window.outerWidth == normalSize.w &&
-         window.outerHeight == normalSize.h;
-}
-
-function ok(condition, msg) {
-  opener.ok(condition, "[rollback] " + msg);
-  if (!condition) {
-    opener.finish();
-  }
-}
-
-// On Linux we sometimes receive fullscreenchange events before the window
-// has finished transitioning to fullscreen. This can cause problems and
-// test failures, so work around it on Linux until we can get a proper fix.
-const workAroundFullscreenTransition = navigator.userAgent.indexOf("Linux") != -1;
-
-if (workAroundFullscreenTransition) {
-  SimpleTest.requestFlakyTimeout("We need to wait an arbitrary and non-zero " +
-    "amount of time in case of the Linux specific workaround to avoid busy-waiting.");
+function inNormalMode(win) {
+  return win.innerWidth == win.normalSize.w &&
+         win.innerHeight == win.normalSize.h;
 }
 
 // Adds a listener that will be called once a fullscreen transition
@@ -48,53 +26,48 @@ if (workAroundFullscreenTransition) {
 // the current document.
 function addFullscreenChangeContinuation(type, callback, inDoc) {
   var doc = inDoc || document;
-  var listener = null;
-  if (type === "enter") {
-    // when entering fullscreen, ensure we don't call 'callback' until the
-    // enter transition is complete.
-    listener = function(event) {
-      doc.removeEventListener("mozfullscreenchange", listener, false);
-      if (!workAroundFullscreenTransition) {
-        callback(event);
-        return;
-      }
-      if (!inFullscreenMode()) {
-        opener.todo(false, "fullscreenchange before entering fullscreen complete! " +
-                    " window.fullScreen=" + window.fullScreen +
-                    " normal=(" + normalSize.w + "," + normalSize.h + ")" +
-                    " outerWidth=" + window.outerWidth + " width=" + window.screen.width +
-                    " outerHeight=" + window.outerHeight + " height=" + window.screen.height);
-        setTimeout(function(){listener(event);}, 100);
-        return;
-      }
-      setTimeout(function(){callback(event)}, 0);
+  var topWin = doc.defaultView.top;
+  // Remember the window size in non-fullscreen mode.
+  if (!topWin.normalSize) {
+    topWin.normalSize = {
+      w: window.innerWidth,
+      h: window.innerHeight
     };
-  } else if (type === "exit") {
-    listener = function(event) {
-      doc.removeEventListener("mozfullscreenchange", listener, false);
-      if (!workAroundFullscreenTransition) {
-        callback(event);
-        return;
-      }
-      if (!document.mozFullScreenElement && !inNormalMode()) {
-        opener.todo(false, "fullscreenchange before exiting fullscreen complete! " +
-                    " window.fullScreen=" + window.fullScreen +
-                    " normal=(" + normalSize.w + "," + normalSize.h + ")" +
-                    " outerWidth=" + window.outerWidth + " width=" + window.screen.width +
-                    " outerHeight=" + window.outerHeight + " height=" + window.screen.height);
-        // 'document' (*not* 'doc') has no fullscreen element, so we're trying
-        // to completely exit fullscreen mode. Wait until the transition
-        // to normal mode is complete before calling callback.
-        setTimeout(function(){listener(event);}, 100);
-        return;
-      }
-      opener.info("[rollback] Exited fullscreen");
-      setTimeout(function(){callback(event);}, 0);
-    };
-  } else {
-    throw "'type' must be either 'enter', or 'exit'.";
   }
-  doc.addEventListener("mozfullscreenchange", listener, false);
+  function checkCondition() {
+    if (type == "enter") {
+      return inFullscreenMode(topWin);
+    } else if (type == "exit") {
+      // If we just revert the state to a previous fullscreen state,
+      // the window won't back to the normal mode. Hence we check
+      // mozFullScreenElement first here. Note that we need to check
+      // the fullscreen element of the outmost document here instead
+      // of the current one.
+      return topWin.document.mozFullScreenElement || inNormalMode(topWin);
+    } else {
+      throw "'type' must be either 'enter', or 'exit'.";
+    }
+  }
+  function invokeCallback(event) {
+    // Use async call after a paint to workaround unfinished fullscreen
+    // change even when the window size has changed on Linux.
+    requestAnimationFrame(() => setTimeout(() => callback(event), 0), 0);
+  }
+  function onFullscreenChange(event) {
+    doc.removeEventListener("mozfullscreenchange", onFullscreenChange, false);
+    if (checkCondition()) {
+      invokeCallback(event);
+      return;
+    }
+    function onResize() {
+      if (checkCondition()) {
+        topWin.removeEventListener("resize", onResize, false);
+        invokeCallback(event);
+      }
+    }
+    topWin.addEventListener("resize", onResize, false);
+  }
+  doc.addEventListener("mozfullscreenchange", onFullscreenChange, false);
 }
 
 // Calls |callback| when the next fullscreenerror is dispatched to inDoc||document.

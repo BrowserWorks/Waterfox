@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2000-2011, International Business Machines
+*   Copyright (C) 2000-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -21,7 +21,7 @@
 
 #include "unicode/utypes.h"
 
-#if !UCONFIG_NO_CONVERSION
+#if !UCONFIG_NO_CONVERSION && !UCONFIG_ONLY_HTML_CONVERSION
 
 #include "unicode/ucnv.h"
 #include "unicode/ucnv_cb.h"
@@ -2009,10 +2009,7 @@ static const UConverterStaticData _SCSUStaticData={
     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* reserved */
 };
 
-const UConverterSharedData _SCSUData={
-    sizeof(UConverterSharedData), ~((uint32_t)0),
-    NULL, NULL, &_SCSUStaticData, FALSE, &_SCSUImpl,
-    0
-};
+const UConverterSharedData _SCSUData=
+        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_SCSUStaticData, &_SCSUImpl);
 
 #endif

@@ -7,6 +7,7 @@
 #include "mozilla/dom/DesktopNotificationBinding.h"
 #include "mozilla/dom/AppNotificationServiceOptionsBinding.h"
 #include "mozilla/dom/ToJSValue.h"
+#include "nsComponentManagerUtils.h"
 #include "nsContentPermissionHelper.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/PBrowserChild.h"
@@ -50,7 +51,7 @@ public:
     return NS_OK;
   }
 
-  nsRefPtr<DesktopNotification> mDesktopNotification;
+  RefPtr<DesktopNotification> mDesktopNotification;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -114,16 +115,20 @@ DesktopNotification::PostDesktopNotification()
   nsIPrincipal* principal = doc->NodePrincipal();
   nsCOMPtr<nsILoadContext> loadContext = doc->GetLoadContext();
   bool inPrivateBrowsing = loadContext && loadContext->UsePrivateBrowsing();
-  return alerts->ShowAlertNotification(mIconURL, mTitle, mDescription,
-                                       true,
-                                       uniqueName,
-                                       mObserver,
-                                       uniqueName,
-                                       NS_LITERAL_STRING("auto"),
-                                       EmptyString(),
-                                       EmptyString(),
-                                       principal,
-                                       inPrivateBrowsing);
+  nsCOMPtr<nsIAlertNotification> alert =
+    do_CreateInstance(ALERT_NOTIFICATION_CONTRACTID);
+  NS_ENSURE_TRUE(alert, NS_ERROR_FAILURE);
+  nsresult rv = alert->Init(uniqueName, mIconURL, mTitle,
+                            mDescription,
+                            true,
+                            uniqueName,
+                            NS_LITERAL_STRING("auto"),
+                            EmptyString(),
+                            EmptyString(),
+                            principal,
+                            inPrivateBrowsing);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return alerts->ShowAlert(alert, mObserver);
 }
 
 DesktopNotification::DesktopNotification(const nsAString & title,
@@ -154,7 +159,7 @@ DesktopNotification::DesktopNotification(const nsAString & title,
 void
 DesktopNotification::Init()
 {
-  nsRefPtr<DesktopNotificationRequest> request = new DesktopNotificationRequest(this);
+  RefPtr<DesktopNotificationRequest> request = new DesktopNotificationRequest(this);
 
   NS_DispatchToMainThread(request);
 }
@@ -173,16 +178,11 @@ DesktopNotification::DispatchNotificationEvent(const nsString& aName)
     return;
   }
 
-  nsCOMPtr<nsIDOMEvent> event;
-  nsresult rv = NS_NewDOMEvent(getter_AddRefs(event), this, nullptr, nullptr);
-  if (NS_SUCCEEDED(rv)) {
-    // it doesn't bubble, and it isn't cancelable
-    rv = event->InitEvent(aName, false, false);
-    if (NS_SUCCEEDED(rv)) {
-      event->SetTrusted(true);
-      DispatchDOMEvent(nullptr, event, nullptr, nullptr);
-    }
-  }
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  // it doesn't bubble, and it isn't cancelable
+  event->InitEvent(aName, false, false);
+  event->SetTrusted(true);
+  DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
 
 nsresult
@@ -249,7 +249,7 @@ DesktopNotificationCenter::CreateNotification(const nsAString& aTitle,
 {
   MOZ_ASSERT(mOwner);
 
-  nsRefPtr<DesktopNotification> notification =
+  RefPtr<DesktopNotification> notification =
     new DesktopNotification(aTitle,
                             aDescription,
                             aIconURL,

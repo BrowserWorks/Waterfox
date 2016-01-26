@@ -21,12 +21,12 @@ from marionette_driver.errors import (
         StaleElementException, ScriptTimeoutException, ElementNotVisibleException,
         NoSuchFrameException, InvalidElementStateException, NoAlertPresentException,
         InvalidCookieDomainException, UnableToSetCookieException, InvalidSelectorException,
-        MoveTargetOutOfBoundsException, FrameSendNotInitializedError, FrameSendFailureError
+        MoveTargetOutOfBoundsException
         )
 from marionette_driver.marionette import Marionette
-from mozlog.structured.structuredlog import get_default_logger
 from marionette_driver.wait import Wait
 from marionette_driver.expected import element_present, element_not_present
+from mozlog import get_default_logger
 
 
 class SkipTest(Exception):
@@ -56,9 +56,7 @@ class _UnexpectedSuccess(Exception):
     pass
 
 def skip(reason):
-    """
-    Unconditionally skip a test.
-    """
+    """Unconditionally skip a test."""
     def decorator(test_item):
         if not isinstance(test_item, (type, types.ClassType)):
             @functools.wraps(test_item)
@@ -81,12 +79,18 @@ def expectedFailure(func):
         raise _UnexpectedSuccess
     return wrapper
 
+def skip_if_desktop(target):
+    def wrapper(self, *args, **kwargs):
+        if self.marionette.session_capabilities.get('b2g') is None:
+            raise SkipTest('skipping due to desktop')
+        return target(self, *args, **kwargs)
+    return wrapper
+
 def skip_if_b2g(target):
     def wrapper(self, *args, **kwargs):
         if self.marionette.session_capabilities.get('b2g') == True:
             raise SkipTest('skipping due to b2g')
         return target(self, *args, **kwargs)
-
     return wrapper
 
 def skip_if_e10s(target):
@@ -102,6 +106,50 @@ def skip_if_e10s(target):
         if multi_process_browser:
             raise SkipTest('skipping due to e10s')
         return target(self, *args, **kwargs)
+    return wrapper
+
+def skip_unless_protocol(predicate):
+    """Given a predicate passed the current protocol level, skip the
+    test if the predicate does not match."""
+    def decorator(test_item):
+        @functools.wraps(test_item)
+        def skip_wrapper(self):
+            level = self.marionette.client.protocol
+            if not predicate(level):
+                raise SkipTest('skipping because protocol level is %s' % level)
+            return self
+        return skip_wrapper
+    return decorator
+
+def skip_unless_browser_pref(pref, predicate=bool):
+    """
+    Skip a test based on the value of a browser preference.
+
+    :param pref: the preference name
+    :param predicate: a function that should return false to skip the test.
+                      The function takes one parameter, the preference value.
+                      Defaults to the python built-in bool function.
+
+    Note that the preference must exist, else a failure is raised.
+
+    Example: ::
+
+      class TestSomething(MarionetteTestCase):
+          @skip_unless_browser_pref("accessibility.tabfocus",
+                                    lambda value: value >= 7)
+          def test_foo(self):
+              pass  # test implementation here
+    """
+    def wrapper(target):
+        @functools.wraps(target)
+        def wrapped(self, *args, **kwargs):
+            value = self.marionette.get_pref(pref)
+            if value is None:
+                self.fail("No such browser preference: %r" % pref)
+            if not predicate(value):
+                raise SkipTest("browser preference %r: %r" % (pref, value))
+            return target(self, *args, **kwargs)
+        return wrapped
     return wrapper
 
 def parameterized(func_suffix, *args, **kwargs):
@@ -376,7 +424,7 @@ class CommonTestCase(unittest.TestCase):
     def id(self):
         # TBPL starring requires that the "test name" field of a failure message
         # not differ over time. The test name to be used is passed to
-        # mozlog.structured via the test id, so this is overriden to maintain
+        # mozlog via the test id, so this is overriden to maintain
         # consistency.
         return self.test_name
 
@@ -474,13 +522,11 @@ setReq.onsuccess = function() {
         for (let i = 0; i < apps.length; i++) {
             let app = apps[i];
             if (app.manifest.name === 'Test Container') {
-                let manager = window.wrappedJSObject.appWindowManager || window.wrappedJSObject.AppWindowManager;
-                if (!manager) {
+                window.wrappedJSObject.Service.request('AppWindowManager:kill', app.origin).then(function() {
+                    marionetteScriptFinished(true);
+                }).catch(function() {
                     marionetteScriptFinished(false);
-                    return;
-                }
-                manager.kill(app.origin);
-                marionetteScriptFinished(true);
+                });
                 return;
             }
         }
@@ -501,6 +547,23 @@ setReq.onerror = function() {
             'css selector',
             'iframe[src*="app://test-container.gaiamobile.org/index.html"]'
         ))
+
+    def setup_SpecialPowers_observer(self):
+        self.marionette.set_context("chrome")
+        self.marionette.execute_script("""
+            let SECURITY_PREF = "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
+            Components.utils.import("resource://gre/modules/Preferences.jsm");
+            Preferences.set(SECURITY_PREF, true);
+
+            if (!testUtils.hasOwnProperty("specialPowersObserver")) {
+              let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                .getService(Components.interfaces.mozIJSSubScriptLoader);
+              loader.loadSubScript("chrome://specialpowers/content/SpecialPowersObserver.jsm",
+                testUtils);
+              testUtils.specialPowersObserver = new testUtils.SpecialPowersObserver();
+              testUtils.specialPowersObserver.init();
+            }
+            """)
 
     def run_js_test(self, filename, marionette=None):
         '''
@@ -537,6 +600,23 @@ setReq.onerror = function() {
             context = context.group(3)
         else:
             context = 'content'
+
+        if 'SpecialPowers' in js:
+            self.setup_SpecialPowers_observer()
+
+            if context == 'content':
+                js = "var SpecialPowers = window.wrappedJSObject.SpecialPowers;\n" + js
+            else:
+                marionette.execute_script("""
+                if (typeof(SpecialPowers) == 'undefined') {
+                  let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                    .getService(Components.interfaces.mozIJSSubScriptLoader);
+                  loader.loadSubScript("chrome://specialpowers/content/specialpowersAPI.js");
+                  loader.loadSubScript("chrome://specialpowers/content/SpecialPowersObserverAPI.js");
+                  loader.loadSubScript("chrome://specialpowers/content/ChromePowers.js");
+                }
+                """)
+
         marionette.set_context(context)
 
         if context != 'chrome':
@@ -555,7 +635,6 @@ setReq.onerror = function() {
             results = marionette.execute_js_script(
                 js,
                 args,
-                special_powers=True,
                 inactivity_timeout=inactivity_timeout,
                 filename=os.path.basename(filename)
             )
@@ -623,6 +702,20 @@ class MarionetteTestCase(CommonTestCase):
 
     @classmethod
     def add_tests_to_suite(cls, mod_name, filepath, suite, testloader, marionette, testvars, **kwargs):
+        # since we use imp.load_source to load test modules, if a module
+        # is loaded with the same name as another one the module would just be
+        # reloaded.
+        #
+        # We may end up by finding too many test in a module then since
+        # reload() only update the module dict (so old keys are still there!)
+        # see https://docs.python.org/2/library/functions.html#reload
+        #
+        # we get rid of that by removing the module from sys.modules,
+        # so we ensure that it will be fully loaded by the
+        # imp.load_source call.
+        if mod_name in sys.modules:
+            del sys.modules[mod_name]
+
         test_mod = imp.load_source(mod_name, filepath)
 
         for name in dir(test_mod):
@@ -645,11 +738,17 @@ class MarionetteTestCase(CommonTestCase):
 
     def tearDown(self):
         if not self.marionette.check_for_crash():
-           self.marionette.set_context("content")
-           self.marionette.clear_imported_scripts()
-           self.marionette.execute_script("log('TEST-END: %s:%s')" %
-                                          (self.filepath.replace('\\', '\\\\'), self.methodName))
-        self.marionette.test_name = None
+            try:
+                self.marionette.clear_imported_scripts()
+                self.marionette.execute_script("log('TEST-END: %s:%s')" %
+                                               (self.filepath.replace('\\', '\\\\'),
+                                                self.methodName))
+                self.marionette.test_name = None
+            except (MarionetteException, IOError):
+                # We have tried to log the test end when there is no listener
+                # object that we can access
+                pass
+
         CommonTestCase.tearDown(self)
 
     def get_new_emulator(self):

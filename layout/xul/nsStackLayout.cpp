@@ -29,7 +29,7 @@ nsBoxLayout* nsStackLayout::gInstance = nullptr;
 #define SPECIFIED_BOTTOM (1 << NS_SIDE_BOTTOM)
 
 nsresult
-NS_NewStackLayout( nsIPresShell* aPresShell, nsCOMPtr<nsBoxLayout>& aNewLayout)
+NS_NewStackLayout(nsCOMPtr<nsBoxLayout>& aNewLayout)
 {
   if (!nsStackLayout::gInstance) {
     nsStackLayout::gInstance = new nsStackLayout();
@@ -70,7 +70,7 @@ nsStackLayout::GetPrefSize(nsIFrame* aBox, nsBoxLayoutState& aState)
 
       AddMargin(child, pref);
       nsMargin offset;
-      GetOffset(aState, child, offset);
+      GetOffset(child, offset);
       pref.width += offset.LeftRight();
       pref.height += offset.TopBottom();
       AddLargestSize(prefSize, pref);
@@ -96,7 +96,7 @@ nsStackLayout::GetMinSize(nsIFrame* aBox, nsBoxLayoutState& aState)
 
       AddMargin(child, min);
       nsMargin offset;
-      GetOffset(aState, child, offset);
+      GetOffset(child, offset);
       min.width += offset.LeftRight();
       min.height += offset.TopBottom();
       AddLargestSize(minSize, min);
@@ -125,7 +125,7 @@ nsStackLayout::GetMaxSize(nsIFrame* aBox, nsBoxLayoutState& aState)
 
       AddMargin(child, max);
       nsMargin offset;
-      GetOffset(aState, child, offset);
+      GetOffset(child, offset);
       max.width += offset.LeftRight();
       max.height += offset.TopBottom();
       AddSmallestSize(maxSize, max);
@@ -161,7 +161,7 @@ nsStackLayout::GetAscent(nsIFrame* aBox, nsBoxLayoutState& aState)
 }
 
 uint8_t
-nsStackLayout::GetOffset(nsBoxLayoutState& aState, nsIFrame* aChild, nsMargin& aOffset)
+nsStackLayout::GetOffset(nsIFrame* aChild, nsMargin& aOffset)
 {
   aOffset = nsMargin(0, 0, 0, 0);
 
@@ -287,7 +287,7 @@ nsStackLayout::Layout(nsIFrame* aBox, nsBoxLayoutState& aState)
 
           // obtain our offset from the top left border of the stack's content box.
           nsMargin offset;
-          uint8_t offsetSpecified = GetOffset(aState, child, offset);
+          uint8_t offsetSpecified = GetOffset(child, offset);
 
           // Set the position and size based on which offsets have been specified:
           //   left only - offset from left edge, preferred width
@@ -298,37 +298,39 @@ nsStackLayout::Layout(nsIFrame* aBox, nsBoxLayoutState& aState)
           //
           // Margins on the child are also included in the edge offsets
           if (offsetSpecified) {
+            nsSize min = child->GetMinSize(aState);
+            nsSize max = child->GetMaxSize(aState);
             if (offsetSpecified & SPECIFIED_LEFT) {
               childRect.x = clientRect.x + offset.left + margin.left;
               if (offsetSpecified & SPECIFIED_RIGHT) {
-                nsSize min = child->GetMinSize(aState);
-                nsSize max = child->GetMaxSize(aState);
                 nscoord width = clientRect.width - offset.LeftRight() - margin.LeftRight();
                 childRect.width = clamped(width, min.width, max.width);
               }
               else {
-                childRect.width = child->GetPrefSize(aState).width;
+                nscoord width = child->GetPrefSize(aState).width;
+                childRect.width = clamped(width, min.width, max.width);
               }
             }
             else if (offsetSpecified & SPECIFIED_RIGHT) {
-              childRect.width = child->GetPrefSize(aState).width;
+              nscoord width = child->GetPrefSize(aState).width;
+              childRect.width = clamped(width, min.width, max.width);
               childRect.x = clientRect.XMost() - offset.right - margin.right - childRect.width;
             }
 
             if (offsetSpecified & SPECIFIED_TOP) {
               childRect.y = clientRect.y + offset.top + margin.top;
               if (offsetSpecified & SPECIFIED_BOTTOM) {
-                nsSize min = child->GetMinSize(aState);
-                nsSize max = child->GetMaxSize(aState);
                 nscoord height = clientRect.height - offset.TopBottom() - margin.TopBottom();
                 childRect.height = clamped(height, min.height, max.height);
               }
               else {
-                childRect.height = child->GetPrefSize(aState).height;
+                nscoord height = child->GetPrefSize(aState).height;
+                childRect.height = clamped(height, min.height, max.height);
               }
             }
             else if (offsetSpecified & SPECIFIED_BOTTOM) {
-              childRect.height = child->GetPrefSize(aState).height;
+              nscoord height = child->GetPrefSize(aState).height;
+              childRect.height = clamped(height, min.height, max.height);
               childRect.y = clientRect.YMost() - offset.bottom - margin.bottom - childRect.height;
             }
           }

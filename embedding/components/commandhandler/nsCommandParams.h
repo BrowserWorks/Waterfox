@@ -10,7 +10,7 @@
 #include "nsString.h"
 #include "nsICommandParams.h"
 #include "nsCOMPtr.h"
-#include "pldhash.h"
+#include "PLDHashTable.h"
 
 class nsCommandParams : public nsICommandParams
 {
@@ -19,8 +19,6 @@ public:
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSICOMMANDPARAMS
-
-  nsresult Init();
 
 protected:
   virtual ~nsCommandParams();

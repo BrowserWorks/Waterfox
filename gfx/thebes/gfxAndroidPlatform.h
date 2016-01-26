@@ -31,12 +31,12 @@ public:
     }
 
     virtual already_AddRefed<gfxASurface>
-    CreateOffscreenSurface(const IntSize& size,
-                           gfxContentType contentType);
+    CreateOffscreenSurface(const IntSize& aSize,
+                           gfxImageFormat aFormat);
     
     virtual gfxImageFormat GetOffscreenFormat() { return mOffscreenFormat; }
     
-    mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
+    already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
     // to support IPC font list (sharing between chrome and content)
@@ -48,11 +48,11 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic);
+                                          uint8_t aStyle);
     virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
                                            uint16_t aWeight,
                                            int16_t aStretch,
-                                           bool aItalic,
+                                           uint8_t aStyle,
                                            const uint8_t* aFontData,
                                            uint32_t aLength);
 
@@ -69,17 +69,17 @@ public:
     virtual nsresult GetStandardFamilyName(const nsAString& aFontName,
                                            nsAString& aFamilyName);
 
-    virtual gfxFontGroup*
+    gfxFontGroup*
     CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
                     const gfxFontStyle *aStyle,
-                    gfxUserFontSet* aUserFontSet);
+                    gfxTextPerfMetrics* aTextPerf,
+                    gfxUserFontSet *aUserFontSet,
+                    gfxFloat aDevToCssSize) override;
 
     virtual bool FontHintingEnabled() override;
     virtual bool RequiresLinearZoom() override;
 
     FT_Library GetFTLibrary();
-
-    virtual int GetScreenDepth() const;
 
     virtual bool CanRenderContentToDataSurface() const override {
       return true;
@@ -89,12 +89,16 @@ public:
     virtual bool UseAcceleratedSkiaCanvas() override;
     virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
 
-
 #ifdef MOZ_WIDGET_GONK
     virtual bool IsInGonkEmulator() const { return mIsInGonkEmulator; }
 #endif
 
     virtual bool SupportsApzTouchInput() const override {
+      return true;
+    }
+
+protected:
+    bool AccelerateLayersByDefault() override {
       return true;
     }
 

@@ -4,7 +4,7 @@
 
 // Test the top-level window UI for social.
 
-let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
+var SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 
 // This function should "reset" Social such that the next time Social.init()
 // is called (eg, when a new window is opened), it re-performs all
@@ -16,7 +16,7 @@ function resetSocial() {
   SocialService._providerListeners.clear();
 }
 
-let createdWindows = [];
+var createdWindows = [];
 
 function openWindowAndWaitForInit(parentWin, callback) {
   // this notification tells us SocialUI.init() has been run...
@@ -51,14 +51,14 @@ function postTestCleanup(cb) {
   closeOneWindow(cb);
 }
 
-let manifest = { // normal provider
+var manifest = { // normal provider
   name: "provider 1",
   origin: "https://example.com",
   sidebarURL: "https://example.com/browser/browser/base/content/test/social/social_sidebar.html",
   workerURL: "https://example.com/browser/browser/base/content/test/social/social_worker.js",
   iconURL: "https://example.com/browser/browser/base/content/test/general/moz.png"
 };
-let manifest2 = { // used for testing install
+var manifest2 = { // used for testing install
   name: "provider test1",
   origin: "https://test1.example.com",
   workerURL: "https://test1.example.com/browser/browser/base/content/test/social/social_worker.js",
@@ -68,10 +68,11 @@ let manifest2 = { // used for testing install
 
 function test() {
   waitForExplicitFinish();
+  requestLongerTimeout(2);
   runSocialTests(tests, undefined, postTestCleanup);
 }
 
-let tests = {
+var tests = {
   // check when social is totally disabled at startup (ie, no providers enabled)
   testInactiveStartup: function(cbnext) {
     is(Social.providers.length, 0, "needs zero providers to start this test.");
@@ -95,7 +96,7 @@ let tests = {
     SocialService.addProvider(manifest, function() {
       SocialService.addProvider(manifest2, function (provider) {
         SocialSidebar.show();
-        waitForCondition(function() SocialSidebar.opened,
+        waitForCondition(() => SocialSidebar.opened,
                      function() {
           ok(SocialSidebar.opened, "first window sidebar is open");
           openWindowAndWaitForInit(window, function(w1) {
@@ -139,7 +140,7 @@ let tests = {
     SocialService.addProvider(manifest, function() {
       openWindowAndWaitForInit(window, function(w1) {
         w1.SocialSidebar.show();
-        waitForCondition(function() w1.SocialSidebar.opened,
+        waitForCondition(() => w1.SocialSidebar.opened,
                      function() {
           ok(Services.prefs.prefHasUserValue("social.sidebar.provider"), "global state set");
           ok(!SocialSidebar.opened, "1. main sidebar is still closed");

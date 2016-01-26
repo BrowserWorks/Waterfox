@@ -33,13 +33,9 @@ DeviceMotionEvent::InitDeviceMotionEvent(
                      const DeviceAccelerationInit& aAcceleration,
                      const DeviceAccelerationInit& aAccelIncludingGravity,
                      const DeviceRotationRateInit& aRotationRate,
-                     Nullable<double> aInterval,
-                     ErrorResult& aRv)
+                     Nullable<double> aInterval)
 {
-  aRv = Event::InitEvent(aType, aCanBubble, aCancelable);
-  if (aRv.Failed()) {
-    return;
-  }
+  Event::InitEvent(aType, aCanBubble, aCancelable);
 
   mAcceleration = new DeviceAcceleration(this, aAcceleration.mX,
                                          aAcceleration.mY,
@@ -63,11 +59,8 @@ DeviceMotionEvent::Constructor(const GlobalObject& aGlobal,
                                ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<DeviceMotionEvent> e = new DeviceMotionEvent(t, nullptr, nullptr);
-  aRv = e->InitEvent(aType, aEventInitDict.mBubbles, aEventInitDict.mCancelable);
-  if (aRv.Failed()) {
-    return nullptr;
-  }
+  RefPtr<DeviceMotionEvent> e = new DeviceMotionEvent(t, nullptr, nullptr);
+  e->InitEvent(aType, aEventInitDict.mBubbles, aEventInitDict.mCancelable);
   bool trusted = e->Init(t);
 
   e->mAcceleration = new DeviceAcceleration(e,
@@ -145,16 +138,12 @@ DeviceRotationRate::~DeviceRotationRate()
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMDeviceMotionEvent(nsIDOMEvent** aInstancePtrResult,
-                           EventTarget* aOwner,
+already_AddRefed<DeviceMotionEvent>
+NS_NewDOMDeviceMotionEvent(EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            WidgetEvent* aEvent) 
 {
-  NS_ENSURE_ARG_POINTER(aInstancePtrResult);
-
-  DeviceMotionEvent* it = new DeviceMotionEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<DeviceMotionEvent> it =
+    new DeviceMotionEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

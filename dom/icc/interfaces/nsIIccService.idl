@@ -5,12 +5,16 @@
 #include "nsISupports.idl"
 
 interface nsIIcc;
+interface nsIIccContact;
 interface nsIIccInfo;
+interface nsIStkDownloadEvent;
+interface nsIStkProactiveCmd;
+interface nsIStkTerminalResponse;
 
-[scriptable, uuid(7c0ada3d-d8d4-493e-9243-fa3df39855e4)]
+[scriptable, uuid(71b33012-eca2-11e4-a40d-9ff040a6fe2a)]
 interface nsIIccListener : nsISupports
 {
-  void notifyStkCommand(in DOMString aMessage);
+  void notifyStkCommand(in nsIStkProactiveCmd aStkProactiveCmd);
   void notifyStkSessionEnd();
   void notifyCardStateChanged();
   void notifyIccInfoChanged();
@@ -19,7 +23,7 @@ interface nsIIccListener : nsISupports
 /**
  * A callback interface for handling asynchronous response.
  */
-[scriptable, uuid(b0e2899a-adc3-11e4-89cf-1b60eaa35b06)]
+[scriptable, uuid(b7b0623f-fb2c-4cec-b0dc-00ac2fe7b296)]
 interface nsIIccCallback : nsISupports
 {
   /**
@@ -43,8 +47,27 @@ interface nsIIccCallback : nsISupports
   void notifyGetCardLockRetryCount(in long aCount);
 
   /**
+   * The success callback of |readContacts|.
+   *
+   * @param aContacts
+   *        The list of contacts retrieved from ICC.
+   * @param aCount
+   *        The number of contacts retrieved from ICC.
+   */
+  void notifyRetrievedIccContacts([array, size_is(aCount)] in nsIIccContact aContacts,
+                                  in uint32_t aCount);
+
+  /**
+   * The success callback of |updateContact|.
+   *
+   * @param aContact
+   *        The contact with the updated result.
+   */
+  void notifyUpdatedIccContact(in nsIIccContact aContact);
+
+  /**
    * The error callback of |getCardLockEnabled|, |getCardLockRetryCount|,
-   * |matchMvno|, and |getServiceStateEnabled|.
+   * |matchMvno|, |getServiceStateEnabled|, |readContacts| and |updateContact|.
    *
    * @param aErrorMsg
    *        The error message.
@@ -61,6 +84,44 @@ interface nsIIccCallback : nsISupports
    *        The number of remaining retries. -1 if unknown.
    */
   void notifyCardLockError(in DOMString aErrorMsg, in long aRetryCount);
+};
+
+[scriptable, uuid(6136acab-b50e-494a-a86d-df392a032897)]
+interface nsIIccChannelCallback : nsISupports
+{
+  /**
+   * Callback function to notify on successfully opening a logical channel.
+   *
+   * @param channel
+   *        The Channel Number/Handle that is successfully opened.
+   */
+  void notifyOpenChannelSuccess(in long channel);
+
+  /**
+   * Callback function to notify on successfully closing the logical channel.
+   *
+   */
+  void notifyCloseChannelSuccess();
+
+  /**
+   * Callback function to notify the status of 'iccExchangeAPDU' command.
+   *
+   * @param sw1
+   *        Response's First Status Byte
+   * @param sw2
+   *        Response's Second Status Byte
+   * @param data
+   *        Response's data
+   */
+  void notifyExchangeAPDUResponse(in octet sw1,
+                                  in octet sw2,
+                                  in DOMString data);
+
+  /**
+   * Callback function to notify error
+   *
+   */
+  void notifyError(in DOMString error);
 };
 
 %{C++
@@ -97,7 +158,7 @@ NS_CreateIccService();
 /**
  * XPCOM component that provides the access to the selected ICC.
  */
-[scriptable, uuid(20a99186-e4cb-11e4-a5f9-938abcf7c826)]
+[scriptable, uuid(1791f102-b081-4435-8555-37eb035fa4e2)]
 interface nsIIcc : nsISupports
 {
   /**
@@ -193,6 +254,15 @@ interface nsIIcc : nsISupports
    * Note: MUST be matched with enum IccService in MozIcc.webidl!
    */
   const unsigned long CARD_SERVICE_FDN = 0;
+
+  /**
+   * Icc Contact Type Constants
+   *
+   * Note: MUST be matched with enum IccContactType in MozIcc.webidl!
+   */
+  const unsigned long CONTACT_TYPE_ADN = 0;
+  const unsigned long CONTACT_TYPE_FDN = 1;
+  const unsigned long CONTACT_TYPE_SDN = 2;
 
   /**
    * Called to register icc-related changes.
@@ -331,4 +401,138 @@ interface nsIIcc : nsISupports
    */
   void getServiceStateEnabled(in unsigned long aService,
                               in nsIIccCallback aCallback);
+
+  /**
+   * Open Secure Card Icc communication channel
+   *
+   * @param aAid
+   *        Card Application Id in this UICC.
+   * @param aCallback
+   *        An instance of nsIIccChannelCallback.
+   *        nsIIccChannelCallback::notifyOpenChannelSuccess() if success.
+   *        nsIIccChannelCallback::notifyError(), otherwise.
+   */
+  void iccOpenChannel(in DOMString aAid,
+                      in nsIIccChannelCallback aCallback);
+
+  /**
+   * Exchange Command APDU (C-APDU) with UICC on the given logical channel.
+   * Note that 'P3' parameter could be Le/Lc depending on command APDU case.
+   * For Case 1 scenario (when only command header is present), the value
+   * of 'P3' should be set to '-1' explicitly.
+   * Refer to 3G TS 31.101 , 10.2 'Command APDU Structure' for all the cases.
+   *
+   * @param aChannel
+   *        given logical channel.
+   * @param aCla
+   *        APDU class.
+   * @param aIns
+   *        Instruction code.
+   * @param aP1, aP2, aP3
+   *        P1, P2, P3 parameters in APDU.
+   * @param aData
+   *        The hex data to be sent by this PDU.
+   * @param aCallback
+   *        An instance of nsIIccChannelCallback.
+   *        nsIIccChannelCallback::notifyExchangeAPDUResponse() if success.
+   *        nsIIccChannelCallback::notifyError(), otherwise.
+   */
+  void iccExchangeAPDU(in long aChannel,
+                       in octet aCla,
+                       in octet aIns,
+                       in octet aP1,
+                       in octet aP2,
+                       in short aP3,
+                       in DOMString aData,
+                       in nsIIccChannelCallback aCallback);
+
+  /**
+   * Close Secure Card Icc communication channel
+   *
+   * @param aChannel
+   *        Channel to be closed.
+   * @param aCallback
+   *        An instance of nsIIccChannelCallback.
+   *        nsIIccChannelCallback::notifyCloseChannelSuccess() if success.
+   *        nsIIccChannelCallback::notifyError(), otherwise.
+   */
+  void iccCloseChannel(in long aChannel,
+                       in nsIIccChannelCallback aCallback);
+
+  /**
+   * Send STK terminal response to the received proactive command.
+   *
+   * @param aCommand
+   *        The received proactive command.
+   * @param aResponse
+   *        The response to be reply to the card application that issues
+   *        this proactive command.
+   */
+   void sendStkResponse(in nsIStkProactiveCmd aCommand,
+                        in nsIStkTerminalResponse aResponse);
+
+  /**
+   * Send envelope to notify the selected item of the main STK menu.
+   *
+   * @param aItemIdentifier
+   *        The identifier of the menu item.
+   * @param aHelpRequested
+   *        True if help information of the selected item is requested by
+   *        the user.
+   */
+   void sendStkMenuSelection(in unsigned short aItemIdentifier,
+                             in boolean aHelpRequested);
+
+  /**
+   * Send envelope to notify the expiration of a requested timer.
+   *
+   * @param aTimerId
+   *        The TimerId provided from previous proactive command.
+   * @param aTimerValue
+   *        The real used seconds when expired.
+   */
+   void sendStkTimerExpiration(in unsigned short aTimerId,
+                               in unsigned long aTimerValue);
+
+  /**
+   * Send "Event Download" envelope to the ICC.
+   *
+   * @param aEvent
+   *        The event that ICC listening to in STK_CMD_SET_UP_EVENT_LIST.
+   */
+   void sendStkEventDownload(in nsIStkDownloadEvent aEvent);
+
+  /**
+   * Read Specified type of Contact from ICC.
+   *
+   * @param aContactType
+   *        One of CONTACT_TYPE_*.
+   *
+   * @param aCallback
+   *        An instance of nsIIccCallback:
+   *        nsIIccCallback::notifyRetrievedIccContacts() if success.
+   *        nsIIccCallback::notifyError(), otherwise.
+   */
+   void readContacts(in unsigned long aContactType,
+                     in nsIIccCallback aCallback);
+
+   /**
+   * Update Specified type of Contact in ICC.
+   *
+   * @param aContactType
+   *        One of CONTACT_TYPE_*.
+   * @param aContact
+   *        an nsIIccContact instance with information to be updated.
+   * @param aPin2 (Optional)
+   *        The PIN2 required to update FDN contact.
+   *
+   * @param aCallback
+   *        An instance of nsIIccCallback:
+   *        nsIIccCallback::notifyUpdatedIccContact() if success.
+   *        nsIIccCallback::notifyError(), otherwise.
+   */
+   void updateContact(in unsigned long aContactType,
+                      in nsIIccContact aContact,
+                      in DOMString aPin2,
+                      in nsIIccCallback aCallback);
 };

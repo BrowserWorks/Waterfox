@@ -93,6 +93,9 @@ NS_LockProfilePath(nsIFile* aPath, nsIFile* aTempPath,
 void
 WriteConsoleLog();
 
+void
+OverrideDefaultLocaleIfNeeded();
+
 #ifdef XP_WIN
 void
 UseParentConsole();
@@ -101,10 +104,6 @@ BOOL
 WinLaunchChild(const wchar_t *exePath, int argc,
                char **argv, HANDLE userToken = nullptr,
                HANDLE *hProcess = nullptr);
-BOOL
-WriteStatusPending(LPCWSTR updateDirPath);
-BOOL
-WriteStatusApplied(LPCWSTR updateDirPath);
 #endif
 
 #define NS_NATIVEAPPSUPPORT_CONTRACTID "@mozilla.org/toolkit/native-app-support;1"
@@ -112,8 +111,8 @@ WriteStatusApplied(LPCWSTR updateDirPath);
 namespace mozilla {
 namespace startup {
 extern GeckoProcessType sChildProcessType;
-}
-}
+} // namespace startup
+} // namespace mozilla
 
 /**
  * Set up platform specific error handling such as suppressing DLL load dialog

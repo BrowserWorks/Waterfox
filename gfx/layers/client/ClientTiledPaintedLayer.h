@@ -82,6 +82,8 @@ public:
                          LayerMetricsWrapper* aOutDisplayPortAncestor,
                          bool* aOutHasTransformAnimation);
 
+  virtual bool IsOptimizedFor(LayerManager::PaintedLayerCreationHint aCreationHint) override;
+
 private:
   ClientLayerManager* ClientManager()
   {
@@ -135,7 +137,7 @@ private:
   BasicTiledLayerPaintData mPaintData;
 };
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla
 
 #endif

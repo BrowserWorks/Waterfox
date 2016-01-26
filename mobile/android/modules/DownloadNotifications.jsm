@@ -15,11 +15,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "FileUtils", "resource://gre/modules/Fil
 XPCOMUtils.defineLazyModuleGetter(this, "Notifications", "resource://gre/modules/Notifications.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "ParentalControls",
   "@mozilla.org/parental-controls-service;1", "nsIParentalControlsService");
 
-let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.i.bind(null, "DownloadNotifications"); 
+var Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.i.bind(null, "DownloadNotifications");
 
 XPCOMUtils.defineLazyGetter(this, "strings",
                             () => Services.strings.createBundle("chrome://browser/locale/browser.properties"));
@@ -39,7 +41,7 @@ const kButtons = {
                                          "alertDownloadsCancel")
 };
 
-let notifications = new Map();
+var notifications = new Map();
 
 var DownloadNotifications = {
   _notificationKey: "downloads",
@@ -64,7 +66,7 @@ var DownloadNotifications = {
     if (!ParentalControls.isAllowed(ParentalControls.DOWNLOAD)) {
       download.cancel().catch(Cu.reportError);
       download.removePartialData().catch(Cu.reportError);
-      window.NativeWindow.toast.show(strings.GetStringFromName("downloads.disabledInGuest"), "long");
+      Snackbars.show(strings.GetStringFromName("downloads.disabledInGuest"), Snackbars.LENGTH_LONG);
       return;
     }
 
@@ -72,20 +74,38 @@ var DownloadNotifications = {
     notifications.set(download, notification);
     notification.showOrUpdate();
 
-    // If this is a new download, show a toast as well.
+    // If this is a new download, show a snackbar as well.
     if (this._viewAdded) {
-      window.NativeWindow.toast.show(strings.GetStringFromName("alertDownloadsToast"), "long");
+      Snackbars.show(strings.GetStringFromName("alertDownloadsToast"), Snackbars.LENGTH_LONG);
     }
   },
 
   onDownloadChanged: function (download) {
     let notification = notifications.get(download);
-    if (!notification) {
-      Cu.reportError("Download doesn't have a notification.");
-      return;
+
+    if (download.succeeded) {
+      let file = new FileUtils.File(download.target.path);
+
+      Snackbars.show(strings.formatStringFromName("alertDownloadSucceeded", [file.leafName], 1), Snackbars.LENGTH_LONG, {
+        action: {
+          label: strings.GetStringFromName("helperapps.open"),
+          callback: () => {
+            UITelemetry.addEvent("launch.1", "toast", null, "downloads");
+            try {
+              file.launch();
+            } catch (ex) {
+              this.showInAboutDownloads(download);
+            }
+            if (notification) {
+              notification.hide();
+            }
+          }
+        }});
     }
 
-    notification.showOrUpdate();
+    if (notification) {
+      notification.showOrUpdate();
+    }
   },
 
   onDownloadRemoved: function (download) {
@@ -121,8 +141,8 @@ var DownloadNotifications = {
   showInAboutDownloads: function (download) {
     let hash = "#" + window.encodeURIComponent(download.target.path);
 
-    // we can't use selectOrOpenTab, since it uses string equality to find a tab
-    window.BrowserApp.selectOrOpenTab("about:downloads" + hash, { startsWith: true });
+    // Force using string equality to find a tab
+    window.BrowserApp.selectOrAddTab("about:downloads" + hash, null, { startsWith: true });
   },
 
   onClick: function(cookie) {
@@ -251,11 +271,11 @@ DownloadNotification.prototype = {
   },
 };
 
-let ConfirmCancelPrompt = {
+var ConfirmCancelPrompt = {
   show: function (download) {
     // Open a prompt that offers a choice to cancel the download
-    let title = strings.GetStringFromName("downloadCancelPromptTitle");
-    let message = strings.GetStringFromName("downloadCancelPromptMessage");
+    let title = strings.GetStringFromName("downloadCancelPromptTitle1");
+    let message = strings.GetStringFromName("downloadCancelPromptMessage1");
 
     if (Services.prompt.confirm(null, title, message)) {
       download.cancel().catch(Cu.reportError);

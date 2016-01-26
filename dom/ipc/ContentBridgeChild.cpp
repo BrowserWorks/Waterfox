@@ -7,7 +7,6 @@
 #include "mozilla/dom/ContentBridgeChild.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
@@ -19,7 +18,8 @@ using namespace mozilla::jsipc;
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_ISUPPORTS(ContentBridgeChild, nsIContentChild)
+NS_IMPL_ISUPPORTS(ContentBridgeChild,
+                  nsIContentChild)
 
 ContentBridgeChild::ContentBridgeChild(Transport* aTransport)
   : mTransport(aTransport)
@@ -41,12 +41,13 @@ ContentBridgeChild::ActorDestroy(ActorDestroyReason aWhy)
 /*static*/ ContentBridgeChild*
 ContentBridgeChild::Create(Transport* aTransport, ProcessId aOtherPid)
 {
-  nsRefPtr<ContentBridgeChild> bridge =
+  RefPtr<ContentBridgeChild> bridge =
     new ContentBridgeChild(aTransport);
   bridge->mSelfRef = bridge;
 
   DebugOnly<bool> ok = bridge->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop());
   MOZ_ASSERT(ok);
+
   return bridge;
 }
 
@@ -97,8 +98,8 @@ ContentBridgeChild::SendPBrowserConstructor(PBrowserChild* aActor,
 jsipc::CPOWManager*
 ContentBridgeChild::GetCPOWManager()
 {
-  if (ManagedPJavaScriptChild().Length()) {
-    return CPOWManagerFor(ManagedPJavaScriptChild()[0]);
+  if (PJavaScriptChild* c = LoneManagedOrNullAsserts(ManagedPJavaScriptChild())) {
+    return CPOWManagerFor(c);
   }
   return CPOWManagerFor(SendPJavaScriptConstructor());
 }

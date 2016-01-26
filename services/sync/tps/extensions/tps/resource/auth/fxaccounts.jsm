@@ -67,7 +67,7 @@ var Authentication = {
     Logger.AssertTrue(account["username"], "Username has been found");
     Logger.AssertTrue(account["password"], "Password has been found");
 
-    Logger.logInfo("Login user: " + account["username"] + '\n');
+    Logger.logInfo("Login user: " + account["username"]);
 
     let client = new FxAccountsClient();
     client.signIn(account["username"], account["password"], true).then(credentials => {

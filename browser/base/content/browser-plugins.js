@@ -1,7 +1,7 @@
-# -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var gPluginHandler = {
   PREF_SESSION_PERSIST_MINUTES: "plugin.sessionPermissionNow.intervalInMinutes",
@@ -44,14 +44,14 @@ var gPluginHandler = {
     switch (msg.name) {
       case "PluginContent:ShowClickToPlayNotification":
         this.showClickToPlayNotification(msg.target, msg.data.plugins, msg.data.showNow,
-                                         msg.principal, msg.data.host, msg.data.location);
+                                         msg.principal, msg.data.location);
         break;
       case "PluginContent:RemoveNotification":
         this.removeNotification(msg.target, msg.data.name);
         break;
       case "PluginContent:UpdateHiddenPluginUI":
         this.updateHiddenPluginUI(msg.target, msg.data.haveInsecure, msg.data.actions,
-                                  msg.principal, msg.data.host, msg.data.location);
+                                  msg.principal, msg.data.location);
         break;
       case "PluginContent:HideNotificationBar":
         this.hideNotificationBar(msg.target, msg.data.name);
@@ -84,14 +84,6 @@ var gPluginHandler = {
         break;
     }
   },
-
-#ifdef MOZ_CRASHREPORTER
-  get CrashSubmit() {
-    delete this.CrashSubmit;
-    Cu.import("resource://gre/modules/CrashSubmit.jsm", this);
-    return this.CrashSubmit;
-  },
-#endif
 
   // Callback for user clicking on a disabled plugin
   managePlugins: function () {
@@ -216,8 +208,8 @@ var gPluginHandler = {
     });
   },
 
-  showClickToPlayNotification: function (browser, plugins, showNow, principal,
-                                         host, location) {
+  showClickToPlayNotification: function (browser, plugins, showNow,
+                                         principal, location) {
     // It is possible that we've received a message from the frame script to show
     // a click to play notification for a principal that no longer matches the one
     // that the browser's content now has assigned (ie, the browser has browsed away
@@ -295,7 +287,6 @@ var gPluginHandler = {
       primaryPlugin: primaryPluginPermission,
       pluginData: pluginData,
       principal: principal,
-      host: host,
     };
     PopupNotifications.show(browser, "click-to-play-plugins",
                             "", "plugins-notification-icon",
@@ -316,8 +307,10 @@ var gPluginHandler = {
       notificationBox.removeNotification(notification, true);
   },
 
-  updateHiddenPluginUI: function (browser, haveInsecure, actions, principal,
-                                  host, location) {
+  updateHiddenPluginUI: function (browser, haveInsecure, actions,
+                                  principal, location) {
+    let origin = principal.originNoSuffix;
+
     // It is possible that we've received a message from the frame script to show
     // the hidden plugin notification for a principal that no longer matches the one
     // that the browser's content now has assigned (ie, the browser has browsed away
@@ -380,22 +373,22 @@ var gPluginHandler = {
           case Ci.nsIObjectLoadingContent.PLUGIN_CLICK_TO_PLAY:
             message = gNavigatorBundle.getFormattedString(
               "pluginActivateNew.message",
-              [pluginName, host]);
+              [pluginName, origin]);
             break;
           case Ci.nsIObjectLoadingContent.PLUGIN_VULNERABLE_UPDATABLE:
             message = gNavigatorBundle.getFormattedString(
               "pluginActivateOutdated.message",
-              [pluginName, host, brand]);
+              [pluginName, origin, brand]);
             break;
           case Ci.nsIObjectLoadingContent.PLUGIN_VULNERABLE_NO_UPDATE:
             message = gNavigatorBundle.getFormattedString(
               "pluginActivateVulnerable.message",
-              [pluginName, host, brand]);
+              [pluginName, origin, brand]);
         }
       } else {
         // Multi-plugin
         message = gNavigatorBundle.getFormattedString(
-          "pluginActivateMultiple.message", [host]);
+          "pluginActivateMultiple.message", [origin]);
       }
 
       let buttons = [

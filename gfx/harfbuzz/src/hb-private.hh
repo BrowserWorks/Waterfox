@@ -54,6 +54,23 @@
 #include <stdarg.h>
 
 
+/* Compile-time custom allocator support. */
+
+#if defined(hb_malloc_impl) \
+ && defined(hb_calloc_impl) \
+ && defined(hb_realloc_impl) \
+ && defined(hb_free_impl)
+extern "C" void* hb_malloc_impl(size_t size);
+extern "C" void* hb_calloc_impl(size_t nmemb, size_t size);
+extern "C" void* hb_realloc_impl(void *ptr, size_t size);
+extern "C" void  hb_free_impl(void *ptr);
+#define malloc hb_malloc_impl
+#define calloc hb_calloc_impl
+#define realloc hb_realloc_impl
+#define free hb_free_impl
+#endif
+
+
 /* Compiler attributes */
 
 
@@ -102,6 +119,36 @@
 #define HB_FUNC __func__
 #endif
 
+/*
+ * Borrowed from https://bugzilla.mozilla.org/show_bug.cgi?id=1215411
+ * HB_FALLTHROUGH is an annotation to suppress compiler warnings about switch
+ * cases that fall through without a break or return statement. HB_FALLTHROUGH
+ * is only needed on cases that have code:
+ *
+ * switch (foo) {
+ *   case 1: // These cases have no code. No fallthrough annotations are needed.
+ *   case 2:
+ *   case 3:
+ *     foo = 4; // This case has code, so a fallthrough annotation is needed:
+ *     HB_FALLTHROUGH;
+ *   default:
+ *     return foo;
+ * }
+ */
+#if defined(__clang__) && __cplusplus >= 201103L
+   /* clang's fallthrough annotations are only available starting in C++11. */
+#  define HB_FALLTHROUGH [[clang::fallthrough]]
+#elif defined(_MSC_VER)
+   /*
+    * MSVC's __fallthrough annotations are checked by /analyze (Code Analysis):
+    * https://msdn.microsoft.com/en-us/library/ms235402%28VS.80%29.aspx
+    */
+#  include <sal.h>
+#  define HB_FALLTHROUGH __fallthrough
+#else
+#  define HB_FALLTHROUGH /* FALLTHROUGH */
+#endif
+
 #if defined(_WIN32) || defined(__CYGWIN__)
    /* We need Windows Vista for both Uniscribe backend and for
     * MemoryBarrier.  We don't support compiling on Windows XP,
@@ -132,6 +179,9 @@ static int errno = 0; /* Use something better? */
 #  endif
 #  if defined(_MSC_VER) && _MSC_VER < 1900
 #    define snprintf _snprintf
+#  elif defined(_MSC_VER) && _MSC_VER >= 1900
+#    /* Covers VC++ Error for strdup being a deprecated POSIX name and to instead use _strdup instead */
+#    define strdup _strdup
 #  endif
 #endif
 
@@ -193,8 +243,9 @@ static inline unsigned int ARRAY_LENGTH (const Type (&)[n]) { return n; }
 #define _ASSERT_STATIC0(_line, _cond)	_ASSERT_STATIC1 (_line, (_cond))
 #define ASSERT_STATIC(_cond)		_ASSERT_STATIC0 (__LINE__, (_cond))
 
-#define ASSERT_STATIC_EXPR(_cond)((void) sizeof (char[(_cond) ? 1 : -1]))
-#define ASSERT_STATIC_EXPR_ZERO(_cond) (0 * sizeof (char[(_cond) ? 1 : -1]))
+template <unsigned int cond> class hb_assert_constant_t {};
+
+#define ASSERT_STATIC_EXPR_ZERO(_cond) (0 * (unsigned int) sizeof (hb_assert_constant_t<_cond>))
 
 #define _PASTE1(a,b) a##b
 #define PASTE(a,b) _PASTE1(a,b)
@@ -247,8 +298,8 @@ ASSERT_STATIC (sizeof (hb_var_int_t) == 4);
 
 /* Void! */
 struct _hb_void_t {};
-typedef const _hb_void_t &hb_void_t;
-#define HB_VOID (* (const _hb_void_t *) NULL)
+typedef const _hb_void_t *hb_void_t;
+#define HB_VOID ((const _hb_void_t *) NULL)
 
 /* Return the number of 1 bits in mask. */
 static inline HB_CONST_FUNC unsigned int
@@ -739,7 +790,7 @@ template <typename T>
 static inline void _hb_warn_no_return (bool returned)
 {
   if (unlikely (!returned)) {
-    fprintf (stderr, "OUCH, returned with no call to TRACE_RETURN.  This is a bug, please report.\n");
+    fprintf (stderr, "OUCH, returned with no call to return_trace().  This is a bug, please report.\n");
   }
 }
 template <>
@@ -774,7 +825,7 @@ struct hb_auto_trace_t {
   inline ret_t ret (ret_t v, unsigned int line = 0)
   {
     if (unlikely (returned)) {
-      fprintf (stderr, "OUCH, double calls to TRACE_RETURN.  This is a bug, please report.\n");
+      fprintf (stderr, "OUCH, double calls to return_trace().  This is a bug, please report.\n");
       return v;
     }
 
@@ -805,7 +856,7 @@ struct hb_auto_trace_t<0, ret_t> {
   inline ret_t ret (ret_t v, unsigned int line HB_UNUSED = 0) { return v; }
 };
 
-#define TRACE_RETURN(RET) trace.ret (RET, __LINE__)
+#define return_trace(RET) return trace.ret (RET, __LINE__)
 
 /* Misc */
 
@@ -843,51 +894,68 @@ hb_in_ranges (T u, T lo1, T hi1, T lo2, T hi2, T lo3, T hi3)
 }
 
 
+/* Enable bitwise ops on enums marked as flags_t */
+/* To my surprise, looks like the function resolver is happy to silently cast
+ * one enum to another...  So this doesn't provide the type-checking that I
+ * originally had in mind... :(.
+ *
+ * For MSVC warnings, see: https://github.com/behdad/harfbuzz/pull/163
+ */
+#ifdef _MSC_VER
+# pragma warning(disable:4200)
+# pragma warning(disable:4800)
+#endif
+#define HB_MARK_AS_FLAG_T(T) \
+	extern "C++" { \
+	  static inline T operator | (T l, T r) { return T ((unsigned) l | (unsigned) r); } \
+	  static inline T operator & (T l, T r) { return T ((unsigned) l & (unsigned) r); } \
+	  static inline T operator ^ (T l, T r) { return T ((unsigned) l ^ (unsigned) r); } \
+	  static inline T operator ~ (T r) { return T (~(unsigned int) r); } \
+	  static inline T& operator |= (T &l, T r) { l = l | r; return l; } \
+	  static inline T& operator &= (T& l, T r) { l = l & r; return l; } \
+	  static inline T& operator ^= (T& l, T r) { l = l ^ r; return l; } \
+	}
+
+
 /* Useful for set-operations on small enums.
  * For example, for testing "x ∈ {x1, x2, x3}" use:
- * (FLAG(x) & (FLAG(x1) | FLAG(x2) | FLAG(x3)))
+ * (FLAG_SAFE(x) & (FLAG(x1) | FLAG(x2) | FLAG(x3)))
  */
-#define FLAG(x) (1<<(x))
+#define FLAG(x) (ASSERT_STATIC_EXPR_ZERO ((x) < 32) + (1U << (x)))
+#define FLAG_SAFE(x) (1U << (x))
+#define FLAG_UNSAFE(x) ((x) < 32 ? FLAG_SAFE(x) : 0)
 #define FLAG_RANGE(x,y) (ASSERT_STATIC_EXPR_ZERO ((x) < (y)) + FLAG(y+1) - FLAG(x))
 
 
 template <typename T, typename T2> static inline void
-hb_bubble_sort (T *array, unsigned int len, int(*compar)(const T *, const T *), T2 *array2)
+hb_stable_sort (T *array, unsigned int len, int(*compar)(const T *, const T *), T2 *array2)
 {
-  if (unlikely (!len))
-    return;
-
-  unsigned int k = len - 1;
-  do {
-    unsigned int new_k = 0;
-
-    for (unsigned int j = 0; j < k; j++)
-      if (compar (&array[j], &array[j+1]) > 0)
-      {
-        {
-	  T t;
-	  t = array[j];
-	  array[j] = array[j + 1];
-	  array[j + 1] = t;
-	}
-        if (array2)
-        {
-	  T2 t;
-	  t = array2[j];
-	  array2[j] = array2[j + 1];
-	  array2[j + 1] = t;
-	}
-
-	new_k = j;
-      }
-    k = new_k;
-  } while (k);
+  for (unsigned int i = 1; i < len; i++)
+  {
+    unsigned int j = i;
+    while (j && compar (&array[j - 1], &array[i]) > 0)
+      j--;
+    if (i == j)
+      continue;
+    /* Move item i to occupy place for item j, shift what's in between. */
+    {
+      T t = array[i];
+      memmove (&array[j + 1], &array[j], (i - j) * sizeof (T));
+      array[j] = t;
+    }
+    if (array2)
+    {
+      T2 t = array2[i];
+      memmove (&array2[j + 1], &array2[j], (i - j) * sizeof (T2));
+      array2[j] = t;
+    }
+  }
 }
 
 template <typename T> static inline void
-hb_bubble_sort (T *array, unsigned int len, int(*compar)(const T *, const T *))
+hb_stable_sort (T *array, unsigned int len, int(*compar)(const T *, const T *))
 {
-  hb_bubble_sort (array, len, compar, (int *) NULL);
+  hb_stable_sort (array, len, compar, (int *) NULL);
 }
 
 static inline hb_bool_t
@@ -937,5 +1005,7 @@ hb_options (void)
   return _hb_options.opts;
 }
 
+/* Size signifying variable-sized array */
+#define VAR 1
 
 #endif /* HB_PRIVATE_HH */

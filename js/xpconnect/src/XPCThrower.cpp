@@ -11,6 +11,7 @@
 #include "jsprf.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Exceptions.h"
+#include "nsStringGlue.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -26,7 +27,7 @@ XPCThrower::Throw(nsresult rv, JSContext* cx)
         return;
     if (!nsXPCException::NameAndFormatForNSResult(rv, nullptr, &format))
         format = "";
-    dom::Throw(cx, rv, format);
+    dom::Throw(cx, rv, nsDependentCString(format));
 }
 
 namespace xpc {
@@ -77,11 +78,12 @@ XPCThrower::Throw(nsresult rv, XPCCallContext& ccx)
         format = "";
 
     sz = (char*) format;
+    NS_ENSURE_TRUE_VOID(sz);
 
     if (sz && sVerbose)
         Verbosify(ccx, &sz, false);
 
-    dom::Throw(ccx, rv, sz);
+    dom::Throw(ccx, rv, nsDependentCString(sz));
 
     if (sz && sz != format)
         JS_smprintf_free(sz);
@@ -118,11 +120,12 @@ XPCThrower::ThrowBadResult(nsresult rv, nsresult result, XPCCallContext& ccx)
         sz = JS_smprintf("%s 0x%x (%s)", format, result, name);
     else
         sz = JS_smprintf("%s 0x%x", format, result);
+    NS_ENSURE_TRUE_VOID(sz);
 
     if (sz && sVerbose)
         Verbosify(ccx, &sz, true);
 
-    dom::Throw(ccx, result, sz);
+    dom::Throw(ccx, result, nsDependentCString(sz));
 
     if (sz)
         JS_smprintf_free(sz);
@@ -139,11 +142,12 @@ XPCThrower::ThrowBadParam(nsresult rv, unsigned paramNum, XPCCallContext& ccx)
         format = "";
 
     sz = JS_smprintf("%s arg %d", format, paramNum);
+    NS_ENSURE_TRUE_VOID(sz);
 
     if (sz && sVerbose)
         Verbosify(ccx, &sz, true);
 
-    dom::Throw(ccx, rv, sz);
+    dom::Throw(ccx, rv, nsDependentCString(sz));
 
     if (sz)
         JS_smprintf_free(sz);

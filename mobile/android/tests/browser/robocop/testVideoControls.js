@@ -5,26 +5,22 @@
 
 "use strict";
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/SimpleServiceDiscovery.jsm");
 
-function ok(passed, text) {
-  do_report_result(passed, text, Components.stack.caller, false);
-}
-
 // The chrome window
-let chromeWin;
+var chromeWin;
 
 // Track the <browser> where the tests are happening
-let browser;
+var browser;
 
 // The document of the video_controls web content
-let contentDocument;
+var contentDocument;
 
 // The <video> we will be testing
-let video;
+var video;
 
 add_test(function setup_browser() {
   chromeWin = Services.wm.getMostRecentWindow("navigator:browser");

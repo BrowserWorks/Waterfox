@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let Ci = Components.interfaces;
-let Cu = Components.utils;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
@@ -12,7 +12,7 @@ Cu.import('resource://gre/modules/DOMRequestHelper.jsm');
 XPCOMUtils.defineLazyModuleGetter(this, 'GlobalSimulatorScreen',
                                   'resource://gre/modules/GlobalSimulatorScreen.jsm');
 
-let DEBUG_PREFIX = 'SimulatorScreen.js - ';
+var DEBUG_PREFIX = 'SimulatorScreen.js - ';
 function debug() {
   //dump(DEBUG_PREFIX + Array.slice(arguments) + '\n');
 }
@@ -62,13 +62,13 @@ function hookScreen(window) {
   };
 
   Object.defineProperty(screen, 'width', {
-    get: function () GlobalSimulatorScreen.width
+    get: () => GlobalSimulatorScreen.width
   });
   Object.defineProperty(screen, 'height', {
-    get: function () GlobalSimulatorScreen.height
+    get: () => GlobalSimulatorScreen.height
   });
   Object.defineProperty(screen, 'mozOrientation', {
-    get: function () GlobalSimulatorScreen.mozOrientation
+    get: () => GlobalSimulatorScreen.mozOrientation
   });
 }
 

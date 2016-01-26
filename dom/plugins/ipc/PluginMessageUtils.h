@@ -12,6 +12,7 @@
 
 #include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/CrossProcessMutex.h"
+#include "mozilla/UniquePtr.h"
 #include "gfxipc/ShadowLayerUtils.h"
 
 #include "npapi.h"
@@ -20,7 +21,7 @@
 #include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsHashKeys.h"
 #ifdef MOZ_CRASHREPORTER
 #  include "nsExceptionHandler.h"
@@ -52,7 +53,7 @@ MungePluginDsoPath(const std::string& path);
 std::string
 UnmungePluginDsoPath(const std::string& munged);
 
-extern PRLogModuleInfo* GetPluginLog();
+extern mozilla::LogModule* GetPluginLog();
 
 #if defined(_MSC_VER)
 #define FULLFUNCTION __FUNCSIG__
@@ -62,9 +63,9 @@ extern PRLogModuleInfo* GetPluginLog();
 #define FULLFUNCTION __FUNCTION__
 #endif
 
-#define PLUGIN_LOG_DEBUG(args) PR_LOG(GetPluginLog(), PR_LOG_DEBUG, args)
-#define PLUGIN_LOG_DEBUG_FUNCTION PR_LOG(GetPluginLog(), PR_LOG_DEBUG, ("%s", FULLFUNCTION))
-#define PLUGIN_LOG_DEBUG_METHOD PR_LOG(GetPluginLog(), PR_LOG_DEBUG, ("%s [%p]", FULLFUNCTION, (void*) this))
+#define PLUGIN_LOG_DEBUG(args) MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, args)
+#define PLUGIN_LOG_DEBUG_FUNCTION MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, ("%s", FULLFUNCTION))
+#define PLUGIN_LOG_DEBUG_METHOD MOZ_LOG(GetPluginLog(), mozilla::LogLevel::Debug, ("%s [%p]", FULLFUNCTION, (void*) this))
 
 /**
  * This is NPByteRange without the linked list.
@@ -93,9 +94,6 @@ struct NPRemoteWindow
   VisualID visualID;
   Colormap colormap;
 #endif /* XP_UNIX */
-#if defined(XP_WIN)
-  base::SharedMemoryHandle surfaceHandle;
-#endif
 #if defined(XP_MACOSX)
   double contentsScaleFactor;
 #endif
@@ -105,7 +103,7 @@ struct NPRemoteWindow
 typedef HWND NativeWindowHandle;
 #elif defined(MOZ_X11)
 typedef XID NativeWindowHandle;
-#elif defined(XP_MACOSX) || defined(ANDROID) || defined(MOZ_WIDGET_QT)
+#elif defined(XP_DARWIN) || defined(ANDROID) || defined(MOZ_WIDGET_QT)
 typedef intptr_t NativeWindowHandle; // never actually used, will always be 0
 #else
 #error Need NativeWindowHandle for this platform
@@ -122,7 +120,7 @@ typedef mozilla::null_t DXGISharedSurfaceHandle;
 // XXX maybe not the best place for these. better one?
 
 #define VARSTR(v_)  case v_: return #v_
-inline const char* const
+inline const char*
 NPPVariableToString(NPPVariable aVar)
 {
     switch (aVar) {
@@ -200,7 +198,7 @@ inline bool IsPluginThread()
 
 inline void AssertPluginThread()
 {
-  NS_ASSERTION(IsPluginThread(), "Should be on the plugin's main thread!");
+  MOZ_RELEASE_ASSERT(IsPluginThread(), "Should be on the plugin's main thread!");
 }
 
 #define ENSURE_PLUGIN_THREAD(retval) \
@@ -221,6 +219,15 @@ inline void AssertPluginThread()
 
 void DeferNPObjectLastRelease(const NPNetscapeFuncs* f, NPObject* o);
 void DeferNPVariantLastRelease(const NPNetscapeFuncs* f, NPVariant* v);
+
+inline bool IsDrawingModelDirect(int16_t aModel)
+{
+    return aModel == NPDrawingModelAsyncBitmapSurface
+#if defined(XP_WIN)
+           || aModel == NPDrawingModelAsyncWindowsDXGISurface
+#endif
+           ;
+}
 
 // in NPAPI, char* == nullptr is sometimes meaningful.  the following is
 // helper code for dealing with nullable nsCString's
@@ -253,11 +260,6 @@ struct DeletingObjectEntry : public nsPtrHashKey<NPObject>
 
   bool mDeleted;
 };
-
-#ifdef XP_WIN
-// The private event used for double-pass widgetless plugin rendering.
-UINT DoublePassRenderingEvent();
-#endif
 
 } /* namespace plugins */
 
@@ -345,9 +347,6 @@ struct ParamTraits<mozilla::plugins::NPRemoteWindow>
     aMsg->WriteULong(aParam.visualID);
     aMsg->WriteULong(aParam.colormap);
 #endif
-#if defined(XP_WIN)
-    WriteParam(aMsg, aParam.surfaceHandle);
-#endif
 #if defined(XP_MACOSX)
     aMsg->WriteDouble(aParam.contentsScaleFactor);
 #endif
@@ -377,12 +376,6 @@ struct ParamTraits<mozilla::plugins::NPRemoteWindow>
       return false;
 #endif
 
-#if defined(XP_WIN)
-    base::SharedMemoryHandle surfaceHandle;
-    if (!ReadParam(aMsg, aIter, &surfaceHandle))
-      return false;
-#endif
-
 #if defined(XP_MACOSX)
     double contentsScaleFactor;
     if (!aMsg->ReadDouble(aIter, &contentsScaleFactor))
@@ -399,9 +392,6 @@ struct ParamTraits<mozilla::plugins::NPRemoteWindow>
 #if defined(MOZ_X11) && defined(XP_UNIX) && !defined(XP_MACOSX)
     aResult->visualID = visualID;
     aResult->colormap = colormap;
-#endif
-#if defined(XP_WIN)
-    aResult->surfaceHandle = surfaceHandle;
 #endif
 #if defined(XP_MACOSX)
     aResult->contentsScaleFactor = contentsScaleFactor;
@@ -440,10 +430,10 @@ struct ParamTraits<NPString>
       }
 
       const char* messageBuffer = nullptr;
-      nsAutoArrayPtr<char> newBuffer(new char[byteCount]);
+      mozilla::UniquePtr<char[]> newBuffer(new char[byteCount]);
       if (newBuffer && aMsg->ReadBytes(aIter, &messageBuffer, byteCount )) {
         memcpy((void*)messageBuffer, newBuffer.get(), byteCount);
-        aResult->UTF8Characters = newBuffer.forget();
+        aResult->UTF8Characters = newBuffer.release();
         return true;
       }
     }

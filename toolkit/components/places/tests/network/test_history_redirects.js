@@ -5,9 +5,9 @@
 
 /* Tests history redirects handling */
 
-let hs = Cc["@mozilla.org/browser/nav-history-service;1"].
+var hs = Cc["@mozilla.org/browser/nav-history-service;1"].
          getService(Ci.nsINavHistoryService);
-let bh = hs.QueryInterface(Ci.nsIBrowserHistory);
+var bh = hs.QueryInterface(Ci.nsIBrowserHistory);
 
 const PERMA_REDIR_PATH = "/permaredir";
 const TEMP_REDIR_PATH = "/tempredir";
@@ -62,15 +62,14 @@ function PathHandler(aMeta, aResponse, aChannelEvent, aRedirURL) {
 function run_test() {
   do_test_pending();
 
-  var chan = NetUtil.ioService.newChannelFromURI2(uri(PERMA_REDIR_URL),
-                                                  null,      // aLoadingNode
-                                                  Services.scriptSecurityManager.getSystemPrincipal(),
-                                                  null,      // aTriggeringPrincipal
-                                                  Ci.nsILoadInfo.SEC_NORMAL,
-                                                  Ci.nsIContentPolicy.TYPE_OTHER);
+  var chan = NetUtil.newChannel({
+               uri: uri(PERMA_REDIR_URL),
+               loadUsingSystemPrincipal: true
+             });
+
   var listener = new ChannelListener();
   chan.notificationCallbacks = listener;
-  chan.asyncOpen(listener, null);
+  chan.asyncOpen2(listener);
   // The test will continue on onStopRequest.
 }
 

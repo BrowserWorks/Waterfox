@@ -22,7 +22,7 @@ public:
   nsPluginNativeWindowQt();
   virtual ~nsPluginNativeWindowQt();
 
-  virtual nsresult CallSetWindow(nsRefPtr<nsNPAPIPluginInstance> &aPluginInstance);
+  virtual nsresult CallSetWindow(RefPtr<nsNPAPIPluginInstance> &aPluginInstance);
 private:
 
   NPSetWindowCallbackStruct mWsInfo;
@@ -62,7 +62,7 @@ nsresult PLUG_NewPluginNativeWindow(nsPluginNativeWindow **aPluginNativeWindow)
 {
   NS_ENSURE_ARG_POINTER(aPluginNativeWindow);
   *aPluginNativeWindow = new nsPluginNativeWindowQt();
-  return *aPluginNativeWindow ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
+  return NS_OK;
 }
 
 nsresult PLUG_DeletePluginNativeWindow(nsPluginNativeWindow * aPluginNativeWindow)
@@ -73,7 +73,7 @@ nsresult PLUG_DeletePluginNativeWindow(nsPluginNativeWindow * aPluginNativeWindo
   return NS_OK;
 }
 
-nsresult nsPluginNativeWindowQt::CallSetWindow(nsRefPtr<nsNPAPIPluginInstance> &aPluginInstance)
+nsresult nsPluginNativeWindowQt::CallSetWindow(RefPtr<nsNPAPIPluginInstance> &aPluginInstance)
 {
   if (aPluginInstance) {
     if (type == NPWindowTypeWindow) {

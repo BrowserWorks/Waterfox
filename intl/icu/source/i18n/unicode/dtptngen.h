@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2013, International Business Machines Corporation and
+* Copyright (C) 2007-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -31,6 +31,7 @@ class DateTimeMatcher;
 class DistanceInfo;
 class PatternMap;
 class PtnSkeleton;
+class SharedDateTimePatternGenerator;
 
 /**
  * This class provides flexible generation of date format patterns, like "yy-MM-dd". 
@@ -64,6 +65,17 @@ public:
      * @stable ICU 3.8
      */
     static DateTimePatternGenerator* U_EXPORT2 createInstance(const Locale& uLocale, UErrorCode& status);
+
+#ifndef U_HIDE_INTERNAL_API
+
+    /**
+     * For ICU use only
+     *
+     * @internal
+     */
+    static DateTimePatternGenerator* U_EXPORT2 internalMakeInstance(const Locale& uLocale, UErrorCode& status);
+
+#endif /* U_HIDE_INTERNAL_API */
 
     /**
      * Create an empty generator, to be constructed with addPattern(...) etc.
@@ -104,6 +116,7 @@ public:
      */
     UBool operator!=(const DateTimePatternGenerator& other) const;
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Utility to return a unique skeleton from a given pattern. For example,
      * both "MMM-dd" and "dd/MMM" produce the skeleton "MMMdd".
@@ -112,10 +125,28 @@ public:
      * @param status  Output param set to success/failure code on exit,
      *                  which must not indicate a failure before the function call.
      * @return skeleton such as "MMMdd"
+     * @draft ICU 56
+     */
+    static UnicodeString staticGetSkeleton(const UnicodeString& pattern, UErrorCode& status);
+#endif  /* U_HIDE_DRAFT_API */
+
+    /**
+     * Utility to return a unique skeleton from a given pattern. For example,
+     * both "MMM-dd" and "dd/MMM" produce the skeleton "MMMdd".
+     * getSkeleton() works exactly like staticGetSkeleton().
+     * Use staticGetSkeleton() instead of getSkeleton().
+     *
+     * @param pattern   Input pattern, such as "dd/MMM"
+     * @param status  Output param set to success/failure code on exit,
+     *                  which must not indicate a failure before the function call.
+     * @return skeleton such as "MMMdd"
      * @stable ICU 3.8
      */
-    UnicodeString getSkeleton(const UnicodeString& pattern, UErrorCode& status);
+    UnicodeString getSkeleton(const UnicodeString& pattern, UErrorCode& status) {
+        return staticGetSkeleton(pattern, status);
+    }
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Utility to return a unique base skeleton from a given pattern. This is
      * the same as the skeleton, except that differences in length are minimized
@@ -126,10 +157,30 @@ public:
      * @param pattern  Input pattern, such as "dd/MMM"
      * @param status  Output param set to success/failure code on exit,
      *               which must not indicate a failure before the function call.
-     * @return base skeleton, such as "Md"
+     * @return base skeleton, such as "MMMd"
+     * @draft ICU 56
+     */
+    static UnicodeString staticGetBaseSkeleton(const UnicodeString& pattern, UErrorCode& status);
+#endif  /* U_HIDE_DRAFT_API */
+
+    /**
+     * Utility to return a unique base skeleton from a given pattern. This is
+     * the same as the skeleton, except that differences in length are minimized
+     * so as to only preserve the difference between string and numeric form. So
+     * for example, both "MMM-dd" and "d/MMM" produce the skeleton "MMMd"
+     * (notice the single d).
+     * getBaseSkeleton() works exactly like staticGetBaseSkeleton().
+     * Use staticGetBaseSkeleton() instead of getBaseSkeleton().
+     *
+     * @param pattern  Input pattern, such as "dd/MMM"
+     * @param status  Output param set to success/failure code on exit,
+     *               which must not indicate a failure before the function call.
+     * @return base skeleton, such as "MMMd"
      * @stable ICU 3.8
      */
-    UnicodeString getBaseSkeleton(const UnicodeString& pattern, UErrorCode& status);
+    UnicodeString getBaseSkeleton(const UnicodeString& pattern, UErrorCode& status) {
+        return staticGetBaseSkeleton(pattern, status);
+    }
 
     /**
      * Adds a pattern to the generator. If the pattern has the same skeleton as
@@ -215,22 +266,24 @@ public:
     const UnicodeString& getAppendItemName(UDateTimePatternField field) const;
 
     /**
-     * The date time format is a message format pattern used to compose date and
-     * time patterns. The default value is "{0} {1}", where {0} will be replaced
-     * by the date pattern and {1} will be replaced by the time pattern.
+     * The DateTimeFormat is a message format pattern used to compose date and
+     * time patterns. The default pattern in the root locale is "{1} {0}", where
+     * {1} will be replaced by the date pattern and {0} will be replaced by the
+     * time pattern; however, other locales may specify patterns such as
+     * "{1}, {0}" or "{1} 'at' {0}", etc.
      * <p>
      * This is used when the input skeleton contains both date and time fields,
      * but there is not a close match among the added patterns. For example,
      * suppose that this object was created by adding "dd-MMM" and "hh:mm", and
-     * its datetimeFormat is the default "{0} {1}". Then if the input skeleton
+     * its datetimeFormat is the default "{1} {0}". Then if the input skeleton
      * is "MMMdhmm", there is not an exact match, so the input skeleton is
      * broken up into two components "MMMd" and "hmm". There are close matches
      * for those two skeletons, so the result is put together with this pattern,
      * resulting in "d-MMM h:mm".
      *
      * @param dateTimeFormat
-     *            message format pattern, here {0} will be replaced by the date
-     *            pattern and {1} will be replaced by the time pattern.
+     *            message format pattern, here {1} will be replaced by the date
+     *            pattern and {0} will be replaced by the time pattern.
      * @stable ICU 3.8
      */
     void setDateTimeFormat(const UnicodeString& dateTimeFormat);

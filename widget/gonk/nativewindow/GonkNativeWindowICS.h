@@ -62,7 +62,7 @@ public:
 
     // Get next frame from the queue and mark it as RENDERING, caller
     // owns the returned buffer.
-    mozilla::TemporaryRef<TextureClient> getCurrentBuffer();
+    already_AddRefed<TextureClient> getCurrentBuffer();
 
     // Return the buffer to the queue and mark it as FREE. After that
     // the buffer is useable again for the decoder.
@@ -138,7 +138,7 @@ public:
     // then those buffer will remain allocated.
     void abandon();
 
-    mozilla::TemporaryRef<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
+    already_AddRefed<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
 
     static void RecycleCallback(TextureClient* client, void* closure);
 
@@ -177,7 +177,7 @@ private:
         sp<GraphicBuffer> mGraphicBuffer;
 
         // mTextureClient is a thin abstraction over remotely allocated GraphicBuffer.
-        mozilla::RefPtr<TextureClient> mTextureClient;
+        RefPtr<TextureClient> mTextureClient;
 
         // BufferState represents the different states in which a buffer slot
         // can be.

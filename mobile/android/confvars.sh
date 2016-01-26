@@ -5,16 +5,17 @@
 MOZ_APP_BASENAME=Fennec
 MOZ_APP_VENDOR=Mozilla
 
-MOZ_APP_VERSION=41.0a1
+MOZ_APP_VERSION=$FIREFOX_VERSION
+MOZ_APP_VERSION_DISPLAY=$FIREFOX_VERSION_DISPLAY
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_BRANDING_DIRECTORY=mobile/android/branding/unofficial
 MOZ_OFFICIAL_BRANDING_DIRECTORY=mobile/android/branding/official
 # MOZ_APP_DISPLAYNAME is set by branding/configure.sh
 
-# We support Android SDK version 9 and up by default.
+# We support Android SDK version 15 and up by default.
 # See the --enable-android-min-sdk and --enable-android-max-sdk arguments in configure.in.
-MOZ_ANDROID_MIN_SDK_VERSION=9
+MOZ_ANDROID_MIN_SDK_VERSION=15
 
 # There are several entry points into the Firefox application.  These are the names of some of the classes that are
 # listed in the Android manifest.  They are specified in here to avoid hard-coding them in source code files.
@@ -32,11 +33,7 @@ MOZ_MEDIA_NAVIGATOR=1
 # Enable NFC permission
 MOZ_ANDROID_BEAM=1
 
-if test "$LIBXUL_SDK"; then
-MOZ_XULRUNNER=1
-else
 MOZ_XULRUNNER=
-fi
 
 MOZ_CAPTURE=1
 MOZ_RAW=1
@@ -90,17 +87,29 @@ MOZ_WEBGL_CONFORMANT=1
 # Enable the Search Activity.
 MOZ_ANDROID_SEARCH_ACTIVITY=1
 
-# Enable the share handler.
-MOZ_ANDROID_SHARE_OVERLAY=1
-
 # Enable the Mozilla Location Service stumbler.
 MOZ_ANDROID_MLS_STUMBLER=1
 
-# Enable adding to the system downloads list in pre-release builds.
+# Enable adding to the system downloads list.
 MOZ_ANDROID_DOWNLOADS_INTEGRATION=1
-
-# Enable Tab Queue
-MOZ_ANDROID_TAB_QUEUE=1
 
 # Use the low-memory GC tuning.
 export JS_GC_SMALL_CHUNK_SIZE=1
+
+# Enable GCM registration on Nightly builds only.
+if test "$NIGHTLY_BUILD"; then
+  MOZ_ANDROID_GCM=1
+fi
+
+# Enable C++ APZ on Nightly builds only.
+if test "$NIGHTLY_BUILD"; then
+  MOZ_ANDROID_APZ=1
+fi
+
+# Enable checking that add-ons are signed by the trusted root
+MOZ_ADDON_SIGNING=1
+
+# Enable the Switchboard A/B framework code.
+# Note: The framework is always included in the app. This flag controls
+# usage of the framework.
+MOZ_SWITCHBOARD=1

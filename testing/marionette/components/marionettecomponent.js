@@ -19,30 +19,16 @@ const ServerSocket = CC("@mozilla.org/network/server-socket;1",
     "nsIServerSocket",
     "initSpecialConnection");
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 function MarionetteComponent() {
   this.loaded_ = false;
   this.observerService = Services.obs;
-
-  this.logger = Log.repository.getLogger("Marionette");
-  this.logger.level = Log.Level.Trace;
-  let dumper = false;
-#ifdef DEBUG
-  dumper = true;
-#endif
-#ifdef MOZ_B2G
-  dumper = true;
-#endif
-  try {
-    if (dumper || Services.prefs.getBoolPref(LOG_PREF)) {
-      let formatter = new Log.BasicFormatter();
-      this.logger.addAppender(new Log.DumpAppender(formatter));
-    }
-  } catch(e) {}
+  this.logger = this.setupLogger_(this.determineLoggingLevel_());
 }
 
 MarionetteComponent.prototype = {
@@ -56,7 +42,45 @@ MarionetteComponent.prototype = {
   ],
   enabled: false,
   finalUiStartup: false,
-  server: null
+  server: null,
+};
+
+MarionetteComponent.prototype.setupLogger_ = function(level) {
+  let log = Log.repository.getLogger("Marionette");
+  log.level = level;
+  log.addAppender(new Log.DumpAppender());
+  return log;
+};
+
+MarionetteComponent.prototype.determineLoggingLevel_ = function() {
+  let level = Log.Level.Info;
+#ifdef DEBUG
+  level = Log.Level.Trace;
+#endif
+
+  // marionette.logging pref can override default
+  // with an entry from the Log.Level enum
+  if (Preferences.has(LOG_PREF)) {
+    let p = Preferences.get(LOG_PREF);
+
+    switch (typeof p) {
+      // Gecko >= 46
+      case "string":
+        let s = p.toLowerCase();
+        s = s.charAt(0).toUpperCase() + s.slice(1);
+        level = Log.Level[s];
+        break;
+
+      // Gecko <= 45
+      case "boolean":
+        if (p) {
+          level = Log.Level.Trace;
+        }
+        break;
+    }
+  }
+
+  return level;
 };
 
 MarionetteComponent.prototype.onSocketAccepted = function(
@@ -74,7 +98,7 @@ MarionetteComponent.prototype.handle = function(cmdLine) {
   // if the CLI is there then lets do work otherwise nothing to see
   if (cmdLine.handleFlag("marionette", false)) {
     this.enabled = true;
-    this.logger.info("Marionette enabled via command-line flag");
+    this.logger.debug("Marionette enabled via command-line flag");
     this.init();
   }
 };
@@ -86,11 +110,9 @@ MarionetteComponent.prototype.observe = function(subj, topic, data) {
       // so we wait for that by adding an observer here.
       this.observerService.addObserver(this, "final-ui-startup", false);
 #ifdef ENABLE_MARIONETTE
-      try {
-        this.enabled = Services.prefs.getBoolPref(ENABLED_PREF);
-      } catch(e) {}
+      this.enabled = Preferences.get(ENABLED_PREF, false);
       if (this.enabled) {
-        this.logger.info("Marionette enabled via build flag and pref");
+        this.logger.debug("Marionette enabled via build flag and pref");
 
         // We want to suppress the modal dialog that's shown
         // when starting up in safe-mode to enable testing.
@@ -141,11 +163,9 @@ MarionetteComponent.prototype.init = function() {
 
   this.loaded_ = true;
 
-  let forceLocal = Services.appinfo.name == "B2G" ? false : true;
-  try {
-    forceLocal = Services.prefs.getBoolPref(FORCELOCAL_PREF);
-  } catch (e) {}
-  Services.prefs.setBoolPref(FORCELOCAL_PREF, forceLocal);
+  let forceLocal = Preferences.get(FORCELOCAL_PREF,
+      Services.appinfo.name == "B2G" ? false : true);
+  Preferences.set(FORCELOCAL_PREF, forceLocal);
 
   if (!forceLocal) {
     // See bug 800138.  Because the first socket that opens with
@@ -158,10 +178,7 @@ MarionetteComponent.prototype.init = function() {
     insaneSacrificialGoat.asyncListen(this);
   }
 
-  let port = DEFAULT_PORT;
-  try {
-    port = Services.prefs.getIntPref(PORT_PREF);
-  } catch (e) {}
+  let port = Preferences.get(PORT_PREF, DEFAULT_PORT);
 
   let s;
   try {

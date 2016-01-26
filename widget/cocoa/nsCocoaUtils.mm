@@ -35,6 +35,7 @@ using mozilla::gfx::BackendType;
 using mozilla::gfx::DataSourceSurface;
 using mozilla::gfx::DrawTarget;
 using mozilla::gfx::Factory;
+using mozilla::gfx::Filter;
 using mozilla::gfx::IntPoint;
 using mozilla::gfx::IntRect;
 using mozilla::gfx::IntSize;
@@ -64,7 +65,7 @@ nsCocoaUtils::FlippedScreenY(float y)
   return MenuBarScreenHeight() - y;
 }
 
-NSRect nsCocoaUtils::GeckoRectToCocoaRect(const nsIntRect &geckoRect)
+NSRect nsCocoaUtils::GeckoRectToCocoaRect(const DesktopIntRect &geckoRect)
 {
   // We only need to change the Y coordinate by starting with the primary screen
   // height and subtracting the gecko Y coordinate of the bottom of the rect.
@@ -74,8 +75,9 @@ NSRect nsCocoaUtils::GeckoRectToCocoaRect(const nsIntRect &geckoRect)
                     geckoRect.height);
 }
 
-NSRect nsCocoaUtils::GeckoRectToCocoaRectDevPix(const nsIntRect &aGeckoRect,
-                                                CGFloat aBackingScale)
+NSRect
+nsCocoaUtils::GeckoRectToCocoaRectDevPix(const LayoutDeviceIntRect &aGeckoRect,
+                                         CGFloat aBackingScale)
 {
   return NSMakeRect(aGeckoRect.x / aBackingScale,
                     MenuBarScreenHeight() - aGeckoRect.YMost() / aBackingScale,
@@ -83,12 +85,12 @@ NSRect nsCocoaUtils::GeckoRectToCocoaRectDevPix(const nsIntRect &aGeckoRect,
                     aGeckoRect.height / aBackingScale);
 }
 
-nsIntRect nsCocoaUtils::CocoaRectToGeckoRect(const NSRect &cocoaRect)
+DesktopIntRect nsCocoaUtils::CocoaRectToGeckoRect(const NSRect &cocoaRect)
 {
   // We only need to change the Y coordinate by starting with the primary screen
   // height and subtracting both the cocoa y origin and the height of the
   // cocoa rect.
-  nsIntRect rect;
+  DesktopIntRect rect;
   rect.x = NSToIntRound(cocoaRect.origin.x);
   rect.y = NSToIntRound(FlippedScreenY(cocoaRect.origin.y + cocoaRect.size.height));
   rect.width = NSToIntRound(cocoaRect.origin.x + cocoaRect.size.width) - rect.x;
@@ -96,10 +98,10 @@ nsIntRect nsCocoaUtils::CocoaRectToGeckoRect(const NSRect &cocoaRect)
   return rect;
 }
 
-nsIntRect nsCocoaUtils::CocoaRectToGeckoRectDevPix(const NSRect &aCocoaRect,
-                                                   CGFloat aBackingScale)
+LayoutDeviceIntRect nsCocoaUtils::CocoaRectToGeckoRectDevPix(
+  const NSRect& aCocoaRect, CGFloat aBackingScale)
 {
-  nsIntRect rect;
+  LayoutDeviceIntRect rect;
   rect.x = NSToIntRound(aCocoaRect.origin.x * aBackingScale);
   rect.y = NSToIntRound(FlippedScreenY(aCocoaRect.origin.y + aCocoaRect.size.height) * aBackingScale);
   rect.width = NSToIntRound((aCocoaRect.origin.x + aCocoaRect.size.width) * aBackingScale) - rect.x;
@@ -234,38 +236,33 @@ void nsCocoaUtils::GetScrollingDeltas(NSEvent* aEvent, CGFloat* aOutDeltaX, CGFl
   *aOutDeltaY = [aEvent deltaY] * lineDeltaPixels;
 }
 
-void nsCocoaUtils::HideOSChromeOnScreen(bool aShouldHide, NSScreen* aScreen)
+BOOL nsCocoaUtils::EventHasPhaseInformation(NSEvent* aEvent)
+{
+  if (![aEvent respondsToSelector:@selector(phase)]) {
+    return NO;
+  }
+  return EventPhase(aEvent) != NSEventPhaseNone ||
+         EventMomentumPhase(aEvent) != NSEventPhaseNone;
+}
+
+void nsCocoaUtils::HideOSChromeOnScreen(bool aShouldHide)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
   // Keep track of how many hiding requests have been made, so that they can
   // be nested.
-  static int sMenuBarHiddenCount = 0, sDockHiddenCount = 0;
+  static int sHiddenCount = 0;
 
-  // Always hide the Dock, since it's not necessarily on the primary screen.
-  sDockHiddenCount += aShouldHide ? 1 : -1;
-  NS_ASSERTION(sMenuBarHiddenCount >= 0, "Unbalanced HideMenuAndDockForWindow calls");
+  sHiddenCount += aShouldHide ? 1 : -1;
+  NS_ASSERTION(sHiddenCount >= 0, "Unbalanced HideMenuAndDockForWindow calls");
 
-  // Only hide the menu bar if the window is on the same screen.
-  // The menu bar is always on the first screen in the screen list.
-  if (aScreen == [[NSScreen screens] objectAtIndex:0]) {
-    sMenuBarHiddenCount += aShouldHide ? 1 : -1;
-    NS_ASSERTION(sDockHiddenCount >= 0, "Unbalanced HideMenuAndDockForWindow calls");
-  }
-
-  // TODO This should be upgraded to use [NSApplication setPresentationOptions:]
-  // when support for 10.5 is dropped.
-  if (sMenuBarHiddenCount > 0) {
-    ::SetSystemUIMode(kUIModeAllHidden, 0);
-  } else if (sDockHiddenCount > 0) {
-    ::SetSystemUIMode(kUIModeContentHidden, 0);
-  } else {
-    ::SetSystemUIMode(kUIModeNormal, 0);
-  }
+  NSApplicationPresentationOptions options =
+    sHiddenCount <= 0 ? NSApplicationPresentationDefault :
+    NSApplicationPresentationHideDock | NSApplicationPresentationHideMenuBar;
+  [NSApp setPresentationOptions:options];
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
-
 
 #define NS_APPSHELLSERVICE_CONTRACTID "@mozilla.org/appshell/appShellService;1"
 nsIWidget* nsCocoaUtils::GetHiddenWindowWidget()
@@ -480,8 +477,7 @@ nsresult nsCocoaUtils::CreateNSImageFromImageContainer(imgIContainer *aImage, ui
 
   // Render a vector image at the correct resolution on a retina display
   if (aImage->GetType() == imgIContainer::TYPE_VECTOR && scaleFactor != 1.0f) {
-    gfxIntSize scaledSize(ceil(width * scaleFactor),
-                          ceil(height * scaleFactor));
+    IntSize scaledSize(ceil(width * scaleFactor), ceil(height * scaleFactor));
 
     RefPtr<DrawTarget> drawTarget = gfxPlatform::GetPlatform()->
       CreateOffscreenContentDrawTarget(scaledSize, SurfaceFormat::B8G8R8A8);
@@ -490,14 +486,14 @@ nsresult nsCocoaUtils::CreateNSImageFromImageContainer(imgIContainer *aImage, ui
       return NS_ERROR_FAILURE;
     }
 
-    nsRefPtr<gfxContext> context = new gfxContext(drawTarget);
+    RefPtr<gfxContext> context = new gfxContext(drawTarget);
     if (!context) {
       NS_ERROR("Failed to create gfxContext");
       return NS_ERROR_FAILURE;
     }
 
     aImage->Draw(context, scaledSize, ImageRegion::Create(scaledSize),
-                 aWhichFrame, GraphicsFilter::FILTER_NEAREST, Nothing(),
+                 aWhichFrame, Filter::POINT, Nothing(),
                  imgIContainer::FLAG_SYNC_DECODE);
 
     surface = drawTarget->Snapshot();
@@ -612,40 +608,38 @@ nsCocoaUtils::InitInputEvent(WidgetInputEvent& aInputEvent,
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  NSUInteger modifiers =
-    aNativeEvent ? [aNativeEvent modifierFlags] : [NSEvent modifierFlags];
-  InitInputEvent(aInputEvent, modifiers);
-
+  aInputEvent.modifiers = ModifiersForEvent(aNativeEvent);
   aInputEvent.time = PR_IntervalNow();
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
 // static
-void
-nsCocoaUtils::InitInputEvent(WidgetInputEvent& aInputEvent,
-                             NSUInteger aModifiers)
+Modifiers
+nsCocoaUtils::ModifiersForEvent(NSEvent* aNativeEvent)
 {
-  aInputEvent.modifiers = 0;
-  if (aModifiers & NSShiftKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_SHIFT;
+  NSUInteger modifiers =
+    aNativeEvent ? [aNativeEvent modifierFlags] : [NSEvent modifierFlags];
+  Modifiers result = 0;
+  if (modifiers & NSShiftKeyMask) {
+    result |= MODIFIER_SHIFT;
   }
-  if (aModifiers & NSControlKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_CONTROL;
+  if (modifiers & NSControlKeyMask) {
+    result |= MODIFIER_CONTROL;
   }
-  if (aModifiers & NSAlternateKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_ALT;
+  if (modifiers & NSAlternateKeyMask) {
+    result |= MODIFIER_ALT;
     // Mac's option key is similar to other platforms' AltGr key.
     // Let's set AltGr flag when option key is pressed for consistency with
     // other platforms.
-    aInputEvent.modifiers |= MODIFIER_ALTGRAPH;
+    result |= MODIFIER_ALTGRAPH;
   }
-  if (aModifiers & NSCommandKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_META;
+  if (modifiers & NSCommandKeyMask) {
+    result |= MODIFIER_META;
   }
 
-  if (aModifiers & NSAlphaShiftKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_CAPSLOCK;
+  if (modifiers & NSAlphaShiftKeyMask) {
+    result |= MODIFIER_CAPSLOCK;
   }
   // Mac doesn't have NumLock key.  We can assume that NumLock is always locked
   // if user is using a keyboard which has numpad.  Otherwise, if user is using
@@ -655,14 +649,15 @@ nsCocoaUtils::InitInputEvent(WidgetInputEvent& aInputEvent,
   // We should notify locked state only when keys in numpad are pressed.
   // By this, web applications may not be confused by unexpected numpad key's
   // key event with unlocked state.
-  if (aModifiers & NSNumericPadKeyMask) {
-    aInputEvent.modifiers |= MODIFIER_NUMLOCK;
+  if (modifiers & NSNumericPadKeyMask) {
+    result |= MODIFIER_NUMLOCK;
   }
 
   // Be aware, NSFunctionKeyMask is included when arrow keys, home key or some
   // other keys are pressed. We cannot check whether 'fn' key is pressed or
   // not by the flag.
 
+  return result;
 }
 
 // static

@@ -115,20 +115,18 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
   }
 
   // Get the node that was clicked on.
-  EventTarget* target = mouseEvent->InternalDOMEvent()->GetTarget();
+  EventTarget* target = mouseEvent->AsEvent()->InternalDOMEvent()->GetTarget();
   nsCOMPtr<nsIDOMNode> targetNode = do_QueryInterface(target);
 
   if (!targetNode && mIsContext) {
     // Not a DOM node, see if it's the DOM window (bug 380818).
-    nsCOMPtr<nsIDOMWindow> domWin = do_QueryInterface(target);
+    nsCOMPtr<nsPIDOMWindow> domWin = do_QueryInterface(target);
     if (!domWin) {
       return NS_ERROR_DOM_WRONG_TYPE_ERR;
     }
     // Try to use the root node as target node.
-    nsCOMPtr<nsIDOMDocument> domDoc;
-    domWin->GetDocument(getter_AddRefs(domDoc));
+    nsCOMPtr<nsIDocument> doc = domWin->GetDoc();
 
-    nsCOMPtr<nsIDocument> doc = do_QueryInterface(domDoc);
     if (doc)
       targetNode = do_QueryInterface(doc->GetRootElement());
     if (!targetNode) {
@@ -146,7 +144,7 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
   }
 
   bool preventDefault;
-  mouseEvent->GetDefaultPrevented(&preventDefault);
+  mouseEvent->AsEvent()->GetDefaultPrevented(&preventDefault);
   if (preventDefault && targetNode && mIsContext) {
     // Someone called preventDefault on a context menu.
     // Let's make sure they are allowed to do so.
@@ -197,9 +195,12 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
 
   if (mIsContext) {
 #ifndef NS_CONTEXT_MENU_IS_MOUSEUP
+    uint16_t inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
+    mouseEvent->GetMozInputSource(&inputSource);
+    bool isTouch = inputSource == nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
     // If the context menu launches on mousedown,
     // we have to fire focus on the content we clicked on
-    FireFocusOnTargetContent(targetNode);
+    FireFocusOnTargetContent(targetNode, isTouch);
 #endif
   }
   else {
@@ -218,7 +219,7 @@ nsXULPopupListener::HandleEvent(nsIDOMEvent* aEvent)
 
 #ifndef NS_CONTEXT_MENU_IS_MOUSEUP
 nsresult
-nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode)
+nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode, bool aIsTouch)
 {
   nsresult rv;
   nsCOMPtr<nsIDOMDocument> domDoc;
@@ -234,7 +235,7 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode)
 
     // strong reference to keep this from going away between events
     // XXXbz between what events?  We don't use this local at all!
-    nsRefPtr<nsPresContext> context = shell->GetPresContext();
+    RefPtr<nsPresContext> context = shell->GetPresContext();
  
     nsCOMPtr<nsIContent> content = do_QueryInterface(aTargetNode);
     nsIFrame* targetFrame = content->GetPrimaryFrame();
@@ -264,8 +265,12 @@ nsXULPopupListener::FireFocusOnTargetContent(nsIDOMNode* aTargetNode)
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm) {
       if (element) {
-        fm->SetFocus(element, nsIFocusManager::FLAG_BYMOUSE |
-                              nsIFocusManager::FLAG_NOSCROLL);
+        uint32_t focusFlags = nsIFocusManager::FLAG_BYMOUSE |
+                              nsIFocusManager::FLAG_NOSCROLL;
+        if (aIsTouch) {
+          focusFlags |= nsIFocusManager::FLAG_BYTOUCH;
+        }
+        fm->SetFocus(element, focusFlags);
       } else if (!suppressBlur) {
         nsPIDOMWindow *window = doc->GetWindow();
         fm->ClearFocus(window);

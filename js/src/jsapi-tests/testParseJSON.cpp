@@ -39,34 +39,34 @@ BEGIN_TEST(testParseJSON_success)
 {
     // Primitives
     JS::RootedValue expected(cx);
-    expected = JSVAL_TRUE;
+    expected = JS::TrueValue();
     CHECK(TryParse(cx, "true", expected));
 
-    expected = JSVAL_FALSE;
+    expected = JS::FalseValue();
     CHECK(TryParse(cx, "false", expected));
 
-    expected = JSVAL_NULL;
+    expected = JS::NullValue();
     CHECK(TryParse(cx, "null", expected));
 
-    expected = INT_TO_JSVAL(0);
+    expected.setInt32(0);
     CHECK(TryParse(cx, "0", expected));
 
-    expected = INT_TO_JSVAL(1);
+    expected.setInt32(1);
     CHECK(TryParse(cx, "1", expected));
 
-    expected = INT_TO_JSVAL(-1);
+    expected.setInt32(-1);
     CHECK(TryParse(cx, "-1", expected));
 
-    expected = DOUBLE_TO_JSVAL(1);
+    expected.setDouble(1);
     CHECK(TryParse(cx, "1", expected));
 
-    expected = DOUBLE_TO_JSVAL(1.75);
+    expected.setDouble(1.75);
     CHECK(TryParse(cx, "1.75", expected));
 
-    expected = DOUBLE_TO_JSVAL(9e9);
+    expected.setDouble(9e9);
     CHECK(TryParse(cx, "9e9", expected));
 
-    expected = DOUBLE_TO_JSVAL(std::numeric_limits<double>::infinity());
+    expected.setDouble(std::numeric_limits<double>::infinity());
     CHECK(TryParse(cx, "9e99999", expected));
 
     JS::Rooted<JSFlatString*> str(cx);
@@ -74,26 +74,26 @@ BEGIN_TEST(testParseJSON_success)
     const char16_t emptystr[] = { '\0' };
     str = js::NewStringCopyN<CanGC>(cx, emptystr, 0);
     CHECK(str);
-    expected = STRING_TO_JSVAL(str);
+    expected = JS::StringValue(str);
     CHECK(TryParse(cx, "\"\"", expected));
 
     const char16_t nullstr[] = { '\0' };
     str = NewString(cx, nullstr);
     CHECK(str);
-    expected = STRING_TO_JSVAL(str);
+    expected = JS::StringValue(str);
     CHECK(TryParse(cx, "\"\\u0000\"", expected));
 
     const char16_t backstr[] = { '\b' };
     str = NewString(cx, backstr);
     CHECK(str);
-    expected = STRING_TO_JSVAL(str);
+    expected = JS::StringValue(str);
     CHECK(TryParse(cx, "\"\\b\"", expected));
     CHECK(TryParse(cx, "\"\\u0008\"", expected));
 
     const char16_t newlinestr[] = { '\n', };
     str = NewString(cx, newlinestr);
     CHECK(str);
-    expected = STRING_TO_JSVAL(str);
+    expected = JS::StringValue(str);
     CHECK(TryParse(cx, "\"\\n\"", expected));
     CHECK(TryParse(cx, "\"\\u000A\"", expected));
 
@@ -102,35 +102,41 @@ BEGIN_TEST(testParseJSON_success)
     JS::RootedValue v(cx), v2(cx);
     JS::RootedObject obj(cx);
 
+    bool isArray;
+
     CHECK(Parse(cx, "[]", &v));
     CHECK(v.isObject());
     obj = &v.toObject();
-    CHECK(JS_IsArrayObject(cx, obj));
+    CHECK(JS_IsArrayObject(cx, obj, &isArray));
+    CHECK(isArray);
     CHECK(JS_GetProperty(cx, obj, "length", &v2));
-    CHECK_SAME(v2, JSVAL_ZERO);
+    CHECK(v2.isInt32(0));
 
     CHECK(Parse(cx, "[1]", &v));
     CHECK(v.isObject());
     obj = &v.toObject();
-    CHECK(JS_IsArrayObject(cx, obj));
+    CHECK(JS_IsArrayObject(cx, obj, &isArray));
+    CHECK(isArray);
     CHECK(JS_GetProperty(cx, obj, "0", &v2));
-    CHECK_SAME(v2, JSVAL_ONE);
+    CHECK(v2.isInt32(1));
     CHECK(JS_GetProperty(cx, obj, "length", &v2));
-    CHECK_SAME(v2, JSVAL_ONE);
+    CHECK(v2.isInt32(1));
 
 
     // Objects
     CHECK(Parse(cx, "{}", &v));
     CHECK(v.isObject());
     obj = &v.toObject();
-    CHECK(!JS_IsArrayObject(cx, obj));
+    CHECK(JS_IsArrayObject(cx, obj, &isArray));
+    CHECK(!isArray);
 
     CHECK(Parse(cx, "{ \"f\": 17 }", &v));
     CHECK(v.isObject());
     obj = &v.toObject();
-    CHECK(!JS_IsArrayObject(cx, obj));
+    CHECK(JS_IsArrayObject(cx, obj, &isArray));
+    CHECK(!isArray);
     CHECK(JS_GetProperty(cx, obj, "f", &v2));
-    CHECK_SAME(v2, INT_TO_JSVAL(17));
+    CHECK(v2.isInt32(17));
 
     return true;
 }
@@ -327,7 +333,7 @@ ReportJSONError(JSContext* cx, const char* message, JSErrorReport* report)
 END_TEST(testParseJSON_error)
 
 static bool
-Censor(JSContext* cx, unsigned argc, jsval* vp)
+Censor(JSContext* cx, unsigned argc, JS::Value* vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     MOZ_RELEASE_ASSERT(args.length() == 2);
@@ -341,7 +347,7 @@ BEGIN_TEST(testParseJSON_reviver)
     JSFunction* fun = JS_NewFunction(cx, Censor, 0, 0, "censor");
     CHECK(fun);
 
-    JS::RootedValue filter(cx, OBJECT_TO_JSVAL(JS_GetFunctionObject(fun)));
+    JS::RootedValue filter(cx, JS::ObjectValue(*JS_GetFunctionObject(fun)));
 
     CHECK(TryParse(cx, "true", filter));
     CHECK(TryParse(cx, "false", filter));
@@ -361,7 +367,7 @@ TryParse(JSContext* cx, const char (&input)[N], JS::HandleValue filter)
     JS::RootedValue v(cx);
     str = input;
     CHECK(JS_ParseJSONWithReviver(cx, str.chars(), str.length(), filter, &v));
-    CHECK_SAME(v, JSVAL_NULL);
+    CHECK(v.isNull());
     return true;
 }
 END_TEST(testParseJSON_reviver)

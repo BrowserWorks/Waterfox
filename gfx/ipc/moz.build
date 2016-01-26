@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla += [
+    'D3DMessageUtils.h',
     'GfxMessageUtils.h'
 ]
 
@@ -17,13 +18,18 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'SharedDIBSurface.h',
         'SharedDIBWin.h',
     ]
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'SharedDIBSurface.cpp',
         'SharedDIBWin.cpp',
     ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
+    'D3DMessageUtils.cpp',
     'SharedDIB.cpp',
+]
+
+IPDL_SOURCES = [
+    'GraphicsMessages.ipdlh',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -32,3 +38,6 @@ FINAL_LIBRARY = 'xul'
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

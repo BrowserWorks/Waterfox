@@ -63,12 +63,10 @@ AddNonJSSizeOfWindowAndItsDescendents(nsGlobalWindow* aWindow,
     innerWindowSizes.addToTabSizes(aSizes);
   }
 
-  nsCOMPtr<nsIDOMWindowCollection> frames;
-  nsresult rv = aWindow->GetFrames(getter_AddRefs(frames));
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIDOMWindowCollection> frames = aWindow->GetFrames();
 
   uint32_t length;
-  rv = frames->GetLength(&length);
+  nsresult rv = frames->GetLength(&length);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Measure this window's descendents.
@@ -113,10 +111,6 @@ nsWindowMemoryReporter::Init()
 
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
   if (os) {
-    // DOM_WINDOW_DESTROYED_TOPIC announces what we call window "detachment",
-    // when a window's docshell is set to nullptr.
-    os->AddObserver(sWindowReporter, DOM_WINDOW_DESTROYED_TOPIC,
-                    /* weakRef = */ true);
     os->AddObserver(sWindowReporter, "after-minimize-memory-usage",
                     /* weakRef = */ true);
     os->AddObserver(sWindowReporter, "cycle-collector-begin",
@@ -127,6 +121,12 @@ nsWindowMemoryReporter::Init()
 
   RegisterStrongMemoryReporter(new GhostWindowsReporter());
   RegisterGhostWindowsDistinguishedAmount(GhostWindowsReporter::DistinguishedAmount);
+}
+
+/* static */ nsWindowMemoryReporter*
+nsWindowMemoryReporter::Get()
+{
+  return sWindowReporter;
 }
 
 static already_AddRefed<nsIURI>
@@ -169,7 +169,7 @@ AppendWindowURI(nsGlobalWindow *aWindow, nsACString& aStr, bool aAnonymize)
 
   if (uri) {
     if (aAnonymize && !aWindow->IsChromeWindow()) {
-      aStr.AppendPrintf("<anonymized-%d>", aWindow->WindowID());
+      aStr.AppendPrintf("<anonymized-%llu>", aWindow->WindowID());
     } else {
       nsCString spec;
       uri->GetSpec(spec);
@@ -252,8 +252,8 @@ CollectWindowReports(nsGlobalWindow *aWindow,
   nsCOMPtr<nsIURI> location;
   if (aWindow->GetOuterWindow()) {
     // Our window should have a null top iff it has a null docshell.
-    MOZ_ASSERT(!!aWindow->GetTop() == !!aWindow->GetDocShell());
-    top = aWindow->GetTop();
+    MOZ_ASSERT(!!aWindow->GetTopInternal() == !!aWindow->GetDocShell());
+    top = aWindow->GetTopInternal();
     if (top) {
       location = GetWindowURI(top);
     }
@@ -278,9 +278,7 @@ CollectWindowReports(nsGlobalWindow *aWindow,
   if (top) {
     windowPath += NS_LITERAL_CSTRING("top(");
     AppendWindowURI(top, windowPath, aAnonymize);
-    windowPath += NS_LITERAL_CSTRING(", id=");
-    windowPath.AppendInt(top->WindowID());
-    windowPath += NS_LITERAL_CSTRING(")");
+    windowPath.AppendPrintf(", id=%llu)", top->WindowID());
 
     aTopWindowPaths->Put(aWindow->WindowID(), windowPath);
 
@@ -390,6 +388,11 @@ CollectWindowReports(nsGlobalWindow *aWindow,
   aWindowTotalSizes->mArenaStats.mStyleContexts
     += windowSizes.mArenaStats.mStyleContexts;
 
+  REPORT_SIZE("/layout/style-structs", windowSizes.mArenaStats.mStyleStructs,
+              "Memory used by style structs within a window.");
+  aWindowTotalSizes->mArenaStats.mStyleStructs
+    += windowSizes.mArenaStats.mStyleStructs;
+
   REPORT_SIZE("/layout/style-sets", windowSizes.mLayoutStyleSetsSize,
               "Memory used by style sets within a window.");
   aWindowTotalSizes->mLayoutStyleSetsSize += windowSizes.mLayoutStyleSetsSize;
@@ -441,60 +444,13 @@ CollectWindowReports(nsGlobalWindow *aWindow,
   return NS_OK;
 }
 
-typedef nsTArray< nsRefPtr<nsGlobalWindow> > WindowArray;
+typedef nsTArray< RefPtr<nsGlobalWindow> > WindowArray;
 
 static
 PLDHashOperator
 GetWindows(const uint64_t& aId, nsGlobalWindow*& aWindow, void* aClosure)
 {
   ((WindowArray *)aClosure)->AppendElement(aWindow);
-
-  return PL_DHASH_NEXT;
-}
-
-struct ReportGhostWindowsEnumeratorData
-{
-  nsIMemoryReporterCallback* mCallback;
-  nsISupports* mData;
-  bool mAnonymize;
-  nsresult mRv;
-};
-
-static PLDHashOperator
-ReportGhostWindowsEnumerator(nsUint64HashKey* aIDHashKey, void* aData)
-{
-  ReportGhostWindowsEnumeratorData *data =
-    static_cast<ReportGhostWindowsEnumeratorData*>(aData);
-
-  nsGlobalWindow::WindowByIdTable* windowsById =
-    nsGlobalWindow::GetWindowsTable();
-  if (!windowsById) {
-    NS_WARNING("Couldn't get window-by-id hashtable?");
-    return PL_DHASH_NEXT;
-  }
-
-  nsGlobalWindow* window = windowsById->Get(aIDHashKey->GetKey());
-  if (!window) {
-    NS_WARNING("Could not look up window?");
-    return PL_DHASH_NEXT;
-  }
-
-  nsAutoCString path;
-  path.AppendLiteral("ghost-windows/");
-  AppendWindowURI(window, path, data->mAnonymize);
-
-  nsresult rv = data->mCallback->Callback(
-    /* process = */ EmptyCString(),
-    path,
-    nsIMemoryReporter::KIND_OTHER,
-    nsIMemoryReporter::UNITS_COUNT,
-    /* amount = */ 1,
-    /* description = */ NS_LITERAL_CSTRING("A ghost window."),
-    data->mData);
-
-  if (NS_FAILED(rv) && NS_SUCCEEDED(data->mRv)) {
-    data->mRv = rv;
-  }
 
   return PL_DHASH_NEXT;
 }
@@ -516,11 +472,37 @@ nsWindowMemoryReporter::CollectReports(nsIMemoryReporterCallback* aCb,
   // one.
   nsTHashtable<nsUint64HashKey> ghostWindows;
   CheckForGhostWindows(&ghostWindows);
-  ReportGhostWindowsEnumeratorData reportGhostWindowsEnumData =
-    { aCb, aClosure, aAnonymize, NS_OK };
-  ghostWindows.EnumerateEntries(ReportGhostWindowsEnumerator,
-                                &reportGhostWindowsEnumData);
-  nsresult rv = reportGhostWindowsEnumData.mRv;
+  nsresult rv = NS_OK;
+  for (auto iter = ghostWindows.ConstIter(); !iter.Done(); iter.Next()) {
+    nsGlobalWindow::WindowByIdTable* windowsById =
+      nsGlobalWindow::GetWindowsTable();
+    if (!windowsById) {
+      NS_WARNING("Couldn't get window-by-id hashtable?");
+      continue;
+    }
+
+    nsGlobalWindow* window = windowsById->Get(iter.Get()->GetKey());
+    if (!window) {
+      NS_WARNING("Could not look up window?");
+      continue;
+    }
+
+    nsAutoCString path;
+    path.AppendLiteral("ghost-windows/");
+    AppendWindowURI(window, path, aAnonymize);
+
+    nsresult callbackRv = aCb->Callback(
+      /* process = */ EmptyCString(),
+      path,
+      nsIMemoryReporter::KIND_OTHER,
+      nsIMemoryReporter::UNITS_COUNT,
+      /* amount = */ 1,
+      /* description = */ NS_LITERAL_CSTRING("A ghost window."),
+      aClosure);
+    if (NS_FAILED(callbackRv) && NS_SUCCEEDED(rv)) {
+      rv = callbackRv;
+    }
+  }
   NS_ENSURE_SUCCESS(rv, rv);
 
   WindowPaths windowPaths;
@@ -529,7 +511,7 @@ nsWindowMemoryReporter::CollectReports(nsIMemoryReporterCallback* aCb,
   // Collect window memory usage.
   nsWindowSizes windowTotalSizes(nullptr);
   nsCOMPtr<amIAddonManager> addonManager;
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     // Only try to access the service from the main process.
     addonManager = do_GetService("@mozilla.org/addons/integration;1");
   }
@@ -596,6 +578,10 @@ nsWindowMemoryReporter::CollectReports(nsIMemoryReporterCallback* aCb,
          windowTotalSizes.mArenaStats.mStyleContexts,
          "This is the sum of all windows' 'layout/style-contexts' numbers.");
 
+  REPORT("window-objects/layout/style-structs",
+         windowTotalSizes.mArenaStats.mStyleStructs,
+         "This is the sum of all windows' 'layout/style-structs' numbers.");
+
   REPORT("window-objects/layout/style-sets", windowTotalSizes.mLayoutStyleSetsSize,
          "This is the sum of all windows' 'layout/style-sets' numbers.");
 
@@ -630,9 +616,7 @@ NS_IMETHODIMP
 nsWindowMemoryReporter::Observe(nsISupports *aSubject, const char *aTopic,
                                 const char16_t *aData)
 {
-  if (!strcmp(aTopic, DOM_WINDOW_DESTROYED_TOPIC)) {
-    ObserveDOMWindowDetached(aSubject);
-  } else if (!strcmp(aTopic, "after-minimize-memory-usage")) {
+  if (!strcmp(aTopic, "after-minimize-memory-usage")) {
     ObserveAfterMinimizeMemoryUsage();
   } else if (!strcmp(aTopic, "cycle-collector-begin")) {
     if (mCheckTimer) {
@@ -654,9 +638,9 @@ nsWindowMemoryReporter::Observe(nsISupports *aSubject, const char *aTopic,
 }
 
 void
-nsWindowMemoryReporter::ObserveDOMWindowDetached(nsISupports* aWindow)
+nsWindowMemoryReporter::ObserveDOMWindowDetached(nsGlobalWindow* aWindow)
 {
-  nsWeakPtr weakWindow = do_GetWeakReference(aWindow);
+  nsWeakPtr weakWindow = do_GetWeakReference(static_cast<nsIDOMEventTarget*>(aWindow));
   if (!weakWindow) {
     NS_WARNING("Couldn't take weak reference to a window?");
     return;
@@ -761,9 +745,9 @@ CheckForGhostWindowsEnumerator(nsISupports *aKey, TimeStamp& aTimeStamp,
   // Avoid calling GetTop() if we have no outer window.  Nothing will break if
   // we do, but it will spew debug output, which can cause our test logs to
   // overflow.
-  nsCOMPtr<nsIDOMWindow> top;
+  nsCOMPtr<nsPIDOMWindow> top;
   if (window->GetOuterWindow()) {
-    window->GetTop(getter_AddRefs(top));
+    top = window->GetOuterWindow()->GetTop();
   }
 
   if (top) {
@@ -802,37 +786,6 @@ CheckForGhostWindowsEnumerator(nsISupports *aKey, TimeStamp& aTimeStamp,
     }
   }
 
-  return PL_DHASH_NEXT;
-}
-
-struct GetNonDetachedWindowDomainsEnumeratorData
-{
-  nsTHashtable<nsCStringHashKey> *nonDetachedDomains;
-  nsIEffectiveTLDService *tldService;
-};
-
-static PLDHashOperator
-GetNonDetachedWindowDomainsEnumerator(const uint64_t& aId, nsGlobalWindow* aWindow,
-                                      void* aClosure)
-{
-  GetNonDetachedWindowDomainsEnumeratorData *data =
-    static_cast<GetNonDetachedWindowDomainsEnumeratorData*>(aClosure);
-
-  // Null outer window implies null top, but calling GetTop() when there's no
-  // outer window causes us to spew debug warnings.
-  if (!aWindow->GetOuterWindow() || !aWindow->GetTop()) {
-    // This window is detached, so we don't care about its domain.
-    return PL_DHASH_NEXT;
-  }
-
-  nsCOMPtr<nsIURI> uri = GetWindowURI(aWindow);
-
-  nsAutoCString domain;
-  if (uri) {
-    data->tldService->GetBaseDomain(uri, 0, domain);
-  }
-
-  data->nonDetachedDomains->PutEntry(domain);
   return PL_DHASH_NEXT;
 }
 
@@ -877,10 +830,22 @@ nsWindowMemoryReporter::CheckForGhostWindows(
   nsTHashtable<nsCStringHashKey> nonDetachedWindowDomains;
 
   // Populate nonDetachedWindowDomains.
-  GetNonDetachedWindowDomainsEnumeratorData nonDetachedEnumData =
-    { &nonDetachedWindowDomains, tldService };
-  windowsById->EnumerateRead(GetNonDetachedWindowDomainsEnumerator,
-                             &nonDetachedEnumData);
+  for (auto iter = windowsById->Iter(); !iter.Done(); iter.Next()) {
+    // Null outer window implies null top, but calling GetTop() when there's no
+    // outer window causes us to spew debug warnings.
+    nsGlobalWindow* window = iter.UserData();
+    if (!window->GetOuterWindow() || !window->GetTopInternal()) {
+      // This window is detached, so we don't care about its domain.
+      continue;
+    }
+
+    nsCOMPtr<nsIURI> uri = GetWindowURI(window);
+    nsAutoCString domain;
+    if (uri) {
+      tldService->GetBaseDomain(uri, 0, domain);
+    }
+    nonDetachedWindowDomains.PutEntry(domain);
+  }
 
   // Update mDetachedWindows and write the ghost window IDs into aOutGhostIDs,
   // if it's not null.
@@ -912,23 +877,6 @@ nsWindowMemoryReporter::KillCheckTimer()
 }
 
 #ifdef DEBUG
-static PLDHashOperator
-UnlinkGhostWindowsEnumerator(nsUint64HashKey* aIDHashKey, void *)
-{
-  nsGlobalWindow::WindowByIdTable* windowsById =
-    nsGlobalWindow::GetWindowsTable();
-  if (!windowsById) {
-    return PL_DHASH_NEXT;
-  }
-
-  nsRefPtr<nsGlobalWindow> window = windowsById->Get(aIDHashKey->GetKey());
-  if (window) {
-    window->RiskyUnlink();
-  }
-
-  return PL_DHASH_NEXT;
-}
-
 /* static */ void
 nsWindowMemoryReporter::UnlinkGhostWindows()
 {
@@ -950,6 +898,17 @@ nsWindowMemoryReporter::UnlinkGhostWindows()
   // Get the IDs of all the "ghost" windows, and unlink them all.
   nsTHashtable<nsUint64HashKey> ghostWindows;
   sWindowReporter->CheckForGhostWindows(&ghostWindows);
-  ghostWindows.EnumerateEntries(UnlinkGhostWindowsEnumerator, nullptr);
+  for (auto iter = ghostWindows.ConstIter(); !iter.Done(); iter.Next()) {
+    nsGlobalWindow::WindowByIdTable* windowsById =
+      nsGlobalWindow::GetWindowsTable();
+    if (!windowsById) {
+      continue;
+    }
+
+    RefPtr<nsGlobalWindow> window = windowsById->Get(iter.Get()->GetKey());
+    if (window) {
+      window->RiskyUnlink();
+    }
+  }
 }
 #endif

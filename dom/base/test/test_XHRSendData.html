@@ -5,27 +5,48 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=464848
 -->
 <head>
   <title>XMLHttpRequest send data and headers</title>
-  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>        
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
 </head>
-<body onload="gen.next();">
+<body onload="createFiles();">
 <a target="_blank"
    href="https://bugzilla.mozilla.org/show_bug.cgi?id=464848">Mozilla Bug 464848</a>
 <p id="display">
-  <input id="fileList" type="file"></input>
 </p>
 <div id="content" style="display: none">
-  
+
 </div>
 <pre id="test">
 <script class="testbody" type="application/javascript;version=1.8">
 SimpleTest.waitForExplicitFinish();
 
+var testData = "blahblahblahblahblahblahblaaaaaaaah. blah.";
+var extensions = [".txt",".png",".jpg",".gif",".xml", "noext"];
+var fileTypes = ["text/plain", "image/png", "image/jpeg", "image/gif", "text/xml", null];
 var gen = runTests();
+var testDOMFiles;
+
+function createFiles() {
+  var filesToCreate = new Array();
+  extensions.forEach(function (extension) {
+    filesToCreate.push({name: "testfile" + extension, data: testData});
+  });
+  SpecialPowers.createFiles(filesToCreate,
+                            function (files) {
+                              testDOMFiles = files;
+                              gen.next();
+                            },
+                            function (msg) {
+                              testDOMFiles = new Array;
+                              ok(false, "File creation error: " + msg);
+                              gen.next();
+                            });
+};
+
+
 function continueTest() { gen.next(); }
 
 function runTests() {
-
 xhr = new XMLHttpRequest();
 xhr.open("GET", "file_XHRSendData_doc.xml", false);
 xhr.send();
@@ -36,13 +57,7 @@ testDoc2 = document.implementation.createDocument("", "", null);
 testDoc2.appendChild(testDoc2.createComment(" doc 2 "));
 testDoc2.appendChild(testDoc2.createElement("res"));
 testDoc2.documentElement.appendChild(testDoc2.createTextNode("text"));
-is(testDoc2.inputEncoding, null, "wrong encoding");
-
-var testData = "blahblahblahblahblahblahblaaaaaaaah. blah.";
-var extensions = [".txt",".png",".jpg",".gif",".xml", "noext"];
-var fileTypes = ["text/plain", "image/png", "image/jpeg", "image/gif", "text/xml", null];
-var testFiles = new Array;
-var testDOMFiles = new Array;
+is(testDoc2.inputEncoding, "UTF-8", "wrong encoding");
 
 // arraybuffer test objects
 var shortArray = new ArrayBuffer(1);
@@ -64,28 +79,6 @@ var longInt16View2 = new Uint16Array(longArray, 256, 64)
 var longInt8View1 = new Int8Array(longArraySlice)
 var longInt8View2 = new Int8Array(longArray, 256, 128)
 
-extensions.forEach(
-    function (extension) {
-      var testFile = createFileWithDataExt(testData, extension);
-      testFiles.push(testFile);
-
-      var fileList = document.getElementById('fileList');
-      SpecialPowers.wrap(fileList).value = testFile.path;
-      testDOMFiles.push(fileList.files[0]);
-    }
-);
-
-function createFileWithDataExt(fileData, extension) {
-  var testFile = SpecialPowers.Services.dirsvc.get("ProfD", SpecialPowers.Ci.nsIFile);
-  testFile.append("testfile" + extension);
-  var outStream = SpecialPowers.Cc["@mozilla.org/network/file-output-stream;1"].createInstance(SpecialPowers.Ci.nsIFileOutputStream);
-  outStream.init(testFile, 0x02 | 0x08 | 0x20, 0666, 0);
-  outStream.write(fileData, fileData.length);
-  outStream.close();
-
-  return testFile;
-}
-
 tests = [{ body: null,
            resBody: "",
          },
@@ -94,26 +87,26 @@ tests = [{ body: null,
          },
          { body: "hi",
            resBody: "hi",
-           resContentType: "text/plain; charset=UTF-8",
+           resContentType: "text/plain;charset=UTF-8",
          },
          { body: "r\xe4ksm\xf6rg\xe5s",
            resBody: "r\xc3\xa4ksm\xc3\xb6rg\xc3\xa5s",
-           resContentType: "text/plain; charset=UTF-8",
+           resContentType: "text/plain;charset=UTF-8",
          },
          { body: "hi",
            contentType: "",
            resBody: "hi",
-           resContentType: "text/plain; charset=UTF-8",
+           resContentType: "text/plain;charset=UTF-8",
          },
          { body: "hi",
            contentType: "foo/bar",
            resBody: "hi",
-           resContentType: "foo/bar; charset=UTF-8",
+           resContentType: "foo/bar",
          },
          { body: "hi",
            contentType: "foo/bar; baz=bin",
            resBody: "hi",
-           resContentType: "foo/bar; charset=UTF-8; baz=bin",
+           resContentType: "foo/bar; baz=bin",
          },
          { body: "hi",
            contentType: "foo/bar; charset=ascii; baz=bin",
@@ -127,12 +120,12 @@ tests = [{ body: null,
          },
          { body: testDoc1,
            resBody: "<!-- comment -->\n<out>hi</out>",
-           resContentType: "application/xml; charset=UTF-8",
+           resContentType: "application/xml;charset=UTF-8",
          },
          { body: testDoc1,
            contentType: "foo/bar",
            resBody: "<!-- comment -->\n<out>hi</out>",
-           resContentType: "foo/bar; charset=UTF-8",
+           resContentType: "foo/bar",
          },
          { body: testDoc1,
            contentType: "foo/bar; charset=ascii; baz=bin",
@@ -146,12 +139,12 @@ tests = [{ body: null,
          },
          { body: testDoc2,
            resBody: "<!-- doc 2 -->\n<res>text</res>",
-           resContentType: "application/xml; charset=UTF-8",
+           resContentType: "application/xml;charset=UTF-8",
          },
          { body: testDoc2,
            contentType: "foo/bar",
            resBody: "<!-- doc 2 -->\n<res>text</res>",
-           resContentType: "foo/bar; charset=UTF-8",
+           resContentType: "foo/bar",
          },
          { body: testDoc2,
            contentType: "foo/bar; charset=ascii; baz=bin",
@@ -253,19 +246,7 @@ try {
                                   "Wrong page for redirect");
     }
   }
-}
-finally {
-  cleanUpData();
-}
-
-function cleanUpData() {
-  testFiles.forEach(
-      function (testFile) {
-        try {
-          testFile.remove(false);
-        } catch (e) {}
-      }
-  );
+} catch (e) {
 }
 
 function is_identical_arraybuffer(ab1, ab2) {

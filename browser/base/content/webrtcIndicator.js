@@ -2,12 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource:///modules/webrtcUI.jsm");
 
 const BUNDLE_URL = "chrome://browser/locale/webrtcIndicator.properties";
-let gStringBundle;
+var gStringBundle;
 
 function init(event) {
   gStringBundle = Services.strings.createBundle(BUNDLE_URL);
@@ -30,6 +30,12 @@ function init(event) {
   fxButton.addEventListener("mousedown", PositionHandler);
 
   updateIndicatorState();
+
+  // Alert accessibility implementations stuff just changed. We only need to do
+  // this initially, because changes after this will automatically fire alert
+  // events if things change materially.
+  let ev = new CustomEvent("AlertActive", {bubbles: true, cancelable: true});
+  document.documentElement.dispatchEvent(ev);
 }
 
 function updateIndicatorState() {
@@ -123,7 +129,7 @@ function onFirefoxButtonClick(event) {
   activeStreams[0].browser.ownerDocument.defaultView.focus();
 }
 
-let PositionHandler = {
+var PositionHandler = {
   positionCustomized: false,
   threshold: 10,
   adjustPosition: function() {

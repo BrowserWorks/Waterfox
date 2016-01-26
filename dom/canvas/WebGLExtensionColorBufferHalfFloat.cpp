@@ -7,6 +7,11 @@
 #include "GLContext.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "WebGLContext.h"
+#include "WebGLFormats.h"
+
+#ifdef FOO
+#error FOO is already defined! We use FOO() macros to keep things succinct in this file.
+#endif
 
 namespace mozilla {
 
@@ -14,6 +19,21 @@ WebGLExtensionColorBufferHalfFloat::WebGLExtensionColorBufferHalfFloat(WebGLCont
     : WebGLExtensionBase(webgl)
 {
     MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
+
+    auto& fua = webgl->mFormatUsage;
+
+    auto fnUpdateUsage = [&fua](GLenum sizedFormat, webgl::EffectiveFormat effFormat) {
+        auto usage = fua->EditUsage(effFormat);
+        usage->isRenderable = true;
+        fua->AllowRBFormat(sizedFormat, usage);
+    };
+
+#define FOO(x) fnUpdateUsage(LOCAL_GL_ ## x, webgl::EffectiveFormat::x)
+
+    FOO(RGBA16F);
+    FOO(RGB16F);
+
+#undef FOO
 }
 
 WebGLExtensionColorBufferHalfFloat::~WebGLExtensionColorBufferHalfFloat()
@@ -30,6 +50,6 @@ WebGLExtensionColorBufferHalfFloat::IsSupported(const WebGLContext* webgl)
            gl->IsANGLE();
 }
 
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionColorBufferHalfFloat)
+IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionColorBufferHalfFloat, EXT_color_buffer_half_float)
 
 } // namespace mozilla

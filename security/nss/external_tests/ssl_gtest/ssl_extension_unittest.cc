@@ -196,8 +196,8 @@ class TlsExtensionReplacer : public TlsExtensionFilter {
     return true;
   }
  private:
-  uint16_t extension_;
-  DataBuffer data_;
+  const uint16_t extension_;
+  const DataBuffer data_;
 };
 
 class TlsExtensionInjector : public TlsHandshakeFilter {
@@ -251,7 +251,27 @@ class TlsExtensionInjector : public TlsHandshakeFilter {
   }
 
  private:
-  uint16_t extension_;
+  const uint16_t extension_;
+  const DataBuffer data_;
+};
+
+class TlsExtensionCapture : public TlsExtensionFilter {
+ public:
+  TlsExtensionCapture(uint16_t ext)
+      : extension_(ext), data_() {}
+
+  virtual bool FilterExtension(uint16_t extension_type,
+                               const DataBuffer& input, DataBuffer* output) {
+    if (extension_type == extension_) {
+      data_.Assign(input);
+    }
+    return false;
+  }
+
+  const DataBuffer& extension() const { return data_; }
+
+ private:
+  const uint16_t extension_;
   DataBuffer data_;
 };
 
@@ -349,6 +369,13 @@ TEST_P(TlsExtensionTestGeneric, BadSni) {
   extension.Allocate(simple.len() + 3);
   extension.Write(0, static_cast<uint32_t>(0), 3);
   extension.Write(3, simple);
+  ClientHelloErrorTest(new TlsExtensionReplacer(ssl_server_name_xtn, extension));
+}
+
+TEST_P(TlsExtensionTestGeneric, EmptySni) {
+  DataBuffer extension;
+  extension.Allocate(2);
+  extension.Write(0, static_cast<uint32_t>(0), 2);
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_server_name_xtn, extension));
 }
 
@@ -494,7 +521,6 @@ TEST_P(TlsExtensionTest12Plus, DISABLED_SignatureAlgorithmsSigUnsupported) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedCurvesShort) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x00, 0x01, 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_elliptic_curves_xtn,
@@ -502,7 +528,6 @@ TEST_P(TlsExtensionTestGeneric, SupportedCurvesShort) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedCurvesBadLength) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x09, 0x99, 0x00, 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_elliptic_curves_xtn,
@@ -510,7 +535,6 @@ TEST_P(TlsExtensionTestGeneric, SupportedCurvesBadLength) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedCurvesTrailingData) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x00, 0x02, 0x00, 0x00, 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_elliptic_curves_xtn,
@@ -518,7 +542,6 @@ TEST_P(TlsExtensionTestGeneric, SupportedCurvesTrailingData) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedPointsEmpty) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_ec_point_formats_xtn,
@@ -526,7 +549,6 @@ TEST_P(TlsExtensionTestGeneric, SupportedPointsEmpty) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedPointsBadLength) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x99, 0x00, 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_ec_point_formats_xtn,
@@ -534,7 +556,6 @@ TEST_P(TlsExtensionTestGeneric, SupportedPointsBadLength) {
 }
 
 TEST_P(TlsExtensionTestGeneric, SupportedPointsTrailingData) {
-  EnableSomeEcdheCiphers();
   const uint8_t val[] = { 0x01, 0x00, 0x00 };
   DataBuffer extension(val, sizeof(val));
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_ec_point_formats_xtn,
@@ -561,6 +582,136 @@ TEST_P(TlsExtensionTestGeneric, RenegotiationInfoExtensionEmpty) {
   ClientHelloErrorTest(new TlsExtensionReplacer(ssl_renegotiation_info_xtn,
                                                 extension));
 }
+
+TEST_P(TlsExtensionTest12Plus, SignatureAlgorithmConfiguration) {
+  const SSLSignatureAndHashAlg algorithms[] = {
+    {ssl_hash_sha512, ssl_sign_rsa},
+    {ssl_hash_sha384, ssl_sign_ecdsa}
+  };
+
+  TlsExtensionCapture *capture =
+    new TlsExtensionCapture(ssl_signature_algorithms_xtn);
+  client_->SetSignatureAlgorithms(algorithms, PR_ARRAY_SIZE(algorithms));
+  client_->SetPacketFilter(capture);
+  DisableDheAndEcdheCiphers();
+  Connect();
+
+  const DataBuffer& ext = capture->extension();
+  EXPECT_EQ(2 + PR_ARRAY_SIZE(algorithms) * 2, ext.len());
+  for (size_t i = 0, cursor = 2;
+       i < PR_ARRAY_SIZE(algorithms) && cursor < ext.len();
+       ++i) {
+    uint32_t v;
+    EXPECT_TRUE(ext.Read(cursor++, 1, &v));
+    EXPECT_EQ(algorithms[i].hashAlg, static_cast<SSLHashType>(v));
+    EXPECT_TRUE(ext.Read(cursor++, 1, &v));
+    EXPECT_EQ(algorithms[i].sigAlg, static_cast<SSLSignType>(v));
+  }
+}
+
+/*
+ * Tests for Certificate Transparency (RFC 6962)
+ */
+
+// Helper class - stores signed certificate timestamps as provided
+// by the relevant callbacks on the client.
+class SignedCertificateTimestampsExtractor {
+ public:
+  SignedCertificateTimestampsExtractor(TlsAgent& client) {
+    client.SetAuthCertificateCallback(
+      [&](TlsAgent& agent, PRBool checksig, PRBool isServer) {
+        const SECItem *scts = SSL_PeerSignedCertTimestamps(agent.ssl_fd());
+        ASSERT_TRUE(scts);
+        auth_timestamps_.reset(new DataBuffer(scts->data, scts->len));
+      }
+    );
+    client.SetHandshakeCallback(
+      [&](TlsAgent& agent) {
+        const SECItem *scts = SSL_PeerSignedCertTimestamps(agent.ssl_fd());
+        ASSERT_TRUE(scts);
+        handshake_timestamps_.reset(new DataBuffer(scts->data, scts->len));
+      }
+    );
+  }
+
+  void assertTimestamps(const DataBuffer& timestamps) {
+    ASSERT_TRUE(auth_timestamps_);
+    ASSERT_EQ(timestamps, *auth_timestamps_);
+
+    ASSERT_TRUE(handshake_timestamps_);
+    ASSERT_EQ(timestamps, *handshake_timestamps_);
+  }
+
+ private:
+  std::unique_ptr<DataBuffer> auth_timestamps_;
+  std::unique_ptr<DataBuffer> handshake_timestamps_;
+};
+
+// Test timestamps extraction during a successful handshake.
+TEST_P(TlsExtensionTestGeneric, SignedCertificateTimestampsHandshake) {
+  uint8_t val[] = { 0x01, 0x23, 0x45, 0x67, 0x89 };
+  const SECItem si_timestamps = { siBuffer, val, sizeof(val) };
+  const DataBuffer timestamps(val, sizeof(val));
+
+  server_->StartConnect();
+  ASSERT_EQ(SECSuccess,
+    SSL_SetSignedCertTimestamps(server_->ssl_fd(),
+      &si_timestamps, server_->kea()));
+
+  client_->StartConnect();
+  ASSERT_EQ(SECSuccess,
+    SSL_OptionSet(client_->ssl_fd(),
+      SSL_ENABLE_SIGNED_CERT_TIMESTAMPS, PR_TRUE));
+
+  SignedCertificateTimestampsExtractor timestamps_extractor(*client_);
+  Handshake();
+  CheckConnected();
+  timestamps_extractor.assertTimestamps(timestamps);
+}
+
+// Test SSL_PeerSignedCertTimestamps returning zero-length SECItem
+// when the client / the server / both have not enabled the feature.
+TEST_P(TlsExtensionTestGeneric, SignedCertificateTimestampsInactiveClient) {
+  uint8_t val[] = { 0x01, 0x23, 0x45, 0x67, 0x89 };
+  const SECItem si_timestamps = { siBuffer, val, sizeof(val) };
+
+  server_->StartConnect();
+  ASSERT_EQ(SECSuccess,
+    SSL_SetSignedCertTimestamps(server_->ssl_fd(),
+      &si_timestamps, server_->kea()));
+
+  client_->StartConnect();
+
+  SignedCertificateTimestampsExtractor timestamps_extractor(*client_);
+  Handshake();
+  CheckConnected();
+  timestamps_extractor.assertTimestamps(DataBuffer());
+}
+
+TEST_P(TlsExtensionTestGeneric, SignedCertificateTimestampsInactiveServer) {
+  server_->StartConnect();
+
+  client_->StartConnect();
+  ASSERT_EQ(SECSuccess,
+    SSL_OptionSet(client_->ssl_fd(),
+      SSL_ENABLE_SIGNED_CERT_TIMESTAMPS, PR_TRUE));
+
+  SignedCertificateTimestampsExtractor timestamps_extractor(*client_);
+  Handshake();
+  CheckConnected();
+  timestamps_extractor.assertTimestamps(DataBuffer());
+}
+
+TEST_P(TlsExtensionTestGeneric, SignedCertificateTimestampsInactiveBoth) {
+  server_->StartConnect();
+  client_->StartConnect();
+
+  SignedCertificateTimestampsExtractor timestamps_extractor(*client_);
+  Handshake();
+  CheckConnected();
+  timestamps_extractor.assertTimestamps(DataBuffer());
+}
+
 
 INSTANTIATE_TEST_CASE_P(ExtensionTls10, TlsExtensionTestGeneric,
                         ::testing::Combine(

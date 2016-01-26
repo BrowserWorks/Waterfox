@@ -28,7 +28,7 @@ public:
    * currently, none are supported and the behaviour is more or less that of
    * RTLD_GLOBAL | RTLD_BIND_NOW.
    */
-  static mozilla::TemporaryRef<LibHandle> Load(Mappable *mappable,
+  static already_AddRefed<LibHandle> Load(Mappable *mappable,
                                                const char *path, int flags);
 
   /**
@@ -135,7 +135,7 @@ private:
   }
 
   /* List of dependent libraries */
-  std::vector<mozilla::RefPtr<LibHandle> > dependencies;
+  std::vector<RefPtr<LibHandle> > dependencies;
 
   /* List of .rel.dyn/.rela.dyn relocations */
   Array<Elf::Reloc> relocations;

@@ -1,6 +1,8 @@
 // ----------------------------------------------------------------------------
 // Tests installing an unsigned add-on through a navigation. Should not be
 // blocked since the referer is whitelisted.
+var URL = TESTROOT2 + "navigate.html?" + encodeURIComponent(TESTROOT + "unsigned.xpi");
+
 function test() {
   Harness.installConfirmCallback = confirm_install;
   Harness.installsCompletedCallback = finish_test;
@@ -9,11 +11,8 @@ function test() {
   var pm = Services.perms;
   pm.add(makeURI("http://example.org/"), "install", pm.ALLOW_ACTION);
 
-  var triggers = encodeURIComponent(JSON.stringify({
-    "Unsigned XPI": TESTROOT2 + "unsigned.xpi"
-  }));
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.loadURI(TESTROOT + "unsigned.xpi", makeURI(TESTROOT2 + "test.html"));
+  gBrowser.loadURI(URL);
 }
 
 function confirm_install(window) {
@@ -22,7 +21,7 @@ function confirm_install(window) {
 
 function finish_test(count) {
   is(count, 0, "No add-ons should have been installed");
-  Services.perms.remove("example.org", "install");
+  Services.perms.remove(makeURI("http://example.org"), "install");
 
   gBrowser.removeCurrentTab();
   Harness.finish();

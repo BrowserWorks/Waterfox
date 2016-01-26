@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/UniquePtr.h"
 #include "nsTArray.h"
 #include "MediaCache.h"
 #include "nsDeque.h"
@@ -96,7 +97,7 @@ public:
     explicit BlockChange(const uint8_t* aData)
       : mSourceBlockIndex(-1)
     {
-      mData = new uint8_t[BLOCK_SIZE];
+      mData = MakeUnique<uint8_t[]>(BLOCK_SIZE);
       memcpy(mData.get(), aData, BLOCK_SIZE);
     }
 
@@ -105,7 +106,7 @@ public:
     explicit BlockChange(int32_t aSourceBlockIndex)
       : mSourceBlockIndex(aSourceBlockIndex) {}
 
-    nsAutoArrayPtr<uint8_t> mData;
+    UniquePtr<uint8_t[]> mData;
     const int32_t mSourceBlockIndex;
 
     bool IsMove() const {
@@ -136,7 +137,7 @@ public:
     }
 
     bool Contains(int32_t aValue) {
-      for (int32_t i = 0; i < GetSize(); ++i) {
+      for (size_t i = 0; i < GetSize(); ++i) {
         if (ObjectAt(i) == aValue) {
           return true;
         }
@@ -149,7 +150,7 @@ public:
     }
 
   private:
-    int32_t ObjectAt(int32_t aIndex) {
+    int32_t ObjectAt(size_t aIndex) {
       void* v = nsDeque::ObjectAt(aIndex);
       return reinterpret_cast<uintptr_t>(v);
     }
@@ -195,7 +196,7 @@ private:
   // mBlockChanges[offset/BLOCK_SIZE] != nullptr, then either there's a block
   // cached in memory waiting to be written, or this block is the target of a
   // block move.
-  nsTArray< nsRefPtr<BlockChange> > mBlockChanges;
+  nsTArray< RefPtr<BlockChange> > mBlockChanges;
   // Thread upon which block writes and block moves are performed. This is
   // created upon open, and shutdown (asynchronously) upon close (on the
   // main thread).

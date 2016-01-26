@@ -81,7 +81,7 @@ BaseElf::FindExidx(int *pcount) const
 }
 #endif
 
-mozilla::TemporaryRef<LibHandle>
+already_AddRefed<LibHandle>
 LoadedElf::Create(const char *path, void *base_addr)
 {
   DEBUG_LOG("LoadedElf::Create(\"%s\", %p) = ...", path, base_addr);
@@ -170,7 +170,7 @@ LoadedElf::Create(const char *path, void *base_addr)
     static_cast<void *>(elf));
 
   ElfLoader::Singleton.Register(elf);
-  return elf;
+  return elf.forget();
 }
 
 bool

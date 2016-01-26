@@ -55,7 +55,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_execute()
+add_task(function* test_execute()
 {
   var testURI = uri("http://mozilla.com/");
   var testItemId = bmsvc.insertBookmark(bmsvc.bookmarksMenuFolder, testURI, -1, "");
@@ -288,7 +288,7 @@ add_task(function test_execute()
 
   // Setting item annotations on invalid item ids should throw
   var invalidIds = [-1, 0, 37643];
-  for each (var id in invalidIds) {
+  for (var id of invalidIds) {
     try {
       annosvc.setItemAnnotation(id, "foo", "bar", 0, 0);
       do_throw("setItemAnnotation* should throw for invalid item id: " + id)

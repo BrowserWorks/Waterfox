@@ -5,7 +5,7 @@
 
 const {Cc: Cc, Ci: Ci, Cr: Cr, Cu: Cu} = SpecialPowers;
 
-let RIL = SpecialPowers.wrap(SpecialPowers.createBlankObject());
+var RIL = SpecialPowers.wrap(SpecialPowers.createBlankObject());
 SpecialPowers.Cu.import("resource://gre/modules/ril_consts.js", RIL);
 
 // Emulate Promise.jsm semantics.
@@ -27,7 +27,7 @@ const MWI_TIMESTAMP = "00000000000000";
 
 // Only bring in what we need from ril_worker/RadioInterfaceLayer here. Reusing
 // that code turns out to be a nightmare, so there is some code duplication.
-let PDUBuilder = {
+var PDUBuilder = {
   toHexString: function(n, length) {
     let str = n.toString(16);
     if (str.length < length) {
@@ -128,7 +128,7 @@ let PDUBuilder = {
     let headerLength = 0;
     this.buf = "";
     if (options.headers) {
-      for each (let header in options.headers) {
+      for (let header of options.headers) {
         headerLength += 2; // id + length octets
         if (header.octets) {
           headerLength += header.octets.length;
@@ -149,12 +149,12 @@ let PDUBuilder = {
     if (options.headers) {
       this.writeHexOctet(headerLength);
 
-      for each (let header in options.headers) {
+      for (let header of options.headers) {
         this.writeHexOctet(header.id);
         this.writeHexOctet(header.length);
 
         if (header.octets) {
-          for each (let octet in header.octets) {
+          for (let octet of header.octets) {
             this.writeHexOctet(octet);
           }
         }
@@ -200,7 +200,7 @@ let PDUBuilder = {
   }
 };
 
-let pendingEmulatorCmdCount = 0;
+var pendingEmulatorCmdCount = 0;
 
 /**
  * Send emulator command with safe guard.
@@ -258,7 +258,7 @@ function pushPermissions(aPermissions) {
   return deferred.promise;
 }
 
-let voicemail;
+var voicemail;
 
 /**
  * Add required permissions and test if |navigator.mozVoicemail| exists.

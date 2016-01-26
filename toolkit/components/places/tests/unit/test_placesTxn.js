@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let bmsvc = PlacesUtils.bookmarks;
-let tagssvc = PlacesUtils.tagging;
-let annosvc = PlacesUtils.annotations;
-let txnManager = PlacesUtils.transactionManager;
+var bmsvc = PlacesUtils.bookmarks;
+var tagssvc = PlacesUtils.tagging;
+var annosvc = PlacesUtils.annotations;
+var txnManager = PlacesUtils.transactionManager;
 const DESCRIPTION_ANNO = "bookmarkProperties/description";
 
 function* promiseKeyword(keyword, href, postData) {
@@ -24,7 +24,7 @@ function* promiseKeyword(keyword, href, postData) {
 }
 
 // create and add bookmarks observer
-let observer = {
+var observer = {
 
   onBeginUpdateBatch: function() {
     this._beginUpdateBatch = true;
@@ -105,10 +105,10 @@ let observer = {
 };
 
 // index at which items should begin
-let bmStartIndex = 0;
+var bmStartIndex = 0;
 
 // get bookmarks root id
-let root = PlacesUtils.bookmarksMenuFolderId;
+var root = PlacesUtils.bookmarksMenuFolderId;
 
 add_task(function* init() {
   bmsvc.addObserver(observer, false);
@@ -540,17 +540,19 @@ add_task(function* test_edit_keyword() {
   let testURI = NetUtil.newURI("http://test_edit_keyword.com");
   let testBkmId = bmsvc.insertBookmark(root, testURI, bmsvc.DEFAULT_INDEX, "Test edit keyword");
 
-  let txn = new PlacesEditBookmarkKeywordTransaction(testBkmId, KEYWORD);
+  let txn = new PlacesEditBookmarkKeywordTransaction(testBkmId, KEYWORD, "postData");
 
   txn.doTransaction();
   do_check_eq(observer._itemChangedId, testBkmId);
   do_check_eq(observer._itemChangedProperty, "keyword");
   do_check_eq(observer._itemChangedValue, KEYWORD);
+  do_check_eq(PlacesUtils.getPostDataForBookmark(testBkmId), "postData");
 
   txn.undoTransaction();
   do_check_eq(observer._itemChangedId, testBkmId);
   do_check_eq(observer._itemChangedProperty, "keyword");
   do_check_eq(observer._itemChangedValue, "");
+  do_check_eq(PlacesUtils.getPostDataForBookmark(testBkmId), null);
 });
 
 add_task(function* test_LoadInSidebar_transaction() {
@@ -698,34 +700,6 @@ add_task(function* test_sort_folder_by_name() {
   do_check_eq(0, bmsvc.getItemIndex(b1));
   do_check_eq(1, bmsvc.getItemIndex(b2));
   do_check_eq(2, bmsvc.getItemIndex(b3));
-});
-
-add_task(function* test_edit_postData() {
-  let postData = "post-test_edit_postData";
-  let testURI = NetUtil.newURI("http://test_edit_postData.com");
-
-  let testBkm = yield PlacesUtils.bookmarks.insert({
-    parentGuid: PlacesUtils.bookmarks.menuGuid,
-    url: "http://test_edit_postData.com",
-    title: "Test edit Post Data"
-  });
-
-  yield PlacesUtils.keywords.insert({
-    keyword: "kw",
-    url: "http://test_edit_postData.com"
-  });
-
-  let testBkmId = yield PlacesUtils.promiseItemId(testBkm.guid);
-  let txn = new PlacesEditBookmarkPostDataTransaction(testBkmId, postData);
-
-  txn.doTransaction();
-  yield promiseKeyword("kw", testURI.spec, postData);
-
-  txn.undoTransaction();
-  entry = yield PlacesUtils.keywords.fetch("kw");
-  Assert.equal(entry.url.href, testURI.spec);
-  // We don't allow anymore to set a null post data.
-  //Assert.equal(null, post_data);
 });
 
 add_task(function* test_tagURI_untagURI() {

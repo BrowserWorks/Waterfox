@@ -33,7 +33,9 @@ SpeechStreamListener::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
                                                TrackID aID,
                                                StreamTime aTrackOffset,
                                                uint32_t aTrackEvents,
-                                               const MediaSegment& aQueuedMedia)
+                                               const MediaSegment& aQueuedMedia,
+                                               MediaStream* aInputStream,
+                                               TrackID aInputTrackID)
 {
   AudioSegment* audio = const_cast<AudioSegment*>(
     static_cast<const AudioSegment*>(&aQueuedMedia));
@@ -76,7 +78,7 @@ SpeechStreamListener::ConvertAndDispatchAudioChunk(int aDuration, float aVolume,
                                                    SampleFormatType* aData,
                                                    TrackRate aTrackRate)
 {
-  nsRefPtr<SharedBuffer> samples(SharedBuffer::Create(aDuration *
+  RefPtr<SharedBuffer> samples(SharedBuffer::Create(aDuration *
                                                       1 * // channel
                                                       sizeof(int16_t)));
 

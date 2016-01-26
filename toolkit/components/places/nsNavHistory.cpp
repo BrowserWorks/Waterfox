@@ -1,4 +1,5 @@
-//* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -30,6 +31,7 @@
 #include "nsEscape.h"
 #include "nsIEffectiveTLDService.h"
 #include "nsIClassInfoImpl.h"
+#include "nsIIDNService.h"
 #include "nsThreadUtils.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsMathUtils.h"
@@ -226,7 +228,7 @@ protected:
   nsNavHistory& mNavHistory;
 };
 
-} // anonymouse namespace
+} // namespace
 
 
 // Queries rows indexes to bind or get values, if adding a new one, be sure to
@@ -297,7 +299,7 @@ nsNavHistory::Init()
    ***
    *** Nothing after these add observer calls should return anything but NS_OK.
    *** If a failure code is returned, this nsNavHistory object will be held onto
-   *** by the observer service and the preference service. 
+   *** by the observer service and the preference service.
    ****************************************************************************/
 
   // Observe preferences changes.
@@ -578,7 +580,7 @@ private:
   PRTime mLastVisitDate;
 };
 
-} // anonymous namespace
+} // namespace
 
 void
 nsNavHistory::DispatchFrecencyChangedNotification(const nsACString& aSpec,
@@ -774,7 +776,7 @@ nsNavHistory::GetUpdateRequirements(const nsCOMArray<nsNavHistoryQuery>& aQuerie
       nsINavHistoryQueryOptions::RESULTS_AS_TAG_QUERY)
     return QUERYUPDATE_COMPLEX_WITH_BOOKMARKS;
 
-  // Whenever there is a maximum number of results, 
+  // Whenever there is a maximum number of results,
   // and we are not a bookmark query we must requery. This
   // is because we can't generally know if any given addition/change causes
   // the item to be in the top N items in the database.
@@ -1006,7 +1008,7 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 nsresult
 nsNavHistory::invalidateFrecencies(const nsCString& aPlaceIdsQueryString)
@@ -1037,7 +1039,7 @@ nsNavHistory::invalidateFrecencies(const nsCString& aPlaceIdsQueryString)
     invalidFrecenciesSQLFragment.Append(aPlaceIdsQueryString);
     invalidFrecenciesSQLFragment.Append(')');
   }
-  nsRefPtr<InvalidateAllFrecenciesCallback> cb =
+  RefPtr<InvalidateAllFrecenciesCallback> cb =
     aPlaceIdsQueryString.IsEmpty() ? new InvalidateAllFrecenciesCallback()
                                    : nullptr;
 
@@ -1150,7 +1152,7 @@ nsNavHistory::GetNewQuery(nsINavHistoryQuery **_retval)
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG_POINTER(_retval);
 
-  nsRefPtr<nsNavHistoryQuery> query = new nsNavHistoryQuery();
+  RefPtr<nsNavHistoryQuery> query = new nsNavHistoryQuery();
   query.forget(_retval);
   return NS_OK;
 }
@@ -1163,7 +1165,7 @@ nsNavHistory::GetNewQueryOptions(nsINavHistoryQueryOptions **_retval)
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG_POINTER(_retval);
 
-  nsRefPtr<nsNavHistoryQueryOptions> queryOptions = new nsNavHistoryQueryOptions();
+  RefPtr<nsNavHistoryQueryOptions> queryOptions = new nsNavHistoryQueryOptions();
   queryOptions.forget(_retval);
   return NS_OK;
 }
@@ -1221,14 +1223,14 @@ nsNavHistory::ExecuteQueries(nsINavHistoryQuery** aQueries, uint32_t aQueryCount
   }
 
   // Create the root node.
-  nsRefPtr<nsNavHistoryContainerResultNode> rootNode;
+  RefPtr<nsNavHistoryContainerResultNode> rootNode;
   int64_t folderId = GetSimpleBookmarksQueryFolder(queries, options);
   if (folderId) {
     // In the simple case where we're just querying children of a single
     // bookmark folder, we can more efficiently generate results.
     nsNavBookmarks* bookmarks = nsNavBookmarks::GetBookmarksService();
     NS_ENSURE_TRUE(bookmarks, NS_ERROR_OUT_OF_MEMORY);
-    nsRefPtr<nsNavHistoryResultNode> tempRootNode;
+    RefPtr<nsNavHistoryResultNode> tempRootNode;
     rv = bookmarks->ResultNodeForContainer(folderId, options,
                                            getter_AddRefs(tempRootNode));
     if (NS_SUCCEEDED(rv)) {
@@ -1249,7 +1251,7 @@ nsNavHistory::ExecuteQueries(nsINavHistoryQuery** aQueries, uint32_t aQueryCount
   }
 
   // Create the result that will hold nodes.  Inject batching status into it.
-  nsRefPtr<nsNavHistoryResult> result;
+  RefPtr<nsNavHistoryResult> result;
   rv = nsNavHistoryResult::NewHistoryResult(aQueries, aQueryCount, options,
                                             rootNode, isBatching(),
                                             getter_AddRefs(result));
@@ -1276,7 +1278,7 @@ bool IsOptimizableHistoryQuery(const nsCOMArray<nsNavHistoryQuery>& aQueries,
     return false;
 
   nsNavHistoryQuery *aQuery = aQueries[0];
- 
+
   if (aOptions->QueryType() != nsINavHistoryQueryOptions::QUERY_TYPE_HISTORY)
     return false;
 
@@ -1298,25 +1300,25 @@ bool IsOptimizableHistoryQuery(const nsCOMArray<nsNavHistoryQuery>& aQueries,
   if (aQuery->MinVisits() != -1 || aQuery->MaxVisits() != -1)
     return false;
 
-  if (aQuery->BeginTime() || aQuery->BeginTimeReference()) 
+  if (aQuery->BeginTime() || aQuery->BeginTimeReference())
     return false;
 
-  if (aQuery->EndTime() || aQuery->EndTimeReference()) 
+  if (aQuery->EndTime() || aQuery->EndTimeReference())
     return false;
 
-  if (!aQuery->SearchTerms().IsEmpty()) 
+  if (!aQuery->SearchTerms().IsEmpty())
     return false;
 
-  if (aQuery->OnlyBookmarked()) 
+  if (aQuery->OnlyBookmarked())
     return false;
 
   if (aQuery->DomainIsHost() || !aQuery->Domain().IsEmpty())
     return false;
 
-  if (aQuery->AnnotationIsNot() || !aQuery->Annotation().IsEmpty()) 
+  if (aQuery->AnnotationIsNot() || !aQuery->Annotation().IsEmpty())
     return false;
 
-  if (aQuery->UriIsPrefix() || aQuery->Uri()) 
+  if (aQuery->UriIsPrefix() || aQuery->Uri())
     return false;
 
   if (aQuery->Folders().Length() > 0)
@@ -1332,7 +1334,7 @@ bool IsOptimizableHistoryQuery(const nsCOMArray<nsNavHistoryQuery>& aQueries,
 }
 
 static
-bool NeedToFilterResultSet(const nsCOMArray<nsNavHistoryQuery>& aQueries, 
+bool NeedToFilterResultSet(const nsCOMArray<nsNavHistoryQuery>& aQueries,
                              nsNavHistoryQueryOptions *aOptions)
 {
   uint16_t resultType = aOptions->ResultType();
@@ -1390,8 +1392,8 @@ private:
 };
 
 PlacesSQLQueryBuilder::PlacesSQLQueryBuilder(
-    const nsCString& aConditions, 
-    nsNavHistoryQueryOptions* aOptions, 
+    const nsCString& aConditions,
+    nsNavHistoryQueryOptions* aOptions,
     bool aUseLimit,
     nsNavHistory::StringHash& aAddParams,
     bool aHasSearchTerms)
@@ -1855,7 +1857,7 @@ PlacesSQLQueryBuilder::SelectAsTag()
 
   // This allows sorting by date fields what is not possible with
   // other history queries.
-  mHasDateColumns = true; 
+  mHasDateColumns = true;
 
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:folder=' || id || '&queryType=%d&type=%ld', "
@@ -1905,7 +1907,7 @@ PlacesSQLQueryBuilder::Where()
   mQueryString.ReplaceSubstring("{QUERY_OPTIONS_PLACES}",
                                 additionalPlacesConditions.get());
 
-  // If we used WHERE already, we inject the conditions 
+  // If we used WHERE already, we inject the conditions
   // in place of {ADDITIONAL_CONDITIONS}
   if (mQueryString.Find("{ADDITIONAL_CONDITIONS}", 0) != kNotFound) {
     nsAutoCString innerCondition;
@@ -2056,15 +2058,15 @@ PlacesSQLQueryBuilder::Limit()
 nsresult
 nsNavHistory::ConstructQueryString(
     const nsCOMArray<nsNavHistoryQuery>& aQueries,
-    nsNavHistoryQueryOptions* aOptions, 
-    nsCString& queryString, 
+    nsNavHistoryQueryOptions* aOptions,
+    nsCString& queryString,
     bool& aParamsPresent,
     nsNavHistory::StringHash& aAddParams)
 {
   // For information about visit_type see nsINavHistoryService.idl.
   // visitType == 0 is undefined (see bug #375777 for details).
-  // Some sites, especially Javascript-heavy ones, load things in frames to 
-  // display them, resulting in a lot of these entries. This is the reason 
+  // Some sites, especially Javascript-heavy ones, load things in frames to
+  // display them, resulting in a lot of these entries. This is the reason
   // why such visits are filtered out.
   nsresult rv;
   aParamsPresent = false;
@@ -2151,19 +2153,6 @@ nsNavHistory::ConstructQueryString(
   return NS_OK;
 }
 
-PLDHashOperator BindAdditionalParameter(nsNavHistory::StringHash::KeyType aParamName, 
-                                        nsCString aParamValue,
-                                        void* aStatement)
-{
-  mozIStorageStatement* stmt = static_cast<mozIStorageStatement*>(aStatement);
-
-  nsresult rv = stmt->BindUTF8StringByName(aParamName, aParamValue);
-  if (NS_FAILED(rv))
-    return PL_DHASH_STOP;
-
-  return PL_DHASH_NEXT;
-}
-
 // nsNavHistory::GetQueryResults
 //
 //    Call this to get the results from a complex query. This is used by
@@ -2220,7 +2209,12 @@ nsNavHistory::GetQueryResults(nsNavHistoryQueryResultNode *aResultNode,
     }
   }
 
-  addParams.EnumerateRead(BindAdditionalParameter, statement.get());
+  for (auto iter = addParams.Iter(); !iter.Done(); iter.Next()) {
+    nsresult rv = statement->BindUTF8StringByName(iter.Key(), iter.Data());
+    if (NS_FAILED(rv)) {
+      break;
+    }
+  }
 
   // Optimize the case where there is no need for any post-query filtering.
   if (NeedToFilterResultSet(aQueries, aOptions)) {
@@ -2233,7 +2227,7 @@ nsNavHistory::GetQueryResults(nsNavHistoryQueryResultNode *aResultNode,
   } else {
     rv = ResultsAsList(statement, aOptions, aResults);
     NS_ENSURE_SUCCESS(rv, rv);
-  } 
+  }
 
   return NS_OK;
 }
@@ -2280,7 +2274,7 @@ nsNavHistory::GetObservers(uint32_t* _count,
 
   // Then add the other observers.
   for (uint32_t i = 0; i < mObservers.Length(); ++i) {
-    const nsCOMPtr<nsINavHistoryObserver> &observer = mObservers.ElementAt(i);
+    const nsCOMPtr<nsINavHistoryObserver> &observer = mObservers.ElementAt(i).GetValue();
     // Skip nullified weak observers.
     if (observer)
       observers.AppendElement(observer);
@@ -2803,6 +2797,8 @@ nsNavHistory::RemoveVisitsByTimeframe(PRTime aBeginTime, PRTime aEndTime)
 NS_IMETHODIMP
 nsNavHistory::RemoveAllPages()
 {
+  PLACES_WARN_DEPRECATED();
+
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
 
   nsresult rv = mDB->MainConn()->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
@@ -2974,8 +2970,19 @@ NS_IMETHODIMP
 nsNavHistory::GetDBConnection(mozIStorageConnection **_DBConnection)
 {
   NS_ENSURE_ARG_POINTER(_DBConnection);
-  nsRefPtr<mozIStorageConnection> connection = mDB->MainConn();
+  RefPtr<mozIStorageConnection> connection = mDB->MainConn();
   connection.forget(_DBConnection);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNavHistory::GetShutdownClient(nsIAsyncShutdownClient **_shutdownClient)
+{
+  NS_ENSURE_ARG_POINTER(_shutdownClient);
+  RefPtr<nsIAsyncShutdownClient> client = mDB->GetConnectionShutdown();
+  MOZ_ASSERT(client);
+  client.forget(_shutdownClient);
 
   return NS_OK;
 }
@@ -3035,7 +3042,13 @@ nsNavHistory::AsyncExecuteLegacyQueries(nsINavHistoryQuery** aQueries,
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
-  addParams.EnumerateRead(BindAdditionalParameter, statement.get());
+
+  for (auto iter = addParams.Iter(); !iter.Done(); iter.Next()) {
+    nsresult rv = statement->BindUTF8StringByName(iter.Key(), iter.Data());
+    if (NS_FAILED(rv)) {
+      break;
+    }
+  }
 
   rv = statement->ExecuteAsync(aCallback, _stmt);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -3077,9 +3090,10 @@ nsNavHistory::Observe(nsISupports *aSubject, const char *aTopic,
                     const char16_t *aData)
 {
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
-
   if (strcmp(aTopic, TOPIC_PROFILE_TEARDOWN) == 0 ||
-      strcmp(aTopic, TOPIC_PROFILE_CHANGE) == 0) {
+      strcmp(aTopic, TOPIC_PROFILE_CHANGE) == 0 ||
+      strcmp(aTopic, TOPIC_SIMULATE_PLACES_MUST_CLOSE_1) == 0 ||
+      strcmp(aTopic, TOPIC_SIMULATE_PLACES_MUST_CLOSE_2) == 0) {
     // These notifications are used by tests to simulate a Places shutdown.
     // They should just be forwarded to the Database handle.
     mDB->Observe(aSubject, aTopic, aData);
@@ -3167,7 +3181,7 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 nsresult
 nsNavHistory::DecayFrecency()
@@ -3206,7 +3220,7 @@ nsNavHistory::DecayFrecency()
     deleteAdaptive.get()
   };
   nsCOMPtr<mozIStoragePendingStatement> ps;
-  nsRefPtr<DecayFrecencyCallback> cb = new DecayFrecencyCallback();
+  RefPtr<DecayFrecencyCallback> cb = new DecayFrecencyCallback();
   rv = mDB->MainConn()->ExecuteAsync(stmts, ArrayLength(stmts), cb,
                                      getter_AddRefs(ps));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -3219,10 +3233,10 @@ nsNavHistory::DecayFrecency()
 
 // Helper class for QueryToSelectClause
 //
-// This class helps to build part of the WHERE clause. It supports 
-// multiple queries by appending the query index to the parameter name. 
+// This class helps to build part of the WHERE clause. It supports
+// multiple queries by appending the query index to the parameter name.
 // For the query with index 0 the parameter name is not altered what
-// allows using this parameter in other situations (see SelectAsSite). 
+// allows using this parameter in other situations (see SelectAsSite).
 
 class ConditionBuilder
 {
@@ -3259,7 +3273,7 @@ public:
     return *this;
   }
 
-  void GetClauseString(nsCString& aResult) 
+  void GetClauseString(nsCString& aResult)
   {
     aResult = mClause;
   }
@@ -3294,7 +3308,7 @@ nsNavHistory::QueryToSelectClause(nsNavHistoryQuery* aQuery, // const
     clause.Condition("EXISTS (SELECT 1 FROM moz_historyvisits "
                               "WHERE place_id = h.id");
     // begin time
-    if (NS_SUCCEEDED(aQuery->GetHasBeginTime(&hasIt)) && hasIt) 
+    if (NS_SUCCEEDED(aQuery->GetHasBeginTime(&hasIt)) && hasIt)
       clause.Condition("visit_date >=").Param(":begin_time");
     // end time
     if (NS_SUCCEEDED(aQuery->GetHasEndTime(&hasIt)) && hasIt)
@@ -3325,7 +3339,7 @@ nsNavHistory::QueryToSelectClause(nsNavHistoryQuery* aQuery, // const
 
   if (aQuery->MaxVisits() >= 0)
     clause.Condition("h.visit_count <=").Param(":max_visits");
-  
+
   // only bookmarked, has no affect on bookmarks-only queries
   if (aOptions->QueryType() != nsINavHistoryQueryOptions::QUERY_TYPE_BOOKMARKS &&
       aQuery->OnlyBookmarked())
@@ -3615,7 +3629,7 @@ nsNavHistory::ResultsAsList(mozIStorageStatement* statement,
 
   bool hasMore = false;
   while (NS_SUCCEEDED(statement->ExecuteStep(&hasMore)) && hasMore) {
-    nsRefPtr<nsNavHistoryResultNode> result;
+    RefPtr<nsNavHistoryResultNode> result;
     rv = RowToResult(row, aOptions, getter_AddRefs(result));
     NS_ENSURE_SUCCESS(rv, rv);
     aResults->AppendObject(result);
@@ -3629,7 +3643,7 @@ const int64_t UNDEFINED_URN_VALUE = -1;
 // urn:places-persist:place:group=0&group=1&sort=1&type=1,,%28local%20files%29)
 // to be used to persist the open state of this container
 nsresult
-CreatePlacesPersistURN(nsNavHistoryQueryResultNode *aResultNode, 
+CreatePlacesPersistURN(nsNavHistoryQueryResultNode *aResultNode,
                        int64_t aValue, const nsCString& aTitle, nsCString& aURN)
 {
   nsAutoCString uri;
@@ -3658,12 +3672,12 @@ int64_t
 nsNavHistory::GetTagsFolder()
 {
   // cache our tags folder
-  // note, we can't do this in nsNavHistory::Init(), 
+  // note, we can't do this in nsNavHistory::Init(),
   // as getting the bookmarks service would initialize it.
   if (mTagsFolder == -1) {
     nsNavBookmarks *bookmarks = nsNavBookmarks::GetBookmarksService();
     NS_ENSURE_TRUE(bookmarks, -1);
-    
+
     nsresult rv = bookmarks->GetTagsFolder(&mTagsFolder);
     NS_ENSURE_SUCCESS(rv, -1);
   }
@@ -3676,7 +3690,7 @@ nsNavHistory::GetTagsFolder()
 //   - searching on title, url and tags
 //   - limit count
 //
-// Note:  changes to filtering in FilterResultSet() 
+// Note:  changes to filtering in FilterResultSet()
 // may require changes to NeedToFilterResultSet()
 
 nsresult
@@ -3827,22 +3841,15 @@ nsNavHistory::CheckIsRecentEvent(RecentEventHash* hashTable,
 //
 //    This goes through our
 
-static PLDHashOperator
-ExpireNonrecentEventsCallback(nsCStringHashKey::KeyType aKey,
-                              int64_t& aData,
-                              void* userArg)
-{
-  int64_t* threshold = reinterpret_cast<int64_t*>(userArg);
-  if (aData < *threshold)
-    return PL_DHASH_REMOVE;
-  return PL_DHASH_NEXT;
-}
 void
 nsNavHistory::ExpireNonrecentEvents(RecentEventHash* hashTable)
 {
   int64_t threshold = GetNow() - RECENT_EVENT_THRESHOLD;
-  hashTable->Enumerate(ExpireNonrecentEventsCallback,
-                       reinterpret_cast<void*>(&threshold));
+  for (auto iter = hashTable->Iter(); !iter.Done(); iter.Next()) {
+    if (iter.Data() < threshold) {
+      iter.Remove();
+    }
+  }
 }
 
 
@@ -3915,7 +3922,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
       NS_ENSURE_SUCCESS(rv, rv);
     }
 
-    nsRefPtr<nsNavHistoryResultNode> resultNode;
+    RefPtr<nsNavHistoryResultNode> resultNode;
     rv = QueryRowToResult(itemId, guid, url, title, accessCount, time, favicon,
                           getter_AddRefs(resultNode));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -3937,7 +3944,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
     return rv;
   } else if (aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_URI ||
              aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_TAG_CONTENTS) {
-    nsRefPtr<nsNavHistoryResultNode> resultNode =
+    RefPtr<nsNavHistoryResultNode> resultNode =
       new nsNavHistoryResultNode(url, title, accessCount, time, favicon);
 
     if (itemId != -1) {
@@ -3969,7 +3976,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
   }
 
   if (aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_VISIT) {
-    nsRefPtr<nsNavHistoryResultNode> resultNode =
+    RefPtr<nsNavHistoryResultNode> resultNode =
       new nsNavHistoryResultNode(url, title, accessCount, time, favicon);
 
     nsAutoString tags;
@@ -4010,7 +4017,7 @@ nsNavHistory::QueryRowToResult(int64_t itemId,
   nsresult rv = QueryStringToQueryArray(aURI, &queries,
                                         getter_AddRefs(options));
 
-  nsRefPtr<nsNavHistoryResultNode> resultNode;
+  RefPtr<nsNavHistoryResultNode> resultNode;
   // If this failed the query does not parse correctly, let the error pass and
   // handle it later.
   if (NS_SUCCEEDED(rv)) {
@@ -4033,7 +4040,7 @@ nsNavHistory::QueryRowToResult(int64_t itemId,
         resultNode->mBookmarkGuid = aBookmarkGuid;
         resultNode->GetAsFolder()->mTargetFolderGuid = targetFolderGuid;
 
-        // Use the query item title, unless it's void (in that case use the 
+        // Use the query item title, unless it's void (in that case use the
         // concrete folder title).
         if (!aTitle.IsVoid()) {
           resultNode->mTitle = aTitle;
@@ -4430,7 +4437,7 @@ void ParseSearchTermsFromQueries(const nsCOMArray<nsNavHistoryQuery>& aQueries,
   }
 }
 
-} // anonymous namespace
+} // namespace
 
 
 nsresult
@@ -4462,7 +4469,7 @@ nsNavHistory::UpdateFrecency(int64_t aPlaceId)
   , updateHiddenStmt.get()
   };
 
-  nsRefPtr<AsyncStatementCallbackNotifier> cb =
+  RefPtr<AsyncStatementCallbackNotifier> cb =
     new AsyncStatementCallbackNotifier(TOPIC_FRECENCY_UPDATED);
   nsCOMPtr<mozIStoragePendingStatement> ps;
   rv = mDB->MainConn()->ExecuteAsync(stmts, ArrayLength(stmts), cb,
@@ -4496,7 +4503,7 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 nsresult
 nsNavHistory::FixInvalidFrecencies()
@@ -4508,7 +4515,7 @@ nsNavHistory::FixInvalidFrecencies()
   );
   NS_ENSURE_STATE(stmt);
 
-  nsRefPtr<FixInvalidFrecenciesCallback> callback =
+  RefPtr<FixInvalidFrecenciesCallback> callback =
     new FixInvalidFrecenciesCallback();
   nsCOMPtr<mozIStoragePendingStatement> ps;
   (void)stmt->ExecuteAsync(callback, getter_AddRefs(ps));
@@ -4547,7 +4554,7 @@ nsNavHistory::AutoCompleteFeedback(int32_t aIndex,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // We do the update asynchronously and we do not care about failures.
-  nsRefPtr<AsyncStatementCallbackNotifier> callback =
+  RefPtr<AsyncStatementCallbackNotifier> callback =
     new AsyncStatementCallbackNotifier(TOPIC_AUTOCOMPLETE_FEEDBACK_UPDATED);
   nsCOMPtr<mozIStoragePendingStatement> canceler;
   rv = stmt->ExecuteAsync(callback, getter_AddRefs(canceler));

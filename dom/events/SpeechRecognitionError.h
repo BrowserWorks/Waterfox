@@ -49,15 +49,14 @@ public:
                              bool aCanBubble,
                              bool aCancelable,
                              SpeechRecognitionErrorCode aError,
-                             const nsAString& aMessage,
-                             ErrorResult& aRv);
+                             const nsAString& aMessage);
 
 protected:
   SpeechRecognitionErrorCode mError;
   nsString mMessage;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif // SpeechRecognitionError_h__

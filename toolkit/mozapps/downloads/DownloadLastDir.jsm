@@ -34,7 +34,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
-let observer = {
+var observer = {
   QueryInterface: function (aIID) {
     if (aIID.equals(Components.interfaces.nsIObserver) ||
         aIID.equals(Components.interfaces.nsISupports) ||
@@ -63,7 +63,7 @@ let observer = {
   }
 };
 
-let os = Components.classes["@mozilla.org/observer-service;1"]
+var os = Components.classes["@mozilla.org/observer-service;1"]
                    .getService(Components.interfaces.nsIObserverService);
 os.addObserver(observer, "last-pb-context-exited", true);
 os.addObserver(observer, "browser:purge-session-history", true);
@@ -86,7 +86,7 @@ function isContentPrefEnabled() {
   }
 }
 
-let gDownloadLastDirFile = readLastDirPref();
+var gDownloadLastDirFile = readLastDirPref();
 
 this.DownloadLastDir = function DownloadLastDir(aWindow) {
   let loadContext = aWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
@@ -97,7 +97,8 @@ this.DownloadLastDir = function DownloadLastDir(aWindow) {
   // load context isn't of interest to the content pref service.
   this.fakeContext = {
     QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsILoadContext]),
-    usePrivateBrowsing: loadContext.usePrivateBrowsing
+    usePrivateBrowsing: loadContext.usePrivateBrowsing,
+    originAttributes: {},
   };
 }
 
@@ -106,7 +107,7 @@ DownloadLastDir.prototype = {
     return this.fakeContext.usePrivateBrowsing;
   },
   // compat shims
-  get file() this._getLastFile(),
+  get file() { return this._getLastFile(); },
   set file(val) { this.setFile(null, val); },
   cleanupPrivateFile: function () {
     gDownloadLastDirFile = null;
@@ -146,7 +147,7 @@ DownloadLastDir.prototype = {
   getFileAsync: function(aURI, aCallback) {
     let plainPrefFile = this._getLastFile();
     if (!aURI || !isContentPrefEnabled()) {
-      Services.tm.mainThread.dispatch(function() aCallback(plainPrefFile),
+      Services.tm.mainThread.dispatch(() => aCallback(plainPrefFile),
                                       Components.interfaces.nsIThread.DISPATCH_NORMAL);
       return;
     }
@@ -156,7 +157,7 @@ DownloadLastDir.prototype = {
                          .getService(Components.interfaces.nsIContentPrefService2);
     let result = null;
     cps2.getByDomainAndName(uri, LAST_DIR_PREF, this.fakeContext, {
-      handleResult: function(aResult) result = aResult,
+      handleResult: aResult => result = aResult,
       handleCompletion: function(aReason) {
         let file = plainPrefFile;
         if (aReason == Components.interfaces.nsIContentPrefCallback2.COMPLETE_OK &&

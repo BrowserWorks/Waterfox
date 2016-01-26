@@ -9,6 +9,7 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/RefCounted.h"
 
 /* VolatileBuffer
  *
@@ -87,7 +88,11 @@ private:
 
 class VolatileBufferPtr_base {
 public:
-  explicit VolatileBufferPtr_base(VolatileBuffer* vbuf) : mVBuf(vbuf) {
+  explicit VolatileBufferPtr_base(VolatileBuffer* vbuf)
+    : mVBuf(vbuf)
+    , mMapping(nullptr)
+    , mPurged(false)
+  {
     Lock();
   }
 
@@ -163,6 +168,6 @@ private:
   VolatileBufferPtr(VolatileBufferPtr const& vbufptr) = delete;
 };
 
-}; /* namespace mozilla */
+} // namespace mozilla
 
 #endif /* mozalloc_VolatileBuffer_h */

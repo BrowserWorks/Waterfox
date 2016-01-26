@@ -1,0 +1,14 @@
+{
+  // When adding items to this file please check for effects on sub-directories.
+  "plugins": [
+    "mozilla"
+  ],
+  "rules": {
+    "mozilla/components-imports": 1,
+    "mozilla/import-globals-from": 1,
+    "mozilla/this-top-level-scope": 1,
+  },
+  "env": {
+    "es6": true
+  },
+}

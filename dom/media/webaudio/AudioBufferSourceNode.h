@@ -21,25 +21,20 @@ class AudioBufferSourceNode final : public AudioNode,
 public:
   explicit AudioBufferSourceNode(AudioContext* aContext);
 
-  virtual void DestroyMediaStream() override
-  {
-    if (mStream) {
-      mStream->RemoveMainThreadListener(this);
-    }
-    AudioNode::DestroyMediaStream();
-  }
-  virtual uint16_t NumberOfInputs() const final override
+  void DestroyMediaStream() override;
+
+  uint16_t NumberOfInputs() const final override
   {
     return 0;
   }
-  virtual AudioBufferSourceNode* AsAudioBufferSourceNode() override
+  AudioBufferSourceNode* AsAudioBufferSourceNode() override
   {
     return this;
   }
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioBufferSourceNode, AudioNode)
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Start(double aWhen, double aOffset,
              const Optional<double>& aDuration, ErrorResult& aRv);
@@ -94,15 +89,15 @@ public:
 
   IMPL_EVENT_HANDLER(ended)
 
-  virtual void NotifyMainThreadStreamFinished() override;
+  void NotifyMainThreadStreamFinished() override;
 
-  virtual const char* NodeType() const override
+  const char* NodeType() const override
   {
     return "AudioBufferSourceNode";
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
 protected:
   virtual ~AudioBufferSourceNode();
@@ -134,23 +129,21 @@ private:
   void SendLoopParametersToStream();
   void SendBufferParameterToStream(JSContext* aCx);
   void SendOffsetAndDurationParametersToStream(AudioNodeStream* aStream);
-  static void SendPlaybackRateToStream(AudioNode* aNode);
-  static void SendDetuneToStream(AudioNode* aNode);
 
 private:
   double mLoopStart;
   double mLoopEnd;
   double mOffset;
   double mDuration;
-  nsRefPtr<AudioBuffer> mBuffer;
-  nsRefPtr<AudioParam> mPlaybackRate;
-  nsRefPtr<AudioParam> mDetune;
+  RefPtr<AudioBuffer> mBuffer;
+  RefPtr<AudioParam> mPlaybackRate;
+  RefPtr<AudioParam> mDetune;
   bool mLoop;
   bool mStartCalled;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

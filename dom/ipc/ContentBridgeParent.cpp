@@ -44,7 +44,7 @@ ContentBridgeParent::ActorDestroy(ActorDestroyReason aWhy)
 /*static*/ ContentBridgeParent*
 ContentBridgeParent::Create(Transport* aTransport, ProcessId aOtherPid)
 {
-  nsRefPtr<ContentBridgeParent> bridge =
+  RefPtr<ContentBridgeParent> bridge =
     new ContentBridgeParent(aTransport);
   bridge->mSelfRef = bridge;
 
@@ -76,7 +76,7 @@ ContentBridgeParent::RecvSyncMessage(const nsString& aMsg,
                                      const ClonedMessageData& aData,
                                      InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                      const IPC::Principal& aPrincipal,
-                                     nsTArray<OwningSerializedStructuredCloneBuffer>* aRetvals)
+                                     nsTArray<StructuredCloneData>* aRetvals)
 {
   return nsIContentParent::RecvSyncMessage(aMsg, aData, Move(aCpows),
                                            aPrincipal, aRetvals);
@@ -163,16 +163,27 @@ ContentBridgeParent::DeallocPBrowserParent(PBrowserParent* aParent)
   return nsIContentParent::DeallocPBrowserParent(aParent);
 }
 
+void
+ContentBridgeParent::NotifyTabDestroyed()
+{
+  int32_t numLiveTabs = ManagedPBrowserParent().Count();
+  if (numLiveTabs == 1) {
+    MessageLoop::current()->PostTask(
+      FROM_HERE,
+      NewRunnableMethod(this, &ContentBridgeParent::Close));
+  }
+}
+
 // This implementation is identical to ContentParent::GetCPOWManager but we can't
 // move it to nsIContentParent because it calls ManagedPJavaScriptParent() which
 // only exists in PContentParent and PContentBridgeParent.
 jsipc::CPOWManager*
 ContentBridgeParent::GetCPOWManager()
 {
-  if (ManagedPJavaScriptParent().Length()) {
-    return CPOWManagerFor(ManagedPJavaScriptParent()[0]);
+  if (PJavaScriptParent* p = LoneManagedOrNullAsserts(ManagedPJavaScriptParent())) {
+    return CPOWManagerFor(p);
   }
-  return CPOWManagerFor(SendPJavaScriptConstructor());
+  return nullptr;
 }
 
 NS_IMETHODIMP

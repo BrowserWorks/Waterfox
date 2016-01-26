@@ -286,6 +286,19 @@ nsAttrSelector::~nsAttrSelector(void)
   NS_CSS_DELETE_LIST_MEMBER(nsAttrSelector, this, mNext);
 }
 
+size_t
+nsAttrSelector::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+  size_t n = 0;
+  const nsAttrSelector* p = this;
+  while (p) {
+    n += aMallocSizeOf(p);
+    n += p->mValue.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+    p = p->mNext;
+  }
+  return n;
+}
+
 // -- nsCSSSelector -------------------------------
 
 nsCSSSelector::nsCSSSelector(void)
@@ -559,7 +572,7 @@ nsCSSSelector::ToString(nsAString& aString, CSSStyleSheet* aSheet,
     const nsCSSSelector *s = stack.ElementAt(index);
     stack.RemoveElementAt(index);
 
-    s->AppendToStringWithoutCombinators(aString, aSheet);
+    s->AppendToStringWithoutCombinators(aString, aSheet, false);
 
     // Append the combinator, if needed.
     if (!stack.IsEmpty()) {
@@ -583,24 +596,85 @@ nsCSSSelector::ToString(nsAString& aString, CSSStyleSheet* aSheet,
 }
 
 void
-nsCSSSelector::AppendToStringWithoutCombinators
-                   (nsAString& aString, CSSStyleSheet* aSheet) const
+nsCSSSelector::AppendToStringWithoutCombinators(
+    nsAString& aString,
+    CSSStyleSheet* aSheet,
+    bool aUseStandardNamespacePrefixes) const
 {
-  AppendToStringWithoutCombinatorsOrNegations(aString, aSheet, false);
+  AppendToStringWithoutCombinatorsOrNegations(aString, aSheet, false,
+                                              aUseStandardNamespacePrefixes);
 
   for (const nsCSSSelector* negation = mNegations; negation;
        negation = negation->mNegations) {
     aString.AppendLiteral(":not(");
-    negation->AppendToStringWithoutCombinatorsOrNegations(aString, aSheet,
-                                                          true);
+    negation->AppendToStringWithoutCombinatorsOrNegations(
+        aString, aSheet, true, aUseStandardNamespacePrefixes);
     aString.Append(char16_t(')'));
   }
 }
 
+#ifdef DEBUG
+nsCString
+nsCSSSelector::RestrictedSelectorToString() const
+{
+  MOZ_ASSERT(IsRestrictedSelector());
+
+  nsString result;
+  AppendToStringWithoutCombinators(result, nullptr, true);
+  return NS_ConvertUTF16toUTF8(result);
+}
+
+static bool
+AppendStandardNamespacePrefixToString(nsAString& aString, int32_t aNameSpace)
+{
+  if (aNameSpace == kNameSpaceID_Unknown) {
+    // Wildcard namespace; no prefix to write.
+    return false;
+  }
+  switch (aNameSpace) {
+    case kNameSpaceID_None:
+      break;
+    case kNameSpaceID_XML:
+      aString.AppendLiteral("xml");
+      break;
+    case kNameSpaceID_XHTML:
+      aString.AppendLiteral("html");
+      break;
+    case kNameSpaceID_XLink:
+      aString.AppendLiteral("xlink");
+      break;
+    case kNameSpaceID_XSLT:
+      aString.AppendLiteral("xsl");
+      break;
+    case kNameSpaceID_XBL:
+      aString.AppendLiteral("xbl");
+      break;
+    case kNameSpaceID_MathML:
+      aString.AppendLiteral("math");
+      break;
+    case kNameSpaceID_RDF:
+      aString.AppendLiteral("rdf");
+      break;
+    case kNameSpaceID_XUL:
+      aString.AppendLiteral("xul");
+      break;
+    case kNameSpaceID_SVG:
+      aString.AppendLiteral("svg");
+      break;
+    default:
+      aString.AppendLiteral("ns");
+      aString.AppendInt(aNameSpace);
+      break;
+  }
+  return true;
+}
+#endif
+
 void
 nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
                    (nsAString& aString, CSSStyleSheet* aSheet,
-                   bool aIsNegated) const
+                   bool aIsNegated,
+                   bool aUseStandardNamespacePrefixes) const
 {
   nsAutoString temp;
   bool isPseudoElement = IsPseudoElement();
@@ -616,7 +690,18 @@ nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
     // null, that means that the only namespaces we could have are the
     // wildcard namespace (which can be implicit in this case) and the "none"
     // namespace, which then needs to be explicitly specified.
-    if (!sheetNS) {
+    if (aUseStandardNamespacePrefixes) {
+#ifdef DEBUG
+      // We have no sheet to look up prefix information from.  This is
+      // only for debugging, so use some "standard" prefixes that
+      // are recognizable.
+      wroteNamespace =
+        AppendStandardNamespacePrefixToString(aString, mNameSpace);
+      if (wroteNamespace) {
+        aString.Append(char16_t('|'));
+      }
+#endif
+    } else if (!sheetNS) {
       NS_ASSERTION(mNameSpace == kNameSpaceID_Unknown ||
                    mNameSpace == kNameSpaceID_None,
                    "How did we get this namespace?");
@@ -740,7 +825,12 @@ nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
         aString.Append(char16_t('*'));
         aString.Append(char16_t('|'));
       } else if (list->mNameSpace != kNameSpaceID_None) {
-        if (aSheet) {
+        if (aUseStandardNamespacePrefixes) {
+#ifdef DEBUG
+          AppendStandardNamespacePrefixToString(aString, list->mNameSpace);
+          aString.Append(char16_t('|'));
+#endif
+        } else if (aSheet) {
           nsXMLNameSpaceMap *sheetNS = aSheet->GetNameSpaceMap();
           nsIAtom *prefixAtom = sheetNS->FindPrefix(list->mNameSpace);
           // Default namespaces don't apply to attribute selectors, so
@@ -847,11 +937,8 @@ nsCSSSelector::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
     MEASURE(s->mClassList);
     MEASURE(s->mPseudoClassList);
     MEASURE(s->mNegations);
+    MEASURE(s->mAttrList);
 
-    // Measurement of the following members may be added later if DMD finds it is
-    // worthwhile:
-    // - s->mAttrList
-    //
     // The following members aren't measured:
     // - s->mLowercaseTag, because it's an atom and therefore shared
     // - s->mCasedTag, because it's an atom and therefore shared
@@ -951,53 +1038,13 @@ nsCSSSelectorList::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) cons
   return n;
 }
 
-// -- ImportantRule ----------------------------------
-
-namespace mozilla {
-namespace css {
-
-ImportantRule::ImportantRule(Declaration* aDeclaration)
-  : mDeclaration(aDeclaration)
-{
-}
-
-ImportantRule::~ImportantRule()
-{
-}
-
-NS_IMPL_ISUPPORTS(ImportantRule, nsIStyleRule)
-
-/* virtual */ void
-ImportantRule::MapRuleInfoInto(nsRuleData* aRuleData)
-{
-  mDeclaration->MapImportantRuleInfoInto(aRuleData);
-}
-
-#ifdef DEBUG
-/* virtual */ void
-ImportantRule::List(FILE* out, int32_t aIndent) const
-{
-  // Indent
-  nsAutoCString str;
-  for (int32_t index = aIndent; --index >= 0; ) {
-    str.AppendLiteral("  ");
-  }
-
-  str.AppendLiteral("! important rule\n");
-  fprintf_stderr(out, "%s", str.get());
-}
-#endif
-
-} // namespace css
-} // namespace mozilla
-
 // --------------------------------------------------------
 
 namespace mozilla {
 namespace css {
 class DOMCSSStyleRule;
-}
-}
+} // namespace css
+} // namespace mozilla
 
 class DOMCSSDeclarationImpl : public nsDOMCSSDeclaration
 {
@@ -1117,6 +1164,12 @@ css::Declaration*
 DOMCSSDeclarationImpl::GetCSSDeclaration(Operation aOperation)
 {
   if (mRule) {
+    if (aOperation != eOperation_Read) {
+      RefPtr<CSSStyleSheet> sheet = mRule->GetStyleSheet();
+      if (sheet) {
+        sheet->WillDirty();
+      }
+    }
     return mRule->GetDeclaration();
   } else {
     return nullptr;
@@ -1150,26 +1203,21 @@ DOMCSSDeclarationImpl::SetCSSDeclaration(css::Declaration* aDecl)
          "can only be called when |GetCSSDeclaration| returned a declaration");
 
   nsCOMPtr<nsIDocument> owningDoc;
-  nsCOMPtr<nsIStyleSheet> sheet = mRule->GetStyleSheet();
+  RefPtr<CSSStyleSheet> sheet = mRule->GetStyleSheet();
   if (sheet) {
     owningDoc = sheet->GetOwningDocument();
   }
 
   mozAutoDocUpdate updateBatch(owningDoc, UPDATE_STYLE, true);
 
-  nsRefPtr<css::StyleRule> oldRule = mRule;
-  mRule = oldRule->DeclarationChanged(aDecl, true).take();
-  if (!mRule)
-    return NS_ERROR_OUT_OF_MEMORY;
-  nsrefcnt cnt = mRule->Release();
-  if (cnt == 0) {
-    NS_NOTREACHED("container didn't take ownership");
-    mRule = nullptr;
-    return NS_ERROR_UNEXPECTED;
+  mRule->SetDeclaration(aDecl);
+
+  if (sheet) {
+    sheet->DidDirty();
   }
 
   if (owningDoc) {
-    owningDoc->StyleRuleChanged(sheet, oldRule, mRule);
+    owningDoc->StyleRuleChanged(sheet, mRule);
   }
   return NS_OK;
 }
@@ -1333,6 +1381,8 @@ StyleRule::StyleRule(nsCSSSelectorList* aSelector,
     mDeclaration(aDeclaration)
 {
   NS_PRECONDITION(aDeclaration, "must have a declaration");
+
+  mDeclaration->SetOwningRule(this);
 }
 
 // for |Clone|
@@ -1341,39 +1391,19 @@ StyleRule::StyleRule(const StyleRule& aCopy)
     mSelector(aCopy.mSelector ? aCopy.mSelector->Clone() : nullptr),
     mDeclaration(new Declaration(*aCopy.mDeclaration))
 {
+  mDeclaration->SetOwningRule(this);
   // rest is constructed lazily on existing data
-}
-
-// for |SetCSSDeclaration|
-StyleRule::StyleRule(StyleRule& aCopy,
-                     Declaration* aDeclaration)
-  : Rule(aCopy),
-    mSelector(aCopy.mSelector),
-    mDeclaration(aDeclaration),
-    mDOMRule(aCopy.mDOMRule.forget())
-{
-  // The DOM rule is replacing |aCopy| with |this|, so transfer
-  // the reverse pointer as well (and transfer ownership).
-
-  // Similarly for the selector.
-  aCopy.mSelector = nullptr;
-
-  // We are probably replacing the old declaration with |aDeclaration|
-  // instead of taking ownership of the old declaration; only null out
-  // aCopy.mDeclaration if we are taking ownership.
-  if (mDeclaration == aCopy.mDeclaration) {
-    // This should only ever happen if the declaration was modifiable.
-    mDeclaration->AssertMutable();
-    aCopy.mDeclaration = nullptr;
-  }
 }
 
 StyleRule::~StyleRule()
 {
   delete mSelector;
-  delete mDeclaration;
   if (mDOMRule) {
     mDOMRule->DOMDeclaration()->DropReference();
+  }
+
+  if (mDeclaration) {
+    mDeclaration->SetOwningRule(nullptr);
   }
 }
 
@@ -1385,26 +1415,11 @@ NS_INTERFACE_MAP_BEGIN(StyleRule)
     return NS_OK;
   }
   else
-  NS_INTERFACE_MAP_ENTRY(nsIStyleRule)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIStyleRule)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, mozilla::css::Rule)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_ADDREF(StyleRule)
 NS_IMPL_RELEASE(StyleRule)
-
-void
-StyleRule::RuleMatched()
-{
-  if (!mWasMatched) {
-    MOZ_ASSERT(!mImportantRule, "should not have important rule yet");
-
-    mWasMatched = true;
-    mDeclaration->SetImmutable();
-    if (mDeclaration->HasImportantData()) {
-      mImportantRule = new ImportantRule(mDeclaration);
-    }
-  }
-}
 
 /* virtual */ int32_t
 StyleRule::GetType() const
@@ -1415,7 +1430,7 @@ StyleRule::GetType() const
 /* virtual */ already_AddRefed<Rule>
 StyleRule::Clone() const
 {
-  nsRefPtr<Rule> clone = new StyleRule(*this);
+  RefPtr<Rule> clone = new StyleRule(*this);
   return clone.forget();
 }
 
@@ -1440,34 +1455,15 @@ StyleRule::GetExistingDOMRule()
   return mDOMRule;
 }
 
-/* virtual */ already_AddRefed<StyleRule>
-StyleRule::DeclarationChanged(Declaration* aDecl,
-                              bool aHandleContainer)
+void
+StyleRule::SetDeclaration(Declaration* aDecl)
 {
-  nsRefPtr<StyleRule> clone = new StyleRule(*this, aDecl);
-
-  if (aHandleContainer) {
-    CSSStyleSheet* sheet = GetStyleSheet();
-    if (mParentRule) {
-      if (sheet) {
-        sheet->ReplaceRuleInGroup(mParentRule, this, clone);
-      } else {
-        mParentRule->ReplaceStyleRule(this, clone);
-      }
-    } else if (sheet) {
-      sheet->ReplaceStyleRule(this, clone);
-    }
+  if (aDecl == mDeclaration) {
+    return;
   }
-
-  return clone.forget();
-}
-
-/* virtual */ void
-StyleRule::MapRuleInfoInto(nsRuleData* aRuleData)
-{
-  MOZ_ASSERT(mWasMatched,
-             "somebody forgot to call css::StyleRule::RuleMatched");
-  mDeclaration->MapNormalRuleInfoInto(aRuleData);
+  mDeclaration->SetOwningRule(nullptr);
+  mDeclaration = aDecl;
+  mDeclaration->SetOwningRule(this);
 }
 
 #ifdef DEBUG
@@ -1566,7 +1562,6 @@ StyleRule::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
   // Measurement of the following members may be added later if DMD finds it is
   // worthwhile:
-  // - mImportantRule;
   // - mDOMRule;
 
   return n;

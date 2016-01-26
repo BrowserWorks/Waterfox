@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const CC = Components.Constructor;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var CC = Components.Constructor;
 
 var Pipe = CC("@mozilla.org/pipe;1",
               "nsIPipe",
@@ -75,7 +75,7 @@ function test_binary_streams() {
   do_check_eq(is.available(), 0);
   os.writeByteArray(HelloArray, HelloArray.length);
   do_check_eq(is.readArrayBuffer(buffer.byteLength, buffer), HelloArray.length);
-  do_check_eq([b for (b of new Uint8Array(buffer))].toSource(), HelloArray.toSource());
+  do_check_eq([...(new Uint8Array(buffer))].toSource(), HelloArray.toSource());
   do_check_eq(is.available(), 0);
 
   // Test writing in one big chunk.

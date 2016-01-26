@@ -10,6 +10,12 @@
 dictionary IDBIndexParameters {
     boolean unique = false;
     boolean multiEntry = false;
+    // <null>:   Not locale-aware, uses normal JS sorting.
+    // <string>: Always sorted based on the rules of the specified
+    //           locale (e.g. "en-US", etc.).
+    // "auto":   Sorted by the platform default, may change based on
+    //           user agent options.
+    DOMString? locale = null;
 };
 
 [Exposed=(Window,Worker)]
@@ -22,6 +28,15 @@ interface IDBIndex {
 
     readonly    attribute boolean        multiEntry;
     readonly    attribute boolean        unique;
+
+    // <null>:   Not locale-aware, uses normal JS sorting.
+    // <string>: Sorted based on the rules of the specified locale.
+    //           Note: never returns "auto", only the current locale.
+    [Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+    readonly attribute DOMString? locale;
+
+    [Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+    readonly attribute boolean isAutoLocale;
 
     [Throws]
     IDBRequest openCursor (optional any range, optional IDBCursorDirection direction = "next");
@@ -41,16 +56,14 @@ interface IDBIndex {
 
 partial interface IDBIndex {
     [Throws]
-    IDBRequest mozGetAll (optional any key, optional unsigned long limit);
+    IDBRequest mozGetAll (optional any key, [EnforceRange] optional unsigned long limit);
 
     [Throws]
-    IDBRequest mozGetAllKeys (optional any key, optional unsigned long limit);
+    IDBRequest mozGetAllKeys (optional any key, [EnforceRange] optional unsigned long limit);
 
-    [Throws,
-     Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
-    IDBRequest getAll (optional any key, optional unsigned long limit);
+    [Throws]
+    IDBRequest getAll (optional any key, [EnforceRange] optional unsigned long limit);
 
-    [Throws,
-     Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
-    IDBRequest getAllKeys (optional any key, optional unsigned long limit);
+    [Throws]
+    IDBRequest getAllKeys (optional any key, [EnforceRange] optional unsigned long limit);
 };

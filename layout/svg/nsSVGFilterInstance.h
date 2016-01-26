@@ -19,8 +19,8 @@ struct nsStyleFilter;
 namespace mozilla {
 namespace dom {
 class SVGFilterElement;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 /**
  * This class helps nsFilterInstance build its filter graph by processing a
@@ -99,7 +99,7 @@ public:
    * new images from feImage filter primitive elements to the aInputImages list.
    */
   nsresult BuildPrimitives(nsTArray<FilterPrimitiveDescription>& aPrimitiveDescrs,
-                           nsTArray<mozilla::RefPtr<SourceSurface>>& aInputImages);
+                           nsTArray<RefPtr<SourceSurface>>& aInputImages);
 
   /**
    * Returns the user specified "filter region", in the filtered element's user

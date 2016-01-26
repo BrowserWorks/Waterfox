@@ -29,6 +29,10 @@ struct InputContext;
 struct InputContextAction;
 }
 
+namespace mozilla {
+class HwcComposer2D;
+}
+
 class nsScreenGonk;
 
 class nsWindow : public nsBaseWidget
@@ -42,10 +46,11 @@ public:
     static nsEventStatus DispatchKeyInput(mozilla::WidgetKeyboardEvent& aEvent);
     static void DispatchTouchInput(mozilla::MultiTouchInput& aInput);
 
-    NS_IMETHOD Create(nsIWidget *aParent,
-                      void *aNativeParent,
-                      const nsIntRect &aRect,
-                      nsWidgetInitData *aInitData);
+    using nsBaseWidget::Create; // for Create signature not overridden here
+    NS_IMETHOD Create(nsIWidget* aParent,
+                      void* aNativeParent,
+                      const LayoutDeviceIntRect& aRect,
+                      nsWidgetInitData* aInitData) override;
     NS_IMETHOD Destroy(void);
 
     NS_IMETHOD Show(bool aState);
@@ -67,14 +72,14 @@ public:
     virtual bool IsEnabled() const;
     NS_IMETHOD SetFocus(bool aRaise = false);
     NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
-    NS_IMETHOD Invalidate(const nsIntRect &aRect);
+    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect);
     virtual void* GetNativeData(uint32_t aDataType);
     virtual void SetNativeData(uint32_t aDataType, uintptr_t aVal);
     NS_IMETHOD SetTitle(const nsAString& aTitle)
     {
         return NS_OK;
     }
-    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset();
+    virtual LayoutDeviceIntPoint WidgetToScreenOffset();
     void DispatchTouchInputViaAPZ(mozilla::MultiTouchInput& aInput);
     void DispatchTouchEventForAPZ(const mozilla::MultiTouchInput& aInput,
                                   const ScrollableLayerGuid& aGuid,
@@ -84,7 +89,7 @@ public:
                              nsEventStatus& aStatus);
     virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                                 TouchPointerState aPointerState,
-                                                nsIntPoint aPointerScreenPoint,
+                                                ScreenIntPoint aPointerScreenPoint,
                                                 double aPointerPressure,
                                                 uint32_t aPointerOrientation,
                                                 nsIObserver* aObserver) override;
@@ -98,7 +103,7 @@ public:
 
     NS_IMETHOD MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen = nullptr) /*override*/;
 
-    virtual mozilla::TemporaryRef<mozilla::gfx::DrawTarget>
+    virtual already_AddRefed<mozilla::gfx::DrawTarget>
         StartRemoteDrawing() override;
     virtual void EndRemoteDrawing() override;
 
@@ -109,6 +114,9 @@ public:
                         LayersBackend aBackendHint = mozilla::layers::LayersBackend::LAYERS_NONE,
                         LayerManagerPersistence aPersistence = LAYER_MANAGER_CURRENT,
                         bool* aAllowRetaining = nullptr);
+    virtual void DestroyCompositor();
+
+    virtual CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight);
 
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction);
@@ -116,32 +124,20 @@ public:
 
     virtual uint32_t GetGLFrameBufferFormat() override;
 
-    virtual nsIntRect GetNaturalBounds() override;
+    virtual LayoutDeviceIntRect GetNaturalBounds() override;
     virtual bool NeedsPaint();
 
     virtual Composer2D* GetComposer2D() override;
 
     void ConfigureAPZControllerThread() override;
 
+    nsScreenGonk* GetScreen();
+
 protected:
     nsWindow* mParent;
     bool mVisible;
     InputContext mInputContext;
     nsCOMPtr<nsIIdleServiceInternal> mIdleService;
-    // If we're using a BasicCompositor, these fields are temporarily
-    // set during frame composition.  They wrap the hardware
-    // framebuffer.
-    mozilla::RefPtr<mozilla::gfx::DrawTarget> mFramebufferTarget;
-    ANativeWindowBuffer* mFramebuffer;
-    // If we're using a BasicCompositor, this is our window back
-    // buffer.  The gralloc framebuffer driver expects us to draw the
-    // entire framebuffer on every frame, but gecko expects the
-    // windowing system to be tracking buffer updates for invalidated
-    // regions.  We get stuck holding that bag.
-    //
-    // Only accessed on the compositor thread, except during
-    // destruction.
-    mozilla::RefPtr<mozilla::gfx::DrawTarget> mBackBuffer;
 
     virtual ~nsWindow();
 
@@ -156,7 +152,9 @@ private:
     // multiple synthesized points
     nsAutoPtr<mozilla::MultiTouchInput> mSynthesizedTouchInput;
 
-    nsRefPtr<nsScreenGonk> mScreen;
+    RefPtr<nsScreenGonk> mScreen;
+
+    RefPtr<mozilla::HwcComposer2D> mComposer2D;
 };
 
 #endif /* nsWindow_h */

@@ -41,13 +41,19 @@ function waitForFrame() {
 /**
  * Returns a Promise that is resolved after the given number of consecutive
  * animation frames have occured (using requestAnimationFrame callbacks).
+ *
+ * @param frameCount  The number of animation frames.
+ * @param onFrame  An optional function to be processed in each animation frame.
  */
-function waitForAnimationFrames(frameCount) {
+function waitForAnimationFrames(frameCount, onFrame) {
   return new Promise(function(resolve, reject) {
     function handleFrame() {
       if (--frameCount <= 0) {
         resolve();
       } else {
+        if (onFrame && typeof onFrame === 'function') {
+          onFrame();
+        }
         window.requestAnimationFrame(handleFrame); // wait another frame
       }
     }
@@ -77,18 +83,23 @@ function flushComputedStyle(elem) {
   cs.marginLeft;
 }
 
-for (var funcName of ["async_test", "assert_not_equals", "assert_equals",
-                      "assert_approx_equals", "assert_less_than_equal",
-                      "assert_between_inclusive", "assert_true", "assert_false",
-                      "test"]) {
-  window[funcName] = opener[funcName].bind(opener);
-}
+if (opener) {
+  for (var funcName of ["async_test", "assert_not_equals", "assert_equals",
+                        "assert_approx_equals", "assert_less_than",
+                        "assert_less_than_equal", "assert_greater_than",
+                        "assert_between_inclusive",
+                        "assert_true", "assert_false",
+                        "assert_class_string", "assert_throws",
+                        "assert_unreached", "promise_test", "test"]) {
+    window[funcName] = opener[funcName].bind(opener);
+  }
 
-window.EventWatcher = opener.EventWatcher;
+  window.EventWatcher = opener.EventWatcher;
 
-function done() {
-  opener.add_completion_callback(function() {
-    self.close();
-  });
-  opener.done();
+  function done() {
+    opener.add_completion_callback(function() {
+      self.close();
+    });
+    opener.done();
+  }
 }

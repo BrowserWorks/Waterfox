@@ -1,5 +1,5 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 const MANDATORY = ["id", "name", "headerURL"];
 const OPTIONAL = ["footerURL", "textcolor", "accentcolor", "iconURL",
@@ -251,11 +251,11 @@ function run_test() {
   });
 
   function non_urls(props) {
-    return props.filter(function (prop) !/URL$/.test(prop));
+    return props.filter(prop => !/URL$/.test(prop));
   }
 
   function urls(props) {
-    return props.filter(function (prop) /URL$/.test(prop));
+    return props.filter(prop => /URL$/.test(prop));
   }
 
   roundtripSet(non_urls(MANDATORY.concat(OPTIONAL)), function (data, prop) {

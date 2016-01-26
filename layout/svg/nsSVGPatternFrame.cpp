@@ -23,7 +23,6 @@
 #include "nsSVGUtils.h"
 #include "nsSVGAnimatedTransformList.h"
 #include "SVGContentUtils.h"
-#include "gfxColor.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -32,7 +31,7 @@ using namespace mozilla::gfx;
 //----------------------------------------------------------------------
 // Helper classes
 
-class MOZ_STACK_CLASS nsSVGPatternFrame::AutoPatternReferencer
+class MOZ_RAII nsSVGPatternFrame::AutoPatternReferencer
 {
 public:
   explicit AutoPatternReferencer(nsSVGPatternFrame *aFrame
@@ -229,7 +228,7 @@ GetTargetGeometry(gfxRect *aBBox,
   return NS_OK;
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
                                 Matrix* patternMatrix,
                                 const Matrix &aContextMatrix,
@@ -378,11 +377,11 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
   }
   dt->ClearRect(Rect(0, 0, surfaceSize.width, surfaceSize.height));
 
-  nsRefPtr<gfxContext> gfx = new gfxContext(dt);
+  RefPtr<gfxContext> gfx = new gfxContext(dt);
 
   if (aGraphicOpacity != 1.0f) {
     gfx->Save();
-    gfx->PushGroup(gfxContentType::COLOR_ALPHA);
+    gfx->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, aGraphicOpacity);
   }
 
   // OK, now render -- note that we use "firstKid", which
@@ -408,7 +407,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
       gfxMatrix tm = *(patternWithChildren->mCTM);
       if (kid->GetContent()->IsSVGElement()) {
         tm = static_cast<nsSVGElement*>(kid->GetContent())->
-              PrependLocalTransformsTo(tm, nsSVGElement::eUserSpaceToParent);
+               PrependLocalTransformsTo(tm, eUserSpaceToParent);
       }
       nsSVGUtils::PaintFrameWithEffects(kid, *gfx, tm);
     }
@@ -418,8 +417,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
   patternWithChildren->mSource = nullptr;
 
   if (aGraphicOpacity != 1.0f) {
-    gfx->PopGroupToSource();
-    gfx->Paint(aGraphicOpacity);
+    gfx->PopGroupAndBlend();
     gfx->Restore();
   }
 
@@ -705,7 +703,7 @@ nsSVGPatternFrame::GetPaintServerPattern(nsIFrame *aSource,
                                          const gfxRect *aOverrideBounds)
 {
   if (aGraphicOpacity == 0.0f) {
-    nsRefPtr<gfxPattern> pattern = new gfxPattern(gfxRGBA(0, 0, 0, 0));
+    RefPtr<gfxPattern> pattern = new gfxPattern(Color());
     return pattern.forget();
   }
 
@@ -719,12 +717,12 @@ nsSVGPatternFrame::GetPaintServerPattern(nsIFrame *aSource,
     return nullptr;
   }
 
-  nsRefPtr<gfxPattern> pattern = new gfxPattern(surface, pMatrix);
+  RefPtr<gfxPattern> pattern = new gfxPattern(surface, pMatrix);
 
   if (!pattern || pattern->CairoStatus())
     return nullptr;
 
-  pattern->SetExtend(gfxPattern::EXTEND_REPEAT);
+  pattern->SetExtend(ExtendMode::REPEAT);
   return pattern.forget();
 }
 

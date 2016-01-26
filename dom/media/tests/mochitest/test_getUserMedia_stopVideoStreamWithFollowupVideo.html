@@ -13,12 +13,12 @@
    * playback in a media element.
    */
   runTest(function () {
-    getUserMedia({video: true})
+    return getUserMedia({video: true})
       .then(stream => {
         var testVideo = createMediaElement('video', 'testVideo');
         var streamPlayback = new LocalMediaStreamPlayback(testVideo, stream);
 
-        return streamPlayback.playMediaWithStreamStop(false)
+        return streamPlayback.playMediaWithDeprecatedStreamStop(false)
           .then(() => getUserMedia({video: true}))
           .then(secondStream => {
             streamPlayback.mediaStream = secondStream;
@@ -26,8 +26,7 @@
             return streamPlayback.playMedia(false)
               .then(() => secondStream.stop());
           });
-      })
-      .then(() => SimpleTest.finish(), generateErrorCallback());
+      });
   });
 
 </script>

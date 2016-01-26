@@ -6,7 +6,7 @@
 
 @template
 def Libxul(name):
-    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'uikit'):
         # This is going to be a framework named "XUL", not an ordinary library named
         # "libxul.dylib"
         GeckoFramework(name, linkage=None)
@@ -18,6 +18,7 @@ def Libxul(name):
     DELAYLOAD_DLLS += [
         'comdlg32.dll',
         'dbghelp.dll',
+        'PowrProf.dll',
         'psapi.dll',
         'rasapi32.dll',
         'rasdlg.dll',
@@ -31,6 +32,12 @@ def Libxul(name):
 
     if CONFIG['MOZ_WEBRTC']:
         DELAYLOAD_DLLS += ['msdmo.dll']
+
+    if CONFIG['OS_ARCH'] == 'WINNT':
+        DELAYLOAD_DLLS += [
+            'api-ms-win-core-winrt-l1-1-0.dll',
+            'api-ms-win-core-winrt-string-l1-1-0.dll',
+        ]
 
     if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
         LOCAL_INCLUDES += [
@@ -48,6 +55,8 @@ def Libxul(name):
     if not CONFIG['JS_SHARED_LIBRARY']:
         LIBRARY_DEFINES['STATIC_EXPORTABLE_JS_API'] = True
 
+    if CONFIG['MOZ_NEEDS_LIBATOMIC']:
+        OS_LIBS += ['atomic']
 
 Libxul('xul')
 
@@ -85,8 +94,6 @@ if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
         '/xpcom/base',
     ]
 
-FAIL_ON_WARNINGS = True
-
 DIRS += ['gtest']
 
 # js needs to come after xul for now, because it is an archive and its content
@@ -102,6 +109,7 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
 
 USE_LIBS += [
     'gkmedias',
+    'lgpllibs',
     'nspr',
     'nss',
     'sqlite',
@@ -253,6 +261,16 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'mtp',
     ]
 
+    if int(CONFIG['ANDROID_VERSION']) >= 17:
+        OS_LIBS += [
+            'sync',
+        ]
+
+    if CONFIG['ANDROID_VERSION'] >= '16':
+        OS_LIBS += [
+            'mdnssd',
+        ]
+
 if 'rtsp' in CONFIG['NECKO_PROTOCOLS']:
     OS_LIBS += [
         'stagefright_foundation',
@@ -260,7 +278,7 @@ if 'rtsp' in CONFIG['NECKO_PROTOCOLS']:
 
 OS_LIBS += CONFIG['ICONV_LIBS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'uikit'):
     OS_LIBS += CONFIG['TK_LIBS']
 
 if CONFIG['OS_ARCH'] == 'OpenBSD':
@@ -339,7 +357,8 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'wbemuuid',
         'wintrust',
         'wtsapi32',
-        'locationapi'
+        'locationapi',
+        'sapi',
     ]
     if CONFIG['ACCESSIBILITY']:
         OS_LIBS += [
@@ -348,9 +367,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
 if CONFIG['MOZ_ENABLE_QT']:
     OS_LIBS += CONFIG['XEXT_LIBS']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa' and CONFIG['MOZ_GSTREAMER']:
-    OS_LIBS += CONFIG['GSTREAMER_LIBS']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     OS_LIBS += [

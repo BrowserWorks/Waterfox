@@ -52,7 +52,7 @@ public:
   // minidump was written.
   void PluginCrashed(const nsAString& pluginDumpID,
                      const nsAString& browserDumpID);
-  
+
   static bool RunPluginOOP(const nsPluginTag *aPluginTag);
 
   nsresult Shutdown();
@@ -129,7 +129,7 @@ inline bool
 NPStringIdentifierIsPermanent(NPIdentifier id)
 {
   AutoSafeJSContext cx;
-  return JS_StringHasBeenInterned(cx, NPIdentifierToString(id));
+  return JS_StringHasBeenPinned(cx, NPIdentifierToString(id));
 }
 
 #define NPIdentifier_VOID (JSIdToNPIdentifier(JSID_VOID))
@@ -319,6 +319,15 @@ _getJavaPeer(NPP npp);
 
 void
 _urlredirectresponse(NPP instance, void* notifyData, NPBool allow);
+
+NPError
+_initasyncsurface(NPP instance, NPSize *size, NPImageFormat format, void *initData, NPAsyncSurface *surface);
+
+NPError
+_finalizeasyncsurface(NPP instance, NPAsyncSurface *surface);
+
+void
+_setcurrentasyncsurface(NPP instance, NPAsyncSurface *surface, NPRect *changed);
 
 } /* namespace parent */
 } /* namespace plugins */

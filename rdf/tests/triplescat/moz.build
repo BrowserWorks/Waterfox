@@ -12,4 +12,5 @@ SOURCES += [
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

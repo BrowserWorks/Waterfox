@@ -9,7 +9,6 @@
 #include <stdint.h>                     // for uint32_t
 #include "ClientLayerManager.h"         // for ClientLayerManager, etc
 #include "Layers.h"                     // for Layer, ContainerLayer, etc
-#include "gfxPrefs.h"                   // for gfxPrefs
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
@@ -47,9 +46,7 @@ protected:
 public:
   virtual void RenderLayer() override
   {
-    if (GetMaskLayer()) {
-      ToClientLayer(GetMaskLayer())->RenderLayer();
-    }
+    RenderMaskLayers(this);
     
     DefaultComputeSupportsComponentAlphaChildren();
 
@@ -61,7 +58,7 @@ public:
 
     for (uint32_t i = 0; i < children.Length(); i++) {
       Layer* child = children.ElementAt(i);
-      if (child->GetEffectiveVisibleRegion().IsEmpty()) {
+      if (!child->IsVisible()) {
         continue;
       }
 
@@ -74,7 +71,7 @@ public:
     }
   }
 
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion) override
+  virtual void SetVisibleRegion(const LayerIntRegion& aRegion) override
   {
     NS_ASSERTION(ClientManager()->InConstruction(),
                  "Can only set properties in construction phase");
@@ -184,7 +181,7 @@ private:
   }
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

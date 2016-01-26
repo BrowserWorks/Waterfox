@@ -10,6 +10,7 @@
 #include "base/process.h"
 #include "mozilla/ipc/Transport.h"
 #include "mozilla/gmp/PGMPServiceChild.h"
+#include "nsRefPtrHashtable.h"
 
 namespace mozilla {
 namespace gmp {
@@ -18,7 +19,20 @@ namespace gmp {
 
 class GMPContentParent;
 class GMPServiceChild;
-class GetServiceChildCallback;
+
+class GetServiceChildCallback
+{
+public:
+  GetServiceChildCallback()
+  {
+    MOZ_COUNT_CTOR(GetServiceChildCallback);
+  }
+  virtual ~GetServiceChildCallback()
+  {
+    MOZ_COUNT_DTOR(GetServiceChildCallback);
+  }
+  virtual void Done(GMPServiceChild* aGMPServiceChild) = 0;
+};
 
 class GeckoMediaPluginServiceChild : public GeckoMediaPluginService
 {
@@ -33,6 +47,7 @@ public:
                                     nsACString& aOutVersion) override;
   NS_IMETHOD GetNodeId(const nsAString& aOrigin,
                        const nsAString& aTopLevelOrigin,
+                       const nsAString& aGMPName,
                        bool aInPrivateBrowsingMode,
                        UniquePtr<GetNodeIdCallback>&& aCallback) override;
 
@@ -43,14 +58,14 @@ public:
   void RemoveGMPContentParent(GMPContentParent* aGMPContentParent);
 
 protected:
-  virtual void InitializePlugins() override
+  void InitializePlugins() override
   {
     // Nothing to do here.
   }
-  virtual bool GetContentParentFrom(const nsACString& aNodeId,
-                                    const nsCString& aAPI,
-                                    const nsTArray<nsCString>& aTags,
-                                    UniquePtr<GetGMPContentParentCallback>&& aCallback)
+  bool GetContentParentFrom(const nsACString& aNodeId,
+                            const nsCString& aAPI,
+                            const nsTArray<nsCString>& aTags,
+                            UniquePtr<GetGMPContentParentCallback>&& aCallback)
     override;
 
 private:
@@ -68,9 +83,8 @@ public:
   explicit GMPServiceChild();
   virtual ~GMPServiceChild();
 
-  virtual PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
-                                                    ProcessId aOtherPid)
-    override;
+  PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
+                                            ProcessId aOtherPid) override;
 
   void GetBridgedGMPContentParent(ProcessId aOtherPid,
                                   GMPContentParent** aGMPContentParent);

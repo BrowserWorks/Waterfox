@@ -4,7 +4,7 @@
 
 #ifndef MERGED_COMPARTMENT
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 this.EXPORTED_SYMBOLS = [
   "RESTRequest",
@@ -16,6 +16,7 @@ this.EXPORTED_SYMBOLS = [
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/utils.js");
@@ -305,14 +306,9 @@ RESTRequest.prototype = {
     }
 
     // Create and initialize HTTP channel.
-    let channel = Services.io.newChannelFromURI2(this.uri,
-                                                 null,      // aLoadingNode
-                                                 Services.scriptSecurityManager.getSystemPrincipal(),
-                                                 null,      // aTriggeringPrincipal
-                                                 Ci.nsILoadInfo.SEC_NORMAL,
-                                                 Ci.nsIContentPolicy.TYPE_OTHER)
-                          .QueryInterface(Ci.nsIRequest)
-                          .QueryInterface(Ci.nsIHttpChannel);
+    let channel = NetUtil.newChannel({uri: this.uri, loadUsingSystemPrincipal: true})
+                         .QueryInterface(Ci.nsIRequest)
+                         .QueryInterface(Ci.nsIHttpChannel);
     this.channel = channel;
     channel.loadFlags |= this.loadFlags;
     channel.notificationCallbacks = this;
@@ -358,10 +354,10 @@ RESTRequest.prototype = {
 
     // Blast off!
     try {
-      channel.asyncOpen(this, null);
+      channel.asyncOpen2(this);
     } catch (ex) {
       // asyncOpen can throw in a bunch of cases -- e.g., a forbidden port.
-      this._log.warn("Caught an error in asyncOpen: " + CommonUtils.exceptionStr(ex));
+      this._log.warn("Caught an error in asyncOpen", ex);
       CommonUtils.nextTick(onComplete.bind(this, ex));
     }
     this.status = this.SENT;
@@ -517,8 +513,7 @@ RESTRequest.prototype = {
         }
       } catch (ex) {
         this._log.warn("Exception thrown reading " + count + " bytes from " +
-                       "the channel.");
-        this._log.warn(CommonUtils.exceptionStr(ex));
+                       "the channel", ex);
         throw ex;
       }
     } else {
@@ -538,8 +533,7 @@ RESTRequest.prototype = {
       this.onProgress();
     } catch (ex) {
       this._log.warn("Got exception calling onProgress handler, aborting " +
-                     this.method + " " + channel.URI.spec);
-      this._log.debug("Exception: " + CommonUtils.exceptionStr(ex));
+                     this.method + " " + channel.URI.spec, ex);
       this.abort();
 
       if (!this.onComplete) {
@@ -606,7 +600,7 @@ RESTRequest.prototype = {
         }
       }
     } catch (ex) {
-      this._log.error("Error copying headers: " + CommonUtils.exceptionStr(ex));
+      this._log.error("Error copying headers", ex);
     }
 
     this.channel = newChannel;
@@ -642,8 +636,7 @@ RESTResponse.prototype = {
     try {
       status = this.request.channel.responseStatus;
     } catch (ex) {
-      this._log.debug("Caught exception fetching HTTP status code:" +
-                      CommonUtils.exceptionStr(ex));
+      this._log.debug("Caught exception fetching HTTP status code", ex);
       return null;
     }
     Object.defineProperty(this, "status", {value: status});
@@ -658,8 +651,7 @@ RESTResponse.prototype = {
     try {
       statusText = this.request.channel.responseStatusText;
     } catch (ex) {
-      this._log.debug("Caught exception fetching HTTP status text:" +
-                      CommonUtils.exceptionStr(ex));
+      this._log.debug("Caught exception fetching HTTP status text", ex);
       return null;
     }
     Object.defineProperty(this, "statusText", {value: statusText});
@@ -674,8 +666,7 @@ RESTResponse.prototype = {
     try {
       success = this.request.channel.requestSucceeded;
     } catch (ex) {
-      this._log.debug("Caught exception fetching HTTP success flag:" +
-                      CommonUtils.exceptionStr(ex));
+      this._log.debug("Caught exception fetching HTTP success flag", ex);
       return null;
     }
     Object.defineProperty(this, "success", {value: success});
@@ -694,8 +685,7 @@ RESTResponse.prototype = {
         headers[header.toLowerCase()] = value;
       });
     } catch (ex) {
-      this._log.debug("Caught exception processing response headers:" +
-                      CommonUtils.exceptionStr(ex));
+      this._log.debug("Caught exception processing response headers", ex);
       return null;
     }
 

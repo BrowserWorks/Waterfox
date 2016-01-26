@@ -1,21 +1,15 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/teo.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/teo.xml
- */
 teo{
     AuxExemplarCharacters{"[f q z]"}
     ExemplarCharacters{"[a b c d e g h i j k l m n o p r s t u v w x y]"}
     ExemplarCharactersIndex{"[A B C D E G H I J K L M N O P R S T U V W X Y]"}
-    LocaleScript{
-        "Latn",
-    }
     NumberElements{
         latn{
             patterns{
@@ -24,14 +18,14 @@ teo{
             }
         }
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
-                "h:mm:ss a zzzz",
-                "h:mm:ss a z",
-                "h:mm:ss a",
-                "h:mm a",
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
                 "EEEE, d MMMM y G",
                 "d MMMM y G",
                 "d MMM y G",
@@ -72,10 +66,10 @@ teo{
                 "Ebongi",
             }
             DateTimePatterns{
-                "h:mm:ss a zzzz",
-                "h:mm:ss a z",
-                "h:mm:ss a",
-                "h:mm a",
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
                 "EEEE, d MMMM y",
                 "d MMMM y",
                 "d MMM y",
@@ -125,7 +119,7 @@ teo{
                         "Nakaebarasa",
                         "Nakaare",
                         "Nakauni",
-                        "Nakaung'on",
+                        "Nakaung’on",
                         "Nakakany",
                         "Nakasabiti",
                     }
@@ -171,10 +165,10 @@ teo{
                     wide{
                         "Orara",
                         "Omuk",
-                        "Okwamg'",
-                        "Odung'el",
+                        "Okwamg’",
+                        "Odung’el",
                         "Omaruk",
-                        "Omodok'king'ol",
+                        "Omodok’king’ol",
                         "Ojola",
                         "Opedel",
                         "Osokosokoma",
@@ -212,7 +206,7 @@ teo{
                         "Akwota abe",
                         "Akwota Aane",
                         "Akwota auni",
-                        "Akwota Aung'on",
+                        "Akwota Aung’on",
                     }
                 }
             }

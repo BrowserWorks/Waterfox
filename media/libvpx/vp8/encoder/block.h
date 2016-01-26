@@ -98,7 +98,8 @@ typedef struct macroblock
     signed int last_act_zbin_adj;
 
     int *mvcost[2];
-    int *mvsadcost[2];
+    /* MSVC generates code that thinks this is 16-byte aligned */
+    DECLARE_ALIGNED(16, int*, mvsadcost[2]);
     int (*mbmode_cost)[MB_MODE_COUNT];
     int (*intra_uv_mode_cost)[MB_MODE_COUNT];
     int (*bmode_costs)[10][10];
@@ -125,8 +126,11 @@ typedef struct macroblock
 
     int optimize;
     int q_index;
+    int is_skin;
+    int denoise_zeromv;
 
 #if CONFIG_TEMPORAL_DENOISING
+    int increase_denoising;
     MB_PREDICTION_MODE best_sse_inter_mode;
     int_mv best_sse_mv;
     MV_REFERENCE_FRAME best_reference_frame;
@@ -159,8 +163,9 @@ typedef struct macroblock
     void (*short_fdct8x4)(short *input, short *output, int pitch);
     void (*short_walsh4x4)(short *input, short *output, int pitch);
     void (*quantize_b)(BLOCK *b, BLOCKD *d);
-    void (*quantize_b_pair)(BLOCK *b1, BLOCK *b2, BLOCKD *d0, BLOCKD *d1);
 
+    unsigned int mbs_zero_last_dot_suppress;
+    int zero_last_dot_suppress;
 } MACROBLOCK;
 
 

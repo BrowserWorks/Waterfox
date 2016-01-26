@@ -1,17 +1,15 @@
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-
-Components.utils.import("resource:///modules/UITour.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
 function test() {
   requestLongerTimeout(2);
   UITourTest();
 }
 
-let tests = [
+var tests = [
   function test_bg_getConfiguration(done) {
     info("getConfiguration is on the allowed list so should work");
     loadForegroundTab().then(() => {

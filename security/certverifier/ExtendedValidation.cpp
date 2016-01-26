@@ -92,44 +92,62 @@ static const size_t NUM_TEST_EV_ROOTS = 2;
 #endif
 
 static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
-  // IMPORTANT! When extending this list,
-  // pairs of dotted_oid and oid_name should always be unique pairs.
-  // In other words, if you add another list, that uses the same dotted_oid
-  // as an existing entry, then please use the same oid_name.
+  // IMPORTANT! When extending this list, if you add another entry that uses
+  // the same dotted_oid as an existing entry, use the same oid_name.
 #ifdef DEBUG
-  // Debug EV certificates should all use the OID (repeating EV OID is OK):
+  // Debug EV certificates should all use the following OID:
   // 1.3.6.1.4.1.13769.666.666.666.1.500.9.1.
+  // (multiple entries with the same OID is ok)
   // If you add or remove debug EV certs you must also modify NUM_TEST_EV_ROOTS
   // so that the correct number of certs are skipped as these debug EV certs are
   // NOT part of the default trust store.
   {
-    // This is the testing EV signature (xpcshell) (RSA)
-    // CN=XPCShell EV Testing (untrustworthy) CA,OU=Security Engineering,O=Mozilla - EV debug test CA,L=Mountain View,ST=CA,C=US"
+    // This is the PSM xpcshell testing EV certificate. It can be generated
+    // using pycert.py and the following specification:
+    //
+    // issuer:evroot
+    // subject:evroot
+    // subjectKey:ev
+    // issuerKey:ev
+    // validity:20150101-20350101
+    // extension:basicConstraints:cA,
+    // extension:keyUsage:keyCertSign,cRLSign
+    //
+    // If this ever needs to change, re-generate the certificate and update the
+    // following entry with the new fingerprint, issuer, and serial number.
     "1.3.6.1.4.1.13769.666.666.666.1.500.9.1",
     "DEBUGtesting EV OID",
     SEC_OID_UNKNOWN,
-    { 0x2D, 0x94, 0x52, 0x70, 0xAA, 0x92, 0x13, 0x0B, 0x1F, 0xB1, 0x24,
-      0x0B, 0x24, 0xB1, 0xEE, 0x4E, 0xFB, 0x7C, 0x43, 0x45, 0x45, 0x7F,
-      0x97, 0x6C, 0x90, 0xBF, 0xD4, 0x8A, 0x04, 0x79, 0xE4, 0x68 },
-    "MIGnMQswCQYDVQQGEwJVUzELMAkGA1UECAwCQ0ExFjAUBgNVBAcMDU1vdW50YWlu"
-    "IFZpZXcxIzAhBgNVBAoMGk1vemlsbGEgLSBFViBkZWJ1ZyB0ZXN0IENBMR0wGwYD"
-    "VQQLDBRTZWN1cml0eSBFbmdpbmVlcmluZzEvMC0GA1UEAwwmWFBDU2hlbGwgRVYg"
-    "VGVzdGluZyAodW50cnVzdHdvcnRoeSkgQ0E=",
-    "At+3zdo=",
+    { 0xE4, 0xFB, 0x04, 0x16, 0x10, 0x32, 0x67, 0x08, 0x6C, 0x84, 0x2E,
+      0x91, 0xF3, 0xEF, 0x0E, 0x45, 0x99, 0xBC, 0xA8, 0x54, 0x73, 0xF5,
+      0x03, 0x2C, 0x7B, 0xDC, 0x09, 0x70, 0x76, 0x49, 0xBF, 0xAA },
+    "MBExDzANBgNVBAMMBmV2cm9vdA==",
+    "W9j5PS8YoKgynZdYa9i2Kwexnp8=",
     nullptr
   },
   {
-    // The RSA root with an inadequate key size used for EV key size checking
-    // O=ev_root_rsa_2040,CN=XPCShell Key Size Testing rsa 2040-bit (EV)
+    // This is an RSA root with an inadequate key size. It is used to test that
+    // minimum key sizes are enforced when verifying for EV. It can be
+    // generated using pycert.py and the following specification:
+    //
+    // issuer:ev_root_rsa_2040
+    // subject:ev_root_rsa_2040
+    // issuerKey:evRSA2040
+    // subjectKey:evRSA2040
+    // validity:20150101-20350101
+    // extension:basicConstraints:cA,
+    // extension:keyUsage:cRLSign,keyCertSign
+    //
+    // If this ever needs to change, re-generate the certificate and update the
+    // following entry with the new fingerprint, issuer, and serial number.
     "1.3.6.1.4.1.13769.666.666.666.1.500.9.1",
     "DEBUGtesting EV OID",
     SEC_OID_UNKNOWN,
-    { 0xA9, 0xCF, 0x93, 0x7B, 0x12, 0x9E, 0x39, 0xD2, 0x43, 0x10, 0x33,
-      0x6B, 0xC6, 0xAD, 0x86, 0xA2, 0x7A, 0x9D, 0xA4, 0x5B, 0x67, 0xB2,
-      0xB7, 0xC1, 0xDC, 0x47, 0x8E, 0xD8, 0xA9, 0x6E, 0x2D, 0x6A },
-    "MFExNDAyBgNVBAMMK1hQQ1NoZWxsIEtleSBTaXplIFRlc3RpbmcgcnNhIDIwNDAt"
-    "Yml0IChFVikxGTAXBgNVBAoMEGV2X3Jvb3RfcnNhXzIwNDA=",
-    "ASt16w==",
+    { 0x49, 0x46, 0x10, 0xF4, 0xF5, 0xB1, 0x96, 0xE7, 0xFB, 0xFA, 0x4D,
+      0xA6, 0x34, 0x03, 0xD0, 0x99, 0x22, 0xD4, 0x77, 0x20, 0x3F, 0x84,
+      0xE0, 0xDF, 0x1C, 0xAD, 0xB4, 0xC2, 0x76, 0xBB, 0x63, 0x24 },
+    "MBsxGTAXBgNVBAMMEGV2X3Jvb3RfcnNhXzIwNDA=",
+    "P1iIBgxk6kH+x64EUBTV3qoHuas=",
     nullptr
   },
 #endif
@@ -341,21 +359,6 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     nullptr
   },
   {
-    // CN=UTN - DATACorp SGC,OU=http://www.usertrust.com,O=The USERTRUST Network,L=Salt Lake City,ST=UT,C=US
-    "1.3.6.1.4.1.6449.1.2.1.5.1",
-    "Comodo EV OID",
-    SEC_OID_UNKNOWN,
-    { 0x85, 0xFB, 0x2F, 0x91, 0xDD, 0x12, 0x27, 0x5A, 0x01, 0x45, 0xB6,
-      0x36, 0x53, 0x4F, 0x84, 0x02, 0x4A, 0xD6, 0x8B, 0x69, 0xB8, 0xEE,
-      0x88, 0x68, 0x4F, 0xF7, 0x11, 0x37, 0x58, 0x05, 0xB3, 0x48 },
-    "MIGTMQswCQYDVQQGEwJVUzELMAkGA1UECBMCVVQxFzAVBgNVBAcTDlNhbHQgTGFr"
-    "ZSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxITAfBgNVBAsT"
-    "GGh0dHA6Ly93d3cudXNlcnRydXN0LmNvbTEbMBkGA1UEAxMSVVROIC0gREFUQUNv"
-    "cnAgU0dD",
-    "RL4Mi1AAIbQR0ypoBqmtaQ==",
-    nullptr
-  },
-  {
     // CN=UTN-USERFirst-Hardware,OU=http://www.usertrust.com,O=The USERTRUST Network,L=Salt Lake City,ST=UT,C=US
     "1.3.6.1.4.1.6449.1.2.1.5.1",
     "Comodo EV OID",
@@ -523,19 +526,6 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     nullptr
   },
   {
-    // CN=Buypass Class 3 CA 1,O=Buypass AS-983163327,C=NO
-    "2.16.578.1.26.1.3.3",
-    "Buypass EV OID",
-    SEC_OID_UNKNOWN,
-    { 0xB7, 0xB1, 0x2B, 0x17, 0x1F, 0x82, 0x1D, 0xAA, 0x99, 0x0C, 0xD0,
-      0xFE, 0x50, 0x87, 0xB1, 0x28, 0x44, 0x8B, 0xA8, 0xE5, 0x18, 0x4F,
-      0x84, 0xC5, 0x1E, 0x02, 0xB5, 0xC8, 0xFB, 0x96, 0x2B, 0x24 },
-    "MEsxCzAJBgNVBAYTAk5PMR0wGwYDVQQKDBRCdXlwYXNzIEFTLTk4MzE2MzMyNzEd"
-    "MBsGA1UEAwwUQnV5cGFzcyBDbGFzcyAzIENBIDE=",
-    "Ag==",
-    nullptr
-  },
-  {
     // CN=Buypass Class 3 Root CA,O=Buypass AS-983163327,C=NO
     "2.16.578.1.26.1.3.3",
     "Buypass EV OID",
@@ -589,20 +579,6 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "QTgyNzQzMjg3MRswGQYDVQQKExJBQyBDYW1lcmZpcm1hIFMuQS4xJzAlBgNVBAMT"
     "Hkdsb2JhbCBDaGFtYmVyc2lnbiBSb290IC0gMjAwOA==",
     "AMnN0+nVfSPO",
-    nullptr
-  },
-  {
-    // CN=TC TrustCenter Universal CA III,OU=TC TrustCenter Universal CA,O=TC TrustCenter GmbH,C=DE
-    "1.2.276.0.44.1.1.1.4",
-    "TC TrustCenter EV OID",
-    SEC_OID_UNKNOWN,
-    { 0x30, 0x9B, 0x4A, 0x87, 0xF6, 0xCA, 0x56, 0xC9, 0x31, 0x69, 0xAA,
-      0xA9, 0x9C, 0x6D, 0x98, 0x88, 0x54, 0xD7, 0x89, 0x2B, 0xD5, 0x43,
-      0x7E, 0x2D, 0x07, 0xB2, 0x9C, 0xBE, 0xDA, 0x55, 0xD3, 0x5D },
-    "MHsxCzAJBgNVBAYTAkRFMRwwGgYDVQQKExNUQyBUcnVzdENlbnRlciBHbWJIMSQw"
-    "IgYDVQQLExtUQyBUcnVzdENlbnRlciBVbml2ZXJzYWwgQ0ExKDAmBgNVBAMTH1RD"
-    "IFRydXN0Q2VudGVyIFVuaXZlcnNhbCBDQSBJSUk=",
-    "YyUAAQACFI0zFQLkbPQ=",
     nullptr
   },
   {
@@ -695,20 +671,6 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "MDgxCzAJBgNVBAYTAkVTMRQwEgYDVQQKDAtJWkVOUEUgUy5BLjETMBEGA1UEAwwK"
     "SXplbnBlLmNvbQ==",
     "ALC3WhZIX7/hy/WL1xnmfQ==",
-    nullptr
-  },
-  {
-    // CN=A-Trust-nQual-03,OU=A-Trust-nQual-03,O=A-Trust Ges. f. Sicherheitssysteme im elektr. Datenverkehr GmbH,C=AT
-    "1.2.40.0.17.1.22",
-    "A-Trust EV OID",
-    SEC_OID_UNKNOWN,
-    { 0x79, 0x3C, 0xBF, 0x45, 0x59, 0xB9, 0xFD, 0xE3, 0x8A, 0xB2, 0x2D,
-      0xF1, 0x68, 0x69, 0xF6, 0x98, 0x81, 0xAE, 0x14, 0xC4, 0xB0, 0x13,
-      0x9A, 0xC7, 0x88, 0xA7, 0x8A, 0x1A, 0xFC, 0xCA, 0x02, 0xFB },
-    "MIGNMQswCQYDVQQGEwJBVDFIMEYGA1UECgw/QS1UcnVzdCBHZXMuIGYuIFNpY2hl"
-    "cmhlaXRzc3lzdGVtZSBpbSBlbGVrdHIuIERhdGVudmVya2VociBHbWJIMRkwFwYD"
-    "VQQLDBBBLVRydXN0LW5RdWFsLTAzMRkwFwYDVQQDDBBBLVRydXN0LW5RdWFsLTAz",
-    "AWwe",
     nullptr
   },
   {
@@ -1145,7 +1107,75 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "aWNhdGlvbiBBdXRob3JpdHkxFTATBgNVBAMMDENGQ0EgRVYgUk9PVA==",
     "GErM1g==",
     nullptr
-  }
+  },
+  {
+    // CN=Certification Authority of WoSign G2,O=WoSign CA Limited,C=CN
+    "1.3.6.1.4.1.36305.2",
+    "WoSign EV OID",
+    SEC_OID_UNKNOWN,
+    { 0xD4, 0x87, 0xA5, 0x6F, 0x83, 0xB0, 0x74, 0x82, 0xE8, 0x5E, 0x96,
+      0x33, 0x94, 0xC1, 0xEC, 0xC2, 0xC9, 0xE5, 0x1D, 0x09, 0x03, 0xEE,
+      0x94, 0x6B, 0x02, 0xC3, 0x01, 0x58, 0x1E, 0xD9, 0x9E, 0x16 },
+    "MFgxCzAJBgNVBAYTAkNOMRowGAYDVQQKExFXb1NpZ24gQ0EgTGltaXRlZDEtMCsG"
+    "A1UEAxMkQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgb2YgV29TaWduIEcy",
+    "ayXaioidfLwPBbOxemFFRA==",
+    nullptr
+  },
+  {
+    // CN=CA WoSign ECC Root,O=WoSign CA Limited,C=CN
+    "1.3.6.1.4.1.36305.2",
+    "WoSign EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x8B, 0x45, 0xDA, 0x1C, 0x06, 0xF7, 0x91, 0xEB, 0x0C, 0xAB, 0xF2,
+      0x6B, 0xE5, 0x88, 0xF5, 0xFB, 0x23, 0x16, 0x5C, 0x2E, 0x61, 0x4B,
+      0xF8, 0x85, 0x56, 0x2D, 0x0D, 0xCE, 0x50, 0xB2, 0x9B, 0x02 },
+    "MEYxCzAJBgNVBAYTAkNOMRowGAYDVQQKExFXb1NpZ24gQ0EgTGltaXRlZDEbMBkG"
+    "A1UEAxMSQ0EgV29TaWduIEVDQyBSb290",
+    "aEpYcIBr8I8C+vbe6LCQkA==",
+    nullptr
+  },
+  {
+    // CN=TÜRKTRUST Elektronik Sertifika Hizmet Sağlayıcısı H6,O=TÜRKTRUST Bilgi İletişim ve Bilişim Güvenliği Hizmetleri A...,L=Ankara,C=TR
+    "2.16.792.3.0.3.1.1.5",
+    "TurkTrust EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x8D, 0xE7, 0x86, 0x55, 0xE1, 0xBE, 0x7F, 0x78, 0x47, 0x80, 0x0B,
+      0x93, 0xF6, 0x94, 0xD2, 0x1D, 0x36, 0x8C, 0xC0, 0x6E, 0x03, 0x3E,
+      0x7F, 0xAB, 0x04, 0xBB, 0x5E, 0xB9, 0x9D, 0xA6, 0xB7, 0x00 },
+    "MIGxMQswCQYDVQQGEwJUUjEPMA0GA1UEBwwGQW5rYXJhMU0wSwYDVQQKDERUw5xS"
+    "S1RSVVNUIEJpbGdpIMSwbGV0acWfaW0gdmUgQmlsacWfaW0gR8O8dmVubGnEn2kg"
+    "SGl6bWV0bGVyaSBBLsWeLjFCMEAGA1UEAww5VMOcUktUUlVTVCBFbGVrdHJvbmlr"
+    "IFNlcnRpZmlrYSBIaXptZXQgU2HEn2xhecSxY8Sxc8SxIEg2",
+    "faHyZeyK",
+    nullptr
+  },
+  {
+    // OU=Security Communication RootCA2,O="SECOM Trust Systems CO.,LTD.",C=JP
+    "1.2.392.200091.100.721.1",
+    "SECOM EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x51, 0x3B, 0x2C, 0xEC, 0xB8, 0x10, 0xD4, 0xCD, 0xE5, 0xDD, 0x85,
+      0x39, 0x1A, 0xDF, 0xC6, 0xC2, 0xDD, 0x60, 0xD8, 0x7B, 0xB7, 0x36,
+      0xD2, 0xB5, 0x21, 0x48, 0x4A, 0xA4, 0x7A, 0x0E, 0xBE, 0xF6 },
+    "MF0xCzAJBgNVBAYTAkpQMSUwIwYDVQQKExxTRUNPTSBUcnVzdCBTeXN0ZW1zIENP"
+    "LixMVEQuMScwJQYDVQQLEx5TZWN1cml0eSBDb21tdW5pY2F0aW9uIFJvb3RDQTI=",
+    "AA==",
+    nullptr
+  },
+  {
+    // CN=OISTE WISeKey Global Root GB CA,OU=OISTE Foundation Endorsed,O=WISeKey,C=CH
+    "2.16.756.5.14.7.4.8",
+    "WISeKey EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x6B, 0x9C, 0x08, 0xE8, 0x6E, 0xB0, 0xF7, 0x67, 0xCF, 0xAD, 0x65,
+      0xCD, 0x98, 0xB6, 0x21, 0x49, 0xE5, 0x49, 0x4A, 0x67, 0xF5, 0x84,
+      0x5E, 0x7B, 0xD1, 0xED, 0x01, 0x9F, 0x27, 0xB8, 0x6B, 0xD6 },
+    "MG0xCzAJBgNVBAYTAkNIMRAwDgYDVQQKEwdXSVNlS2V5MSIwIAYDVQQLExlPSVNU"
+    "RSBGb3VuZGF0aW9uIEVuZG9yc2VkMSgwJgYDVQQDEx9PSVNURSBXSVNlS2V5IEds"
+    "b2JhbCBSb290IEdCIENB",
+    "drEgUnTwhYdGs/gjGvbCwA==",
+    nullptr
+  },
 };
 
 static SECOidTag
@@ -1233,8 +1263,9 @@ IdentityInfoInit()
 
     // If an entry is missing in the NSS root database, it may be because the
     // root database is out of sync with what we expect (e.g. a different
-    // version of system NSS is installed). We will just silently avoid
-    // treating that root cert as EV.
+    // version of system NSS is installed). We assert on debug builds, but
+    // silently continue on release builds. In both cases, the root cert does
+    // not get EV treatment.
     if (!entry.cert) {
 #ifdef DEBUG
       // The debug CA structs are at positions 0 to NUM_TEST_EV_ROOTS - 1, and

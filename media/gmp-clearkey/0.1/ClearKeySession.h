@@ -18,7 +18,7 @@
 #define __ClearKeySession_h__
 
 #include "ClearKeyUtils.h"
-#include "gmp-decryption.h"
+#include "gmp-api/gmp-decryption.h"
 
 class GMPBuffer;
 class GMPDecryptorCallback;
@@ -38,6 +38,7 @@ public:
 
   void Init(uint32_t aCreateSessionToken,
             uint32_t aPromiseId,
+            const string& aInitDataType,
             const uint8_t* aInitData, uint32_t aInitDataSize);
 
   GMPSessionType Type() const;

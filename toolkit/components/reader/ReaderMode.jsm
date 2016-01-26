@@ -132,20 +132,11 @@ this.ReaderMode = {
     // We pass in a helper function to determine if a node is visible, because
     // it uses gecko APIs that the engine-agnostic readability code can't rely
     // upon.
-    // NB: we need to do a flush the first time we call this, so we keep track of
-    // this using a property:
-    this._needFlushForVisibilityCheck = true;
     return new Readability(uri, doc).isProbablyReaderable(this.isNodeVisible.bind(this, utils));
   },
 
   isNodeVisible: function(utils, node) {
-    let bounds;
-    if (this._needFlushForVisibilityCheck) {
-      bounds = node.getBoundingClientRect();
-      this._needFlushForVisibilityCheck = false;
-    } else {
-      bounds = utils.getBoundsWithoutFlushing(node);
-    }
+    let bounds = utils.getBoundsWithoutFlushing(node);
     return bounds.height > 0 && bounds.width > 0;
   },
 
@@ -215,13 +206,44 @@ this.ReaderMode = {
         if (meta) {
           let content = meta.getAttribute("content");
           if (content) {
-            let urlIndex = content.indexOf("URL=");
+            let urlIndex = content.toUpperCase().indexOf("URL=");
             if (urlIndex > -1) {
               let url = content.substring(urlIndex + 4);
-              this._downloadDocument(url).then((doc) => resolve(doc));
+              let ssm = Services.scriptSecurityManager;
+              let flags = ssm.LOAD_IS_AUTOMATIC_DOCUMENT_REPLACEMENT |
+                          ssm.DISALLOW_INHERIT_PRINCIPAL;
+              try {
+                ssm.checkLoadURIStrWithPrincipal(doc.nodePrincipal, url, flags);
+              } catch (ex) {
+                let errorMsg = "Reader mode disallowed meta refresh (reason: " + ex + ").";
+
+                if (Services.prefs.getBoolPref("reader.errors.includeURLs"))
+                  errorMsg += " Refresh target URI: '" + url + "'.";
+                reject(errorMsg);
+                return;
+              }
+              // Otherwise, pass an object indicating our new URL:
+              reject({newURL: url});
               return;
             }
           }
+        }
+        let responseURL = xhr.responseURL;
+        let givenURL = url;
+        // Convert these to real URIs to make sure the escaping (or lack
+        // thereof) is identical:
+        try {
+          responseURL = Services.io.newURI(responseURL, null, null).spec;
+        } catch (ex) { /* Ignore errors - we'll use what we had before */ }
+        try {
+          givenURL = Services.io.newURI(givenURL, null, null).spec;
+        } catch (ex) { /* Ignore errors - we'll use what we had before */ }
+
+        if (responseURL != givenURL) {
+          // We were redirected without a meta refresh tag.
+          // Force redirect to the correct place:
+          reject({newURL: xhr.responseURL});
+          return;
         }
         resolve(doc);
         histogram.add(DOWNLOAD_SUCCESS);
@@ -244,7 +266,9 @@ this.ReaderMode = {
     try {
       let array = yield OS.File.read(path);
       return JSON.parse(new TextDecoder().decode(array));
-    } catch (e if e instanceof OS.File.Error && e.becauseNoSuchFile) {
+    } catch (e) {
+      if (!(e instanceof OS.File.Error) || !e.becauseNoSuchFile)
+        throw e;
       return null;
     }
   }),
@@ -282,8 +306,17 @@ this.ReaderMode = {
       dump("Reader: " + msg);
   },
 
+  _blockedHosts: [
+    "mail.google.com",
+    "github.com",
+    "pinterest.com",
+    "reddit.com",
+    "twitter.com",
+    "youtube.com",
+  ],
+
   _shouldCheckUri: function (uri) {
-    if (!(uri.schemeIs("http") || uri.schemeIs("https") || uri.schemeIs("file"))) {
+    if (!(uri.schemeIs("http") || uri.schemeIs("https"))) {
       this.log("Not parsing URI scheme: " + uri.scheme);
       return false;
     }
@@ -294,6 +327,12 @@ this.ReaderMode = {
       // If this doesn't work, presumably the URL is not well-formed or something
       return false;
     }
+    // Sadly, some high-profile pages have false positives, so bail early for those:
+    let asciiHost = uri.asciiHost;
+    if (this._blockedHosts.some(blockedHost => asciiHost.endsWith(blockedHost))) {
+      return false;
+    }
+
     if (!uri.filePath || uri.filePath == "/") {
       this.log("Not parsing home page: " + uri.spec);
       return false;
@@ -334,7 +373,7 @@ this.ReaderMode = {
     let serializer = Cc["@mozilla.org/xmlextras/xmlserializer;1"].
                      createInstance(Ci.nsIDOMSerializer);
     let serializedDoc = serializer.serializeToString(doc);
-    TelemetryStopwatch.finish("READER_MOD_SERIALIZE_DOM_MS");
+    TelemetryStopwatch.finish("READER_MODE_SERIALIZE_DOM_MS");
 
     TelemetryStopwatch.start("READER_MODE_WORKER_PARSE_MS");
     let article = null;

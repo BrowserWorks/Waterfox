@@ -33,7 +33,7 @@ already_AddRefed<SpeechGrammar>
 SpeechGrammar::Constructor(const GlobalObject& aGlobal,
                            ErrorResult& aRv)
 {
-  nsRefPtr<SpeechGrammar> speechGrammar =
+  RefPtr<SpeechGrammar> speechGrammar =
     new SpeechGrammar(aGlobal.GetAsSupports());
   return speechGrammar.forget();
 }
@@ -53,14 +53,14 @@ SpeechGrammar::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 void
 SpeechGrammar::GetSrc(nsString& aRetVal, ErrorResult& aRv) const
 {
-  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+  aRetVal = mSrc;
   return;
 }
 
 void
 SpeechGrammar::SetSrc(const nsAString& aArg, ErrorResult& aRv)
 {
-  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
+  mSrc = aArg;
   return;
 }
 

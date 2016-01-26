@@ -34,12 +34,13 @@ tasks:
         createdForUser: {{owner}}
 
       scopes:
-        - "docker-worker:cache:tc-vcs-public-sources"
-        - "docker-worker:image:quay.io/mozilla/decision:0.0.3"
+        - "docker-worker:cache:level-{{level}}-{{project}}-tc-vcs-public-sources"
+        - "docker-worker:cache:level-{{level}}-{{project}}-gecko-decision"
         - "queue:route:tc-treeherder-stage.{{project}}.{{revision_hash}}"
         - "queue:route:tc-treeherder.{{project}}.{{revision_hash}}"
 
       routes:
+        - "tc-treeherder.{{project}}.{{revision_hash}}"
         - "tc-treeherder-stage.{{project}}.{{revision_hash}}"
 
       payload:
@@ -53,12 +54,12 @@ tasks:
           # The taskcluster-vcs tooling stores the large clone caches in this
           # directory and will reuse them for new requests this saves about 20s~ and
           # is the most generic cache possible.
-          tc-vcs-public-sources: /home/worker/.tc-vcs/
-          gecko-decision: /home/worker/workspace
+          level-{{level}}-{{project}}-tc-vcs-public-sources: /home/worker/.tc-vcs/
+          level-{{level}}-{{project}}-gecko-decision: /home/worker/workspace
 
         # Note: This task is built server side without the context or tooling that
         # exist in tree so we must hard code the version
-        image: 'quay.io/mozilla/builder:0.5.0'
+        image: 'taskcluster/builder:0.5.11'
 
         # Virtually no network or other potentially risky operations happen as part
         # of the task timeout aside from the initial clone. We intentionally have
@@ -70,6 +71,7 @@ tasks:
           - /bin/bash
           - -cx
           - >
+            mkdir -p /home/worker/artifacts &&
             checkout-gecko workspace &&
             cd workspace/gecko &&
             ./mach taskcluster-graph
@@ -77,10 +79,21 @@ tasks:
             --project='{{project}}'
             --message='{{comment}}'
             --owner='{{owner}}'
+            --level='{{level}}'
             --revision-hash='{{revision_hash}}'
-            --extend-graph > /home/worker/graph.json
+            --extend-graph > /home/worker/artifacts/graph.json
+
         graphs:
-          - /home/worker/graph.json
+          - /home/worker/artifacts/graph.json
+
+        artifacts:
+          'public':
+            type: 'directory'
+            path: '/home/worker/artifacts'
+            # Arbitrary value for keeping these artifacts around.  They are just the
+            # graph.json and context directories for now, so nothing that needs
+            # to stay around for long.
+            expires: '{{#from_now}}7 days{{/from_now}}'
 
       extra:
         treeherder:

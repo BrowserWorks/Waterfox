@@ -321,7 +321,7 @@ def _runtimeAbort(msg):
         ExprCall(ExprVar('NS_RUNTIMEABORT'), args=[ msg ]))
 
 def _refptr(T):
-    return Type('nsRefPtr', T=T)
+    return Type('RefPtr', T=T)
 
 def _refptrGet(expr):
     return ExprCall(ExprSelect(expr, '.', 'get'))
@@ -335,6 +335,10 @@ def _refptrTake(expr):
 def _cxxArrayType(basetype, const=0, ref=0):
     return Type('nsTArray', T=basetype, const=const, ref=ref, hasimplicitcopyctor=False)
 
+def _cxxManagedContainerType(basetype, const=0, ref=0):
+    return Type('ManagedContainer', T=basetype,
+                const=const, ref=ref, hasimplicitcopyctor=False)
+
 def _cxxFallibleArrayType(basetype, const=0, ref=0):
     return Type('FallibleTArray', T=basetype, const=const, ref=ref)
 
@@ -343,7 +347,7 @@ def _callCxxArrayLength(arr):
 
 def _callCxxCheckedArraySetLength(arr, lenexpr, sel='.'):
     ifbad = StmtIf(ExprNot(ExprCall(ExprSelect(arr, sel, 'SetLength'),
-                                    args=[ lenexpr ])))
+                                    args=[ lenexpr, ExprVar('mozilla::fallible') ])))
     ifbad.addifstmt(_fatalError('Error setting the array length'))
     ifbad.addifstmt(StmtReturn.FALSE)
     return ifbad
@@ -352,21 +356,19 @@ def _callCxxSwapArrayElements(arr1, arr2, sel='.'):
     return ExprCall(ExprSelect(arr1, sel, 'SwapElements'),
                     args=[ arr2 ])
 
-def _callCxxArrayInsertSorted(arr, elt):
-    return ExprCall(ExprSelect(arr, '.', 'InsertElementSorted'),
-                    args=[ elt ])
+def _callInsertManagedActor(managees, actor):
+    return ExprCall(ExprSelect(managees, '.', 'PutEntry'),
+                    args=[ actor ])
 
-def _callCxxArrayRemoveSorted(arr, elt):
-    return ExprCall(ExprSelect(arr, '.', 'RemoveElementSorted'),
-                    args=[ elt ])
+def _callRemoveManagedActor(managees, actor):
+    return ExprCall(ExprSelect(managees, '.', 'RemoveEntry'),
+                    args=[ actor ])
 
-def _callCxxArrayClear(arr):
-    return ExprCall(ExprSelect(arr, '.', 'Clear'))
+def _callClearManagedActors(managees):
+    return ExprCall(ExprSelect(managees, '.', 'Clear'))
 
-def _cxxArrayHasElementSorted(arr, elt):
-    return ExprBinary(
-        ExprSelect(arr, '.', 'NoIndex'), '!=',
-        ExprCall(ExprSelect(arr, '.', 'BinaryIndexOf'), args=[ elt ]))
+def _callHasManagedActor(managees, actor):
+    return ExprCall(ExprSelect(managees, '.', 'Contains'), args=[ actor ])
 
 def _otherSide(side):
     if side == 'child':  return 'parent'
@@ -525,6 +527,9 @@ class _ConvertToCxxType(TypeVisitor):
     def visitFDType(self, s):
         return Type(self.typename(s))
 
+    def visitEndpointType(self, s):
+        return Type(self.typename(s))
+
     def visitProtocolType(self, p): assert 0
     def visitMessageType(self, m): assert 0
     def visitVoidType(self, v): assert 0
@@ -551,7 +556,7 @@ def _cxxConstRefType(ipdltype, side):
 
 def _cxxMoveRefType(ipdltype, side):
     t = _cxxBareType(ipdltype, side)
-    if ipdltype.isIPDL() and (ipdltype.isArray() or ipdltype.isShmem()):
+    if ipdltype.isIPDL() and (ipdltype.isArray() or ipdltype.isShmem() or ipdltype.isEndpoint()):
         t.ref = 2
         return t
     return _cxxConstRefType(ipdltype, side)
@@ -572,7 +577,7 @@ def _cxxConstPtrToType(ipdltype, side):
         t.ptrconstptr = 1
         return t
     t.const = 1
-    t.ptrconst = 1
+    t.ptr = 1
     return t
 
 def _allocMethod(ptype, side):
@@ -790,7 +795,7 @@ IPDL union type."""
         if self.recursive:
             return self.ptrToType()
         else:
-            return TypeArray(Type('char'), ExprSizeof(self.internalType()))
+            return Type('mozilla::AlignedStorage2', T=self.internalType())
 
     def unionValue(self):
         # NB: knows that Union's storage C union is named |mValue|
@@ -852,14 +857,14 @@ IPDL union type."""
         if self.recursive:
             return v
         else:
-            return ExprCast(ExprAddrOf(v), self.ptrToType(), reinterpret=1)
+            return ExprCall(ExprSelect(v, '.', 'addr'))
 
     def constptrToSelfExpr(self):
         """|*constptrToSelfExpr()| has type |self.constType()|"""
         v = self.unionValue()
         if self.recursive:
             return v
-        return ExprCast(ExprAddrOf(v), self.constPtrToType(), reinterpret=1)
+        return ExprCall(ExprSelect(v, '.', 'addr'))
 
     def ptrToInternalType(self):
         t = self.ptrToType()
@@ -1266,8 +1271,8 @@ class Protocol(ipdl.ast.Protocol):
 
     def managedVarType(self, actortype, side, const=0, ref=0):
         assert self.decl.type.isManagerOf(actortype)
-        return _cxxArrayType(self.managedCxxType(actortype, side),
-                             const=const, ref=ref)
+        return _cxxManagedContainerType(Type(_actorName(actortype.name(), side)),
+                                        const=const, ref=ref)
 
     def managerArrayExpr(self, thisvar, side):
         """The member var my manager keeps of actors of my type."""
@@ -1356,6 +1361,8 @@ with some new IPDL/C++ nodes that are tuned for C++ codegen."""
                                         'ProtocolId'),
                                 Typedef(Type('mozilla::ipc::Transport'),
                                         'Transport'),
+                                Typedef(Type('mozilla::ipc::Endpoint'),
+                                        'Endpoint', ['FooSide']),
                                 Typedef(Type('mozilla::ipc::TransportDescriptor'),
                                         'TransportDescriptor') ])
         self.protocolName = None
@@ -1564,6 +1571,14 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
 
     def visitProtocol(self, p):
         self.cppIncludeHeaders.append(_protocolHeaderName(self.protocol, ''))
+
+        # Forward declare our own actors.
+        self.hdrfile.addthings([
+            Whitespace.NL,
+            _makeForwardDeclForActor(p.decl.type, 'Parent'),
+            _makeForwardDeclForActor(p.decl.type, 'Child')
+        ])
+
         bridges = ProcessGraph.bridgesOf(p.decl.type)
         for bridge in bridges:
             ppt, pside = bridge.parent.ptype, _otherSide(bridge.parent.side)
@@ -1608,6 +1623,10 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
             odecl, odefn = _splitFuncDeclDefn(self.genOpenFunc(o))
             ns.addstmts([ odecl, Whitespace.NL ])
             self.funcDefns.append(odefn)
+
+        edecl, edefn = _splitFuncDeclDefn(self.genEndpointFunc())
+        ns.addstmts([ edecl, Whitespace.NL ])
+        self.funcDefns.append(edefn)
 
         # state information
         stateenum = TypeEnum('State')
@@ -1680,7 +1699,7 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
             'Bridge',
             params=[ Decl(parentHandleType, parentvar.name),
                      Decl(childHandleType, childvar.name) ],
-            ret=Type.BOOL))
+            ret=Type.NSRESULT))
         bridgefunc.addstmt(StmtReturn(ExprCall(
             ExprVar('mozilla::ipc::Bridge'),
             args=[ _backstagePass(),
@@ -1709,6 +1728,36 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
                    _sideToTransportMode(localside),
                    _protocolId(p.decl.type),
                    ExprVar(_messageStartName(p.decl.type) + 'Child')
+                   ])))
+        return openfunc
+
+
+    # Generate code for PFoo::CreateEndpoints.
+    def genEndpointFunc(self):
+        p = self.protocol.decl.type
+        tparent = _cxxBareType(ActorType(p), 'Parent', fq=1)
+        tchild = _cxxBareType(ActorType(p), 'Child', fq=1)
+        methodvar = ExprVar('CreateEndpoints')
+        rettype = Type.NSRESULT
+        parentpidvar = ExprVar('aParentDestPid')
+        childpidvar = ExprVar('aChildDestPid')
+        parentvar = ExprVar('aParent')
+        childvar = ExprVar('aChild')
+
+        openfunc = MethodDefn(MethodDecl(
+            methodvar.name,
+            params=[ Decl(Type('base::ProcessId'), parentpidvar.name),
+                     Decl(Type('base::ProcessId'), childpidvar.name),
+                     Decl(Type('mozilla::ipc::Endpoint<' + tparent.name + '>', ptr=1), parentvar.name),
+                     Decl(Type('mozilla::ipc::Endpoint<' + tchild.name + '>', ptr=1), childvar.name) ],
+            ret=rettype))
+        openfunc.addstmt(StmtReturn(ExprCall(
+            ExprVar('mozilla::ipc::CreateEndpoints'),
+            args=[ _backstagePass(),
+                   parentpidvar, childpidvar,
+                   _protocolId(p),
+                   ExprVar(_messageStartName(p) + 'Child'),
+                   parentvar, childvar
                    ])))
         return openfunc
 
@@ -2057,6 +2106,12 @@ def _generateCxxStruct(sd):
         # Struct()
         defctor = ConstructorDefn(ConstructorDecl(sd.name))
         defctor.addstmt(StmtExpr(callinit))
+        defctor.memberinits = []
+        for f in sd.fields:
+          # Only generate default values for primitives.
+          if not (f.ipdltype.isCxx() and f.ipdltype.isAtom()):
+            continue
+          defctor.memberinits.append(ExprMemberInit(f.memberVar()))
         struct.addstmts([ defctor, Whitespace.NL ])
 
     # Struct(const field1& _f1, ...)
@@ -2936,7 +2991,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                 ExprMemberInit(p.lastActorIdVar(),
                                [ p.actorIdInit(self.side) ]),
                 ExprMemberInit(p.otherPidVar(),
-                               [ ExprVar('ipc::kInvalidProcessId') ]),
+                               [ ExprVar('mozilla::ipc::kInvalidProcessId') ]),
                 ExprMemberInit(p.lastShmemIdVar(),
                                [ p.shmemIdInit(self.side) ]),
                 ExprMemberInit(p.stateVar(),
@@ -3048,17 +3103,41 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
 
                 self.cls.addstmts([ managermeth, Whitespace.NL ])
 
+        def actorFromIter(itervar):
+            return ExprCall(ExprSelect(ExprCall(ExprSelect(itervar, '.', 'Get')),
+                                       '->', 'GetKey'))
+        def forLoopOverHashtable(hashtable, itervar, const=False):
+            return StmtFor(
+                init=Param(Type.AUTO, itervar.name,
+                           ExprCall(ExprSelect(hashtable, '.', 'ConstIter' if const else 'Iter'))),
+                cond=ExprNot(ExprCall(ExprSelect(itervar, '.', 'Done'))),
+                update=ExprCall(ExprSelect(itervar, '.', 'Next')))
+
         ## Managed[T](Array& inout) const
         ## const Array<T>& Managed() const
         for managed in ptype.manages:
             arrvar = ExprVar('aArr')
             meth = MethodDefn(MethodDecl(
                 p.managedMethod(managed, self.side).name,
-                params=[ Decl(p.managedVarType(managed, self.side, ref=1),
+                params=[ Decl(_cxxArrayType(p.managedCxxType(managed, self.side), ref=1),
                               arrvar.name) ],
                 const=1))
-            meth.addstmt(StmtExpr(ExprAssn(
-                arrvar, p.managedVar(managed, self.side))))
+            ivar = ExprVar('i')
+            elementsvar = ExprVar('elements')
+            itervar = ExprVar('iter')
+            meth.addstmt(StmtDecl(Decl(Type.UINT32, ivar.name),
+                                  init=ExprLiteral.ZERO))
+            meth.addstmt(StmtDecl(Decl(Type(_actorName(managed.name(), self.side), ptrptr=1), elementsvar.name),
+                                  init=ExprCall(ExprSelect(arrvar, '.', 'AppendElements'),
+                                                args=[ ExprCall(ExprSelect(p.managedVar(managed, self.side),
+                                                                           '.', 'Count')) ])))
+            foreachaccumulate = forLoopOverHashtable(p.managedVar(managed, self.side),
+                                                     itervar, const=True)
+            foreachaccumulate.addstmt(StmtExpr(
+                ExprAssn(ExprIndex(elementsvar, ivar),
+                         actorFromIter(itervar))))
+            foreachaccumulate.addstmt(StmtExpr(ExprPrefixUnop(ivar, '++')))
+            meth.addstmt(foreachaccumulate)
 
             refmeth = MethodDefn(MethodDecl(
                 p.managedMethod(managed, self.side).name,
@@ -3398,6 +3477,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         subtreewhyvar = ExprVar('subtreewhy')
         kidsvar = ExprVar('kids')
         ivar = ExprVar('i')
+        itervar = ExprVar('iter')
         ithkid = ExprIndex(kidsvar, ivar)
 
         destroysubtree = MethodDefn(MethodDecl(
@@ -3427,6 +3507,8 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             ])
 
         for managed in ptype.manages:
+            managedVar = p.managedVar(managed, self.side)
+
             foreachdestroy = StmtFor(
                 init=Param(Type.UINT32, ivar.name, ExprLiteral.ZERO),
                 cond=ExprBinary(ivar, '<', _callCxxArrayLength(kidsvar)),
@@ -3441,8 +3523,13 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                     '// Recursively shutting down %s kids\n'% (managed.name()),
                     indent=1),
                 StmtDecl(
-                    Decl(p.managedVarType(managed, self.side), kidsvar.name),
-                    initargs=[ p.managedVar(managed, self.side) ]),
+                    Decl(_cxxArrayType(p.managedCxxType(managed, self.side)), kidsvar.name),
+                    initargs=[ ExprCall(ExprSelect(managedVar, '.', 'Count')) ]),
+                Whitespace(
+                    '// Accumulate kids into a stable structure to iterate over\n',
+                    indent=1),
+                StmtExpr(ExprCall(p.managedMethod(managed, self.side),
+                                  args=[ kidsvar ])),
                 foreachdestroy,
             ])
             destroysubtree.addstmt(block)
@@ -3460,20 +3547,16 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         ## DeallocSubtree()
         deallocsubtree = MethodDefn(MethodDecl(deallocsubtreevar.name))
         for managed in ptype.manages:
-            foreachrecurse = StmtFor(
-                init=Param(Type.UINT32, ivar.name, ExprLiteral.ZERO),
-                cond=ExprBinary(ivar, '<', _callCxxArrayLength(kidsvar)),
-                update=ExprPrefixUnop(ivar, '++'))
-            foreachrecurse.addstmt(StmtExpr(ExprCall(
-                ExprSelect(ithkid, '->', deallocsubtreevar.name))))
+            managedVar = p.managedVar(managed, self.side)
 
-            foreachdealloc = StmtFor(
-                init=Param(Type.UINT32, ivar.name, ExprLiteral.ZERO),
-                cond=ExprBinary(ivar, '<', _callCxxArrayLength(kidsvar)),
-                update=ExprPrefixUnop(ivar, '++'))
+            foreachrecurse = forLoopOverHashtable(managedVar, itervar)
+            foreachrecurse.addstmt(StmtExpr(ExprCall(
+                ExprSelect(actorFromIter(itervar), '->', deallocsubtreevar.name))))
+
+            foreachdealloc = forLoopOverHashtable(managedVar, itervar)
             foreachdealloc.addstmts([
                 StmtExpr(ExprCall(_deallocMethod(managed, self.side),
-                                  args=[ ithkid ]))
+                                  args=[ actorFromIter(itervar) ]))
             ])
 
             block = StmtBlock()
@@ -3481,17 +3564,10 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                 Whitespace(
                     '// Recursively deleting %s kids\n'% (managed.name()),
                     indent=1),
-                StmtDecl(
-                    Decl(p.managedVarType(managed, self.side, ref=1),
-                         kidsvar.name),
-                    init=p.managedVar(managed, self.side)),
                 foreachrecurse,
                 Whitespace.NL,
-                # no need to copy |kids| here; we're the ones deleting
-                # stragglers, no outside C++ is being invoked (except
-                # Dealloc(subactor))
                 foreachdealloc,
-                StmtExpr(_callCxxArrayClear(p.managedVar(managed, self.side))),
+                StmtExpr(_callClearManagedActors(managedVar)),
 
             ])
             deallocsubtree.addstmt(block)
@@ -3550,7 +3626,6 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
 
         for managed in ptype.manages:
             self.cls.addstmts([
-                Whitespace('// Sorted by pointer value\n', indent=1),
                 StmtDecl(Decl(
                     p.managedVarType(managed, self.side),
                     p.managedVar(managed, self.side).name)) ])
@@ -3670,7 +3745,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                          [ idvar ])))
 
             # SharedMemory* CreateSharedMemory(size_t aSize, Type aType, bool aUnsafe, id_t* aId):
-            #   nsRefPtr<SharedMemory> segment(Shmem::Alloc(aSize, aType, aUnsafe));
+            #   RefPtr<SharedMemory> segment(Shmem::Alloc(aSize, aType, aUnsafe));
             #   if (!segment)
             #     return nullptr;
             #   Shmem shmem(segment.get(), [nextshmemid]);
@@ -3952,7 +4027,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                     _actorChannel(actorvar),
                     p.channelForSubactor())),
                 StmtExpr(ExprAssn(_actorState(actorvar), _actorState(ithkid))),
-                StmtExpr(_callCxxArrayInsertSorted(manageearray, actorvar)),
+                StmtExpr(_callInsertManagedActor(manageearray, actorvar)),
                 registerstmt,
                 StmtExpr(ExprCall(
                     ExprSelect(actorvar,
@@ -3963,10 +4038,9 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             block.addstmts([
                 StmtDecl(Decl(_cxxArrayType(manageecxxtype, ref=0),
                               kidsvar.name)),
-                StmtExpr(ExprAssn(kidsvar,
-                                  ExprSelect(othervar,
-                                             '->',
-                                             manageearray.name))),
+                StmtExpr(ExprCall(ExprSelect(othervar, '->',
+                                             p.managedMethod(manageeipdltype, self.side).name),
+                                  args=[ kidsvar ])),
                 StmtDecl(Decl(manageecxxtype, actorvar.name)),
                 forstmt])
             clonemanagees.addstmt(block)
@@ -3996,10 +4070,10 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                     StmtDecl(Decl(manageecxxtype, actorvar.name),
                              ExprCast(listenervar, manageecxxtype, static=1)),
                     _abortIfFalse(
-                        _cxxArrayHasElementSorted(manageearray, actorvar),
+                        _callHasManagedActor(manageearray, actorvar),
                         "actor not managed by this!"),
                     Whitespace.NL,
-                    StmtExpr(_callCxxArrayRemoveSorted(manageearray, actorvar)),
+                    StmtExpr(_callRemoveManagedActor(manageearray, actorvar)),
                     StmtExpr(ExprCall(_deallocMethod(manageeipdltype, self.side),
                                       args=[ actorvar ])),
                     StmtReturn()
@@ -4383,7 +4457,6 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                                          args=[ msgvar, itervar, var ])))
 
         self.cls.addstmts([ write, Whitespace.NL, read, Whitespace.NL ])
-
 
     def implementActorPickling(self, actortype):
         # Note that we pickle based on *protocol* type and *not* actor
@@ -4939,7 +5012,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             StmtExpr(ExprAssn(_actorManager(actorvar), ExprVar.THIS)),
             StmtExpr(ExprAssn(_actorChannel(actorvar),
                               self.protocol.channelForSubactor())),
-            StmtExpr(_callCxxArrayInsertSorted(
+            StmtExpr(_callInsertManagedActor(
                 self.protocol.managedVar(md.decl.type.constructedType(),
                                          self.side),
                 actorvar)),
@@ -5134,9 +5207,9 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             + self.invokeRecvHandler(md, implicit=0)
             + [ Whitespace.NL ]
             + saveIdStmts
-            + self.dtorEpilogue(md, md.actorDecl().var())
-            + [ Whitespace.NL ]
             + self.makeReply(md, errfnRecv, routingId=idvar)
+            + [ Whitespace.NL ]
+            + self.dtorEpilogue(md, md.actorDecl().var())
             + [ Whitespace.NL,
                 StmtReturn(_Result.Processed) ])
 

@@ -9,7 +9,6 @@
 #define __mozilla_widget_GfxInfo_h__
 
 #include "GfxInfoBase.h"
-#include "nsIGfxInfo2.h"
 
 namespace mozilla {
 namespace widget {
@@ -22,40 +21,41 @@ public:
 
   // We only declare the subset of nsIGfxInfo that we actually implement. The
   // rest is brought forward from GfxInfoBase.
-  NS_IMETHOD GetD2DEnabled(bool *aD2DEnabled);
-  NS_IMETHOD GetDWriteEnabled(bool *aDWriteEnabled);
-  NS_IMETHOD GetDWriteVersion(nsAString & aDwriteVersion);
-  NS_IMETHOD GetCleartypeParameters(nsAString & aCleartypeParams);
-  NS_IMETHOD GetAdapterDescription(nsAString & aAdapterDescription);
-  NS_IMETHOD GetAdapterDriver(nsAString & aAdapterDriver);
-  NS_IMETHOD GetAdapterVendorID(nsAString & aAdapterVendorID);
-  NS_IMETHOD GetAdapterDeviceID(nsAString & aAdapterDeviceID);
-  NS_IMETHOD GetAdapterSubsysID(nsAString & aAdapterSubsysID);
-  NS_IMETHOD GetAdapterRAM(nsAString & aAdapterRAM);
-  NS_IMETHOD GetAdapterDriverVersion(nsAString & aAdapterDriverVersion);
-  NS_IMETHOD GetAdapterDriverDate(nsAString & aAdapterDriverDate);
-  NS_IMETHOD GetAdapterDescription2(nsAString & aAdapterDescription);
-  NS_IMETHOD GetAdapterDriver2(nsAString & aAdapterDriver);
-  NS_IMETHOD GetAdapterVendorID2(nsAString & aAdapterVendorID);
-  NS_IMETHOD GetAdapterDeviceID2(nsAString & aAdapterDeviceID);
-  NS_IMETHOD GetAdapterSubsysID2(nsAString & aAdapterSubsysID);
-  NS_IMETHOD GetAdapterRAM2(nsAString & aAdapterRAM);
-  NS_IMETHOD GetAdapterDriverVersion2(nsAString & aAdapterDriverVersion);
-  NS_IMETHOD GetAdapterDriverDate2(nsAString & aAdapterDriverDate);
-  NS_IMETHOD GetIsGPU2Active(bool *aIsGPU2Active);
+  NS_IMETHOD GetD2DEnabled(bool *aD2DEnabled) override;
+  NS_IMETHOD GetDWriteEnabled(bool *aDWriteEnabled) override;
+  NS_IMETHOD GetDWriteVersion(nsAString & aDwriteVersion) override;
+  NS_IMETHOD GetCleartypeParameters(nsAString & aCleartypeParams) override;
+  NS_IMETHOD GetAdapterDescription(nsAString & aAdapterDescription) override;
+  NS_IMETHOD GetAdapterDriver(nsAString & aAdapterDriver) override;
+  NS_IMETHOD GetAdapterVendorID(nsAString & aAdapterVendorID) override;
+  NS_IMETHOD GetAdapterDeviceID(nsAString & aAdapterDeviceID) override;
+  NS_IMETHOD GetAdapterSubsysID(nsAString & aAdapterSubsysID) override;
+  NS_IMETHOD GetAdapterRAM(nsAString & aAdapterRAM) override;
+  NS_IMETHOD GetAdapterDriverVersion(nsAString & aAdapterDriverVersion) override;
+  NS_IMETHOD GetAdapterDriverDate(nsAString & aAdapterDriverDate) override;
+  NS_IMETHOD GetAdapterDescription2(nsAString & aAdapterDescription) override;
+  NS_IMETHOD GetAdapterDriver2(nsAString & aAdapterDriver) override;
+  NS_IMETHOD GetAdapterVendorID2(nsAString & aAdapterVendorID) override;
+  NS_IMETHOD GetAdapterDeviceID2(nsAString & aAdapterDeviceID) override;
+  NS_IMETHOD GetAdapterSubsysID2(nsAString & aAdapterSubsysID) override;
+  NS_IMETHOD GetAdapterRAM2(nsAString & aAdapterRAM) override;
+  NS_IMETHOD GetAdapterDriverVersion2(nsAString & aAdapterDriverVersion) override;
+  NS_IMETHOD GetAdapterDriverDate2(nsAString & aAdapterDriverDate) override;
+  NS_IMETHOD GetIsGPU2Active(bool *aIsGPU2Active) override;
   using GfxInfoBase::GetFeatureStatus;
   using GfxInfoBase::GetFeatureSuggestedDriverVersion;
   using GfxInfoBase::GetWebGLParameter;
 
-  virtual nsresult Init();
+  virtual nsresult Init() override;
 
   virtual uint32_t OperatingSystemVersion() override { return mWindowsVersion; }
 
-  NS_DECL_ISUPPORTS_INHERITED
+  nsresult FindMonitors(JSContext* cx, JS::HandleObject array) override;
+
 #ifdef DEBUG
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIGFXINFODEBUG
 #endif
-  NS_DECL_NSIGFXINFO2
 
 protected:
 
@@ -63,15 +63,15 @@ protected:
                                         int32_t *aStatus, 
                                         nsAString & aSuggestedDriverVersion, 
                                         const nsTArray<GfxDriverInfo>& aDriverInfo, 
-                                        OperatingSystem* aOS = nullptr);
-  virtual const nsTArray<GfxDriverInfo>& GetGfxDriverInfo();
+                                        OperatingSystem* aOS = nullptr) override;
+  virtual const nsTArray<GfxDriverInfo>& GetGfxDriverInfo() override;
+
+  void DescribeFeatures(JSContext* cx, JS::Handle<JSObject*> aOut) override;
 
 private:
 
   void AddCrashReportAnnotations();
-  void GetCountryCode();
 
-  nsString mCountryCode;
   nsString mDeviceString;
   nsString mDeviceID;
   nsString mDriverVersion;

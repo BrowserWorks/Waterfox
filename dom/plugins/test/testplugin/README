@@ -23,6 +23,15 @@ The plugin will draw a solid color instead of the default rendering described
 above. The default solid color is completely transparent black (i.e., nothing).
 This should be specified when using one of the async models.
 
+* asyncmodel="bitmap"
+The plugin will use the NPAPI Async Bitmap drawing model extension. On
+unsupported platforms this will fallback to non-async rendering.
+
+* asyncmodel="dxgi"
+The plugin will use the NPAPI Async DXGI drawing model extension. Only
+supported on Windows Vista or higher. On unsupported platforms this will
+fallback to non-async rendering.
+
 * color
 This specifies the color to use for drawmode="solid". The value should be 8 hex
 digits, 2 per channel in AARRGGBB format.
@@ -419,3 +428,14 @@ x86-only on some OSes:
 Returns the contents scale factor. On platforms without support for this query
 always returns 1.0 (a double value). Likewise on hardware without HiDPI mode
 support.
+
+== Plugin audio channel support ==
+
+* startAudioPlayback()
+Simulates the plugin starting to play back audio.
+
+* stopAudioPlayback()
+Simulates the plugin stopping to play back audio.
+
+* audioMuted()
+Returns the last value set by NPP_SetValue(NPNVmuteAudioBool).

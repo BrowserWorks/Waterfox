@@ -14,20 +14,33 @@
 
 struct JSContext;
 
+// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
+// GetTickCount().
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
 namespace mozilla {
 namespace dom {
 
-class DocumentTimeline final : public AnimationTimeline
+class DocumentTimeline final
+  : public AnimationTimeline
+  , public nsARefreshObserver
 {
 public:
   explicit DocumentTimeline(nsIDocument* aDocument)
     : AnimationTimeline(aDocument->GetParentObject())
     , mDocument(aDocument)
+    , mIsObservingRefreshDriver(false)
   {
   }
 
 protected:
-  virtual ~DocumentTimeline() { }
+  virtual ~DocumentTimeline()
+  {
+    MOZ_ASSERT(!mIsObservingRefreshDriver, "Timeline should have disassociated"
+               " from the refresh driver before being destroyed");
+  }
 
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -37,31 +50,30 @@ public:
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
 
-  // DocumentTimeline methods
+  // AnimationTimeline methods
   virtual Nullable<TimeDuration> GetCurrentTime() const override;
 
-  // Converts a TimeStamp to the equivalent value in timeline time.
-  // Note that when IsUnderTestControl() is true, there is no correspondence
-  // between timeline time and wallclock time. In such a case, passing a
-  // timestamp from TimeStamp::Now() to this method will not return a
-  // meaningful result.
-  Nullable<TimeDuration> ToTimelineTime(const TimeStamp& aTimeStamp) const;
-  TimeStamp ToTimeStamp(const TimeDuration& aTimelineTime) const;
-
-  nsRefreshDriver* GetRefreshDriver() const;
-  // Returns true if this timeline is driven by a refresh driver that is
-  // under test control. In such a case, there is no correspondence between
-  // TimeStamp values returned by the refresh driver and wallclock time.
-  // As a result, passing a value from TimeStamp::Now() to ToTimelineTime()
-  // would not return a meaningful result.
-  bool IsUnderTestControl() const
+  bool TracksWallclockTime() const override
   {
     nsRefreshDriver* refreshDriver = GetRefreshDriver();
-    return refreshDriver && refreshDriver->IsTestControllingRefreshesEnabled();
+    return !refreshDriver ||
+           !refreshDriver->IsTestControllingRefreshesEnabled();
   }
+  Nullable<TimeDuration> ToTimelineTime(const TimeStamp& aTimeStamp) const
+                                                                     override;
+  TimeStamp ToTimeStamp(const TimeDuration& aTimelineTime) const override;
+
+  void NotifyAnimationUpdated(Animation& aAnimation) override;
+
+  // nsARefreshObserver methods
+  void WillRefresh(TimeStamp aTime) override;
+
+  void NotifyRefreshDriverCreated(nsRefreshDriver* aDriver);
+  void NotifyRefreshDriverDestroying(nsRefreshDriver* aDriver);
 
 protected:
   TimeStamp GetCurrentTimeStamp() const;
+  nsRefreshDriver* GetRefreshDriver() const;
 
   nsCOMPtr<nsIDocument> mDocument;
 
@@ -69,6 +81,7 @@ protected:
   // we don't have a refresh driver (e.g. because we are in a display:none
   // iframe).
   mutable TimeStamp mLastRefreshDriverTime;
+  bool mIsObservingRefreshDriver;
 };
 
 } // namespace dom

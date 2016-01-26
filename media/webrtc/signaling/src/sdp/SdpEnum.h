@@ -46,6 +46,23 @@ inline std::ostream& operator<<(std::ostream& os, sdp::AddrType t)
   MOZ_CRASH("Unknown AddrType");
 }
 
+enum Direction {
+  // Start at 1 so these can be used as flags
+  kSend = 1,
+  kRecv = 2
+};
+
+inline std::ostream& operator<<(std::ostream& os, sdp::Direction d)
+{
+  switch (d) {
+    case sdp::kSend:
+      return os << "send";
+    case sdp::kRecv:
+      return os << "recv";
+  }
+  MOZ_CRASH("Unknown Direction");
+}
+
 } // namespace sdp
 
 } // namespace mozilla

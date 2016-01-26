@@ -26,7 +26,7 @@ USING_BLUETOOTH_NAMESPACE
 namespace {
   StaticRefPtr<BluetoothA2dpManager> sBluetoothA2dpManager;
   bool sInShutdown = false;
-} // anonymous namespace
+} // namespace
 
 NS_IMETHODIMP
 BluetoothA2dpManager::Observe(nsISupports* aSubject,
@@ -52,8 +52,9 @@ BluetoothA2dpManager::BluetoothA2dpManager()
 void
 BluetoothA2dpManager::Reset()
 {
-  ResetA2dp();
-  ResetAvrcp();
+  mA2dpConnected = false;
+  mSinkState = SinkState::SINK_DISCONNECTED;
+  mController = nullptr;
 }
 
 bool
@@ -78,25 +79,6 @@ BluetoothA2dpManager::~BluetoothA2dpManager()
   if (NS_FAILED(obs->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID))) {
     BT_WARNING("Failed to remove shutdown observer!");
   }
-}
-
-void
-BluetoothA2dpManager::ResetA2dp()
-{
-  mA2dpConnected = false;
-  mSinkState = SinkState::SINK_DISCONNECTED;
-  mController = nullptr;
-}
-
-void
-BluetoothA2dpManager::ResetAvrcp()
-{
-  mAvrcpConnected = false;
-  mDuration = 0;
-  mMediaNumber = 0;
-  mTotalMediaCount = 0;
-  mPosition = 0;
-  mPlayStatus = ControlPlayStatus::PLAYSTATUS_UNKNOWN;
 }
 
 static BluetoothA2dpManager::SinkState
@@ -150,11 +132,11 @@ BluetoothA2dpManager::HandleShutdown()
 }
 
 void
-BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
+BluetoothA2dpManager::Connect(const BluetoothAddress& aDeviceAddress,
                               BluetoothProfileController* aController)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
   MOZ_ASSERT(aController && !mController);
 
   BluetoothService* bs = BluetoothService::Get();
@@ -171,7 +153,10 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
   mDeviceAddress = aDeviceAddress;
   mController = aController;
 
-  if (NS_FAILED(bs->SendSinkMessage(aDeviceAddress,
+  nsAutoString deviceAddressStr;
+  AddressToString(aDeviceAddress, deviceAddressStr);
+
+  if (NS_FAILED(bs->SendSinkMessage(deviceAddressStr,
                                     NS_LITERAL_STRING("Connect")))) {
     aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
     return;
@@ -184,24 +169,29 @@ BluetoothA2dpManager::Disconnect(BluetoothProfileController* aController)
   BluetoothService* bs = BluetoothService::Get();
   if (!bs) {
     if (aController) {
-      aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
+      aController->NotifyCompletion(
+        NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
     }
     return;
   }
 
   if (!mA2dpConnected) {
     if (aController) {
-      aController->NotifyCompletion(NS_LITERAL_STRING(ERR_ALREADY_DISCONNECTED));
+      aController->NotifyCompletion(
+        NS_LITERAL_STRING(ERR_ALREADY_DISCONNECTED));
     }
     return;
   }
 
-  MOZ_ASSERT(!mDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!mDeviceAddress.IsCleared());
   MOZ_ASSERT(!mController);
 
   mController = aController;
 
-  if (NS_FAILED(bs->SendSinkMessage(mDeviceAddress,
+  nsAutoString deviceAddressStr;
+  AddressToString(mDeviceAddress, deviceAddressStr);
+
+  if (NS_FAILED(bs->SendSinkMessage(deviceAddressStr,
                                     NS_LITERAL_STRING("Disconnect")))) {
     aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
     return;
@@ -219,7 +209,7 @@ BluetoothA2dpManager::OnConnect(const nsAString& aErrorStr)
    */
   NS_ENSURE_TRUE_VOID(mController);
 
-  nsRefPtr<BluetoothProfileController> controller = mController.forget();
+  RefPtr<BluetoothProfileController> controller = mController.forget();
   controller->NotifyCompletion(aErrorStr);
 }
 
@@ -234,7 +224,7 @@ BluetoothA2dpManager::OnDisconnect(const nsAString& aErrorStr)
    */
   NS_ENSURE_TRUE_VOID(mController);
 
-  nsRefPtr<BluetoothProfileController> controller = mController.forget();
+  RefPtr<BluetoothProfileController> controller = mController.forget();
   controller->NotifyCompletion(aErrorStr);
 
   Reset();
@@ -262,16 +252,20 @@ void
 BluetoothA2dpManager::HandleSinkPropertyChanged(const BluetoothSignal& aSignal)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aSignal.value().type() == BluetoothValue::TArrayOfBluetoothNamedValue);
+  MOZ_ASSERT(aSignal.value().type() ==
+             BluetoothValue::TArrayOfBluetoothNamedValue);
 
-  const nsString& address = aSignal.path();
+  const nsString& addressStr = aSignal.path();
+
+  BluetoothAddress address;
+  StringToAddress(addressStr, address);
+
   /**
    * Update sink property only if
    * - mDeviceAddress is empty (A2dp is disconnected), or
    * - this property change is from the connected sink.
    */
-  NS_ENSURE_TRUE_VOID(mDeviceAddress.IsEmpty() ||
-                      mDeviceAddress.Equals(address));
+  NS_ENSURE_TRUE_VOID(mDeviceAddress.IsCleared() || mDeviceAddress == address);
 
   const InfallibleTArray<BluetoothNamedValue>& arr =
     aSignal.value().get_ArrayOfBluetoothNamedValue();
@@ -344,7 +338,7 @@ BluetoothA2dpManager::HandleSinkPropertyChanged(const BluetoothSignal& aSignal)
 
       mA2dpConnected = false;
       NotifyConnectionStatusChanged();
-      mDeviceAddress.Truncate();
+      mDeviceAddress.Clear();
       OnDisconnect(EmptyString());
       break;
     default:
@@ -361,9 +355,12 @@ BluetoothA2dpManager::NotifyConnectionStatusChanged()
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE_VOID(obs);
 
+  nsAutoString deviceAddressStr;
+  AddressToString(mDeviceAddress, deviceAddressStr);
+
   if (NS_FAILED(obs->NotifyObservers(this,
                                      BLUETOOTH_A2DP_STATUS_CHANGED_ID,
-                                     mDeviceAddress.get()))) {
+                                     deviceAddressStr.get()))) {
     BT_WARNING("Failed to notify bluetooth-a2dp-status-changed observsers!");
   }
 
@@ -373,19 +370,19 @@ BluetoothA2dpManager::NotifyConnectionStatusChanged()
 }
 
 void
-BluetoothA2dpManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
-                                          const nsAString& aServiceUuid,
+BluetoothA2dpManager::OnGetServiceChannel(const BluetoothAddress& aDeviceAddress,
+                                          const BluetoothUuid& aServiceUuid,
                                           int aChannel)
 {
 }
 
 void
-BluetoothA2dpManager::OnUpdateSdpRecords(const nsAString& aDeviceAddress)
+BluetoothA2dpManager::OnUpdateSdpRecords(const BluetoothAddress& aDeviceAddress)
 {
 }
 
 void
-BluetoothA2dpManager::GetAddress(nsAString& aDeviceAddress)
+BluetoothA2dpManager::GetAddress(BluetoothAddress& aDeviceAddress)
 {
   aDeviceAddress = mDeviceAddress;
 }
@@ -396,82 +393,4 @@ BluetoothA2dpManager::IsConnected()
   return mA2dpConnected;
 }
 
-void
-BluetoothA2dpManager::SetAvrcpConnected(bool aConnected)
-{
-  mAvrcpConnected = aConnected;
-  if (!aConnected) {
-    ResetAvrcp();
-  }
-}
-
-bool
-BluetoothA2dpManager::IsAvrcpConnected()
-{
-  return mAvrcpConnected;
-}
-
-void
-BluetoothA2dpManager::UpdateMetaData(const nsAString& aTitle,
-                                     const nsAString& aArtist,
-                                     const nsAString& aAlbum,
-                                     uint64_t aMediaNumber,
-                                     uint64_t aTotalMediaCount,
-                                     uint32_t aDuration)
-{
-  mTitle.Assign(aTitle);
-  mArtist.Assign(aArtist);
-  mAlbum.Assign(aAlbum);
-  mMediaNumber = aMediaNumber;
-  mTotalMediaCount = aTotalMediaCount;
-  mDuration = aDuration;
-}
-
-void
-BluetoothA2dpManager::UpdatePlayStatus(uint32_t aDuration,
-                                       uint32_t aPosition,
-                                       ControlPlayStatus aPlayStatus)
-{
-  mDuration = aDuration;
-  mPosition = aPosition;
-  mPlayStatus = aPlayStatus;
-}
-
-void
-BluetoothA2dpManager::GetAlbum(nsAString& aAlbum)
-{
-    aAlbum.Assign(mAlbum);
-}
-
-uint32_t
-BluetoothA2dpManager::GetDuration()
-{
-  return mDuration;
-}
-
-ControlPlayStatus
-BluetoothA2dpManager::GetPlayStatus()
-{
-  return mPlayStatus;
-}
-
-uint32_t
-BluetoothA2dpManager::GetPosition()
-{
-  return mPosition;
-}
-
-uint64_t
-BluetoothA2dpManager::GetMediaNumber()
-{
-  return mMediaNumber;
-}
-
-void
-BluetoothA2dpManager::GetTitle(nsAString& aTitle)
-{
-  aTitle.Assign(mTitle);
-}
-
 NS_IMPL_ISUPPORTS(BluetoothA2dpManager, nsIObserver)
-

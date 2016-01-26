@@ -24,7 +24,7 @@
 
 namespace {
 
-using mozilla::unused;
+using mozilla::Unused;
 using mozilla::dom::cache::CachePushStreamChild;
 using mozilla::dom::cache::CacheReadStream;
 using mozilla::dom::cache::CacheReadStreamOrVoid;
@@ -54,7 +54,7 @@ CleanupChildFds(CacheReadStream& aReadStream, CleanupAction aAction)
   MOZ_ASSERT(fdSetActor);
 
   if (aAction == Delete) {
-    unused << fdSetActor->Send__delete__(fdSetActor);
+    Unused << fdSetActor->Send__delete__(fdSetActor);
   }
 
   // FileDescriptorSet doesn't clear its fds in its ActorDestroy, so we
@@ -114,7 +114,7 @@ CleanupParentFds(CacheReadStream& aReadStream, CleanupAction aAction)
   MOZ_ASSERT(fdSetActor);
 
   if (aAction == Delete) {
-    unused << fdSetActor->Send__delete__(fdSetActor);
+    Unused << fdSetActor->Send__delete__(fdSetActor);
   }
 
   // FileDescriptorSet doesn't clear its fds in its ActorDestroy, so we
@@ -133,7 +133,7 @@ CleanupParentFds(CacheReadStreamOrVoid& aReadStreamOrVoid, CleanupAction aAction
   CleanupParentFds(aReadStreamOrVoid.get_CacheReadStream(), aAction);
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 namespace dom {
@@ -283,7 +283,7 @@ MatchInPutList(InternalRequest* aRequest,
              method.LowerCaseEqualsLiteral("head"));
 #endif
 
-  nsRefPtr<InternalHeaders> requestHeaders = aRequest->Headers();
+  RefPtr<InternalHeaders> requestHeaders = aRequest->Headers();
 
   for (uint32_t i = 0; i < aPutList.Length(); ++i) {
     const CacheRequest& cachedRequest = aPutList[i].request();
@@ -292,15 +292,18 @@ MatchInPutList(InternalRequest* aRequest,
     nsAutoCString url;
     aRequest->GetURL(url);
 
+    nsAutoCString requestUrl(cachedRequest.urlWithoutQuery());
+    requestUrl.Append(cachedRequest.urlQuery());
+
     // If the URLs don't match, then just skip to the next entry.
-    if (NS_ConvertUTF8toUTF16(url) != cachedRequest.url()) {
+    if (url != requestUrl) {
       continue;
     }
 
-    nsRefPtr<InternalHeaders> cachedRequestHeaders =
+    RefPtr<InternalHeaders> cachedRequestHeaders =
       TypeUtils::ToInternalHeaders(cachedRequest.headers());
 
-    nsRefPtr<InternalHeaders> cachedResponseHeaders =
+    RefPtr<InternalHeaders> cachedResponseHeaders =
       TypeUtils::ToInternalHeaders(cachedResponse.headers());
 
     nsAutoTArray<nsCString, 16> varyHeaders;
@@ -360,7 +363,7 @@ MatchInPutList(InternalRequest* aRequest,
   return false;
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 AutoChildOpArgs::Add(InternalRequest* aRequest, BodyAction aBodyAction,
@@ -479,7 +482,8 @@ AutoParentOpResult::~AutoParentOpResult()
       if (action == Forget || result.actorParent() == nullptr) {
         break;
       }
-      unused << PCacheParent::Send__delete__(result.actorParent());
+      Unused << PCacheParent::Send__delete__(result.actorParent());
+      break;
     }
     default:
       // other types do not need clean up
@@ -487,7 +491,7 @@ AutoParentOpResult::~AutoParentOpResult()
   }
 
   if (action == Delete && mStreamControl) {
-    unused << PCacheStreamControlParent::Send__delete__(mStreamControl);
+    Unused << PCacheStreamControlParent::Send__delete__(mStreamControl);
   }
 }
 
@@ -616,7 +620,7 @@ AutoParentOpResult::SerializeReadStream(const nsID& aId, StreamList* aStreamList
 
   aStreamList->SetStreamControl(mStreamControl);
 
-  nsRefPtr<ReadStream> readStream = ReadStream::Create(mStreamControl,
+  RefPtr<ReadStream> readStream = ReadStream::Create(mStreamControl,
                                                        aId, stream);
   readStream->Serialize(aReadStreamOut);
 }

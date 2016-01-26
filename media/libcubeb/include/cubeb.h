@@ -118,6 +118,10 @@ typedef enum {
 } cubeb_stream_type;
 #endif
 
+/** An opaque handle used to refer a particular input or output device
+ *  across calls. */
+typedef void * cubeb_devid;
+
 /** Stream format initialization parameters. */
 typedef struct {
   cubeb_sample_format format; /**< Requested sample format.  One of
@@ -149,21 +153,117 @@ enum {
   CUBEB_ERROR = -1,                   /**< Unclassified error. */
   CUBEB_ERROR_INVALID_FORMAT = -2,    /**< Unsupported #cubeb_stream_params requested. */
   CUBEB_ERROR_INVALID_PARAMETER = -3, /**< Invalid parameter specified. */
-  CUBEB_ERROR_NOT_SUPPORTED = -4      /**< Optional function not implemented in current backend. */
+  CUBEB_ERROR_NOT_SUPPORTED = -4,     /**< Optional function not implemented in current backend. */
+  CUBEB_ERROR_DEVICE_UNAVAILABLE = -5 /**< Device specified by #cubeb_devid not available. */
 };
 
+/**
+ * Whether a particular device is an input device (e.g. a microphone), or an
+ * output device (e.g. headphones). */
+typedef enum {
+  CUBEB_DEVICE_TYPE_UNKNOWN,
+  CUBEB_DEVICE_TYPE_INPUT,
+  CUBEB_DEVICE_TYPE_OUTPUT
+} cubeb_device_type;
+
+/**
+ * The state of a device.
+ */
+typedef enum {
+  CUBEB_DEVICE_STATE_DISABLED, /**< The device has been disabled at the system level. */
+  CUBEB_DEVICE_STATE_UNPLUGGED, /**< The device is enabled, but nothing is plugged into it. */
+  CUBEB_DEVICE_STATE_ENABLED /**< The device is enabled. */
+} cubeb_device_state;
+
+/**
+ * Architecture specific sample type.
+ */
+typedef enum {
+  CUBEB_DEVICE_FMT_S16LE          = 0x0010, /**< 16-bit integers, Little Endian. */
+  CUBEB_DEVICE_FMT_S16BE          = 0x0020, /**< 16-bit integers, Big Endian. */
+  CUBEB_DEVICE_FMT_F32LE          = 0x1000, /**< 32-bit floating point, Little Endian. */
+  CUBEB_DEVICE_FMT_F32BE          = 0x2000  /**< 32-bit floating point, Big Endian. */
+} cubeb_device_fmt;
+
+#if defined(WORDS_BIGENDIAN) || defined(__BIG_ENDIAN__)
+/** 16-bit integers, native endianess, when on a Big Endian environment. */
+#define CUBEB_DEVICE_FMT_S16NE     CUBEB_DEVICE_FMT_S16BE
+/** 32-bit floating points, native endianess, when on a Big Endian environment. */
+#define CUBEB_DEVICE_FMT_F32NE     CUBEB_DEVICE_FMT_F32BE
+#else
+/** 16-bit integers, native endianess, when on a Little Endian environment. */
+#define CUBEB_DEVICE_FMT_S16NE     CUBEB_DEVICE_FMT_S16LE
+/** 32-bit floating points, native endianess, when on a Little Endian
+ *  environment. */
+#define CUBEB_DEVICE_FMT_F32NE     CUBEB_DEVICE_FMT_F32LE
+#endif
+/** All the 16-bit integers types. */
+#define CUBEB_DEVICE_FMT_S16_MASK  (CUBEB_DEVICE_FMT_S16LE | CUBEB_DEVICE_FMT_S16BE)
+/** All the 32-bit floating points types. */
+#define CUBEB_DEVICE_FMT_F32_MASK  (CUBEB_DEVICE_FMT_F32LE | CUBEB_DEVICE_FMT_F32BE)
+/** All the device formats types. */
+#define CUBEB_DEVICE_FMT_ALL       (CUBEB_DEVICE_FMT_S16_MASK | CUBEB_DEVICE_FMT_F32_MASK)
+
+/** Channel type for a `cubeb_stream`. Depending on the backend and platform
+ * used, this can control inter-stream interruption, ducking, and volume
+ * control.
+ */
+typedef enum {
+  CUBEB_DEVICE_PREF_NONE          = 0x00,
+  CUBEB_DEVICE_PREF_MULTIMEDIA    = 0x01,
+  CUBEB_DEVICE_PREF_VOICE         = 0x02,
+  CUBEB_DEVICE_PREF_NOTIFICATION  = 0x04,
+  CUBEB_DEVICE_PREF_ALL           = 0x0F
+} cubeb_device_pref;
+
+/** This structure holds the characteristics
+ *  of an input or output audio device. It can be obtained using
+ *  `cubeb_enumerate_devices`, and must be destroyed using
+ *  `cubeb_device_info_destroy`. */
+typedef struct {
+  cubeb_devid devid;          /**< Device identifier handle. */
+  char * device_id;           /**< Device identifier which might be presented in a UI. */
+  char * friendly_name;       /**< Friendly device name which might be presented in a UI. */
+  char * group_id;            /**< Two devices have the same group identifier if they belong to the same physical device; for example a headset and microphone. */
+  char * vendor_name;         /**< Optional vendor name, may be NULL. */
+
+  cubeb_device_type type;     /**< Type of device (Input/Output). */
+  cubeb_device_state state;   /**< State of device disabled/enabled/unplugged. */
+  cubeb_device_pref preferred;/**< Preferred device. */
+
+  cubeb_device_fmt format;    /**< Sample format supported. */
+  cubeb_device_fmt default_format; /**< The default sample format for this device. */
+  unsigned int max_channels;  /**< Channels. */
+  unsigned int default_rate;  /**< Default/Preferred sample rate. */
+  unsigned int max_rate;      /**< Maximum sample rate supported. */
+  unsigned int min_rate;      /**< Minimum sample rate supported. */
+
+  unsigned int latency_lo_ms; /**< Lowest possible latency in milliseconds. */
+  unsigned int latency_hi_ms; /**< Higest possible latency in milliseconds. */
+} cubeb_device_info;
+
+/** Device collection. */
+typedef struct {
+  uint32_t count;                 /**< Device count in collection. */
+  cubeb_device_info * device[1];   /**< Array of pointers to device info. */
+} cubeb_device_collection;
+
 /** User supplied data callback.
-    @param stream
-    @param user_ptr
-    @param buffer
-    @param nframes
-    @retval Number of frames written to buffer, which must equal nframes except
-            at end of stream.
+    @param stream The stream for which this callback fired
+    @param user_ptr The pointer passed to cubeb_stream_create
+    @param input_buffer A pointer containing the input data, or nullptr
+                        if this is an output-only stream.
+    @param output_buffer A pointer containing the output data, or nullptr
+                         if this is an input -only stream.
+    @param nframes The number of frames of the two buffer.
+    @retval Number of frames written to the output buffer, which must equal
+            nframes except at end of stream.
     @retval CUBEB_ERROR on error, in which case the data callback will stop
             and the stream will enter a shutdown state. */
 typedef long (* cubeb_data_callback)(cubeb_stream * stream,
                                      void * user_ptr,
-                                     void * buffer,
+                                     const void * input_buffer,
+                                     void * output_buffer,
                                      long nframes);
 
 /** User supplied state callback.
@@ -178,6 +278,12 @@ typedef void (* cubeb_state_callback)(cubeb_stream * stream,
  * User supplied callback called when the underlying device changed.
  * @param user */
 typedef void (* cubeb_device_changed_callback)(void * user_ptr);
+
+/**
+ * User supplied callback called when the underlying device collection changed.
+ * @param context
+ * @param user_ptr */
+typedef void (* cubeb_device_collection_changed_callback)(cubeb * context, void * user_ptr);
 
 /** Initialize an application context.  This will perform any library or
     application scoped initialization.
@@ -232,7 +338,14 @@ void cubeb_destroy(cubeb * context);
     @param context
     @param stream
     @param stream_name
-    @param stream_params
+    @param input_device Device for the input side of the stream. If NULL
+                        default input device is used.
+    @param input_stream_params Parameters for the input side of the stream, or
+                               NULL if this stream is output only.
+    @param output_device Device for the output side of the stream. If NULL
+                         default output device is used.
+    @param output_stream_params Parameters for the output side of the stream, or
+                                NULL if this stream is input only.
     @param latency Approximate stream latency in milliseconds.  Valid range
                    is [1, 2000].
     @param data_callback Will be called to preroll data before playback is
@@ -241,11 +354,15 @@ void cubeb_destroy(cubeb * context);
     @param user_ptr
     @retval CUBEB_OK
     @retval CUBEB_ERROR
-    @retval CUBEB_ERROR_INVALID_FORMAT */
+    @retval CUBEB_ERROR_INVALID_FORMAT
+    @retval CUBEB_ERROR_DEVICE_UNAVAILABLE */
 int cubeb_stream_init(cubeb * context,
                       cubeb_stream ** stream,
                       char const * stream_name,
-                      cubeb_stream_params stream_params,
+                      cubeb_devid input_device,
+                      cubeb_stream_params * input_stream_params,
+                      cubeb_devid output_device,
+                      cubeb_stream_params * output_stream_params,
                       unsigned int latency,
                       cubeb_data_callback data_callback,
                       cubeb_state_callback state_callback,
@@ -335,7 +452,44 @@ int cubeb_stream_device_destroy(cubeb_stream * stream,
             device_changed_callback are invalid pointers.
     @retval CUBEB_ERROR_NOT_SUPPORTED */
 int cubeb_stream_register_device_changed_callback(cubeb_stream * stream,
-                                                  cubeb_device_changed_callback  device_changed_callback);
+                                                  cubeb_device_changed_callback device_changed_callback);
+
+/** Returns enumerated devices.
+    @param context
+    @param devtype device type to include
+    @param collection output collection. Must be destroyed with cubeb_device_collection_destroy
+    @retval CUBEB_OK in case of success
+    @retval CUBEB_ERROR_INVALID_PARAMETER if collection is an invalid pointer
+    @retval CUBEB_ERROR_NOT_SUPPORTED */
+int cubeb_enumerate_devices(cubeb * context,
+                            cubeb_device_type devtype,
+                            cubeb_device_collection ** collection);
+
+/** Destroy a cubeb_device_collection, and its `cubeb_device_info`.
+    @param collection collection to destroy
+    @retval CUBEB_OK
+    @retval CUBEB_ERROR_INVALID_PARAMETER if collection is an invalid pointer */
+int cubeb_device_collection_destroy(cubeb_device_collection * collection);
+
+/** Destroy a cubeb_device_info structure.
+    @param info pointer to device info structure
+    @retval CUBEB_OK
+    @retval CUBEB_ERROR_INVALID_PARAMETER if info is an invalid pointer */
+int cubeb_device_info_destroy(cubeb_device_info * info);
+
+/** Registers a callback which is called when the system detects
+    a new device or a device is removed.
+    @param context
+    @param devtype device type to include
+    @param callback a function called whenever the system device list changes.
+           Passing NULL allow to unregister a function
+    @param user_ptr pointer to user specified data which will be present in
+           subsequent callbacks.
+    @retval CUBEB_ERROR_NOT_SUPPORTED */
+int cubeb_register_device_collection_changed(cubeb * context,
+                                       cubeb_device_type devtype,
+                                       cubeb_device_collection_changed_callback callback,
+                                       void * user_ptr);
 
 #if defined(__cplusplus)
 }

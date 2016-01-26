@@ -1,0 +1,69 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+* {
+  padding: 0;
+  margin: 0;
+}
+
+.more-nodes {
+  padding-left: 16px;
+}
+
+.styleinspector-propertyeditor {
+  border: 1px solid #CCC;
+}
+
+/* Draw a circle next to nodes that have a pseudo class lock.
+   Center vertically with the 1.4em line height on .tag-line */
+.child.pseudoclass-locked::before {
+  content: "";
+  background: var(--theme-highlight-lightorange);
+  border-radius: 50%;
+  width: .8em;
+  height: .8em;
+  margin-top: .3em;
+  left: 1px;
+  position: absolute;
+}
+
+/* Selected nodes in the tree should have light selected text.
+   theme-selected doesn't work in this case since the text is a
+   sibling of the class, not a child. */
+.theme-selected ~ .editor,
+.theme-selected ~ .editor .theme-fg-color1,
+.theme-selected ~ .editor .theme-fg-color2,
+.theme-selected ~ .editor .theme-fg-color3,
+.theme-selected ~ .editor .theme-fg-color4,
+.theme-selected ~ .editor .theme-fg-color5,
+.theme-selected ~ .editor .theme-fg-color6,
+.theme-selected ~ .editor .theme-fg-color7 {
+  color: var(--theme-selection-color);
+}
+
+/* In case a node isn't displayed in the page, we fade the syntax highlighting */
+.not-displayed .open,
+.not-displayed .close {
+  opacity: .7;
+}
+
+.tag-line {
+  padding-left: 2px;
+}
+
+/* Events */
+.markupview-events {
+  font-size: 8px;
+  font-weight: bold;
+  line-height: 10px;
+  border-radius: 3px;
+  padding: 0px 2px;
+  -moz-margin-start: 5px;
+  -moz-user-select: none;
+}
+
+.markupview-events {
+  background-color: var(--theme-body-color-alt);
+  color: var(--theme-body-background);
+}

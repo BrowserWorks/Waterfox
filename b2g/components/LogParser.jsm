@@ -16,10 +16,14 @@ function parseLogArray(array) {
   let data = new DataView(array.buffer);
   let byteString = String.fromCharCode.apply(null, array);
 
+  // Length of bytes that precede the payload of a log message
+  // From the 5 Uint32 and 1 Uint8 reads
+  const HEADER_LENGTH = 21;
+
   let logMessages = [];
   let pos = 0;
 
-  while (pos < byteString.length) {
+  while (pos + HEADER_LENGTH < byteString.length) {
     // Parse a single log entry
 
     // Track current offset from global position
@@ -204,32 +208,42 @@ function formatLogMessage(logMessage) {
 }
 
 /**
+ * Convert a string to a utf-8 Uint8Array
+ * @param {String} str
+ * @return {Uint8Array}
+ */
+function textEncode(str) {
+  return new TextEncoder("utf-8").encode(str);
+}
+
+/**
  * Pretty-print an array of bytes read from a log file by parsing then
  * threadtime formatting its entries.
  * @param array {Uint8Array} Array of a log file's bytes
- * @return {String} Pretty-printed log
+ * @return {Uint8Array} Pretty-printed log
  */
 function prettyPrintLogArray(array) {
   let logMessages = parseLogArray(array);
-  return logMessages.map(formatLogMessage).join("");
+  return textEncode(logMessages.map(formatLogMessage).join(""));
 }
 
 /**
  * Pretty-print an array read from the list of propreties.
  * @param {Object} Object representing the properties
- * @return {String} Human-readable string of property name: property value
+ * @return {Uint8Array} Human-readable string of property name: property value
  */
 function prettyPrintPropertiesArray(properties) {
   let propertiesString = "";
   for(let propName in properties) {
     propertiesString += "[" + propName + "]: [" + properties[propName] + "]\n";
   }
-  return propertiesString;
+  return textEncode(propertiesString);
 }
 
 /**
  * Pretty-print a normal array. Does nothing.
  * @param array {Uint8Array} Input array
+ * @return {Uint8Array} The same array
  */
 function prettyPrintArray(array) {
   return array;

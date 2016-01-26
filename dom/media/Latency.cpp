@@ -6,7 +6,7 @@
 
 #include "Latency.h"
 #include "nsThreadUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include <cmath>
 #include <algorithm>
 
@@ -37,16 +37,12 @@ const char* LatencyLogIndex2Strings[] = {
 
 static StaticRefPtr<AsyncLatencyLogger> gAsyncLogger;
 
-PRLogModuleInfo*
+LogModule*
 GetLatencyLog()
 {
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("MediaLatency");
-  }
+  static LazyLogModule sLog("MediaLatency");
   return sLog;
 }
-
 
 class LogEvent : public nsRunnable
 {
@@ -111,6 +107,8 @@ void LogLatency(uint32_t aIndex, uint64_t aID, int64_t aValue)
 void AsyncLatencyLogger::InitializeStatics()
 {
   NS_ASSERTION(NS_IsMainThread(), "Main thread only");
+
+  //Make sure that the underlying logger is allocated.
   GetLatencyLog();
   gAsyncLogger = new AsyncLatencyLogger();
 }
@@ -191,11 +189,11 @@ void AsyncLatencyLogger::WriteLog(LatencyLogIndex aIndex, uint64_t aID, int64_t 
                                   TimeStamp aTimeStamp)
 {
   if (aTimeStamp.IsNull()) {
-    PR_LOG(GetLatencyLog(), PR_LOG_DEBUG,
+    MOZ_LOG(GetLatencyLog(), LogLevel::Debug,
       ("Latency: %s,%llu,%lld,%lld",
        LatencyLogIndex2Strings[aIndex], aID, GetTimeStamp(), aValue));
   } else {
-    PR_LOG(GetLatencyLog(), PR_LOG_DEBUG,
+    MOZ_LOG(GetLatencyLog(), LogLevel::Debug,
       ("Latency: %s,%llu,%lld,%lld,%lld",
        LatencyLogIndex2Strings[aIndex], aID, GetTimeStamp(), aValue,
        static_cast<int64_t>((aTimeStamp - gAsyncLogger->mStart).ToMilliseconds())));
@@ -216,7 +214,7 @@ void AsyncLatencyLogger::Log(LatencyLogIndex aIndex, uint64_t aID, int64_t aValu
 
 void AsyncLatencyLogger::Log(LatencyLogIndex aIndex, uint64_t aID, int64_t aValue, TimeStamp &aTime)
 {
-  if (PR_LOG_TEST(GetLatencyLog(), PR_LOG_DEBUG)) {
+  if (MOZ_LOG_TEST(GetLatencyLog(), LogLevel::Debug)) {
     nsCOMPtr<nsIRunnable> event = new LogEvent(aIndex, aID, aValue, aTime);
     if (mThread) {
       mThread->Dispatch(event, NS_DISPATCH_NORMAL);

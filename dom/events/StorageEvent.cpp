@@ -55,7 +55,7 @@ StorageEvent::Constructor(EventTarget* aOwner,
                           const nsAString& aType,
                           const StorageEventInit& aEventInitDict)
 {
-  nsRefPtr<StorageEvent> e = new StorageEvent(aOwner);
+  RefPtr<StorageEvent> e = new StorageEvent(aOwner);
 
   bool trusted = e->Init(aOwner);
   e->InitEvent(aType, aEventInitDict.mBubbles, aEventInitDict.mCancelable);
@@ -85,14 +85,9 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
                                const nsAString& aOldValue,
                                const nsAString& aNewValue,
                                const nsAString& aURL,
-                               DOMStorage* aStorageArea,
-                               ErrorResult& aRv)
+                               DOMStorage* aStorageArea)
 {
-  aRv = InitEvent(aType, aCanBubble, aCancelable);
-  if (aRv.Failed()) {
-    return;
-  }
-
+  InitEvent(aType, aCanBubble, aCancelable);
   mKey = aKey;
   mOldValue = aOldValue;
   mNewValue = aNewValue;
@@ -103,16 +98,15 @@ StorageEvent::InitStorageEvent(const nsAString& aType, bool aCanBubble,
 } // namespace dom
 } // namespace mozilla
 
-nsresult
-NS_NewDOMStorageEvent(nsIDOMEvent** aDOMEvent,
-                      mozilla::dom::EventTarget* aOwner)
+using namespace mozilla;
+using namespace mozilla::dom;
+
+already_AddRefed<StorageEvent>
+NS_NewDOMStorageEvent(EventTarget* aOwner)
 {
-  nsRefPtr<mozilla::dom::StorageEvent> e =
-    new mozilla::dom::StorageEvent(aOwner);
+  RefPtr<StorageEvent> e = new StorageEvent(aOwner);
 
   e->SetTrusted(e->Init(aOwner));
-  e.forget(aDOMEvent);
-
-  return NS_OK;
+  return e.forget();
 }
 

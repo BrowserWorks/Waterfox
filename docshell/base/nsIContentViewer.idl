@@ -31,10 +31,9 @@ class nsDOMNavigationTiming;
 [ptr] native nsDOMNavigationTimingPtr(nsDOMNavigationTiming);
 [ref] native nsIContentViewerTArray(nsTArray<nsCOMPtr<nsIContentViewer> >);
 
-[scriptable, builtinclass, uuid(702e0a92-7d63-490e-b5ee-d247e6bd4588)]
+[scriptable, builtinclass, uuid(2da17016-7851-4a45-a7a8-00b360e01595)]
 interface nsIContentViewer : nsISupports
 {
-
   [noscript] void init(in nsIWidgetPtr aParentWidget,
                        [const] in nsIntRectRef aBounds);
 
@@ -46,12 +45,8 @@ interface nsIContentViewer : nsISupports
   /**
    * Checks if the document wants to prevent unloading by firing beforeunload on
    * the document, and if it does, prompts the user. The result is returned.
-   *
-   * @param aCallerClosesWindow indicates that the current caller will close the
-   *        window. If the method returns true, all subsequent calls will be
-   *        ignored.
    */
-  boolean permitUnload([optional] in boolean aCallerClosesWindow);
+  boolean permitUnload();
 
   /**
    * Exposes whether we're blocked in a call to permitUnload.
@@ -63,8 +58,7 @@ interface nsIContentViewer : nsISupports
    * track of whether the user has responded to a prompt.
    * Used internally by the scriptable version to ensure we only prompt once.
    */
-  [noscript,nostdcall] boolean permitUnloadInternal(in boolean aCallerClosesWindow,
-                                                    inout boolean aShouldPrompt);
+  [noscript,nostdcall] boolean permitUnloadInternal(inout boolean aShouldPrompt);
 
   /**
    * Exposes whether we're in the process of firing the beforeunload event.
@@ -72,16 +66,6 @@ interface nsIContentViewer : nsISupports
    */
   readonly attribute boolean beforeUnloadFiring;
 
-  /**
-   * Works in tandem with permitUnload, if the caller decides not to close the
-   * window it indicated it will, it is the caller's responsibility to reset
-   * that with this method.
-   *
-   * @Note this method is only meant to be called on documents for which the
-   *  caller has indicated that it will close the window. If that is not the case
-   *  the behavior of this method is undefined.
-   */
-  void resetCloseWindow();
   void pageHide(in boolean isUnload);
 
   /**
@@ -244,15 +228,6 @@ interface nsIContentViewer : nsISupports
    * in depth-first pre-order traversal.
    */
   [noscript] void appendSubtree(in nsIContentViewerTArray array);
-
-  /**
-   * Set the maximum line width for the document.
-   * NOTE: This will generate a reflow!
-   *
-   * @param maxLineWidth The maximum width of any line boxes on the page,
-   *        in CSS pixels.
-   */
-  void changeMaxLineBoxWidth(in int32_t maxLineBoxWidth);
 
   /**
    * Instruct the refresh driver to discontinue painting until further

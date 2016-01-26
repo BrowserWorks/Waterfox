@@ -4,8 +4,8 @@
  */
 const URI_EXTENSION_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul";
 
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://testing-common/MockRegistrar.jsm");
@@ -253,12 +253,12 @@ var PluginHost = {
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, arguments) {
+  openWindow: function(parent, url, name, features, args) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
     do_check_neq(gCallback, null);
 
-    var args = arguments.wrappedJSObject;
+    var args = args.wrappedJSObject;
 
     gNewBlocks = [];
     var list = args.list;
@@ -303,10 +303,10 @@ function create_addon(addon) {
   target.append("extensions");
   target.append(addon.id);
   target.append("install.rdf");
-  target.create(target.NORMAL_FILE_TYPE, 0644);
+  target.create(target.NORMAL_FILE_TYPE, 0o644);
   var stream = Components.classes["@mozilla.org/network/file-output-stream;1"]
                          .createInstance(Ci.nsIFileOutputStream);
-  stream.init(target, 0x04 | 0x08 | 0x20, 0664, 0); // write, create, truncate
+  stream.init(target, 0x04 | 0x08 | 0x20, 0o664, 0); // write, create, truncate
   stream.write(installrdf, installrdf.length);
   stream.close();
 }
@@ -317,7 +317,7 @@ function create_addon(addon) {
  * the newly blocked items compared to the previous test.
  */
 function check_state(test, lastTest, callback) {
-  AddonManager.getAddonsByIDs([a.id for each (a in ADDONS)], function(addons) {
+  AddonManager.getAddonsByIDs(ADDONS.map(a => a.id), function(addons) {
     for (var i = 0; i < ADDONS.length; i++) {
       var blocked = addons[i].blocklistState == Ci.nsIBlocklistService.STATE_BLOCKED;
       if (blocked != ADDONS[i][test])
@@ -386,7 +386,7 @@ function run_test() {
 function check_test_pt1() {
   dump("Checking pt 1\n");
 
-  AddonManager.getAddonsByIDs([a.id for each (a in ADDONS)], function(addons) {
+  AddonManager.getAddonsByIDs(ADDONS.map(a => a.id), function(addons) {
     for (var i = 0; i < ADDONS.length; i++) {
       if (!addons[i])
         do_throw("Addon " + (i + 1) + " did not get installed correctly");

@@ -11,6 +11,7 @@
 
 #include "mozilla/Mutex.h"
 #include "nsString.h"
+#include "Intervals.h"
 
 namespace mozilla {
 
@@ -112,7 +113,7 @@ public:
     return mIsMP3 != NOT_MP3;
   }
 
-  void Parse(const char* aBuffer, uint32_t aLength, uint64_t aStreamOffset);
+  void Parse(const uint8_t* aBuffer, uint32_t aLength, uint64_t aStreamOffset);
 
   // Returns the duration, in microseconds. If the entire stream has not
   // been parsed yet, this is an estimate based on the bitrate of the
@@ -197,7 +198,7 @@ private:
 
   // If the MP3 has a variable bitrate, then there *should* be metadata about
   // the encoding in the first frame. We buffer the first frame here.
-  nsAutoCString mFirstFrame;
+  nsCString mFirstFrame;
 
   // While we are reading the first frame, this is the stream offset of the
   // last byte of that frame. -1 at all other times.
@@ -213,6 +214,6 @@ private:
 
 };
 
-}
+} // namespace mozilla
 
 #endif

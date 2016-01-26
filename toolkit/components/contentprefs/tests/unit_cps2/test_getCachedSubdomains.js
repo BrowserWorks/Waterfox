@@ -6,20 +6,20 @@ function run_test() {
   runAsyncTests(tests);
 }
 
-let tests = [
+var tests = [
 
-  function nonexistent() {
+  function* nonexistent() {
     getCachedSubdomainsOK(["a.com", "foo"], []);
     yield true;
   },
 
-  function isomorphicDomains() {
+  function* isomorphicDomains() {
     yield set("a.com", "foo", 1);
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", 1]]);
     getCachedSubdomainsOK(["http://a.com/huh", "foo"], [["a.com", 1]]);
   },
 
-  function names() {
+  function* names() {
     yield set("a.com", "foo", 1);
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", 1]]);
 
@@ -39,14 +39,14 @@ let tests = [
     getCachedGlobalOK(["bar"], true, 4);
   },
 
-  function subdomains() {
+  function* subdomains() {
     yield set("a.com", "foo", 1);
     yield set("b.a.com", "foo", 2);
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", 1], ["b.a.com", 2]]);
     getCachedSubdomainsOK(["b.a.com", "foo"], [["b.a.com", 2]]);
   },
 
-  function populateViaGet() {
+  function* populateViaGet() {
     yield cps.getByDomainAndName("a.com", "foo", null, makeCallback());
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", undefined]]);
 
@@ -55,12 +55,12 @@ let tests = [
     getCachedGlobalOK(["foo"], true, undefined);
   },
 
-  function populateViaGetSubdomains() {
+  function* populateViaGetSubdomains() {
     yield cps.getBySubdomainAndName("a.com", "foo", null, makeCallback());
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", undefined]]);
   },
 
-  function populateViaRemove() {
+  function* populateViaRemove() {
     yield cps.removeByDomainAndName("a.com", "foo", null, makeCallback());
     getCachedSubdomainsOK(["a.com", "foo"], [["a.com", undefined]]);
 
@@ -97,7 +97,7 @@ let tests = [
     getCachedSubdomainsOK(["b.a.com", "foo"], [["b.a.com", undefined]]);
   },
 
-  function populateViaRemoveByDomain() {
+  function* populateViaRemoveByDomain() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield set("b.a.com", "foo", 3);
@@ -123,7 +123,7 @@ let tests = [
     getCachedGlobalOK(["bar"], true, undefined);
   },
 
-  function populateViaRemoveAllDomains() {
+  function* populateViaRemoveAllDomains() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield set("b.com", "foo", 3);
@@ -135,7 +135,7 @@ let tests = [
     getCachedSubdomainsOK(["b.com", "bar"], [["b.com", undefined]]);
   },
 
-  function populateViaRemoveByName() {
+  function* populateViaRemoveByName() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield setGlobal("foo", 3);
@@ -153,7 +153,7 @@ let tests = [
     getCachedGlobalOK(["bar"], true, undefined);
   },
 
-  function privateBrowsing() {
+  function* privateBrowsing() {
     yield set("a.com", "foo", 1);
     yield set("a.com", "bar", 2);
     yield setGlobal("foo", 3);
@@ -176,15 +176,11 @@ let tests = [
     getCachedSubdomainsOK(["b.com", "foo"], [["b.com", 5]]);
   },
 
-  function erroneous() {
-    do_check_throws(function ()
-                    cps.getCachedBySubdomainAndName(null, "foo", null));
-    do_check_throws(function ()
-                    cps.getCachedBySubdomainAndName("", "foo", null));
-    do_check_throws(function ()
-                    cps.getCachedBySubdomainAndName("a.com", "", null));
-    do_check_throws(function ()
-                    cps.getCachedBySubdomainAndName("a.com", null, null));
+  function* erroneous() {
+    do_check_throws(() => cps.getCachedBySubdomainAndName(null, "foo", null));
+    do_check_throws(() => cps.getCachedBySubdomainAndName("", "foo", null));
+    do_check_throws(() => cps.getCachedBySubdomainAndName("a.com", "", null));
+    do_check_throws(() => cps.getCachedBySubdomainAndName("a.com", null, null));
     yield true;
   },
 ];

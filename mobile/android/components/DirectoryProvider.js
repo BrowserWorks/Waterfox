@@ -11,6 +11,8 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "JNI", "resource://gre/modules/JNI.jsm");
+
 // -----------------------------------------------------------------------
 // Directory Provider for special browser folders and files
 // -----------------------------------------------------------------------
@@ -18,6 +20,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 const NS_APP_CACHE_PARENT_DIR = "cachePDir";
 const NS_APP_SEARCH_DIR       = "SrchPlugns";
 const NS_APP_SEARCH_DIR_LIST  = "SrchPluginsDL";
+const NS_APP_DISTRIBUTION_SEARCH_DIR_LIST = "SrchPluginsDistDL";
 const NS_APP_USER_SEARCH_DIR  = "UsrSrchPlugns";
 const NS_XPCOM_CURRENT_PROCESS_DIR = "XCurProcD";
 const XRE_APP_DISTRIBUTION_DIR = "XREAppDist";
@@ -49,18 +52,14 @@ DirectoryProvider.prototype = {
       let profile = dirsvc.get("ProfD", Ci.nsIFile);
       return profile.parent;
     } else if (prop == XRE_APP_DISTRIBUTION_DIR) {
-      // First, check to see if there's a distribution in the data directory.
-      let dataDist = FileUtils.getDir(NS_XPCOM_CURRENT_PROCESS_DIR, ["distribution"], false);
-      if (!dataDist.exists()) {
-        // Then check to see if there's distribution in the system directory.
-        let systemDist = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
-        systemDist.initWithPath(SYSTEM_DIST_PATH);
-        // Only return the system distribution location if it exists.
-        if (systemDist.exists()) {
-          return systemDist;
+      let distributionDirectories =  this._getDistributionDirectories();
+      for (let i = 0; i < distributionDirectories.length; i++) {
+        if (distributionDirectories[i].exists()) {
+          return distributionDirectories[i];
         }
       }
-      return dataDist;
+      // Fallback: Return default data distribution directory
+      return FileUtils.getDir(NS_XPCOM_CURRENT_PROCESS_DIR, ["distribution"], false);
     } else if (prop == XRE_UPDATE_ROOT_DIR) {
       let env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
       if (env.exists(ENVVAR_UPDATE_DIR)) {
@@ -76,6 +75,9 @@ DirectoryProvider.prototype = {
       // implementation would have returned.
       let env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
       return new FileUtils.File(env.get("DOWNLOADS_DIRECTORY"));
+    } else if (AppConstants.MOZ_B2GDROID && prop === "coreAppsDir") {
+      let dirsvc = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
+      return dirsvc.get("DefRt", Ci.nsIFile);
     }
 
     // We are retuning null to show failure instead for throwing an error. The
@@ -147,27 +149,32 @@ DirectoryProvider.prototype = {
   },
 
   getFiles: function(prop) {
-    if (prop != NS_APP_SEARCH_DIR_LIST)
-      return;
+    if (prop != NS_APP_SEARCH_DIR_LIST &&
+        prop != NS_APP_DISTRIBUTION_SEARCH_DIR_LIST)
+      return null;
 
     let result = [];
 
-    /**
-     * We want to preserve the following order, since the search service loads
-     * engines in first-loaded-wins order.
-     *   - distro search plugin locations
-     *   - user search plugin locations (profile)
-     *   - app search plugin location (shipped engines)
-     */
-    this._appendDistroSearchDirs(result);
+    if (prop == NS_APP_DISTRIBUTION_SEARCH_DIR_LIST) {
+      this._appendDistroSearchDirs(result);
+    }
+    else {
+      /**
+       * We want to preserve the following order, since the search service
+       * loads engines in first-loaded-wins order.
+       *   - distro search plugin locations (loaded separately by the search
+       *     service)
+       *   - user search plugin locations (profile)
+       *   - app search plugin location (shipped engines)
+       */
+      let appUserSearchDir = FileUtils.getDir(NS_APP_USER_SEARCH_DIR, [], false);
+      if (appUserSearchDir.exists())
+        result.push(appUserSearchDir);
 
-    let appUserSearchDir = FileUtils.getDir(NS_APP_USER_SEARCH_DIR, [], false);
-    if (appUserSearchDir.exists())
-      result.push(appUserSearchDir);
-
-    let appSearchDir = FileUtils.getDir(NS_APP_SEARCH_DIR, [], false);
-    if (appSearchDir.exists())
-      result.push(appSearchDir);
+      let appSearchDir = FileUtils.getDir(NS_APP_SEARCH_DIR, [], false);
+      if (appSearchDir.exists())
+        result.push(appSearchDir);
+    }
 
     return {
       QueryInterface: XPCOMUtils.generateQI([Ci.nsISimpleEnumerator]),
@@ -178,6 +185,35 @@ DirectoryProvider.prototype = {
         return result.shift();
       }
     };
+  },
+
+  _getDistributionDirectories: function() {
+    let directories = [];
+    let jenv = null;
+
+    try {
+      jenv = JNI.GetForThread();
+
+      let jDistribution = JNI.LoadClass(jenv, "org.mozilla.gecko.distribution.Distribution", {
+        static_methods: [
+          { name: "getDistributionDirectories", sig: "()[Ljava/lang/String;" }
+        ],
+      });
+
+      let jDirectories = jDistribution.getDistributionDirectories();
+
+      for (let i = 0; i < jDirectories.length; i++) {
+        directories.push(new FileUtils.File(
+          JNI.ReadString(jenv, jDirectories.get(i))
+        ));
+      }
+    } finally {
+      if (jenv) {
+        JNI.UnloadClasses(jenv);
+      }
+    }
+
+    return directories;
   }
 };
 

@@ -12,8 +12,15 @@ const testcases = [
     // non-XID character
     ["I♥NY",     "xn--iny-zx5a",                     false, false, false],
 
+/*
+  Behaviour of this test changed in IDNA2008, replacing the non-XID
+  character with U+FFFD replacement character - when all platforms use
+  IDNA2008 it can be uncommented and the punycode URL changed to
+   "xn--mgbl3eb85703a"
+
     // new non-XID character in Unicode 6.3
     ["حلا\u061cل", "xn--bgbvr6gc",                    false, false, false],
+*/
 
     // U+30FB KATAKANA MIDDLE DOT is excluded from non-XID characters (bug 857490)
     ["乾燥肌・石けん", "xn--08j4gylj12hz80b0uhfup",     false, true,  true],
@@ -154,7 +161,8 @@ const testcases = [
             "xn--j50icd",                            false, true,  true],
 
     // Same with a lone high surrogate at the end
-    ["\uD840\uDC00\uD840\uDC01\uD840", "",           false, false, false],
+    ["\uD840\uDC00\uD840\uDC01\uD840",
+            "xn--zn7c0336bda",                       false, false, false],
 
     // Latin text and Bengali digits
     ["super৪",   "xn--super-k2l",                    false, false, true],

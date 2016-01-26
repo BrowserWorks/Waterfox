@@ -143,10 +143,10 @@ SVGTransformListParser::ParseTranslate()
   switch (count) {
     case 1:
       t[1] = 0.f;
-      // fall-through
+      MOZ_FALLTHROUGH;
     case 2:
     {
-      nsSVGTransform* transform = mTransforms.AppendElement();
+      nsSVGTransform* transform = mTransforms.AppendElement(fallible);
       if (!transform) {
         return false;
       }
@@ -171,10 +171,10 @@ SVGTransformListParser::ParseScale()
   switch (count) {
     case 1:
       s[1] = s[0];
-      // fall-through
+      MOZ_FALLTHROUGH;
     case 2:
     {
-      nsSVGTransform* transform = mTransforms.AppendElement();
+      nsSVGTransform* transform = mTransforms.AppendElement(fallible);
       if (!transform) {
         return false;
       }
@@ -200,10 +200,10 @@ SVGTransformListParser::ParseRotate()
   switch (count) {
     case 1:
       r[1] = r[2] = 0.f;
-      // fall-through
+      MOZ_FALLTHROUGH;
     case 3:
     {
-      nsSVGTransform* transform = mTransforms.AppendElement();
+      nsSVGTransform* transform = mTransforms.AppendElement(fallible);
       if (!transform) {
         return false;
       }
@@ -225,7 +225,7 @@ SVGTransformListParser::ParseSkewX()
     return false;
   }
 
-  nsSVGTransform* transform = mTransforms.AppendElement();
+  nsSVGTransform* transform = mTransforms.AppendElement(fallible);
   if (!transform) {
     return false;
   }
@@ -244,7 +244,7 @@ SVGTransformListParser::ParseSkewY()
     return false;
   }
 
-  nsSVGTransform* transform = mTransforms.AppendElement();
+  nsSVGTransform* transform = mTransforms.AppendElement(fallible);
   if (!transform) {
     return false;
   }
@@ -263,7 +263,7 @@ SVGTransformListParser::ParseMatrix()
     return false;
   }
 
-  nsSVGTransform* transform = mTransforms.AppendElement();
+  nsSVGTransform* transform = mTransforms.AppendElement(fallible);
   if (!transform) {
     return false;
   }

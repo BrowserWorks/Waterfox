@@ -37,7 +37,7 @@ nsresult
 PluginPRLibrary::NP_Initialize(NPNetscapeFuncs* bFuncs,
 			       NPPluginFuncs* pFuncs, NPError* error)
 {
-  JNIEnv* env = GetJNIForThread();
+  JNIEnv* env = jni::GetEnvForThread();
 
   mozilla::AutoLocalJNIFrame jniFrame(env);
 
@@ -204,7 +204,7 @@ PluginPRLibrary::NPP_New(NPMIMEType pluginType, NPP instance,
 
 nsresult
 PluginPRLibrary::NPP_ClearSiteData(const char* site, uint64_t flags,
-                                   uint64_t maxAge)
+                                   uint64_t maxAge, nsCOMPtr<nsIClearSiteDataCallback> callback)
 {
   if (!mNPP_ClearSiteData) {
     return NS_ERROR_NOT_AVAILABLE;
@@ -213,39 +213,44 @@ PluginPRLibrary::NPP_ClearSiteData(const char* site, uint64_t flags,
   MAIN_THREAD_JNI_REF_GUARD;
   NPError result = mNPP_ClearSiteData(site, flags, maxAge);
 
+  nsresult rv;
   switch (result) {
   case NPERR_NO_ERROR:
-    return NS_OK;
+    rv = NS_OK;
+    break;
   case NPERR_TIME_RANGE_NOT_SUPPORTED:
-    return NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED;
+    rv = NS_ERROR_PLUGIN_TIME_RANGE_NOT_SUPPORTED;
+    break;
   case NPERR_MALFORMED_SITE:
-    return NS_ERROR_INVALID_ARG;
+    rv = NS_ERROR_INVALID_ARG;
+    break;
   default:
-    return NS_ERROR_FAILURE;
+    rv = NS_ERROR_FAILURE;
   }
+  callback->Callback(rv);
+  return NS_OK;
 }
 
 nsresult
-PluginPRLibrary::NPP_GetSitesWithData(InfallibleTArray<nsCString>& result)
+PluginPRLibrary::NPP_GetSitesWithData(nsCOMPtr<nsIGetSitesWithDataCallback> callback)
 {
   if (!mNPP_GetSitesWithData) {
     return NS_ERROR_NOT_AVAILABLE;
   }
-
-  result.Clear();
 
   MAIN_THREAD_JNI_REF_GUARD;
   char** sites = mNPP_GetSitesWithData();
   if (!sites) {
     return NS_OK;
   }
-
+  InfallibleTArray<nsCString> result;
   char** iterator = sites;
   while (*iterator) {
     result.AppendElement(*iterator);
     free(*iterator);
     ++iterator;
   }
+  callback->SitesWithData(result);
   free(sites);
 
   return NS_OK;
@@ -299,19 +304,18 @@ PluginPRLibrary::SetBackgroundUnknown(NPP instance)
 }
 
 nsresult
-PluginPRLibrary::BeginUpdateBackground(NPP instance,
-                                       const nsIntRect&, gfxContext** aCtx)
+PluginPRLibrary::BeginUpdateBackground(NPP instance, const nsIntRect&,
+                                       DrawTarget** aDrawTarget)
 {
   nsNPAPIPluginInstance* inst = (nsNPAPIPluginInstance*)instance->ndata;
   NS_ENSURE_TRUE(inst, NS_ERROR_NULL_POINTER);
   NS_ERROR("Unexpected use of async APIs for in-process plugin.");
-  *aCtx = nullptr;
+  *aDrawTarget = nullptr;
   return NS_OK;
 }
 
 nsresult
-PluginPRLibrary::EndUpdateBackground(NPP instance,
-                                     gfxContext*, const nsIntRect&)
+PluginPRLibrary::EndUpdateBackground(NPP instance, const nsIntRect&)
 {
   NS_RUNTIMEABORT("This should never be called");
   return NS_ERROR_NOT_AVAILABLE;

@@ -3,8 +3,12 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!ENTITY aboutAccounts.welcome "Welcome to &syncBrand.shortName.label;">
+<!ENTITY aboutAccounts.connected "Account connected">
 
 <!ENTITY aboutAccountsConfig.description "Sign in to sync your tabs, bookmarks, passwords &amp; more.">
 <!ENTITY aboutAccountsConfig.startButton.label "Get started">
 <!ENTITY aboutAccountsConfig.useOldSync.label "Using an older version of Sync?">
-<!ENTITY aboutAccountsConfig.manage.label "Manage">
+<!ENTITY aboutAccountsConfig.syncPreferences.label "Sync preferences">
+<!ENTITY aboutAccounts.noConnection.title "No connection">
+<!ENTITY aboutAccounts.noConnection.description "You must be connected to the Internet to sign in.">
+<!ENTITY aboutAccounts.noConnection.retry "Try again">

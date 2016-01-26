@@ -6,14 +6,14 @@ Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-crypto/utils.js");
 
-let {hexToBytes: h2b,
+var {hexToBytes: h2b,
      hexAsString: h2s,
      stringAsHex: s2h,
      bytesAsHex: b2h} = CommonUtils;
 
 // Test vectors for the "onepw" protocol:
 // https://github.com/mozilla/fxa-auth-server/wiki/onepw-protocol#wiki-test-vectors
-let vectors = {
+var vectors = {
   "client stretch-KDF": {
     email:
       h("616e6472c3a94065 78616d706c652e6f 7267"),
@@ -29,7 +29,7 @@ let vectors = {
 };
 
 // A simple test suite with no utf8 encoding madness.
-add_task(function test_onepw_setup_credentials() {
+add_task(function* test_onepw_setup_credentials() {
   let email = "francine@example.org";
   let password = CommonUtils.encodeUTF8("i like pie");
 
@@ -66,7 +66,7 @@ add_task(function test_onepw_setup_credentials() {
   do_check_eq(b2h(unwrapKey), "8ff58975be391338e4ec5d7138b5ed7b65c7d1bfd1f3a4f93e05aa47d5b72be9");
 });
 
-add_task(function test_client_stretch_kdf() {
+add_task(function* test_client_stretch_kdf() {
   let pbkdf2 = CryptoUtils.pbkdf2Generate;
   let hkdf = CryptoUtils.hkdf;
   let expected = vectors["client stretch-KDF"];

@@ -4,11 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+# TODO: bug 1172551 - get these tests working on iOS
+if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'uikit':
     GeckoCppUnitTests([
         'jsep_session_unittest',
+        'jsep_track_unittest',
         'mediaconduit_unittests',
         'mediapipeline_unittest',
+        'sdp_file_parser',
         'sdp_unittests',
         'signaling_unittests',
     ])

@@ -51,16 +51,18 @@ public:
 
     nsOfflineCacheUpdateItem(nsIURI *aURI,
                              nsIURI *aReferrerURI,
+                             nsIPrincipal* aLoadingPrincipal,
                              nsIApplicationCache *aApplicationCache,
                              nsIApplicationCache *aPreviousApplicationCache,
                              uint32_t aType);
 
-    nsCOMPtr<nsIURI>           mURI;
-    nsCOMPtr<nsIURI>           mReferrerURI;
+    nsCOMPtr<nsIURI>              mURI;
+    nsCOMPtr<nsIURI>              mReferrerURI;
+    nsCOMPtr<nsIPrincipal>        mLoadingPrincipal;
     nsCOMPtr<nsIApplicationCache> mApplicationCache;
     nsCOMPtr<nsIApplicationCache> mPreviousApplicationCache;
-    nsCString                  mCacheKey;
-    uint32_t                   mItemType;
+    nsCString                     mCacheKey;
+    uint32_t                      mItemType;
 
     nsresult OpenChannel(nsOfflineCacheUpdate *aUpdate);
     nsresult Cancel();
@@ -80,7 +82,7 @@ private:
       LOADED = 3U
     };
 
-    nsRefPtr<nsOfflineCacheUpdate> mUpdate;
+    RefPtr<nsOfflineCacheUpdate> mUpdate;
     nsCOMPtr<nsIChannel>           mChannel;
     uint16_t                       mState;
 
@@ -99,6 +101,7 @@ public:
 
     nsOfflineManifestItem(nsIURI *aURI,
                           nsIURI *aReferrerURI,
+                          nsIPrincipal* aLoadingPrincipal,
                           nsIApplicationCache *aApplicationCache,
                           nsIApplicationCache *aPreviousApplicationCache);
     virtual ~nsOfflineManifestItem();
@@ -228,7 +231,7 @@ protected:
     void OnByteProgress(uint64_t byteIncrement);
 
 private:
-    nsresult InitInternal(nsIURI *aManifestURI);
+    nsresult InitInternal(nsIURI *aManifestURI, nsIPrincipal* aPrincipal);
     nsresult HandleManifest(bool *aDoUpdate);
     nsresult AddURI(nsIURI *aURI, uint32_t aItemType);
 
@@ -275,10 +278,8 @@ private:
     nsCString mGroupID;
     nsCOMPtr<nsIURI> mManifestURI;
     nsCOMPtr<nsIURI> mDocumentURI;
+    nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
     nsCOMPtr<nsIFile> mCustomProfileDir;
-
-    uint32_t mAppID;
-    bool mInBrowser;
 
     nsCOMPtr<nsIObserver> mUpdateAvailableObserver;
 
@@ -287,11 +288,11 @@ private:
 
     nsCOMPtr<nsIObserverService> mObserverService;
 
-    nsRefPtr<nsOfflineManifestItem> mManifestItem;
+    RefPtr<nsOfflineManifestItem> mManifestItem;
 
     /* Items being updated */
     uint32_t mItemsInProgress;
-    nsTArray<nsRefPtr<nsOfflineCacheUpdateItem> > mItems;
+    nsTArray<RefPtr<nsOfflineCacheUpdateItem> > mItems;
 
     /* Clients watching this update for changes */
     nsCOMArray<nsIWeakReference> mWeakObservers;
@@ -308,7 +309,7 @@ private:
      * increaded. */
     uint32_t mPinnedEntryRetriesCount;
 
-    nsRefPtr<nsOfflineCacheUpdate> mImplicitUpdate;
+    RefPtr<nsOfflineCacheUpdate> mImplicitUpdate;
 
     bool                           mPinned;
 
@@ -331,18 +332,16 @@ public:
 
     nsresult ScheduleUpdate(nsOfflineCacheUpdate *aUpdate);
     nsresult FindUpdate(nsIURI *aManifestURI,
-                        uint32_t aAppID,
-                        bool aInBrowser,
+                        nsACString const &aOriginSuffix,
                         nsIFile *aCustomProfileDir,
                         nsOfflineCacheUpdate **aUpdate);
 
     nsresult Schedule(nsIURI *aManifestURI,
                       nsIURI *aDocumentURI,
+                      nsIPrincipal* aLoadingPrincipal,
                       nsIDOMDocument *aDocument,
                       nsIDOMWindow* aWindow,
                       nsIFile* aCustomProfileDir,
-                      uint32_t aAppID,
-                      bool aInBrowser,
                       nsIOfflineCacheUpdate **aUpdate);
 
     virtual nsresult UpdateFinished(nsOfflineCacheUpdate *aUpdate) override;
@@ -367,7 +366,7 @@ private:
 
     nsresult ProcessNextUpdate();
 
-    nsTArray<nsRefPtr<nsOfflineCacheUpdate> > mUpdates;
+    nsTArray<RefPtr<nsOfflineCacheUpdate> > mUpdates;
     static nsTHashtable<nsCStringHashKey>* mAllowedDomains;
 
     bool mDisabled;

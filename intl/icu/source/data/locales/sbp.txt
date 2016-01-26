@@ -1,21 +1,15 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sbp.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sbp.xml
- */
 sbp{
     AuxExemplarCharacters{"[q r x z]"}
     ExemplarCharacters{"[a b c d e f g h i j k l m n o p s t u v w y]"}
     ExemplarCharactersIndex{"[A B C D E F G H I J K L M N O P S T U V W Y]"}
-    LocaleScript{
-        "Latn",
-    }
     NumberElements{
         latn{
             patterns{
@@ -29,14 +23,14 @@ sbp{
             }
         }
     }
-    Version{"2.0.92.87"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
-                "h:mm:ss a zzzz",
-                "h:mm:ss a z",
-                "h:mm:ss a",
-                "h:mm a",
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
                 "EEEE, d MMMM y G",
                 "d MMMM y G",
                 "d MMM y G",
@@ -78,10 +72,10 @@ sbp{
                 "Pashamihe",
             }
             DateTimePatterns{
-                "h:mm:ss a zzzz",
-                "h:mm:ss a z",
-                "h:mm:ss a",
-                "h:mm a",
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
                 "EEEE, d MMMM y",
                 "d MMMM y",
                 "d MMM y",
@@ -220,7 +214,7 @@ sbp{
             dn{"Lusiku"}
             relative{
                 "-1"{"Imehe"}
-                "0"{"Ineng'uni"}
+                "0"{"Ineng’uni"}
                 "1"{"Pamulaawu"}
             }
         }

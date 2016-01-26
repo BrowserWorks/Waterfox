@@ -10,6 +10,7 @@
 
 namespace mozilla {
 
+class ErrorResult;
 class WebGLSampler;
 class WebGLSync;
 class WebGLTransformFeedback;
@@ -17,7 +18,7 @@ class WebGLVertexArrayObject;
 namespace dom {
 class OwningUnsignedLongOrUint32ArrayOrBoolean;
 class OwningWebGLBufferOrLongLong;
-}
+} // namespace dom
 
 class WebGL2Context
     : public WebGLContext
@@ -37,15 +38,23 @@ public:
     // -------------------------------------------------------------------------
     // IMPLEMENT nsWrapperCache
 
-    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto) override;
 
     // -------------------------------------------------------------------------
     // Buffer objects - WebGL2ContextBuffers.cpp
 
     void CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                            GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+
+private:
+    template<typename BufferT>
+    void GetBufferSubDataT(GLenum target, GLintptr offset, const BufferT& data);
+
+public:
     void GetBufferSubData(GLenum target, GLintptr offset,
                           const dom::Nullable<dom::ArrayBuffer>& maybeData);
+    void GetBufferSubData(GLenum target, GLintptr offset,
+                          const dom::SharedArrayBuffer& data);
 
 
     // -------------------------------------------------------------------------
@@ -54,12 +63,25 @@ public:
     void BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                          GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                          GLbitfield mask, GLenum filter);
-    void FramebufferTextureLayer(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
-    void GetInternalformatParameter(JSContext*, GLenum target, GLenum internalformat, GLenum pname, JS::MutableHandleValue retval);
-    void InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments);
+    void FramebufferTextureLayer(GLenum target, GLenum attachment, WebGLTexture* texture, GLint level, GLint layer);
+
+    virtual JS::Value GetFramebufferAttachmentParameter(JSContext* cx, GLenum target,
+                                                        GLenum attachment, GLenum pname,
+                                                        ErrorResult& rv) override;
+
+    void InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments,
+                               ErrorResult& rv);
     void InvalidateSubFramebuffer (GLenum target, const dom::Sequence<GLenum>& attachments, GLint x, GLint y,
-                                   GLsizei width, GLsizei height);
+                                   GLsizei width, GLsizei height, ErrorResult& rv);
     void ReadBuffer(GLenum mode);
+
+
+    // -------------------------------------------------------------------------
+    // Renderbuffer objects - WebGL2ContextRenderbuffers.cpp
+
+    void GetInternalformatParameter(JSContext*, GLenum target, GLenum internalformat,
+                                    GLenum pname, JS::MutableHandleValue retval,
+                                    ErrorResult& rv);
     void RenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat,
                                         GLsizei width, GLsizei height);
 
@@ -67,37 +89,47 @@ public:
     // -------------------------------------------------------------------------
     // Texture objects - WebGL2ContextTextures.cpp
 
-    void TexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-    void TexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height,
-                      GLsizei depth);
-    void TexImage3D(GLenum target, GLint level, GLenum internalformat,
-                    GLsizei width, GLsizei height, GLsizei depth,
-                    GLint border, GLenum format, GLenum type,
-                    const Nullable<dom::ArrayBufferView> &pixels,
-                    ErrorResult& rv);
-    void TexSubImage3D(GLenum target, GLint level,
-                       GLint xoffset, GLint yoffset, GLint zoffset,
-                       GLsizei width, GLsizei height, GLsizei depth,
-                       GLenum format, GLenum type, const Nullable<dom::ArrayBufferView>& pixels,
-                       ErrorResult& rv);
-    void TexSubImage3D(GLenum target, GLint level,
-                       GLint xoffset, GLint yoffset, GLint zoffset,
-                       GLenum format, GLenum type, dom::ImageData* data,
-                       ErrorResult& rv);
-    template<class ElementType>
-    void TexSubImage3D(GLenum target, GLint level,
-                       GLint xoffset, GLint yoffset, GLint zoffset,
-                       GLenum format, GLenum type, ElementType& elt, ErrorResult& rv)
-    {}
+    void TexStorage2D(GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width,
+                      GLsizei height);
+    void TexStorage3D(GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width,
+                      GLsizei height, GLsizei depth);
+    void TexImage3D(GLenum target, GLint level, GLenum internalFormat, GLsizei width,
+                    GLsizei height, GLsizei depth, GLint border, GLenum unpackFormat,
+                    GLenum unpackType,
+                    const dom::Nullable<dom::ArrayBufferView>& pixels);
+    void TexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset,
+                       GLint zOffset, GLsizei width, GLsizei height, GLsizei depth,
+                       GLenum unpackFormat, GLenum unpackType,
+                       const dom::Nullable<dom::ArrayBufferView>& pixels,
+                       ErrorResult& out_rv);
+    void TexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset,
+                       GLint zOffset, GLenum unpackFormat, GLenum unpackType,
+                       dom::ImageData* data, ErrorResult& out_rv);
+protected:
+    void TexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset,
+                       GLint zOffset, GLenum unpackFormat, GLenum unpackType,
+                       dom::Element* elem, ErrorResult* const out_rv);
+public:
+    template<class T>
+    inline void
+    TexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset, GLint zOffset,
+                  GLenum unpackFormat, GLenum unpackType, T& elem, ErrorResult& out_rv)
+    {
+        TexSubImage3D(target, level, xOffset, yOffset, zOffset, unpackFormat, unpackType,
+                      &elem, &out_rv);
+    }
 
-    void CopyTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
-                           GLint x, GLint y, GLsizei width, GLsizei height);
-    void CompressedTexImage3D(GLenum target, GLint level, GLenum internalformat,
+    void CopyTexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset,
+                           GLint zOffset, GLint x, GLint y, GLsizei width,
+                           GLsizei height);
+    void CompressedTexImage3D(GLenum target, GLint level, GLenum internalFormat,
                               GLsizei width, GLsizei height, GLsizei depth,
-                              GLint border, GLsizei imageSize, const dom::ArrayBufferView& data);
-    void CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
-                                 GLsizei width, GLsizei height, GLsizei depth,
-                                 GLenum format, GLsizei imageSize, const dom::ArrayBufferView& data);
+                              GLint border,
+                              const dom::ArrayBufferView& data);
+    void CompressedTexSubImage3D(GLenum target, GLint level, GLint xOffset, GLint yOffset,
+                                 GLint zOffset, GLsizei width, GLsizei height,
+                                 GLsizei depth, GLenum sizedUnpackFormat,
+                                 const dom::ArrayBufferView& data);
 
 
     // -------------------------------------------------------------------------
@@ -322,6 +354,7 @@ public:
     void BindBufferBase(GLenum target, GLuint index, WebGLBuffer* buffer);
     void BindBufferRange(GLenum target, GLuint index, WebGLBuffer* buffer, GLintptr offset, GLsizeiptr size);
 */
+    virtual JS::Value GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv) override;
     void GetIndexedParameter(GLenum target, GLuint index,
                              dom::Nullable<dom::OwningWebGLBufferOrLongLong>& retval);
     void GetUniformIndices(WebGLProgram* program,
@@ -353,20 +386,18 @@ public:
 
 private:
     WebGL2Context();
+    virtual UniquePtr<webgl::FormatUsageAuthority>
+    CreateFormatUsage(gl::GLContext* gl) const override;
 
-    JS::Value GetTexParameterInternal(const TexTarget& target, GLenum pname) override;
+    virtual bool IsTexParamValid(GLenum pname) const override;
 
     void UpdateBoundQuery(GLenum target, WebGLQuery* query);
 
-    bool ValidateSizedInternalFormat(GLenum internalFormat, const char* info);
-    bool ValidateTexStorage(GLenum target, GLsizei levels, GLenum internalformat,
-                                GLsizei width, GLsizei height, GLsizei depth,
-                                const char* info);
-
+    // CreateVertexArrayImpl is assumed to be infallible.
+    virtual WebGLVertexArray* CreateVertexArrayImpl() override;
     virtual bool ValidateAttribPointerType(bool integerMode, GLenum type, GLsizei* alignment, const char* info) override;
     virtual bool ValidateBufferTarget(GLenum target, const char* info) override;
     virtual bool ValidateBufferIndexedTarget(GLenum target, const char* info) override;
-    virtual bool ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer, const char* info) override;
     virtual bool ValidateBufferUsageEnum(GLenum usage, const char* info) override;
     virtual bool ValidateQueryTarget(GLenum target, const char* info) override;
     virtual bool ValidateUniformMatrixTranspose(bool transpose, const char* info) override;

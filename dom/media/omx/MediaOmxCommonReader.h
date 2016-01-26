@@ -15,6 +15,7 @@
 
 namespace android {
 struct MOZ_EXPORT MediaSource;
+class MediaStreamSource;
 } // namespace android
 
 namespace mozilla {
@@ -24,6 +25,8 @@ class AbstractMediaDecoder;
 class MediaOmxCommonReader : public MediaDecoderReader
 {
 public:
+  typedef MozPromise<bool /* aIgnored */, bool /* aIgnored */, /* IsExclusive = */ true> MediaResourcePromise;
+
   MediaOmxCommonReader(AbstractMediaDecoder* aDecoder);
 
   void SetAudioChannel(dom::AudioChannel aAudioChannel) {
@@ -41,6 +44,15 @@ public:
 
 protected:
   dom::AudioChannel mAudioChannel;
+  // Weak reference to the MediaStreamSource that will be created by either
+  // MediaOmxReader or MediaCodecReader.
+  android::MediaStreamSource* mStreamSource;
+  // Get value from the preferece, if true, we stop the audio offload.
+  bool IsMonoAudioEnabled();
+
+private:
+  virtual bool HasAudio() = 0;
+  virtual bool HasVideo() = 0;
 };
 
 } // namespace mozilla

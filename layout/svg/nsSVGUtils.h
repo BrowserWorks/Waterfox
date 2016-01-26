@@ -7,7 +7,6 @@
 #define NS_SVGUTILS_H
 
 // include math.h to pick up definition of M_ maths defines e.g. M_PI
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "DrawMode.h"
@@ -25,7 +24,6 @@
 #include "nsISupportsBase.h"
 #include "nsMathUtils.h"
 #include "nsStyleStruct.h"
-#include "mozilla/Constants.h"
 #include <algorithm>
 
 class gfxContext;
@@ -56,7 +54,7 @@ class UserSpaceMetrics;
 namespace gfx {
 class DrawTarget;
 class GeneralPattern;
-}
+} // namespace gfx
 } // namespace mozilla
 
 // maximum dimension of an offscreen surface - choose so that
@@ -137,7 +135,7 @@ private:
 // GRRR WINDOWS HATE HATE HATE
 #undef CLIP_MASK
 
-class MOZ_STACK_CLASS SVGAutoRenderState
+class MOZ_RAII SVGAutoRenderState
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
@@ -184,6 +182,7 @@ public:
   typedef mozilla::gfx::AntialiasMode AntialiasMode;
   typedef mozilla::gfx::FillRule FillRule;
   typedef mozilla::gfx::GeneralPattern GeneralPattern;
+  typedef mozilla::gfx::Size Size;
 
   static void Init();
 
@@ -249,6 +248,14 @@ public:
    * Update the filter invalidation region for ancestor frames, if relevant.
    */
   static void NotifyAncestorsOfFilterRegionChange(nsIFrame *aFrame);
+
+  /**
+   * Percentage lengths in SVG are resolved against the width/height of the
+   * nearest viewport (or its viewBox, if set). This helper returns the size
+   * of this "context" for the given frame so that percentage values can be
+   * resolved.
+   */
+  static Size GetContextSize(const nsIFrame* aFrame);
 
   /* Computes the input length in terms of object space coordinates.
      Input: rect - bounding box
@@ -342,8 +349,8 @@ public:
    * @param aResultOverflows true if the desired surface size is too big
    * @return the surface size to use
    */
-  static gfxIntSize ConvertToSurfaceSize(const gfxSize& aSize,
-                                         bool *aResultOverflows);
+  static mozilla::gfx::IntSize ConvertToSurfaceSize(const gfxSize& aSize,
+                                                    bool *aResultOverflows);
 
   /*
    * Hit test a given rectangle/matrix.

@@ -39,16 +39,17 @@ public:
                          nsDisplayList* aBackground, nsDisplayList* aForeground);
 
 
-  void PaintOutlineAndFocusBorders(nsPresContext* aPresContext,
-                                   nsRenderingContext& aRenderingContext,
-                                   const nsRect& aDirtyRect,
-                                   const nsRect& aRect);
+  DrawResult PaintOutlineAndFocusBorders(nsDisplayListBuilder* aBuilder,
+                                         nsPresContext* aPresContext,
+                                         nsRenderingContext& aRenderingContext,
+                                         const nsRect& aDirtyRect,
+                                         const nsRect& aRect);
 
-  DrawResult PaintBorderAndBackground(nsPresContext* aPresContext,
+  DrawResult PaintBorderAndBackground(nsDisplayListBuilder* aBuilder,
+                                      nsPresContext* aPresContext,
                                       nsRenderingContext& aRenderingContext,
                                       const nsRect& aDirtyRect,
-                                      const nsRect& aRect,
-                                      uint32_t aBGFlags);
+                                      const nsRect& aRect);
 
   void SetFrame(nsFrame* aFrame, nsPresContext* aPresContext);
  
@@ -77,8 +78,8 @@ protected:
 private:
 
   // cached styles for focus and outline.
-  nsRefPtr<nsStyleContext> mInnerFocusStyle;
-  nsRefPtr<nsStyleContext> mOuterFocusStyle;
+  RefPtr<nsStyleContext> mInnerFocusStyle;
+  RefPtr<nsStyleContext> mOuterFocusStyle;
 
   nsFrame* mFrame;
 };

@@ -44,6 +44,8 @@
 #include "JumpListBuilder.h"
 #include "JumpListItem.h"
 
+#include "WindowsUIUtils.h"
+
 #ifdef NS_PRINTING
 #include "nsDeviceContextSpecWin.h"
 #include "nsPrintOptionsWin.h"
@@ -112,10 +114,12 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListItem)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListSeparator)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListLink)
 NS_GENERIC_FACTORY_CONSTRUCTOR(JumpListShortcut)
+NS_GENERIC_FACTORY_CONSTRUCTOR(WindowsUIUtils)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsTransferable)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsHTMLFormatConverter)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsDragService)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsBidiKeyboard)
+NS_GENERIC_FACTORY_CONSTRUCTOR(TaskbarPreviewCallback)
 #ifdef NS_PRINTING
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsPrintOptionsWin, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsPrinterEnumeratorWin)
@@ -150,8 +154,10 @@ NS_DEFINE_NAMED_CID(NS_WIN_JUMPLISTITEM_CID);
 NS_DEFINE_NAMED_CID(NS_WIN_JUMPLISTSEPARATOR_CID);
 NS_DEFINE_NAMED_CID(NS_WIN_JUMPLISTLINK_CID);
 NS_DEFINE_NAMED_CID(NS_WIN_JUMPLISTSHORTCUT_CID);
+NS_DEFINE_NAMED_CID(NS_WINDOWS_UIUTILS_CID);
 NS_DEFINE_NAMED_CID(NS_DRAGSERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_BIDIKEYBOARD_CID);
+NS_DEFINE_NAMED_CID(NS_TASKBARPREVIEWCALLBACK_CID);
 #ifdef NS_PRINTING
 NS_DEFINE_NAMED_CID(NS_PRINTSETTINGSSERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_PRINTER_ENUMERATOR_CID);
@@ -182,8 +188,10 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_WIN_JUMPLISTSEPARATOR_CID, false, nullptr, JumpListSeparatorConstructor },
   { &kNS_WIN_JUMPLISTLINK_CID, false, nullptr, JumpListLinkConstructor },
   { &kNS_WIN_JUMPLISTSHORTCUT_CID, false, nullptr, JumpListShortcutConstructor },
+  { &kNS_WINDOWS_UIUTILS_CID, false, nullptr, WindowsUIUtilsConstructor },
   { &kNS_DRAGSERVICE_CID, false, nullptr, nsDragServiceConstructor, Module::MAIN_PROCESS_ONLY },
   { &kNS_BIDIKEYBOARD_CID, false, nullptr, nsBidiKeyboardConstructor },
+  { &kNS_TASKBARPREVIEWCALLBACK_CID, false, nullptr, TaskbarPreviewCallbackConstructor },
 #ifdef NS_PRINTING
   { &kNS_PRINTSETTINGSSERVICE_CID, false, nullptr, nsPrintOptionsWinConstructor },
   { &kNS_PRINTER_ENUMERATOR_CID, false, nullptr, nsPrinterEnumeratorWinConstructor },
@@ -214,8 +222,10 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
   { "@mozilla.org/windows-jumplistseparator;1", &kNS_WIN_JUMPLISTSEPARATOR_CID },
   { "@mozilla.org/windows-jumplistlink;1", &kNS_WIN_JUMPLISTLINK_CID },
   { "@mozilla.org/windows-jumplistshortcut;1", &kNS_WIN_JUMPLISTSHORTCUT_CID },
+  { "@mozilla.org/windows-ui-utils;1", &kNS_WINDOWS_UIUTILS_CID },
   { "@mozilla.org/widget/dragservice;1", &kNS_DRAGSERVICE_CID, Module::MAIN_PROCESS_ONLY },
   { "@mozilla.org/widget/bidikeyboard;1", &kNS_BIDIKEYBOARD_CID },
+  { "@mozilla.org/widget/taskbar-preview-callback;1", &kNS_TASKBARPREVIEWCALLBACK_CID },
 #ifdef NS_PRINTING
   { "@mozilla.org/gfx/printsettings-service;1", &kNS_PRINTSETTINGSSERVICE_CID },
   { "@mozilla.org/gfx/printerenumerator;1", &kNS_PRINTER_ENUMERATOR_CID },

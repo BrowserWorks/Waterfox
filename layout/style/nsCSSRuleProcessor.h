@@ -15,11 +15,16 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MemoryReporting.h"
-#include "nsIStyleRuleProcessor.h"
-#include "nsTArray.h"
-#include "nsAutoPtr.h"
-#include "nsRuleWalker.h"
+#include "mozilla/RefCountType.h"
+#include "mozilla/SheetType.h"
 #include "mozilla/UniquePtr.h"
+#include "nsAutoPtr.h"
+#include "nsCSSPseudoElements.h"
+#include "nsExpirationTracker.h"
+#include "nsIMediaList.h"
+#include "nsIStyleRuleProcessor.h"
+#include "nsRuleWalker.h"
+#include "nsTArray.h"
 
 struct CascadeEnumData;
 struct ElementDependentRuleProcessorData;
@@ -35,6 +40,9 @@ class nsCSSCounterStyleRule;
 
 namespace mozilla {
 class CSSStyleSheet;
+namespace css {
+class DocumentRule;
+} // namespace css
 } // namespace mozilla
 
 /**
@@ -50,16 +58,17 @@ class CSSStyleSheet;
 
 class nsCSSRuleProcessor: public nsIStyleRuleProcessor {
 public:
-  typedef nsTArray<nsRefPtr<mozilla::CSSStyleSheet>> sheet_array_type;
+  typedef nsTArray<RefPtr<mozilla::CSSStyleSheet>> sheet_array_type;
 
   // aScopeElement must be non-null iff aSheetType is
-  // nsStyleSet::eScopedDocSheet.
+  // SheetType::ScopedDoc.
   // aPreviousCSSRuleProcessor is the rule processor (if any) that this
   // one is replacing.
   nsCSSRuleProcessor(const sheet_array_type& aSheets,
-                     uint8_t aSheetType,
+                     mozilla::SheetType aSheetType,
                      mozilla::dom::Element* aScopeElement,
-                     nsCSSRuleProcessor* aPreviousCSSRuleProcessor);
+                     nsCSSRuleProcessor* aPreviousCSSRuleProcessor,
+                     bool aIsShared = false);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(nsCSSRuleProcessor)
@@ -105,6 +114,21 @@ public:
    */
   static bool IsLink(mozilla::dom::Element* aElement);
 
+  /**
+   * Returns true if the given aElement matches aSelector.
+   * Like nsCSSRuleProcessor.cpp's SelectorMatches (and unlike
+   * SelectorMatchesTree), this does not check an entire selector list
+   * separated by combinators.
+   *
+   * :visited and :link will match both visited and non-visited links,
+   * as if aTreeMatchContext->mVisitedHandling were eLinksVisitedOrUnvisited.
+   *
+   * aSelector is restricted to not containing pseudo-elements.
+   */
+  static bool RestrictedSelectorMatches(mozilla::dom::Element* aElement,
+                                        nsCSSSelector* aSelector,
+                                        TreeMatchContext& aTreeMatchContext);
+
   // nsIStyleRuleProcessor
   virtual void RulesMatching(ElementRuleProcessorData* aData) override;
 
@@ -122,7 +146,9 @@ public:
   virtual bool HasDocumentStateDependentStyle(StateRuleProcessorData* aData) override;
 
   virtual nsRestyleHint
-    HasAttributeDependentStyle(AttributeRuleProcessorData* aData) override;
+    HasAttributeDependentStyle(AttributeRuleProcessorData* aData,
+                               mozilla::RestyleHintData& aRestyleHintDataResult)
+                                 override;
 
   virtual bool MediumFeaturesChanged(nsPresContext* aPresContext) override;
 
@@ -161,12 +187,22 @@ public:
    */
   mozilla::dom::Element* GetScopeElement() const { return mScopeElement; }
 
-#ifdef DEBUG
-  void AssertQuirksChangeOK() {
-    NS_ASSERTION(!mRuleCascades, "can't toggle quirks style sheet without "
-                                 "clearing rule cascades");
+  void TakeDocumentRulesAndCacheKey(
+      nsPresContext* aPresContext,
+      nsTArray<mozilla::css::DocumentRule*>& aDocumentRules,
+      nsDocumentRuleResultCacheKey& aDocumentRuleResultCacheKey);
+
+  bool IsShared() const { return mIsShared; }
+
+  nsExpirationState* GetExpirationState() { return &mExpirationState; }
+  void AddStyleSetRef();
+  void ReleaseStyleSetRef();
+  void SetInRuleProcessorCache(bool aVal) {
+    MOZ_ASSERT(mIsShared);
+    mInRuleProcessorCache = aVal;
   }
-#endif
+  bool IsInRuleProcessorCache() const { return mInRuleProcessorCache; }
+  bool IsUsedByMultipleStyleSets() const { return mStyleSetRefCnt > 1; }
 
 #ifdef XP_WIN
   // Cached theme identifier for the moz-windows-theme media query.
@@ -219,10 +255,30 @@ private:
 
   // The scope element for this rule processor's scoped style sheets.
   // Only used if mSheetType == nsStyleSet::eScopedDocSheet.
-  nsRefPtr<mozilla::dom::Element> mScopeElement;
+  RefPtr<mozilla::dom::Element> mScopeElement;
+
+  nsTArray<mozilla::css::DocumentRule*> mDocumentRules;
+  nsDocumentRuleResultCacheKey mDocumentCacheKey;
+
+  nsExpirationState mExpirationState;
+  MozRefCountType mStyleSetRefCnt;
 
   // type of stylesheet using this processor
-  uint8_t mSheetType;  // == nsStyleSet::sheetType
+  mozilla::SheetType mSheetType;
+
+  const bool mIsShared;
+
+  // Whether we need to build up mDocumentCacheKey and mDocumentRules as
+  // we build a RuleCascadeData.  Is true only for shared rule processors
+  // and only before we build the first RuleCascadeData.  See comment in
+  // RefreshRuleCascade for why.
+  bool mMustGatherDocumentRules;
+
+  bool mInRuleProcessorCache;
+
+#ifdef DEBUG
+  bool mDocumentRulesAndCacheKeyValid;
+#endif
 
 #ifdef XP_WIN
   static uint8_t sWinThemeId;

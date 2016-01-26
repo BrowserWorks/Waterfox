@@ -1,0 +1,495 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* CSS Variables specific to this panel that aren't defined by the themes */
+.theme-dark {
+  --cell-border-color: rgba(255,255,255,0.15);
+  --cell-border-color-light: rgba(255,255,255,0.1);
+  --focus-cell-border-color: rgba(255,255,255,0.5);
+  --row-alt-background-color: rgba(29,79,115,0.15);
+  --row-hover-background-color: rgba(29,79,115,0.25);
+}
+
+.theme-light {
+  --cell-border-color: rgba(0,0,0,0.15);
+  --cell-border-color-light: rgba(0,0,0,0.1);
+  --focus-cell-border-color: rgba(0,0,0,0.3);
+  --row-alt-background-color: rgba(76,158,217,0.1);
+  --row-hover-background-color: rgba(76,158,217,0.2);
+}
+
+html, body, #app, #memory-tool {
+  height: 100%;
+}
+
+#memory-tool {
+  /**
+   * Flex: contains two children: .devtools-toolbar and #memory-tool-container,
+   * which need to be laid out vertically. The toolbar has a fixed height and
+   * the container needs to flex to fill out all remaining vertical space.
+   */
+  display: flex;
+  flex-direction: column;
+  --sidebar-width: 185px;
+  /**
+   * If --heap-tree-row-height changes, be sure to change HEAP_TREE_ROW_HEIGHT
+   * in `devtools/client/memory/components/heap.js`.
+   */
+  --heap-tree-row-height: 14px;
+  --heap-tree-header-height: 17px;
+}
+
+/**
+ * Toolbar
+ */
+
+.devtools-toolbar {
+  /**
+   * Flex: contains several children, which need to be laid out horizontally,
+   * and aligned vertically in the middle of the container.
+   */
+  display: flex;
+  align-items: center;
+}
+
+.devtools-toolbar > .toolbar-group:nth-of-type(1) {
+  /**
+   * We want this to be exactly at a `--sidebar-width` distance from the
+   * toolbar's start boundary. A `.devtools-toolbar` has a 3px start padding.
+   */
+  flex: 0 0 calc(var(--sidebar-width) - 4px);
+  border-inline-end: 1px solid var(--theme-splitter-color);
+  margin-inline-end: 5px;
+  padding-right: 1px;
+}
+
+.devtools-toolbar > .toolbar-group {
+  /**
+   * Flex: contains several children, which need to be laid out horizontally,
+   * and aligned vertically in the middle of the container.
+   */
+  display: flex;
+  align-items: center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.devtools-toolbar > .toolbar-group > label {
+  /**
+   * Flex: contains form controls and text, which need to be laid out
+   * horizontally, vertically aligned in the middle of the container.
+   */
+  display: flex;
+  align-items: center;
+  margin-inline-end: 5px;
+}
+
+.devtools-toolbar > .toolbar-group > label.breakdown-by > span {
+  margin-inline-end: 5px;
+}
+
+.devtools-toolbar > label {
+  margin-inline-end: 5px;
+}
+
+#select-view {
+  margin-inline-start: 5px;
+}
+
+#take-snapshot::before {
+  background-image: url(images/command-screenshot.png);
+}
+@media (min-resolution: 1.1dppx) {
+  #take-snapshot::before {
+    background-image: url(images/command-screenshot@2x.png);
+  }
+}
+
+/**
+ * Due to toolbar styles of `.devtools-toolbarbutton:not([label])` which overrides
+ * .devtools-toolbarbutton's min-width of 78px, reset the min-width.
+ */
+#import-snapshot,
+#clear-snapshots {
+  -moz-box-align: center;
+  flex-grow: 1;
+  padding: 1px;
+  margin: 2px 1px;
+  min-width: unset;
+}
+
+.spacer {
+  flex: 1;
+}
+
+#filter {
+  align-self: stretch;
+  margin: 2px;
+}
+
+/**
+ * Container (sidebar + main panel)
+ */
+
+#memory-tool-container {
+  /**
+   * Flex: contains two children: .list (sidebar) and #heap-view (main panel),
+   * which need to be laid out horizontally. The sidebar has a fixed width and
+   * the main panel needs to flex to fill out all remaining horizontal space.
+   */
+  display: flex;
+  /**
+   * Flexing to fill out remaining vertical space. The preceeding sibling is
+   * the toolbar. @see #memory-tool.
+   */
+  flex: 1;
+  overflow: hidden;
+}
+
+/**
+ * Sidebar
+ */
+
+.list {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  background-color: var(--theme-sidebar-background);
+  border-inline-end: 1px solid var(--theme-splitter-color);
+}
+
+.snapshot-list-item {
+  /**
+   * Flex: contains several children, which need to be laid out vertically.
+   */
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-body-color);
+  border-bottom: 1px solid rgba(128,128,128,0.15);
+  padding: 8px;
+}
+
+.snapshot-list-item.selected {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+}
+
+.snapshot-list-item .snapshot-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 90%;
+}
+
+.snapshot-list-item .save {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.snapshot-list-item > .snapshot-title {
+  margin-bottom: 14px;
+}
+
+.snapshot-list-item > .snapshot-title > input[type=checkbox] {
+  margin: 0;
+  margin-inline-end: 5px;
+}
+
+.snapshot-list-item > .snapshot-state,
+.snapshot-list-item > .snapshot-totals {
+  font-size: 90%;
+  color: var(--theme-body-color-alt);
+}
+
+.snapshot-list-item.selected > .snapshot-state,
+.snapshot-list-item.selected > .snapshot-totals {
+  /* Text inside a selected item should not be custom colored. */
+  color: inherit !important;
+}
+
+/**
+ * Main panel
+ */
+
+#heap-view {
+  /**
+   * Flex: contains a .heap-view-panel which needs to fill out all the
+   * available space, horizontally and vertically.
+   */;
+  display: flex;
+  /**
+   * Flexing to fill out remaining horizontal space. The preceeding sibling
+   * is the sidebar. @see #memory-tool-container.
+   */
+  flex: 1;
+  background-color: var(--theme-toolbar-background);
+
+  /**
+   * By default, flex items have min-width: auto;
+   * (https://drafts.csswg.org/css-flexbox/#min-size-auto)
+   */
+  min-width: 0;
+}
+
+#heap-view > .heap-view-panel {
+  /**
+   * Flex: can contain several children, including a tree with a header and
+   * multiple rows, all of which need to be laid out vertically. When the
+   * tree is visible, the header has a fixed height and tree body needs to flex
+   * to fill out all remaining vertical space.
+   */
+  display: flex;
+  flex-direction: column;
+  /**
+   * Flexing to fill out remaining horizontal space. @see #heap-view.
+   */
+  flex: 1;
+
+  /**
+   * By default, flex items have min-width: auto;
+   * (https://drafts.csswg.org/css-flexbox/#min-size-auto)
+   */
+  min-width: 0;
+}
+
+#heap-view > .heap-view-panel > .snapshot-status,
+#heap-view > .heap-view-panel > .take-snapshot {
+  margin: auto;
+  margin-top: 65px;
+  font-size: 120%;
+}
+
+#heap-view > .heap-view-panel > .take-snapshot {
+  padding: 5px;
+}
+
+#heap-view > .heap-view-panel[data-state="snapshot-state-error"] pre {
+  background-color: var(--theme-body-background);
+  margin: 20px;
+  padding: 20px;
+}
+
+/**
+ * Heap tree view header
+ */
+
+.header {
+  /**
+   * Flex: contains several span columns, all of which need to be laid out
+   * horizontally. All columns except the last one have percentage widths, and
+   * the last one needs to flex to fill out all remaining horizontal space.
+   */
+  display: flex;
+  color: var(--theme-body-color);
+  background-color: var(--theme-tab-toolbar-background);
+  border-bottom: 1px solid var(--cell-border-color);
+}
+
+.header > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--heap-tree-header-height);
+  justify-content: center;
+  font-size: 90%;
+  white-space: nowrap;
+}
+
+.header > .heap-tree-item-name {
+  justify-content: flex-start;
+}
+
+/**
+ * Heap tree view body
+ */
+
+.tree {
+  /**
+   * Flexing to fill out remaining vertical space. @see .heap-view-panel
+   */
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--theme-body-background);
+}
+
+.tree-node {
+  height: var(--heap-tree-row-height);
+}
+
+/**
+ * Heap tree view columns
+ */
+
+.heap-tree-item {
+  /**
+   * Flex: contains several span columns, all of which need to be laid out
+   * horizontally. All columns except the last one have percentage widths, and
+   * the last one needs to flex to fill out all remaining horizontal space.
+   */
+  display: flex;
+}
+
+.tree-node-odd {
+  background-color: var(--row-alt-background-color);
+}
+
+.tree-node:hover {
+  background-color: var(--row-hover-background-color);
+}
+
+.heap-tree-item.focused {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+}
+
+.heap-tree-item-bytes,
+.heap-tree-item-count,
+.heap-tree-item-total-bytes,
+.heap-tree-item-total-count {
+  /**
+   * Flex: contains several subcolumns, which need to be laid out horizontally.
+   * These subcolumns may have specific widths or need to flex.
+   */
+  display: flex;
+  text-align: end;
+  border-inline-end: var(--cell-border-color) 1px solid;
+}
+
+.heap-tree-item-count,
+.heap-tree-item-total-count,
+.heap-tree-item-bytes,
+.heap-tree-item-total-bytes {
+  width: 10%;
+}
+
+.heap-tree-item-name {
+  /**
+   * Flex: contains an .arrow and some text, which need to be laid out
+   * horizontally, vertically aligned in the middle of the container.
+   */
+  display: flex;
+  align-items: center;
+  /**
+   * Flexing to fill out remaining vertical space.
+   * @see .header and .heap-tree-item */
+  flex: 1;
+  padding-inline-start: 5px;
+}
+
+/**
+ * Heap tree view subcolumns
+ */
+
+.heap-tree-number,
+.heap-tree-percent,
+.heap-tree-item-name {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.heap-tree-number {
+  padding-inline-start: 3px;
+}
+
+.heap-tree-percent {
+  padding-inline-start: 3px;
+  padding-inline-end: 3px;
+}
+
+.heap-tree-number,
+.heap-tree-percent {
+  font-family: var(--monospace-font-family);
+}
+
+.heap-tree-number {
+  flex: 1;
+  color: var(--theme-content-color3);
+}
+
+.heap-tree-percent {
+  width: 2.5em;
+}
+
+.heap-tree-item.focused .heap-tree-number,
+.heap-tree-item.focused .heap-tree-percent {
+  color: inherit;
+}
+
+/**
+ * Heap tree errors.
+ */
+
+.error::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  max-height: 12px;
+  background-image: url(chrome://devtools/skin/images/webconsole.svg);
+  background-size: 72px 60px;
+  background-position: -24px -24px;
+  background-repeat: no-repeat;
+  margin: 0px;
+  margin-top: 2px;
+  margin-inline-end: 5px;
+}
+
+.theme-light .error::before {
+  background-image: url(chrome://devtools/skin/images/webconsole.svg#light-icons);
+}
+
+/**
+ * Frame View components
+ */
+
+.separator,
+.not-available,
+.heap-tree-item-address {
+  opacity: .5;
+  margin-left: .5em;
+  margin-right: .5em;
+}
+
+.focused .frame-link-filename,
+.focused .frame-link-column,
+.focused .frame-link-line,
+.focused .frame-link-host,
+.focused .frame-link-colon {
+  color: var(--theme-selection-color);
+}
+
+.frame-link-filename {
+  color: var(--theme-highlight-blue);
+  cursor: pointer;
+}
+
+.frame-link-filename:hover {
+  text-decoration: underline;
+}
+
+.frame-link-column,
+.frame-link-line,
+.frame-link-colon {
+  color: var(--theme-highlight-orange);
+}
+
+.frame-link-host {
+  margin-inline-start: 5px;
+  font-size: 90%;
+  color: var(--theme-content-color2);
+}
+
+.frame-link-function-display-name {
+  margin-inline-end: 5px;
+}
+
+.no-allocation-stacks {
+    border-color: var(--theme-splitter-color);
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    text-align: center;
+    padding: 5px;
+}

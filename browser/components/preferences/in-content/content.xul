@@ -36,7 +36,9 @@
       class="header"
       hidden="true"
       data-category="paneContent">
-  <label class="header-name">&paneContent.title;</label>
+  <label class="header-name" flex="1">&paneContent.title;</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
 </hbox>
 
 <groupbox id="drmGroup" data-category="paneContent" hidden="true">
@@ -55,6 +57,39 @@
         <hbox pack="end" align="center">
           <label id="playDRMContentLink" class="text-link" value="&playDRMContent.learnMore.label;"/>
         </hbox>
+      </row>
+    </rows>
+  </grid>
+</groupbox>
+
+<groupbox id="notificationsGroup" data-category="paneContent" hidden="true">
+  <caption><label>&notificationsPolicy.label;</label></caption>
+  <grid>
+    <columns>
+      <column flex="1"/>
+      <column/>
+    </columns>
+    <rows>
+      <row id="notificationsPolicyRow" align="center">
+        <hbox align="start">
+          <label id="notificationsPolicy">&notificationsPolicyDesc3.label;</label>
+          <label id="notificationsPolicyLearnMore"
+                 class="text-link"
+                 value="&notificationsPolicyLearnMore.label;"/>
+        </hbox>
+        <hbox pack="end">
+          <button id="notificationsPolicyButton" label="&notificationsPolicyButton.label;"
+                  accesskey="&notificationsPolicyButton.accesskey;"/>
+        </hbox>
+      </row>
+      <row id="notificationsDoNotDisturbRow" hidden="true">
+        <vbox align="start">
+          <checkbox id="notificationsDoNotDisturb" label="&notificationsDoNotDisturb.label;"
+                    accesskey="&notificationsDoNotDisturb.accesskey;"/>
+          <label id="notificationsDoNotDisturbDetails"
+                 class="indent"
+                 value="&notificationsDoNotDisturbDetails.value;"/>
+        </vbox>
       </row>
     </rows>
   </grid>
@@ -97,9 +132,9 @@
       <row id="fontRow">
         <hbox align="center">
           <label control="defaultFont" accesskey="&defaultFont.accesskey;">&defaultFont.label;</label>
-          <menulist id="defaultFont" />
+          <menulist id="defaultFont" delayprefsave="true"/>
           <label id="defaultFontSizeLabel" control="defaultFontSize" accesskey="&defaultSize.accesskey;">&defaultSize.label;</label>
-          <menulist id="defaultFontSize">
+          <menulist id="defaultFontSize" delayprefsave="true">
             <menupopup>
               <menuitem value="9" label="9"/>
               <menuitem value="10" label="10"/>
@@ -160,12 +195,14 @@
                 label="&translateWebPages.label;." accesskey="&translateWebPages.accesskey;"
                 onsyncfrompreference="return gContentPane.updateButtons('translateButton',
                                               'browser.translation.detectLanguage');"/>
-      <label>&translation.options.attribution.beforeLogo;</label>
-      <separator orient="vertical" class="thin"/>
-      <image id="translationAttributionImage" aria-label="Microsoft Translator"
-             src="chrome://browser/content/microsoft-translator-attribution.png"/>
-      <separator orient="vertical" class="thin"/>
-      <label>&translation.options.attribution.afterLogo;</label>
+      <hbox id="bingAttribution" hidden="true">
+        <label>&translation.options.attribution.beforeLogo;</label>
+        <separator orient="vertical" class="thin"/>
+        <image id="translationAttributionImage" aria-label="Microsoft Translator"
+               src="chrome://browser/content/microsoft-translator-attribution.png"/>
+        <separator orient="vertical" class="thin"/>
+        <label>&translation.options.attribution.afterLogo;</label>
+      </hbox>
     </hbox>
     <button id="translateButton" label="&translateExceptions.label;"
             accesskey="&translateExceptions.accesskey;"/>

@@ -110,16 +110,10 @@ public:
   /**
    * Tells the spellchecker to use a specific dictionary.
    * @param aDictionary a string that is in the list returned
-   * by GetDictionaryList() or an empty string. If aDictionary is 
+   * by GetDictionaryList() or an empty string. If aDictionary is
    * empty string, spellchecker will be disabled.
    */
   NS_IMETHOD SetCurrentDictionary(const nsAString &aDictionary) = 0;
-
-  /**
-   * Call this on any change in installed dictionaries to ensure that the spell
-   * checker is not using a current dictionary which is no longer available.
-   */
-  NS_IMETHOD CheckCurrentDictionary() = 0;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsISpellChecker, NS_ISPELLCHECKER_IID)

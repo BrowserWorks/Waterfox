@@ -22,6 +22,7 @@ EXPORTS.mozilla += [
 
 SOURCES += [
     'Telemetry.cpp',
+    'WebrtcTelemetry.cpp',
 ]
 
 EXTRA_COMPONENTS += [
@@ -31,21 +32,23 @@ EXTRA_COMPONENTS += [
 
 EXTRA_JS_MODULES += [
     'TelemetryArchive.jsm',
+    'TelemetryController.jsm',
+    'TelemetryEnvironment.jsm',
     'TelemetryLog.jsm',
+    'TelemetryReportingPolicy.jsm',
+    'TelemetrySend.jsm',
+    'TelemetrySession.jsm',
     'TelemetryStopwatch.jsm',
     'TelemetryStorage.jsm',
+    'TelemetryTimestamps.jsm',
     'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
     'UITelemetry.jsm',
 ]
 
-EXTRA_PP_JS_MODULES += [
-    'TelemetryController.jsm',
-    'TelemetryEnvironment.jsm',
-    'TelemetrySession.jsm',
+TESTING_JS_MODULES += [
+  'tests/unit/TelemetryArchiveTesting.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -53,10 +56,24 @@ FINAL_LIBRARY = 'xul'
 
 GENERATED_FILES = [
     'TelemetryHistogramData.inc',
+    'TelemetryHistogramEnums.h',
 ]
 
-if CONFIG['MOZILLA_OFFICIAL']:
-    DEFINES['MOZILLA_OFFICIAL'] = True
+histogram_files = [
+    'Histograms.json',
+    '/dom/base/UseCounters.conf',
+    '/dom/base/nsDeprecatedOperationList.h',
+]
+
+data = GENERATED_FILES['TelemetryHistogramData.inc']
+data.script = 'gen-histogram-data.py'
+data.inputs = histogram_files
+
+enums = GENERATED_FILES['TelemetryHistogramEnums.h']
+enums.script = 'gen-histogram-enum.py'
+enums.inputs = histogram_files
+
+DEFINES['MOZ_APP_VERSION'] = '"%s"' % CONFIG['MOZ_APP_VERSION']
 
 LOCAL_INCLUDES += [
     '/xpcom/build',
@@ -64,3 +81,4 @@ LOCAL_INCLUDES += [
 ]
 
 SPHINX_TREES['telemetry'] = 'docs'
+SPHINX_TREES['healthreport'] = 'docs/fhr'

@@ -59,8 +59,8 @@
 #define MATCHES(tagName, str) tagName.EqualsIgnoreCase(str)
 
 nsHTMLURIRefObject::nsHTMLURIRefObject()
+  : mCurAttrIndex(0), mAttributeCnt(0)
 {
-  mCurAttrIndex = mAttributeCnt = 0;
 }
 
 nsHTMLURIRefObject::~nsHTMLURIRefObject()
@@ -248,7 +248,7 @@ nsHTMLURIRefObject::SetNode(nsIDOMNode *aNode)
 
 nsresult NS_NewHTMLURIRefObject(nsIURIRefObject** aResult, nsIDOMNode* aNode)
 {
-  nsRefPtr<nsHTMLURIRefObject> refObject = new nsHTMLURIRefObject();
+  RefPtr<nsHTMLURIRefObject> refObject = new nsHTMLURIRefObject();
   nsresult rv = refObject->SetNode(aNode);
   if (NS_FAILED(rv)) {
     *aResult = 0;

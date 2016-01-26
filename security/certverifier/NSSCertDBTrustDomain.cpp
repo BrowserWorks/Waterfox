@@ -10,6 +10,7 @@
 
 #include "ExtendedValidation.h"
 #include "OCSPRequestor.h"
+#include "OCSPVerificationTrustDomain.h"
 #include "certdb.h"
 #include "cert.h"
 #include "mozilla/UniquePtr.h"
@@ -45,19 +46,27 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            OCSPCache& ocspCache,
              /*optional but shouldn't be*/ void* pinArg,
                                            CertVerifier::OcspGetConfig ocspGETConfig,
+                                           uint32_t certShortLifetimeInDays,
                                            CertVerifier::PinningMode pinningMode,
                                            unsigned int minRSABits,
-                              /*optional*/ const char* hostname,
-                              /*optional*/ ScopedCERTCertList* builtChain)
+                                           ValidityCheckingMode validityCheckingMode,
+                                           CertVerifier::SHA1Mode sha1Mode,
+                                           ScopedCERTCertList& builtChain,
+                              /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo,
+                              /*optional*/ const char* hostname)
   : mCertDBTrustType(certDBTrustType)
   , mOCSPFetching(ocspFetching)
   , mOCSPCache(ocspCache)
   , mPinArg(pinArg)
   , mOCSPGetConfig(ocspGETConfig)
+  , mCertShortLifetimeInDays(certShortLifetimeInDays)
   , mPinningMode(pinningMode)
   , mMinRSABits(minRSABits)
-  , mHostname(hostname)
+  , mValidityCheckingMode(validityCheckingMode)
+  , mSHA1Mode(sha1Mode)
   , mBuiltChain(builtChain)
+  , mPinningTelemetryInfo(pinningTelemetryInfo)
+  , mHostname(hostname)
   , mCertBlocklist(do_GetService(NS_CERTBLOCKLIST_CONTRACTID))
   , mOCSPStaplingStatus(CertVerifier::OCSP_STAPLING_NEVER_CHECKED)
 {
@@ -197,7 +206,7 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   }
 
   if (isCertRevoked) {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: certificate is in blocklist"));
     return Result::ERROR_REVOKED_CERTIFICATE;
   }
@@ -253,7 +262,6 @@ NSSCertDBTrustDomain::DigestBuf(Input item, DigestAlgorithm digestAlg,
   return DigestBufNSS(item, digestAlg, digestBuf, digestBufLen);
 }
 
-
 static PRIntervalTime
 OCSPFetchingTypeToTimeoutTime(NSSCertDBTrustDomain::OCSPFetching ocspFetching)
 {
@@ -268,9 +276,10 @@ OCSPFetchingTypeToTimeoutTime(NSSCertDBTrustDomain::OCSPFetching ocspFetching)
     case NSSCertDBTrustDomain::NeverFetchOCSP:
     case NSSCertDBTrustDomain::LocalOnlyOCSPForEV:
       PR_NOT_REACHED("we should never see this OCSPFetching type here");
-    default:
-      PR_NOT_REACHED("we're not handling every OCSPFetching type");
+      break;
   }
+
+  PR_NOT_REACHED("we're not handling every OCSPFetching type");
   return PR_SecondsToInterval(2);
 }
 
@@ -329,6 +338,7 @@ GetOCSPAuthorityInfoAccessLocation(PLArenaPool* arena,
 Result
 NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
                                       const CertID& certID, Time time,
+                                      Duration validityDuration,
                          /*optional*/ const Input* stapledOCSPResponse,
                          /*optional*/ const Input* aiaExtension)
 {
@@ -338,7 +348,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   // TODO: need to verify that IsRevoked isn't called for trust anchors AND
   // that that fact is documented in mozillapkix.
 
-  PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
          ("NSSCertDBTrustDomain: Top of CheckRevocation\n"));
 
   // Bug 991815: The BR allow OCSP for intermediates to be up to one year old.
@@ -372,7 +382,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     if (stapledOCSPResponseResult == Success) {
       // stapled OCSP response present and good
       mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_GOOD;
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: stapled OCSP response: good"));
       return Success;
     }
@@ -380,19 +390,19 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
         expired) {
       // stapled OCSP response present but expired
       mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_EXPIRED;
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: expired stapled OCSP response"));
     } else {
       // stapled OCSP response present but invalid for some reason
       mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_INVALID;
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: stapled OCSP response: failure"));
       return stapledOCSPResponseResult;
     }
   } else if (endEntityOrCA == EndEntityOrCA::MustBeEndEntity) {
     // no stapled OCSP response
     mOCSPStaplingStatus = CertVerifier::OCSP_STAPLING_NONE;
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: no stapled OCSP response"));
   }
 
@@ -403,22 +413,22 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
                                               cachedResponseValidThrough);
   if (cachedResponsePresent) {
     if (cachedResponseResult == Success && cachedResponseValidThrough >= time) {
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: cached OCSP response: good"));
       return Success;
     }
     // If we have a cached revoked response, use it.
     if (cachedResponseResult == Result::ERROR_REVOKED_CERTIFICATE) {
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: cached OCSP response: revoked"));
       return Result::ERROR_REVOKED_CERTIFICATE;
     }
     // The cached response may indicate an unknown certificate or it may be
     // expired. Don't return with either of these statuses yet - we may be
     // able to fetch a more recent one.
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
-           ("NSSCertDBTrustDomain: cached OCSP response: error %ld valid "
-           "until %lld", cachedResponseResult, cachedResponseValidThrough));
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+           ("NSSCertDBTrustDomain: cached OCSP response: error %d",
+           cachedResponseResult));
     // When a good cached response has expired, it is more convenient
     // to convert that to an error code and just deal with
     // cachedResponseResult from here on out.
@@ -435,7 +445,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
       cachedResponsePresent = false;
     }
   } else {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: no cached OCSP response"));
   }
   // At this point, if and only if cachedErrorResult is Success, there was no
@@ -455,7 +465,10 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   // security.OCSP.enable==0 means "I want the default" or "I really never want
   // you to ever fetch OCSP."
 
+  Duration shortLifetime(mCertShortLifetimeInDays * Time::ONE_DAY_IN_SECONDS);
+
   if ((mOCSPFetching == NeverFetchOCSP) ||
+      (validityDuration < shortLifetime) ||
       (endEntityOrCA == EndEntityOrCA::MustBeCA &&
        (mOCSPFetching == FetchOCSPForDVHardFail ||
         mOCSPFetching == FetchOCSPForDVSoftFail ||
@@ -565,25 +578,25 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
       }
     }
     if (mOCSPFetching != FetchOCSPForDVSoftFail) {
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: returning SECFailure after "
               "OCSP request failure"));
       return error;
     }
     if (cachedResponseResult == Result::ERROR_OCSP_UNKNOWN_CERT) {
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: returning SECFailure from cached "
               "response after OCSP request failure"));
       return cachedResponseResult;
     }
     if (stapledOCSPResponseResult != Success) {
-      PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+      MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
              ("NSSCertDBTrustDomain: returning SECFailure from expired "
               "stapled response after OCSP request failure"));
       return stapledOCSPResponseResult;
     }
 
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: returning SECSuccess after "
             "OCSP request failure"));
     return Success; // Soft fail -> success :(
@@ -598,7 +611,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
                                               response, ResponseIsFromNetwork,
                                               expired);
   if (rv == Success || mOCSPFetching != FetchOCSPForDVSoftFail) {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
       ("NSSCertDBTrustDomain: returning after VerifyEncodedOCSPResponse"));
     return rv;
   }
@@ -608,13 +621,13 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     return rv;
   }
   if (stapledOCSPResponseResult != Success) {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: returning SECFailure from expired stapled "
             "response after OCSP request verification failure"));
     return stapledOCSPResponseResult;
   }
 
-  PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
          ("NSSCertDBTrustDomain: end of CheckRevocation"));
 
   return Success; // Soft fail -> success :(
@@ -628,7 +641,17 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
 {
   Time thisUpdate(Time::uninitialized);
   Time validThrough(Time::uninitialized);
-  Result rv = VerifyEncodedOCSPResponse(*this, certID, time,
+
+  // We use a try and fallback approach which first mandates good signature
+  // digest algorithms, then falls back to SHA-1 if this fails. If a delegated
+  // OCSP response signing certificate was issued with a SHA-1 signature,
+  // verification initially fails. We cache the failure and then re-use that
+  // result even when doing fallback (i.e. when weak signature digest algorithms
+  // should succeed). To address this we use an OCSPVerificationTrustDomain
+  // here, rather than using *this, to ensure verification succeeds for all
+  // allowed signature digest algorithms.
+  OCSPVerificationTrustDomain trustDomain(*this);
+  Result rv = VerifyEncodedOCSPResponse(trustDomain, certID, time,
                                         maxLifetimeInDays, encodedResponse,
                                         expired, &thisUpdate, &validThrough);
   // If a response was stapled and expired, we don't want to cache it. Return
@@ -652,7 +675,7 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
       rv == Success ||
       rv == Result::ERROR_REVOKED_CERTIFICATE ||
       rv == Result::ERROR_OCSP_UNKNOWN_CERT) {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+    MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: caching OCSP response"));
     Result putRV = mOCSPCache.Put(certID, rv, thisUpdate, validThrough);
     if (putRV != Success) {
@@ -700,7 +723,7 @@ private:
 Result
 NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
 {
-  PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
          ("NSSCertDBTrustDomain: IsChainValid"));
 
   ScopedCERTCertList certList;
@@ -771,7 +794,8 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
       (mPinningMode == CertVerifier::pinningEnforceTestMode);
     bool chainHasValidPins;
     nsresult nsrv = PublicKeyPinningService::ChainHasValidPins(
-      certList, mHostname, time, enforceTestMode, chainHasValidPins);
+      certList, mHostname, time, enforceTestMode, chainHasValidPins,
+      mPinningTelemetryInfo);
     if (NS_FAILED(nsrv)) {
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
@@ -780,16 +804,41 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
     }
   }
 
-  if (mBuiltChain) {
-    *mBuiltChain = certList.forget();
-  }
+  mBuiltChain = certList.forget();
 
   return Success;
 }
 
 Result
-NSSCertDBTrustDomain::CheckSignatureDigestAlgorithm(DigestAlgorithm)
+NSSCertDBTrustDomain::CheckSignatureDigestAlgorithm(DigestAlgorithm aAlg,
+                                                    EndEntityOrCA endEntityOrCA,
+                                                    Time notBefore)
 {
+  // (new Date("2016-01-01T00:00:00Z")).getTime() / 1000
+  static const Time JANUARY_FIRST_2016 = TimeFromEpochInSeconds(1451606400);
+
+  MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
+          ("NSSCertDBTrustDomain: CheckSignatureDigestAlgorithm"));
+  if (aAlg == DigestAlgorithm::sha1) {
+    switch (mSHA1Mode) {
+      case CertVerifier::SHA1Mode::Forbidden:
+        MOZ_LOG(gCertVerifierLog, LogLevel::Debug, ("SHA-1 certificate rejected"));
+        return Result::ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED;
+      case CertVerifier::SHA1Mode::Before2016:
+        if (JANUARY_FIRST_2016 <= notBefore) {
+          MOZ_LOG(gCertVerifierLog, LogLevel::Debug, ("Post-2015 SHA-1 certificate rejected"));
+          return Result::ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED;
+        }
+        break;
+      case CertVerifier::SHA1Mode::Allowed:
+      // Enforcing that the resulting chain uses an imported root is only
+      // possible at a higher level. This is done in CertVerifier::VerifyCert.
+      case CertVerifier::SHA1Mode::ImportedRoot:
+      default:
+        break;
+    }
+  }
+
   return Success;
 }
 
@@ -834,6 +883,42 @@ NSSCertDBTrustDomain::VerifyECDSASignedDigest(const SignedDigest& signedDigest,
                                     mPinArg);
 }
 
+Result
+NSSCertDBTrustDomain::CheckValidityIsAcceptable(Time notBefore, Time notAfter,
+                                                EndEntityOrCA endEntityOrCA,
+                                                KeyPurposeId keyPurpose)
+{
+  if (endEntityOrCA != EndEntityOrCA::MustBeEndEntity) {
+    return Success;
+  }
+  if (keyPurpose == KeyPurposeId::id_kp_OCSPSigning) {
+    return Success;
+  }
+
+  Duration DURATION_27_MONTHS_PLUS_SLOP((2 * 365 + 3 * 31 + 7) *
+                                        Time::ONE_DAY_IN_SECONDS);
+  Duration maxValidityDuration(UINT64_MAX);
+  Duration validityDuration(notBefore, notAfter);
+
+  switch (mValidityCheckingMode) {
+    case ValidityCheckingMode::CheckingOff:
+      return Success;
+    case ValidityCheckingMode::CheckForEV:
+      // The EV Guidelines say the maximum is 27 months, but we use a slightly
+      // higher limit here to (hopefully) minimize compatibility breakage.
+      maxValidityDuration = DURATION_27_MONTHS_PLUS_SLOP;
+      break;
+    default:
+      PR_NOT_REACHED("We're not handling every ValidityCheckingMode type");
+  }
+
+  if (validityDuration > maxValidityDuration) {
+    return Result::ERROR_VALIDITY_TOO_LONG;
+  }
+
+  return Success;
+}
+
 namespace {
 
 static char*
@@ -869,7 +954,7 @@ nss_addEscape(const char* string, char quote)
 } // unnamed namespace
 
 SECStatus
-InitializeNSS(const char* dir, bool readOnly)
+InitializeNSS(const char* dir, bool readOnly, bool loadPKCS11Modules)
 {
   // The NSS_INIT_NOROOTINIT flag turns off the loading of the root certs
   // module by NSS_Initialize because we will load it in InstallLoadableRoots
@@ -879,6 +964,9 @@ InitializeNSS(const char* dir, bool readOnly)
   uint32_t flags = NSS_INIT_NOROOTINIT | NSS_INIT_OPTIMIZESPACE;
   if (readOnly) {
     flags |= NSS_INIT_READONLY;
+  }
+  if (!loadPKCS11Modules) {
+    flags |= NSS_INIT_NOMODDB;
   }
   return ::NSS_Initialize(dir, "", "", SECMOD_DB, flags);
 }

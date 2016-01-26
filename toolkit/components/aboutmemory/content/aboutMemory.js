@@ -18,10 +18,10 @@
 
 //---------------------------------------------------------------------------
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const CC = Components.Constructor;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var CC = Components.Constructor;
 
 const KIND_NONHEAP           = Ci.nsIMemoryReporter.KIND_NONHEAP;
 const KIND_HEAP              = Ci.nsIMemoryReporter.KIND_HEAP;
@@ -34,6 +34,7 @@ const UNITS_PERCENTAGE       = Ci.nsIMemoryReporter.UNITS_PERCENTAGE;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "nsBinaryStream",
                             () => CC("@mozilla.org/binaryinputstream;1",
@@ -46,7 +47,7 @@ XPCOMUtils.defineLazyGetter(this, "nsGzipConverter",
                             () => CC("@mozilla.org/streamconv;1?from=gzip&to=uncompressed",
                                      "nsIStreamConverter"));
 
-let gMgr = Cc["@mozilla.org/memory-reporter-manager;1"]
+var gMgr = Cc["@mozilla.org/memory-reporter-manager;1"]
              .getService(Ci.nsIMemoryReporterManager);
 
 const gPageName = 'about:memory';
@@ -54,7 +55,7 @@ document.title = gPageName;
 
 const gUnnamedProcessStr = "Main Process";
 
-let gIsDiff = false;
+var gIsDiff = false;
 
 //---------------------------------------------------------------------------
 
@@ -125,20 +126,20 @@ function onUnload()
 
 // The <div> holding everything but the header and footer (if they're present).
 // It's what is updated each time the page changes.
-let gMain;
+var gMain;
 
 // The <div> holding the footer.
-let gFooter;
+var gFooter;
 
 // The "verbose" checkbox.
-let gVerbose;
+var gVerbose;
 
 // The "anonymize" checkbox.
-let gAnonymize;
+var gAnonymize;
 
 // Values for the |aFooterAction| argument to updateTitleMainAndFooter.
-let HIDE_FOOTER = 0;
-let SHOW_FOOTER = 1;
+var HIDE_FOOTER = 0;
+var SHOW_FOOTER = 1;
 
 function updateTitleMainAndFooter(aTitleNote, aMsg, aFooterAction, aClassName)
 {
@@ -670,13 +671,11 @@ function loadMemoryReportsFromFile(aFilename, aTitleNote, aFn)
     }, null);
 
     let file = new nsFile(aFilename);
-    let fileChan = Services.io.newChannelFromURI2(Services.io.newFileURI(file),
-                                                  null,      // aLoadingNode
-                                                  Services.scriptSecurityManager.getSystemPrincipal(),
-                                                  null,      // aTriggeringPrincipal
-                                                  Ci.nsILoadInfo.SEC_NORMAL,
-                                                  Ci.nsIContentPolicy.TYPE_OTHER);
-    fileChan.asyncOpen(converter, null);
+    let fileChan = NetUtil.newChannel({
+                     uri: Services.io.newFileURI(file),
+                     loadUsingSystemPrincipal: true
+                   });
+    fileChan.asyncOpen2(converter);
 
   } catch (ex) {
     handleException(ex);
@@ -727,7 +726,7 @@ function updateAboutMemoryFromTwoFiles(aFilename1, aFilename2)
 //---------------------------------------------------------------------------
 
 // Something unlikely to appear in a process name.
-let kProcessPathSep = "^:^:^";
+var kProcessPathSep = "^:^:^";
 
 // Short for "diff report".
 function DReport(aKind, aUnits, aAmount, aDescription, aNMerged, aPresence)
@@ -1390,7 +1389,7 @@ function sortTreeAndInsertAggregateNodes(aTotalBytes, aT)
 // Global variable indicating if we've seen any invalid values for this
 // process;  it holds the unsafePaths of any such reports.  It is reset for
 // each new process.
-let gUnsafePathsWithInvalidValuesForThisProcess = [];
+var gUnsafePathsWithInvalidValuesForThisProcess = [];
 
 function appendWarningElements(aP, aHasKnownHeapAllocated,
                                aHasMozMallocUsableSize)
@@ -1764,7 +1763,7 @@ function appendMrNameSpan(aP, aDescription, aUnsafeName, aIsInvalid, aNMerged,
 // have been closed.  This doesn't seem like a big deal, because the number is
 // limited by the number of entries the user has changed from their original
 // state.
-let gShowSubtreesBySafeTreeId = {};
+var gShowSubtreesBySafeTreeId = {};
 
 function assertClassListContains(e, className) {
   assert(e, "undefined " + className);

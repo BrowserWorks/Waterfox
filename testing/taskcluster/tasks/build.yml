@@ -7,7 +7,7 @@ task:
   created: '{{now}}'
   deadline: '{{#from_now}}24 hours{{/from_now}}'
   metadata:
-    source: http://todo.com/soon
+    source: '{{source}}'
     owner: mozilla-taskcluster-maintenance@mozilla.com
 
   tags:
@@ -23,20 +23,14 @@ task:
   scopes:
     # Nearly all of our build tasks use tc-vcs so just include the scope across
     # the board.
-    - 'docker-worker:cache:tc-vcs'
-    - 'docker-worker:image:{{#docker_image}}builder{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner/build-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner/build-c4-2xlarge'
-
+    - 'docker-worker:cache:level-{{level}}-{{project}}-tc-vcs'
 
   payload:
-    image: '{{#docker_image}}builder{{/docker_image}}'
-
     # Two hours is long but covers edge cases (and matches bb based infra)
     maxRunTime: 7200
 
     cache:
-      tc-vcs: '/home/worker/.tc-vcs'
+      level-{{level}}-{{project}}-tc-vcs: '/home/worker/.tc-vcs'
 
     # All builds share a common artifact directory for ease of uploading.
     artifacts:
@@ -52,11 +46,13 @@ task:
       GECKO_HEAD_REPOSITORY: '{{head_repository}}'
       GECKO_HEAD_REV: '{{head_rev}}'
       GECKO_HEAD_REF: '{{head_ref}}'
-      MOZHARNESS_REPOSITORY: '{{mozharness_repository}}'
-      MOZHARNESS_REV: '{{mozharness_rev}}'
-      MOZHARNESS_REF: '{{mozharness_ref}}'
+      TOOLTOOL_REPO: 'https://git.mozilla.org/build/tooltool.git'
+      TOOLTOOL_REV: 'master'
 
   extra:
+    build_product: '{{build_product}}'
+    build_name: '{{build_name}}'
+    build_type: '{{build_type}}'
     index:
       rank: {{pushlog_id}}
     treeherder:

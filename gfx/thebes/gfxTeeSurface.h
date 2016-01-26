@@ -10,8 +10,6 @@
 #include "nsTArrayForwardDeclare.h"
 #include "nsSize.h"
 
-template<class T> class nsRefPtr;
-
 /**
  * Wraps a cairo_tee_surface. The first surface in the surface list is the
  * primary surface, which answers all surface queries (including size).
@@ -26,12 +24,12 @@ public:
     explicit gfxTeeSurface(cairo_surface_t *csurf);
     gfxTeeSurface(gfxASurface **aSurfaces, int32_t aSurfaceCount);
 
-    virtual const gfxIntSize GetSize() const;
+    virtual const mozilla::gfx::IntSize GetSize() const;
 
     /**
      * Returns the list of underlying surfaces.
      */
-    void GetSurfaces(nsTArray<nsRefPtr<gfxASurface> > *aSurfaces);
+    void GetSurfaces(nsTArray<RefPtr<gfxASurface> > *aSurfaces);
 };
 
 #endif /* GFX_TEESURFACE_H */

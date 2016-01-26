@@ -14,6 +14,8 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "nsGlobalWindow.h"
 
+#include "GeckoProfiler.h"
+
 #include "nsID.h"
 
 using namespace js;
@@ -29,10 +31,12 @@ InterposeProperty(JSContext* cx, HandleObject target, const nsIID* iid, HandleId
     // wrapped natives.
     RootedObject unwrapped(cx, UncheckedUnwrap(target));
     const js::Class* clasp = js::GetObjectClass(unwrapped);
+    bool isCPOW = jsipc::IsWrappedCPOW(unwrapped);
     if (!mozilla::dom::IsDOMClass(clasp) &&
         !IS_WN_CLASS(clasp) &&
         !IS_PROTO_CLASS(clasp) &&
-        clasp != &OuterWindowProxyClass) {
+        clasp != &OuterWindowProxyClass &&
+        !isCPOW) {
         return true;
     }
 
@@ -40,6 +44,12 @@ InterposeProperty(JSContext* cx, HandleObject target, const nsIID* iid, HandleId
     MOZ_ASSERT(scope->HasInterposition());
 
     nsCOMPtr<nsIAddonInterposition> interp = scope->GetInterposition();
+    InterpositionWhitelist* wl = XPCWrappedNativeScope::GetInterpositionWhitelist(interp);
+    // We do InterposeProperty only if the id is on the whitelist of the interpostion
+    // or if the target is a CPOW.
+    if ((!wl || !wl->has(JSID_BITS(id.get()))) && !isCPOW)
+        return true;
+
     JSAddonId* addonId = AddonIdOfObject(target);
     RootedValue addonIdValue(cx, StringValue(StringOfAddonId(addonId)));
     RootedValue prop(cx, IdToValue(id));
@@ -161,9 +171,11 @@ AddonWrapper<Base>::getOwnPropertyDescriptor(JSContext* cx, HandleObject wrapper
 
 template<typename Base>
 bool
-AddonWrapper<Base>::get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<JSObject*> receiver,
+AddonWrapper<Base>::get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<Value> receiver,
                         JS::Handle<jsid> id, JS::MutableHandle<JS::Value> vp) const
 {
+    PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
     Rooted<JSPropertyDescriptor> desc(cx);
     if (!InterposeProperty(cx, wrapper, nullptr, id, &desc))
         return false;
@@ -172,10 +184,7 @@ AddonWrapper<Base>::get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle
         return Base::get(cx, wrapper, receiver, id, vp);
 
     if (desc.getter()) {
-        MOZ_ASSERT(desc.hasGetterObject());
-        AutoValueVector args(cx);
-        RootedValue fval(cx, ObjectValue(*desc.getterObject()));
-        return JS_CallFunctionValue(cx, receiver, fval, args, vp);
+        return Call(cx, receiver, desc.getterObject(), HandleValueArray::empty(), vp);
     } else {
         vp.set(desc.value());
         return true;

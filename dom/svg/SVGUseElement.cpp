@@ -89,7 +89,7 @@ nsresult
 SVGUseElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
 {
   *aResult = nullptr;
-  already_AddRefed<mozilla::dom::NodeInfo> ni = nsRefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
+  already_AddRefed<mozilla::dom::NodeInfo> ni = RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
   SVGUseElement *it = new SVGUseElement(ni);
 
   nsCOMPtr<nsINode> kungFuDeathGrip(it);
@@ -156,7 +156,8 @@ SVGUseElement::AttributeChanged(nsIDocument* aDocument,
                                 Element* aElement,
                                 int32_t aNameSpaceID,
                                 nsIAtom* aAttribute,
-                                int32_t aModType)
+                                int32_t aModType,
+                                const nsAttrValue* aOldValue)
 {
   if (nsContentUtils::IsInSameAnonymousTree(this, aElement)) {
     TriggerReclone();
@@ -268,6 +269,16 @@ SVGUseElement::CreateAnonymousContent()
   if (!newcontent)
     return nullptr;
 
+#ifdef DEBUG
+  // Our anonymous clone can get restyled by various things
+  // (e.g. SMIL).  Reconstructing its frame is OK, though, because
+  // it's going to be our _only_ child in the frame tree, so can't get
+  // mis-ordered with anything.
+  newcontent->SetProperty(nsGkAtoms::restylableAnonymousNode,
+                          reinterpret_cast<void*>(true));
+#endif // DEBUG
+
+
   if (newcontent->IsSVGElement(nsGkAtoms::symbol)) {
     nsIDocument *document = GetComposedDoc();
     if (!document)
@@ -277,7 +288,7 @@ SVGUseElement::CreateAnonymousContent()
     if (!nodeInfoManager)
       return nullptr;
 
-    nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo;
     nodeInfo = nodeInfoManager->GetNodeInfo(nsGkAtoms::svg, nullptr,
                                             kNameSpaceID_SVG,
                                             nsIDOMNode::ELEMENT_NODE);
@@ -420,8 +431,8 @@ SVGUseElement::UnlinkSource()
 // nsSVGElement methods
 
 /* virtual */ gfxMatrix
-SVGUseElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
-                                        TransformTypes aWhich) const
+SVGUseElement::PrependLocalTransformsTo(
+  const gfxMatrix &aMatrix, SVGTransformTypes aWhich) const
 {
   // 'transform' attribute:
   gfxMatrix fromUserSpace =

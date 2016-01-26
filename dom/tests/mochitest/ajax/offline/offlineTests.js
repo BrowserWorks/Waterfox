@@ -2,7 +2,7 @@
 var Cc = SpecialPowers.Cc;
 var Ci = SpecialPowers.Ci;
 var Cu = SpecialPowers.Cu;
-var LoadContextInfo = Cu.import("resource://gre/modules/LoadContextInfo.jsm", {}).LoadContextInfo;
+var LoadContextInfo = Cc["@mozilla.org/load-context-info-factory;1"].getService(Ci.nsILoadContextInfoFactory);
 var CommonUtils = Cu.import("resource://services-common/utils.js", {}).CommonUtils;
 
 const kNetBase = 2152398848; // 0x804B0000
@@ -324,7 +324,7 @@ getActiveCache: function(overload)
   // one associated with this window.
   var serv = Cc["@mozilla.org/network/application-cache-service;1"]
              .getService(Ci.nsIApplicationCacheService);
-  var groupID = serv.buildGroupID(this.manifestURL(overload), this.loadContextInfo());
+  var groupID = serv.buildGroupIDForInfo(this.manifestURL(overload), this.loadContextInfo());
   return serv.getActiveCache(groupID);
 },
 

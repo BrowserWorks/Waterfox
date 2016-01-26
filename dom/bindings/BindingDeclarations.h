@@ -13,15 +13,18 @@
 #ifndef mozilla_dom_BindingDeclarations_h__
 #define mozilla_dom_BindingDeclarations_h__
 
-#include "nsStringGlue.h"
-#include "js/Value.h"
 #include "js/RootingAPI.h"
+#include "js/Value.h"
+
 #include "mozilla/Maybe.h"
-#include "nsCOMPtr.h"
-#include "nsTArray.h"
-#include "nsAutoPtr.h" // for nsRefPtr member variables
+#include "mozilla/OwningNonNull.h"
+
 #include "mozilla/dom/DOMString.h"
-#include "mozilla/dom/OwningNonNull.h"
+
+#include "nsAutoPtr.h" // for nsRefPtr member variables
+#include "nsCOMPtr.h"
+#include "nsStringGlue.h"
+#include "nsTArray.h"
 
 class nsWrapperCache;
 
@@ -119,6 +122,11 @@ public:
     mImpl.emplace(aValue);
   }
 
+  bool operator==(const Optional_base<T, InternalType>& aOther) const
+  {
+    return mImpl == aOther.mImpl;
+  }
+
   template<typename T1, typename T2>
   explicit Optional_base(const T1& aValue1, const T2& aValue2)
   {
@@ -131,23 +139,10 @@ public:
   }
 
   // Return InternalType here so we can work with it usefully.
-  InternalType& Construct()
+  template<typename... Args>
+  InternalType& Construct(Args&&... aArgs)
   {
-    mImpl.emplace();
-    return *mImpl;
-  }
-
-  template <class T1>
-  InternalType& Construct(const T1 &t1)
-  {
-    mImpl.emplace(t1);
-    return *mImpl;
-  }
-
-  template <class T1, class T2>
-  InternalType& Construct(const T1 &t1, const T2 &t2)
-  {
-    mImpl.emplace(t1, t2);
+    mImpl.emplace(Forward<Args>(aArgs)...);
     return *mImpl;
   }
 
@@ -471,14 +466,14 @@ GetWrapperCache(const SmartPtr<T>& aObject)
 
 struct MOZ_STACK_CLASS ParentObject {
   template<class T>
-  ParentObject(T* aObject) :
+  MOZ_IMPLICIT ParentObject(T* aObject) :
     mObject(aObject),
     mWrapperCache(GetWrapperCache(aObject)),
     mUseXBLScope(false)
   {}
 
   template<class T, template<typename> class SmartPtr>
-  ParentObject(const SmartPtr<T>& aObject) :
+  MOZ_IMPLICIT ParentObject(const SmartPtr<T>& aObject) :
     mObject(aObject.get()),
     mWrapperCache(GetWrapperCache(aObject.get())),
     mUseXBLScope(false)

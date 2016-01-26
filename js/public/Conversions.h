@@ -32,6 +32,18 @@ ToBooleanSlow(JS::HandleValue v);
 extern JS_PUBLIC_API(bool)
 ToNumberSlow(JSContext* cx, JS::Value v, double* dp);
 
+/* DO NOT CALL THIS. Use JS::ToInt8. */
+extern JS_PUBLIC_API(bool)
+ToInt8Slow(JSContext *cx, JS::HandleValue v, int8_t *out);
+
+/* DO NOT CALL THIS. Use JS::ToUint8. */
+extern JS_PUBLIC_API(bool)
+ToUint8Slow(JSContext *cx, JS::HandleValue v, uint8_t *out);
+
+/* DO NOT CALL THIS. Use JS::ToInt16. */
+extern JS_PUBLIC_API(bool)
+ToInt16Slow(JSContext *cx, JS::HandleValue v, int16_t *out);
+
 /* DO NOT CALL THIS. Use JS::ToInt32. */
 extern JS_PUBLIC_API(bool)
 ToInt32Slow(JSContext* cx, JS::HandleValue v, int32_t* out);
@@ -67,7 +79,7 @@ namespace JS {
 namespace detail {
 
 #ifdef JS_DEBUG
-/*
+/**
  * Assert that we're not doing GC on cx, that we're in a request as
  * needed, and that the compartments for cx and v are correct.
  * Also check that GC would be safe at this point.
@@ -81,7 +93,7 @@ inline void AssertArgumentsAreSane(JSContext* cx, HandleValue v)
 
 } // namespace detail
 
-/*
+/**
  * ES6 draft 20141224, 7.1.1, second algorithm.
  *
  * Most users shouldn't call this -- use JS::ToBoolean, ToNumber, or ToString
@@ -168,6 +180,19 @@ ToUint32(JSContext* cx, HandleValue v, uint32_t* out)
     return js::ToUint32Slow(cx, v, out);
 }
 
+/* ES6 draft 20141224, 7.1.7. */
+MOZ_ALWAYS_INLINE bool
+ToInt16(JSContext *cx, JS::HandleValue v, int16_t *out)
+{
+    detail::AssertArgumentsAreSane(cx, v);
+
+    if (v.isInt32()) {
+        *out = int16_t(v.toInt32());
+        return true;
+    }
+    return js::ToInt16Slow(cx, v, out);
+}
+
 /* ES6 draft 20141224, 7.1.8. */
 MOZ_ALWAYS_INLINE bool
 ToUint16(JSContext* cx, HandleValue v, uint16_t* out)
@@ -179,6 +204,32 @@ ToUint16(JSContext* cx, HandleValue v, uint16_t* out)
         return true;
     }
     return js::ToUint16Slow(cx, v, out);
+}
+
+/* ES6 draft 20141224, 7.1.9 */
+MOZ_ALWAYS_INLINE bool
+ToInt8(JSContext *cx, JS::HandleValue v, int8_t *out)
+{
+    detail::AssertArgumentsAreSane(cx, v);
+
+    if (v.isInt32()) {
+        *out = int8_t(v.toInt32());
+        return true;
+    }
+    return js::ToInt8Slow(cx, v, out);
+}
+
+/* ES6 ECMA-262, 7.1.10 */
+MOZ_ALWAYS_INLINE bool
+ToUint8(JSContext *cx, JS::HandleValue v, uint8_t *out)
+{
+    detail::AssertArgumentsAreSane(cx, v);
+
+    if (v.isInt32()) {
+        *out = uint8_t(v.toInt32());
+        return true;
+    }
+    return js::ToUint8Slow(cx, v, out);
 }
 
 /*
@@ -349,7 +400,9 @@ ToIntWidth(double d)
 inline int32_t
 ToInt32(double d)
 {
-#if defined (__arm__) && defined (__GNUC__)
+    // clang crashes compiling this when targeting arm-darwin:
+    // https://llvm.org/bugs/show_bug.cgi?id=22974
+#if defined (__arm__) && defined (__GNUC__) && !defined(__APPLE__)
     int32_t i;
     uint32_t    tmp0;
     uint32_t    tmp1;
@@ -480,6 +533,27 @@ inline uint32_t
 ToUint32(double d)
 {
     return detail::ToUintWidth<uint32_t>(d);
+}
+
+/* WEBIDL 4.2.4 */
+inline int8_t
+ToInt8(double d)
+{
+    return detail::ToIntWidth<int8_t>(d);
+}
+
+/* ECMA-262 7.1.10 ToUInt8() specialized for doubles. */
+inline int8_t
+ToUint8(double d)
+{
+    return detail::ToUintWidth<uint8_t>(d);
+}
+
+/* WEBIDL 4.2.6 */
+inline int16_t
+ToInt16(double d)
+{
+    return detail::ToIntWidth<int16_t>(d);
 }
 
 /* WEBIDL 4.2.10 */

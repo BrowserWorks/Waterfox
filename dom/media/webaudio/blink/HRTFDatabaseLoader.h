@@ -48,7 +48,7 @@ public:
     // and starts loading asynchronously (when created the first time).
     // Returns the HRTFDatabaseLoader.
     // Must be called from the main thread.
-    static mozilla::TemporaryRef<HRTFDatabaseLoader> createAndLoadAsynchronouslyIfNecessary(float sampleRate);
+    static already_AddRefed<HRTFDatabaseLoader> createAndLoadAsynchronouslyIfNecessary(float sampleRate);
 
     // AddRef and Release may be called from any thread.
     void AddRef()
@@ -128,9 +128,6 @@ private:
 
         HRTFDatabaseLoader* mLoader;
     };
-
-    static PLDHashOperator shutdownEnumFunc(LoaderByRateEntry *entry,
-                                            void* unused);
 
     // Keeps track of loaders on a per-sample-rate basis.
     static nsTHashtable<LoaderByRateEntry> *s_loaderMap; // singleton

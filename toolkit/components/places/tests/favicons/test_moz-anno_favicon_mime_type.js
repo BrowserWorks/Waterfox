@@ -63,7 +63,7 @@ function run_test()
                                         Services.scriptSecurityManager.getSystemPrincipal(),
                                         null,      // aTriggeringPrincipal
                                         Ci.nsILoadInfo.SEC_NORMAL,
-                                        Ci.nsIContentPolicy.TYPE_IMAGE);
+                                        Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
   channel.asyncOpen(new streamListener("image/png"), null);
   do_test_pending();
 
@@ -76,7 +76,7 @@ function run_test()
                             Services.scriptSecurityManager.getSystemPrincipal(),
                             null,      // aTriggeringPrincipal
                             Ci.nsILoadInfo.SEC_NORMAL,
-                            Ci.nsIContentPolicy.TYPE_IMAGE);
+                            Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
   channel.asyncOpen(new streamListener("image/png"), null);
   do_test_pending();
 
@@ -84,7 +84,8 @@ function run_test()
   let testURI = uri("http://mozilla.org/");
   // Add the data before opening
   fs.replaceFaviconDataFromDataURL(testURI, testFaviconData,
-                                   (Date.now() + 60 * 60 * 24 * 1000) * 1000);
+                                   (Date.now() + 60 * 60 * 24 * 1000) * 1000,
+                                   Services.scriptSecurityManager.getSystemPrincipal());
 
   // Open the channel
   channel = ios.newChannel2(moz_anno_favicon_prefix + testURI.spec,
@@ -94,7 +95,7 @@ function run_test()
                             Services.scriptSecurityManager.getSystemPrincipal(),
                             null,      // aTriggeringPrincipal
                             Ci.nsILoadInfo.SEC_NORMAL,
-                            Ci.nsIContentPolicy.TYPE_IMAGE);
+                            Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
   channel.asyncOpen(new streamListener("image/png"), null);
   do_test_pending();
 }

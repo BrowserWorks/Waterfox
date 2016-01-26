@@ -9,7 +9,6 @@
 #include "nsJSPrincipals.h"
 #include "nsScriptSecurityManager.h"
 #include "jsfriendapi.h"
-#include "prprf.h"
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
 #include "shared-libraries.h"
 #endif
@@ -21,21 +20,11 @@
 #include "mozilla/Scoped.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/MemoryChecking.h"
+#include "mozilla/Snprintf.h"
 
-#ifdef MOZ_THREADSTACKHELPER_NATIVE
-#include "google_breakpad/processor/call_stack.h"
-#include "google_breakpad/processor/basic_source_line_resolver.h"
-#include "google_breakpad/processor/stack_frame_cpu.h"
-#include "processor/basic_code_module.h"
-#include "processor/basic_code_modules.h"
-#endif
-
-#if defined(MOZ_THREADSTACKHELPER_X86)
-#include "processor/stackwalker_x86.h"
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-#include "processor/stackwalker_amd64.h"
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-#include "processor/stackwalker_arm.h"
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wshadow"
 #endif
 
 #if defined(MOZ_VALGRIND)
@@ -44,6 +33,7 @@
 
 #include <string.h>
 #include <vector>
+#include <cstdlib>
 
 #ifdef XP_LINUX
 #ifdef ANDROID
@@ -54,6 +44,10 @@
 #endif
 #include <unistd.h>
 #include <sys/syscall.h>
+#endif
+
+#ifdef __GNUC__
+# pragma GCC diagnostic pop // -Wshadow
 #endif
 
 #if defined(XP_LINUX) || defined(XP_MACOSX)
@@ -216,7 +210,7 @@ public:
   ScopedSetPtr(T*& p, T* val) : mPtr(p) { mPtr = val; }
   ~ScopedSetPtr() { mPtr = nullptr; }
 };
-}
+} // namespace
 
 void
 ThreadStackHelper::GetStack(Stack& aStack)
@@ -286,67 +280,12 @@ ThreadStackHelper::GetStack(Stack& aStack)
 }
 
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
-class ThreadStackHelper::CodeModulesProvider
-  : public google_breakpad::CodeModules
-{
-private:
-  typedef google_breakpad::CodeModule CodeModule;
-  typedef google_breakpad::BasicCodeModule BasicCodeModule;
-
-  const SharedLibraryInfo mLibs;
-  mutable ScopedDeletePtr<BasicCodeModule> mModule;
-
-public:
-  CodeModulesProvider() : mLibs(SharedLibraryInfo::GetInfoForSelf()) {}
-  virtual ~CodeModulesProvider() {}
-
-  virtual unsigned int module_count() const
-  {
-    return mLibs.GetSize();
-  }
-
-  virtual const CodeModule* GetModuleForAddress(uint64_t aAddress) const
-  {
-    MOZ_CRASH("Not implemented");
-  }
-
-  virtual const CodeModule* GetMainModule() const
-  {
-    return nullptr;
-  }
-
-  virtual const CodeModule* GetModuleAtSequence(unsigned int aSequence) const
-  {
-    MOZ_CRASH("Not implemented");
-  }
-
-  virtual const CodeModule* GetModuleAtIndex(unsigned int aIndex) const
-  {
-    const SharedLibrary& lib = mLibs.GetEntry(aIndex);
-    mModule = new BasicCodeModule(lib.GetStart(), lib.GetEnd() - lib.GetStart(),
-                                  lib.GetName(), lib.GetBreakpadId(),
-                                  lib.GetName(), lib.GetBreakpadId(), "");
-    // Keep mModule valid until the next GetModuleAtIndex call.
-    return mModule;
-  }
-
-  virtual const CodeModules* Copy() const
-  {
-    MOZ_CRASH("Not implemented");
-  }
-};
-
 class ThreadStackHelper::ThreadContext final
-  : public google_breakpad::MemoryRegion
 {
 public:
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  typedef MDRawContextX86 Context;
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  typedef MDRawContextAMD64 Context;
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  typedef MDRawContextARM Context;
-#endif
+  // TODO: provide per-platform definition of Context.
+  typedef struct {} Context;
+
   // Limit copied stack to 4kB
   static const size_t kMaxStackSize = 0x1000;
   // Limit unwound stack to 32 frames
@@ -369,38 +308,6 @@ public:
     , mStackBase(0)
     , mStackSize(0)
     , mStackEnd(nullptr) {}
-  virtual ~ThreadContext() {}
-
-  virtual uint64_t GetBase() const { return uint64_t(mStackBase); }
-  virtual uint32_t GetSize() const { return mStackSize; }
-  virtual bool GetMemoryAtAddress(uint64_t aAddress, uint8_t* aValue) const
-  {
-    return GetMemoryAtAddressInternal(aAddress, aValue);
-  }
-  virtual bool GetMemoryAtAddress(uint64_t aAddress, uint16_t* aValue) const
-  {
-    return GetMemoryAtAddressInternal(aAddress, aValue);
-  }
-  virtual bool GetMemoryAtAddress(uint64_t aAddress, uint32_t* aValue) const
-  {
-    return GetMemoryAtAddressInternal(aAddress, aValue);
-  }
-  virtual bool GetMemoryAtAddress(uint64_t aAddress, uint64_t* aValue) const
-  {
-    return GetMemoryAtAddressInternal(aAddress, aValue);
-  }
-
-private:
-  template<typename T>
-  bool GetMemoryAtAddressInternal(uint64_t aAddress, T* aValue) const
-  {
-    const intptr_t offset = intptr_t(aAddress) - intptr_t(GetBase());
-    if (offset < 0 || uintptr_t(offset) > (GetSize() - sizeof(T))) {
-      return false;
-    }
-    *aValue = *reinterpret_cast<const T*>(&mStack[offset]);
-    return true;
-  }
 };
 #endif // MOZ_THREADSTACKHELPER_NATIVE
 
@@ -417,63 +324,7 @@ ThreadStackHelper::GetNativeStack(Stack& aStack)
   GetStack(aStack);
   NS_ENSURE_TRUE_VOID(context.mValid);
 
-  CodeModulesProvider modulesProvider;
-  google_breakpad::BasicCodeModules modules(&modulesProvider);
-  google_breakpad::BasicSourceLineResolver resolver;
-  google_breakpad::StackFrameSymbolizer symbolizer(nullptr, &resolver);
-
-#if defined(MOZ_THREADSTACKHELPER_X86)
-  google_breakpad::StackwalkerX86 stackWalker(
-    nullptr, &context.mContext, &context, &modules, &symbolizer);
-#elif defined(MOZ_THREADSTACKHELPER_X64)
-  google_breakpad::StackwalkerAMD64 stackWalker(
-    nullptr, &context.mContext, &context, &modules, &symbolizer);
-#elif defined(MOZ_THREADSTACKHELPER_ARM)
-  google_breakpad::StackwalkerARM stackWalker(
-    nullptr, &context.mContext, -1, &context, &modules, &symbolizer);
-#else
-  #error "Unsupported architecture"
-#endif
-
-  google_breakpad::CallStack callStack;
-  std::vector<const google_breakpad::CodeModule*> modules_without_symbols;
-
-  google_breakpad::Stackwalker::set_max_frames(ThreadContext::kMaxStackFrames);
-  google_breakpad::Stackwalker::
-    set_max_frames_scanned(ThreadContext::kMaxStackFrames);
-
-  NS_ENSURE_TRUE_VOID(stackWalker.Walk(&callStack, &modules_without_symbols));
-
-  const std::vector<google_breakpad::StackFrame*>& frames(*callStack.frames());
-  for (intptr_t i = frames.size() - 1; i >= 0; i--) {
-    const google_breakpad::StackFrame& frame = *frames[i];
-    if (!frame.module) {
-      continue;
-    }
-    const string& module = frame.module->code_file();
-#if defined(XP_LINUX) || defined(XP_MACOSX)
-    const char PATH_SEP = '/';
-#elif defined(XP_WIN)
-    const char PATH_SEP = '\\';
-#endif
-    const char* const module_basename = strrchr(module.c_str(), PATH_SEP);
-    const char* const module_name = module_basename ?
-                                    module_basename + 1 : module.c_str();
-
-    char buffer[0x100];
-    size_t len = 0;
-    if (!frame.function_name.empty()) {
-      len = PR_snprintf(buffer, sizeof(buffer), "%s:%s",
-                        module_name, frame.function_name.c_str());
-    } else {
-      len = PR_snprintf(buffer, sizeof(buffer), "%s:0x%p",
-                        module_name, (intptr_t)
-                        (frame.instruction - frame.module->base_address()));
-    }
-    if (len) {
-      aStack.AppendViaBuffer(buffer, len);
-    }
-  }
+  // TODO: walk the saved stack frames.
 #endif // MOZ_THREADSTACKHELPER_NATIVE
 }
 
@@ -611,9 +462,14 @@ ThreadStackHelper::AppendJSEntry(const volatile StackEntry* aEntry,
       // Only keep the file base name for paths outside the above formats.
       basename = strrchr(filename, '/');
       basename = basename ? basename + 1 : filename;
+      // Look for Windows path separator as well.
+      filename = strrchr(basename, '\\');
+      if (filename) {
+        basename = filename + 1;
+      }
     }
 
-    size_t len = PR_snprintf(buffer, sizeof(buffer), "%s:%u", basename, lineno);
+    size_t len = snprintf_literal(buffer, "%s:%u", basename, lineno);
     if (len < sizeof(buffer)) {
       if (mStackToFill->IsSameAsEntry(aPrevLabel, buffer)) {
         return aPrevLabel;
@@ -701,6 +557,7 @@ ThreadStackHelper::FillThreadContext(void* aContext)
     return;
   }
 
+#if 0 // TODO: remove dependency on Breakpad structs.
 #if defined(XP_LINUX)
   const ucontext_t& context = *reinterpret_cast<ucontext_t*>(aContext);
 #if defined(MOZ_THREADSTACKHELPER_X86)
@@ -858,6 +715,7 @@ ThreadStackHelper::FillThreadContext(void* aContext)
   mContextToFill->mStackBase = uintptr_t(sp);
   mContextToFill->mStackSize = stackSize;
   mContextToFill->mValid = true;
+#endif
 #endif // MOZ_THREADSTACKHELPER_NATIVE
 }
 

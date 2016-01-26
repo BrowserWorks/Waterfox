@@ -54,7 +54,7 @@ function handleReassign(handler, req, resp) {
   resp.bodyOutputStream.write(reassignBody, reassignBody.length);
 }
 
-let numTokenRequests = 0;
+var numTokenRequests = 0;
 
 function prepareServer(cbAfterTokenFetch) {
   let config = makeIdentityConfig({username: "johndoe"});
@@ -97,7 +97,7 @@ function getReassigned() {
     return false;
   } catch (ex) {
     do_throw("Got exception retrieving lastSyncReassigned: " +
-             Utils.exceptionStr(ex));
+             Log.exceptionStr(ex));
   }
 }
 

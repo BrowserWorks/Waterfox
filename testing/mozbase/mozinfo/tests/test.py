@@ -84,5 +84,36 @@ class TestMozinfo(unittest.TestCase):
             self.assertEqual(mozinfo.find_and_update_from_json(), j)
         self.assertEqual(mozinfo.info["foo"], "123456")
 
+    def test_output_to_file(self):
+        """Test that mozinfo.output_to_file works."""
+        path = os.path.join(self.tempdir, "mozinfo.json")
+        mozinfo.output_to_file(path)
+        self.assertEqual(open(path).read(), json.dumps(mozinfo.info))
+
+
+class TestStringVersion(unittest.TestCase):
+    def test_os_version_is_a_StringVersion(self):
+        self.assertIsInstance(mozinfo.os_version, mozinfo.StringVersion)
+
+    def test_compare_to_string(self):
+        version = mozinfo.StringVersion('10.10')
+
+        self.assertGreater(version, '10.2')
+        self.assertGreater('11', version)
+        self.assertGreaterEqual(version, '10.10')
+        self.assertGreaterEqual('10.11', version)
+        self.assertEqual(version, '10.10')
+        self.assertEqual('10.10', version)
+        self.assertNotEqual(version, '10.2')
+        self.assertNotEqual('11', version)
+        self.assertLess(version, '11.8.5')
+        self.assertLess('10.2', version)
+        self.assertLessEqual(version, '11')
+        self.assertLessEqual('10.10', version)
+
+    def test_to_string(self):
+        self.assertEqual('10.10', str(mozinfo.StringVersion('10.10')))
+
+
 if __name__ == '__main__':
     unittest.main()

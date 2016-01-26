@@ -35,7 +35,7 @@ class TextRenderedRunIterator;
 namespace dom {
 class SVGIRect;
 class SVGPathElement;
-}
+} // namespace dom
 
 /**
  * Information about the positioning for a single character in an SVG <text>
@@ -212,8 +212,7 @@ public:
 } // namespace mozilla
 
 /**
- * Frame class for SVG <text> elements, used when the
- * layout.svg.css-text.enabled is true.
+ * Frame class for SVG <text> elements.
  *
  * An SVGTextFrame manages SVG text layout, painting and interaction for
  * all descendent text content elements.  The frame tree will look like this:
@@ -605,7 +604,7 @@ private:
   // Methods to get information for a <textPath> frame.
   mozilla::dom::SVGPathElement*
   GetTextPathPathElement(nsIFrame* aTextPathFrame);
-  mozilla::TemporaryRef<Path> GetTextPath(nsIFrame* aTextPathFrame);
+  already_AddRefed<Path> GetTextPath(nsIFrame* aTextPathFrame);
   gfxFloat GetOffsetScale(nsIFrame* aTextPathFrame);
   gfxFloat GetStartOffset(nsIFrame* aTextPathFrame);
 
@@ -618,7 +617,7 @@ private:
   /**
    * The MutationObserver we have registered for the <text> element subtree.
    */
-  nsRefPtr<MutationObserver> mMutationObserver;
+  RefPtr<MutationObserver> mMutationObserver;
 
   /**
    * Cached canvasTM value.

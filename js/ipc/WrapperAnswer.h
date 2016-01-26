@@ -14,7 +14,7 @@ namespace mozilla {
 
 namespace dom {
 class AutoJSAPI;
-}
+} // namespace dom
 
 namespace jsipc {
 
@@ -39,7 +39,7 @@ class WrapperAnswer : public virtual JavaScriptShared
                  ReturnStatus* rs, bool* foundp);
     bool RecvHasOwn(const ObjectId& objId, const JSIDVariant& id,
                     ReturnStatus* rs, bool* foundp);
-    bool RecvGet(const ObjectId& objId, const ObjectVariant& receiverVar,
+    bool RecvGet(const ObjectId& objId, const JSVariant& receiverVar,
                  const JSIDVariant& id,
                  ReturnStatus* rs, JSVariant* result);
     bool RecvSet(const ObjectId& objId, const JSIDVariant& id, const JSVariant& value,
@@ -51,8 +51,9 @@ class WrapperAnswer : public virtual JavaScriptShared
                              const bool& construct, ReturnStatus* rs, JSVariant* result,
                              nsTArray<JSParam>* outparams);
     bool RecvHasInstance(const ObjectId& objId, const JSVariant& v, ReturnStatus* rs, bool* bp);
-    bool RecvObjectClassIs(const ObjectId& objId, const uint32_t& classValue,
-                           bool* result);
+    bool RecvGetBuiltinClass(const ObjectId& objId, ReturnStatus* rs,
+                             uint32_t* classValue);
+    bool RecvIsArray(const ObjectId& objId, ReturnStatus* rs, uint32_t* ans);
     bool RecvClassName(const ObjectId& objId, nsCString* result);
     bool RecvGetPrototype(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result);
     bool RecvRegExpToShared(const ObjectId& objId, ReturnStatus* rs, nsString* source, uint32_t* flags);
@@ -72,7 +73,7 @@ class WrapperAnswer : public virtual JavaScriptShared
     bool ok(ReturnStatus* rs, const JS::ObjectOpResult& result);
 };
 
-} // mozilla
-} // jsipc
+} // namespace jsipc
+} // namespace mozilla
 
 #endif

@@ -7,12 +7,14 @@
 #include "media/stagefright/MediaDefs.h"
 #include "media/stagefright/MediaSource.h"
 #include "media/stagefright/MetaData.h"
-#include "mozilla/Monitor.h"
+#include "mozilla/Logging.h"
+#include "mozilla/Telemetry.h"
 #include "mp4_demuxer/MoofParser.h"
 #include "mp4_demuxer/MP4Metadata.h"
 
 #include <limits>
 #include <stdint.h>
+#include <vector>
 
 using namespace stagefright;
 
@@ -63,23 +65,30 @@ public:
   virtual status_t reconnectAtOffset(off64_t offset) { return NO_ERROR; }
 
 private:
-  nsRefPtr<Stream> mSource;
+  RefPtr<Stream> mSource;
 };
 
-static inline void
-ConvertIndex(nsTArray<Index::Indice>& aDest,
-             const stagefright::Vector<stagefright::MediaSource::Indice>& aIndex)
+static inline bool
+ConvertIndex(FallibleTArray<Index::Indice>& aDest,
+             const nsTArray<stagefright::MediaSource::Indice>& aIndex,
+             int64_t aMediaTime)
 {
-  for (size_t i = 0; i < aIndex.size(); i++) {
+  if (!aDest.SetCapacity(aIndex.Length(), mozilla::fallible)) {
+    return false;
+  }
+  for (size_t i = 0; i < aIndex.Length(); i++) {
     Index::Indice indice;
     const stagefright::MediaSource::Indice& s_indice = aIndex[i];
     indice.start_offset = s_indice.start_offset;
     indice.end_offset = s_indice.end_offset;
-    indice.start_composition = s_indice.start_composition;
-    indice.end_composition = s_indice.end_composition;
+    indice.start_composition = s_indice.start_composition - aMediaTime;
+    indice.end_composition = s_indice.end_composition - aMediaTime;
+    indice.start_decode = s_indice.start_decode;
     indice.sync = s_indice.sync;
-    aDest.AppendElement(indice);
+    // FIXME: Make this infallible after bug 968520 is done.
+    MOZ_ALWAYS_TRUE(aDest.AppendElement(indice, mozilla::fallible));
   }
+  return true;
 }
 
 MP4Metadata::MP4Metadata(Stream* aSource)
@@ -92,16 +101,55 @@ MP4Metadata::MP4Metadata(Stream* aSource)
     mPrivate->mMetadataExtractor->flags() & MediaExtractor::CAN_SEEK;
   sp<MetaData> metaData = mPrivate->mMetadataExtractor->getMetaData();
 
-  UpdateCrypto(metaData.get());
+  if (metaData.get()) {
+    UpdateCrypto(metaData.get());
+  }
 }
 
 MP4Metadata::~MP4Metadata()
 {
 }
 
+#ifdef MOZ_RUST_MP4PARSE
+// Helper to test the rust parser on a data source.
+static bool try_rust(const UniquePtr<mp4parse_state, FreeMP4ParseState>& aRustState, RefPtr<Stream> aSource)
+{
+  static LazyLogModule sLog("MP4Metadata");
+  int64_t length;
+  if (!aSource->Length(&length) || length <= 0) {
+    MOZ_LOG(sLog, LogLevel::Warning, ("Couldn't get source length"));
+    return false;
+  }
+  MOZ_LOG(sLog, LogLevel::Debug,
+         ("Source length %d bytes\n", (long long int)length));
+  size_t bytes_read = 0;
+  auto buffer = std::vector<uint8_t>(length);
+  bool rv = aSource->ReadAt(0, buffer.data(), length, &bytes_read);
+  if (!rv || bytes_read != size_t(length)) {
+    MOZ_LOG(sLog, LogLevel::Warning, ("Error copying mp4 data"));
+    return false;
+  }
+  return mp4parse_read(aRustState.get(), buffer.data(), bytes_read);
+}
+#endif
+
 uint32_t
 MP4Metadata::GetNumberTracks(mozilla::TrackInfo::TrackType aType) const
 {
+#ifdef MOZ_RUST_MP4PARSE
+  static LazyLogModule sLog("MP4Metadata");
+  // Try in rust first.
+  mRustState.reset(mp4parse_new());
+  int32_t rust_mp4parse_success = try_rust(mRustState, mSource);
+  Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_SUCCESS,
+                        rust_mp4parse_success == 0);
+  if (rust_mp4parse_success < 0) {
+    Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_ERROR_CODE,
+                          -rust_mp4parse_success);
+  }
+  uint32_t rust_tracks = mp4parse_get_track_count(mRustState.get());
+  MOZ_LOG(sLog, LogLevel::Info, ("rust parser found %u tracks", rust_tracks));
+#endif
   size_t tracks = mPrivate->mMetadataExtractor->countTracks();
   uint32_t total = 0;
   for (size_t i = 0; i < tracks; i++) {
@@ -113,12 +161,14 @@ MP4Metadata::GetNumberTracks(mozilla::TrackInfo::TrackType aType) const
     }
     switch (aType) {
       case mozilla::TrackInfo::kAudioTrack:
-        if (!strncmp(mimeType, "audio/", 6)) {
+        if (!strncmp(mimeType, "audio/", 6) &&
+            CheckTrack(mimeType, metaData.get(), i)) {
           total++;
         }
         break;
       case mozilla::TrackInfo::kVideoTrack:
-        if (!strncmp(mimeType, "video/", 6)) {
+        if (!strncmp(mimeType, "video/", 6) &&
+            CheckTrack(mimeType, metaData.get(), i)) {
           total++;
         }
         break;
@@ -126,6 +176,46 @@ MP4Metadata::GetNumberTracks(mozilla::TrackInfo::TrackType aType) const
         break;
     }
   }
+#ifdef MOZ_RUST_MP4PARSE
+  uint32_t rust_total = 0;
+  const char* rust_track_type = nullptr;
+  if (rust_mp4parse_success && rust_tracks > 0) {
+    for (uint32_t i = 0; i < rust_tracks; ++i) {
+      mp4parse_track_info track_info;
+      int32_t r = mp4parse_get_track_info(mRustState.get(), i, &track_info);
+      switch (aType) {
+      case mozilla::TrackInfo::kAudioTrack:
+        rust_track_type = "audio";
+        if (r == 0 && track_info.track_type == MP4PARSE_TRACK_TYPE_AAC) {
+          rust_total += 1;
+        }
+        break;
+      case mozilla::TrackInfo::kVideoTrack:
+        rust_track_type = "video";
+        if (r == 0 && track_info.track_type == MP4PARSE_TRACK_TYPE_H264) {
+          rust_total += 1;
+        }
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  MOZ_LOG(sLog, LogLevel::Info, ("%s tracks found: stagefright=%u rust=%u",
+                                 rust_track_type, total, rust_total));
+  switch (aType) {
+    case mozilla::TrackInfo::kAudioTrack:
+      Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_TRACK_MATCH_AUDIO,
+                            rust_total == total);
+      break;
+    case mozilla::TrackInfo::kVideoTrack:
+      Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_TRACK_MATCH_VIDEO,
+                            rust_total == total);
+      break;
+    default:
+      break;
+  }
+#endif
   return total;
 }
 
@@ -150,12 +240,14 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
     }
     switch (aType) {
       case mozilla::TrackInfo::kAudioTrack:
-        if (!strncmp(mimeType, "audio/", 6)) {
+        if (!strncmp(mimeType, "audio/", 6) &&
+            CheckTrack(mimeType, metaData.get(), i)) {
           index++;
         }
         break;
       case mozilla::TrackInfo::kVideoTrack:
-        if (!strncmp(mimeType, "video/", 6)) {
+        if (!strncmp(mimeType, "video/", 6) &&
+            CheckTrack(mimeType, metaData.get(), i)) {
           index++;
         }
         break;
@@ -171,33 +263,8 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
     return nullptr;
   }
 
-  sp<MediaSource> track = mPrivate->mMetadataExtractor->getTrack(index);
-  if (!track.get() || track->start() != OK) {
-    return nullptr;
-  }
+  UniquePtr<mozilla::TrackInfo> e = CheckTrack(mimeType, metaData.get(), index);
 
-  UniquePtr<mozilla::TrackInfo> e;
-
-  switch (aType) {
-    case mozilla::TrackInfo::kAudioTrack:
-    {
-      auto info = mozilla::MakeUnique<MP4AudioInfo>();
-      info->Update(metaData.get(), mimeType);
-      e = Move(info);
-    }
-      break;
-    case mozilla::TrackInfo::kVideoTrack:
-    {
-      auto info = mozilla::MakeUnique<MP4VideoInfo>();
-      info->Update(metaData.get(), mimeType);
-      e = Move(info);
-    }
-      break;
-    default:
-      break;
-  }
-
-  track->stop();
   if (e) {
     metaData = mPrivate->mMetadataExtractor->getMetaData();
     int64_t movieDuration;
@@ -209,6 +276,34 @@ MP4Metadata::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
   }
 
   return e;
+}
+
+mozilla::UniquePtr<mozilla::TrackInfo>
+MP4Metadata::CheckTrack(const char* aMimeType,
+                        stagefright::MetaData* aMetaData,
+                        int32_t aIndex) const
+{
+  sp<MediaSource> track = mPrivate->mMetadataExtractor->getTrack(aIndex);
+  if (!track.get()) {
+    return nullptr;
+  }
+
+  UniquePtr<mozilla::TrackInfo> e;
+
+  if (!strncmp(aMimeType, "audio/", 6)) {
+    auto info = mozilla::MakeUnique<MP4AudioInfo>();
+    info->Update(aMetaData, aMimeType);
+    e = Move(info);
+  } else if (!strncmp(aMimeType, "video/", 6)) {
+    auto info = mozilla::MakeUnique<MP4VideoInfo>();
+    info->Update(aMetaData, aMimeType);
+    e = Move(info);
+  }
+
+  if (e && e->IsValid()) {
+    return e;
+  }
+  return nullptr;
 }
 
 bool
@@ -233,7 +328,7 @@ MP4Metadata::UpdateCrypto(const MetaData* aMetaData)
 }
 
 bool
-MP4Metadata::ReadTrackIndex(nsTArray<Index::Indice>& aDest, mozilla::TrackID aTrackID)
+MP4Metadata::ReadTrackIndex(FallibleTArray<Index::Indice>& aDest, mozilla::TrackID aTrackID)
 {
   size_t numTracks = mPrivate->mMetadataExtractor->countTracks();
   int32_t trackNumber = GetTrackNumber(aTrackID);
@@ -241,14 +336,18 @@ MP4Metadata::ReadTrackIndex(nsTArray<Index::Indice>& aDest, mozilla::TrackID aTr
     return false;
   }
   sp<MediaSource> track = mPrivate->mMetadataExtractor->getTrack(trackNumber);
-  if (!track.get() || track->start() != OK) {
+  if (!track.get()) {
     return false;
   }
-  ConvertIndex(aDest, track->exportIndex());
+  sp<MetaData> metadata =
+    mPrivate->mMetadataExtractor->getTrackMetaData(trackNumber);
+  int64_t mediaTime;
+  if (!metadata->findInt64(kKeyMediaTime, &mediaTime)) {
+    mediaTime = 0;
+  }
+  bool rv = ConvertIndex(aDest, track->exportIndex(), mediaTime);
 
-  track->stop();
-
-  return true;
+  return rv;
 }
 
 int32_t
@@ -257,6 +356,9 @@ MP4Metadata::GetTrackNumber(mozilla::TrackID aTrackID)
   size_t numTracks = mPrivate->mMetadataExtractor->countTracks();
   for (size_t i = 0; i < numTracks; i++) {
     sp<MetaData> metaData = mPrivate->mMetadataExtractor->getTrackMetaData(i);
+    if (!metaData.get()) {
+      continue;
+    }
     int32_t value;
     if (metaData->findInt32(kKeyTrackID, &value) && value == aTrackID) {
       return i;
@@ -268,24 +370,15 @@ MP4Metadata::GetTrackNumber(mozilla::TrackID aTrackID)
 /*static*/ bool
 MP4Metadata::HasCompleteMetadata(Stream* aSource)
 {
-  // The MoofParser requires a monitor, but we don't need one here.
-  mozilla::Monitor monitor("MP4Metadata::HasCompleteMetadata");
-  mozilla::MonitorAutoLock mon(monitor);
-  auto parser = mozilla::MakeUnique<MoofParser>(aSource, 0, false, &monitor);
+  auto parser = mozilla::MakeUnique<MoofParser>(aSource, 0, false);
   return parser->HasMetadata();
 }
 
-/*static*/ mozilla::MediaByteRange
-MP4Metadata::MetadataRange(Stream* aSource)
+/*static*/ already_AddRefed<mozilla::MediaByteBuffer>
+MP4Metadata::Metadata(Stream* aSource)
 {
-  // The MoofParser requires a monitor, but we don't need one here.
-  mozilla::Monitor monitor("MP4Metadata::HasCompleteMetadata");
-  mozilla::MonitorAutoLock mon(monitor);
-  auto parser = mozilla::MakeUnique<MoofParser>(aSource, 0, false, &monitor);
-  if (parser->HasMetadata()) {
-    return parser->mInitRange;
-  }
-  return mozilla::MediaByteRange();
+  auto parser = mozilla::MakeUnique<MoofParser>(aSource, 0, false);
+  return parser->Metadata();
 }
 
 } // namespace mp4_demuxer

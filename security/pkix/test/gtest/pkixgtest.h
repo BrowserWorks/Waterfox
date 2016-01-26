@@ -102,7 +102,7 @@ public:
                       Result::FATAL_ERROR_LIBRARY_FAILURE);
   }
 
-  Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+  Result CheckRevocation(EndEntityOrCA, const CertID&, Time, Duration,
                           /*optional*/ const Input*,
                           /*optional*/ const Input*) override
   {
@@ -125,7 +125,9 @@ public:
                       Result::FATAL_ERROR_LIBRARY_FAILURE);
   }
 
-  Result CheckSignatureDigestAlgorithm(DigestAlgorithm) override
+  Result CheckSignatureDigestAlgorithm(DigestAlgorithm,
+                                       EndEntityOrCA,
+                                       Time) override
   {
     ADD_FAILURE();
     return NotReached("CheckSignatureDigestAlgorithm should not be called",
@@ -160,6 +162,14 @@ public:
     return NotReached("VerifyRSAPKCS1SignedDigest should not be called",
                       Result::FATAL_ERROR_LIBRARY_FAILURE);
   }
+
+  Result CheckValidityIsAcceptable(Time, Time, EndEntityOrCA, KeyPurposeId)
+                                   override
+  {
+    ADD_FAILURE();
+    return NotReached("CheckValidityIsAcceptable should not be called",
+                      Result::FATAL_ERROR_LIBRARY_FAILURE);
+  }
 };
 
 class DefaultCryptoTrustDomain : public EverythingFailsByDefaultTrustDomain
@@ -170,7 +180,8 @@ class DefaultCryptoTrustDomain : public EverythingFailsByDefaultTrustDomain
     return TestDigestBuf(item, digestAlg, digestBuf, digestBufLen);
   }
 
-  Result CheckSignatureDigestAlgorithm(DigestAlgorithm) override
+  Result CheckSignatureDigestAlgorithm(DigestAlgorithm, EndEntityOrCA, Time)
+                                       override
   {
     return Success;
   }
@@ -196,6 +207,12 @@ class DefaultCryptoTrustDomain : public EverythingFailsByDefaultTrustDomain
                                     Input subjectPublicKeyInfo) override
   {
     return TestVerifyRSAPKCS1SignedDigest(signedDigest, subjectPublicKeyInfo);
+  }
+
+  Result CheckValidityIsAcceptable(Time, Time, EndEntityOrCA, KeyPurposeId)
+                                   override
+  {
+    return Success;
   }
 };
 

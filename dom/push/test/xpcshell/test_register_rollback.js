@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {PushDB, PushService} = serviceExports;
+const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = 'b2546987-4f63-49b1-99f7-739cd3c40e44';
 const channelID = '35a820f7-d7dd-43b3-af21-d65352212ae3';
@@ -15,25 +15,24 @@ function run_test() {
     requestTimeout: 1000,
     retryBaseInterval: 150
   });
-  disableServiceWorkerEvents(
-    'https://example.com/storage-error'
-  );
   run_next_test();
 }
 
 add_task(function* test_register_rollback() {
-  let db = new PushDB();
-  do_register_cleanup(() => cleanupDatabase(db));
+  let db = PushServiceWebSocket.newPushDB();
+  do_register_cleanup(() => {return db.drop().then(_ => db.close());});
 
   let handshakes = 0;
   let registers = 0;
-  let unregisterDefer = Promise.defer();
-  PushService._generateID = () => channelID;
+  let unregisterDone;
+  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
+  PushServiceWebSocket._generateID = () => channelID;
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     db: makeStub(db, {
-      put(prev, record, successCb, failureCb) {
-        failureCb('universe has imploded');
+      put(prev, record) {
+        return Promise.reject('universe has imploded');
       }
     }),
     makeWebSocket(uri) {
@@ -65,7 +64,7 @@ add_task(function* test_register_rollback() {
             status: 200,
             channelID
           }));
-          unregisterDefer.resolve();
+          unregisterDone();
         }
       });
     }
@@ -73,15 +72,16 @@ add_task(function* test_register_rollback() {
 
   // Should return a rejected promise if storage fails.
   yield rejects(
-    PushNotificationService.register('https://example.com/storage-error'),
-    function(error) {
-      return error == 'universe has imploded';
-    },
-    'Wrong error for unregister database failure'
+    PushService.register({
+      scope: 'https://example.com/storage-error',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for unregister database failure'
   );
 
   // Should send an out-of-band unregister request.
-  yield waitForPromise(unregisterDefer.promise, DEFAULT_TIMEOUT,
+  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
     'Unregister request timed out');
   equal(handshakes, 1, 'Wrong handshake count');
   equal(registers, 1, 'Wrong register count');

@@ -20,31 +20,43 @@ EXPORTS.mozilla.gfx += [
     'Blur.h',
     'BorrowedContext.h',
     'Coord.h',
+    'CriticalSection.h',
     'DataSurfaceHelpers.h',
+    'DrawEventRecorder.h',
     'DrawTargetTiled.h',
     'Filters.h',
     'Helpers.h',
+    'HelpersCairo.h',
+    'IterableArena.h',
+    'JobScheduler.h',
+    'JobScheduler_posix.h',
+    'JobScheduler_win32.h',
     'Logging.h',
     'Matrix.h',
+    'MatrixFwd.h',
     'NumericTools.h',
     'PathHelpers.h',
     'PatternHelpers.h',
     'Point.h',
+    'Preferences.h',
     'Quaternion.h',
+    'RecordedEvent.h',
+    'RecordingTypes.h',
     'Rect.h',
     'Scale.h',
     'ScaleFactor.h',
     'ScaleFactors2D.h',
     'SourceSurfaceCairo.h',
+    'SourceSurfaceRawData.h',
+    'StackArray.h',
     'Tools.h',
     'Types.h',
     'UserData.h',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('cocoa', 'uikit'):
     EXPORTS.mozilla.gfx += [
         'MacIOSurface.h',
-        'QuartzSupport.h',
     ]
     UNIFIED_SOURCES += [
         'DrawTargetCG.cpp',
@@ -58,6 +70,9 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'DrawTargetD2D1.cpp',
         'ExtendInputEffectD2D1.cpp',
         'FilterNodeD2D1.cpp',
+        'JobScheduler_win32.cpp',
+        'NativeFontResourceDWrite.cpp',
+        'NativeFontResourceGDI.cpp',
         'PathD2D.cpp',
         'RadialGradientEffectD2D1.cpp',
         'ScaledFontDWrite.cpp',
@@ -68,19 +83,29 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     ]
     DEFINES['WIN32'] = True
 
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'windows':
+    SOURCES += [
+        'JobScheduler_posix.cpp',
+    ]
+
 if CONFIG['MOZ_ENABLE_SKIA']:
     UNIFIED_SOURCES += [
         'convolver.cpp',
+    ]
+    SOURCES += [
         'DrawTargetSkia.cpp',
+        'image_operations.cpp', # Uses _USE_MATH_DEFINES
         'PathSkia.cpp',
         'SourceSurfaceSkia.cpp',
     ]
-    SOURCES += [
-        'image_operations.cpp', # Uses _USE_MATH_DEFINES
-    ]
+    if CONFIG['CLANG_CXX']:
+        # Suppress warnings from Skia header files.
+        SOURCES['DrawTargetSkia.cpp'].flags += ['-Wno-implicit-fallthrough']
+        SOURCES['PathSkia.cpp'].flags += ['-Wno-implicit-fallthrough']
+        SOURCES['SourceSurfaceSkia.cpp'].flags += ['-Wno-implicit-fallthrough']
     EXPORTS.mozilla.gfx += [
-        'HelpersCairo.h',
         'HelpersSkia.h',
+        'RefPtrSkia.h',
     ]
 
 # Are we targeting x86 or x64?  If so, build SSE2 files.
@@ -102,41 +127,60 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['ImageScalingSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
     if CONFIG['MOZ_ENABLE_SKIA']:
         SOURCES['convolverSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+elif CONFIG['CPU_ARCH'].startswith('mips'):
+    SOURCES += [
+        'BlurLS3.cpp',
+    ]
+    if CONFIG['MOZ_ENABLE_SKIA']:
+        SOURCES += [
+            'convolverLS3.cpp',
+        ]
 
 UNIFIED_SOURCES += [
     'Blur.cpp',
     'DataSourceSurface.cpp',
     'DataSurfaceHelpers.cpp',
     'DrawEventRecorder.cpp',
+    'DrawingJob.cpp',
     'DrawTarget.cpp',
     'DrawTargetCairo.cpp',
     'DrawTargetCapture.cpp',
     'DrawTargetDual.cpp',
     'DrawTargetRecording.cpp',
     'DrawTargetTiled.cpp',
-    'Factory.cpp',
     'FilterNodeSoftware.cpp',
     'FilterProcessing.cpp',
     'FilterProcessingScalar.cpp',
     'ImageScaling.cpp',
+    'JobScheduler.cpp',
     'Matrix.cpp',
     'Path.cpp',
     'PathCairo.cpp',
+    'PathHelpers.cpp',
     'PathRecording.cpp',
+    'Preferences.cpp',
     'Quaternion.cpp',
     'RecordedEvent.cpp',
     'Scale.cpp',
     'ScaledFontBase.cpp',
     'ScaledFontCairo.cpp',
+    'SFNTData.cpp',
+    'SFNTNameTable.cpp',
     'SourceSurfaceCairo.cpp',
     'SourceSurfaceRawData.cpp',
 ]
 
 SOURCES += [
-    'PathHelpers.cpp', # Uses _USE_MATH_DEFINES
+    'Factory.cpp', # Need to suppress warnings in Skia header files.
 ]
 
+if CONFIG['CLANG_CXX']:
+    SOURCES['Factory.cpp'].flags += ['-Wno-implicit-fallthrough']
+
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXPORTS.mozilla.gfx += [
+        'QuartzSupport.h',
+    ]
     SOURCES += [
         'MacIOSurface.cpp',
         'QuartzSupport.mm',
@@ -145,8 +189,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['BlurNEON.cpp']
     SOURCES['BlurNEON.cpp'].flags += ['-mfpu=neon']
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -158,25 +200,9 @@ for var in ('USE_CAIRO', 'MOZ2D_HAS_MOZ_CAIRO'):
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
-if CONFIG['MOZ_DEBUG']:
-    DEFINES['GFX_LOG_DEBUG'] = True
-    DEFINES['GFX_LOG_WARNING'] = True
-
-# Define the GFX_LOG_WARNING in release builds (available, but controlled by a
-# preference), though we may want to consider only doing it in the nightly
-# build, if the size of gfxWarning() code ends up making a difference.
-# See bug 1074952.
-# if CONFIG['NIGHTLY_BUILD']:
-DEFINES['GFX_LOG_WARNING'] = True
-
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    # Due to bug 796023, we can't have -DUNICODE and -D_UNICODE; defining those
-    # macros changes the type of LOGFONT to LOGFONTW instead of LOGFONTA. This
-    # changes the symbol names of exported C++ functions that use LOGFONT.
-    del DEFINES['UNICODE']
-    del DEFINES['_UNICODE']
+LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']

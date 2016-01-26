@@ -1,6 +1,6 @@
-let gTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
-let gPluginHost = Components.classes["@mozilla.org/plugin/host;1"].getService(Components.interfaces.nsIPluginHost);
-let gTestBrowser = null;
+var gTestRoot = getRootDirectory(gTestPath).replace("chrome://mochitests/content/", "http://127.0.0.1:8888/");
+var gPluginHost = Components.classes["@mozilla.org/plugin/host;1"].getService(Components.interfaces.nsIPluginHost);
+var gTestBrowser = null;
 
 function updateAllTestPlugins(aState) {
   setTestPluginEnabledState(aState, "Test Plug-in");
@@ -48,6 +48,57 @@ add_task(function* () {
   let pluginInfo = yield promiseForPluginInfo("unknown");
   is(pluginInfo.pluginFallbackType, Ci.nsIObjectLoadingContent.PLUGIN_UNSUPPORTED,
      "Test 1a, plugin fallback type should be PLUGIN_UNSUPPORTED");
+});
+
+// Test that the doorhanger is shown when the user clicks on the overlay
+// after having previously blocked the plugin.
+add_task(function* () {
+  updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
+
+  yield promiseTabLoadEvent(gBrowser.selectedTab, gTestRoot + "plugin_test.html");
+
+  // Work around for delayed PluginBindingAttached
+  yield promiseUpdatePluginBindings(gTestBrowser);
+
+  yield promisePopupNotification("click-to-play-plugins");
+
+  let pluginInfo = yield promiseForPluginInfo("test");
+  ok(!pluginInfo.activated, "Plugin should not be activated");
+
+  // Simulate clicking the "Allow Now" button.
+  let notification = PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser);
+
+  yield promiseForNotificationShown(notification);
+
+  PopupNotifications.panel.firstChild._secondaryButton.click();
+
+  pluginInfo = yield promiseForPluginInfo("test");
+  ok(pluginInfo.activated, "Plugin should be activated");
+
+  // Simulate clicking the "Block" button.
+  yield promiseForNotificationShown(notification);
+
+  PopupNotifications.panel.firstChild._primaryButton.click();
+
+  pluginInfo = yield promiseForPluginInfo("test");
+  ok(!pluginInfo.activated, "Plugin should not be activated");
+
+  // Simulate clicking the overlay
+  yield ContentTask.spawn(gTestBrowser, {}, function* () {
+    let doc = content.document;
+    let plugin = doc.getElementById("test");
+    let bounds = doc.getAnonymousElementByAttribute(plugin, "anonid", "main").getBoundingClientRect();
+    let left = (bounds.left + bounds.right) / 2;
+    let top = (bounds.top + bounds.bottom) / 2;
+    let utils = content.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                       .getInterface(Components.interfaces.nsIDOMWindowUtils);
+    utils.sendMouseEvent("mousedown", left, top, 0, 1, 0, false, 0, 0);
+    utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
+  });
+
+  ok(!notification.dismissed, "A plugin notification should be shown.");
+
+  clearAllPluginPermissions();
 });
 
 // Tests that going back will reshow the notification for click-to-play plugins
@@ -188,7 +239,7 @@ add_task(function* () {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = function() !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
+  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
   yield promiseForCondition(condition);
 });
 
@@ -218,7 +269,7 @@ add_task(function* () {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = function() !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
+  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed;
   yield promiseForCondition(condition);
 });
 
@@ -245,7 +296,7 @@ add_task(function* () {
     utils.sendMouseEvent("mouseup", 50, 50, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = function() !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed &&
+  let condition = () => !PopupNotifications.getNotification("click-to-play-plugins", gTestBrowser).dismissed &&
     PopupNotifications.panel.firstChild;
   yield promiseForCondition(condition);
   PopupNotifications.panel.firstChild._primaryButton.click();
@@ -328,7 +379,7 @@ add_task(function* () {
     utils.sendMouseEvent("mouseup", left, top, 0, 1, 0, false, 0, 0);
   });
 
-  let condition = function() !notification.dismissed && !!PopupNotifications.panel.firstChild;
+  let condition = () => !notification.dismissed && !!PopupNotifications.panel.firstChild;
   yield promiseForCondition(condition);
   PopupNotifications.panel.firstChild._primaryButton.click();
 

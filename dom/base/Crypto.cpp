@@ -62,6 +62,12 @@ Crypto::GetRandomValues(JSContext* aCx, const ArrayBufferView& aArray,
 
   JS::Rooted<JSObject*> view(aCx, aArray.Obj());
 
+  if (JS_IsTypedArrayObject(view) && JS_GetTypedArraySharedness(view)) {
+    // Throw if the object is mapping shared memory (must opt in).
+    aRv.ThrowTypeError<MSG_TYPEDARRAY_IS_SHARED>(NS_LITERAL_STRING("Argument of Crypto.getRandomValues"));
+    return;
+  }
+
   // Throw if the wrong type of ArrayBufferView is passed in
   // (Part of the Web Crypto API spec)
   switch (JS_GetArrayBufferViewType(view)) {
@@ -91,7 +97,7 @@ Crypto::GetRandomValues(JSContext* aCx, const ArrayBufferView& aArray,
 
   uint8_t* data = aArray.Data();
 
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     InfallibleTArray<uint8_t> randomValues;
     // Tell the parent process to generate random values via PContent
     ContentChild* cc = ContentChild::GetSingleton();

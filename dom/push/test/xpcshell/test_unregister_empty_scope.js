@@ -13,6 +13,7 @@ function run_test() {
 
 add_task(function* test_unregister_empty_scope() {
   PushService.init({
+    serverURI: "wss://push.example.org/",
     networkInfo: new MockDesktopNetworkInfo(),
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -28,10 +29,11 @@ add_task(function* test_unregister_empty_scope() {
   });
 
   yield rejects(
-    PushNotificationService.unregister(''),
-    function(error) {
-      return error == 'NotFoundError';
-    },
-    'Wrong error for empty endpoint'
+    PushService.unregister({
+      scope: '',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for empty endpoint'
   );
 });

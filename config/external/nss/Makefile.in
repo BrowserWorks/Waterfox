@@ -85,15 +85,6 @@ NSS_EXTRA_DLLS += freebl_64int_3
 NSS_EXTRA_DLLS += freebl_64fpu_3
 endif
 
-ABS_DIST := $(abspath $(DIST))
-ifeq ($(HOST_OS_ARCH),WINNT)
-ifdef CYGDRIVE_MOUNT
-ABS_DIST := $(shell cygpath -w $(ABS_DIST) | sed -e 's|\\|/|g')
-endif
-ifneq (,$(filter mingw%,$(host_os)))
-ABS_DIST := $(shell cd $(DIST) && pwd -W)
-endif
-endif
 # For all variables such as DLLFLAGS, that may contain $(DIST)
 DIST := $(ABS_DIST)
 NSPR_INCLUDE_DIR = $(firstword $(filter -I%,$(NSPR_CFLAGS)))
@@ -213,7 +204,7 @@ DEFAULT_GMAKE_FLAGS += \
 	OS_PTHREAD= \
 	$(NULL)
 
-DEFAULT_GMAKE_FLAGS += ARCHFLAG='$(CFLAGS) -DCHECK_FORK_GETPID $(addprefix -DANDROID_VERSION=,$(ANDROID_VERSION)) -include $(topsrcdir)/security/manager/android_stub.h'
+DEFAULT_GMAKE_FLAGS += ARCHFLAG='$(filter-out -W%,$(CFLAGS)) -DCHECK_FORK_GETPID $(addprefix -DANDROID_VERSION=,$(ANDROID_VERSION)) -include $(topsrcdir)/security/manager/android_stub.h'
 endif
 endif
 
@@ -221,11 +212,14 @@ ifdef WRAP_LDFLAGS
 NSS_EXTRA_LDFLAGS += $(WRAP_LDFLAGS)
 endif
 
-ifdef MOZ_GLUE_WRAP_LDFLAGS
+# The SHARED_LIBS part is needed unconditionally on Android.  It's not
+# clear why this is the case, but see bug 1133073 (starting around
+# comment #8) for context.
+ifneq (,$(or $(MOZ_GLUE_WRAP_LDFLAGS), $(filter Android, $(OS_TARGET))))
 NSS_EXTRA_LDFLAGS += $(SHARED_LIBS:$(DEPTH)%=$(MOZ_BUILD_ROOT)%) $(MOZ_GLUE_WRAP_LDFLAGS)
 endif
 
-ifneq (,$(WRAP_LDFLAGS)$(MOZ_GLUE_WRAP_LDFLAGS))
+ifneq (,$(NSS_EXTRA_LDFLAGS))
 DEFAULT_GMAKE_FLAGS += \
 	LDFLAGS='$(LDFLAGS) $(NSS_EXTRA_LDFLAGS)' \
 	DSO_LDOPTS='$(DSO_LDOPTS) $(LDFLAGS) $(NSS_EXTRA_LDFLAGS)' \
@@ -241,7 +235,7 @@ ifdef MOZ_NO_WLZDEFS
 DEFAULT_GMAKE_FLAGS += ZDEFS_FLAG=
 endif
 ifdef MOZ_CFLAGS_NSS
-DEFAULT_GMAKE_FLAGS += XCFLAGS='$(CFLAGS)'
+DEFAULT_GMAKE_FLAGS += XCFLAGS='$(filter-out -W%,$(CFLAGS))'
 DEFAULT_GMAKE_FLAGS += DARWIN_DYLIB_VERSIONS='-compatibility_version 1 -current_version 1 $(LDFLAGS)'
 endif
 ifeq (1_1,$(CLANG_CL)_$(MOZ_ASAN))
@@ -262,6 +256,17 @@ DEFAULT_GMAKE_FLAGS += MAKE_OBJDIR='$$(INSTALL) -D $$(OBJDIR)'
 # Work around NSS adding IMPORT_LIBRARY to TARGETS with no rule for
 # it, creating race conditions. See bug #836220
 DEFAULT_GMAKE_FLAGS += TARGETS='$$(LIBRARY) $$(SHARED_LIBRARY) $$(PROGRAM)'
+
+ifdef MOZ_FOLD_LIBS_FLAGS
+DEFAULT_GMAKE_FLAGS += XCFLAGS='$(MOZ_FOLD_LIBS_FLAGS)'
+endif
+
+ifndef WARNINGS_AS_ERRORS
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
+endif
+ifeq ($(OS_TARGET),Android)
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
+endif
 
 NSS_SRCDIR = $(topsrcdir)
 
@@ -333,31 +338,6 @@ ifdef MOZ_FOLD_LIBS
 # Add all static libraries for nss, smime, ssl and nssutil
 STATIC_LIBS += $(addprefix $(DEPTH)/security/,$(NSS_STATIC_LIBS))
 
-nss_def_file := $(srcdir)/nss.def
-
-ifeq (WINNT,$(OS_TARGET))
-# Create a .def file based on the various .def files for nss, smime, ssl and
-# nssutil.
-nss3.def: $(nss_def_file) $(DEPTH)/db/sqlite3/src/sqlite-processed.def $(NSS_EXTRA_SYMBOLS_FILE)
-	echo LIBRARY nss3$(DLL_SUFFIX) > $@.tmp
-	echo EXPORTS >> $@.tmp
-	grep -v -h -e ^LIBRARY -e ^EXPORTS -e ^\; $^ >> $@.tmp
-	mv $@.tmp $@
-else
-ifdef GCC_USE_GNU_LD
-sqlite_def_file := $(topsrcdir)/db/sqlite3/src/sqlite.def
-nspr_def_file := $(srcdir)/nspr-dummy.def
-
-nss3.def: $(nss_def_file) $(sqlite_def_file) $(nspr_def_file) $(NSS_EXTRA_SYMBOLS_FILE)
-	@$(call py_action,convert_def_file, \
-	  $(DEFINES) $(ACDEFINES) $(XULPPFLAGS) -o $@ $^)
-
-GARBAGE += \
-  nss3.def \
-  $(NULL)
-endif # GCC_USE_GNU_LD
-endif # WINNT
-
 IMPORT_LIB_FILES = $(IMPORT_LIBRARY)
 IMPORT_LIB_DEST ?= $(DIST)/lib
 IMPORT_LIB_TARGET = target
@@ -374,7 +354,7 @@ ifdef MOZ_CRT
 # OS_LIBS comes from having mozcrt as a dependency in moz.build.
 DLLFLAGS := $(OS_LIBS)
 else
-DLLFLAGS := -LIBPATH:$(ABS_DIST)/lib -DEFAULTLIB:mozglue
+DLLFLAGS := -LIBPATH:$(ABS_DIST)/../mozglue/build -DEFAULTLIB:mozglue
 endif
 export DLLFLAGS
 endif

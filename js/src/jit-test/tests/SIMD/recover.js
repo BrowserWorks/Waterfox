@@ -25,7 +25,7 @@ var uceFault = function (i) {
 // Check that we can correctly recover a boxed value.
 var uceFault_simdBox_i4 = eval(uneval(uceFault).replace('uceFault', 'uceFault_simdBox_i4'));
 function simdBox_i4(i) {
-    var a = SIMD.int32x4(i, i, i, i);
+    var a = SIMD.Int32x4(i, i, i, i);
     if (uceFault_simdBox_i4(i) || uceFault_simdBox_i4(i))
         assertEqX4(a, [i, i, i, i]);
     assertRecoveredOnBailout(a, true);
@@ -34,9 +34,21 @@ function simdBox_i4(i) {
 
 var uceFault_simdBox_f4 = eval(uneval(uceFault).replace('uceFault', 'uceFault_simdBox_f4'));
 function simdBox_f4(i) {
-    var a = SIMD.float32x4(i, i + 0.1, i + 0.2, i + 0.3);
+    var a = SIMD.Float32x4(i, i + 0.1, i + 0.2, i + 0.3);
     if (uceFault_simdBox_f4(i) || uceFault_simdBox_f4(i))
         assertEqX4(a, [i, i + 0.1, i + 0.2, i + 0.3].map(Math.fround));
+    assertRecoveredOnBailout(a, true);
+    return 0;
+}
+
+var uceFault_simdBox_b4 = eval(uneval(uceFault).replace('uceFault', 'uceFault_simdBox_b4'));
+function simdBox_b4(i) {
+    var val1 = i%2 === 0,
+        val2 = !val1;
+
+    var a = SIMD.Bool32x4(val1, val2, val1, val2);
+    if (uceFault_simdBox_b4(i) || uceFault_simdBox_b4(i))
+        assertEqX4(a, [val1, val2, val1, val2]);
     assertRecoveredOnBailout(a, true);
     return 0;
 }
@@ -44,4 +56,5 @@ function simdBox_f4(i) {
 for (var i = 0; i < 100; i++) {
     simdBox_i4(i);
     simdBox_f4(i);
+    simdBox_b4(i);
 }

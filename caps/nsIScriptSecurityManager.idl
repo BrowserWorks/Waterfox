@@ -26,7 +26,7 @@ class DomainPolicyClone;
 [ptr] native JSObjectPtr(JSObject);
 [ptr] native DomainPolicyClonePtr(mozilla::dom::DomainPolicyClone);
 
-[scriptable, uuid(ba602ca6-dc7a-457e-a57a-ee5b343fd863)]
+[scriptable, uuid(b7ae2310-576e-11e5-a837-0800200c9a66)]
 interface nsIScriptSecurityManager : nsISupports
 {
     /**
@@ -150,10 +150,12 @@ interface nsIScriptSecurityManager : nsISupports
      * @param appId is the app id of the principal. It can't be UNKNOWN_APP_ID.
      * @param inMozBrowser is true if the principal has to be considered as
      * inside a mozbrowser frame.
+     *
+     * @deprecated use createCodebasePrincipal instead.
      */
-    nsIPrincipal getAppCodebasePrincipal(in nsIURI uri,
-                                         in unsigned long appId,
-                                         in boolean inMozBrowser);
+    [deprecated] nsIPrincipal getAppCodebasePrincipal(in nsIURI uri,
+                                                      in unsigned long appId,
+                                                      in boolean inMozBrowser);
 
     /**
      * Returns a principal that has the appId and inMozBrowser of the load
@@ -175,15 +177,54 @@ interface nsIScriptSecurityManager : nsISupports
      * Returns a principal with that has the same origin as uri and is not part
      * of an appliction.
      * The returned principal will have appId = NO_APP_ID.
+     *
+     * @deprecated use createCodebasePrincipal instead.
      */
-    nsIPrincipal getNoAppCodebasePrincipal(in nsIURI uri);
+    [deprecated] nsIPrincipal getNoAppCodebasePrincipal(in nsIURI uri);
 
     /**
-     * Legacy name for getNoAppCodebasePrincipal.
+     * Legacy method for getting a principal with no origin attributes.
      *
-     * @deprecated use getNoAppCodebasePrincipal instead.
+     * @deprecated use createCodebasePrincipal instead.
      */
     [deprecated] nsIPrincipal getCodebasePrincipal(in nsIURI uri);
+
+    /**
+     * Returns a principal whose origin is composed of |uri| and |originAttributes|.
+     * See nsIPrincipal.idl for a description of origin attributes, and
+     * ChromeUtils.webidl for a list of origin attributes and their defaults.
+     */
+    [implicit_jscontext]
+    nsIPrincipal createCodebasePrincipal(in nsIURI uri, in jsval originAttributes);
+
+    /**
+     * Returns a principal whose origin is the one we pass in.
+     * See nsIPrincipal.idl for a description of origin attributes, and
+     * ChromeUtils.webidl for a list of origin attributes and their defaults.
+     */
+    nsIPrincipal createCodebasePrincipalFromOrigin(in ACString origin);
+
+    /**
+     * Returns a unique nonce principal with |originAttributes|.
+     * See nsIPrincipal.idl for a description of origin attributes, and
+     * ChromeUtils.webidl for a list of origin attributes and their defaults.
+     */
+    [implicit_jscontext]
+    nsIPrincipal createNullPrincipal(in jsval originAttributes);
+
+    /**
+     * Creates an expanded principal whose capabilities are the union of the
+     * given principals. An expanded principal has an asymmetric privilege
+     * relationship with its sub-principals (that is to say, it subsumes the
+     * sub-principals, but the sub-principals do not subsume it), even if
+     * there's only one. This presents a legitimate use-case for making an
+     * expanded principal around a single sub-principal, which we do frequently.
+     *
+     * Expanded principals cannot have origin attributes themselves, but rather
+     * have them through their sub-principals - so we don't accept them here.
+     */
+    nsIPrincipal createExpandedPrincipal([array, size_is(aLength)] in nsIPrincipal aPrincipalArray,
+                                         [optional] in unsigned long aLength);
 
     /**
      * Returns OK if aSourceURI and target have the same "origin"
@@ -224,6 +265,8 @@ interface nsIScriptSecurityManager : nsISupports
     const unsigned long NO_APP_ID = 0;
     const unsigned long UNKNOWN_APP_ID = 4294967295; // UINT32_MAX
     const unsigned long SAFEBROWSING_APP_ID = 4294967294; // UINT32_MAX - 1
+
+    const unsigned long DEFAULT_USER_CONTEXT_ID = 0;
 
     /**
      * Returns the jar prefix for the app.

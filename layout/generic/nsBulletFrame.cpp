@@ -128,7 +128,7 @@ nsBulletFrame::DidSetStyleContext(nsStyleContext* aOldStyleContext)
     }
 
     if (needNewRequest) {
-      nsRefPtr<imgRequestProxy> newRequestClone;
+      RefPtr<imgRequestProxy> newRequestClone;
       newRequest->Clone(mListener, getter_AddRefs(newRequestClone));
 
       // Deregister the old request. We wait until after Clone is done in case
@@ -304,7 +304,7 @@ nsBulletFrame::PaintBullet(nsRenderingContext& aRenderingContext, nsPoint aPt,
     }
   }
 
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   ColorPattern color(ToDeviceColor(
                        nsLayoutUtils::GetColor(this, eCSSProperty_color)));
 
@@ -410,7 +410,7 @@ nsBulletFrame::PaintBullet(nsRenderingContext& aRenderingContext, nsPoint aPt,
   default:
     {
       aRenderingContext.ThebesContext()->SetColor(
-                          nsLayoutUtils::GetColor(this, eCSSProperty_color));
+        Color::FromABGR(nsLayoutUtils::GetColor(this, eCSSProperty_color)));
 
       nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
                                             GetFontSizeInflation());
@@ -535,7 +535,7 @@ nsBulletFrame::GetDesiredSize(nsPresContext*  aCX,
 
   const nsStyleList* myList = StyleList();
   nscoord ascent;
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
                                         aFontSizeInflation);
 
@@ -608,8 +608,7 @@ nsBulletFrame::GetDesiredSize(nsPresContext*  aCX,
       GetListItemText(text);
       finalSize.BSize(wm) = fm->MaxHeight();
       finalSize.ISize(wm) =
-        nsLayoutUtils::AppUnitWidthOfStringBidi(text, this, *fm,
-                                                *aRenderingContext);
+        nsLayoutUtils::AppUnitWidthOfStringBidi(text, this, *fm, *aRenderingContext);
       aMetrics.SetBlockStartAscent(wm.IsLineInverted()
                                      ? fm->MaxDescent() : fm->MaxAscent());
       break;
@@ -631,8 +630,8 @@ nsBulletFrame::Reflow(nsPresContext* aPresContext,
   SetFontSizeInflation(inflation);
 
   // Get the base size
-  GetDesiredSize(aPresContext, aReflowState.rendContext,
-                 aMetrics, inflation, &mPadding);
+  GetDesiredSize(aPresContext, aReflowState.rendContext, aMetrics, inflation,
+                 &mPadding);
 
   // Add in the border and padding; split the top/bottom between the
   // ascent and descent to make things look nice
@@ -712,10 +711,31 @@ nsBulletFrame::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect* aDa
     // Unconditionally start decoding for now.
     // XXX(seth): We eventually want to decide whether to do this based on
     // visibility. We should get that for free from bug 1091236.
-    if (aRequest == mImageRequest) {
-      mImageRequest->RequestDecode();
+    nsCOMPtr<imgIContainer> container;
+    aRequest->GetImage(getter_AddRefs(container));
+    if (container) {
+      // Retrieve the intrinsic size of the image.
+      int32_t width = 0;
+      int32_t height = 0;
+      container->GetWidth(&width);
+      container->GetHeight(&height);
+
+      // Request a decode at that size.
+      container->RequestDecodeForSize(IntSize(width, height),
+                                      imgIContainer::DECODE_FLAGS_DEFAULT);
     }
+
     InvalidateFrame();
+  }
+
+  if (aType == imgINotificationObserver::DECODE_COMPLETE) {
+    if (nsIDocument* parent = GetOurCurrentDoc()) {
+      nsCOMPtr<imgIContainer> container;
+      aRequest->GetImage(getter_AddRefs(container));
+      if (container) {
+        container->PropagateUseCounters(parent);
+      }
+    }
   }
 
   return NS_OK;
@@ -883,7 +903,7 @@ nsBulletFrame::GetLogicalBaseline(WritingMode aWritingMode) const
   if (GetStateBits() & BULLET_FRAME_IMAGE_LOADING) {
     ascent = BSize(aWritingMode);
   } else {
-    nsRefPtr<nsFontMetrics> fm;
+    RefPtr<nsFontMetrics> fm;
     nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
                                           GetFontSizeInflation());
     CounterStyle* listStyleType = StyleList()->GetCounterStyle();

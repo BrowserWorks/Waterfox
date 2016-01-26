@@ -1,11 +1,13 @@
 <!DOCTYPE project [
     <!ENTITY icu-config SYSTEM "./icu-config.xml">
     <!ENTITY icu-locale-deprecates SYSTEM "./icu-locale-deprecates.xml">
+    <!ENTITY icu-coll-deprecates SYSTEM "./icu-coll-deprecates.xml">
+    <!ENTITY icu-rbnf-deprecates SYSTEM "./icu-rbnf-deprecates.xml">
 ]>
 <!--
 /*
 *******************************************************************************
-* Copyright (C) 2005-2013, International Business Machines Corporation and    *
+* Copyright (C) 2005-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -55,7 +57,7 @@
         </taskdef>
     </target>
     <!-- target for generating ICU data -->
-    <target name="all" depends="locales, collation, rbnf, supplementalData, metadata, metaZones, windowsZones, likelySubtags, plurals, numberingSystems, translit, brkitr, keyTypeData, genderList, postalCodeData, dayPeriods" />
+    <target name="all" depends="locales, collation, rbnf, supplementalData, metadata, metaZones, windowsZones, likelySubtags, plurals, numberingSystems, translit, brkitr, keyTypeData, genderList, dayPeriods" />
     <!-- parallel target -->
     <target name="pall" depends="init">
         <parallel threadsPerProcessor ="1">
@@ -82,6 +84,15 @@
             <!--<ant target='trnsfiles'></ant> Not ANT-built - see
             note below. -->
           </sequential>
+          <sequential>
+          	<ant target='keyTypeData'/>
+          </sequential>
+          <sequential>
+          	<ant target='genderList'/>
+          </sequential>
+          <sequential>
+          	<ant target='dayPeriods'/>
+          </sequential>
         </parallel>
      </target>
 
@@ -100,20 +111,34 @@
 		<remapper>
 		  <remap sourcePath="/Keys" targetDir="lang" />
 		  <remap sourcePath="/Languages" targetDir="lang" />
-		  <remap sourcePath="/LanguagesShort" targetDir="lang" />
+		  <remap sourcePath="/Languages%short" targetDir="lang" />
+		  <remap sourcePath="/Languages%secondary" targetDir="lang" />
+		  <remap sourcePath="/Languages%variant" targetDir="lang" />
 		  <remap sourcePath="/Scripts" targetDir="lang" />
+		  <remap sourcePath="/Scripts%secondary" targetDir="lang" />
+		  <remap sourcePath="/Scripts%short" targetDir="lang" />
 		  <remap sourcePath="/Scripts%stand-alone" targetDir="lang" />
+		  <remap sourcePath="/Scripts%variant" targetDir="lang" />
 		  <remap sourcePath="/Types" targetDir="lang" />
+		  <remap sourcePath="/Types%short" targetDir="lang" />
 		  <remap sourcePath="/Variants" targetDir="lang" />
+		  <remap sourcePath="/Variants%secondary" targetDir="lang" />
 		  <remap sourcePath="/codePatterns" targetDir="lang" />
 		  <remap sourcePath="/localeDisplayPattern" targetDir="lang" />
 		  <remap sourcePath="/Countries" targetDir="region" />
-		  <remap sourcePath="/CountriesShort" targetDir="region" />
+		  <remap sourcePath="/Countries%variant" targetDir="region" />
+		  <remap sourcePath="/Countries%short" targetDir="region" />
 		  <remap sourcePath="/Currencies" targetDir="curr" />
+		  <remap sourcePath="/Currencies%narrow" targetDir="curr" />
+		  <remap sourcePath="/Currencies%variant" targetDir="curr" />
 		  <remap sourcePath="/CurrencyPlurals" targetDir="curr" />
 		  <remap sourcePath="/CurrencyUnitPatterns" targetDir="curr" />
 		  <remap sourcePath="/currencySpacing" targetDir="curr" />
 		  <remap sourcePath="/zoneStrings" targetDir="zone" />
+		  <remap sourcePath="/durationUnits" targetDir="unit" />
+		  <remap sourcePath="/units" targetDir="unit" />
+		  <remap sourcePath="/unitsShort" targetDir="unit" />
+		  <remap sourcePath="/unitsNarrow" targetDir="unit" />
 		</remapper>
                 <!-- http://ant.apache.org/faq.html#xml-entity-include -->
                 &icu-config;
@@ -133,32 +158,7 @@
                 </args>
                 <!-- http://ant.apache.org/faq.html#xml-entity-include -->
                 &icu-config;
-                <deprecates>
-                    <alias from="de__PHONEBOOK" to="de"  rbpath="/collations/default" value="phonebook"/>
-                    <alias from="es__TRADITIONAL" to="es" rbpath="/collations/default" value="traditional"/>
-                    <alias from="in" to="id" />
-                    <alias from="in_ID" to="id_ID" />
-                    <alias from="iw" to="he" />
-                    <alias from="iw_IL" to="he_IL" />
-                    <alias from="mo" to="ro_MD" />
-                    <alias from="no" to="nb" />
-                    <alias from="no_NO" to="nb_NO" />
-                    <alias from="pa_IN" to="pa_Guru_IN" />
-                    <alias from="sh" to="sr_Latn" />
-                    <alias from="sh_BA" to="sr_Latn_BA" />
-                    <alias from="sh_CS" to="sr_Latn_RS" />
-                    <alias from="sh_YU" to="sr_Latn_RS" />
-                    <alias from="sr_BA" to="sr_Cyrl_BA" />
-                    <alias from="sr_ME" to="sr_Cyrl_ME" />
-                    <alias from="sr_RS" to="sr_Cyrl_RS" />
-                    <alias from="zh_CN" to="zh_Hans_CN" />
-                    <alias from="zh_SG" to="zh_Hans_SG" />
-                    <alias from="zh_HK" to="zh_Hant_HK" />
-                    <alias from="zh_MO" to="zh_Hant_MO" />
-                    <alias from="zh_TW" to="zh_Hant_TW" />
-                    <emptyLocale locale="de_" />
-                    <emptyLocale locale="es_" />
-                </deprecates>
+                &icu-coll-deprecates;
             </run>
         </cldr-build>
     </target>
@@ -174,6 +174,7 @@
                 </args>
                 <!-- http://ant.apache.org/faq.html#xml-entity-include -->
                 &icu-config;
+                &icu-rbnf-deprecates;
             </run>
         </cldr-build>
     </target>
@@ -277,18 +278,6 @@
             </run>
         </cldr-build>
     </target>
-    <target name="postalCodeData" depends="init,setup" description="builds postalCodeData.txt from postalCodeData.xml">
-        <cldr-build toolName="org.unicode.cldr.icu.NewLdml2IcuConverter" destFile="postalCodeData.txt" noArgs="true">
-            <!-- launch the tool and generate the data after reading the config file -->
-            <run>
-                <args>
-                    <arg name="-s" value="${env.CLDR_DIR}/common/supplemental" />
-                    <arg name="-d" value="${env.ICU4C_DIR}/source/data/misc"/>
-                    <arg name="-t" value="postalCodeData"/>
-                </args>
-            </run>
-        </cldr-build>
-    </target>
     <target name="dayPeriods" depends="init,setup" description="builds dayPeriods.txt from dayPeriods.xml">
         <cldr-build toolName="org.unicode.cldr.icu.NewLdml2IcuConverter" destFile="dayPeriods.txt" noArgs="true">
             <!-- launch the tool and generate the data after reading the config file -->
@@ -305,7 +294,8 @@
         <cldr-build toolName="org.unicode.cldr.icu.NewLdml2IcuConverter" srcFile=".*xml" destFile=".*txt">
             <run>
                 <args>
-                    <arg name="--sourcedir"       value="${env.ICU4C_DIR}/source/data/xml/brkitr"/>
+                    <arg name="--sourcedir"       value="${env.CLDR_DIR}/common/segments"/>
+					<arg name="--specialsdir"       value="${env.ICU4C_DIR}/source/data/xml/brkitr"/>
                     <arg name="--destdir"         value="${env.ICU4C_DIR}/source/data/brkitr"/>
                     <arg name="--type" value="brkitr" />
                     <arg name="--makefile" value="brkfiles.mk"/>
@@ -330,11 +320,11 @@
         </cldr-build>
     </target>
 
-        <target name="translit" depends="init,setup" description="builds collation files in ICU text format">
+    <target name="translit" depends="init,setup" description="builds collation files in ICU text format">
         <cldr-build toolName="org.unicode.cldr.icu.ConvertTransforms" srcFile=".*xml" destFile=".*txt">
             <run>
                 <args>
-                    <arg name="-m" value="((?!.*(Canadian|Ethiopic).*).*)" />
+                    <arg name="-m" value="((?!.*(Canadian|Ethiopic|ug-Latin).*).*)" />
                     <arg name="--sourcedir" value="${env.CLDR_DIR}/common/transforms" />
                     <arg name="--destdir"   value="${env.ICU4C_DIR}/source/data/translit"/>
                     <arg name="--commentSkip"/>
@@ -375,6 +365,9 @@
                <include name="region/resfiles.mk" /> 
                <include name="zone/*.txt" /> 
                <include name="zone/resfiles.mk" /> 
+               <exclude name="zone/tzdbNames.txt" /> 
+               <include name="unit/*.txt" /> 
+               <include name="unit/resfiles.mk" /> 
 	    </fileset>
             <fileset id="collation" dir="${env.ICU4C_DIR}/source/data/coll">
                 <include name="*.txt" />
@@ -433,9 +426,6 @@
             </fileset>
             <fileset id="genderList" dir="${env.ICU4C_DIR}/source/data/misc">
                 <include name="genderList.txt" />
-            </fileset>
-            <fileset id="postalCodeData" dir="${env.ICU4C_DIR}/source/data/misc">
-                <include name="postalCodeData.txt" />
             </fileset>
             <fileset id="dayPeriods" dir="${env.ICU4C_DIR}/source/data/misc">
                 <include name="dayPeriods.txt" />

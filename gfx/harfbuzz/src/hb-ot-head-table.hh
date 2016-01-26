@@ -55,7 +55,9 @@ struct head
   inline bool sanitize (hb_sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
-    return TRACE_RETURN (c->check_struct (this) && likely (version.major == 1));
+    return_trace (c->check_struct (this) &&
+		  version.major == 1 &&
+		  magicNumber == 0x5F0F3CF5u);
   }
 
   protected:
@@ -138,9 +140,10 @@ struct head
 					 * 2: Like 1 but also contains neutrals;
 					 * -1: Only strongly right to left;
 					 * -2: Like -1 but also contains neutrals. */
+  public:
   SHORT		indexToLocFormat;	/* 0 for short offsets, 1 for long. */
   SHORT		glyphDataFormat;	/* 0 for current format. */
-  public:
+
   DEFINE_SIZE_STATIC (54);
 };
 

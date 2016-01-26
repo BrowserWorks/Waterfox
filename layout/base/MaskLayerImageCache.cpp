@@ -19,24 +19,15 @@ MaskLayerImageCache::~MaskLayerImageCache()
   MOZ_COUNT_DTOR(MaskLayerImageCache);
 }
 
-
-/* static */ PLDHashOperator
-MaskLayerImageCache::SweepFunc(MaskLayerImageEntry* aEntry,
-                               void* aUserArg)
-{
-  const MaskLayerImageCache::MaskLayerImageKey* key = aEntry->mKey;
-
-  if (key->mLayerCount == 0) {
-    return PL_DHASH_REMOVE;
-  }
-
-  return PL_DHASH_NEXT;
-}
-
 void
-MaskLayerImageCache::Sweep() 
+MaskLayerImageCache::Sweep()
 {
-  mMaskImageContainers.EnumerateEntries(SweepFunc, nullptr);
+  for (auto iter = mMaskImageContainers.Iter(); !iter.Done(); iter.Next()) {
+    const MaskLayerImageCache::MaskLayerImageKey* key = iter.Get()->mKey;
+    if (key->HasZeroLayerCount()) {
+      iter.Remove();
+    }
+  }
 }
 
 ImageContainer*
@@ -57,24 +48,16 @@ MaskLayerImageCache::PutImage(const MaskLayerImageKey* aKey, ImageContainer* aCo
   entry->mContainer = aContainer;
 }
 
-// This case is particularly 'clever' because it uses AddRef/Release to track the use
-// not to release the object.
-template<>
-struct HasDangerousPublicDestructor<MaskLayerImageCache::MaskLayerImageKey>
-{
-  static const bool value = true;
-};
-
 MaskLayerImageCache::MaskLayerImageKey::MaskLayerImageKey()
-  : mLayerCount(0)
-  , mRoundedClipRects()
+  : mRoundedClipRects()
+  , mLayerCount(0)
 {
   MOZ_COUNT_CTOR(MaskLayerImageKey);
 }
 
 MaskLayerImageCache::MaskLayerImageKey::MaskLayerImageKey(const MaskLayerImageKey& aKey)
-  : mLayerCount(aKey.mLayerCount)
-  , mRoundedClipRects(aKey.mRoundedClipRects)
+  : mRoundedClipRects(aKey.mRoundedClipRects)
+  , mLayerCount(aKey.mLayerCount)
 {
   MOZ_COUNT_CTOR(MaskLayerImageKey);
 }
@@ -84,4 +67,4 @@ MaskLayerImageCache::MaskLayerImageKey::~MaskLayerImageKey()
   MOZ_COUNT_DTOR(MaskLayerImageKey);
 }
 
-}
+} // namespace mozilla

@@ -1,0 +1,221 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Bug 1185544: Add data delivery to the WebSocket backend.
+
+Any copyright is dedicated to the Public Domain.
+http://creativecommons.org/licenses/publicdomain/
+
+-->
+<head>
+  <title>Test for Bug 1185544</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/dom/push/test/webpush.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+</head>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1185544">Mozilla Bug 1185544</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+
+<script class="testbody" type="text/javascript">
+
+  SimpleTest.registerCleanupFunction(() =>
+    new Promise(resolve => SpecialPowers.popPermissions(resolve))
+  );
+
+  var registration;
+  add_task(function* start() {
+    yield new Promise(resolve => {
+      SpecialPowers.pushPermissions([
+        { type: "desktop-notification", allow: true, context: document },
+        ], resolve);
+    });
+    yield new Promise(resolve => {
+      SpecialPowers.pushPrefEnv({"set": [
+        ["dom.push.enabled", true],
+        ["dom.serviceWorkers.exemptFromPerDomainMax", true],
+        ["dom.serviceWorkers.enabled", true],
+        ["dom.serviceWorkers.testing.enabled", true]
+        ]}, resolve);
+    });
+
+    var url = "worker.js" + "?" + (Math.random());
+    registration = yield navigator.serviceWorker.register(url, {scope: "."});
+  });
+
+  var controlledFrame;
+  add_task(function* createControlledIFrame() {
+    yield new Promise(function(res, rej) {
+      var iframe = document.createElement('iframe');
+      iframe.id = "controlledFrame";
+      iframe.src = "http://mochi.test:8888/tests/dom/push/test/frame.html";
+
+      iframe.onload = () => res();
+      controlledFrame = iframe;
+      document.body.appendChild(iframe);
+    });
+  });
+
+  var pushSubscription;
+  add_task(function* subscribe() {
+    pushSubscription = yield registration.pushManager.subscribe();
+  });
+
+  function sendRequestToWorker(request) {
+    return new Promise((resolve, reject) => {
+      var channel = new MessageChannel();
+      channel.port1.onmessage = e => {
+        (e.data.error ? reject : resolve)(e.data);
+      };
+      registration.active.postMessage(request, [channel.port2]);
+    });
+  }
+
+  function base64UrlDecode(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+
+    // Replace padding if it was stripped by the sender.
+    // See http://tools.ietf.org/html/rfc4648#section-4
+    switch (s.length % 4) {
+      case 0:
+        break; // No pad chars in this case
+      case 2:
+        s += '==';
+        break; // Two pad chars
+      case 3:
+        s += '=';
+        break; // One pad char
+      default:
+        throw new Error('Illegal base64url string!');
+    }
+
+    // With correct padding restored, apply the standard base64 decoder
+    var decoded = atob(s);
+
+    var array = new Uint8Array(new ArrayBuffer(decoded.length));
+    for (var i = 0; i < decoded.length; i++) {
+      array[i] = decoded.charCodeAt(i);
+    }
+    return array;
+  }
+
+  add_task(function* compareJSONSubscription() {
+    var json = pushSubscription.toJSON();
+    is(json.endpoint, pushSubscription.endpoint, "Wrong endpoint");
+
+    ["p256dh", "auth"].forEach(keyName => {
+      isDeeply(
+        base64UrlDecode(json.keys[keyName]),
+        new Uint8Array(pushSubscription.getKey(keyName)),
+        "Mismatched Base64-encoded key: " + keyName
+      );
+    });
+  });
+
+  add_task(function* comparePublicKey() {
+    var data = yield sendRequestToWorker({ type: "publicKey" });
+    var p256dhKey = new Uint8Array(pushSubscription.getKey("p256dh"));
+    ok(p256dhKey.length > 0, "Missing key share");
+    isDeeply(
+      p256dhKey,
+      new Uint8Array(data.p256dh),
+      "Mismatched key share"
+    );
+    var authSecret = new Uint8Array(pushSubscription.getKey("auth"));
+    ok(authSecret.length > 0, "Missing auth secret");
+    isDeeply(
+      authSecret,
+      new Uint8Array(data.auth),
+      "Mismatched auth secret"
+    );
+  });
+
+  function waitForMessage(pushSubscription, message) {
+    return Promise.all([
+      controlledFrame.contentWindow.waitOnPushMessage(pushSubscription),
+      webpush(pushSubscription, message),
+    ]).then(([message]) => message);
+  }
+
+  add_task(function* sendPushMessageFromPage() {
+    var typedArray = new Uint8Array([226, 130, 40, 240, 40, 140, 188]);
+    var json = { hello: "world" };
+
+    var message = yield waitForMessage(pushSubscription, "Text message from page");
+    is(message.data.text, "Text message from page", "Wrong text message data");
+
+    message = yield waitForMessage(
+      pushSubscription,
+      typedArray
+    );
+    isDeeply(new Uint8Array(message.data.arrayBuffer), typedArray,
+      "Wrong array buffer message data");
+
+    message = yield waitForMessage(
+      pushSubscription,
+      JSON.stringify(json)
+    );
+    ok(message.data.json.ok, "Unexpected error parsing JSON");
+    isDeeply(message.data.json.value, json, "Wrong JSON message data");
+
+    message = yield waitForMessage(
+      pushSubscription,
+      ""
+    );
+    ok(message, "Should include data for empty messages");
+    is(message.data.text, "", "Wrong text for empty message");
+    is(message.data.arrayBuffer.byteLength, 0, "Wrong buffer length for empty message");
+    ok(!message.data.json.ok, "Expected JSON parse error for empty message");
+
+    message = yield waitForMessage(
+      pushSubscription,
+      new Uint8Array([0x48, 0x69, 0x21, 0x20, 0xf0, 0x9f, 0x91, 0x80])
+    );
+    is(message.data.text, "Hi! \ud83d\udc40", "Wrong text for message with emoji");
+    var text = yield new Promise((resolve, reject) => {
+      var reader = new FileReader();
+      reader.onloadend = event => {
+        if (reader.error) {
+          reject(reader.error);
+        } else {
+          resolve(reader.result);
+        }
+      };
+      reader.readAsText(message.data.blob);
+    });
+    is(text, "Hi! \ud83d\udc40", "Wrong blob data for message with emoji");
+    is(text, "Hi! \ud83d\udc40", "Wrong blob data for message with emoji");
+
+    // Send a blank message.
+    var [message] = yield Promise.all([
+      controlledFrame.contentWindow.waitOnPushMessage(pushSubscription),
+      fetch("http://mochi.test:8888/tests/dom/push/test/push-server.sjs", {
+        method: "PUT",
+        headers: {
+          "X-Push-Method": "POST",
+          "X-Push-Server": pushSubscription.endpoint,
+        },
+      }),
+    ]);
+    ok(!message.data, "Should exclude data for blank messages");
+  });
+
+  add_task(function* unsubscribe() {
+    controlledFrame.parentNode.removeChild(controlledFrame);
+    controlledFrame = null;
+    yield pushSubscription.unsubscribe();
+  });
+
+  add_task(function* unregister() {
+    yield registration.unregister();
+  });
+
+</script>
+</body>
+</html>

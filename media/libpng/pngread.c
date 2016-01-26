@@ -1,7 +1,7 @@
 
 /* pngread.c - read a PNG file
  *
- * Last changed in libpng 1.6.17 [March 25, 2015]
+ * Last changed in libpng 1.6.17 [March 26, 2015]
  * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
@@ -63,7 +63,7 @@ png_create_read_struct_2,(png_const_charp user_png_ver, png_voidp error_ptr,
          /* In stable builds only warn if an application error can be completely
           * handled.
           */
-#        if PNG_LIBPNG_BUILD_BASE_TYPE >= PNG_LIBPNG_BUILD_RC
+#        if PNG_RELEASE_BUILD
             png_ptr->flags |= PNG_FLAG_APP_WARNINGS_WARN;
 #        endif
 #     endif
@@ -1123,9 +1123,9 @@ png_read_png(png_structrp png_ptr, png_inforp info_ptr,
    /* Tell libpng to strip 16-bit/color files down to 8 bits per color.
     */
    if ((transforms & PNG_TRANSFORM_SCALE_16) != 0)
-     /* Added at libpng-1.5.4. "strip_16" produces the same result that it
-      * did in earlier versions, while "scale_16" is now more accurate.
-      */
+      /* Added at libpng-1.5.4. "strip_16" produces the same result that it
+       * did in earlier versions, while "scale_16" is now more accurate.
+       */
 #ifdef PNG_READ_SCALE_16_TO_8_SUPPORTED
       png_set_scale_16(png_ptr);
 #else
@@ -1289,7 +1289,7 @@ png_read_png(png_structrp png_ptr, png_inforp info_ptr,
 
       for (iptr = 0; iptr < info_ptr->height; iptr++)
          info_ptr->row_pointers[iptr] = png_voidcast(png_bytep,
-            png_malloc(png_ptr, info_ptr->rowbytes));
+             png_malloc(png_ptr, info_ptr->rowbytes));
    }
 
    png_read_image(png_ptr, info_ptr->row_pointers);
@@ -1763,10 +1763,11 @@ decode_gamma(png_image_read_control *display, png_uint_32 value, int encoding)
          value *= 257;
          break;
 
+#ifdef __GNUC__
       default:
          png_error(display->image->opaque->png_ptr,
             "unexpected encoding (internal error)");
-         break;
+#endif
    }
 
    return value;
@@ -2927,10 +2928,6 @@ png_image_read_colormap(png_voidp argument)
 
    switch (data_encoding)
    {
-      default:
-         png_error(png_ptr, "bad data option (internal error)");
-         break;
-
       case P_sRGB:
          /* Change to 8-bit sRGB */
          png_set_alpha_mode_fixed(png_ptr, PNG_ALPHA_PNG, PNG_GAMMA_sRGB);
@@ -2940,6 +2937,11 @@ png_image_read_colormap(png_voidp argument)
          if (png_ptr->bit_depth > 8)
             png_set_scale_16(png_ptr);
          break;
+
+#ifdef __GNUC__
+      default:
+         png_error(png_ptr, "bad data option (internal error)");
+#endif
    }
 
    if (cmap_entries > 256 || cmap_entries > image->colormap_entries)
@@ -3490,10 +3492,6 @@ png_image_read_background(png_voidp argument)
     */
    switch (info_ptr->bit_depth)
    {
-      default:
-         png_error(png_ptr, "unexpected bit depth");
-         break;
-
       case 8:
          /* 8-bit sRGB gray values with an alpha channel; the alpha channel is
           * to be removed by composing on a background: either the row if
@@ -3711,6 +3709,11 @@ png_image_read_background(png_voidp argument)
             }
          }
          break;
+
+#ifdef __GNUC__
+      default:
+         png_error(png_ptr, "unexpected bit depth");
+#endif
    }
 
    return 1;

@@ -17,6 +17,8 @@
 #ifndef __VideoDecoder_h__
 #define __VideoDecoder_h__
 
+#include <atomic>
+
 #include "gmp-task-utils.h"
 #include "gmp-video-decode.h"
 #include "gmp-video-host.h"
@@ -58,7 +60,22 @@ private:
 
   void DrainTask();
 
-  void DecodeTask(GMPVideoEncodedFrame* aInputFrame);
+  struct DecodeData {
+    DecodeData()
+      : mTimestamp(0)
+      , mDuration(0)
+      , mIsKeyframe(false)
+    {}
+    std::vector<uint8_t> mBuffer;
+    uint64_t mTimestamp;
+    uint64_t mDuration;
+    bool mIsKeyframe;
+    CryptoMetaData mCrypto;
+  };
+
+  void DecodeTask(DecodeData* aData);
+
+  void ResetCompleteTask();
 
   void ReturnOutput(IMFSample* aSample,
                     int32_t aWidth,
@@ -84,6 +101,8 @@ private:
 
   int32_t mNumInputTasks;
   bool mSentExtraData;
+
+  std::atomic<bool> mIsFlushing;
 
   bool mHasShutdown;
 };

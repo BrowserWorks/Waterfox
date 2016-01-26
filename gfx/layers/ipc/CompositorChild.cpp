@@ -29,7 +29,7 @@
 
 using mozilla::layers::LayerTransactionChild;
 using mozilla::dom::TabChildBase;
-using mozilla::unused;
+using mozilla::Unused;
 
 namespace mozilla {
 namespace layers {
@@ -46,13 +46,16 @@ CompositorChild::CompositorChild(ClientLayerManager *aLayerManager)
 
 CompositorChild::~CompositorChild()
 {
+  XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
+                                   new DeleteTask<Transport>(GetTransport()));
+
   if (mCanSend) {
     gfxCriticalError() << "CompositorChild was not deinitialized";
   }
 }
 
-static void DeferredDestroyCompositor(nsRefPtr<CompositorParent> aCompositorParent,
-                                      nsRefPtr<CompositorChild> aCompositorChild)
+static void DeferredDestroyCompositor(RefPtr<CompositorParent> aCompositorParent,
+                                      RefPtr<CompositorChild> aCompositorChild)
 {
     // Bug 848949 needs to be fixed before
     // we can close the channel properly
@@ -74,7 +77,7 @@ CompositorChild::Destroy()
   // Destroying the layer manager may cause all sorts of things to happen, so
   // let's make sure there is still a reference to keep this alive whatever
   // happens.
-  nsRefPtr<CompositorChild> selfRef = this;
+  RefPtr<CompositorChild> selfRef = this;
 
   SendWillStop();
   // The call just made to SendWillStop can result in IPC from the
@@ -92,11 +95,11 @@ CompositorChild::Destroy()
     mLayerManager = nullptr;
   }
 
-  // start from the end of the array because Destroy() can cause the
-  // LayerTransactionChild to be removed from the array.
-  for (int i = ManagedPLayerTransactionChild().Length() - 1; i >= 0; --i) {
+  nsAutoTArray<PLayerTransactionChild*, 16> transactions;
+  ManagedPLayerTransactionChild(transactions);
+  for (int i = transactions.Length() - 1; i >= 0; --i) {
     RefPtr<LayerTransactionChild> layers =
-      static_cast<LayerTransactionChild*>(ManagedPLayerTransactionChild()[i]);
+      static_cast<LayerTransactionChild*>(transactions[i]);
     layers->Destroy();
   }
 
@@ -126,7 +129,7 @@ CompositorChild::Create(Transport* aTransport, ProcessId aOtherPid)
   // There's only one compositor per child process.
   MOZ_ASSERT(!sCompositor);
 
-  nsRefPtr<CompositorChild> child(new CompositorChild(nullptr));
+  RefPtr<CompositorChild> child(new CompositorChild(nullptr));
   if (!child->Open(aTransport, aOtherPid, XRE_GetIOMessageLoop(), ipc::ChildSide)) {
     NS_RUNTIMEABORT("Couldn't Open() Compositor channel.");
     return nullptr;
@@ -162,7 +165,7 @@ CompositorChild::OpenSameProcess(CompositorParent* aParent)
 CompositorChild::Get()
 {
   // This is only expected to be used in child processes.
-  MOZ_ASSERT(XRE_GetProcessType() != GeckoProcessType_Default);
+  MOZ_ASSERT(!XRE_IsParentProcess());
   return sCompositor;
 }
 
@@ -178,22 +181,17 @@ CompositorChild::AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBac
   return c;
 }
 
-/*static*/ PLDHashOperator
-CompositorChild::RemoveSharedMetricsForLayersId(const uint64_t& aKey,
-                                                nsAutoPtr<SharedFrameMetricsData>& aData,
-                                                void* aLayerTransactionChild)
-{
-  uint64_t childId = static_cast<LayerTransactionChild*>(aLayerTransactionChild)->GetId();
-  if (aData->GetLayersId() == childId) {
-    return PLDHashOperator::PL_DHASH_REMOVE;
-  }
-  return PLDHashOperator::PL_DHASH_NEXT;
-}
-
 bool
 CompositorChild::DeallocPLayerTransactionChild(PLayerTransactionChild* actor)
 {
-  mFrameMetricsTable.Enumerate(RemoveSharedMetricsForLayersId, actor);
+  uint64_t childId = static_cast<LayerTransactionChild*>(actor)->GetId();
+
+  for (auto iter = mFrameMetricsTable.Iter(); !iter.Done(); iter.Next()) {
+    nsAutoPtr<SharedFrameMetricsData>& data = iter.Data();
+    if (data->GetLayersId() == childId) {
+      iter.Remove();
+    }
+  }
   static_cast<LayerTransactionChild*>(actor)->ReleaseIPDLReference();
   return true;
 }
@@ -208,26 +206,26 @@ CompositorChild::RecvInvalidateAll()
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-static void CalculatePluginClip(const gfx::IntRect& aBounds,
-                                const nsTArray<gfx::IntRect>& aPluginClipRects,
-                                const nsIntPoint& aContentOffset,
-                                const nsIntRegion& aParentLayerVisibleRegion,
-                                nsTArray<gfx::IntRect>& aResult,
-                                gfx::IntRect& aVisibleBounds,
+static void CalculatePluginClip(const LayoutDeviceIntRect& aBounds,
+                                const nsTArray<LayoutDeviceIntRect>& aPluginClipRects,
+                                const LayoutDeviceIntPoint& aContentOffset,
+                                const LayoutDeviceIntRegion& aParentLayerVisibleRegion,
+                                nsTArray<LayoutDeviceIntRect>& aResult,
+                                LayoutDeviceIntRect& aVisibleBounds,
                                 bool& aPluginIsVisible)
 {
   aPluginIsVisible = true;
-  // aBounds (content origin)
-  nsIntRegion contentVisibleRegion(aBounds);
-  // aPluginClipRects (plugin widget origin)
+  LayoutDeviceIntRegion contentVisibleRegion;
+  // aPluginClipRects (plugin widget origin) - contains *visible* rects
   for (uint32_t idx = 0; idx < aPluginClipRects.Length(); idx++) {
-    gfx::IntRect rect = aPluginClipRects[idx];
+    LayoutDeviceIntRect rect = aPluginClipRects[idx];
     // shift to content origin
     rect.MoveBy(aBounds.x, aBounds.y);
-    contentVisibleRegion.AndWith(rect);
+    // accumulate visible rects
+    contentVisibleRegion.OrWith(rect);
   }
   // apply layers clip (window origin)
-  nsIntRegion region = aParentLayerVisibleRegion;
+  LayoutDeviceIntRegion region = aParentLayerVisibleRegion;
   region.MoveBy(-aContentOffset.x, -aContentOffset.y);
   contentVisibleRegion.AndWith(region);
   if (contentVisibleRegion.IsEmpty()) {
@@ -236,8 +234,8 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
   }
   // shift to plugin widget origin
   contentVisibleRegion.MoveBy(-aBounds.x, -aBounds.y);
-  nsIntRegionRectIterator iter(contentVisibleRegion);
-  for (const gfx::IntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
+  LayoutDeviceIntRegion::RectIterator iter(contentVisibleRegion);
+  for (const LayoutDeviceIntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
     aResult.AppendElement(*rgnRect);
     aVisibleBounds.UnionRect(aVisibleBounds, *rgnRect);
   }
@@ -245,8 +243,8 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
 #endif
 
 bool
-CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset,
-                                                const nsIntRegion& aParentLayerVisibleRegion,
+CompositorChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aContentOffset,
+                                                const LayoutDeviceIntRegion& aParentLayerVisibleRegion,
                                                 nsTArray<PluginWindowData>&& aPlugins)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
@@ -262,7 +260,7 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
 
   // Tracks visible plugins we update, so we can hide any plugins we don't.
   nsTArray<uintptr_t> visiblePluginIds;
-
+  nsIWidget* parent = nullptr;
   for (uint32_t pluginsIdx = 0; pluginsIdx < aPlugins.Length(); pluginsIdx++) {
     nsIWidget* widget =
       nsIWidget::LookupRegisteredPluginWindow(aPlugins[pluginsIdx].windowId());
@@ -270,10 +268,13 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
       NS_WARNING("Unexpected, plugin id not found!");
       continue;
     }
+    if (!parent) {
+      parent = widget->GetParent();
+    }
     bool isVisible = aPlugins[pluginsIdx].visible();
     if (widget && !widget->Destroyed()) {
-      gfx::IntRect bounds;
-      gfx::IntRect visibleBounds;
+      LayoutDeviceIntRect bounds;
+      LayoutDeviceIntRect visibleBounds;
       // If the plugin is visible update it's geometry.
       if (isVisible) {
         // bounds (content origin) - don't pass true to Resize, it triggers a
@@ -284,10 +285,11 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
                             aContentOffset.y + bounds.y,
                             bounds.width, bounds.height, false);
         NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
-        nsTArray<gfx::IntRect> rectsOut;
+        nsTArray<LayoutDeviceIntRect> rectsOut;
         // This call may change the value of isVisible
         CalculatePluginClip(bounds, aPlugins[pluginsIdx].clip(),
-                            aContentOffset, aParentLayerVisibleRegion,
+                            aContentOffset,
+                            aParentLayerVisibleRegion,
                             rectsOut, visibleBounds, isVisible);
         // content clipping region (widget origin)
         rv = widget->SetWindowClipRegion(rectsOut, false);
@@ -304,13 +306,12 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
       // Handle invalidation, this can be costly, avoid if it is not needed.
       if (isVisible) {
         // invalidate region (widget origin)
-        gfx::IntRect bounds = aPlugins[pluginsIdx].bounds();
-        gfx::IntRect rect(0, 0, bounds.width, bounds.height);
 #if defined(XP_WIN)
         // Work around for flash's crummy sandbox. See bug 762948. This call
         // digs down into the window hirearchy, invalidating regions on
         // windows owned by other processes.
-        mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(widget, visibleBounds);
+        mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(
+          widget, visibleBounds);
 #else
         rv = widget->Invalidate(visibleBounds);
         NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
@@ -321,35 +322,44 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
   }
   // Any plugins we didn't update need to be hidden, as they are
   // not associated with visible content.
-  nsIWidget::UpdateRegisteredPluginWindowVisibility(visiblePluginIds);
+  nsIWidget::UpdateRegisteredPluginWindowVisibility((uintptr_t)parent, visiblePluginIds);
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  SendRemotePluginsReady();
+#endif
   return true;
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
 bool
-CompositorChild::RecvUpdatePluginVisibility(nsTArray<uintptr_t>&& aVisibleIdList)
+CompositorChild::RecvHideAllPlugins(const uintptr_t& aParentWidget)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
-  NS_NOTREACHED("CompositorChild::RecvUpdatePluginVisibility calls "
+  NS_NOTREACHED("CompositorChild::RecvHideAllPlugins calls "
                 "unexpected on this platform.");
   return false;
 #else
   MOZ_ASSERT(NS_IsMainThread());
-  nsIWidget::UpdateRegisteredPluginWindowVisibility(aVisibleIdList);
+  nsTArray<uintptr_t> list;
+  nsIWidget::UpdateRegisteredPluginWindowVisibility(aParentWidget, list);
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  SendRemotePluginsReady();
+#endif
   return true;
 #endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
 }
 
 bool
-CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId)
+CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId,
+                                  const TimeStamp& aCompositeStart,
+                                  const TimeStamp& aCompositeEnd)
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    mLayerManager->DidComposite(aTransactionId);
+    mLayerManager->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
   } else if (aId != 0) {
     dom::TabChild *child = dom::TabChild::GetFrom(aId);
     if (child) {
-      child->DidComposite(aTransactionId);
+      child->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
     }
   }
   return true;
@@ -370,6 +380,16 @@ CompositorChild::AddOverfillObserver(ClientLayerManager* aLayerManager)
 {
   MOZ_ASSERT(aLayerManager);
   mOverfillObservers.AppendElement(aLayerManager);
+}
+
+bool
+CompositorChild::RecvClearCachedResources(const uint64_t& aId)
+{
+  dom::TabChild* child = dom::TabChild::GetFrom(aId);
+  if (child) {
+    child->ClearCachedResources();
+  }
+  return true;
 }
 
 void
@@ -486,7 +506,7 @@ CompositorChild::RecvRemotePaintIsReady()
   // XPCOM gives a soup of compiler errors when trying to do_QueryReference
   // so I'm using static_cast<>
   MOZ_LAYERS_LOG(("[RemoteGfx] CompositorChild received RemotePaintIsReady"));
-  nsRefPtr<nsISupports> iTabChildBase(do_QueryReferent(mWeakTabChild));
+  RefPtr<nsISupports> iTabChildBase(do_QueryReferent(mWeakTabChild));
   if (!iTabChildBase) {
     MOZ_LAYERS_LOG(("[RemoteGfx] Note: TabChild was released before RemotePaintIsReady. "
         "MozAfterRemotePaint will not be sent to listener."));
@@ -495,7 +515,7 @@ CompositorChild::RecvRemotePaintIsReady()
   TabChildBase* tabChildBase = static_cast<TabChildBase*>(iTabChildBase.get());
   TabChild* tabChild = static_cast<TabChild*>(tabChildBase);
   MOZ_ASSERT(tabChild);
-  unused << tabChild->SendRemotePaintIsReady();
+  Unused << tabChild->SendRemotePaintIsReady();
   mWeakTabChild = nullptr;
   return true;
 }
@@ -506,13 +526,13 @@ CompositorChild::RequestNotifyAfterRemotePaint(TabChild* aTabChild)
 {
   MOZ_ASSERT(aTabChild, "NULL TabChild not allowed in CompositorChild::RequestNotifyAfterRemotePaint");
   mWeakTabChild = do_GetWeakReference( static_cast<dom::TabChildBase*>(aTabChild) );
-  unused << SendRequestNotifyAfterRemotePaint();
+  Unused << SendRequestNotifyAfterRemotePaint();
 }
 
 void
 CompositorChild::CancelNotifyAfterRemotePaint(TabChild* aTabChild)
 {
-  nsRefPtr<nsISupports> iTabChildBase(do_QueryReferent(mWeakTabChild));
+  RefPtr<nsISupports> iTabChildBase(do_QueryReferent(mWeakTabChild));
   if (!iTabChildBase) {
     return;
   }
@@ -547,6 +567,26 @@ CompositorChild::SendResume()
     return true;
   }
   return PCompositorChild::SendResume();
+}
+
+bool
+CompositorChild::SendNotifyHidden(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyHidden(id);
+}
+
+bool
+CompositorChild::SendNotifyVisible(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyVisible(id);
 }
 
 bool

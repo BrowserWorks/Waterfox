@@ -12,8 +12,11 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.search.providers.SearchEngine;
 
+import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -44,6 +47,7 @@ public class PostSearchFragment extends Fragment {
 
     private String resultsPageHost;
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -138,15 +142,28 @@ public class PostSearchFragment extends Fragment {
                             TelemetryContract.Method.INTENT, "search-result");
                 }
 
+                i.addCategory(Intent.CATEGORY_BROWSABLE);
+                i.setComponent(null);
+                if (AppConstants.Versions.feature15Plus) {
+                    i.setSelector(null);
+                }
+
                 startActivity(i);
                 return true;
             } catch (URISyntaxException e) {
                 Log.e(LOG_TAG, "Error parsing intent URI", e);
+            } catch (SecurityException e) {
+                Log.e(LOG_TAG, "SecurityException handling arbitrary intent content");
+            } catch (ActivityNotFoundException e) {
+                Log.e(LOG_TAG, "Intent not actionable");
             }
 
             return false;
         }
 
+        // We are suppressing the 'deprecation' warning because the new method is only available starting with API
+        // level 23 and that's much higher than our current minSdkLevel (1208580).
+        @SuppressWarnings("deprecation")
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             Log.e(LOG_TAG, "Error loading search results: " + description);
@@ -162,7 +179,7 @@ public class PostSearchFragment extends Fragment {
 
                 final TextView message = (TextView) errorView.findViewById(R.id.empty_message);
                 message.setText(R.string.network_error_message);
-                message.setTextColor(getResources().getColor(R.color.network_error_link));
+                message.setTextColor(ColorUtils.getColor(view.getContext(), R.color.network_error_link));
                 message.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {

@@ -20,7 +20,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "DynamicResizeWatcher", "resource:///mod
 const PANEL_MIN_HEIGHT = 100;
 const PANEL_MIN_WIDTH = 330;
 
-let PanelFrameInternal = {
+var PanelFrameInternal = {
   /**
    * Helper function to get and hold a single instance of a DynamicResizeWatcher.
    */
@@ -77,6 +77,10 @@ let PanelFrameInternal = {
         "origin": aOrigin,
         "src": aSrc
       };
+      if (aType == "social") {
+        attrs["message"] = "true";
+        attrs["messagemanagergroup"] = aType;
+      }
       for (let [k, v] of Iterator(attrs)) {
         frame.setAttribute(k, v);
       }
@@ -92,7 +96,7 @@ let PanelFrameInternal = {
 /**
  * The exported PanelFrame object
  */
-let PanelFrame = {
+var PanelFrame = {
   /**
    * Shows a popup in a pop-up panel, or in a sliding panel view in the application menu.
    * It will move the iframe to different DOM locations depending on where it needs to be
@@ -179,9 +183,7 @@ let PanelFrame = {
       }
     });
 
-    // in overflow, the anchor is a normal toolbarbutton, in toolbar it is a badge button
-    let anchor = aWindow.document.getAnonymousElementByAttribute(anchorBtn, "class", "toolbarbutton-badge-container") ||
-                 aWindow.document.getAnonymousElementByAttribute(anchorBtn, "class", "toolbarbutton-icon");
+    let anchor = aWindow.document.getAnonymousElementByAttribute(anchorBtn, "class", "toolbarbutton-icon");
     // Bug 849216 - open the popup asynchronously so we avoid the auto-rollup
     // handling from preventing it being opened in some cases.
     Services.tm.mainThread.dispatch(function() {

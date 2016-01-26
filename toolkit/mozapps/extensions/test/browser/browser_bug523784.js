@@ -6,7 +6,7 @@ const URI_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul"
 // This tests that the blocklist dialog still affects soft-blocked add-ons
 // if the user clicks the "Restart Later" button. It also ensures that the
 // "Cancel" button is correctly renamed (to "Restart Later").
-let args = {
+var args = {
   restart: false,
   list: [{
     name: "Bug 523784 softblocked addon",
@@ -31,7 +31,7 @@ function test() {
     win.addEventListener("load", function() {
       win.removeEventListener("load", arguments.callee, false);
 
-      executeSoon(function() bug523784_test1(win));
+      executeSoon(() => bug523784_test1(win));
     }, false);
   };
   Services.ww.registerNotification(windowObserver);

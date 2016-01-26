@@ -38,7 +38,7 @@ protected:
   }
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion) override
+  virtual void SetVisibleRegion(const LayerIntRegion& aRegion) override
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");
@@ -49,7 +49,7 @@ public:
                      const gfx::Point& aDeviceOffset,
                      Layer* aMaskLayer) override;
 
-  virtual TemporaryRef<SourceSurface> GetAsSourceSurface() override;
+  virtual already_AddRefed<SourceSurface> GetAsSourceSurface() override;
 
 protected:
   BasicLayerManager* BasicManager()
@@ -69,46 +69,52 @@ BasicImageLayer::Paint(DrawTarget* aDT,
     return;
   }
 
-  nsRefPtr<ImageFactory> originalIF = mContainer->GetImageFactory();
+  RefPtr<ImageFactory> originalIF = mContainer->GetImageFactory();
   mContainer->SetImageFactory(mManager->IsCompositingCheap() ? nullptr : BasicManager()->GetImageFactory());
 
-  RefPtr<gfx::SourceSurface> surface;
-  AutoLockImage autoLock(mContainer, &surface);
+  AutoLockImage autoLock(mContainer);
   Image *image = autoLock.GetImage();
-  gfx::IntSize size = mSize = autoLock.GetSize();
-
+  if (!image) {
+    mContainer->SetImageFactory(originalIF);
+    return;
+  }
+  RefPtr<gfx::SourceSurface> surface = image->GetAsSourceSurface();
   if (!surface || !surface->IsValid()) {
     mContainer->SetImageFactory(originalIF);
     return;
   }
 
-  FillRectWithMask(aDT, aDeviceOffset, Rect(0, 0, size.width, size.height), 
-                   surface, ToFilter(mFilter),
+  gfx::IntSize size = mSize = surface->GetSize();
+  FillRectWithMask(aDT, aDeviceOffset, Rect(0, 0, size.width, size.height),
+                   surface, mFilter,
                    DrawOptions(GetEffectiveOpacity(), GetEffectiveOperator(this)),
                    aMaskLayer);
 
   mContainer->SetImageFactory(originalIF);
-  GetContainer()->NotifyPaintedImage(image);
 }
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 BasicImageLayer::GetAsSourceSurface()
 {
   if (!mContainer) {
     return nullptr;
   }
 
-  gfx::IntSize dontCare;
-  return mContainer->GetCurrentAsSourceSurface(&dontCare);
+  AutoLockImage lockImage(mContainer);
+  Image* image = lockImage.GetImage();
+  if (!image) {
+    return nullptr;
+  }
+  return image->GetAsSourceSurface();
 }
 
 already_AddRefed<ImageLayer>
 BasicLayerManager::CreateImageLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ImageLayer> layer = new BasicImageLayer(this);
+  RefPtr<ImageLayer> layer = new BasicImageLayer(this);
   return layer.forget();
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

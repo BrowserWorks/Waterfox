@@ -4,74 +4,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WebGL2Context.h"
+
 #include "GLContext.h"
+#include "mozilla/dom/WebGL2RenderingContextBinding.h"
+#include "mozilla/RefPtr.h"
+#include "WebGLBuffer.h"
 #include "WebGLContext.h"
 #include "WebGLProgram.h"
 #include "WebGLVertexArray.h"
 #include "WebGLVertexAttribData.h"
-#include "mozilla/dom/WebGL2RenderingContextBinding.h"
 
 namespace mozilla {
-
-typedef union { GLint i; GLfloat f; GLuint u; } fi_t;
-
-static inline
-GLfloat PuntToFloat(GLint i)
-{
-   fi_t tmp;
-   tmp.i = i;
-   return tmp.f;
-}
-
-static inline
-GLfloat PuntToFloat(GLuint u)
-{
-   fi_t tmp;
-   tmp.u = u;
-   return tmp.f;
-}
-
-bool
-WebGL2Context::ValidateAttribPointerType(bool integerMode, GLenum type,
-                                         GLsizei* out_alignment, const char* info)
-{
-    MOZ_ASSERT(out_alignment);
-
-    switch (type) {
-    case LOCAL_GL_BYTE:
-    case LOCAL_GL_UNSIGNED_BYTE:
-        *out_alignment = 1;
-        return true;
-
-    case LOCAL_GL_SHORT:
-    case LOCAL_GL_UNSIGNED_SHORT:
-        *out_alignment = 2;
-        return true;
-
-    case LOCAL_GL_INT:
-    case LOCAL_GL_UNSIGNED_INT:
-        *out_alignment = 4;
-        return true;
-    }
-
-    if (!integerMode) {
-        switch (type) {
-        case LOCAL_GL_HALF_FLOAT:
-            *out_alignment = 2;
-            return true;
-
-        case LOCAL_GL_FLOAT:
-        case LOCAL_GL_FIXED:
-        case LOCAL_GL_INT_2_10_10_10_REV:
-        case LOCAL_GL_UNSIGNED_INT_2_10_10_10_REV:
-            *out_alignment = 4;
-            return true;
-        }
-    }
-
-    ErrorInvalidEnum("%s: invalid enum value 0x%x", info, type);
-    return false;
-}
 
 bool
 WebGL2Context::ValidateUniformMatrixTranspose(bool /*transpose*/, const char* /*info*/)
@@ -80,42 +23,7 @@ WebGL2Context::ValidateUniformMatrixTranspose(bool /*transpose*/, const char* /*
 }
 
 // -------------------------------------------------------------------------
-// Uniforms and attributes
-
-void
-WebGL2Context::VertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsizei stride,
-                                    GLintptr offset)
-{
-    if (IsContextLost())
-        return;
-
-    if (!ValidateAttribIndex(index, "vertexAttribIPointer"))
-        return;
-
-    if (!ValidateAttribPointer(true, index, size, type, LOCAL_GL_FALSE, stride, offset,
-                               "vertexAttribIPointer"))
-    {
-        return;
-    }
-
-    MOZ_ASSERT(mBoundVertexArray);
-    mBoundVertexArray->EnsureAttrib(index);
-
-    InvalidateBufferFetching();
-
-    WebGLVertexAttribData& vd = mBoundVertexArray->mAttribs[index];
-
-    vd.buf = mBoundArrayBuffer;
-    vd.stride = stride;
-    vd.size = size;
-    vd.byteOffset = offset;
-    vd.type = type;
-    vd.normalized = false;
-    vd.integer = true;
-
-    MakeContextCurrent();
-    gl->fVertexAttribIPointer(index, size, type, stride, reinterpret_cast<void*>(offset));
-}
+// Uniforms
 
 void
 WebGL2Context::Uniform1ui(WebGLUniformLocation* loc, GLuint v0)
@@ -336,85 +244,6 @@ WebGL2Context::UniformMatrix4x3fv_base(WebGLUniformLocation* loc, bool transpose
     gl->fUniformMatrix4x3fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
-void
-WebGL2Context::VertexAttribI4i(GLuint index, GLint x, GLint y, GLint z, GLint w)
-{
-    if (IsContextLost())
-        return;
-
-    if (index || gl->IsGLES()) {
-        MakeContextCurrent();
-        gl->fVertexAttribI4i(index, x, y, z, w);
-    } else {
-        mVertexAttrib0Vector[0] = PuntToFloat(x);
-        mVertexAttrib0Vector[1] = PuntToFloat(y);
-        mVertexAttrib0Vector[2] = PuntToFloat(z);
-        mVertexAttrib0Vector[3] = PuntToFloat(w);
-    }
-}
-
-void
-WebGL2Context::VertexAttribI4iv(GLuint index, size_t length, const GLint* v)
-{
-    if (!ValidateAttribArraySetter("vertexAttribI4iv", 4, length))
-        return;
-
-    if (index || gl->IsGLES()) {
-        MakeContextCurrent();
-        gl->fVertexAttribI4iv(index, v);
-    } else {
-        mVertexAttrib0Vector[0] = PuntToFloat(v[0]);
-        mVertexAttrib0Vector[1] = PuntToFloat(v[1]);
-        mVertexAttrib0Vector[2] = PuntToFloat(v[2]);
-        mVertexAttrib0Vector[3] = PuntToFloat(v[3]);
-    }
-}
-
-void
-WebGL2Context::VertexAttribI4iv(GLuint index, const dom::Sequence<GLint>& v)
-{
-    VertexAttribI4iv(index, v.Length(), v.Elements());
-}
-
-void
-WebGL2Context::VertexAttribI4ui(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w)
-{
-    if (IsContextLost())
-        return;
-
-    if (index || gl->IsGLES()) {
-        MakeContextCurrent();
-        gl->fVertexAttribI4ui(index, x, y, z, w);
-    } else {
-        mVertexAttrib0Vector[0] = PuntToFloat(x);
-        mVertexAttrib0Vector[1] = PuntToFloat(y);
-        mVertexAttrib0Vector[2] = PuntToFloat(z);
-        mVertexAttrib0Vector[3] = PuntToFloat(w);
-    }
-}
-
-void
-WebGL2Context::VertexAttribI4uiv(GLuint index, size_t length, const GLuint* v)
-{
-    if (IsContextLost())
-        return;
-
-    if (index || gl->IsGLES()) {
-        MakeContextCurrent();
-        gl->fVertexAttribI4uiv(index, v);
-    } else {
-        mVertexAttrib0Vector[0] = PuntToFloat(v[0]);
-        mVertexAttrib0Vector[1] = PuntToFloat(v[1]);
-        mVertexAttrib0Vector[2] = PuntToFloat(v[2]);
-        mVertexAttrib0Vector[3] = PuntToFloat(v[3]);
-    }
-}
-
-void
-WebGL2Context::VertexAttribI4uiv(GLuint index, const dom::Sequence<GLuint>& v)
-{
-    VertexAttribI4uiv(index, v.Length(), v.Elements());
-}
 
 // -------------------------------------------------------------------------
 // Uniform Buffer Objects and Transform Feedback Buffers
@@ -444,8 +273,10 @@ WebGL2Context::GetIndexedParameter(GLenum target, GLuint index,
             return ErrorInvalidValue("getIndexedParameter: index should be less than "
                                      "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
 
-        retval.SetValue().SetAsWebGLBuffer() =
-            mBoundTransformFeedbackBuffers[index].get();
+        if (mBoundTransformFeedbackBuffers[index].get()) {
+            retval.SetValue().SetAsWebGLBuffer() =
+                mBoundTransformFeedbackBuffers[index].get();
+        }
         return;
 
     case LOCAL_GL_UNIFORM_BUFFER_BINDING:
@@ -453,7 +284,8 @@ WebGL2Context::GetIndexedParameter(GLenum target, GLuint index,
             return ErrorInvalidValue("getIndexedParameter: index should be than "
                                      "MAX_UNIFORM_BUFFER_BINDINGS");
 
-        retval.SetValue().SetAsWebGLBuffer() = mBoundUniformBuffers[index].get();
+        if (mBoundUniformBuffers[index].get())
+            retval.SetValue().SetAsWebGLBuffer() = mBoundUniformBuffers[index].get();
         return;
 
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER_START:
@@ -483,22 +315,7 @@ WebGL2Context::GetUniformIndices(WebGLProgram* program,
     if (!uniformNames.Length())
         return;
 
-    GLuint progname = program->mGLName;
-    size_t count = uniformNames.Length();
-    nsTArray<GLuint>& arr = retval.SetValue();
-
-    MakeContextCurrent();
-
-    for (size_t n = 0; n < count; n++) {
-        NS_LossyConvertUTF16toASCII name(uniformNames[n]);
-        //        const GLchar* glname = name.get();
-        const GLchar* glname = nullptr;
-        name.BeginReading(glname);
-
-        GLuint index = 0;
-        gl->fGetUniformIndices(progname, 1, &glname, &index);
-        arr.AppendElement(index);
-    }
+    program->GetUniformIndices(uniformNames, retval);
 }
 
 void
@@ -510,6 +327,11 @@ WebGL2Context::GetActiveUniforms(WebGLProgram* program,
     retval.SetNull();
     if (IsContextLost())
         return;
+
+    if (pname == LOCAL_GL_UNIFORM_NAME_LENGTH) {
+        ErrorInvalidEnumInfo("getActiveUniforms: pname", pname);
+        return;
+    }
 
     if (!ValidateObject("getActiveUniforms: program", program))
         return;
@@ -543,7 +365,7 @@ WebGL2Context::GetUniformBlockIndex(WebGLProgram* program,
 void
 WebGL2Context::GetActiveUniformBlockParameter(JSContext* cx, WebGLProgram* program,
                                               GLuint uniformBlockIndex, GLenum pname,
-                                              Nullable<dom::OwningUnsignedLongOrUint32ArrayOrBoolean>& retval,
+                                              dom::Nullable<dom::OwningUnsignedLongOrUint32ArrayOrBoolean>& retval,
                                               ErrorResult& rv)
 {
     retval.SetNull();

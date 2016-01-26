@@ -19,11 +19,18 @@ var baseConfig = {
   mode: 'video',
 };
 
+var testFilePath = 'test.3gp';
 var storage = navigator.getDeviceStorage("videos");
 
-suite.test('recording', function() {
-  storage.delete("test.3gp");
+function cleanup()
+{
+  return storage.delete(testFilePath).then(function(p) {
+  }, function(e) {
+    Promise.resolve();
+  });
+}
 
+suite.test('recording', function() {
   function startRecording(p) {
     var eventPromise = new Promise(function(resolve, reject) {
       function onEvent(evt) {
@@ -34,7 +41,51 @@ suite.test('recording', function() {
       suite.camera.addEventListener('recorderstatechange', onEvent);
     });
 
-    var domPromise = suite.camera.startRecording({}, storage, "test.3gp");
+    var domPromise = suite.camera.startRecording({}, storage, testFilePath);
+    return Promise.all([domPromise, eventPromise]);
+  }
+
+  function pauseRecording(p) {
+    var eventPromise = new Promise(function(resolve, reject) {
+      function onEvent(evt) {
+        ok(evt.newState === 'Paused', 'recorder state change event = ' + evt.newState);
+        suite.camera.removeEventListener('recorderstatechange', onEvent);
+        resolve();
+      }
+      suite.camera.addEventListener('recorderstatechange', onEvent);
+    });
+
+    var domPromise = new Promise(function(resolve, reject) {
+      try {
+        suite.camera.pauseRecording();
+        resolve();
+      } catch(e) {
+        reject(e);
+      }
+    });
+
+    return Promise.all([domPromise, eventPromise]);
+  }
+
+  function resumeRecording(p) {
+    var eventPromise = new Promise(function(resolve, reject) {
+      function onEvent(evt) {
+        ok(evt.newState === 'Resumed', 'recorder state change event = ' + evt.newState);
+        suite.camera.removeEventListener('recorderstatechange', onEvent);
+        resolve();
+      }
+      suite.camera.addEventListener('recorderstatechange', onEvent);
+    });
+
+    var domPromise = new Promise(function(resolve, reject) {
+      try {
+        suite.camera.resumeRecording();
+        resolve();
+      } catch(e) {
+        reject(e);
+      }
+    });
+
     return Promise.all([domPromise, eventPromise]);
   }
 
@@ -61,9 +112,91 @@ suite.test('recording', function() {
   }
 
   return suite.getCamera(undefined, baseConfig)
-    .then(startRecording, suite.rejectGetCamera)
-    .then(stopRecording, suite.rejectStartRecording)
+    .then(cleanup, suite.rejectGetCamera)
+    .then(startRecording)
+    .then(pauseRecording, suite.rejectStartRecording)
+    .then(resumeRecording, suite.rejectPauseRecording)
+    .then(stopRecording, suite.rejectResumeRecording)
     .catch(suite.rejectStopRecording);
+});
+
+// bug 1152500
+suite.test('interrupt-record', function() {
+  function startRecording(p) {
+    var startPromise = suite.camera.startRecording({}, storage, testFilePath);
+    suite.camera.stopRecording();
+    return startPromise;
+  }
+
+  function rejectStartRecording(e) {
+    ok(e.name === 'NS_ERROR_ABORT', 'onError called correctly on startRecording interrupted: ' + e);
+  }
+
+  return suite.getCamera(undefined, baseConfig)
+    .then(cleanup, suite.rejectGetCamera)
+    .then(startRecording)
+    .then(suite.expectedRejectStartRecording, rejectStartRecording);
+});
+
+// bug 1152500
+suite.test('already-initiated-recording', function() {
+  function startRecording(p) {
+    return new Promise(function(resolve, reject) {
+      var firstCall = false;
+      var secondCall = false;
+
+      function end() {
+        if (firstCall && secondCall) {
+          resolve();
+        }
+      }
+
+      suite.camera.startRecording({}, storage, testFilePath).then(function(p) {
+        ok(true, "First call to startRecording() succeeded");
+        firstCall = true;
+        end();
+      }, function(e) {
+        ok(false, "First call to startRecording() failed unexpectedly with: " + e);
+        firstCall = true;
+        end();
+      });
+
+      suite.camera.startRecording({}, storage, testFilePath).then(function(p) {
+        ok(false, "Second call to startRecording() succeeded unexpectedly");
+        secondCall = true;
+        end();
+      }, function(e) {
+        ok(e.name === 'NS_ERROR_IN_PROGRESS', "Second call to startRecording() failed expectedly with: " + e);
+        secondCall = true;
+        end();
+      });
+    });
+  }
+
+  return suite.getCamera(undefined, baseConfig)
+    .then(cleanup, suite.rejectGetCamera)
+    .then(startRecording);
+});
+
+// bug 1152500
+suite.test('already-started-recording', function() {
+  function startRecording(p) {
+    return suite.camera.startRecording({}, storage, testFilePath);
+  }
+
+  function startRecordingAgain(p) {
+    return suite.camera.startRecording({}, storage, testFilePath);
+  }
+
+  function rejectStartRecordingAgain(e) {
+    ok(e.name === 'NS_ERROR_IN_PROGRESS', "Second call to startRecording() failed expectedly with: " + e);
+  }
+
+  return suite.getCamera(undefined, baseConfig)
+    .then(cleanup, suite.rejectGetCamera)
+    .then(startRecording)
+    .then(startRecordingAgain, suite.rejectStartRecording)
+    .then(suite.expectedRejectStartRecording, rejectStartRecordingAgain)
 });
 
 suite.setup()

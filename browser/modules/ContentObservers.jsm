@@ -19,7 +19,7 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-let gEMEUIObserver = function(subject, topic, data) {
+var gEMEUIObserver = function(subject, topic, data) {
   let win = subject.top;
   let mm = getMessageManagerForWindow(win);
   if (mm) {
@@ -35,8 +35,11 @@ function getMessageManagerForWindow(aContentWindow) {
   try {
     // If e10s is disabled, this throws NS_NOINTERFACE for closed tabs.
     return ir.getInterface(Ci.nsIContentFrameMessageManager);
-  } catch(e if e.result == Cr.NS_NOINTERFACE) {
-    return null;
+  } catch(e) {
+    if (e.result == Cr.NS_NOINTERFACE) {
+      return null;
+    }
+    throw e;
   }
 }
 

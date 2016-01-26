@@ -54,16 +54,17 @@ class BufferedStunSocketTest : public ::testing::Test {
   }
 
   void SetUp() {
-    nsRefPtr<DummySocket> dummy(new DummySocket());
+    RefPtr<DummySocket> dummy(new DummySocket());
 
     int r = nr_socket_buffered_stun_create(
         dummy->get_nr_socket(),
         kStunMessageLen,
+        TURN_TCP_FRAMING,
         &test_socket_);
     ASSERT_EQ(0, r);
     dummy_ = dummy.forget();  // Now owned by test_socket_.
 
-    r = nr_ip4_str_port_to_transport_addr(
+    r = nr_str_port_to_transport_addr(
         (char *)"192.0.2.133", 3333, IPPROTO_TCP, &remote_addr_);
     ASSERT_EQ(0, r);
 
@@ -75,7 +76,7 @@ class BufferedStunSocketTest : public ::testing::Test {
   nr_socket *socket() { return test_socket_; }
 
  protected:
-  nsRefPtr<DummySocket> dummy_;
+  RefPtr<DummySocket> dummy_;
   nr_socket *test_socket_;
   nr_transport_addr remote_addr_;
 };
@@ -183,7 +184,7 @@ TEST_F(BufferedStunSocketTest, TestSendToReject) {
 TEST_F(BufferedStunSocketTest, TestSendToWrongAddr) {
   nr_transport_addr addr;
 
-  int r = nr_ip4_str_port_to_transport_addr(
+  int r = nr_str_port_to_transport_addr(
       (char *)"192.0.2.134", 3333, IPPROTO_TCP, &addr);
   ASSERT_EQ(0, r);
 

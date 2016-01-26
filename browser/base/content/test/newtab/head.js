@@ -6,7 +6,7 @@ const PREF_NEWTAB_DIRECTORYSOURCE = "browser.newtabpage.directory.source";
 
 Services.prefs.setBoolPref(PREF_NEWTAB_ENABLED, true);
 
-let tmp = {};
+var tmp = {};
 Cu.import("resource://gre/modules/Promise.jsm", tmp);
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
 Cu.import("resource:///modules/DirectoryLinksProvider.jsm", tmp);
@@ -15,23 +15,23 @@ Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
 Cu.import("resource://gre/modules/Timer.jsm", tmp);
-let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider, PlacesTestUtils} = tmp;
+var {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider, PlacesTestUtils} = tmp;
 
-let uri = Services.io.newURI("about:newtab", null, null);
-let principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
+var uri = Services.io.newURI("about:newtab", null, null);
+var principal = Services.scriptSecurityManager.createCodebasePrincipal(uri, {});
 
-let isMac = ("nsILocalFileMac" in Ci);
-let isLinux = ("@mozilla.org/gnome-gconf-service;1" in Cc);
-let isWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
-let gWindow = window;
+var isMac = ("nsILocalFileMac" in Ci);
+var isLinux = ("@mozilla.org/gnome-gconf-service;1" in Cc);
+var isWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+var gWindow = window;
 
 // Default to dummy/empty directory links
-let gDirectorySource = 'data:application/json,{"test":1}';
-let gOrigDirectorySource;
+var gDirectorySource = 'data:application/json,{"test":1}';
+var gOrigDirectorySource;
 
 // The tests assume all 3 rows and all 3 columns of sites are shown, but the
 // window may be too small to actually show everything.  Resize it if necessary.
-let requiredSize = {};
+var requiredSize = {};
 requiredSize.innerHeight =
   40 + 32 + // undo container + bottom margin
   44 + 32 + // search bar + bottom margin
@@ -41,7 +41,7 @@ requiredSize.innerWidth =
   (3 * (290 + 20)) + // 3 cols * (tile width + side margins)
   100; // breathing room
 
-let oldSize = {};
+var oldSize = {};
 Object.keys(requiredSize).forEach(prop => {
   info([prop, gBrowser.contentWindow[prop], requiredSize[prop]]);
   if (gBrowser.contentWindow[prop] < requiredSize[prop]) {
@@ -52,8 +52,8 @@ Object.keys(requiredSize).forEach(prop => {
   }
 });
 
-let screenHeight = {};
-let screenWidth = {};
+var screenHeight = {};
+var screenWidth = {};
 Cc["@mozilla.org/gfx/screenmanager;1"].
   getService(Ci.nsIScreenManager).
   primaryScreen.
@@ -116,24 +116,64 @@ function watchLinksChangeOnce() {
 
 /**
  * Provide the default test function to start our test runner.
+ *
+ * We need different code paths for tests that are still wired for
+ * `TestRunner` and tests that have been ported to `add_task` as
+ * we cannot have both in the same file.
  */
-function test() {
-  waitForExplicitFinish();
-  // start TestRunner.run() after directory links is downloaded and written to disk
-  watchLinksChangeOnce().then(() => {
-    // Wait for hidden page to update with the desired links
-    whenPagesUpdated(() => TestRunner.run(), true);
-  });
+function isTestPortedToAddTask() {
+  return gTestPath.endsWith("browser_newtab_bug722273.js");
+}
+if (!isTestPortedToAddTask()) {
+  this.test = function() {
+    waitForExplicitFinish();
+    // start TestRunner.run() after directory links is downloaded and written to disk
+    watchLinksChangeOnce().then(() => {
+      // Wait for hidden page to update with the desired links
+      whenPagesUpdated(() => TestRunner.run(), true);
+    });
 
-  // Save the original directory source (which is set globally for tests)
-  gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
-  Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gDirectorySource);
+    // Save the original directory source (which is set globally for tests)
+    gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
+    Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gDirectorySource);
+  }
+} else {
+  add_task(function* setup() {
+    registerCleanupFunction(function() {
+      return new Promise(resolve => {
+        function cleanupAndFinish() {
+          PlacesTestUtils.clearHistory().then(() => {
+            whenPagesUpdated(resolve);
+            NewTabUtils.restore();
+          });
+        }
+
+        let callbacks = NewTabUtils.links._populateCallbacks;
+        let numCallbacks = callbacks.length;
+
+        if (numCallbacks)
+          callbacks.splice(0, numCallbacks, cleanupAndFinish);
+        else
+          cleanupAndFinish();
+      });
+    });
+
+    let promiseReady = Task.spawn(function*() {
+      yield watchLinksChangeOnce();
+      yield new Promise(resolve => whenPagesUpdated(resolve, true));
+    });
+
+    // Save the original directory source (which is set globally for tests)
+    gOrigDirectorySource = Services.prefs.getCharPref(PREF_NEWTAB_DIRECTORYSOURCE);
+    Services.prefs.setCharPref(PREF_NEWTAB_DIRECTORYSOURCE, gDirectorySource);
+    yield promiseReady;
+  });
 }
 
 /**
  * The test runner that controls the execution flow of our tests.
  */
-let TestRunner = {
+var TestRunner = {
   /**
    * Starts the test runner.
    */
@@ -270,7 +310,7 @@ function fillHistory(aLinks, aCallback = TestRunner.next) {
     };
 
     PlacesUtils.asyncHistory.updatePlaces(place, {
-      handleError: function () ok(false, "couldn't add visit to history"),
+      handleError: () => ok(false, "couldn't add visit to history"),
       handleResult: function () {},
       handleCompletion: function () {
         if (--numLinks == 0 && aCallback)
@@ -587,7 +627,8 @@ function createExternalDropIframe() {
   iframe.style.position = "absolute";
   iframe.style.zIndex = 50;
 
-  let margin = doc.getElementById("newtab-margin-top");
+  // the frame has to be attached to a visible element
+  let margin = doc.getElementById("newtab-search-container");
   margin.appendChild(iframe);
 
   iframe.addEventListener("load", function onLoad() {
@@ -722,14 +763,23 @@ function whenPagesUpdated(aCallback = TestRunner.next) {
  */
 function whenSearchInitDone() {
   let deferred = Promise.defer();
-  if (getContentWindow().gSearch._initialStateReceived) {
+  let searchController = getContentWindow().gSearch._contentSearchController;
+  if (searchController.defaultEngine) {
     return Promise.resolve();
   }
   let eventName = "ContentSearchService";
   getContentWindow().addEventListener(eventName, function onEvent(event) {
     if (event.detail.type == "State") {
       getContentWindow().removeEventListener(eventName, onEvent);
-      deferred.resolve();
+      // Wait for the search controller to receive the event, then resolve.
+      let resolver = function() {
+        if (searchController.defaultEngine) {
+          deferred.resolve();
+          return;
+        }
+        executeSoon(resolver);
+      }
+      executeSoon(resolver);
     }
   });
   return deferred.promise;
@@ -742,26 +792,44 @@ function whenSearchInitDone() {
  *        Can be any of("blank"|"classic"|"enhanced")
  */
 function customizeNewTabPage(aTheme) {
-  let document = getContentDocument();
-  let panel = document.getElementById("newtab-customize-panel");
-  let customizeButton = document.getElementById("newtab-customize-button");
+  let promise = ContentTask.spawn(gBrowser.selectedBrowser, aTheme, function*(aTheme) {
 
-  // Attache onShown the listener on panel
-  panel.addEventListener("popupshown", function onShown() {
-    panel.removeEventListener("popupshown", onShown);
+    let document = content.document;
+    let panel = document.getElementById("newtab-customize-panel");
+    let customizeButton = document.getElementById("newtab-customize-button");
 
-    // Get the element for the specific option and click on it,
-    // then trigger an escape to close the panel
-    document.getElementById("newtab-customize-" + aTheme).click();
-    executeSoon(() => { panel.hidePopup(); });
+    function panelOpened(opened) {
+      return new Promise( (resolve) => {
+        let options = {attributes: true, oldValue: true};
+        let observer = new content.MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            document.getElementById("newtab-customize-" + aTheme).click();
+            observer.disconnect();
+            if (opened == panel.hasAttribute("open")) {
+              resolve();
+            }
+          });
+        });
+        observer.observe(panel, options);
+      });
+    }
+
+    let opened = panelOpened(true);
+    customizeButton.click();
+    yield opened;
+
+    let closed = panelOpened(false);
+    customizeButton.click();
+    yield closed;
   });
 
-  // Attache the listener for panel closing, this will resolve the promise
-  panel.addEventListener("popuphidden", function onHidden() {
-    panel.removeEventListener("popuphidden", onHidden);
-    executeSoon(TestRunner.next);
-  });
+  promise.then(TestRunner.next);
+}
 
-  // Click on the customize button to display the panel
-  customizeButton.click();
+/**
+ * Reports presence of a scrollbar
+ */
+function hasScrollbar() {
+  let docElement = getContentDocument().documentElement;
+  return docElement.scrollHeight > docElement.clientHeight;
 }

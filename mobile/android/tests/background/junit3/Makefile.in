@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ANDROID_APK_NAME := background-junit3-debug
-
 ANDROID_EXTRA_JARS := \
   background-junit3.jar \
   $(NULL)
@@ -19,17 +17,6 @@ manifest_FLAGS    += \
   $(NULL)
 ANDROID_MANIFEST_FILE := $(CURDIR)/AndroidManifest.xml
 
-GARBAGE += AndroidManifest.xml
-
-# The test APK needs to know the contents of the target APK while not
-# being linked against them.  This is a best effort to avoid getting
-# out of sync with base's build config.
-JARS_DIR := $(DEPTH)/mobile/android/base
-JAVA_BOOTCLASSPATH := $(ANDROID_SDK)/android.jar:$(subst $(NULL) ,:,$(wildcard $(JARS_DIR)/*.jar))
-# We also want to re-compile classes.dex when the associated base
-# content changes.
-classes.dex: $(wildcard $(JARS_DIR)/*.jar)
+include $(topsrcdir)/config/rules.mk
 
 tools:: $(ANDROID_APK_NAME).apk
-
-include $(topsrcdir)/config/rules.mk

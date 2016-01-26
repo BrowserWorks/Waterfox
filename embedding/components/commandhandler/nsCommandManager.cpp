@@ -34,29 +34,19 @@ nsCommandManager::~nsCommandManager()
 {
 }
 
-static PLDHashOperator
-TraverseCommandObservers(const char* aKey,
-                         nsCommandManager::ObserverList* aObservers,
-                         void* aClosure)
-{
-  nsCycleCollectionTraversalCallback* cb =
-    static_cast<nsCycleCollectionTraversalCallback*>(aClosure);
-
-  int32_t i, numItems = aObservers->Length();
-  for (i = 0; i < numItems; ++i) {
-    cb->NoteXPCOMChild(aObservers->ElementAt(i));
-  }
-
-  return PL_DHASH_NEXT;
-}
-
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsCommandManager)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsCommandManager)
   tmp->mObserversTable.Clear();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsCommandManager)
-  tmp->mObserversTable.EnumerateRead(TraverseCommandObservers, &cb);
+  for (auto iter = tmp->mObserversTable.Iter(); !iter.Done(); iter.Next()) {
+    nsCommandManager::ObserverList* observers = iter.UserData();
+    int32_t numItems = observers->Length();
+    for (int32_t i = 0; i < numItems; ++i) {
+      cb.NoteXPCOMChild(observers->ElementAt(i));
+    }
+  }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsCommandManager)
@@ -237,7 +227,7 @@ nsCommandManager::GetControllerForCommand(const char* aCommand,
 
   // check if we're in content or chrome
   // if we're not chrome we must have a target window or we bail
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (!nsContentUtils::LegacyIsCallerChromeOrNativeCode()) {
     if (!aTargetWindow) {
       return rv;
     }
@@ -248,10 +238,10 @@ nsCommandManager::GetControllerForCommand(const char* aCommand,
     }
   }
 
-  if (aTargetWindow) {
+  if (nsCOMPtr<nsPIDOMWindow> targetWindow = do_QueryInterface(aTargetWindow)) {
     // get the controller for this particular window
     nsCOMPtr<nsIControllers> controllers;
-    rv = aTargetWindow->GetControllers(getter_AddRefs(controllers));
+    rv = targetWindow->GetControllers(getter_AddRefs(controllers));
     if (NS_FAILED(rv)) {
       return rv;
     }

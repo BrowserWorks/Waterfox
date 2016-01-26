@@ -11,7 +11,10 @@ TESTING_JS_MODULES += [
     'AppData.jsm',
     'AppInfo.jsm',
     'Assert.jsm',
+    'CoverageUtils.jsm',
     'MockRegistrar.jsm',
     'StructuredLog.jsm',
     'TestUtils.jsm',
 ]
+
+TEST_HARNESS_FILES.testing.mochitest.tests.SimpleTest += ['StructuredLog.jsm']

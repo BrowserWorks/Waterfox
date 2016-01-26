@@ -14,6 +14,7 @@
 #include "nsString.h"
 #include "nsICryptoHash.h"
 #include "nsNetUtil.h"
+#include "nsIOutputStream.h"
 
 #if DEBUG
 #include "plbase64.h"
@@ -87,6 +88,7 @@ struct SafebrowsingHash
     PL_Base64Encode((char*)buf, sHashSize, aStr.BeginWriting());
     aStr.BeginWriting()[len] = '\0';
   }
+#endif
 
   void ToHexString(nsACString& aStr) const {
     static const char* const lut = "0123456789ABCDEF";
@@ -100,7 +102,7 @@ struct SafebrowsingHash
       aStr.Append(lut[c & 15]);
     }
   }
-#endif
+
   uint32_t ToUint32() const {
       return *((uint32_t*)buf);
   }
@@ -276,20 +278,7 @@ template<class T, class Alloc>
 nsresult
 ReadTArray(nsIInputStream* aStream, nsTArray_Impl<T, Alloc>* aArray, uint32_t aNumElements)
 {
-  aArray->SetLength(aNumElements);
-
-  void *buffer = aArray->Elements();
-  nsresult rv = NS_ReadInputStreamToBuffer(aStream, &buffer,
-                                           (aNumElements * sizeof(T)));
-  NS_ENSURE_SUCCESS(rv, rv);
-  return NS_OK;
-}
-
-template<class T>
-nsresult
-ReadTArray(nsIInputStream* aStream, FallibleTArray<T>* aArray, uint32_t aNumElements)
-{
-  if (!aArray->SetLength(aNumElements))
+  if (!aArray->SetLength(aNumElements, fallible))
     return NS_ERROR_OUT_OF_MEMORY;
 
   void *buffer = aArray->Elements();
@@ -311,4 +300,5 @@ WriteTArray(nsIOutputStream* aStream, nsTArray_Impl<T, Alloc>& aArray)
 
 } // namespace safebrowsing
 } // namespace mozilla
+
 #endif // SBEntries_h__

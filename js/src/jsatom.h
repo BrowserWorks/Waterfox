@@ -12,22 +12,14 @@
 #include "jsalloc.h"
 
 #include "gc/Barrier.h"
+#include "gc/Marking.h"
 #include "gc/Rooting.h"
 #include "js/GCAPI.h"
+#include "js/GCHashTable.h"
 #include "vm/CommonPropertyNames.h"
 
 class JSAtom;
 class JSAutoByteString;
-
-struct JSIdArray {
-    int length;
-    js::HeapId vector[1];    /* actually, length jsid words */
-
-    js::HeapId* begin() { return vector; }
-    const js::HeapId* begin() const { return vector; }
-    js::HeapId* end() { return vector + length; }
-    const js::HeapId* end() const { return vector + length; }
-};
 
 namespace js {
 
@@ -72,7 +64,7 @@ class AtomStateEntry
         MOZ_ASSERT((uintptr_t(ptr) & 0x1) == 0);
     }
 
-    bool isTagged() const {
+    bool isPinned() const {
         return bits & 0x1;
     }
 
@@ -80,11 +72,17 @@ class AtomStateEntry
      * Non-branching code sequence. Note that the const_cast is safe because
      * the hash function doesn't consider the tag to be a portion of the key.
      */
-    void setTagged(bool enabled) const {
-        const_cast<AtomStateEntry*>(this)->bits |= uintptr_t(enabled);
+    void setPinned(bool pinned) const {
+        const_cast<AtomStateEntry*>(this)->bits |= uintptr_t(pinned);
     }
 
     JSAtom* asPtr() const;
+    JSAtom* asPtrUnbarriered() const;
+
+    bool needsSweep() {
+        JSAtom* atom = asPtrUnbarriered();
+        return gc::IsAboutToBeFinalizedUnbarriered(&atom);
+    }
 };
 
 struct AtomHasher
@@ -120,7 +118,7 @@ struct AtomHasher
     static void rekey(AtomStateEntry& k, const AtomStateEntry& newKey) { k = newKey; }
 };
 
-typedef HashSet<AtomStateEntry, AtomHasher, SystemAllocPolicy> AtomSet;
+using AtomSet = js::GCHashSet<AtomStateEntry, AtomHasher, SystemAllocPolicy>;
 
 // This class is a wrapper for AtomSet that is used to ensure the AtomSet is
 // not modified. It should only expose read-only methods from AtomSet.
@@ -151,7 +149,7 @@ class PropertyName;
 }  /* namespace js */
 
 extern bool
-AtomIsInterned(JSContext* cx, JSAtom* atom);
+AtomIsPinned(JSContext* cx, JSAtom* atom);
 
 /* Well-known predefined C strings. */
 #define DECLARE_PROTO_STR(name,code,init,clasp) extern const char js_##name##_str[];
@@ -186,7 +184,6 @@ extern const char js_import_str[];
 extern const char js_in_str[];
 extern const char js_instanceof_str[];
 extern const char js_interface_str[];
-extern const char js_new_str[];
 extern const char js_package_str[];
 extern const char js_private_str[];
 extern const char js_protected_str[];
@@ -218,23 +215,26 @@ void
 MarkWellKnownSymbols(JSTracer* trc);
 
 /* N.B. must correspond to boolean tagging behavior. */
-enum InternBehavior
+enum PinningBehavior
 {
-    DoNotInternAtom = false,
-    InternAtom = true
+    DoNotPinAtom = false,
+    PinAtom = true
 };
 
 extern JSAtom*
 Atomize(ExclusiveContext* cx, const char* bytes, size_t length,
-        js::InternBehavior ib = js::DoNotInternAtom);
+        js::PinningBehavior pin = js::DoNotPinAtom);
 
 template <typename CharT>
 extern JSAtom*
 AtomizeChars(ExclusiveContext* cx, const CharT* chars, size_t length,
-             js::InternBehavior ib = js::DoNotInternAtom);
+             js::PinningBehavior pin = js::DoNotPinAtom);
 
 extern JSAtom*
-AtomizeString(ExclusiveContext* cx, JSString* str, js::InternBehavior ib = js::DoNotInternAtom);
+AtomizeUTF8Chars(JSContext* cx, const char* utf8Chars, size_t utf8ByteLength);
+
+extern JSAtom*
+AtomizeString(ExclusiveContext* cx, JSString* str, js::PinningBehavior pin = js::DoNotPinAtom);
 
 template <AllowGC allowGC>
 extern JSAtom*

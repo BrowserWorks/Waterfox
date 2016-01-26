@@ -8,9 +8,9 @@
 // Firefox chrome intentionally prevents "simple gesture" events from
 // reaching web content.
 
-let test_utils;
-let test_commandset;
-let test_prefBranch = "browser.gesture.";
+var test_utils;
+var test_commandset;
+var test_prefBranch = "browser.gesture.";
 
 function test()
 {
@@ -39,13 +39,13 @@ function test()
   test_rotateGestures();
 }
 
-let test_eventCount = 0;
-let test_expectedType;
-let test_expectedDirection;
-let test_expectedDelta;
-let test_expectedModifiers;
-let test_expectedClickCount;
-let test_imageTab;
+var test_eventCount = 0;
+var test_expectedType;
+var test_expectedDirection;
+var test_expectedDelta;
+var test_expectedModifiers;
+var test_expectedClickCount;
+var test_imageTab;
 
 function test_gestureListener(evt)
 {
@@ -283,7 +283,7 @@ function test_emitLatchedEvents(eventPrefix, initialDelta, cmd)
   for (let dir in cmd)
     cmd[dir].callCount = expect[dir] = 0;
 
-  let check = function(aDir, aMsg) ok(cmd[aDir].callCount == expect[aDir], aMsg);
+  let check = (aDir, aMsg) => ok(cmd[aDir].callCount == expect[aDir], aMsg);
   let checkBoth = function(aNum, aInc, aDec) {
     let prefix = "Step " + aNum + ": ";
     check("inc", prefix + aInc);

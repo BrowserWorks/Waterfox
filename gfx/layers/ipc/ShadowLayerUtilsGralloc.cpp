@@ -148,7 +148,7 @@ ParamTraits<MagicGrallocBufferHandle>::Read(const Message* aMsg,
 
   aResult->mRef.mOwner = owner;
   aResult->mRef.mKey = index;
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     // If we are in chrome process, we can just get GraphicBuffer directly from
     // SharedBufferManagerParent.
     aResult->mGraphicBuffer = SharedBufferManagerParent::GetGraphicBuffer(aResult->mRef);
@@ -215,7 +215,7 @@ GetGraphicBufferFrom(MaybeMagicGrallocBufferHandle aHandle)
 {
   if (aHandle.type() != MaybeMagicGrallocBufferHandle::TMagicGrallocBufferHandle) {
     if (aHandle.type() == MaybeMagicGrallocBufferHandle::TGrallocBufferRef) {
-      if (XRE_GetProcessType() == GeckoProcessType_Default) {
+      if (XRE_IsParentProcess()) {
         return SharedBufferManagerParent::GetGraphicBuffer(aHandle.get_GrallocBufferRef());
       }
       return SharedBufferManagerChild::GetSingleton()->GetGraphicBuffer(aHandle.get_GrallocBufferRef().mKey);
@@ -231,8 +231,8 @@ android::sp<android::GraphicBuffer>
 GetGraphicBufferFromDesc(SurfaceDescriptor aDesc)
 {
   MaybeMagicGrallocBufferHandle handle;
-  if (aDesc.type() == SurfaceDescriptor::TNewSurfaceDescriptorGralloc) {
-    handle = aDesc.get_NewSurfaceDescriptorGralloc().buffer();
+  if (aDesc.type() == SurfaceDescriptor::TSurfaceDescriptorGralloc) {
+    handle = aDesc.get_SurfaceDescriptorGralloc().buffer();
   }
   return GetGraphicBufferFrom(handle);
 }

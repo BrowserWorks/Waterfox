@@ -11,6 +11,10 @@
   locale/@AB_CD@/global/aboutReader.properties          (%chrome/global/aboutReader.properties)
   locale/@AB_CD@/global/aboutRights.dtd                 (%chrome/global/aboutRights.dtd)
   locale/@AB_CD@/global/aboutNetworking.dtd             (%chrome/global/aboutNetworking.dtd)
+#ifndef ANDROID
+  locale/@AB_CD@/global/aboutProfiles.dtd               (%chrome/global/aboutProfiles.dtd)
+  locale/@AB_CD@/global/aboutProfiles.properties        (%chrome/global/aboutProfiles.properties)
+#endif
   locale/@AB_CD@/global/aboutServiceWorkers.dtd         (%chrome/global/aboutServiceWorkers.dtd)
   locale/@AB_CD@/global/aboutServiceWorkers.properties  (%chrome/global/aboutServiceWorkers.properties)
   locale/@AB_CD@/global/aboutSupport.dtd                (%chrome/global/aboutSupport.dtd)
@@ -31,26 +35,26 @@
   locale/@AB_CD@/global/console.dtd                     (%chrome/global/console.dtd)
   locale/@AB_CD@/global/console.properties              (%chrome/global/console.properties)
   locale/@AB_CD@/global/contentAreaCommands.properties  (%chrome/global/contentAreaCommands.properties)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/global/customizeToolbar.dtd            (%chrome/global/customizeToolbar.dtd)
   locale/@AB_CD@/global/customizeToolbar.properties     (%chrome/global/customizeToolbar.properties)
+#endif
   locale/@AB_CD@/global/datetimepicker.dtd              (%chrome/global/datetimepicker.dtd)
   locale/@AB_CD@/global/dateFormat.properties           (%chrome/global/dateFormat.properties)
-  locale/@AB_CD@/global/devtools/csscoverage.properties (%chrome/global/devtools/csscoverage.properties)
-  locale/@AB_CD@/global/devtools/csscoverage.dtd        (%chrome/global/devtools/csscoverage.dtd)
-  locale/@AB_CD@/global/devtools/debugger.properties    (%chrome/global/devtools/debugger.properties)
-  locale/@AB_CD@/global/devtools/gcli.properties        (%chrome/global/devtools/gcli.properties)
-  locale/@AB_CD@/global/devtools/gclicommands.properties (%chrome/global/devtools/gclicommands.properties)
-  locale/@AB_CD@/global/devtools/styleinspector.properties (%chrome/global/devtools/styleinspector.properties)
   locale/@AB_CD@/global/dialogOverlay.dtd               (%chrome/global/dialogOverlay.dtd)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/global/editMenuOverlay.dtd             (%chrome/global/editMenuOverlay.dtd)
+#endif
   locale/@AB_CD@/global/fallbackMenubar.properties      (%chrome/global/fallbackMenubar.properties)
   locale/@AB_CD@/global/filefield.properties            (%chrome/global/filefield.properties)
   locale/@AB_CD@/global/filepicker.dtd                  (%chrome/global/filepicker.dtd)
   locale/@AB_CD@/global/filepicker.properties           (%chrome/global/filepicker.properties)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/global/findbar.dtd                     (%chrome/global/findbar.dtd)
   locale/@AB_CD@/global/findbar.properties              (%chrome/global/findbar.properties)
   locale/@AB_CD@/global/finddialog.dtd                  (%chrome/global/finddialog.dtd)
   locale/@AB_CD@/global/finddialog.properties           (%chrome/global/finddialog.properties)
+#endif
   locale/@AB_CD@/global/globalKeys.dtd                  (%chrome/global/globalKeys.dtd)
   locale/@AB_CD@/global/headsUpDisplay.properties       (%chrome/global/headsUpDisplay.properties)
   locale/@AB_CD@/global/intl.css                        (%chrome/global/intl.css)
@@ -96,6 +100,7 @@
   locale/@AB_CD@/mozapps/downloads/settingsChange.dtd             (%chrome/mozapps/downloads/settingsChange.dtd)
   locale/@AB_CD@/mozapps/downloads/downloads.dtd                  (%chrome/mozapps/downloads/downloads.dtd)
   locale/@AB_CD@/mozapps/downloads/downloads.properties           (%chrome/mozapps/downloads/downloads.properties)
+#ifndef MOZ_FENNEC
   locale/@AB_CD@/mozapps/extensions/extensions.dtd                (%chrome/mozapps/extensions/extensions.dtd)
   locale/@AB_CD@/mozapps/extensions/extensions.properties         (%chrome/mozapps/extensions/extensions.properties)
   locale/@AB_CD@/mozapps/extensions/blocklist.dtd                 (%chrome/mozapps/extensions/blocklist.dtd)
@@ -106,9 +111,9 @@
   locale/@AB_CD@/mozapps/extensions/update.properties             (%chrome/mozapps/extensions/update.properties)
   locale/@AB_CD@/mozapps/extensions/newaddon.dtd                  (%chrome/mozapps/extensions/newaddon.dtd)
   locale/@AB_CD@/mozapps/extensions/newaddon.properties           (%chrome/mozapps/extensions/newaddon.properties)
+#endif
   locale/@AB_CD@/mozapps/handling/handling.dtd                    (%chrome/mozapps/handling/handling.dtd)
   locale/@AB_CD@/mozapps/handling/handling.properties             (%chrome/mozapps/handling/handling.properties)
-  locale/@AB_CD@/mozapps/plugins/plugins.dtd                      (%chrome/mozapps/plugins/plugins.dtd)
   locale/@AB_CD@/mozapps/preferences/changemp.dtd                 (%chrome/mozapps/preferences/changemp.dtd)
   locale/@AB_CD@/mozapps/preferences/removemp.dtd                 (%chrome/mozapps/preferences/removemp.dtd)
   locale/@AB_CD@/mozapps/preferences/preferences.properties       (%chrome/mozapps/preferences/preferences.properties)
@@ -120,12 +125,16 @@
   locale/@AB_CD@/mozapps/update/history.dtd                       (%chrome/mozapps/update/history.dtd)
   locale/@AB_CD@/mozapps/xpinstall/xpinstallConfirm.dtd           (%chrome/mozapps/extensions/xpinstallConfirm.dtd)
   locale/@AB_CD@/mozapps/xpinstall/xpinstallConfirm.properties    (%chrome/mozapps/extensions/xpinstallConfirm.properties)
+% locale pluginproblem @AB_CD@ %locale/@AB_CD@/pluginproblem/
+  locale/@AB_CD@/pluginproblem/pluginproblem.dtd                  (%chrome/pluginproblem/pluginproblem.dtd)
 % locale alerts @AB_CD@ %locale/@AB_CD@/alerts/
   locale/@AB_CD@/alerts/alert.dtd                                (%chrome/alerts/alert.dtd)
-  locale/@AB_CD@/alerts/notificationNames.properties             (%chrome/alerts/notificationNames.properties)
+  locale/@AB_CD@/alerts/alert.properties                         (%chrome/alerts/alert.properties)
+#ifndef MOZ_FENNEC
 % locale cookie @AB_CD@ %locale/@AB_CD@/cookie/
   locale/@AB_CD@/cookie/cookieAcceptDialog.dtd           (%chrome/cookie/cookieAcceptDialog.dtd)
   locale/@AB_CD@/cookie/cookieAcceptDialog.properties    (%chrome/cookie/cookieAcceptDialog.properties)
+#endif
 % locale formautofill @AB_CD@ %locale/@AB_CD@/formautofill/
   locale/@AB_CD@/formautofill/requestAutocomplete.dtd (%chrome/formautofill/requestAutocomplete.dtd)
 % locale passwordmgr @AB_CD@ %locale/@AB_CD@/passwordmgr/

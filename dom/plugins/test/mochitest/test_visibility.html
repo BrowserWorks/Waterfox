@@ -12,7 +12,7 @@
 <body onload="startTest()">
   <p id="display"></p>
 
-  <script type="application/javascript" src="utils.js"></script>
+  <script type="application/javascript" src="plugin-utils.js"></script>
   <script type="application/javascript">
   SimpleTest.waitForExplicitFinish();
   SimpleTest.requestFlakyTimeout("untriaged");
@@ -21,11 +21,9 @@
   var didPaint = function() {};
 
   function startTest() {
-    if (SimpleTest.testPluginIsOOP()) {
-      if (p.getPaintCount() < 1) {
-        setTimeout(startTest, 0);
-        return;
-      }
+    if (p.getPaintCount() < 1) {
+      setTimeout(startTest, 0);
+      return;
     }
 
     didPaint = function() {

@@ -21,27 +21,28 @@ txLoadedDocumentsHash::init(txXPathNode* aSourceDocument)
 {
     mSourceDocument = aSourceDocument;
 
-    nsAutoString baseURI;
-    txXPathNodeUtils::getBaseURI(*mSourceDocument, baseURI);
+    nsCOMPtr<nsIURI> baseURI;
+    txXPathNodeUtils::getBaseURI(*mSourceDocument, getter_AddRefs(baseURI));
 
-    PutEntry(baseURI)->mDocument = mSourceDocument;
+    LookupOrAdd(baseURI)->mDocument = mSourceDocument;
 }
 
 txLoadedDocumentsHash::~txLoadedDocumentsHash()
 {
     if (mSourceDocument) {
-        nsAutoString baseURI;
-        txXPathNodeUtils::getBaseURI(*mSourceDocument, baseURI);
+        nsCOMPtr<nsIURI> baseURI;
+        txXPathNodeUtils::getBaseURI(*mSourceDocument, getter_AddRefs(baseURI));
 
-        txLoadedDocumentEntry* entry = GetEntry(baseURI);
-        if (entry) {
-            delete entry->mDocument.forget();
+        txLoadedDocumentInfo* info = Get(baseURI);
+        if (info) {
+            delete info->mDocument.forget();
         }
     }
 }
 
 txExecutionState::txExecutionState(txStylesheet* aStylesheet,
-                                   bool aDisableLoads)
+                                   bool aDisableLoads,
+                                   nsIDocument* aLoadingDocument)
     : mOutputHandler(nullptr),
       mResultHandler(nullptr),
       mStylesheet(aStylesheet),
@@ -51,6 +52,7 @@ txExecutionState::txExecutionState(txStylesheet* aStylesheet,
       mEvalContext(nullptr),
       mInitialEvalContext(nullptr),
       mGlobalParams(nullptr),
+      mLoadingDocument(aLoadingDocument),
       mKeyHash(aStylesheet->getKeyMap()),
       mDisableLoads(aDisableLoads)
 {
@@ -103,8 +105,6 @@ txExecutionState::init(const txXPathNode& aNode,
 
     // Set up initial context
     mEvalContext = new txSingleNodeContext(aNode, this);
-    NS_ENSURE_TRUE(mEvalContext, NS_ERROR_OUT_OF_MEMORY);
-
     mInitialEvalContext = mEvalContext;
 
     // Set up output and result-handler
@@ -129,7 +129,6 @@ txExecutionState::init(const txXPathNode& aNode,
     // The actual value here doesn't really matter since noone should use this
     // value. But lets put something errorlike in just in case
     mGlobalVarPlaceholderValue = new StringResult(NS_LITERAL_STRING("Error"), nullptr);
-    NS_ENSURE_TRUE(mGlobalVarPlaceholderValue, NS_ERROR_OUT_OF_MEMORY);
 
     // Initiate first instruction. This has to be done last since findTemplate
     // might use us.
@@ -375,41 +374,48 @@ txExecutionState::getEvalContext()
 }
 
 const txXPathNode*
-txExecutionState::retrieveDocument(const nsAString& aUri)
+txExecutionState::retrieveDocument(nsIURI* aUri)
 {
-    NS_ASSERTION(aUri.FindChar(char16_t('#')) == kNotFound,
-                 "Remove the fragment.");
+#ifdef DEBUG
+    {
+        bool hasFrag;
+        aUri->GetHasRef(&hasFrag);
+        MOZ_ASSERT(!hasFrag, "Remove the fragment");
+    }
+#endif
 
-    if (mDisableLoads) {
+    if (mDisableLoads || !mLoadingDocument) {
         return nullptr;
     }
 
-    PR_LOG(txLog::xslt, PR_LOG_DEBUG,
-           ("Retrieve Document %s", NS_LossyConvertUTF16toASCII(aUri).get()));
+    if (MOZ_LOG_TEST(txLog::xslt, LogLevel::Debug)) {
+        nsAutoCString spec;
+        aUri->GetSpec(spec);
+        MOZ_LOG(txLog::xslt, LogLevel::Debug,
+                ("Retrieve Document %s", spec.get()));
+    }
 
     // try to get already loaded document
-    txLoadedDocumentEntry *entry = mLoadedDocuments.PutEntry(aUri);
-    if (!entry) {
-        return nullptr;
-    }
+    txLoadedDocumentInfo* info = mLoadedDocuments.LookupOrAdd(aUri);
 
-    if (!entry->mDocument && !entry->LoadingFailed()) {
+    if (!info->mDocument && !info->LoadingFailed()) {
         // open URI
         nsAutoString errMsg;
-        // XXX we should get the loader from the actual node
-        // triggering the load, but this will do for the time being
-        entry->mLoadResult =
-            txParseDocumentFromURI(aUri, *mLoadedDocuments.mSourceDocument,
-                                   errMsg, getter_Transfers(entry->mDocument));
+        info->mLoadResult =
+            txParseDocumentFromURI(aUri, mLoadingDocument,
+                                   errMsg, getter_Transfers(info->mDocument));
 
-        if (entry->LoadingFailed()) {
+        if (info->LoadingFailed()) {
+            nsAutoCString spec;
+            aUri->GetSpec(spec);
             receiveError(NS_LITERAL_STRING("Couldn't load document '") +
-                         aUri + NS_LITERAL_STRING("': ") + errMsg,
-                         entry->mLoadResult);
+                         NS_ConvertUTF8toUTF16(spec) +
+                         NS_LITERAL_STRING("': ") + errMsg,
+                         info->mLoadResult);
         }
     }
 
-    return entry->mDocument;
+    return info->mDocument;
 }
 
 nsresult
@@ -482,7 +488,6 @@ txExecutionState::bindVariable(const txExpandedName& aName,
 {
     if (!mLocalVariables) {
         mLocalVariables = new txVariableMap;
-        NS_ENSURE_TRUE(mLocalVariables, NS_ERROR_OUT_OF_MEMORY);
     }
     return mLocalVariables->bindVariable(aName, aValue);
 }

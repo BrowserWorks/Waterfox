@@ -7,9 +7,9 @@
 
 #include "GLContext.h"
 #include "WebGLBuffer.h"
+#include "WebGLTransformFeedback.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 bool
 WebGL2Context::ValidateBufferTarget(GLenum target, const char* info)
@@ -19,11 +19,16 @@ WebGL2Context::ValidateBufferTarget(GLenum target, const char* info)
     case LOCAL_GL_COPY_READ_BUFFER:
     case LOCAL_GL_COPY_WRITE_BUFFER:
     case LOCAL_GL_ELEMENT_ARRAY_BUFFER:
-    case LOCAL_GL_PIXEL_PACK_BUFFER:
-    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
     case LOCAL_GL_UNIFORM_BUFFER:
         return true;
+
+    case LOCAL_GL_PIXEL_PACK_BUFFER:
+    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
+        ErrorInvalidOperation("%s: PBOs are still under development, and are currently"
+                              " disabled.",
+                              info);
+        return false;
 
     default:
         ErrorInvalidEnumInfo(info, target);
@@ -43,36 +48,6 @@ WebGL2Context::ValidateBufferIndexedTarget(GLenum target, const char* info)
         ErrorInvalidEnumInfo(info, target);
         return false;
     }
-}
-
-bool
-WebGL2Context::ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer,
-                                       const char* info)
-{
-    if (!buffer)
-        return true;
-
-    switch (target) {
-    case LOCAL_GL_COPY_READ_BUFFER:
-    case LOCAL_GL_COPY_WRITE_BUFFER:
-        return true;
-
-    case LOCAL_GL_ELEMENT_ARRAY_BUFFER:
-        return !buffer->HasEverBeenBound() ||
-            buffer->Target() == LOCAL_GL_ELEMENT_ARRAY_BUFFER;
-
-    case LOCAL_GL_ARRAY_BUFFER:
-    case LOCAL_GL_PIXEL_PACK_BUFFER:
-    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
-    case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
-    case LOCAL_GL_UNIFORM_BUFFER:
-        return !buffer->HasEverBeenBound() ||
-            buffer->Target() != LOCAL_GL_ELEMENT_ARRAY_BUFFER;
-    }
-
-    ErrorInvalidOperation("%s: buffer already bound to a incompatible target %s",
-                          info, EnumName(buffer->Target().get()));
-    return false;
 }
 
 bool
@@ -123,7 +98,7 @@ WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
     if (!readBuffer)
         return ErrorInvalidOperation("copyBufferSubData: No buffer bound to readTarget");
 
-    const WebGLBuffer* writeBuffer = writeBufferSlot.get();
+    WebGLBuffer* writeBuffer = writeBufferSlot.get();
     if (!writeBuffer)
         return ErrorInvalidOperation("copyBufferSubData: No buffer bound to writeTarget");
 
@@ -145,17 +120,39 @@ WebGL2Context::CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
         return;
     }
 
+    WebGLBuffer::Kind readType = readBuffer->Content();
+    WebGLBuffer::Kind writeType = writeBuffer->Content();
+
+    if (readType != WebGLBuffer::Kind::Undefined &&
+        writeType != WebGLBuffer::Kind::Undefined &&
+        writeType != readType)
+    {
+        ErrorInvalidOperation("copyBufferSubData: Can't copy %s data to %s data",
+                              (readType == WebGLBuffer::Kind::OtherData) ? "other" : "element",
+                              (writeType == WebGLBuffer::Kind::OtherData) ? "other" : "element");
+        return;
+    }
+
     WebGLContextUnchecked::CopyBufferSubData(readTarget, writeTarget, readOffset,
                                              writeOffset, size);
+
+    if (writeType == WebGLBuffer::Kind::Undefined) {
+        writeBuffer->BindTo(
+            (readType == WebGLBuffer::Kind::OtherData) ? LOCAL_GL_ARRAY_BUFFER
+                                                       : LOCAL_GL_ELEMENT_ARRAY_BUFFER);
+    }
 }
 
+// BufferT may be one of
+// const dom::ArrayBuffer&
+// const dom::SharedArrayBuffer&
+template<typename BufferT>
 void
-WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
-                                const dom::Nullable<dom::ArrayBuffer>& maybeData)
+WebGL2Context::GetBufferSubDataT(GLenum target, GLintptr offset, const BufferT& data)
 {
     if (IsContextLost())
         return;
-    
+
     // For the WebGLBuffer bound to the passed target, read
     // returnedData.byteLength bytes from the buffer starting at byte
     // offset offset and write them to returnedData.
@@ -168,24 +165,18 @@ WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
     // If offset is less than zero, an INVALID_VALUE error is
     // generated.
     if (offset < 0)
-        return ErrorInvalidValue("getBufferSubData: negative offset"); 
-
-    // If returnedData is null then an INVALID_VALUE error is
-    // generated.
-    if (maybeData.IsNull())
-        return ErrorInvalidValue("getBufferSubData: returnedData is null");
+        return ErrorInvalidValue("getBufferSubData: negative offset");
 
     WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
     WebGLBuffer* boundBuffer = bufferSlot.get();
     if (!boundBuffer)
         return ErrorInvalidOperation("getBufferSubData: no buffer bound");
-    
+
     // If offset + returnedData.byteLength would extend beyond the end
     // of the buffer an INVALID_VALUE error is generated.
-    const dom::ArrayBuffer& data = maybeData.Value();
     data.ComputeLengthAndData();
 
-    CheckedInt<WebGLsizeiptr> neededByteLength = CheckedInt<WebGLsizeiptr>(offset) + data.Length();
+    CheckedInt<WebGLsizeiptr> neededByteLength = CheckedInt<WebGLsizeiptr>(offset) + data.LengthAllowShared();
     if (!neededByteLength.isValid()) {
         ErrorInvalidValue("getBufferSubData: Integer overflow computing the needed"
                           " byte length.");
@@ -227,11 +218,32 @@ WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
      * bound to a transform feedback binding point.
      */
 
-    void* ptr = gl->fMapBufferRange(target, offset, data.Length(), LOCAL_GL_MAP_READ_BIT);
-    memcpy(data.Data(), ptr, data.Length());
+    void* ptr = gl->fMapBufferRange(target, offset, data.LengthAllowShared(), LOCAL_GL_MAP_READ_BIT);
+    // Warning: Possibly shared memory.  See bug 1225033.
+    memcpy(data.DataAllowShared(), ptr, data.LengthAllowShared());
     gl->fUnmapBuffer(target);
 
     if (target == LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER && currentTF) {
         BindTransformFeedback(LOCAL_GL_TRANSFORM_FEEDBACK, currentTF);
     }
 }
+
+void WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
+                                     const dom::Nullable<dom::ArrayBuffer>& maybeData)
+{
+    // If returnedData is null then an INVALID_VALUE error is
+    // generated.
+    if (maybeData.IsNull())
+        return ErrorInvalidValue("getBufferSubData: returnedData is null");
+
+    const dom::ArrayBuffer& data = maybeData.Value();
+    GetBufferSubDataT(target, offset, data);
+}
+
+void WebGL2Context::GetBufferSubData(GLenum target, GLintptr offset,
+                                     const dom::SharedArrayBuffer& data)
+{
+    GetBufferSubDataT(target, offset, data);
+}
+
+} // namespace mozilla

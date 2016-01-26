@@ -4,8 +4,8 @@
 // This test ensures that tags changes are correctly live-updated in a history
 // query.
 
-let gNow = Date.now();
-let gTestData = [
+var gNow = Date.now();
+var gTestData = [
   {
     isVisit: true,
     uri: "http://example.com/1/",
@@ -48,7 +48,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function pages_query()
+add_task(function* pages_query()
 {
   yield task_populateDB(gTestData);
 
@@ -71,7 +71,7 @@ add_task(function pages_query()
   yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function visits_query()
+add_task(function* visits_query()
 {
   yield task_populateDB(gTestData);
 
@@ -98,7 +98,7 @@ add_task(function visits_query()
   yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function pages_searchterm_query()
+add_task(function* pages_searchterm_query()
 {
   yield task_populateDB(gTestData);
 
@@ -122,7 +122,7 @@ add_task(function pages_searchterm_query()
   yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function visits_searchterm_query()
+add_task(function* visits_searchterm_query()
 {
   yield task_populateDB(gTestData);
 
@@ -149,7 +149,7 @@ add_task(function visits_searchterm_query()
   yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function pages_searchterm_is_title_query()
+add_task(function* pages_searchterm_is_title_query()
 {
   yield task_populateDB(gTestData);
 
@@ -158,22 +158,24 @@ add_task(function pages_searchterm_is_title_query()
   let root = PlacesUtils.history.executeQuery(query, options).root;
   root.containerOpen = true;
   compareArrayToResult([], root);
-  gTestData.forEach(function (data) {
+  for (let data of gTestData) {
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+                                      visitDate: data.lastVisit });
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+                                      visitDate: data.lastVisit });
     compareArrayToResult([], root);
-  });
+  }
 
   root.containerOpen = false;
   yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function visits_searchterm_is_title_query()
+add_task(function* visits_searchterm_is_title_query()
 {
   yield task_populateDB(gTestData);
 
@@ -183,16 +185,18 @@ add_task(function visits_searchterm_is_title_query()
   let root = PlacesUtils.history.executeQuery(query, options).root;
   root.containerOpen = true;
   compareArrayToResult([], root);
-  gTestData.forEach(function (data) {
+  for (let data of gTestData) {
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+                                      visitDate: data.lastVisit });
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({ uri: uri, title: data.title,
+                                      visitDate: data.lastVisit });
     compareArrayToResult([], root);
-  });
+  }
 
   root.containerOpen = false;
   yield PlacesTestUtils.clearHistory();

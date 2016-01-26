@@ -26,7 +26,6 @@ public:
 
   uint32_t ReadBits(size_t aNum)
   {
-    MOZ_ASSERT(mBitReader.numBitsLeft());
     MOZ_ASSERT(aNum <= 32);
     if (mBitReader.numBitsLeft() < aNum) {
       return 0;
@@ -48,7 +47,10 @@ public:
       i++;
     }
     if (i == 32) {
-      MOZ_ASSERT(false);
+      // This can happen if the data is invalid, or if it's
+      // short, since ReadBit() will return 0 when it runs
+      // off the end of the buffer.
+      NS_WARNING("Invalid H.264 data");
       return 0;
     }
     uint32_t r = ReadBits(i);
@@ -91,7 +93,7 @@ H264::DecodeNALUnit(const mozilla::MediaByteBuffer* aNAL)
     return nullptr;
   }
 
-  nsRefPtr<mozilla::MediaByteBuffer> rbsp = new mozilla::MediaByteBuffer;
+  RefPtr<mozilla::MediaByteBuffer> rbsp = new mozilla::MediaByteBuffer;
   ByteReader reader(aNAL);
   uint8_t nal_unit_type = reader.ReadU8() & 0x1f;
   uint32_t nalUnitHeaderBytes = 1;
@@ -140,7 +142,9 @@ ConditionDimension(float aValue)
 /* static */ bool
 H264::DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest)
 {
-  MOZ_ASSERT(aSPS);
+  if (!aSPS) {
+    return false;
+  }
   BitReader br(aSPS);
 
   int32_t lastScale;
@@ -490,12 +494,16 @@ H264::DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData, SPSData
     return false;
   }
 
-  nsRefPtr<mozilla::MediaByteBuffer> rawNAL = new mozilla::MediaByteBuffer;
+  reader.DiscardRemaining();
+
+  RefPtr<mozilla::MediaByteBuffer> rawNAL = new mozilla::MediaByteBuffer;
   rawNAL->AppendElements(ptr, length);
 
-  nsRefPtr<mozilla::MediaByteBuffer> sps = DecodeNALUnit(rawNAL);
+  RefPtr<mozilla::MediaByteBuffer> sps = DecodeNALUnit(rawNAL);
 
-  reader.DiscardRemaining();
+  if (!sps) {
+    return false;
+  }
 
   return DecodeSPS(sps, aDest);
 }

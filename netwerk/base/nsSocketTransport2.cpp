@@ -7,6 +7,7 @@
 #include "nsSocketTransport2.h"
 
 #include "mozilla/Attributes.h"
+#include "mozilla/Telemetry.h"
 #include "nsIOService.h"
 #include "nsStreamUtils.h"
 #include "nsNetSegmentUtils.h"
@@ -22,7 +23,6 @@
 #include "NetworkActivityMonitor.h"
 #include "NSSErrorsService.h"
 #include "mozilla/net/NeckoChild.h"
-#include "mozilla/VisualEventTracer.h"
 #include "nsThreadUtils.h"
 #include "nsISocketProviderService.h"
 #include "nsISocketProvider.h"
@@ -52,6 +52,11 @@
 #endif
 /* End keepalive config inclusions. */
 
+#define SUCCESSFUL_CONNECTING_TO_IPV4_ADDRESS 0
+#define UNSUCCESSFUL_CONNECTING_TO_IPV4_ADDRESS 1
+#define SUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS 2
+#define UNSUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS 3
+
 using namespace mozilla;
 using namespace mozilla::net;
 
@@ -80,7 +85,7 @@ public:
     }
 
 private:
-    nsRefPtr<nsSocketTransport> mTransport;
+    RefPtr<nsSocketTransport> mTransport;
 
     uint32_t              mType;
     nsresult              mStatus;
@@ -738,6 +743,7 @@ nsSocketTransport::nsSocketTransport()
     , mOutputClosed(true)
     , mResolving(false)
     , mNetAddrIsSet(false)
+    , mSelfAddrIsSet(false)
     , mLock("nsSocketTransport.mLock")
     , mFD(this)
     , mFDref(0)
@@ -784,8 +790,6 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
                         const nsACString &hostRoute, uint16_t portRoute,
                         nsIProxyInfo *givenProxyInfo)
 {
-    MOZ_EVENT_TRACER_NAME_OBJECT(this, host.BeginReading());
-
     nsCOMPtr<nsProxyInfo> proxyInfo;
     if (givenProxyInfo) {
         proxyInfo = do_QueryInterface(givenProxyInfo);
@@ -809,6 +813,7 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
     }
 
     const char *proxyType = nullptr;
+    mProxyInfo = proxyInfo;
     if (proxyInfo) {
         mProxyPort = proxyInfo->Port();
         mProxyHost = proxyInfo->Host();
@@ -905,6 +910,7 @@ nsSocketTransport::InitWithFilename(const char *filename)
 nsresult
 nsSocketTransport::InitWithConnectedSocket(PRFileDesc *fd, const NetAddr *addr)
 {
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "wrong thread");
     NS_ASSERTION(!mFD.IsInitialized(), "already initialized");
 
     char buf[kNetAddrMaxCStrBufSize];
@@ -925,6 +931,7 @@ nsSocketTransport::InitWithConnectedSocket(PRFileDesc *fd, const NetAddr *addr)
     mPollFlags = (PR_POLL_READ | PR_POLL_WRITE | PR_POLL_EXCEPT);
     mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
     mState = STATE_TRANSFERRING;
+    SetSocketName(fd);
     mNetAddrIsSet = true;
 
     {
@@ -1101,8 +1108,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
         // on an explicit alternate service host name
         const char *host       = mOriginHost.get();
         int32_t     port       = (int32_t) mOriginPort;
-        const char *proxyHost  = mProxyHost.IsEmpty() ? nullptr : mProxyHost.get();
-        int32_t     proxyPort  = (int32_t) mProxyPort;
+        nsCOMPtr<nsIProxyInfo> proxyInfo = mProxyInfo;
         uint32_t    controlFlags = 0;
 
         uint32_t i;
@@ -1136,9 +1142,9 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // it were the end host (i.e. expect the proxy's cert)
 
                 rv = provider->NewSocket(mNetAddr.raw.family,
-                                         mHttpsProxy ? proxyHost : host,
-                                         mHttpsProxy ? proxyPort : port,
-                                         proxyHost, proxyPort,
+                                         mHttpsProxy ? mProxyHost.get() : host,
+                                         mHttpsProxy ? mProxyPort : port,
+                                         proxyInfo,
                                          controlFlags, &fd,
                                          getter_AddRefs(secinfo));
 
@@ -1152,7 +1158,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // so we just want the service to add itself
                 // to the stack (such as pushing an io layer)
                 rv = provider->AddToSocket(mNetAddr.raw.family,
-                                           host, port, proxyHost, proxyPort,
+                                           host, port, proxyInfo,
                                            controlFlags, fd,
                                            getter_AddRefs(secinfo));
             }
@@ -1182,16 +1188,16 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                      (strcmp(mTypes[i], "socks4") == 0)) {
                 // since socks is transparent, any layers above
                 // it do not have to worry about proxy stuff
-                proxyHost = nullptr;
-                proxyPort = -1;
+                proxyInfo = nullptr;
                 proxyTransparent = true;
             }
         }
 
         if (NS_FAILED(rv)) {
             SOCKET_LOG(("  error pushing io layer [%u:%s rv=%x]\n", i, mTypes[i], rv));
-            if (fd)
+            if (fd) {
                 PR_Close(fd);
+            }
         }
     }
 
@@ -1217,6 +1223,9 @@ nsSocketTransport::InitiateSocket()
     bool isLocal;
     IsLocal(&isLocal);
 
+    if (gIOService->IsNetTearingDown()) {
+        return NS_ERROR_ABORT;
+    }
     if (gIOService->IsOffline()) {
         if (!isLocal)
             return NS_ERROR_OFFLINE;
@@ -1234,7 +1243,7 @@ nsSocketTransport::InitiateSocket()
             crashOnNonLocalConnections &&
             !(IsIPAddrAny(&mNetAddr) || IsIPAddrLocal(&mNetAddr))) {
             nsAutoCString ipaddr;
-            nsRefPtr<nsNetAddr> netaddr = new nsNetAddr(&mNetAddr);
+            RefPtr<nsNetAddr> netaddr = new nsNetAddr(&mNetAddr);
             netaddr->GetAddress(ipaddr);
             fprintf_stderr(stderr,
                            "FATAL ERROR: Non-local network connections are disabled and a connection "
@@ -1394,8 +1403,25 @@ nsSocketTransport::InitiateSocket()
 
     NetAddrToPRNetAddr(&mNetAddr, &prAddr);
 
-    MOZ_EVENT_TRACER_EXEC(this, "net::tcp::connect");
+    // We use PRIntervalTime here because we need
+    // nsIOService::LastOfflineStateChange time and
+    // nsIOService::LastConectivityChange time to be atomic.
+    PRIntervalTime connectStarted = 0;
+    if (gSocketTransportService->IsTelemetryEnabled()) {
+        connectStarted = PR_IntervalNow();
+    }
+
     status = PR_Connect(fd, &prAddr, NS_SOCKET_CONNECT_TIMEOUT);
+
+    if (gSocketTransportService->IsTelemetryEnabled() && connectStarted) {
+        SendPRBlockingTelemetry(connectStarted,
+            Telemetry::PRCONNECT_BLOCKING_TIME_NORMAL,
+            Telemetry::PRCONNECT_BLOCKING_TIME_SHUTDOWN,
+            Telemetry::PRCONNECT_BLOCKING_TIME_CONNECTIVITY_CHANGE,
+            Telemetry::PRCONNECT_BLOCKING_TIME_LINK_CHANGE,
+            Telemetry::PRCONNECT_BLOCKING_TIME_OFFLINE);
+    }
+
     if (status == PR_SUCCESS) {
         // 
         // we are connected!
@@ -1501,6 +1527,16 @@ nsSocketTransport::RecoverFromError()
         return false;
 
     bool tryAgain = false;
+
+    if (mSocketTransportService->IsTelemetryEnabled()) {
+        if (mNetAddr.raw.family == AF_INET) {
+            Telemetry::Accumulate(Telemetry::IPV4_AND_IPV6_ADDRESS_CONNECTIVITY,
+                                  UNSUCCESSFUL_CONNECTING_TO_IPV4_ADDRESS);
+        } else if (mNetAddr.raw.family == AF_INET6) {
+            Telemetry::Accumulate(Telemetry::IPV4_AND_IPV6_ADDRESS_CONNECTIVITY,
+                                  UNSUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS);
+        }
+    }
 
     if (mConnectionFlags & (DISABLE_IPV6 | DISABLE_IPV4) &&
         mCondition == NS_ERROR_UNKNOWN_HOST &&
@@ -1612,13 +1648,14 @@ nsSocketTransport::OnMsgOutputClosed(nsresult reason)
 void
 nsSocketTransport::OnSocketConnected()
 {
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "wrong thread");
     SOCKET_LOG(("  advancing to STATE_TRANSFERRING\n"));
 
     mPollFlags = (PR_POLL_READ | PR_POLL_WRITE | PR_POLL_EXCEPT);
     mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
     mState = STATE_TRANSFERRING;
 
-    // Set the mNetAddrIsSet flag only when state has reached TRANSFERRING
+    // Set the m*AddrIsSet flags only when state has reached TRANSFERRING
     // because we need to make sure its value does not change due to failover
     mNetAddrIsSet = true;
 
@@ -1628,6 +1665,7 @@ nsSocketTransport::OnSocketConnected()
         MutexAutoLock lock(mLock);
         NS_ASSERTION(mFD.IsInitialized(), "no socket");
         NS_ASSERTION(mFDref == 1, "wrong socket ref count");
+        SetSocketName(mFD);
         mFDconnected = true;
     }
 
@@ -1639,9 +1677,23 @@ nsSocketTransport::OnSocketConnected()
         }
     }
 
-    MOZ_EVENT_TRACER_DONE(this, "net::tcp::connect");
-
     SendStatus(NS_NET_STATUS_CONNECTED_TO);
+}
+
+void
+nsSocketTransport::SetSocketName(PRFileDesc *fd)
+{
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "wrong thread");
+    if (mSelfAddrIsSet) {
+        return;
+    }
+
+    PRNetAddr prAddr;
+    memset(&prAddr, 0, sizeof(prAddr));
+    if (PR_GetSockName(fd, &prAddr) == PR_SUCCESS) {
+        PRNetAddrToNetAddr(&prAddr, &mSelfAddr);
+        mSelfAddrIsSet = true;
+    }
 }
 
 PRFileDesc *
@@ -1696,7 +1748,12 @@ nsSocketTransport::ReleaseFD_Locked(PRFileDesc *fd)
     SOCKET_LOG(("JIMB: ReleaseFD_Locked: mFDref = %d\n", mFDref));
 
     if (--mFDref == 0) {
-        if (PR_GetCurrentThread() == gSocketThread) {
+        if (gIOService->IsNetTearingDown() &&
+            ((PR_IntervalNow() - gIOService->NetTearingDownStarted()) >
+             gSocketTransportService->MaxTimeForPrClosePref())) {
+          // If shutdown last to long, let the socket leak and do not close it.
+          SOCKET_LOG(("Intentional leak"));
+        } else if (PR_GetCurrentThread() == gSocketThread) {
             SOCKET_LOG(("nsSocketTransport: calling PR_Close [this=%p]\n", this));
             PR_Close(mFD);
         } else {
@@ -1851,13 +1908,46 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
         // Update poll timeout in case it was changed
         mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
     }
-    else if (mState == STATE_CONNECTING) {
+    else if ((mState == STATE_CONNECTING) && !gIOService->IsNetTearingDown()) {
+        // We do not need to do PR_ConnectContinue when we are already
+        // shutting down.
+
+        // We use PRIntervalTime here because we need
+        // nsIOService::LastOfflineStateChange time and
+        // nsIOService::LastConectivityChange time to be atomic.
+        PRIntervalTime connectStarted = 0;
+        if (gSocketTransportService->IsTelemetryEnabled()) {
+            connectStarted = PR_IntervalNow();
+        }
+
         PRStatus status = PR_ConnectContinue(fd, outFlags);
+
+        if (gSocketTransportService->IsTelemetryEnabled() && connectStarted) {
+            SendPRBlockingTelemetry(connectStarted,
+                Telemetry::PRCONNECTCONTINUE_BLOCKING_TIME_NORMAL,
+                Telemetry::PRCONNECTCONTINUE_BLOCKING_TIME_SHUTDOWN,
+                Telemetry::PRCONNECTCONTINUE_BLOCKING_TIME_CONNECTIVITY_CHANGE,
+                Telemetry::PRCONNECTCONTINUE_BLOCKING_TIME_LINK_CHANGE,
+                Telemetry::PRCONNECTCONTINUE_BLOCKING_TIME_OFFLINE);
+        }
+
         if (status == PR_SUCCESS) {
             //
             // we are connected!
             //
             OnSocketConnected();
+
+            if (mSocketTransportService->IsTelemetryEnabled()) {
+                if (mNetAddr.raw.family == AF_INET) {
+                    Telemetry::Accumulate(
+                        Telemetry::IPV4_AND_IPV6_ADDRESS_CONNECTIVITY,
+                        SUCCESSFUL_CONNECTING_TO_IPV4_ADDRESS);
+                } else if (mNetAddr.raw.family == AF_INET6) {
+                    Telemetry::Accumulate(
+                        Telemetry::IPV4_AND_IPV6_ADDRESS_CONNECTIVITY,
+                        SUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS);
+                }
+            }
         }
         else {
             PRErrorCode code = PR_GetError();
@@ -1893,6 +1983,13 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
             }
         }
     }
+    else if ((mState == STATE_CONNECTING) && gIOService->IsNetTearingDown()) {
+        // We do not need to do PR_ConnectContinue when we are already
+        // shutting down.
+        SOCKET_LOG(("We are in shutdown so skip PR_ConnectContinue and set "
+                    "and error.\n"));
+        mCondition = NS_ERROR_ABORT;
+    }
     else {
         NS_ERROR("unexpected socket state");
         mCondition = NS_ERROR_UNEXPECTED;
@@ -1922,7 +2019,8 @@ nsSocketTransport::OnSocketDetached(PRFileDesc *fd)
         }
     }
 
-    if (RecoverFromError())
+    // If we are not shutting down try again.
+    if (!gIOService->IsNetTearingDown() && RecoverFromError())
         mCondition = NS_OK;
     else {
         mState = STATE_CLOSED;
@@ -2249,31 +2347,19 @@ nsSocketTransport::GetPeerAddr(NetAddr *addr)
 NS_IMETHODIMP
 nsSocketTransport::GetSelfAddr(NetAddr *addr)
 {
-    // we must not call any PR methods on our file descriptor
-    // while holding mLock since those methods might re-enter
-    // socket transport code.
+    // once we are in the connected state, mSelfAddr will not change.
+    // so if we can verify that we are in the connected state, then
+    // we can freely access mSelfAddr from any thread without being
+    // inside a critical section.
 
-    PRFileDescAutoLock fd(this);
-    if (!fd.IsInitialized()) {
-        return NS_ERROR_NOT_CONNECTED;
+    if (!mSelfAddrIsSet) {
+        SOCKET_LOG(("nsSocketTransport::GetSelfAddr [this=%p state=%d] "
+                    "NOT_AVAILABLE because not yet connected.", this, mState));
+        return NS_ERROR_NOT_AVAILABLE;
     }
 
-    PRNetAddr prAddr;
-
-    // NSPR doesn't tell us the socket address's length (as provided by
-    // the 'getsockname' system call), so we can't distinguish between
-    // named, unnamed, and abstract Unix domain socket names. (Server
-    // sockets are never unnamed, obviously, but client sockets can use
-    // any kind of address.) Clear prAddr first, so that the path for
-    // unnamed and abstract addresses will at least be reliably empty,
-    // and not garbage for unnamed sockets.
-    memset(&prAddr, 0, sizeof(prAddr));
-
-    nsresult rv =
-        (PR_GetSockName(fd, &prAddr) == PR_SUCCESS) ? NS_OK : NS_ERROR_FAILURE;
-    PRNetAddrToNetAddr(&prAddr, addr);
-
-    return rv;
+    memcpy(addr, &mSelfAddr, sizeof(NetAddr));
+    return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -2292,7 +2378,6 @@ nsSocketTransport::Bind(NetAddr *aLocalAddr)
     return NS_OK;
 }
 
-/* nsINetAddr getScriptablePeerAddr (); */
 NS_IMETHODIMP
 nsSocketTransport::GetScriptablePeerAddr(nsINetAddr * *addr)
 {
@@ -2308,7 +2393,6 @@ nsSocketTransport::GetScriptablePeerAddr(nsINetAddr * *addr)
     return NS_OK;
 }
 
-/* nsINetAddr getScriptableSelfAddr (); */
 NS_IMETHODIMP
 nsSocketTransport::GetScriptableSelfAddr(nsINetAddr * *addr)
 {
@@ -2440,7 +2524,6 @@ nsSocketTransport::OnLookupComplete(nsICancelable *request,
     // flag host lookup complete for the benefit of the ResolveHost method.
     mResolving = false;
 
-    MOZ_EVENT_TRACER_WAIT(this, "net::tcp::connect");
     nsresult rv = PostEvent(MSG_DNS_LOOKUP_COMPLETE, status, rec);
 
     // if posting a message fails, then we should assume that the socket
@@ -2921,8 +3004,8 @@ nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals(bool aEnabled,
     }
     return NS_OK;
 
-#elif defined(XP_MACOSX)
-    // OS X uses sec; only supports idle time being set.
+#elif defined(XP_DARWIN)
+    // Darwin uses sec; only supports idle time being set.
     int err = setsockopt(sock, IPPROTO_TCP, TCP_KEEPALIVE,
                          &aIdleTime, sizeof(aIdleTime));
     if (NS_WARN_IF(err)) {
@@ -2975,4 +3058,36 @@ nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals(bool aEnabled,
                "called on unsupported platform!");
     return NS_ERROR_UNEXPECTED;
 #endif
+}
+
+void
+nsSocketTransport::SendPRBlockingTelemetry(PRIntervalTime aStart,
+                                           Telemetry::ID aIDNormal,
+                                           Telemetry::ID aIDShutdown,
+                                           Telemetry::ID aIDConnectivityChange,
+                                           Telemetry::ID aIDLinkChange,
+                                           Telemetry::ID aIDOffline)
+{
+    PRIntervalTime now = PR_IntervalNow();
+    if (gIOService->IsNetTearingDown()) {
+        Telemetry::Accumulate(aIDShutdown,
+                              PR_IntervalToMilliseconds(now - aStart));
+
+    } else if (PR_IntervalToSeconds(now - gIOService->LastConnectivityChange())
+               < 60) {
+        Telemetry::Accumulate(aIDConnectivityChange,
+                              PR_IntervalToMilliseconds(now - aStart));
+    } else if (PR_IntervalToSeconds(now - gIOService->LastNetworkLinkChange())
+               < 60) {
+        Telemetry::Accumulate(aIDLinkChange,
+                              PR_IntervalToMilliseconds(now - aStart));
+
+    } else if (PR_IntervalToSeconds(now - gIOService->LastOfflineStateChange())
+               < 60) {
+        Telemetry::Accumulate(aIDOffline,
+                              PR_IntervalToMilliseconds(now - aStart));
+    } else {
+        Telemetry::Accumulate(aIDNormal,
+                              PR_IntervalToMilliseconds(now - aStart));
+    }
 }

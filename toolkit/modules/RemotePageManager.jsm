@@ -153,6 +153,10 @@ RemotePages.prototype = {
 
     this.listener.removeMessageListener(name, callback);
   },
+
+  portsForBrowser: function(browser) {
+    return [...this.messagePorts].filter(port => port.browser == browser);
+  },
 };
 
 
@@ -389,7 +393,7 @@ function ChildMessagePort(contentFrame, window) {
   // Tell the main process to set up its side of the message pipe.
   this.messageManager.sendAsyncMessage("RemotePage:InitPort", {
     portID: portID,
-    url: window.location.toString(),
+    url: window.document.documentURI.replace(/[\#|\?].*$/, ""),
   });
 }
 
@@ -418,7 +422,7 @@ ChildMessagePort.prototype.destroy = function() {
 
 // Allows callers to register to connect to specific content pages. Registration
 // is done through the addRemotePageListener method
-let RemotePageManagerInternal = {
+var RemotePageManagerInternal = {
   // The currently registered remote pages
   pages: new Map(),
 
@@ -461,7 +465,7 @@ let RemotePageManagerInternal = {
 
   // A listener is requesting the list of currently registered urls
   initListener: function({ target: messageManager }) {
-    messageManager.sendAsyncMessage("RemotePage:Register", { urls: [u for (u of this.pages.keys())] })
+    messageManager.sendAsyncMessage("RemotePage:Register", { urls: Array.from(this.pages.keys()) })
   },
 
   // A remote page has been created and a port is ready in the content side
@@ -487,10 +491,11 @@ this.RemotePageManager = {
 };
 
 // Listen for pages in any process we're loaded in
-let registeredURLs = new Set();
+var registeredURLs = new Set();
 
-let observer = (window) => {
-  let url = window.location.toString();
+var observer = (window) => {
+  // Strip the hash from the URL, because it's not part of the origin.
+  let url = window.document.documentURI.replace(/[\#|\?].*$/, "");
   if (!registeredURLs.has(url))
     return;
 

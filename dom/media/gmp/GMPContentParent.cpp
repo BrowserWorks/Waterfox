@@ -11,7 +11,8 @@
 #include "GMPVideoDecoderParent.h"
 #include "GMPVideoEncoderParent.h"
 #include "mozIGeckoMediaPluginService.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
+#include "mozilla/unused.h"
 
 namespace mozilla {
 
@@ -19,15 +20,10 @@ namespace mozilla {
 #undef LOG
 #endif
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* GetGMPLog();
+extern LogModule* GetGMPLog();
 
-#define LOGD(msg) PR_LOG(GetGMPLog(), PR_LOG_DEBUG, msg)
-#define LOG(level, msg) PR_LOG(GetGMPLog(), (level), msg)
-#else
-#define LOGD(msg)
-#define LOG(level, msg)
-#endif
+#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
+#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 #ifdef __CLASS__
 #undef __CLASS__
@@ -65,7 +61,7 @@ public:
   }
 
 private:
-  nsRefPtr<GMPContentParent> mToRelease;
+  RefPtr<GMPContentParent> mToRelease;
 };
 
 void
@@ -99,7 +95,7 @@ GMPContentParent::VideoDecoderDestroyed(GMPVideoDecoderParent* aDecoder)
   MOZ_ASSERT(GMPThread() == NS_GetCurrentThread());
 
   // If the constructor fails, we'll get called before it's added
-  unused << NS_WARN_IF(!mVideoDecoders.RemoveElement(aDecoder));
+  Unused << NS_WARN_IF(!mVideoDecoders.RemoveElement(aDecoder));
   CloseIfUnused();
 }
 
@@ -109,7 +105,7 @@ GMPContentParent::VideoEncoderDestroyed(GMPVideoEncoderParent* aEncoder)
   MOZ_ASSERT(GMPThread() == NS_GetCurrentThread());
 
   // If the constructor fails, we'll get called before it's added
-  unused << NS_WARN_IF(!mVideoEncoders.RemoveElement(aEncoder));
+  Unused << NS_WARN_IF(!mVideoEncoders.RemoveElement(aEncoder));
   CloseIfUnused();
 }
 
@@ -129,12 +125,12 @@ GMPContentParent::CloseIfUnused()
       mDecryptors.IsEmpty() &&
       mVideoDecoders.IsEmpty() &&
       mVideoEncoders.IsEmpty()) {
-    nsRefPtr<GMPContentParent> toClose;
+    RefPtr<GMPContentParent> toClose;
     if (mParent) {
       toClose = mParent->ForgetGMPContentParent();
     } else {
       toClose = this;
-      nsRefPtr<GeckoMediaPluginServiceChild> gmp(
+      RefPtr<GeckoMediaPluginServiceChild> gmp(
         GeckoMediaPluginServiceChild::GetSingleton());
       gmp->RemoveGMPContentParent(toClose);
     }

@@ -73,16 +73,6 @@ nsXULTemplateResultSetXML::GetNext(nsISupports **aResult)
 // nsXULTemplateQueryProcessorXML
 //
 
-static PLDHashOperator
-TraverseRuleToBindingsMap(nsISupports* aKey, nsXMLBindingSet* aMatch, void* aContext)
-{
-    nsCycleCollectionTraversalCallback *cb =
-        static_cast<nsCycleCollectionTraversalCallback*>(aContext);
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(*cb, "mRuleToBindingsMap key");
-    cb->NoteXPCOMChild(aKey);
-    return PL_DHASH_NEXT;
-}
-  
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsXULTemplateQueryProcessorXML)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXULTemplateQueryProcessorXML)
@@ -93,7 +83,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXULTemplateQueryProcessorXML)
     NS_IMPL_CYCLE_COLLECTION_UNLINK(mRequest)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsXULTemplateQueryProcessorXML)
-    tmp->mRuleToBindingsMap.EnumerateRead(TraverseRuleToBindingsMap, &cb);
+    for (auto it = tmp->mRuleToBindingsMap.Iter(); !it.Done(); it.Next()) {
+        NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mRuleToBindingsMap key");
+        cb.NoteXPCOMChild(it.Key());
+    }
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRoot)
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEvaluator)
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTemplateBuilder)
@@ -255,7 +248,7 @@ nsXULTemplateQueryProcessorXML::CompileQuery(nsIXULTemplateBuilder* aBuilder,
         return rv.StealNSResult();
     }
 
-    nsRefPtr<nsXMLQuery> query =
+    RefPtr<nsXMLQuery> query =
         new nsXMLQuery(this, aMemberVariable, Move(compiledexpr));
 
     for (nsIContent* condition = content->GetFirstChild();
@@ -319,14 +312,14 @@ nsXULTemplateQueryProcessorXML::GenerateResults(nsISupports* aDatasource,
         return NS_ERROR_FAILURE;
 
     ErrorResult rv;
-    nsRefPtr<XPathResult> exprresults =
+    RefPtr<XPathResult> exprresults =
         expr->Evaluate(*context, XPathResult::ORDERED_NODE_SNAPSHOT_TYPE,
                        nullptr, rv);
     if (rv.Failed()) {
         return rv.StealNSResult();
     }
 
-    nsRefPtr<nsXULTemplateResultSetXML> results =
+    RefPtr<nsXULTemplateResultSetXML> results =
         new nsXULTemplateResultSetXML(xmlquery, exprresults.forget(),
                                       xmlquery->GetBindingSet());
 
@@ -344,7 +337,7 @@ nsXULTemplateQueryProcessorXML::AddBinding(nsIDOMNode* aRuleNode,
     if (mGenerationStarted)
         return NS_ERROR_FAILURE;
 
-    nsRefPtr<nsXMLBindingSet> bindings = mRuleToBindingsMap.GetWeak(aRuleNode);
+    RefPtr<nsXMLBindingSet> bindings = mRuleToBindingsMap.GetWeak(aRuleNode);
     if (!bindings) {
         bindings = new nsXMLBindingSet();
         mRuleToBindingsMap.Put(aRuleNode, bindings);
@@ -356,6 +349,7 @@ nsXULTemplateQueryProcessorXML::AddBinding(nsIDOMNode* aRuleNode,
     nsAutoPtr<XPathExpression> compiledexpr;
     compiledexpr = CreateExpression(aExpr, ruleNode, rv);
     if (rv.Failed()) {
+        rv.SuppressException();
         nsXULContentUtils::LogTemplateError(ERROR_TEMPLATE_BAD_BINDING_XPATH);
         return NS_OK;
     }
@@ -384,7 +378,7 @@ nsXULTemplateQueryProcessorXML::TranslateRef(nsISupports* aDatasource,
     if (!rootElement)
         return NS_OK;
     
-    nsRefPtr<nsXULTemplateResultXML> result = new nsXULTemplateResultXML(nullptr, rootElement, nullptr);
+    RefPtr<nsXULTemplateResultXML> result = new nsXULTemplateResultXML(nullptr, rootElement, nullptr);
     result.forget(aRef);
 
     return NS_OK;

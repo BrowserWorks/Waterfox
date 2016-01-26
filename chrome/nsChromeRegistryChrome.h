@@ -15,8 +15,8 @@
 namespace mozilla {
 namespace dom {
 class PContentParent;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsIPrefBranch;
 struct ChromePackage;
@@ -59,9 +59,6 @@ class nsChromeRegistryChrome : public nsChromeRegistry
                                             ChromePackage* aChromePackage,
                                             const nsCString& aSelectedLocale,
                                             const nsCString& aSelectedSkin);
-  static PLDHashOperator CollectPackages(const nsACString &aKey,
-                                         PackageEntry *package,
-                                         void *arg);
 
   nsresult OverrideLocalePackage(const nsACString& aPackage,
                                  nsACString& aOverride);

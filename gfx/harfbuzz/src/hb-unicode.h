@@ -174,23 +174,23 @@ typedef struct hb_unicode_funcs_t hb_unicode_funcs_t;
 /*
  * just give me the best implementation you've got there.
  */
-hb_unicode_funcs_t *
+HB_EXTERN hb_unicode_funcs_t *
 hb_unicode_funcs_get_default (void);
 
 
-hb_unicode_funcs_t *
+HB_EXTERN hb_unicode_funcs_t *
 hb_unicode_funcs_create (hb_unicode_funcs_t *parent);
 
-hb_unicode_funcs_t *
+HB_EXTERN hb_unicode_funcs_t *
 hb_unicode_funcs_get_empty (void);
 
-hb_unicode_funcs_t *
+HB_EXTERN hb_unicode_funcs_t *
 hb_unicode_funcs_reference (hb_unicode_funcs_t *ufuncs);
 
-void
+HB_EXTERN void
 hb_unicode_funcs_destroy (hb_unicode_funcs_t *ufuncs);
 
-hb_bool_t
+HB_EXTERN hb_bool_t
 hb_unicode_funcs_set_user_data (hb_unicode_funcs_t *ufuncs,
 			        hb_user_data_key_t *key,
 			        void *              data,
@@ -198,18 +198,18 @@ hb_unicode_funcs_set_user_data (hb_unicode_funcs_t *ufuncs,
 				hb_bool_t           replace);
 
 
-void *
+HB_EXTERN void *
 hb_unicode_funcs_get_user_data (hb_unicode_funcs_t *ufuncs,
 			        hb_user_data_key_t *key);
 
 
-void
+HB_EXTERN void
 hb_unicode_funcs_make_immutable (hb_unicode_funcs_t *ufuncs);
 
-hb_bool_t
+HB_EXTERN hb_bool_t
 hb_unicode_funcs_is_immutable (hb_unicode_funcs_t *ufuncs);
 
-hb_unicode_funcs_t *
+HB_EXTERN hb_unicode_funcs_t *
 hb_unicode_funcs_get_parent (hb_unicode_funcs_t *ufuncs);
 
 
@@ -283,9 +283,9 @@ typedef unsigned int			(*hb_unicode_decompose_compatibility_func_t)	(hb_unicode_
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_combining_class_func (hb_unicode_funcs_t *ufuncs,
 					   hb_unicode_combining_class_func_t func,
 					   void *user_data, hb_destroy_func_t destroy);
@@ -299,9 +299,9 @@ hb_unicode_funcs_set_combining_class_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_eastasian_width_func (hb_unicode_funcs_t *ufuncs,
 					   hb_unicode_eastasian_width_func_t func,
 					   void *user_data, hb_destroy_func_t destroy);
@@ -315,9 +315,9 @@ hb_unicode_funcs_set_eastasian_width_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_general_category_func (hb_unicode_funcs_t *ufuncs,
 					    hb_unicode_general_category_func_t func,
 					    void *user_data, hb_destroy_func_t destroy);
@@ -331,9 +331,9 @@ hb_unicode_funcs_set_general_category_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_mirroring_func (hb_unicode_funcs_t *ufuncs,
 				     hb_unicode_mirroring_func_t func,
 				     void *user_data, hb_destroy_func_t destroy);
@@ -347,9 +347,9 @@ hb_unicode_funcs_set_mirroring_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_script_func (hb_unicode_funcs_t *ufuncs,
 				  hb_unicode_script_func_t func,
 				  void *user_data, hb_destroy_func_t destroy);
@@ -363,9 +363,9 @@ hb_unicode_funcs_set_script_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_compose_func (hb_unicode_funcs_t *ufuncs,
 				   hb_unicode_compose_func_t func,
 				   void *user_data, hb_destroy_func_t destroy);
@@ -379,9 +379,9 @@ hb_unicode_funcs_set_compose_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_decompose_func (hb_unicode_funcs_t *ufuncs,
 				     hb_unicode_decompose_func_t func,
 				     void *user_data, hb_destroy_func_t destroy);
@@ -395,47 +395,88 @@ hb_unicode_funcs_set_decompose_func (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
-void
+HB_EXTERN void
 hb_unicode_funcs_set_decompose_compatibility_func (hb_unicode_funcs_t *ufuncs,
 						   hb_unicode_decompose_compatibility_func_t func,
 						   void *user_data, hb_destroy_func_t destroy);
 
 /* accessors */
 
-hb_unicode_combining_class_t
+/**
+ * hb_unicode_combining_class:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_unicode_combining_class_t
 hb_unicode_combining_class (hb_unicode_funcs_t *ufuncs,
 			    hb_codepoint_t unicode);
 
-unsigned int
+/**
+ * hb_unicode_eastasian_width:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN unsigned int
 hb_unicode_eastasian_width (hb_unicode_funcs_t *ufuncs,
 			    hb_codepoint_t unicode);
 
-hb_unicode_general_category_t
+/**
+ * hb_unicode_general_category:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_unicode_general_category_t
 hb_unicode_general_category (hb_unicode_funcs_t *ufuncs,
 			     hb_codepoint_t unicode);
 
-hb_codepoint_t
+/**
+ * hb_unicode_mirroring:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_codepoint_t
 hb_unicode_mirroring (hb_unicode_funcs_t *ufuncs,
 		      hb_codepoint_t unicode);
 
-hb_script_t
+/**
+ * hb_unicode_script:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_script_t
 hb_unicode_script (hb_unicode_funcs_t *ufuncs,
 		   hb_codepoint_t unicode);
 
-hb_bool_t
+/**
+ * hb_unicode_compose:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_bool_t
 hb_unicode_compose (hb_unicode_funcs_t *ufuncs,
 		    hb_codepoint_t      a,
 		    hb_codepoint_t      b,
 		    hb_codepoint_t     *ab);
-hb_bool_t
+
+/**
+ * hb_unicode_decompose:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN hb_bool_t
 hb_unicode_decompose (hb_unicode_funcs_t *ufuncs,
 		      hb_codepoint_t      ab,
 		      hb_codepoint_t     *a,
 		      hb_codepoint_t     *b);
 
-unsigned int
+/**
+ * hb_unicode_decompose_compatibility:
+ *
+ * Since: 0.9.2
+ **/
+HB_EXTERN unsigned int
 hb_unicode_decompose_compatibility (hb_unicode_funcs_t *ufuncs,
 				    hb_codepoint_t      u,
 				    hb_codepoint_t     *decomposed);

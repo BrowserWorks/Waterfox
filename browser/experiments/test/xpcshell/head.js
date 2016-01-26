@@ -1,16 +1,13 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
-Cu.import("resource://services-sync/healthreport.jsm", this);
-Cu.import("resource://testing-common/services/healthreport/utils.jsm", this);
-Cu.import("resource://gre/modules/services/healthreport/providers.jsm");
 Cu.import("resource://testing-common/AddonManagerTesting.jsm");
 
 const PREF_EXPERIMENTS_ENABLED  = "experiments.enabled";
@@ -19,7 +16,6 @@ const PREF_LOGGING_DUMP         = "experiments.logging.dump";
 const PREF_MANIFEST_URI         = "experiments.manifest.uri";
 const PREF_FETCHINTERVAL        = "experiments.manifest.fetchIntervalSeconds";
 const PREF_TELEMETRY_ENABLED    = "toolkit.telemetry.enabled";
-const PREF_HEALTHREPORT_ENABLED = "datareporting.healthreport.service.enabled";
 
 function getExperimentPath(base) {
   let p = do_get_cwd();
@@ -42,9 +38,11 @@ function sha1File(path) {
   is.close();
   let bytes = hasher.finish(false);
 
-  return [("0" + bytes.charCodeAt(byte).toString(16)).slice(-2)
-          for (byte in bytes)]
-         .join("");
+  let rv = "";
+  for (let i = 0; i < bytes.length; i++) {
+    rv += ("0" + bytes.charCodeAt(i).toString(16)).substr(-2);
+  }
+  return rv;
 }
 
 const EXPERIMENT1_ID       = "test-experiment-1@tests.mozilla.org";
@@ -101,19 +99,7 @@ const FAKE_EXPERIMENTS_2 = [
   },
 ];
 
-let gAppInfo = null;
-
-function getReporter(name, uri, inspected) {
-  return Task.spawn(function init() {
-    let reporter = getHealthReporter(name, uri, inspected);
-    yield reporter.init();
-
-    yield reporter._providerManager.registerProviderFromType(
-      HealthReportProvider);
-
-    throw new Task.Result(reporter);
-  });
-}
+var gAppInfo = null;
 
 function removeCacheFile() {
   let path = OS.Path.join(OS.Constants.Path.profileDir, "experiments.json");
@@ -141,7 +127,7 @@ function dateToSeconds(date) {
   return date.getTime() / 1000;
 }
 
-let gGlobalScope = this;
+var gGlobalScope = this;
 function loadAddonManager() {
   let ns = {};
   Cu.import("resource://gre/modules/Services.jsm", ns);
@@ -169,7 +155,7 @@ function getExperimentAddons(previous=false) {
     if (previous) {
       deferred.resolve(addons);
     } else {
-      deferred.resolve([a for (a of addons) if (!a.appDisabled)]);
+      deferred.resolve(addons.filter(a => !a.appDisabled));
     }
   });
 
@@ -249,3 +235,7 @@ function replaceExperiments(experiment, list) {
     },
   });
 }
+
+// Experiments require Telemetry to be enabled, and that's not true for debug
+// builds. Let's just enable it here instead of going through each test.
+Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);

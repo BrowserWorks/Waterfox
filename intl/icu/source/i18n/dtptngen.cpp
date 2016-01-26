@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2013, International Business Machines Corporation and
+* Copyright (C) 2007-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -26,7 +26,6 @@
 #include "unicode/ustring.h"
 #include "unicode/rep.h"
 #include "cpputils.h"
-#include "ucln_in.h"
 #include "mutex.h"
 #include "cmemory.h"
 #include "cstring.h"
@@ -35,8 +34,6 @@
 #include "hash.h"
 #include "uresimp.h"
 #include "dtptngen_impl.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 #if U_CHARSET_FAMILY==U_EBCDIC_FAMILY
 /**
@@ -127,7 +124,6 @@ static const UChar *ures_a_getNextString(UResourceBundleAIterator *aiter, int32_
 
 U_NAMESPACE_BEGIN
 
-
 // *****************************************************************************
 // class DateTimePatternGenerator
 // *****************************************************************************
@@ -144,6 +140,7 @@ static const dtTypeElem dtTypes[] = {
     {LOW_Y, UDATPG_YEAR_FIELD, DT_NUMERIC, 1, 20},
     {CAP_Y, UDATPG_YEAR_FIELD, DT_NUMERIC + DT_DELTA, 1, 20},
     {LOW_U, UDATPG_YEAR_FIELD, DT_NUMERIC + 2*DT_DELTA, 1, 20},
+    {LOW_R, UDATPG_YEAR_FIELD, DT_NUMERIC + 3*DT_DELTA, 1, 20},
     {CAP_U, UDATPG_YEAR_FIELD, DT_SHORT, 1, 3},
     {CAP_U, UDATPG_YEAR_FIELD, DT_LONG, 4, 0},
     {CAP_U, UDATPG_YEAR_FIELD, DT_NARROW, 5, 0},
@@ -247,15 +244,12 @@ DateTimePatternGenerator::createInstance(UErrorCode& status) {
 
 DateTimePatternGenerator* U_EXPORT2
 DateTimePatternGenerator::createInstance(const Locale& locale, UErrorCode& status) {
-    DateTimePatternGenerator *result = new DateTimePatternGenerator(locale, status);
-    if (result == NULL) {
-        status = U_MEMORY_ALLOCATION_ERROR;
-    }
     if (U_FAILURE(status)) {
-        delete result;
-        result = NULL;
+        return NULL;
     }
-    return result;
+    LocalPointer<DateTimePatternGenerator> result(
+            new DateTimePatternGenerator(locale, status), status);
+    return U_SUCCESS(status) ? result.orphan() : NULL;
 }
 
 DateTimePatternGenerator*  U_EXPORT2
@@ -314,6 +308,10 @@ DateTimePatternGenerator::DateTimePatternGenerator(const DateTimePatternGenerato
 
 DateTimePatternGenerator&
 DateTimePatternGenerator::operator=(const DateTimePatternGenerator& other) {
+    // reflexive case
+    if (&other == this) {
+        return *this;
+    }
     pLocale = other.pLocale;
     fDefaultHourFormatChar = other.fDefaultHourFormatChar;
     *fp = *(other.fp);
@@ -399,16 +397,23 @@ DateTimePatternGenerator::initData(const Locale& locale, UErrorCode &status) {
 } // DateTimePatternGenerator::initData
 
 UnicodeString
-DateTimePatternGenerator::getSkeleton(const UnicodeString& pattern, UErrorCode&
-/*status*/) {
-    dtMatcher->set(pattern, fp);
-    return dtMatcher->getSkeletonPtr()->getSkeleton();
+DateTimePatternGenerator::staticGetSkeleton(
+        const UnicodeString& pattern, UErrorCode& /*status*/) {
+    FormatParser fp;
+    DateTimeMatcher matcher;
+    PtnSkeleton localSkeleton;
+    matcher.set(pattern, &fp, localSkeleton);
+    return localSkeleton.getSkeleton();
 }
 
 UnicodeString
-DateTimePatternGenerator::getBaseSkeleton(const UnicodeString& pattern, UErrorCode& /*status*/) {
-    dtMatcher->set(pattern, fp);
-    return dtMatcher->getSkeletonPtr()->getBaseSkeleton();
+DateTimePatternGenerator::staticGetBaseSkeleton(
+        const UnicodeString& pattern, UErrorCode& /*status*/) {
+    FormatParser fp;
+    DateTimeMatcher matcher;
+    PtnSkeleton localSkeleton;
+    matcher.set(pattern, &fp, localSkeleton);
+    return localSkeleton.getBaseSkeleton();
 }
 
 void
@@ -510,7 +515,7 @@ DateTimePatternGenerator::addCLDRData(const Locale& locale, UErrorCode& err) {
     const char *key=NULL;
     int32_t i;
 
-    UnicodeString defaultItemFormat(TRUE, UDATPG_ItemFormat, LENGTHOF(UDATPG_ItemFormat)-1);  // Read-only alias.
+    UnicodeString defaultItemFormat(TRUE, UDATPG_ItemFormat, UPRV_LENGTHOF(UDATPG_ItemFormat)-1);  // Read-only alias.
 
     err = U_ZERO_ERROR;
     
@@ -1219,7 +1224,7 @@ DateTimePatternGenerator::copyHashtable(Hashtable *other, UErrorCode &status) {
     if(U_FAILURE(status)){
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* elem = NULL;
     // walk through the hash table and create a deep clone
     while((elem = other->nextElement(pos))!= NULL){
@@ -1335,7 +1340,7 @@ PatternMap::copyFrom(const PatternMap& other, UErrorCode& status) {
                 status = U_MEMORY_ALLOCATION_ERROR;
                 return;
             }
-
+            curElem->skeletonWasSpecified = otherElem->skeletonWasSpecified;
             if (prevElem!=NULL) {
                 prevElem->next=curElem;
             }
@@ -1842,7 +1847,7 @@ FormatParser::getCanonicalIndex(const UnicodeString& s, UBool strict) {
 }
 
 UBool
-FormatParser::isQuoteLiteral(const UnicodeString& s) const {
+FormatParser::isQuoteLiteral(const UnicodeString& s) {
     return (UBool)(s.charAt(0)==SINGLE_QUOTE);
 }
 

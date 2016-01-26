@@ -1,6 +1,6 @@
 /*
 ***************************************************************************
-* Copyright (C) 1999-2013, International Business Machines Corporation
+* Copyright (C) 1999-2015, International Business Machines Corporation
 * and others. All Rights Reserved.
 ***************************************************************************
 *   Date        Name        Description
@@ -23,7 +23,7 @@
 U_NAMESPACE_BEGIN
 
 // Forward Declarations.
-void UnicodeSet_initInclusion(int32_t src, UErrorCode &status); /**< @internal */
+void U_CALLCONV UnicodeSet_initInclusion(int32_t src, UErrorCode &status); /**< @internal */
 
 class BMPSet;
 class ParsePosition;
@@ -273,7 +273,7 @@ class RuleCharacterIterator;
  * @author Alan Liu
  * @stable ICU 2.0
  */
-class U_COMMON_API UnicodeSet : public UnicodeFilter {
+class U_COMMON_API UnicodeSet U_FINAL : public UnicodeFilter {
 
     int32_t len; // length of list used; 0 <= len <= capacity
     int32_t capacity; // capacity of list
@@ -368,6 +368,28 @@ public:
      * @stable ICU 2.4
      */
     UnicodeSet(UChar32 start, UChar32 end);
+
+#ifndef U_HIDE_INTERNAL_API
+    /**
+     * @internal
+     */
+    enum ESerialization {
+      kSerialized  /* result of serialize() */
+    };
+
+    /**
+     * Constructs a set from the output of serialize().
+     *
+     * @param buffer the 16 bit array
+     * @param bufferLen the original length returned from serialize()
+     * @param serialization the value 'kSerialized'
+     * @param status error code
+     *
+     * @internal
+     */
+    UnicodeSet(const uint16_t buffer[], int32_t bufferLen,
+               ESerialization serialization, UErrorCode &status);
+#endif  /* U_HIDE_INTERNAL_API */
 
     /**
      * Constructs a set from the given pattern.  See the class
@@ -1589,7 +1611,7 @@ private:
                               UnicodeString& rebuiltPat,
                               UErrorCode& ec);
 
-    friend void UnicodeSet_initInclusion(int32_t src, UErrorCode &status);
+    friend void U_CALLCONV UnicodeSet_initInclusion(int32_t src, UErrorCode &status);
     static const UnicodeSet* getInclusions(int32_t src, UErrorCode &status);
 
     /**

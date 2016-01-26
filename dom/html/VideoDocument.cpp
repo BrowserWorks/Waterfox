@@ -36,7 +36,7 @@ protected:
   nsresult CreateSyntheticVideoDocument(nsIChannel* aChannel,
                                         nsIStreamListener** aListener);
 
-  nsRefPtr<MediaDocumentStreamListener> mStreamListener;
+  RefPtr<MediaDocumentStreamListener> mStreamListener;
 };
 
 nsresult
@@ -76,6 +76,7 @@ VideoDocument::SetScriptGlobalObject(nsIScriptGlobalObject* aScriptGlobalObject)
         GetReadyStateEnum() != nsIDocument::READYSTATE_COMPLETE) {
       LinkStylesheet(NS_LITERAL_STRING("resource://gre/res/TopLevelVideoDocument.css"));
       LinkStylesheet(NS_LITERAL_STRING("chrome://global/skin/media/TopLevelVideoDocument.css"));
+      LinkScript(NS_LITERAL_STRING("chrome://global/content/TopLevelVideoDocument.js"));
     }
     BecomeInteractive();
   }
@@ -96,12 +97,12 @@ VideoDocument::CreateSyntheticVideoDocument(nsIChannel* aChannel,
   }
 
   // make content
-  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nodeInfo = mNodeInfoManager->GetNodeInfo(nsGkAtoms::video, nullptr,
                                            kNameSpaceID_XHTML,
                                            nsIDOMNode::ELEMENT_NODE);
 
-  nsRefPtr<HTMLMediaElement> element =
+  RefPtr<HTMLMediaElement> element =
     static_cast<HTMLMediaElement*>(NS_NewHTMLVideoElement(nodeInfo.forget(),
                                                           NOT_FROM_PARSER));
   if (!element)

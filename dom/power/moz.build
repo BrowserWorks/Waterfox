@@ -27,11 +27,12 @@ UNIFIED_SOURCES += [
     'WakeLock.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
 MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

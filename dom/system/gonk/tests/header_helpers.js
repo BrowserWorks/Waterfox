@@ -3,10 +3,10 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 
-let subscriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+var subscriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
                         .getService(Ci.mozIJSSubScriptLoader);
 
 /**
@@ -187,6 +187,30 @@ function newIncomingParcel(fakeParcelSize, response, request, data) {
   // write parcel data
   for (let ii = 0; ii < data.length; ++ii) {
     writeUint8(data[ii]);
+  }
+
+  return bytes;
+}
+
+/**
+ * Create a parcel buffer which represents the hex string.
+ *
+ * @param hexString
+ *        The HEX string to be converted.
+ *
+ * @return an Uint8Array carrying all parcel data.
+ */
+function hexStringToParcelByteArrayData(hexString) {
+  let length = Math.ceil((hexString.length / 2));
+  let bytes = new Uint8Array(4 + length);
+
+  bytes[0] = length & 0xFF;
+  bytes[1] = (length >>  8) & 0xFF;
+  bytes[2] = (length >> 16) & 0xFF;
+  bytes[3] = (length >> 24) & 0xFF;
+
+  for (let i = 0; i < length; i ++) {
+    bytes[i + 4] = Number.parseInt(hexString.substr(i * 2, 2), 16);
   }
 
   return bytes;

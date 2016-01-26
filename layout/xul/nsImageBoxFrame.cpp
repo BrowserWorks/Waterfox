@@ -15,6 +15,7 @@
 #include "nsRenderingContext.h"
 #include "nsStyleContext.h"
 #include "nsStyleConsts.h"
+#include "nsStyleUtil.h"
 #include "nsCOMPtr.h"
 #include "nsPresContext.h"
 #include "nsBoxLayoutState.h"
@@ -40,7 +41,6 @@
 
 #include "nsIServiceManager.h"
 #include "nsIURI.h"
-#include "nsNetUtil.h"
 #include "nsThreadUtils.h"
 #include "nsDisplayList.h"
 #include "ImageLayers.h"
@@ -51,6 +51,7 @@
 
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventDispatcher.h"
+#include "mozilla/Maybe.h"
 
 #define ONLOAD_CALLED_TOO_EARLY 1
 
@@ -62,14 +63,14 @@ using namespace mozilla::layers;
 class nsImageBoxFrameEvent : public nsRunnable
 {
 public:
-  nsImageBoxFrameEvent(nsIContent *content, uint32_t message)
+  nsImageBoxFrameEvent(nsIContent *content, EventMessage message)
     : mContent(content), mMessage(message) {}
 
   NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIContent> mContent;
-  uint32_t mMessage;
+  EventMessage mMessage;
 };
 
 NS_IMETHODIMP
@@ -80,7 +81,7 @@ nsImageBoxFrameEvent::Run()
     return NS_OK;
   }
 
-  nsRefPtr<nsPresContext> pres_context = pres_shell->GetPresContext();
+  RefPtr<nsPresContext> pres_context = pres_shell->GetPresContext();
   if (!pres_context) {
     return NS_OK;
   }
@@ -102,9 +103,9 @@ nsImageBoxFrameEvent::Run()
 // asynchronously.
 
 void
-FireImageDOMEvent(nsIContent* aContent, uint32_t aMessage)
+FireImageDOMEvent(nsIContent* aContent, EventMessage aMessage)
 {
-  NS_ASSERTION(aMessage == NS_LOAD || aMessage == NS_LOAD_ERROR,
+  NS_ASSERTION(aMessage == eLoad || aMessage == eLoadError,
                "invalid message");
 
   nsCOMPtr<nsIRunnable> event = new nsImageBoxFrameEvent(aContent, aMessage);
@@ -150,8 +151,7 @@ nsImageBoxFrame::nsImageBoxFrame(nsStyleContext* aContext):
   mLoadFlags(nsIRequest::LOAD_NORMAL),
   mRequestRegistered(false),
   mUseSrcAttr(false),
-  mSuppressStyleCheck(false),
-  mFireEventOnDecode(false)
+  mSuppressStyleCheck(false)
 {
   MarkIntrinsicISizesDirty();
 }
@@ -192,7 +192,7 @@ nsImageBoxFrame::Init(nsIContent*       aContent,
                       nsIFrame*         aPrevInFlow)
 {
   if (!mListener) {
-    nsRefPtr<nsImageBoxListener> listener = new nsImageBoxListener();
+    RefPtr<nsImageBoxListener> listener = new nsImageBoxListener();
     listener->SetFrame(this);
     mListener = listener.forget();
   }
@@ -307,6 +307,13 @@ nsImageBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   if (!IsVisibleForPainting(aBuilder))
     return;
 
+  uint32_t clipFlags =
+    nsStyleUtil::ObjectPropsMightCauseOverflow(StylePosition()) ?
+    0 : DisplayListClipState::ASSUME_DRAWING_RESTRICTED_TO_CONTENT_RECT;
+
+  DisplayListClipState::AutoClipContainingBlockDescendantsToContentBox
+    clip(aBuilder, this, clipFlags);
+
   nsDisplayList list;
   list.AppendNewToTop(
     new (aBuilder) nsDisplayXULImage(aBuilder, this));
@@ -321,10 +328,10 @@ nsImageBoxFrame::PaintImage(nsRenderingContext& aRenderingContext,
                             const nsRect& aDirtyRect, nsPoint aPt,
                             uint32_t aFlags)
 {
-  nsRect rect;
-  GetClientRect(rect);
+  nsRect constraintRect;
+  GetClientRect(constraintRect);
 
-  rect += aPt;
+  constraintRect += aPt;
 
   if (!mImageRequest) {
     // This probably means we're drawn by a native theme.
@@ -334,24 +341,60 @@ nsImageBoxFrame::PaintImage(nsRenderingContext& aRenderingContext,
   // don't draw if the image is not dirty
   // XXX(seth): Can this actually happen anymore?
   nsRect dirty;
-  if (!dirty.IntersectRect(aDirtyRect, rect)) {
+  if (!dirty.IntersectRect(aDirtyRect, constraintRect)) {
     return DrawResult::TEMPORARY_ERROR;
   }
 
   nsCOMPtr<imgIContainer> imgCon;
   mImageRequest->GetImage(getter_AddRefs(imgCon));
 
-  if (imgCon) {
-    bool hasSubRect = !mUseSrcAttr && (mSubRect.width > 0 || mSubRect.height > 0);
-    return
-      nsLayoutUtils::DrawSingleImage(*aRenderingContext.ThebesContext(),
-        PresContext(), imgCon,
-        nsLayoutUtils::GetGraphicsFilterForFrame(this),
-        rect, dirty, nullptr, aFlags, nullptr,
-        hasSubRect ? &mSubRect : nullptr);
+  if (!imgCon) {
+    return DrawResult::NOT_READY;
   }
 
-  return DrawResult::NOT_READY;
+  bool hasSubRect = !mUseSrcAttr && (mSubRect.width > 0 || mSubRect.height > 0);
+
+  Maybe<nsPoint> anchorPoint;
+  nsRect dest;
+  if (!mUseSrcAttr) {
+    // Our image (if we have one) is coming from the CSS property
+    // 'list-style-image' (combined with '-moz-image-region'). For now, ignore
+    // 'object-fit' & 'object-position' in this case, and just fill our rect.
+    // XXXdholbert Should we even honor these properties in this case? They only
+    // apply to replaced elements, and I'm not sure we count as a replaced
+    // element when our image data is determined by CSS.
+    dest = constraintRect;
+  } else {
+    // Determine dest rect based on intrinsic size & ratio, along with
+    // 'object-fit' & 'object-position' properties:
+    IntrinsicSize intrinsicSize;
+    nsSize intrinsicRatio;
+    if (mIntrinsicSize.width > 0 && mIntrinsicSize.height > 0) {
+      // Image has a valid size; use it as intrinsic size & ratio.
+      intrinsicSize.width.SetCoordValue(mIntrinsicSize.width);
+      intrinsicSize.height.SetCoordValue(mIntrinsicSize.height);
+      intrinsicRatio = mIntrinsicSize;
+    } else {
+      // Image doesn't have a (valid) intrinsic size.
+      // Try to look up intrinsic ratio and use that at least.
+      imgCon->GetIntrinsicRatio(&intrinsicRatio);
+    }
+    anchorPoint.emplace();
+    dest = nsLayoutUtils::ComputeObjectDestRect(constraintRect,
+                                                intrinsicSize,
+                                                intrinsicRatio,
+                                                StylePosition(),
+                                                anchorPoint.ptr());
+  }
+
+
+  return nsLayoutUtils::DrawSingleImage(
+           *aRenderingContext.ThebesContext(),
+           PresContext(), imgCon,
+           nsLayoutUtils::GetGraphicsFilterForFrame(this),
+           dest, dirty, nullptr, aFlags,
+           anchorPoint.ptrOr(nullptr),
+           hasSubRect ? &mSubRect : nullptr);
 }
 
 void nsDisplayXULImage::Paint(nsDisplayListBuilder* aBuilder,
@@ -727,52 +770,23 @@ nsImageBoxFrame::OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage)
 nsresult
 nsImageBoxFrame::OnDecodeComplete(imgIRequest* aRequest)
 {
-  if (mFireEventOnDecode) {
-    mFireEventOnDecode = false;
-
-    uint32_t reqStatus;
-    aRequest->GetImageStatus(&reqStatus);
-    if (!(reqStatus & imgIRequest::STATUS_ERROR)) {
-      FireImageDOMEvent(mContent, NS_LOAD);
-    } else {
-      // Fire an onerror DOM event.
-      mIntrinsicSize.SizeTo(0, 0);
-      PresContext()->PresShell()->
-        FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
-      FireImageDOMEvent(mContent, NS_LOAD_ERROR);
-    }
-  }
-
   nsBoxLayoutState state(PresContext());
   this->Redraw(state);
-
   return NS_OK;
 }
 
 nsresult
 nsImageBoxFrame::OnLoadComplete(imgIRequest* aRequest, nsresult aStatus)
 {
-  uint32_t reqStatus;
-  aRequest->GetImageStatus(&reqStatus);
-
-  // We want to give the decoder a chance to find errors. If we haven't found
-  // an error yet and we've already started decoding, we must only fire these
-  // events after we finish decoding.
-  if (NS_SUCCEEDED(aStatus) && !(reqStatus & imgIRequest::STATUS_ERROR) &&
-      (reqStatus & imgIRequest::STATUS_DECODE_STARTED) &&
-      !(reqStatus & imgIRequest::STATUS_DECODE_COMPLETE)) {
-    mFireEventOnDecode = true;
+  if (NS_SUCCEEDED(aStatus)) {
+    // Fire an onload DOM event.
+    FireImageDOMEvent(mContent, eLoad);
   } else {
-    if (NS_SUCCEEDED(aStatus)) {
-      // Fire an onload DOM event.
-      FireImageDOMEvent(mContent, NS_LOAD);
-    } else {
-      // Fire an onerror DOM event.
-      mIntrinsicSize.SizeTo(0, 0);
-      PresContext()->PresShell()->
-        FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
-      FireImageDOMEvent(mContent, NS_LOAD_ERROR);
-    }
+    // Fire an onerror DOM event.
+    mIntrinsicSize.SizeTo(0, 0);
+    PresContext()->PresShell()->
+      FrameNeedsReflow(this, nsIPresShell::eStyleChange, NS_FRAME_IS_DIRTY);
+    FireImageDOMEvent(mContent, eLoadError);
   }
 
   return NS_OK;
@@ -819,7 +833,6 @@ nsImageBoxListener::Notify(imgIRequest *request, int32_t aType, const nsIntRect*
   return mFrame->Notify(request, aType, aData);
 }
 
-/* void blockOnload (in imgIRequest aRequest); */
 NS_IMETHODIMP
 nsImageBoxListener::BlockOnload(imgIRequest *aRequest)
 {
@@ -830,7 +843,6 @@ nsImageBoxListener::BlockOnload(imgIRequest *aRequest)
   return NS_OK;
 }
 
-/* void unblockOnload (in imgIRequest aRequest); */
 NS_IMETHODIMP
 nsImageBoxListener::UnblockOnload(imgIRequest *aRequest)
 {

@@ -32,9 +32,10 @@ else:
         'nsUserInfoUnix.cpp',
     ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
 
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Startup and Profile System')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

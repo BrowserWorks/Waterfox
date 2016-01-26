@@ -27,6 +27,10 @@
 #include <fcntl.h>
 #include "stdint.h"
 
+#if MOZ_WIDGET_GTK == 2
+#include <glib.h>
+#endif
+
 #ifdef __SUNPRO_CC
 #include <stdio.h>
 #endif
@@ -70,6 +74,11 @@ extern pid_t glxtest_pid;
 // the write end of the pipe, which we're going to write to
 static int write_end_of_the_pipe = -1;
 
+#if MOZ_WIDGET_GTK == 2
+static int gtk_write_end_of_the_pipe = -1;
+int gtk_read_end_of_the_pipe = -1;
+#endif
+
 // C++ standard collides with C standard in that it doesn't allow casting void* to function pointer types.
 // So the work-around is to convert first to size_t.
 // http://www.trilithium.com/johan/2004/12/problem-with-dlsym/
@@ -83,8 +92,8 @@ static func_ptr_type cast(void *ptr)
 
 static void fatal_error(const char *str)
 {
-  mozilla::unused << write(write_end_of_the_pipe, str, strlen(str));
-  mozilla::unused << write(write_end_of_the_pipe, "\n", 1);
+  mozilla::Unused << write(write_end_of_the_pipe, str, strlen(str));
+  mozilla::Unused << write(write_end_of_the_pipe, "\n", 1);
   _exit(EXIT_FAILURE);
 }
 
@@ -98,7 +107,7 @@ x_error_handler(Display *, XErrorEvent *ev)
                         ev->error_code,
                         ev->request_code,
                         ev->minor_code);
-  mozilla::unused << write(write_end_of_the_pipe, buf, length);
+  mozilla::Unused << write(write_end_of_the_pipe, buf, length);
   _exit(EXIT_FAILURE);
   return 0;
 }
@@ -119,6 +128,36 @@ void glxtest()
   for (int i = 1; i < fd; i++)
     dup2(fd, i);
   close(fd);
+
+#if MOZ_WIDGET_GTK == 2
+  // On Gtk+2 builds, try to get the Gtk+3 version if it's installed, and
+  // use that in nsSystemInfo for secondaryLibrary. Better safe than sorry,
+  // we want to load the Gtk+3 library in a subprocess, and since we already
+  // have such a subprocess for the GLX test, we piggy back on it.
+  void *gtk3 = dlopen("libgtk-3.so.0", RTLD_LOCAL | RTLD_LAZY);
+  if (gtk3) {
+    auto gtk_get_major_version = reinterpret_cast<guint (*)(void)>(
+      dlsym(gtk3, "gtk_get_major_version"));
+    auto gtk_get_minor_version = reinterpret_cast<guint (*)(void)>(
+      dlsym(gtk3, "gtk_get_minor_version"));
+    auto gtk_get_micro_version = reinterpret_cast<guint (*)(void)>(
+      dlsym(gtk3, "gtk_get_micro_version"));
+
+    if (gtk_get_major_version && gtk_get_minor_version &&
+        gtk_get_micro_version) {
+      // 64 bytes is going to be well enough for "GTK " followed by 3 integers
+      // separated with dots.
+      char gtkver[64];
+      int len = snprintf(gtkver, sizeof(gtkver), "GTK %u.%u.%u",
+                         gtk_get_major_version(), gtk_get_minor_version(),
+                         gtk_get_micro_version());
+      if (len > 0 && size_t(len) < sizeof(gtkver)) {
+        mozilla::Unused << write(gtk_write_end_of_the_pipe, gtkver, len);
+      }
+    }
+  }
+#endif
+
 
   if (getenv("MOZ_AVOID_OPENGL_ALTOGETHER"))
     fatal_error("The MOZ_AVOID_OPENGL_ALTOGETHER environment variable is defined");
@@ -251,7 +290,7 @@ void glxtest()
   dlclose(libgl);
 
   ///// Finally write data to the pipe
-  mozilla::unused << write(write_end_of_the_pipe, buf, length);
+  mozilla::Unused << write(write_end_of_the_pipe, buf, length);
 }
 
 }
@@ -264,11 +303,22 @@ bool fire_glxtest_process()
       perror("pipe");
       return false;
   }
+#if MOZ_WIDGET_GTK == 2
+  int gtkpfd[2];
+  if (pipe(gtkpfd) == -1) {
+      perror("pipe");
+      return false;
+  }
+#endif
   pid_t pid = fork();
   if (pid < 0) {
       perror("fork");
       close(pfd[0]);
       close(pfd[1]);
+#if MOZ_WIDGET_GTK == 2
+      close(gtkpfd[0]);
+      close(gtkpfd[1]);
+#endif
       return false;
   }
   // The child exits early to avoid running the full shutdown sequence and avoid conflicting with threads 
@@ -276,13 +326,24 @@ bool fire_glxtest_process()
   if (pid == 0) {
       close(pfd[0]);
       write_end_of_the_pipe = pfd[1];
+#if MOZ_WIDGET_GTK == 2
+      close(gtkpfd[0]);
+      gtk_write_end_of_the_pipe = gtkpfd[1];
+#endif
       glxtest();
       close(pfd[1]);
+#if MOZ_WIDGET_GTK == 2
+      close(gtkpfd[1]);
+#endif
       _exit(0);
   }
 
   close(pfd[1]);
   mozilla::widget::glxtest_pipe = pfd[0];
   mozilla::widget::glxtest_pid = pid;
+#if MOZ_WIDGET_GTK == 2
+  close(gtkpfd[1]);
+  gtk_read_end_of_the_pipe = gtkpfd[0];
+#endif
   return false;
 }

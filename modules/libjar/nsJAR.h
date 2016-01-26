@@ -9,7 +9,7 @@
 #include "nscore.h"
 #include "prio.h"
 #include "plstr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinrval.h"
 
 #include "mozilla/Mutex.h"
@@ -102,7 +102,7 @@ class nsJAR final : public nsIZipReader
     //-- Private data members
     nsCOMPtr<nsIFile>        mZipFile;        // The zip/jar file on disk
     nsCString                mOuterZipEntry;  // The entry in the zip this zip is reading from
-    nsRefPtr<nsZipArchive>   mZip;            // The underlying zip archive
+    RefPtr<nsZipArchive>     mZip;            // The underlying zip archive
     ManifestDataHashtable    mManifestData;   // Stores metadata for each entry
     bool                     mParsedManifest; // True if manifest has been parsed
     nsCOMPtr<nsIX509Cert>    mSigningCert;    // The entity which signed this file
@@ -166,7 +166,8 @@ public:
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIUTF8STRINGENUMERATOR
 
-    explicit nsJAREnumerator(nsZipFind *aFind) : mFind(aFind), mName(nullptr) {
+    explicit nsJAREnumerator(nsZipFind *aFind)
+      : mFind(aFind), mName(nullptr), mNameLen(0) {
       NS_ASSERTION(mFind, "nsJAREnumerator: Missing zipFind.");
     }
 
@@ -196,10 +197,6 @@ public:
 
   nsresult ReleaseZip(nsJAR* reader);
 
-  bool IsMustCacheFdEnabled() {
-    return mMustCacheFd;
-  }
-
   typedef nsRefPtrHashtable<nsCStringHashKey, nsJAR> ZipsHashtable;
 
 protected:
@@ -209,7 +206,6 @@ protected:
   mozilla::Mutex        mLock;
   uint32_t              mCacheSize;
   ZipsHashtable         mZips;
-  bool                  mMustCacheFd;
 
 #ifdef ZIP_CACHE_HIT_RATE
   uint32_t              mZipCacheLookups;

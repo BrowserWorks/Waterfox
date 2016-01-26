@@ -7,7 +7,7 @@ const { Cc, Ci, Cm, Cr } = require("chrome");
 const { isCIDRegistered } = Cm.QueryInterface(Ci.nsIComponentRegistrar);
 const { Class } = require("sdk/core/heritage");
 const { Loader } = require("sdk/test/loader");
-const { Services } = require("resource://gre/modules/Services.jsm");
+const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 
 exports['test Unknown implements nsISupports'] = function(assert) {
   let actual = xpcom.Unknown();
@@ -57,7 +57,9 @@ exports['test implement xpcom interfaces'] = function(assert) {
 
 exports['test implement factory without contract'] = function(assert) {
   let actual = xpcom.Factory({
-    get wrappedJSObject() this,
+    get wrappedJSObject() {
+      return this;
+    },
   });
 
   assert.ok(isCIDRegistered(actual.id), 'factory is regiseterd');
@@ -69,7 +71,9 @@ exports['test implement xpcom factory'] = function(assert) {
   let Component = Class({
     extends: xpcom.Unknown,
     interfaces: [ 'nsIObserver' ],
-    get wrappedJSObject() this,
+    get wrappedJSObject() {
+      return this;
+    },
     observe: function() {}
   });
 
@@ -100,7 +104,9 @@ exports['test implement xpcom service'] = function(assert) {
     Component: Class({
       extends: xpcom.Unknown,
       interfaces: [ 'nsIObserver'],
-      get wrappedJSObject() this,
+      get wrappedJSObject() {
+        return this;
+      },
       observe: function() {},
       name: 'my-service'
     })
@@ -127,7 +133,9 @@ function testRegister(assert, text) {
     register: false,
     Component: Class({
       extends: xpcom.Unknown,
-      get wrappedJSObject() this,
+      get wrappedJSObject() {
+        return this;
+      },
       interfaces: [ 'nsIAboutModule' ],
       newChannel : function(aURI, aLoadInfo) {
         var ios = Cc["@mozilla.org/network/io-service;1"].
@@ -160,14 +168,11 @@ function testRegister(assert, text) {
     Ci.nsIAboutModule.ALLOW_SCRIPT
   );
 
-  var aboutURI = ios.newURI("about:boop", null, null);
-  var channel = ios.newChannelFromURI2(aboutURI,
-                                       null,      // aLoadingNode
-                                       Services.scriptSecurityManager.getSystemPrincipal(),
-                                       null,      // aTriggeringPrincipal
-                                       Ci.nsILoadInfo.SEC_NORMAL,
-                                       Ci.nsIContentPolicy.TYPE_OTHER);
-  var iStream = channel.open();
+  var channel = NetUtil.newChannel({
+    uri: "about:boop",
+    loadUsingSystemPrincipal: true
+  });
+  var iStream = channel.open2();
   var siStream = Cc['@mozilla.org/scriptableinputstream;1']
                  .createInstance(Ci.nsIScriptableInputStream);
   siStream.init(iStream);

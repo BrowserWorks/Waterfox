@@ -19,6 +19,8 @@
 #include "js/HashTable.h"
 
 namespace js {
+class GenericPrinter;
+
 namespace jit {
 
 class RValueAllocation;
@@ -78,7 +80,7 @@ class RValueAllocation
         // This mask represents the set of bits which can be used to encode a
         // value in a snapshot. The mode is used to determine how to interpret
         // the union of values and how to pack the value in memory.
-        MODE_MASK           = 0x17f,
+        MODE_BITS_MASK           = 0x17f,
 
         INVALID = 0x100,
     };
@@ -165,7 +167,7 @@ class RValueAllocation
     static void writePayload(CompactBufferWriter& writer, PayloadType t,
                              Payload p);
     static void writePadding(CompactBufferWriter& writer);
-    static void dumpPayload(FILE* fp, PayloadType t, Payload p);
+    static void dumpPayload(GenericPrinter& out, PayloadType t, Payload p);
     static bool equalPayloads(PayloadType t, Payload lhs, Payload rhs);
 
     RValueAllocation(Mode mode, Payload a1, Payload a2)
@@ -292,7 +294,7 @@ class RValueAllocation
 
   public:
     Mode mode() const {
-        return Mode(mode_ & MODE_MASK);
+        return Mode(mode_ & MODE_BITS_MASK);
     }
     bool needSideEffect() const {
         return mode_ & RECOVER_SIDE_EFFECT_MASK;
@@ -334,7 +336,7 @@ class RValueAllocation
     }
 
   public:
-    void dump(FILE* fp) const;
+    void dump(GenericPrinter& out) const;
 
   public:
     bool operator==(const RValueAllocation& rhs) const {
@@ -553,7 +555,7 @@ class RecoverReader
     }
 };
 
-}
-}
+} // namespace jit
+} // namespace js
 
 #endif /* jit_Snapshot_h */

@@ -1,0 +1,178 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="utf8">
+  <title>Test for the object actor</title>
+  <script type="text/javascript" src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript;version=1.8" src="common.js"></script>
+  <!-- Any copyright is dedicated to the Public Domain.
+     - http://creativecommons.org/publicdomain/zero/1.0/ -->
+</head>
+<body>
+<p>Test for the object actor</p>
+
+<script class="testbody" type="text/javascript;version=1.8">
+SimpleTest.waitForExplicitFinish();
+
+let expectedProps = [];
+
+function startTest()
+{
+  removeEventListener("load", startTest);
+
+  attachConsoleToTab(["ConsoleAPI"], onAttach);
+}
+
+function onAttach(aState, aResponse)
+{
+  onConsoleCall = onConsoleCall.bind(null, aState);
+  aState.dbgClient.addListener("consoleAPICall", onConsoleCall);
+
+  let longString = (new Array(DebuggerServer.LONG_STRING_LENGTH + 3)).join("\u0629");
+
+  // Here we put the objects in the correct window, to avoid having them all
+  // wrapped by proxies for cross-compartment access.
+
+  let foobarObject = top.Object.create(null);
+  foobarObject.tamarbuta = longString;
+  foobarObject.foo = 1;
+  foobarObject.foobar = "hello";
+  foobarObject.omg = null;
+  foobarObject.testfoo = false;
+  foobarObject.notInspectable = top.Object.create(null);
+  foobarObject.omgfn = new top.Function("return 'myResult'");
+  foobarObject.abArray = new top.Array("a", "b");
+  foobarObject.foobaz = top.document;
+
+  top.Object.defineProperty(foobarObject, "getterAndSetter", {
+    enumerable: true,
+    get: new top.Function("return 'foo';"),
+    set: new top.Function("1+2"),
+  });
+
+  foobarObject.longStringObj = top.Object.create(null);
+  foobarObject.longStringObj.toSource = new top.Function("'" + longString + "'");
+  foobarObject.longStringObj.toString = new top.Function("'" + longString + "'");
+  foobarObject.longStringObj.boom = "explode";
+
+  top.wrappedJSObject.foobarObject = foobarObject;
+  top.console.log("hello", top.wrappedJSObject.foobarObject);
+
+  expectedProps = {
+    "abArray": {
+      value: {
+        type: "object",
+        class: "Array",
+        actor: /[a-z]/,
+      },
+    },
+    "foo": {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: 1,
+    },
+    "foobar": {
+      value: "hello",
+    },
+    "foobaz": {
+      value: {
+        type: "object",
+        class: "XULDocument",
+        actor: /[a-z]/,
+      },
+    },
+    "getterAndSetter": {
+      get: {
+        type: "object",
+        class: "Function",
+        actor: /[a-z]/,
+      },
+      set: {
+        type: "object",
+        class: "Function",
+        actor: /[a-z]/,
+      },
+    },
+    "longStringObj": {
+      value: {
+        type: "object",
+        class: "Object",
+        actor: /[a-z]/,
+      },
+    },
+    "notInspectable": {
+      value: {
+        type: "object",
+        class: "Object",
+        actor: /[a-z]/,
+      },
+    },
+    "omg": {
+      value: { type: "null" },
+    },
+    "omgfn": {
+      value: {
+        type: "object",
+        class: "Function",
+        actor: /[a-z]/,
+      },
+    },
+    "tamarbuta": {
+      value: {
+        type: "longString",
+        initial: longString.substring(0,
+          DebuggerServer.LONG_STRING_INITIAL_LENGTH),
+        length: longString.length,
+      },
+    },
+    "testfoo": {
+      value: false,
+    },
+  };
+}
+
+function onConsoleCall(aState, aType, aPacket)
+{
+  is(aPacket.from, aState.actor, "console API call actor");
+
+  info("checking the console API call packet");
+
+  checkConsoleAPICall(aPacket.message, {
+    level: "log",
+    filename: /test_object_actor/,
+    functionName: "onAttach",
+    arguments: ["hello", {
+      type: "object",
+      actor: /[a-z]/,
+    }],
+  });
+
+  aState.dbgClient.removeListener("consoleAPICall", onConsoleCall);
+
+  info("inspecting object properties");
+  let args = aPacket.message.arguments;
+  onProperties = onProperties.bind(null, aState);
+
+  let client = new ObjectClient(aState.dbgClient, args[1]);
+  client.getPrototypeAndProperties(onProperties);
+}
+
+function onProperties(aState, aResponse)
+{
+  let props = aResponse.ownProperties;
+  is(Object.keys(props).length, Object.keys(expectedProps).length,
+     "number of enumerable properties");
+  checkObject(props, expectedProps);
+
+  expectedProps = [];
+
+  closeDebugger(aState, function() {
+    SimpleTest.finish();
+  });
+}
+
+addEventListener("load", startTest);
+</script>
+</body>
+</html>

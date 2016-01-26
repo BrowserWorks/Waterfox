@@ -25,7 +25,8 @@ public:
                     GLXDrawable drawable,
                     GLXFBConfig cfg,
                     bool deleteDrawable,
-                    gfxXlibSurface* pixmap = nullptr);
+                    gfxXlibSurface* pixmap = nullptr,
+                    ContextProfile profile = ContextProfile::OpenGLCompatibility);
 
     ~GLContextGLX();
 
@@ -50,6 +51,15 @@ public:
 
     virtual bool SwapBuffers() override;
 
+    // Overrides the current GLXDrawable backing the context and makes the
+    // context current.
+    bool OverrideDrawable(GLXDrawable drawable);
+
+    // Undoes the effect of a drawable override.
+    bool RestoreDrawable();
+
+    virtual Maybe<gfx::IntSize> GetTargetSize() override;
+
 private:
     friend class GLContextProviderGLX;
 
@@ -61,7 +71,8 @@ private:
                  GLXContext aContext,
                  bool aDeleteDrawable,
                  bool aDoubleBuffered,
-                 gfxXlibSurface *aPixmap);
+                 gfxXlibSurface *aPixmap,
+                 ContextProfile profile);
 
     GLXContext mContext;
     Display *mDisplay;
@@ -71,7 +82,7 @@ private:
 
     GLXLibrary* mGLX;
 
-    nsRefPtr<gfxXlibSurface> mPixmap;
+    RefPtr<gfxXlibSurface> mPixmap;
     bool mOwnsContext;
 };
 

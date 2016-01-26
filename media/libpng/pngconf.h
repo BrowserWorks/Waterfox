@@ -1,7 +1,7 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.6.17, March 25, 2015
+ * libpng version 1.6.19, July 23, 2015
  *
  * Copyright (c) 1998-2015 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -63,7 +63,7 @@
  */
 #define PNG_CONST const /* backward compatibility only */
 
-/* This controls optimization of the reading of 16 and 32 bit values
+/* This controls optimization of the reading of 16-bit and 32-bit values
  * from PNG files.  It can be set on a per-app-file basis - it
  * just changes whether a macro is used when the function is called.
  * The library builder sets the default; if read functions are not
@@ -295,11 +295,11 @@
     * table entries, so we discard it here.  See the .dfn files in the
     * scripts directory.
     */
-#ifndef PNG_EXPORTA
 
-#  define PNG_EXPORTA(ordinal, type, name, args, attributes)\
-      PNG_FUNCTION(PNG_EXPORT_TYPE(type),(PNGAPI name),PNGARG(args), \
-        extern attributes)
+#ifndef PNG_EXPORTA
+#  define PNG_EXPORTA(ordinal, type, name, args, attributes) \
+      PNG_FUNCTION(PNG_EXPORT_TYPE(type), (PNGAPI name), PNGARG(args), \
+      PNG_LINKAGE_API attributes)
 #endif
 
 /* ANSI-C (C90) does not permit a macro to be invoked with an empty argument,
@@ -307,7 +307,7 @@
  */
 #define PNG_EMPTY /*empty list*/
 
-#define PNG_EXPORT(ordinal, type, name, args)\
+#define PNG_EXPORT(ordinal, type, name, args) \
    PNG_EXPORTA(ordinal, type, name, args, PNG_EMPTY)
 
 /* Use PNG_REMOVED to comment out a removed interface. */
@@ -480,7 +480,7 @@
 #if CHAR_BIT == 8 && UCHAR_MAX == 255
    typedef unsigned char png_byte;
 #else
-#  error "libpng requires 8 bit bytes"
+#  error "libpng requires 8-bit bytes"
 #endif
 
 #if INT_MIN == -32768 && INT_MAX == 32767
@@ -488,7 +488,7 @@
 #elif SHRT_MIN == -32768 && SHRT_MAX == 32767
    typedef short png_int_16;
 #else
-#  error "libpng requires a signed 16 bit type"
+#  error "libpng requires a signed 16-bit type"
 #endif
 
 #if UINT_MAX == 65535
@@ -496,7 +496,7 @@
 #elif USHRT_MAX == 65535
    typedef unsigned short png_uint_16;
 #else
-#  error "libpng requires an unsigned 16 bit type"
+#  error "libpng requires an unsigned 16-bit type"
 #endif
 
 #if INT_MIN < -2147483646 && INT_MAX > 2147483646
@@ -504,7 +504,7 @@
 #elif LONG_MIN < -2147483646 && LONG_MAX > 2147483646
    typedef long int png_int_32;
 #else
-#  error "libpng requires a signed 32 bit (or more) type"
+#  error "libpng requires a signed 32-bit (or more) type"
 #endif
 
 #if UINT_MAX > 4294967294
@@ -512,7 +512,7 @@
 #elif ULONG_MAX > 4294967294
    typedef unsigned long int png_uint_32;
 #else
-#  error "libpng requires an unsigned 32 bit (or more) type"
+#  error "libpng requires an unsigned 32-bit (or more) type"
 #endif
 
 /* Prior to 1.6.0 it was possible to disable the use of size_t, 1.6.0, however,

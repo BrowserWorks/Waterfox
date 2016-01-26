@@ -324,7 +324,7 @@ public:
     // dump our state in a String
     virtual void dumpToString(String8& result, const char* prefix) const;
 
-     mozilla::TemporaryRef<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
+     already_AddRefed<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
 
     int getSlotFromTextureClientLocked(TextureClient* client) const;
 
@@ -386,7 +386,7 @@ private:
         sp<GraphicBuffer> mGraphicBuffer;
 
         // mTextureClient is a thin abstraction over remotely allocated GraphicBuffer.
-        mozilla::RefPtr<TextureClient> mTextureClient;
+        RefPtr<TextureClient> mTextureClient;
 
         // BufferState represents the different states in which a buffer slot
         // can be.  All slots are initially FREE.

@@ -15,6 +15,10 @@
 #include "nscore.h"
 #include "nsMemory.h"
 #include "nsNetUtil.h"
+#include "nsComponentManagerUtils.h"
+#include "nsServiceManagerUtils.h"
+#include "nsIInputStream.h"
+#include "nsIURI.h"
 #include "nsIObserverService.h"
 #include "nsCOMArray.h"
 #include "nsTextFormatter.h"
@@ -82,7 +86,7 @@ nsStringBundle::LoadProperties()
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      nsContentUtils::GetSystemPrincipal(),
-                     nsILoadInfo::SEC_NORMAL,
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                      nsIContentPolicy::TYPE_OTHER);
 
   if (NS_FAILED(rv)) return rv;
@@ -91,7 +95,7 @@ nsStringBundle::LoadProperties()
   channel->SetContentType(NS_LITERAL_CSTRING("text/plain"));
 
   nsCOMPtr<nsIInputStream> in;
-  rv = channel->Open(getter_AddRefs(in));
+  rv = channel->Open2(getter_AddRefs(in));
   if (NS_FAILED(rv)) return rv;
 
   NS_ASSERTION(NS_SUCCEEDED(rv) && in, "Error in OpenBlockingStream");
@@ -187,7 +191,6 @@ nsStringBundle::FormatStringFromName(const char16_t *aName,
 
 NS_IMPL_ISUPPORTS(nsStringBundle, nsIStringBundle)
 
-/* void GetStringFromID (in long aID, out wstring aResult); */
 NS_IMETHODIMP
 nsStringBundle::GetStringFromID(int32_t aID, char16_t **aResult)
 {
@@ -207,7 +210,6 @@ nsStringBundle::GetStringFromID(int32_t aID, char16_t **aResult)
   return NS_OK;
 }
 
-/* void GetStringFromName (in wstring aName, out wstring aResult); */
 NS_IMETHODIMP
 nsStringBundle::GetStringFromName(const char16_t *aName, char16_t **aResult)
 {
@@ -591,7 +593,7 @@ nsStringBundleService::getStringBundle(const char *aURLSpec,
   } else {
 
     // hasn't been cached, so insert it into the hash table
-    nsRefPtr<nsStringBundle> bundle = new nsStringBundle(aURLSpec, mOverrideStrings);
+    RefPtr<nsStringBundle> bundle = new nsStringBundle(aURLSpec, mOverrideStrings);
     cacheEntry = insertIntoCache(bundle.forget(), key);
   }
 
@@ -653,7 +655,7 @@ nsStringBundleService::CreateExtensibleBundle(const char* aCategory,
   NS_ENSURE_ARG_POINTER(aResult);
   *aResult = nullptr;
 
-  nsRefPtr<nsExtensibleStringBundle> bundle = new nsExtensibleStringBundle();
+  RefPtr<nsExtensibleStringBundle> bundle = new nsExtensibleStringBundle();
 
   nsresult res = bundle->Init(aCategory, this);
   if (NS_FAILED(res)) {

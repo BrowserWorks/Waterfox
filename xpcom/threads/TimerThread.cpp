@@ -8,6 +8,7 @@
 #include "TimerThread.h"
 
 #include "nsThreadUtils.h"
+#include "plarena.h"
 #include "pratom.h"
 
 #include "nsIObserverService.h"
@@ -20,6 +21,10 @@
 #include <math.h>
 
 using namespace mozilla;
+#ifdef MOZ_TASK_TRACER
+#include "GeckoTaskTracerImpl.h"
+using namespace mozilla::tasktracer;
+#endif
 
 NS_IMPL_ISUPPORTS(TimerThread, nsIRunnable, nsIObserver)
 
@@ -77,12 +82,218 @@ TimerObserverRunnable::Run()
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
+
+namespace {
+
+// TimerEventAllocator is a thread-safe allocator used only for nsTimerEvents.
+// It's needed to avoid contention over the default allocator lock when
+// firing timer events (see bug 733277).  The thread-safety is required because
+// nsTimerEvent objects are allocated on the timer thread, and freed on another
+// thread.  Because TimerEventAllocator has its own lock, contention over that
+// lock is limited to the allocation and deallocation of nsTimerEvent objects.
+//
+// Because this allocator is layered over PLArenaPool, it never shrinks -- even
+// "freed" nsTimerEvents aren't truly freed, they're just put onto a free-list
+// for later recycling.  So the amount of memory consumed will always be equal
+// to the high-water mark consumption.  But nsTimerEvents are small and it's
+// unusual to have more than a few hundred of them, so this shouldn't be a
+// problem in practice.
+
+class TimerEventAllocator
+{
+private:
+  struct FreeEntry
+  {
+    FreeEntry* mNext;
+  };
+
+  PLArenaPool mPool;
+  FreeEntry* mFirstFree;
+  mozilla::Monitor mMonitor;
+
+public:
+  TimerEventAllocator()
+    : mFirstFree(nullptr)
+    , mMonitor("TimerEventAllocator")
+  {
+    PL_InitArenaPool(&mPool, "TimerEventPool", 4096, /* align = */ 0);
+  }
+
+  ~TimerEventAllocator()
+  {
+    PL_FinishArenaPool(&mPool);
+  }
+
+  void* Alloc(size_t aSize);
+  void Free(void* aPtr);
+};
+
+} // namespace
+
+// This is a nsICancelableRunnable because we can dispatch it to Workers and
+// those can be shut down at any time, and in these cases, Cancel() is called
+// instead of Run().
+class nsTimerEvent : public nsCancelableRunnable
+{
+public:
+  NS_IMETHOD Run() override;
+
+  NS_IMETHOD Cancel() override
+  {
+    // Since nsTimerImpl is not thread-safe, we should release |mTimer|
+    // here in the target thread to avoid race condition. Otherwise,
+    // ~nsTimerEvent() which calls nsTimerImpl::Release() could run in the
+    // timer thread and result in race condition.
+    mTimer = nullptr;
+    return NS_OK;
+  }
+
+  nsTimerEvent()
+    : mTimer()
+    , mGeneration(0)
+  {
+    MOZ_COUNT_CTOR(nsTimerEvent);
+
+    // Note: We override operator new for this class, and the override is
+    // fallible!
+    sAllocatorUsers++;
+  }
+
+  TimeStamp mInitTime;
+
+  static void Init();
+  static void Shutdown();
+  static void DeleteAllocatorIfNeeded();
+
+  static void* operator new(size_t aSize) CPP_THROW_NEW
+  {
+    return sAllocator->Alloc(aSize);
+  }
+  void operator delete(void* aPtr)
+  {
+    sAllocator->Free(aPtr);
+    DeleteAllocatorIfNeeded();
+  }
+
+  already_AddRefed<nsTimerImpl> ForgetTimer()
+  {
+    return mTimer.forget();
+  }
+
+  void SetTimer(already_AddRefed<nsTimerImpl> aTimer)
+  {
+    mTimer = aTimer;
+    mGeneration = mTimer->GetGeneration();
+  }
+
+private:
+  ~nsTimerEvent()
+  {
+    MOZ_COUNT_DTOR(nsTimerEvent);
+
+    MOZ_ASSERT(!sCanDeleteAllocator || sAllocatorUsers > 0,
+               "This will result in us attempting to deallocate the nsTimerEvent allocator twice");
+    sAllocatorUsers--;
+  }
+
+  RefPtr<nsTimerImpl> mTimer;
+  int32_t      mGeneration;
+
+  static TimerEventAllocator* sAllocator;
+  static Atomic<int32_t> sAllocatorUsers;
+  static bool sCanDeleteAllocator;
+};
+
+TimerEventAllocator* nsTimerEvent::sAllocator = nullptr;
+Atomic<int32_t> nsTimerEvent::sAllocatorUsers;
+bool nsTimerEvent::sCanDeleteAllocator = false;
+
+namespace {
+
+void*
+TimerEventAllocator::Alloc(size_t aSize)
+{
+  MOZ_ASSERT(aSize == sizeof(nsTimerEvent));
+
+  mozilla::MonitorAutoLock lock(mMonitor);
+
+  void* p;
+  if (mFirstFree) {
+    p = mFirstFree;
+    mFirstFree = mFirstFree->mNext;
+  } else {
+    PL_ARENA_ALLOCATE(p, &mPool, aSize);
+    if (!p) {
+      return nullptr;
+    }
+  }
+
+  return p;
+}
+
+void
+TimerEventAllocator::Free(void* aPtr)
+{
+  mozilla::MonitorAutoLock lock(mMonitor);
+
+  FreeEntry* entry = reinterpret_cast<FreeEntry*>(aPtr);
+
+  entry->mNext = mFirstFree;
+  mFirstFree = entry;
+}
+
+} // namespace
+
+void
+nsTimerEvent::Init()
+{
+  sAllocator = new TimerEventAllocator();
+}
+
+void
+nsTimerEvent::Shutdown()
+{
+  sCanDeleteAllocator = true;
+  DeleteAllocatorIfNeeded();
+}
+
+void
+nsTimerEvent::DeleteAllocatorIfNeeded()
+{
+  if (sCanDeleteAllocator && sAllocatorUsers == 0) {
+    delete sAllocator;
+    sAllocator = nullptr;
+  }
+}
+
+NS_IMETHODIMP
+nsTimerEvent::Run()
+{
+  MOZ_ASSERT(mTimer);
+
+  if (mGeneration != mTimer->GetGeneration()) {
+    return NS_OK;
+  }
+
+  if (MOZ_LOG_TEST(GetTimerLog(), LogLevel::Debug)) {
+    TimeStamp now = TimeStamp::Now();
+    MOZ_LOG(GetTimerLog(), LogLevel::Debug,
+           ("[this=%p] time between PostTimerEvent() and Fire(): %fms\n",
+            this, (now - mInitTime).ToMilliseconds()));
+  }
+
+  mTimer->Fire();
+
+  // We call Cancel() to correctly release mTimer.
+  // Read more in the Cancel() implementation.
+  return Cancel();
+}
 
 nsresult
 TimerThread::Init()
 {
-  PR_LOG(GetTimerLog(), PR_LOG_DEBUG,
+  MOZ_LOG(GetTimerLog(), LogLevel::Debug,
          ("TimerThread::Init [%d]\n", mInitialized));
 
   if (mInitialized) {
@@ -93,13 +304,15 @@ TimerThread::Init()
     return NS_OK;
   }
 
+  nsTimerEvent::Init();
+
   if (mInitInProgress.exchange(true) == false) {
     // We hold on to mThread to keep the thread alive.
     nsresult rv = NS_NewThread(getter_AddRefs(mThread), this);
     if (NS_FAILED(rv)) {
       mThread = nullptr;
     } else {
-      nsRefPtr<TimerObserverRunnable> r = new TimerObserverRunnable(this);
+      RefPtr<TimerObserverRunnable> r = new TimerObserverRunnable(this);
       if (NS_IsMainThread()) {
         r->Run();
       } else {
@@ -129,7 +342,7 @@ TimerThread::Init()
 nsresult
 TimerThread::Shutdown()
 {
-  PR_LOG(GetTimerLog(), PR_LOG_DEBUG, ("TimerThread::Shutdown begin\n"));
+  MOZ_LOG(GetTimerLog(), LogLevel::Debug, ("TimerThread::Shutdown begin\n"));
 
   if (!mThread) {
     return NS_ERROR_NOT_INITIALIZED;
@@ -167,7 +380,9 @@ TimerThread::Shutdown()
 
   mThread->Shutdown();    // wait for the thread to die
 
-  PR_LOG(GetTimerLog(), PR_LOG_DEBUG, ("TimerThread::Shutdown end\n"));
+  nsTimerEvent::Shutdown();
+
+  MOZ_LOG(GetTimerLog(), LogLevel::Debug, ("TimerThread::Shutdown end\n"));
   return NS_OK;
 }
 
@@ -193,7 +408,6 @@ struct IntervalComparator
 
 } // namespace
 
-/* void Run(); */
 NS_IMETHODIMP
 TimerThread::Run()
 {
@@ -205,7 +419,6 @@ TimerThread::Run()
   }
 #endif
 
-  NS_SetIgnoreStatusOfCurrentThread();
   MonitorAutoLock lock(mMonitor);
 
   // We need to know how many microseconds give a positive PRIntervalTime. This
@@ -233,10 +446,14 @@ TimerThread::Run()
     bool forceRunThisTimer = forceRunNextTimer;
     forceRunNextTimer = false;
 
-    if (mSleeping) {
+    if (mSleeping
+#ifdef MOZ_NUWA_PROCESS
+        || IsNuwaProcess() // Don't fire timers or deadlock will result.
+#endif
+        ) {
       // Sleep for 0.1 seconds while not firing timers.
       uint32_t milliseconds = 100;
-      if (ChaosMode::isActive(ChaosMode::TimerScheduling)) {
+      if (ChaosMode::isActive(ChaosFeature::TimerScheduling)) {
         milliseconds = ChaosMode::randomUint32LessThan(200);
       }
       waitFor = PR_MillisecondsToInterval(milliseconds);
@@ -256,23 +473,18 @@ TimerThread::Run()
           // must be racing with us, blocked in gThread->RemoveTimer waiting
           // for TimerThread::mMonitor, under nsTimerImpl::Release.
 
-          nsRefPtr<nsTimerImpl> timerRef(timer);
+          RefPtr<nsTimerImpl> timerRef(timer);
           RemoveTimerInternal(timer);
           timer = nullptr;
 
-          PR_LOG(GetTimerLog(), PR_LOG_DEBUG,
+          MOZ_LOG(GetTimerLog(), LogLevel::Debug,
                  ("Timer thread woke up %fms from when it was supposed to\n",
                   fabs((now - timerRef->mTimeout).ToMilliseconds())));
 
-          {
-            // We release mMonitor around the Fire call to avoid deadlock.
-            MonitorAutoUnlock unlock(mMonitor);
-
-            // We are going to let the call to PostTimerEvent here handle the
-            // release of the timer so that we don't end up releasing the timer
-            // on the TimerThread instead of on the thread it targets.
-            timerRef = nsTimerImpl::PostTimerEvent(timerRef.forget());
-          }
+          // We are going to let the call to PostTimerEvent here handle the
+          // release of the timer so that we don't end up releasing the timer
+          // on the TimerThread instead of on the thread it targets.
+          timerRef = PostTimerEvent(timerRef.forget());
 
           if (timerRef) {
             // We got our reference back due to an error.
@@ -319,7 +531,7 @@ TimerThread::Run()
         // interval is so small we should not wait at all).
         double microseconds = (timeout - now).ToMilliseconds() * 1000;
 
-        if (ChaosMode::isActive(ChaosMode::TimerScheduling)) {
+        if (ChaosMode::isActive(ChaosFeature::TimerScheduling)) {
           // The mean value of sFractions must be 1 to ensure that
           // the average of a long sequence of timeouts converges to the
           // actual sum of their times.
@@ -342,12 +554,12 @@ TimerThread::Run()
         }
       }
 
-      if (PR_LOG_TEST(GetTimerLog(), PR_LOG_DEBUG)) {
+      if (MOZ_LOG_TEST(GetTimerLog(), LogLevel::Debug)) {
         if (waitFor == PR_INTERVAL_NO_TIMEOUT)
-          PR_LOG(GetTimerLog(), PR_LOG_DEBUG,
+          MOZ_LOG(GetTimerLog(), LogLevel::Debug,
                  ("waiting for PR_INTERVAL_NO_TIMEOUT\n"));
         else
-          PR_LOG(GetTimerLog(), PR_LOG_DEBUG,
+          MOZ_LOG(GetTimerLog(), LogLevel::Debug,
                  ("waiting for %u\n", PR_IntervalToMilliseconds(waitFor)));
       }
     }
@@ -436,6 +648,7 @@ TimerThread::RemoveTimer(nsTimerImpl* aTimer)
 int32_t
 TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
 {
+  mMonitor.AssertCurrentThreadOwns();
   if (mShutdown) {
     return -1;
   }
@@ -453,9 +666,9 @@ TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
   NS_ADDREF(aTimer);
 
 #ifdef MOZ_TASK_TRACER
-  // Create a FakeTracedTask, and dispatch it here. This is the start point of
-  // the latency.
-  aTimer->DispatchTracedTask();
+  // Caller of AddTimer is the parent task of its timer event, so we store the
+  // TraceInfo here for later used.
+  aTimer->GetTLSTraceInfo();
 #endif
 
   return insertSlot - mTimers.Elements();
@@ -464,6 +677,7 @@ TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
 bool
 TimerThread::RemoveTimerInternal(nsTimerImpl* aTimer)
 {
+  mMonitor.AssertCurrentThreadOwns();
   if (!mTimers.RemoveElement(aTimer)) {
     return false;
   }
@@ -475,34 +689,100 @@ TimerThread::RemoveTimerInternal(nsTimerImpl* aTimer)
 void
 TimerThread::ReleaseTimerInternal(nsTimerImpl* aTimer)
 {
+  if (!mShutdown) {
+    // copied to a local array before releasing in shutdown
+    mMonitor.AssertCurrentThreadOwns();
+  }
   // Order is crucial here -- see nsTimerImpl::Release.
   aTimer->mArmed = false;
   NS_RELEASE(aTimer);
 }
 
+already_AddRefed<nsTimerImpl>
+TimerThread::PostTimerEvent(already_AddRefed<nsTimerImpl> aTimerRef)
+{
+  mMonitor.AssertCurrentThreadOwns();
+
+  RefPtr<nsTimerImpl> timer(aTimerRef);
+  if (!timer->mEventTarget) {
+    NS_ERROR("Attempt to post timer event to NULL event target");
+    return timer.forget();
+  }
+
+  // XXX we may want to reuse this nsTimerEvent in the case of repeating timers.
+
+  // Since we already addref'd 'timer', we don't need to addref here.
+  // We will release either in ~nsTimerEvent(), or pass the reference back to
+  // the caller. We need to copy the generation number from this timer into the
+  // event, so we can avoid firing a timer that was re-initialized after being
+  // canceled.
+
+  RefPtr<nsTimerEvent> event = new nsTimerEvent;
+  if (!event) {
+    return timer.forget();
+  }
+
+  if (MOZ_LOG_TEST(GetTimerLog(), LogLevel::Debug)) {
+    event->mInitTime = TimeStamp::Now();
+  }
+
+  // If this is a repeating precise timer, we need to calculate the time for
+  // the next timer to fire before we make the callback. But don't re-arm.
+  if (timer->IsRepeatingPrecisely()) {
+    timer->SetDelayInternal(timer->mDelay);
+  }
+
+#ifdef MOZ_TASK_TRACER
+  // During the dispatch of TimerEvent, we overwrite the current TraceInfo
+  // partially with the info saved in timer earlier, and restore it back by
+  // AutoSaveCurTraceInfo.
+  AutoSaveCurTraceInfo saveCurTraceInfo;
+  (timer->GetTracedTask()).SetTLSTraceInfo();
+#endif
+
+  nsIEventTarget* target = timer->mEventTarget;
+  event->SetTimer(timer.forget());
+
+  nsresult rv;
+  {
+    // We release mMonitor around the Dispatch because if this timer is targeted
+    // at the TimerThread we'll deadlock.
+    MonitorAutoUnlock unlock(mMonitor);
+    rv = target->Dispatch(event, NS_DISPATCH_NORMAL);
+  }
+
+  if (NS_FAILED(rv)) {
+    timer = event->ForgetTimer();
+    RemoveTimerInternal(timer);
+    return timer.forget();
+  }
+
+  return nullptr;
+}
+
 void
 TimerThread::DoBeforeSleep()
 {
+  // Mainthread
+  MonitorAutoLock lock(mMonitor);
   mSleeping = true;
 }
 
+// Note: wake may be notified without preceding sleep notification
 void
 TimerThread::DoAfterSleep()
 {
-  mSleeping = true; // wake may be notified without preceding sleep notification
-  for (uint32_t i = 0; i < mTimers.Length(); i ++) {
-    nsTimerImpl* timer = mTimers[i];
-    // get and set the delay to cause its timeout to be recomputed
-    uint32_t delay;
-    timer->GetDelay(&delay);
-    timer->SetDelay(delay);
-  }
-
+  // Mainthread
+  MonitorAutoLock lock(mMonitor);
   mSleeping = false;
+
+  // Wake up the timer thread to re-process the array to ensure the sleep delay is correct,
+  // and fire any expired timers (perhaps quite a few)
+  mNotified = true;
+  mMonitor.Notify();
 }
 
 
-/* void observe (in nsISupports aSubject, in string aTopic, in wstring aData); */
 NS_IMETHODIMP
 TimerThread::Observe(nsISupports* /* aSubject */, const char* aTopic,
                      const char16_t* /* aData */)

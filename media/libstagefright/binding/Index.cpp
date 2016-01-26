@@ -5,16 +5,16 @@
 #include "mp4_demuxer/ByteReader.h"
 #include "mp4_demuxer/Index.h"
 #include "mp4_demuxer/Interval.h"
-#include "mp4_demuxer/MoofParser.h"
 #include "mp4_demuxer/SinfParser.h"
 #include "nsAutoPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 #include <algorithm>
 #include <limits>
 
 using namespace stagefright;
 using namespace mozilla;
+using namespace mozilla::media;
 
 namespace mp4_demuxer
 {
@@ -25,7 +25,7 @@ public:
   // Given that we're processing this in order we don't use a binary search
   // to find the apropriate time range. Instead we search linearly from the
   // last used point.
-  explicit RangeFinder(const nsTArray<mozilla::MediaByteRange>& ranges)
+  explicit RangeFinder(const MediaByteRangeSet& ranges)
     : mRanges(ranges), mIndex(0)
   {
     // Ranges must be normalised for this to work
@@ -34,7 +34,7 @@ public:
   bool Contains(MediaByteRange aByteRange);
 
 private:
-  const nsTArray<MediaByteRange>& mRanges;
+  const MediaByteRangeSet& mRanges;
   size_t mIndex;
 };
 
@@ -45,7 +45,7 @@ RangeFinder::Contains(MediaByteRange aByteRange)
     return false;
   }
 
-  if (mRanges[mIndex].Contains(aByteRange)) {
+  if (mRanges[mIndex].ContainsStrict(aByteRange)) {
     return true;
   }
 
@@ -56,7 +56,7 @@ RangeFinder::Contains(MediaByteRange aByteRange)
         return false;
       }
       --mIndex;
-      if (mRanges[mIndex].Contains(aByteRange)) {
+      if (mRanges[mIndex].ContainsStrict(aByteRange)) {
         return true;
       }
     } while (aByteRange.mStart < mRanges[mIndex].mStart);
@@ -69,7 +69,7 @@ RangeFinder::Contains(MediaByteRange aByteRange)
       return false;
     }
     ++mIndex;
-    if (mRanges[mIndex].Contains(aByteRange)) {
+    if (mRanges[mIndex].ContainsStrict(aByteRange)) {
       return true;
     }
   }
@@ -91,7 +91,14 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
     return nullptr;
   }
 
-  nsRefPtr<MediaRawData> sample = new MediaRawData();
+  int64_t length = std::numeric_limits<int64_t>::max();
+  mIndex->mSource->Length(&length);
+  if (s->mByteRange.mEnd > length) {
+    // We don't have this complete sample.
+    return nullptr;
+  }
+
+  RefPtr<MediaRawData> sample = new MediaRawData();
   sample->mTimecode= s->mDecodeTime;
   sample->mTime = s->mCompositionRange.start;
   sample->mDuration = s->mCompositionRange.Length();
@@ -105,12 +112,12 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
   }
 
   size_t bytesRead;
-  if (!mIndex->mSource->ReadAt(sample->mOffset, writer->mData, sample->mSize,
-                               &bytesRead) || bytesRead != sample->mSize) {
+  if (!mIndex->mSource->ReadAt(sample->mOffset, writer->Data(), sample->Size(),
+                               &bytesRead) || bytesRead != sample->Size()) {
     return nullptr;
   }
 
-  if (!s->mCencRange.IsNull()) {
+  if (!s->mCencRange.IsEmpty()) {
     MoofParser* parser = mIndex->mMoofParser.get();
 
     if (!parser || !parser->mSinf.IsValid()) {
@@ -148,7 +155,7 @@ already_AddRefed<MediaRawData> SampleIterator::GetNext()
     } else {
       // No subsample information means the entire sample is encrypted.
       writer->mCrypto.mPlainSizes.AppendElement(0);
-      writer->mCrypto.mEncryptedSizes.AppendElement(sample->mSize);
+      writer->mCrypto.mEncryptedSizes.AppendElement(sample->Size());
     }
   }
 
@@ -229,23 +236,75 @@ SampleIterator::GetNextKeyframeTime()
 Index::Index(const nsTArray<Indice>& aIndex,
              Stream* aSource,
              uint32_t aTrackId,
-             bool aIsAudio,
-             Monitor* aMonitor)
+             bool aIsAudio)
   : mSource(aSource)
-  , mMonitor(aMonitor)
+  , mIsAudio(aIsAudio)
 {
   if (aIndex.IsEmpty()) {
-    mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio, aMonitor);
+    mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio);
   } else {
+    if (!mIndex.SetCapacity(aIndex.Length(), fallible)) {
+      // OOM.
+      return;
+    }
+    media::IntervalSet<int64_t> intervalTime;
+    MediaByteRange intervalRange;
+    bool haveSync = false;
+    bool progressive = true;
+    int64_t lastOffset = 0;
     for (size_t i = 0; i < aIndex.Length(); i++) {
       const Indice& indice = aIndex[i];
+      if (indice.sync || mIsAudio) {
+        haveSync = true;
+      }
+      if (!haveSync) {
+        continue;
+      }
+
       Sample sample;
       sample.mByteRange = MediaByteRange(indice.start_offset,
                                          indice.end_offset);
       sample.mCompositionRange = Interval<Microseconds>(indice.start_composition,
                                                         indice.end_composition);
-      sample.mSync = indice.sync;
-      mIndex.AppendElement(sample);
+      sample.mDecodeTime = indice.start_decode;
+      sample.mSync = indice.sync || mIsAudio;
+      // FIXME: Make this infallible after bug 968520 is done.
+      MOZ_ALWAYS_TRUE(mIndex.AppendElement(sample, fallible));
+      if (indice.start_offset < lastOffset) {
+        NS_WARNING("Chunks in MP4 out of order, expect slow down");
+        progressive = false;
+      }
+      lastOffset = indice.end_offset;
+
+      // Pack audio samples in group of 128.
+      if (sample.mSync && progressive && (!mIsAudio || !(i % 128))) {
+        if (mDataOffset.Length()) {
+          auto& last = mDataOffset.LastElement();
+          last.mEndOffset = intervalRange.mEnd;
+          NS_ASSERTION(intervalTime.Length() == 1, "Discontinuous samples between keyframes");
+          last.mTime.start = intervalTime.GetStart();
+          last.mTime.end = intervalTime.GetEnd();
+        }
+        if (!mDataOffset.AppendElement(MP4DataOffset(mIndex.Length() - 1,
+                                                     indice.start_offset),
+                                       fallible)) {
+          // OOM.
+          return;
+        }
+        intervalTime = media::IntervalSet<int64_t>();
+        intervalRange = MediaByteRange();
+      }
+      intervalTime += media::Interval<int64_t>(sample.mCompositionRange.start,
+                                               sample.mCompositionRange.end);
+      intervalRange = intervalRange.Span(sample.mByteRange);
+    }
+
+    if (mDataOffset.Length() && progressive) {
+      auto& last = mDataOffset.LastElement();
+      last.mEndOffset = aIndex.LastElement().end_offset;
+      last.mTime = Interval<int64_t>(intervalTime.GetStart(), intervalTime.GetEnd());
+    } else {
+      mDataOffset.Clear();
     }
   }
 }
@@ -253,7 +312,7 @@ Index::Index(const nsTArray<Indice>& aIndex,
 Index::~Index() {}
 
 void
-Index::UpdateMoofIndex(const nsTArray<MediaByteRange>& aByteRanges)
+Index::UpdateMoofIndex(const MediaByteRangeSet& aByteRanges)
 {
   if (!mMoofParser) {
     return;
@@ -263,9 +322,9 @@ Index::UpdateMoofIndex(const nsTArray<MediaByteRange>& aByteRanges)
 }
 
 Microseconds
-Index::GetEndCompositionIfBuffered(const nsTArray<MediaByteRange>& aByteRanges)
+Index::GetEndCompositionIfBuffered(const MediaByteRangeSet& aByteRanges)
 {
-  nsTArray<Sample>* index;
+  FallibleTArray<Sample>* index;
   if (mMoofParser) {
     if (!mMoofParser->ReachedEnd() || mMoofParser->Moofs().IsEmpty()) {
       return 0;
@@ -290,15 +349,60 @@ Index::GetEndCompositionIfBuffered(const nsTArray<MediaByteRange>& aByteRanges)
   return 0;
 }
 
-void
-Index::ConvertByteRangesToTimeRanges(
-  const nsTArray<MediaByteRange>& aByteRanges,
-  nsTArray<Interval<Microseconds>>* aTimeRanges)
+TimeIntervals
+Index::ConvertByteRangesToTimeRanges(const MediaByteRangeSet& aByteRanges)
 {
+  if (aByteRanges == mLastCachedRanges) {
+    return mLastBufferedRanges;
+  }
+  mLastCachedRanges = aByteRanges;
+
+  if (mDataOffset.Length()) {
+    TimeIntervals timeRanges;
+    for (const auto& range : aByteRanges) {
+      uint32_t start = mDataOffset.IndexOfFirstElementGt(range.mStart - 1);
+      if (!mIsAudio && start == mDataOffset.Length()) {
+        continue;
+      }
+      uint32_t end = mDataOffset.IndexOfFirstElementGt(range.mEnd, MP4DataOffset::EndOffsetComparator());
+      if (!mIsAudio && end < start) {
+        continue;
+      }
+      if (mIsAudio && start &&
+          range.Intersects(MediaByteRange(mDataOffset[start-1].mStartOffset,
+                                          mDataOffset[start-1].mEndOffset))) {
+        // Check if previous audio data block contains some available samples.
+        for (size_t i = mDataOffset[start-1].mIndex; i < mIndex.Length(); i++) {
+          if (range.ContainsStrict(mIndex[i].mByteRange)) {
+            timeRanges +=
+              TimeInterval(TimeUnit::FromMicroseconds(mIndex[i].mCompositionRange.start),
+                           TimeUnit::FromMicroseconds(mIndex[i].mCompositionRange.end));
+          }
+        }
+      }
+      if (end > start) {
+        timeRanges +=
+          TimeInterval(TimeUnit::FromMicroseconds(mDataOffset[start].mTime.start),
+                       TimeUnit::FromMicroseconds(mDataOffset[end-1].mTime.end));
+      }
+      if (end < mDataOffset.Length()) {
+        // Find samples in partial block contained in the byte range.
+        for (size_t i = mDataOffset[end].mIndex;
+             i < mIndex.Length() && range.ContainsStrict(mIndex[i].mByteRange);
+             i++) {
+          timeRanges +=
+            TimeInterval(TimeUnit::FromMicroseconds(mIndex[i].mCompositionRange.start),
+                         TimeUnit::FromMicroseconds(mIndex[i].mCompositionRange.end));
+        }
+      }
+    }
+    mLastBufferedRanges = timeRanges;
+    return timeRanges;
+  }
+
   RangeFinder rangeFinder(aByteRanges);
   nsTArray<Interval<Microseconds>> timeRanges;
-
-  nsTArray<nsTArray<Sample>*> indexes;
+  nsTArray<FallibleTArray<Sample>*> indexes;
   if (mMoofParser) {
     // We take the index out of the moof parser and move it into a local
     // variable so we don't get concurrency issues. It gets freed when we
@@ -321,7 +425,7 @@ Index::ConvertByteRangesToTimeRanges(
 
   bool hasSync = false;
   for (size_t i = 0; i < indexes.Length(); i++) {
-    nsTArray<Sample>* index = indexes[i];
+    FallibleTArray<Sample>* index = indexes[i];
     for (size_t j = 0; j < index->Length(); j++) {
       const Sample& sample = (*index)[j];
       if (!rangeFinder.Contains(sample.mByteRange)) {
@@ -342,7 +446,17 @@ Index::ConvertByteRangesToTimeRanges(
   }
 
   // This fixes up when the compositon order differs from the byte range order
-  Interval<Microseconds>::Normalize(timeRanges, aTimeRanges);
+  nsTArray<Interval<Microseconds>> timeRangesNormalized;
+  Interval<Microseconds>::Normalize(timeRanges, &timeRangesNormalized);
+  // convert timeRanges.
+  media::TimeIntervals ranges;
+  for (size_t i = 0; i < timeRangesNormalized.Length(); i++) {
+    ranges +=
+      media::TimeInterval(media::TimeUnit::FromMicroseconds(timeRangesNormalized[i].start),
+                          media::TimeUnit::FromMicroseconds(timeRangesNormalized[i].end));
+  }
+  mLastBufferedRanges = ranges;
+  return ranges;
 }
 
 uint64_t

@@ -45,7 +45,7 @@ NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(DOMSVGPathSeg, Release)
 // Helper class: AutoChangePathSegNotifier
 // Stack-based helper class to pair calls to WillChangePathSegList
 // and DidChangePathSegList.
-class MOZ_STACK_CLASS AutoChangePathSegNotifier
+class MOZ_RAII AutoChangePathSegNotifier
 {
 public:
   explicit AutoChangePathSegNotifier(DOMSVGPathSeg* aPathSeg MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -156,7 +156,6 @@ DOMSVGPathSeg::IndexIsValid()
 // Implementation of DOMSVGPathSeg sub-classes below this point
 
 #define IMPL_PROP_WITH_TYPE(segName, propName, index, type)                   \
-  /* attribute type propName; */                                              \
   type                                                                        \
   DOMSVGPathSeg##segName::propName()                                          \
   {                                                                           \

@@ -7,6 +7,7 @@
 #define mozilla_net_Predictor_h
 
 #include "nsINetworkPredictor.h"
+#include "nsINetworkPredictorVerifier.h"
 
 #include "nsCOMPtr.h"
 #include "nsICacheEntry.h"
@@ -16,7 +17,7 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIObserver.h"
 #include "nsISpeculativeConnect.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
@@ -25,7 +26,6 @@
 class nsICacheStorage;
 class nsIDNSService;
 class nsIIOService;
-class nsINetworkPredictorVerifier;
 class nsITimer;
 
 namespace mozilla {
@@ -36,6 +36,7 @@ class Predictor : public nsINetworkPredictor
                 , public nsISpeculativeConnectionOverrider
                 , public nsIInterfaceRequestor
                 , public nsICacheEntryMetaDataVisitor
+                , public nsINetworkPredictorVerifier
 {
 public:
   NS_DECL_ISUPPORTS
@@ -44,6 +45,7 @@ public:
   NS_DECL_NSISPECULATIVECONNECTIONOVERRIDER
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICACHEENTRYMETADATAVISITOR
+  NS_DECL_NSINETWORKPREDICTORVERIFIER
 
   Predictor();
 
@@ -53,6 +55,9 @@ public:
 
 private:
   virtual ~Predictor();
+
+  // Stores callbacks for a child process predictor (for test purposes)
+  nsCOMPtr<nsINetworkPredictorVerifier> mChildVerifier;
 
   union Reason {
     PredictorLearnReason mLearn;
@@ -107,7 +112,7 @@ private:
     nsCOMPtr<nsINetworkPredictorVerifier> mVerifier;
     TimeStamp mStartTime;
     uint8_t mStackCount;
-    nsRefPtr<Predictor> mPredictor;
+    RefPtr<Predictor> mPredictor;
   };
 
   class Resetter : public nsICacheEntryOpenCallback,
@@ -129,7 +134,7 @@ private:
 
     uint32_t mEntriesToVisit;
     nsTArray<nsCString> mKeysToDelete;
-    nsRefPtr<Predictor> mPredictor;
+    RefPtr<Predictor> mPredictor;
     nsTArray<nsCOMPtr<nsIURI>> mURIsToVisit;
   };
 
@@ -141,7 +146,7 @@ private:
 
     explicit SpaceCleaner(Predictor *predictor)
       :mLRUStamp(0)
-      ,mKeyToDelete(nullptr)
+      ,mLRUKeyToDelete(nullptr)
       ,mPredictor(predictor)
     { }
 
@@ -150,8 +155,9 @@ private:
   private:
     virtual ~SpaceCleaner() { }
     uint32_t mLRUStamp;
-    const char *mKeyToDelete;
-    nsRefPtr<Predictor> mPredictor;
+    const char *mLRUKeyToDelete;
+    nsTArray<nsCString> mLongKeysToDelete;
+    RefPtr<Predictor> mPredictor;
   };
 
   // Observer-related stuff
@@ -349,9 +355,11 @@ private:
   uint32_t mLastStartupTime;
   int32_t mStartupCount;
 
+  uint32_t mMaxURILength;
+
   nsCOMPtr<nsIDNSService> mDnsService;
 
-  nsRefPtr<DNSListener> mDNSListener;
+  RefPtr<DNSListener> mDNSListener;
 
   nsTArray<nsCOMPtr<nsIURI>> mPreconnects;
   nsTArray<nsCOMPtr<nsIURI>> mPreresolves;
@@ -359,7 +367,7 @@ private:
   static Predictor *sSelf;
 };
 
-} // ::mozilla::net
-} // ::mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_Predictor_h

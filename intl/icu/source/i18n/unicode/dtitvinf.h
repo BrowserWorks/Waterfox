@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (C) 2008-2011,2013, International Business Machines Corporation and
+ * Copyright (C) 2008-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  *******************************************************************************
  *
@@ -148,7 +148,7 @@ U_NAMESPACE_BEGIN
  * @stable ICU 4.0
 **/
 
-class U_I18N_API DateIntervalInfo : public UObject {
+class U_I18N_API DateIntervalInfo U_FINAL : public UObject {
 public:
 #ifndef U_HIDE_INTERNAL_API
     /**
@@ -353,6 +353,7 @@ private:
         kIPI_AM_PM,
         kIPI_HOUR,
         kIPI_MINUTE,
+        kIPI_SECOND,
         kIPI_MAX_INDEX
     };
 public:

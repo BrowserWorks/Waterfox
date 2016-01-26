@@ -8,8 +8,9 @@ import difflib
 import errno
 import os
 import shutil
+import ssl
+import stat
 import sys
-import which
 import subprocess
 
 from distutils.version import LooseVersion
@@ -17,12 +18,13 @@ from distutils.version import LooseVersion
 from configobj import ConfigObjError
 from StringIO import StringIO
 
-from mozversioncontrol import get_hg_version
+from mozversioncontrol import get_hg_path, get_hg_version
 
 from .update import MercurialUpdater
 from .config import (
-    HgIncludeException,
+    config_file,
     MercurialConfig,
+    ParseException,
 )
 
 
@@ -40,7 +42,9 @@ are up to date and you won't have to do anything.
 To begin, press the enter/return key.
 '''.strip()
 
-OLDEST_NON_LEGACY_VERSION = LooseVersion('3.0')
+# This should match MODERN_MERCURIAL_VERSION in
+# python/mozboot/mozboot/base.py.
+OLDEST_NON_LEGACY_VERSION = LooseVersion('3.5.2')
 LEGACY_MERCURIAL = '''
 You are running an out of date Mercurial client (%s).
 
@@ -52,11 +56,15 @@ MISSING_USERNAME = '''
 You don't have a username defined in your Mercurial config file. In order to
 send patches to Mozilla, you'll need to attach a name and email address. If you
 aren't comfortable giving us your full name, pseudonames are acceptable.
+
+(Relevant config option: ui.username)
 '''.strip()
 
 BAD_DIFF_SETTINGS = '''
 Mozilla developers produce patches in a standard format, but your Mercurial is
 not configured to produce patches in that format.
+
+(Relevant config options: diff.git, diff.showfunc, diff.unified)
 '''.strip()
 
 MQ_INFO = '''
@@ -65,6 +73,8 @@ alternative to the recommended bookmark-based development workflow.
 
 If you are a newcomer to Mercurial or are coming from Git, it is
 recommended to avoid mq.
+
+(Relevant config option: extensions.mq)
 
 Would you like to activate the mq extension
 '''.strip()
@@ -75,13 +85,17 @@ bzexport that makes it easy to upload patches from the command line via the
 |hg bzexport| command. More info is available at
 https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/bzexport/README
 
+(Relevant config option: extensions.bzexport)
+
 Would you like to activate bzexport
 '''.strip()
 
 MQEXT_INFO = '''
-The mqext extension (https://bitbucket.org/sfink/mqext) provides a number of
-useful abilities to Mercurial, including automatically committing changes to
-your mq patch queue.
+The mqext extension adds a number of features, including automatically committing
+changes to your mq patch queue. More info is available at
+https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/mqext/README.txt
+
+(Relevant config option: extensions.mqext)
 
 Would you like to activate mqext
 '''.strip()
@@ -91,6 +105,8 @@ The qimportbz extension
 (https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/qimportbz/README) makes it possible to
 import patches from Bugzilla using a friendly bz:// URL handler. e.g.
 |hg qimport bz://123456|.
+
+(Relevant config option: extensions.qimportbz)
 
 Would you like to activate qimportbz
 '''.strip()
@@ -106,7 +122,7 @@ Your Mercurial should now be properly configured and recommended extensions
 should be up to date!
 '''.strip()
 
-REVIEWBOARD_MINIMUM_VERSION = LooseVersion('3.0.1')
+REVIEWBOARD_MINIMUM_VERSION = LooseVersion('3.3')
 
 REVIEWBOARD_INCOMPATIBLE = '''
 Your Mercurial is too old to use the reviewboard extension, which is necessary
@@ -116,26 +132,50 @@ Please upgrade to Mercurial %s or newer to use this extension.
 '''.strip()
 
 MISSING_BUGZILLA_CREDENTIALS = '''
-You do not have your Bugzilla credentials defined in your Mercurial config.
+You do not have your Bugzilla API Key defined in your Mercurial config.
 
-Various extensions make use of your Bugzilla credentials to interface with
+Various extensions make use of a Bugzilla API Key to interface with
 Bugzilla to enrich your development experience.
 
-Bugzilla credentials are optional. If you do not provide them, associated
-functionality will not be enabled or you will be prompted for your
-Bugzilla credentials when they are needed.
+The Bugzilla API Key is optional. If you do not provide one, associated
+functionality will not be enabled, we will attempt to find a Bugzilla cookie
+from a Firefox profile, or you will be prompted for your Bugzilla credentials
+when they are needed.
+
+You should only need to configure a Bugzilla API Key once.
 '''.lstrip()
 
-BZPOST_MINIMUM_VERSION = LooseVersion('3.0')
+BUGZILLA_API_KEY_INSTRUCTIONS = '''
+Bugzilla API Keys can only be obtained through the Bugzilla web interface.
+
+Please perform the following steps:
+
+  1) Open https://bugzilla.mozilla.org/userprefs.cgi?tab=apikey
+  2) Generate a new API Key
+  3) Copy the generated key and paste it here
+'''.lstrip()
+
+LEGACY_BUGZILLA_CREDENTIALS_DETECTED = '''
+Your existing Mercurial config uses a legacy method for defining Bugzilla
+credentials. Bugzilla API Keys are the most secure and preferred method
+for defining Bugzilla credentials. Bugzilla API Keys are also required
+if you have enabled 2 Factor Authentication in Bugzilla.
+
+All consumers formerly looking at these options should support API Keys.
+'''.lstrip()
+
+BZPOST_MINIMUM_VERSION = LooseVersion('3.3')
 
 BZPOST_INFO = '''
 The bzpost extension automatically records the URLs of pushed commits to
 referenced Bugzilla bugs after push.
 
+(Relevant config option: extensions.bzpost)
+
 Would you like to activate bzpost
 '''.strip()
 
-FIREFOXTREE_MINIMUM_VERSION = LooseVersion('3.0')
+FIREFOXTREE_MINIMUM_VERSION = LooseVersion('3.3')
 
 FIREFOXTREE_INFO = '''
 The firefoxtree extension makes interacting with the multiple Firefox
@@ -156,8 +196,106 @@ The firefoxtree extension is *strongly* recommended if you:
 a) aggregate multiple Firefox repositories into a single local repo
 b) perform head/bookmark-based development (as opposed to mq)
 
+(Relevant config option: extensions.firefoxtree)
+
 Would you like to activate firefoxtree
 '''.strip()
+
+PUSHTOTRY_MINIMUM_VERSION = LooseVersion('3.3')
+
+PUSHTOTRY_INFO = '''
+The push-to-try extension generates a temporary commit with a given
+try syntax and pushes it to the try server. The extension is intended
+to be used in concert with other tools generating try syntax so that
+they can push to try without depending on mq or other workarounds.
+
+(Relevant config option: extensions.push-to-try)
+
+Would you like to activate push-to-try
+'''.strip()
+
+CLONEBUNDLES_INFO = '''
+Mercurial 3.6 and hg.mozilla.org support transparently cloning from a CDN,
+making clones faster and more reliable.
+
+(Relevant config option: experimental.clonebundles)
+
+Would you like to activate this feature and have faster clones
+'''.strip()
+
+BUNDLECLONE_MINIMUM_VERSION = LooseVersion('3.1')
+
+BUNDLECLONE_INFO = '''
+The bundleclone extension makes cloning faster and saves server resources.
+
+We highly recommend you activate this extension.
+
+(Relevant config option: extensions.bundleclone)
+
+Would you like to activate bundleclone
+'''.strip()
+
+WIP_INFO = '''
+It is common to want a quick view of changesets that are in progress.
+
+The ``hg wip`` command provides should a view.
+
+Example Usage:
+
+  $ hg wip
+  o   4084:fcfa34d0387b dminor  @
+  |  mozreview: use repository name when displaying treeherder results (bug 1230548) r=mcote
+  | @   4083:786baf6d476a gps
+  | |  mozreview: create child review requests from batch API
+  | o   4082:3f100fa4a94f gps
+  | |  mozreview: copy more read-only processing code; r?smacleod
+  | o   4081:939417680cbe gps
+  |/   mozreview: add web API to submit an entire series of commits (bug 1229468); r?smacleod
+
+(Not shown are the colors that help denote the state each changeset
+is in.)
+
+(Relevant config options: alias.wip, revsetalias.wip, templates.wip)
+
+Would you like to install the `hg wip` alias?
+'''.strip()
+
+HGWATCHMAN_MINIMUM_VERSION = LooseVersion('3.5.2')
+
+HGWATCHMAN_INFO = '''
+The hgwatchman extension integrates the watchman filesystem watching
+tool with Mercurial. Commands like `hg status`, `hg diff`, and
+`hg commit` that need to examine filesystem state can query watchman
+and obtain filesystem state nearly instantaneously. The result is much
+faster command execution.
+
+When installed, the hgwatchman extension will launch a background
+watchman file watching daemon for accessed Mercurial repositories. It
+should "just work."
+
+Would you like to install hgwatchman
+'''.strip()
+
+FILE_PERMISSIONS_WARNING = '''
+Your hgrc file is currently readable by others.
+
+Sensitive information such as your Bugzilla credentials could be
+stolen if others have access to this file/machine.
+'''.strip()
+
+MULTIPLE_VCT = '''
+*** WARNING ***
+
+Multiple version-control-tools repositories are referenced in your
+Mercurial config. Extensions and other code within the
+version-control-tools repository could run with inconsistent results.
+
+Please manually edit the following file to reference a single
+version-control-tools repository:
+
+    %s
+'''.lstrip()
+
 
 class MercurialSetupWizard(object):
     """Command-line wizard to help users configure Mercurial."""
@@ -168,7 +306,6 @@ class MercurialSetupWizard(object):
         self.state_dir = os.path.normpath(state_dir)
         self.ext_dir = os.path.join(self.state_dir, 'mercurial', 'extensions')
         self.vcs_tools_dir = os.path.join(self.state_dir, 'version-control-tools')
-        self.update_vcs_tools = False
         self.updater = MercurialUpdater(state_dir)
 
     def run(self, config_paths):
@@ -178,34 +315,24 @@ class MercurialSetupWizard(object):
             if e.errno != errno.EEXIST:
                 raise
 
-        # We use subprocess in places, which expects a Win32 executable or
-        # batch script. On some versions of MozillaBuild, we have "hg.exe",
-        # "hg.bat," and "hg" (a Python script). "which" will happily return the
-        # Python script, which will cause subprocess to choke. Explicitly favor
-        # the Windows version over the plain script.
-        try:
-            hg = which.which('hg.exe')
-        except which.WhichError:
-            try:
-                hg = which.which('hg')
-            except which.WhichError as e:
-                print(e)
-                print('Try running |mach bootstrap| to ensure your environment is '
-                      'up to date.')
-                return 1
+        hg = get_hg_path()
+        config_path = config_file(config_paths)
 
         try:
-            c = MercurialConfig(config_paths)
+            c = MercurialConfig(config_path)
         except ConfigObjError as e:
-            print('Error importing existing Mercurial config!\n')
+            print('Error importing existing Mercurial config: %s\n' % config_path)
             for error in e.errors:
                 print(error.message)
 
             return 1
-        except HgIncludeException as e:
-            print(e.message)
+        except ParseException as e:
+            print('Error importing existing Mercurial config: %s\n' % config_path)
+            print('Line %d: %s' % (e.line, e.message))
 
             return 1
+
+        self.updater.update_all()
 
         print(INITIAL_MESSAGE)
         raw_input()
@@ -246,8 +373,10 @@ class MercurialSetupWizard(object):
                 print('Fixed patch settings.')
                 print('')
 
-        self.prompt_native_extension(c, 'progress',
-            'Would you like to see progress bars during Mercurial operations')
+        # Progress is built into core and enabled by default in Mercurial 3.5.
+        if hg_version < LooseVersion('3.5'):
+            self.prompt_native_extension(c, 'progress',
+                'Would you like to see progress bars during Mercurial operations')
 
         self.prompt_native_extension(c, 'color',
             'Would you like Mercurial to colorize output to your terminal')
@@ -261,9 +390,29 @@ class MercurialSetupWizard(object):
             'rewriting via the "histedit" command (similar to '
             '`git rebase -i`)')
 
-        self.prompt_native_extension(c, 'mq', MQ_INFO)
+        # hgwatchman is provided by MozillaBuild and we don't yet support
+        # Linux/BSD.
+        if ('hgwatchman' not in c.extensions
+            and sys.platform.startswith('darwin')
+            and hg_version >= HGWATCHMAN_MINIMUM_VERSION
+            and self._prompt_yn(HGWATCHMAN_INFO)):
+            # Unlike other extensions, we need to run an installer
+            # to compile a Python C extension.
+            try:
+                subprocess.check_output(
+                    ['make', 'local'],
+                    cwd=self.updater.hgwatchman_dir,
+                    stderr=subprocess.STDOUT)
 
-        self.prompt_external_extension(c, 'bzexport', BZEXPORT_INFO)
+                ext_path = os.path.join(self.updater.hgwatchman_dir,
+                                        'hgwatchman')
+                if self.can_use_extension(c, 'hgwatchman', ext_path):
+                    c.activate_extension('hgwatchman', ext_path)
+            except subprocess.CalledProcessError as e:
+                print('Error compiling hgwatchman; will not install hgwatchman')
+                print(e.output)
+
+        self.prompt_native_extension(c, 'mq', MQ_INFO)
 
         if 'reviewboard' not in c.extensions:
             if hg_version < REVIEWBOARD_MINIMUM_VERSION:
@@ -277,23 +426,32 @@ class MercurialSetupWizard(object):
                     'projects',
                     path=p)
 
+        self.prompt_external_extension(c, 'bzexport', BZEXPORT_INFO)
+
         if hg_version >= BZPOST_MINIMUM_VERSION:
             self.prompt_external_extension(c, 'bzpost', BZPOST_INFO)
 
         if hg_version >= FIREFOXTREE_MINIMUM_VERSION:
             self.prompt_external_extension(c, 'firefoxtree', FIREFOXTREE_INFO)
 
-        if 'mq' in c.extensions:
-            self.prompt_external_extension(c, 'mqext', MQEXT_INFO,
-                                           os.path.join(self.ext_dir, 'mqext'))
+        # Functionality from bundleclone is experimental in Mercurial 3.6.
+        # There was a bug in 3.6, so look for 3.6.1.
+        if hg_version >= LooseVersion('3.6.1'):
+            if not c.have_clonebundles() and self._prompt_yn(CLONEBUNDLES_INFO):
+                c.activate_clonebundles()
+                print('Enabled the clonebundles feature.\n')
+        elif hg_version >= BUNDLECLONE_MINIMUM_VERSION:
+            self.prompt_external_extension(c, 'bundleclone', BUNDLECLONE_INFO)
 
-            if 'mqext' in c.extensions:
-                self.updater.update_mercurial_repo(
-                    hg,
-                    'https://bitbucket.org/sfink/mqext',
-                    os.path.join(self.ext_dir, 'mqext'),
-                    'default',
-                    'Ensuring mqext extension is up to date...')
+        if hg_version >= PUSHTOTRY_MINIMUM_VERSION:
+            self.prompt_external_extension(c, 'push-to-try', PUSHTOTRY_INFO)
+
+        if not c.have_wip():
+            if self._prompt_yn(WIP_INFO):
+                c.install_wip_alias()
+
+        if 'mq' in c.extensions:
+            self.prompt_external_extension(c, 'mqext', MQEXT_INFO)
 
             if 'mqext' in c.extensions and not c.have_mqext_autocommit_mq():
                 if self._prompt_yn('Would you like to configure mqext to '
@@ -312,32 +470,36 @@ class MercurialSetupWizard(object):
                     print('')
 
         if 'reviewboard' in c.extensions or 'bzpost' in c.extensions:
-            bzuser, bzpass = c.get_bugzilla_credentials()
+            bzuser, bzpass, bzuserid, bzcookie, bzapikey = c.get_bugzilla_credentials()
 
-            if not bzuser or not bzpass:
+            if not bzuser or not bzapikey:
                 print(MISSING_BUGZILLA_CREDENTIALS)
 
             if not bzuser:
-                bzuser = self._prompt('What is your Bugzilla email address?',
+                bzuser = self._prompt('What is your Bugzilla email address? (optional)',
                     allow_empty=True)
 
-            if bzuser and not bzpass:
-                bzpass = self._prompt('What is your Bugzilla password?',
+            if bzuser and not bzapikey:
+                print(BUGZILLA_API_KEY_INSTRUCTIONS)
+                bzapikey = self._prompt('Please enter a Bugzilla API Key: (optional)',
                     allow_empty=True)
 
-            if bzuser or bzpass:
-                c.set_bugzilla_credentials(bzuser, bzpass)
+            if bzuser or bzapikey:
+                c.set_bugzilla_credentials(bzuser, bzapikey)
 
-        if self.update_vcs_tools:
-            self.updater.update_mercurial_repo(
-                hg,
-                'https://hg.mozilla.org/hgcustom/version-control-tools',
-                self.vcs_tools_dir,
-                'default',
-                'Ensuring version-control-tools is up to date...')
+            if bzpass or bzuserid or bzcookie:
+                print(LEGACY_BUGZILLA_CREDENTIALS_DETECTED)
+
+                # Clear legacy credentials automatically if an API Key is
+                # found as it supercedes all other credentials.
+                if bzapikey:
+                    print('The legacy credentials have been removed.\n')
+                    c.clear_legacy_bugzilla_credentials()
+                elif self._prompt_yn('Remove legacy credentials'):
+                    c.clear_legacy_bugzilla_credentials()
 
         # Look for and clean up old extensions.
-        for ext in {'bzexport', 'qimportbz'}:
+        for ext in {'bzexport', 'qimportbz', 'mqext'}:
             path = os.path.join(self.ext_dir, ext)
             if os.path.exists(path):
                 if self._prompt_yn('Would you like to remove the old and no '
@@ -345,7 +507,32 @@ class MercurialSetupWizard(object):
                     print('Cleaning up old repository: %s' % path)
                     shutil.rmtree(path)
 
-        c.add_mozilla_host_fingerprints()
+        # Python + Mercurial didn't have terrific TLS handling until Python
+        # 2.7.9 and Mercurial 3.4. For this reason, it was recommended to pin
+        # certificates in Mercurial config files. In modern versions of
+        # Mercurial, the system CA store is used and old, legacy TLS protocols
+        # are disabled. The default connection/security setting should
+        # be sufficient and pinning certificates is no longer needed.
+        have_modern_ssl = hasattr(ssl, 'SSLContext')
+        if hg_version < LooseVersion('3.4') or not have_modern_ssl:
+            c.add_mozilla_host_fingerprints()
+
+        # References to multiple version-control-tools checkouts can confuse
+        # version-control-tools, since various Mercurial extensions resolve
+        # dependencies via __file__ and repos could reference another copy.
+        seen_vct = set()
+        for k, v in c.config.get('extensions', {}).items():
+            if 'version-control-tools' not in v:
+                continue
+
+            i = v.index('version-control-tools')
+            vct = v[0:i + len('version-control-tools')]
+            seen_vct.add(os.path.realpath(os.path.expanduser(vct)))
+
+        if len(seen_vct) > 1:
+            print(MULTIPLE_VCT % c.config_path)
+
+        # At this point the config should be finalized.
 
         b = StringIO()
         c.write(b)
@@ -378,6 +565,20 @@ class MercurialSetupWizard(object):
                     'written the following:\n')
                 c.write(sys.stdout)
                 return 1
+
+        if sys.platform != 'win32':
+            # Config file may contain sensitive content, such as passwords.
+            # Prompt to remove global permissions.
+            mode = os.stat(config_path).st_mode
+            if mode & (stat.S_IRWXG | stat.S_IRWXO):
+                print(FILE_PERMISSIONS_WARNING)
+                if self._prompt_yn('Remove permissions for others to '
+                                   'read your hgrc file'):
+                    # We don't care about sticky and set UID bits because
+                    # this is a regular file.
+                    mode = mode & stat.S_IRWXU
+                    print('Changing permissions of %s' % config_path)
+                    os.chmod(config_path, mode)
 
         print(FINISHED)
         return 0
@@ -414,11 +615,13 @@ class MercurialSetupWizard(object):
             if not self._prompt_yn(prompt_text):
                 print('')
                 return
-            print('Activated %s extension.\n' % name)
         if not path:
-            path = os.path.join(self.vcs_tools_dir, 'hgext', name)
-            self.update_vcs_tools = True
+            # We replace the user's home directory with ~ so the
+            # config file doesn't depend on the path to the home
+            # directory
+            path = os.path.join(self.vcs_tools_dir.replace(os.path.expanduser('~'), '~'), 'hgext', name)
         c.activate_extension(name, path)
+        print('Activated %s extension.\n' % name)
 
     def _prompt(self, msg, allow_empty=False):
         print(msg)

@@ -3,27 +3,27 @@
 
 'use strict';
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
+Cu.import('resource://gre/modules/Task.jsm');
 Cu.import('resource://gre/modules/Timer.jsm');
 Cu.import('resource://gre/modules/Promise.jsm');
 Cu.import('resource://gre/modules/Preferences.jsm');
+Cu.import('resource://gre/modules/PlacesUtils.jsm');
+Cu.import('resource://gre/modules/ObjectUtils.jsm');
 
 const serviceExports = Cu.import('resource://gre/modules/PushService.jsm', {});
 const servicePrefs = new Preferences('dom.push.');
 
-XPCOMUtils.defineLazyServiceGetter(
-  this,
-  "PushNotificationService",
-  "@mozilla.org/push/NotificationService;1",
-  "nsIPushNotificationService"
-);
-
 const DEFAULT_TIMEOUT = 5000;
 
 const WEBSOCKET_CLOSE_GOING_AWAY = 1001;
+
+var isParent = Cc['@mozilla.org/xre/runtime;1']
+                 .getService(Ci.nsIXULRuntime).processType ==
+                 Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
 
 // Stop and clean up after the PushService.
 Services.obs.addObserver(function observe(subject, topic, data) {
@@ -62,42 +62,21 @@ function after(times, func) {
 }
 
 /**
- * Wraps a Push database in a proxy that returns promises for all asynchronous
- * methods. This makes it easier to test the database code with Task.jsm.
+ * Updates the places database.
  *
- * @param {PushDB} db A Push database.
- * @returns {Proxy} A proxy that traps function property gets and returns
- *  promisified functions.
+ * @param {mozIPlaceInfo} place A place record to insert.
+ * @returns {Promise} A promise that fulfills when the database is updated.
  */
-function promisifyDatabase(db) {
-  return new Proxy(db, {
-    get(target, property) {
-      let method = target[property];
-      if (typeof method != 'function') {
-        return method;
-      }
-      return function(...params) {
-        return new Promise((resolve, reject) => {
-          method.call(target, ...params, resolve, reject);
-        });
-      };
+function addVisit(place) {
+  return new Promise((resolve, reject) => {
+    if (typeof place.uri == 'string') {
+      place.uri = Services.io.newURI(place.uri, null, null);
     }
-  });
-}
-
-/**
- * Clears and closes an open Push database.
- *
- * @param {PushDB} db A Push database.
- * @returns {Promise} A promise that fulfills when the database is closed.
- */
-function cleanupDatabase(db) {
-  return new Promise(resolve => {
-    function close() {
-      db.close();
-      resolve();
-    }
-    db.drop(close, close);
+    PlacesUtils.asyncHistory.updatePlaces(place, {
+      handleCompletion: resolve,
+      handleError: reject,
+      handleResult() {},
+    });
   });
 }
 
@@ -190,23 +169,6 @@ function makeStub(target, stubs) {
 }
 
 /**
- * Disables `push` and `pushsubscriptionchange` service worker events for the
- * given scopes. These events cause crashes in xpcshell, so we disable them
- * for testing nsIPushNotificationService.
- *
- * @param {String[]} scopes A list of scope URLs.
- */
-function disableServiceWorkerEvents(...scopes) {
-  for (let scope of scopes) {
-    Services.perms.add(
-      Services.io.newURI(scope, null, null),
-      'push',
-      Ci.nsIPermissionManager.DENY_ACTION
-    );
-  }
-}
-
-/**
  * Sets default PushService preferences. All pref names are prefixed with
  * `dom.push.`; any additional preferences will override the defaults.
  *
@@ -214,7 +176,7 @@ function disableServiceWorkerEvents(...scopes) {
  */
 function setPrefs(prefs = {}) {
   let defaultPrefs = Object.assign({
-    debug: true,
+    loglevel: 'all',
     serverURL: 'wss://push.example.org',
     'connection.enabled': true,
     userAgentID: '',
@@ -236,7 +198,14 @@ function setPrefs(prefs = {}) {
     'adaptive.gap': 60000,
     'adaptive.upperLimit': 29 * 60 * 1000,
     // Misc. defaults.
-    'adaptive.mobile': ''
+    'adaptive.mobile': '',
+    'http2.maxRetries': 2,
+    'http2.retryInterval': 500,
+    'http2.reset_retry_count_after_ms': 60000,
+    maxQuotaPerSubscription: 16,
+    quotaUpdateDelay: 3000,
+    'testing.notifyWorkers': false,
+    'testing.notifyAllObservers': true,
   }, prefs);
   for (let pref in defaultPrefs) {
     servicePrefs.set(pref, defaultPrefs[pref]);
@@ -295,7 +264,7 @@ MockWebSocket.prototype = {
     return this._originalURI;
   },
 
-  asyncOpen(uri, origin, listener, context) {
+  asyncOpen(uri, origin, windowId, listener, context) {
     this._listener = listener;
     this._context = context;
     waterfall(() => this._listener.onStart(this._context));
@@ -394,7 +363,11 @@ MockWebSocket.prototype = {
       () => this._listener.onServerClose(this._context, statusCode, reason),
       () => this._listener.onStop(this._context, Cr.NS_BASE_STREAM_CLOSED)
     );
-  }
+  },
+
+  serverInterrupt(result = Cr.NS_ERROR_NET_RESET) {
+    waterfall(() => this._listener.onStop(this._context, result));
+  },
 };
 
 /**
@@ -448,3 +421,114 @@ MockMobileNetworkInfo.prototype = {
     return 'network-active-changed';
   }
 };
+
+var setUpServiceInParent = Task.async(function* (service, db) {
+  if (!isParent) {
+    return;
+  }
+
+  let userAgentID = 'ce704e41-cb77-4206-b07b-5bf47114791b';
+  setPrefs({
+    userAgentID: userAgentID,
+  });
+
+  yield db.put({
+    channelID: '6e2814e1-5f84-489e-b542-855cc1311f09',
+    pushEndpoint: 'https://example.org/push/get',
+    scope: 'https://example.com/get/ok',
+    originAttributes: '',
+    version: 1,
+    pushCount: 10,
+    lastPush: 1438360548322,
+    quota: 16,
+  });
+  yield db.put({
+    channelID: '3a414737-2fd0-44c0-af05-7efc172475fc',
+    pushEndpoint: 'https://example.org/push/unsub',
+    scope: 'https://example.com/unsub/ok',
+    originAttributes: '',
+    version: 2,
+    pushCount: 10,
+    lastPush: 1438360848322,
+    quota: 4,
+  });
+  yield db.put({
+    channelID: 'ca3054e8-b59b-4ea0-9c23-4a3c518f3161',
+    pushEndpoint: 'https://example.org/push/stale',
+    scope: 'https://example.com/unsub/fail',
+    originAttributes: '',
+    version: 3,
+    pushCount: 10,
+    lastPush: 1438362348322,
+    quota: 1,
+  });
+
+  service.init({
+    serverURI: 'wss://push.example.org/',
+    networkInfo: new MockDesktopNetworkInfo(),
+    db: makeStub(db, {
+      put(prev, record) {
+        if (record.scope == 'https://example.com/sub/fail') {
+          return Promise.reject('synergies not aligned');
+        }
+        return prev.call(this, record);
+      },
+      delete: function(prev, channelID) {
+        if (channelID == 'ca3054e8-b59b-4ea0-9c23-4a3c518f3161') {
+          return Promise.reject('splines not reticulated');
+        }
+        return prev.call(this, channelID);
+      },
+      getByIdentifiers(prev, identifiers) {
+        if (identifiers.scope == 'https://example.com/get/fail') {
+          return Promise.reject('qualia unsynchronized');
+        }
+        return prev.call(this, identifiers);
+      },
+    }),
+    makeWebSocket(uri) {
+      return new MockWebSocket(uri, {
+        onHello(request) {
+          this.serverSendMsg(JSON.stringify({
+            messageType: 'hello',
+            uaid: userAgentID,
+            status: 200,
+          }));
+        },
+        onRegister(request) {
+          this.serverSendMsg(JSON.stringify({
+            messageType: 'register',
+            uaid: userAgentID,
+            channelID: request.channelID,
+            status: 200,
+            pushEndpoint: 'https://example.org/push/' + request.channelID,
+          }));
+        },
+      });
+    },
+  });
+});
+
+var tearDownServiceInParent = Task.async(function* (db) {
+  if (!isParent) {
+    return;
+  }
+
+  let record = yield db.getByIdentifiers({
+    scope: 'https://example.com/sub/ok',
+    originAttributes: '',
+  });
+  ok(record.pushEndpoint.startsWith('https://example.org/push'),
+    'Wrong push endpoint in subscription record');
+
+  record = yield db.getByIdentifiers({
+    scope: 'https://example.net/scope/1',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: 1, inBrowser: true }),
+  });
+  ok(record.pushEndpoint.startsWith('https://example.org/push'),
+    'Wrong push endpoint in app record');
+
+  record = yield db.getByKeyID('3a414737-2fd0-44c0-af05-7efc172475fc');
+  ok(!record, 'Unsubscribed record should not exist');
+});

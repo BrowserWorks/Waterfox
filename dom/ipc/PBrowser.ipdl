@@ -9,6 +9,7 @@ include protocol PBlob;
 include protocol PColorPicker;
 include protocol PContent;
 include protocol PContentBridge;
+include protocol PDocAccessible;
 include protocol PDocumentRenderer;
 include protocol PFilePicker;
 include protocol PIndexedDBPermissionRequest;
@@ -24,12 +25,15 @@ using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using class mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
 using struct gfxSize from "gfxPoint.h";
 using CSSRect from "Units.h";
-using LayoutDeviceIntRect from "Units.h";
+using CSSSize from "Units.h";
+using mozilla::LayoutDeviceIntRect from "Units.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
+using mozilla::ScreenIntPoint from "Units.h";
 using ScreenIntSize from "Units.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using struct mozilla::layers::ZoomConstraints from "FrameMetrics.h";
+using mozilla::layers::MaybeZoomConstraints from "FrameMetrics.h";
 using FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
@@ -40,6 +44,7 @@ using struct nsIMEUpdatePreference from "nsIWidget.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntRect from "mozilla/gfx/Rect.h";
+using class mozilla::ContentCache from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetKeyboardEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetMouseEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetWheelEvent from "ipc/nsGUIEventIPC.h";
@@ -47,8 +52,9 @@ using class mozilla::WidgetDragEvent from "ipc/nsGUIEventIPC.h";
 using struct nsRect from "nsRect.h";
 using class mozilla::WidgetSelectionEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetTouchEvent from "ipc/nsGUIEventIPC.h";
+using class mozilla::WidgetPluginEvent from "ipc/nsGUIEventIPC.h";
 using struct mozilla::dom::RemoteDOMEvent from "mozilla/dom/TabMessageUtils.h";
-using mozilla::dom::ScreenOrientation from "mozilla/dom/ScreenOrientation.h";
+using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 using mozilla::CSSPoint from "Units.h";
 using mozilla::CSSToScreenScale from "Units.h";
@@ -56,10 +62,14 @@ using mozilla::CommandInt from "mozilla/EventForwards.h";
 using mozilla::Modifiers from "mozilla/EventForwards.h";
 using mozilla::layers::GeckoContentController::APZStateChange from "mozilla/layers/GeckoContentController.h";
 using mozilla::WritingMode from "mozilla/WritingModes.h";
+using mozilla::layers::AsyncDragMetrics from "mozilla/layers/AsyncDragMetrics.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using nsIWidget::TouchPointerState from "nsIWidget.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
-using struct mozilla::OwningSerializedStructuredCloneBuffer from "ipc/IPCMessageUtils.h";
+using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
+using mozilla::EventMessage from "mozilla/EventForwards.h";
+using nsEventStatus from "mozilla/EventForwards.h";
+using nsSizeMode from "nsIWidgetListener.h";
 
 namespace mozilla {
 namespace dom {
@@ -82,14 +92,9 @@ struct ShowInfo
   nsString name;
   bool fullscreenAllowed;
   bool isPrivate;
+  bool fakeShowInfo;
   float dpi;
   double defaultScale;
-};
-
-struct FrameScriptInfo
-{
-    nsString url;
-    bool runInGlobalScope;
 };
 
 prio(normal upto urgent) sync protocol PBrowser
@@ -97,6 +102,7 @@ prio(normal upto urgent) sync protocol PBrowser
     manager PContent or PContentBridge;
 
     manages PColorPicker;
+    manages PDocAccessible;
     manages PDocumentRenderer;
     manages PFilePicker;
     manages PIndexedDBPermissionRequest;
@@ -114,6 +120,14 @@ both:
     PRenderFrame();
 
 parent:
+    /**
+     * Tell the parent process a new accessible document has been created.
+     * aParentDoc is the accessible document it was created in if any, and
+     * aParentAcc is the id of the accessible in that document the new document
+     * is a child of.
+     */
+    PDocAccessible(nullable PDocAccessible aParentDoc, uint64_t aParentAcc);
+
     /*
      * Creates a new remoted nsIWidget connection for windowed plugins
      * in e10s mode. This is always initiated from the child in response
@@ -126,117 +140,84 @@ parent:
      */
     sync GetWidgetNativeData() returns (WindowsHandle value);
 
+    /**
+     * Sends an NS_NATIVE_CHILD_OF_SHAREABLE_WINDOW to be adopted by the
+     * widget's shareable window on the chrome side. Only used on Windows.
+     */
+    async SetNativeChildOfShareableWindow(uintptr_t childWindow);
+
+    /**
+     * When content moves focus from a native plugin window that's a child
+     * of the native browser window we need to move native focus to the
+     * browser. Otherwise the plugin window will never relinquish focus.
+     */
+    sync DispatchFocusToTopLevelWindow();
+
 parent:
     /**
      * When child sends this message, parent should move focus to
-     * the next or previous focusable element.
+     * the next or previous focusable element or document.
      */
-    MoveFocus(bool forward);
+    MoveFocus(bool forward, bool forDocumentNavigation);
 
     Event(RemoteDOMEvent aEvent);
 
-    sync CreateWindow(PBrowser aNewTab,
-                      uint32_t aChromeFlags,
-                      bool aCalledFromJS,
-                      bool aPositionSpecified,
-                      bool aSizeSpecified,
-                      nsString aURI,
-                      nsString aName,
-                      nsString aFeatures,
-                      nsString aBaseURI)
-      returns (bool windowOpened, FrameScriptInfo[] frameScripts, nsCString urlToLoad);
-
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
-      returns (OwningSerializedStructuredCloneBuffer[] retval);
+      returns (StructuredCloneData[] retval);
 
     prio(high) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
                                CpowEntry[] aCpows, Principal aPrincipal)
-      returns (OwningSerializedStructuredCloneBuffer[] retval);
-
-    /**
-     * The IME sequence number (seqno) parameter is used to make sure
-     * that a notification is discarded if it arrives at the chrome process
-     * too late. If the notification is late and we accept it, we will have
-     * an out-of-date view of the content process, which means events that we
-     * dispatch based on this out-of-date view will be wrong also.
-     * (see Bug 599550 and Bug 591047 comments 44, 50, and 54)
-     *
-     * Chrome increments seqno and includes it in each IME event sent to
-     * content, and content sends its current seqno back to chrome with each
-     * notification. A notification is up-to-date only if the content
-     * seqno is the same as the current chrome seqno, meaning no additional
-     * event was sent to content before the notification was received
-     *
-     * On blur, chrome returns the current seqno to content, and content
-     * uses it to discard subsequent events until the content seqno and
-     * chrome seqno-on-blur match again. These events, meant for the blurred
-     * textfield, are discarded to prevent events going to the wrong target
-     */
+      returns (StructuredCloneData[] retval);
 
     /**
      * Notifies chrome that there is a focus change involving an editable
      * object (input, textarea, document, contentEditable. etc.)
      *
-     *  focus        PR_TRUE if editable object is receiving focus
-     *               PR_FALSE if losing focus
+     *  contentCache Cache of content
+     *  notification Whole data of the notification
      *  preference   Native widget preference for IME updates
-     *  seqno        Current seqno value on the chrome side
      */
-    prio(urgent) sync NotifyIMEFocus(bool focus)
-      returns (nsIMEUpdatePreference preference, uint32_t seqno);
+    prio(urgent) sync NotifyIMEFocus(ContentCache contentCache,
+                                     IMENotification notification)
+      returns (nsIMEUpdatePreference preference);
 
     /**
      * Notifies chrome that there has been a change in text content
      * One call can encompass both a delete and an insert operation
      * Only called when NotifyIMEFocus returns PR_TRUE for mWantUpdates
      *
-     *  offset       Starting offset of the change
-     *  end          Ending offset of the range deleted
-     *  newEnd       New ending offset after insertion
-     *  causedByComposition true if the change is caused by composition
-     *
-     *  for insertion, offset == end
-     *  for deletion, offset == newEnd
+     *  contentCache Cache of content
+     *  notification Whole data of the notification
      */
-    prio(urgent) async NotifyIMETextChange(uint32_t offset, uint32_t end,
-                                           uint32_t newEnd,
-                                           bool causedByComposition);
+    prio(urgent) async NotifyIMETextChange(ContentCache contentCache,
+                                           IMENotification notification);
 
     /**
      * Notifies chrome that there is a IME compostion rect updated
      *
-     *  offset       The starting offset of this rect
-     *  rect         The rect of first character of selected IME composition
-     *  caretOffset  The offset of caret position
-     *  caretRect    The rect of IME caret
+     *  contentCache Cache of content
      */
-    prio(urgent) async NotifyIMESelectedCompositionRect(uint32_t offset,
-                                                        LayoutDeviceIntRect[] rect,
-                                                        uint32_t caretOffset,
-                                                        LayoutDeviceIntRect caretRect);
+    prio(urgent) async NotifyIMECompositionUpdate(ContentCache contentCache,
+                                                  IMENotification notification);
 
     /**
      * Notifies chrome that there has been a change in selection
      * Only called when NotifyIMEFocus returns PR_TRUE for mWantUpdates
      *
-     *  seqno        Current seqno value on the content side
-     *  anchor       Offset where the selection started
-     *  focus        Offset where the caret is
-     *  writingMode  CSS writing-mode in effect at the focus
-     *  causedByComposition true if the change is caused by composition
+     *  contentCache Cache of content
+     *  notification Whole data of the notification
      */
-    prio(urgent) async NotifyIMESelection(uint32_t seqno, uint32_t anchor,
-                                          uint32_t focus,
-                                          WritingMode writingMode,
-                                          bool causedByComposition);
+    prio(urgent) async NotifyIMESelection(ContentCache contentCache,
+                                          IMENotification notification);
 
     /**
-     * Notifies chrome to refresh its text cache 
+     * Notifies chrome of updating its content cache.
+     * This is useful if content is modified but we don't need to notify IME.
      *
-     *  text         The entire content of the text field
+     *  contentCache Cache of content
      */
-    prio(urgent) async NotifyIMETextHint(nsString text);
+    prio(urgent) async UpdateContentCache(ContentCache contentCache);
 
     /**
      * Notifies IME of mouse button event on a character in focused editor.
@@ -247,37 +228,36 @@ parent:
       returns (bool consumedByIME);
 
     /**
-     * Notifies chrome to currect editor rect
-     *
-     *  rect         Rect of current focused editor
-     */
-    prio(urgent) async NotifyIMEEditorRect(LayoutDeviceIntRect rect);
-
-    /**
      * Notifies chrome to position change
      *
-     *  editorRect   Rect of current focused editor
-     *  compositionRects     Rects of current composition string
+     *  contentCache Cache of content
      */
-    prio(urgent) async NotifyIMEPositionChange(LayoutDeviceIntRect editorRect,
-                                               LayoutDeviceIntRect[] compositionRects,
-                                               LayoutDeviceIntRect caretRect);
+    prio(urgent) async NotifyIMEPositionChange(ContentCache contentCache,
+                                               IMENotification notification);
 
     /**
-     * Instructs chrome to end any pending composition
+     * Requests chrome to commit or cancel composition of IME.
      *
-     *  cancel       true if composition should be cancelled
-     *  noCompositionEvent   true if no composition event is fired by commit or
-     *                       cancel
-     *  composition  Text to commit before ending the composition
+     *  cancel                Set true if composition should be cancelled.
      *
-     *  if cancel is true,
-     *    widget should return empty string for composition
-     *  if cancel is false,
-     *    widget should return the current composition text
+     *  isCommitted           Returns true if the request causes composition
+     *                        being committed synchronously.
+     *  committedString       Returns committed string.  The may be non-empty
+     *                        string even if cancel is true because IME may
+     *                        try to restore selected string which was
+     *                        replaced with the composition.
      */
-    prio(urgent) sync EndIMEComposition(bool cancel)
-                        returns (bool noCompositionEvent, nsString composition);
+    prio(urgent) sync RequestIMEToCommitComposition(bool cancel)
+                        returns (bool isCommitted, nsString committedString);
+
+    /**
+     * OnEventNeedingAckHandled() is called after a child process dispatches a
+     * composition event or a selection event which is sent from the parent
+     * process.
+     *
+     * message      The message value of the handled event.
+     */
+    prio(urgent) async OnEventNeedingAckHandled(EventMessage message);
 
     /**
      * Tells chrome to start plugin IME.  If this results in a string getting
@@ -302,6 +282,16 @@ parent:
     prio(urgent) async SetPluginFocused(bool aFocused);
 
     /**
+     * Set IME candidate window by windowless plugin if plugin has focus.
+     */
+    async SetCandidateWindowForPlugin(int32_t aX, int32_t aY);
+
+    /**
+     *  When plugin event isn't consumed, call this
+     */
+    async DefaultProcOfPluginEvent(WidgetPluginEvent aEvent);
+
+    /**
      * Request that the parent process move focus to the browser's frame. If
      * canRaise is true, the window can be raised if it is inactive.
      */
@@ -316,8 +306,7 @@ parent:
                           nsCString[] disabledCommands);
 
     prio(urgent) sync GetInputContext() returns (int32_t IMEEnabled,
-                                                 int32_t IMEOpen,
-                                                 intptr_t NativeIMEContext);
+                                                 int32_t IMEOpen);
 
     prio(urgent) async SetInputContext(int32_t IMEEnabled,
                                        int32_t IMEOpen,
@@ -330,14 +319,6 @@ parent:
     sync IsParentWindowMainWidgetVisible() returns (bool visible);
 
     /**
-     * Returns the offset of this tab from the top level window
-     * origin in device pixels.
-     *
-     * aPoint offset values in device pixels.
-     */
-    sync GetTabOffset() returns (LayoutDeviceIntPoint aPoint);
-
-    /**
      * Gets the DPI of the screen corresponding to this browser.
      */
     sync GetDPI() returns (float value);
@@ -346,6 +327,11 @@ parent:
      * Gets the default scaling factor of the screen corresponding to this browser.
      */
     sync GetDefaultScale() returns (double value);
+
+    /**
+     * Gets maximum of touch points at current device.
+     */
+    sync GetMaxTouchPoints() returns (uint32_t value);
 
     /**
      * Set the native cursor.
@@ -357,7 +343,29 @@ parent:
      */
     SetCursor(uint32_t value, bool force);
 
-    SetBackgroundColor(nscolor color);
+    /**
+     * Set the native cursor using a custom image.
+     * @param cursorData
+     *   Serialized image data.
+     * @param width
+     *   Width of the image.
+     * @param height
+     *   Height of the image.
+     * @param stride
+     *   Stride used in the image data.
+     * @param format
+     *   Image format, see gfx::SurfaceFormat for possible values.
+     * @param hotspotX
+     *   Horizontal hotspot of the image, as specified by the css cursor property.
+     * @param hotspotY
+     *   Vertical hotspot of the image, as specified by the css cursor property.
+     * @param force
+     *   Invalidate any locally cached cursor settings and force an
+     *   update.
+     */
+    SetCustomCursor(nsCString cursorData, uint32_t width, uint32_t height,
+                    uint32_t stride, uint8_t format,
+                    uint32_t hotspotX, uint32_t hotspotY, bool force);
 
     /**
      * Used to set the current text of the status tooltip.
@@ -412,7 +420,7 @@ parent:
      * Instructs the TabParent to forward a request to zoom to a rect given in
      * CSS pixels. This rect is relative to the document.
      */
-    ZoomToRect(uint32_t aPresShellId, ViewID aViewId, CSSRect aRect);
+    ZoomToRect(uint32_t aPresShellId, ViewID aViewId, CSSRect aRect, uint32_t aFlags);
 
     /**
      * We know for sure that content has either preventDefaulted or not
@@ -442,8 +450,15 @@ parent:
      * The zoom controller code lives on the parent side and so this allows it to
      * have up-to-date zoom constraints.
      */
-    UpdateZoomConstraints(uint32_t aPresShellId, ViewID aViewId, bool aIsRoot,
-                          ZoomConstraints aConstraints);
+    UpdateZoomConstraints(uint32_t aPresShellId, ViewID aViewId,
+                          MaybeZoomConstraints aConstraints);
+
+    /**
+     * Tells the containing widget whether the given input block results in a
+     * swipe. Should be called in response to a WidgetWheelEvent that has
+     * mFlags.mCanTriggerSwipe set on it.
+     */
+    RespondStartSwipeEvent(uint64_t aInputBlockId, bool aStartSwipe);
 
     /**
      * Brings up the auth prompt dialog.
@@ -485,16 +500,17 @@ parent:
                                      uint64_t aObserverId);
     SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                TouchPointerState aPointerState,
-                               IntPoint aPointerScreenPoint,
+                               ScreenIntPoint aPointerScreenPoint,
                                double aPointerPressure,
                                uint32_t aPointerOrientation,
                                uint64_t aObserverId);
-    SynthesizeNativeTouchTap(IntPoint aPointerScreenPoint,
+    SynthesizeNativeTouchTap(ScreenIntPoint aPointerScreenPoint,
                              bool aLongTap,
                              uint64_t aObserverId);
     ClearNativeTouchSequence(uint64_t aObserverId);
 child:
     NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
+
 
 parent:
 
@@ -521,9 +537,16 @@ parent:
     prio(high) sync DispatchMouseEvent(WidgetMouseEvent event);
     prio(high) sync DispatchKeyboardEvent(WidgetKeyboardEvent event);
 
+    // Start an APZ drag on a scrollbar
+    async StartScrollbarDrag(AsyncDragMetrics aDragMetrics);
+
     InvokeDragSession(IPCDataTransfer[] transfers, uint32_t action,
                       nsCString visualData, uint32_t width, uint32_t height,
                       uint32_t stride, uint8_t format, int32_t dragAreaX, int32_t dragAreaY);
+
+    async AudioChannelActivityNotification(uint32_t aAudioChannel,
+                                           bool aActive);
+
 child:
     /**
      * Notify the remote browser that it has been Show()n on this
@@ -541,11 +564,14 @@ child:
          nullable PRenderFrame renderFrame,
          bool parentIsActive);
 
-    LoadURL(nsCString uri, BrowserConfiguration config);
+    LoadURL(nsCString uri, BrowserConfiguration config, ShowInfo info);
+
+    OpenURI(URIParams uri, uint32_t flags);
 
     CacheFileDescriptor(nsString path, FileDescriptor fd);
 
-    UpdateDimensions(IntRect rect, ScreenIntSize size, ScreenOrientation orientation,
+    UpdateDimensions(CSSRect rect, CSSSize size, nsSizeMode sizeMode,
+                     ScreenOrientationInternal orientation,
                      LayoutDeviceIntPoint chromeDisp) compressall;
 
     UpdateFrame(FrameMetrics frame);
@@ -559,6 +585,7 @@ child:
     HandleSingleTap(CSSPoint aPoint, Modifiers aModifiers, ScrollableLayerGuid aGuid);
     HandleLongTap(CSSPoint point, Modifiers aModifiers, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     NotifyAPZStateChange(ViewID aViewId, APZStateChange aChange, int aArg);
+    NotifyFlushComplete();
 
 
     /**
@@ -569,6 +596,18 @@ child:
     Deactivate();
 
     ParentActivated(bool aActivated);
+
+    /**
+     * StopIMEStateManagement() is called when the process loses focus and
+     * should stop managing IME state.
+     */
+    StopIMEStateManagement();
+
+    /**
+     * MenuKeyboardListenerInstalled() is called when menu keyboard listener
+     * is installed in the parent process.
+     */
+    MenuKeyboardListenerInstalled(bool aInstalled);
 
     /**
      * @see nsIDOMWindowUtils sendMouseEvent.
@@ -585,13 +624,28 @@ child:
      * When two consecutive mouse move events would be added to the message queue,
      * they are 'compressed' by dumping the oldest one.
      */
-    RealMouseMoveEvent(WidgetMouseEvent event) compress;
-    RealMouseButtonEvent(WidgetMouseEvent event);
+    RealMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId) compress;
+    /**
+     * Mouse move events with |reason == eSynthesized| are sent via a separate
+     * message because they do not generate DOM 'mousemove' events, and the
+     * 'compress' attribute on RealMouseMoveEvent() could result in a
+     * |reason == eReal| event being dropped in favour of an |eSynthesized|
+     * event, and thus a DOM 'mousemove' event to be lost.
+     */
+    SynthMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    RealMouseButtonEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     RealKeyEvent(WidgetKeyboardEvent event, MaybeNativeKeyBinding keyBinding);
     MouseWheelEvent(WidgetWheelEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
-    RealTouchEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
-    RealTouchMoveEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    RealTouchEvent(WidgetTouchEvent aEvent,
+                   ScrollableLayerGuid aGuid,
+                   uint64_t aInputBlockId,
+                   nsEventStatus aApzResponse);
+    RealTouchMoveEvent(WidgetTouchEvent aEvent,
+                       ScrollableLayerGuid aGuid,
+                       uint64_t aInputBlockId,
+                       nsEventStatus aApzResponse);
     RealDragEvent(WidgetDragEvent aEvent, uint32_t aDragAction, uint32_t aDropEffect);
+    PluginEvent(WidgetPluginEvent aEvent);
 
     /**
      * @see nsIDOMWindowUtils sendKeyEvent.
@@ -652,9 +706,25 @@ child:
     SetUpdateHitRegion(bool aEnabled);
 
     /**
-     * Tell the child to update its docShell's active state.
+     * Update the child side docShell active (resource use) state.
      */
-    SetIsDocShellActive(bool aIsActive);
+    SetDocShellIsActive(bool aIsActive, bool aIsHidden);
+
+    /**
+     * Notify the child that it shouldn't paint the offscreen displayport.
+     * This is useful to speed up interactive operations over async
+     * scrolling performance like resize, tabswitch, pageload.
+     *
+     * Each enable call must be matched with a disable call. The child
+     * will remain in the suppress mode as long as there's
+     * a single unmatched call.
+     */
+    async SuppressDisplayport(bool aEnabled);
+
+    /**
+     * Navigate by key (Tab/Shift+Tab/F6/Shift+f6).
+     */
+    NavigateByKey(bool aForward, bool aForDocumentNavigation);
 
     /**
      * The parent (chrome thread) requests that the child inform it when
@@ -667,8 +737,13 @@ child:
     /**
      * Tell the child that the UI resolution changed for the containing
      * window.
+     * To avoid some sync messages from child to parent, we also send the dpi
+     * and default scale with the notification.
+     * If we don't know the dpi and default scale, we just pass in a negative
+     * value (-1) but in the majority of the cases this saves us from two
+     * sync requests from the child to the parent.
      */
-    UIResolutionChanged();
+    UIResolutionChanged(float dpi, double scale);
 
     /**
      * Tell the child that the system theme has changed, and that a repaint
@@ -686,6 +761,23 @@ child:
      * with another.
      */
     SwappedWithOtherRemoteLoader();
+
+    /**
+     * A potential accesskey was just pressed. Look for accesskey targets
+     * using the list of provided charCodes.
+     *
+     * @param charCode array of potential character codes
+     * @param isTrusted true if triggered by a trusted key event
+     * @param modifierMask indicates which accesskey modifiers are pressed
+     */
+    HandleAccessKey(uint32_t[] charCodes, bool isTrusted, int32_t modifierMask);
+
+    /**
+     * Propagate a refresh to the child process
+     */
+    AudioChannelChangeNotification(uint32_t aAudioChannel,
+                                   float aVolume,
+                                   bool aMuted);
 
 /*
  * FIXME: write protocol!

@@ -30,7 +30,6 @@ function test() {
     alias: null,
     description: "Yahoo Search",
     searchForm: "https://search.yahoo.com/yhs/search?p=&ei=UTF-8&hspart=mozilla",
-    type: Ci.nsISearchEngine.TYPE_MOZSEARCH,
     hidden: false,
     wrappedJSObject: {
       queryCharset: "UTF-8",
@@ -102,6 +101,11 @@ function test() {
               name: "hsimp",
               value: "yhs-005",
               purpose: "contextmenu",
+            },
+            {
+              name: "hsimp",
+              value: "yhs-007",
+              purpose: "system",
             },
           ],
           mozparams: {},

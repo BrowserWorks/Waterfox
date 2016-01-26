@@ -11,10 +11,10 @@ var Ci = Components.interfaces;
 var Cc = Components.classes;
 var Cu = Components.utils;
 
-Cu.import("resource://specialpowers/MockFilePicker.jsm");
-Cu.import("resource://specialpowers/MockColorPicker.jsm");
-Cu.import("resource://specialpowers/MockPermissionPrompt.jsm");
-Cu.import("resource://specialpowers/MockPaymentsUIGlue.jsm");
+Cu.import("chrome://specialpowers/content/MockFilePicker.jsm");
+Cu.import("chrome://specialpowers/content/MockColorPicker.jsm");
+Cu.import("chrome://specialpowers/content/MockPermissionPrompt.jsm");
+Cu.import("chrome://specialpowers/content/MockPaymentsUIGlue.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -44,9 +44,9 @@ function SpecialPowersAPI() {
   this._permissionsUndoStack = [];
   this._pendingPermissions = [];
   this._applyingPermissions = false;
+  this._observingPermissions = false;
   this._fm = null;
   this._cb = null;
-  this._quotaManagerCallbackInfos = null;
 }
 
 function bindDOMWindowUtils(aWindow) {
@@ -606,7 +606,7 @@ SpecialPowersAPI.prototype = {
       // in order to properly log these assertions and notify
       // all usefull log observers
       let window = this.window.get();
-      let parentRunner, repr = function (o) o;
+      let parentRunner, repr = o => o;
       if (window) {
         window = window.wrappedJSObject;
         parentRunner = window.TestRunner;
@@ -641,6 +641,14 @@ SpecialPowersAPI.prototype = {
     };
 
     return this.wrap(chromeScript);
+  },
+
+  importInMainProcess: function (importString) {
+    var message = this._sendSyncMessage("SPImportInMainProcess", importString)[0];
+    if (message.hadError) {
+      throw "SpecialPowers.importInMainProcess failed with error " + message.errorMessage;
+    }
+    return;
   },
 
   get Services() {
@@ -785,8 +793,8 @@ SpecialPowersAPI.prototype = {
           originalValue = Ci.nsICookiePermission.ACCESS_LIMIT_THIRD_PARTY;
         }
 
-        let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(context);
-        if (isSystem) {
+        let principal = this._getPrincipalFromArg(context);
+        if (principal.isSystemPrincipal) {
           continue;
         }
 
@@ -805,14 +813,24 @@ SpecialPowersAPI.prototype = {
           continue;
         }
 
-        var todo = {'op': 'add', 'type': permission.type, 'permission': perm, 'value': perm, 'url': url, 'appId': appId, 'isInBrowserElement': isInBrowserElement};
+        var todo = {'op': 'add',
+                    'type': permission.type,
+                    'permission': perm,
+                    'value': perm,
+                    'principal': principal,
+                    'expireType': (typeof permission.expireType === "number") ?
+                      permission.expireType : 0, // default: EXPIRE_NEVER
+                    'expireTime': (typeof permission.expireTime === "number") ?
+                      permission.expireTime : 0};
+
+        var cleanupTodo = Object.assign({}, todo);
+
         if (permission.remove == true)
           todo.op = 'remove';
 
         pendingPermissions.push(todo);
 
         /* Push original permissions value or clear into cleanup array */
-        var cleanupTodo = {'op': 'add', 'type': permission.type, 'permission': perm, 'value': perm, 'url': url, 'appId': appId, 'isInBrowserElement': isInBrowserElement};
         if (originalValue == Ci.nsIPermissionManager.UNKNOWN_ACTION) {
           cleanupTodo.op = 'remove';
         } else {
@@ -830,12 +848,72 @@ SpecialPowersAPI.prototype = {
       // that the callback checks for. The second delay is because pref
       // observers often defer making their changes by posting an event to the
       // event loop.
+      if (!this._observingPermissions) {
+        this._observingPermissions = true;
+        // If specialpowers is in main-process, then we can add a observer
+        // to get all 'perm-changed' signals. Otherwise, it can't receive
+        // all signals, so we register a observer in specialpowersobserver(in
+        // main-process) and get signals from it.
+        if (this.isMainProcess()) {
+          this.permissionObserverProxy._specialPowersAPI = this;
+          Services.obs.addObserver(this.permissionObserverProxy, "perm-changed", false);
+        } else {
+          this.registerObservers("perm-changed");
+          // bind() is used to set 'this' to SpecialPowersAPI itself.
+          this._addMessageListener("specialpowers-perm-changed", this.permChangedProxy.bind(this));
+        }
+      }
       this._permissionsUndoStack.push(cleanupPermissions);
       this._pendingPermissions.push([pendingPermissions,
 				     this._delayCallbackTwice(callback)]);
       this._applyPermissions();
     } else {
       this._setTimeout(callback);
+    }
+  },
+
+  /*
+   * This function should be used when specialpowers is in content process but
+   * it want to get the notification from chrome space.
+   *
+   * This function will call Services.obs.addObserver in SpecialPowersObserver
+   * (that is in chrome process) and forward the data received to SpecialPowers
+   * via messageManager.
+   * You can use this._addMessageListener("specialpowers-YOUR_TOPIC") to fire
+   * the callback.
+   *
+   * To get the expected data, you should modify
+   * SpecialPowersObserver.prototype._registerObservers.observe. Or the message
+   * you received from messageManager will only contain 'aData' from Service.obs.
+   *
+   * NOTICE: there is no implementation of _addMessageListener in
+   * ChromePowers.js
+   */
+  registerObservers: function(topic) {
+    var msg = {
+      'op': 'add',
+      'observerTopic': topic,
+    };
+    this._sendSyncMessage("SPObserverService", msg);
+  },
+
+  permChangedProxy: function(aMessage) {
+    let permission = aMessage.json.permission;
+    let aData = aMessage.json.aData;
+    this._permissionObserver.observe(permission, aData);
+  },
+
+  permissionObserverProxy: {
+    // 'this' in permChangedObserverProxy is the permChangedObserverProxy
+    // object itself. The '_specialPowersAPI' will be set to the 'SpecialPowersAPI'
+    // object to call the member function in SpecialPowersAPI.
+    _specialPowersAPI: null,
+    observe: function (aSubject, aTopic, aData)
+    {
+      if (aTopic == "perm-changed") {
+        var permission = aSubject.QueryInterface(Ci.nsIPermission);
+        this._specialPowersAPI._permissionObserver.observe(permission, aData);
+      }
     }
   },
 
@@ -847,7 +925,11 @@ SpecialPowersAPI.prototype = {
       this._pendingPermissions.push([this._permissionsUndoStack.pop(), cb]);
       this._applyPermissions();
     } else {
-       this._setTimeout(callback);
+      if (this._observingPermissions) {
+        this._observingPermissions = false;
+        this._removeMessageListener("specialpowers-perm-changed", this.permChangedProxy.bind(this));
+      }
+      this._setTimeout(callback);
     }
   },
 
@@ -870,15 +952,39 @@ SpecialPowersAPI.prototype = {
     _lastPermission: {},
     _callBack: null,
     _nextCallback: null,
-
-    observe: function (aSubject, aTopic, aData)
+    _obsDataMap: {
+      'deleted':'remove',
+      'added':'add'
+    },
+    observe: function (permission, aData)
     {
-      if (aTopic == "perm-changed") {
-        var permission = aSubject.QueryInterface(Ci.nsIPermission);
+      if (this._self._applyingPermissions) {
         if (permission.type == this._lastPermission.type) {
-          Services.obs.removeObserver(this, "perm-changed");
           this._self._setTimeout(this._callback);
           this._self._setTimeout(this._nextCallback);
+          this._callback = null;
+          this._nextCallback = null;
+        }
+      } else {
+        var found = false;
+        for (var i = 0; !found && i < this._self._permissionsUndoStack.length; i++) {
+          var undos = this._self._permissionsUndoStack[i];
+          for (var j = 0; j < undos.length; j++) {
+            var undo = undos[j];
+            if (undo.op == this._obsDataMap[aData] &&
+                undo.principal.originAttributes.appId == permission.principal.originAttributes.appId &&
+                undo.type == permission.type) {
+              // Remove this undo item if it has been done by others(not
+              // specialpowers itself.)
+              undos.splice(j,1);
+              found = true;
+              break;
+            }
+          }
+          if (!undos.length) {
+            // Remove the empty row in permissionsUndoStack
+            this._self._permissionsUndoStack.splice(i, 1);
+          }
         }
       }
     }
@@ -909,8 +1015,6 @@ SpecialPowersAPI.prototype = {
         // Now apply any permissions that may have been queued while we were applying
         self._applyPermissions();
     }
-
-    Services.obs.addObserver(this._permissionObserver, "perm-changed", false);
 
     for (var idx in pendingActions) {
       var perm = pendingActions[idx];
@@ -1135,6 +1239,23 @@ SpecialPowersAPI.prototype = {
     });
   },
 
+  // Force-registering an app in the registry
+  injectApp: function(aAppId, aApp) {
+    this._sendSyncMessage("SPWebAppService", {
+      op: "inject-app",
+      appId: aAppId,
+      app: aApp
+    });
+  },
+
+  // Removing app from the registry
+  rejectApp: function(aAppId) {
+    this._sendSyncMessage("SPWebAppService", {
+      op: "reject-app",
+      appId: aAppId
+    });
+  },
+
   _proxiedObservers: {
     "specialpowers-http-notify-request": function(aMessage) {
       let uri = aMessage.json.uri;
@@ -1331,14 +1452,6 @@ SpecialPowersAPI.prototype = {
   },
   resetConsole: function() {
     Services.console.reset();
-  },
-
-  getMaxLineBoxWidth: function(window) {
-    return this._getMUDV(window).maxLineBoxWidth;
-  },
-
-  setMaxLineBoxWidth: function(window, width) {
-    this._getMUDV(window).changeMaxLineBoxWidth(width);
   },
 
   getFullZoom: function(window) {
@@ -1550,12 +1663,6 @@ SpecialPowersAPI.prototype = {
       deleteCategoryEntry(category, entry, persists);
   },
 
-  copyString: function(str, doc) {
-    Components.classes["@mozilla.org/widget/clipboardhelper;1"].
-      getService(Components.interfaces.nsIClipboardHelper).
-      copyString(str, doc);
-  },
-
   openDialog: function(win, args) {
     return win.openDialog.apply(win, args);
   },
@@ -1634,10 +1741,10 @@ SpecialPowersAPI.prototype = {
     return data.QueryInterface(Components.interfaces.nsISupportsString).data;
   },
 
-  clipboardCopyString: function(preExpectedVal, doc) {
-    var cbHelperSvc = Components.classes["@mozilla.org/widget/clipboardhelper;1"].
-                      getService(Components.interfaces.nsIClipboardHelper);
-    cbHelperSvc.copyString(preExpectedVal, doc);
+  clipboardCopyString: function(str) {
+    Cc["@mozilla.org/widget/clipboardhelper;1"].
+      getService(Ci.nsIClipboardHelper).
+      copyString(str);
   },
 
   supportsSelectionClipboard: function() {
@@ -1710,67 +1817,40 @@ SpecialPowersAPI.prototype = {
                                   .messageManager);
   },
 
-  setFullscreenAllowed: function(document) {
-    Services.perms.addFromPrincipal(document.nodePrincipal, "fullscreen",
-				     Ci.nsIPermissionManager.ALLOW_ACTION);
-    Services.obs.notifyObservers(document, "fullscreen-approved", null);
-  },
-
-  removeFullscreenAllowed: function(document) {
-    Services.perms.removeFromPrincipal(document.nodePrincipal, "fullscreen");
-  },
-
-  _getInfoFromPermissionArg: function(arg) {
-    let url = "";
-    let appId = Ci.nsIScriptSecurityManager.NO_APP_ID;
-    let isInBrowserElement = false;
-    let isSystem = false;
+  _getPrincipalFromArg: function(arg) {
+    let principal;
+    let secMan = Services.scriptSecurityManager;
 
     if (typeof(arg) == "string") {
       // It's an URL.
-      url = Cc["@mozilla.org/network/io-service;1"]
-              .getService(Ci.nsIIOService)
-              .newURI(arg, null, null)
-              .spec;
+      let uri = Services.io.newURI(arg, null, null);
+      principal = secMan.createCodebasePrincipal(uri, {});
     } else if (arg.manifestURL) {
       // It's a thing representing an app.
       let appsSvc = Cc["@mozilla.org/AppsService;1"]
                       .getService(Ci.nsIAppsService)
       let app = appsSvc.getAppByManifestURL(arg.manifestURL);
-
       if (!app) {
         throw "No app for this manifest!";
       }
 
-      appId = appsSvc.getAppLocalIdByManifestURL(arg.manifestURL);
-      url = app.origin;
-      isInBrowserElement = arg.isInBrowserElement || false;
+      principal = app.principal;
     } else if (arg.nodePrincipal) {
       // It's a document.
-      isSystem = (arg.nodePrincipal instanceof Ci.nsIPrincipal) &&
-                 Cc["@mozilla.org/scriptsecuritymanager;1"].
-                 getService(Ci.nsIScriptSecurityManager).
-                 isSystemPrincipal(arg.nodePrincipal);
-      if (!isSystem) {
-        // System principals don't have a URL associated with them, and they
-        // don't really need any permissions to be registered with the
-        // permission manager anyway.
-        url = arg.nodePrincipal.URI.spec;
-        appId = arg.nodePrincipal.appId;
-        isInBrowserElement = arg.nodePrincipal.isInBrowserElement;
-      }
+      // In some tests the arg is a wrapped DOM element, so we unwrap it first.
+      principal = unwrapIfWrapped(arg).nodePrincipal;
     } else {
-      url = arg.url;
-      appId = arg.appId;
-      isInBrowserElement = arg.isInBrowserElement;
+      let uri = Services.io.newURI(arg.url, null, null);
+      let attrs = arg.originAttributes || {};
+      principal = secMan.createCodebasePrincipal(uri, attrs);
     }
 
-    return [ url, appId, isInBrowserElement, isSystem ];
+    return principal;
   },
 
-  addPermission: function(type, allow, arg) {
-    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
-    if (isSystem) {
+  addPermission: function(type, allow, arg, expireType, expireTime) {
+    let principal = this._getPrincipalFromArg(arg);
+    if (principal.isSystemPrincipal) {
       return; // nothing to do
     }
 
@@ -1786,60 +1866,55 @@ SpecialPowersAPI.prototype = {
       'op': 'add',
       'type': type,
       'permission': permission,
-      'url': url,
-      'appId': appId,
-      'isInBrowserElement': isInBrowserElement
+      'principal': principal,
+      'expireType': (typeof expireType === "number") ? expireType : 0,
+      'expireTime': (typeof expireTime === "number") ? expireTime : 0
     };
 
     this._sendSyncMessage('SPPermissionManager', msg);
   },
 
   removePermission: function(type, arg) {
-    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
-    if (isSystem) {
+    let principal = this._getPrincipalFromArg(arg);
+    if (principal.isSystemPrincipal) {
       return; // nothing to do
     }
 
     var msg = {
       'op': 'remove',
       'type': type,
-      'url': url,
-      'appId': appId,
-      'isInBrowserElement': isInBrowserElement
+      'principal': principal
     };
 
     this._sendSyncMessage('SPPermissionManager', msg);
   },
 
   hasPermission: function (type, arg) {
-    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
-    if (isSystem) {
+    let principal = this._getPrincipalFromArg(arg);
+    if (principal.isSystemPrincipal) {
       return true; // system principals have all permissions
     }
 
     var msg = {
       'op': 'has',
       'type': type,
-      'url': url,
-      'appId': appId,
-      'isInBrowserElement': isInBrowserElement
+      'principal': principal
     };
 
     return this._sendSyncMessage('SPPermissionManager', msg)[0];
   },
+
   testPermission: function (type, value, arg) {
-    let [url, appId, isInBrowserElement, isSystem] = this._getInfoFromPermissionArg(arg);
-    if (isSystem) {
+    let principal = this._getPrincipalFromArg(arg);
+    if (principal.isSystemPrincipal) {
       return true; // system principals have all permissions
     }
 
     var msg = {
       'op': 'test',
       'type': type,
-      'value': value, 
-      'url': url,
-      'appId': appId,
-      'isInBrowserElement': isInBrowserElement
+      'value': value,
+      'principal': principal
     };
     return this._sendSyncMessage('SPPermissionManager', msg)[0];
   },
@@ -1864,67 +1939,8 @@ SpecialPowersAPI.prototype = {
     this._sendSyncMessage('SPObserverService', msg);
   },
 
-  clearStorageForURI: function(uri, callback, appId, inBrowser) {
-    this._quotaManagerRequest('clear', uri, appId, inBrowser, callback);
-  },
-
-  getStorageUsageForURI: function(uri, callback, appId, inBrowser) {
-    this._quotaManagerRequest('getUsage', uri, appId, inBrowser, callback);
-  },
-
-  _quotaManagerRequest: function(op, uri, appId, inBrowser, callback) {
-    const messageTopic = "SPQuotaManager";
-
-    if (uri instanceof Ci.nsIURI) {
-      uri = uri.spec;
-    }
-
-    const id = Cc["@mozilla.org/uuid-generator;1"]
-                 .getService(Ci.nsIUUIDGenerator)
-                 .generateUUID()
-                 .toString();
-
-    let callbackInfo = { id: id, callback: callback };
-
-    if (this._quotaManagerCallbackInfos) {
-      callbackInfo.listener = this._quotaManagerCallbackInfos[0].listener;
-      this._quotaManagerCallbackInfos.push(callbackInfo)
-    } else {
-      callbackInfo.listener = function(msg) {
-        msg = msg.data;
-        for (let index in this._quotaManagerCallbackInfos) {
-          let callbackInfo = this._quotaManagerCallbackInfos[index];
-          if (callbackInfo.id == msg.id) {
-            if (this._quotaManagerCallbackInfos.length > 1) {
-              this._quotaManagerCallbackInfos.splice(index, 1);
-            } else {
-              this._quotaManagerCallbackInfos = null;
-              this._removeMessageListener(messageTopic, callbackInfo.listener);
-            }
-
-            if ('usage' in msg) {
-              callbackInfo.callback(msg.usage, msg.fileUsage);
-            } else {
-              callbackInfo.callback();
-            }
-          }
-        }
-      }.bind(this);
-
-      this._addMessageListener(messageTopic, callbackInfo.listener);
-      this._quotaManagerCallbackInfos = [ callbackInfo ];
-    }
-
-    let msg = { op: op, uri: uri, appId: appId, inBrowser: inBrowser, id: id };
-    this._sendAsyncMessage(messageTopic, msg);
-  },
-
   createDOMFile: function(path, options) {
     return new File(path, options);
-  },
-
-  startPeriodicServiceWorkerUpdates: function() {
-    return this._sendSyncMessage('SPPeriodicServiceWorkerUpdates', {});
   },
 
   removeAllServiceWorkerData: function() {
@@ -1933,6 +1949,72 @@ SpecialPowersAPI.prototype = {
 
   removeServiceWorkerDataForExampleDomain: function() {
     this.notifyObserversInParentProcess(null, "browser:purge-domain-data", "example.com");
+  },
+
+  cleanUpSTSData: function(origin, flags) {
+    return this._sendSyncMessage('SPCleanUpSTSData', {origin: origin, flags: flags || 0});
+  },
+
+  loadExtension: function(id, ext, handler) {
+    if (!id) {
+      let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+      id = uuidGenerator.generateUUID().number;
+    }
+
+    let resolveStartup, resolveUnload, rejectStartup;
+    let startupPromise = new Promise((resolve, reject) => {
+      resolveStartup = resolve;
+      rejectStartup = reject;
+    });
+    let unloadPromise = new Promise(resolve => { resolveUnload = resolve; });
+
+    handler = Cu.waiveXrays(handler);
+    ext = Cu.waiveXrays(ext);
+
+    let sp = this;
+    let extension = {
+      id,
+
+      startup() {
+        sp._sendAsyncMessage("SPStartupExtension", {id});
+        return startupPromise;
+      },
+
+      unload() {
+        sp._sendAsyncMessage("SPUnloadExtension", {id});
+        return unloadPromise;
+      },
+
+      sendMessage(...args) {
+        sp._sendAsyncMessage("SPExtensionMessage", {id, args});
+      },
+    };
+
+    this._sendAsyncMessage("SPLoadExtension", {ext, id});
+
+    let listener = (msg) => {
+      if (msg.data.id == id) {
+        if (msg.data.type == "extensionStarted") {
+          resolveStartup();
+        } else if (msg.data.type == "extensionFailed") {
+          rejectStartup("startup failed");
+        } else if (msg.data.type == "extensionUnloaded") {
+          this._removeMessageListener("SPExtensionMessage", listener);
+          resolveUnload();
+        } else if (msg.data.type in handler) {
+          handler[msg.data.type](...msg.data.args);
+        } else {
+          dump(`Unexpected: ${msg.data.type}\n`);
+        }
+      }
+    };
+
+    this._addMessageListener("SPExtensionMessage", listener);
+    return extension;
+  },
+
+  invalidateExtensionStorageCache: function() {
+    this.notifyObserversInParentProcess(null, "extension-invalidate-storage-cache", "");
   },
 };
 

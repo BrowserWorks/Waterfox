@@ -49,7 +49,7 @@ mozSpellChecker::~mozSpellChecker()
   mPersonalDictionary = nullptr;
 
   if (mEngine) {
-    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Content);
+    MOZ_ASSERT(XRE_IsContentProcess());
     mEngine->Send__delete__(mEngine);
     MOZ_ASSERT(!mEngine);
   }
@@ -59,7 +59,7 @@ nsresult
 mozSpellChecker::Init()
 {
   mSpellCheckingEngine = nullptr;
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     mozilla::dom::ContentChild* contentChild = mozilla::dom::ContentChild::GetSingleton();
     MOZ_ASSERT(contentChild);
     mEngine = new RemoteSpellcheckEngineChild(this);
@@ -130,7 +130,7 @@ mozSpellChecker::CheckWord(const nsAString &aWord, bool *aIsMisspelled, nsTArray
   nsresult result;
   bool correct;
 
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     nsString wordwrapped = nsString(aWord);
     bool rv;
     if (aSuggestions) {
@@ -153,9 +153,10 @@ mozSpellChecker::CheckWord(const nsAString &aWord, bool *aIsMisspelled, nsTArray
       char16_t **words;
       
       result = mSpellCheckingEngine->Suggest(PromiseFlatString(aWord).get(), &words, &count);
-      NS_ENSURE_SUCCESS(result, result); 
+      NS_ENSURE_SUCCESS(result, result);
+      nsString* suggestions = aSuggestions->AppendElements(count);
       for(i=0;i<count;i++){
-        aSuggestions->AppendElement(nsDependentString(words[i]));
+	suggestions[i].Assign(words[i]);
       }
       
       if (count)
@@ -309,7 +310,7 @@ mozSpellChecker::GetPersonalDictionary(nsTArray<nsString> *aWordList)
 NS_IMETHODIMP
 mozSpellChecker::GetDictionaryList(nsTArray<nsString> *aDictionaryList)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     ContentChild *child = ContentChild::GetSingleton();
     child->GetAvailableDictionaries(*aDictionaryList);
     return NS_OK;
@@ -357,7 +358,7 @@ mozSpellChecker::GetDictionaryList(nsTArray<nsString> *aDictionaryList)
 NS_IMETHODIMP
 mozSpellChecker::GetCurrentDictionary(nsAString &aDictionary)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     aDictionary = mCurrentDictionary;
     return NS_OK;
   }
@@ -376,7 +377,7 @@ mozSpellChecker::GetCurrentDictionary(nsAString &aDictionary)
 NS_IMETHODIMP
 mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
 {
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     nsString wrappedDict = nsString(aDictionary);
     bool isSuccess;
     mEngine->SendSetDictionary(wrappedDict, &isSuccess);
@@ -390,7 +391,7 @@ mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
   }
 
   // Calls to mozISpellCheckingEngine::SetDictionary might destroy us
-  nsRefPtr<mozSpellChecker> kungFuDeathGrip = this;
+  RefPtr<mozSpellChecker> kungFuDeathGrip = this;
 
   mSpellCheckingEngine = nullptr;
 
@@ -426,31 +427,6 @@ mozSpellChecker::SetCurrentDictionary(const nsAString &aDictionary)
 
   // We could not find any engine with the requested dictionary
   return NS_ERROR_NOT_AVAILABLE;
-}
-
-NS_IMETHODIMP 
-mozSpellChecker::CheckCurrentDictionary()
-{
-  // If the current dictionary has been uninstalled, we need to stop using it.
-  // This happens when there is a current engine, but that engine has no
-  // current dictionary.
-
-  if (!mSpellCheckingEngine) {
-    // We didn't have a current dictionary
-    return NS_OK;
-  }
-
-  nsXPIDLString dictname;
-  mSpellCheckingEngine->GetDictionary(getter_Copies(dictname));
-
-  if (!dictname.IsEmpty()) {
-    // We still have a current dictionary
-    return NS_OK;
-  }
-
-  // We had a current dictionary, but it has gone, so we cannot use it anymore.
-  mSpellCheckingEngine = nullptr;
-  return NS_OK;
 }
 
 nsresult
@@ -536,7 +512,7 @@ mozSpellChecker::GetCurrentBlockIndex(nsITextServicesDocument *aDoc, int32_t *ou
 nsresult
 mozSpellChecker::GetEngineList(nsCOMArray<mozISpellCheckingEngine>* aSpellCheckingEngines)
 {
-  MOZ_ASSERT(XRE_GetProcessType() != GeckoProcessType_Content);
+  MOZ_ASSERT(!XRE_IsContentProcess());
 
   nsresult rv;
   bool hasMoreEngines;

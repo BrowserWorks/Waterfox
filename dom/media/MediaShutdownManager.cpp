@@ -8,23 +8,19 @@
 #include "nsContentUtils.h"
 #include "mozilla/StaticPtr.h"
 #include "MediaDecoder.h"
-#include "SharedThreadPool.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* gMediaDecoderLog;
-#define DECODER_LOG(type, msg) PR_LOG(gMediaDecoderLog, type, msg)
-#else
-#define DECODER_LOG(type, msg)
-#endif
+extern LazyLogModule gMediaDecoderLog;
+#define DECODER_LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
 
 NS_IMPL_ISUPPORTS(MediaShutdownManager, nsIObserver)
 
 MediaShutdownManager::MediaShutdownManager()
-  : mIsObservingShutdown(false),
-    mIsDoingXPCOMShutDown(false)
+  : mIsObservingShutdown(false)
+  , mIsDoingXPCOMShutDown(false)
+  , mCompletedShutdown(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(MediaShutdownManager);
@@ -104,20 +100,13 @@ MediaShutdownManager::Observe(nsISupports *aSubjet,
   return NS_OK;
 }
 
-static PLDHashOperator
-ShutdownMediaDecoder(nsRefPtrHashKey<MediaDecoder>* aEntry, void*)
-{
-  aEntry->GetKey()->Shutdown();
-  return PL_DHASH_REMOVE;
-}
-
 void
 MediaShutdownManager::Shutdown()
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(sInstance);
 
-  DECODER_LOG(PR_LOG_DEBUG, ("MediaShutdownManager::Shutdown() start..."));
+  DECODER_LOG(LogLevel::Debug, ("MediaShutdownManager::Shutdown() start..."));
 
   // Mark that we're shutting down, so that Unregister(*) calls don't remove
   // hashtable entries. If Unregsiter(*) was to remove from the hash table,
@@ -126,12 +115,34 @@ MediaShutdownManager::Shutdown()
 
   // Iterate over the decoders and shut them down, and remove them from the
   // hashtable.
-  mDecoders.EnumerateEntries(ShutdownMediaDecoder, nullptr);
+  nsTArray<RefPtr<ShutdownPromise>> promises;
+  for (auto iter = mDecoders.Iter(); !iter.Done(); iter.Next()) {
+    promises.AppendElement(iter.Get()->GetKey()->Shutdown()->Then(
+      // We want to ensure that all shutdowns have completed, regardless
+      // of the ShutdownPromise being resolved or rejected. At this stage,
+      // a MediaDecoder's ShutdownPromise is only ever resolved, but as this may
+      // change in the future we want to avoid nasty surprises, so we wrap the
+      // ShutdownPromise into our own that will only ever be resolved.
+      AbstractThread::MainThread(), __func__,
+      []() -> RefPtr<ShutdownPromise> {
+        return ShutdownPromise::CreateAndResolve(true, __func__);
+      },
+      []() -> RefPtr<ShutdownPromise> {
+        return ShutdownPromise::CreateAndResolve(true, __func__);
+      })->CompletionPromise());
+    iter.Remove();
+  }
 
-  // Ensure all media shared thread pools are shutdown. This joins with all
-  // threads in the state machine thread pool, the decoder thread pool, and
-  // any others.
-  SharedThreadPool::SpinUntilShutdown();
+  if (!promises.IsEmpty()) {
+    ShutdownPromise::All(AbstractThread::MainThread(), promises)
+      ->Then(AbstractThread::MainThread(), __func__, this,
+             &MediaShutdownManager::FinishShutdown,
+             &MediaShutdownManager::FinishShutdown);
+    // Wait for all decoders to complete their async shutdown...
+    while (!mCompletedShutdown) {
+      NS_ProcessNextEvent(NS_GetCurrentThread(), true);
+    }
+  }
 
   // Remove the MediaShutdownManager instance from the shutdown observer
   // list.
@@ -143,7 +154,14 @@ MediaShutdownManager::Shutdown()
   // up after it finishes its notifications.
   sInstance = nullptr;
 
-  DECODER_LOG(PR_LOG_DEBUG, ("MediaShutdownManager::Shutdown() end."));
+  DECODER_LOG(LogLevel::Debug, ("MediaShutdownManager::Shutdown() end."));
+}
+
+void
+MediaShutdownManager::FinishShutdown()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mCompletedShutdown = true;
 }
 
 } // namespace mozilla

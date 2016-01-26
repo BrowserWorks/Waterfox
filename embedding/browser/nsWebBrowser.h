@@ -122,10 +122,11 @@ protected:
   // nsIWidgetListener
   virtual void WindowRaised(nsIWidget* aWidget);
   virtual void WindowLowered(nsIWidget* aWidget);
-  virtual bool PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion) override;
+  virtual bool PaintWindow(nsIWidget* aWidget,
+                           mozilla::LayoutDeviceIntRegion aRegion) override;
 
 protected:
-  nsRefPtr<nsDocShellTreeOwner> mDocShellTreeOwner;
+  RefPtr<nsDocShellTreeOwner> mDocShellTreeOwner;
   nsCOMPtr<nsIDocShell> mDocShell;
   nsCOMPtr<nsIInterfaceRequestor> mDocShellAsReq;
   nsCOMPtr<nsIBaseWindow> mDocShellAsWin;
@@ -156,7 +157,7 @@ protected:
   uint32_t mPersistFlags;
 
   // stream
-  nsRefPtr<nsEmbedStream> mStream;
+  RefPtr<nsEmbedStream> mStream;
 
   // Weak Reference interfaces...
   nsIWidget* mParentWidget;

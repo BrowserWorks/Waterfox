@@ -18,7 +18,7 @@
 #define __ClearKeyPersistence_h__
 
 #include <string>
-#include "gmp-decryption.h"
+#include "gmp-api/gmp-decryption.h"
 
 class ClearKeySessionManager;
 
@@ -31,6 +31,7 @@ public:
   static bool DeferCreateSessionIfNotReady(ClearKeySessionManager* aInstance,
                                            uint32_t aCreateSessionToken,
                                            uint32_t aPromiseId,
+                                           const std::string& aInitDataType,
                                            const uint8_t* aInitData,
                                            uint32_t aInitDataSize,
                                            GMPSessionType aSessionType);

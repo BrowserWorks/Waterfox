@@ -46,7 +46,7 @@ CustomEvent::Constructor(const GlobalObject& aGlobal,
                          ErrorResult& aRv)
 {
   nsCOMPtr<mozilla::dom::EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<CustomEvent> e = new CustomEvent(t, nullptr, nullptr);
+  RefPtr<CustomEvent> e = new CustomEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
   JS::Rooted<JS::Value> detail(aGlobal.Context(), aParam.mDetail);
   e->InitCustomEvent(aGlobal.Context(), aType, aParam.mBubbles, aParam.mCancelable, detail, aRv);
@@ -66,8 +66,7 @@ CustomEvent::InitCustomEvent(const nsAString& aType,
                              bool aCancelable,
                              nsIVariant* aDetail)
 {
-  nsresult rv = Event::InitEvent(aType, aCanBubble, aCancelable);
-  NS_ENSURE_SUCCESS(rv, rv);
+  Event::InitEvent(aType, aCanBubble, aCancelable);
   mDetail = aDetail;
   return NS_OK;
 }
@@ -89,7 +88,7 @@ CustomEvent::InitCustomEvent(JSContext* aCx,
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
-  aRv = InitCustomEvent(aType, aCanBubble, aCancelable, detail);
+  InitCustomEvent(aType, aCanBubble, aCancelable, detail);
 }
 
 NS_IMETHODIMP
@@ -111,14 +110,12 @@ CustomEvent::GetDetail(JSContext* aCx,
   VariantToJsval(aCx, mDetail, aRetval);
 }
 
-nsresult
-NS_NewDOMCustomEvent(nsIDOMEvent** aInstancePtrResult,
-                     mozilla::dom::EventTarget* aOwner,
+already_AddRefed<CustomEvent>
+NS_NewDOMCustomEvent(EventTarget* aOwner,
                      nsPresContext* aPresContext,
                      mozilla::WidgetEvent* aEvent)
 {
-  CustomEvent* it = new CustomEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<CustomEvent> it =
+    new CustomEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

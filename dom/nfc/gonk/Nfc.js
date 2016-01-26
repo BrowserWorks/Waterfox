@@ -36,9 +36,9 @@ Cu.import("resource://gre/modules/systemlibs.js");
 const NFC_ENABLED = libcutils.property_get("ro.moz.nfc.enabled", "false") === "true";
 
 // set to true in nfc_consts.js to see debug messages
-let DEBUG = NFC.DEBUG_NFC;
+var DEBUG = NFC.DEBUG_NFC;
 
-let debug;
+var debug;
 function updateDebug() {
   if (DEBUG || NFC.DEBUG_NFC) {
     debug = function (s) {
@@ -57,6 +57,7 @@ const NFC_CID =
 const NFC_IPC_MSG_ENTRIES = [
   { permission: null,
     messages: ["NFC:AddEventListener",
+               "NFC:RemoveEventListener",
                "NFC:QueryInfo",
                "NFC:CallDefaultFoundHandler",
                "NFC:CallDefaultLostHandler"] },
@@ -78,7 +79,7 @@ const NFC_IPC_MSG_ENTRIES = [
                "NFC:NotifyUserAcceptedP2P",
                "NFC:NotifySendFileStatus",
                "NFC:ChangeRFState",
-               "NFC:SetFocusApp"] }
+               "NFC:SetFocusTab"] }
 ];
 
 // Should be consistent with NfcRequestType defined in NfcOptions.webidl.
@@ -147,7 +148,7 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
 
     eventListeners: {},
 
-    focusApp: NFC.SYSTEM_APP_ID,
+    focusId: NFC.SYSTEM_APP_ID,
 
     init: function init(nfc) {
       this.nfc = nfc;
@@ -213,6 +214,13 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
       });
     },
 
+    notifyFocusTab: function notifyFocusTab(options) {
+      let tabId = this.getFocusTabId();
+      options.tabId = tabId;
+
+      this.notifyDOMEvent(this.eventListeners[tabId], options);
+    },
+
     notifyDOMEvent: function notifyDOMEvent(target, options) {
       if (!target) {
         dump("invalid target");
@@ -222,25 +230,30 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
       target.sendAsyncMessage("NFC:DOMEvent", options);
     },
 
-    setFocusApp: function setFocusApp(id, isFocus) {
+    getFocusTabId: function getFocusTabId() {
+      return this.eventListeners[this.focusId] ? this.focusId
+                                               : NFC.SYSTEM_APP_ID;
+    },
+
+    setFocusTab: function setFocusTab(id, isFocus) {
       // if calling setNFCFocus(true) on the browser-element which is already
       // focused, or calling setNFCFocus(false) on the browser-element which has
       // lost focus already, ignore.
-      if (isFocus == (id == this.focusApp)) {
+      if (isFocus == (id == this.focusId)) {
         return;
       }
 
-      if (this.focusApp != NFC.SYSTEM_APP_ID) {
-        this.onFocusChanged(this.focusApp, false);
+      if (this.focusId != NFC.SYSTEM_APP_ID) {
+        this.onFocusChanged(this.focusId, false);
       }
 
       if (isFocus) {
         // Now we only support one focus app.
-        this.focusApp = id;
-        this.onFocusChanged(this.focusApp, true);
-      } else if (this.focusApp == id){
-        // Set focusApp to SystemApp means currently there is no foreground app.
-        this.focusApp = NFC.SYSTEM_APP_ID;
+        this.focusId = id;
+        this.onFocusChanged(this.focusId, true);
+      } else if (this.focusId == id){
+        // Set focusId to SystemApp means currently there is no foreground app.
+        this.focusId = NFC.SYSTEM_APP_ID;
       }
     },
 
@@ -255,10 +268,14 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
     removeEventListener: function removeEventListener(target) {
       for (let id in this.eventListeners) {
         if (target == this.eventListeners[id]) {
-          delete this.eventListeners[id];
+          this.removeEventListenerById(id);
           break;
         }
       }
+    },
+
+    removeEventListenerById: function removeEventListenerById(id) {
+      delete this.eventListeners[id];
     },
 
     checkP2PRegistration: function checkP2PRegistration(message) {
@@ -276,13 +293,13 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
     notifyUserAcceptedP2P: function notifyUserAcceptedP2P(appId) {
       let target = this.peerTargets[appId];
       let sessionToken = SessionHelper.getCurrentP2PToken();
-      let isValid = (sessionToken != null) && (target != null);
-      if (!isValid) {
+      if (!sessionToken || !target) {
         debug("Peer already lost or " + appId + " is not a registered PeerReadytarget");
         return;
       }
 
-      this.notifyDOMEvent(target, {event: NFC.PEER_EVENT_READY,
+      this.notifyDOMEvent(target, {tabId: this.getFocusTabId(),
+                                   event: NFC.PEER_EVENT_READY,
                                    sessionToken: sessionToken});
     },
 
@@ -307,47 +324,38 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
     },
 
     onTagFound: function onTagFound(message) {
-      let target = this.eventListeners[this.focusApp] ||
-                   this.eventListeners[NFC.SYSTEM_APP_ID];
-
       message.event = NFC.TAG_EVENT_FOUND;
-
-      this.notifyDOMEvent(target, message);
-
+      this.notifyFocusTab(message);
       delete message.event;
     },
 
     onTagLost: function onTagLost(sessionToken) {
-      let target = this.eventListeners[this.focusApp] ||
-                   this.eventListeners[NFC.SYSTEM_APP_ID];
-
-      this.notifyDOMEvent(target, { event: NFC.TAG_EVENT_LOST,
-                                    sessionToken: sessionToken });
+      this.notifyFocusTab({ event: NFC.TAG_EVENT_LOST,
+                            sessionToken: sessionToken });
     },
 
     onPeerEvent: function onPeerEvent(eventType, sessionToken) {
-      let target = this.eventListeners[this.focusApp] ||
-                   this.eventListeners[NFC.SYSTEM_APP_ID];
-
-      this.notifyDOMEvent(target, { event: eventType,
-                                    sessionToken: sessionToken });
+      this.notifyFocusTab({ event: eventType,
+                            sessionToken: sessionToken });
     },
 
     onRFStateChanged: function onRFStateChanged(rfState) {
       for (let id in this.eventListeners) {
         this.notifyDOMEvent(this.eventListeners[id],
-                            { event: NFC.RF_EVENT_STATE_CHANGED,
+                            { tabId: id,
+                              event: NFC.RF_EVENT_STATE_CHANGED,
                               rfState: rfState });
       }
     },
 
-    onFocusChanged: function onFocusChanged(focusApp, focus) {
-      let target = this.eventListeners[focusApp];
+    onFocusChanged: function onFocusChanged(focusId, focus) {
+      let target = this.eventListeners[focusId];
       if (!target) {
         return;
       }
 
-      this.notifyDOMEvent(target, { event: NFC.FOCUS_CHANGED,
+      this.notifyDOMEvent(target, { tabId: this.focusId,
+                                    event: NFC.FOCUS_CHANGED,
                                     focus: focus });
     },
 
@@ -378,11 +386,14 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
       }
 
       switch (message.name) {
-        case "NFC:SetFocusApp":
-          this.setFocusApp(message.data.tabId, message.data.isFocus);
+        case "NFC:SetFocusTab":
+          this.setFocusTab(message.data.tabId, message.data.isFocus);
           return null;
         case "NFC:AddEventListener":
           this.addEventListener(message.target, message.data.tabId);
+          return null;
+        case "NFC:RemoveEventListener":
+          this.removeEventListenerById(message.data.tabId);
           return null;
         case "NFC:RegisterPeerReadyTarget":
           this.registerPeerReadyTarget(message.target, message.data.appId);
@@ -448,7 +459,7 @@ XPCOMUtils.defineLazyGetter(this, "gMessageManager", function () {
   };
 });
 
-let SessionHelper = {
+var SessionHelper = {
   tokenMap: {},
 
   registerSession: function registerSession(id, isP2P) {

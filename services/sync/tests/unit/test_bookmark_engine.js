@@ -71,7 +71,7 @@ add_test(function test_ID_caching() {
     _("New mobile ID: " + newMobileID);
   } catch (ex) {
     err = ex;
-    _("Error: " + Utils.exceptionStr(err));
+    _("Error: " + Log.exceptionStr(err));
   }
 
   do_check_true(!err);
@@ -220,14 +220,14 @@ add_task(function test_restorePromptsReupload() {
       engine.sync();
     } catch(ex) {
       error = ex;
-      _("Got error: " + Utils.exceptionStr(ex));
+      _("Got error: " + Log.exceptionStr(ex));
     }
     do_check_true(!error);
 
     _("Verify that there's only one bookmark on the server, and it's Thunderbird.");
     // Of course, there's also the Bookmarks Toolbar and Bookmarks Menu...
     let wbos = collection.keys(function (id) {
-      return ["menu", "toolbar", "mobile", folder1_guid].indexOf(id) == -1;
+      return ["menu", "toolbar", "mobile", "unfiled", folder1_guid].indexOf(id) == -1;
     });
     do_check_eq(wbos.length, 1);
     do_check_eq(wbos[0], bmk2_guid);
@@ -257,14 +257,14 @@ add_task(function test_restorePromptsReupload() {
     do_check_true(found);
 
     _("Have the correct number of IDs locally, too.");
-    do_check_eq(count, ["menu", "toolbar", folder1_id, bmk1_id].length);
+    do_check_eq(count, ["menu", "toolbar", "mobile", "unfiled", folder1_id, bmk1_id].length);
 
     _("Sync again. This'll wipe bookmarks from the server.");
     try {
       engine.sync();
     } catch(ex) {
       error = ex;
-      _("Got error: " + Utils.exceptionStr(ex));
+      _("Got error: " + Log.exceptionStr(ex));
     }
     do_check_true(!error);
 
@@ -277,7 +277,9 @@ add_task(function test_restorePromptsReupload() {
     let folderWBOs   = payloads.filter(function (wbo) {
                          return ((wbo.type == "folder") &&
                                  (wbo.id   != "menu") &&
-                                 (wbo.id   != "toolbar"));
+                                 (wbo.id   != "toolbar") &&
+                                 (wbo.id   != "unfiled") &&
+                                 (wbo.id   != "mobile"));
                        });
 
     do_check_eq(bookmarkWBOs.length, 1);

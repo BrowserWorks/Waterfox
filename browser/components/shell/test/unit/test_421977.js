@@ -1,6 +1,6 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
 
 const GCONF_BG_COLOR_KEY = "/desktop/gnome/background/primary_color";
 
@@ -20,7 +20,7 @@ function colorToHex(aColor) {
   var g = (aColor & gMask) >> 8;
   var b = (aColor & bMask);
 
-  return "#" + [r, g, b].map(function(aInt)
+  return "#" + [r, g, b].map(aInt =>
                               aInt.toString(16).replace(/^(.)$/, "0$1"))
                              .join("").toUpperCase();
 }

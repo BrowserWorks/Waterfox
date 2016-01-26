@@ -10,9 +10,13 @@
 
 namespace mozilla {
 
+namespace dom {
+  class BlobImpl;
+} // namespace dom
+
 namespace layers {
   class Image;
-}
+} // namespace layers
 
 class CameraControlListener
 {
@@ -60,6 +64,10 @@ public:
   {
     kRecorderStopped,
     kRecorderStarted,
+    kRecorderPaused,
+    kRecorderResumed,
+    kPosterCreated,
+    kPosterFailed,
 #ifdef MOZ_B2G_CAMERA
     kFileSizeLimitReached,
     kVideoLengthLimitReached,
@@ -91,6 +99,7 @@ public:
   virtual void OnAutoFocusMoving(bool aIsMoving) { }
   virtual void OnTakePictureComplete(const uint8_t* aData, uint32_t aLength, const nsAString& aMimeType) { }
   virtual void OnFacesDetected(const nsTArray<ICameraControl::Face>& aFaces) { }
+  virtual void OnPoster(dom::BlobImpl* aBlobImpl) { }
 
   enum UserContext
   {
@@ -102,6 +111,8 @@ public:
     kInTakePicture,
     kInStartRecording,
     kInStopRecording,
+    kInPauseRecording,
+    kInResumeRecording,
     kInSetConfiguration,
     kInStartPreview,
     kInStopPreview,

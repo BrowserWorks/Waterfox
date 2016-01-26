@@ -10,7 +10,6 @@
 #include "IccManager.h"
 #include "nsIDOMClassInfo.h"
 #include "nsIIccInfo.h"
-#include "nsRadioInterfaceLayer.h"
 
 using namespace mozilla::dom;
 
@@ -21,15 +20,6 @@ IccListener::IccListener(IccManager* aIccManager, uint32_t aClientId)
   , mIccManager(aIccManager)
 {
   MOZ_ASSERT(mIccManager);
-
-  // TODO: Bug 1114938, Refactor STK in MozIcc.webidl with IPDL.
-  //       Remove the registration to IccProvider.
-  mProvider = do_GetService(NS_RILCONTENTHELPER_CONTRACTID);
-
-  if (!mProvider) {
-    NS_WARNING("Could not acquire nsIIccProvider!");
-    return;
-  }
 
   nsCOMPtr<nsIIccService> iccService = do_GetService(ICC_SERVICE_CONTRACTID);
 
@@ -50,17 +40,13 @@ IccListener::IccListener(IccManager* aIccManager, uint32_t aClientId)
     nsString iccId;
     iccInfo->GetIccid(iccId);
     if (!iccId.IsEmpty()) {
-      mIcc = new Icc(mIccManager->GetOwner(), mClientId, mHandler, iccInfo);
+      mIcc = new Icc(mIccManager->GetOwner(), mHandler, iccInfo);
     }
   }
 
   DebugOnly<nsresult> rv = mHandler->RegisterListener(this);
   NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
                    "Failed registering icc listener with Icc Handler");
-
-  rv = mProvider->RegisterIccMsg(mClientId, this);
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
-                   "Failed registering icc messages with provider");
 }
 
 IccListener::~IccListener()
@@ -71,13 +57,6 @@ IccListener::~IccListener()
 void
 IccListener::Shutdown()
 {
-  // TODO: Bug 1114938, Refactor STK in MozIcc.webidl with IPDL.
-  //       Remove the unregistration to IccProvider.
-  if (mProvider) {
-    mProvider->UnregisterIccMsg(mClientId, this);
-    mProvider = nullptr;
-  }
-
   if (mHandler) {
     mHandler->UnregisterListener(this);
     mHandler = nullptr;
@@ -94,13 +73,13 @@ IccListener::Shutdown()
 // nsIIccListener
 
 NS_IMETHODIMP
-IccListener::NotifyStkCommand(const nsAString& aMessage)
+IccListener::NotifyStkCommand(nsIStkProactiveCmd *aStkProactiveCmd)
 {
   if (!mIcc) {
     return NS_OK;
   }
 
-  return mIcc->NotifyStkEvent(NS_LITERAL_STRING("stkcommand"), aMessage);
+  return mIcc->NotifyStkEvent(NS_LITERAL_STRING("stkcommand"), aStkProactiveCmd);
 }
 
 NS_IMETHODIMP
@@ -143,7 +122,7 @@ IccListener::NotifyIccInfoChanged()
       nsString iccId;
       iccInfo->GetIccid(iccId);
       if (!iccId.IsEmpty()) {
-        mIcc = new Icc(mIccManager->GetOwner(), mClientId, mHandler, iccInfo);
+        mIcc = new Icc(mIccManager->GetOwner(), mHandler, iccInfo);
         mIccManager->NotifyIccAdd(iccId);
         mIcc->NotifyEvent(NS_LITERAL_STRING("iccinfochange"));
       }

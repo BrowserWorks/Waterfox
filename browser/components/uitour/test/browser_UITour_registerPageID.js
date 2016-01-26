@@ -3,11 +3,10 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
-Components.utils.import("resource:///modules/UITour.jsm");
 Components.utils.import("resource://gre/modules/UITelemetry.jsm");
 Components.utils.import("resource:///modules/BrowserUITelemetry.jsm");
 
@@ -49,7 +48,7 @@ function checkExpectedSeenPageIDs(expected) {
     ok(prefData.has(id), "Should have seen '" + id + "' page ID persisted");
 }
 
-let tests = [
+var tests = [
   function test_seenPageIDs_restore(done) {
     info("Setting up seenPageIDs to be restored from pref");
     let data = JSON.stringify([

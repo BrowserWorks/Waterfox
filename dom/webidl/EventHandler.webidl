@@ -89,6 +89,9 @@ interface GlobalEventHandlers {
            attribute EventHandler onvolumechange;
            attribute EventHandler onwaiting;
 
+           [Pref="dom.select_events.enabled"]
+           attribute EventHandler onselectstart;
+
            // Pointer events handlers
            [Pref="dom.w3c_pointer_events.enabled"]
            attribute EventHandler onpointercancel;
@@ -131,7 +134,7 @@ interface WindowEventHandlers {
            attribute EventHandler onpagehide;
            attribute EventHandler onpageshow;
            attribute EventHandler onpopstate;
-           //(Not implemented)attribute EventHandler onstorage;
+           attribute EventHandler onstorage;
            attribute EventHandler onunload;
 };
 

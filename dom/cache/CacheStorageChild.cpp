@@ -53,7 +53,7 @@ CacheStorageChild::ExecuteOp(nsIGlobalObject* aGlobal, Promise* aPromise,
                              nsISupports* aParent, const CacheOpArgs& aArgs)
 {
   mNumChildActors += 1;
-  unused << SendPCacheOpConstructor(
+  Unused << SendPCacheOpConstructor(
     new CacheOpChild(GetFeature(), aGlobal, aParent, aPromise), aArgs);
 }
 
@@ -84,7 +84,7 @@ CacheStorageChild::StartDestroy()
     return;
   }
 
-  nsRefPtr<CacheStorage> listener = mListener;
+  RefPtr<CacheStorage> listener = mListener;
 
   // StartDestroy() can get called from either CacheStorage or the Feature.
   // Theoretically we can get double called if the right race happens.  Handle
@@ -99,14 +99,14 @@ CacheStorageChild::StartDestroy()
   MOZ_ASSERT(!mListener);
 
   // Start actor destruction from parent process
-  unused << SendTeardown();
+  Unused << SendTeardown();
 }
 
 void
 CacheStorageChild::ActorDestroy(ActorDestroyReason aReason)
 {
   NS_ASSERT_OWNINGTHREAD(CacheStorageChild);
-  nsRefPtr<CacheStorage> listener = mListener;
+  RefPtr<CacheStorage> listener = mListener;
   if (listener) {
     listener->DestroyInternal(this);
     // CacheStorage listener should call ClearListener() in DestroyInternal()

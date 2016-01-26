@@ -8,9 +8,8 @@
 
 #include <stdint.h>                     // for uint64_t
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
+#include "nsRegionFwd.h"                // for nsIntRegion
 #include "nsTArray.h"                   // for nsTArray
- 
-class nsIntRegion;
 
 namespace mozilla {
 namespace layers {
@@ -75,6 +74,7 @@ protected:
   nsTArray<Update> mAllUpdates;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
+
 #endif /* GFX_READBACKPROCESSOR_H */

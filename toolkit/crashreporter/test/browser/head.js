@@ -9,7 +9,7 @@ function create_subdir(dir, subdirname) {
 }
 
 // need to hold on to this to unregister for cleanup
-let _provider = null;
+var _provider = null;
 
 function make_fake_appdir() {
   // Create a directory inside the profile and register it as UAppData, so
@@ -94,7 +94,7 @@ function add_fake_crashes(crD, count) {
   }
   // we want them sorted newest to oldest, since that's the order
   // that about:crashes lists them in
-  results.sort(function(a,b) b.date - a.date);
+  results.sort((a,b) => b.date - a.date);
   return results;
 }
 

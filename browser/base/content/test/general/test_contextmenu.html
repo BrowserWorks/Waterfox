@@ -80,6 +80,16 @@ function runTest(testNum) {
                     "context-inspect", true];
   }
 
+  var loginFillItems = [
+    "---", null,
+    "fill-login", null,
+      [
+        "fill-login-no-logins", false,
+        "---", null,
+        "fill-login-saved-passwords", true
+      ], null,
+  ];
+
   var tests = [
     function () {
         // Invoke context menu for next test.
@@ -357,8 +367,8 @@ function runTest(testNum) {
         // Context menu for textarea before spell check initialization finishes
         checkContextMenu(["context-undo",                false,
                           "---",                         null,
-                          "context-cut",                 false,
-                          "context-copy",                false,
+                          "context-cut",                 true,
+                          "context-copy",                true,
                           "context-paste",               null,
                           "context-delete",              false,
                           "---",                         null,
@@ -377,8 +387,8 @@ function runTest(testNum) {
                           "---",                 null,
                           "context-undo",        false,
                           "---",                 null,
-                          "context-cut",         false,
-                          "context-copy",        false,
+                          "context-cut",         true,
+                          "context-copy",        true,
                           "context-paste",       null, // ignore clipboard state
                           "context-delete",      false,
                           "---",                 null,
@@ -409,8 +419,8 @@ function runTest(testNum) {
                           "---",                 null,
                           "context-undo",        false,
                           "---",                 null,
-                          "context-cut",         false,
-                          "context-copy",        false,
+                          "context-cut",         true,
+                          "context-copy",        true,
                           "context-paste",       null, // ignore clipboard state
                           "context-delete",      false,
                           "---",                 null,
@@ -434,8 +444,8 @@ function runTest(testNum) {
                           "---",                 null,
                           "context-undo",        false,
                           "---",                 null,
-                          "context-cut",         false,
-                          "context-copy",        false,
+                          "context-cut",         true,
+                          "context-copy",        true,
                           "context-paste",       null, // ignore clipboard state
                           "context-delete",      false,
                           "---",                 null,
@@ -505,8 +515,9 @@ function runTest(testNum) {
             openContextMenuFor(dom_full_screen, true); // Invoke context menu for next test.
         }
         subwindow.addEventListener("mozfullscreenchange", openDomFullScreen, false);
-        SpecialPowers.setBoolPref("full-screen-api.approval-required", false);
         SpecialPowers.setBoolPref("full-screen-api.allow-trusted-requests-only", false);
+        SpecialPowers.setCharPref("full-screen-api.transition-duration.enter", "0 0");
+        SpecialPowers.setCharPref("full-screen-api.transition-duration.leave", "0 0");
         full_screen_element.mozRequestFullScreen();
     },
 
@@ -532,8 +543,9 @@ function runTest(testNum) {
         var full_screen_element = subwindow.document.getElementById("test-dom-full-screen");
         var openPagemenu = function() {
             subwindow.removeEventListener("mozfullscreenchange", openPagemenu, false);
-            SpecialPowers.clearUserPref("full-screen-api.approval-required");
             SpecialPowers.clearUserPref("full-screen-api.allow-trusted-requests-only");
+            SpecialPowers.clearUserPref("full-screen-api.transition-duration.enter", "0 0");
+            SpecialPowers.clearUserPref("full-screen-api.transition-duration.leave", "0 0");
             openContextMenuFor(pagemenu, true); // Invoke context menu for next test.
         }
         subwindow.addEventListener("mozfullscreenchange", openPagemenu, false);
@@ -640,7 +652,8 @@ function runTest(testNum) {
                           "context-searchselect",true,
                           "---",                 null,
                           "spell-check-enabled", true
-                         ].concat(inspectItems));
+                         ].concat(loginFillItems)
+                          .concat(inspectItems));
         closeContextMenu();
         selectInputText(select_inputtext_password); // Select text prior to opening context menu.
         openContextMenuFor(select_inputtext_password); // Invoke context menu for next test.
@@ -650,8 +663,8 @@ function runTest(testNum) {
         // Context menu for selected text in input[type="password"]
         checkContextMenu(["context-undo",        false,
                           "---",                 null,
-                          "context-cut",         false,
-                          "context-copy",        false,
+                          "context-cut",         true,
+                          "context-copy",        true,
                           "context-paste",       null, // ignore clipboard state
                           "context-delete",      true,
                           "---",                 null,
@@ -663,7 +676,8 @@ function runTest(testNum) {
                               ["spell-check-dictionary-en-US", true,
                                "---",                          null,
                                "spell-add-dictionaries",       true], null
-                         ].concat(inspectItems));
+                         ].concat(loginFillItems)
+                          .concat(inspectItems));
         closeContextMenu();
         subwindow.getSelection().removeAllRanges();
         openContextMenuFor(plugin);
@@ -743,8 +757,8 @@ function runTest(testNum) {
         // Context menu for text input field with spellcheck=false
         checkContextMenu(["context-undo",        false,
                           "---",                 null,
-                          "context-cut",         false,
-                          "context-copy",        false,
+                          "context-cut",         true,
+                          "context-copy",        true,
                           "context-paste",       null, // ignore clipboard state
                           "context-delete",      false,
                           "---",                 null,

@@ -53,7 +53,7 @@ private:
   static nsIAtom *sSampAtom;
   static nsIAtom *sSmallAtom;
   static nsIAtom *sSpacerAtom;
-  static nsIAtom *sSpanAtom;      
+  static nsIAtom *sSpanAtom;
   static nsIAtom *sStrikeAtom;
   static nsIAtom *sStrongAtom;
   static nsIAtom *sSubAtom;
@@ -83,7 +83,7 @@ private:
   int32_t                         mSelEndIndex;
   int32_t                         mSelEndOffset;
 
-  nsRefPtr<nsRange>               mExtent;
+  RefPtr<nsRange>               mExtent;
 
   nsCOMPtr<nsITextServicesFilter> mTxtSvcFilter;
 

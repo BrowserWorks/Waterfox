@@ -29,12 +29,12 @@ and
 <script class="testbody" type="text/javascript; version=1.7">
 
 /** Test for Bug 418756 and 617528 **/
-let group1;
-let group2;
-let group3;
+var group1;
+var group2;
+var group3;
 
-let tags = ["input", "menuitem"];
-for each (let tag in tags) {
+var tags = ["input", "menuitem"];
+for (let tag of tags) {
 
 function bounce(node) {
   let n = node.nextSibling;
@@ -43,10 +43,10 @@ function bounce(node) {
   p.insertBefore(node, n);
 }
 
-let createdNodes = [];
+var createdNodes = [];
 
 function cleanup() {
-  for each (let node in createdNodes) {
+  for (let node of createdNodes) {
     if (node.parentNode) {
       node.parentNode.removeChild(node);
     }
@@ -55,12 +55,12 @@ function cleanup() {
   createdNodes = [];
 }
 
-let typeMapper = {
+var typeMapper = {
  'c': 'checkbox',
  'r': 'radio'
 };
 
-let id = 0;
+var id = 0;
 
 // type can be 'c' for 'checkbox' and 'r' for 'radio'
 function createNode(type, name, checked) {
@@ -75,11 +75,11 @@ function createNode(type, name, checked) {
   return node;
 }
 
-let types = ['c', 'r'];
+var types = ['c', 'r'];
 
 // First make sure that setting .checked makes .defaultChecked changes no
 // longer affect .checked.
-for each (let type in types) {
+for (let type of types) {
   let n = createNode(type, '', false);
   is(n.defaultChecked, false, "Bogus defaultChecked on " + typeMapper[type]);
   is(n.checked, false, "Bogus checked on " + typeMapper[type]);
@@ -109,7 +109,7 @@ cleanup();
 
 // Now check that bouncing a control that's the only one of its kind has no
 // effect
-for each (let type in types) {
+for (let type of types) {
   let n = createNode(type, 'test1', true);
   $(tag == "input" ? "f1" : "m1").appendChild(n);
   n.checked = false;
@@ -132,18 +132,18 @@ group2 = [ createNode('r', 'g2', false),
 group3 = [ createNode('r', 'g1', false),
            createNode('r', 'g1', false),
            createNode('r', 'g1', false) ];
-for each (let g in group1) {
+for (let g of group1) {
   $(tag == "input" ? "f1" : "m1").appendChild(g);
 }
-for each (let g in group2) {
+for (let g of group2) {
   $(tag == "input" ? "f1" : "m1").appendChild(g);
 }
-for each (let g in group3) {
+for (let g of group3) {
   $(tag == "input" ? "f2" : "m2").appendChild(g);
 }
 
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, false,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 1");
@@ -154,8 +154,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[1].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && group1.indexOf(g) == 1,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 2");
@@ -166,8 +166,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[0].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 1 ||
                                     group1.indexOf(g) == 0),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -179,8 +179,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[2].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 4");
@@ -196,8 +196,8 @@ p.removeChild(group1[1]);
 group1[1].defaultChecked = false;
 group1[1].defaultChecked = true;
 p.insertBefore(group1[1], next);
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 5");
@@ -207,11 +207,11 @@ for each (let n in [1, 2, 3]) {
   }
 }
 
-for each(let g in group1) {
+for (let g of group1) {
   g.defaultChecked = false;
 }
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, false,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 6");
@@ -222,8 +222,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[1].checked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, false,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 7");
@@ -234,8 +234,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[0].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && group1.indexOf(g) == 0,
        "group" + n + "[" + window["group"+n].indexOf(g) +
        "] defaultChecked wrong pass 8");
@@ -246,8 +246,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[2].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -258,8 +258,8 @@ for each (let n in [1, 2, 3]) {
   }
 }
 group1[1].parentNode.removeChild(group1[1]);
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -271,8 +271,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[2].checked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -285,8 +285,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group1[0].checked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -303,8 +303,8 @@ p = group2[1].parentNode;
 p.removeChild(group2[1]);
 p.insertBefore(group2[1], next);
 group2[0].checked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -318,8 +318,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 p.insertBefore(group2[1], next);
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, n == 1 && (group1.indexOf(g) == 0 ||
                                     group1.indexOf(g) == 2),
        "group" + n + "[" + window["group"+n].indexOf(g) +
@@ -333,8 +333,8 @@ for each (let n in [1, 2, 3]) {
 }
 
 group2[1].defaultChecked = true;
-for each (let n in [1, 2, 3]) {
-  for each (let g in window["group"+n]) {
+for (let n of [1, 2, 3]) {
+  for (let g of window["group"+n]) {
     is(g.defaultChecked, (n == 1 && (group1.indexOf(g) == 0 ||
                                      group1.indexOf(g) == 2)) ||
                          (n == 2 && group2.indexOf(g) == 1),

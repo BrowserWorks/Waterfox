@@ -11,6 +11,7 @@ XPIDL_SOURCES += [
     'nsICacheStorage.idl',
     'nsICacheStorageService.idl',
     'nsICacheStorageVisitor.idl',
+    'nsICacheTesting.idl',
 ]
 
 XPIDL_MODULE = 'necko_cache2'
@@ -51,7 +52,5 @@ LOCAL_INCLUDES += [
     '/netwerk/base',
     '/netwerk/cache',
 ]
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

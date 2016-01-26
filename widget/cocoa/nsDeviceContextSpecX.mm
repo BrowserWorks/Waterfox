@@ -44,7 +44,7 @@ NS_IMETHODIMP nsDeviceContextSpecX::Init(nsIWidget *aWidget,
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  nsRefPtr<nsPrintSettingsX> settings(do_QueryObject(aPS));
+  RefPtr<nsPrintSettingsX> settings(do_QueryObject(aPS));
   if (!settings)
     return NS_ERROR_NO_INTERFACE;
 
@@ -59,7 +59,7 @@ NS_IMETHODIMP nsDeviceContextSpecX::Init(nsIWidget *aWidget,
 }
 
 NS_IMETHODIMP nsDeviceContextSpecX::BeginDocument(const nsAString& aTitle, 
-                                                  char16_t*       aPrintToFileName,
+                                                  const nsAString& aPrintToFileName,
                                                   int32_t          aStartPage, 
                                                   int32_t          aEndPage)
 {
@@ -148,7 +148,7 @@ NS_IMETHODIMP nsDeviceContextSpecX::GetSurfaceForPrinter(gfxASurface **surface)
     CGContextRef context;
     ::PMSessionGetCGGraphicsContext(mPrintSession, &context);
 
-    nsRefPtr<gfxASurface> newSurface;
+    RefPtr<gfxASurface> newSurface;
 
     if (context) {
         // Initially, origin is at bottom-left corner of the paper.
@@ -157,7 +157,7 @@ NS_IMETHODIMP nsDeviceContextSpecX::GetSurfaceForPrinter(gfxASurface **surface)
         CGContextScaleCTM(context, 1.0, -1.0);
         newSurface = new gfxQuartzSurface(context, gfxSize(width, height));
     } else {
-        newSurface = new gfxQuartzSurface(gfxSize((int32_t)width, (int32_t)height), gfxImageFormat::ARGB32);
+        newSurface = new gfxQuartzSurface(gfxSize((int32_t)width, (int32_t)height), SurfaceFormat::A8R8G8B8_UINT32);
     }
 
     if (!newSurface)

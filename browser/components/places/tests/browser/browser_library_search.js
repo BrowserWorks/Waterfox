@@ -28,9 +28,9 @@
 const TEST_URL = "http://dummy.mozilla.org/";
 const TEST_DOWNLOAD_URL = "http://dummy.mozilla.org/dummy.pdf";
 
-let gLibrary;
+var gLibrary;
 
-let testCases = [
+var testCases = [
   function allBookmarksScope() {
     let defScope = getDefaultScope(PlacesUIUtils.allBookmarksFolderId);
     search(PlacesUIUtils.allBookmarksFolderId, "dummy", defScope);
@@ -149,7 +149,7 @@ function search(aFolderId, aSearchStr, aExpectedScopeButtonId) {
  * things off.  Add functions to the testCases array, and this will call them.
  */
 function onLibraryAvailable() {
-  testCases.forEach(function (aTest) aTest());
+  testCases.forEach(aTest => aTest());
 
   gLibrary.close();
   gLibrary = null;

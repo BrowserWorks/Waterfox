@@ -74,8 +74,9 @@ public:
   /**
    * Allocate a tab id for the given content process's id.
    * Used when a content process wants to create a new tab. aOpenerTabId and
-   * aContext are saved in RemoteFrameInfo, which is a part of ContentProcessInfo.
-   * We can use the tab id and process id to locate the TabContext for future use.
+   * aContext are saved in RemoteFrameInfo, which is a part of
+   * ContentProcessInfo.  We can use the tab id and process id to locate the
+   * TabContext for future use.
    */
   TabId AllocateTabId(const TabId& aOpenerTabId,
                       const IPCTabContext& aContext,
@@ -111,6 +112,13 @@ public:
                                  /*out*/ TabId* aOpenerTabId);
 
   /**
+   * Get all TabParents' Ids managed by the givent content process.
+   * Return empty array when TabParent couldn't be found via aChildCpId
+   */
+  nsTArray<TabId>
+  GetTabParentsByProcessId(const ContentParentId& aChildCpId);
+
+  /**
    * Get the TabParent by the given content process and tab id.
    * Return nullptr when TabParent couldn't be found via aChildCpId
    * and aChildTabId.
@@ -135,6 +143,15 @@ public:
   GetTopLevelTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
                                         const TabId& aChildTabId);
 
+  /**
+   * Return appId by given TabId and ContentParentId.
+   * It will return nsIScriptSecurityManager::NO_APP_ID
+   * if the given tab is not an app.
+   */
+  uint32_t
+  GetAppIdByProcessAndTabId(const ContentParentId& aChildCpId,
+                            const TabId& aChildTabId);
+
 private:
   static StaticAutoPtr<ContentProcessManager> sSingleton;
   TabId mUniqueId;
@@ -145,4 +162,5 @@ private:
 
 } // namespace dom
 } // namespace mozilla
-#endif
+
+#endif // mozilla_dom_ContentProcessManager_h

@@ -25,10 +25,12 @@ SpeechSynthesisParent::ActorDestroy(ActorDestroyReason aWhy)
 }
 
 bool
-SpeechSynthesisParent::RecvReadVoiceList(InfallibleTArray<RemoteVoice>* aVoices,
-                                         InfallibleTArray<nsString>* aDefaults)
+SpeechSynthesisParent::RecvReadVoicesAndState(InfallibleTArray<RemoteVoice>* aVoices,
+                                              InfallibleTArray<nsString>* aDefaults,
+                                              bool* aIsSpeaking)
 {
-  nsSynthVoiceRegistry::GetInstance()->SendVoices(aVoices, aDefaults);
+  nsSynthVoiceRegistry::GetInstance()->SendVoicesAndState(aVoices, aDefaults,
+                                                          aIsSpeaking);
   return true;
 }
 
@@ -40,7 +42,7 @@ SpeechSynthesisParent::AllocPSpeechSynthesisRequestParent(const nsString& aText,
                                                           const float& aRate,
                                                           const float& aPitch)
 {
-  nsRefPtr<SpeechTaskParent> task = new SpeechTaskParent(aVolume, aText);
+  RefPtr<SpeechTaskParent> task = new SpeechTaskParent(aVolume, aText);
   SpeechSynthesisRequestParent* actor = new SpeechSynthesisRequestParent(task);
   return actor;
 }
@@ -80,10 +82,11 @@ SpeechSynthesisRequestParent::SpeechSynthesisRequestParent(SpeechTaskParent* aTa
 
 SpeechSynthesisRequestParent::~SpeechSynthesisRequestParent()
 {
-  if (mTask && mTask->mActor) {
+  if (mTask) {
     mTask->mActor = nullptr;
+    // If we still have a task, cancel it.
+    mTask->Cancel();
   }
-
   MOZ_COUNT_DTOR(SpeechSynthesisRequestParent);
 }
 
@@ -98,6 +101,15 @@ SpeechSynthesisRequestParent::RecvPause()
 {
   MOZ_ASSERT(mTask);
   mTask->Pause();
+  return true;
+}
+
+bool
+SpeechSynthesisRequestParent::Recv__delete__()
+{
+  MOZ_ASSERT(mTask);
+  mTask->mActor = nullptr;
+  mTask = nullptr;
   return true;
 }
 
@@ -117,13 +129,31 @@ SpeechSynthesisRequestParent::RecvCancel()
   return true;
 }
 
+bool
+SpeechSynthesisRequestParent::RecvForceEnd()
+{
+  MOZ_ASSERT(mTask);
+  mTask->ForceEnd();
+  return true;
+}
+
+bool
+SpeechSynthesisRequestParent::RecvSetAudioOutputVolume(const float& aVolume)
+{
+  MOZ_ASSERT(mTask);
+  mTask->SetAudioOutputVolume(aVolume);
+  return true;
+}
+
 // SpeechTaskParent
 
 nsresult
 SpeechTaskParent::DispatchStartImpl(const nsAString& aUri)
 {
   MOZ_ASSERT(mActor);
-  NS_ENSURE_TRUE(mActor->SendOnStart(nsString(aUri)), NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnStart(nsString(aUri))))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -131,11 +161,14 @@ SpeechTaskParent::DispatchStartImpl(const nsAString& aUri)
 nsresult
 SpeechTaskParent::DispatchEndImpl(float aElapsedTime, uint32_t aCharIndex)
 {
-  MOZ_ASSERT(mActor);
-  SpeechSynthesisRequestParent* actor = mActor;
-  mActor = nullptr;
-  NS_ENSURE_TRUE(actor->Send__delete__(actor, false, aElapsedTime, aCharIndex),
-                 NS_ERROR_FAILURE);
+  if (!mActor) {
+    // Child is already gone.
+    return NS_OK;
+  }
+
+  if(NS_WARN_IF(!(mActor->SendOnEnd(false, aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -144,7 +177,9 @@ nsresult
 SpeechTaskParent::DispatchPauseImpl(float aElapsedTime, uint32_t aCharIndex)
 {
   MOZ_ASSERT(mActor);
-  NS_ENSURE_TRUE(mActor->SendOnPause(aElapsedTime, aCharIndex), NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnPause(aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -153,7 +188,9 @@ nsresult
 SpeechTaskParent::DispatchResumeImpl(float aElapsedTime, uint32_t aCharIndex)
 {
   MOZ_ASSERT(mActor);
-  NS_ENSURE_TRUE(mActor->SendOnResume(aElapsedTime, aCharIndex), NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnResume(aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -162,10 +199,9 @@ nsresult
 SpeechTaskParent::DispatchErrorImpl(float aElapsedTime, uint32_t aCharIndex)
 {
   MOZ_ASSERT(mActor);
-  SpeechSynthesisRequestParent* actor = mActor;
-  mActor = nullptr;
-  NS_ENSURE_TRUE(actor->Send__delete__(actor, true, aElapsedTime, aCharIndex),
-                 NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnEnd(true, aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -175,8 +211,9 @@ SpeechTaskParent::DispatchBoundaryImpl(const nsAString& aName,
                                        float aElapsedTime, uint32_t aCharIndex)
 {
   MOZ_ASSERT(mActor);
-  NS_ENSURE_TRUE(mActor->SendOnBoundary(nsString(aName), aElapsedTime, aCharIndex),
-                 NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnBoundary(nsString(aName), aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -186,8 +223,9 @@ SpeechTaskParent::DispatchMarkImpl(const nsAString& aName,
                                    float aElapsedTime, uint32_t aCharIndex)
 {
   MOZ_ASSERT(mActor);
-  NS_ENSURE_TRUE(mActor->SendOnMark(nsString(aName), aElapsedTime, aCharIndex),
-                 NS_ERROR_FAILURE);
+  if(NS_WARN_IF(!(mActor->SendOnMark(nsString(aName), aElapsedTime, aCharIndex)))) {
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }

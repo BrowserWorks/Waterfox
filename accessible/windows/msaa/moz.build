@@ -56,10 +56,20 @@ LOCAL_INCLUDES += [
     '/accessible/xpcom',
     '/accessible/xul',
     '/dom/base',
+    '/layout/style',
 ]
+
+# The Windows MIDL code generator creates things like:
+#
+#   #endif !_MIDL_USE_GUIDDEF_
+#
+# which clang-cl complains about.  MSVC doesn't, so turn this warning off.
+if CONFIG['CLANG_CL']:
+    CXXFLAGS += ['-Wno-extra-tokens']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

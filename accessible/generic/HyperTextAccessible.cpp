@@ -30,6 +30,7 @@
 #include "nsIScrollableFrame.h"
 #include "nsIServiceManager.h"
 #include "nsITextControlElement.h"
+#include "nsIMathMLFrame.h"
 #include "nsTextFragment.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/dom/Element.h"
@@ -63,12 +64,11 @@ HyperTextAccessible::NativeRole()
   if (r != roles::NOTHING)
     return r;
 
-  // Treat block frames as paragraphs
-  nsIFrame *frame = GetFrame();
-  if (frame && frame->GetType() == nsGkAtoms::blockFrame)
-    return roles::PARAGRAPH;
+  nsIFrame* frame = GetFrame();
+  if (frame && frame->GetType() == nsGkAtoms::inlineFrame)
+    return roles::TEXT;
 
-  return roles::TEXT_CONTAINER; // In ATK this works
+  return roles::TEXT_CONTAINER;
 }
 
 uint64_t
@@ -953,6 +953,145 @@ HyperTextAccessible::GetLevelInternal()
   return AccessibleWrap::GetLevelInternal();
 }
 
+void
+HyperTextAccessible::SetMathMLXMLRoles(nsIPersistentProperties* aAttributes)
+{
+  // Add MathML xmlroles based on the position inside the parent.
+  Accessible* parent = Parent();
+  if (parent) {
+    switch (parent->Role()) {
+    case roles::MATHML_CELL:
+    case roles::MATHML_ENCLOSED:
+    case roles::MATHML_ERROR:
+    case roles::MATHML_MATH:
+    case roles::MATHML_ROW:
+    case roles::MATHML_SQUARE_ROOT:
+    case roles::MATHML_STYLE:
+      if (Role() == roles::MATHML_OPERATOR) {
+        // This is an operator inside an <mrow> (or an inferred <mrow>).
+        // See http://www.w3.org/TR/MathML3/chapter3.html#presm.inferredmrow
+        // XXX We should probably do something similar for MATHML_FENCED, but
+        // operators do not appear in the accessible tree. See bug 1175747.
+        nsIMathMLFrame* mathMLFrame = do_QueryFrame(GetFrame());
+        if (mathMLFrame) {
+          nsEmbellishData embellishData;
+          mathMLFrame->GetEmbellishData(embellishData);
+          if (NS_MATHML_EMBELLISH_IS_FENCE(embellishData.flags)) {
+            if (!PrevSibling()) {
+              nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                     nsGkAtoms::open_fence);
+            } else if (!NextSibling()) {
+              nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                     nsGkAtoms::close_fence);
+            }
+          }
+          if (NS_MATHML_EMBELLISH_IS_SEPARATOR(embellishData.flags)) {
+            nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                   nsGkAtoms::separator_);
+          }
+        }
+      }
+    break;
+    case roles::MATHML_FRACTION:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ?
+                             nsGkAtoms::numerator :
+                             nsGkAtoms::denominator);
+      break;
+    case roles::MATHML_ROOT:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ? nsGkAtoms::base :
+                             nsGkAtoms::root_index);
+      break;
+    case roles::MATHML_SUB:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ? nsGkAtoms::base :
+                             nsGkAtoms::subscript);
+      break;
+    case roles::MATHML_SUP:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ? nsGkAtoms::base :
+                             nsGkAtoms::superscript);
+      break;
+    case roles::MATHML_SUB_SUP: {
+      int32_t index = IndexInParent();
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             index == 0 ? nsGkAtoms::base :
+                             (index == 1 ? nsGkAtoms::subscript :
+                              nsGkAtoms::superscript));
+    } break;
+    case roles::MATHML_UNDER:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ? nsGkAtoms::base :
+                             nsGkAtoms::underscript);
+      break;
+    case roles::MATHML_OVER:
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             IndexInParent() == 0 ? nsGkAtoms::base :
+                             nsGkAtoms::overscript);
+      break;
+    case roles::MATHML_UNDER_OVER: {
+      int32_t index = IndexInParent();
+      nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                             index == 0 ? nsGkAtoms::base :
+                             (index == 1 ? nsGkAtoms::underscript :
+                              nsGkAtoms::overscript));
+    } break;
+    case roles::MATHML_MULTISCRIPTS: {
+      // Get the <multiscripts> base.
+      nsIContent* child;
+      bool baseFound = false;
+      for (child = parent->GetContent()->GetFirstChild(); child;
+           child = child->GetNextSibling()) {
+        if (child->IsMathMLElement()) {
+          baseFound = true;
+          break;
+        }
+      }
+      if (baseFound) {
+        nsIContent* content = GetContent();
+        if (child == content) {
+          // We are the base.
+          nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                 nsGkAtoms::base);
+        } else {
+          // Browse the list of scripts to find us and determine our type.
+          bool postscript = true;
+          bool subscript = true;
+          for (child = child->GetNextSibling(); child;
+               child = child->GetNextSibling()) {
+            if (!child->IsMathMLElement())
+              continue;
+            if (child->IsMathMLElement(nsGkAtoms::mprescripts_)) {
+              postscript = false;
+              subscript = true;
+              continue;
+            }
+            if (child == content) {
+              if (postscript) {
+                nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                       subscript ?
+                                       nsGkAtoms::subscript :
+                                       nsGkAtoms::superscript);
+              } else {
+                nsAccUtils::SetAccAttr(aAttributes, nsGkAtoms::xmlroles,
+                                       subscript ?
+                                       nsGkAtoms::presubscript :
+                                       nsGkAtoms::presuperscript);
+              }
+              break;
+            }
+            subscript = !subscript;
+          }
+        }
+      }
+    } break;
+    default:
+      break;
+    }
+  }
+}
+
 already_AddRefed<nsIPersistentProperties>
 HyperTextAccessible::NativeAttributes()
 {
@@ -977,8 +1116,11 @@ HyperTextAccessible::NativeAttributes()
     }
   }
 
-  if (HasOwnContent())
+  if (HasOwnContent()) {
     GetAccService()->MarkupAttributes(mContent, attributes);
+    if (mContent->IsMathMLElement())
+      SetMathMLXMLRoles(attributes);
+  }
 
   return attributes.forget();
 }
@@ -986,6 +1128,9 @@ HyperTextAccessible::NativeAttributes()
 nsIAtom*
 HyperTextAccessible::LandmarkRole() const
 {
+  if (!HasOwnContent())
+    return nullptr;
+
   // For the html landmark elements we expose them like we do ARIA landmarks to
   // make AT navigation schemes "just work".
   if (mContent->IsHTMLElement(nsGkAtoms::nav)) {
@@ -1285,7 +1430,7 @@ HyperTextAccessible::CaretLineNumber()
 {
   // Provide the line number for the caret, relative to the
   // currently focused node. Use a 1-based index
-  nsRefPtr<nsFrameSelection> frameSelection = FrameSelection();
+  RefPtr<nsFrameSelection> frameSelection = FrameSelection();
   if (!frameSelection)
     return -1;
 
@@ -1349,34 +1494,34 @@ HyperTextAccessible::CaretLineNumber()
   return lineNumber;
 }
 
-nsIntRect
+LayoutDeviceIntRect
 HyperTextAccessible::GetCaretRect(nsIWidget** aWidget)
 {
   *aWidget = nullptr;
 
-  nsRefPtr<nsCaret> caret = mDoc->PresShell()->GetCaret();
-  NS_ENSURE_TRUE(caret, nsIntRect());
+  RefPtr<nsCaret> caret = mDoc->PresShell()->GetCaret();
+  NS_ENSURE_TRUE(caret, LayoutDeviceIntRect());
 
   bool isVisible = caret->IsVisible();
   if (!isVisible)
-    return nsIntRect();
+    return LayoutDeviceIntRect();
 
   nsRect rect;
   nsIFrame* frame = caret->GetGeometry(&rect);
   if (!frame || rect.IsEmpty())
-    return nsIntRect();
+    return LayoutDeviceIntRect();
 
   nsPoint offset;
   // Offset from widget origin to the frame origin, which includes chrome
   // on the widget.
   *aWidget = frame->GetNearestWidget(offset);
-  NS_ENSURE_TRUE(*aWidget, nsIntRect());
+  NS_ENSURE_TRUE(*aWidget, LayoutDeviceIntRect());
   rect.MoveBy(offset);
 
-  nsIntRect caretRect;
-  caretRect = rect.ToOutsidePixels(frame->PresContext()->AppUnitsPerDevPixel());
+  LayoutDeviceIntRect caretRect = LayoutDeviceIntRect::FromUnknownRect(
+    rect.ToOutsidePixels(frame->PresContext()->AppUnitsPerDevPixel()));
   // ((content screen origin) - (content offset in the widget)) = widget origin on the screen
-  caretRect.MoveBy((*aWidget)->WidgetToScreenOffsetUntyped() - (*aWidget)->GetClientOffset());
+  caretRect.MoveBy((*aWidget)->WidgetToScreenOffset() - (*aWidget)->GetClientOffset());
 
   // Correct for character size, so that caret always matches the size of
   // the character. This is important for font size transitions, and is
@@ -1396,7 +1541,7 @@ HyperTextAccessible::GetSelectionDOMRanges(int16_t aType,
                                            nsTArray<nsRange*>* aRanges)
 {
   // Ignore selection if it is not visible.
-  nsRefPtr<nsFrameSelection> frameSelection = FrameSelection();
+  RefPtr<nsFrameSelection> frameSelection = FrameSelection();
   if (!frameSelection ||
       frameSelection->GetDisplaySelection() <= nsISelectionController::SELECTION_HIDDEN)
     return;
@@ -1504,7 +1649,7 @@ HyperTextAccessible::SetSelectionBoundsAt(int32_t aSelectionNum,
   if (!domSel)
     return false;
 
-  nsRefPtr<nsRange> range;
+  RefPtr<nsRange> range;
   uint32_t rangeCount = domSel->RangeCount();
   if (aSelectionNum == static_cast<int32_t>(rangeCount))
     range = new nsRange(mContent);
@@ -1544,7 +1689,7 @@ void
 HyperTextAccessible::ScrollSubstringTo(int32_t aStartOffset, int32_t aEndOffset,
                                        uint32_t aScrollType)
 {
-  nsRefPtr<nsRange> range = new nsRange(mContent);
+  RefPtr<nsRange> range = new nsRange(mContent);
   if (OffsetsToDOMRange(aStartOffset, aEndOffset, range))
     nsCoreUtils::ScrollSubstringTo(GetFrame(), range, aScrollType);
 }
@@ -1562,7 +1707,7 @@ HyperTextAccessible::ScrollSubstringToPoint(int32_t aStartOffset,
   nsIntPoint coords = nsAccUtils::ConvertToScreenCoords(aX, aY, aCoordinateType,
                                                         this);
 
-  nsRefPtr<nsRange> range = new nsRange(mContent);
+  RefPtr<nsRange> range = new nsRange(mContent);
   if (!OffsetsToDOMRange(aStartOffset, aEndOffset, range))
     return;
 
@@ -1624,7 +1769,7 @@ HyperTextAccessible::EnclosingRange(a11y::TextRange& aRange) const
 void
 HyperTextAccessible::SelectionRanges(nsTArray<a11y::TextRange>* aRanges) const
 {
-  NS_ASSERTION(aRanges->Length() != 0, "TextRange array supposed to be empty");
+  MOZ_ASSERT(aRanges->Length() == 0, "TextRange array supposed to be empty");
 
   dom::Selection* sel = DOMSelection();
   if (!sel)
@@ -1753,6 +1898,43 @@ HyperTextAccessible::RemoveChild(Accessible* aAccessible)
   return Accessible::RemoveChild(aAccessible);
 }
 
+Relation
+HyperTextAccessible::RelationByType(RelationType aType)
+{
+  Relation rel = Accessible::RelationByType(aType);
+
+  switch (aType) {
+    case RelationType::NODE_CHILD_OF:
+      if (HasOwnContent() && mContent->IsMathMLElement()) {
+        Accessible* parent = Parent();
+        if (parent) {
+          nsIContent* parentContent = parent->GetContent();
+          if (parentContent &&
+              parentContent->IsMathMLElement(nsGkAtoms::mroot_)) {
+            // Add a relation pointing to the parent <mroot>.
+            rel.AppendTarget(parent);
+          }
+        }
+      }
+      break;
+    case RelationType::NODE_PARENT_OF:
+      if (HasOwnContent() && mContent->IsMathMLElement(nsGkAtoms::mroot_)) {
+        Accessible* base = GetChildAt(0);
+        Accessible* index = GetChildAt(1);
+        if (base && index) {
+          // Append the <mroot> children in the order index, base.
+          rel.AppendTarget(index);
+          rel.AppendTarget(base);
+        }
+      }
+      break;
+    default:
+      break;
+  }
+
+  return rel;
+}
+
 void
 HyperTextAccessible::CacheChildren()
 {
@@ -1802,17 +1984,10 @@ HyperTextAccessible::ContentToRenderedOffset(nsIFrame* aFrame, int32_t aContentO
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
-  gfxSkipChars skipChars;
-  gfxSkipCharsIterator iter;
-  // Only get info up to original offset, we know that will be larger than skipped offset
-  nsresult rv = aFrame->GetRenderedText(nullptr, &skipChars, &iter, 0, aContentOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  uint32_t ourRenderedStart = iter.GetSkippedOffset();
-  int32_t ourContentStart = iter.GetOriginalOffset();
-
-  *aRenderedOffset = iter.ConvertOriginalToSkipped(aContentOffset + ourContentStart) -
-                    ourRenderedStart;
+  nsIFrame::RenderedText text = aFrame->GetRenderedText(aContentOffset,
+      aContentOffset + 1, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
+      nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+  *aRenderedOffset = text.mOffsetWithinNodeRenderedText;
 
   return NS_OK;
 }
@@ -1834,16 +2009,10 @@ HyperTextAccessible::RenderedToContentOffset(nsIFrame* aFrame, uint32_t aRendere
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
-  gfxSkipChars skipChars;
-  gfxSkipCharsIterator iter;
-  // We only need info up to skipped offset -- that is what we're converting to original offset
-  nsresult rv = aFrame->GetRenderedText(nullptr, &skipChars, &iter, 0, aRenderedOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  uint32_t ourRenderedStart = iter.GetSkippedOffset();
-  int32_t ourContentStart = iter.GetOriginalOffset();
-
-  *aContentOffset = iter.ConvertSkippedToOriginal(aRenderedOffset + ourRenderedStart) - ourContentStart;
+  nsIFrame::RenderedText text = aFrame->GetRenderedText(aRenderedOffset,
+      aRenderedOffset + 1, nsIFrame::TextOffsetType::OFFSETS_IN_RENDERED_TEXT,
+      nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+  *aContentOffset = text.mOffsetWithinNodeText;
 
   return NS_OK;
 }
@@ -1971,7 +2140,7 @@ HyperTextAccessible::GetSpellTextAttr(nsINode* aNode,
                                       uint32_t* aEndOffset,
                                       nsIPersistentProperties* aAttributes)
 {
-  nsRefPtr<nsFrameSelection> fs = FrameSelection();
+  RefPtr<nsFrameSelection> fs = FrameSelection();
   if (!fs)
     return;
 

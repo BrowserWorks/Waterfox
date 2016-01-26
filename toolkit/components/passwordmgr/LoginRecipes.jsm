@@ -13,6 +13,7 @@ const SUPPORTED_KEYS = REQUIRED_KEYS.concat(OPTIONAL_KEYS);
 
 Cu.importGlobalProperties(["URL"]);
 
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -27,23 +28,16 @@ XPCOMUtils.defineLazyGetter(this, "log", () => LoginHelper.createLogger("LoginRe
  * calling methods on the object.
  *
  * @constructor
- * @param {boolean} [aOptions.defaults=true] whether to load default application recipes.
- */
-function LoginRecipesParent(aOptions = { defaults: true }) {
+ * @param {String} [aOptions.defaults=null] the URI to load the recipes from.
+ *                                          If it's null, nothing is loaded.
+ *
+*/
+function LoginRecipesParent(aOptions = { defaults: null }) {
   if (Services.appinfo.processType != Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
     throw new Error("LoginRecipesParent should only be used from the main process");
   }
-
-  this._recipesByHost = new Map();
-
-  if (aOptions.defaults) {
-    // XXX: Bug 1134850 will handle reading recipes from a file.
-    this.initializationPromise = this.load(DEFAULT_RECIPES).then(resolve => {
-      return this;
-    });
-  } else {
-    this.initializationPromise = Promise.resolve(this);
-  }
+  this._defaults = aOptions.defaults;
+  this.reset();
 }
 
 LoginRecipesParent.prototype = {
@@ -53,6 +47,11 @@ LoginRecipesParent.prototype = {
    * @type {Promise}
    */
   initializationPromise: null,
+
+  /**
+   * @type {bool} Whether default recipes were loaded at construction time.
+   */
+  _defaults: null,
 
   /**
    * @type {Map} Map of hosts (including non-default port numbers) to Sets of recipes.
@@ -82,6 +81,42 @@ LoginRecipesParent.prototype = {
     }
 
     return Promise.resolve();
+  },
+
+  /**
+   * Reset the set of recipes to the ones from the time of construction.
+   */
+  reset() {
+    log.debug("Resetting recipes with defaults:", this._defaults);
+    this._recipesByHost = new Map();
+
+    if (this._defaults) {
+      let channel = NetUtil.newChannel({uri: NetUtil.newURI(this._defaults, "UTF-8"),
+                                        loadUsingSystemPrincipal: true});
+      channel.contentType = "application/json";
+
+      try {
+        this.initializationPromise = new Promise(function(resolve) {
+          NetUtil.asyncFetch(channel, function (stream, result) {
+            if (!Components.isSuccessCode(result)) {
+              throw new Error("Error fetching recipe file:" + result);
+              return;
+            }
+            let count = stream.available();
+            let data = NetUtil.readInputStreamToString(stream, count, { charset: "UTF-8" });
+            resolve(JSON.parse(data));
+          });
+        }).then(recipes => {
+          return this.load(recipes);
+        }).then(resolve => {
+          return this;
+        });
+      } catch (e) {
+        throw new Error("Error reading recipe file:" + e);
+      }
+    } else {
+      this.initializationPromise = Promise.resolve(this);
+    }
   },
 
   /**
@@ -147,10 +182,10 @@ LoginRecipesParent.prototype = {
 };
 
 
-let LoginRecipesContent = {
+var LoginRecipesContent = {
   /**
    * @param {Set} aRecipes - Possible recipes that could apply to the form
-   * @param {HTMLFormElement} aForm - We use a form instead of just a URL so we can later apply
+   * @param {FormLike} aForm - We use a form instead of just a URL so we can later apply
    * tests to the page contents.
    * @return {Set} a subset of recipes that apply to the form with the order preserved
    */
@@ -179,7 +214,7 @@ let LoginRecipesContent = {
    * overriding login fields in the form.
    *
    * @param {Set} aRecipes The set of recipes to consider for the form
-   * @param {HTMLFormElement} aForm The form where login fields exist.
+   * @param {FormLike} aForm The form where login fields exist.
    * @return {Object} The recipe that is most applicable for the form.
    */
   getFieldOverrides(aRecipes, aForm) {
@@ -223,24 +258,4 @@ let LoginRecipesContent = {
     }
     return field;
   },
-};
-
-const DEFAULT_RECIPES = {
-  "siteRecipes": [
-    {
-      "description": "okta uses a hidden password field to disable filling",
-      "hosts": ["mozilla.okta.com"],
-      "passwordSelector": "#pass-signin"
-    },
-    {
-      "description": "anthem uses a hidden password and username field to disable filling",
-      "hosts": ["www.anthem.com"],
-      "passwordSelector": "#LoginContent_txtLoginPass"
-    },
-    {
-      "description": "An ephemeral password-shim field is incorrectly selected as the username field.",
-      "hosts": ["www.discover.com"],
-      "usernameSelector": "#login-account"
-    }
-  ]
 };

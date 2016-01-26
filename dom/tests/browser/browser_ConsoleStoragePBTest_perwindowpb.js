@@ -50,7 +50,7 @@ function test() {
 
       aWindow.Services.obs.addObserver(
         consoleObserver, "console-api-log-event", false);
-      aWindow.console.log("foo bar baz (private: " + aIsPrivateMode + ")");
+      aWindow.nativeConsole.log("foo bar baz (private: " + aIsPrivateMode + ")");
     }, true);
 
     // We expect that console API messages are always stored.
@@ -66,7 +66,7 @@ function test() {
       // execute should only be called when need, like when you are opening
       // web pages on the test. If calling executeSoon() is not necesary, then
       // call whenNewWindowLoaded() instead of testOnWindow() on your test.
-      executeSoon(function() aCallback(aWin));
+      executeSoon(() => aCallback(aWin));
     });
   };
 

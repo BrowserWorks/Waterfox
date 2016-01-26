@@ -15,6 +15,7 @@
 #include "nsIStreamListener.h"
 #include "nsICacheEntryOpenCallback.h"
 #include "PrivateBrowsingChannel.h"
+#include "mozilla/BasePrincipal.h"
 
 class nsICacheEntry;
 class nsIEventTarget;
@@ -25,7 +26,7 @@ class nsIOutputStream;
 class nsIProgressEventSink;
 class nsIURI;
 
-extern PRLogModuleInfo * gWyciwygLog;
+extern mozilla::LazyLogModule gWyciwygLog;
 
 //-----------------------------------------------------------------------------
 
@@ -86,8 +87,7 @@ protected:
     nsCString                           mCharset;
     int64_t                             mContentLength;
     uint32_t                            mLoadFlags;
-    uint32_t                            mAppId;
-    bool                                mInBrowser;
+    mozilla::NeckoOriginAttributes      mOriginAttributes;
     nsCOMPtr<nsIURI>                    mURI;
     nsCOMPtr<nsIURI>                    mOriginalURI;
     nsCOMPtr<nsISupports>               mOwner;

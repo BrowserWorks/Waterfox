@@ -5,6 +5,7 @@
 "use strict";
 
 Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/NetUtil.jsm");
 
 if (typeof(Ci) == 'undefined') {
   var Ci = Components.interfaces;
@@ -30,6 +31,7 @@ this.SpecialPowersObserverAPI = function SpecialPowersObserverAPI() {
   this._crashDumpDir = null;
   this._processCrashObserversRegistered = false;
   this._chromeScriptListeners = [];
+  this._extensions = new Map();
 }
 
 function parseKeyValuePairs(text) {
@@ -185,15 +187,12 @@ SpecialPowersObserverAPI.prototype = {
     // to evaluate http:// urls...
     var scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
                              .getService(Ci.nsIScriptableInputStream);
-    var channel = Services.io.newChannel2(aUrl,
-                                          null,
-                                          null,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_OTHER);
-    var input = channel.open();
+
+    var channel = NetUtil.newChannel({
+      uri: aUrl,
+      loadUsingSystemPrincipal: true
+    });
+    var input = channel.open2();
     scriptableStream.init(input);
 
     var str;
@@ -227,6 +226,14 @@ SpecialPowersObserverAPI.prototype = {
     }
 
     return output;
+  },
+
+  _sendReply: function(aMessage, aReplyName, aReplyMsg) {
+    let mm = aMessage.target
+                     .QueryInterface(Ci.nsIFrameLoaderOwner)
+                     .frameLoader
+                     .messageManager;
+    mm.sendAsyncMessage(aReplyName, aReplyMsg);
   },
 
   /**
@@ -312,30 +319,21 @@ SpecialPowersObserverAPI.prototype = {
 
       case "SPPermissionManager": {
         let msg = aMessage.json;
-
-        let secMan = Services.scriptSecurityManager;
-        let principal = secMan.getAppCodebasePrincipal(this._getURI(msg.url), msg.appId, msg.isInBrowserElement);
+        let principal = msg.principal;
 
         switch (msg.op) {
           case "add":
-            Services.perms.addFromPrincipal(principal, msg.type, msg.permission);
+            Services.perms.addFromPrincipal(principal, msg.type, msg.permission, msg.expireType, msg.expireTime);
             break;
           case "remove":
             Services.perms.removeFromPrincipal(principal, msg.type);
             break;
           case "has":
             let hasPerm = Services.perms.testPermissionFromPrincipal(principal, msg.type);
-            if (hasPerm == Ci.nsIPermissionManager.ALLOW_ACTION) 
-              return true;
-            return false;
-            break;
+            return hasPerm == Ci.nsIPermissionManager.ALLOW_ACTION;
           case "test":
             let testPerm = Services.perms.testPermissionFromPrincipal(principal, msg.type, msg.value);
-            if (testPerm == msg.value)  {
-              return true;
-            }
-            return false;
-            break;
+            return testPerm == msg.value;
           default:
             throw new SpecialPowersError(
               "Invalid operation for SPPermissionManager");
@@ -375,6 +373,33 @@ SpecialPowersObserverAPI.prototype = {
               scope.UserCustomizations._debug = aMessage.json.value;
               return;
             }
+          case "inject-app":
+            {
+              let aAppId = aMessage.json.appId;
+              let aApp   = aMessage.json.app;
+
+              let keys = Object.keys(Webapps.DOMApplicationRegistry.webapps);
+              let exists = keys.indexOf(aAppId) !== -1;
+              if (exists) {
+                return false;
+              }
+
+              Webapps.DOMApplicationRegistry.webapps[aAppId] = aApp;
+              return true;
+            }
+          case "reject-app":
+            {
+              let aAppId = aMessage.json.appId;
+
+              let keys = Object.keys(Webapps.DOMApplicationRegistry.webapps);
+              let exists = keys.indexOf(aAppId) !== -1;
+              if (!exists) {
+                return false;
+              }
+
+              delete Webapps.DOMApplicationRegistry.webapps[aAppId];
+              return true;
+            }
           default:
             throw new SpecialPowersError("Invalid operation for SPWebAppsService");
         }
@@ -382,11 +407,15 @@ SpecialPowersObserverAPI.prototype = {
       }
 
       case "SPObserverService": {
+        let topic = aMessage.json.observerTopic;
         switch (aMessage.json.op) {
           case "notify":
-            let topic = aMessage.json.observerTopic;
             let data = aMessage.json.observerData
             Services.obs.notifyObservers(null, topic, data);
+            break;
+          case "add":
+            this._registerObservers._self = this;
+            this._registerObservers._add(topic);
             break;
           default:
             throw new SpecialPowersError("Invalid operation for SPObserverervice");
@@ -428,7 +457,7 @@ SpecialPowersObserverAPI.prototype = {
         Object.defineProperty(sb, "assert", {
           get: function () {
             let scope = Components.utils.createObjectIn(sb);
-            Services.scriptloader.loadSubScript("resource://specialpowers/Assert.jsm",
+            Services.scriptloader.loadSubScript("chrome://specialpowers/content/Assert.jsm",
                                                 scope);
 
             let assert = new scope.Assert(reporter);
@@ -460,64 +489,92 @@ SpecialPowersObserverAPI.prototype = {
         return undefined;	// See comment at the beginning of this function.
       }
 
-      case 'SPQuotaManager': {
-        let qm = Cc['@mozilla.org/dom/quota/manager;1']
-                   .getService(Ci.nsIQuotaManager);
-        let mm = aMessage.target
-                         .QueryInterface(Ci.nsIFrameLoaderOwner)
-                         .frameLoader
-                         .messageManager;
-        let msg = aMessage.data;
-        let op = msg.op;
-
-        if (op != 'clear' && op != 'getUsage') {
-          throw new SpecialPowersError('Invalid operation for SPQuotaManager');
+      case "SPImportInMainProcess": {
+        var message = { hadError: false, errorMessage: null };
+        try {
+          Components.utils.import(aMessage.data);
+        } catch (e) {
+          message.hadError = true;
+          message.errorMessage = e.toString();
         }
-
-        let uri = this._getURI(msg.uri);
-
-        if (op == 'clear') {
-          if (('inBrowser' in msg) && msg.inBrowser !== undefined) {
-            qm.clearStoragesForURI(uri, msg.appId, msg.inBrowser);
-          } else if (('appId' in msg) && msg.appId !== undefined) {
-            qm.clearStoragesForURI(uri, msg.appId);
-          } else {
-            qm.clearStoragesForURI(uri);
-          }
-        }
-
-        // We always use the getUsageForURI callback even if we're clearing
-        // since we know that clear and getUsageForURI are synchronized by the
-        // QuotaManager.
-        let callback = function(uri, usage, fileUsage) {
-          let reply = { id: msg.id };
-          if (op == 'getUsage') {
-            reply.usage = usage;
-            reply.fileUsage = fileUsage;
-          }
-          mm.sendAsyncMessage(aMessage.name, reply);
-        };
-
-        if (('inBrowser' in msg) && msg.inBrowser !== undefined) {
-          qm.getUsageForURI(uri, callback, msg.appId, msg.inBrowser);
-        } else if (('appId' in msg) && msg.appId !== undefined) {
-          qm.getUsageForURI(uri, callback, msg.appId);
-        } else {
-          qm.getUsageForURI(uri, callback);
-        }
-
-        return undefined;	// See comment at the beginning of this function.
+        return message;
       }
 
-      case "SPPeriodicServiceWorkerUpdates": {
-        // We could just dispatch a generic idle-daily notification here, but
-        // this is better since it avoids invoking other idle daily observers
-        // at the cost of hard-coding the usage of PeriodicServiceWorkerUpdater.
-        Cc["@mozilla.org/service-worker-periodic-updater;1"].
-          getService(Ci.nsIObserver).
-          observe(null, "idle-daily", "Caller:SpecialPowers");
+      case "SPCleanUpSTSData": {
+        let origin = aMessage.data.origin;
+        let flags = aMessage.data.flags;
+        let uri = Services.io.newURI(origin, null, null);
+        let sss = Cc["@mozilla.org/ssservice;1"].
+                  getService(Ci.nsISiteSecurityService);
+        sss.removeState(Ci.nsISiteSecurityService.HEADER_HSTS, uri, flags);
+      }
 
-        return undefined;	// See comment at the beginning of this function.
+      case "SPLoadExtension": {
+        let {Extension} = Components.utils.import("resource://gre/modules/Extension.jsm", {});
+
+        let id = aMessage.data.id;
+        let ext = aMessage.data.ext;
+        let extension;
+        if (typeof(ext) == "string") {
+          let target = "resource://testing-common/extensions/" + ext + "/";
+          let resourceHandler = Services.io.getProtocolHandler("resource")
+                                        .QueryInterface(Ci.nsISubstitutingProtocolHandler);
+          let resURI = Services.io.newURI(target, null, null);
+          let uri = Services.io.newURI(resourceHandler.resolveURI(resURI), null, null);
+          extension = new Extension({
+            id,
+            resourceURI: uri
+          });
+        } else {
+          extension = Extension.generate(id, ext);
+        }
+
+        let resultListener = (...args) => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "testResult", args});
+        };
+
+        let messageListener = (...args) => {
+          args.shift();
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "testMessage", args});
+        };
+
+        // Register pass/fail handlers.
+        extension.on("test-result", resultListener);
+        extension.on("test-eq", resultListener);
+        extension.on("test-log", resultListener);
+        extension.on("test-done", resultListener);
+
+        extension.on("test-message", messageListener);
+
+        this._extensions.set(id, extension);
+        return undefined;
+      }
+
+      case "SPStartupExtension": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        extension.startup().then(() => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionStarted", args: []});
+        }).catch(e => {
+          this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionFailed", args: []});
+        });
+        return undefined;
+      }
+
+      case "SPExtensionMessage": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        extension.testMessage(...aMessage.data.args);
+        return undefined;
+      }
+
+      case "SPUnloadExtension": {
+        let id = aMessage.data.id;
+        let extension = this._extensions.get(id);
+        this._extensions.delete(id);
+        extension.shutdown();
+        this._sendReply(aMessage, "SPExtensionMessage", {id, type: "extensionUnloaded", args: []});
+        return undefined;
       }
 
       default:

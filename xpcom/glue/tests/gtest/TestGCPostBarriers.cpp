@@ -28,7 +28,7 @@ TraceArray(JSTracer* trc, void* data)
 {
   ArrayT* array = static_cast<ArrayT *>(data);
   for (unsigned i = 0; i < array->Length(); ++i)
-    JS_CallObjectTracer(trc, &array->ElementAt(i), "array-element");
+    JS::TraceEdge(trc, &array->ElementAt(i), "array-element");
 }
 
 /*
@@ -58,7 +58,7 @@ RunTest(JSRuntime* rt, JSContext* cx, ArrayT* array)
     ASSERT_FALSE(JS::ObjectIsTenured(obj));
     value = Int32Value(i);
     ASSERT_TRUE(JS_SetProperty(cx, obj, property, value));
-    array->AppendElement(obj);
+    ASSERT_TRUE(array->AppendElement(obj, fallible));
   }
 
   /*
@@ -88,12 +88,12 @@ CreateGlobalAndRunTest(JSRuntime* rt, JSContext* cx)
     "global", JSCLASS_GLOBAL_FLAGS,
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr,
     JS_GlobalObjectTraceHook
   };
 
   JS::CompartmentOptions options;
-  options.setVersion(JSVERSION_LATEST);
+  options.behaviors().setVersion(JSVERSION_LATEST);
   JS::PersistentRootedObject global(cx);
   global = JS_NewGlobalObject(cx, &GlobalClass, nullptr, JS::FireOnNewGlobalHook, options);
   ASSERT_TRUE(global != nullptr);

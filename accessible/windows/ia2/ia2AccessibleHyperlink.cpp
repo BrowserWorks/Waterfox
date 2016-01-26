@@ -26,7 +26,10 @@ ia2AccessibleHyperlink::QueryInterface(REFIID iid, void** ppv)
   *ppv = nullptr;
 
   if (IID_IAccessibleHyperlink == iid) {
-    if (!static_cast<AccessibleWrap*>(this)->IsLink())
+    auto accWrap = static_cast<AccessibleWrap*>(this);
+    if (accWrap->IsProxy() ?
+        !(accWrap->ProxyInterfaces() & Interfaces::HYPERLINK) :
+        !accWrap->IsLink())
       return E_NOINTERFACE;
 
     *ppv = static_cast<IAccessibleHyperlink*>(this);
@@ -55,7 +58,9 @@ ia2AccessibleHyperlink::get_anchor(long aIndex, VARIANT* aAnchor)
     if (!anchor)
       return S_FALSE;
 
-    aAnchor->punkVal = static_cast<IAccessibleHyperlink*>(WrapperFor(anchor));
+    IUnknown* tmp = static_cast<IAccessibleHyperlink*>(WrapperFor(anchor));
+    tmp->AddRef();
+    aAnchor->punkVal = tmp;
     aAnchor->vt = VT_UNKNOWN;
     return S_OK;
   }

@@ -19,6 +19,7 @@
 #include "mozilla/RefPtr.h"
 #include "FakeMediaStreams.h"
 #include "FakeMediaStreamsImpl.h"
+#include "FakeLogging.h"
 #include "MediaConduitErrors.h"
 #include "MediaConduitInterface.h"
 #include "MediaPipeline.h"
@@ -123,7 +124,7 @@ class TransportInfo {
     flow_ = nullptr;
   }
 
-  mozilla::RefPtr<TransportFlow> flow_;
+  RefPtr<TransportFlow> flow_;
   TransportLayerLoopback *loopback_;
   TransportLayerDtls *dtls_;
 };
@@ -161,7 +162,7 @@ class TestAgent {
 
     mozilla::SyncRunnable::DispatchToThread(
       test_utils->sts_target(),
-      WrapRunnableRet(audio_->GetStream(), &Fake_MediaStream::Start, &ret));
+      WrapRunnableRet(&ret, audio_->GetStream(), &Fake_MediaStream::Start));
 
     ASSERT_TRUE(NS_SUCCEEDED(ret));
   }
@@ -228,12 +229,12 @@ class TestAgent {
 
  protected:
   mozilla::AudioCodecConfig audio_config_;
-  mozilla::RefPtr<mozilla::MediaSessionConduit> audio_conduit_;
-  nsRefPtr<DOMMediaStream> audio_;
+  RefPtr<mozilla::MediaSessionConduit> audio_conduit_;
+  RefPtr<DOMMediaStream> audio_;
   // TODO(bcampen@mozilla.com): Right now this does not let us test RTCP in
   // both directions; only the sender's RTCP is sent, but the receiver should
   // be sending it too.
-  mozilla::RefPtr<mozilla::MediaPipeline> audio_pipeline_;
+  RefPtr<mozilla::MediaPipeline> audio_pipeline_;
   TransportInfo audio_rtp_transport_;
   TransportInfo audio_rtcp_transport_;
   TransportInfo bundle_transport_;
@@ -396,9 +397,9 @@ class MediaPipelineTest : public ::testing::Test {
     // Setup transport flows
     InitTransports(aIsRtcpMux);
 
-    mozilla::SyncRunnable::DispatchToThread(
-      test_utils->sts_target(),
-      WrapRunnable(&p1_, &TestAgent::CreatePipelines_s, aIsRtcpMux));
+    NS_DispatchToMainThread(
+      WrapRunnable(&p1_, &TestAgent::CreatePipelines_s, aIsRtcpMux),
+      NS_DISPATCH_SYNC);
 
     mozilla::SyncRunnable::DispatchToThread(
       test_utils->sts_target(),
@@ -560,7 +561,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReport0CountTruncated) {
 TEST_F(MediaPipelineFilterTest, TestFilterReport1SSRCTruncated) {
   MediaPipelineFilter filter;
   filter.AddRemoteSSRC(16);
-  filter.AddLocalSSRC(17);
   const unsigned char sr[] = {
     RTCP_TYPEINFO(1, MediaPipelineFilter::SENDER_REPORT_T, 12),
     REPORT_FRAGMENT(16),
@@ -572,7 +572,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReport1SSRCTruncated) {
 TEST_F(MediaPipelineFilterTest, TestFilterReport1BigSSRC) {
   MediaPipelineFilter filter;
   filter.AddRemoteSSRC(0x01020304);
-  filter.AddLocalSSRC(0x11121314);
   const unsigned char sr[] = {
     RTCP_TYPEINFO(1, MediaPipelineFilter::SENDER_REPORT_T, 12),
     SSRC(0x01020304),
@@ -597,7 +596,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReportNoMatch) {
 
 TEST_F(MediaPipelineFilterTest, TestFilterUnknownRTCPType) {
   MediaPipelineFilter filter;
-  filter.AddLocalSSRC(18);
   ASSERT_FALSE(filter.FilterSenderReport(unknown_type, sizeof(unknown_type)));
 }
 

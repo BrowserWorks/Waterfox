@@ -9,6 +9,7 @@
 
 #include "MediaStreamGraph.h"
 #include "SpeechSynthesisUtterance.h"
+#include "nsIAudioChannelAgent.h"
 #include "nsISpeechService.h"
 
 namespace mozilla {
@@ -19,6 +20,8 @@ class SpeechSynthesis;
 class SynthStreamListener;
 
 class nsSpeechTask : public nsISpeechTask
+                   , public nsIAudioChannelAgentCallback
+                   , public nsSupportsWeakReference
 {
   friend class SynthStreamListener;
 
@@ -27,6 +30,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsSpeechTask, nsISpeechTask)
 
   NS_DECL_NSISPEECHTASK
+  NS_DECL_NSIAUDIOCHANNELAGENTCALLBACK
 
   explicit nsSpeechTask(SpeechSynthesisUtterance* aUtterance);
   nsSpeechTask(float aVolume, const nsAString& aText);
@@ -37,17 +41,30 @@ public:
 
   virtual void Cancel();
 
+  virtual void ForceEnd();
+
   float GetCurrentTime();
 
   uint32_t GetCurrentCharOffset();
 
   void SetSpeechSynthesis(SpeechSynthesis* aSpeechSynthesis);
 
-  void SetIndirectAudio(bool aIndirectAudio) { mIndirectAudio = aIndirectAudio; }
-
-  void BindStream(ProcessedMediaStream* aStream);
+  void InitDirectAudio();
+  void InitIndirectAudio();
 
   void SetChosenVoiceURI(const nsAString& aUri);
+
+  virtual void SetAudioOutputVolume(float aVolume);
+
+  bool IsPreCanceled()
+  {
+    return mPreCanceled;
+  };
+
+  bool IsPrePaused()
+  {
+    return mPrePaused;
+  }
 
 protected:
   virtual ~nsSpeechTask();
@@ -71,26 +88,42 @@ protected:
   virtual nsresult DispatchMarkImpl(const nsAString& aName,
                                     float aElapsedTime, uint32_t aCharIndex);
 
-  nsRefPtr<SpeechSynthesisUtterance> mUtterance;
+  RefPtr<SpeechSynthesisUtterance> mUtterance;
 
   float mVolume;
 
   nsString mText;
 
+  bool mInited;
+
+  bool mPrePaused;
+
+  bool mPreCanceled;
+
 private:
   void End();
 
-  void SendAudioImpl(nsRefPtr<mozilla::SharedBuffer>& aSamples, uint32_t aDataLen);
+  void SendAudioImpl(RefPtr<mozilla::SharedBuffer>& aSamples, uint32_t aDataLen);
 
-  nsRefPtr<SourceMediaStream> mStream;
+  nsresult DispatchStartInner();
 
-  nsRefPtr<MediaInputPort> mPort;
+  nsresult DispatchEndInner(float aElapsedTime, uint32_t aCharIndex);
+
+  void CreateAudioChannelAgent();
+
+  void DestroyAudioChannelAgent();
+
+  RefPtr<SourceMediaStream> mStream;
+
+  RefPtr<MediaInputPort> mPort;
 
   nsCOMPtr<nsISpeechTaskCallback> mCallback;
 
+  nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
+
   uint32_t mChannels;
 
-  nsRefPtr<SpeechSynthesis> mSpeechSynthesis;
+  RefPtr<SpeechSynthesis> mSpeechSynthesis;
 
   bool mIndirectAudio;
 

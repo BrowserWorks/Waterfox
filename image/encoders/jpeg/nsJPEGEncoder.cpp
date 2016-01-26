@@ -162,19 +162,19 @@ nsJPEGEncoder::InitFromData(const uint8_t* aData,
       jpeg_write_scanlines(&cinfo, const_cast<uint8_t**>(&row), 1);
     }
   } else if (aInputFormat == INPUT_FORMAT_RGBA) {
-    uint8_t* row = new uint8_t[aWidth * 3];
+    UniquePtr<uint8_t[]> rowptr = MakeUnique<uint8_t[]>(aWidth * 3);
+    uint8_t* row = rowptr.get();
     while (cinfo.next_scanline < cinfo.image_height) {
       ConvertRGBARow(&aData[cinfo.next_scanline * aStride], row, aWidth);
       jpeg_write_scanlines(&cinfo, &row, 1);
     }
-    delete[] row;
   } else if (aInputFormat == INPUT_FORMAT_HOSTARGB) {
-    uint8_t* row = new uint8_t[aWidth * 3];
+    UniquePtr<uint8_t[]> rowptr = MakeUnique<uint8_t[]>(aWidth * 3);
+    uint8_t* row = rowptr.get();
     while (cinfo.next_scanline < cinfo.image_height) {
       ConvertHostARGBRow(&aData[cinfo.next_scanline * aStride], row, aWidth);
       jpeg_write_scanlines(&cinfo, &row, 1);
     }
-    delete[] row;
   }
 
   jpeg_finish_compress(&cinfo);
@@ -238,7 +238,6 @@ nsJPEGEncoder::EndImageEncode()
 }
 
 
-/* void close (); */
 NS_IMETHODIMP
 nsJPEGEncoder::Close()
 {
@@ -252,7 +251,6 @@ nsJPEGEncoder::Close()
   return NS_OK;
 }
 
-/* unsigned long available (); */
 NS_IMETHODIMP
 nsJPEGEncoder::Available(uint64_t* _retval)
 {
@@ -264,15 +262,12 @@ nsJPEGEncoder::Available(uint64_t* _retval)
   return NS_OK;
 }
 
-/* [noscript] unsigned long read (in charPtr aBuf, in unsigned long aCount); */
 NS_IMETHODIMP
 nsJPEGEncoder::Read(char* aBuf, uint32_t aCount, uint32_t* _retval)
 {
   return ReadSegments(NS_CopySegmentToBuffer, aBuf, aCount, _retval);
 }
 
-/* [noscript] unsigned long readSegments (in nsWriteSegmentFun aWriter, in
-   voidPtr aClosure, in unsigned long aCount); */
 NS_IMETHODIMP
 nsJPEGEncoder::ReadSegments(nsWriteSegmentFun aWriter,
                             void* aClosure, uint32_t aCount, uint32_t* _retval)
@@ -302,7 +297,6 @@ nsJPEGEncoder::ReadSegments(nsWriteSegmentFun aWriter,
   return NS_OK;
 }
 
-/* boolean isNonBlocking (); */
 NS_IMETHODIMP
 nsJPEGEncoder::IsNonBlocking(bool* _retval)
 {

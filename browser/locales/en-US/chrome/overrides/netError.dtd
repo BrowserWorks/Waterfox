@@ -7,6 +7,8 @@
 
 <!ENTITY loadError.label "Problem loading page">
 <!ENTITY retry.label "Try Again">
+<!ENTITY returnToPreviousPage.label "Go Back">
+<!ENTITY advanced.label "Advanced">
 
 <!-- Specific error messages -->
 
@@ -175,6 +177,10 @@ be temporary, and you can try again later.</li>
 <p>These types of web forgeries are used in scams known as phishing attacks, in which fraudulent web pages and emails are used to imitate sources you may trust.</p>
 ">
 
+<!ENTITY forbiddenBlocked.title "Forbidden Site">
+<!ENTITY forbiddenBlocked.longDesc "<p>&brandShortName; prevented this page from loading because it is configured to block it.</p>
+">
+
 <!ENTITY cspBlocked.title "Blocked by Content Security Policy">
 <!ENTITY cspBlocked.longDesc "<p>&brandShortName; prevented this page from loading in this way because the page has a content security policy that disallows it.</p>">
 
@@ -198,20 +204,24 @@ functionality specific to firefox. -->
 <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
 ">
 
-<!ENTITY errorReporting.title "Report this error">
-<!ENTITY errorReporting.longDesc "Reporting the address and certificate information for <span id='hostname'></span> will help us identify and block malicious sites. Thanks for helping create a safer web!">
-<!ENTITY errorReporting.automatic "Automatically report errors in the future">
+<!ENTITY errorReporting.automatic2 "Report errors like this to help Mozilla identify and block malicious sites">
 <!ENTITY errorReporting.learnMore "Learn more…">
 <!ENTITY errorReporting.sending "Sending report">
 <!ENTITY errorReporting.sent "Report sent">
-<!ENTITY errorReporting.report "Report">
 <!ENTITY errorReporting.tryAgain "Try again">
 
 <!ENTITY remoteXUL.title "Remote XUL">
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Please contact the website owners to inform them of this problem.</li></ul></p>">
 
 <!ENTITY sslv3Used.title "Unable to Connect Securely">
-<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
-     "ssl_error_unsupported_version". -->
-<!ENTITY sslv3Used.longDesc "Advanced info: ssl_error_unsupported_version">
-<!ENTITY sslv3Used.learnMore "Learn More…">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Your connection is not secure">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc2) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc2 "Advanced info: SSL_ERROR_NO_CYPHER_OVERLAP">
+<!ENTITY weakCryptoAdvanced.title "Advanced">
+<!ENTITY weakCryptoAdvanced.longDesc "<span class='hostname'></span> uses security technology that is outdated and vulnerable to attack. An attacker could easily reveal information which you thought to be safe.">
+<!ENTITY weakCryptoAdvanced.override "(Not secure) Try loading <span class='hostname'></span> using outdated security">

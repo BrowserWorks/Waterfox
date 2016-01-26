@@ -44,8 +44,8 @@ SEC_ASN1Template CERTSignatureDataTemplate[] =
           offsetof(CERTSignedData,signatureAlgorithm),
           SEC_ASN1_SUB(SECOID_AlgorithmIDTemplate) },
     { SEC_ASN1_BIT_STRING,
-          offsetof(CERTSignedData,signature), },
-    { 0, }
+          offsetof(CERTSignedData,signature) },
+    { 0 }
 };
 
 
@@ -175,7 +175,7 @@ main(int argc, char **argv)
     PRFileDesc *inFile;
     char *keyName = NULL;
     CERTCertDBHandle *certHandle;
-    CERTCertificate *cert;
+    CERTCertificate *cert = NULL;
     PLOptState *optstate;
     PLOptStatus status;
     SECStatus rv;

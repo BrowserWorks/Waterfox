@@ -1254,12 +1254,12 @@ static void scalar_mult(felem nx, felem ny, felem nz,
 #define BYTESWAP64(x) OSSwapInt64(x)
 #else
 #define BYTESWAP32(x) \
-    ((x) >> 24 | (x) >> 8 & 0xff00 | ((x) & 0xff00) << 8 | (x) << 24)
+    (((x) >> 24) | (((x) >> 8) & 0xff00) | (((x) & 0xff00) << 8) | ((x) << 24))
 #define BYTESWAP64(x) \
-    ((x) >> 56 | (x) >> 40 & 0xff00 | \
-     (x) >> 24 & 0xff0000 | (x) >> 8 & 0xff000000 | \
-     ((x) & 0xff000000) << 8 | ((x) & 0xff0000) << 24 | \
-     ((x) & 0xff00) << 40 | (x) << 56)
+    (((x) >> 56) | (((x) >> 40) & 0xff00) | \
+     (((x) >> 24) & 0xff0000) | (((x) >> 8) & 0xff000000) | \
+     (((x) & 0xff000000) << 8) | (((x) & 0xff0000) << 24) | \
+     (((x) & 0xff00) << 40) | ((x) << 56))
 #endif
 
 #ifdef MP_USE_UINT_DIGIT
@@ -1302,23 +1302,23 @@ static mp_err to_montgomery(felem out, const mp_int *in, const ECGroup *group)
     int i;
     mp_err res;
 
-    mp_init(&in_shifted);
-    s_mp_pad(&in_shifted, MP_USED(in) + MP_DIGITS_IN_256_BITS);
+    MP_CHECKOK(mp_init(&in_shifted));
+    MP_CHECKOK(s_mp_pad(&in_shifted, MP_USED(in) + MP_DIGITS_IN_256_BITS));
     memcpy(&MP_DIGIT(&in_shifted, MP_DIGITS_IN_256_BITS),
 	   MP_DIGITS(in),
 	   MP_USED(in)*sizeof(mp_digit));
-    mp_mul_2(&in_shifted, &in_shifted);
+    MP_CHECKOK(mp_mul_2(&in_shifted, &in_shifted));
     MP_CHECKOK(group->meth->field_mod(&in_shifted, &in_shifted, group->meth));
 
     for (i = 0;; i++) {
 	out[i] = MP_DIGIT(&in_shifted, 0) & kBottom29Bits;
-	mp_div_d(&in_shifted, kTwo29, &in_shifted, NULL);
+	MP_CHECKOK(mp_div_d(&in_shifted, kTwo29, &in_shifted, NULL));
 
 	i++;
 	if (i == NLIMBS)
 	    break;
 	out[i] = MP_DIGIT(&in_shifted, 0) & kBottom28Bits;
-	mp_div_d(&in_shifted, kTwo28, &in_shifted, NULL);
+	MP_CHECKOK(mp_div_d(&in_shifted, kTwo28, &in_shifted, NULL));
     }
 
 CLEANUP:
@@ -1334,8 +1334,8 @@ static mp_err from_montgomery(mp_int *out, const felem in,
     mp_err res;
     int i;
 
-    mp_init(&result);
-    mp_init(&tmp);
+    MP_CHECKOK(mp_init(&result));
+    MP_CHECKOK(mp_init(&tmp));
 
     MP_CHECKOK(mp_add_d(&tmp, in[NLIMBS-1], &result));
     for (i = NLIMBS-2; i >= 0; i--) {

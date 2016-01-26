@@ -30,7 +30,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "appsService",
                                    "nsIAppsService");
 
 // Limit the number of pending messages for a given page.
-let kMaxPendingMessages;
+var kMaxPendingMessages;
 try {
   kMaxPendingMessages =
     Services.prefs.getIntPref("dom.messages.maxPendingMessages");
@@ -54,7 +54,7 @@ function debug(aMsg) {
 }
 
 
-let defaultMessageConfigurator = {
+var defaultMessageConfigurator = {
   get mustShowRunningApp() {
     return false;
   }
@@ -273,7 +273,7 @@ SystemMessageInternal.prototype = {
                                    type: aType,
                                    msg: aMessage,
                                    extra: aExtra });
-      return;
+      return Promise.resolve();
     }
 
     // Give this message an ID so that we can identify the message and
@@ -285,37 +285,50 @@ SystemMessageInternal.prototype = {
 
     let shouldDispatchFunc = this._getMessageConfigurator(aType).shouldDispatch;
 
-    // Find pages that registered an handler for this type.
-    this._pages.forEach(function(aPage) {
-      if (aPage.type !== aType) {
-        return;
-      }
+    if (!this._pages.length) {
+      return Promise.resolve();
+    }
 
-      let doDispatch = () => {
-        let result = this._sendMessageCommon(aType,
-                                             aMessage,
-                                             messageID,
-                                             aPage.pageURL,
-                                             aPage.manifestURL,
-                                             aExtra);
-        debug("Returned status of sending message: " + result);
-      };
-
-      if ('function' !== typeof shouldDispatchFunc) {
-        // If the configurator has no 'shouldDispatch' defined,
-        // always dispatch this message.
-        doDispatch();
-        return;
-      }
-
-      shouldDispatchFunc(aPage.manifestURL, aPage.pageURL, aType, aMessage, aExtra)
-        .then(aShouldDispatch => {
-          if (aShouldDispatch) {
-            doDispatch();
+    // Find pages that registered a handler for this type.
+    let promises = [];
+    for (let i = 0; i < this._pages.length; i++) {
+      let promise = ((page) => {
+        return new Promise((resolve, reject) => {
+          if (page.type !== aType) {
+            resolve();
+            return;
           }
-        });
 
-    }, this);
+          let doDispatch = () => {
+            let result = this._sendMessageCommon(aType,
+                                                 aMessage,
+                                                 messageID,
+                                                 page.pageURL,
+                                                 page.manifestURL,
+                                                 aExtra);
+            debug("Returned status of sending message: " + result);
+            resolve();
+          };
+
+          if ('function' !== typeof shouldDispatchFunc) {
+            // If the configurator has no 'shouldDispatch' defined,
+            // always dispatch this message.
+            doDispatch();
+            return;
+          }
+
+          shouldDispatchFunc(page.manifestURL, page.pageURL, aType, aMessage, aExtra)
+            .then(aShouldDispatch => {
+              if (aShouldDispatch) {
+                doDispatch();
+              }
+            });
+        });
+      })(this._pages[i]);
+      promises.push(promise);
+    }
+
+    return Promise.all(promises);
   },
 
   registerPage: function(aType, aPageURI, aManifestURI) {
@@ -742,11 +755,9 @@ SystemMessageInternal.prototype = {
     if (!page) {
       debug("Message " + aType + " is not registered for " +
             aPageURL + " @ " + aManifestURL);
-      // FIXME bug 1140275 should only send message to page registered in manifest
-      // return MSG_SENT_FAILURE_PERM_DENIED;
+      return MSG_SENT_FAILURE_PERM_DENIED;
     }
-    if (page)
-      this._queueMessage(page, aMessage, aMessageID);
+    this._queueMessage(page, aMessage, aMessageID);
 
     let appPageIsRunning = false;
     let pageKey = this._createKeyForPage({ type: aType,
@@ -801,8 +812,7 @@ SystemMessageInternal.prototype = {
       result = MSG_SENT_FAILURE_APP_NOT_RUNNING;
       this._acquireCpuWakeLock(pageKey);
     }
-    if (page)
-      this._openAppPage(page, aMessage, aExtra, result);
+    this._openAppPage(page, aMessage, aExtra, result);
     return result;
   },
 

@@ -11,7 +11,7 @@ this.EXPORTED_SYMBOLS = [
   "RotaryTracker",
 ];
 
-const {utils: Cu} = Components;
+var {utils: Cu} = Components;
 
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/record.js");
@@ -32,8 +32,8 @@ RotaryRecord.prototype = {
 };
 Utils.deferGetSet(RotaryRecord, "cleartext", ["denomination"]);
 
-this.RotaryStore = function RotaryStore(engine) {
-  Store.call(this, "Rotary", engine);
+this.RotaryStore = function RotaryStore(name, engine) {
+  Store.call(this, name, engine);
   this.items = {};
 }
 RotaryStore.prototype = {
@@ -88,8 +88,8 @@ RotaryStore.prototype = {
   }
 };
 
-this.RotaryTracker = function RotaryTracker(engine) {
-  Tracker.call(this, "Rotary", engine);
+this.RotaryTracker = function RotaryTracker(name, engine) {
+  Tracker.call(this, name, engine);
 }
 RotaryTracker.prototype = {
   __proto__: Tracker.prototype

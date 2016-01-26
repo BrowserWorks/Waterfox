@@ -30,11 +30,11 @@ static float ClampFactor(float aFactor)
 
 nsCSSFilterInstance::nsCSSFilterInstance(const nsStyleFilter& aFilter,
                                          nscolor aShadowFallbackColor,
-                                         const nsIntRect& aTargetBBoxInFilterSpace,
+                                         const nsIntRect& aTargetBoundsInFilterSpace,
                                          const gfxMatrix& aFrameSpaceInCSSPxToFilterSpaceTransform)
   : mFilter(aFilter)
   , mShadowFallbackColor(aShadowFallbackColor)
-  , mTargetBBoxInFilterSpace(aTargetBBoxInFilterSpace)
+  , mTargetBoundsInFilterSpace(aTargetBoundsInFilterSpace)
   , mFrameSpaceInCSSPxToFilterSpaceTransform(aFrameSpaceInCSSPxToFilterSpaceTransform)
 {
 }
@@ -324,8 +324,8 @@ nsCSSFilterInstance::BlurRadiusToFilterSpace(nscoord aRadiusInFrameSpace)
     nsPresContext::AppUnitsToFloatCSSPixels(aRadiusInFrameSpace);
 
   // Convert the radius to filter space.
-  gfxSize radiusInFilterSpace(radiusInFrameSpaceInCSSPx,
-                              radiusInFrameSpaceInCSSPx);
+  Size radiusInFilterSpace(radiusInFrameSpaceInCSSPx,
+                           radiusInFrameSpaceInCSSPx);
   gfxSize frameSpaceInCSSPxToFilterSpaceScale =
     mFrameSpaceInCSSPxToFilterSpaceTransform.ScaleFactors(true);
   radiusInFilterSpace.Scale(frameSpaceInCSSPxToFilterSpaceScale.width,
@@ -336,11 +336,11 @@ nsCSSFilterInstance::BlurRadiusToFilterSpace(nscoord aRadiusInFrameSpace)
     NS_NOTREACHED("we shouldn't have parsed a negative radius in the style");
     return Size();
   }
-  gfxFloat maxStdDeviation = (gfxFloat)kMaxStdDeviation;
+  Float maxStdDeviation = (Float)kMaxStdDeviation;
   radiusInFilterSpace.width = std::min(radiusInFilterSpace.width, maxStdDeviation);
   radiusInFilterSpace.height = std::min(radiusInFilterSpace.height, maxStdDeviation);
 
-  return ToSize(radiusInFilterSpace);
+  return radiusInFilterSpace;
 }
 
 IntPoint
@@ -385,7 +385,7 @@ nsCSSFilterInstance::SetBounds(FilterPrimitiveDescription& aDescr,
 {
   int32_t inputIndex = GetLastResultIndex(aPrimitiveDescrs);
   nsIntRect inputBounds = (inputIndex < 0) ?
-    mTargetBBoxInFilterSpace : aPrimitiveDescrs[inputIndex].PrimitiveSubregion();
+    mTargetBoundsInFilterSpace : aPrimitiveDescrs[inputIndex].PrimitiveSubregion();
 
   nsTArray<nsIntRegion> inputExtents;
   inputExtents.AppendElement(inputBounds);

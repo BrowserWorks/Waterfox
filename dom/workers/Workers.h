@@ -20,6 +20,7 @@
 #include "nsILoadContext.h"
 #include "nsIWeakReferenceUtils.h"
 #include "nsIInterfaceRequestor.h"
+#include "mozilla/dom/ChannelInfo.h"
 
 #define BEGIN_WORKERS_NAMESPACE \
   namespace mozilla { namespace dom { namespace workers {
@@ -38,12 +39,13 @@ class nsIPrincipal;
 class nsILoadGroup;
 class nsITabChild;
 class nsIChannel;
+class nsIRunnable;
 class nsIURI;
 
 namespace mozilla {
 namespace ipc {
 class PrincipalInfo;
-}
+} // namespace ipc
 
 namespace dom {
 // If you change this, the corresponding list in nsIWorkerDebugger.idl needs to
@@ -54,8 +56,9 @@ enum WorkerType
   WorkerTypeShared,
   WorkerTypeService
 };
-}
-}
+
+} // namespace dom
+} // namespace mozilla
 
 BEGIN_WORKERS_NAMESPACE
 
@@ -194,9 +197,11 @@ struct JSSettings
 
 enum WorkerPreference
 {
-  WORKERPREF_DUMP = 0, // browser.dom.window.dump.enabled
-  WORKERPREF_DOM_CACHES, // dom.caches.enabled
-  WORKERPREF_SERVICEWORKERS, // dom.serviceWorkers.enabled
+#define WORKER_SIMPLE_PREF(name, getter, NAME) WORKERPREF_ ## NAME,
+#define WORKER_PREF(name, callback)
+#include "mozilla/dom/WorkerPrefs.h"
+#undef WORKER_SIMPLE_PREF
+#undef WORKER_PREF
   WORKERPREF_COUNT
 };
 
@@ -213,6 +218,12 @@ struct WorkerLoadInfo
   nsCOMPtr<nsIContentSecurityPolicy> mCSP;
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
+
+  // mLoadFailedAsyncRunnable will execute on main thread if script loading
+  // fails during script loading.  If script loading is never started due to
+  // a synchronous error, then the runnable is never executed.  The runnable
+  // is guaranteed to be released on the main thread.
+  nsCOMPtr<nsIRunnable> mLoadFailedAsyncRunnable;
 
   class InterfaceRequestor final : public nsIInterfaceRequestor
   {
@@ -237,16 +248,17 @@ struct WorkerLoadInfo
   };
 
   // Only set if we have a custom overriden load group
-  nsRefPtr<InterfaceRequestor> mInterfaceRequestor;
+  RefPtr<InterfaceRequestor> mInterfaceRequestor;
 
   nsAutoPtr<mozilla::ipc::PrincipalInfo> mPrincipalInfo;
   nsCString mDomain;
 
   nsString mServiceWorkerCacheName;
 
-  nsCString mSecurityInfo;
+  ChannelInfo mChannelInfo;
 
   uint64_t mWindowID;
+  uint64_t mServiceWorkerID;
 
   bool mFromWindow;
   bool mEvalAllowed;
@@ -255,7 +267,9 @@ struct WorkerLoadInfo
   bool mPrincipalIsSystem;
   bool mIsInPrivilegedApp;
   bool mIsInCertifiedApp;
-  bool mIndexedDBAllowed;
+  bool mStorageAllowed;
+  bool mPrivateBrowsing;
+  bool mServiceWorkersTestingInWindow;
 
   WorkerLoadInfo();
   ~WorkerLoadInfo();
@@ -273,6 +287,12 @@ FreezeWorkersForWindow(nsPIDOMWindow* aWindow);
 
 void
 ThawWorkersForWindow(nsPIDOMWindow* aWindow);
+
+void
+SuspendWorkersForWindow(nsPIDOMWindow* aWindow);
+
+void
+ResumeWorkersForWindow(nsPIDOMWindow* aWindow);
 
 class WorkerTask
 {
@@ -323,7 +343,7 @@ public:
 };
 
 WorkerCrossThreadDispatcher*
-GetWorkerCrossThreadDispatcher(JSContext* aCx, jsval aWorker);
+GetWorkerCrossThreadDispatcher(JSContext* aCx, JS::Value aWorker);
 
 // Random unique constant to facilitate JSPrincipal debugging
 const uint32_t kJSPrincipalsDebugToken = 0x7e2df9d2;

@@ -1,0 +1,47 @@
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>frame for storage prevented test</title>
+
+<script type="text/javascript" src="https://example.com/tests/dom/tests/mochitest/general/storagePermissionsUtils.js"></script>
+<script  type="text/javascript;version=1.7">
+
+  task(function* () {
+    // We shouldn't be able to access storage
+    yield storagePrevented();
+
+    // This hash of the URI is set to #nullprincipal by the test if the current page has a null principal,
+    // and thus attempting to create a dedicated worker will throw
+    if (location.hash == "#nullprincipal") {
+      function createWorker() {
+        return new Promise((resolve, reject) => {
+          var w;
+          try {
+            w = new Worker("workerStoragePrevented.js");
+          } catch (e) {
+            ok(true, "Running workers was prevented");
+            resolve();
+          }
+
+          w.onerror = function() {
+            ok(true, "Running workers was prevented");
+            resolve();
+         }
+        });
+      }
+
+      yield createWorker();
+      return;
+    }
+
+    // Try to run a worker, which shouldn't be able to access storage
+    yield runWorker("workerStoragePrevented.js");
+  });
+
+</script>
+
+</head>
+
+<body>
+</body>
+</html>

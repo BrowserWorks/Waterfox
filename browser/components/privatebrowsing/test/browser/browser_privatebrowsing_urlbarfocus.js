@@ -6,6 +6,8 @@
 
 "use strict";
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
+let aboutNewTabService = Components.classes["@mozilla.org/browser/aboutnewtab-service;1"]
+                                   .getService(Components.interfaces.nsIAboutNewTabService);
 
 function checkUrlbarFocus(win) {
   let urlbar = win.gURLBar;
@@ -28,14 +30,14 @@ add_task(function* () {
 });
 
 add_task(function* () {
-  Services.prefs.setCharPref("browser.newtab.url", "about:blank");
+  aboutNewTabService.newTabURL = "about:blank";
   registerCleanupFunction(() => {
-    Services.prefs.clearUserPref("browser.newtab.url");
+    aboutNewTabService.resetNewTabURL();
   });
 
   let win = yield openNewPrivateWindow();
   checkUrlbarFocus(win);
   win.close();
 
-  Services.prefs.clearUserPref("browser.newtab.url");
+  aboutNewTabService.resetNewTabURL();
 });

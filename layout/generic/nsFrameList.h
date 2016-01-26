@@ -45,8 +45,8 @@ namespace layout {
       // is normally done when manipulating child lists.
       kNoReflowPrincipalList        = 0x4000
   };
-}
-}
+} // namespace layout
+} // namespace mozilla
 
 // Uncomment this to enable expensive frame-list integrity checking
 // #define DEBUG_FRAME_LIST
@@ -73,7 +73,7 @@ public:
   }
 
   /**
-   * Allocate a nsFrameList from the shell arena.
+   * Infallibly allocate a nsFrameList from the shell arena.
    */
   void* operator new(size_t sz, nsIPresShell* aPresShell) CPP_THROW_NEW;
 
@@ -451,11 +451,6 @@ public:
   class Iterator
   {
   public:
-    typedef nsIFrame* const ValueType;
-    // Though we don't support +/- a integer currently,
-    // iterators have to have a DifferenceType.
-    typedef ptrdiff_t DifferenceType;
-
     Iterator(const nsFrameList& aList, nsIFrame* aCurrent)
       : mList(aList)
       , mCurrent(aCurrent)
@@ -466,7 +461,7 @@ public:
       , mCurrent(aOther.mCurrent)
     {}
 
-    ValueType& operator*() const { return mCurrent; }
+    nsIFrame* operator*() const { return mCurrent; }
 
     // The operators need to know about nsIFrame, hence the
     // implementations are in nsIFrame.h
@@ -564,9 +559,10 @@ union AlignedFrameListBytes {
   char bytes[sizeof(nsFrameList)];
 };
 extern const AlignedFrameListBytes gEmptyFrameListBytes;
-}
-}
-}
+} // namespace detail
+
+} // namespace layout
+} // namespace mozilla
 
 /* static */ inline const nsFrameList&
 nsFrameList::EmptyList()

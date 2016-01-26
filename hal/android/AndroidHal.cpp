@@ -123,23 +123,30 @@ GetCurrentScreenConfiguration(ScreenConfiguration* aScreenConfiguration)
 
   nsIntRect rect;
   int32_t colorDepth, pixelDepth;
-  ScreenOrientation orientation;
+  int16_t angle;
+  ScreenOrientationInternal orientation;
   nsCOMPtr<nsIScreen> screen;
 
   screenMgr->GetPrimaryScreen(getter_AddRefs(screen));
   screen->GetRect(&rect.x, &rect.y, &rect.width, &rect.height);
   screen->GetColorDepth(&colorDepth);
   screen->GetPixelDepth(&pixelDepth);
-  orientation = static_cast<ScreenOrientation>(bridge->GetScreenOrientation());
+  orientation = static_cast<ScreenOrientationInternal>(bridge->GetScreenOrientation());
+  angle = bridge->GetScreenAngle();
 
   *aScreenConfiguration =
-    hal::ScreenConfiguration(rect, orientation, colorDepth, pixelDepth);
+    hal::ScreenConfiguration(rect, orientation, angle, colorDepth, pixelDepth);
 }
 
 bool
-LockScreenOrientation(const ScreenOrientation& aOrientation)
+LockScreenOrientation(const ScreenOrientationInternal& aOrientation)
 {
-  switch (aOrientation) {
+  // Force the default orientation to be portrait-primary.
+  ScreenOrientationInternal orientation =
+    aOrientation == eScreenOrientation_Default ? eScreenOrientation_PortraitPrimary
+                                               : aOrientation;
+
+  switch (orientation) {
     // The Android backend only supports these orientations.
     case eScreenOrientation_PortraitPrimary:
     case eScreenOrientation_PortraitSecondary:
@@ -148,7 +155,7 @@ LockScreenOrientation(const ScreenOrientation& aOrientation)
     case eScreenOrientation_LandscapeSecondary:
     case eScreenOrientation_LandscapePrimary | eScreenOrientation_LandscapeSecondary:
     case eScreenOrientation_Default:
-      mozilla::widget::GeckoAppShell::LockScreenOrientation(aOrientation);
+      mozilla::widget::GeckoAppShell::LockScreenOrientation(orientation);
       return true;
     default:
       return false;

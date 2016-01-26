@@ -137,8 +137,8 @@ class BailoutFrameInfo
     SnapshotOffset snapshotOffset() const {
         return snapshotOffset_;
     }
-    const MachineState machineState() const {
-        return machine_;
+    const MachineState* machineState() const {
+        return &machine_;
     }
     size_t topFrameSize() const {
         return topFrameSize_;
@@ -211,7 +211,7 @@ uint32_t ExceptionHandlerBailout(JSContext* cx, const InlineFrameIterator& frame
 
 uint32_t FinishBailoutToBaseline(BaselineBailoutInfo* bailoutInfo);
 
-bool CheckFrequentBailouts(JSContext* cx, JSScript* script);
+bool CheckFrequentBailouts(JSContext* cx, JSScript* script, BailoutKind bailoutKind);
 
 } // namespace jit
 } // namespace js

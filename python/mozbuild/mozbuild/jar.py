@@ -8,6 +8,8 @@ processing jar.mn files.
 See the documentation for jar.mn on MDC for further details on the format.
 '''
 
+from __future__ import absolute_import
+
 import sys
 import os
 import errno
@@ -16,15 +18,12 @@ import logging
 from time import localtime
 from MozZipFile import ZipFile
 from cStringIO import StringIO
-
-from mozbuild.util import (
-    lock_file,
-    PushbackIter,
-)
+from collections import defaultdict
 
 from mozbuild.preprocessor import Preprocessor
 from mozbuild.action.buildlist import addEntriesToListFile
 from mozpack.files import FileFinder
+import mozpack.path as mozpath
 if sys.platform == 'win32':
     from ctypes import windll, WinError
     CreateHardLink = windll.kernel32.CreateHardLinkA
@@ -64,19 +63,138 @@ def getModTime(aPath):
     return localtime(mtime)
 
 
-class JarMaker(object):
-    '''JarMaker reads jar.mn files and process those into jar files or
-      flat directories, along with chrome.manifest files.
-      '''
+class JarManifestEntry(object):
+    def __init__(self, output, source, is_locale=False, preprocess=False):
+        self.output = output
+        self.source = source
+        self.is_locale = is_locale
+        self.preprocess = preprocess
+
+
+class JarInfo(object):
+    def __init__(self, base_or_jarinfo, name=None):
+        if name is None:
+            assert isinstance(base_or_jarinfo, JarInfo)
+            self.base = base_or_jarinfo.base
+            self.name = base_or_jarinfo.name
+        else:
+            assert not isinstance(base_or_jarinfo, JarInfo)
+            self.base = base_or_jarinfo or ''
+            self.name = name
+            # For compatibility with existing jar.mn files, if there is no
+            # base, the jar name is under chrome/
+            if not self.base:
+                self.name = mozpath.join('chrome', self.name)
+        self.relativesrcdir = None
+        self.chrome_manifests = []
+        self.entries = []
+
+
+class DeprecatedJarManifest(Exception): pass
+
+
+class JarManifestParser(object):
 
     ignore = re.compile('\s*(\#.*)?$')
-    jarline = re.compile('(?:(?P<jarfile>[\w\d.\-\_\\\/]+).jar\:)|(?:\s*(\#.*)?)\s*$')
+    jarline = re.compile('''
+        (?:
+            (?:\[(?P<base>[\w\d.\-\_\\\/{}@]+)\]\s*)? # optional [base/path]
+            (?P<jarfile>[\w\d.\-\_\\\/{}]+).jar\:    # filename.jar:
+        |
+            (?:\s*(\#.*)?)                           # comment
+        )\s*$                                        # whitespaces
+        ''', re.VERBOSE)
     relsrcline = re.compile('relativesrcdir\s+(?P<relativesrcdir>.+?):')
     regline = re.compile('\%\s+(.*)$')
     entryre = '(?P<optPreprocess>\*)?(?P<optOverwrite>\+?)\s+'
     entryline = re.compile(entryre
                            + '(?P<output>[\w\d.\-\_\\\/\+\@]+)\s*(\((?P<locale>\%?)(?P<source>[\w\d.\-\_\\\/\@\*]+)\))?\s*$'
                            )
+
+    def __init__(self):
+        self._current_jar = None
+        self._jars = []
+
+    def write(self, line):
+        # A Preprocessor instance feeds the parser through calls to this method.
+
+        # Ignore comments and empty lines
+        if self.ignore.match(line):
+            return
+
+        # A jar manifest file can declare several different sections, each of
+        # which applies to a given "jar file". Each of those sections starts
+        # with "<name>.jar:", in which case the path is assumed relative to
+        # a "chrome" directory, or "[<base/path>] <subpath/name>.jar:", where
+        # a base directory is given (usually pointing at the root of the
+        # application or addon) and the jar path is given relative to the base
+        # directory.
+        if self._current_jar is None:
+            m = self.jarline.match(line)
+            if not m:
+                raise RuntimeError(line)
+            if m.group('jarfile'):
+                self._current_jar = JarInfo(m.group('base'),
+                                            m.group('jarfile'))
+                self._jars.append(self._current_jar)
+            return
+
+        # Within each section, there can be three different types of entries:
+
+        # - indications of the relative source directory we pretend to be in
+        # when considering localization files, in the following form;
+        # "relativesrcdir <path>:"
+        m = self.relsrcline.match(line)
+        if m:
+            if self._current_jar.chrome_manifests or self._current_jar.entries:
+                self._current_jar = JarInfo(self._current_jar)
+                self._jars.append(self._current_jar)
+            self._current_jar.relativesrcdir = m.group('relativesrcdir')
+            return
+
+        # - chrome manifest entries, prefixed with "%".
+        m = self.regline.match(line)
+        if m:
+            rline = ' '.join(m.group(1).split())
+            if rline not in self._current_jar.chrome_manifests:
+                self._current_jar.chrome_manifests.append(rline)
+            return
+
+        # - entries indicating files to be part of the given jar. They are
+        # formed thusly:
+        #   "<dest_path>"
+        # or
+        #   "<dest_path> (<source_path>)"
+        # The <dest_path> is where the file(s) will be put in the chrome jar.
+        # The <source_path> is where the file(s) can be found in the source
+        # directory. The <source_path> may start with a "%" for files part
+        # of a localization directory, in which case the "%" counts as the
+        # locale.
+        # Each entry can be prefixed with "*" for preprocessing.
+        m = self.entryline.match(line)
+        if m:
+            if m.group('optOverwrite'):
+                raise DeprecatedJarManifest(
+                    'The "+" prefix is not supported anymore')
+            self._current_jar.entries.append(JarManifestEntry(
+                m.group('output'),
+                m.group('source') or mozpath.basename(m.group('output')),
+                is_locale=bool(m.group('locale')),
+                preprocess=bool(m.group('optPreprocess')),
+            ))
+            return
+
+        self._current_jar = None
+        self.write(line)
+
+    def __iter__(self):
+        return iter(self._jars)
+
+
+class JarMaker(object):
+    '''JarMaker reads jar.mn files and process those into jar files or
+      flat directories, along with chrome.manifest files.
+      '''
 
     def __init__(self, outputFormat='flat', useJarfileManifest=True,
         useChromeManifest=False):
@@ -92,6 +210,7 @@ class JarMaker(object):
         self.l10nmerge = None
         self.relativesrcdir = None
         self.rootManifestAppId = None
+        self._seen_output = set()
 
     def getCommandLineParser(self):
         '''Get a optparse.OptionParser for jarmaker.
@@ -130,28 +249,13 @@ class JarMaker(object):
                      )
         p.add_option('--relativesrcdir', type='string',
                      help='relativesrcdir to be used for localization')
-        p.add_option('-j', type='string', help='jarfile directory')
+        p.add_option('-d', type='string', help='base directory')
         p.add_option('--root-manifest-entry-appid', type='string',
                      help='add an app id specific root chrome manifest entry.'
                      )
         return p
 
-    def processIncludes(self, includes):
-        '''Process given includes with the inner PreProcessor.
-
-        Only use this for #defines, the includes shouldn't generate
-        content.
-        '''
-
-        self.pp.out = StringIO()
-        for inc in includes:
-            self.pp.do_include(inc)
-        includesvalue = self.pp.out.getvalue()
-        if includesvalue:
-            logging.info('WARNING: Includes produce non-empty output')
-        self.pp.out = None
-
-    def finalizeJar(self, jarPath, chromebasepath, register, doZip=True):
+    def finalizeJar(self, jardir, jarbase, jarname, chromebasepath, register, doZip=True):
         '''Helper method to write out the chrome registration entries to
          jarfile.manifest or chrome.manifest, or both.
 
@@ -162,18 +266,19 @@ class JarMaker(object):
         if not register:
             return
 
-        chromeManifest = os.path.join(os.path.dirname(jarPath), '..',
-                'chrome.manifest')
+        chromeManifest = os.path.join(jardir, jarbase, 'chrome.manifest')
 
         if self.useJarfileManifest:
-            self.updateManifest(jarPath + '.manifest',
+            self.updateManifest(os.path.join(jardir, jarbase,
+                                             jarname + '.manifest'),
                                 chromebasepath.format(''), register)
-            addEntriesToListFile(chromeManifest,
-                                 ['manifest chrome/{0}.manifest'.format(os.path.basename(jarPath))])
+            if jarname != 'chrome':
+                addEntriesToListFile(chromeManifest,
+                                     ['manifest {0}.manifest'.format(jarname)])
         if self.useChromeManifest:
+            chromebase = os.path.dirname(jarname) + '/'
             self.updateManifest(chromeManifest,
-                                chromebasepath.format('chrome/'),
-                                register)
+                                chromebasepath.format(chromebase), register)
 
         # If requested, add a root chrome manifest entry (assumed to be in the parent directory
         # of chromeManifest) with the application specific id. In cases where we're building
@@ -197,27 +302,9 @@ class JarMaker(object):
         '''updateManifest replaces the % in the chrome registration entries
         with the given chrome base path, and updates the given manifest file.
         '''
-
-        lock = lock_file(manifestPath + '.lck')
-        try:
-            myregister = dict.fromkeys(map(lambda s: s.replace('%',
-                    chromebasepath), register.iterkeys()))
-            manifestExists = os.path.isfile(manifestPath)
-            mode = manifestExists and 'r+b' or 'wb'
-            mf = open(manifestPath, mode)
-            if manifestExists:
-                # import previous content into hash, ignoring empty ones and comments
-                imf = re.compile('(#.*)?$')
-                for l in re.split('[\r\n]+', mf.read()):
-                    if imf.match(l):
-                        continue
-                    myregister[l] = None
-                mf.seek(0)
-            for k in sorted(myregister.iterkeys()):
-                mf.write(k + os.linesep)
-            mf.close()
-        finally:
-            lock = None
+        myregister = dict.fromkeys(map(lambda s: s.replace('%',
+            chromebasepath), register))
+        addEntriesToListFile(manifestPath, myregister.iterkeys())
 
     def makeJar(self, infile, jardir):
         '''makeJar is the main entry point to JarMaker.
@@ -239,24 +326,11 @@ class JarMaker(object):
             logging.info('processing ' + infile)
             self.sourcedirs.append(_normpath(os.path.dirname(infile)))
         pp = self.pp.clone()
-        pp.out = StringIO()
+        pp.out = JarManifestParser()
         pp.do_include(infile)
-        lines = PushbackIter(pp.out.getvalue().splitlines())
-        try:
-            while True:
-                l = lines.next()
-                m = self.jarline.match(l)
-                if not m:
-                    raise RuntimeError(l)
-                if m.group('jarfile') is None:
-                    # comment
-                    continue
-                self.processJarSection(m.group('jarfile'), lines,
-                        jardir)
-        except StopIteration:
-            # we read the file
-            pass
-        return
+
+        for info in pp.out:
+            self.processJarSection(info, jardir)
 
     def generateLocaleDirs(self, relativesrcdir):
         if os.path.basename(relativesrcdir) == 'locales':
@@ -277,25 +351,21 @@ class JarMaker(object):
                            relativesrcdir, 'en-US'))
         return locdirs
 
-    def processJarSection(self, jarfile, lines, jardir):
+    def processJarSection(self, jarinfo, jardir):
         '''Internal method called by makeJar to actually process a section
         of a jar.mn file.
-
-        jarfile is the basename of the jarfile or the directory name for
-        flat output, lines is a PushbackIter of the lines of jar.mn,
-        the remaining options are carried over from makeJar.
         '''
 
         # chromebasepath is used for chrome registration manifests
         # {0} is getting replaced with chrome/ for chrome.manifest, and with
         # an empty string for jarfile.manifest
 
-        chromebasepath = '{0}' + os.path.basename(jarfile)
+        chromebasepath = '{0}' + os.path.basename(jarinfo.name)
         if self.outputFormat == 'jar':
             chromebasepath = 'jar:' + chromebasepath + '.jar!'
         chromebasepath += '/'
 
-        jarfile = os.path.join(jardir, jarfile)
+        jarfile = os.path.join(jardir, jarinfo.base, jarinfo.name)
         jf = None
         if self.outputFormat == 'jar':
             # jar
@@ -310,59 +380,25 @@ class JarMaker(object):
         else:
             outHelper = getattr(self, 'OutputHelper_'
                                 + self.outputFormat)(jarfile)
-        register = {}
 
-        # This loop exits on either
-        # - the end of the jar.mn file
-        # - an line in the jar.mn file that's not part of a jar section
-        # - on an exception raised, close the jf in that case in a finally
+        if jarinfo.relativesrcdir:
+            self.localedirs = self.generateLocaleDirs(jarinfo.relativesrcdir)
 
-        try:
-            while True:
-                try:
-                    l = lines.next()
-                except StopIteration:
-                    # we're done with this jar.mn, and this jar section
-                    self.finalizeJar(jarfile, chromebasepath, register)
-                    if jf is not None:
-                        jf.close()
+        for e in jarinfo.entries:
+            self._processEntryLine(e, outHelper, jf)
 
-                    # reraise the StopIteration for makeJar
-                    raise
-                if self.ignore.match(l):
-                    continue
-                m = self.relsrcline.match(l)
-                if m:
-                    relativesrcdir = m.group('relativesrcdir')
-                    self.localedirs = \
-                        self.generateLocaleDirs(relativesrcdir)
-                    continue
-                m = self.regline.match(l)
-                if m:
-                    rline = m.group(1)
-                    register[rline] = 1
-                    continue
-                m = self.entryline.match(l)
-                if not m:
-                    # neither an entry line nor chrome reg, this jar section is done
-                    self.finalizeJar(jarfile, chromebasepath, register)
-                    if jf is not None:
-                        jf.close()
-                    lines.pushback(l)
-                    return
-                self._processEntryLine(m, outHelper, jf)
-        finally:
-            if jf is not None:
-                jf.close()
-        return
+        self.finalizeJar(jardir, jarinfo.base, jarinfo.name, chromebasepath,
+                         jarinfo.chrome_manifests)
+        if jf is not None:
+            jf.close()
 
-    def _processEntryLine(self, m, outHelper, jf):
-        out = m.group('output')
-        src = m.group('source') or os.path.basename(out)
+    def _processEntryLine(self, e, outHelper, jf):
+        out = e.output
+        src = e.source
 
         # pick the right sourcedir -- l10n, topsrc or src
 
-        if m.group('locale'):
+        if e.is_locale:
             src_base = self.localedirs
         elif src.startswith('/'):
             # path/in/jar/file_name.xul     (/path/in/sourcetree/file_name.xul)
@@ -375,26 +411,29 @@ class JarMaker(object):
             src_base = self.sourcedirs + [os.getcwd()]
 
         if '*' in src:
-            if not out.endswith('/'):
-                out += '/'
             def _prefix(s):
                 for p in s.split('/'):
                     if '*' not in p:
                         yield p + '/'
             prefix = ''.join(_prefix(src))
-            fmt = '%s%s %s%%s (%s%%s)' % (
-                m.group('optPreprocess') or '',
-                m.group('optOverwrite') or '',
-                out,
-                m.group('locale') or '',
-            )
+            emitted = set()
             for _srcdir in src_base:
                 finder = FileFinder(_srcdir, find_executables=False)
                 for path, _ in finder.find(src):
-                    line = fmt % (path[len(prefix):], path)
-                    m = self.entryline.match(line)
-                    if m:
-                        self._processEntryLine(m, outHelper, jf)
+                    # If the path was already seen in one of the other source
+                    # directories, skip it. That matches the non-wildcard case
+                    # below, where we pick the first existing file.
+                    reduced_path = path[len(prefix):]
+                    if reduced_path in emitted:
+                        continue
+                    emitted.add(reduced_path)
+                    e = JarManifestEntry(
+                        mozpath.join(out, reduced_path),
+                        path,
+                        is_locale=e.is_locale,
+                        preprocess=e.preprocess,
+                    )
+                    self._processEntryLine(e, outHelper, jf)
             return
 
         # check if the source file exists
@@ -408,7 +447,12 @@ class JarMaker(object):
                 jf.close()
             raise RuntimeError('File "{0}" not found in {1}'.format(src,
                                ', '.join(src_base)))
-        if m.group('optPreprocess'):
+
+        if out in self._seen_output:
+            raise RuntimeError('%s already added' % out)
+        self._seen_output.add(out)
+
+        if e.preprocess:
             outf = outHelper.getOutput(out)
             inf = open(realsrc)
             pp = self.pp.clone()
@@ -416,15 +460,14 @@ class JarMaker(object):
                 pp.setMarker('%')
             pp.out = outf
             pp.do_include(inf)
-            pp.warnUnused(realsrc)
+            pp.failUnused(realsrc)
             outf.close()
             inf.close()
             return
 
-        # copy or symlink if newer or overwrite
+        # copy or symlink if newer
 
-        if m.group('optOverwrite') or getModTime(realsrc) \
-            > outHelper.getDestModTime(m.group('output')):
+        if getModTime(realsrc) > outHelper.getDestModTime(e.output):
             if self.outputFormat == 'symlink':
                 outHelper.symlink(realsrc, out)
                 return
@@ -515,7 +558,6 @@ def main(args=None):
     jm = JarMaker()
     p = jm.getCommandLineParser()
     (options, args) = p.parse_args(args)
-    jm.processIncludes(options.I)
     jm.outputFormat = options.f
     jm.sourcedirs = options.s
     jm.topsourcedir = options.t
@@ -552,4 +594,4 @@ def main(args=None):
         infile = sys.stdin
     else:
         (infile, ) = args
-    jm.makeJar(infile, options.j)
+    jm.makeJar(infile, options.d)

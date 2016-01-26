@@ -48,13 +48,18 @@ function testFiles() {
   // GIFs with padding on the first frame are always transparent.
   yield ["first-frame-padding.gif", true];
 
-  // JPEGs and BMPs are never transparent.
+  // JPEGs are never transparent.
   yield ["damon.jpg", false];
+
+  // Most BMPs are not transparent. (The TestMetadata GTest, which will
+  // eventually replace this test totally, has coverage for the kinds that can be
+  // transparent.)
   yield ["opaque.bmp", false];
 
   // ICO files which contain BMPs have an additional type of transparency - the
-  // AND mask - that warrants separate testing.
-  yield ["ico-bmp-opaque.ico", false];
+  // AND mask - that warrants separate testing. (Although, after bug 1201796,
+  // all ICOs are considered transparent.)
+  yield ["ico-bmp-opaque.ico", true];
   yield ["ico-bmp-transparent.ico", true];
 
   // SVGs are always transparent.

@@ -55,7 +55,7 @@ function promiseSocialUrlNotRemembered(url) {
   return deferred.promise;
 }
 
-let gURLsNotRemembered = [];
+var gURLsNotRemembered = [];
 
 
 function checkProviderPrefsEmpty(isError) {
@@ -154,7 +154,7 @@ function runSocialTestWithProvider(manifest, callback, finishcallback) {
         registerCleanupFunction(function () {
           finishSocialTest(true);
         });
-        waitForCondition(function() provider.enabled,
+        waitForCondition(() => provider.enabled,
                          function() {
           info("provider has been enabled");
           callback(finishSocialTest);
@@ -416,7 +416,7 @@ function loadIntoTab(tab, url, callback) {
 
 function ensureBrowserTabClosed(tab) {
   let promise = ensureEventFired(gBrowser.tabContainer, "TabClose");
-  gBrowser.removeTab(tab);
+  gBrowser.removeTab(tab, {skipPermitUnload: true});
   return promise;
 }
 
@@ -474,7 +474,9 @@ function get3ChatsForCollapsing(mode, cb) {
           let second = chatbar.childNodes[2];
           let first = chatbar.childNodes[1];
           let third = chatbar.childNodes[0];
-          ok(first.collapsed && !second.collapsed && !third.collapsed, "collapsed state as promised");
+          is(first.collapsed, true, "first collapsed state as promised");
+          is(second.collapsed, false, "second collapsed state as promised");
+          is(third.collapsed, false, "third collapsed state as promised");
           is(chatbar.selectedChat, third, "third is selected as promised")
           info("have 3 chats for collapse testing - starting actual test...");
           cb(first, second, third);
@@ -487,7 +489,12 @@ function get3ChatsForCollapsing(mode, cb) {
 function makeChat(mode, uniqueid, cb) {
   info("making a chat window '" + uniqueid +"'");
   let provider = SocialSidebar.provider;
-  const chatUrl = provider.origin + "/browser/browser/base/content/test/social/social_chat.html";
+  let chatUrl = provider.origin + "/browser/browser/base/content/test/social/social_chat.html";
+  // chatURL is not a part of the provider class, but is added by tests if we
+  // want to use a specific url (different than above) for testing
+  if (provider.chatURL) {
+    chatUrl = provider.chatURL;
+  }
   // Note that we use promiseChatLoaded instead of the callback to ensure the
   // content has started loading.
   let chatbox = getChatBar().openChat(provider.origin, provider.name,
@@ -582,7 +589,7 @@ function resizeAndCheckWidths(first, second, third, checks, cb) {
     checkPopup();
     ok(sizedOk, count+": window resized correctly");
     function collapsedObserver(r, m) {
-      if ([first, second, third].filter(function(item) !item.collapsed).length == numExpectedVisible) {
+      if ([first, second, third].filter(item => !item.collapsed).length == numExpectedVisible) {
         if (m) {
           m.disconnect();
         }
@@ -618,17 +625,38 @@ function getPopupWidth() {
   return popup.parentNode.getBoundingClientRect().width + margins;
 }
 
+function promiseCloseChat(chat) {
+  let deferred = Promise.defer();
+  let parent = chat.parentNode;
+
+  let observer = new MutationObserver(function onMutatations(mutations) {
+    for (let mutation of mutations) {
+      for (let i = 0; i < mutation.removedNodes.length; i++) {
+        let node = mutation.removedNodes.item(i);
+        if (node != chat) {
+          continue;
+        }
+        observer.disconnect();
+        deferred.resolve();
+      }
+    }
+  });
+  observer.observe(parent, {childList: true});
+  chat.close();
+  return deferred.promise;
+}
+
 function closeAllChats() {
   let chatbar = getChatBar();
   while (chatbar.selectedChat) {
-    chatbar.selectedChat.close();
+    yield promiseCloseChat(chatbar.selectedChat);
   }
 }
 
 
 // Support for going on and offline.
 // (via browser/base/content/test/browser_bookmark_titles.js)
-let origProxyType = Services.prefs.getIntPref('network.proxy.type');
+var origProxyType = Services.prefs.getIntPref('network.proxy.type');
 
 function toggleOfflineStatus(goOffline) {
   // Bug 968887 fix.  when going on/offline, wait for notification before continuing

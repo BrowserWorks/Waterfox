@@ -13,7 +13,7 @@ const rootGuid = PlacesUtils.bookmarks.rootGuid;
 Components.utils.importGlobalProperties(["URL"]);
 
 // Create and add bookmarks observer.
-let observer = {
+var observer = {
   __proto__: NavBookmarkObserver.prototype,
 
   tagRelatedGuids: new Set(),
@@ -105,7 +105,7 @@ let observer = {
 observer.reset();
 
 // index at which items should begin
-let bmStartIndex = 0;
+var bmStartIndex = 0;
 
 function run_test() {
   bmsvc.addObserver(observer, false);
@@ -243,7 +243,7 @@ function ensureTimestampsUpdated(aGuid, aCheckDateAdded = false) {
 function ensureTagsForURI(aURI, aTags) {
   let tagsSet = tagssvc.getTagsForURI(aURI);
   do_check_eq(tagsSet.length, aTags.length);
-  do_check_true(aTags.every( t => tagsSet.indexOf(t) != -1 ));
+  do_check_true(aTags.every( t => tagsSet.includes(t)));
 }
 
 function createTestFolderInfo(aTitle = "Test Folder") {
@@ -327,7 +327,7 @@ function* ensureNonExistent(...aGuids) {
 }
 
 add_task(function* test_recycled_transactions() {
-  function ensureTransactThrowsFor(aTransaction) {
+  function* ensureTransactThrowsFor(aTransaction) {
     let [txns, undoPosition] = getTransactionsHistoryState();
     try {
       yield aTransaction.transact();
@@ -1069,7 +1069,7 @@ add_task(function* test_tag_uri() {
     let tags = "tag" in aInfo ? [aInfo.tag] : aInfo.tags;
 
     let ensureURI = url => typeof(url) == "string" ? NetUtil.newURI(url) : url;
-    urls = [for (url of urls) ensureURI(url)];
+    urls = urls.map(ensureURI);
 
     let tagWillAlsoBookmark = new Set();
     for (let url of urls) {
@@ -1161,8 +1161,7 @@ add_task(function* test_untag_uri() {
     function ensureTagsUnset() {
       for (let url of urls) {
         let expectedTags = tagsRemoved.length == 0 ?
-           [] : [for (tag of preRemovalTags.get(url))
-                 if (tagsRemoved.indexOf(tag) == -1) tag];
+           [] : preRemovalTags.get(url).filter(tag => !tagsRemoved.includes(tag));
         ensureTagsForURI(url, expectedTags);
       }
     }
@@ -1250,7 +1249,9 @@ add_task(function* test_annotate_multiple() {
     this.expires = Ci.nsIAnnotationService.EXPIRE_NEVER;
   }
 
-  function annos(a = null, b = null) [new AnnoObj("A", a), new AnnoObj("B", b)]
+  function annos(a = null, b = null) {
+    return [new AnnoObj("A", a), new AnnoObj("B", b)];
+  }
 
   function verifyAnnoValues(a = null, b = null) {
     let currentAnnos = PlacesUtils.getAnnotationsForItem(itemId);
@@ -1297,9 +1298,9 @@ add_task(function* test_sort_folder_by_name() {
   let folder_info = createTestFolderInfo();
 
   let url = NetUtil.newURI("http://sort.by.name/");
-  let preSep =  [{ title: i, url } for (i of ["3","2","1"])];
+  let preSep =  ["3","2","1"].map(i => ({ title: i, url }));
   let sep = {};
-  let postSep = [{ title: l, url } for (l of ["c","b","a"])];
+  let postSep = ["c","b","a"].map(l => ({ title: l, url }));
   let originalOrder = [...preSep, sep, ...postSep];
   let sortedOrder = [...preSep.slice(0).reverse(),
                      sep,
@@ -1498,7 +1499,7 @@ add_task(function* test_copy_excluding_annotations() {
   let ensureAnnosSet = function* (guid, ...expectedAnnoNames) {
     let tree = yield PlacesUtils.promiseBookmarksTree(guid);
     let annoNames = "annos" in tree ?
-                      [for (a of tree.annos) a.name].sort() : [];
+                      tree.annos.map(a => a.name).sort() : [];
     Assert.deepEqual(annoNames, expectedAnnoNames);
   };
 
@@ -1593,8 +1594,10 @@ add_task(function* test_remove_multiple() {
     guids.push(bmGuid);
   });
 
-  let originalInfos = [for (guid of guids)
-                       yield PlacesUtils.promiseBookmarksTree(guid)];
+  let originalInfos = [];
+  for (let guid of guids) {
+    originalInfos.push(yield PlacesUtils.promiseBookmarksTree(guid));
+  }
 
   yield PT.Remove(guids).transact();
   yield ensureNonExistent(...guids);
@@ -1634,8 +1637,10 @@ add_task(function* test_remove_bookmarks_for_urls() {
     }
   });
 
-  let originalInfos = [for (guid of guids)
-                       yield PlacesUtils.promiseBookmarksTree(guid)];
+  let originalInfos = [];
+  for (let guid of guids) {
+    originalInfos.push(yield PlacesUtils.promiseBookmarksTree(guid));
+  }
 
   yield PT.RemoveBookmarksForUrls(urls).transact();
   yield ensureNonExistent(...guids);

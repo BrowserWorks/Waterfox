@@ -12,7 +12,7 @@ const PREF_GETADDONS_BYIDS            = "extensions.getAddons.get.url";
 const PREF_MIN_PLATFORM_COMPAT        = "extensions.minCompatiblePlatformVersion";
 const PREF_METADATA_LASTUPDATE        = "extensions.getAddons.cache.lastUpdate";
 
-let repo = {};
+var repo = {};
 Components.utils.import("resource://gre/modules/addons/AddonRepository.jsm", repo);
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
@@ -33,16 +33,16 @@ Components.utils.import("resource://gre/modules/Promise.jsm", this);
  */
 
 // describe the addons
-let ao1 = { file: "browser_bug557956_1", id: "addon1@tests.mozilla.org"};
-let ao2 = { file: "browser_bug557956_2", id: "addon2@tests.mozilla.org"};
-let ao3 = { file: "browser_bug557956_3", id: "addon3@tests.mozilla.org"};
-let ao4 = { file: "browser_bug557956_4", id: "addon4@tests.mozilla.org"};
-let ao5 = { file: "browser_bug557956_5", id: "addon5@tests.mozilla.org"};
-let ao6 = { file: "browser_bug557956_6", id: "addon6@tests.mozilla.org"};
-let ao7 = { file: "browser_bug557956_7", id: "addon7@tests.mozilla.org"};
-let ao8 = { file: "browser_bug557956_8_1", id: "addon8@tests.mozilla.org"};
-let ao9 = { file: "browser_bug557956_9_1", id: "addon9@tests.mozilla.org"};
-let ao10 = { file: "browser_bug557956_10", id: "addon10@tests.mozilla.org"};
+var ao1 = { file: "browser_bug557956_1", id: "addon1@tests.mozilla.org"};
+var ao2 = { file: "browser_bug557956_2", id: "addon2@tests.mozilla.org"};
+var ao3 = { file: "browser_bug557956_3", id: "addon3@tests.mozilla.org"};
+var ao4 = { file: "browser_bug557956_4", id: "addon4@tests.mozilla.org"};
+var ao5 = { file: "browser_bug557956_5", id: "addon5@tests.mozilla.org"};
+var ao6 = { file: "browser_bug557956_6", id: "addon6@tests.mozilla.org"};
+var ao7 = { file: "browser_bug557956_7", id: "addon7@tests.mozilla.org"};
+var ao8 = { file: "browser_bug557956_8_1", id: "addon8@tests.mozilla.org"};
+var ao9 = { file: "browser_bug557956_9_1", id: "addon9@tests.mozilla.org"};
+var ao10 = { file: "browser_bug557956_10", id: "addon10@tests.mozilla.org"};
 
 // Return a promise that resolves after the specified delay in MS
 function delayMS(aDelay) {
@@ -210,7 +210,7 @@ function get_list_names(aList) {
 }
 
 // These add-ons became inactive during the upgrade
-let inactiveAddonIds = [
+var inactiveAddonIds = [
   ao5.id,
   ao6.id,
   ao7.id,
@@ -220,7 +220,7 @@ let inactiveAddonIds = [
 
 // Make sure the addons in the list are not installed
 function* check_addons_uninstalled(aAddonList) {
-  let foundList = yield promise_addons_by_ids([addon.id for (addon of aAddonList)]);
+  let foundList = yield promise_addons_by_ids(aAddonList.map(a => a.id));
   for (let i = 0; i < aAddonList.length; i++) {
     ok(!foundList[i], "Addon " + aAddonList[i].id + " is not installed");
   }
@@ -232,7 +232,7 @@ function* check_addons_uninstalled(aAddonList) {
 // Add-ons that have updates available should not update if they were disabled before
 // For this test, addon8 became disabled during update and addon9 was previously disabled,
 // so addon8 should update and addon9 should not
-add_task(function cancel_during_repopulate() {
+add_task(function* cancel_during_repopulate() {
   let a5, a8, a9, a10;
 
   Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);
@@ -297,7 +297,7 @@ add_task(function cancel_during_repopulate() {
 // calls in gVersionInfoPage_onPageShow() to complete
 // For this test, both addon8 and addon9 were disabled by this update, but addon8
 // is set to not auto-update, so only addon9 should update in the background
-add_task(function cancel_during_findUpdates() {
+add_task(function* cancel_during_findUpdates() {
   let a5, a8, a9;
 
   Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);
@@ -357,7 +357,7 @@ add_task(function cancel_during_findUpdates() {
 // to continue updating in the background and cancels any other updates
 // Same conditions as the previous test - addon8 and addon9 have updates available,
 // addon8 is set to not auto-update so only addon9 should become compatible
-add_task(function cancel_mismatch() {
+add_task(function* cancel_mismatch() {
   let a3, a5, a7, a8, a9;
 
   Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);
@@ -416,7 +416,7 @@ add_task(function cancel_mismatch() {
 
 // Cancelling during the 'mismatch' screen with only add-ons that have
 // no updates available
-add_task(function cancel_mismatch_no_updates() {
+add_task(function* cancel_mismatch_no_updates() {
   let a3, a5, a6
 
   Services.prefs.setBoolPref(PREF_STRICT_COMPAT, true);

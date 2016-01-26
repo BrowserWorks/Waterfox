@@ -7,11 +7,13 @@
 /* representation of a SMIL-animatable CSS property on an element */
 
 #include "nsSMILCSSProperty.h"
+
+#include "mozilla/dom/Element.h"
+#include "mozilla/Move.h"
 #include "nsSMILCSSValueType.h"
 #include "nsSMILValue.h"
 #include "nsComputedDOMStyle.h"
 #include "nsCSSProps.h"
-#include "mozilla/dom/Element.h"
 #include "nsIDOMElement.h"
 #include "nsIDocument.h"
 
@@ -42,7 +44,7 @@ GetCSSComputedValue(Element* aElem,
     return false;
   }
 
-  nsRefPtr<nsComputedDOMStyle> computedStyle =
+  RefPtr<nsComputedDOMStyle> computedStyle =
     NS_NewComputedDOMStyle(aElem, EmptyString(), shell);
 
   computedStyle->GetPropertyValue(aPropID, aResult);
@@ -81,7 +83,7 @@ nsSMILCSSProperty::GetBaseValue() const
     // In either case, just return a dummy value (initialized with the right
     // type, so as not to indicate failure).
     nsSMILValue tmpVal(&nsSMILCSSValueType::sSingleton);
-    baseValue.Swap(tmpVal);
+    Swap(baseValue, tmpVal);
     return baseValue;
   }
 

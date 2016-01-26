@@ -9,9 +9,6 @@ ac_add_options --enable-update-channel=${MOZ_UPDATE_CHANNEL}
 ac_add_options --enable-update-packaging
 ac_add_options --enable-signmar
 
-# Nightlies only since this has a cost in performance
-#ac_add_options --enable-js-diagnostics
-
 # This will overwrite the default of stripping everything and keep the symbol table.
 # This is useful for profiling and debugging and only increases the package size
 # by 2 MBs.
@@ -22,12 +19,11 @@ export MOZILLA_OFFICIAL=1
 
 export MOZ_TELEMETRY_REPORTING=1
 
-# Treat warnings as errors in directories with FAIL_ON_WARNINGS.
+# Treat warnings as errors (modulo ALLOW_COMPILER_WARNINGS).
 ac_add_options --enable-warnings-as-errors
 
 # Use sccache
 no_sccache=
-. "$topsrcdir/build/mozconfig.cache"
 
 #B2G options
 ac_add_options --enable-application=b2g
@@ -36,7 +32,7 @@ export CXXFLAGS=-DMOZ_ENABLE_JS_DUMP
 GAIADIR=$topsrcdir/gaia
 
 # Include Firefox OS fonts.
-MOZTTDIR=$topsrcdir/moztt
+MOZTTDIR=$topsrcdir/moz-tt
 
 # Build simulator xpi and phone tweaks for b2g-desktop
 FXOS_SIMULATOR=1

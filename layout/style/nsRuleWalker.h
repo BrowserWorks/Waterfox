@@ -13,7 +13,7 @@
 
 #include "nsRuleNode.h"
 #include "nsIStyleRule.h"
-#include "StyleRule.h"
+#include "Declaration.h"
 #include "nsQueryObject.h"
 
 class nsRuleWalker {
@@ -34,14 +34,14 @@ protected:
 
 public:
   void Forward(nsIStyleRule* aRule) {
-    NS_PRECONDITION(!nsRefPtr<mozilla::css::StyleRule>(do_QueryObject(aRule)),
+    NS_PRECONDITION(!RefPtr<mozilla::css::Declaration>(do_QueryObject(aRule)),
                     "Calling the wrong Forward() overload");
     DoForward(aRule);
   }
-  void Forward(mozilla::css::StyleRule* aRule) {
+  void Forward(mozilla::css::Declaration* aRule) {
     DoForward(aRule);
     mCheckForImportantRules =
-      mCheckForImportantRules && !aRule->GetImportantRule();
+      mCheckForImportantRules && !aRule->HasImportantData();
   }
   // ForwardOnPossiblyCSSRule should only be used by callers that have
   // an explicit list of rules they need to walk, with the list
@@ -54,7 +54,7 @@ public:
 
   bool AtRoot() { return mCurrent == mRoot; }
 
-  void SetLevel(uint8_t aLevel, bool aImportance,
+  void SetLevel(mozilla::SheetType aLevel, bool aImportance,
                 bool aCheckForImportantRules) {
     NS_ASSERTION(!aCheckForImportantRules || !aImportance,
                  "Shouldn't be checking for important rules while walking "
@@ -63,7 +63,7 @@ public:
     mImportance = aImportance;
     mCheckForImportantRules = aCheckForImportantRules;
   }
-  uint8_t GetLevel() const { return mLevel; }
+  mozilla::SheetType GetLevel() const { return mLevel; }
   bool GetImportance() const { return mImportance; }
   bool GetCheckForImportantRules() const { return mCheckForImportantRules; }
 
@@ -86,7 +86,7 @@ public:
 private:
   nsRuleNode* mCurrent; // Our current position.  Never null.
   nsRuleNode* mRoot; // The root of the tree we're walking.
-  uint8_t mLevel; // an nsStyleSet::sheetType
+  mozilla::SheetType mLevel;
   bool mImportance;
   bool mCheckForImportantRules; // If true, check for important rules as
                                 // we walk and set to false if we find

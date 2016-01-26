@@ -32,7 +32,7 @@ This is likely the same like id.heading in crashes.dtd. -->
 <!ENTITY aboutSupport.experimentActive "Active">
 <!ENTITY aboutSupport.experimentEndDate "End Date">
 <!ENTITY aboutSupport.experimentHomepage "Homepage">
-
+<!ENTITY aboutSupport.experimentBranch "Branch">
 
 <!ENTITY aboutSupport.appBasicsTitle "Application Basics">
 <!ENTITY aboutSupport.appBasicsName "Name">
@@ -59,7 +59,11 @@ Windows/Mac use the term "Folder" instead of "Directory" -->
 <!-- LOCALIZATION NOTE the term "Service Workers" should not be translated. -->
 <!ENTITY aboutSupport.appBasicsServiceWorkers "Registered Service Workers">
 
+<!ENTITY aboutSupport.appBasicsProfiles "Profiles">
+
 <!ENTITY aboutSupport.appBasicsMultiProcessSupport "Multiprocess Windows">
+
+<!ENTITY aboutSupport.appBasicsSafeMode "Safe Mode">
 
 <!ENTITY aboutSupport.showDir.label "Open Directory">
 <!-- LOCALIZATION NOTE (aboutSupport.showMac.label): This is the Mac-specific

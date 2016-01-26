@@ -27,7 +27,6 @@
 // If the pref is true, the antanna will be always available.
 #define DOM_FM_ANTENNA_INTERNAL_PREF "dom.fmradio.antenna.internal"
 
-using namespace mozilla::hal;
 using mozilla::Preferences;
 
 BEGIN_FMRADIO_NAMESPACE
@@ -106,7 +105,7 @@ private:
 NS_IMPL_ISUPPORTS_INHERITED0(FMRadioRequest, DOMRequest)
 
 FMRadio::FMRadio()
-  : mHeadphoneState(SWITCH_STATE_OFF)
+  : mHeadphoneState(hal::SWITCH_STATE_OFF)
   , mRdsGroupMask(0)
   , mAudioChannelAgentEnabled(false)
   , mHasInternalAntenna(false)
@@ -131,20 +130,9 @@ FMRadio::Init(nsPIDOMWindow *aWindow)
   if (mHasInternalAntenna) {
     LOG("We have an internal antenna.");
   } else {
-    mHeadphoneState = GetCurrentSwitchState(SWITCH_HEADPHONES);
-    RegisterSwitchObserver(SWITCH_HEADPHONES, this);
+    mHeadphoneState = hal::GetCurrentSwitchState(hal::SWITCH_HEADPHONES);
+    hal::RegisterSwitchObserver(hal::SWITCH_HEADPHONES, this);
   }
-
-  nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(GetOwner());
-  NS_ENSURE_TRUE_VOID(target);
-  target->AddSystemEventListener(NS_LITERAL_STRING("visibilitychange"), this,
-                                 /* useCapture = */ true,
-                                 /* wantsUntrusted = */ false);
-
-
-  // All of the codes below are for AudioChannel. We can directly return here
-  // if preferences doesn't enable AudioChannelService.
-  NS_ENSURE_TRUE_VOID(Preferences::GetBool("media.useAudioChannelService"));
 
   nsCOMPtr<nsIAudioChannelAgent> audioChannelAgent =
     do_CreateInstance("@mozilla.org/audiochannelagent;1");
@@ -154,13 +142,6 @@ FMRadio::Init(nsPIDOMWindow *aWindow)
     GetOwner(),
     nsIAudioChannelAgent::AUDIO_AGENT_CHANNEL_CONTENT,
     this);
-
-  nsCOMPtr<nsIDocShell> docshell = do_GetInterface(GetOwner());
-  NS_ENSURE_TRUE_VOID(docshell);
-
-  bool isActive = false;
-  docshell->GetIsActive(&isActive);
-  audioChannelAgent->SetVisibilityState(isActive);
 
   // Once all necessary resources are got successfully, we just enabled
   // mAudioChannelAgent.
@@ -173,13 +154,8 @@ FMRadio::Shutdown()
   IFMRadioService::Singleton()->RemoveObserver(this);
 
   if (!mHasInternalAntenna) {
-    UnregisterSwitchObserver(SWITCH_HEADPHONES, this);
+    hal::UnregisterSwitchObserver(hal::SWITCH_HEADPHONES, this);
   }
-
-  nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(GetOwner());
-  NS_ENSURE_TRUE_VOID(target);
-  target->RemoveSystemEventListener(NS_LITERAL_STRING("visibilitychange"), this,
-                                    /* useCapture = */ true);
 
   mIsShutdown = true;
 }
@@ -191,7 +167,7 @@ FMRadio::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
-FMRadio::Notify(const SwitchEvent& aEvent)
+FMRadio::Notify(const hal::SwitchEvent& aEvent)
 {
   MOZ_ASSERT(!mHasInternalAntenna);
 
@@ -214,7 +190,7 @@ FMRadio::Notify(const FMRadioEventType& aType)
         DispatchTrustedEvent(NS_LITERAL_STRING("enabled"));
       } else {
         if (mAudioChannelAgentEnabled) {
-          mAudioChannelAgent->StopPlaying();
+          mAudioChannelAgent->NotifyStoppedPlaying();
           mAudioChannelAgentEnabled = false;
         }
 
@@ -264,8 +240,8 @@ FMRadio::RdsEnabled()
 bool
 FMRadio::AntennaAvailable() const
 {
-  return mHasInternalAntenna ? true : (mHeadphoneState != SWITCH_STATE_OFF) &&
-    (mHeadphoneState != SWITCH_STATE_UNKNOWN);
+  return mHasInternalAntenna ? true : (mHeadphoneState != hal::SWITCH_STATE_OFF) &&
+    (mHeadphoneState != hal::SWITCH_STATE_UNKNOWN);
 }
 
 Nullable<double>
@@ -345,7 +321,9 @@ FMRadio::GetRdsgroup(JSContext* cx, JS::MutableHandle<JSObject*> retval)
 
   JSObject *rdsgroup = Uint16Array::Create(cx, this, 4);
   JS::AutoCheckCannotGC nogc;
-  uint16_t *data = JS_GetUint16ArrayData(rdsgroup, nogc);
+  bool isShared = false;
+  uint16_t *data = JS_GetUint16ArrayData(rdsgroup, &isShared, nogc);
+  MOZ_ASSERT(!isShared);  // Because created above.
   data[3] = group & 0xFFFF;
   group >>= 16;
   data[2] = group & 0xFFFF;
@@ -366,7 +344,7 @@ FMRadio::Enable(double aFrequency)
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r =
+  RefPtr<FMRadioRequest> r =
     new FMRadioRequest(win, this, FMRadioRequestArgs::TEnableRequestArgs);
   IFMRadioService::Singleton()->Enable(aFrequency, r);
 
@@ -381,7 +359,7 @@ FMRadio::Disable()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
   IFMRadioService::Singleton()->Disable(r);
 
   return r.forget();
@@ -395,7 +373,7 @@ FMRadio::SetFrequency(double aFrequency)
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
   IFMRadioService::Singleton()->SetFrequency(aFrequency, r);
 
   return r.forget();
@@ -409,8 +387,8 @@ FMRadio::SeekUp()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
-  IFMRadioService::Singleton()->Seek(FM_RADIO_SEEK_DIRECTION_UP, r);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  IFMRadioService::Singleton()->Seek(hal::FM_RADIO_SEEK_DIRECTION_UP, r);
 
   return r.forget();
 }
@@ -423,8 +401,8 @@ FMRadio::SeekDown()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
-  IFMRadioService::Singleton()->Seek(FM_RADIO_SEEK_DIRECTION_DOWN, r);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  IFMRadioService::Singleton()->Seek(hal::FM_RADIO_SEEK_DIRECTION_DOWN, r);
 
   return r.forget();
 }
@@ -437,7 +415,7 @@ FMRadio::CancelSeek()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
   IFMRadioService::Singleton()->CancelSeek(r);
 
   return r.forget();
@@ -451,7 +429,7 @@ FMRadio::EnableRDS()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
   IFMRadioService::Singleton()->EnableRDS(r);
   return r.forget();
 }
@@ -464,29 +442,9 @@ FMRadio::DisableRDS()
     return nullptr;
   }
 
-  nsRefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
+  RefPtr<FMRadioRequest> r = new FMRadioRequest(win, this);
   FMRadioService::Singleton()->DisableRDS(r);
   return r.forget();
-}
-
-NS_IMETHODIMP
-FMRadio::HandleEvent(nsIDOMEvent* aEvent)
-{
-  nsAutoString type;
-  aEvent->GetType(type);
-
-  if (!type.EqualsLiteral("visibilitychange")) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsIDocShell> docshell = do_GetInterface(GetOwner());
-  NS_ENSURE_TRUE(docshell, NS_ERROR_FAILURE);
-
-  bool isActive = false;
-  docshell->GetIsActive(&isActive);
-
-  mAudioChannelAgent->SetVisibilityState(isActive);
-  return NS_OK;
 }
 
 void
@@ -494,36 +452,31 @@ FMRadio::EnableAudioChannelAgent()
 {
   NS_ENSURE_TRUE_VOID(mAudioChannelAgent);
 
-  int32_t playingState = 0;
-  mAudioChannelAgent->StartPlaying(&playingState);
-  SetCanPlay(playingState == AudioChannelState::AUDIO_CHANNEL_STATE_NORMAL);
+  float volume = 0.0;
+  bool muted = true;
+  mAudioChannelAgent->NotifyStartedPlaying(&volume, &muted);
+  WindowVolumeChanged(volume, muted);
 
   mAudioChannelAgentEnabled = true;
 }
 
 NS_IMETHODIMP
-FMRadio::CanPlayChanged(int32_t aCanPlay)
+FMRadio::WindowVolumeChanged(float aVolume, bool aMuted)
 {
-  SetCanPlay(!(aCanPlay == AudioChannelState::AUDIO_CHANNEL_STATE_MUTED));
+  IFMRadioService::Singleton()->EnableAudio(!aMuted);
+  // TODO: what about the volume?
   return NS_OK;
 }
 
 NS_IMETHODIMP
-FMRadio::WindowVolumeChanged()
+FMRadio::WindowAudioCaptureChanged(bool aCapture)
 {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-void
-FMRadio::SetCanPlay(bool aCanPlay)
-{
-  IFMRadioService::Singleton()->EnableAudio(aCanPlay);
+  return NS_OK;
 }
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(FMRadio)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
   NS_INTERFACE_MAP_ENTRY(nsIAudioChannelAgentCallback)
-  NS_INTERFACE_MAP_ENTRY(nsIDOMEventListener)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 NS_IMPL_ADDREF_INHERITED(FMRadio, DOMEventTargetHelper)

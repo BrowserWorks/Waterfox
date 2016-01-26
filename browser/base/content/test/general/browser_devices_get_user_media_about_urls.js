@@ -218,10 +218,10 @@ fakeLoopAboutModule.prototype = {
   }
 };
 
-let factory = XPCOMUtils._getFactory(fakeLoopAboutModule);
-let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+var factory = XPCOMUtils._getFactory(fakeLoopAboutModule);
+var registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
 
-let originalLoopCsp = Services.prefs.getCharPref(PREF_LOOP_CSP);
+var originalLoopCsp = Services.prefs.getCharPref(PREF_LOOP_CSP);
 registerCleanupFunction(function() {
   gBrowser.removeCurrentTab();
   kObservedTopics.forEach(topic => {
@@ -231,9 +231,9 @@ registerCleanupFunction(function() {
   Services.prefs.setCharPref(PREF_LOOP_CSP, originalLoopCsp);
 });
 
-const permissionError = "error: PermissionDeniedError: The user did not grant permission for the operation.";
+const permissionError = "error: SecurityError: The operation is insecure.";
 
-let gTests = [
+var gTests = [
 
 {
   desc: "getUserMedia about:loopconversation shouldn't prompt",

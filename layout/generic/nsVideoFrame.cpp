@@ -59,7 +59,7 @@ nsresult
 nsVideoFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
   nsNodeInfoManager *nodeInfoManager = GetContent()->GetComposedDoc()->NodeInfoManager();
-  nsRefPtr<NodeInfo> nodeInfo;
+  RefPtr<NodeInfo> nodeInfo;
   Element *element;
 
   if (HasVideoElement()) {
@@ -168,7 +168,7 @@ nsVideoFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
     return nullptr;
   }
 
-  nsRefPtr<ImageContainer> container = element->GetImageContainer();
+  RefPtr<ImageContainer> container = element->GetImageContainer();
   if (!container)
     return nullptr;
   
@@ -203,7 +203,7 @@ nsVideoFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
                     static_cast<int32_t>(destGFXRect.Height()));
   container->SetScaleHint(scaleHint);
 
-  nsRefPtr<ImageLayer> layer = static_cast<ImageLayer*>
+  RefPtr<ImageLayer> layer = static_cast<ImageLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, aItem));
   if (!layer) {
     layer = aManager->CreateImageLayer();
@@ -218,7 +218,7 @@ nsVideoFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
   Matrix transform = Matrix::Translation(p.x, p.y);
   layer->SetBaseTransform(gfx::Matrix4x4::From2D(transform));
   layer->SetScaleToSize(scaleHint, ScaleMode::STRETCH);
-  nsRefPtr<Layer> result = layer.forget();
+  RefPtr<Layer> result = layer.forget();
   return result.forget();
 }
 
@@ -264,21 +264,20 @@ nsVideoFrame::Reflow(nsPresContext*           aPresContext,
 
   // Reflow the child frames. We may have up to two, an image frame
   // which is the poster, and a box frame, which is the video controls.
-  for (nsIFrame *child = mFrames.FirstChild();
-       child;
-       child = child->GetNextSibling()) {
+  for (nsIFrame* child : mFrames) {
     if (child->GetContent() == mPosterImage) {
       // Reflow the poster frame.
       nsImageFrame* imageFrame = static_cast<nsImageFrame*>(child);
       nsHTMLReflowMetrics kidDesiredSize(aReflowState);
       WritingMode wm = imageFrame->GetWritingMode();
       LogicalSize availableSize = aReflowState.AvailableSize(wm);
+      LogicalSize cbSize = aMetrics.Size(aMetrics.GetWritingMode()).
+                             ConvertTo(wm, aMetrics.GetWritingMode());
       nsHTMLReflowState kidReflowState(aPresContext,
                                        aReflowState,
                                        imageFrame,
                                        availableSize,
-                                       aMetrics.Width(),
-                                       aMetrics.Height());
+                                       &cbSize);
 
       nsRect posterRenderRect;
       if (ShouldDisplayPoster()) {
@@ -305,7 +304,7 @@ nsVideoFrame::Reflow(nsPresContext*           aPresContext,
                                        aReflowState.ComputedWidth(),
                                        aReflowState.ComputedHeight()));
       if (child->GetSize() != size) {
-        nsRefPtr<nsRunnable> event = new DispatchResizeToControls(child->GetContent());
+        RefPtr<nsRunnable> event = new DispatchResizeToControls(child->GetContent());
         nsContentUtils::AddScriptRunner(event);
       }
     } else if (child->GetContent() == mCaptionDiv) {
@@ -313,12 +312,13 @@ nsVideoFrame::Reflow(nsPresContext*           aPresContext,
       nsHTMLReflowMetrics kidDesiredSize(aReflowState);
       WritingMode wm = child->GetWritingMode();
       LogicalSize availableSize = aReflowState.AvailableSize(wm);
+      LogicalSize cbSize = aMetrics.Size(aMetrics.GetWritingMode()).
+                             ConvertTo(wm, aMetrics.GetWritingMode());
       nsHTMLReflowState kidReflowState(aPresContext,
                                        aReflowState,
                                        child,
                                        availableSize,
-                                       aMetrics.Width(),
-                                       aMetrics.Height());
+                                       &cbSize);
       nsSize size(aReflowState.ComputedWidth(), aReflowState.ComputedHeight());
       size.width -= kidReflowState.ComputedPhysicalBorderPadding().LeftRight();
       size.height -= kidReflowState.ComputedPhysicalBorderPadding().TopBottom();
@@ -436,9 +436,7 @@ nsVideoFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   // Add child frames to display list. We expect various children,
   // but only want to draw mPosterImage conditionally. Others we
   // always add to the display list.
-  for (nsIFrame *child = mFrames.FirstChild();
-       child;
-       child = child->GetNextSibling()) {
+  for (nsIFrame* child : mFrames) {
     if (child->GetContent() != mPosterImage || shouldDisplayPoster) {
       child->BuildDisplayListForStackingContext(aBuilder,
                                                 aDirtyRect - child->GetOffsetTo(this),

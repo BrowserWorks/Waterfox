@@ -48,7 +48,7 @@ public:
   MediaRecorder(AudioNode& aSrcAudioNode, uint32_t aSrcOutput, nsPIDOMWindow* aOwnerWindow);
 
   // nsWrapperCache
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsPIDOMWindow* GetParentObject() { return GetOwner(); }
 
@@ -104,6 +104,9 @@ public:
 
   NS_DECL_NSIDOCUMENTACTIVITY
 
+  uint32_t GetAudioBitrate() { return mAudioBitsPerSecond; }
+  uint32_t GetVideoBitrate() { return mVideoBitsPerSecond; }
+  uint32_t GetBitrate() { return mBitsPerSecond; }
 protected:
   virtual ~MediaRecorder();
 
@@ -118,6 +121,7 @@ protected:
   bool CheckPrincipal();
   // Set encoded MIME type.
   void SetMimeType(const nsString &aMimeType);
+  void SetOptions(const MediaRecorderOptions& aInitDict);
 
   MediaRecorder(const MediaRecorder& x) = delete; // prevent bad usage
   // Remove session pointer.
@@ -126,33 +130,36 @@ protected:
   MediaStream* GetSourceMediaStream();
   nsIPrincipal* GetSourcePrincipal();
   // DOM wrapper for source media stream. Will be null when input is audio node.
-  nsRefPtr<DOMMediaStream> mDOMStream;
+  RefPtr<DOMMediaStream> mDOMStream;
   // Source audio node. Will be null when input is a media stream.
-  nsRefPtr<AudioNode> mAudioNode;
+  RefPtr<AudioNode> mAudioNode;
   // Pipe stream connecting non-destination source node and session track union
   // stream of recorder. Will be null when input is media stream or destination
   // node.
-  nsRefPtr<AudioNodeStream> mPipeStream;
+  RefPtr<AudioNodeStream> mPipeStream;
   // Connect source node to the pipe stream.
-  nsRefPtr<MediaInputPort> mInputPort;
+  RefPtr<MediaInputPort> mInputPort;
 
   // The current state of the MediaRecorder object.
   RecordingState mState;
   // Hold the sessions reference and clean it when the DestroyRunnable for a
   // session is running.
-  nsTArray<nsRefPtr<Session> > mSessions;
+  nsTArray<RefPtr<Session> > mSessions;
   // It specifies the container format as well as the audio and video capture formats.
   nsString mMimeType;
 
+  uint32_t mAudioBitsPerSecond;
+  uint32_t mVideoBitsPerSecond;
+  uint32_t mBitsPerSecond;
 private:
   // Register MediaRecorder into Document to listen the activity changes.
   void RegisterActivityObserver();
   void UnRegisterActivityObserver();
 
-  bool Check3gppPermission();
+  bool CheckPermission(const nsString &aType);
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif

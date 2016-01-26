@@ -9,14 +9,14 @@
 #include "nsRequestObserverProxy.h"
 #include "nsIRequest.h"
 #include "nsAutoPtr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 using namespace mozilla;
 
-static PRLogModuleInfo *gRequestObserverProxyLog;
+static LazyLogModule gRequestObserverProxyLog("nsRequestObserverProxy");
 
 #undef LOG
-#define LOG(args) PR_LOG(gRequestObserverProxyLog, PR_LOG_DEBUG, args)
+#define LOG(args) MOZ_LOG(gRequestObserverProxyLog, mozilla::LogLevel::Debug, args)
 
 //-----------------------------------------------------------------------------
 // nsARequestObserverEvent internal class...
@@ -34,7 +34,7 @@ nsARequestObserverEvent::nsARequestObserverEvent(nsIRequest *request)
 
 class nsOnStartRequestEvent : public nsARequestObserverEvent
 {
-    nsRefPtr<nsRequestObserverProxy> mProxy;
+    RefPtr<nsRequestObserverProxy> mProxy;
 public:
     nsOnStartRequestEvent(nsRequestObserverProxy *proxy,
                           nsIRequest *request)
@@ -73,7 +73,7 @@ public:
 
 class nsOnStopRequestEvent : public nsARequestObserverEvent
 {
-    nsRefPtr<nsRequestObserverProxy> mProxy;
+    RefPtr<nsRequestObserverProxy> mProxy;
 public:
     nsOnStopRequestEvent(nsRequestObserverProxy *proxy,
                          nsIRequest *request)
@@ -173,10 +173,6 @@ NS_IMETHODIMP
 nsRequestObserverProxy::Init(nsIRequestObserver *observer, nsISupports *context)
 {
     NS_ENSURE_ARG_POINTER(observer);
-
-    if (!gRequestObserverProxyLog)
-        gRequestObserverProxyLog = PR_NewLogModule("nsRequestObserverProxy");
-
     mObserver = new nsMainThreadPtrHolder<nsIRequestObserver>(observer);
     mContext = new nsMainThreadPtrHolder<nsISupports>(context);
 

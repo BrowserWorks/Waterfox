@@ -5,28 +5,19 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/EMEUtils.h"
+#include "mozilla/dom/UnionTypes.h"
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-
-PRLogModuleInfo* GetEMELog() {
-  static PRLogModuleInfo* log = nullptr;
-  if (!log) {
-    log = PR_NewLogModule("EME");
-  }
+LogModule* GetEMELog() {
+  static LazyLogModule log("EME");
   return log;
 }
 
-PRLogModuleInfo* GetEMEVerboseLog() {
-  static PRLogModuleInfo* log = nullptr;
-  if (!log) {
-    log = PR_NewLogModule("EMEV");
-  }
+LogModule* GetEMEVerboseLog() {
+  static LazyLogModule log("EMEV");
   return log;
 }
-
-#endif
 
 static bool
 ContainsOnlyDigits(const nsAString& aString)
@@ -91,7 +82,6 @@ ParseKeySystem(const nsAString& aExpectedKeySystem,
 
 static const char16_t* sKeySystems[] = {
   MOZ_UTF16("org.w3.clearkey"),
-  MOZ_UTF16("com.adobe.access"),
   MOZ_UTF16("com.adobe.primetime"),
 };
 
@@ -111,6 +101,47 @@ ParseKeySystem(const nsAString& aInputKeySystem,
     }
   }
   return false;
+}
+
+ArrayData
+GetArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView)
+{
+  MOZ_ASSERT(aBufferOrView.IsArrayBuffer() || aBufferOrView.IsArrayBufferView());
+  if (aBufferOrView.IsArrayBuffer()) {
+    const dom::ArrayBuffer& buffer = aBufferOrView.GetAsArrayBuffer();
+    buffer.ComputeLengthAndData();
+    return ArrayData(buffer.Data(), buffer.Length());
+  } else if (aBufferOrView.IsArrayBufferView()) {
+    const dom::ArrayBufferView& bufferview = aBufferOrView.GetAsArrayBufferView();
+    bufferview.ComputeLengthAndData();
+    return ArrayData(bufferview.Data(), bufferview.Length());
+  }
+  return ArrayData(nullptr, 0);
+}
+
+void
+CopyArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView,
+                                     nsTArray<uint8_t>& aOutData)
+{
+  ArrayData data = GetArrayBufferViewOrArrayBufferData(aBufferOrView);
+  aOutData.Clear();
+  if (!data.IsValid()) {
+    return;
+  }
+  aOutData.AppendElements(data.mData, data.mLength);
+}
+
+nsString
+KeySystemToGMPName(const nsAString& aKeySystem)
+{
+  if (aKeySystem.EqualsLiteral("com.adobe.primetime")) {
+    return NS_LITERAL_STRING("gmp-eme-adobe");
+  }
+  if (aKeySystem.EqualsLiteral("org.w3.clearkey")) {
+    return NS_LITERAL_STRING("gmp-clearkey");
+  }
+  MOZ_ASSERT(false, "We should only call this for known GMPs");
+  return EmptyString();
 }
 
 } // namespace mozilla

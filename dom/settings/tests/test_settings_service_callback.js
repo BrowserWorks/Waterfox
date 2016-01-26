@@ -1,8 +1,8 @@
 "use strict";
 
-const Cu = Components.utils;
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -13,7 +13,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "SettingsService",
                                    "@mozilla.org/settingsService;1",
                                    "nsISettingsService");
 
-let tests = [
+var tests = [
   function () {
     let callback = {
       handle: function() {

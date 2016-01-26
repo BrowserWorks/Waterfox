@@ -5,10 +5,11 @@
 
 /* This content script contains code that requires a tab browser. */
 
-let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/ExtensionContent.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
@@ -30,7 +31,6 @@ XPCOMUtils.defineLazyGetter(this, "SimpleServiceDiscovery", function() {
       Cu.import("resource://gre/modules/RokuApp.jsm");
       return new RokuApp(aService);
     },
-    mirror: true,
     types: ["video/mp4"],
     extensions: ["mp4"]
   });
@@ -97,7 +97,7 @@ addMessageListener("SecondScreen:tab-mirror", function(message) {
   }
 });
 
-let AboutHomeListener = {
+var AboutHomeListener = {
   init: function(chromeGlobal) {
     chromeGlobal.addEventListener('AboutHomeLoad', this, false, true);
   },
@@ -113,12 +113,6 @@ let AboutHomeListener = {
     switch (aEvent.type) {
       case "AboutHomeLoad":
         this.onPageLoad();
-        break;
-      case "AboutHomeSearchEvent":
-        this.onSearch(aEvent);
-        break;
-      case "AboutHomeSearchPanel":
-        this.onOpenSearchPanel(aEvent);
         break;
       case "click":
         this.onClick(aEvent);
@@ -137,9 +131,6 @@ let AboutHomeListener = {
       case "AboutHome:Update":
         this.onUpdate(aMessage.data);
         break;
-      case "AboutHome:FocusInput":
-        this.onFocusInput();
-        break;
     }
   },
 
@@ -150,13 +141,11 @@ let AboutHomeListener = {
 
     // Inject search engine and snippets URL.
     let docElt = doc.documentElement;
-    // set the following attributes BEFORE searchEngineName, which triggers to
-    // show the snippets when it's set.
+    // Set snippetsVersion last, which triggers to show the snippets when it's set.
     docElt.setAttribute("snippetsURL", aData.snippetsURL);
     if (aData.showKnowYourRights)
       docElt.setAttribute("showKnowYourRights", "true");
     docElt.setAttribute("snippetsVersion", aData.snippetsVersion);
-    docElt.setAttribute("searchEngineName", aData.defaultEngineName);
   },
 
   onPageLoad: function() {
@@ -167,17 +156,10 @@ let AboutHomeListener = {
 
     doc.documentElement.setAttribute("hasBrowserHandlers", "true");
     addMessageListener("AboutHome:Update", this);
-    addMessageListener("AboutHome:FocusInput", this);
     addEventListener("click", this, true);
     addEventListener("pagehide", this, true);
 
-    if (!Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
-      doc.documentElement.setAttribute("searchUIConfiguration", "oldsearchui");
-    }
-
     sendAsyncMessage("AboutHome:RequestUpdate");
-    doc.addEventListener("AboutHomeSearchEvent", this, true, true);
-    doc.addEventListener("AboutHomeSearchPanel", this, true, true);
   },
 
   onClick: function(aEvent) {
@@ -213,10 +195,6 @@ let AboutHomeListener = {
         sendAsyncMessage("AboutHome:History");
         break;
 
-      case "apps":
-        sendAsyncMessage("AboutHome:Apps");
-        break;
-
       case "addons":
         sendAsyncMessage("AboutHome:Addons");
         break;
@@ -227,10 +205,6 @@ let AboutHomeListener = {
 
       case "settings":
         sendAsyncMessage("AboutHome:Settings");
-        break;
-
-      case "searchIcon":
-        sendAsyncMessage("AboutHome:OpenSearchPanel", null, { anchor: originalTarget });
         break;
     }
   },
@@ -246,27 +220,16 @@ let AboutHomeListener = {
       aEvent.target.documentElement.removeAttribute("hasBrowserHandlers");
     }
   },
-
-  onSearch: function(aEvent) {
-    sendAsyncMessage("AboutHome:Search", { searchData: aEvent.detail });
-  },
-
-  onOpenSearchPanel: function(aEvent) {
-    sendAsyncMessage("AboutHome:OpenSearchPanel");
-  },
-
-  onFocusInput: function () {
-    let searchInput = content.document.getElementById("searchText");
-    if (searchInput) {
-      searchInput.focus();
-    }
-  },
 };
 AboutHomeListener.init(this);
 
-let AboutPrivateBrowsingListener = {
+var AboutPrivateBrowsingListener = {
   init(chromeGlobal) {
     chromeGlobal.addEventListener("AboutPrivateBrowsingOpenWindow", this,
+                                  false, true);
+    chromeGlobal.addEventListener("AboutPrivateBrowsingToggleTrackingProtection", this,
+                                  false, true);
+    chromeGlobal.addEventListener("AboutPrivateBrowsingDontShowIntroPanelAgain", this,
                                   false, true);
   },
 
@@ -282,12 +245,18 @@ let AboutPrivateBrowsingListener = {
       case "AboutPrivateBrowsingOpenWindow":
         sendAsyncMessage("AboutPrivateBrowsing:OpenPrivateWindow");
         break;
+      case "AboutPrivateBrowsingToggleTrackingProtection":
+        sendAsyncMessage("AboutPrivateBrowsing:ToggleTrackingProtection");
+        break;
+      case "AboutPrivateBrowsingDontShowIntroPanelAgain":
+        sendAsyncMessage("AboutPrivateBrowsing:DontShowIntroPanelAgain");
+        break;
     }
   },
 };
 AboutPrivateBrowsingListener.init(this);
 
-let AboutReaderListener = {
+var AboutReaderListener = {
 
   _articlePromise: null,
 
@@ -308,12 +277,15 @@ let AboutReaderListener = {
         break;
 
       case "Reader:PushState":
-        this.updateReaderButton();
+        this.updateReaderButton(!!(message.data && message.data.isArticle));
         break;
     }
   },
 
   get isAboutReader() {
+    if (!content) {
+      return false;
+    }
     return content.document.documentURI.startsWith("about:reader");
   },
 
@@ -337,6 +309,7 @@ let AboutReaderListener = {
         break;
 
       case "pagehide":
+        this.cancelPotentialPendingReadabilityCheck();
         sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
         break;
 
@@ -353,23 +326,55 @@ let AboutReaderListener = {
 
     }
   },
-  updateReaderButton: function() {
+
+  /**
+   * NB: this function will update the state of the reader button asynchronously
+   * after the next mozAfterPaint call (assuming reader mode is enabled and
+   * this is a suitable document). Calling it on things which won't be
+   * painted is not going to work.
+   */
+  updateReaderButton: function(forceNonArticle) {
     if (!ReaderMode.isEnabledForParseOnLoad || this.isAboutReader ||
-        !(content.document instanceof content.HTMLDocument) ||
+        !content || !(content.document instanceof content.HTMLDocument) ||
         content.document.mozSyntheticDocument) {
       return;
     }
+
+    this.scheduleReadabilityCheckPostPaint(forceNonArticle);
+  },
+
+  cancelPotentialPendingReadabilityCheck: function() {
+    if (this._pendingReadabilityCheck) {
+      removeEventListener("MozAfterPaint", this._pendingReadabilityCheck);
+      delete this._pendingReadabilityCheck;
+    }
+  },
+
+  scheduleReadabilityCheckPostPaint: function(forceNonArticle) {
+    if (this._pendingReadabilityCheck) {
+      // We need to stop this check before we re-add one because we don't know
+      // if forceNonArticle was true or false last time.
+      this.cancelPotentialPendingReadabilityCheck();
+    }
+    this._pendingReadabilityCheck = this.onPaintWhenWaitedFor.bind(this, forceNonArticle);
+    addEventListener("MozAfterPaint", this._pendingReadabilityCheck);
+  },
+
+  onPaintWhenWaitedFor: function(forceNonArticle) {
+    this.cancelPotentialPendingReadabilityCheck();
     // Only send updates when there are articles; there's no point updating with
     // |false| all the time.
     if (ReaderMode.isProbablyReaderable(content.document)) {
       sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: true });
+    } else if (forceNonArticle) {
+      sendAsyncMessage("Reader:UpdateReaderButton", { isArticle: false });
     }
   },
 };
 AboutReaderListener.init();
 
 
-let ContentSearchMediator = {
+var ContentSearchMediator = {
 
   whitelist: new Set([
     "about:home",
@@ -424,31 +429,27 @@ let ContentSearchMediator = {
 };
 ContentSearchMediator.init(this);
 
-let PageStyleHandler = {
+var PageStyleHandler = {
   init: function() {
     addMessageListener("PageStyle:Switch", this);
     addMessageListener("PageStyle:Disable", this);
-
-    // Send a CPOW to the parent so that it can synchronously request
-    // the list of style sheets.
-    sendSyncMessage("PageStyle:SetSyncHandler", {}, {syncHandler: this});
+    addEventListener("pageshow", () => this.sendStyleSheetInfo());
   },
 
   get markupDocumentViewer() {
     return docShell.contentViewer;
   },
 
-  // Called synchronously via CPOW from the parent.
-  getStyleSheetInfo: function() {
-    let styleSheets = this._filterStyleSheets(this.getAllStyleSheets());
-    return {
-      styleSheets: styleSheets,
+  sendStyleSheetInfo: function() {
+    let filteredStyleSheets = this._filterStyleSheets(this.getAllStyleSheets());
+
+    sendAsyncMessage("PageStyle:StyleSheets", {
+      filteredStyleSheets: filteredStyleSheets,
       authorStyleDisabled: this.markupDocumentViewer.authorStyleDisabled,
       preferredStyleSheetSet: content.document.preferredStyleSheetSet
-    };
+    });
   },
 
-  // Called synchronously via CPOW from the parent.
   getAllStyleSheets: function(frameset = content) {
     let selfSheets = Array.slice(frameset.document.styleSheets);
     let subSheets = Array.map(frameset.frames, frame => this.getAllStyleSheets(frame));
@@ -466,6 +467,8 @@ let PageStyleHandler = {
         this.markupDocumentViewer.authorStyleDisabled = true;
         break;
     }
+
+    this.sendStyleSheetInfo();
   },
 
   _stylesheetSwitchAll: function (frameset, title) {
@@ -511,8 +514,26 @@ let PageStyleHandler = {
         }
       }
 
-      result.push({title: currentStyleSheet.title,
-                   disabled: currentStyleSheet.disabled});
+      let URI;
+      try {
+        URI = Services.io.newURI(currentStyleSheet.href, null, null);
+      } catch(e) {
+        if (e.result != Cr.NS_ERROR_MALFORMED_URI) {
+          throw e;
+        }
+      }
+
+      if (URI) {
+        // We won't send data URIs all of the way up to the parent, as these
+        // can be arbitrarily large.
+        let sentURI = URI.scheme == "data" ? null : URI.spec;
+
+        result.push({
+          title: currentStyleSheet.title,
+          disabled: currentStyleSheet.disabled,
+          href: sentURI,
+        });
+      }
     }
 
     return result;
@@ -521,7 +542,7 @@ let PageStyleHandler = {
 PageStyleHandler.init();
 
 // Keep a reference to the translation content handler to avoid it it being GC'ed.
-let trHandler = null;
+var trHandler = null;
 if (Services.prefs.getBoolPref("browser.translation.detectLanguage")) {
   Cu.import("resource:///modules/translation/TranslationContentHandler.jsm");
   trHandler = new TranslationContentHandler(global, docShell);
@@ -529,6 +550,9 @@ if (Services.prefs.getBoolPref("browser.translation.detectLanguage")) {
 
 function gKeywordURIFixup(fixupInfo) {
   fixupInfo.QueryInterface(Ci.nsIURIFixupInfo);
+  if (!fixupInfo.consumer) {
+    return;
+  }
 
   // Ignore info from other docshells
   let parent = fixupInfo.consumer.QueryInterface(Ci.nsIDocShellTreeItem).sameTypeRootTreeItem;
@@ -560,7 +584,7 @@ addMessageListener("Browser:AppTab", function(message) {
   }
 });
 
-let WebBrowserChrome = {
+var WebBrowserChrome = {
   onBeforeLinkTraversal: function(originalTarget, linkURI, linkNode, isAppTab) {
     return BrowserUtils.onBeforeLinkTraversal(originalTarget, linkURI, linkNode, isAppTab);
   },
@@ -583,27 +607,43 @@ if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
 }
 
 
-let DOMFullscreenHandler = {
+var DOMFullscreenHandler = {
   _fullscreenDoc: null,
 
   init: function() {
-    addMessageListener("DOMFullscreen:Approved", this);
+    addMessageListener("DOMFullscreen:Entered", this);
     addMessageListener("DOMFullscreen:CleanUp", this);
-    addEventListener("MozEnteredDomFullscreen", this);
-    addEventListener("MozExitedDomFullscreen", this);
+    addEventListener("MozDOMFullscreen:Request", this);
+    addEventListener("MozDOMFullscreen:Entered", this);
+    addEventListener("MozDOMFullscreen:NewOrigin", this);
+    addEventListener("MozDOMFullscreen:Exit", this);
+    addEventListener("MozDOMFullscreen:Exited", this);
+  },
+
+  get _windowUtils() {
+    if (!content) {
+      return null;
+    }
+    return content.QueryInterface(Ci.nsIInterfaceRequestor)
+                  .getInterface(Ci.nsIDOMWindowUtils);
   },
 
   receiveMessage: function(aMessage) {
     switch(aMessage.name) {
-      case "DOMFullscreen:Approved": {
-        if (this._fullscreenDoc) {
-          Services.obs.notifyObservers(this._fullscreenDoc,
-                                       "fullscreen-approved",
-                                       "");
+      case "DOMFullscreen:Entered": {
+        if (!this._windowUtils.handleFullscreenRequests() &&
+            !content.document.mozFullScreen) {
+          // If we don't actually have any pending fullscreen request
+          // to handle, neither we have been in fullscreen, tell the
+          // parent to just exit.
+          sendAsyncMessage("DOMFullscreen:Exit");
         }
         break;
       }
       case "DOMFullscreen:CleanUp": {
+        if (this._windowUtils) {
+          this._windowUtils.exitFullscreen();
+        }
         this._fullscreenDoc = null;
         break;
       }
@@ -611,14 +651,44 @@ let DOMFullscreenHandler = {
   },
 
   handleEvent: function(aEvent) {
-    if (aEvent.type == "MozEnteredDomFullscreen") {
-      this._fullscreenDoc = aEvent.target;
-      sendAsyncMessage("MozEnteredDomFullscreen", {
-        origin: this._fullscreenDoc.nodePrincipal.origin,
-      });
-    } else if (aEvent.type == "MozExitedDomFullscreen") {
-      sendAsyncMessage("MozExitedDomFullscreen");
+    switch (aEvent.type) {
+      case "MozDOMFullscreen:Request": {
+        sendAsyncMessage("DOMFullscreen:Request");
+        break;
+      }
+      case "MozDOMFullscreen:NewOrigin": {
+        this._fullscreenDoc = aEvent.target;
+        sendAsyncMessage("DOMFullscreen:NewOrigin", {
+          originNoSuffix: this._fullscreenDoc.nodePrincipal.originNoSuffix,
+        });
+        break;
+      }
+      case "MozDOMFullscreen:Exit": {
+        sendAsyncMessage("DOMFullscreen:Exit");
+        break;
+      }
+      case "MozDOMFullscreen:Entered":
+      case "MozDOMFullscreen:Exited": {
+        addEventListener("MozAfterPaint", this);
+        if (!content || !content.document.mozFullScreen) {
+          // If we receive any fullscreen change event, and find we are
+          // actually not in fullscreen, also ask the parent to exit to
+          // ensure that the parent always exits fullscreen when we do.
+          sendAsyncMessage("DOMFullscreen:Exit");
+        }
+        break;
+      }
+      case "MozAfterPaint": {
+        removeEventListener("MozAfterPaint", this);
+        sendAsyncMessage("DOMFullscreen:Painted");
+        break;
+      }
     }
   }
 };
 DOMFullscreenHandler.init();
+
+ExtensionContent.init(this);
+addEventListener("unload", () => {
+  ExtensionContent.uninit(this);
+});

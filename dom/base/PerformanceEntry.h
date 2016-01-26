@@ -7,11 +7,15 @@
 #ifndef mozilla_dom_PerformanceEntry_h___
 #define mozilla_dom_PerformanceEntry_h___
 
-#include "nsPerformance.h"
 #include "nsDOMNavigationTiming.h"
+#include "nsString.h"
+#include "nsWrapperCache.h"
+
+class nsISupports;
 
 namespace mozilla {
 namespace dom {
+class PerformanceResourceTiming;
 
 // http://www.w3.org/TR/performance-timeline/#performanceentry
 class PerformanceEntry : public nsISupports,
@@ -21,7 +25,7 @@ protected:
   virtual ~PerformanceEntry();
 
 public:
-  PerformanceEntry(nsPerformance* aPerformance,
+  PerformanceEntry(nsISupports* aParent,
                    const nsAString& aName,
                    const nsAString& aEntryType);
 
@@ -30,9 +34,9 @@ public:
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  nsPerformance* GetParentObject() const
+  nsISupports* GetParentObject() const
   {
-    return mPerformance;
+    return mParent;
   }
 
   void GetName(nsAString& aName) const
@@ -75,8 +79,13 @@ public:
     return 0;
   }
 
+  virtual const PerformanceResourceTiming* ToResourceTiming() const
+  {
+    return nullptr;
+  }
+
 protected:
-  nsRefPtr<nsPerformance> mPerformance;
+  nsCOMPtr<nsISupports> mParent;
   nsString mName;
   nsString mEntryType;
 };

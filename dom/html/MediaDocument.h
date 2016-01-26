@@ -52,6 +52,7 @@ protected:
   void GetFileName(nsAString& aResult, nsIChannel* aChannel);
 
   nsresult LinkStylesheet(const nsAString& aStylesheet);
+  nsresult LinkScript(const nsAString& aScript);
 
   // |aFormatNames[]| needs to have four elements in the following order: 
   // a format name with neither dimension nor file, a format name with
@@ -95,7 +96,7 @@ public:
 
   NS_DECL_NSISTREAMLISTENER
 
-  nsRefPtr<MediaDocument>      mDocument;
+  RefPtr<MediaDocument>      mDocument;
   nsCOMPtr<nsIStreamListener>  mNextStream;
 };
 

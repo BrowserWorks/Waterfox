@@ -154,7 +154,7 @@ private:
     uint32_t                          mTriedHostAuth            : 1;
     uint32_t                          mSuppressDefensiveAuth    : 1;
 
-    nsRefPtr<nsHttpHandler>           mHttpHandler;  // keep gHttpHandler alive
+    RefPtr<nsHttpHandler>           mHttpHandler;  // keep gHttpHandler alive
 
     // A variable holding the preference settings to whether to open HTTP
     // authentication credentials dialogs for sub-resources and cross-origin
@@ -162,6 +162,7 @@ private:
     static uint32_t                   sAuthAllowPref;
 };
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // nsHttpChannelAuthProvider_h__

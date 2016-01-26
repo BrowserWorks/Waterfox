@@ -41,7 +41,6 @@ if CONFIG['MOZ_PLACES']:
         'nsAnnoProtocolHandler.cpp',
         'nsAnnotationService.cpp',
         'nsFaviconService.cpp',
-        'nsMaybeWeakPtr.cpp',
         'nsNavBookmarks.cpp',
         'nsNavHistory.cpp',
         'nsNavHistoryQuery.cpp',
@@ -66,6 +65,7 @@ if CONFIG['MOZ_PLACES']:
         'History.jsm',
         'PlacesBackups.jsm',
         'PlacesDBUtils.jsm',
+        'PlacesRemoteTabsAutocompleteProvider.jsm',
         'PlacesSearchAutocompleteProvider.jsm',
         'PlacesTransactions.jsm',
         'PlacesUtils.jsm',
@@ -86,8 +86,6 @@ if CONFIG['MOZ_PLACES']:
             'UnifiedComplete.js',
             'UnifiedComplete.manifest',
         ]
-
-    FAIL_ON_WARNINGS = True
 
     FINAL_LIBRARY = 'xul'
 

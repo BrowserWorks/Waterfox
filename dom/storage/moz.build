@@ -13,6 +13,7 @@ UNIFIED_SOURCES += [
     'DOMStorage.cpp',
     'DOMStorageCache.cpp',
     'DOMStorageDBThread.cpp',
+    'DOMStorageDBUpdater.cpp',
     'DOMStorageIPC.cpp',
     'DOMStorageManager.cpp',
     'DOMStorageObserver.cpp',
@@ -21,8 +22,6 @@ UNIFIED_SOURCES += [
 IPDL_SOURCES += [
     'PStorage.ipdl',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -33,3 +32,6 @@ LOCAL_INCLUDES += [
 
 if CONFIG['ENABLE_TESTS']:
     DEFINES['DOM_STORAGE_TESTS'] = True
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

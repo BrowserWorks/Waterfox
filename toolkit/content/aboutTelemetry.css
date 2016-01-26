@@ -27,15 +27,37 @@ h2 {
   padding: 10px;
 }
 
-#description-enabled > span {
+#settings {
+  border: 1px solid lightgrey;
+  padding: 5px;
+}
+
+.description-enabled,
+.description-disabled {
+  margin: 0px;
+}
+
+.description-enabled > span {
   color: green;
 }
 
-#description-disabled > span {
+.description-disabled > span {
   color: red;
 }
 
-.data-section {
+#ping-picker {
+  margin-top: 10px;
+  border: 1px solid lightgrey;
+  padding: 5px;
+}
+
+#ping-source-picker {
+  margin-left: 5px;
+  margin-bottom: 10px;
+}
+
+.data-section,
+.data-subsection {
   background-color: -moz-Field;
   color: -moz-FieldText;
   border-top: 1px solid threedshadow;
@@ -44,7 +66,8 @@ h2 {
   padding: 10px;
 }
 
-.data-section:not(.has-data) {
+.data-section:not(.has-data),
+.data-subsection:not(.has-subdata) {
   color: gray;
 }
 
@@ -64,7 +87,8 @@ h2 {
   cursor: pointer;
 }
 
-.data-section:not(.has-data) .toggle-caption {
+.data-section:not(.has-data) .toggle-caption,
+.data-subsection:not(.has-subdata) .toggle-caption {
   display: none;
 }
 
@@ -73,17 +97,19 @@ h2 {
   font-style: italic;
 }
 
-.has-data .empty-caption {
+.has-data .empty-caption,
+.has-subdata .empty-caption {
   display: none; /* invisible when has-data */
 }
 
-
-.data {
+.data,
+.subdata {
   margin: 15px;
   display: none;
 }
 
-.has-data.expanded .data {
+.has-data.expanded .data,
+.has-subdata.expanded .subdata {
   display: block;
 }
 
@@ -205,4 +231,29 @@ body[dir="rtl"] .copy-node {
 
 .filter-blocked {
   display: none;
+}
+
+#raw-ping-data-section {
+  width: 100%;
+  height: 100%;
+  background-color:-moz-Dialog;
+}
+
+#raw-ping-data {
+  background-color:white;
+  margin: 0px;
+}
+
+#hide-raw-ping {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+  background-color:#d8d8d8;
+  padding: 5px 10px;
+}
+
+/* addon subsection style */
+.addon-caption {
+  font-size: larger;
+  margin: 5px 0;
 }

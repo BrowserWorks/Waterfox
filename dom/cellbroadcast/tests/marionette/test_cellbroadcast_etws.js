@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-MARIONETTE_TIMEOUT = 20000;
+MARIONETTE_TIMEOUT = 60000;
 MARIONETTE_HEAD_JS = 'head.js';
 
 function testReceiving_ETWS_MessageAttributes() {
@@ -91,7 +91,7 @@ function testReceiving_ETWS_MessageId() {
   // Message Identifier has 16 bits, but no bitwise operation is needed.
   // Test some selected values only.
   let messageIds = [
-    0x0000, 0x0001, 0x0010, 0x0100, 0x1000, 0x1111, 0x8888, 0x8811,
+    0x0000, 0x0001, 0x0010, 0x0100, 0x1111, 0x8888, 0x8811,
   ];
 
   let verifyCBMessage = (aMessage, aMessageId) => {

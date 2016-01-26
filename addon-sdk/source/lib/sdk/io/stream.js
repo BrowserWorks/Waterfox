@@ -35,7 +35,7 @@ const threadManager = Cc["@mozilla.org/thread-manager;1"].
 const eventTarget = Cc["@mozilla.org/network/stream-transport-service;1"].
                     getService(Ci.nsIEventTarget);
 
-let isFunction = value => typeof(value) === "function"
+var isFunction = value => typeof(value) === "function"
 
 function accessor() {
   let map = new WeakMap();
@@ -123,10 +123,10 @@ const Stream = Class({
 exports.Stream = Stream;
 
 
-let nsIStreamListener = accessor();
-let nsIInputStreamPump = accessor();
-let nsIAsyncInputStream = accessor();
-let nsIBinaryInputStream = accessor();
+var nsIStreamListener = accessor();
+var nsIInputStreamPump = accessor();
+var nsIAsyncInputStream = accessor();
+var nsIBinaryInputStream = accessor();
 
 const StreamListener = Class({
   initialize: function(stream) {
@@ -181,7 +181,9 @@ const InputStream = Class({
     this.inputStreamPump = inputStreamPump;
     this.binaryInputStream = binaryInputStream;
   },
-  get status() nsIInputStreamPump(this).status,
+  get status() {
+    return nsIInputStreamPump(this).status;
+  },
   read: function() {
     nsIInputStreamPump(this).asyncRead(nsIStreamListener(this), null);
   },
@@ -216,10 +218,10 @@ exports.InputStream = InputStream;
 
 
 
-let nsIRequestObserver = accessor();
-let nsIAsyncOutputStream = accessor();
-let nsIAsyncStreamCopier = accessor();
-let nsIMultiplexInputStream = accessor();
+var nsIRequestObserver = accessor();
+var nsIAsyncOutputStream = accessor();
+var nsIAsyncStreamCopier = accessor();
+var nsIMultiplexInputStream = accessor();
 
 const RequestObserver = Class({
   initialize: function(stream) {

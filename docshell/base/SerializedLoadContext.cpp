@@ -7,6 +7,7 @@
 #include "SerializedLoadContext.h"
 #include "nsNetUtil.h"
 #include "nsIChannel.h"
+#include "nsIPrivateBrowsingChannel.h"
 #include "nsIWebSocketChannel.h"
 
 namespace IPC {
@@ -61,8 +62,9 @@ SerializedLoadContext::Init(nsILoadContext* aLoadContext)
     aLoadContext->GetIsContent(&mIsContent);
     aLoadContext->GetUsePrivateBrowsing(&mUsePrivateBrowsing);
     aLoadContext->GetUseRemoteTabs(&mUseRemoteTabs);
-    aLoadContext->GetAppId(&mAppId);
-    aLoadContext->GetIsInBrowserElement(&mIsInBrowserElement);
+    if (!aLoadContext->GetOriginAttributes(mOriginAttributes)) {
+      NS_WARNING("GetOriginAttributes failed");
+    }
   } else {
     mIsNotNull = false;
     mIsPrivateBitValid = false;
@@ -71,8 +73,6 @@ SerializedLoadContext::Init(nsILoadContext* aLoadContext)
     mIsContent = true;
     mUsePrivateBrowsing = false;
     mUseRemoteTabs = false;
-    mAppId = 0;
-    mIsInBrowserElement = false;
   }
 }
 

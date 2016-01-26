@@ -6,7 +6,7 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/javascript"
           src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
-  <script type="application/javascript" src="utils.js"></script>
+  <script type="application/javascript" src="plugin-utils.js"></script>
   <script type="application/javascript">
     setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED);
   </script>
@@ -88,16 +88,10 @@ function onPluginCrashed(aEvent) {
 }
 
 function runTests() {
-  if (!SimpleTest.testPluginIsOOP()) {
-    ok(true, "Skipping this test when test plugin is not OOP.");
-    SimpleTest.finish();
-    return;
-  }
-
   var os = Components.classes["@mozilla.org/observer-service;1"].
            getService(Components.interfaces.nsIObserverService);
   os.addObserver(testObserver, "plugin-crashed", true);
-  
+
   document.addEventListener("PluginCrashed", onPluginCrashed, false);
 
   var pluginElement = document.getElementById("plugin1");

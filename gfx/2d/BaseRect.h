@@ -353,6 +353,18 @@ struct BaseRect {
   T XMost() const { return x + width; }
   T YMost() const { return y + height; }
 
+  // Get the coordinate of the edge on the given side.
+  T Edge(mozilla::Side aSide) const
+  {
+    switch (aSide) {
+      case NS_SIDE_TOP: return Y();
+      case NS_SIDE_RIGHT: return XMost();
+      case NS_SIDE_BOTTOM: return YMost();
+      case NS_SIDE_LEFT: return X();
+    }
+    MOZ_CRASH("Incomplete switch");
+  }
+
   // Moves one edge of the rect without moving the opposite edge.
   void SetLeftEdge(T aX) {
     MOZ_ASSERT(aX <= XMost());
@@ -518,11 +530,11 @@ struct BaseRect {
   }
 
   /**
-   * Clamp this rectangle to be inside aRect. The function returns a copy of
-   * this rect after it is forced inside the bounds of aRect. It will attempt to
-   * retain the size but will shrink the dimensions that don't fit.
+   * Translate this rectangle to be inside aRect. If it doesn't fit inside
+   * aRect then the dimensions that don't fit will be shrunk so that they
+   * do fit. The resulting rect is returned.
    */
-  MOZ_WARN_UNUSED_RESULT Sub ForceInside(const Sub& aRect) const
+  MOZ_WARN_UNUSED_RESULT Sub MoveInsideAndClamp(const Sub& aRect) const
   {
     Sub rect(std::max(aRect.x, x),
              std::max(aRect.y, y),
@@ -546,7 +558,7 @@ private:
   bool operator!=(const Sub& aRect) const { return false; }
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_BASERECT_H_ */

@@ -7,17 +7,21 @@ if the entry does not already exist.
 
 Usage: buildlist.py <filename> <entry> [<entry> ...]
 '''
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import sys
 import os
 
-from mozbuild.util import lock_file
+from mozbuild.util import (
+    ensureParentDir,
+    lock_file,
+)
 
 def addEntriesToListFile(listFile, entries):
   """Given a file |listFile| containing one entry per line,
   add each entry in |entries| to the file, unless it is already
   present."""
+  ensureParentDir(listFile)
   lock = lock_file(listFile + ".lck")
   try:
     if os.path.exists(listFile):
@@ -29,7 +33,7 @@ def addEntriesToListFile(listFile, entries):
     for e in entries:
       if e not in existing:
         existing.add(e)
-    with open(listFile, 'w') as f:
+    with open(listFile, 'wb') as f:
       f.write("\n".join(sorted(existing))+"\n")
   finally:
     lock = None

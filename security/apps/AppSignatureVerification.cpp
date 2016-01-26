@@ -30,7 +30,7 @@
 #include "nsString.h"
 #include "nsTHashtable.h"
 #include "plstr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
 #include "secmime.h"
@@ -775,7 +775,7 @@ OpenSignedAppFile(AppTrustedRoot aTrustedRoot, nsIFile* aJarFile,
     rv = entries->GetNext(entryFilename);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG, ("Verifying digests for %s",
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Verifying digests for %s",
            entryFilename.get()));
 
     // The files that comprise the signature mechanism are not covered by the
@@ -811,7 +811,7 @@ OpenSignedAppFile(AppTrustedRoot aTrustedRoot, nsIFile* aJarFile,
     }
 
     // Remove the item so we can check for leftover items later
-    items.RemoveEntry(entryFilename);
+    items.RemoveEntry(item);
   }
 
   // We verified that every entry that we require to be signed is signed. But,
@@ -1321,7 +1321,7 @@ CheckDirForUnsignedFiles(nsIFile* aDir,
       }
 
       // Remove the item so we can check for leftover items later
-      aItems.RemoveEntry(curName);
+      aItems.RemoveEntry(item);
     }
   }
   files->Close();

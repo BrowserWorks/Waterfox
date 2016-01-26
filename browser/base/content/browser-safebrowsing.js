@@ -1,8 +1,10 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_SAFE_BROWSING
+// Note: this file is not shipped (through jar.mn)
+// if MOZ_SAFE_BROWSING is not defined.
+
 var gSafeBrowsing = {
 
   setReportPhishingMenu: function() {
@@ -36,17 +38,6 @@ var gSafeBrowsing = {
    * @return String the report phishing URL.
    */
   getReportURL: function(name) {
-    var reportUrl = SafeBrowsing.getReportURL(name);
-
-    var pageUri = gBrowser.currentURI.clone();
-
-    // Remove the query to avoid including potentially sensitive data
-    if (pageUri instanceof Ci.nsIURL)
-      pageUri.query = '';
-
-    reportUrl += "&url=" + encodeURIComponent(pageUri.asciiSpec);
-
-    return reportUrl;
+    return SafeBrowsing.getReportURL(name, gBrowser.currentURI);
   }
 }
-#endif

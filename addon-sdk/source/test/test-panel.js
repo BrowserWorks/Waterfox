@@ -22,6 +22,8 @@ const { getMostRecentBrowserWindow } = require('sdk/window/utils');
 const { URL } = require('sdk/url');
 const { wait } = require('./event/helpers');
 const packaging = require('@loader/options');
+const { cleanUI, after, isTravisCI } = require("sdk/test/utils");
+const { platform } = require('sdk/system');
 
 const fixtures = require('./fixtures')
 
@@ -50,7 +52,7 @@ exports["test Panel"] = function(assert, done) {
 
   let panel = Panel({
     contentURL: "about:buildconfig",
-    contentScript: "self.postMessage(1); self.on('message', function() self.postMessage(2));",
+    contentScript: "self.postMessage(1); self.on('message', () => self.postMessage(2));",
     onMessage: function (message) {
       assert.equal(this, panel, "The 'this' object is the panel.");
       switch(message) {
@@ -75,7 +77,7 @@ exports["test Panel Emit"] = function(assert, done) {
     contentURL: "about:buildconfig",
     contentScript: "self.port.emit('loaded');" +
                    "self.port.on('addon-to-content', " +
-                   "             function() self.port.emit('received'));",
+                   "             () => self.port.emit('received'));",
   });
   panel.port.on("loaded", function () {
     assert.pass("The panel was loaded and sent a first event.");
@@ -94,7 +96,7 @@ exports["test Panel Emit Early"] = function(assert, done) {
   let panel = Panel({
     contentURL: "about:buildconfig",
     contentScript: "self.port.on('addon-to-content', " +
-                   "             function() self.port.emit('received'));",
+                   "             () => self.port.emit('received'));",
   });
   panel.port.on("received", function () {
     assert.pass("The panel posted a message early and received a response.");
@@ -146,7 +148,7 @@ exports["test Document Reload"] = function(assert, done) {
     contentURL: URL("data:text/html;charset=utf-8," + encodeURIComponent(content)),
     contentScript: "self.postMessage(window.location.href);" +
                    // initiate change to url2
-                   "self.port.once('move', function() document.defaultView.postMessage('move', '*'));",
+                   "self.port.once('move', () => document.defaultView.postMessage('move', '*'));",
     onMessage: function (message) {
       messageCount++;
       assert.notEqual(message, "about:blank", "about:blank is not a message " + messageCount);
@@ -335,65 +337,27 @@ exports["test Anchor And Arrow"] = function(assert, done) {
   let { Panel } = loader.require('sdk/panel');
 
   let count = 0;
-  let queue = [];
-  let tab;
+  let url = 'data:text/html;charset=utf-8,' +
+    '<html><head><title>foo</title></head><body>' +
+    '</body></html>';
 
-  function newPanel(anchor) {
+  let panel = yield new Promise(resolve => {
+    let browserWindow = getMostRecentBrowserWindow();
+    let anchor = browserWindow.document.getElementById("identity-box");
     let panel = Panel({
       contentURL: "data:text/html;charset=utf-8,<html><body style='padding: 0; margin: 0; " +
                   "background: gray; text-align: center;'>Anchor: " +
                   anchor.id + "</body></html>",
       width: 200,
       height: 100,
-      onShow: function () {
-        panel.destroy();
-        next();
-      }
+      onShow: () => resolve(panel)
     });
-    queue.push({ panel: panel, anchor: anchor });
-  }
-
-  function next () {
-    if (!queue.length) {
-      assert.pass("All anchored panel test displayed");
-      tab.close(function () {
-        done();
-      });
-      return;
-    }
-    let { panel, anchor } = queue.shift();
     panel.show(null, anchor);
-  }
-
-  let tabs= require("sdk/tabs");
-  let url = 'data:text/html;charset=utf-8,' +
-    '<html><head><title>foo</title></head><body>' +
-    '<style>div {background: gray; position: absolute; width: 300px; ' +
-           'border: 2px solid black;}</style>' +
-    '<div id="tl" style="top: 0px; left: 0px;">Top Left</div>' +
-    '<div id="tr" style="top: 0px; right: 0px;">Top Right</div>' +
-    '<div id="bl" style="bottom: 0px; left: 0px;">Bottom Left</div>' +
-    '<div id="br" style="bottom: 0px; right: 0px;">Bottom right</div>' +
-    '</body></html>';
-
-  tabs.open({
-    url: url,
-    onReady: function(_tab) {
-      tab = _tab;
-      let browserWindow = Cc["@mozilla.org/appshell/window-mediator;1"].
-                      getService(Ci.nsIWindowMediator).
-                      getMostRecentWindow("navigator:browser");
-      let window = browserWindow.content;
-      newPanel(window.document.getElementById('tl'));
-      newPanel(window.document.getElementById('tr'));
-      newPanel(window.document.getElementById('bl'));
-      newPanel(window.document.getElementById('br'));
-      let anchor = browserWindow.document.getElementById("identity-box");
-      newPanel(anchor);
-
-      next();
-    }
   });
+  assert.pass("All anchored panel test displayed");
+
+  panel.destroy();
+  assert.pass("panel was destroyed.");
 };
 
 exports["test Panel Focus True"] = function(assert, done) {
@@ -569,7 +533,7 @@ exports["test Automatic Destroy"] = function(assert) {
   let panel = loader.require("sdk/panel").Panel({
     contentURL: "about:buildconfig",
     contentScript:
-      "self.port.on('event', function() self.port.emit('event-back'));"
+      "self.port.on('event', () => self.port.emit('event-back'));"
   });
 
   loader.unload();
@@ -621,7 +585,7 @@ exports["test Content URL Option"] = function(assert) {
   assert.ok(panel.contentURL == null, "contentURL is undefined.");
   panel.destroy();
 
-  assert.throws(function () Panel({ contentURL: "foo" }),
+  assert.throws(() => Panel({ contentURL: "foo" }),
                     /The `contentURL` option must be a valid URL./,
                     "Panel throws an exception if contentURL is not a URL.");
 };
@@ -1352,7 +1316,101 @@ exports["test Panel without contentURL and contentScriptWhen=start should show"]
   loader.unload();
 }
 
-if (packaging.isNative) {
+exports["test Panel links"] = function*(assert) {
+  const loader = Loader(module);
+
+  const { Panel } = loader.require('sdk/panel');
+  const { getActiveView } = loader.require('sdk/view/core');
+  const tabs = loader.require('sdk/tabs');
+
+  const synthesizeClick = (panel, options) => {
+    let { contentWindow } = getActiveView(panel).querySelector('iframe');
+    let event = new contentWindow.MouseEvent('click', options);
+
+    contentWindow.document.querySelector('a').dispatchEvent(event);
+  }
+
+  const linkURL = 'data:text/html;charset=utf-8,' +
+                  encodeURIComponent('<html><a href="#">foo</a></html>');
+
+  const contentURL = 'data:text/html;charset=utf-8,' +
+          encodeURIComponent(`<html><a href="${linkURL}">page</a></html>`);
+
+  let panel = Panel({
+    contentURL,
+    contentScript: Isolate(() => self.postMessage(document.URL))
+  });
+
+  panel.show();
+
+  let url = yield wait(panel, 'message');
+
+  assert.equal(url, contentURL,
+    'content URL loaded');
+
+  synthesizeClick(panel, { bubbles: true });
+
+  url = yield wait(panel, 'message');
+
+  assert.equal(url, linkURL,
+    'link URL loaded in the panel after click');
+
+  synthesizeClick(panel, {
+    bubbles: true,
+    [platform === 'darwin' ? 'metaKey' : 'ctrlKey']: true
+  });
+
+  let tab = yield wait(tabs, 'ready');
+
+  assert.equal(tab.url, linkURL + '#',
+      'link URL loaded in a new tab after click + accel');
+
+  loader.unload();
+}
+
+exports["test Panel script allow property"] = function*(assert) {
+  const loader = Loader(module);
+  const { Panel } = loader.require('sdk/panel');
+  const { getActiveView } = loader.require('sdk/view/core');
+
+  const contentURL = 'data:text/html;charset=utf-8,' +
+    encodeURIComponent(`<body onclick='postMessage("got script click", "*")'>
+        <script>
+        document.body.appendChild(document.createElement('unwanted'))
+        </script>
+        </body>`);
+  let panel = Panel({
+    contentURL,
+    allow: {script: false},
+  });
+
+  panel.show();
+
+  yield wait(panel, 'show');
+
+  let { contentWindow } = getActiveView(panel).querySelector('iframe');
+
+  assert.equal(contentWindow.document.body.lastElementChild.localName, "script",
+               "Script should not have executed");
+
+  panel.allow.script = true;
+
+  let p = wait(contentWindow, "message");
+  let event = new contentWindow.MouseEvent('click', {});
+  contentWindow.document.body.dispatchEvent(event);
+
+  let msg = yield p;
+  assert.equal(msg.data, "got script click", "Should have seen script click");
+
+  loader.unload();
+};
+
+after(exports, function*(name, assert) {
+  yield cleanUI();
+  assert.pass("ui was cleaned.");
+});
+
+if (isTravisCI) {
   module.exports = {
     "test skip on jpm": (assert) => assert.pass("skipping this file with jpm")
   };

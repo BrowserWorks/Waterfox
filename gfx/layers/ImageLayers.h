@@ -7,7 +7,6 @@
 #define GFX_IMAGELAYER_H
 
 #include "Layers.h"                     // for Layer, etc
-#include "GraphicsFilter.h"             // for GraphicsFilter
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/layers/LayersTypes.h"
@@ -21,7 +20,7 @@ class ImageContainer;
 
 namespace layerscope {
 class LayersPacket;
-}
+} // namespace layerscope
 
 /**
  * A Layer which renders an Image.
@@ -39,7 +38,7 @@ public:
    * CONSTRUCTION PHASE ONLY
    * Set the filter used to resample this image if necessary.
    */
-  void SetFilter(GraphicsFilter aFilter)
+  void SetFilter(gfx::Filter aFilter)
   {
     if (mFilter != aFilter) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) Filter", this));
@@ -63,7 +62,7 @@ public:
 
 
   ImageContainer* GetContainer() { return mContainer; }
-  GraphicsFilter GetFilter() { return mFilter; }
+  gfx::Filter GetFilter() { return mFilter; }
   const gfx::IntSize& GetScaleToSize() { return mScaleToSize; }
   ScaleMode GetScaleMode() { return mScaleMode; }
 
@@ -94,15 +93,15 @@ protected:
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
   virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent) override;
 
-  nsRefPtr<ImageContainer> mContainer;
-  GraphicsFilter mFilter;
+  RefPtr<ImageContainer> mContainer;
+  gfx::Filter mFilter;
   gfx::IntSize mScaleToSize;
   ScaleMode mScaleMode;
   bool mDisallowBigImage;
   gfx::Matrix4x4 mEffectiveTransformForBuffer;
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_IMAGELAYER_H */

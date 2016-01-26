@@ -5,7 +5,7 @@
 // Tests blocking of extensions by ID, name, creator, homepageURL, updateURL
 // and RegExps for each. See bug 897735.
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 const URI_EXTENSION_BLOCKLIST_DIALOG = "chrome://mozapps/content/extensions/blocklist.xul";
 
@@ -24,12 +24,12 @@ profileDir.append("extensions");
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, arguments) {
+  openWindow: function(parent, url, name, features, args) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
 
     // Simulate auto-disabling any softblocks
-    var list = arguments.wrappedJSObject.list;
+    var list = args.wrappedJSObject.list;
     list.forEach(function(aItem) {
       if (!aItem.blocked)
         aItem.disable = true;

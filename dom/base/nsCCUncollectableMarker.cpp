@@ -30,9 +30,11 @@
 #include "nsFrameLoader.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/ProcessGlobal.h"
 #include "xpcpublic.h"
 #include "nsObserverService.h"
 #include "nsFocusManager.h"
+#include "nsIInterfaceRequestorUtils.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -54,7 +56,6 @@ nsCCUncollectableMarker::Init()
   }
 
   nsCOMPtr<nsIObserver> marker = new nsCCUncollectableMarker;
-  NS_ENSURE_TRUE(marker, NS_ERROR_OUT_OF_MEMORY);
 
   nsCOMPtr<nsIObserverService> obs =
     mozilla::services::GetObserverService();
@@ -139,8 +140,16 @@ MarkChildMessageManagers(nsIMessageBroadcaster* aMM)
 static void
 MarkMessageManagers()
 {
+  if (nsFrameMessageManager::GetChildProcessManager()) {
+    // ProcessGlobal's MarkForCC marks also ChildProcessManager.
+    ProcessGlobal* pg = ProcessGlobal::Get();
+    if (pg) {
+      pg->MarkForCC();
+    }
+  }
+
   // The global message manager only exists in the root process.
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return;
   }
   nsCOMPtr<nsIMessageBroadcaster> strongGlobalMM =
@@ -170,9 +179,6 @@ MarkMessageManagers()
   }
   if (nsFrameMessageManager::sSameProcessParentManager) {
     nsFrameMessageManager::sSameProcessParentManager->MarkForCC();
-  }
-  if (nsFrameMessageManager::GetChildProcessManager()) {
-    nsFrameMessageManager::GetChildProcessManager()->MarkForCC();
   }
 }
 
@@ -437,7 +443,7 @@ nsCCUncollectableMarker::Observe(nsISupports* aSubject, const char* aTopic,
 
   switch(sFSState) {
     case eUnmarkJSEventListeners: {
-      nsContentUtils::UnmarkGrayJSListenersInCCGenerationDocuments(sGeneration);
+      nsContentUtils::UnmarkGrayJSListenersInCCGenerationDocuments();
       break;
     }
     case eUnmarkMessageManagers: {

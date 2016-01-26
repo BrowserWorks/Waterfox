@@ -4,12 +4,12 @@
 
 "use strict";
 
-let Cu = Components.utils;
-let Ci = Components.interfaces;
+var Cu = Components.utils;
+var Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/sessionstore/FrameTree.jsm", this);
-let gFrameTree = new FrameTree(this);
+var gFrameTree = new FrameTree(this);
 
 function executeSoon(callback) {
   Services.tm.mainThread.dispatch(callback, Components.interfaces.nsIThread.DISPATCH_NORMAL);
@@ -25,7 +25,7 @@ gFrameTree.addObserver({
   }
 });
 
-let historyListener = {
+var historyListener = {
   OnHistoryNewEntry: function () {
     sendAsyncMessage("ss-test:OnHistoryNewEntry");
   },
@@ -65,7 +65,7 @@ let historyListener = {
   ])
 };
 
-let {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
+var {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
 if (sessionHistory) {
   sessionHistory.addSHistoryListener(historyListener);
 }
@@ -79,34 +79,9 @@ addEventListener("hashchange", function () {
   sendAsyncMessage("ss-test:hashchange");
 });
 
-addEventListener("MozStorageChanged", function () {
-  // It's possible that this event handler runs before the one in
-  // content-sessionStore.js. We run ours a little later to make sure
-  // that the session store code has seen the event before we allow
-  // the test to proceed.
-  executeSoon(() => sendAsyncMessage("ss-test:MozStorageChanged"));
-}, true);
-
-addMessageListener("ss-test:modifySessionStorage", function (msg) {
-  for (let key of Object.keys(msg.data)) {
-    content.sessionStorage[key] = msg.data[key];
-  }
-});
-
-addMessageListener("ss-test:modifySessionStorage2", function (msg) {
-  for (let key of Object.keys(msg.data)) {
-    content.frames[0].sessionStorage[key] = msg.data[key];
-  }
-});
-
 addMessageListener("ss-test:purgeDomainData", function ({data: domain}) {
   Services.obs.notifyObservers(null, "browser:purge-domain-data", domain);
   content.setTimeout(() => sendAsyncMessage("ss-test:purgeDomainData"));
-});
-
-addMessageListener("ss-test:purgeSessionHistory", function () {
-  Services.obs.notifyObservers(null, "browser:purge-session-history", "");
-  content.setTimeout(() => sendAsyncMessage("ss-test:purgeSessionHistory"));
 });
 
 addMessageListener("ss-test:getStyleSheets", function (msg) {
@@ -239,12 +214,6 @@ addMessageListener("ss-test:mapFrameTree", function (msg) {
 addMessageListener("ss-test:click", function ({data}) {
   content.document.getElementById(data.id).click();
   sendAsyncMessage("ss-test:click");
-});
-
-addMessageListener("ss-test:run", function({data, objects}) {
-  let f = eval('(' + data.code + ')');
-  let result = f(content, objects.arg);
-  sendAsyncMessage("ss-test:runFinished", result);
 });
 
 addEventListener("load", function(event) {

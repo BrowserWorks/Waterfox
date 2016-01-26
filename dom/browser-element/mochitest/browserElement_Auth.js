@@ -49,6 +49,9 @@ function testHttpAuthCancel(e) {
 
   is(e.detail.realm, 'http_realm', 'expected realm matches');
   is(e.detail.host, 'http://test', 'expected host matches');
+  is(e.detail.path,
+     '/tests/dom/browser-element/mochitest/file_http_401_response.sjs',
+     'expected path matches');
   e.preventDefault();
 
   SimpleTest.executeSoon(function() {
@@ -71,6 +74,9 @@ function testHttpAuth(e) {
 
   is(e.detail.realm, 'http_realm', 'expected realm matches');
   is(e.detail.host, 'http://test', 'expected host matches');
+  is(e.detail.path,
+     '/tests/dom/browser-element/mochitest/file_http_401_response.sjs',
+     'expected path matches');
   is(e.detail.isProxy, false, 'expected isProxy is false');
   e.preventDefault();
 
@@ -98,6 +104,9 @@ function testProxyAuth(e) {
 
     is(e.detail.realm, 'http_realm', 'expected realm matches');
     is(e.detail.host, mozproxy, 'expected host matches');
+    is(e.detail.path,
+       '/tests/dom/browser-element/mochitest/file_http_407_response.sjs',
+       'expected path matches');
     is(e.detail.isProxy, true, 'expected isProxy is true');
     e.preventDefault();
 
@@ -158,15 +167,17 @@ function testAuthJarNoInterfere(e) {
 
   // Set a bunch of auth data that should not conflict with the correct auth data already
   // stored in the cache.
-  var principal = secMan.getAppCodebasePrincipal(uri, 1, false);
+  var attrs = {appId: 1};
+  var principal = secMan.createCodebasePrincipal(uri, attrs);
   authMgr.setAuthIdentity('http', 'test', -1, 'basic', 'http_realm',
                           'tests/dom/browser-element/mochitest/file_http_401_response.sjs',
                           '', 'httpuser', 'wrongpass', false, principal);
-  principal = secMan.getAppCodebasePrincipal(uri, 1, true);
+  attrs = {appId: 1, inBrowser: true};
+  principal = secMan.createCodebasePrincipal(uri, attrs);
   authMgr.setAuthIdentity('http', 'test', -1, 'basic', 'http_realm',
                           'tests/dom/browser-element/mochitest/file_http_401_response.sjs',
                           '', 'httpuser', 'wrongpass', false, principal);
-  principal = secMan.getAppCodebasePrincipal(uri, secMan.NO_APP_ID, false);
+  principal = secMan.createCodebasePrincipal(uri, {});
   authMgr.setAuthIdentity('http', 'test', -1, 'basic', 'http_realm',
                           'tests/dom/browser-element/mochitest/file_http_401_response.sjs',
                           '', 'httpuser', 'wrongpass', false, principal);
@@ -196,7 +207,7 @@ function testAuthJarInterfere(e) {
   var uri = ioService.newURI("http://test/tests/dom/browser-element/mochitest/file_http_401_response.sjs", null, null);
 
   // Set some auth data that should overwrite the successful stored details.
-  var principal = secMan.getAppCodebasePrincipal(uri, secMan.NO_APP_ID, true);
+  var principal = secMan.createCodebasePrincipal(uri, {inBrowser: true});
   authMgr.setAuthIdentity('http', 'test', -1, 'basic', 'http_realm',
                           'tests/dom/browser-element/mochitest/file_http_401_response.sjs',
                           '', 'httpuser', 'wrongpass', false, principal);

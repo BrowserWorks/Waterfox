@@ -1,6 +1,6 @@
-const Ci = Components.interfaces;
-const Cc = Components.classes;
-const Cr = Components.results;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
+var Cr = Components.results;
 
 var gIoService = Components.classes["@mozilla.org/network/io-service;1"]
                            .getService(Components.interfaces.nsIIOService);
@@ -12,9 +12,9 @@ function isParentProcess() {
 
 function getPrincipalForURI(aURI) {
   var uri = gIoService.newURI(aURI, null, null);
-  return Cc["@mozilla.org/scriptsecuritymanager;1"]
-           .getService(Ci.nsIScriptSecurityManager)
-           .getNoAppCodebasePrincipal(uri);
+  var ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
+              .getService(Ci.nsIScriptSecurityManager);
+  return ssm.createCodebasePrincipal(uri, {});
 }
 
 function run_test() {

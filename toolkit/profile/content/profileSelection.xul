@@ -1,4 +1,4 @@
-<?xml version="1.0"?> 
+<?xml version="1.0"?>
 <!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
 <!--
 
@@ -17,10 +17,10 @@
 
 <dialog
   id="profileWindow"
-  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   class="non-resizable"
   title="&windowtitle.label;"
-  orient="vertical" 
+  orient="vertical"
   buttons="accept,cancel"
   style="width: 30em;"
   onload="startup();"
@@ -50,7 +50,7 @@
       <button id="delbutton" label="&deleteButton.label;"
               accesskey="&deleteButton.accesskey;" oncommand="ConfirmDelete();"/>
     </vbox>
-    
+
     <separator flex="1"/>
 
     <vbox flex="1">
@@ -60,10 +60,10 @@
       </listbox>
 
       <!-- Bug 257777 -->
-      <checkbox id="offlineState" label="&offlineState.label;" accesskey="&offlineState.accesskey;"/> 
+      <checkbox id="offlineState" label="&offlineState.label;" accesskey="&offlineState.accesskey;"/>
 
       <checkbox id="autoSelectLastProfile" label="&useSelected.label;"
-                accesskey="&useSelected.accesskey;"/> 
+                accesskey="&useSelected.accesskey;"/>
     </vbox>
 
   </hbox>

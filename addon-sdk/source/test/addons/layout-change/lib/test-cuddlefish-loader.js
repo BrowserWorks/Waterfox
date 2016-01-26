@@ -142,23 +142,13 @@ exports["test compatibility"] = function(assert) {
                require("sdk/tabs/utils"), "sdk/tabs/utils -> tabs/utils");
 
   assert.equal(require("dom/events"),
-               require("sdk/dom/events"), "sdk/dom/events -> dom/events");
+               require("sdk/dom/events-shimmed"), "sdk/dom/events-shimmed -> dom/events");
 
   assert.equal(require("tabs/tab.js"),
                require("sdk/tabs/tab"), "sdk/tabs/tab -> tabs/tab.js");
 
-  assert.equal(require("memory"),
-               require("sdk/deprecated/memory"), "sdk/deprecated/memory -> memory");
-
   assert.equal(require("environment"),
                require("sdk/system/environment"), "sdk/system/environment -> environment");
-
-  if (app.is("Firefox")) {
-    // This module fails on fennec because of favicon xpcom component
-    // being not implemented on it.
-    assert.equal(require("utils/data"),
-                 require("sdk/io/data"), "sdk/io/data -> utils/data");
-  }
 
   assert.equal(require("test/assert"),
                require("sdk/test/assert"), "sdk/test/assert -> test/assert");

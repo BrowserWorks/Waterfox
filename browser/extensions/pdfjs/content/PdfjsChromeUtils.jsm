@@ -1,5 +1,3 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +30,7 @@ const PDF_CONTENT_TYPE = 'application/pdf';
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 
-let Svc = {};
+var Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1',
                                    'nsIMIMEService');
@@ -50,11 +48,12 @@ var DEFAULT_PREFERENCES = {
   disableAutoFetch: false,
   disableFontFace: false,
   disableTextLayer: false,
-  useOnlyCssZoom: false
+  useOnlyCssZoom: false,
+  externalLinkTarget: 0,
 };
 
 
-let PdfjsChromeUtils = {
+var PdfjsChromeUtils = {
   // For security purposes when running remote, we restrict preferences
   // content can access.
   _allowedPrefNames: Object.keys(DEFAULT_PREFERENCES),
@@ -183,7 +182,8 @@ let PdfjsChromeUtils = {
   _findbarFromMessage: function(aMsg) {
     let browser = aMsg.target;
     let tabbrowser = browser.getTabBrowser();
-    let tab = tabbrowser.getTabForBrowser(browser);
+    let tab;
+    tab = tabbrowser.getTabForBrowser(browser);
     return tabbrowser.getFindBar(tab);
   },
 
@@ -310,24 +310,30 @@ let PdfjsChromeUtils = {
    * a pdf displayed correctly.
    */
   _displayWarning: function (aMsg) {
-    let json = aMsg.data;
+    let data = aMsg.data;
     let browser = aMsg.target;
-    let cpowCallback = aMsg.objects.callback;
+
     let tabbrowser = browser.getTabBrowser();
     let notificationBox = tabbrowser.getNotificationBox(browser);
-    // Flag so we don't call the response callback twice, since if the user
-    // clicks open with different viewer both the button callback and
+
+    // Flag so we don't send the message twice, since if the user clicks
+    // "open with different viewer" both the button callback and
     // eventCallback will be called.
-    let responseSent = false;
+    let messageSent = false;
+    function sendMessage(download) {
+      let mm = browser.messageManager;
+      mm.sendAsyncMessage('PDFJS:Child:fallbackDownload',
+                          { download: download });
+    }
     let buttons = [{
-      label: json.label,
-      accessKey: json.accessKey,
+      label: data.label,
+      accessKey: data.accessKey,
       callback: function() {
-        responseSent = true;
-        cpowCallback(true);
+        messageSent = true;
+        sendMessage(true);
       }
     }];
-    notificationBox.appendNotification(json.message, 'pdfjs-fallback', null,
+    notificationBox.appendNotification(data.message, 'pdfjs-fallback', null,
                                        notificationBox.PRIORITY_INFO_LOW,
                                        buttons,
                                        function eventsCallback(eventType) {
@@ -338,10 +344,10 @@ let PdfjsChromeUtils = {
       }
       // Don't send a response again if we already responded when the button was
       // clicked.
-      if (responseSent) {
+      if (messageSent) {
         return;
       }
-      cpowCallback(false);
+      sendMessage(false);
     });
   }
 };

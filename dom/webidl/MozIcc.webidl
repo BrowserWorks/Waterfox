@@ -140,7 +140,7 @@ dictionary IccCardLockRetryCount
 };
 
 [Pref="dom.icc.enabled",
- CheckPermissions="mobileconnection",
+ CheckAnyPermissions="mobileconnection",
  AvailableIn="CertifiedApps"]
 interface MozIcc : EventTarget
 {
@@ -333,7 +333,7 @@ interface MozIcc : EventTarget
    */
   [Throws]
   DOMRequest updateContact(IccContactType contactType,
-                           any contact,
+                           mozContact contact,
                            optional DOMString? pin2 = null);
 
   // Integrated Circuit Card Helpers.

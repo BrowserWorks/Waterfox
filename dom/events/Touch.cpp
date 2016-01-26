@@ -7,7 +7,6 @@
 #include "mozilla/dom/Touch.h"
 
 #include "mozilla/dom/EventTarget.h"
-#include "mozilla/dom/TouchBinding.h"
 #include "mozilla/dom/TouchEvent.h"
 #include "nsGlobalWindow.h"
 #include "nsContentUtils.h"
@@ -15,6 +14,29 @@
 
 namespace mozilla {
 namespace dom {
+
+// static
+already_AddRefed<Touch>
+Touch::Constructor(const GlobalObject& aGlobal,
+                   const TouchInit& aParam,
+                   ErrorResult& aRv)
+{
+  // Annoyingly many parameters, make sure the ordering is the same as in the
+  // Touch constructor.
+  RefPtr<Touch> touch = new Touch(aParam.mTarget,
+                                  aParam.mIdentifier,
+                                  aParam.mPageX,
+                                  aParam.mPageY,
+                                  aParam.mScreenX,
+                                  aParam.mScreenY,
+                                  aParam.mClientX,
+                                  aParam.mClientY,
+                                  aParam.mRadiusX,
+                                  aParam.mRadiusY,
+                                  aParam.mRotationAngle,
+                                  aParam.mForce);
+  return touch.forget();
+}
 
 Touch::Touch(EventTarget* aTarget,
              int32_t aIdentifier,
@@ -32,7 +54,7 @@ Touch::Touch(EventTarget* aTarget,
   mTarget = aTarget;
   mIdentifier = aIdentifier;
   mPagePoint = CSSIntPoint(aPageX, aPageY);
-  mScreenPoint = LayoutDeviceIntPoint(aScreenX, aScreenY);
+  mScreenPoint = CSSIntPoint(aScreenX, aScreenY);
   mClientPoint = CSSIntPoint(aClientX, aClientY);
   mRefPoint = LayoutDeviceIntPoint(0, 0);
   mPointsInitialized = true;
@@ -48,13 +70,13 @@ Touch::Touch(EventTarget* aTarget,
 
 Touch::Touch(int32_t aIdentifier,
              LayoutDeviceIntPoint aPoint,
-             nsIntPoint aRadius,
+             LayoutDeviceIntPoint aRadius,
              float aRotationAngle,
              float aForce)
 {
   mIdentifier = aIdentifier;
   mPagePoint = CSSIntPoint(0, 0);
-  mScreenPoint = LayoutDeviceIntPoint(0, 0);
+  mScreenPoint = CSSIntPoint(0, 0);
   mClientPoint = CSSIntPoint(0, 0);
   mRefPoint = aPoint;
   mPointsInitialized = false;
@@ -64,6 +86,23 @@ Touch::Touch(int32_t aIdentifier,
 
   mChanged = false;
   mMessage = 0;
+  nsJSContext::LikelyShortLivingObjectCreated();
+}
+
+Touch::Touch(const Touch& aOther)
+  : mTarget(aOther.mTarget)
+  , mRefPoint(aOther.mRefPoint)
+  , mChanged(aOther.mChanged)
+  , mMessage(aOther.mMessage)
+  , mIdentifier(aOther.mIdentifier)
+  , mPagePoint(aOther.mPagePoint)
+  , mClientPoint(aOther.mClientPoint)
+  , mScreenPoint(aOther.mScreenPoint)
+  , mRadius(aOther.mRadius)
+  , mRotationAngle(aOther.mRotationAngle)
+  , mForce(aOther.mForce)
+  , mPointsInitialized(aOther.mPointsInitialized)
+{
   nsJSContext::LikelyShortLivingObjectCreated();
 }
 
@@ -93,6 +132,7 @@ Touch::GetTarget() const
 {
   nsCOMPtr<nsIContent> content = do_QueryInterface(mTarget);
   if (content && content->ChromeOnlyAccess() &&
+      !nsContentUtils::LegacyIsCallerNativeCode() &&
       !nsContentUtils::CanAccessNativeAnon()) {
     return content->FindFirstNonChromeOnlyAccessContent();
   }

@@ -40,7 +40,6 @@
 #include "VolumeManager.h"
 #include "nsIStatusReporter.h"
 
-using namespace mozilla::hal;
 USING_MTP_NAMESPACE
 
 /**************************************************************************
@@ -115,9 +114,9 @@ static void SetAutoMounterStatus(int32_t aStatus);
 
 /***************************************************************************/
 
-inline const char* SwitchStateStr(const SwitchEvent& aEvent)
+inline const char* SwitchStateStr(const hal::SwitchEvent& aEvent)
 {
-  return aEvent.status() == SWITCH_STATE_ON ? "plugged" : "unplugged";
+  return aEvent.status() == hal::SWITCH_STATE_ON ? "plugged" : "unplugged";
 }
 
 /***************************************************************************/
@@ -128,7 +127,7 @@ IsUsbCablePluggedIn()
 #if 0
   // Use this code when bug 745078 gets fixed (or use whatever the
   // appropriate method is)
-  return GetCurrentSwitchEvent(SWITCH_USB) == SWITCH_STATE_ON;
+  return GetCurrentSwitchEvent(SWITCH_USB) == hal::SWITCH_STATE_ON;
 #else
   // Until then, just go read the file directly
   if (access(ICS_SYS_USB_STATE, F_OK) == 0) {
@@ -659,7 +658,7 @@ AutoMounter::StartMtpServer()
   VolumeArray::size_type  numVolumes = VolumeManager::NumVolumes();
   for (volIndex = 0; volIndex < numVolumes; volIndex++) {
     RefPtr<Volume> vol = VolumeManager::GetVolume(volIndex);
-    nsRefPtr<MozMtpStorage> storage = new MozMtpStorage(vol, sMozMtpServer);
+    RefPtr<MozMtpStorage> storage = new MozMtpStorage(vol, sMozMtpServer);
     mMozMtpStorage.AppendElement(storage);
   }
 
@@ -1056,18 +1055,23 @@ AutoMounter::UpdateState()
           LOG("UpdateState: Volume %s is %s", vol->NameStr(), vol->StateStr());
           if (vol->IsFormatting() && !vol->IsFormatRequested()) {
             vol->SetFormatRequested(false);
-            LOG("UpdateState: Mounting %s", vol->NameStr());
-            vol->StartMount(mResponseCallback);
-            break;
+            if (!(tryToShare && vol->IsSharingEnabled()) && volState == nsIVolume::STATE_IDLE) {
+              LOG("UpdateState: Mounting %s", vol->NameStr());
+              vol->StartMount(mResponseCallback);
+              break;
+            }
           }
-          if (tryToShare && vol->IsSharingEnabled() && volState == nsIVolume::STATE_IDLE) {
-            // Volume is unmounted. We can go ahead and share.
-            LOG("UpdateState: Sharing %s", vol->NameStr());
-            vol->StartShare(mResponseCallback);
-          } else if (vol->IsFormatRequested()){
+
+          // If there are format and share requests in the same time,
+          // we should do format first then share.
+          if (vol->IsFormatRequested()) {
             // Volume is unmounted. We can go ahead and format.
             LOG("UpdateState: Formatting %s", vol->NameStr());
             vol->StartFormat(mResponseCallback);
+          } else if (tryToShare && vol->IsSharingEnabled() && volState == nsIVolume::STATE_IDLE) {
+            // Volume is unmounted. We can go ahead and share.
+            LOG("UpdateState: Sharing %s", vol->NameStr());
+            vol->StartShare(mResponseCallback);
           }
           return; // UpdateState will be called again when the Share/Format command completes
         }
@@ -1298,7 +1302,7 @@ ShutdownAutoMounterIOThread()
 static void
 SetAutoMounterModeIOThread(const int32_t& aMode)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1308,7 +1312,7 @@ SetAutoMounterModeIOThread(const int32_t& aMode)
 static void
 SetAutoMounterSharingModeIOThread(const nsCString& aVolumeName, const bool& aAllowSharing)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1318,7 +1322,7 @@ SetAutoMounterSharingModeIOThread(const nsCString& aVolumeName, const bool& aAll
 static void
 AutoMounterFormatVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1328,7 +1332,7 @@ AutoMounterFormatVolumeIOThread(const nsCString& aVolumeName)
 static void
 AutoMounterMountVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1338,7 +1342,7 @@ AutoMounterMountVolumeIOThread(const nsCString& aVolumeName)
 static void
 AutoMounterUnmountVolumeIOThread(const nsCString& aVolumeName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   MOZ_ASSERT(sAutoMounter);
 
@@ -1366,11 +1370,11 @@ UsbCableEventIOThread()
 *
 **************************************************************************/
 
-class UsbCableObserver final : public SwitchObserver
+class UsbCableObserver final : public hal::SwitchObserver
 {
   ~UsbCableObserver()
   {
-    UnregisterSwitchObserver(SWITCH_USB, this);
+    hal::UnregisterSwitchObserver(hal::SWITCH_USB, this);
   }
 
 public:
@@ -1378,10 +1382,10 @@ public:
 
   UsbCableObserver()
   {
-    RegisterSwitchObserver(SWITCH_USB, this);
+    hal::RegisterSwitchObserver(hal::SWITCH_USB, this);
   }
 
-  virtual void Notify(const SwitchEvent& aEvent)
+  virtual void Notify(const hal::SwitchEvent& aEvent)
   {
     DBG("UsbCable switch device: %d state: %s\n",
         aEvent.device(), SwitchStateStr(aEvent));

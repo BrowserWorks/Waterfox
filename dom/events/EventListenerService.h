@@ -16,16 +16,34 @@
 #include "nsString.h"
 #include "nsTObserverArray.h"
 #include "nsDataHashtable.h"
+#include "nsGkAtoms.h"
 
 class nsIMutableArray;
 
 namespace mozilla {
 namespace dom {
 class EventTarget;
-};
+} // namespace dom
 
 template<typename T>
 class Maybe;
+
+class EventListenerChange final : public nsIEventListenerChange
+{
+public:
+  explicit EventListenerChange(dom::EventTarget* aTarget);
+
+  void AddChangedListenerName(nsIAtom* aEventName);
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIEVENTLISTENERCHANGE
+
+protected:
+  virtual ~EventListenerChange();
+  nsCOMPtr<dom::EventTarget> mTarget;
+  nsCOMPtr<nsIMutableArray> mChangedListenerNames;
+
+};
 
 class EventListenerInfo final : public nsIEventListenerInfo
 {
@@ -56,7 +74,7 @@ protected:
 
   nsString mType;
   // nsReftPtr because that is what nsListenerStruct uses too.
-  nsRefPtr<nsIDOMEventListener> mListener;
+  RefPtr<nsIDOMEventListener> mListener;
   bool mCapturing;
   bool mAllowsUntrusted;
   bool mInSystemEventGroup;
@@ -70,19 +88,21 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIEVENTLISTENERSERVICE
 
-  static void NotifyAboutMainThreadListenerChange(dom::EventTarget* aTarget)
+  static void NotifyAboutMainThreadListenerChange(dom::EventTarget* aTarget,
+                                                  nsIAtom* aName)
   {
     if (sInstance) {
-      sInstance->NotifyAboutMainThreadListenerChangeInternal(aTarget);
+      sInstance->NotifyAboutMainThreadListenerChangeInternal(aTarget, aName);
     }
   }
 
   void NotifyPendingChanges();
 private:
-  void NotifyAboutMainThreadListenerChangeInternal(dom::EventTarget* aTarget);
+  void NotifyAboutMainThreadListenerChangeInternal(dom::EventTarget* aTarget,
+                                                   nsIAtom* aName);
   nsTObserverArray<nsCOMPtr<nsIListenerChangeListener>> mChangeListeners;
   nsCOMPtr<nsIMutableArray> mPendingListenerChanges;
-  nsDataHashtable<nsISupportsHashKey, bool> mPendingListenerChangesSet;
+  nsDataHashtable<nsISupportsHashKey, RefPtr<EventListenerChange>> mPendingListenerChangesSet;
 
   static EventListenerService* sInstance;
 };

@@ -14,14 +14,14 @@ SOURCES += [
 ]
 
 DEFINES['XPCOM_GLUE'] = True
-if CONFIG['DEBUG']:
-    DEFINES['DEBUG'] = True
+
+DEFINES['APP_VERSION'] = CONFIG['FIREFOX_VERSION']
 
 # Statically link against the CRT
 USE_STATIC_LIBS = True
 
-GENERATED_INCLUDES += ['/build']
 LOCAL_INCLUDES += [
+    '!/build',
     '/toolkit/xre',
     '/xpcom/base',
     '/xpcom/build',
@@ -46,6 +46,7 @@ if not CONFIG['GNU_CC']:
 RCINCLUDE = 'webapprt.rc'
 
 USE_LIBS += [
+    'mfbt_staticruntime',
     'xpcomglue_staticruntime',
 ]
 
@@ -54,5 +55,3 @@ DISABLE_STL_WRAPPING = True
 OS_LIBS += [
     'shell32',
 ]
-
-FAIL_ON_WARNINGS = True

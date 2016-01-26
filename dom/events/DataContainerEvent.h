@@ -51,13 +51,15 @@ protected:
   ~DataContainerEvent() {}
 
 private:
-  static PLDHashOperator
-    TraverseEntry(const nsAString& aKey, nsIVariant* aDataItem, void* aUserArg);
-
   nsInterfaceHashtable<nsStringHashKey, nsIVariant> mData;
 };
 
 } // namespace dom
 } // namespace mozilla
+
+already_AddRefed<mozilla::dom::DataContainerEvent>
+NS_NewDOMDataContainerEvent(mozilla::dom::EventTarget* aOwner,
+                            nsPresContext* aPresContext,
+                            mozilla::WidgetEvent* aEvent);
 
 #endif // mozilla_dom_DataContainerEvent_h_

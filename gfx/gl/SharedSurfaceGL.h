@@ -19,11 +19,11 @@
 namespace mozilla {
     namespace gl {
         class GLContext;
-    }
+    } // namespace gl
     namespace gfx {
         class DataSourceSurface;
-    }
-}
+    } // namespace gfx
+} // namespace mozilla
 
 namespace mozilla {
 namespace gl {
@@ -38,6 +38,11 @@ public:
                                                  const gfx::IntSize& size,
                                                  bool hasAlpha);
 
+    static UniquePtr<SharedSurface_Basic> Wrap(GLContext* gl,
+                                               const gfx::IntSize& size,
+                                               bool hasAlpha,
+                                               GLuint tex);
+
     static SharedSurface_Basic* Cast(SharedSurface* surf) {
         MOZ_ASSERT(surf->mType == SharedSurfaceType::Basic);
 
@@ -46,13 +51,14 @@ public:
 
 protected:
     const GLuint mTex;
+    const bool mOwnsTex;
     GLuint mFB;
 
     SharedSurface_Basic(GLContext* gl,
                         const gfx::IntSize& size,
                         bool hasAlpha,
-                        gfx::SurfaceFormat format,
-                        GLuint tex);
+                        GLuint tex,
+                        bool ownsTex);
 
 public:
     virtual ~SharedSurface_Basic();
@@ -60,12 +66,16 @@ public:
     virtual void LockProdImpl() override {}
     virtual void UnlockProdImpl() override {}
 
-    virtual void Fence() override {}
-    virtual bool WaitSync() override { return true; }
-    virtual bool PollSync() override { return true; }
+    virtual void ProducerAcquireImpl() override {}
+    virtual void ProducerReleaseImpl() override {}
 
     virtual GLuint ProdTexture() override {
         return mTex;
+    }
+
+    virtual bool ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor) override {
+        MOZ_CRASH("don't do this");
+        return false;
     }
 };
 
@@ -73,9 +83,8 @@ class SurfaceFactory_Basic
     : public SurfaceFactory
 {
 public:
-    SurfaceFactory_Basic(GLContext* gl, const SurfaceCaps& caps)
-        : SurfaceFactory(gl, SharedSurfaceType::Basic, caps)
-    {}
+    SurfaceFactory_Basic(GLContext* gl, const SurfaceCaps& caps,
+                         const layers::TextureFlags& flags);
 
     virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) override {
         bool hasAlpha = mReadCaps.alpha;
@@ -90,41 +99,31 @@ class SharedSurface_GLTexture
 {
 public:
     static UniquePtr<SharedSurface_GLTexture> Create(GLContext* prodGL,
-                                                     GLContext* consGL,
                                                      const GLFormats& formats,
                                                      const gfx::IntSize& size,
-                                                     bool hasAlpha,
-                                                     GLuint texture = 0);
+                                                     bool hasAlpha);
 
     static SharedSurface_GLTexture* Cast(SharedSurface* surf) {
-        MOZ_ASSERT(surf->mType == SharedSurfaceType::GLTextureShare);
+        MOZ_ASSERT(surf->mType == SharedSurfaceType::SharedGLTexture);
 
         return (SharedSurface_GLTexture*)surf;
     }
 
 protected:
-    GLContext* mConsGL;
     const GLuint mTex;
-    const bool mOwnsTex;
     GLsync mSync;
-    mutable Mutex mMutex;
 
     SharedSurface_GLTexture(GLContext* prodGL,
-                            GLContext* consGL,
                             const gfx::IntSize& size,
                             bool hasAlpha,
-                            GLuint tex,
-                            bool ownsTex)
-        : SharedSurface(SharedSurfaceType::GLTextureShare,
+                            GLuint tex)
+        : SharedSurface(SharedSurfaceType::SharedGLTexture,
                         AttachmentType::GLTexture,
                         prodGL,
                         size,
-                        hasAlpha)
-        , mConsGL(consGL)
+                        hasAlpha, true)
         , mTex(tex)
-        , mOwnsTex(ownsTex)
         , mSync(0)
-        , mMutex("SharedSurface_GLTexture mutex")
     {
     }
 
@@ -134,49 +133,36 @@ public:
     virtual void LockProdImpl() override {}
     virtual void UnlockProdImpl() override {}
 
-    virtual void Fence() override;
-    virtual bool WaitSync() override;
-    virtual bool PollSync() override;
+    virtual void ProducerAcquireImpl() override {}
+    virtual void ProducerReleaseImpl() override;
 
     virtual GLuint ProdTexture() override {
         return mTex;
     }
 
-    // Custom:
-
-    GLuint ConsTexture(GLContext* consGL);
-
-    GLenum ConsTextureTarget() const {
-        return ProdTextureTarget();
-    }
+    virtual bool ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor) override;
 };
 
 class SurfaceFactory_GLTexture
     : public SurfaceFactory
 {
-protected:
-    GLContext* const mConsGL;
-
 public:
-    // If we don't know `consGL` at construction time, use `nullptr`, and call
-    // `SetConsumerGL()` on each `SharedSurface_GLTexture` before calling its
-    // `WaitSync()`.
     SurfaceFactory_GLTexture(GLContext* prodGL,
-                             GLContext* consGL,
-                             const SurfaceCaps& caps)
-        : SurfaceFactory(prodGL, SharedSurfaceType::GLTextureShare, caps)
-        , mConsGL(consGL)
+                             const SurfaceCaps& caps,
+                             const RefPtr<layers::ISurfaceAllocator>& allocator,
+                             const layers::TextureFlags& flags)
+        : SurfaceFactory(SharedSurfaceType::SharedGLTexture, prodGL, caps, allocator, flags)
     {
-        MOZ_ASSERT(consGL != prodGL);
     }
 
     virtual UniquePtr<SharedSurface> CreateShared(const gfx::IntSize& size) override {
         bool hasAlpha = mReadCaps.alpha;
-        return SharedSurface_GLTexture::Create(mGL, mConsGL, mFormats, size, hasAlpha);
+        return SharedSurface_GLTexture::Create(mGL, mFormats, size, hasAlpha);
     }
 };
 
-} /* namespace gfx */
+} // namespace gl
+
 } /* namespace mozilla */
 
 #endif /* SHARED_SURFACE_GL_H_ */

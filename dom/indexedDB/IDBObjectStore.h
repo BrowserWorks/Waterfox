@@ -49,7 +49,7 @@ class IDBObjectStore final
 
   static const JSClass sDummyPropJSClass;
 
-  nsRefPtr<IDBTransaction> mTransaction;
+  RefPtr<IDBTransaction> mTransaction;
   JS::Heap<JS::Value> mCachedKeyPath;
 
   // This normally points to the ObjectStoreSpec owned by the parent IDBDatabase
@@ -59,7 +59,7 @@ class IDBObjectStore final
   const ObjectStoreSpec* mSpec;
   nsAutoPtr<ObjectStoreSpec> mDeletedSpec;
 
-  nsTArray<nsRefPtr<IDBIndex>> mIndexes;
+  nsTArray<RefPtr<IDBIndex>> mIndexes;
 
   const int64_t mId;
   bool mRooted;
@@ -75,6 +75,7 @@ public:
                         const KeyPath& aKeyPath,
                         bool aUnique,
                         bool aMultiEntry,
+                        const nsCString& aLocale,
                         JSContext* aCx,
                         JS::Handle<JS::Value> aObject,
                         nsTArray<IndexUpdateInfo>& aUpdateInfoArray);
@@ -91,6 +92,13 @@ public:
   DeserializeIndexValue(JSContext* aCx,
                         StructuredCloneReadInfo& aCloneReadInfo,
                         JS::MutableHandle<JS::Value> aValue);
+
+#if !defined(MOZ_B2G)
+  static bool
+  DeserializeUpgradeValue(JSContext* aCx,
+                          StructuredCloneReadInfo& aCloneReadInfo,
+                          JS::MutableHandle<JS::Value> aValue);
+#endif
 
   static const JSClass*
   DummyPropClass()
@@ -267,6 +275,14 @@ public:
 
   void
   NoteDeletion();
+
+  bool
+  IsDeleted() const
+  {
+    AssertIsOnOwningThread();
+
+    return !!mDeletedSpec;
+  }
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(IDBObjectStore)

@@ -4,8 +4,8 @@
 // found in the LICENSE file.
 //
 
-#ifndef COMPILER_TRANSLATOR_REGENERATE_STRUCT_NAMES_H_
-#define COMPILER_TRANSLATOR_REGENERATE_STRUCT_NAMES_H_
+#ifndef COMPILER_TRANSLATOR_REGENERATESTRUCTNAMES_H_
+#define COMPILER_TRANSLATOR_REGENERATESTRUCTNAMES_H_
 
 #include "compiler/translator/Intermediate.h"
 #include "compiler/translator/SymbolTable.h"
@@ -17,13 +17,14 @@ class RegenerateStructNames : public TIntermTraverser
   public:
     RegenerateStructNames(const TSymbolTable &symbolTable,
                           int shaderVersion)
-        : mSymbolTable(symbolTable),
+        : TIntermTraverser(true, false, false),
+          mSymbolTable(symbolTable),
           mShaderVersion(shaderVersion),
           mScopeDepth(0) {}
 
   protected:
-    virtual void visitSymbol(TIntermSymbol *);
-    virtual bool visitAggregate(Visit, TIntermAggregate *);
+    void visitSymbol(TIntermSymbol *) override;
+    bool visitAggregate(Visit, TIntermAggregate *) override;
 
   private:
     const TSymbolTable &mSymbolTable;
@@ -37,4 +38,4 @@ class RegenerateStructNames : public TIntermTraverser
     std::set<int> mDeclaredGlobalStructs;
 };
 
-#endif  // COMPILER_TRANSLATOR_REGENERATE_STRUCT_NAMES_H_
+#endif  // COMPILER_TRANSLATOR_REGENERATESTRUCTNAMES_H_

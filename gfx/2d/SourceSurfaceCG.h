@@ -6,11 +6,17 @@
 #ifndef _MOZILLA_GFX_SOURCESURFACECG_H
 #define _MOZILLA_GFX_SOURCESURFACECG_H
 
+#ifdef MOZ_WIDGET_COCOA
 #include <ApplicationServices/ApplicationServices.h>
+#else
+#include <CoreGraphics/CoreGraphics.h>
+#endif
 
 #include "2D.h"
 
+#ifdef MOZ_WIDGET_COCOA
 class MacIOSurface;
+#endif
 
 namespace mozilla {
 namespace gfx {
@@ -43,7 +49,7 @@ public:
   virtual SurfaceType GetType() const { return SurfaceType::COREGRAPHICS_IMAGE; }
   virtual IntSize GetSize() const;
   virtual SurfaceFormat GetFormat() const;
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface();
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface();
 
   CGImageRef GetImage() { return mImage; }
 
@@ -115,7 +121,7 @@ public:
   virtual SurfaceType GetType() const { return SurfaceType::COREGRAPHICS_CGCONTEXT; }
   virtual IntSize GetSize() const;
   virtual SurfaceFormat GetFormat() const { return mFormat; }
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface()
+  virtual already_AddRefed<DataSourceSurface> GetDataSurface()
   {
     // This call to DrawTargetWillChange() is needed to make a local copy of
     // the data from mDrawTarget.  If we don't do that, the data can end up
@@ -127,7 +133,8 @@ public:
     //
     // For more information see bug 925448.
     DrawTargetWillChange();
-    return this;
+    RefPtr<DataSourceSurface> copy(this);
+    return copy.forget();
   }
 
   CGImageRef GetImage() { EnsureImage(); return mImage; }
@@ -162,6 +169,7 @@ private:
   IntSize mSize;
 };
 
+#ifdef MOZ_WIDGET_COCOA
 class SourceSurfaceCGIOSurfaceContext : public SourceSurfaceCGContext
 {
 public:
@@ -195,9 +203,10 @@ private:
 
   IntSize mSize;
 };
+#endif
 
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif // _MOZILLA_GFX_SOURCESURFACECG_H

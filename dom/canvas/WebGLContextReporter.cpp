@@ -3,12 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "WebGLBuffer.h"
 #include "WebGLContext.h"
 #include "WebGLMemoryTracker.h"
 
-using namespace mozilla;
-
-NS_IMPL_ISUPPORTS(WebGLObserver, nsIObserver)
+namespace mozilla {
 
 NS_IMETHODIMP
 WebGLMemoryTracker::CollectReports(nsIHandleReportCallback* handleReport,
@@ -126,8 +125,7 @@ WebGLMemoryTracker::GetBufferCacheMemoryUsed()
              buffer;
              buffer = buffer->getNext())
         {
-            if (buffer->HasEverBeenBound() &&
-                buffer->Target() == LOCAL_GL_ELEMENT_ARRAY_BUFFER) {
+            if (buffer->Content() == WebGLBuffer::Kind::ElementArray) {
                 result += buffer->SizeOfIncludingThis(WebGLBufferMallocSizeOf);
             }
         }
@@ -152,3 +150,5 @@ WebGLMemoryTracker::GetShaderSize()
     }
     return result;
 }
+
+} // namespace mozilla

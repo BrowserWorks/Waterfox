@@ -40,8 +40,9 @@ const DownloadsButton = {
   /**
    * Location of the indicator overlay.
    */
-  get kIndicatorOverlay()
-      "chrome://browser/content/downloads/indicatorOverlay.xul",
+  get kIndicatorOverlay() {
+    return "chrome://browser/content/downloads/indicatorOverlay.xul";
+  },
 
   /**
    * Returns a reference to the downloads button position placeholder, or null
@@ -179,6 +180,12 @@ const DownloadsButton = {
     return this._navBar = document.getElementById("nav-bar");
   }
 };
+
+Object.defineProperty(this, "DownloadsButton", {
+  value: DownloadsButton,
+  enumerable: true,
+  writable: false
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsIndicatorView
@@ -576,3 +583,8 @@ const DownloadsIndicatorView = {
   },
 };
 
+Object.defineProperty(this, "DownloadsIndicatorView", {
+  value: DownloadsIndicatorView,
+  enumerable: true,
+  writable: false
+});

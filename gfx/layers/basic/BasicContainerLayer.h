@@ -29,7 +29,7 @@ protected:
   virtual ~BasicContainerLayer();
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion) override
+  virtual void SetVisibleRegion(const LayerIntRegion& aRegion) override
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");
@@ -99,7 +99,8 @@ protected:
     return static_cast<BasicLayerManager*>(mManager);
   }
 };
-}
-}
+
+} // namespace layers
+} // namespace mozilla
 
 #endif

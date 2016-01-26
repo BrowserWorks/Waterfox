@@ -51,10 +51,10 @@ function test(sharedName, expectedHits, code) {
 // the optimization or with the debugger exposing it, but that's not what we
 // want to test here.)
 
-test("q", 2, "var q = function (a) { h(); }; q(1); q(2);");
+test("q", 2, "let q = function (a) { h(); }; q(1); q(2);");
 test("a", 2, "q = function (a) { (function (b) { h(); a = b; })(2); h(); }; q(1);");
 test("a", 2, "q = function (a) { h(); return function (b) { h(); a = b; }; }; q(1)(2);");
-test("n", 3, "q = function (n) { for (var i = 0; i < n; i++) { let (j = i) { h(); } } }; q(3);");
+test("n", 3, "q = function (n) { for (var i = 0; i < n; i++) { { let j = i; h(); } } }; q(3);");
 
 // A function with long dynamic and static chains.
 var N = 80;
@@ -95,9 +95,9 @@ function range(start, stop) {
 }
 
 function DSSDsplit(s) {
-    return ("var mid = f1" + ["(" + i + ")" for (i in range(0, s))].join("") + ";\n" +
-            "mid" +          ["(" + i + ")" for (i in range(s, N))].join("") + ";\n" +
-            "mid" +          ["(" + i + ")" for (i in range(s, N))].join("") + ";\n");
+    return ("var mid = f1" + [...range(0, s)].map((i) => "(" + i + ")").join("") + ";\n" +
+            "mid" +          [...range(s, N)].map((i) => "(" + i + ")").join("") + ";\n" +
+            "mid" +          [...range(s, N)].map((i) => "(" + i + ")").join("") + ";\n");
 }
 
 test("a1", 2, DSSDsplit(1));

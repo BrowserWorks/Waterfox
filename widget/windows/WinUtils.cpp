@@ -20,7 +20,7 @@
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsString.h"
 #include "nsDirectoryServiceUtils.h"
@@ -28,6 +28,9 @@
 #include "imgITools.h"
 #include "nsStringStream.h"
 #include "nsNetUtil.h"
+#include "nsIOutputStream.h"
+#include "nsNetCID.h"
+#include "prtime.h"
 #ifdef MOZ_PLACES
 #include "mozIAsyncFavicons.h"
 #endif
@@ -39,11 +42,11 @@
 #include "imgIEncoder.h"
 #include "nsIThread.h"
 #include "MainThreadUtils.h"
-#include "gfxColor.h"
+#include "nsLookAndFeel.h"
 
 #ifdef NS_ENABLE_TSF
 #include <textstor.h>
-#include "nsTextStore.h"
+#include "TSFTextStore.h"
 #endif // #ifdef NS_ENABLE_TSF
 
 PRLogModuleInfo* gWindowsLog = nullptr;
@@ -483,7 +486,7 @@ WinUtils::LogW(const wchar_t *fmt, ...)
       printf("%s\n", utf8);
       NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                    "log module doesn't exist!");
-      PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (utf8));
+      MOZ_LOG(gWindowsLog, LogLevel::Error, (utf8));
     }
     delete[] utf8;
   }
@@ -517,15 +520,72 @@ WinUtils::Log(const char *fmt, ...)
 
   NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                "log module doesn't exist!");
-  PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (buffer));
+  MOZ_LOG(gWindowsLog, LogLevel::Error, (buffer));
   delete[] buffer;
+}
+
+#ifndef WM_DPICHANGED
+typedef enum {
+  MDT_EFFECTIVE_DPI = 0,
+  MDT_ANGULAR_DPI = 1,
+  MDT_RAW_DPI = 2,
+  MDT_DEFAULT = MDT_EFFECTIVE_DPI
+} MONITOR_DPI_TYPE;
+
+typedef enum {
+  PROCESS_DPI_UNAWARE = 0,
+  PROCESS_SYSTEM_DPI_AWARE = 1,
+  PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+#endif
+
+typedef HRESULT
+(WINAPI *GETDPIFORMONITORPROC)(HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*);
+
+typedef HRESULT
+(WINAPI *GETPROCESSDPIAWARENESSPROC)(HANDLE, PROCESS_DPI_AWARENESS*);
+
+GETDPIFORMONITORPROC sGetDpiForMonitor;
+GETPROCESSDPIAWARENESSPROC sGetProcessDpiAwareness;
+
+static bool
+SlowIsPerMonitorDPIAware()
+{
+  if (IsVistaOrLater()) {
+    // Intentionally leak the handle.
+    HMODULE shcore =
+      LoadLibraryEx(L"shcore", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (shcore) {
+      sGetDpiForMonitor =
+        (GETDPIFORMONITORPROC) GetProcAddress(shcore, "GetDpiForMonitor");
+      sGetProcessDpiAwareness =
+        (GETPROCESSDPIAWARENESSPROC) GetProcAddress(shcore, "GetProcessDpiAwareness");
+    }
+  }
+  PROCESS_DPI_AWARENESS dpiAwareness;
+  return sGetDpiForMonitor && sGetProcessDpiAwareness &&
+      SUCCEEDED(sGetProcessDpiAwareness(GetCurrentProcess(), &dpiAwareness)) &&
+      dpiAwareness == PROCESS_PER_MONITOR_DPI_AWARE;
+}
+
+/* static */ bool
+WinUtils::IsPerMonitorDPIAware()
+{
+  static bool perMonitorDPIAware = SlowIsPerMonitorDPIAware();
+  return perMonitorDPIAware;
 }
 
 /* static */
 double
-WinUtils::LogToPhysFactor()
+WinUtils::LogToPhysFactor(HMONITOR aMonitor)
 {
-  // dpi / 96.0
+  if (IsPerMonitorDPIAware()) {
+    UINT dpiX, dpiY = 96;
+    sGetDpiForMonitor(aMonitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+    return dpiY / 96.0;
+  }
+
+  // The system DPI will never change during the session.
   HDC hdc = ::GetDC(nullptr);
   double result = ::GetDeviceCaps(hdc, LOGPIXELSY) / 96.0;
   ::ReleaseDC(nullptr, hdc);
@@ -541,25 +601,42 @@ WinUtils::LogToPhysFactor()
 }
 
 /* static */
-double
-WinUtils::PhysToLogFactor()
-{
-  // 1.0 / (dpi / 96.0)
-  return 1.0 / LogToPhysFactor();
-}
-
-/* static */
-double
-WinUtils::PhysToLog(int32_t aValue)
-{
-  return double(aValue) * PhysToLogFactor();
-}
-
-/* static */
 int32_t
-WinUtils::LogToPhys(double aValue)
+WinUtils::LogToPhys(HMONITOR aMonitor, double aValue)
 {
-  return int32_t(NS_round(aValue * LogToPhysFactor()));
+  return int32_t(NS_round(aValue * LogToPhysFactor(aMonitor)));
+}
+
+/* static */
+HMONITOR
+WinUtils::GetPrimaryMonitor()
+{
+  const POINT pt = { 0, 0 };
+  return ::MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+}
+
+/* static */
+HMONITOR
+WinUtils::MonitorFromRect(const gfx::Rect& rect)
+{
+  // convert coordinates from logical to device pixels for MonitorFromRect
+  double dpiScale = nsIWidget::DefaultScaleOverride();
+  if (dpiScale <= 0.0) {
+    if (IsPerMonitorDPIAware()) {
+      dpiScale = 1.0;
+    } else {
+      dpiScale = LogToPhysFactor(GetPrimaryMonitor());
+    }
+  }
+
+  RECT globalWindowBounds = {
+    NSToIntRound(dpiScale * rect.x),
+    NSToIntRound(dpiScale * rect.y),
+    NSToIntRound(dpiScale * (rect.x + rect.width)),
+    NSToIntRound(dpiScale * (rect.y + rect.height))
+  };
+
+  return ::MonitorFromRect(&globalWindowBounds, MONITOR_DEFAULTTONEAREST);
 }
 
 /* static */
@@ -568,7 +645,7 @@ WinUtils::PeekMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                       UINT aLastMessage, UINT aOption)
 {
 #ifdef NS_ENABLE_TSF
-  ITfMessagePump* msgPump = nsTextStore::GetMessagePump();
+  ITfMessagePump* msgPump = TSFTextStore::GetMessagePump();
   if (msgPump) {
     BOOL ret = FALSE;
     HRESULT hr = msgPump->PeekMessageW(aMsg, aWnd, aFirstMessage, aLastMessage,
@@ -586,7 +663,7 @@ WinUtils::GetMessage(LPMSG aMsg, HWND aWnd, UINT aFirstMessage,
                      UINT aLastMessage)
 {
 #ifdef NS_ENABLE_TSF
-  ITfMessagePump* msgPump = nsTextStore::GetMessagePump();
+  ITfMessagePump* msgPump = TSFTextStore::GetMessagePump();
   if (msgPump) {
     BOOL ret = FALSE;
     HRESULT hr = msgPump->GetMessageW(aMsg, aWnd, aFirstMessage, aLastMessage,
@@ -666,7 +743,8 @@ WinUtils::GetRegistryKey(HKEY aRoot,
     ::RegQueryValueExW(key, aValueName, nullptr, &type, (BYTE*) aBuffer,
                        &aBufferLength);
   ::RegCloseKey(key);
-  if (result != ERROR_SUCCESS || type != REG_SZ) {
+  if (result != ERROR_SUCCESS ||
+      (type != REG_SZ && type != REG_EXPAND_SZ)) {
     return false;
   }
   if (aBuffer) {
@@ -937,13 +1015,12 @@ WinUtils::GetMouseInputSource()
 
 /* static */
 bool
-WinUtils::GetIsMouseFromTouch(uint32_t aEventType)
+WinUtils::GetIsMouseFromTouch(EventMessage aEventMessage)
 {
-  const int MOZ_T_I_SIGNATURE = TABLET_INK_TOUCH | TABLET_INK_SIGNATURE;
-  const int MOZ_T_I_CHECK_TCH = TABLET_INK_TOUCH | TABLET_INK_CHECK;
-  return ((aEventType == NS_MOUSE_MOVE ||
-           aEventType == NS_MOUSE_BUTTON_DOWN ||
-           aEventType == NS_MOUSE_BUTTON_UP) &&
+  const uint32_t MOZ_T_I_SIGNATURE = TABLET_INK_TOUCH | TABLET_INK_SIGNATURE;
+  const uint32_t MOZ_T_I_CHECK_TCH = TABLET_INK_TOUCH | TABLET_INK_CHECK;
+  return ((aEventMessage == eMouseMove || aEventMessage == eMouseDown ||
+           aEventMessage == eMouseUp) &&
          (GetMessageExtraInfo() & MOZ_T_I_SIGNATURE) == MOZ_T_I_CHECK_TCH);
 }
 
@@ -1018,7 +1095,8 @@ WINAPI EnumFirstChild(HWND hwnd, LPARAM lParam)
 
 /* static */
 void
-WinUtils::InvalidatePluginAsWorkaround(nsIWidget *aWidget, const nsIntRect &aRect)
+WinUtils::InvalidatePluginAsWorkaround(nsIWidget* aWidget,
+                                       const LayoutDeviceIntRect& aRect)
 {
   aWidget->Invalidate(aRect);
 
@@ -1103,8 +1181,8 @@ nsresult AsyncFaviconDataReady::OnFaviconDataNotAvailable(void)
   rv = NS_NewChannel(getter_AddRefs(channel),
                      mozIconURI,
                      nsContentUtils::GetSystemPrincipal(),
-                     nsILoadInfo::SEC_NORMAL,
-                     nsIContentPolicy::TYPE_IMAGE);
+                     nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                     nsIContentPolicy::TYPE_INTERNAL_IMAGE);
 
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1113,8 +1191,7 @@ nsresult AsyncFaviconDataReady::OnFaviconDataNotAvailable(void)
   rv = NS_NewDownloader(getter_AddRefs(listener), downloadObserver, icoFile);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  channel->AsyncOpen(listener, nullptr);
-  return NS_OK;
+  return channel->AsyncOpen2(listener);
 }
 
 NS_IMETHODIMP
@@ -1155,7 +1232,9 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<SourceSurface> surface =
-    container->GetFrame(imgIContainer::FRAME_FIRST, 0);
+    container->GetFrame(imgIContainer::FRAME_FIRST,
+                        imgIContainer::FLAG_SYNC_DECODE |
+                        imgIContainer::FLAG_ASYNC_NOTIFY);
   NS_ENSURE_TRUE(surface, NS_ERROR_FAILURE);
 
   RefPtr<DataSourceSurface> dataSurface;
@@ -1208,16 +1287,14 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
 
   // Allocate a new buffer that we own and can use out of line in
   // another thread.
-  uint8_t *data = SurfaceToPackedBGRA(dataSurface);
+  UniquePtr<uint8_t[]> data = SurfaceToPackedBGRA(dataSurface);
   if (!data) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   int32_t stride = 4 * size.width;
-  int32_t dataLength = stride * size.height;
 
   // AsyncEncodeAndWriteIcon takes ownership of the heap allocated buffer
-  nsCOMPtr<nsIRunnable> event = new AsyncEncodeAndWriteIcon(path, data,
-                                                            dataLength,
+  nsCOMPtr<nsIRunnable> event = new AsyncEncodeAndWriteIcon(path, Move(data),
                                                             stride,
                                                             size.width,
                                                             size.height,
@@ -1230,16 +1307,14 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
 
 // Warning: AsyncEncodeAndWriteIcon assumes ownership of the aData buffer passed in
 AsyncEncodeAndWriteIcon::AsyncEncodeAndWriteIcon(const nsAString &aIconPath,
-                                                 uint8_t *aBuffer,
-                                                 uint32_t aBufferLength,
+                                                 UniquePtr<uint8_t[]> aBuffer,
                                                  uint32_t aStride,
                                                  uint32_t aWidth,
                                                  uint32_t aHeight,
                                                  const bool aURLShortcut) :
   mURLShortcut(aURLShortcut),
   mIconPath(aIconPath),
-  mBuffer(aBuffer),
-  mBufferLength(aBufferLength),
+  mBuffer(Move(aBuffer)),
   mStride(aStride),
   mWidth(aWidth),
   mHeight(aHeight)
@@ -1253,7 +1328,7 @@ NS_IMETHODIMP AsyncEncodeAndWriteIcon::Run()
   // Note that since we're off the main thread we can't use
   // gfxPlatform::GetPlatform()->ScreenReferenceDrawTarget()
   RefPtr<DataSourceSurface> surface =
-    Factory::CreateWrappingDataSourceSurface(mBuffer, mStride,
+    Factory::CreateWrappingDataSourceSurface(mBuffer.get(), mStride,
                                              IntSize(mWidth, mHeight),
                                              SurfaceFormat::B8G8R8A8);
 
@@ -1668,6 +1743,26 @@ bool
 WinUtils::ShouldHideScrollbars()
 {
   return false;
+}
+
+// This is in use here and in dom/events/TouchEvent.cpp
+/* static */
+uint32_t
+WinUtils::IsTouchDeviceSupportPresent()
+{
+  int32_t touchCapabilities = ::GetSystemMetrics(SM_DIGITIZER);
+  return (touchCapabilities & NID_READY) &&
+         (touchCapabilities & (NID_EXTERNAL_TOUCH | NID_INTEGRATED_TOUCH));
+}
+
+/* static */
+uint32_t
+WinUtils::GetMaxTouchPoints()
+{
+  if (IsWin7OrLater() && IsTouchDeviceSupportPresent()) {
+    return GetSystemMetrics(SM_MAXIMUMTOUCHES);
+  }
+  return 0;
 }
 
 } // namespace widget

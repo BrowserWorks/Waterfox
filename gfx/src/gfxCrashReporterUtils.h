@@ -6,7 +6,7 @@
 #ifndef gfxCrashReporterUtils_h__
 #define gfxCrashReporterUtils_h__
 
-#include "gfxCore.h"
+#include "nsString.h"
 
 namespace mozilla {
 
@@ -21,18 +21,20 @@ namespace mozilla {
   * have many exit points. We don't want to encourage having function with many exit points.
   * It just happens that our graphics features initialization functions are like that.
   */
-class NS_GFX ScopedGfxFeatureReporter
+class ScopedGfxFeatureReporter
 {
 public:
-  explicit ScopedGfxFeatureReporter(const char *aFeature, bool force = false)
+  explicit ScopedGfxFeatureReporter(const char *aFeature, bool aForce = false)
     : mFeature(aFeature), mStatusChar('-')
   {
-    WriteAppNote(force ? '!' : '?');
+    WriteAppNote(aForce ? '!' : '?');
   }
   ~ScopedGfxFeatureReporter() {
     WriteAppNote(mStatusChar);
   }
   void SetSuccessful() { mStatusChar = '+'; }
+
+  static void AppNote(const nsACString& aMessage);
 
   class AppNoteWritingRunnable;
 

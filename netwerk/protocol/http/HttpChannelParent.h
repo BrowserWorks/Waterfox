@@ -20,30 +20,41 @@
 #include "nsHttpChannel.h"
 #include "nsIAuthPromptProvider.h"
 #include "mozilla/dom/ipc/IdType.h"
-#include "nsINetworkInterceptController.h"
+#include "nsIDeprecationWarner.h"
+#include "nsIPackagedAppChannelListener.h"
 
 class nsICacheEntry;
 class nsIAssociatedContentSecurity;
+
+#define HTTP_CHANNEL_PARENT_IID \
+  { 0x982b2372, 0x7aa5, 0x4e8a, \
+      { 0xbd, 0x9f, 0x89, 0x74, 0xd7, 0xf0, 0x58, 0xeb } }
 
 namespace mozilla {
 
 namespace dom{
 class TabParent;
 class PBrowserOrId;
-}
+} // namespace dom
 
 namespace net {
 
 class HttpChannelParentListener;
+class ChannelEventQueue;
 
-class HttpChannelParent final : public PHttpChannelParent
+// Note: nsIInterfaceRequestor must be the first base so that do_QueryObject()
+// works correctly on this object, as it's needed to compute a void* pointing to
+// the beginning of this object.
+
+class HttpChannelParent final : public nsIInterfaceRequestor
+                              , public PHttpChannelParent
                               , public nsIParentRedirectingChannel
                               , public nsIProgressEventSink
-                              , public nsIInterfaceRequestor
                               , public ADivertableParentChannel
                               , public nsIAuthPromptProvider
-                              , public nsINetworkInterceptController
+                              , public nsIDeprecationWarner
                               , public DisconnectableParent
+                              , public nsIPackagedAppChannelListener
                               , public HttpChannelSecurityWarningReporter
 {
   virtual ~HttpChannelParent();
@@ -52,12 +63,15 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSIPACKAGEDAPPCHANNELLISTENER
   NS_DECL_NSIPARENTCHANNEL
   NS_DECL_NSIPARENTREDIRECTINGCHANNEL
   NS_DECL_NSIPROGRESSEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSIAUTHPROMPTPROVIDER
-  NS_DECL_NSINETWORKINTERCEPTCONTROLLER
+  NS_DECL_NSIDEPRECATIONWARNER
+
+  NS_DECLARE_STATIC_IID_ACCESSOR(HTTP_CHANNEL_PARENT_IID)
 
   HttpChannelParent(const dom::PBrowserOrId& iframeEmbedding,
                     nsILoadContext* aLoadContext,
@@ -88,7 +102,7 @@ public:
 protected:
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during redirects.
-  bool ConnectChannel(const uint32_t& channelId);
+  bool ConnectChannel(const uint32_t& channelId, const bool& shouldIntercept);
 
   bool DoAsyncOpen(const URIParams&           uri,
                    const OptionalURIParams&   originalUri,
@@ -116,13 +130,16 @@ protected:
                    const bool&                allowSpdy,
                    const bool&                allowAltSvc,
                    const OptionalFileDescriptorSet& aFds,
-                   const ipc::PrincipalInfo&  aRequestingPrincipalInfo,
-                   const ipc::PrincipalInfo&  aTriggeringPrincipalInfo,
-                   const uint32_t&            aSecurityFlags,
-                   const uint32_t&            aContentPolicyType,
-                   const uint32_t&            aInnerWindowID,
+                   const OptionalLoadInfoArgs& aLoadInfoArgs,
                    const OptionalHttpResponseHead& aSynthesizedResponseHead,
-                   const OptionalHttpChannelCacheKey& aCacheKey);
+                   const nsCString&           aSecurityInfoSerialization,
+                   const uint32_t&            aCacheKey,
+                   const nsCString&           aSchedulingContextID,
+                   const OptionalCorsPreflightArgs& aCorsPreflightArgs,
+                   const uint32_t&            aInitialRwin,
+                   const bool&                aBlockAuthPrompt,
+                   const bool&                aSuspendAfterSynthesizeResponse,
+                   const bool&                aAllowStaleCacheContent);
 
   virtual bool RecvSetPriority(const uint16_t& priority) override;
   virtual bool RecvSetClassOfService(const uint32_t& cos) override;
@@ -132,7 +149,9 @@ protected:
   virtual bool RecvCancel(const nsresult& status) override;
   virtual bool RecvRedirect2Verify(const nsresult& result,
                                    const RequestHeaderTuples& changedHeaders,
-                                   const OptionalURIParams& apiRedirectUri) override;
+                                   const uint32_t& loadFlags,
+                                   const OptionalURIParams& apiRedirectUri,
+                                   const OptionalCorsPreflightArgs& aCorsPreflightArgs) override;
   virtual bool RecvUpdateAssociatedContentSecurity(const int32_t& broken,
                                                    const int32_t& no) override;
   virtual bool RecvDocumentChannelCleanup() override;
@@ -142,6 +161,8 @@ protected:
                                          const uint32_t& count) override;
   virtual bool RecvDivertOnStopRequest(const nsresult& statusCode) override;
   virtual bool RecvDivertComplete() override;
+  virtual bool RecvRemoveCorsPreflightCacheEntry(const URIParams& uri,
+                                                 const mozilla::ipc::PrincipalInfo& requestingPrincipal) override;
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   // Supporting function for ADivertableParentChannel.
@@ -151,7 +172,7 @@ protected:
   void FailDiversion(nsresult aErrorCode, bool aSkipResume = true);
 
   friend class HttpChannelParentListener;
-  nsRefPtr<mozilla::dom::TabParent> mTabParent;
+  RefPtr<mozilla::dom::TabParent> mTabParent;
 
   void OfflineDisconnect() override;
   uint32_t GetAppId() override;
@@ -160,7 +181,21 @@ protected:
                                  const nsAString& aMessageCategory) override;
 
 private:
-  nsRefPtr<nsHttpChannel>       mChannel;
+  void UpdateAndSerializeSecurityInfo(nsACString& aSerializedSecurityInfoOut);
+
+  void DivertOnDataAvailable(const nsCString& data,
+                             const uint64_t& offset,
+                             const uint32_t& count);
+  void DivertOnStopRequest(const nsresult& statusCode);
+  void DivertComplete();
+  void MaybeFlushPendingDiversion();
+  void ResponseSynthesized();
+
+  friend class DivertDataAvailableEvent;
+  friend class DivertStopRequestEvent;
+  friend class DivertCompleteEvent;
+
+  RefPtr<nsHttpChannel>       mChannel;
   nsCOMPtr<nsICacheEntry>       mCacheEntry;
   nsCOMPtr<nsIAssociatedContentSecurity>  mAssociatedContentSecurity;
   bool mIPCClosed;                // PHttpChannel actor has been Closed()
@@ -180,20 +215,22 @@ private:
   bool mSentRedirect1BeginFailed    : 1;
   bool mReceivedRedirect2Verify     : 1;
 
-  nsRefPtr<OfflineObserver> mObserver;
+  RefPtr<OfflineObserver> mObserver;
 
   PBOverrideStatus mPBOverride;
 
   nsCOMPtr<nsILoadContext> mLoadContext;
-  nsRefPtr<nsHttpHandler>  mHttpHandler;
+  RefPtr<nsHttpHandler>  mHttpHandler;
 
-  nsAutoPtr<nsHttpResponseHead> mSynthesizedResponseHead;
-
-  nsRefPtr<HttpChannelParentListener> mParentListener;
-  // This is listener we are diverting to.
+  RefPtr<HttpChannelParentListener> mParentListener;
+  // The listener we are diverting to or will divert to if mPendingDiversion
+  // is set.
   nsCOMPtr<nsIStreamListener> mDivertListener;
   // Set to the canceled status value if the main channel was canceled.
   nsresult mStatus;
+  // Indicates that diversion has been requested, but we could not start it
+  // yet because the channel is still being opened with a synthesized response.
+  bool mPendingDiversion;
   // Once set, no OnStart/OnData/OnStop calls should be accepted; conversely, it
   // must be set when RecvDivertOnData/~DivertOnStop/~DivertComplete are
   // received from the child channel.
@@ -204,8 +241,18 @@ private:
 
   bool mSuspendedForDiversion;
 
+  // Set if this channel should be suspended after synthesizing a response.
+  bool mSuspendAfterSynthesizeResponse;
+  // Set if this channel will synthesize its response.
+  bool mWillSynthesizeResponse;
+
   dom::TabId mNestedFrameId;
+
+  RefPtr<ChannelEventQueue> mEventQ;
 };
+
+NS_DEFINE_STATIC_IID_ACCESSOR(HttpChannelParent,
+                              HTTP_CHANNEL_PARENT_IID)
 
 } // namespace net
 } // namespace mozilla

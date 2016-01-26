@@ -8,11 +8,12 @@ interface nsICellInfoListCallback;
 interface nsIMobileCallForwardingOptions;
 interface nsIMobileConnection;
 interface nsIMobileConnectionInfo;
+interface nsIMobileDeviceIdentities;
 interface nsIMobileNetworkInfo;
 interface nsINeighboringCellIdsCallback;
 interface nsIVariant;
 
-[scriptable, uuid(d6827b51-61a7-4b7c-8454-42d0cffc1829)]
+[scriptable, uuid(8884b326-891c-11e5-a434-67def07c4a41)]
 interface nsIMobileConnectionListener : nsISupports
 {
   /**
@@ -102,13 +103,18 @@ interface nsIMobileConnectionListener : nsISupports
    * Notify when network selection mode is changed.
    */
   void notifyNetworkSelectionModeChanged();
+
+  /**
+   * Notify when device identities are changed.
+   */
+  void notifyDeviceIdentitiesChanged();
 };
 
 %{C++
 #define NO_ADDITIONAL_INFORMATION 0
 %}
 
-[scriptable, uuid(14d66926-8434-11e4-8c3f-f724194bb5f1)]
+[scriptable, uuid(ef5e02a6-adff-4425-8634-ec49ced1f14f)]
 interface nsIMobileConnectionCallback : nsISupports
 {
   /**
@@ -127,6 +133,8 @@ interface nsIMobileConnectionCallback : nsISupports
   void notifyGetCallBarringSuccess(in unsigned short program,
                                    in boolean enabled,
                                    in unsigned short serviceClass);
+
+  void notifyGetCallWaitingSuccess(in unsigned short serviceClass);
 
   void notifyGetClirStatusSuccess(in unsigned short n, in unsigned short m);
 
@@ -163,7 +171,7 @@ already_AddRefed<nsIMobileConnectionService>
 NS_CreateMobileConnectionService();
 %}
 
-[scriptable, uuid(b9845f09-7cbb-46d0-b713-773d80844e0d)]
+[scriptable, uuid(7a557116-8753-11e5-9f9b-6794b577c0a1)]
 interface nsIMobileConnection : nsISupports
 {
   /*
@@ -214,6 +222,9 @@ interface nsIMobileConnection : nsISupports
   const long CALL_BARRING_PROGRAM_OUTGOING_INTERNATIONAL_EXCEPT_HOME = 2;
   const long CALL_BARRING_PROGRAM_ALL_INCOMING                       = 3;
   const long CALL_BARRING_PROGRAM_INCOMING_ROAMING                   = 4;
+  const long CALL_BARRING_PROGRAM_ALL_SERVICE                        = 5;
+  const long CALL_BARRING_PROGRAM_OUTGOING_SERVICE                   = 6;
+  const long CALL_BARRING_PROGRAM_INCOMING_SERVICE                   = 7;
 
   /**
    * Calling line identification restriction constants.
@@ -314,6 +325,11 @@ interface nsIMobileConnection : nsISupports
    * values.
    */
   readonly attribute long radioState;
+
+  /**
+   * Device Identities, including IMEI, IMEISV, ESN and MEID.
+   */
+  readonly attribute nsIMobileDeviceIdentities deviceIdentities;
 
   /**
    * The network types supported by this radio.
@@ -598,6 +614,8 @@ interface nsIMobileConnection : nsISupports
    *
    * @param enabled
    *        Boolean indicates the desired call waiting status.
+   * @param serviceClass
+   *        One of the nsIMobileConnection.ICC_SERVICE_CLASS_* values.
    * @param requestCallback
    *        Called when request is finished.
    *
@@ -608,6 +626,7 @@ interface nsIMobileConnection : nsISupports
    * 'GenericFailure'.
    */
   void setCallWaiting(in bool enabled,
+                      in unsigned short serviceClass,
                       in nsIMobileConnectionCallback requestCallback);
 
   /**
@@ -616,8 +635,12 @@ interface nsIMobileConnection : nsISupports
    * @param requestCallback
    *        Called when request is finished.
    *
-   * If successful, the notifySuccessWithBoolean() will be called. And the result
-   * will be a boolean indicating the call waiting status.
+   * If successful, the notifyGetCallWaitingSuccess() will be called. And the
+   * result will be a service class bit vector of services for which call
+   * waiting is enabled. e.g. 3 means call waiting is enabled for data
+   * and voice and disabled for everything else. 0 means call waiting is
+   * disabled for all service.
+   * @see nsIMobileConnection.ICC_SERVICE_CLASS_*.
    *
    * Otherwise, the notifyError() will be called, and the error will be either
    * 'RadioNotAvailable', 'RequestNotSupported', 'IllegalSIMorME', or

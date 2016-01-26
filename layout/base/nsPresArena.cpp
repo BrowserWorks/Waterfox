@@ -23,8 +23,11 @@
 #include "nsDebug.h"
 #include "nsArenaMemoryStats.h"
 #include "nsPrintfCString.h"
+#include "nsStyleContext.h"
 
 #include <inttypes.h>
+
+using namespace mozilla;
 
 // Size to use for PLArena block allocations.
 static const size_t ARENA_PAGE_SIZE = 8192;
@@ -36,10 +39,73 @@ nsPresArena::nsPresArena()
 
 nsPresArena::~nsPresArena()
 {
+  ClearArenaRefPtrs();
+
 #if defined(MOZ_HAVE_MEM_CHECKS)
-  mFreeLists.EnumerateEntries(UnpoisonFreeList, nullptr);
+  for (auto iter = mFreeLists.Iter(); !iter.Done(); iter.Next()) {
+    FreeList* entry = iter.Get();
+    nsTArray<void*>::index_type len;
+    while ((len = entry->mEntries.Length())) {
+      void* result = entry->mEntries.ElementAt(len - 1);
+      entry->mEntries.RemoveElementAt(len - 1);
+      MOZ_MAKE_MEM_UNDEFINED(result, entry->mEntrySize);
+    }
+  }
 #endif
+
   PL_FinishArenaPool(&mPool);
+}
+
+/* inline */ void
+nsPresArena::ClearArenaRefPtrWithoutDeregistering(void* aPtr,
+                                                  ArenaObjectID aObjectID)
+{
+  switch (aObjectID) {
+#define PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT(name_)                     \
+    case eArenaObjectID_##name_:                                              \
+      static_cast<ArenaRefPtr<name_>*>(aPtr)->ClearWithoutDeregistering();    \
+      return;
+#include "nsPresArenaObjectList.h"
+#undef PRES_ARENA_OBJECT_WITH_ARENAREFPTR_SUPPORT
+    default:
+      break;
+  }
+  switch (aObjectID) {
+#define PRES_ARENA_OBJECT_WITHOUT_ARENAREFPTR_SUPPORT(name_)                  \
+    case eArenaObjectID_##name_:                                              \
+      MOZ_ASSERT(false, #name_ " must be declared in nsPresArenaObjectList.h "\
+                        "with PRES_ARENA_OBJECT_SUPPORTS_ARENAREFPTR");       \
+      break;
+#include "nsPresArenaObjectList.h"
+#undef PRES_ARENA_OBJECT_WITHOUT_ARENAREFPTR_SUPPORT
+    default:
+      MOZ_ASSERT(false, "unexpected ArenaObjectID value");
+      break;
+  }
+}
+
+void
+nsPresArena::ClearArenaRefPtrs()
+{
+  for (auto iter = mArenaRefPtrs.Iter(); !iter.Done(); iter.Next()) {
+    void* ptr = iter.Key();
+    ArenaObjectID id = iter.UserData();
+    ClearArenaRefPtrWithoutDeregistering(ptr, id);
+  }
+  mArenaRefPtrs.Clear();
+}
+
+void
+nsPresArena::ClearArenaRefPtrs(ArenaObjectID aObjectID)
+{
+  for (auto iter = mArenaRefPtrs.Iter(); !iter.Done(); iter.Next()) {
+    void* ptr = iter.Key();
+    ArenaObjectID id = iter.UserData();
+    if (id == aObjectID) {
+      ClearArenaRefPtrWithoutDeregistering(ptr, id);
+      iter.Remove();
+    }
+  }
 }
 
 void*
@@ -117,63 +183,6 @@ nsPresArena::Free(uint32_t aCode, void* aPtr)
   list->mEntries.AppendElement(aPtr);
 }
 
-struct EnumerateData {
-  nsArenaMemoryStats* stats;
-  size_t total;
-};
-
-#if defined(MOZ_HAVE_MEM_CHECKS)
-/* static */ PLDHashOperator
-nsPresArena::UnpoisonFreeList(FreeList* aEntry, void*)
-{
-  nsTArray<void*>::index_type len;
-  while ((len = aEntry->mEntries.Length())) {
-    void* result = aEntry->mEntries.ElementAt(len - 1);
-    aEntry->mEntries.RemoveElementAt(len - 1);
-    MOZ_MAKE_MEM_UNDEFINED(result, aEntry->mEntrySize);
-  }
-  return PL_DHASH_NEXT;
-}
-#endif
-
-/* static */ PLDHashOperator
-nsPresArena::FreeListEnumerator(FreeList* aEntry, void* aData)
-{
-  EnumerateData* data = static_cast<EnumerateData*>(aData);
-  // Note that we're not measuring the size of the entries on the free
-  // list here.  The free list knows how many objects we've allocated
-  // ever (which includes any objects that may be on the FreeList's
-  // |mEntries| at this point) and we're using that to determine the
-  // total size of objects allocated with a given ID.
-  size_t totalSize = aEntry->mEntrySize * aEntry->mEntriesEverAllocated;
-  size_t* p;
-
-  switch (NS_PTR_TO_INT32(aEntry->mKey)) {
-#define FRAME_ID(classname)                                      \
-    case nsQueryFrame::classname##_id:                           \
-      p = &data->stats->FRAME_ID_STAT_FIELD(classname);          \
-      break;
-#include "nsFrameIdList.h"
-#undef FRAME_ID
-  case nsLineBox_id:
-    p = &data->stats->mLineBoxes;
-    break;
-  case nsRuleNode_id:
-    p = &data->stats->mRuleNodes;
-    break;
-  case nsStyleContext_id:
-    p = &data->stats->mStyleContexts;
-    break;
-  default:
-    return PL_DHASH_NEXT;
-  }
-
-  *p += totalSize;
-  data->total += totalSize;
-
-  return PL_DHASH_NEXT;
-}
-
 void
 nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                     nsArenaMemoryStats* aArenaStats)
@@ -192,7 +201,47 @@ nsPresArena::AddSizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf,
   size_t mallocSize = PL_SizeOfArenaPoolExcludingPool(&mPool, aMallocSizeOf);
   mallocSize += mFreeLists.SizeOfExcludingThis(aMallocSizeOf);
 
-  EnumerateData data = { aArenaStats, 0 };
-  mFreeLists.EnumerateEntries(FreeListEnumerator, &data);
-  aArenaStats->mOther += mallocSize - data.total;
+  size_t totalSizeInFreeLists = 0;
+  for (auto iter = mFreeLists.Iter(); !iter.Done(); iter.Next()) {
+    FreeList* entry = iter.Get();
+
+    // Note that we're not measuring the size of the entries on the free
+    // list here.  The free list knows how many objects we've allocated
+    // ever (which includes any objects that may be on the FreeList's
+    // |mEntries| at this point) and we're using that to determine the
+    // total size of objects allocated with a given ID.
+    size_t totalSize = entry->mEntrySize * entry->mEntriesEverAllocated;
+    size_t* p;
+
+    switch (NS_PTR_TO_INT32(entry->mKey)) {
+#define FRAME_ID(classname)                               \
+      case nsQueryFrame::classname##_id:                  \
+        p = &aArenaStats->FRAME_ID_STAT_FIELD(classname); \
+        break;
+#include "nsFrameIdList.h"
+#undef FRAME_ID
+      case eArenaObjectID_nsLineBox:
+        p = &aArenaStats->mLineBoxes;
+        break;
+      case eArenaObjectID_nsRuleNode:
+        p = &aArenaStats->mRuleNodes;
+        break;
+      case eArenaObjectID_nsStyleContext:
+        p = &aArenaStats->mStyleContexts;
+        break;
+#define STYLE_STRUCT(name_, checkdata_cb_)      \
+        case eArenaObjectID_nsStyle##name_:
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+        p = &aArenaStats->mStyleStructs;
+        break;
+      default:
+        continue;
+    }
+
+    *p += totalSize;
+    totalSizeInFreeLists += totalSize;
+  }
+
+  aArenaStats->mOther += mallocSize - totalSizeInFreeLists;
 }

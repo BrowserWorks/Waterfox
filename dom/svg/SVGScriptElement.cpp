@@ -58,7 +58,7 @@ SVGScriptElement::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) co
 {
   *aResult = nullptr;
 
-  already_AddRefed<mozilla::dom::NodeInfo> ni = nsRefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
+  already_AddRefed<mozilla::dom::NodeInfo> ni = RefPtr<mozilla::dom::NodeInfo>(aNodeInfo).forget();
   SVGScriptElement* it = new SVGScriptElement(ni, NOT_FROM_PARSER);
 
   nsCOMPtr<nsINode> kungFuDeathGrip = it;
@@ -124,9 +124,7 @@ SVGScriptElement::GetScriptType(nsAString& type)
 void
 SVGScriptElement::GetScriptText(nsAString& text)
 {
-  if (!nsContentUtils::GetNodeTextContent(this, false, text)) {
-    NS_RUNTIMEABORT("OOM");
-  }
+  nsContentUtils::GetNodeTextContent(this, false, text);
 }
 
 void

@@ -4,7 +4,7 @@
 
 this.EXPORTED_SYMBOLS = ["XPCOMUtils", "Services", "Utils", "Async", "Svc", "Str"];
 
-const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
@@ -35,8 +35,6 @@ this.Utils = {
   // In the ideal world, references to these would be removed.
   nextTick: CommonUtils.nextTick,
   namedTimer: CommonUtils.namedTimer,
-  exceptionStr: CommonUtils.exceptionStr,
-  stackTrace: CommonUtils.stackTrace,
   makeURI: CommonUtils.makeURI,
   encodeUTF8: CommonUtils.encodeUTF8,
   decodeUTF8: CommonUtils.decodeUTF8,
@@ -77,7 +75,7 @@ this.Utils = {
         return func.call(thisArg);
       }
       catch(ex) {
-        thisArg._log.debug("Exception: " + Utils.exceptionStr(ex));
+        thisArg._log.debug("Exception", ex);
         if (exceptionCallback) {
           return exceptionCallback.call(thisArg, ex);
         }
@@ -342,8 +340,7 @@ this.Utils = {
       // Ignore non-existent files.
     } catch (e) {
       if (that._log) {
-        that._log.debug("Failed to load json: " +
-                        CommonUtils.exceptionStr(e));
+        that._log.debug("Failed to load json", e);
       }
     }
 
@@ -477,7 +474,7 @@ this.Utils = {
 
     // 20-char sync key.
     if (pp.length == 23 &&
-        [5, 11, 17].every(function(i) pp[i] == '-')) {
+        [5, 11, 17].every(i => pp[i] == '-')) {
 
       return pp.slice(0, 5) + pp.slice(6, 11)
              + pp.slice(12, 17) + pp.slice(18, 23);
@@ -485,7 +482,7 @@ this.Utils = {
 
     // "Modern" 26-char key.
     if (pp.length == 31 &&
-        [1, 7, 13, 19, 25].every(function(i) pp[i] == '-')) {
+        [1, 7, 13, 19, 25].every(i => pp[i] == '-')) {
 
       return pp.slice(0, 1) + pp.slice(2, 7)
              + pp.slice(8, 13) + pp.slice(14, 19)
@@ -672,6 +669,20 @@ this.Utils = {
       Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler).oscpu;
 
     return Str.sync.get("client.name2", [user, appName, system]);
+  },
+
+  getDeviceName() {
+    const deviceName = Svc.Prefs.get("client.name", "");
+
+    if (deviceName === "") {
+      return this.getDefaultDeviceName();
+    }
+
+    return deviceName;
+  },
+
+  getDeviceType() {
+    return Svc.Prefs.get("client.type", DEVICE_TYPE_DESKTOP);
   }
 };
 
@@ -690,7 +701,7 @@ Svc.Prefs = new Preferences(PREFS_BRANCH);
 Svc.DefaultPrefs = new Preferences({branch: PREFS_BRANCH, defaultBranch: true});
 Svc.Obs = Observers;
 
-let _sessionCID = Services.appinfo.ID == SEAMONKEY_ID ?
+var _sessionCID = Services.appinfo.ID == SEAMONKEY_ID ?
   "@mozilla.org/suite/sessionstore;1" :
   "@mozilla.org/browser/sessionstore;1";
 

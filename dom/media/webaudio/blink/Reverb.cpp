@@ -77,7 +77,7 @@ static float calculateNormalizationScale(ThreadSharedFloatArrayBufferList* respo
     return scale;
 }
 
-Reverb::Reverb(ThreadSharedFloatArrayBufferList* impulseResponse, size_t impulseResponseBufferLength, size_t renderSliceSize, size_t maxFFTSize, size_t numberOfChannels, bool useBackgroundThreads, bool normalize, float sampleRate)
+Reverb::Reverb(ThreadSharedFloatArrayBufferList* impulseResponse, size_t impulseResponseBufferLength, size_t maxFFTSize, size_t numberOfChannels, bool useBackgroundThreads, bool normalize, float sampleRate)
 {
     float scale = 1;
 
@@ -101,14 +101,14 @@ Reverb::Reverb(ThreadSharedFloatArrayBufferList* impulseResponse, size_t impulse
         }
     }
 
-    initialize(irChannels, impulseResponseBufferLength, renderSliceSize,
+    initialize(irChannels, impulseResponseBufferLength,
                maxFFTSize, numberOfChannels, useBackgroundThreads);
 }
 
 size_t Reverb::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
     size_t amount = aMallocSizeOf(this);
-    amount += m_convolvers.SizeOfExcludingThis(aMallocSizeOf);
+    amount += m_convolvers.ShallowSizeOfExcludingThis(aMallocSizeOf);
     for (size_t i = 0; i < m_convolvers.Length(); i++) {
         if (m_convolvers[i]) {
             amount += m_convolvers[i]->sizeOfIncludingThis(aMallocSizeOf);
@@ -121,7 +121,7 @@ size_t Reverb::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 
 
 void Reverb::initialize(const nsTArray<const float*>& impulseResponseBuffer,
-                        size_t impulseResponseBufferLength, size_t renderSliceSize,
+                        size_t impulseResponseBufferLength,
                         size_t maxFFTSize, size_t numberOfChannels, bool useBackgroundThreads)
 {
     m_impulseResponseLength = impulseResponseBufferLength;
@@ -135,68 +135,68 @@ void Reverb::initialize(const nsTArray<const float*>& impulseResponseBuffer,
         const float* channel = impulseResponseBuffer[i];
         size_t length = impulseResponseBufferLength;
 
-        nsAutoPtr<ReverbConvolver> convolver(new ReverbConvolver(channel, length, renderSliceSize, maxFFTSize, convolverRenderPhase, useBackgroundThreads));
+        nsAutoPtr<ReverbConvolver> convolver(new ReverbConvolver(channel, length, maxFFTSize, convolverRenderPhase, useBackgroundThreads));
         m_convolvers.AppendElement(convolver.forget());
 
-        convolverRenderPhase += renderSliceSize;
+        convolverRenderPhase += WEBAUDIO_BLOCK_SIZE;
     }
 
     // For "True" stereo processing we allocate a temporary buffer to avoid repeatedly allocating it in the process() method.
     // It can be bad to allocate memory in a real-time thread.
     if (numResponseChannels == 4) {
-        AllocateAudioBlock(2, &m_tempBuffer);
+        m_tempBuffer.AllocateChannels(2);
         WriteZeroesToAudioBlock(&m_tempBuffer, 0, WEBAUDIO_BLOCK_SIZE);
     }
 }
 
-void Reverb::process(const AudioChunk* sourceBus, AudioChunk* destinationBus, size_t framesToProcess)
+void Reverb::process(const AudioBlock* sourceBus, AudioBlock* destinationBus)
 {
     // Do a fairly comprehensive sanity check.
     // If these conditions are satisfied, all of the source and destination pointers will be valid for the various matrixing cases.
-    bool isSafeToProcess = sourceBus && destinationBus && sourceBus->mChannelData.Length() > 0 && destinationBus->mChannelData.Length() > 0
-        && framesToProcess <= MaxFrameSize && framesToProcess <= size_t(sourceBus->mDuration) && framesToProcess <= size_t(destinationBus->mDuration);
+    bool isSafeToProcess = sourceBus && destinationBus && sourceBus->ChannelCount() > 0 && destinationBus->mChannelData.Length() > 0
+        && WEBAUDIO_BLOCK_SIZE <= MaxFrameSize && WEBAUDIO_BLOCK_SIZE <= size_t(sourceBus->GetDuration()) && WEBAUDIO_BLOCK_SIZE <= size_t(destinationBus->GetDuration());
 
     MOZ_ASSERT(isSafeToProcess);
     if (!isSafeToProcess)
         return;
 
     // For now only handle mono or stereo output
-    MOZ_ASSERT(destinationBus->mChannelData.Length() <= 2);
+    MOZ_ASSERT(destinationBus->ChannelCount() <= 2);
 
     float* destinationChannelL = static_cast<float*>(const_cast<void*>(destinationBus->mChannelData[0]));
     const float* sourceBusL = static_cast<const float*>(sourceBus->mChannelData[0]);
 
     // Handle input -> output matrixing...
-    size_t numInputChannels = sourceBus->mChannelData.Length();
-    size_t numOutputChannels = destinationBus->mChannelData.Length();
+    size_t numInputChannels = sourceBus->ChannelCount();
+    size_t numOutputChannels = destinationBus->ChannelCount();
     size_t numReverbChannels = m_convolvers.Length();
 
     if (numInputChannels == 2 && numReverbChannels == 2 && numOutputChannels == 2) {
         // 2 -> 2 -> 2
         const float* sourceBusR = static_cast<const float*>(sourceBus->mChannelData[1]);
         float* destinationChannelR = static_cast<float*>(const_cast<void*>(destinationBus->mChannelData[1]));
-        m_convolvers[0]->process(sourceBusL, sourceBus->mDuration, destinationChannelL, destinationBus->mDuration, framesToProcess);
-        m_convolvers[1]->process(sourceBusR, sourceBus->mDuration, destinationChannelR, destinationBus->mDuration, framesToProcess);
+        m_convolvers[0]->process(sourceBusL, destinationChannelL);
+        m_convolvers[1]->process(sourceBusR, destinationChannelR);
     } else  if (numInputChannels == 1 && numOutputChannels == 2 && numReverbChannels == 2) {
         // 1 -> 2 -> 2
         for (int i = 0; i < 2; ++i) {
             float* destinationChannel = static_cast<float*>(const_cast<void*>(destinationBus->mChannelData[i]));
-            m_convolvers[i]->process(sourceBusL, sourceBus->mDuration, destinationChannel, destinationBus->mDuration, framesToProcess);
+            m_convolvers[i]->process(sourceBusL, destinationChannel);
         }
     } else if (numInputChannels == 1 && numReverbChannels == 1 && numOutputChannels == 2) {
         // 1 -> 1 -> 2
-        m_convolvers[0]->process(sourceBusL, sourceBus->mDuration, destinationChannelL, destinationBus->mDuration, framesToProcess);
+        m_convolvers[0]->process(sourceBusL, destinationChannelL);
 
         // simply copy L -> R
         float* destinationChannelR = static_cast<float*>(const_cast<void*>(destinationBus->mChannelData[1]));
-        bool isCopySafe = destinationChannelL && destinationChannelR && size_t(destinationBus->mDuration) >= framesToProcess;
+        bool isCopySafe = destinationChannelL && destinationChannelR && size_t(destinationBus->GetDuration()) >= WEBAUDIO_BLOCK_SIZE;
         MOZ_ASSERT(isCopySafe);
         if (!isCopySafe)
             return;
-        PodCopy(destinationChannelR, destinationChannelL, framesToProcess);
+        PodCopy(destinationChannelR, destinationChannelL, WEBAUDIO_BLOCK_SIZE);
     } else if (numInputChannels == 1 && numReverbChannels == 1 && numOutputChannels == 1) {
         // 1 -> 1 -> 1
-        m_convolvers[0]->process(sourceBusL, sourceBus->mDuration, destinationChannelL, destinationBus->mDuration, framesToProcess);
+        m_convolvers[0]->process(sourceBusL, destinationChannelL);
     } else if (numInputChannels == 2 && numReverbChannels == 4 && numOutputChannels == 2) {
         // 2 -> 4 -> 2 ("True" stereo)
         const float* sourceBusR = static_cast<const float*>(sourceBus->mChannelData[1]);
@@ -206,15 +206,15 @@ void Reverb::process(const AudioChunk* sourceBus, AudioChunk* destinationBus, si
         float* tempChannelR = static_cast<float*>(const_cast<void*>(m_tempBuffer.mChannelData[1]));
 
         // Process left virtual source
-        m_convolvers[0]->process(sourceBusL, sourceBus->mDuration, destinationChannelL, destinationBus->mDuration, framesToProcess);
-        m_convolvers[1]->process(sourceBusL, sourceBus->mDuration, destinationChannelR, destinationBus->mDuration, framesToProcess);
+        m_convolvers[0]->process(sourceBusL, destinationChannelL);
+        m_convolvers[1]->process(sourceBusL, destinationChannelR);
 
         // Process right virtual source
-        m_convolvers[2]->process(sourceBusR, sourceBus->mDuration, tempChannelL, m_tempBuffer.mDuration, framesToProcess);
-        m_convolvers[3]->process(sourceBusR, sourceBus->mDuration, tempChannelR, m_tempBuffer.mDuration, framesToProcess);
+        m_convolvers[2]->process(sourceBusR, tempChannelL);
+        m_convolvers[3]->process(sourceBusR, tempChannelR);
 
-        AudioBufferAddWithScale(tempChannelL, 1.0f, destinationChannelL, sourceBus->mDuration);
-        AudioBufferAddWithScale(tempChannelR, 1.0f, destinationChannelR, sourceBus->mDuration);
+        AudioBufferAddWithScale(tempChannelL, 1.0f, destinationChannelL, sourceBus->GetDuration());
+        AudioBufferAddWithScale(tempChannelR, 1.0f, destinationChannelR, sourceBus->GetDuration());
     } else if (numInputChannels == 1 && numReverbChannels == 4 && numOutputChannels == 2) {
         // 1 -> 4 -> 2 (Processing mono with "True" stereo impulse response)
         // This is an inefficient use of a four-channel impulse response, but we should handle the case.
@@ -224,31 +224,20 @@ void Reverb::process(const AudioChunk* sourceBus, AudioChunk* destinationBus, si
         float* tempChannelR = static_cast<float*>(const_cast<void*>(m_tempBuffer.mChannelData[1]));
 
         // Process left virtual source
-        m_convolvers[0]->process(sourceBusL, sourceBus->mDuration, destinationChannelL, destinationBus->mDuration, framesToProcess);
-        m_convolvers[1]->process(sourceBusL, sourceBus->mDuration, destinationChannelR, destinationBus->mDuration, framesToProcess);
+        m_convolvers[0]->process(sourceBusL, destinationChannelL);
+        m_convolvers[1]->process(sourceBusL, destinationChannelR);
 
         // Process right virtual source
-        m_convolvers[2]->process(sourceBusL, sourceBus->mDuration, tempChannelL, m_tempBuffer.mDuration, framesToProcess);
-        m_convolvers[3]->process(sourceBusL, sourceBus->mDuration, tempChannelR, m_tempBuffer.mDuration, framesToProcess);
+        m_convolvers[2]->process(sourceBusL, tempChannelL);
+        m_convolvers[3]->process(sourceBusL, tempChannelR);
 
-        AudioBufferAddWithScale(tempChannelL, 1.0f, destinationChannelL, sourceBus->mDuration);
-        AudioBufferAddWithScale(tempChannelR, 1.0f, destinationChannelR, sourceBus->mDuration);
+        AudioBufferAddWithScale(tempChannelL, 1.0f, destinationChannelL, sourceBus->GetDuration());
+        AudioBufferAddWithScale(tempChannelR, 1.0f, destinationChannelR, sourceBus->GetDuration());
     } else {
         // Handle gracefully any unexpected / unsupported matrixing
         // FIXME: add code for 5.1 support...
-        destinationBus->SetNull(destinationBus->mDuration);
+        destinationBus->SetNull(destinationBus->GetDuration());
     }
-}
-
-void Reverb::reset()
-{
-    for (size_t i = 0; i < m_convolvers.Length(); ++i)
-        m_convolvers[i]->reset();
-}
-
-size_t Reverb::latencyFrames() const
-{
-    return !m_convolvers.IsEmpty() ? m_convolvers[0]->latencyFrames() : 0;
 }
 
 } // namespace WebCore

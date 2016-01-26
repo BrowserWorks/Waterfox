@@ -26,6 +26,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "Notifications", "resource://gre/modules
 XPCOMUtils.defineLazyModuleGetter(this, "Messaging", "resource://gre/modules/Messaging.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 
+// Import AppsServiceChild.DOMApplicationRegistry for its getAll method.
+var AppsServiceChild = {};
+XPCOMUtils.defineLazyModuleGetter(AppsServiceChild, "DOMApplicationRegistry",
+                                  "resource://gre/modules/AppsServiceChild.jsm");
+
 XPCOMUtils.defineLazyGetter(this, "Strings", function() {
   return Services.strings.createBundle("chrome://browser/locale/webapp.properties");
 });
@@ -51,15 +56,15 @@ XPCOMUtils.defineLazyServiceGetter(this, "ParentalControls",
  */
 function getFormattedPluralForm(stringName, formatterArgs, pluralNum) {
   // Escape semicolons by replacing them with ESC characters.
-  let escapedArgs = [arg.replace(/;/g, String.fromCharCode(0x1B)) for (arg of formatterArgs)];
+  let escapedArgs = formatterArgs.map((arg) => arg.replace(/;/g, String.fromCharCode(0x1B)));
   let formattedString = Strings.formatStringFromName(stringName, escapedArgs, escapedArgs.length);
   let pluralForm = PluralForm.get(pluralNum, formattedString);
   let unescapedString = pluralForm.replace(String.fromCharCode(0x1B), ";", "g");
   return unescapedString;
 }
 
-let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
-let debug = Log.d.bind(null, "WebappManager");
+var Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
+var debug = Log.d.bind(null, "WebappManager");
 
 this.WebappManager = {
   __proto__: DOMRequestIpcHelper.prototype,
@@ -135,7 +140,7 @@ this.WebappManager = {
       manifestUrl: aManifestUrl,
     };
     generatorUrl.query =
-      [p + "=" + encodeURIComponent(params[p]) for (p in params)].join("&");
+      Object.keys(params).map((p) => p + "=" + encodeURIComponent(params[p])).join("&");
     debug("downloading APK from " + generatorUrl.spec);
 
     Downloads.getSystemDownloadsDirectory().then(function(downloadsDir) {
@@ -266,16 +271,6 @@ this.WebappManager = {
   autoInstall: function(aData) {
     debug("autoInstall " + aData.manifestURL);
 
-    // If the app is already installed, update the existing installation.
-    // We should be able to use DOMApplicationRegistry.getAppByManifestURL,
-    // but it returns a mozIApplication, while _autoUpdate needs the original
-    // object from DOMApplicationRegistry.webapps in order to modify it.
-    for (let [ , app] in Iterator(DOMApplicationRegistry.webapps)) {
-      if (app.manifestURL == aData.manifestURL) {
-        return this._autoUpdate(aData, app);
-      }
-    }
-
     let mm = {
       sendAsyncMessage: function (aMessageName, aData) {
         // TODO hook this back to Java to report errors.
@@ -310,6 +305,16 @@ this.WebappManager = {
     message.apkInstall = true;
 
     DOMApplicationRegistry.registryReady.then(() => {
+      // If the app is already installed, update the existing installation.
+      // We should be able to use DOMApplicationRegistry.getAppByManifestURL,
+      // but it returns a mozIApplication, while _autoUpdate needs the original
+      // object from DOMApplicationRegistry.webapps in order to modify it.
+      for (let [ , app] in Iterator(DOMApplicationRegistry.webapps)) {
+        if (app.manifestURL == aData.manifestURL) {
+          return this._autoUpdate(aData, app);
+        }
+      }
+
       switch (aData.type) { // can be hosted or packaged.
         case "hosted":
           DOMApplicationRegistry.doInstall(message, mm);
@@ -430,9 +435,9 @@ this.WebappManager = {
       };
 
       if (updateAllowed()) {
-        yield this._updateApks([manifestUrlToApp[url] for (url of outdatedApps)]);
+        yield this._updateApks(outdatedApps.map((url) => manifestUrlToApp[url]));
       } else {
-        let names = [manifestUrlToApp[url].name for (url of outdatedApps)].join(", ");
+        let names = outdatedApps.map((url) => manifestUrlToApp[url].name).join(", ");
         let accepted = yield this._notify({
           title: PluralForm.get(outdatedApps.length, Strings.GetStringFromName("retrieveUpdateTitle")).
                  replace("#1", outdatedApps.length),
@@ -441,7 +446,7 @@ this.WebappManager = {
         }).dismissed;
 
         if (accepted) {
-          yield this._updateApks([manifestUrlToApp[url] for (url of outdatedApps)]);
+          yield this._updateApks(outdatedApps.map((url) => manifestUrlToApp[url]));
         }
       }
     }
@@ -463,7 +468,7 @@ this.WebappManager = {
 
   _getInstalledApps: function() {
     let deferred = Promise.defer();
-    DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
+    AppsServiceChild.DOMApplicationRegistry.getAll(apps => deferred.resolve(apps));
     return deferred.promise;
   },
 
@@ -512,7 +517,7 @@ this.WebappManager = {
 
   _updateApks: function(aApps) { return Task.spawn((function*() {
     // Notify the user that we're in the progress of downloading updates.
-    let downloadingNames = [app.name for (app of aApps)].join(", ");
+    let downloadingNames = aApps.map((app) => app.name).join(", ");
     let notification = this._notify({
       title: PluralForm.get(aApps.length, Strings.GetStringFromName("retrievingUpdateTitle")).
              replace("#1", aApps.length),
@@ -544,7 +549,7 @@ this.WebappManager = {
     // when the user accepts/cancels the notification.
     // In the future, we might prompt the user to retry the download.
     if (downloadFailedApps.length > 0) {
-      let downloadFailedNames = [app.name for (app of downloadFailedApps)].join(", ");
+      let downloadFailedNames = downloadFailedApps.map((app) => app.name).join(", ");
       this._notify({
         title: PluralForm.get(downloadFailedApps.length, Strings.GetStringFromName("retrievalFailedTitle")).
                replace("#1", downloadFailedApps.length),
@@ -560,7 +565,7 @@ this.WebappManager = {
 
     // Prompt the user to update the apps for which we downloaded APKs, and wait
     // until they accept/cancel the notification.
-    let downloadedNames = [apk.app.name for (apk of downloadedApks)].join(", ");
+    let downloadedNames = downloadedApks.map((apk) => apk.app.name).join(", ");
     let accepted = yield this._notify({
       title: PluralForm.get(downloadedApks.length, Strings.GetStringFromName("installUpdateTitle")).
              replace("#1", downloadedApks.length),

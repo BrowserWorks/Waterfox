@@ -59,7 +59,7 @@ ImageData::Constructor(const GlobalObject& aGlobal,
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
   }
-  nsRefPtr<ImageData> imageData = new ImageData(aWidth, aHeight, *data);
+  RefPtr<ImageData> imageData = new ImageData(aWidth, aHeight, *data);
   return imageData.forget();
 }
 
@@ -89,7 +89,12 @@ ImageData::Constructor(const GlobalObject& aGlobal,
     aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return nullptr;
   }
-  nsRefPtr<ImageData> imageData = new ImageData(aWidth, height, *aData.Obj());
+  if (JS_GetTypedArraySharedness(aData.Obj())) {
+    // Throw if the object is mapping shared memory (must opt in).
+    aRv.ThrowTypeError<MSG_TYPEDARRAY_IS_SHARED>(NS_LITERAL_STRING("Argument of ImageData constructor"));
+    return nullptr;
+  }
+  RefPtr<ImageData> imageData = new ImageData(aWidth, height, *aData.Obj());
   return imageData.forget();
 }
 

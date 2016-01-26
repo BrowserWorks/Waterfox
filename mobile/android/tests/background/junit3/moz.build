@@ -6,20 +6,29 @@
 
 DEFINES['ANDROID_PACKAGE_NAME'] = CONFIG['ANDROID_PACKAGE_NAME']
 
+ANDROID_APK_NAME = 'background-junit3-debug'
+ANDROID_APK_PACKAGE = 'org.mozilla.gecko.background.tests'
+
 include('background_junit3_sources.mozbuild')
 
 jar = add_java_jar('background-junit3')
 jar.sources += background_junit3_sources
-jar.extra_jars += [CONFIG['ANDROID_COMPAT_LIB']]
+jar.extra_jars += [
+    CONFIG['ANDROID_SUPPORT_V4_AAR_LIB'],
+    CONFIG['ANDROID_RECYCLERVIEW_V7_AAR_LIB'],
+    TOPOBJDIR + '/mobile/android/base/constants.jar',
+    TOPOBJDIR + '/mobile/android/base/gecko-R.jar',
+    TOPOBJDIR + '/mobile/android/base/gecko-browser.jar',
+    TOPOBJDIR + '/mobile/android/base/gecko-mozglue.jar',
+    TOPOBJDIR + '/mobile/android/base/gecko-thirdparty.jar',
+    TOPOBJDIR + '/mobile/android/base/gecko-util.jar',
+    TOPOBJDIR + '/mobile/android/base/services.jar',
+    TOPOBJDIR + '/mobile/android/base/sync-thirdparty.jar',
+]
 
-main = add_android_eclipse_project('BackgroundInstrumentationTests', OBJDIR + '/AndroidManifest.xml')
-main.package_name = 'org.mozilla.gecko.background.tests'
-main.res = SRCDIR + '/res'
-main.recursive_make_targets += [
-    OBJDIR + '/AndroidManifest.xml']
-main.referenced_projects += ['Fennec']
-
-main.add_classpathentry('src', SRCDIR + '/src',
-    dstdir='src/org/mozilla/gecko/background')
+if CONFIG['MOZ_ANDROID_MLS_STUMBLER']:
+    jar.extra_jars += [
+        TOPOBJDIR + '/mobile/android/stumbler/stumbler.jar',
+    ]
 
 ANDROID_INSTRUMENTATION_MANIFESTS += ['instrumentation.ini']

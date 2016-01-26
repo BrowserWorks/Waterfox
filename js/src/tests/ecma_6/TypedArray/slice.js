@@ -7,8 +7,17 @@ const constructors = [
     Int32Array,
     Uint32Array,
     Float32Array,
-    Float64Array
-];
+    Float64Array ];
+
+if (typeof SharedArrayBuffer != "undefined")
+    constructors.push(sharedConstructor(Int8Array),
+		      sharedConstructor(Uint8Array),
+		      sharedConstructor(Int16Array),
+		      sharedConstructor(Uint16Array),
+		      sharedConstructor(Int32Array),
+		      sharedConstructor(Uint32Array),
+		      sharedConstructor(Float32Array),
+		      sharedConstructor(Float64Array));
 
 for (var constructor of constructors) {
     assertDeepEq(constructor.prototype.slice.length, 2);
@@ -29,7 +38,7 @@ for (var constructor of constructors) {
     assertDeepEq(new constructor([1, 2]).slice(1, 5), new constructor([2]));
 
     // Called from other globals.
-    if (typeof newGlobal === "function") {
+    if (typeof newGlobal === "function" && !isSharedConstructor(constructor)) {
         var slice = newGlobal()[constructor.name].prototype.slice;
         assertDeepEq(slice.call(new constructor([3, 2, 1]), 1),
                      new constructor([2, 1]));
@@ -68,8 +77,8 @@ for (var constructor of constructors) {
     mathConstructor.constructor = Math.sin;
     assertDeepEq(mathConstructor.slice(4), new constructor(4));
 
-    assertEq("species" in Symbol, false,
-             "you've implemented @@species -- add real tests here!");
+    assertEq(Symbol.species in Int8Array, false,
+             "you've implemented %TypedArray%[@@species] -- add real tests here!");
 }
 
 if (typeof reportCompare === "function")

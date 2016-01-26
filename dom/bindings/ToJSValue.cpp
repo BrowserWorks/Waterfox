@@ -43,7 +43,7 @@ ToJSValue(JSContext* aCx,
           nsresult aArgument,
           JS::MutableHandle<JS::Value> aValue)
 {
-  nsRefPtr<Exception> exception = CreateException(aCx, aArgument);
+  RefPtr<Exception> exception = CreateException(aCx, aArgument);
   return ToJSValue(aCx, exception, aValue);
 }
 
@@ -56,8 +56,8 @@ ToJSValue(JSContext* aCx,
   MOZ_ASSERT(!aArgument.IsUncatchableException(),
              "Doesn't make sense to convert uncatchable exception to a JS value!");
   AutoForceSetExceptionOnContext forceExn(aCx);
-  DebugOnly<bool> throwResult = ThrowMethodFailedWithDetails(aCx, aArgument, "", "");
-  MOZ_ASSERT(!throwResult);
+  DebugOnly<bool> throwResult = aArgument.MaybeSetPendingException(aCx);
+  MOZ_ASSERT(throwResult);
   DebugOnly<bool> getPendingResult = JS_GetPendingException(aCx, aValue);
   MOZ_ASSERT(getPendingResult);
   JS_ClearPendingException(aCx);

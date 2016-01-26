@@ -88,7 +88,10 @@ ActiveElementManager::TriggerElementActivation()
   if (!mCanBePan) {
     SetActive(mTarget);
   } else {
+    CancelTask();   // this is only needed because of bug 1169802. Fixing that
+                    // bug properly should make this unnecessary.
     MOZ_ASSERT(mSetActiveTask == nullptr);
+
     mSetActiveTask = NewRunnableMethod(
         this, &ActiveElementManager::SetActiveTask, mTarget);
     MessageLoop::current()->PostDelayedTask(
@@ -98,12 +101,9 @@ ActiveElementManager::TriggerElementActivation()
 }
 
 void
-ActiveElementManager::HandlePanStart()
+ActiveElementManager::ClearActivation()
 {
-  AEM_LOG("Handle pan start\n");
-
-  // The user started to pan, so we don't want mTarget to be :active.
-  // Make it not :active, and clear any pending task to make it :active.
+  AEM_LOG("Clearing element activation\n");
   CancelTask();
   ResetActive();
 }
@@ -229,5 +229,5 @@ ActiveElementManager::CancelTask()
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

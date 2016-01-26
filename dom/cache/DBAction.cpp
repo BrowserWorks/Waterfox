@@ -6,6 +6,9 @@
 
 #include "mozilla/dom/cache/DBAction.h"
 
+#include "mozilla/dom/cache/Connection.h"
+#include "mozilla/dom/cache/DBSchema.h"
+#include "mozilla/dom/cache/FileUtils.h"
 #include "mozilla/dom/quota/PersistenceType.h"
 #include "mozilla/net/nsFileProtocolHandler.h"
 #include "mozIStorageConnection.h"
@@ -13,10 +16,8 @@
 #include "mozStorageCID.h"
 #include "nsIFile.h"
 #include "nsIURI.h"
-#include "nsNetUtil.h"
+#include "nsIFileURL.h"
 #include "nsThreadUtils.h"
-#include "DBSchema.h"
-#include "FileUtils.h"
 
 namespace mozilla {
 namespace dom {
@@ -54,6 +55,12 @@ DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
     return;
   }
 
+  rv = dbDir->Append(NS_LITERAL_STRING("cache"));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aResolver->Resolve(rv);
+    return;
+  }
+
   nsCOMPtr<mozIStorageConnection> conn;
 
   // Attempt to reuse the connection opened by a previous Action.
@@ -63,12 +70,6 @@ DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
 
   // If there is no previous Action, then we must open one.
   if (!conn) {
-    rv = dbDir->Append(NS_LITERAL_STRING("cache"));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      aResolver->Resolve(rv);
-      return;
-    }
-
     rv = OpenConnection(aQuotaInfo, dbDir, getter_AddRefs(conn));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       aResolver->Resolve(rv);
@@ -79,7 +80,12 @@ DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
     // Save this connection in the shared Data object so later Actions can
     // use it.  This avoids opening a new connection for every Action.
     if (aOptionalData) {
-      aOptionalData->SetConnection(conn);
+      // Since we know this connection will be around for as long as the
+      // Cache is open, use our special wrapped connection class.  This
+      // will let us perform certain operations once the Cache origin
+      // is closed.
+      nsCOMPtr<mozIStorageConnection> wrapped = new Connection(conn);
+      aOptionalData->SetConnection(wrapped);
     }
   }
 
@@ -120,7 +126,7 @@ DBAction::OpenConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
   // URL.  This avoids any problems if a plugin registers a custom file://
   // handler.  If such a custom handler used javascript, then we would have a
   // bad time running off the main thread here.
-  nsRefPtr<nsFileProtocolHandler> handler = new nsFileProtocolHandler();
+  RefPtr<nsFileProtocolHandler> handler = new nsFileProtocolHandler();
   rv = handler->Init();
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -164,7 +170,7 @@ DBAction::OpenConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
   int32_t schemaVersion = 0;
   rv = conn->GetSchemaVersion(&schemaVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  if (schemaVersion > 0 && schemaVersion < db::kMaxWipeSchemaVersion) {
+  if (schemaVersion > 0 && schemaVersion < db::kFirstShippedSchemaVersion) {
     conn = nullptr;
     rv = WipeDatabase(dbFile, aDBDir);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
@@ -186,6 +192,9 @@ DBAction::WipeDatabase(nsIFile* aDBFile, nsIFile* aDBDir)
 {
   nsresult rv = aDBFile->Remove(false);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  // Note, the -wal journal file will be automatically deleted by sqlite when
+  // the new database is created.  No need to explicitly delete it here.
 
   // Delete the morgue as well.
   rv = BodyDeleteDir(aDBDir);

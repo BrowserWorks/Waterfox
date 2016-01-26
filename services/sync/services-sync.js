@@ -54,7 +54,7 @@ pref("services.sync.addons.ignoreUserEnabledChanges", false);
 // Comma-delimited list of hostnames to trust for add-on install.
 pref("services.sync.addons.trustedSourceHostnames", "addons.mozilla.org");
 
-pref("services.sync.log.appender.console", "Warn");
+pref("services.sync.log.appender.console", "Fatal");
 pref("services.sync.log.appender.dump", "Error");
 pref("services.sync.log.appender.file.level", "Trace");
 pref("services.sync.log.appender.file.logOnError", true);
@@ -80,8 +80,6 @@ pref("services.sync.log.logger.engine.apps", "Debug");
 pref("services.sync.log.logger.identity", "Debug");
 pref("services.sync.log.logger.userapi", "Debug");
 pref("services.sync.log.cryptoDebug", false);
-
-pref("services.sync.tokenServerURI", "https://token.services.mozilla.com/1.0/sync/1.5");
 
 pref("services.sync.fxa.termsURL", "https://accounts.firefox.com/legal/terms");
 pref("services.sync.fxa.privacyURL", "https://accounts.firefox.com/legal/privacy");

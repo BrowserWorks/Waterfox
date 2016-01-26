@@ -11,6 +11,7 @@
 #include "nsIDocument.h"
 #include "nsIDOMHTMLCollection.h"
 #include "nsStyledElement.h"
+#include "HTMLCanvasElement.h"
 
 namespace mozilla {
 namespace dom {
@@ -112,6 +113,30 @@ AnonymousContent::RemoveAttributeForElement(const nsAString& aElementId,
   element->RemoveAttribute(aName, aRv);
 }
 
+already_AddRefed<nsISupports>
+AnonymousContent::GetCanvasContext(const nsAString& aElementId,
+                                   const nsAString& aContextId,
+                                   ErrorResult& aRv)
+{
+  Element* element = GetElementById(aElementId);
+
+  if (!element) {
+    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+    return nullptr;
+  }
+
+  if (!element->IsHTMLElement(nsGkAtoms::canvas)) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsISupports> context;
+
+  HTMLCanvasElement* canvas = static_cast<HTMLCanvasElement*>(element);
+  canvas->GetContext(aContextId, getter_AddRefs(context));
+
+  return context.forget();
+}
+
 Element*
 AnonymousContent::GetElementById(const nsAString& aElementId)
 {
@@ -138,5 +163,5 @@ AnonymousContent::WrapObject(JSContext* aCx,
   return AnonymousContentBinding::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla

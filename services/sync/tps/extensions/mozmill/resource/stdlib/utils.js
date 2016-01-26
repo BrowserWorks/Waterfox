@@ -10,9 +10,9 @@ var EXPORTED_SYMBOLS = ["applicationName", "assert", "Copy", "getBrowserObject",
                         "unwrapNode", "waitFor"
                        ];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 
 Cu.import("resource://gre/modules/NetUtil.jsm");
@@ -83,7 +83,7 @@ function getWindows(type) {
 }
 
 function getMethodInWindows(methodName) {
-  for each (var w in getWindows()) {
+  for (var w of getWindows()) {
     if (w[methodName] != undefined) {
       return w[methodName];
     }
@@ -93,7 +93,7 @@ function getMethodInWindows(methodName) {
 }
 
 function getWindowByTitle(title) {
-  for each (var w in getWindows()) {
+  for (var w of getWindows()) {
     if (w.document.title && w.document.title == title) {
       return w;
     }

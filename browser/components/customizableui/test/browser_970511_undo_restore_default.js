@@ -4,8 +4,10 @@
 
 "use strict";
 
+requestLongerTimeout(2);
+
 // Restoring default should show an "undo" option which undoes the restoring operation.
-add_task(function() {
+add_task(function*() {
   let homeButtonId = "home-button";
   CustomizableUI.removeWidgetFromArea(homeButtonId);
   yield startCustomizing();
@@ -20,7 +22,7 @@ add_task(function() {
   is(undoResetButton.hidden, false, "The undo button is visible after reset");
 
   undoResetButton.click();
-  yield waitForCondition(function() !gCustomizeMode.resetting);
+  yield waitForCondition(() => !gCustomizeMode.resetting);
   ok(!CustomizableUI.inDefaultState, "Not in default state after reset-undo");
   is(undoResetButton.hidden, true, "The undo button is hidden after clicking on the undo button");
   is(CustomizableUI.getPlacementOfWidget(homeButtonId), null, "Home button is in palette");
@@ -29,7 +31,7 @@ add_task(function() {
 });
 
 // Performing an action after a reset will hide the reset button.
-add_task(function() {
+add_task(function*() {
   let homeButtonId = "home-button";
   CustomizableUI.removeWidgetFromArea(homeButtonId);
   ok(!CustomizableUI.inDefaultState, "Not in default state to begin with");
@@ -47,7 +49,7 @@ add_task(function() {
 });
 
 // "Restore defaults", exiting customize, and re-entering shouldn't show the Undo button
-add_task(function() {
+add_task(function*() {
   let undoResetButton = document.getElementById("customization-undo-reset-button");
   is(undoResetButton.hidden, true, "The undo button is hidden before a reset");
   ok(!CustomizableUI.inDefaultState, "The browser should not be in default state");
@@ -60,7 +62,7 @@ add_task(function() {
 });
 
 // Bug 971626 - Restore Defaults should collapse the Title Bar
-add_task(function() {
+add_task(function*() {
   if (Services.appinfo.OS != "WINNT" &&
       Services.appinfo.OS != "Darwin") {
     return;
@@ -101,7 +103,7 @@ add_task(function() {
   is(undoResetButton.hidden, true, "Undo reset button should be hidden at end of test");
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   yield gCustomizeMode.reset();
   yield endCustomizing();
 });

@@ -8,12 +8,14 @@ if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
     CppUnitTests([
         'buffered_stun_socket_unittest',
         'ice_unittest',
+        'multi_tcp_socket_unittest',
         'nrappkit_unittest',
         'proxy_tunnel_socket_unittest',
         'rlogringbuffer_unittest',
         'runnable_utils_unittest',
         'simpletokenbucket_unittest',
         'sockettransportservice_unittest',
+        'test_nr_socket_unittest',
         'TestSyncRunnable',
         'transport_unittests',
         'turn_unittest',
@@ -24,12 +26,12 @@ if CONFIG['OS_TARGET'] != 'WINNT' and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
             'sctp_unittest',
         ])
 
-FAIL_ON_WARNINGS = True
-
 for var in ('MOZILLA_INTERNAL_API', 'MOZILLA_XPCOMRT_API', 'MOZILLA_EXTERNAL_LINKAGE', 'HAVE_STRDUP', 'NR_SOCKET_IS_VOID_PTR', 'SCTP_DEBUG', 'INET'):
     DEFINES[var] = True
 
 if CONFIG['OS_TARGET'] == 'Android':
+    DEFINES['LINUX'] = True
+    DEFINES['ANDROID'] = True
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/android/include',
     ]
@@ -37,6 +39,7 @@ else:
     DEFINES['INET6'] = True
 
 if CONFIG['OS_TARGET'] == 'Linux':
+    DEFINES['LINUX'] = True
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/linux/include',
     ]
@@ -53,13 +56,19 @@ if CONFIG['OS_TARGET'] == 'Darwin':
     ]
 
 if CONFIG['OS_TARGET'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
+    if CONFIG['OS_TARGET'] == 'Darwin':
+        DEFINES['DARWIN'] = True
+    else:
+        DEFINES['BSD'] = True
     LOCAL_INCLUDES += [
         '/media/mtransport/third_party/nrappkit/src/port/darwin/include',
-        '/media/mtransport/third_party/nrappkit/src/port/generic/include',
     ]
 
 # SCTP DEFINES
 if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['WIN'] = True
+    # for stun.h
+    DEFINES['WIN32'] = True
     DEFINES['__Userspace_os_Windows'] = 1
 else:
     # Works for Darwin, Linux, Android. Probably doesn't work for others.
@@ -79,6 +88,7 @@ LOCAL_INCLUDES += [
     '/media/mtransport/third_party/nrappkit/src/event',
     '/media/mtransport/third_party/nrappkit/src/log',
     '/media/mtransport/third_party/nrappkit/src/plugin',
+    '/media/mtransport/third_party/nrappkit/src/port/generic/include',
     '/media/mtransport/third_party/nrappkit/src/registry',
     '/media/mtransport/third_party/nrappkit/src/share',
     '/media/mtransport/third_party/nrappkit/src/stats',

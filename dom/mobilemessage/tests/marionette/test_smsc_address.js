@@ -2,77 +2,68 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 MARIONETTE_TIMEOUT = 60000;
+MARIONETTE_HEAD_JS = 'head.js';
 
-SpecialPowers.addPermission("sms", true, document);
+const SMSC_ATT = '+13123149810';
+const SMSC_ATT_TYPO = '+++1312@@@314$$$9,8,1,0';
+const SMSC_ATT_TEXT = '"+13123149810",145';
+const SMSC_O2 = '+447802000332';
+const SMSC_O2_TEXT = '"+447802000332",145';
+const SMSC_DEF = '+123456789';
+const SMSC_DEF_TEXT = '"+123456789",145';
+const SMSC_TON_UNKNOWN = '0407485455'
+const SMSC_TON_UNKNOWN_TEXT = '"0407485455",129';
 
-// Expected SMSC addresses of emulator
-const SMSC = "\"+123456789\",145";
+function verifySmscAddress(smsc, expectedAddr, expectedTon, expectedNpi) {
+  is(smsc.address, expectedAddr);
+  is(smsc.typeOfAddress.typeOfNumber, expectedTon);
+  is(smsc.typeOfAddress.numberPlanIdentification, expectedNpi);
+}
 
-let manager = window.navigator.mozMobileMessage;
+startTestCommon(function testCaseMain() {
+  return Promise.resolve()
 
-let tasks = {
-  // List of test fuctions. Each of them should call |tasks.next()| when
-  // completed or |tasks.finish()| to jump to the last one.
-  _tasks: [],
-  _nextTaskIndex: 0,
+    // Bug 1224990, initialization of SMSC in emulator NV item is unstable.
+    // Verify Getter after Setter to prevent intermittent failure.
 
-  push: function(func) {
-    this._tasks.push(func);
-  },
+    // Verify setting AT&T SMSC address.
+    .then(() => manager.setSmscAddress({ address:SMSC_ATT }))
+    .then(() => manager.getSmscAddress())
+    .then((result) =>
+      verifySmscAddress(result, SMSC_ATT, "international", "isdn"))
 
-  next: function() {
-    let index = this._nextTaskIndex++;
-    let task = this._tasks[index];
-    try {
-      task();
-    } catch (ex) {
-      ok(false, "test task[" + index + "] throws: " + ex);
-      // Run last task as clean up if possible.
-      if (index != this._tasks.length - 1) {
-        this.finish();
-      }
-    }
-  },
+    // Verify setting O2 SMSC address.
+    .then(() => manager.setSmscAddress({ address:SMSC_O2 }))
+    .then(() => manager.getSmscAddress())
+    .then((result) =>
+      verifySmscAddress(result, SMSC_O2, "international", "isdn"))
 
-  finish: function() {
-    this._tasks[this._tasks.length - 1]();
-  },
+    // Verify setting AT&T SMSC address with extra illegal characters.
+    .then(() => manager.setSmscAddress({ address:SMSC_ATT_TYPO }))
+    .then(() => manager.getSmscAddress())
+    .then((result) =>
+      verifySmscAddress(result, SMSC_ATT, "international", "isdn"))
 
-  run: function() {
-    this.next();
-  }
-};
+    // Verify setting a SMSC address with TON=unknown.
+    .then(() => manager.setSmscAddress({ address:SMSC_TON_UNKNOWN }))
+    .then(() => manager.getSmscAddress())
+    .then((result) =>
+      verifySmscAddress(result, SMSC_TON_UNKNOWN, "unknown", "isdn"))
 
-tasks.push(function init() {
-  log("Initialize test object.");
-  ok(manager instanceof MozMobileMessageManager,
-     "manager is instance of " + manager.constructor);
-  tasks.next();
+    // Verify setting invalid SMSC address.
+    .then(() => manager.setSmscAddress({}))
+    .then(() => Promise.reject("Expect for an error."),
+      (err) => log("Got expected error: " + err))
+    .then(() => manager.setSmscAddress({ address:"" }))
+    .then(() => Promise.reject("Expect for an error."),
+      (err) => log("Got expected error: " + err))
+    .then(() => manager.setSmscAddress({ address:"???" }))
+    .then(() => Promise.reject("Expect for an error."),
+      (err) => log("Got expected error: " + err))
+
+    // Restore to default emulator SMSC address.
+    .then(() => manager.setSmscAddress({ address:SMSC_DEF }))
+    .then(() => manager.getSmscAddress())
+    .then((result) =>
+      verifySmscAddress(result, SMSC_DEF, "international", "isdn"));
 });
-
-tasks.push(function readSmscAddress() {
-  log("read SMSC address");
-
-  let req = manager.getSmscAddress();
-  ok(req, "DOMRequest object for getting smsc address");
-
-  req.onsuccess = function(e) {
-    is(e.target.result, SMSC, "SMSC address");
-    tasks.next();
-  };
-
-  req.onerror = function(error) {
-    ok(false, "readSmscAddress(): Received 'onerror'");
-    tasks.finish();
-  };
-});
-
-// WARNING: All tasks should be pushed before this!!!
-tasks.push(function cleanUp() {
-  manager.onreceived = null;
-  SpecialPowers.removePermission("sms", document);
-  finish();
-});
-
-// Start the test
-tasks.run();

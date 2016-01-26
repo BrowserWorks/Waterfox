@@ -32,13 +32,14 @@ both:
 
     prio(high) sync Has(uint64_t objId, JSIDVariant id) returns (ReturnStatus rs, bool has);
     prio(high) sync HasOwn(uint64_t objId, JSIDVariant id) returns (ReturnStatus rs, bool has);
-    prio(high) sync Get(uint64_t objId, ObjectVariant receiver, JSIDVariant id) returns (ReturnStatus rs, JSVariant result);
+    prio(high) sync Get(uint64_t objId, JSVariant receiver, JSIDVariant id) returns (ReturnStatus rs, JSVariant result);
     prio(high) sync Set(uint64_t objId, JSIDVariant id, JSVariant value, JSVariant receiver) returns (ReturnStatus rs);
 
     prio(high) sync IsExtensible(uint64_t objId) returns (ReturnStatus rs, bool result);
     prio(high) sync CallOrConstruct(uint64_t objId, JSParam[] argv, bool construct) returns (ReturnStatus rs, JSVariant result, JSParam[] outparams);
     prio(high) sync HasInstance(uint64_t objId, JSVariant v) returns (ReturnStatus rs, bool has);
-    prio(high) sync ObjectClassIs(uint64_t objId, uint32_t classValue) returns (bool result);
+    prio(high) sync GetBuiltinClass(uint64_t objId) returns (ReturnStatus rs, uint32_t classValue);
+    prio(high) sync IsArray(uint64_t objId) returns (ReturnStatus rs, uint32_t ans);
     prio(high) sync ClassName(uint64_t objId) returns (nsCString name);
     prio(high) sync GetPrototype(uint64_t objId) returns (ReturnStatus rs, ObjectOrNullVariant result);
     prio(high) sync RegExpToShared(uint64_t objId) returns (ReturnStatus rs, nsString source, uint32_t flags);

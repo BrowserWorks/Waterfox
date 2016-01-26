@@ -7,27 +7,25 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-let highlight = document.getElementById("UITourHighlightContainer");
-let tooltip = document.getElementById("UITourTooltip");
-
-Components.utils.import("resource:///modules/UITour.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
+var highlight = document.getElementById("UITourHighlightContainer");
+var tooltip = document.getElementById("UITourTooltip");
 
 function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   function test_highlight_size_attributes(done) {
     gContentAPI.showHighlight("appMenu");
     waitForElementToBeVisible(highlight, function moveTheHighlight() {
       gContentAPI.showHighlight("urlbar");
       waitForElementToBeVisible(highlight, function checkPanelAttributes() {
         SimpleTest.executeSoon(() => {
-          ise(highlight.height, "", "Highlight panel should have no explicit height set");
-          ise(highlight.width, "", "Highlight panel should have no explicit width set");
+          is(highlight.height, "", "Highlight panel should have no explicit height set");
+          is(highlight.width, "", "Highlight panel should have no explicit width set");
           done();
         });
       }, "Highlight should be moved to the urlbar");
@@ -40,8 +38,8 @@ let tests = [
       gContentAPI.showInfo("urlbar", "new title", "new text");
       waitForElementToBeVisible(tooltip, function checkPanelAttributes() {
         SimpleTest.executeSoon(() => {
-          ise(tooltip.height, "", "Info panel should have no explicit height set");
-          ise(tooltip.width, "", "Info panel should have no explicit width set");
+          is(tooltip.height, "", "Info panel should have no explicit height set");
+          is(tooltip.width, "", "Info panel should have no explicit width set");
           done();
         });
       }, "Tooltip should be moved to the urlbar");

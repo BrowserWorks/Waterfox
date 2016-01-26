@@ -21,8 +21,8 @@ function newURI (uri) {
 }
 exports.newURI = newURI;
 
-let getURL = method('sdk/url:getURL');
-getURL.define(String, function (url) url);
+var getURL = method('sdk/url:getURL');
+getURL.define(String, url => url);
 getURL.define(function (object) {
   return null;
 });

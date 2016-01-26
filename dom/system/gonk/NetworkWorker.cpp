@@ -134,7 +134,7 @@ NetworkWorker::~NetworkWorker()
 already_AddRefed<NetworkWorker>
 NetworkWorker::FactoryCreate()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return nullptr;
   }
 
@@ -148,7 +148,7 @@ NetworkWorker::FactoryCreate()
     ClearOnShutdown(&gNetworkUtils);
   }
 
-  nsRefPtr<NetworkWorker> worker = gNetworkWorker.get();
+  RefPtr<NetworkWorker> worker = gNetworkWorker.get();
   return worker.forget();
 }
 

@@ -26,7 +26,6 @@
 #include "nsIObserverService.h"         // for nsIObserverService
 #include "nsIRunnable.h"                // for nsIRunnable
 #include "nsISupports.h"
-#include "nsString.h"               // for nsAutoCString, nsCString, etc
 #include "nsTArray.h"                   // for nsTArray
 #include "nsThreadUtils.h"              // for NS_DispatchToMainThread, etc
 #include "nscore.h"                     // for NS_IMETHOD, NS_IMETHODIMP, etc
@@ -78,10 +77,26 @@ public:
     nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
     if (!observerService)
       return NS_OK;
-    nsRefPtr<ObserverToDestroyFeaturesAlreadyReported> observer = new ObserverToDestroyFeaturesAlreadyReported;
+    RefPtr<ObserverToDestroyFeaturesAlreadyReported> observer = new ObserverToDestroyFeaturesAlreadyReported;
     observerService->AddObserver(observer, "xpcom-shutdown", false);
     return NS_OK;
   }
+};
+
+class AppendAppNotesRunnable : public nsCancelableRunnable {
+public:
+  explicit AppendAppNotesRunnable(const nsACString& aFeatureStr)
+    : mFeatureString(aFeatureStr)
+  {
+  }
+
+  NS_IMETHOD Run() override {
+    CrashReporter::AppendAppNotesToCrashReport(mFeatureString);
+    return NS_OK;
+  }
+
+private:
+  nsAutoCString mFeatureString;
 };
 
 void
@@ -98,20 +113,33 @@ ScopedGfxFeatureReporter::WriteAppNote(char statusChar)
   nsAutoCString featureString;
   featureString.AppendPrintf("%s%c ",
                              mFeature,
-                             mStatusChar);
+                             statusChar);
 
   if (!gFeaturesAlreadyReported->Contains(featureString)) {
     gFeaturesAlreadyReported->AppendElement(featureString);
-    CrashReporter::AppendAppNotesToCrashReport(featureString);
+    AppNote(featureString);
   }
 }
 
+void
+ScopedGfxFeatureReporter::AppNote(const nsACString& aMessage)
+{
+  if (NS_IsMainThread()) {
+    CrashReporter::AppendAppNotesToCrashReport(aMessage);
+  } else {
+    nsCOMPtr<nsIRunnable> r = new AppendAppNotesRunnable(aMessage);
+    NS_DispatchToMainThread(r);
+  }
+}
+  
 } // end namespace mozilla
 
 #else
 
 namespace mozilla {
 void ScopedGfxFeatureReporter::WriteAppNote(char) {}
-}
+void ScopedGfxFeatureReporter::AppNote(const nsACString&) {}
+  
+} // namespace mozilla
 
 #endif

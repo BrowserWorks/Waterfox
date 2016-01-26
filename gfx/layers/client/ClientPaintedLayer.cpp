@@ -75,17 +75,25 @@ ClientPaintedLayer::PaintThebes()
   // from RGB to RGBA, because we might need to repaint with
   // subpixel AA)
   state.mRegionToInvalidate.And(state.mRegionToInvalidate,
-                                GetEffectiveVisibleRegion());
+                                GetEffectiveVisibleRegion().ToUnknownRegion());
 
   bool didUpdate = false;
   RotatedContentBuffer::DrawIterator iter;
   while (DrawTarget* target = mContentClient->BorrowDrawTargetForPainting(state, &iter)) {
+    if (!target || !target->IsValid()) {
+      if (target) {
+        mContentClient->ReturnDrawTargetToBuffer(target);
+      }
+      continue;
+    }
+    
     SetAntialiasingFlags(this, target);
 
-    nsRefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
+    RefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
 
     ClientManager()->GetPaintedLayerCallback()(this,
                                               ctx,
+                                              iter.mDrawRegion,
                                               iter.mDrawRegion,
                                               state.mClip,
                                               state.mRegionToInvalidate,
@@ -109,7 +117,7 @@ ClientPaintedLayer::PaintThebes()
     // so deleting this Hold for whatever reason will break things.
     ClientManager()->Hold(this);
     contentClientRemote->Updated(state.mRegionToDraw,
-                                 mVisibleRegion,
+                                 mVisibleRegion.ToUnknownRegion(),
                                  state.mDidSelfCopy);
   }
 }
@@ -117,9 +125,7 @@ ClientPaintedLayer::PaintThebes()
 void
 ClientPaintedLayer::RenderLayerWithReadback(ReadbackProcessor *aReadback)
 {
-  if (GetMaskLayer()) {
-    ToClientLayer(GetMaskLayer())->RenderLayer();
-  }
+  RenderMaskLayers(this);
   
   if (!mContentClient) {
     mContentClient = ContentClient::CreateContentClient(ClientManager()->AsShadowForwarder());
@@ -143,22 +149,6 @@ ClientPaintedLayer::RenderLayerWithReadback(ReadbackProcessor *aReadback)
   mContentClient->EndPaint(&readbackUpdates);
 }
 
-bool
-ClientLayerManager::IsOptimizedFor(PaintedLayer* aLayer, PaintedLayerCreationHint aHint)
-{
-#ifdef MOZ_B2G
-  // The only creation hint is whether the layer is scrollable or not, and this
-  // is only respected on B2G, where it's used to determine whether to use
-  // tiled layers or not.
-  // There are pretty nasty performance consequences for not using tiles on
-  // large, scrollable layers, so we want the layer to be recreated in this
-  // situation.
-  return aHint == aLayer->GetCreationHint();
-#else
-  return LayerManager::IsOptimizedFor(aLayer, aHint);
-#endif
-}
-
 already_AddRefed<PaintedLayer>
 ClientLayerManager::CreatePaintedLayer()
 {
@@ -169,22 +159,18 @@ already_AddRefed<PaintedLayer>
 ClientLayerManager::CreatePaintedLayerWithHint(PaintedLayerCreationHint aHint)
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  if (
-#ifdef MOZ_B2G
-      aHint == SCROLLABLE &&
-#endif
-      gfxPrefs::LayersTilesEnabled()
+  if (gfxPrefs::LayersTilesEnabled()
 #ifndef MOZ_X11
       && (AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_OPENGL ||
           AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_D3D9 ||
           AsShadowForwarder()->GetCompositorBackendType() == LayersBackend::LAYERS_D3D11)
 #endif
   ) {
-    nsRefPtr<ClientTiledPaintedLayer> layer = new ClientTiledPaintedLayer(this, aHint);
+    RefPtr<ClientTiledPaintedLayer> layer = new ClientTiledPaintedLayer(this, aHint);
     CREATE_SHADOW(Painted);
     return layer.forget();
   } else {
-    nsRefPtr<ClientPaintedLayer> layer = new ClientPaintedLayer(this, aHint);
+    RefPtr<ClientPaintedLayer> layer = new ClientPaintedLayer(this, aHint);
     CREATE_SHADOW(Painted);
     return layer.forget();
   }
@@ -202,5 +188,5 @@ ClientPaintedLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

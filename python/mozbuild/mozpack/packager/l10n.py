@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 '''
 Replace localized parts of a packaged directory with data from a langpack
 directory.
@@ -42,7 +44,7 @@ from createprecomplete import generate_precomplete
 class LocaleManifestFinder(object):
     def __init__(self, finder):
         entries = self.entries = []
-        bases = self.bases = ['']
+        bases = self.bases = []
 
         class MockFormatter(object):
             def add_interfaces(self, path, content):

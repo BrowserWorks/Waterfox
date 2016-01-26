@@ -10,11 +10,12 @@ function test() {
 
     var doc = gBrowser.contentDocument;
     var testImg = doc.getElementById("test-image");
-    var pageInfo = BrowserPageInfo(doc, "mediaTab", testImg);
+    var pageInfo = BrowserPageInfo(gBrowser.selectedBrowser.currentURI.spec,
+                                   "mediaTab", testImg);
 
     pageInfo.addEventListener("load", function () {
       pageInfo.removeEventListener("load", arguments.callee, true);
-      pageInfo.onImagePreviewShown.push(function () {
+      pageInfo.onFinished.push(function () {
         executeSoon(function () {
           var pageInfoImg = pageInfo.document.getElementById("thepreviewimage");
 

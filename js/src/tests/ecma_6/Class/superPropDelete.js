@@ -1,14 +1,12 @@
-var test = `
-
+// Make sure we get the proper side effects.
 // |delete super.prop| and |delete super[expr]| throw universally.
-// Even so, we should make sure we get proper side effects
 
 class base {
     constructor() { }
 }
 
 class derived extends base {
-    constructor() { }
+    constructor() { super(); }
     testDeleteProp() { delete super.prop; }
     testDeleteElem() {
         let sideEffect = 0;
@@ -43,11 +41,6 @@ Object.setPrototypeOf(thing2, new Proxy({}, {
     deleteProperty(x) { throw "FAIL"; }
 }));
 assertThrowsInstanceOf(() => thing2.go(), ReferenceError);
-
-`;
-
-if (classesEnabled())
-    eval(test);
 
 if (typeof reportCompare === 'function')
     reportCompare(0,0,"OK");

@@ -20,12 +20,25 @@
                        oncommand="gMenuButtonUpdateBadge.onMenuPanelCommand(event);"
                        wrap="true"
                        hidden="true"/>
-        <toolbarbutton id="PanelUI-fxa-status"
-                       defaultlabel="&fxaSignIn.label;"
-                       errorlabel="&fxaSignInError.label;"
-                       fxabrandname="&syncBrand.fxAccount.label;"
-                       oncommand="gFxAccounts.onMenuPanelCommand(event);"
-                       hidden="true"/>
+        <hbox id="PanelUI-footer-fxa">
+          <hbox id="PanelUI-fxa-status"
+                defaultlabel="&fxaSignIn.label;"
+                signedinTooltiptext="&fxaSignedIn.tooltip;"
+                errorlabel="&fxaSignInError.label;"
+                unverifiedlabel="&fxaUnverified.label;"
+                onclick="if (event.which == 1) gFxAccounts.onMenuPanelCommand();">
+            <image id="PanelUI-fxa-avatar"/>
+            <toolbarbutton id="PanelUI-fxa-label"
+                           fxabrandname="&syncBrand.fxAccount.label;"/>
+          </hbox>
+          <toolbarseparator/>
+          <toolbarbutton id="PanelUI-fxa-icon"
+                         oncommand="gSyncUI.doSync();"
+                         closemenu="none">
+            <observes element="sync-status" attribute="syncstatus"/>
+            <observes element="sync-status" attribute="tooltiptext"/>
+          </toolbarbutton>
+        </hbox>
 
         <hbox id="PanelUI-footer-inner">
           <toolbarbutton id="PanelUI-customize" label="&appMenuCustomize.label;"
@@ -71,13 +84,11 @@
                        label="&appMenuHistory.clearRecent.label;"
                        class="subviewbutton"
                        command="Tools:Sanitize"/>
-#ifdef MOZ_SERVICES_SYNC
         <toolbarbutton id="sync-tabs-menuitem2"
                        class="syncTabsMenuItem subviewbutton"
-                       label="&syncTabsMenu2.label;"
+                       label="&syncTabsMenu3.label;"
                        oncommand="BrowserOpenSyncTabs();"
-                       disabled="true"/>
-#endif
+                       hidden="true"/>
         <toolbarbutton id="appMenuRestoreLastSession"
                        label="&appMenuHistory.restoreSession.label;"
                        class="subviewbutton"
@@ -93,6 +104,88 @@
                      class="panel-subview-footer subviewbutton"
                      label="&appMenuHistory.showAll.label;"
                      oncommand="PlacesCommandHook.showPlacesOrganizer('History'); CustomizableUI.hidePanelForNode(this);"/>
+    </panelview>
+
+    <panelview id="PanelUI-remotetabs" flex="1" class="PanelUI-subView">
+      <label value="&appMenuRemoteTabs.label;" class="panel-subview-header"/>
+      <vbox class="panel-subview-body">
+        <!-- this widget has 3 boxes in the body, but only 1 is ever visible -->
+        <!-- When Sync is ready to sync -->
+        <vbox id="PanelUI-remotetabs-main" observes="sync-syncnow-state">
+          <toolbarbutton id="PanelUI-remotetabs-syncnow"
+                         observes="sync-status"
+                         class="subviewbutton"
+                         oncommand="gSyncUI.doSync();"
+                         closemenu="none"/>
+          <menuseparator id="PanelUI-remotetabs-separator"/>
+          <deck id="PanelUI-remotetabs-deck">
+            <!-- Sync is ready to Sync and the "tabs" engine is enabled -->
+            <vbox id="PanelUI-remotetabs-tabspane">
+              <vbox id="PanelUI-remotetabs-tabslist"
+                    notabsforclientlabel="&appMenuRemoteTabs.notabs.label;"
+                    />
+            </vbox>
+            <!-- Sync is ready to Sync but the "tabs" engine isn't enabled-->
+            <hbox id="PanelUI-remotetabs-tabsdisabledpane" pack="center" flex="1">
+              <vbox class="PanelUI-remotetabs-instruction-box">
+                <hbox pack="center">
+                  <image class="fxaSyncIllustration" alt=""/>
+                </hbox>
+                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.tabsnotsyncing.label;</label>
+                <hbox pack="center">
+                  <toolbarbutton class="PanelUI-remotetabs-prefs-button"
+                                 label="&appMenuRemoteTabs.openprefs.label;"
+                                 oncommand="gSyncUI.openSetup();"/>
+                </hbox>
+              </vbox>
+            </hbox>
+            <!-- Sync is ready to Sync but we are still fetching the tabs to show -->
+            <vbox id="PanelUI-remotetabs-fetching">
+              <label>&appMenuRemoteTabs.fetching.label;</label>
+            </vbox>
+            <!-- Sync has only 1 (ie, this) device connected -->
+            <hbox id="PanelUI-remotetabs-nodevicespane" pack="center" flex="1">
+              <vbox class="PanelUI-remotetabs-instruction-box">
+                <hbox pack="center">
+                  <image class="fxaSyncIllustration" alt=""/>
+                </hbox>
+                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.label;</label>
+                <!-- The inner HTML for PanelUI-remotetabs-mobile-promo is built at runtime -->
+                <label id="PanelUI-remotetabs-mobile-promo"/>
+              </vbox>
+            </hbox>
+          </deck>
+        </vbox>
+        <!-- a box to ensure contained boxes are centered horizonally -->
+        <hbox pack="center" flex="1">
+          <!-- When Sync is not configured -->
+          <vbox id="PanelUI-remotetabs-setupsync"
+                flex="1"
+                align="center"
+                class="PanelUI-remotetabs-instruction-box"
+                observes="sync-setup-state">
+            <image class="fxaSyncIllustration" alt=""/>
+            <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
+            <toolbarbutton class="PanelUI-remotetabs-prefs-button"
+                           label="&appMenuRemoteTabs.signin.label;"
+                           oncommand="gSyncUI.openSetup();"/>
+          </vbox>
+          <!-- When Sync needs re-authentication. This uses the exact same messaging
+               as "Sync is not configured" but remains a separate box so we get
+               the goodness of observing broadcasters to manage the hidden states -->
+          <vbox id="PanelUI-remotetabs-reauthsync"
+                flex="1"
+                align="center"
+                class="PanelUI-remotetabs-instruction-box"
+                observes="sync-reauth-state">
+            <image class="fxaSyncIllustration" alt=""/>
+            <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.notsignedin.label;</label>
+            <toolbarbutton class="PanelUI-remotetabs-prefs-button"
+                           label="&appMenuRemoteTabs.signin.label;"
+                           oncommand="gSyncUI.openSetup();"/>
+          </vbox>
+        </hbox>
+      </vbox>
     </panelview>
 
     <panelview id="PanelUI-bookmarks" flex="1" class="PanelUI-subView">
@@ -126,21 +219,6 @@
                        label="&unsortedBookmarksCmd.label;"
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('UnfiledBookmarks'); PanelUI.hide();"/>
-        <toolbarseparator>
-          <observes element="readingListSidebar" attribute="hidden"/>
-        </toolbarseparator>
-        <toolbarbutton id="panelMenu_viewReadingListSidebar"
-                       label="&readingList.showSidebar.label;"
-                       class="subviewbutton"
-                       key="key_readingListSidebar"
-                       oncommand="SidebarUI.toggle('readingListSidebar'); PanelUI.hide();">
-          <observes element="readingListSidebar" attribute="checked"/>
-          <observes element="readingListSidebar" attribute="hidden"/>
-        </toolbarbutton>
-        <toolbarseparator id="panelMenu_pocketSeparator"/>
-        <toolbarbutton id="panelMenu_pocket" label="&pocketMenuitem.label;"
-                       class="subviewbutton cui-withicon"
-                       oncommand="openUILink(Pocket.listURL, event);"/>
         <toolbarseparator class="small-separator"/>
         <toolbaritem id="panelMenu_bookmarksMenu"
                      orient="vertical"
@@ -233,22 +311,17 @@
       </vbox>
     </panelview>
 
-    <panelview id="PanelUI-pocketView" flex="1">
-      <vbox class="panel-subview-body">
-        <iframe id="pocket-panel-iframe" type="content"/>
-      </vbox>
-    </panelview>
-
-
   </panelmultiview>
   <!-- These menupopups are located here to prevent flickering,
        see bug 492960 comment 20. -->
   <menupopup id="customizationPanelItemContextMenu">
     <menuitem oncommand="gCustomizeMode.addToToolbar(document.popupNode)"
+              closemenu="single"
               class="customize-context-moveToToolbar"
               accesskey="&customizeMenu.moveToToolbar.accesskey;"
               label="&customizeMenu.moveToToolbar.label;"/>
     <menuitem oncommand="gCustomizeMode.removeFromArea(document.popupNode)"
+              closemenu="single"
               class="customize-context-removeFromPanel"
               accesskey="&customizeMenu.removeFromMenu.accesskey;"
               label="&customizeMenu.removeFromMenu.label;"/>

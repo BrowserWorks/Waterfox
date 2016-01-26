@@ -18,6 +18,7 @@
 #include "nsInputStreamPump.h"
 #include "CacheFileUtils.h"
 #include <algorithm>
+#include "nsIPipe.h"
 
 using namespace mozilla::net;
 
@@ -467,7 +468,7 @@ nsAboutCacheEntry::WriteCacheEntryDescription(nsICacheEntry *entry)
         return NS_OK;
     }
 
-    nsRefPtr<nsInputStreamPump> pump;
+    RefPtr<nsInputStreamPump> pump;
     rv = nsInputStreamPump::Create(getter_AddRefs(pump), stream);
     if (NS_FAILED(rv)) {
         return NS_OK; // just ignore

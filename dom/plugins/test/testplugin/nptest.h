@@ -62,6 +62,12 @@ typedef enum {
 } TestFunction;
 
 typedef enum {
+  AD_NONE,
+  AD_BITMAP,
+  AD_DXGI
+} AsyncDrawing;
+
+typedef enum {
   ACTIVATION_STATE_UNKNOWN,
   ACTIVATION_STATE_ACTIVATED,
   ACTIVATION_STATE_DEACTIVATED
@@ -106,6 +112,8 @@ typedef struct InstanceData {
   bool asyncCallbackResult;
   bool invalidateDuringPaint;
   bool slowPaint;
+  bool playingAudio;
+  bool audioMuted;
   int32_t winX;
   int32_t winY;
   int32_t lastMouseX;
@@ -145,8 +153,18 @@ typedef struct InstanceData {
   int32_t mouseUpEventCount;
   int32_t bugMode;
   std::string javaCodebase;
+  AsyncDrawing asyncDrawing;
+  NPAsyncSurface *frontBuffer;
+  NPAsyncSurface *backBuffer;
+  std::string lastComposition;
+  void* placeholderWnd;
 } InstanceData;
 
 void notifyDidPaint(InstanceData* instanceData);
+
+#if defined(XP_WIN)
+bool setupDxgiSurfaces(NPP npp, InstanceData* instanceData);
+void drawDxgiBitmapColor(InstanceData* instanceData);
+#endif
 
 #endif // nptest_h_

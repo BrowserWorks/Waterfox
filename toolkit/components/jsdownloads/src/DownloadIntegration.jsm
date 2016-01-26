@@ -68,6 +68,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gMIMEService",
 XPCOMUtils.defineLazyServiceGetter(this, "gExternalProtocolService",
                                    "@mozilla.org/uriloader/external-protocol-service;1",
                                    "nsIExternalProtocolService");
+#ifdef MOZ_WIDGET_ANDROID
+XPCOMUtils.defineLazyModuleGetter(this, "RuntimePermissions",
+                                  "resource://gre/modules/RuntimePermissions.jsm");
+#endif
 
 XPCOMUtils.defineLazyGetter(this, "gParentalControlsService", function() {
   if ("@mozilla.org/parental-controls-service;1" in Cc) {
@@ -136,6 +140,8 @@ this.DownloadIntegration = {
   dontLoadObservers: false,
   dontCheckParentalControls: false,
   shouldBlockInTest: false,
+  dontCheckRuntimePermissions: false,
+  shouldBlockInTestForRuntimePermissions: false,
 #ifdef MOZ_URL_CLASSIFIER
   dontCheckApplicationReputation: false,
 #else
@@ -159,7 +165,9 @@ this.DownloadIntegration = {
   /**
    * Gets and sets test mode
    */
-  get testMode() this._testMode,
+  get testMode() {
+    return this._testMode;
+  },
   set testMode(mode) {
     this._downloadsDirectory = null;
     return (this._testMode = mode);
@@ -494,6 +502,25 @@ this.DownloadIntegration = {
     }
 
     return Promise.resolve(shouldBlock);
+  },
+
+  /**
+   * Checks to determine whether to block downloads for not granted runtime permissions.
+   *
+   * @return {Promise}
+   * @resolves The boolean indicates to block downloads or not.
+   */
+  shouldBlockForRuntimePermissions: function DI_shouldBlockForRuntimePermissions() {
+    if (this.dontCheckRuntimePermissions) {
+      return Promise.resolve(this.shouldBlockInTestForRuntimePermissions);
+    }
+
+#ifdef MOZ_WIDGET_ANDROID
+    return RuntimePermissions.waitForPermissions(RuntimePermissions.WRITE_EXTERNAL_STORAGE)
+                             .then(permissionGranted => !permissionGranted);
+#else
+    return Promise.resolve(false);
+#endif
   },
 
   /**
@@ -909,6 +936,20 @@ this.DownloadIntegration = {
       for (let topic of kObserverTopics) {
         Services.obs.addObserver(DownloadObserver, topic, false);
       }
+    }
+    return Promise.resolve();
+  },
+
+  /**
+   * Force a save on _store if it exists. Used to ensure downloads do not
+   * persist after being sanitized on Android.
+   *
+   * @return {Promise}
+   * @resolves When _store.save() completes.
+   */
+  forceSave: function DI_forceSave() {
+    if (this._store) {
+      return this._store.save();
     }
     return Promise.resolve();
   },

@@ -26,7 +26,7 @@
 
 namespace mozilla {
 class PreferenceServiceReporter;
-} // namespace mozilla;
+} // namespace mozilla
 
 class nsPrefBranch;
 
@@ -200,7 +200,10 @@ protected:
   virtual ~nsPrefBranch();
 
   nsPrefBranch()    /* disallow use of this constructer */
-    { }
+    : mPrefRootLength(0)
+    , mIsDefault(false)
+    , mFreeingObserverList(false)
+  {}
 
   nsresult   GetDefaultFromPropertiesFile(const char *aPrefName, char16_t **return_buf);
   // As SetCharPref, but without any check on the length of |aValue|

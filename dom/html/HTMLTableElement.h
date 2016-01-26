@@ -190,7 +190,7 @@ public:
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                 const nsAttrValueOrString* aValue,
+                                 nsAttrValueOrString* aValue,
                                  bool aNotify) override;
   /**
    * Called when an attribute has just been changed
@@ -218,8 +218,8 @@ protected:
     return nullptr;
   }
 
-  nsRefPtr<nsContentList> mTBodies;
-  nsRefPtr<TableRowsCollection> mRows;
+  RefPtr<nsContentList> mTBodies;
+  RefPtr<TableRowsCollection> mRows;
   // Sentinel value of TABLE_ATTRS_DIRTY indicates that this is dirty and needs
   // to be recalculated.
   nsMappedAttributes *mTableInheritedAttributes;

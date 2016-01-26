@@ -22,7 +22,7 @@
 
 #include "mozilla/FileLocation.h"
 
-class nsIDOMWindow;
+class nsPIDOMWindow;
 class nsIPrefBranch;
 class nsIURL;
 
@@ -95,9 +95,11 @@ protected:
 
   nsresult SelectLocaleFromPref(nsIPrefBranch* prefs);
 
-  static nsresult RefreshWindow(nsIDOMWindow* aWindow);
+  static nsresult RefreshWindow(nsPIDOMWindow* aWindow);
   static nsresult GetProviderAndPath(nsIURL* aChromeURL,
                                      nsACString& aProvider, nsACString& aPath);
+
+  bool GetDirectionForLocale(const nsACString& aLocale);
 
 public:
   static already_AddRefed<nsChromeRegistry> GetSingleton();

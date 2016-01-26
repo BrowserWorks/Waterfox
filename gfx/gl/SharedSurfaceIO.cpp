@@ -6,8 +6,9 @@
 #include "SharedSurfaceIO.h"
 
 #include "GLContextCGL.h"
-#include "mozilla/gfx/MacIOSurface.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/gfx/MacIOSurface.h"
+#include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor, etc
 #include "ScopedGLHelpers.h"
 
 namespace mozilla {
@@ -29,7 +30,7 @@ SharedSurface_IOSurface::Create(const RefPtr<MacIOSurface>& ioSurf,
 }
 
 void
-SharedSurface_IOSurface::Fence()
+SharedSurface_IOSurface::ProducerReleaseImpl()
 {
     mGL->MakeCurrent();
     mGL->fFlush();
@@ -152,7 +153,8 @@ SharedSurface_IOSurface::SharedSurface_IOSurface(const RefPtr<MacIOSurface>& ioS
                   AttachmentType::GLTexture,
                   gl,
                   size,
-                  hasAlpha)
+                  hasAlpha,
+                  true)
   , mIOSurf(ioSurf)
 {
     gl->MakeCurrent();
@@ -170,18 +172,54 @@ SharedSurface_IOSurface::~SharedSurface_IOSurface()
     }
 }
 
+bool
+SharedSurface_IOSurface::ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor)
+{
+    bool isOpaque = !mHasAlpha;
+    *out_descriptor = layers::SurfaceDescriptorMacIOSurface(mIOSurf->GetIOSurfaceID(),
+                                                            mIOSurf->GetContentsScaleFactor(),
+                                                            isOpaque);
+    return true;
+}
+
+bool
+SharedSurface_IOSurface::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surface)
+{
+    MOZ_ASSERT(out_surface);
+    mIOSurf->Lock();
+    size_t bytesPerRow = mIOSurf->GetBytesPerRow();
+    size_t ioWidth = mIOSurf->GetDevicePixelWidth();
+    size_t ioHeight = mIOSurf->GetDevicePixelHeight();
+
+    const unsigned char* ioData = (unsigned char*)mIOSurf->GetBaseAddress();
+    gfx::DataSourceSurface::ScopedMap map(out_surface, gfx::DataSourceSurface::WRITE);
+    if (!map.IsMapped()) {
+        mIOSurf->Unlock();
+        return false;
+    }
+
+    for (size_t i = 0; i < ioHeight; i++) {
+        memcpy(map.GetData() + i * map.GetStride(),
+               ioData + i * bytesPerRow, ioWidth * 4);
+    }
+
+    mIOSurf->Unlock();
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////
 // SurfaceFactory_IOSurface
 
 /*static*/ UniquePtr<SurfaceFactory_IOSurface>
-SurfaceFactory_IOSurface::Create(GLContext* gl,
-                                 const SurfaceCaps& caps)
+SurfaceFactory_IOSurface::Create(GLContext* gl, const SurfaceCaps& caps,
+                                 const RefPtr<layers::ISurfaceAllocator>& allocator,
+                                 const layers::TextureFlags& flags)
 {
     gfx::IntSize maxDims(MacIOSurface::GetMaxWidth(),
                          MacIOSurface::GetMaxHeight());
 
     typedef SurfaceFactory_IOSurface ptrT;
-    UniquePtr<ptrT> ret( new ptrT(gl, caps, maxDims) );
+    UniquePtr<ptrT> ret( new ptrT(gl, caps, allocator, flags, maxDims) );
     return Move(ret);
 }
 
@@ -207,5 +245,5 @@ SurfaceFactory_IOSurface::CreateShared(const gfx::IntSize& size)
     return SharedSurface_IOSurface::Create(ioSurf, mGL, hasAlpha);
 }
 
-}
-}
+} // namespace gl
+} // namespace mozilla

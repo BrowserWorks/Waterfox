@@ -4,6 +4,7 @@
 
 import hashlib
 import mozlog
+import logging
 import os
 import posixpath
 import re
@@ -45,12 +46,14 @@ class DeviceManager(object):
     """
 
     _logcatNeedsRoot = True
+    default_timeout = 300
+    short_timeout = 30
 
     def __init__(self, logLevel=None, deviceRoot=None):
         try:
-            self._logger = mozlog.structured.structuredlog.get_default_logger(component="mozdevice")
+            self._logger = mozlog.get_default_logger(component="mozdevice")
             if not self._logger: # no global structured logger, fall back to reg logging
-                self._logger = mozlog.getLogger("mozdevice")
+                self._logger = mozlog.unstructured.getLogger("mozdevice")
                 if logLevel is not None:
                     self._logger.setLevel(logLevel)
         except AttributeError:
@@ -86,16 +89,16 @@ class DeviceManager(object):
     @property
     def debug(self):
         self._logger.warning("dm.debug is deprecated. Use logLevel.")
-        levels = {mozlog.DEBUG: 5, mozlog.INFO: 3, mozlog.WARNING: 2,
-                  mozlog.ERROR: 1, mozlog.CRITICAL: 0}
+        levels = {logging.DEBUG: 5, logging.INFO: 3, logging.WARNING: 2,
+                  logging.ERROR: 1, logging.CRITICAL: 0}
         return levels[self.logLevel]
 
     @debug.setter
     def debug_setter(self, newDebug):
         self._logger.warning("dm.debug is deprecated. Use logLevel.")
         newDebug = 5 if newDebug > 5 else newDebug # truncate >=5 to 5
-        levels = {5: mozlog.DEBUG, 3: mozlog.INFO, 2: mozlog.WARNING,
-                  1: mozlog.ERROR, 0: mozlog.CRITICAL}
+        levels = {5: logging.DEBUG, 3: logging.INFO, 2: logging.WARNING,
+                  1: logging.ERROR, 0: logging.CRITICAL}
         self.logLevel = levels[newDebug]
 
     @abstractmethod
@@ -133,7 +136,8 @@ class DeviceManager(object):
         """
         for interface in interfaces:
             match = re.match(r"%s: ip (\S+)" % interface,
-                             self.shellCheckOutput(['ifconfig', interface]))
+                             self.shellCheckOutput(['ifconfig', interface],
+                             timeout=self.short_timeout))
             if match:
                 return match.group(1)
 
@@ -144,7 +148,8 @@ class DeviceManager(object):
         #TODO: spawn this off in a separate thread/process so we can collect all the logcat information
 
         # Right now this is just clearing the logcat so we can only see what happens after this call.
-        self.shellCheckOutput(['/system/bin/logcat', '-c'], root=self._logcatNeedsRoot)
+        self.shellCheckOutput(['/system/bin/logcat', '-c'], root=self._logcatNeedsRoot,
+                              timeout=self.short_timeout)
 
     def getLogcat(self, filterSpecs=["dalvikvm:I", "ConnectivityService:S",
                                       "WifiMonitor:S", "WifiStateTracker:S",
@@ -157,7 +162,8 @@ class DeviceManager(object):
         """
         cmdline = ["/system/bin/logcat", "-v", format, "-d"] + filterSpecs
         output = self.shellCheckOutput(cmdline,
-                                      root=self._logcatNeedsRoot)
+                                      root=self._logcatNeedsRoot,
+                                      timeout=self.short_timeout)
         lines = output.replace('\r\n', '\n').splitlines(True)
 
         for regex in filterOutRegexps:

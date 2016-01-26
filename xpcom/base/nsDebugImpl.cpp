@@ -17,7 +17,6 @@
 #include "nsString.h"
 #include "nsXULAppAPI.h"
 #include "prprf.h"
-#include "prlog.h"
 #include "nsError.h"
 #include "prerror.h"
 #include "prerr.h"
@@ -217,16 +216,6 @@ nsDebugImpl::SetMultiprocessMode(const char* aDesc)
  * always compiled in, in case some other module that uses it is
  * compiled with debugging even if this library is not.
  */
-static PRLogModuleInfo* gDebugLog;
-
-static void
-InitLog()
-{
-  if (0 == gDebugLog) {
-    gDebugLog = PR_NewLogModule("nsDebug");
-  }
-}
-
 enum nsAssertBehavior
 {
   NS_ASSERT_UNINITIALIZED,
@@ -317,31 +306,25 @@ EXPORT_XPCOM_API(void)
 NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
               const char* aFile, int32_t aLine)
 {
-  InitLog();
-
   FixedBuffer buf;
-  PRLogModuleLevel ll = PR_LOG_WARNING;
   const char* sevString = "WARNING";
 
   switch (aSeverity) {
     case NS_DEBUG_ASSERTION:
       sevString = "###!!! ASSERTION";
-      ll = PR_LOG_ERROR;
       break;
 
     case NS_DEBUG_BREAK:
       sevString = "###!!! BREAK";
-      ll = PR_LOG_ALWAYS;
       break;
 
     case NS_DEBUG_ABORT:
       sevString = "###!!! ABORT";
-      ll = PR_LOG_ALWAYS;
       break;
 
     default:
       aSeverity = NS_DEBUG_WARNING;
-  };
+  }
 
 #  define PrintToBuffer(...) PR_sxprintf(StuffFixedBuffer, &buf, __VA_ARGS__)
 
@@ -371,13 +354,9 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
 
 #  undef PrintToBuffer
 
-  // Write out the message to the debug log
-  PR_LOG(gDebugLog, ll, ("%s", buf.buffer));
-  PR_LogFlush();
-
   // errors on platforms without a debugdlg ring a bell on stderr
 #if !defined(XP_WIN)
-  if (ll != PR_LOG_WARNING) {
+  if (aSeverity != NS_DEBUG_WARNING) {
     fprintf(stderr, "\07");
   }
 #endif
@@ -406,7 +385,7 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
       // Updating crash annotations in the child causes us to do IPC. This can
       // really cause trouble if we're asserting from within IPC code. So we
       // have to do without the annotations in that case.
-      if (XRE_GetProcessType() == GeckoProcessType_Default) {
+      if (XRE_IsParentProcess()) {
         nsCString note("xpcom_runtime_abort(");
         note += buf.buffer;
         note += ")";
@@ -454,6 +433,7 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
       nsTraceRefcnt::WalkTheStack(stderr);
 #endif // !defined(MOZILLA_XPCOMRT_API)
       // Fall through to abort
+      MOZ_FALLTHROUGH;
 
     case NS_ASSERT_ABORT:
       Abort(buf.buffer);
@@ -579,16 +559,20 @@ Break(const char* aMsg)
 #endif
 }
 
-static const nsDebugImpl kImpl;
-
 nsresult
 nsDebugImpl::Create(nsISupports* aOuter, const nsIID& aIID, void** aInstancePtr)
 {
+  static const nsDebugImpl* sImpl;
+
   if (NS_WARN_IF(aOuter)) {
     return NS_ERROR_NO_AGGREGATION;
   }
 
-  return const_cast<nsDebugImpl*>(&kImpl)->QueryInterface(aIID, aInstancePtr);
+  if (!sImpl) {
+    sImpl = new nsDebugImpl();
+  }
+
+  return const_cast<nsDebugImpl*>(sImpl)->QueryInterface(aIID, aInstancePtr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -624,4 +608,3 @@ NS_ABORT_OOM(size_t aSize)
 #endif
   MOZ_CRASH();
 }
-

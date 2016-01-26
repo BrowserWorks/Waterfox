@@ -1,10 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const Ci = Components.interfaces;
+var Ci = Components.interfaces;
 
-let tab;
-let browser;
+var tab;
+var browser;
 
 const scrollHtml =
   "<textarea id=\"textarea1\" row=2>Firefox\n\nFirefox\n\n\n\n\n\n\n\n\n\n" +

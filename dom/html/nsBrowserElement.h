@@ -8,6 +8,7 @@
 #define nsBrowserElement_h
 
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/BrowserElementAudioChannel.h"
 
 #include "nsCOMPtr.h"
 #include "nsIBrowserElementAPI.h"
@@ -18,8 +19,11 @@ namespace mozilla {
 
 namespace dom {
 struct BrowserElementDownloadOptions;
+struct BrowserElementExecuteScriptOptions;
 class BrowserElementNextPaintEventCallback;
 class DOMRequest;
+enum class BrowserFindCaseSensitivity: uint32_t;
+enum class BrowserFindDirection: uint32_t;
 } // namespace dom
 
 class ErrorResult;
@@ -68,6 +72,17 @@ public:
 
   already_AddRefed<dom::DOMRequest> PurgeHistory(ErrorResult& aRv);
 
+  void GetAllowedAudioChannels(
+            nsTArray<RefPtr<dom::BrowserElementAudioChannel>>& aAudioChannels,
+            ErrorResult& aRv);
+
+  void Mute(ErrorResult& aRv);
+  void Unmute(ErrorResult& aRv);
+  already_AddRefed<dom::DOMRequest> GetMuted(ErrorResult& aRv);
+
+  void SetVolume(float aVolume , ErrorResult& aRv);
+  already_AddRefed<dom::DOMRequest> GetVolume(ErrorResult& aRv);
+
   already_AddRefed<dom::DOMRequest>
   GetScreenshot(uint32_t aWidth,
                 uint32_t aHeight,
@@ -80,6 +95,11 @@ public:
   already_AddRefed<dom::DOMRequest> GetCanGoForward(ErrorResult& aRv);
   already_AddRefed<dom::DOMRequest> GetContentDimensions(ErrorResult& aRv);
 
+  void FindAll(const nsAString& aSearchString, dom::BrowserFindCaseSensitivity aCaseSensitivity,
+               ErrorResult& aRv);
+  void FindNext(dom::BrowserFindDirection aDirection, ErrorResult& aRv);
+  void ClearMatch(ErrorResult& aRv);
+
   void AddNextPaintListener(dom::BrowserElementNextPaintEventCallback& listener,
                             ErrorResult& aRv);
   void RemoveNextPaintListener(dom::BrowserElementNextPaintEventCallback& listener,
@@ -88,13 +108,34 @@ public:
   already_AddRefed<dom::DOMRequest> SetInputMethodActive(bool isActive,
                                                          ErrorResult& aRv);
 
+  already_AddRefed<dom::DOMRequest> ExecuteScript(const nsAString& aScript,
+                                                  const dom::BrowserElementExecuteScriptOptions& aOptions,
+                                                  ErrorResult& aRv);
+
+  already_AddRefed<dom::DOMRequest> GetStructuredData(ErrorResult& aRv);
+
+  already_AddRefed<dom::DOMRequest> GetWebManifest(ErrorResult& aRv);
+
   void SetNFCFocus(bool isFocus,
                    ErrorResult& aRv);
 
+  // Helper
+  static void GenerateAllowedAudioChannels(
+                 nsPIDOMWindow* aWindow,
+                 nsIFrameLoader* aFrameLoader,
+                 nsIBrowserElementAPI* aAPI,
+                 const nsAString& aManifestURL,
+                 mozIApplication* aParentApp,
+                 nsTArray<RefPtr<dom::BrowserElementAudioChannel>>& aAudioChannels,
+                 ErrorResult& aRv);
+
 protected:
   NS_IMETHOD_(already_AddRefed<nsFrameLoader>) GetFrameLoader() = 0;
+  NS_IMETHOD GetParentApplication(mozIApplication** aApplication) = 0;
+
   void InitBrowserElementAPI();
   nsCOMPtr<nsIBrowserElementAPI> mBrowserElementAPI;
+  nsTArray<RefPtr<dom::BrowserElementAudioChannel>> mBrowserElementAudioChannels;
 
 private:
   bool IsBrowserElementOrThrow(ErrorResult& aRv);

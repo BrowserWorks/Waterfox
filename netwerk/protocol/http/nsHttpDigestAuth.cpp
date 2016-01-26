@@ -18,6 +18,7 @@
 #include "prprf.h"
 #include "nsCRT.h"
 #include "nsICryptoHash.h"
+#include "nsComponentManagerUtils.h"
 
 namespace mozilla {
 namespace net {
@@ -695,7 +696,7 @@ nsHttpDigestAuth::AppendQuotedString(const nsACString & value,
   return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 // vim: ts=2 sw=2

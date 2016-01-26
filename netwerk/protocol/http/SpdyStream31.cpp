@@ -28,11 +28,6 @@
 
 #include <algorithm>
 
-#ifdef DEBUG
-// defined by the socket transport service while active
-extern PRThread *gSocketThread;
-#endif
-
 namespace mozilla {
 namespace net {
 
@@ -82,8 +77,8 @@ SpdyStream31::SpdyStream31(nsAHttpTransaction *httpTransaction,
   mRemoteWindow = spdySession->GetServerInitialStreamWindow();
   mLocalWindow = spdySession->PushAllowance();
 
-  mTxInlineFrame = new uint8_t[mTxInlineFrameSize];
-  mDecompressBuffer = new char[mDecompressBufferSize];
+  mTxInlineFrame = MakeUnique<uint8_t[]>(mTxInlineFrameSize);
+  mDecompressBuffer = MakeUnique<char[]>(mDecompressBufferSize);
 }
 
 SpdyStream31::~SpdyStream31()
@@ -316,10 +311,10 @@ SpdyStream31::ParseHttpRequestHeaders(const char *buf,
   // check the push cache for GET
   if (mTransaction->RequestHead()->IsGet()) {
     // from :scheme, :host, :path
-    nsILoadGroupConnectionInfo *loadGroupCI = mTransaction->LoadGroupConnectionInfo();
+    nsISchedulingContext *schedulingContext = mTransaction->SchedulingContext();
     SpdyPushCache *cache = nullptr;
-    if (loadGroupCI)
-      loadGroupCI->GetSpdyPushCache(&cache);
+    if (schedulingContext)
+      schedulingContext->GetSpdyPushCache(&cache);
 
     SpdyPushedStream31 *pushedStream = nullptr;
     // we remove the pushedstream from the push cache so that
@@ -386,11 +381,11 @@ SpdyStream31::GenerateSynFrame()
   // 4 to 7 are length and flags, we'll fill that in later
 
   uint32_t networkOrderID = PR_htonl(mStreamID);
-  memcpy(mTxInlineFrame + 8, &networkOrderID, 4);
+  memcpy(&mTxInlineFrame[8], &networkOrderID, 4);
 
   // this is the associated-to field, which is not used sending
   // from the client in the http binding
-  memset (mTxInlineFrame + 12, 0, 4);
+  memset (&mTxInlineFrame[12], 0, 4);
 
   // Priority flags are the E0 mask of byte 16.
   // 0 is highest priority, 7 is lowest.
@@ -455,10 +450,11 @@ SpdyStream31::GenerateSynFrame()
     ToLowerCase(name);
 
     // exclusions.. mostly from 3.2.1
+    // we send accept-encoding here because we often include brotli
+    // in that list which is greater than the implied accept-encoding: gzip
     if (name.EqualsLiteral("connection") ||
         name.EqualsLiteral("keep-alive") ||
         name.EqualsLiteral("host") ||
-        name.EqualsLiteral("accept-encoding") ||
         name.EqualsLiteral("te") ||
         name.EqualsLiteral("transfer-encoding"))
       continue;
@@ -741,7 +737,7 @@ SpdyStream31::TransmitFrame(const char *buf,
       mTxStreamFrameSize < SpdySession31::kDefaultBufferSize &&
       mTxInlineFrameUsed + mTxStreamFrameSize < mTxInlineFrameSize) {
     LOG3(("Coalesce Transmit"));
-    memcpy (mTxInlineFrame + mTxInlineFrameUsed,
+    memcpy (&mTxInlineFrame[mTxInlineFrameUsed],
             buf, mTxStreamFrameSize);
     if (countUsed)
       *countUsed += mTxStreamFrameSize;
@@ -1183,17 +1179,26 @@ SpdyStream31::FindHeader(nsCString name,
 nsresult
 SpdyStream31::ConvertHeaders(nsACString &aHeadersOut)
 {
+  LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x\n",
+        mSession, this, mStreamID));
+
   // :status and :version are required.
   nsDependentCSubstring status, version;
   nsresult rv = FindHeader(NS_LITERAL_CSTRING(":status"),
                            status);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
+    LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x missing :status\n",
+          mSession, this, mStreamID));
     return (rv == NS_ERROR_NOT_AVAILABLE) ? NS_ERROR_ILLEGAL_VALUE : rv;
+  }
 
   rv = FindHeader(NS_LITERAL_CSTRING(":version"),
                   version);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
+    LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x missing :version\n",
+          mSession, this, mStreamID));
     return (rv == NS_ERROR_NOT_AVAILABLE) ? NS_ERROR_ILLEGAL_VALUE : rv;
+  }
 
   if (mDecompressedBytes && mDecompressBufferUsed) {
     Telemetry::Accumulate(Telemetry::SPDY_SYN_REPLY_SIZE, mDecompressedBytes);
@@ -1216,31 +1221,51 @@ SpdyStream31::ConvertHeaders(nsACString &aHeadersOut)
   aHeadersOut.Append(status);
   aHeadersOut.AppendLiteral("\r\n");
 
+  LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x decompressed size %d\n",
+        mSession, this, mStreamID, mDecompressBufferUsed));
+
   const unsigned char *nvpair = reinterpret_cast<unsigned char *>
     (mDecompressBuffer.get()) + 4;
   const unsigned char *lastHeaderByte = reinterpret_cast<unsigned char *>
     (mDecompressBuffer.get()) + mDecompressBufferUsed;
-  if (lastHeaderByte < nvpair)
+  if (lastHeaderByte < nvpair) {
+    LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x format err 1\n",
+          mSession, this, mStreamID));
     return NS_ERROR_ILLEGAL_VALUE;
+  }
 
   do {
     uint32_t numPairs = PR_ntohl(reinterpret_cast<const uint32_t *>(nvpair)[-1]);
+    LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x numPairs %d\n",
+          mSession, this, mStreamID, numPairs));
 
     for (uint32_t index = 0; index < numPairs; ++index) {
-      if (lastHeaderByte < nvpair + 4)
+      LOG5(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x index=%u remaining=%u\n",
+            mSession, this, mStreamID, index, lastHeaderByte - nvpair));
+      if (lastHeaderByte < nvpair + 4) {
+        LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x format err 2\n",
+              mSession, this, mStreamID));
         return NS_ERROR_ILLEGAL_VALUE;
-
+      }
       uint32_t nameLen = (nvpair[0] << 24) + (nvpair[1] << 16) +
         (nvpair[2] << 8) + nvpair[3];
-      if (lastHeaderByte < nvpair + 4 + nameLen)
+      LOG5(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x namelen=%u\n",
+            mSession, this, mStreamID, nameLen));
+      if (lastHeaderByte < nvpair + 4 + nameLen) {
+        LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x format err 3\n",
+              mSession, this, mStreamID));
         return NS_ERROR_ILLEGAL_VALUE;
+      }
 
       nsDependentCSubstring nameString =
         Substring(reinterpret_cast<const char *>(nvpair) + 4,
                   reinterpret_cast<const char *>(nvpair) + 4 + nameLen);
 
-      if (lastHeaderByte < nvpair + 8 + nameLen)
+      if (lastHeaderByte < nvpair + 8 + nameLen) {
+        LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x format err 4\n",
+              mSession, this, mStreamID));
         return NS_ERROR_ILLEGAL_VALUE;
+      }
 
       // Look for illegal characters in the nameString.
       // This includes upper case characters and nulls (as they will
@@ -1260,8 +1285,11 @@ SpdyStream31::ConvertHeaders(nsACString &aHeadersOut)
         }
 
         // check for null characters
-        if (*cPtr == '\0')
+        if (*cPtr == '\0') {
+          LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x unexpected null\n",
+                mSession, this, mStreamID));
           return NS_ERROR_ILLEGAL_VALUE;
+        }
       }
 
       // HTTP Chunked responses are not legal over spdy. We do not need
@@ -1279,9 +1307,13 @@ SpdyStream31::ConvertHeaders(nsACString &aHeadersOut)
       uint32_t valueLen =
         (nvpair[4 + nameLen] << 24) + (nvpair[5 + nameLen] << 16) +
         (nvpair[6 + nameLen] << 8)  +   nvpair[7 + nameLen];
-
-      if (lastHeaderByte < nvpair + 8 + nameLen + valueLen)
+      LOG5(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x valueLen=%u\n",
+            mSession, this, mStreamID, valueLen));
+      if (lastHeaderByte < nvpair + 8 + nameLen + valueLen) {
+        LOG3(("SpdyStream31::ConvertHeaders session=%p stream=%p id=0x%x format err 5\n",
+              mSession, this, mStreamID));
         return NS_ERROR_ILLEGAL_VALUE;
+      }
 
       // spdy transport level headers shouldn't be gatewayed into http/1
       if (!nameString.IsEmpty() && nameString[0] != ':' &&
@@ -1356,7 +1388,7 @@ SpdyStream31::ExecuteCompress(uint32_t flushMode)
       avail = mTxInlineFrameSize - mTxInlineFrameUsed;
     }
 
-    mZlib->next_out = mTxInlineFrame + mTxInlineFrameUsed;
+    mZlib->next_out = &mTxInlineFrame[mTxInlineFrameUsed];
     mZlib->avail_out = avail;
     deflate(mZlib, flushMode);
     mTxInlineFrameUsed += avail - mZlib->avail_out;
@@ -1535,14 +1567,14 @@ SpdyStream31::OnReadSegment(const char *buf,
     if (dataLength > mSession->RemoteSessionWindow())
       dataLength = static_cast<uint32_t>(mSession->RemoteSessionWindow());
 
-    LOG3(("SpdyStream31 this=%p id 0x%X remote window is stream %ld and "
-          "session %ld. Chunk is %d\n",
-          this, mStreamID, mRemoteWindow, mSession->RemoteSessionWindow(),
-          dataLength));
+    LOG3(("SpdyStream31 this=%p id 0x%X remote window is stream %" PRId64 " and "
+          "session %" PRId64". Chunk is %u\n",
+          this, mStreamID, mRemoteWindow,
+          mSession->RemoteSessionWindow(), dataLength));
     mRemoteWindow -= dataLength;
     mSession->DecrementRemoteSessionWindow(dataLength);
 
-    LOG3(("SpdyStream31 %p id %x request len remaining %u, "
+    LOG3(("SpdyStream31 %p id 0x%x request len remaining %" PRId64 ", "
           "count avail %u, chunk used %u",
           this, mStreamID, mRequestBodyLenRemaining, count, dataLength));
     if (!dataLength && mRequestBodyLenRemaining) {
@@ -1554,7 +1586,7 @@ SpdyStream31::OnReadSegment(const char *buf,
     mRequestBodyLenRemaining -= dataLength;
     GenerateDataFrameHeader(dataLength, !mRequestBodyLenRemaining);
     ChangeState(SENDING_REQUEST_BODY);
-    // NO BREAK
+    MOZ_FALLTHROUGH;
 
   case SENDING_REQUEST_BODY:
     MOZ_ASSERT(mTxInlineFrameUsed, "OnReadSegment Send Data Header 0b");
@@ -1632,7 +1664,7 @@ SpdyStream31::ClearTransactionsBlockedOnTunnel()
 void
 SpdyStream31::MapStreamToPlainText()
 {
-  nsRefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
+  RefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
   MOZ_ASSERT(qiTrans);
   mPlainTextTunnel = true;
   qiTrans->ForcePlainText();
@@ -1641,11 +1673,11 @@ SpdyStream31::MapStreamToPlainText()
 void
 SpdyStream31::MapStreamToHttpConnection()
 {
-  nsRefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
+  RefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
   MOZ_ASSERT(qiTrans);
   qiTrans->MapStreamToHttpConnection(mSocketTransport,
                                      mTransaction->ConnectionInfo());
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

@@ -29,14 +29,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MacroArgs.h"
 #include "mozilla/MacroForEach.h"
-
-namespace mozilla {
-template <typename T>
-struct HasDangerousPublicDestructor
-{
-  static const bool value = false;
-};
-}
+#include "mozilla/TypeTraits.h"
 
 #if defined(__clang__)
    // bug 1028428 shows that at least in FreeBSD 10.0 with Clang 3.4 and libc++ 3.4,
@@ -62,9 +55,7 @@ struct HasDangerousPublicDestructor
   namespace mozilla {
     struct IsDestructibleFallbackImpl
     {
-      template<typename T> static T&& Declval();
-
-      template<typename T, typename = decltype(Declval<T>().~T())>
+      template<typename T, typename = decltype(DeclVal<T>().~T())>
       static TrueType Test(int);
 
       template<typename>
@@ -82,22 +73,15 @@ struct HasDangerousPublicDestructor
       : IsDestructibleFallbackImpl::Selector<T>::type
     {
     };
-  }
+  } // namespace mozilla
 #  define MOZ_IS_DESTRUCTIBLE(X) (mozilla::IsDestructibleFallback<X>::value)
 #endif
 
 #ifdef MOZ_IS_DESTRUCTIBLE
 #define MOZ_ASSERT_TYPE_OK_FOR_REFCOUNTING(X) \
-  static_assert(!MOZ_IS_DESTRUCTIBLE(X) || \
-                mozilla::HasDangerousPublicDestructor<X>::value, \
+  static_assert(!MOZ_IS_DESTRUCTIBLE(X), \
                 "Reference-counted class " #X " should not have a public destructor. " \
-                "Try to make this class's destructor non-public. If that is really " \
-                "not possible, you can whitelist this class by providing a " \
-                "HasDangerousPublicDestructor specialization for it."); \
-  static_assert(!mozilla::HasDangerousPublicDestructor<X>::value || \
-                MOZ_IS_DESTRUCTIBLE(X), \
-                "Class " #X " has no public destructor. That's good! So please " \
-                "remove the HasDangerousPublicDestructor specialization for it.");
+                "Make this class's destructor non-public");
 #else
 #define MOZ_ASSERT_TYPE_OK_FOR_REFCOUNTING(X)
 #endif
@@ -384,7 +368,7 @@ private:
   // but could break pre-existing code that assumes sequential consistency.
   Atomic<nsrefcnt> mValue;
 };
-}
+} // namespace mozilla
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1023,11 +1007,6 @@ NS_IMETHODIMP_(MozExternalRefCountType) Class::Release(void)                  \
     MOZ_FOR_EACH(NS_INTERFACE_TABLE_ENTRY, (aClass,), (__VA_ARGS__))          \
   NS_INTERFACE_TABLE_END
 
-#define NS_IMPL_QUERY_INTERFACE_INHERITED0(aClass, aSuper)                    \
-  NS_INTERFACE_TABLE_HEAD(aClass)                                             \
-  NS_INTERFACE_TABLE_INHERITED0(aClass)                                       \
-  NS_INTERFACE_TABLE_TAIL_INHERITING(aSuper)
-
 #define NS_IMPL_QUERY_INTERFACE_INHERITED(aClass, aSuper, ...)                \
   NS_INTERFACE_TABLE_HEAD(aClass)                                             \
   NS_INTERFACE_TABLE_INHERITED(aClass, __VA_ARGS__)                           \
@@ -1052,7 +1031,8 @@ NS_IMETHODIMP_(MozExternalRefCountType) Class::Release(void)                  \
   NS_IMPL_QUERY_INTERFACE(aClass, __VA_ARGS__)
 
 #define NS_IMPL_ISUPPORTS_INHERITED0(aClass, aSuper)                          \
-    NS_IMPL_QUERY_INTERFACE_INHERITED0(aClass, aSuper)                        \
+    NS_INTERFACE_TABLE_HEAD(aClass)                                           \
+    NS_INTERFACE_TABLE_TAIL_INHERITING(aSuper)                                \
     NS_IMPL_ADDREF_INHERITED(aClass, aSuper)                                  \
     NS_IMPL_RELEASE_INHERITED(aClass, aSuper)                                 \
 

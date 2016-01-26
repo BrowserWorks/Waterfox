@@ -125,6 +125,9 @@ _hb_coretext_shaper_face_data_destroy (hb_coretext_shaper_face_data_t *data)
   CFRelease (data);
 }
 
+/*
+ * Since: 0.9.10
+ */
 CGFontRef
 hb_coretext_face_get_cg_font (hb_face_t *face)
 {
@@ -156,6 +159,7 @@ _hb_coretext_shaper_font_data_create (hb_font_t *font)
   hb_coretext_shaper_face_data_t *face_data = HB_SHAPER_DATA_GET (face);
 
   /* Choose a CoreText font size and calculate multipliers to convert to HarfBuzz space. */
+  /* TODO: use upem instead of 36? */
   CGFloat font_size = 36.; /* Default... */
   /* No idea if the following is even a good idea. */
   if (font->y_ppem)
@@ -166,6 +170,43 @@ _hb_coretext_shaper_font_data_create (hb_font_t *font)
   data->x_mult = (CGFloat) font->x_scale / font_size;
   data->y_mult = (CGFloat) font->y_scale / font_size;
   data->ct_font = CTFontCreateWithGraphicsFont (face_data, font_size, NULL, NULL);
+  if (unlikely (!data->ct_font)) {
+    DEBUG_MSG (CORETEXT, font, "Font CTFontCreateWithGraphicsFont() failed");
+    free (data);
+    return NULL;
+  }
+
+  /* Create font copy with cascade list that has LastResort first; this speeds up CoreText
+   * font fallback which we don't need anyway. */
+  {
+    // TODO Handle allocation failures?
+    CTFontDescriptorRef last_resort = CTFontDescriptorCreateWithNameAndSize(CFSTR("LastResort"), 0);
+    CFArrayRef cascade_list = CFArrayCreate (kCFAllocatorDefault,
+					     (const void **) &last_resort,
+					     1,
+					     &kCFTypeArrayCallBacks);
+    CFRelease (last_resort);
+    CFDictionaryRef attributes = CFDictionaryCreate (kCFAllocatorDefault,
+						     (const void **) &kCTFontCascadeListAttribute,
+						     (const void **) &cascade_list,
+						     1,
+						     &kCFTypeDictionaryKeyCallBacks,
+						     &kCFTypeDictionaryValueCallBacks);
+    CFRelease (cascade_list);
+
+    CTFontDescriptorRef new_font_desc = CTFontDescriptorCreateWithAttributes (attributes);
+    CFRelease (attributes);
+
+    CTFontRef new_ct_font = CTFontCreateCopyWithAttributes (data->ct_font, 0.0, NULL, new_font_desc);
+    if (new_ct_font)
+    {
+      CFRelease (data->ct_font);
+      data->ct_font = new_ct_font;
+    }
+    else
+      DEBUG_MSG (CORETEXT, font, "Font copy with empty cascade list failed");
+  }
+
   if (unlikely (!data->ct_font)) {
     DEBUG_MSG (CORETEXT, font, "Font CTFontCreateWithGraphicsFont() failed");
     free (data);
@@ -689,7 +730,6 @@ resize_and_retry:
     scratch += old_scratch_used;
     scratch_size -= old_scratch_used;
   }
-retry:
   {
     string_ref = CFStringCreateWithCharactersNoCopy (NULL,
 						     pchars, chars_len,
@@ -844,11 +884,9 @@ retry:
 	 * However, even that wouldn't work if we were passed in the CGFont to
 	 * begin with.
 	 *
-	 * Webkit uses a slightly different approach: it installs LastResort
-	 * as fallback chain, and then checks PS name of used font against
-	 * LastResort.  That one is safe for any font except for LastResort,
-	 * as opposed to ours, which can fail if we are using any uninstalled
-	 * font that has the same name as an installed font.
+	 * We might switch to checking PS name against "LastResort".  That would
+	 * be safe for all fonts except for those named "Last Resort".  Might be
+	 * better than what we have right now.
 	 *
 	 * See: http://github.com/behdad/harfbuzz/pull/36
 	 */
@@ -915,8 +953,8 @@ retry:
 	      info->cluster = log_clusters[j];
 
 	      info->mask = advance;
-	      info->var1.u32 = x_offset;
-	      info->var2.u32 = y_offset;
+	      info->var1.i32 = x_offset;
+	      info->var2.i32 = y_offset;
 
 	      info++;
 	      buffer->len++;
@@ -1002,8 +1040,8 @@ retry:
 	    else /* last glyph */
 	      advance = run_advance - (positions[j].x - positions[0].x);
 	    info->mask = advance * x_mult;
-	    info->var1.u32 = x_offset;
-	    info->var2.u32 = positions[j].y * y_mult;
+	    info->var1.i32 = x_offset;
+	    info->var2.i32 = positions[j].y * y_mult;
 	    info++;
 	  }
 	}
@@ -1018,8 +1056,8 @@ retry:
 	    else /* last glyph */
 	      advance = run_advance - (positions[j].y - positions[0].y);
 	    info->mask = advance * y_mult;
-	    info->var1.u32 = positions[j].x * x_mult;
-	    info->var2.u32 = y_offset;
+	    info->var1.i32 = positions[j].x * x_mult;
+	    info->var2.i32 = y_offset;
 	    info++;
 	  }
 	}
@@ -1034,10 +1072,20 @@ retry:
       buffer->len += num_glyphs;
     }
 
-    /* Make sure all runs had the expected direction. */
-    bool backward = HB_DIRECTION_IS_BACKWARD (buffer->props.direction);
-    assert (bool (status_and & kCTRunStatusRightToLeft) == backward);
-    assert (bool (status_or  & kCTRunStatusRightToLeft) == backward);
+    /* Mac OS 10.6 doesn't have kCTTypesetterOptionForcedEmbeddingLevel,
+     * or if it does, it doesn't resepct it.  So we get runs with wrong
+     * directions.  As such, disable the assert...  It wouldn't crash, but
+     * cursoring will be off...
+     *
+     * http://crbug.com/419769
+     */
+    if (0)
+    {
+      /* Make sure all runs had the expected direction. */
+      bool backward = HB_DIRECTION_IS_BACKWARD (buffer->props.direction);
+      assert (bool (status_and & kCTRunStatusRightToLeft) == backward);
+      assert (bool (status_or  & kCTRunStatusRightToLeft) == backward);
+    }
 
     buffer->clear_positions ();
 
@@ -1048,16 +1096,16 @@ retry:
       for (unsigned int i = 0; i < count; i++)
       {
 	pos->x_advance = info->mask;
-	pos->x_offset = info->var1.u32;
-	pos->y_offset = info->var2.u32;
+	pos->x_offset = info->var1.i32;
+	pos->y_offset = info->var2.i32;
 	info++, pos++;
       }
     else
       for (unsigned int i = 0; i < count; i++)
       {
 	pos->y_advance = info->mask;
-	pos->x_offset = info->var1.u32;
-	pos->y_offset = info->var2.u32;
+	pos->x_offset = info->var1.i32;
+	pos->y_offset = info->var2.i32;
 	info++, pos++;
       }
 
@@ -1114,10 +1162,6 @@ fail:
 /*
  * AAT shaper
  */
-
-HB_SHAPER_DATA_ENSURE_DECLARE(coretext_aat, face)
-HB_SHAPER_DATA_ENSURE_DECLARE(coretext_aat, font)
-
 
 /*
  * shaper face data

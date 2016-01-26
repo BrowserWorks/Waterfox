@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2000-2012, International Business Machines
+*   Copyright (C) 2000-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnvisci.c
@@ -17,7 +17,7 @@
 
 #include "unicode/utypes.h"
 
-#if !UCONFIG_NO_CONVERSION && !UCONFIG_NO_LEGACY_CONVERSION
+#if !UCONFIG_NO_CONVERSION && !UCONFIG_NO_LEGACY_CONVERSION && !UCONFIG_ONLY_HTML_CONVERSION
 
 #include "unicode/ucnv.h"
 #include "unicode/ucnv_cb.h"
@@ -1617,15 +1617,7 @@ static const UConverterStaticData _ISCIIStaticData={
 
 };
 
-const UConverterSharedData _ISCIIData={
-    sizeof(UConverterSharedData),
-        ~((uint32_t) 0),
-        NULL,
-        NULL,
-        &_ISCIIStaticData,
-        FALSE,
-        &_ISCIIImpl,
-        0
-};
+const UConverterSharedData _ISCIIData=
+        UCNV_IMMUTABLE_SHARED_DATA_INITIALIZER(&_ISCIIStaticData, &_ISCIIImpl);
 
 #endif /* #if !UCONFIG_NO_LEGACY_CONVERSION */

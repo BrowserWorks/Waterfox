@@ -3,9 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-
 #include "PathHelpers.h"
 
 namespace mozilla {
@@ -184,7 +181,8 @@ AppendEllipseToPath(PathBuilder* aPathBuilder,
 
 bool
 SnapLineToDevicePixelsForStroking(Point& aP1, Point& aP2,
-                                  const DrawTarget& aDrawTarget)
+                                  const DrawTarget& aDrawTarget,
+                                  Float aLineWidth)
 {
   Matrix mat = aDrawTarget.GetTransform();
   if (mat.HasNonTranslation()) {
@@ -199,14 +197,21 @@ SnapLineToDevicePixelsForStroking(Point& aP1, Point& aP2,
   p2.Round();
   p1 -= mat.GetTranslation(); // back into user space
   p2 -= mat.GetTranslation();
-  if (aP1.x == aP2.x) {
-    // snap vertical line, adding 0.5 to align it to be mid-pixel:
-    aP1 = p1 + Point(0.5, 0);
-    aP2 = p2 + Point(0.5, 0);
-  } else {
-    // snap horizontal line, adding 0.5 to align it to be mid-pixel:
-    aP1 = p1 + Point(0, 0.5);
-    aP2 = p2 + Point(0, 0.5);
+
+  aP1 = p1;
+  aP2 = p2;
+
+  bool lineWidthIsOdd = (int(aLineWidth) % 2) == 1;
+  if (lineWidthIsOdd) {
+    if (aP1.x == aP2.x) {
+      // snap vertical line, adding 0.5 to align it to be mid-pixel:
+      aP1 += Point(0.5, 0);
+      aP2 += Point(0.5, 0);
+    } else {
+      // snap horizontal line, adding 0.5 to align it to be mid-pixel:
+      aP1 += Point(0, 0.5);
+      aP2 += Point(0, 0.5);
+    }
   }
   return true;
 }
@@ -222,22 +227,26 @@ StrokeSnappedEdgesOfRect(const Rect& aRect, DrawTarget& aDrawTarget,
 
   Point p1 = aRect.TopLeft();
   Point p2 = aRect.BottomLeft();
-  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget);
+  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget,
+                                    aStrokeOptions.mLineWidth);
   aDrawTarget.StrokeLine(p1, p2, aColor, aStrokeOptions);
 
   p1 = aRect.BottomLeft();
   p2 = aRect.BottomRight();
-  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget);
+  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget,
+                                    aStrokeOptions.mLineWidth);
   aDrawTarget.StrokeLine(p1, p2, aColor, aStrokeOptions);
 
   p1 = aRect.TopLeft();
   p2 = aRect.TopRight();
-  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget);
+  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget,
+                                    aStrokeOptions.mLineWidth);
   aDrawTarget.StrokeLine(p1, p2, aColor, aStrokeOptions);
 
   p1 = aRect.TopRight();
   p2 = aRect.BottomRight();
-  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget);
+  SnapLineToDevicePixelsForStroking(p1, p2, aDrawTarget,
+                                    aStrokeOptions.mLineWidth);
   aDrawTarget.StrokeLine(p1, p2, aColor, aStrokeOptions);
 }
 
@@ -266,4 +275,3 @@ MaxStrokeExtents(const StrokeOptions& aStrokeOptions,
 
 } // namespace gfx
 } // namespace mozilla
-

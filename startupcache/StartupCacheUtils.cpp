@@ -6,6 +6,7 @@
 #include "nsIInputStream.h"
 #include "nsIStringStream.h"
 #include "nsNetUtil.h"
+#include "nsIFileURL.h"
 #include "nsIJARURI.h"
 #include "nsIResProtocolHandler.h"
 #include "nsIChromeRegistry.h"
@@ -246,5 +247,5 @@ PathifyURI(nsIURI *in, nsACString &out)
     return NS_OK;
 }
 
-}
-}
+} // namespace scache
+} // namespace mozilla

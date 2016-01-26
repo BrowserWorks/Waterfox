@@ -8,6 +8,7 @@
 #include <vector>
 #include <dlfcn.h>
 #include <signal.h>
+#include "mozilla/RefCounted.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "Zip.h"
@@ -234,7 +235,7 @@ private:
   char *path;
 
   /* Mappable object keeping the result of GetMappable() */
-  mutable mozilla::RefPtr<Mappable> mappable;
+  mutable RefPtr<Mappable> mappable;
 };
 
 /**
@@ -279,7 +280,7 @@ public:
    * Returns a new SystemElf for the given path. The given flags are passed
    * to dlopen().
    */
-  static mozilla::TemporaryRef<LibHandle> Load(const char *path, int flags);
+  static already_AddRefed<LibHandle> Load(const char *path, int flags);
 
   /**
    * Inherited from LibHandle
@@ -412,7 +413,7 @@ public:
    * requesting the given library to be loaded. The loader may look in the
    * directory containing that parent library for the library to load.
    */
-  mozilla::TemporaryRef<LibHandle> Load(const char *path, int flags,
+  already_AddRefed<LibHandle> Load(const char *path, int flags,
                                         LibHandle *parent = nullptr);
 
   /**
@@ -421,7 +422,7 @@ public:
    * LibHandle::Contains returns true. Its purpose is to allow to
    * implement dladdr().
    */
-  mozilla::TemporaryRef<LibHandle> GetHandleByPtr(void *addr);
+  already_AddRefed<LibHandle> GetHandleByPtr(void *addr);
 
   /**
    * Returns a Mappable object for the path. Paths in the form
@@ -468,14 +469,14 @@ private:
 
   /* System loader handle for the library/program containing our code. This
    * is used to resolve wrapped functions. */
-  mozilla::RefPtr<LibHandle> self_elf;
+  RefPtr<LibHandle> self_elf;
 
 #if defined(ANDROID)
   /* System loader handle for the libc. This is used to resolve weak symbols
    * that some libcs contain that the Android linker won't dlsym(). Normally,
    * we wouldn't treat non-Android differently, but glibc uses versioned
    * symbols which this linker doesn't support. */
-  mozilla::RefPtr<LibHandle> libc;
+  RefPtr<LibHandle> libc;
 #endif
 
   /* Bookkeeping */

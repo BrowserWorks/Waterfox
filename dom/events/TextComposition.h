@@ -17,6 +17,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/TextRange.h"
+#include "mozilla/dom/TabParent.h"
 
 class nsIEditor;
 
@@ -38,8 +39,13 @@ class TextComposition final
   NS_INLINE_DECL_REFCOUNTING(TextComposition)
 
 public:
+  typedef dom::TabParent TabParent;
+
+  static bool IsHandlingSelectionEvent() { return sHandlingSelectionEvent; }
+
   TextComposition(nsPresContext* aPresContext,
                   nsINode* aNode,
+                  TabParent* aTabParent,
                   WidgetCompositionEvent* aCompositionEvent);
 
   bool Destroyed() const { return !mPresContext; }
@@ -55,6 +61,10 @@ public:
   // Note that mString and mLastData are different between dispatcing
   // compositionupdate and compositionchange event handled by focused editor.
   const nsString& String() const { return mString; }
+  // The latest clauses range of the composition string.
+  // During compositionupdate event, GetRanges() returns old ranges.
+  // So if getting on compositionupdate, Use GetLastRange instead of GetRange().
+  TextRangeArray* GetLastRanges() const { return mLastRanges; }
   // Returns the clauses and/or caret range of the composition string.
   // This is modified at a call of EditorWillHandleCompositionChangeEvent().
   // This may return null if there is no clauses and caret.
@@ -70,7 +80,10 @@ public:
   // came from nsDOMWindowUtils.
   bool IsSynthesizedForTests() const { return mIsSynthesizedForTests; }
 
-  bool MatchesNativeContext(nsIWidget* aWidget) const;
+  const widget::NativeIMEContext& GetNativeIMEContext() const
+  {
+    return mNativeContext;
+  }
 
   /**
    * This is called when IMEStateManager stops managing the instance.
@@ -125,6 +138,12 @@ public:
   void EndHandlingComposition(nsIEditor* aEditor);
 
   /**
+   * OnEditorDestroyed() is called when the editor is destroyed but there is
+   * active composition.
+   */
+  void OnEditorDestroyed();
+
+  /**
    * CompositionChangeEventHandlingMarker class should be created at starting
    * to handle text event in focused editor.  This calls
    * EditorWillHandleCompositionChangeEvent() and
@@ -148,7 +167,7 @@ public:
     }
 
   private:
-    nsRefPtr<TextComposition> mComposition;
+    RefPtr<TextComposition> mComposition;
     CompositionChangeEventHandlingMarker();
     CompositionChangeEventHandlingMarker(
       const CompositionChangeEventHandlingMarker& aOther);
@@ -161,20 +180,28 @@ private:
     // WARNING: mPresContext may be destroying, so, be careful if you touch it.
   }
 
+  // sHandlingSelectionEvent is true while TextComposition sends a selection
+  // event to ContentEventHandler.
+  static bool sHandlingSelectionEvent;
+
   // This class holds nsPresContext weak.  This instance shouldn't block
   // destroying it.  When the presContext is being destroyed, it's notified to
   // IMEStateManager::OnDestroyPresContext(), and then, it destroy
   // this instance.
   nsPresContext* mPresContext;
   nsCOMPtr<nsINode> mNode;
+  RefPtr<TabParent> mTabParent;
 
   // This is the clause and caret range information which is managed by
   // the focused editor.  This may be null if there is no clauses or caret.
-  nsRefPtr<TextRangeArray> mRanges;
+  RefPtr<TextRangeArray> mRanges;
+  // Same as mRange, but mRange will have old data during compositionupdate.
+  // So this will be valied during compositionupdate.
+  RefPtr<TextRangeArray> mLastRanges;
 
   // mNativeContext stores a opaque pointer.  This works as the "ID" for this
   // composition.  Don't access the instance, it may not be available.
-  void* mNativeContext;
+  widget::NativeIMEContext mNativeContext;
 
   // mEditorWeak is a weak reference to the focused editor handling composition.
   nsWeakPtr mEditorWeak;
@@ -229,7 +256,20 @@ private:
   bool mAllowControlCharacters;
 
   // Hide the default constructor and copy constructor.
-  TextComposition() {}
+  TextComposition()
+    : mPresContext(nullptr)
+    , mNativeContext(nullptr)
+    , mCompositionStartOffset(0)
+    , mCompositionTargetOffset(0)
+    , mIsSynthesizedForTests(false)
+    , mIsComposing(false)
+    , mIsEditorHandlingEvent(false)
+    , mIsRequestingCommit(false)
+    , mIsRequestingCancel(false)
+    , mRequestedToCommitOrCancel(false)
+    , mWasNativeCompositionEndEventDiscarded(false)
+    , mAllowControlCharacters(false)
+  {}
   TextComposition(const TextComposition& aOther);
 
   /**
@@ -274,6 +314,27 @@ private:
                                 bool aIsSynthesized);
 
   /**
+   * Simply calling EventDispatcher::Dispatch() with plugin event.
+   * If dispatching event has no orginal clone, aOriginalEvent can be null.
+   */
+  void DispatchEvent(WidgetCompositionEvent* aDispatchEvent,
+                     nsEventStatus* aStatus,
+                     EventDispatchingCallback* aCallback,
+                     const WidgetCompositionEvent *aOriginalEvent = nullptr);
+
+  /**
+   * HandleSelectionEvent() sends the selection event to ContentEventHandler
+   * or dispatches it to the focused child process.
+   */
+  void HandleSelectionEvent(WidgetSelectionEvent* aSelectionEvent)
+  {
+    HandleSelectionEvent(mPresContext, mTabParent, aSelectionEvent);
+  }
+  static void HandleSelectionEvent(nsPresContext* aPresContext,
+                                   TabParent* aTabParent,
+                                   WidgetSelectionEvent* aSelectionEvent);
+
+  /**
    * MaybeDispatchCompositionUpdate() may dispatch a compositionupdate event
    * if aCompositionEvent changes composition string.
    * @return Returns false if dispatching the compositionupdate event caused
@@ -290,7 +351,7 @@ private:
    */
   BaseEventFlags CloneAndDispatchAs(
                    const WidgetCompositionEvent* aCompositionEvent,
-                   uint32_t aMessage,
+                   EventMessage aMessage,
                    nsEventStatus* aStatus = nullptr,
                    EventDispatchingCallback* aCallBack = nullptr);
 
@@ -308,8 +369,7 @@ private:
    * compositionupdate, compositionend or compositionchange event due to not
    * safe to dispatch event.
    */
-  void OnCompositionEventDiscarded(
-         const WidgetCompositionEvent* aCompositionEvent);
+  void OnCompositionEventDiscarded(WidgetCompositionEvent* aCompositionEvent);
 
   /**
    * Calculate composition offset then notify composition update to widget
@@ -325,19 +385,19 @@ private:
   public:
     CompositionEventDispatcher(TextComposition* aTextComposition,
                                nsINode* aEventTarget,
-                               uint32_t aEventMessage,
+                               EventMessage aEventMessage,
                                const nsAString& aData,
                                bool aIsSynthesizedEvent = false);
     NS_IMETHOD Run() override;
 
   private:
-    nsRefPtr<TextComposition> mTextComposition;
+    RefPtr<TextComposition> mTextComposition;
     nsCOMPtr<nsINode> mEventTarget;
-    uint32_t mEventMessage;
     nsString mData;
+    EventMessage mEventMessage;
     bool mIsSynthesizedEvent;
 
-    CompositionEventDispatcher() {};
+    CompositionEventDispatcher() : mIsSynthesizedEvent(false) {};
   };
 
   /**
@@ -353,7 +413,7 @@ private:
    *                                commit or cancel composition.  Otherwise,
    *                                false.
    */
-  void DispatchCompositionEventRunnable(uint32_t aEventMessage,
+  void DispatchCompositionEventRunnable(EventMessage aEventMessage,
                                         const nsAString& aData,
                                         bool aIsSynthesizingCommit = false);
 };
@@ -369,14 +429,22 @@ private:
  */
 
 class TextCompositionArray final :
-  public nsAutoTArray<nsRefPtr<TextComposition>, 2>
+  public nsAutoTArray<RefPtr<TextComposition>, 2>
 {
 public:
+  // Looking for per native IME context.
+  index_type IndexOf(const widget::NativeIMEContext& aNativeIMEContext);
   index_type IndexOf(nsIWidget* aWidget);
+
+  TextComposition* GetCompositionFor(nsIWidget* aWidget);
+  TextComposition* GetCompositionFor(
+                     const WidgetCompositionEvent* aCompositionEvent);
+
+  // Looking for per nsPresContext
   index_type IndexOf(nsPresContext* aPresContext);
   index_type IndexOf(nsPresContext* aPresContext, nsINode* aNode);
 
-  TextComposition* GetCompositionFor(nsIWidget* aWidget);
+  TextComposition* GetCompositionFor(nsPresContext* aPresContext);
   TextComposition* GetCompositionFor(nsPresContext* aPresContext,
                                      nsINode* aNode);
   TextComposition* GetCompositionInContent(nsPresContext* aPresContext,

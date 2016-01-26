@@ -24,6 +24,7 @@
 #include "nsIController.h"
 #include "xpcpublic.h"
 #include "nsCycleCollectionParticipant.h"
+#include "mozilla/dom/TabParent.h"
 
 #ifdef MOZ_XUL
 #include "nsIDOMXULElement.h"
@@ -67,7 +68,7 @@ NS_IMPL_DOMTARGET_DEFAULTS(nsWindowRoot)
 NS_IMETHODIMP
 nsWindowRoot::RemoveEventListener(const nsAString& aType, nsIDOMEventListener* aListener, bool aUseCapture)
 {
-  if (nsRefPtr<EventListenerManager> elm = GetExistingListenerManager()) {
+  if (RefPtr<EventListenerManager> elm = GetExistingListenerManager()) {
     elm->RemoveEventListener(aType, aListener, aUseCapture);
   }
   return NS_OK;
@@ -241,7 +242,7 @@ nsWindowRoot::GetControllers(nsIControllers** aResult)
       return focusedWindow->GetControllers(aResult);
   }
   else {
-    nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(focusedWindow);
+    nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(focusedWindow);
     if (domWindow)
       return domWindow->GetControllers(aResult);
   }
@@ -383,6 +384,38 @@ JSObject*
 nsWindowRoot::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return mozilla::dom::WindowRootBinding::Wrap(aCx, this, aGivenProto);
+}
+
+void
+nsWindowRoot::AddBrowser(mozilla::dom::TabParent* aBrowser)
+{
+  nsWeakPtr weakBrowser = do_GetWeakReference(static_cast<nsITabParent*>(aBrowser));
+  mWeakBrowsers.PutEntry(weakBrowser);
+}
+
+void
+nsWindowRoot::RemoveBrowser(mozilla::dom::TabParent* aBrowser)
+{
+  nsWeakPtr weakBrowser = do_GetWeakReference(static_cast<nsITabParent*>(aBrowser));
+  mWeakBrowsers.RemoveEntry(weakBrowser);
+}
+
+void
+nsWindowRoot::EnumerateBrowsers(BrowserEnumerator aEnumFunc, void* aArg)
+{
+  // Collect strong references to all browsers in a separate array in
+  // case aEnumFunc alters mWeakBrowsers.
+  nsTArray<RefPtr<TabParent>> tabParents;
+  for (auto iter = mWeakBrowsers.ConstIter(); !iter.Done(); iter.Next()) {
+    nsCOMPtr<nsITabParent> tabParent(do_QueryReferent(iter.Get()->GetKey()));
+    if (TabParent* tab = TabParent::GetFrom(tabParent)) {
+      tabParents.AppendElement(tab);
+    }
+  }
+
+  for (uint32_t i = 0; i < tabParents.Length(); ++i) {
+    aEnumFunc(tabParents[i], aArg);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

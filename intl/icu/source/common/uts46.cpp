@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 2010-2012, International Business Machines
+*   Copyright (C) 2010-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *   file name:  uts46.cpp
@@ -26,8 +26,6 @@
 #include "punycode.h"
 #include "ubidi_props.h"
 #include "ustr_imp.h"
-
-#define LENGTHOF(array) (int32_t)(sizeof(array)/sizeof((array)[0]))
 
 // Note about tests for UIDNA_ERROR_DOMAIN_NAME_TOO_LONG:
 //
@@ -182,7 +180,7 @@ private:
     int32_t
     markBadACELabel(UnicodeString &dest,
                     int32_t labelStart, int32_t labelLength,
-                    UBool toASCII, IDNAInfo &info) const;
+                    UBool toASCII, IDNAInfo &info, UErrorCode &errorCode) const;
 
     void
     checkLabelBiDi(const UChar *label, int32_t labelLength, IDNAInfo &info) const;
@@ -321,9 +319,7 @@ UTS46::process(const UnicodeString &src,
     info.reset();
     int32_t srcLength=src.length();
     if(srcLength==0) {
-        if(toASCII) {
-            info.errors|=UIDNA_ERROR_EMPTY_LABEL;
-        }
+        info.errors|=UIDNA_ERROR_EMPTY_LABEL;
         return dest;
     }
     UChar *destArray=dest.getBuffer(srcLength);
@@ -381,13 +377,11 @@ UTS46::process(const UnicodeString &src,
                     ++i;  // '.' was copied to dest already
                     break;
                 }
-                if(toASCII) {
-                    // Permit an empty label at the end but not elsewhere.
-                    if(i==labelStart && i<(srcLength-1)) {
-                        info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
-                    } else if((i-labelStart)>63) {
-                        info.labelErrors|=UIDNA_ERROR_LABEL_TOO_LONG;
-                    }
+                if(i==labelStart) {
+                    info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
+                }
+                if(toASCII && (i-labelStart)>63) {
+                    info.labelErrors|=UIDNA_ERROR_LABEL_TOO_LONG;
                 }
                 info.errors|=info.labelErrors;
                 info.labelErrors=0;
@@ -423,9 +417,7 @@ UTS46::processUTF8(const StringPiece &src,
     // Arguments are fine, reset output values.
     info.reset();
     if(srcLength==0) {
-        if(toASCII) {
-            info.errors|=UIDNA_ERROR_EMPTY_LABEL;
-        }
+        info.errors|=UIDNA_ERROR_EMPTY_LABEL;
         dest.Flush();
         return;
     }
@@ -436,7 +428,7 @@ UTS46::processUTF8(const StringPiece &src,
         char stackArray[256];
         int32_t destCapacity;
         char *destArray=dest.GetAppendBuffer(srcLength, srcLength+20,
-                                             stackArray, LENGTHOF(stackArray), &destCapacity);
+                                             stackArray, UPRV_LENGTHOF(stackArray), &destCapacity);
         UBool disallowNonLDHDot=(options&UIDNA_USE_STD3_RULES)!=0;
         int32_t i;
         for(i=0;; ++i) {
@@ -483,13 +475,11 @@ UTS46::processUTF8(const StringPiece &src,
                     if(isLabel) {
                         break;  // Replacing with U+FFFD can be complicated for toASCII.
                     }
-                    if(toASCII) {
-                        // Permit an empty label at the end but not elsewhere.
-                        if(i==labelStart && i<(srcLength-1)) {
-                            info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
-                        } else if((i-labelStart)>63) {
-                            info.labelErrors|=UIDNA_ERROR_LABEL_TOO_LONG;
-                        }
+                    if(i==labelStart) {
+                        info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
+                    }
+                    if(toASCII && (i-labelStart)>63) {
+                        info.labelErrors|=UIDNA_ERROR_LABEL_TOO_LONG;
                     }
                     info.errors|=info.labelErrors;
                     info.labelErrors=0;
@@ -597,6 +587,9 @@ UTS46::processUnicode(const UnicodeString &src,
 int32_t
 UTS46::mapDevChars(UnicodeString &dest, int32_t labelStart, int32_t mappingStart,
                    UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
     int32_t length=dest.length();
     UChar *s=dest.getBuffer(dest[mappingStart]==0xdf ? length+1 : length);
     if(s==NULL) {
@@ -654,6 +647,9 @@ UTS46::mapDevChars(UnicodeString &dest, int32_t labelStart, int32_t mappingStart
         uts46Norm2.normalize(dest.tempSubString(labelStart), normalized, errorCode);
         if(U_SUCCESS(errorCode)) {
             dest.replace(labelStart, 0x7fffffff, normalized);
+            if(dest.isBogus()) {
+                errorCode=U_MEMORY_ALLOCATION_ERROR;
+            }
             return dest.length();
         }
     }
@@ -675,9 +671,16 @@ isNonASCIIDisallowedSTD3Valid(UChar32 c) {
 // Returns labelLength (= the new label length).
 static int32_t
 replaceLabel(UnicodeString &dest, int32_t destLabelStart, int32_t destLabelLength,
-             const UnicodeString &label, int32_t labelLength) {
+             const UnicodeString &label, int32_t labelLength, UErrorCode &errorCode) {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
     if(&label!=&dest) {
         dest.replace(destLabelStart, destLabelLength, label);
+        if(dest.isBogus()) {
+            errorCode=U_MEMORY_ALLOCATION_ERROR;
+            return 0;
+        }
     }
     return labelLength;
 }
@@ -687,6 +690,9 @@ UTS46::processLabel(UnicodeString &dest,
                     int32_t labelStart, int32_t labelLength,
                     UBool toASCII,
                     IDNAInfo &info, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
     UnicodeString fromPunycode;
     UnicodeString *labelString;
     const UChar *label=dest.getBuffer()+labelStart;
@@ -721,7 +727,7 @@ UTS46::processLabel(UnicodeString &dest,
         fromPunycode.releaseBuffer(unicodeLength);
         if(U_FAILURE(punycodeErrorCode)) {
             info.labelErrors|=UIDNA_ERROR_PUNYCODE;
-            return markBadACELabel(dest, labelStart, labelLength, toASCII, info);
+            return markBadACELabel(dest, labelStart, labelLength, toASCII, info, errorCode);
         }
         // Check for NFC, and for characters that are not
         // valid or deviation characters according to the normalizer.
@@ -736,7 +742,7 @@ UTS46::processLabel(UnicodeString &dest,
         }
         if(!isValid) {
             info.labelErrors|=UIDNA_ERROR_INVALID_ACE_LABEL;
-            return markBadACELabel(dest, labelStart, labelLength, toASCII, info);
+            return markBadACELabel(dest, labelStart, labelLength, toASCII, info, errorCode);
         }
         labelString=&fromPunycode;
         label=fromPunycode.getBuffer();
@@ -748,10 +754,9 @@ UTS46::processLabel(UnicodeString &dest,
     }
     // Validity check
     if(labelLength==0) {
-        if(toASCII) {
-            info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
-        }
-        return replaceLabel(dest, destLabelStart, destLabelLength, *labelString, labelLength);
+        info.labelErrors|=UIDNA_ERROR_EMPTY_LABEL;
+        return replaceLabel(dest, destLabelStart, destLabelLength,
+                            *labelString, labelLength, errorCode);
     }
     // labelLength>0
     if(labelLength>=4 && label[2]==0x2d && label[3]==0x2d) {
@@ -873,7 +878,7 @@ UTS46::processLabel(UnicodeString &dest,
                     info.labelErrors|=UIDNA_ERROR_LABEL_TOO_LONG;
                 }
                 return replaceLabel(dest, destLabelStart, destLabelLength,
-                                    punycode, punycodeLength);
+                                    punycode, punycodeLength, errorCode);
             } else {
                 // all-ASCII label
                 if(labelLength>63) {
@@ -886,10 +891,11 @@ UTS46::processLabel(UnicodeString &dest,
         // then leave it but make sure it does not look valid.
         if(wasPunycode) {
             info.labelErrors|=UIDNA_ERROR_INVALID_ACE_LABEL;
-            return markBadACELabel(dest, destLabelStart, destLabelLength, toASCII, info);
+            return markBadACELabel(dest, destLabelStart, destLabelLength, toASCII, info, errorCode);
         }
     }
-    return replaceLabel(dest, destLabelStart, destLabelLength, *labelString, labelLength);
+    return replaceLabel(dest, destLabelStart, destLabelLength,
+                        *labelString, labelLength, errorCode);
 }
 
 // Make sure an ACE label does not look valid.
@@ -898,7 +904,10 @@ UTS46::processLabel(UnicodeString &dest,
 int32_t
 UTS46::markBadACELabel(UnicodeString &dest,
                        int32_t labelStart, int32_t labelLength,
-                       UBool toASCII, IDNAInfo &info) const {
+                       UBool toASCII, IDNAInfo &info, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
     UBool disallowNonLDHDot=(options&UIDNA_USE_STD3_RULES)!=0;
     UBool isASCII=TRUE;
     UBool onlyLDH=TRUE;
@@ -926,6 +935,10 @@ UTS46::markBadACELabel(UnicodeString &dest,
     } while(++s<limit);
     if(onlyLDH) {
         dest.insert(labelStart+labelLength, (UChar)0xfffd);
+        if(dest.isBogus()) {
+            errorCode=U_MEMORY_ALLOCATION_ERROR;
+            return 0;
+        }
         ++labelLength;
     } else {
         if(toASCII && isASCII && labelLength>63) {

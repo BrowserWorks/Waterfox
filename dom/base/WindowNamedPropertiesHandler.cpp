@@ -7,6 +7,7 @@
 #include "WindowNamedPropertiesHandler.h"
 #include "mozilla/dom/EventTargetBinding.h"
 #include "mozilla/dom/WindowBinding.h"
+#include "nsContentUtils.h"
 #include "nsDOMClassInfo.h"
 #include "nsGlobalWindow.h"
 #include "nsHTMLDocument.h"
@@ -113,9 +114,7 @@ WindowNamedPropertiesHandler::getOwnPropDescriptor(JSContext* aCx,
       if (!WrapObject(aCx, childWin, &v)) {
         return false;
       }
-      aDesc.object().set(aProxy);
-      aDesc.value().set(v);
-      aDesc.setAttributes(JSPROP_ENUMERATE);
+      FillPropertyDescriptor(aDesc, aProxy, 0, v);
       return true;
     }
   }
@@ -133,9 +132,7 @@ WindowNamedPropertiesHandler::getOwnPropDescriptor(JSContext* aCx,
     if (!WrapObject(aCx, element, &v)) {
       return false;
     }
-    aDesc.object().set(aProxy);
-    aDesc.value().set(v);
-    aDesc.setAttributes(JSPROP_ENUMERATE);
+    FillPropertyDescriptor(aDesc, aProxy, 0, v);
     return true;
   }
 
@@ -149,9 +146,7 @@ WindowNamedPropertiesHandler::getOwnPropDescriptor(JSContext* aCx,
   if (!WrapObject(aCx, result, cache, nullptr, &v)) {
     return false;
   }
-  aDesc.object().set(aProxy);
-  aDesc.value().set(v);
-  aDesc.setAttributes(JSPROP_ENUMERATE);
+  FillPropertyDescriptor(aDesc, aProxy, 0, v);
   return true;
 }
 
@@ -163,8 +158,8 @@ WindowNamedPropertiesHandler::defineProperty(JSContext* aCx,
                                              JS::ObjectOpResult &result) const
 {
   ErrorResult rv;
-  rv.ThrowTypeError(MSG_DEFINEPROPERTY_ON_GSP);
-  rv.ReportErrorWithMessage(aCx);
+  rv.ThrowTypeError<MSG_DEFINEPROPERTY_ON_GSP>();
+  rv.MaybeSetPendingException(aCx);
   return false;
 }
 
@@ -174,6 +169,11 @@ WindowNamedPropertiesHandler::ownPropNames(JSContext* aCx,
                                            unsigned flags,
                                            JS::AutoIdVector& aProps) const
 {
+  if (!(flags & JSITER_HIDDEN)) {
+    // None of our named properties are enumerable.
+    return true;
+  }
+
   // Grab the DOM window.
   nsGlobalWindow* win = xpc::WindowOrNull(JS_GetGlobalForObject(aCx, aProxy));
   nsTArray<nsString> names;
@@ -275,13 +275,27 @@ WindowNamedPropertiesHandler::Create(JSContext* aCx,
   // Note: since the scope polluter proxy lives on the window's prototype
   // chain, it needs a singleton type to avoid polluting type information
   // for properties on the window.
-  JS::Rooted<JSObject*> gsp(aCx);
   js::ProxyOptions options;
   options.setSingleton(true);
   options.setClass(&WindowNamedPropertiesClass.mBase);
-  return js::NewProxyObject(aCx, WindowNamedPropertiesHandler::getInstance(),
-                            JS::NullHandleValue, aProto,
-                            options);
+
+  JS::Rooted<JSObject*> gsp(aCx);
+  gsp = js::NewProxyObject(aCx, WindowNamedPropertiesHandler::getInstance(),
+                           JS::NullHandleValue, aProto,
+                           options);
+  if (!gsp) {
+    return nullptr;
+  }
+
+  bool succeeded;
+  if (!JS_SetImmutablePrototype(aCx, gsp, &succeeded)) {
+    return nullptr;
+  }
+  MOZ_ASSERT(succeeded,
+             "errors making the [[Prototype]] of the named properties object "
+             "immutable should have been JSAPI failures, not !succeeded");
+
+  return gsp;
 }
 
 } // namespace dom

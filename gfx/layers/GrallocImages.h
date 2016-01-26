@@ -20,7 +20,12 @@
 namespace mozilla {
 namespace layers {
 
-class GrallocTextureClientOGL;
+class TextureClient;
+
+already_AddRefed<gfx::DataSourceSurface>
+GetDataSourceSurfaceFrom(android::sp<android::GraphicBuffer>& aGraphicBuffer,
+                         gfx::IntSize aSize,
+                         const layers::PlanarYCbCrData& aYcbcrData);
 
 /**
  * The YUV format supported by Android HAL
@@ -43,16 +48,11 @@ class GrallocTextureClientOGL;
  * mPicX, mPicY and mPicSize. The size of the rendered image is
  * mPicSize, not mYSize or mCbCrSize.
  */
-class GrallocImage : public PlanarYCbCrImage
+class GrallocImage : public RecyclingPlanarYCbCrImage
 {
   typedef PlanarYCbCrData Data;
   static int32_t sColorIdMap[];
 public:
-  struct GrallocData {
-    nsRefPtr<TextureClient> mGraphicBuffer;
-    gfx::IntSize mPicSize;
-  };
-
   GrallocImage();
 
   virtual ~GrallocImage();
@@ -61,13 +61,13 @@ public:
    * This makes a copy of the data buffers, in order to support functioning
    * in all different layer managers.
    */
-  virtual void SetData(const Data& aData);
+  virtual bool SetData(const Data& aData);
 
   /**
    *  Share the SurfaceDescriptor without making the copy, in order
    *  to support functioning in all different layer managers.
    */
-  virtual void SetData(const GrallocData& aData);
+  void SetData(TextureClient* aGraphicBuffer, const gfx::IntSize& aSize);
 
   // From [android 4.0.4]/hardware/msm7k/libgralloc-qsd8k/gralloc_priv.h
   enum {
@@ -84,7 +84,7 @@ public:
     GRALLOC_SW_UAGE = android::GraphicBuffer::USAGE_SOFTWARE_MASK,
   };
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   android::sp<android::GraphicBuffer> GetGraphicBuffer() const;
 
@@ -124,11 +124,12 @@ public:
   }
 
 private:
-  RefPtr<GrallocTextureClientOGL> mTextureClient;
+  RefPtr<TextureClient> mTextureClient;
 };
 
 } // namespace layers
 } // namespace mozilla
+
 #endif
 
 #endif /* GRALLOCIMAGES_H */

@@ -4,7 +4,7 @@
 
 this.EXPORTED_SYMBOLS = ["JPAKEClient", "SendCredentialsController"];
 
-const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/rest.js");
@@ -281,8 +281,7 @@ JPAKEClient.prototype = {
     let rng = Cc["@mozilla.org/security/random-generator;1"]
                 .createInstance(Ci.nsIRandomGenerator);
     let bytes = rng.generateRandomBytes(JPAKE_LENGTH_CLIENTID / 2);
-    this._clientID = [("0" + byte.toString(16)).slice(-2)
-                      for each (byte in bytes)].join("");
+    this._clientID = bytes.map(byte => ("0" + byte.toString(16)).slice(-2)).join("");
   },
 
   _createSecret: function _createSecret() {
@@ -291,8 +290,7 @@ JPAKEClient.prototype = {
     let rng = Cc["@mozilla.org/security/random-generator;1"]
                 .createInstance(Ci.nsIRandomGenerator);
     let bytes = rng.generateRandomBytes(JPAKE_LENGTH_SECRET);
-    return [key[Math.floor(byte * key.length / 256)]
-            for each (byte in bytes)].join("");
+    return bytes.map(byte => key[Math.floor(byte * key.length / 256)]).join("");
   },
 
   _newRequest: function _newRequest(uri) {

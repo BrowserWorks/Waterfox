@@ -4,7 +4,7 @@
 importScripts('worker_test_osfile_shared.js');
 importScripts("resource://gre/modules/workers/require.js");
 
-let SharedAll = require("resource://gre/modules/osfile/osfile_shared_allthreads.jsm");
+var SharedAll = require("resource://gre/modules/osfile/osfile_shared_allthreads.jsm");
 SharedAll.Config.DEBUG = true;
 
 function should_throw(f) {
@@ -245,18 +245,21 @@ function test_iter_dir()
     ok(success, "test_iter_dir: Entry " + entry.path + " exists");
 
     if (OS.Win) {
+      // We assume that the files are at least as recent as 2009.
+      // Since this test was written in 2011 and some of our packaging
+      // sets dates arbitrarily to 2010, this should be safe.
       let year = new Date().getFullYear();
       let creation = entry.winCreationDate;
       ok(creation, "test_iter_dir: Windows creation date exists: " + creation);
-      ok(creation.getFullYear() >= year -  1 && creation.getFullYear() <= year, "test_iter_dir: consistent creation date");
+      ok(creation.getFullYear() >= 2009 && creation.getFullYear() <= year, "test_iter_dir: consistent creation date");
 
       let lastWrite = entry.winLastWriteDate;
       ok(lastWrite, "test_iter_dir: Windows lastWrite date exists: " + lastWrite);
-      ok(lastWrite.getFullYear() >= year - 1 && lastWrite.getFullYear() <= year, "test_iter_dir: consistent lastWrite date");
+      ok(lastWrite.getFullYear() >= 2009 && lastWrite.getFullYear() <= year, "test_iter_dir: consistent lastWrite date");
 
       let lastAccess = entry.winLastAccessDate;
       ok(lastAccess, "test_iter_dir: Windows lastAccess date exists: " + lastAccess);
-      ok(lastAccess.getFullYear() >= year - 1 && lastAccess.getFullYear() <= year, "test_iter_dir: consistent lastAccess date");
+      ok(lastAccess.getFullYear() >= 2009 && lastAccess.getFullYear() <= year, "test_iter_dir: consistent lastAccess date");
     }
 
   }
@@ -267,7 +270,10 @@ function test_iter_dir()
 
   // Testing nextBatch()
   iterator = new OS.File.DirectoryIterator(parent);
-  let allentries = [x for(x in iterator)];
+  let allentries = [];
+  for (let x in iterator) {
+    allentries.push(x);
+  }
   iterator.close();
 
   ok(allentries.length >= 14, "test_iter_dir: Meta-check: the test directory should contain at least 14 items");

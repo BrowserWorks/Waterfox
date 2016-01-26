@@ -24,7 +24,7 @@ Cu.import("resource://gre/modules/Services.jsm");
  * This object handles channel registration, origin validation and message multiplexing.
  */
 
-let WebChannelBroker = Object.create({
+var WebChannelBroker = Object.create({
   /**
    * Register a new channel that callbacks messages
    * based on proper origin and channel name
@@ -309,7 +309,8 @@ this.WebChannel.prototype = {
           errno: ERRNO_UNKNOWN_ERROR,
           error: ex.message ? ex.message : ERROR_UNKNOWN
         }, sendingContext);
-        Cu.reportError("Failed to execute callback:" + ex);
+        Cu.reportError("Failed to execute WebChannel callback:");
+        Cu.reportError(ex);
       }
     } else {
       Cu.reportError("No callback set for this channel.");

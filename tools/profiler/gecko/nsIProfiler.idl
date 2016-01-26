@@ -1,0 +1,101 @@
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsISupports.idl"
+
+%{C++
+template<class T> class nsTArray;
+class nsCString;
+%}
+
+[ref] native StringArrayRef(const nsTArray<nsCString>);
+
+/**
+ * Start-up parameters for subprocesses are passed through nsIObserverService,
+ * which, unfortunately, means we need to implement nsISupports in order to
+ * go through it.
+ */
+[uuid(0a175ba7-8fcf-4ce9-9c4b-ccc6272f4425)]
+interface nsIProfilerStartParams : nsISupports
+{
+  attribute uint32_t entries;
+  attribute double interval;
+
+  [noscript, notxpcom, nostdcall] StringArrayRef getFeatures();
+  [noscript, notxpcom, nostdcall] StringArrayRef getThreadFilterNames();
+};
+
+[scriptable, uuid(ead3f75c-0e0e-4fbb-901c-1e5392ef5b2a)]
+interface nsIProfiler : nsISupports
+{
+  boolean CanProfile();
+  void StartProfiler(in uint32_t aEntries, in double aInterval,
+                      [array, size_is(aFeatureCount)] in string aFeatures,
+                      in uint32_t aFeatureCount,
+                      [array, size_is(aFilterCount), optional] in string aThreadNameFilters,
+                      [optional] in uint32_t aFilterCount);
+  void StopProfiler();
+  boolean IsPaused();
+  void PauseSampling();
+  void ResumeSampling();
+  void AddMarker(in string aMarker);
+  /*
+   * Returns the JSON string of the profile. If aSinceTime is passed, only
+   * report samples taken at >= aSinceTime.
+   */
+  string GetProfile([optional] in double aSinceTime);
+
+  /*
+   * Returns a JS object of the profile. If aSinceTime is passed, only report
+   * samples taken at >= aSinceTime.
+   */
+  [implicit_jscontext]
+  jsval getProfileData([optional] in double aSinceTime);
+
+  [implicit_jscontext]
+  nsISupports getProfileDataAsync([optional] in double aSinceTime);
+
+  boolean IsActive();
+  void GetFeatures(out uint32_t aCount, [retval, array, size_is(aCount)] out string aFeatures);
+
+  /**
+   * The starting parameters that were sent to the profiler for sampling.
+   * If the profiler is not currently sampling, this will return null.
+   */
+  readonly attribute nsIProfilerStartParams startParams;
+
+  /**
+   * The profileGatherer will be null if the profiler is not currently
+   * active.
+   */
+  readonly attribute nsISupports profileGatherer;
+
+  void GetBufferInfo(out uint32_t aCurrentPosition, out uint32_t aTotalSize,
+                     out uint32_t aGeneration);
+
+  /**
+   * Returns the elapsed time, in milliseconds, since the profiler's epoch.
+   * The epoch is guaranteed to be constant for the duration of the
+   * process, but is otherwise arbitrary.
+   */
+  double getElapsedTime();
+
+  /**
+   * Returns a JSON string of an array of shared library objects.
+   * Every object has three properties: start, end, and name.
+   * start and end are integers describing the address range that the library
+   * occupies in memory. name is the path of the library as a string.
+   *
+   * On Windows profiling builds, the shared library objects will have
+   * additional pdbSignature and pdbAge properties for uniquely identifying
+   * shared library versions for stack symbolication.
+   */
+  AString getSharedLibraryInformation();
+
+  /**
+   * Dump the collected profile to a file.
+   */
+  void dumpProfileToFile(in string aFilename);
+};

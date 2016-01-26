@@ -6,8 +6,10 @@
 
 #include "nsWrapperCacheInlines.h"
 
+#include "js/Class.h"
 #include "js/Proxy.h"
 #include "mozilla/dom/DOMJSProxyHandler.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "nsCycleCollectionTraversalCallback.h"
 #include "nsCycleCollector.h"
@@ -15,11 +17,33 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-/* static */ void
+#ifdef DEBUG
+/* static */ bool
+nsWrapperCache::HasJSObjectMovedOp(JSObject* aWrapper)
+{
+    return js::HasObjectMovedOp(aWrapper);
+}
+#endif
+
+void
 nsWrapperCache::HoldJSObjects(void* aScriptObjectHolder,
                               nsScriptObjectTracer* aTracer)
 {
   cyclecollector::HoldJSObjectsImpl(aScriptObjectHolder, aTracer);
+  if (mWrapper && !JS::ObjectIsTenured(mWrapper)) {
+    CycleCollectedJSRuntime::Get()->NurseryWrapperPreserved(mWrapper);
+  }
+}
+
+void
+nsWrapperCache::SetWrapperJSObject(JSObject* aWrapper)
+{
+  mWrapper = aWrapper;
+  UnsetWrapperFlags(kWrapperFlagsMask & ~WRAPPER_IS_NOT_DOM_BINDING);
+
+  if (aWrapper && !JS::ObjectIsTenured(aWrapper)) {
+    CycleCollectedJSRuntime::Get()->NurseryWrapperAdded(this);
+  }
 }
 
 void
@@ -92,8 +116,8 @@ DebugWrapperTraceCallback(JS::GCCellPtr aPtr, const char* aName, void* aClosure)
 {
   DebugWrapperTraversalCallback* callback =
     static_cast<DebugWrapperTraversalCallback*>(aClosure);
-  if (aPtr.isObject()) {
-    callback->NoteJSObject(aPtr.toObject());
+  if (aPtr.is<JSObject>()) {
+    callback->NoteJSObject(&aPtr.as<JSObject>());
   }
 }
 

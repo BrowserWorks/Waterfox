@@ -12,6 +12,9 @@
 
 namespace mozilla {
 namespace dom {
+
+class Promise;
+
 namespace workers {
 
 class ServiceWorkerWindowClient final : public ServiceWorkerClient
@@ -21,8 +24,7 @@ public:
                             const ServiceWorkerClientInfo& aClientInfo)
     : ServiceWorkerClient(aOwner, aClientInfo),
       mVisibilityState(aClientInfo.mVisibilityState),
-      mFocused(aClientInfo.mFocused),
-      mFrameType(aClientInfo.mFrameType)
+      mFocused(aClientInfo.mFocused)
   {
   }
 
@@ -41,12 +43,6 @@ public:
     return mFocused;
   }
 
-  mozilla::dom::FrameType
-  FrameType() const
-  {
-    return mFrameType;
-  }
-
   already_AddRefed<Promise>
   Focus(ErrorResult& aRv) const;
 
@@ -56,7 +52,6 @@ private:
 
   mozilla::dom::VisibilityState mVisibilityState;
   bool mFocused;
-  mozilla::dom::FrameType mFrameType;
 };
 
 } // namespace workers

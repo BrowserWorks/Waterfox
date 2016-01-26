@@ -7,7 +7,7 @@
  * http://seanyhlin.github.io/TV-Manager-API/
  */
 
-[Pref="dom.tv.enabled", CheckPermissions="tv", Func="Navigator::HasTVSupport"]
+[Pref="dom.tv.enabled", CheckAnyPermissions="tv", AvailableIn=CertifiedApps]
 interface TVManager : EventTarget {
   [Throws]
   Promise<sequence<TVTuner>> getTuners();

@@ -18,6 +18,7 @@
 
 class nsIPrincipal;
 class nsIDOMWindow;
+class nsPIDOMWindow;
 
 namespace mozilla {
 namespace dom {
@@ -122,7 +123,7 @@ public:
   // It is an optimization since the privileges check and session only
   // state determination are complex and share the code (comes hand in
   // hand together).
-  static bool CanUseStorage(DOMStorage* aStorage = nullptr);
+  static bool CanUseStorage(nsPIDOMWindow* aWindow, DOMStorage* aStorage = nullptr);
 
   bool IsPrivate() const { return mIsPrivate; }
   bool IsSessionOnly() const { return mIsSessionOnly; }
@@ -140,8 +141,8 @@ private:
   friend class DOMStorageCache;
 
   nsCOMPtr<nsIDOMWindow> mWindow;
-  nsRefPtr<DOMStorageManager> mManager;
-  nsRefPtr<DOMStorageCache> mCache;
+  RefPtr<DOMStorageManager> mManager;
+  RefPtr<DOMStorageCache> mCache;
   nsString mDocumentURI;
 
   // Principal this DOMStorage (i.e. localStorage or sessionStorage) has
@@ -161,7 +162,7 @@ private:
                                    const nsSubstring& aNewValue);
 };
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla
 
 #endif /* nsDOMStorage_h___ */

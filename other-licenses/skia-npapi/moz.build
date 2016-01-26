@@ -16,6 +16,9 @@ UNIFIED_SOURCES += [
     'SkANP.cpp',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'xul'
 
 DEFINES['SK_BUILD_FOR_ANDROID_NDK'] = True
@@ -24,7 +27,7 @@ LOCAL_INCLUDES += [
     '/dom/plugins/base',
     '/dom/plugins/base/android',
     '/gfx/gl',
-    '/gfx/skia/trunk/include/config',
-    '/gfx/skia/trunk/include/core',
+    '/gfx/skia/skia/include/config',
+    '/gfx/skia/skia/include/core',
 ]
 

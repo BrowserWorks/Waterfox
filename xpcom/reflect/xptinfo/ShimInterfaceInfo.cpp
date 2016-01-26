@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  * vim: set ts=8 sw=4 et tw=78:
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -32,7 +32,6 @@
 #include "nsIDOMDataChannel.h"
 #endif
 #include "nsIDOMDataTransfer.h"
-#include "nsIDOMDeviceStorage.h"
 #include "nsIDOMDOMCursor.h"
 #include "nsIDOMDOMException.h"
 #include "nsIDOMDOMRequest.h"
@@ -45,7 +44,6 @@
 #include "nsIDOMEvent.h"
 #include "nsIDOMEventTarget.h"
 #include "nsIDOMFileList.h"
-#include "nsIDOMFileReader.h"
 #include "nsIDOMFocusEvent.h"
 #include "nsIDOMFormData.h"
 #include "nsIDOMGeoPositionError.h"
@@ -180,7 +178,6 @@
 #include "mozilla/dom/EventBinding.h"
 #include "mozilla/dom/EventTargetBinding.h"
 #include "mozilla/dom/FileListBinding.h"
-#include "mozilla/dom/FileReaderBinding.h"
 #include "mozilla/dom/FocusEventBinding.h"
 #include "mozilla/dom/FormDataBinding.h"
 #include "mozilla/dom/HistoryBinding.h"
@@ -281,9 +278,14 @@
 using namespace mozilla;
 
 struct ComponentsInterfaceShimEntry {
+  MOZ_CONSTEXPR
+  ComponentsInterfaceShimEntry(const char* aName, const nsIID& aIID,
+                               const dom::NativePropertyHooks* aNativePropHooks)
+    : geckoName(aName), iid(aIID), nativePropHooks(aNativePropHooks) {}
+
   const char *geckoName;
-  nsIID iid;
-  const mozilla::dom::NativePropertyHooks* nativePropHooks;
+  const nsIID& iid;
+  const dom::NativePropertyHooks* nativePropHooks;
 };
 
 #define DEFINE_SHIM_WITH_CUSTOM_INTERFACE(geckoName, domName) \
@@ -353,7 +355,6 @@ const ComponentsInterfaceShimEntry kComponentsInterfaceShimMap[] =
 #endif
   DEFINE_SHIM(DataContainerEvent),
   DEFINE_SHIM(DataTransfer),
-  DEFINE_SHIM(DeviceStorage),
   DEFINE_SHIM(DOMCursor),
   DEFINE_SHIM(DOMException),
   DEFINE_SHIM(DOMRequest),
@@ -365,7 +366,6 @@ const ComponentsInterfaceShimEntry kComponentsInterfaceShimMap[] =
   DEFINE_SHIM(Element),
   DEFINE_SHIM(Event),
   DEFINE_SHIM(EventTarget),
-  DEFINE_SHIM(FileReader),
   DEFINE_SHIM(FileList),
   DEFINE_SHIM(FocusEvent),
   DEFINE_SHIM(FormData),
@@ -473,7 +473,7 @@ NS_IMPL_ISUPPORTS(ShimInterfaceInfo, nsISupports, nsIInterfaceInfo)
 already_AddRefed<ShimInterfaceInfo>
 ShimInterfaceInfo::MaybeConstruct(const char* aName, JSContext* cx)
 {
-    nsRefPtr<ShimInterfaceInfo> info;
+    RefPtr<ShimInterfaceInfo> info;
     for (uint32_t i = 0; i < ArrayLength(kComponentsInterfaceShimMap); ++i) {
         if (!strcmp(aName, kComponentsInterfaceShimMap[i].geckoName)) {
             const ComponentsInterfaceShimEntry& shimEntry =

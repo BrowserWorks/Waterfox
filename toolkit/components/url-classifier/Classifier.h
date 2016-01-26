@@ -60,6 +60,7 @@ public:
    * unnecessarily
    */
   nsresult MarkSpoiled(nsTArray<nsCString>& aTables);
+  void SetLastUpdateTime(const nsACString& aTableName, uint64_t updateTime);
   nsresult CacheCompletions(const CacheResultArray& aResults);
   uint32_t GetHashKey(void) { return mHashKey; }
   /*
@@ -104,7 +105,7 @@ private:
   nsDataHashtable<nsCStringHashKey, int64_t> mTableFreshness;
 };
 
-}
-}
+} // namespace safebrowsing
+} // namespace mozilla
 
 #endif

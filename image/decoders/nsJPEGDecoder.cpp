@@ -36,25 +36,9 @@ static void cmyk_convert_rgb(JSAMPROW row, JDIMENSION width);
 namespace mozilla {
 namespace image {
 
-static PRLogModuleInfo*
-GetJPEGLog()
-{
-  static PRLogModuleInfo* sJPEGLog;
-  if (!sJPEGLog) {
-    sJPEGLog = PR_NewLogModule("JPEGDecoder");
-  }
-  return sJPEGLog;
-}
+static mozilla::LazyLogModule sJPEGLog("JPEGDecoder");
 
-static PRLogModuleInfo*
-GetJPEGDecoderAccountingLog()
-{
-  static PRLogModuleInfo* sJPEGDecoderAccountingLog;
-  if (!sJPEGDecoderAccountingLog) {
-    sJPEGDecoderAccountingLog = PR_NewLogModule("JPEGDecoderAccounting");
-  }
-  return sJPEGDecoderAccountingLog;
-}
+static mozilla::LazyLogModule sJPEGDecoderAccountingLog("JPEGDecoderAccounting");
 
 static qcms_profile*
 GetICCProfile(struct jpeg_decompress_struct& info)
@@ -84,6 +68,7 @@ nsJPEGDecoder::nsJPEGDecoder(RasterImage* aImage,
                              Decoder::DecodeStyle aDecodeStyle)
  : Decoder(aImage)
  , mDecodeStyle(aDecodeStyle)
+ , mSampleSize(0)
 {
   mState = JPEG_HEADER;
   mReading = true;
@@ -105,7 +90,7 @@ nsJPEGDecoder::nsJPEGDecoder(RasterImage* aImage,
 
   mCMSMode = 0;
 
-  PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+  MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
          ("nsJPEGDecoder::nsJPEGDecoder: Creating JPEG decoder %p",
           this));
 }
@@ -124,7 +109,7 @@ nsJPEGDecoder::~nsJPEGDecoder()
     qcms_profile_release(mInProfile);
   }
 
-  PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+  MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
          ("nsJPEGDecoder::~nsJPEGDecoder: Destroying JPEG decoder %p",
           this));
 }
@@ -135,25 +120,11 @@ nsJPEGDecoder::SpeedHistogram()
   return Telemetry::IMAGE_DECODE_SPEED_JPEG;
 }
 
-nsresult
-nsJPEGDecoder::SetTargetSize(const nsIntSize& aSize)
-{
-  // Make sure the size is reasonable.
-  if (MOZ_UNLIKELY(aSize.width <= 0 || aSize.height <= 0)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Create a downscaler that we'll filter our output through.
-  mDownscaler.emplace(aSize);
-
-  return NS_OK;
-}
-
 void
 nsJPEGDecoder::InitInternal()
 {
   mCMSMode = gfxPlatform::GetCMSMode();
-  if (GetDecodeFlags() & imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION) {
+  if (GetSurfaceFlags() & SurfaceFlags::NO_COLORSPACE_CONVERSION) {
     mCMSMode = eCMSMode_Off;
   }
 
@@ -195,7 +166,7 @@ nsJPEGDecoder::FinishInternal()
   // If we're not in any sort of error case, force our state to JPEG_DONE.
   if ((mState != JPEG_DONE && mState != JPEG_SINK_NON_JPEG_TRAILER) &&
       (mState != JPEG_ERROR) &&
-      !IsSizeDecode()) {
+      !IsMetadataDecode()) {
     mState = JPEG_DONE;
   }
 }
@@ -218,7 +189,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       // Error due to corrupt stream - return NS_OK and consume silently
       // so that ImageLib doesn't throw away a partial image load
       mState = JPEG_SINK_NON_JPEG_TRAILER;
-      PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+      MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
              ("} (setjmp returned NS_ERROR_FAILURE)"));
       return;
     } else {
@@ -227,31 +198,31 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       // mozilla is seconds away from falling flat on its face.
       PostDecoderError(error_code);
       mState = JPEG_ERROR;
-      PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+      MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
              ("} (setjmp returned an error)"));
       return;
     }
   }
 
-  PR_LOG(GetJPEGLog(), PR_LOG_DEBUG,
+  MOZ_LOG(sJPEGLog, LogLevel::Debug,
          ("[this=%p] nsJPEGDecoder::Write -- processing JPEG data\n", this));
 
   switch (mState) {
     case JPEG_HEADER: {
-      LOG_SCOPE(GetJPEGLog(), "nsJPEGDecoder::Write -- entering JPEG_HEADER"
+      LOG_SCOPE((mozilla::LogModule*)sJPEGLog, "nsJPEGDecoder::Write -- entering JPEG_HEADER"
                 " case");
 
       // Step 3: read file parameters with jpeg_read_header()
       if (jpeg_read_header(&mInfo, TRUE) == JPEG_SUSPENDED) {
-        PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+        MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                ("} (JPEG_SUSPENDED)"));
         return; // I/O suspension
       }
 
-      int sampleSize = mImage->GetRequestedSampleSize();
-      if (sampleSize > 0) {
+      // If we have a sample size specified for -moz-sample-size, use it.
+      if (mSampleSize > 0) {
         mInfo.scale_num = 1;
-        mInfo.scale_denom = sampleSize;
+        mInfo.scale_denom = mSampleSize;
       }
 
       // Used to set up image size so arrays can be allocated
@@ -266,8 +237,8 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         return;
       }
 
-      // If we're doing a size decode, we're done.
-      if (IsSizeDecode()) {
+      // If we're doing a metadata decode, we're done.
+      if (IsMetadataDecode()) {
         return;
       }
 
@@ -309,7 +280,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         default:
           mState = JPEG_ERROR;
           PostDataError();
-          PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+          MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                  ("} (unknown colorpsace (1))"));
           return;
       }
@@ -326,7 +297,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
           default:
             mState = JPEG_ERROR;
             PostDataError();
-            PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+            MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                    ("} (unknown colorpsace (2))"));
             return;
         }
@@ -385,7 +356,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         default:
           mState = JPEG_ERROR;
           PostDataError();
-          PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+          MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                  ("} (unknown colorpsace (3))"));
           return;
       }
@@ -396,16 +367,22 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
     mInfo.buffered_image = mDecodeStyle == PROGRESSIVE &&
                            jpeg_has_multiple_scans(&mInfo);
 
-    if (!mImageData) {
+    MOZ_ASSERT(!mImageData, "Already have a buffer allocated?");
+    nsIntSize targetSize = mDownscaler ? mDownscaler->TargetSize() : GetSize();
+    nsresult rv = AllocateFrame(0, targetSize,
+                                nsIntRect(nsIntPoint(), targetSize),
+                                gfx::SurfaceFormat::B8G8R8A8);
+    if (NS_FAILED(rv)) {
       mState = JPEG_ERROR;
-      PostDecoderError(NS_ERROR_OUT_OF_MEMORY);
-      PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+      MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
              ("} (could not initialize image frame)"));
       return;
     }
 
+    MOZ_ASSERT(mImageData, "Should have a buffer now");
+
     if (mDownscaler) {
-      nsresult rv = mDownscaler->BeginFrame(GetSize(),
+      nsresult rv = mDownscaler->BeginFrame(GetSize(), Nothing(),
                                             mImageData,
                                             /* aHasAlpha = */ false);
       if (NS_FAILED(rv)) {
@@ -414,7 +391,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       }
     }
 
-    PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+    MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
            ("        JPEGDecoderAccounting: nsJPEGDecoder::"
             "Write -- created image frame with %ux%u pixels",
             mInfo.output_width, mInfo.output_height));
@@ -423,7 +400,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
   }
 
   case JPEG_START_DECOMPRESS: {
-    LOG_SCOPE(GetJPEGLog(), "nsJPEGDecoder::Write -- entering"
+    LOG_SCOPE((mozilla::LogModule*)sJPEGLog, "nsJPEGDecoder::Write -- entering"
                             " JPEG_START_DECOMPRESS case");
     // Step 4: set parameters for decompression
 
@@ -438,7 +415,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 
     // Step 5: Start decompressor
     if (jpeg_start_decompress(&mInfo) == FALSE) {
-      PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+      MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
              ("} (I/O suspension after jpeg_start_decompress())"));
       return; // I/O suspension
     }
@@ -450,14 +427,14 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 
   case JPEG_DECOMPRESS_SEQUENTIAL: {
     if (mState == JPEG_DECOMPRESS_SEQUENTIAL) {
-      LOG_SCOPE(GetJPEGLog(), "nsJPEGDecoder::Write -- "
+      LOG_SCOPE((mozilla::LogModule*)sJPEGLog, "nsJPEGDecoder::Write -- "
                               "JPEG_DECOMPRESS_SEQUENTIAL case");
 
       bool suspend;
       OutputScanlines(&suspend);
 
       if (suspend) {
-        PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+        MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                ("} (I/O suspension after OutputScanlines() - SEQUENTIAL)"));
         return; // I/O suspension
       }
@@ -471,7 +448,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 
   case JPEG_DECOMPRESS_PROGRESSIVE: {
     if (mState == JPEG_DECOMPRESS_PROGRESSIVE) {
-      LOG_SCOPE(GetJPEGLog(),
+      LOG_SCOPE((mozilla::LogModule*)sJPEGLog,
                 "nsJPEGDecoder::Write -- JPEG_DECOMPRESS_PROGRESSIVE case");
 
       int status;
@@ -493,7 +470,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             scan--;
 
           if (!jpeg_start_output(&mInfo, scan)) {
-            PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+            MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                    ("} (I/O suspension after jpeg_start_output() -"
                     " PROGRESSIVE)"));
             return; // I/O suspension
@@ -513,14 +490,14 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             // jpeg_start_output() multiple times for the same scan
             mInfo.output_scanline = 0xffffff;
           }
-          PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+          MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                  ("} (I/O suspension after OutputScanlines() - PROGRESSIVE)"));
           return; // I/O suspension
         }
 
         if (mInfo.output_scanline == mInfo.output_height) {
           if (!jpeg_finish_output(&mInfo)) {
-            PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+            MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
                    ("} (I/O suspension after jpeg_finish_output() -"
                     " PROGRESSIVE)"));
             return; // I/O suspension
@@ -542,13 +519,13 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
   }
 
   case JPEG_DONE: {
-    LOG_SCOPE(GetJPEGLog(), "nsJPEGDecoder::ProcessData -- entering"
+    LOG_SCOPE((mozilla::LogModule*)sJPEGLog, "nsJPEGDecoder::ProcessData -- entering"
                             " JPEG_DONE case");
 
     // Step 7: Finish decompression
 
     if (jpeg_finish_decompress(&mInfo) == FALSE) {
-      PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+      MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
              ("} (I/O suspension after jpeg_finish_decompress() - DONE)"));
       return; // I/O suspension
     }
@@ -559,7 +536,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
     break;
   }
   case JPEG_SINK_NON_JPEG_TRAILER:
-    PR_LOG(GetJPEGLog(), PR_LOG_DEBUG,
+    MOZ_LOG(sJPEGLog, LogLevel::Debug,
            ("[this=%p] nsJPEGDecoder::ProcessData -- entering"
             " JPEG_SINK_NON_JPEG_TRAILER case\n", this));
 
@@ -571,7 +548,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
                "decoder");
   }
 
-  PR_LOG(GetJPEGDecoderAccountingLog(), PR_LOG_DEBUG,
+  MOZ_LOG(sJPEGDecoderAccountingLog, LogLevel::Debug,
          ("} (end of function)"));
   return;
 }

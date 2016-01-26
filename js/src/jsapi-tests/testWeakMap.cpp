@@ -5,6 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "jscompartment.h"
+
 #include "gc/Zone.h"
 
 #include "jsapi-tests/tests.h"
@@ -70,7 +72,6 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 {
     JS_SetGCParameter(rt, JSGC_MODE, JSGC_MODE_INCREMENTAL);
     JS_GC(rt);
-
     JS::RootedObject map(cx, JS::NewWeakMapObject(cx));
     CHECK(map);
 
@@ -81,16 +82,26 @@ BEGIN_TEST(testWeakMap_keyDelegates)
     CHECK(delegate);
     keyDelegate = delegate;
 
+    JS::RootedObject delegateRoot(cx);
+    {
+        JSAutoCompartment ac(cx, delegate);
+        delegateRoot = JS_NewPlainObject(cx);
+        CHECK(delegateRoot);
+        JS::RootedValue delegateValue(cx, JS::ObjectValue(*delegate));
+        CHECK(JS_DefineProperty(cx, delegateRoot, "delegate", delegateValue, 0));
+    }
+    delegate = nullptr;
+
     /*
      * Perform an incremental GC, introducing an unmarked CCW to force the map
      * zone to finish marking before the delegate zone.
      */
-    CHECK(newCCW(map, delegate));
+    CHECK(newCCW(map, delegateRoot));
     js::SliceBudget budget(js::WorkBudget(1000000));
     rt->gc.startDebugGC(GC_NORMAL, budget);
     CHECK(!JS::IsIncrementalGCInProgress(rt));
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() < delegate->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastZoneGroupIndex() < delegateRoot->zone()->lastZoneGroupIndex());
 #endif
 
     /* Add our entry to the weakmap. */
@@ -100,7 +111,7 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     /* Check the delegate keeps the entry alive even if the key is not reachable. */
     key = nullptr;
-    CHECK(newCCW(map, delegate));
+    CHECK(newCCW(map, delegateRoot));
     budget = js::SliceBudget(js::WorkBudget(100000));
     rt->gc.startDebugGC(GC_NORMAL, budget);
     CHECK(!JS::IsIncrementalGCInProgress(rt));
@@ -108,14 +119,14 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     /*
      * Check that the zones finished marking at the same time, which is
-     * neccessary because of the presence of the delegate and the CCW.
+     * necessary because of the presence of the delegate and the CCW.
      */
 #ifdef DEBUG
-    CHECK(map->zone()->lastZoneGroupIndex() == delegate->zone()->lastZoneGroupIndex());
+    CHECK(map->zone()->lastZoneGroupIndex() == delegateRoot->zone()->lastZoneGroupIndex());
 #endif
 
     /* Check that when the delegate becomes unreachable the entry is removed. */
-    delegate = nullptr;
+    delegateRoot = nullptr;
     keyDelegate = nullptr;
     JS_GC(rt);
     CHECK(checkSize(map, 0));
@@ -149,7 +160,6 @@ JSObject* newKey()
         nullptr, /* enumerate */
         nullptr, /* resolve */
         nullptr, /* mayResolve */
-        nullptr, /* convert */
         nullptr, /* finalize */
         nullptr, /* call */
         nullptr, /* hasInstance */
@@ -157,8 +167,6 @@ JSObject* newKey()
         nullptr, /* trace */
         JS_NULL_CLASS_SPEC,
         {
-            nullptr,
-            nullptr,
             false,
             GetKeyDelegate
         },
@@ -206,7 +214,6 @@ JSObject* newDelegate()
         nullptr, /* enumerate */
         nullptr, /* resolve */
         nullptr, /* mayResolve */
-        nullptr, /* convert */
         nullptr, /* finalize */
         nullptr, /* call */
         nullptr, /* hasInstance */
@@ -214,8 +221,6 @@ JSObject* newDelegate()
         JS_GlobalObjectTraceHook,
         JS_NULL_CLASS_SPEC,
         {
-            nullptr,
-            nullptr,
             false,
             nullptr,
             DelegateObjectMoved
@@ -225,12 +230,14 @@ JSObject* newDelegate()
 
     /* Create the global object. */
     JS::CompartmentOptions options;
-    options.setVersion(JSVERSION_LATEST);
-    JS::RootedObject global(cx);
-    global = JS_NewGlobalObject(cx, Jsvalify(&delegateClass), nullptr, JS::FireOnNewGlobalHook,
-                                options);
-    JS_SetReservedSlot(global, 0, JS::Int32Value(42));
+    options.behaviors().setVersion(JSVERSION_LATEST);
 
+    JS::RootedObject global(cx, JS_NewGlobalObject(cx, Jsvalify(&delegateClass), nullptr,
+                                                   JS::FireOnNewGlobalHook, options));
+    if (!global)
+        return nullptr;
+
+    JS_SetReservedSlot(global, 0, JS::Int32Value(42));
     return global;
 }
 

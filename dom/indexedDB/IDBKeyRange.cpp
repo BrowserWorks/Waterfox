@@ -37,7 +37,7 @@ GetKeyFromJSVal(JSContext* aCx,
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
 
 IDBKeyRange::IDBKeyRange(nsISupports* aGlobal,
                          bool aLowerOpen,
@@ -64,6 +64,23 @@ IDBKeyRange::~IDBKeyRange()
   DropJSObjects();
 }
 
+IDBLocaleAwareKeyRange::IDBLocaleAwareKeyRange(nsISupports* aGlobal,
+                                               bool aLowerOpen,
+                                               bool aUpperOpen,
+                                               bool aIsOnly)
+  : IDBKeyRange(aGlobal, aLowerOpen, aUpperOpen, aIsOnly)
+{
+#ifdef DEBUG
+  mOwningThread = PR_GetCurrentThread();
+#endif
+  AssertIsOnOwningThread();
+}
+
+IDBLocaleAwareKeyRange::~IDBLocaleAwareKeyRange()
+{
+  DropJSObjects();
+}
+
 #ifdef DEBUG
 
 void
@@ -81,7 +98,7 @@ IDBKeyRange::FromJSVal(JSContext* aCx,
                        JS::Handle<JS::Value> aVal,
                        IDBKeyRange** aKeyRange)
 {
-  nsRefPtr<IDBKeyRange> keyRange;
+  RefPtr<IDBKeyRange> keyRange;
 
   if (aVal.isNullOrUndefined()) {
     // undefined and null returns no IDBKeyRange.
@@ -90,8 +107,15 @@ IDBKeyRange::FromJSVal(JSContext* aCx,
   }
 
   JS::Rooted<JSObject*> obj(aCx, aVal.isObject() ? &aVal.toObject() : nullptr);
-  if (aVal.isPrimitive() || JS_IsArrayObject(aCx, obj) ||
-      JS_ObjectIsDate(aCx, obj)) {
+  bool isValidKey = aVal.isPrimitive();
+  if (!isValidKey) {
+    js::ESClassValue cls;
+    if (!js::GetBuiltinClass(aCx, obj, &cls)) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    isValidKey = cls == js::ESClass_Array || cls == js::ESClass_Date;
+  }
+  if (isValidKey) {
     // A valid key returns an 'only' IDBKeyRange.
     keyRange = new IDBKeyRange(nullptr, false, false, true);
 
@@ -116,7 +140,7 @@ IDBKeyRange::FromJSVal(JSContext* aCx,
 already_AddRefed<IDBKeyRange>
 IDBKeyRange::FromSerialized(const SerializedKeyRange& aKeyRange)
 {
-  nsRefPtr<IDBKeyRange> keyRange =
+  RefPtr<IDBKeyRange> keyRange =
     new IDBKeyRange(nullptr, aKeyRange.lowerOpen(), aKeyRange.upperOpen(),
                     aKeyRange.isOnly());
   keyRange->Lower() = aKeyRange.lower();
@@ -233,6 +257,8 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(IDBKeyRange)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(IDBKeyRange)
 
+NS_IMPL_ISUPPORTS_INHERITED0(IDBLocaleAwareKeyRange, IDBKeyRange)
+
 void
 IDBKeyRange::DropJSObjects()
 {
@@ -251,6 +277,12 @@ bool
 IDBKeyRange::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector)
 {
   return IDBKeyRangeBinding::Wrap(aCx, this, aGivenProto, aReflector);
+}
+
+bool
+IDBLocaleAwareKeyRange::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector)
+{
+  return IDBLocaleAwareKeyRangeBinding::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
 void
@@ -307,7 +339,7 @@ IDBKeyRange::Only(const GlobalObject& aGlobal,
                   JS::Handle<JS::Value> aValue,
                   ErrorResult& aRv)
 {
-  nsRefPtr<IDBKeyRange> keyRange =
+  RefPtr<IDBKeyRange> keyRange =
     new IDBKeyRange(aGlobal.GetAsSupports(), false, false, true);
 
   aRv = GetKeyFromJSVal(aGlobal.Context(), aValue, keyRange->Lower());
@@ -325,7 +357,7 @@ IDBKeyRange::LowerBound(const GlobalObject& aGlobal,
                         bool aOpen,
                         ErrorResult& aRv)
 {
-  nsRefPtr<IDBKeyRange> keyRange =
+  RefPtr<IDBKeyRange> keyRange =
     new IDBKeyRange(aGlobal.GetAsSupports(), aOpen, true, false);
 
   aRv = GetKeyFromJSVal(aGlobal.Context(), aValue, keyRange->Lower());
@@ -343,7 +375,7 @@ IDBKeyRange::UpperBound(const GlobalObject& aGlobal,
                         bool aOpen,
                         ErrorResult& aRv)
 {
-  nsRefPtr<IDBKeyRange> keyRange =
+  RefPtr<IDBKeyRange> keyRange =
     new IDBKeyRange(aGlobal.GetAsSupports(), true, aOpen, false);
 
   aRv = GetKeyFromJSVal(aGlobal.Context(), aValue, keyRange->Upper());
@@ -363,7 +395,7 @@ IDBKeyRange::Bound(const GlobalObject& aGlobal,
                    bool aUpperOpen,
                    ErrorResult& aRv)
 {
-  nsRefPtr<IDBKeyRange> keyRange =
+  RefPtr<IDBKeyRange> keyRange =
     new IDBKeyRange(aGlobal.GetAsSupports(), aLowerOpen, aUpperOpen, false);
 
   aRv = GetKeyFromJSVal(aGlobal.Context(), aLower, keyRange->Lower());
@@ -378,6 +410,36 @@ IDBKeyRange::Bound(const GlobalObject& aGlobal,
 
   if (keyRange->Lower() > keyRange->Upper() ||
       (keyRange->Lower() == keyRange->Upper() && (aLowerOpen || aUpperOpen))) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_DATA_ERR);
+    return nullptr;
+  }
+
+  return keyRange.forget();
+}
+
+// static
+already_AddRefed<IDBLocaleAwareKeyRange>
+IDBLocaleAwareKeyRange::Bound(const GlobalObject& aGlobal,
+                              JS::Handle<JS::Value> aLower,
+                              JS::Handle<JS::Value> aUpper,
+                              bool aLowerOpen,
+                              bool aUpperOpen,
+                              ErrorResult& aRv)
+{
+  RefPtr<IDBLocaleAwareKeyRange> keyRange =
+    new IDBLocaleAwareKeyRange(aGlobal.GetAsSupports(), aLowerOpen, aUpperOpen, false);
+
+  aRv = GetKeyFromJSVal(aGlobal.Context(), aLower, keyRange->Lower());
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  aRv = GetKeyFromJSVal(aGlobal.Context(), aUpper, keyRange->Upper());
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  if (keyRange->Lower() == keyRange->Upper() && (aLowerOpen || aUpperOpen)) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_DATA_ERR);
     return nullptr;
   }

@@ -12,14 +12,11 @@ SOURCES += [
     'DirectoryProvider.cpp',
 ]
 
-XPCSHELL_TESTS_MANIFESTS += [
-    'tests/unit/xpcshell.ini',
-]
-
 FINAL_LIBRARY = 'browsercomps'
 
 LOCAL_INCLUDES += [
     '../build'
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

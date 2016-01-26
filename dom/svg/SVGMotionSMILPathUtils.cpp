@@ -80,7 +80,7 @@ SVGMotionSMILPathUtils::PathGenerator::
   return true;
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 SVGMotionSMILPathUtils::PathGenerator::GetResultingPath()
 {
   return mPathBuilder->Finish();
@@ -136,14 +136,14 @@ SVGMotionSMILPathUtils::MotionValueParser::
     // Interpret first value in "values" attribute as the path's initial MoveTo
     success = mPathGenerator->MoveToAbsolute(aValueStr);
     if (success) {
-      success = !!mPointDistances->AppendElement(0.0);
+      success = !!mPointDistances->AppendElement(0.0, fallible);
     }
   } else {
     double dist;
     success = mPathGenerator->LineToAbsolute(aValueStr, dist);
     if (success) {
       mDistanceSoFar += dist;
-      success = !!mPointDistances->AppendElement(mDistanceSoFar);
+      success = !!mPointDistances->AppendElement(mDistanceSoFar, fallible);
     }
   }
   return success;

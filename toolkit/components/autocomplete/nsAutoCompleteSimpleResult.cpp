@@ -4,15 +4,116 @@
 
 #include "nsAutoCompleteSimpleResult.h"
 
+#define CHECK_MATCH_INDEX(_index, _insert)                                     \
+  if (_index < 0 ||                                                            \
+      static_cast<MatchesArray::size_type>(_index) > mMatches.Length() ||      \
+      (!_insert && static_cast<MatchesArray::size_type>(_index) == mMatches.Length())) { \
+    MOZ_ASSERT(false, "Trying to use an invalid index on mMatches");           \
+    return NS_ERROR_ILLEGAL_VALUE;                                             \
+  }                                                                            \
+
 NS_IMPL_ISUPPORTS(nsAutoCompleteSimpleResult,
                   nsIAutoCompleteResult,
                   nsIAutoCompleteSimpleResult)
+
+struct AutoCompleteSimpleResultMatch
+{
+  AutoCompleteSimpleResultMatch(const nsAString& aValue,
+                                const nsAString& aComment,
+                                const nsAString& aImage,
+                                const nsAString& aStyle,
+                                const nsAString& aFinalCompleteValue,
+                                const nsAString& aLabel)
+    : mValue(aValue)
+    , mComment(aComment)
+    , mImage(aImage)
+    , mStyle(aStyle)
+    , mFinalCompleteValue(aFinalCompleteValue)
+    , mLabel(aLabel)
+  {
+  }
+
+  nsString mValue;
+  nsString mComment;
+  nsString mImage;
+  nsString mStyle;
+  nsString mFinalCompleteValue;
+  nsString mLabel;
+};
 
 nsAutoCompleteSimpleResult::nsAutoCompleteSimpleResult() :
   mDefaultIndex(-1),
   mSearchResult(RESULT_NOMATCH),
   mTypeAheadResult(false)
 {
+}
+
+nsresult
+nsAutoCompleteSimpleResult::AppendResult(nsIAutoCompleteResult* aResult)
+{
+  nsAutoString searchString;
+  nsresult rv = aResult->GetSearchString(searchString);
+  NS_ENSURE_SUCCESS(rv, rv);
+  mSearchString = searchString;
+
+  uint16_t searchResult;
+  rv = aResult->GetSearchResult(&searchResult);
+  NS_ENSURE_SUCCESS(rv, rv);
+  mSearchResult = searchResult;
+
+  nsAutoString errorDescription;
+  if (NS_SUCCEEDED(aResult->GetErrorDescription(errorDescription)) &&
+      !errorDescription.IsEmpty()) {
+    mErrorDescription = errorDescription;
+  }
+
+  bool typeAheadResult = false;
+  if (NS_SUCCEEDED(aResult->GetTypeAheadResult(&typeAheadResult)) &&
+      typeAheadResult) {
+    mTypeAheadResult = typeAheadResult;
+  }
+
+  int32_t defaultIndex = -1;
+  if (NS_SUCCEEDED(aResult->GetDefaultIndex(&defaultIndex)) &&
+      defaultIndex >= 0) {
+    mDefaultIndex = defaultIndex;
+  }
+
+  nsCOMPtr<nsIAutoCompleteSimpleResult> simpleResult =
+    do_QueryInterface(aResult);
+  if (simpleResult) {
+    nsCOMPtr<nsIAutoCompleteSimpleResultListener> listener;
+    if (NS_SUCCEEDED(simpleResult->GetListener(getter_AddRefs(listener))) &&
+        listener) {
+      listener.swap(mListener);
+    }
+  }
+
+  // Copy matches.
+  uint32_t matchCount = 0;
+  rv = aResult->GetMatchCount(&matchCount);
+  NS_ENSURE_SUCCESS(rv, rv);
+  for (size_t i = 0; i < matchCount; ++i) {
+    nsAutoString value, comment, image, style, finalCompleteValue, label;
+
+    rv = aResult->GetValueAt(i, value);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = aResult->GetCommentAt(i, comment);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = aResult->GetImageAt(i, image);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = aResult->GetStyleAt(i, style);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = aResult->GetFinalCompleteValueAt(i, finalCompleteValue);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = aResult->GetLabelAt(i, label);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = AppendMatch(value, comment, image, style, finalCompleteValue, label);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  return NS_OK;
 }
 
 // searchString
@@ -87,94 +188,84 @@ nsAutoCompleteSimpleResult::SetTypeAheadResult(bool aTypeAheadResult)
 }
 
 NS_IMETHODIMP
+nsAutoCompleteSimpleResult::InsertMatchAt(int32_t aIndex,
+                                          const nsAString& aValue,
+                                          const nsAString& aComment,
+                                          const nsAString& aImage,
+                                          const nsAString& aStyle,
+                                          const nsAString& aFinalCompleteValue,
+                                          const nsAString& aLabel)
+{
+  CHECK_MATCH_INDEX(aIndex, true);
+
+  AutoCompleteSimpleResultMatch match(aValue, aComment, aImage, aStyle, aFinalCompleteValue, aLabel);
+
+  if (!mMatches.InsertElementAt(aIndex, match)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsAutoCompleteSimpleResult::AppendMatch(const nsAString& aValue,
                                         const nsAString& aComment,
                                         const nsAString& aImage,
                                         const nsAString& aStyle,
-                                        const nsAString& aFinalCompleteValue)
+                                        const nsAString& aFinalCompleteValue,
+                                        const nsAString& aLabel)
 {
-  CheckInvariants();
-
-  if (! mValues.AppendElement(aValue))
-    return NS_ERROR_OUT_OF_MEMORY;
-  if (! mComments.AppendElement(aComment)) {
-    mValues.RemoveElementAt(mValues.Length() - 1);
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  if (! mImages.AppendElement(aImage)) {
-    mValues.RemoveElementAt(mValues.Length() - 1);
-    mComments.RemoveElementAt(mComments.Length() - 1);
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  if (! mStyles.AppendElement(aStyle)) {
-    mValues.RemoveElementAt(mValues.Length() - 1);
-    mComments.RemoveElementAt(mComments.Length() - 1);
-    mImages.RemoveElementAt(mImages.Length() - 1);
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  if (!mFinalCompleteValues.AppendElement(aFinalCompleteValue)) {
-    mValues.RemoveElementAt(mValues.Length() - 1);
-    mComments.RemoveElementAt(mComments.Length() - 1);
-    mImages.RemoveElementAt(mImages.Length() - 1);
-    mStyles.RemoveElementAt(mStyles.Length() - 1);
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  return NS_OK;
+  return InsertMatchAt(mMatches.Length(), aValue, aComment, aImage, aStyle,
+                       aFinalCompleteValue, aLabel);
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetMatchCount(uint32_t *aMatchCount)
 {
-  CheckInvariants();
-
-  *aMatchCount = mValues.Length();
+  *aMatchCount = mMatches.Length();
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetValueAt(int32_t aIndex, nsAString& _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && aIndex < int32_t(mValues.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
-  CheckInvariants();
-
-  _retval = mValues[aIndex];
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mValue;
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetLabelAt(int32_t aIndex, nsAString& _retval)
 {
-  return GetValueAt(aIndex, _retval);
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mLabel;
+  if (_retval.IsEmpty()) {
+    _retval = mMatches[aIndex].mValue;
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetCommentAt(int32_t aIndex, nsAString& _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && aIndex < int32_t(mComments.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
-  CheckInvariants();
-  _retval = mComments[aIndex];
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mComment;
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetImageAt(int32_t aIndex, nsAString& _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && aIndex < int32_t(mImages.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
-  CheckInvariants();
-  _retval = mImages[aIndex];
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mImage;
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetStyleAt(int32_t aIndex, nsAString& _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && aIndex < int32_t(mStyles.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
-  CheckInvariants();
-  _retval = mStyles[aIndex];
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mStyle;
   return NS_OK;
 }
 
@@ -182,12 +273,11 @@ NS_IMETHODIMP
 nsAutoCompleteSimpleResult::GetFinalCompleteValueAt(int32_t aIndex,
                                                     nsAString& _retval)
 {
-  NS_ENSURE_TRUE(aIndex >= 0 && aIndex < int32_t(mFinalCompleteValues.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
-  CheckInvariants();
-  _retval = mFinalCompleteValues[aIndex];
-  if (_retval.Length() == 0)
-    _retval = mValues[aIndex];
+  CHECK_MATCH_INDEX(aIndex, false);
+  _retval = mMatches[aIndex].mFinalCompleteValue;
+  if (_retval.IsEmpty()) {
+    _retval = mMatches[aIndex].mValue;
+  }
   return NS_OK;
 }
 
@@ -199,21 +289,25 @@ nsAutoCompleteSimpleResult::SetListener(nsIAutoCompleteSimpleResultListener* aLi
 }
 
 NS_IMETHODIMP
+nsAutoCompleteSimpleResult::GetListener(nsIAutoCompleteSimpleResultListener** aListener)
+{
+  nsCOMPtr<nsIAutoCompleteSimpleResultListener> listener(mListener);
+  listener.forget(aListener);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsAutoCompleteSimpleResult::RemoveValueAt(int32_t aRowIndex,
                                           bool aRemoveFromDb)
 {
-  NS_ENSURE_TRUE(aRowIndex >= 0 && aRowIndex < int32_t(mValues.Length()),
-                 NS_ERROR_ILLEGAL_VALUE);
+  CHECK_MATCH_INDEX(aRowIndex, false);
 
-  nsAutoString removedValue(mValues[aRowIndex]);
-  mValues.RemoveElementAt(aRowIndex);
-  mComments.RemoveElementAt(aRowIndex);
-  mImages.RemoveElementAt(aRowIndex);
-  mStyles.RemoveElementAt(aRowIndex);
-  mFinalCompleteValues.RemoveElementAt(aRowIndex);
+  nsString value = mMatches[aRowIndex].mValue;
+  mMatches.RemoveElementAt(aRowIndex);
 
-  if (mListener)
-    mListener->OnValueRemoved(this, removedValue, aRemoveFromDb);
+  if (mListener) {
+    mListener->OnValueRemoved(this, value, aRemoveFromDb);
+  }
 
   return NS_OK;
 }

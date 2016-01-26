@@ -38,7 +38,7 @@ class IDBIndex final
   : public nsISupports
   , public nsWrapperCache
 {
-  nsRefPtr<IDBObjectStore> mObjectStore;
+  RefPtr<IDBObjectStore> mObjectStore;
 
   JS::Heap<JS::Value> mCachedKeyPath;
 
@@ -76,8 +76,20 @@ public:
   bool
   MultiEntry() const;
 
+  bool
+  LocaleAware() const;
+
   const KeyPath&
   GetKeyPath() const;
+
+  void
+  GetLocale(nsString& aLocale) const;
+
+  const nsCString&
+  Locale() const;
+
+  bool
+  IsAutoLocale() const;
 
   IDBObjectStore*
   ObjectStore() const
@@ -167,6 +179,14 @@ public:
 
   void
   NoteDeletion();
+
+  bool
+  IsDeleted() const
+  {
+    AssertIsOnOwningThread();
+
+    return !!mDeletedMetadata;
+  }
 
   void
   AssertIsOnOwningThread() const

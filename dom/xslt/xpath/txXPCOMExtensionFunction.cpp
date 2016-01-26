@@ -256,8 +256,7 @@ TX_ResolveFunctionCallXPCOM(const nsCString &aContractID, int32_t aNamespaceID,
                                                   aName,
 #endif
                                                   aState);
-
-    return *aFunction ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
+    return NS_OK;
 }
 
 txArgumentType
@@ -286,8 +285,8 @@ txXPCOMExtensionFunctionCall::GetParamType(const nsXPTParamInfo &aParam,
             if (iid.Equals(NS_GET_IID(txIXPathObject))) {
                 return eOBJECT;
             }
+            return eUNKNOWN;
         }
-        // FALLTHROUGH
         default:
         {
             // XXX Error!
@@ -340,10 +339,6 @@ txParamArrayHolder::Init(uint8_t aCount)
 {
     mCount = aCount;
     mArray = new nsXPTCVariant[mCount];
-    if (!mArray) {
-        return false;
-    }
-
     memset(mArray, 0, mCount * sizeof(nsXPTCVariant));
 
     return true;
@@ -389,9 +384,6 @@ txXPCOMExtensionFunctionCall::evaluate(txIEvalContext* aContext,
 
         // Create context wrapper.
         context = new txFunctionEvaluationContext(aContext, mState);
-        if (!context) {
-            return NS_ERROR_OUT_OF_MEMORY;
-        }
 
         nsXPTCVariant &invokeParam = invokeParams[0];
         invokeParam.type = paramInfo.GetType();
@@ -430,7 +422,7 @@ txXPCOMExtensionFunctionCall::evaluate(txIEvalContext* aContext,
         switch (type) {
             case eNODESET:
             {
-                nsRefPtr<txNodeSet> nodes;
+                RefPtr<txNodeSet> nodes;
                 rv = evaluateToNodeSet(expr, aContext, getter_AddRefs(nodes));
                 NS_ENSURE_SUCCESS(rv, rv);
 
@@ -479,7 +471,7 @@ txXPCOMExtensionFunctionCall::evaluate(txIEvalContext* aContext,
             }
             case eOBJECT:
             {
-              nsRefPtr<txAExprResult> exprRes;
+              RefPtr<txAExprResult> exprRes;
               rv = expr->evaluate(aContext, getter_AddRefs(exprRes));
               NS_ENSURE_SUCCESS(rv, rv);
 
@@ -512,10 +504,6 @@ txXPCOMExtensionFunctionCall::evaluate(txIEvalContext* aContext,
     returnParam.type = returnInfo.GetType();
     if (returnType == eSTRING) {
         nsString *value = new nsString();
-        if (!value) {
-            return NS_ERROR_FAILURE;
-        }
-
         returnParam.SetValNeedsCleanup();
         returnParam.val.p = value;
     }

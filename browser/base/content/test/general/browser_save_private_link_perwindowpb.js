@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", null);
+var {LoadContextInfo} = Cu.import("resource://gre/modules/LoadContextInfo.jsm", null);
 
 function test() {
   // initialization
@@ -116,7 +116,7 @@ function test() {
       // execute should only be called when need, like when you are opening
       // web pages on the test. If calling executeSoon() is not necesary, then
       // call whenNewWindowLoaded() instead of testOnWindow() on your test.
-      executeSoon(function() aCallback(aWin));
+      executeSoon(() => aCallback(aWin));
     });
   };
 

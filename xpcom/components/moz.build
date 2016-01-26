@@ -39,12 +39,13 @@ UNIFIED_SOURCES += [
     'nsNativeModuleLoader.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
 
 FINAL_LIBRARY = 'xul'
 
-GENERATED_INCLUDES += ['..']
 LOCAL_INCLUDES += [
+    '!..',
     '../base',
     '../build',
     '../ds',

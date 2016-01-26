@@ -17,7 +17,7 @@
 #include "nsIDOMHTMLAreaElement.h"
 #include "nsIDOMHTMLLinkElement.h"
 #include "nsIDOMWindow.h"
-#include "nsIDOMCSSStyleDeclaration.h"
+#include "nsICSSDeclaration.h"
 #include "nsIDOMCSSValue.h"
 #include "nsIDOMCSSPrimitiveValue.h"
 #include "nsNetUtil.h"
@@ -28,6 +28,9 @@
 #include "nsIContentPolicy.h"
 #include "nsAutoPtr.h"
 #include "imgRequestProxy.h"
+
+using mozilla::dom::Element;
+using mozilla::ErrorResult;
 
 NS_IMPL_ISUPPORTS(nsContextMenuInfo, nsIContextMenuInfo)
 
@@ -157,7 +160,7 @@ nsContextMenuInfo::GetBackgroundImageContainer(imgIContainer** aImageContainer)
   NS_ENSURE_ARG_POINTER(aImageContainer);
   NS_ENSURE_STATE(mDOMNode);
 
-  nsRefPtr<imgRequestProxy> request;
+  RefPtr<imgRequestProxy> request;
   GetBackgroundImageRequest(mDOMNode, getter_AddRefs(request));
   if (request) {
     return request->GetImage(aImageContainer);
@@ -172,7 +175,7 @@ nsContextMenuInfo::GetBackgroundImageSrc(nsIURI** aURI)
   NS_ENSURE_ARG_POINTER(aURI);
   NS_ENSURE_STATE(mDOMNode);
 
-  nsRefPtr<imgRequestProxy> request;
+  RefPtr<imgRequestProxy> request;
   GetBackgroundImageRequest(mDOMNode, getter_AddRefs(request));
   if (request) {
     return request->GetURI(aURI);
@@ -199,7 +202,7 @@ nsContextMenuInfo::HasBackgroundImage(nsIDOMNode* aDOMNode)
 {
   NS_ENSURE_TRUE(aDOMNode, false);
 
-  nsRefPtr<imgRequestProxy> request;
+  RefPtr<imgRequestProxy> request;
   GetBackgroundImageRequest(aDOMNode, getter_AddRefs(request));
 
   return (request != nullptr);
@@ -260,6 +263,11 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode* aDOMNode,
   document->GetDefaultView(getter_AddRefs(window));
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(window);
+  MOZ_ASSERT(piWindow);
+  piWindow = piWindow->GetCurrentInnerWindow();
+  MOZ_ASSERT(piWindow);
+
   nsCOMPtr<nsIDOMCSSPrimitiveValue> primitiveValue;
   nsAutoString bgStringValue;
 
@@ -267,15 +275,16 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode* aDOMNode,
   nsCOMPtr<nsIPrincipal> principal = doc ? doc->NodePrincipal() : nullptr;
 
   while (true) {
-    nsCOMPtr<nsIDOMElement> domElement(do_QueryInterface(domNode));
+    nsCOMPtr<Element> domElement(do_QueryInterface(domNode));
     // bail for the parent node of the root element or null argument
     if (!domElement) {
       break;
     }
 
-    nsCOMPtr<nsIDOMCSSStyleDeclaration> computedStyle;
-    window->GetComputedStyle(domElement, EmptyString(),
-                             getter_AddRefs(computedStyle));
+    ErrorResult dummy;
+    nsCOMPtr<nsICSSDeclaration> computedStyle =
+      piWindow->GetComputedStyle(*domElement, EmptyString(), dummy);
+    dummy.SuppressException();
     if (computedStyle) {
       nsCOMPtr<nsIDOMCSSValue> cssValue;
       computedStyle->GetPropertyCSSValue(NS_LITERAL_STRING("background-image"),
@@ -288,13 +297,13 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode* aDOMNode,
           NS_NewURI(getter_AddRefs(bgUri), bgStringValue);
           NS_ENSURE_TRUE(bgUri, NS_ERROR_FAILURE);
 
-          nsRefPtr<imgLoader> il = imgLoader::GetInstance();
+          RefPtr<imgLoader> il = imgLoader::GetInstance();
           NS_ENSURE_TRUE(il, NS_ERROR_FAILURE);
 
           return il->LoadImage(bgUri, nullptr, nullptr,
                                doc->GetReferrerPolicy(), principal, nullptr,
                                nullptr, nullptr, nsIRequest::LOAD_NORMAL,
-                               nullptr, nsIContentPolicy::TYPE_IMAGE,
+                               nullptr, nsIContentPolicy::TYPE_INTERNAL_IMAGE,
                                EmptyString(), aRequest);
         }
       }

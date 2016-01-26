@@ -9,6 +9,7 @@
 #include "CreateDirectoryTask.h"
 #include "CreateFileTask.h"
 #include "FileSystemPermissionRequest.h"
+#include "GetDirectoryListingTask.h"
 #include "GetFileOrDirectoryTask.h"
 #include "RemoveTask.h"
 
@@ -33,7 +34,20 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(Directory)
+NS_IMPL_CYCLE_COLLECTION_CLASS(Directory)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Directory)
+  tmp->mFileSystem->Unlink();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Directory)
+  tmp->mFileSystem->Traverse(cb);
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(Directory)
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(Directory)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(Directory)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Directory)
@@ -45,7 +59,7 @@ NS_INTERFACE_MAP_END
 already_AddRefed<Promise>
 Directory::GetRoot(FileSystemBase* aFileSystem, ErrorResult& aRv)
 {
-  nsRefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
+  RefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
     aFileSystem, EmptyString(), true, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -81,12 +95,12 @@ Directory::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 void
-Directory::GetName(nsString& aRetval) const
+Directory::GetName(nsAString& aRetval) const
 {
   aRetval.Truncate();
 
   if (mPath.IsEmpty()) {
-    aRetval = mFileSystem->GetRootName();
+    mFileSystem->GetRootName(aRetval);
     return;
   }
 
@@ -99,8 +113,8 @@ Directory::CreateFile(const nsAString& aPath, const CreateFileOptions& aOptions,
                       ErrorResult& aRv)
 {
   nsresult error = NS_OK;
-  nsString realPath;
-  nsRefPtr<Blob> blobData;
+  nsAutoString realPath;
+  RefPtr<Blob> blobData;
   InfallibleTArray<uint8_t> arrayData;
   bool replace = (aOptions.mIfExists == CreateIfExistsMode::Replace);
 
@@ -128,7 +142,7 @@ Directory::CreateFile(const nsAString& aPath, const CreateFileOptions& aOptions,
     error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
   }
 
-  nsRefPtr<CreateFileTask> task =
+  RefPtr<CreateFileTask> task =
     new CreateFileTask(mFileSystem, realPath, blobData, arrayData, replace, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -142,11 +156,11 @@ already_AddRefed<Promise>
 Directory::CreateDirectory(const nsAString& aPath, ErrorResult& aRv)
 {
   nsresult error = NS_OK;
-  nsString realPath;
+  nsAutoString realPath;
   if (!DOMPathToRealPath(aPath, realPath)) {
     error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
   }
-  nsRefPtr<CreateDirectoryTask> task = new CreateDirectoryTask(
+  RefPtr<CreateDirectoryTask> task = new CreateDirectoryTask(
     mFileSystem, realPath, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -160,11 +174,11 @@ already_AddRefed<Promise>
 Directory::Get(const nsAString& aPath, ErrorResult& aRv)
 {
   nsresult error = NS_OK;
-  nsString realPath;
+  nsAutoString realPath;
   if (!DOMPathToRealPath(aPath, realPath)) {
     error = NS_ERROR_DOM_FILESYSTEM_INVALID_PATH_ERR;
   }
-  nsRefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
+  RefPtr<GetFileOrDirectoryTask> task = new GetFileOrDirectoryTask(
     mFileSystem, realPath, false, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -191,8 +205,8 @@ Directory::RemoveInternal(const StringOrFileOrDirectory& aPath, bool aRecursive,
                           ErrorResult& aRv)
 {
   nsresult error = NS_OK;
-  nsString realPath;
-  nsRefPtr<BlobImpl> blob;
+  nsAutoString realPath;
+  RefPtr<BlobImpl> blob;
 
   // Check and get the target path.
 
@@ -212,7 +226,7 @@ Directory::RemoveInternal(const StringOrFileOrDirectory& aPath, bool aRecursive,
     }
   }
 
-  nsRefPtr<RemoveTask> task = new RemoveTask(mFileSystem, mPath, blob, realPath,
+  RefPtr<RemoveTask> task = new RemoveTask(mFileSystem, mPath, blob, realPath,
     aRecursive, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -220,6 +234,39 @@ Directory::RemoveInternal(const StringOrFileOrDirectory& aPath, bool aRecursive,
   task->SetError(error);
   FileSystemPermissionRequest::RequestForTask(task);
   return task->GetPromise();
+}
+
+void
+Directory::GetPath(nsAString& aRetval) const
+{
+  if (mPath.IsEmpty()) {
+    // The Directory ctor removes any trailing '/'; this is the root directory.
+    aRetval.AssignLiteral(FILESYSTEM_DOM_PATH_SEPARATOR);
+  } else {
+    aRetval = mPath;
+  }
+}
+
+already_AddRefed<Promise>
+Directory::GetFilesAndDirectories()
+{
+  nsresult error = NS_OK;
+  nsString realPath;
+  ErrorResult rv;
+  RefPtr<GetDirectoryListingTask> task =
+    new GetDirectoryListingTask(mFileSystem, mPath, mFilters, rv);
+  if (NS_WARN_IF(rv.Failed())) {
+    return nullptr;
+  }
+  task->SetError(error);
+  FileSystemPermissionRequest::RequestForTask(task);
+  return task->GetPromise();
+}
+
+void
+Directory::SetContentFilters(const nsAString& aFilters)
+{
+  mFilters = aFilters;
 }
 
 FileSystemBase*

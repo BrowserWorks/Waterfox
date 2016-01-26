@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-function test() {
+add_task(function* test() {
   gPrefService.setBoolPref("browser.ctrlTab.previews", true);
 
   let [origTab] = gBrowser.visibleTabs;
@@ -30,7 +30,7 @@ function test() {
 
   if (gPrefService.prefHasUserValue("browser.ctrlTab.previews"))
     gPrefService.clearUserPref("browser.ctrlTab.previews");
-}
+});
 
 function pressCtrlTab(aShiftKey) {
   EventUtils.synthesizeKey("VK_TAB", { ctrlKey: true, shiftKey: !!aShiftKey });

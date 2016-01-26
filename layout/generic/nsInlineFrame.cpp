@@ -165,7 +165,7 @@ nsInlineFrame::IsEmpty()
     return false;
   }
 
-  for (nsIFrame *kid = mFrames.FirstChild(); kid; kid = kid->GetNextSibling()) {
+  for (nsIFrame* kid : mFrames) {
     if (!kid->IsEmpty())
       return false;
   }
@@ -292,13 +292,13 @@ nsInlineFrame::ComputeSize(nsRenderingContext *aRenderingContext,
 }
 
 nsRect
-nsInlineFrame::ComputeTightBounds(gfxContext* aContext) const
+nsInlineFrame::ComputeTightBounds(DrawTarget* aDrawTarget) const
 {
   // be conservative
   if (StyleContext()->HasTextDecorationLines()) {
     return GetVisualOverflowRect();
   }
-  return ComputeSimpleTightBounds(aContext);
+  return ComputeSimpleTightBounds(aDrawTarget);
 }
 
 void
@@ -1058,7 +1058,7 @@ nsFirstLineFrame::Init(nsIContent*       aContent,
     // we behave as if an anonymous (unstyled) span was the child
     // of the parent frame.
     nsStyleContext* parentContext = aParent->StyleContext();
-    nsRefPtr<nsStyleContext> newSC = PresContext()->StyleSet()->
+    RefPtr<nsStyleContext> newSC = PresContext()->StyleSet()->
       ResolveAnonymousBoxStyle(nsCSSAnonBoxes::mozLineFrame, parentContext);
     SetStyleContext(newSC);
   } else {

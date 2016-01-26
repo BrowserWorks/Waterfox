@@ -19,7 +19,6 @@
 <!ENTITY formatD "&#037;d">
 ]>
 
-#includesubst @BOOKMARKSPATH@
 <resources>
   <string name="moz_app_displayname">@MOZ_APP_DISPLAYNAME@</string>
   <string name="android_package_name">@ANDROID_PACKAGE_NAME@</string>
@@ -38,11 +37,28 @@
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
   <string name="error_loading_file">&error_loading_file;</string>
 
+  <string name="firstrun_panel_title_welcome">&firstrun_panel_title_welcome;</string>
   <string name="firstrun_welcome_message">&onboard_start_message3;</string>
   <string name="firstrun_welcome_subtext">&onboard_start_subtext3;</string>
-  <string name="firstrun_welcome_button_account">&onboard_start_button_account;</string>
+
+  <string name="firstrun_urlbar_message">&firstrun_urlbar_message;</string>
+  <string name="firstrun_urlbar_subtext">&firstrun_urlbar_subtext;</string>
+  <string name="firstrun_bookmarks_title">&firstrun_bookmarks_title;</string>
+  <string name="firstrun_bookmarks_message">&firstrun_bookmarks_message;</string>
+  <string name="firstrun_bookmarks_subtext">&firstrun_bookmarks_subtext;</string>
+  <string name="firstrun_data_title">&firstrun_data_title;</string>
+  <string name="firstrun_data_message">&firstrun_data_message;</string>
+  <string name="firstrun_data_subtext">&firstrun_data_subtext;</string>
+  <string name="firstrun_sync_title">&firstrun_sync_title;</string>
+  <string name="firstrun_sync_message">&firstrun_sync_message;</string>
+  <string name="firstrun_sync_subtext">&firstrun_sync_subtext;</string>
+  <string name="firstrun_signin_message">&firstrun_signin_message;</string>
+  <string name="firstrun_signin_button">&firstrun_signin_button;</string>
   <string name="firstrun_welcome_button_browser">&onboard_start_button_browser;</string>
+  <string name="firstrun_button_next">&firstrun_button_next;</string>
   <string name="firstrun_empty_contentDescription"></string>
+
+  <string name="firstrun_welcome_restricted">&onboard_start_restricted1;</string>
 
   <string name="bookmarks_title">&bookmarks_title;</string>
   <string name="history_title">&history_title;</string>
@@ -72,6 +88,9 @@
 
   <string name="url_bar_default_text">&url_bar_default_text2;</string>
 
+  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq -->
+  <string name="faq_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/faq</string>
+
   <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/ -->
   <string name="help_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/</string>
   <string name="help_menu">&help_menu;</string>
@@ -80,19 +99,22 @@
   <string name="bookmark">&bookmark;</string>
   <string name="bookmark_remove">&bookmark_remove;</string>
   <string name="bookmark_added">&bookmark_added;</string>
+  <string name="bookmark_already_added">&bookmark_already_added;</string>
   <string name="bookmark_removed">&bookmark_removed;</string>
   <string name="bookmark_updated">&bookmark_updated;</string>
   <string name="bookmark_options">&bookmark_options;</string>
 
   <string name="history_today_section">&history_today_section;</string>
   <string name="history_yesterday_section">&history_yesterday_section;</string>
-  <string name="history_week_section">&history_week_section2;</string>
-  <string name="history_older_section">&history_older_section2;</string>
+  <string name="history_week_section">&history_week_section3;</string>
+  <string name="history_this_month_section">&history_this_month_section;</string>
+  <string name="history_older_section">&history_older_section3;</string>
 
   <string name="share">&share;</string>
   <string name="share_title">&share_title;</string>
   <string name="share_image_failed">&share_image_failed;</string>
   <string name="save_as_pdf">&save_as_pdf;</string>
+  <string name="print">&print;</string>
   <string name="find_in_page">&find_in_page;</string>
   <string name="find_matchcase">&find_matchcase;</string>
   <string name="desktop_mode">&desktop_mode;</string>
@@ -119,23 +141,20 @@
   <string name="overlay_share_no_url">&overlay_share_no_url;</string>
   <string name="overlay_share_select_device">&overlay_share_select_device;</string>
   <string name="overlay_no_synced_devices">&overlay_no_synced_devices;</string>
-  <string name="overlay_share_tab_not_sent">&overlay_share_tab_not_sent;</string>
 
   <string name="settings">&settings;</string>
   <string name="settings_title">&settings_title;</string>
-  <string name="pref_category_advanced">&pref_category_advanced;</string>
-  <string name="pref_category_customize">&pref_category_customize;</string>
-  <string name="pref_category_customize_summary">&pref_category_customize_summary;</string>
-  <string name="pref_category_customize_alt_summary">&pref_category_customize_alt_summary;</string>
+  <string name="pref_category_general">&pref_category_general;</string>
+  <string name="pref_category_general_summary">&pref_category_general_summary2;</string>
 
   <string name="pref_category_search">&pref_category_search3;</string>
   <string name="pref_category_search_summary">&pref_category_search_summary;</string>
-  <string name="pref_category_display">&pref_category_display;</string>
-  <string name="pref_category_display_summary">&pref_category_display_summary;</string>
+  <string name="pref_category_accessibility">&pref_category_accessibility;</string>
+  <string name="pref_category_accessibility_summary">&pref_category_accessibility_summary2;</string>
   <string name="pref_category_privacy_short">&pref_category_privacy_short;</string>
-  <string name="pref_category_privacy_summary">&pref_category_privacy_summary;</string>
-  <string name="pref_category_vendor">&pref_category_vendor;</string>
-  <string name="pref_category_vendor_summary">&pref_category_vendor_summary;</string>
+  <string name="pref_category_privacy_summary">&pref_category_privacy_summary3;</string>
+  <string name="pref_category_vendor">&pref_category_vendor2;</string>
+  <string name="pref_category_vendor_summary">&pref_category_vendor_summary2;</string>
   <string name="pref_category_datareporting">&pref_category_datareporting;</string>
   <string name="pref_category_installed_search_engines">&pref_category_installed_search_engines;</string>
   <string name="pref_category_add_search_providers">&pref_category_add_search_providers;</string>
@@ -149,8 +168,12 @@
   <string name="pref_browser_locale">&pref_browser_locale;</string>
   <string name="locale_system_default">&locale_system_default;</string>
 
-  <string name="pref_category_devtools">&pref_category_devtools;</string>
+  <string name="pref_category_advanced">&pref_category_advanced;</string>
+  <string name="pref_category_advanced_summary">&pref_category_advanced_summary2;</string>
   <string name="pref_developer_remotedebugging">&pref_developer_remotedebugging;</string>
+  <string name="pref_developer_remotedebugging_usb">&pref_developer_remotedebugging_usb;</string>
+  <string name="pref_developer_remotedebugging_wifi">&pref_developer_remotedebugging_wifi;</string>
+  <string name="pref_developer_remotedebugging_wifi_disabled_summary">&pref_developer_remotedebugging_wifi_disabled_summary;</string>
 
   <string name="pref_category_home">&pref_category_home;</string>
   <string name="pref_category_home_summary">&pref_category_home_summary;</string>
@@ -164,18 +187,23 @@
   <string name="pref_home_updates_wifi">&pref_home_updates_wifi;</string>
   <string name="pref_home_suggested_sites">&pref_home_suggested_sites;</string>
   <string name="pref_home_suggested_sites_summary">&pref_home_suggested_sites_summary;</string>
+  <string name="pref_category_home_homepage">&pref_category_home_homepage;</string>
+  <string name="home_homepage_title">&home_homepage_title;</string>
+  <string name="home_homepage_radio_default">&home_homepage_radio_default;</string>
+  <string name="home_homepage_radio_user_address">&home_homepage_radio_user_address;</string>
+  <string name="home_homepage_hint_user_address">&home_homepage_hint_user_address;</string>
 
-  <string name="pref_header_customize">&pref_header_customize;</string>
-  <string name="pref_header_display">&pref_header_display;</string>
+  <string name="pref_header_general">&pref_header_general;</string>
+  <string name="pref_header_search">&pref_header_search;</string>
+  <string name="pref_header_accessibility">&pref_header_accessibility;</string>
   <string name="pref_header_privacy_short">&pref_header_privacy_short;</string>
-  <string name="pref_header_language">&pref_header_language;</string>
+  <string name="pref_header_advanced">&pref_header_advanced;</string>
   <string name="pref_header_vendor">&pref_header_vendor;</string>
-  <string name="pref_header_devtools">&pref_header_devtools;</string>
 
   <string name="pref_learn_more">&pref_learn_more;</string>
 
-  <string name="pref_category_logins">&pref_category_logins;</string>
-  <string name="pref_remember_signons">&pref_remember_signons;</string>
+  <string name="pref_remember_signons">&pref_remember_signons2;</string>
+
   <string name="pref_manage_logins">&pref_manage_logins;</string>
 
   <string name="pref_cookies_menu">&pref_cookies_menu;</string>
@@ -183,17 +211,26 @@
   <string name="pref_cookies_not_accept_foreign">&pref_cookies_not_accept_foreign;</string>
   <string name="pref_cookies_disabled">&pref_cookies_disabled;</string>
 
+  <string name="pref_tap_to_load_images_title2">&pref_tap_to_load_images_title2;</string>
+  <string name="pref_tap_to_load_images_enabled">&pref_tap_to_load_images_enabled;</string>
+  <string name="pref_tap_to_load_images_data">&pref_tap_to_load_images_data;</string>
+  <string name="pref_tap_to_load_images_disabled2">&pref_tap_to_load_images_disabled2;</string>
+
   <string name="pref_tracking_protection_title">&pref_tracking_protection_title;</string>
-  <string name="pref_tracking_protection_summary">&pref_tracking_protection_summary;</string>
+  <string name="pref_tracking_protection_summary">&pref_tracking_protection_summary3;</string>
   <string name="pref_donottrack_title">&pref_donottrack_title;</string>
   <string name="pref_donottrack_summary">&pref_donottrack_summary;</string>
+
+  <string name="pref_tracking_protection_enabled">&pref_tracking_protection_enabled;</string>
+  <string name="pref_tracking_protection_enabled_pb">&pref_tracking_protection_enabled_pb;</string>
+  <string name="pref_tracking_protection_disabled">&pref_tracking_protection_disabled;</string>
 
   <string name="pref_char_encoding">&pref_char_encoding;</string>
   <string name="pref_char_encoding_on">&pref_char_encoding_on;</string>
   <string name="pref_char_encoding_off">&pref_char_encoding_off;</string>
-  <string name="pref_clear_private_data">&pref_clear_private_data2;</string>
-  <string name="pref_clear_private_data_category">&pref_clear_private_data_category;</string>
-  <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title2;</string>
+  <string name="pref_clear_private_data_now">&pref_clear_private_data;</string>
+  <string name="pref_clear_private_data_now_tablet">&pref_clear_private_data_now_tablet;</string>
+  <string name="pref_clear_on_exit_title">&pref_clear_on_exit_title3;</string>
   <string name="pref_clear_on_exit_summary2">&pref_clear_on_exit_summary2;</string>
   <string name="pref_clear_on_exit_dialog_title">&pref_clear_on_exit_dialog_title;</string>
   <string name="pref_plugins">&pref_plugins;</string>
@@ -213,41 +250,54 @@
   <string name="pref_media_autoplay_enabled_summary">&pref_media_autoplay_enabled_summary;</string>
   <string name="pref_zoom_force_enabled">&pref_zoom_force_enabled;</string>
   <string name="pref_zoom_force_enabled_summary">&pref_zoom_force_enabled_summary;</string>
-  <string name="pref_reflow_on_zoom">&pref_reflow_on_zoom4;</string>
-  <string name="pref_restore">&pref_restore;</string>
+  <string name="pref_voice_input">&pref_voice_input;</string>
+  <string name="pref_voice_input_summary">&pref_voice_input_summary2;</string>
+  <string name="pref_qrcode_enabled">&pref_qrcode_enabled;</string>
+  <string name="pref_qrcode_enabled_summary">&pref_qrcode_enabled_summary2;</string>
+  <string name="pref_restore">&pref_restore_tabs;</string>
   <string name="pref_restore_always">&pref_restore_always;</string>
   <string name="pref_restore_quit">&pref_restore_quit;</string>
-  <string name="pref_sync">&pref_sync;</string>
-  <string name="pref_sync_summary">&pref_sync_summary;</string>
+  <string name="pref_sync">&pref_sync2;</string>
+  <string name="pref_sync_summary">&pref_sync_summary2;</string>
   <string name="pref_search_suggestions">&pref_search_suggestions;</string>
+  <string name="pref_history_search_suggestions">&pref_history_search_suggestions;</string>
   <string name="pref_private_data_history2">&pref_private_data_history2;</string>
   <string name="pref_private_data_searchHistory">&pref_private_data_searchHistory;</string>
   <string name="pref_private_data_formdata2">&pref_private_data_formdata2;</string>
   <string name="pref_private_data_cookies2">&pref_private_data_cookies2;</string>
-  <string name="pref_private_data_passwords">&pref_private_data_passwords;</string>
+  <string name="pref_private_data_passwords">&pref_private_data_passwords2;</string>
   <string name="pref_private_data_cache">&pref_private_data_cache;</string>
   <string name="pref_private_data_offlineApps">&pref_private_data_offlineApps;</string>
   <string name="pref_private_data_siteSettings">&pref_private_data_siteSettings2;</string>
   <string name="pref_private_data_downloadFiles2">&pref_private_data_downloadFiles2;</string>
-  <string name="pref_import_android">&pref_import_android;</string>
+  <string name="pref_private_data_syncedTabs">&pref_private_data_syncedTabs;</string>
+  <string name="pref_import_android">&pref_import_options;</string>
   <string name="pref_import_android_summary">&pref_import_android_summary;</string>
-  <string name="pref_update_autodownload">&pref_update_autodownload2;</string>
+  <string name="pref_update_autodownload">&pref_update_autodownload3;</string>
   <string name="pref_update_autodownload_wifi">&pref_update_autodownload_wifi;</string>
   <string name="pref_update_autodownload_disabled">&pref_update_autodownload_never;</string>
   <string name="pref_update_autodownload_enabled">&pref_update_autodownload_always;</string>
 
+  <string name="tracking_protection_prompt_title">&tracking_protection_prompt_title;</string>
+  <string name="tracking_protection_prompt_text">&tracking_protection_prompt_text;</string>
+  <string name="tracking_protection_prompt_tip_text">&tracking_protection_prompt_tip_text;</string>
+  <string name="tracking_protection_prompt_action_button">&tracking_protection_prompt_action_button;</string>
+
   <string name="pref_tab_queue_title">&pref_tab_queue_title2;</string>
-  <string name="pref_tab_queue_summary">&pref_tab_queue_summary2;</string>
+  <string name="pref_tab_queue_summary">&pref_tab_queue_summary3;</string>
   <string name="tab_queue_prompt_title">&tab_queue_prompt_title;</string>
-  <string name="tab_queue_prompt_text">&tab_queue_prompt_text2;</string>
-  <string name="tab_queue_prompt_tip_text">&tab_queue_prompt_tip_text;</string>
+  <string name="tab_queue_prompt_text">&tab_queue_prompt_text4;</string>
+  <string name="tab_queue_prompt_tip_text">&tab_queue_prompt_tip_text2;</string>
   <string name="tab_queue_prompt_positive_action_button">&tab_queue_prompt_positive_action_button;</string>
   <string name="tab_queue_prompt_negative_action_button">&tab_queue_prompt_negative_action_button;</string>
-  <string name="tab_queue_toast_message">&tab_queue_toast_message2;</string>
+  <string name="tab_queue_prompt_permit_drawing_over_apps">&tab_queue_prompt_permit_drawing_over_apps;</string>
+  <string name="tab_queue_prompt_settings_button">&tab_queue_prompt_settings_button;</string>
+  <string name="tab_queue_toast_message">&tab_queue_toast_message3;</string>
   <string name="tab_queue_toast_action">&tab_queue_toast_action;</string>
   <string name="tab_queue_notification_text_singular">&tab_queue_notification_text_singular2;</string>
   <string name="tab_queue_notification_text_plural">&tab_queue_notification_text_plural2;</string>
   <string name="tab_queue_notification_title">&tab_queue_notification_title;</string>
+  <string name="tab_queue_notification_settings">&tab_queue_notification_settings;</string>
 
   <string name="pref_about_firefox">&pref_about_firefox;</string>
   <string name="pref_vendor_faqs">&pref_vendor_faqs;</string>
@@ -294,12 +344,12 @@
   <string name="new_tab_opened">&new_tab_opened;</string>
   <string name="new_private_tab_opened">&new_private_tab_opened;</string>
   <string name="switch_button_message">&switch_button_message;</string>
+  <string name="tab_title_prefix_is_playing_audio">&tab_title_prefix_is_playing_audio;</string>
   <string name="one_tab">&one_tab;</string>
   <string name="num_tabs">&num_tabs2;</string>
   <string name="addons">&addons;</string>
   <string name="logins">&logins;</string>
   <string name="downloads">&downloads;</string>
-  <string name="apps">&apps;</string>
   <string name="char_encoding">&char_encoding;</string>
   <string name="new_tab">&new_tab;</string>
   <string name="new_private_tab">&new_private_tab;</string>
@@ -313,9 +363,8 @@
   <string name="site_settings_title">&site_settings_title3;</string>
   <string name="site_settings_cancel">&site_settings_cancel;</string>
   <string name="site_settings_clear">&site_settings_clear;</string>
-  <string name="site_settings_no_settings">&site_settings_no_settings;</string>
 
-  <string name="reading_list_added">&reading_list_added;</string>
+  <string name="reading_list_added">&reading_list_added3;</string>
   <string name="reading_list_removed">&reading_list_removed;</string>
   <string name="reading_list_remove">&reading_list_remove;</string>
   <string name="reading_list_duplicate">&reading_list_duplicate;</string>
@@ -339,6 +388,8 @@
   <string name="contextmenu_top_sites_pin">&contextmenu_top_sites_pin;</string>
   <string name="contextmenu_top_sites_unpin">&contextmenu_top_sites_unpin;</string>
   <string name="contextmenu_add_search_engine">&contextmenu_add_search_engine;</string>
+  <string name="contextmenu_mark_read">&contextmenu_mark_read;</string>
+  <string name="contextmenu_mark_unread">&contextmenu_mark_unread;</string>
 
   <string name="doorhanger_login_no_username">&doorhanger_login_no_username;</string>
   <string name="doorhanger_login_edit_title">&doorhanger_login_edit_title;</string>
@@ -346,13 +397,17 @@
   <string name="doorhanger_login_edit_password_hint">&doorhanger_login_edit_password_hint;</string>
   <string name="doorhanger_login_edit_toggle">&doorhanger_login_edit_toggle;</string>
   <string name="doorhanger_login_edit_toast_error">&doorhanger_login_edit_toast_error;</string>
+  <string name="doorhanger_login_select_message">&doorhanger_login_select_message;</string>
+  <string name="doorhanger_login_select_toast_copy">&doorhanger_login_select_toast_copy;</string>
+  <string name="doorhanger_login_select_toast_copy_error">&doorhanger_login_select_toast_copy_error;</string>
+  <string name="doorhanger_login_select_action_text">&doorhanger_login_select_action_text;</string>
+  <string name="doorhanger_login_select_title">&doorhanger_login_select_title;</string>
 
-  <string name="pref_titlebar_mode">&pref_titlebar_mode;</string>
-  <string name="pref_titlebar_mode_title">&pref_titlebar_mode_title;</string>
-  <string name="pref_titlebar_mode_url">&pref_titlebar_mode_url;</string>
+  <string name="pref_magnifying_glass_enabled">&pref_magnifying_glass_enabled;</string>
+  <string name="pref_magnifying_glass_enabled_summary">&pref_magnifying_glass_enabled_summary;</string>
 
   <string name="pref_scroll_title_bar2">&pref_scroll_title_bar2;</string>
-  <string name="pref_scroll_title_bar_summary">&pref_scroll_title_bar_summary;</string>
+  <string name="pref_scroll_title_bar_summary">&pref_scroll_title_bar_summary2;</string>
 
   <string name="page_removed">&page_removed;</string>
 
@@ -374,9 +429,7 @@
   <string name="button_clear">&button_clear;</string>
   <string name="button_yes">&button_yes;</string>
   <string name="button_no">&button_no;</string>
-  <string name="button_remember">&button_remember;</string>
-
-  <string name="firstrun_panel_title_welcome">&firstrun_panel_title_welcome;</string>
+  <string name="button_copy">&button_copy;</string>
 
   <string name="home_title">&home_title;</string>
   <string name="home_top_sites_title">&home_top_sites_title;</string>
@@ -390,10 +443,9 @@
   <string name="home_last_tabs_empty">&home_last_tabs_empty;</string>
   <string name="home_open_all">&home_open_all;</string>
   <string name="home_most_recent_empty">&home_most_recent_empty;</string>
+  <string name="home_selected_empty">&home_selected_empty;</string>
   <string name="home_most_recent_emptyhint">&home_most_recent_emptyhint2;</string>
   <string name="home_reading_list_empty">&home_reading_list_empty;</string>
-  <string name="home_reading_list_hint">&home_reading_list_hint2;</string>
-  <string name="home_reading_list_hint_accessible">&home_reading_list_hint_accessible;</string>
   <string name="home_default_empty">&home_default_empty;</string>
   <string name="home_move_up_to_filter">&home_move_up_to_filter;</string>
   <string name="home_remote_tabs_title">&home_remote_tabs_title;</string>
@@ -407,11 +459,6 @@
   <string name="home_remote_tabs_many_hidden_devices">&home_remote_tabs_many_hidden_devices;</string>
   <string name="home_remote_tabs_hidden_devices_title">&home_remote_tabs_hidden_devices_title;</string>
   <string name="home_remote_tabs_unhide_selected_devices">&home_remote_tabs_unhide_selected_devices;</string>
-  <string name="private_browsing_title">&private_browsing_title;</string>
-  <string name="private_tabs_panel_empty_desc">&private_tabs_panel_empty_desc;</string>
-  <string name="private_tabs_panel_learn_more">&private_tabs_panel_learn_more;</string>
-  <!-- https://support.mozilla.org/%LOCALE%/kb/mobile-private-browsing-browse-web-without-saving-syncing-info -->
-  <string name="private_tabs_panel_learn_more_link">https://support.mozilla.org/&formatS1;/kb/mobile-private-browsing-browse-web-without-saving-syncing-info</string>
   <string name="pin_site_dialog_hint">&pin_site_dialog_hint;</string>
 
   <string name="remote_tabs_panel_moved_title">&remote_tabs_panel_moved_title;</string>
@@ -426,33 +473,40 @@
 
   <!-- Default bookmarks. We used to use bookmark titles shared with XUL from mobile's
        profile/bookmarks.inc (see bug 964946). Don't expose the URLs to L10N. -->
-  <string name="bookmarkdefaults_title_aboutfirefox">@bookmarks_aboutBrowser@</string>
+  <string name="bookmarkdefaults_title_aboutfirefox">&bookmarks_about_browser;</string>
   <string name="bookmarkdefaults_url_aboutfirefox">about:firefox</string>
 
   <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_addons -->
-  <string name="bookmarkdefaults_title_addons">@bookmarks_addons@</string>
+  <string name="bookmarkdefaults_title_addons">&bookmarks_addons;</string>
   <string name="bookmarkdefaults_url_addons">https://addons.mozilla.org/android/</string>
 
   <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_support -->
-  <string name="bookmarkdefaults_title_support">@bookmarks_support@</string>
+  <string name="bookmarkdefaults_title_support">&bookmarks_support;</string>
   <string name="bookmarkdefaults_url_support">https://support.mozilla.org/products/mobile</string>
 
-  <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_marketplace -->
-  <string name="bookmarkdefaults_title_marketplace">@bookmarks_marketplace@</string>
-  <string name="bookmarkdefaults_url_marketplace">https://marketplace.firefox.com/</string>
+  <string name="bookmarkdefaults_title_restricted_webmaker">&bookmarks_restricted_webmaker;</string>
+  <string name="bookmarkdefaults_url_restricted_webmaker">https://webmaker.org/</string>
+
+  <string name="bookmarkdefaults_title_restricted_support">&bookmarks_restricted_support2;</string>
+  <string name="bookmarkdefaults_url_restricted_support">https://support.mozilla.org/kb/controlledaccess</string>
 
   <!-- Site identity popup -->
-  <string name="identity_connected_to">&identity_connected_to;</string>
-  <string name="identity_run_by">&identity_run_by;</string>
-  <string name="identity_no_info">&identity_no_info;</string>
-  <string name="identity_not_encrypted">&identity_not_encrypted;</string>
-  <string name="loaded_mixed_content_message">&loaded_mixed_content_message;</string>
-  <string name="blocked_mixed_content_message_top">&blocked_mixed_content_message_top;</string>
-  <string name="blocked_mixed_content_message_bottom">&blocked_mixed_content_message_bottom;</string>
-  <string name="loaded_tracking_content_message_top">&loaded_tracking_content_message_top;</string>
-  <string name="loaded_tracking_content_message_bottom">&loaded_tracking_content_message_bottom;</string>
-  <string name="blocked_tracking_content_message_top">&blocked_tracking_content_message_top2;</string>
-  <string name="blocked_tracking_content_message_bottom">&blocked_tracking_content_message_bottom2;</string>
+  <string name="identity_connection_secure">&identity_connection_secure;</string>
+  <string name="identity_connection_insecure">&identity_connection_insecure;</string>
+  <string name="identity_login_insecure">&identity_login_insecure;</string>
+  <string name="identity_connection_chromeui">&identity_connection_chromeui;</string>
+
+  <string name="mixed_content_blocked_all">&mixed_content_blocked_all1;</string>
+  <string name="mixed_content_blocked_some">&mixed_content_blocked_some1;</string>
+  <string name="mixed_content_display_loaded">&mixed_content_display_loaded1;</string>
+  <string name="mixed_content_protection_disabled">&mixed_content_protection_disabled1;</string>
+
+  <string name="doorhanger_tracking_title">&doorhanger_tracking_title;</string>
+  <string name="doorhanger_tracking_state_enabled">&doorhanger_tracking_state_enabled;</string>
+  <string name="doorhanger_tracking_state_disabled">&doorhanger_tracking_state_disabled;</string>
+  <string name="doorhanger_tracking_message_enabled">&doorhanger_tracking_message_enabled1;</string>
+  <string name="doorhanger_tracking_message_disabled">&doorhanger_tracking_message_disabled2;</string>
+
   <string name="learn_more">&learn_more;</string>
   <string name="enable_protection">&enable_protection;</string>
   <string name="disable_protection">&disable_protection;</string>
@@ -485,6 +539,9 @@
   <string name="updater_apply_title">&updater_apply_title2;</string>
   <string name="updater_apply_select">&updater_apply_select2;</string>
 
+  <string name="updater_permission_title">&brandShortName;</string>
+  <string name="updater_permission_text">&updater_permission_text;</string>
+
   <!-- Awesomescreen screen -->
   <string name="suggestions_prompt">&suggestions_prompt3;</string>
   <string name="search_bar_item_desc">&search_bar_item_desc;</string>
@@ -506,7 +563,7 @@
   <string name="guest_session_dialog_continue">&guest_session_dialog_continue;</string>
   <string name="guest_session_dialog_cancel">&guest_session_dialog_cancel;</string>
   <string name="new_guest_session_title">&new_guest_session_title;</string>
-  <string name="new_guest_session_text">&new_guest_session_text;</string>
+  <string name="new_guest_session_text">&new_guest_session_text2;</string>
   <string name="guest_browsing_notification_title">&guest_browsing_notification_title;</string>
   <string name="guest_browsing_notification_text">&guest_browsing_notification_text;</string>
 
@@ -518,10 +575,20 @@
 
   <!-- Voice search from the Awesome Bar -->
   <string name="voicesearch_prompt">&voicesearch_prompt;</string>
-  <string name="voicesearch_failed_title">&voicesearch_failed_title;</string>
-  <string name="voicesearch_failed_message">&voicesearch_failed_message;</string>
-  <string name="voicesearch_failed_message_recoverable">&voicesearch_failed_message_recoverable;</string>
-  <string name="voicesearch_failed_retry">&voicesearch_failed_retry;</string>
+
+  <!-- Restrictable features -->
+  <string name="restrictable_feature_addons_installation">&restrictable_feature_addons_installation;</string>
+  <string name="restrictable_feature_addons_installation_description">&restrictable_feature_addons_installation_description;</string>
+  <string name="restrictable_feature_private_browsing">&restrictable_feature_private_browsing;</string>
+  <string name="restrictable_feature_private_browsing_description">&restrictable_feature_private_browsing_description;</string>
+  <string name="restrictable_feature_clear_history">&restrictable_feature_clear_history;</string>
+  <string name="restrictable_feature_clear_history_description">&restrictable_feature_clear_history_description;</string>
+  <string name="restrictable_feature_advanced_settings">&restrictable_feature_advanced_settings;</string>
+  <string name="restrictable_feature_advanced_settings_description">&restrictable_feature_advanced_settings_description;</string>
+  <string name="restrictable_feature_camera_microphone">&restrictable_feature_camera_microphone;</string>
+  <string name="restrictable_feature_camera_microphone_description">&restrictable_feature_camera_microphone_description;</string>
+  <string name="restrictable_feature_block_list">&restrictable_feature_block_list;</string>
+  <string name="restrictable_feature_block_list_description">&restrictable_feature_block_list_description;</string>
 
   <!-- Miscellaneous -->
   <string name="ellipsis">&ellipsis;</string>
@@ -531,4 +598,16 @@
   <string name="percent">&percent;</string>
 
   <string name="remote_tabs_last_synced">&remote_tabs_last_synced;</string>
+
+  <string name="intent_uri_cannot_open">&intent_uri_cannot_open;</string>
+  <string name="intent_uri_private_browsing_prompt">&intent_uri_private_browsing_prompt;</string>
+  <string name="intent_uri_private_browsing_multiple_match_title">&intent_uri_private_browsing_multiple_match_title;</string>
+
+  <string name="devtools_auth_scan_header">&devtools_auth_scan_header;</string>
+
+  <string name="unsupported_sdk_version">&unsupported_sdk_version;</string>
+  <string name="eol_notification_title">&eol_notification_title;</string>
+  <string name="eol_notification_summary">&eol_notification_summary;</string>
+  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/honeycomb -->
+  <string name="eol_notification_url">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/honeycomb</string>
 </resources>

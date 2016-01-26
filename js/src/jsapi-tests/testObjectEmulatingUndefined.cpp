@@ -10,7 +10,7 @@ static const JSClass ObjectEmulatingUndefinedClass = {
 };
 
 static bool
-ObjectEmulatingUndefinedConstructor(JSContext* cx, unsigned argc, jsval* vp)
+ObjectEmulatingUndefinedConstructor(JSContext* cx, unsigned argc, JS::Value* vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JSObject* obj = JS_NewObjectForConstructor(cx, &ObjectEmulatingUndefinedClass, args);
@@ -22,17 +22,17 @@ ObjectEmulatingUndefinedConstructor(JSContext* cx, unsigned argc, jsval* vp)
 
 BEGIN_TEST(testObjectEmulatingUndefined_truthy)
 {
-    CHECK(JS_InitClass(cx, global, js::NullPtr(), &ObjectEmulatingUndefinedClass,
+    CHECK(JS_InitClass(cx, global, nullptr, &ObjectEmulatingUndefinedClass,
                        ObjectEmulatingUndefinedConstructor, 0,
                        nullptr, nullptr, nullptr, nullptr));
 
     JS::RootedValue result(cx);
 
     EVAL("if (new ObjectEmulatingUndefined()) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_FALSE);
+    CHECK(result.isFalse());
 
     EVAL("if (!new ObjectEmulatingUndefined()) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("var obj = new ObjectEmulatingUndefined(); \n"
          "var res = []; \n"
@@ -40,7 +40,7 @@ BEGIN_TEST(testObjectEmulatingUndefined_truthy)
          "  res.push(Boolean(obj)); \n"
          "res.every(function(v) { return v === false; });",
          &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     return true;
 }
@@ -48,23 +48,23 @@ END_TEST(testObjectEmulatingUndefined_truthy)
 
 BEGIN_TEST(testObjectEmulatingUndefined_equal)
 {
-    CHECK(JS_InitClass(cx, global, js::NullPtr(), &ObjectEmulatingUndefinedClass,
+    CHECK(JS_InitClass(cx, global, nullptr, &ObjectEmulatingUndefinedClass,
                        ObjectEmulatingUndefinedConstructor, 0,
                        nullptr, nullptr, nullptr, nullptr));
 
     JS::RootedValue result(cx);
 
     EVAL("if (new ObjectEmulatingUndefined() == undefined) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("if (new ObjectEmulatingUndefined() == null) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("if (new ObjectEmulatingUndefined() != undefined) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_FALSE);
+    CHECK(result.isFalse());
 
     EVAL("if (new ObjectEmulatingUndefined() != null) true; else false;", &result);
-    CHECK_SAME(result, JSVAL_FALSE);
+    CHECK(result.isFalse());
 
     EVAL("var obj = new ObjectEmulatingUndefined(); \n"
          "var res = []; \n"
@@ -72,7 +72,7 @@ BEGIN_TEST(testObjectEmulatingUndefined_equal)
          "  res.push(obj == undefined); \n"
          "res.every(function(v) { return v === true; });",
          &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("var obj = new ObjectEmulatingUndefined(); \n"
          "var res = []; \n"
@@ -80,7 +80,7 @@ BEGIN_TEST(testObjectEmulatingUndefined_equal)
          "  res.push(obj == null); \n"
          "res.every(function(v) { return v === true; });",
          &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("var obj = new ObjectEmulatingUndefined(); \n"
          "var res = []; \n"
@@ -88,7 +88,7 @@ BEGIN_TEST(testObjectEmulatingUndefined_equal)
          "  res.push(obj != undefined); \n"
          "res.every(function(v) { return v === false; });",
          &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     EVAL("var obj = new ObjectEmulatingUndefined(); \n"
          "var res = []; \n"
@@ -96,7 +96,7 @@ BEGIN_TEST(testObjectEmulatingUndefined_equal)
          "  res.push(obj != null); \n"
          "res.every(function(v) { return v === false; });",
          &result);
-    CHECK_SAME(result, JSVAL_TRUE);
+    CHECK(result.isTrue());
 
     return true;
 }

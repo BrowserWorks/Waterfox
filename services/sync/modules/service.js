@@ -4,10 +4,10 @@
 
 this.EXPORTED_SYMBOLS = ["Service"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 // How long before refreshing the cluster
 const CLUSTER_BACKOFF = 5 * 60 * 1000; // 5 minutes
@@ -21,7 +21,6 @@ const KEYS_WBO = "keys";
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/engines/clients.js");
@@ -51,15 +50,6 @@ const STORAGE_INFO_TYPES = [INFO_COLLECTIONS,
                             INFO_COLLECTION_COUNTS,
                             INFO_QUOTA];
 
-// A structure mapping a (boolean) telemetry probe name to a preference name.
-// The probe will record true if the pref is modified, false otherwise.
-const TELEMETRY_CUSTOM_SERVER_PREFS = {
-  WEAVE_CUSTOM_LEGACY_SERVER_CONFIGURATION: "services.sync.serverURL",
-  WEAVE_CUSTOM_FXA_SERVER_CONFIGURATION: "identity.fxaccounts.auth.uri",
-  WEAVE_CUSTOM_TOKEN_SERVER_CONFIGURATION: "services.sync.tokenServerURI",
-};
-
-
 function Sync11Service() {
   this._notify = Utils.notify("weave:service:");
 }
@@ -74,7 +64,9 @@ Sync11Service.prototype = {
   metaURL: null,
   cryptoKeyURL: null,
 
-  get serverURL() Svc.Prefs.get("serverURL"),
+  get serverURL() {
+    return Svc.Prefs.get("serverURL");
+  },
   set serverURL(value) {
     if (!value.endsWith("/")) {
       value += "/";
@@ -89,7 +81,9 @@ Sync11Service.prototype = {
     Svc.Prefs.reset("clusterURL");
   },
 
-  get clusterURL() Svc.Prefs.get("clusterURL", ""),
+  get clusterURL() {
+    return Svc.Prefs.get("clusterURL", "");
+  },
   set clusterURL(value) {
     Svc.Prefs.set("clusterURL", value);
     this._updateCachedURLs();
@@ -377,12 +371,6 @@ Sync11Service.prototype = {
       Svc.Obs.notify("weave:engine:start-tracking");
     }
 
-    // Telemetry probes to indicate if the user is using custom servers.
-    for (let [probeName, prefName] of Iterator(TELEMETRY_CUSTOM_SERVER_PREFS)) {
-      let isCustomized = Services.prefs.prefHasUserValue(prefName);
-      Services.telemetry.getHistogramById(probeName).add(isCustomized);
-    }
-
     // Send an event now that Weave service is ready.  We don't do this
     // synchronously so that observers can import this module before
     // registering an observer.
@@ -432,7 +420,7 @@ Sync11Service.prototype = {
 
     // Map each old pref to the current pref branch
     let oldPref = new Preferences(oldPrefBranch);
-    for each (let pref in oldPrefNames)
+    for (let pref of oldPrefNames)
       Svc.Prefs.set(pref, oldPref.get(pref));
 
     // Remove all the old prefs and remember that we've migrated
@@ -480,8 +468,7 @@ Sync11Service.prototype = {
 
         this.engineManager.register(ns[engineName]);
       } catch (ex) {
-        this._log.warn("Could not register engine " + name + ": " +
-                       CommonUtils.exceptionStr(ex));
+        this._log.warn("Could not register engine " + name, ex);
       }
     }
 
@@ -676,21 +663,13 @@ Sync11Service.prototype = {
 
     } catch (ex) {
       // This means no keys are present, or there's a network error.
-      this._log.debug("Failed to fetch and verify keys: "
-                      + Utils.exceptionStr(ex));
+      this._log.debug("Failed to fetch and verify keys", ex);
       this.errorHandler.checkServerError(ex);
       return false;
     }
   },
 
   verifyLogin: function verifyLogin(allow40XRecovery = true) {
-    // If the identity isn't ready it  might not know the username...
-    if (!this.identity.readyToAuthenticate) {
-      this._log.info("Not ready to authenticate in verifyLogin.");
-      this.status.login = LOGIN_FAILED_NOT_READY;
-      return false;
-    }
-
     if (!this.identity.username) {
       this._log.warn("No username in verifyLogin.");
       this.status.login = LOGIN_FAILED_NO_USERNAME;
@@ -762,8 +741,12 @@ Sync11Service.prototype = {
             return this.verifyLogin(false);
           }
 
-          // We must have the right cluster, but the server doesn't expect us
-          this.status.login = LOGIN_FAILED_LOGIN_REJECTED;
+          // We must have the right cluster, but the server doesn't expect us.
+          // The implications of this depend on the identity being used - for
+          // the legacy identity, it's an authoritatively "incorrect password",
+          // (ie, LOGIN_FAILED_LOGIN_REJECTED) but for FxA it probably means
+          // "transient error fetching auth token".
+          this.status.login = this.identity.loginStatusFromVerification404();
           return false;
 
         default:
@@ -774,7 +757,7 @@ Sync11Service.prototype = {
       }
     } catch (ex) {
       // Must have failed on some network issue
-      this._log.debug("verifyLogin failed: " + Utils.exceptionStr(ex));
+      this._log.debug("verifyLogin failed", ex);
       this.status.login = LOGIN_FAILED_NETWORK_ERROR;
       this.errorHandler.checkServerError(ex);
       return false;
@@ -847,8 +830,7 @@ Sync11Service.prototype = {
     try {
       cb.wait();
     } catch (ex) {
-      this._log.debug("Password change failed: " +
-                      CommonUtils.exceptionStr(ex));
+      this._log.debug("Password change failed", ex);
       return false;
     }
 
@@ -890,12 +872,11 @@ Sync11Service.prototype = {
     // Deletion doesn't make sense if we aren't set up yet!
     if (this.clusterURL != "") {
       // Clear client-specific data from the server, including disabled engines.
-      for each (let engine in [this.clientsEngine].concat(this.engineManager.getAll())) {
+      for (let engine of [this.clientsEngine].concat(this.engineManager.getAll())) {
         try {
           engine.removeClientData();
         } catch(ex) {
-          this._log.warn("Deleting client data for " + engine.name + " failed:"
-                         + Utils.exceptionStr(ex));
+          this._log.warn(`Deleting client data for ${engine.name} failed`, ex);
         }
       }
       this._log.debug("Finished deleting client data.");
@@ -937,25 +918,22 @@ Sync11Service.prototype = {
       return;
     }
 
-    this.identity.finalize().then(
-      () => {
-        // an observer so the FxA migration code can take some action before
-        // the new identity is created.
-        Svc.Obs.notify("weave:service:start-over:init-identity");
-        this.identity.username = "";
-        this.status.__authManager = null;
-        this.identity = Status._authManager;
-        this._clusterManager = this.identity.createClusterManager(this);
-        Svc.Obs.notify("weave:service:start-over:finish");
-      }
-    ).then(null,
-      err => {
-        this._log.error("startOver failed to re-initialize the identity manager: " + err);
-        // Still send the observer notification so the current state is
-        // reflected in the UI.
-        Svc.Obs.notify("weave:service:start-over:finish");
-      }
-    );
+    try {
+      this.identity.finalize();
+      // an observer so the FxA migration code can take some action before
+      // the new identity is created.
+      Svc.Obs.notify("weave:service:start-over:init-identity");
+      this.identity.username = "";
+      this.status.__authManager = null;
+      this.identity = Status._authManager;
+      this._clusterManager = this.identity.createClusterManager(this);
+      Svc.Obs.notify("weave:service:start-over:finish");
+    } catch (err) {
+      this._log.error("startOver failed to re-initialize the identity manager: " + err);
+      // Still send the observer notification so the current state is
+      // reflected in the UI.
+      Svc.Obs.notify("weave:service:start-over:finish");
+    }
   },
 
   persistLogin: function persistLogin() {
@@ -990,6 +968,7 @@ Sync11Service.prototype = {
       }
 
       // Ask the identity manager to explicitly login now.
+      this._log.info("Logging in the user.");
       let cb = Async.makeSpinningCallback();
       this.identity.ensureLoggedIn().then(
         () => cb(null),
@@ -1005,9 +984,9 @@ Sync11Service.prototype = {
           && (username || password || passphrase)) {
         Svc.Obs.notify("weave:service:setup-complete");
       }
-      this._log.info("Logging in the user.");
       this._updateCachedURLs();
 
+      this._log.info("User logged in successfully - verifying login.");
       if (!this.verifyLogin()) {
         // verifyLogin sets the failure states here.
         throw "Login failed: " + this.status.login;
@@ -1113,8 +1092,10 @@ Sync11Service.prototype = {
         newMeta.isNew = true;
 
         this.recordManager.set(this.metaURL, newMeta);
-        if (!newMeta.upload(this.resource(this.metaURL)).success) {
+        let uploadRes = newMeta.upload(this.resource(this.metaURL));
+        if (!uploadRes.success) {
           this._log.warn("Unable to upload new meta/global. Failing remote setup.");
+          this.errorHandler.checkServerError(uploadRes);
           return false;
         }
       } else {
@@ -1257,7 +1238,7 @@ Sync11Service.prototype = {
     return reason;
   },
 
-  sync: function sync() {
+  sync: function sync(engineNamesToSync) {
     if (!this.enabled) {
       this._log.debug("Not syncing as Sync is disabled.");
       return;
@@ -1277,14 +1258,14 @@ Sync11Service.prototype = {
       else {
         this._log.trace("In sync: no need to login.");
       }
-      return this._lockedSync.apply(this, arguments);
+      return this._lockedSync(engineNamesToSync);
     })();
   },
 
   /**
    * Sync up engines with the server.
    */
-  _lockedSync: function _lockedSync() {
+  _lockedSync: function _lockedSync(engineNamesToSync) {
     return this._lock("service.js: sync",
                       this._notify("sync", "", function onNotify() {
 
@@ -1295,7 +1276,7 @@ Sync11Service.prototype = {
       let cb = Async.makeSpinningCallback();
       synchronizer.onComplete = cb;
 
-      synchronizer.sync();
+      synchronizer.sync(engineNamesToSync);
       // wait() throws if the first argument is truthy, which is exactly what
       // we want.
       let result = cb.wait();
@@ -1500,7 +1481,7 @@ Sync11Service.prototype = {
 
     // Wipe everything we know about except meta because we just uploaded it
     let engines = [this.clientsEngine].concat(this.engineManager.getAll());
-    let collections = [engine.name for each (engine in engines)];
+    let collections = engines.map(engine => engine.name);
     // TODO: there's a bug here. We should be calling resetClient, no?
 
     // Generate, upload, and download new keys. Do this last so we don't wipe
@@ -1526,7 +1507,7 @@ Sync11Service.prototype = {
       try {
         response = res.delete();
       } catch (ex) {
-        this._log.debug("Failed to wipe server: " + CommonUtils.exceptionStr(ex));
+        this._log.debug("Failed to wipe server", ex);
         throw ex;
       }
       if (response.status != 200 && response.status != 404) {
@@ -1543,8 +1524,7 @@ Sync11Service.prototype = {
       try {
         response = this.resource(url).delete();
       } catch (ex) {
-        this._log.debug("Failed to wipe '" + name + "' collection: " +
-                        Utils.exceptionStr(ex));
+        this._log.debug("Failed to wipe '" + name + "' collection", ex);
         throw ex;
       }
 
@@ -1582,7 +1562,7 @@ Sync11Service.prototype = {
     }
 
     // Fully wipe each engine if it's able to decrypt data
-    for each (let engine in engines) {
+    for (let engine of engines) {
       if (engine.canDecrypt()) {
         engine.wipeClient();
       }
@@ -1660,7 +1640,7 @@ Sync11Service.prototype = {
       }
 
       // Have each engine drop any temporary meta data
-      for each (let engine in engines) {
+      for (let engine of engines) {
         engine.resetClient();
       }
     })();
@@ -1690,8 +1670,7 @@ Sync11Service.prototype = {
     return this.getStorageRequest(url).get(function onComplete(error) {
       // Note: 'this' is the request.
       if (error) {
-        this._log.debug("Failed to retrieve '" + info_type + "': " +
-                        Utils.exceptionStr(error));
+        this._log.debug("Failed to retrieve '" + info_type + "'", error);
         return callback(error);
       }
       if (this.response.status != 200) {

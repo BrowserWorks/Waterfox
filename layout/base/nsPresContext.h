@@ -38,6 +38,7 @@
 #include "ScrollbarStyles.h"
 #include "nsIMessageManager.h"
 #include "mozilla/RestyleLogging.h"
+#include "Units.h"
 
 class nsAString;
 class nsIPrintSettings;
@@ -64,17 +65,15 @@ class nsDeviceContext;
 class gfxMissingFontRecorder;
 
 namespace mozilla {
+class EffectCompositor;
 class EventStateManager;
 class RestyleManager;
 class CounterStyleManager;
-namespace dom {
-class FontFaceSet;
-}
 namespace layers {
 class ContainerLayer;
 class LayerManager;
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 // supported values for cached bool types
 enum nsPresContext_CachedBoolPrefType {
@@ -113,7 +112,7 @@ public:
 
   void TakeFrom(nsInvalidateRequestList* aList)
   {
-    mRequests.MoveElementsFrom(aList->mRequests);
+    mRequests.AppendElements(mozilla::Move(aList->mRequests));
   }
   bool IsEmpty() { return mRequests.IsEmpty(); }
 
@@ -209,7 +208,7 @@ public:
    * be found (e.g. it's detached).
    */
   nsRootPresContext* GetRootPresContext();
-  nsRootPresContext* GetDisplayRootPresContext();
+
   virtual bool IsRoot() { return false; }
 
   nsIDocument* Document() const
@@ -229,6 +228,7 @@ public:
   nsCSSFrameConstructor* FrameConstructor()
     { return PresShell()->FrameConstructor(); }
 
+  mozilla::EffectCompositor* EffectCompositor() { return mEffectCompositor; }
   nsTransitionManager* TransitionManager() { return mTransitionManager; }
   nsAnimationManager* AnimationManager() { return mAnimationManager; }
 
@@ -405,18 +405,18 @@ public:
   /**
    * Get the default colors
    */
-  const nscolor DefaultColor() const { return mDefaultColor; }
-  const nscolor DefaultBackgroundColor() const { return mBackgroundColor; }
-  const nscolor DefaultLinkColor() const { return mLinkColor; }
-  const nscolor DefaultActiveLinkColor() const { return mActiveLinkColor; }
-  const nscolor DefaultVisitedLinkColor() const { return mVisitedLinkColor; }
-  const nscolor FocusBackgroundColor() const { return mFocusBackgroundColor; }
-  const nscolor FocusTextColor() const { return mFocusTextColor; }
+  nscolor DefaultColor() const { return mDefaultColor; }
+  nscolor DefaultBackgroundColor() const { return mBackgroundColor; }
+  nscolor DefaultLinkColor() const { return mLinkColor; }
+  nscolor DefaultActiveLinkColor() const { return mActiveLinkColor; }
+  nscolor DefaultVisitedLinkColor() const { return mVisitedLinkColor; }
+  nscolor FocusBackgroundColor() const { return mFocusBackgroundColor; }
+  nscolor FocusTextColor() const { return mFocusTextColor; }
 
   /**
    * Body text color, for use in quirks mode only.
    */
-  const nscolor BodyTextColor() const { return mBodyTextColor; }
+  nscolor BodyTextColor() const { return mBodyTextColor; }
   void SetBodyTextColor(nscolor aColor) { mBodyTextColor = aColor; }
 
   bool GetUseFocusColors() const { return mUseFocusColors; }
@@ -527,10 +527,12 @@ public:
 
   nsDeviceContext* DeviceContext() { return mDeviceContext; }
   mozilla::EventStateManager* EventStateManager() { return mEventManager; }
-  nsIAtom* GetLanguageFromCharset() { return mLanguage; }
+  nsIAtom* GetLanguageFromCharset() const { return mLanguage; }
+  already_AddRefed<nsIAtom> GetContentLanguage() const;
 
   float TextZoom() { return mTextZoom; }
   void SetTextZoom(float aZoom) {
+    MOZ_ASSERT(aZoom > 0.0f, "invalid zoom factor");
     if (aZoom == mTextZoom)
       return;
 
@@ -639,6 +641,12 @@ public:
   float DevPixelsToFloatCSSPixels(int32_t aPixels)
   { return AppUnitsToFloatCSSPixels(DevPixelsToAppUnits(aPixels)); }
 
+  mozilla::CSSToLayoutDeviceScale CSSToDevPixelScale() const
+  {
+    return mozilla::CSSToLayoutDeviceScale(
+        float(AppUnitsPerCSSPixel()) / float(AppUnitsPerDevPixel()));
+  }
+
   // If there is a remainder, it is rounded to nearest app units.
   nscoord GfxUnitsToAppUnits(gfxFloat aGfxUnits) const;
 
@@ -668,10 +676,17 @@ public:
   nscoord RoundAppUnitsToNearestDevPixels(nscoord aAppUnits) const
   { return DevPixelsToAppUnits(AppUnitsToDevPixels(aAppUnits)); }
 
-  void SetViewportScrollbarStylesOverride(const ScrollbarStyles& aScrollbarStyle)
-  {
-    mViewportStyleScrollbar = aScrollbarStyle;
-  }
+  /**
+   * This checks the root element and the HTML BODY, if any, for an "overflow"
+   * property that should be applied to the viewport. If one is found then we
+   * return the element that we took the overflow from (which should then be
+   * treated as "overflow: visible"), and we store the overflow style here.
+   * If the document is in fullscreen, and the fullscreen element is not the
+   * root, the scrollbar of viewport will be suppressed.
+   * @return if scroll was propagated from some content node, the content node
+   *         it was propagated from.
+   */
+  nsIContent* UpdateViewportScrollbarStylesOverride();
   ScrollbarStyles GetViewportScrollbarStylesOverride()
   {
     return mViewportStyleScrollbar;
@@ -691,13 +706,6 @@ public:
   {
     mDrawColorBackground = aCanDraw;
   }
-
-  /**
-   * Getter and setters for OMTA time counters
-   */
-  bool StyleUpdateForAllAnimationsIsUpToDate() const;
-  void TickLastStyleUpdateForAllAnimations();
-  void ClearLastStyleUpdateForAllAnimations();
 
   /**
    *  Check if bidi enabled (set depending on the presence of RTL
@@ -791,8 +799,14 @@ public:
    * Notify the pres context that the resolution of the user interface has
    * changed. This happens if a window is moved between HiDPI and non-HiDPI
    * displays, so that the ratio of points to device pixels changes.
+   * The notification happens asynchronously.
    */
   void UIResolutionChanged();
+
+ /*
+  * Like UIResolutionChanged() but invalidates values immediately.
+  */
+  void UIResolutionChangedSync();
 
   /*
    * Notify the pres context that a system color has changed
@@ -851,7 +865,8 @@ public:
   void UpdateIsChrome();
 
   // Public API for native theme code to get style internals.
-  virtual bool HasAuthorSpecifiedRules(nsIFrame *aFrame, uint32_t ruleTypeMask) const;
+  virtual bool HasAuthorSpecifiedRules(const nsIFrame *aFrame,
+                                       uint32_t ruleTypeMask) const;
 
   // Is it OK to let the page specify colors and backgrounds?
   bool UseDocumentColors() const {
@@ -872,16 +887,7 @@ public:
 
   bool             SuppressingResizeReflow() const { return mSuppressResizeReflow; }
 
-  virtual gfxUserFontSet* GetUserFontSetExternal();
-  gfxUserFontSet* GetUserFontSetInternal();
-#ifdef MOZILLA_INTERNAL_API
-  gfxUserFontSet* GetUserFontSet() { return GetUserFontSetInternal(); }
-#else
-  gfxUserFontSet* GetUserFontSet() { return GetUserFontSetExternal(); }
-#endif
-
-  void FlushUserFontSet();
-  void RebuildUserFontSet(); // asynchronously
+  gfxUserFontSet* GetUserFontSet();
 
   // Should be called whenever the set of fonts available in the user
   // font set changes (e.g., because a new font loads, or because the
@@ -890,8 +896,6 @@ public:
 
   gfxMissingFontRecorder *MissingFontRecorder() { return mMissingFonts; }
   void NotifyMissingFonts();
-
-  mozilla::dom::FontFaceSet* Fonts();
 
   void FlushCounterStyles();
   void RebuildCounterStyles(); // asynchronously
@@ -921,6 +925,11 @@ public:
     mUndeliveredInvalidateRequestsBeforeLastPaint.mRequests.Clear();
     mAllInvalidated = false;
   }
+
+  /**
+   * Returns the RestyleManager's restyle generation counter.
+   */
+  uint64_t GetRestyleGeneration() const;
 
   /**
    * Returns whether there are any pending restyles or reflows.
@@ -1090,28 +1099,13 @@ protected:
     LangGroupFontPrefs()
       : mLangGroup(nullptr)
       , mMinimumFontSize(0)
-      , mDefaultVariableFont(mozilla::eFamily_serif, NS_FONT_STYLE_NORMAL,
-                             NS_FONT_WEIGHT_NORMAL,
-                             NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultFixedFont(mozilla::eFamily_monospace, NS_FONT_STYLE_NORMAL,
-                          NS_FONT_WEIGHT_NORMAL,
-                          NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultSerifFont(mozilla::eFamily_serif, NS_FONT_STYLE_NORMAL,
-                          NS_FONT_WEIGHT_NORMAL,
-                          NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultSansSerifFont(mozilla::eFamily_sans_serif,
-                              NS_FONT_STYLE_NORMAL,
-                              NS_FONT_WEIGHT_NORMAL,
-                              NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultMonospaceFont(mozilla::eFamily_monospace, NS_FONT_STYLE_NORMAL,
-                              NS_FONT_WEIGHT_NORMAL,
-                              NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultCursiveFont(mozilla::eFamily_cursive, NS_FONT_STYLE_NORMAL,
-                            NS_FONT_WEIGHT_NORMAL,
-                            NS_FONT_STRETCH_NORMAL, 0, 0)
-      , mDefaultFantasyFont(mozilla::eFamily_fantasy, NS_FONT_STYLE_NORMAL,
-                            NS_FONT_WEIGHT_NORMAL,
-                            NS_FONT_STRETCH_NORMAL, 0, 0)
+      , mDefaultVariableFont(mozilla::eFamily_serif, 0)
+      , mDefaultFixedFont(mozilla::eFamily_monospace, 0)
+      , mDefaultSerifFont(mozilla::eFamily_serif, 0)
+      , mDefaultSansSerifFont(mozilla::eFamily_sans_serif, 0)
+      , mDefaultMonospaceFont(mozilla::eFamily_monospace, 0)
+      , mDefaultCursiveFont(mozilla::eFamily_cursive, 0)
+      , mDefaultFantasyFont(mozilla::eFamily_fantasy, 0)
     {}
 
     size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
@@ -1189,11 +1183,6 @@ protected:
 
   void AppUnitsPerDevPixelChanged();
 
-  void HandleRebuildUserFontSet() {
-    mPostedFlushUserFontSet = false;
-    FlushUserFontSet();
-  }
-
   void HandleRebuildCounterStyles() {
     mPostedFlushCounterStyles = false;
     FlushCounterStyles();
@@ -1206,29 +1195,38 @@ protected:
 
   bool IsChromeSlow() const;
 
+  // Creates a one-shot timer with the given aCallback & aDelay.
+  // Returns a refcounted pointer to the timer (or nullptr on failure).
+  already_AddRefed<nsITimer> CreateTimer(nsTimerCallbackFunc aCallback,
+                                         uint32_t aDelay);
+
   // IMPORTANT: The ownership implicit in the following member variables
   // has been explicitly checked.  If you add any members to this class,
   // please make the ownership explicit (pinkerton, scc).
 
   nsPresContextType     mType;
-  nsIPresShell*         mShell;         // [WEAK]
+  // the nsPresShell owns a strong reference to the nsPresContext, and is responsible
+  // for nulling this pointer before it is destroyed
+  nsIPresShell* MOZ_NON_OWNING_REF mShell;         // [WEAK]
   nsCOMPtr<nsIDocument> mDocument;
-  nsRefPtr<nsDeviceContext> mDeviceContext; // [STRONG] could be weak, but
+  RefPtr<nsDeviceContext> mDeviceContext; // [STRONG] could be weak, but
                                             // better safe than sorry.
                                             // Cannot reintroduce cycles
                                             // since there is no dependency
                                             // from gfx back to layout.
-  nsRefPtr<mozilla::EventStateManager> mEventManager;
-  nsRefPtr<nsRefreshDriver> mRefreshDriver;
-  nsRefPtr<nsTransitionManager> mTransitionManager;
-  nsRefPtr<nsAnimationManager> mAnimationManager;
-  nsRefPtr<mozilla::RestyleManager> mRestyleManager;
-  nsRefPtr<mozilla::CounterStyleManager> mCounterStyleManager;
-  nsIAtom*              mMedium;        // initialized by subclass ctors;
-                                        // weak pointer to static atom
+  RefPtr<mozilla::EventStateManager> mEventManager;
+  RefPtr<nsRefreshDriver> mRefreshDriver;
+  RefPtr<mozilla::EffectCompositor> mEffectCompositor;
+  RefPtr<nsTransitionManager> mTransitionManager;
+  RefPtr<nsAnimationManager> mAnimationManager;
+  RefPtr<mozilla::RestyleManager> mRestyleManager;
+  RefPtr<mozilla::CounterStyleManager> mCounterStyleManager;
+  nsIAtom* MOZ_UNSAFE_REF("always a static atom") mMedium; // initialized by subclass ctors
   nsCOMPtr<nsIAtom> mMediaEmulated;
 
-  nsILinkHandler*       mLinkHandler;   // [WEAK]
+  // This pointer is nulled out through SetLinkHandler() in the destructors of
+  // the classes which set it. (using SetLinkHandler() again).
+  nsILinkHandler* MOZ_NON_OWNING_REF mLinkHandler;
 
   // Formerly mLangGroup; moving from charset-oriented langGroup to
   // maintaining actual language settings everywhere (see bug 524107).
@@ -1268,9 +1266,6 @@ protected:
 
   nsInvalidateRequestList mInvalidateRequestsSinceLastPaint;
   nsInvalidateRequestList mUndeliveredInvalidateRequestsBeforeLastPaint;
-
-  // container for per-context fonts (downloadable, SVG, etc.)
-  nsRefPtr<mozilla::dom::FontFaceSet> mFontFaceSet;
 
   // text performance metrics
   nsAutoPtr<gfxTextPerfMetrics>   mTextPerf;
@@ -1360,13 +1355,6 @@ protected:
   // Has there been a change to the viewport's dimensions?
   unsigned              mPendingViewportChange : 1;
 
-  // Is the current mFontFaceSet valid?
-  unsigned              mFontFaceSetDirty : 1;
-  // Has GetUserFontSet() been called?
-  unsigned              mGetUserFontSetCalled : 1;
-  // Do we currently have an event posted to call FlushUserFontSet?
-  unsigned              mPostedFlushUserFontSet : 1;
-
   // Is the current mCounterStyleManager valid?
   unsigned              mCounterStylesDirty : 1;
   // Do we currently have an event posted to call FlushCounterStyles?
@@ -1389,6 +1377,12 @@ protected:
   mutable unsigned mPaintFlashingInitialized : 1;
 
   unsigned mHasWarnedAboutPositionedTableParts : 1;
+
+  // Have we added quirk.css to the style set?
+  unsigned              mQuirkSheetAdded : 1;
+
+  // Is there a pref update to process once we have a container?
+  unsigned              mNeedsPrefUpdate : 1;
 
 #ifdef RESTYLE_LOGGING
   // Should we output debug information about restyling for this document?
@@ -1548,7 +1542,8 @@ protected:
       }
       return NS_OK;
     }
-    nsRootPresContext* mPresContext;
+    // The lifetime of this reference is handled by an nsRevocableEventPtr
+    nsRootPresContext* MOZ_NON_OWNING_REF mPresContext;
   };
 
   friend class nsPresContext;

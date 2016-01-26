@@ -7,8 +7,8 @@
 #define MOZILLA_GFX_BASEPOINT_H_
 
 #include <cmath>
+#include <ostream>
 #include "mozilla/Attributes.h"
-#include "mozilla/ToString.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/TypeTraits.h"
 
@@ -69,6 +69,10 @@ struct BasePoint {
     return Sub(-x, -y);
   }
 
+  T DotProduct(const Sub& aPoint) const {
+      return x * aPoint.x + y * aPoint.y;
+  }
+
   T Length() const {
     return hypot(x, y);
   }
@@ -102,7 +106,7 @@ struct BasePoint {
 
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_BASEPOINT_H_ */

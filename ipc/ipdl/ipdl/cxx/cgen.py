@@ -86,9 +86,16 @@ class CxxCodeGen(CodePrinter, Visitor):
 
 
     def visitTypedef(self, td):
-        self.printdent('typedef ')
-        td.fromtype.accept(self)
-        self.println(' '+ td.totypename +';')
+        if td.templateargs:
+            formals = ', '.join([ 'class ' + T for T in td.templateargs ])
+            args = ', '.join(td.templateargs)
+            self.printdent('template<' + formals + '> using ' + td.totypename + ' = ')
+            td.fromtype.accept(self)
+            self.println('<' + args + '>;')
+        else:
+            self.printdent('typedef ')
+            td.fromtype.accept(self)
+            self.println(' '+ td.totypename +';')
 
     def visitUsing(self, us):
         self.printdent('using ')
@@ -125,17 +132,11 @@ class CxxCodeGen(CodePrinter, Visitor):
     def visitClass(self, c):
         if c.specializes is not None:
             self.printdentln('template<>')
-        
+
         if c.struct:
             self.printdent('struct')
         else:
             self.printdent('class')
-        if c.interface:
-            # FIXME/cjones: turn this "on" when we get the analysis
-            self.write(' /*NS_INTERFACE_CLASS*/')
-        if c.abstract:
-            # FIXME/cjones: turn this "on" when we get the analysis
-            self.write(' /*NS_ABSTRACT_CLASS*/')
         self.write(' '+ c.name)
         if c.final:
             self.write(' final')

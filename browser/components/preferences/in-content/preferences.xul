@@ -149,7 +149,6 @@
         <label class="category-name" flex="1">&paneSecurity.title;</label>
       </richlistitem>
 
-#ifdef MOZ_SERVICES_SYNC
       <richlistitem id="category-sync"
                     class="category"
                     value="paneSync"
@@ -159,7 +158,6 @@
         <image class="category-icon"/>
         <label class="category-name" flex="1">&paneSync.title;</label>
       </richlistitem>
-#endif
 
       <richlistitem id="category-advanced"
                     class="category"
@@ -181,15 +179,8 @@
 #include applications.xul
 #include content.xul
 #include security.xul
-#ifdef MOZ_SERVICES_SYNC
 #include sync.xul
-#endif
       </prefpane>
-      <hbox pack="end">
-        <button id="help-button"
-                class="help-button"
-                aria-label="&helpButton.label;"/>
-      </hbox>
     </vbox>
 
   </hbox>
@@ -200,8 +191,8 @@
                 pack="end"
                 role="dialog"
                 aria-labelledby="dialogTitle">
-        <caption class="titlebar" flex="1" align="center">
-          <label id="dialogTitle" class="title" flex="1"></label>
+        <caption flex="1" align="center">
+          <label id="dialogTitle" flex="1"></label>
           <button id="dialogClose"
                   class="close-icon"
                   aria-label="&preferencesCloseButton.label;"/>

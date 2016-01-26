@@ -8,18 +8,16 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Preferences.jsm");
 
-const policy = Cc["@mozilla.org/datareporting/service;1"]
-                 .getService(Ci.nsISupports)
-                 .wrappedJSObject
-                 .policy;
+const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 
-XPCOMUtils.defineLazyGetter(this, "reporter", () => {
-  return Cc["@mozilla.org/datareporting/service;1"]
-           .getService(Ci.nsISupports)
-           .wrappedJSObject
-           .healthReporter;
-});
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryArchive",
+                                  "resource://gre/modules/TelemetryArchive.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryEnvironment",
+                                  "resource://gre/modules/TelemetryEnvironment.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+                                  "resource://gre/modules/TelemetryController.jsm");
 
 function MozSelfSupportInterface() {
 }
@@ -37,32 +35,11 @@ MozSelfSupportInterface.prototype = {
   },
 
   get healthReportDataSubmissionEnabled() {
-    return policy.healthReportUploadEnabled;
+    return Preferences.get(PREF_FHR_UPLOAD_ENABLED, false);
   },
 
   set healthReportDataSubmissionEnabled(enabled) {
-    let reason = "Self-support interface sent " +
-                 (enabled ? "opt-in" : "opt-out") +
-                 " command.";
-    policy.recordHealthReportUploadEnabled(enabled, reason);
-  },
-
-  getHealthReportPayload: function () {
-    return new this._window.Promise(function (aResolve, aReject) {
-      if (reporter) {
-        let resolvePayload = function () {
-          reporter.collectAndObtainJSONPayload(true).then(aResolve, aReject);
-        };
-
-        if (reporter.initialized) {
-          resolvePayload();
-        } else {
-          reporter.onInit().then(resolvePayload, aReject);
-        }
-      } else {
-        aReject(new Error("No reporter"));
-      }
-    }.bind(this));
+    Preferences.set(PREF_FHR_UPLOAD_ENABLED, enabled);
   },
 
   resetPref: function(name) {
@@ -72,6 +49,29 @@ MozSelfSupportInterface.prototype = {
   resetSearchEngines: function() {
     Services.search.restoreDefaultEngines();
     Services.search.resetToOriginalDefaultEngine();
+  },
+
+  getTelemetryPingList: function() {
+    return this._wrapPromise(TelemetryArchive.promiseArchivedPingList());
+  },
+
+  getTelemetryPing: function(pingId) {
+    return this._wrapPromise(TelemetryArchive.promiseArchivedPingById(pingId));
+  },
+
+  getCurrentTelemetryEnvironment: function() {
+    const current = TelemetryEnvironment.currentEnvironment;
+    return new this._window.Promise(resolve => resolve(current));
+  },
+
+  getCurrentTelemetrySubsessionPing: function() {
+    const current = TelemetryController.getCurrentPingData(true);
+    return new this._window.Promise(resolve => resolve(current));
+  },
+
+  _wrapPromise: function(promise) {
+    return new this._window.Promise(
+      (resolve, reject) => promise.then(resolve, reject));
   },
 }
 

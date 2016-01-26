@@ -448,6 +448,23 @@
 
 
 
+- name: toBlob.png
+  desc: toBlob with image/png returns a PNG Blob
+  testing:
+    - toBlob.png
+  code: |
+    canvas.toBlob(function(data){
+      @assert data.type === "image/png";
+    }, 'image/png');
+
+- name: toBlob.jpeg
+  desc: toBlob with image/jpeg returns a JPEG Blob
+  testing:
+    - toBlob.jpeg
+  code: |
+    canvas.toBlob(function(data){
+      @assert data.type === "image/jpeg";
+    }, 'image/jpeg');
 
 - name: toDataURL.default
   desc: toDataURL with no arguments returns a PNG
@@ -465,6 +482,16 @@
   code: |
     var data = canvas.toDataURL('image/png');
     @assert data =~ /^data:image\/png[;,]/;
+
+- name: toDataURL.jpg
+  desc: toDataURL with image/jpg is invalid type hence returns a PNG
+  testing:
+    - toDataURL.jpg
+    - toDataURL.witharguments
+  code: |
+    var data = canvas.toDataURL('image/jpg');
+    @assert data =~ /^data:image\/png[;,]/;
+
 
 - name: toDataURL.bogustype
   desc: toDataURL with a syntactically invalid type returns a PNG

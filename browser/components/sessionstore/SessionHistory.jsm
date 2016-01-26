@@ -40,7 +40,7 @@ this.SessionHistory = Object.freeze({
 /**
  * The internal API for the SessionHistory module.
  */
-let SessionHistoryInternal = {
+var SessionHistoryInternal = {
   /**
    * Returns whether the given docShell's session history is empty.
    *
@@ -64,16 +64,17 @@ let SessionHistoryInternal = {
    *        The docShell that owns the session history.
    */
   collect: function (docShell) {
-    let data = {entries: []};
-    let isPinned = docShell.isAppTab;
+    let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
     let webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory.QueryInterface(Ci.nsISHistoryInternal);
+
+    let data = {entries: [], userContextId: loadContext.originAttributes.userContextId };
 
     if (history && history.count > 0) {
       // Loop over the transaction linked list directly so we can get the
       // persist property for each transaction.
       for (let txn = history.rootTransaction; txn; txn = txn.next) {
-        let entry = this.serializeEntry(txn.sHEntry, isPinned);
+        let entry = this.serializeEntry(txn.sHEntry);
         entry.persist = txn.persist;
         data.entries.push(entry);
       }
@@ -103,30 +104,13 @@ let SessionHistoryInternal = {
   },
 
   /**
-   * Determines whether a given session history entry has been added dynamically.
-   *
-   * @param shEntry
-   *        The session history entry.
-   * @return bool
-   */
-  isDynamic: function (shEntry) {
-    // shEntry.isDynamicallyAdded() is true for dynamically added
-    // <iframe> and <frameset>, but also for <html> (the root of the
-    // document) so we use shEntry.parent to ensure that we're not looking
-    // at the root of the document
-    return shEntry.parent && shEntry.isDynamicallyAdded();
-  },
-
-  /**
    * Get an object that is a serialized representation of a History entry.
    *
    * @param shEntry
    *        nsISHEntry instance
-   * @param isPinned
-   *        The tab is pinned and should be treated differently for privacy.
    * @return object
    */
-  serializeEntry: function (shEntry, isPinned) {
+  serializeEntry: function (shEntry) {
     let entry = { url: shEntry.URI.spec };
 
     // Save some bytes and don't include the title property
@@ -137,6 +121,8 @@ let SessionHistoryInternal = {
     if (shEntry.isSubFrame) {
       entry.subframe = true;
     }
+
+    entry.charset = shEntry.URI.originCharset;
 
     let cacheKey = shEntry.cacheKey;
     if (cacheKey && cacheKey instanceof Ci.nsISupportsPRUint32 &&
@@ -167,10 +153,14 @@ let SessionHistoryInternal = {
     if (shEntry.contentType)
       entry.contentType = shEntry.contentType;
 
-    let x = {}, y = {};
-    shEntry.getScrollPosition(x, y);
-    if (x.value != 0 || y.value != 0)
-      entry.scroll = x.value + "," + y.value;
+    if (shEntry.scrollRestorationIsManual) {
+      entry.scrollRestorationIsManual = true;
+    } else {
+      let x = {}, y = {};
+      shEntry.getScrollPosition(x, y);
+      if (x.value != 0 || y.value != 0)
+        entry.scroll = x.value + "," + y.value;
+    }
 
     // Collect owner data for the current history entry.
     try {
@@ -195,12 +185,12 @@ let SessionHistoryInternal = {
       return entry;
     }
 
-    if (shEntry.childCount > 0) {
+    if (shEntry.childCount > 0 && !shEntry.hasDynamicallyAddedChild()) {
       let children = [];
       for (let i = 0; i < shEntry.childCount; i++) {
         let child = shEntry.GetChildAt(i);
 
-        if (child && !this.isDynamic(child)) {
+        if (child) {
           // Don't try to restore framesets containing wyciwyg URLs.
           // (cf. bug 424689 and bug 450595)
           if (child.URI.schemeIs("wyciwyg")) {
@@ -208,7 +198,7 @@ let SessionHistoryInternal = {
             break;
           }
 
-          children.push(this.serializeEntry(child, isPinned));
+          children.push(this.serializeEntry(child));
         }
       }
 
@@ -265,6 +255,10 @@ let SessionHistoryInternal = {
     let webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory;
 
+    if ("userContextId" in tabData) {
+      docShell.setUserContextId(tabData.userContextId);
+    }
+
     if (history.count > 0) {
       history.PurgeHistory(history.count);
     }
@@ -279,6 +273,12 @@ let SessionHistoryInternal = {
         continue;
       let persist = "persist" in entry ? entry.persist : true;
       history.addEntry(this.deserializeEntry(entry, idMap, docIdentMap), persist);
+    }
+
+    // Select the right history entry.
+    let index = tabData.index - 1;
+    if (index < history.count && history.index != index) {
+      history.getEntryAtIndex(index, true);
     }
   },
 
@@ -298,7 +298,7 @@ let SessionHistoryInternal = {
     var shEntry = Cc["@mozilla.org/browser/session-history-entry;1"].
                   createInstance(Ci.nsISHEntry);
 
-    shEntry.setURI(Utils.makeURI(entry.url));
+    shEntry.setURI(Utils.makeURI(entry.url, entry.charset));
     shEntry.setTitle(entry.title || entry.url);
     if (entry.subframe)
       shEntry.setIsSubFrame(entry.subframe || false);
@@ -345,7 +345,9 @@ let SessionHistoryInternal = {
                                        entry.structuredCloneVersion);
     }
 
-    if (entry.scroll) {
+    if (entry.scrollRestorationIsManual) {
+      shEntry.scrollRestorationIsManual = true;
+    } else if (entry.scroll) {
       var scrollPos = (entry.scroll || "0,0").split(",");
       scrollPos = [parseInt(scrollPos[0]) || 0, parseInt(scrollPos[1]) || 0];
       shEntry.setScrollPosition(scrollPos[0], scrollPos[1]);

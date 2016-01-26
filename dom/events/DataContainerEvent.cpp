@@ -28,11 +28,11 @@ DataContainerEvent::DataContainerEvent(EventTarget* aOwner,
 NS_IMPL_CYCLE_COLLECTION_CLASS(DataContainerEvent)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DataContainerEvent, Event)
-  tmp->mData.Clear();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mData)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(DataContainerEvent, Event)
-  tmp->mData.EnumerateRead(TraverseEntry, &cb);
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mData)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_ADDREF_INHERITED(DataContainerEvent, Event)
@@ -81,33 +81,19 @@ DataContainerEvent::SetData(JSContext* aCx, const nsAString& aKey,
   aRv = SetData(aKey, val);
 }
 
-PLDHashOperator
-DataContainerEvent::TraverseEntry(const nsAString& aKey,
-                                  nsIVariant* aDataItem,
-                                  void* aUserArg)
-{
-  nsCycleCollectionTraversalCallback *cb =
-    static_cast<nsCycleCollectionTraversalCallback*>(aUserArg);
-  cb->NoteXPCOMChild(aDataItem);
-
-  return PL_DHASH_NEXT;
-}
-
 } // namespace dom
 } // namespace mozilla
 
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMDataContainerEvent(nsIDOMEvent** aInstancePtrResult,
-                            EventTarget* aOwner,
+already_AddRefed<DataContainerEvent>
+NS_NewDOMDataContainerEvent(EventTarget* aOwner,
                             nsPresContext* aPresContext,
                             WidgetEvent* aEvent)
 {
-  DataContainerEvent* it = new DataContainerEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<DataContainerEvent> it =
+    new DataContainerEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }
 

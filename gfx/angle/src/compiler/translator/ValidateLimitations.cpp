@@ -26,12 +26,16 @@ class ValidateConstIndexExpr : public TIntermTraverser
 {
   public:
     ValidateConstIndexExpr(TLoopStack& stack)
-        : mValid(true), mLoopStack(stack) {}
+        : TIntermTraverser(true, false, false),
+          mValid(true),
+          mLoopStack(stack)
+    {
+    }
 
     // Returns true if the parsed node represents a constant index expression.
     bool isValid() const { return mValid; }
 
-    virtual void visitSymbol(TIntermSymbol *symbol)
+    void visitSymbol(TIntermSymbol *symbol) override
     {
         // Only constants and loop indices are allowed in a
         // constant index expression.
@@ -47,101 +51,37 @@ class ValidateConstIndexExpr : public TIntermTraverser
     TLoopStack& mLoopStack;
 };
 
-const char *GetOperatorString(TOperator op)
-{
-    switch (op)
-    {
-      case EOpInitialize: return "=";
-      case EOpAssign: return "=";
-      case EOpAddAssign: return "+=";
-      case EOpSubAssign: return "-=";
-      case EOpDivAssign: return "/=";
-
-      // Fall-through.
-      case EOpMulAssign:
-      case EOpVectorTimesMatrixAssign:
-      case EOpVectorTimesScalarAssign:
-      case EOpMatrixTimesScalarAssign:
-      case EOpMatrixTimesMatrixAssign: return "*=";
-
-      // Fall-through.
-      case EOpIndexDirect:
-      case EOpIndexIndirect: return "[]";
-
-      case EOpIndexDirectStruct:
-      case EOpIndexDirectInterfaceBlock: return ".";
-      case EOpVectorSwizzle: return ".";
-      case EOpAdd: return "+";
-      case EOpSub: return "-";
-      case EOpMul: return "*";
-      case EOpDiv: return "/";
-      case EOpMod: UNIMPLEMENTED(); break;
-      case EOpEqual: return "==";
-      case EOpNotEqual: return "!=";
-      case EOpLessThan: return "<";
-      case EOpGreaterThan: return ">";
-      case EOpLessThanEqual: return "<=";
-      case EOpGreaterThanEqual: return ">=";
-
-      // Fall-through.
-      case EOpVectorTimesScalar:
-      case EOpVectorTimesMatrix:
-      case EOpMatrixTimesVector:
-      case EOpMatrixTimesScalar:
-      case EOpMatrixTimesMatrix: return "*";
-
-      case EOpLogicalOr: return "||";
-      case EOpLogicalXor: return "^^";
-      case EOpLogicalAnd: return "&&";
-      case EOpNegative: return "-";
-      case EOpPositive: return "+";
-      case EOpVectorLogicalNot: return "not";
-      case EOpLogicalNot: return "!";
-      case EOpPostIncrement: return "++";
-      case EOpPostDecrement: return "--";
-      case EOpPreIncrement: return "++";
-      case EOpPreDecrement: return "--";
-
-      case EOpRadians: return "radians";
-      case EOpDegrees: return "degrees";
-      case EOpSin: return "sin";
-      case EOpCos: return "cos";
-      case EOpTan: return "tan";
-      case EOpAsin: return "asin";
-      case EOpAcos: return "acos";
-      case EOpAtan: return "atan";
-      case EOpExp: return "exp";
-      case EOpLog: return "log";
-      case EOpExp2: return "exp2";
-      case EOpLog2: return "log2";
-      case EOpSqrt: return "sqrt";
-      case EOpInverseSqrt: return "inversesqrt";
-      case EOpAbs: return "abs";
-      case EOpSign: return "sign";
-      case EOpFloor: return "floor";
-      case EOpCeil: return "ceil";
-      case EOpFract: return "fract";
-      case EOpLength: return "length";
-      case EOpNormalize: return "normalize";
-      case EOpDFdx: return "dFdx";
-      case EOpDFdy: return "dFdy";
-      case EOpFwidth: return "fwidth";
-      case EOpAny: return "any";
-      case EOpAll: return "all";
-
-      default: break;
-    }
-    return "";
-}
-
 }  // namespace anonymous
 
-ValidateLimitations::ValidateLimitations(sh::GLenum shaderType,
-                                         TInfoSinkBase &sink)
-    : mShaderType(shaderType),
+ValidateLimitations::ValidateLimitations(sh::GLenum shaderType, TInfoSinkBase *sink)
+    : TIntermTraverser(true, false, false),
+      mShaderType(shaderType),
       mSink(sink),
-      mNumErrors(0)
+      mNumErrors(0),
+      mValidateIndexing(true),
+      mValidateInnerLoops(true)
 {
+}
+
+// static
+bool ValidateLimitations::IsLimitedForLoop(TIntermLoop *loop)
+{
+    // The shader type doesn't matter in this case.
+    ValidateLimitations validate(GL_FRAGMENT_SHADER, nullptr);
+    validate.mValidateIndexing   = false;
+    validate.mValidateInnerLoops = false;
+    if (!validate.validateLoopType(loop))
+        return false;
+    if (!validate.validateForLoopHeader(loop))
+        return false;
+    TIntermNode *body = loop->getBody();
+    if (body != nullptr)
+    {
+        validate.mLoopStack.push(loop);
+        body->traverse(&validate);
+        validate.mLoopStack.pop();
+    }
+    return (validate.mNumErrors == 0);
 }
 
 bool ValidateLimitations::visitBinary(Visit, TIntermBinary *node)
@@ -154,10 +94,11 @@ bool ValidateLimitations::visitBinary(Visit, TIntermBinary *node)
     {
       case EOpIndexDirect:
       case EOpIndexIndirect:
-        validateIndexing(node);
-        break;
+          if (mValidateIndexing)
+              validateIndexing(node);
+          break;
       default:
-        break;
+          break;
     }
     return true;
 }
@@ -184,6 +125,9 @@ bool ValidateLimitations::visitAggregate(Visit, TIntermAggregate *node)
 
 bool ValidateLimitations::visitLoop(Visit, TIntermLoop *node)
 {
+    if (!mValidateInnerLoops)
+        return true;
+
     if (!validateLoopType(node))
         return false;
 
@@ -205,9 +149,12 @@ bool ValidateLimitations::visitLoop(Visit, TIntermLoop *node)
 void ValidateLimitations::error(TSourceLoc loc,
                                 const char *reason, const char *token)
 {
-    mSink.prefix(EPrefixError);
-    mSink.location(loc);
-    mSink << "'" << token << "' : " << reason << "\n";
+    if (mSink)
+    {
+        mSink->prefix(EPrefixError);
+        mSink->location(loc);
+        (*mSink) << "'" << token << "' : " << reason << "\n";
+    }
     ++mNumErrors;
 }
 
@@ -476,13 +423,13 @@ bool ValidateLimitations::validateFunctionCall(TIntermAggregate *node)
 
     bool valid = true;
     TSymbolTable& symbolTable = GetGlobalParseContext()->symbolTable;
-    TSymbol* symbol = symbolTable.find(node->getName(), GetGlobalParseContext()->shaderVersion);
+    TSymbol* symbol = symbolTable.find(node->getName(), GetGlobalParseContext()->getShaderVersion());
     ASSERT(symbol && symbol->isFunction());
     TFunction *function = static_cast<TFunction *>(symbol);
     for (ParamIndex::const_iterator i = pIndex.begin();
          i != pIndex.end(); ++i)
     {
-        const TParameter &param = function->getParam(*i);
+        const TConstParameter &param = function->getParam(*i);
         TQualifier qual = param.type->getQualifier();
         if ((qual == EvqOut) || (qual == EvqInOut))
         {
@@ -515,8 +462,8 @@ bool ValidateLimitations::validateOperation(TIntermOperator *node,
 
 bool ValidateLimitations::isConstExpr(TIntermNode *node)
 {
-    ASSERT(node != NULL);
-    return node->getAsConstantUnion() != NULL;
+    ASSERT(node != nullptr);
+    return node->getAsConstantUnion() != nullptr && node->getAsTyped()->getQualifier() == EvqConst;
 }
 
 bool ValidateLimitations::isConstIndexExpr(TIntermNode *node)
@@ -535,13 +482,6 @@ bool ValidateLimitations::validateIndexing(TIntermBinary *node)
 
     bool valid = true;
     TIntermTyped *index = node->getRight();
-    // The index expression must have integral type.
-    if (!index->isScalarInt()) {
-        error(index->getLine(),
-              "Index expression must have integral type",
-              index->getCompleteString().c_str());
-        valid = false;
-    }
     // The index expession must be a constant-index-expression unless
     // the operand is a uniform in a vertex shader.
     TIntermTyped *operand = node->getLeft();

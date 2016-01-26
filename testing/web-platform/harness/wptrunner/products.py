@@ -43,6 +43,8 @@ def load_product(config, product):
     browser_kwargs = getattr(module, data["browser_kwargs"])
     executor_kwargs = getattr(module, data["executor_kwargs"])
     env_options = getattr(module, data["env_options"])()
+    run_info_extras = (getattr(module, data["run_info_extras"])
+                       if "run_info_extras" in data else lambda **kwargs:{})
 
     executor_classes = {}
     for test_type, cls_name in data["executor"].iteritems():
@@ -52,4 +54,19 @@ def load_product(config, product):
     return (check_args,
             browser_cls, browser_kwargs,
             executor_classes, executor_kwargs,
-            env_options)
+            env_options, run_info_extras)
+
+
+def load_product_update(config, product):
+    """Return tuple of (property_order, boolean_properties) indicating the
+    run_info properties to use when constructing the expectation data for
+    this product. None for either key indicates that the default keys
+    appropriate for distinguishing based on platform will be used."""
+
+    module = product_module(config, product)
+    data = module.__wptrunner__
+
+    update_properties = (getattr(module, data["update_properties"])()
+                         if "update_properties" in data else (None, None))
+
+    return update_properties

@@ -5,6 +5,7 @@
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cc = Components.classes;
+const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -49,26 +50,29 @@ ContentDispatchChooser.prototype =
     if (aHandler.possibleApplicationHandlers.length > 1) {
       aHandler.launchWithURI(aURI, aWindowContext);
     } else {
+      // xpcshell tests do not have an Android Bridge but we require Android
+      // Bridge when using Messaging so we guard against this case. xpcshell
+      // tests also do not have a window, so we use this state to guard.
       let win = this._getChromeWin();
-      if (win && win.NativeWindow) {
-        let bundle = Services.strings.createBundle("chrome://browser/locale/handling.properties");
-        let failedText = bundle.GetStringFromName("protocol.failed");
-        let searchText = bundle.GetStringFromName("protocol.toast.search");
-
-        win.NativeWindow.toast.show(failedText, "long", {
-          button: {
-            label: searchText,
-            callback: function() {
-              let message = {
-                type: "Intent:Open",
-                url: "market://search?q=" + aURI.scheme,
-              };
-
-              Messaging.sendRequest(message);
-            }
-          }
-        });
+      if (!win) {
+        return;
       }
+
+      let msg = {
+        type: "Intent:OpenNoHandler",
+        uri: aURI.spec,
+      };
+
+      Messaging.sendRequestForResult(msg).then(() => {
+        // Java opens an app on success: take no action.
+      }, (uri) => {
+        // Java didn't load a page so load the page that Java wants us to load.
+        //
+        // Note: when we load the page here (rather than into the selected tab in
+        // java), we load it in the same context where the uri was specified (e.g.
+        // if it's in an iframe, we load the page in an iframe).
+        window.location.href = uri;
+      });
     }
   },
 };

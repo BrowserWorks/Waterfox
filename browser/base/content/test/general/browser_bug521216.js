@@ -1,7 +1,7 @@
 var expected = ["TabOpen", "onStateChange", "onLocationChange", "onLinkIconAvailable"];
 var actual = [];
 var tabIndex = -1;
-this.__defineGetter__("tab", function () gBrowser.tabs[tabIndex]);
+this.__defineGetter__("tab", () => gBrowser.tabs[tabIndex]);
 
 function test() {
   waitForExplicitFinish();
@@ -18,10 +18,13 @@ function record(aName) {
   if (actual.length == expected.length) {
     is(actual.toString(), expected.toString(),
        "got events and progress notifications in expected order");
-    gBrowser.removeTab(tab);
-    gBrowser.removeTabsProgressListener(progressListener);
-    gBrowser.tabContainer.removeEventListener("TabOpen", TabOpen, false);
-    finish();
+
+    executeSoon(function(tab) {
+      gBrowser.removeTab(tab);
+      gBrowser.removeTabsProgressListener(progressListener);
+      gBrowser.tabContainer.removeEventListener("TabOpen", TabOpen, false);
+      finish();
+    }.bind(null, tab));
   }
 }
 

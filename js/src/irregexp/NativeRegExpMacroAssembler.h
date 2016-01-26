@@ -43,6 +43,7 @@ struct InputOutputData
 
     // Index into inputStart (in chars) at which to begin matching.
     size_t startIndex;
+    size_t* endIndex;
 
     MatchPairs* matches;
 
@@ -52,10 +53,11 @@ struct InputOutputData
 
     template <typename CharT>
     InputOutputData(const CharT* inputStart, const CharT* inputEnd,
-                    size_t startIndex, MatchPairs* matches)
+                    size_t startIndex, MatchPairs* matches, size_t* endIndex)
       : inputStart(inputStart),
         inputEnd(inputEnd),
         startIndex(startIndex),
+        endIndex(endIndex),
         matches(matches),
         result(0)
     {}
@@ -66,6 +68,7 @@ struct FrameData
     // Copy of the input/output data's data.
     char16_t* inputStart;
     size_t startIndex;
+    size_t* endIndex;
 
     // Pointer to the character before the input start.
     char16_t* inputStartMinusOne;
@@ -104,7 +107,7 @@ class MOZ_STACK_CLASS NativeRegExpMacroAssembler : public RegExpMacroAssembler
     void CheckGreedyLoop(jit::Label* on_tos_equals_current_position);
     void CheckNotAtStart(jit::Label* on_not_at_start);
     void CheckNotBackReference(int start_reg, jit::Label* on_no_match);
-    void CheckNotBackReferenceIgnoreCase(int start_reg, jit::Label* on_no_match);
+    void CheckNotBackReferenceIgnoreCase(int start_reg, jit::Label* on_no_match, bool unicode);
     void CheckNotCharacter(unsigned c, jit::Label* on_not_equal);
     void CheckNotCharacterAfterAnd(unsigned c, unsigned and_with, jit::Label* on_not_equal);
     void CheckNotCharacterAfterMinusAnd(char16_t c, char16_t minus, char16_t and_with,
@@ -191,9 +194,9 @@ class MOZ_STACK_CLASS NativeRegExpMacroAssembler : public RegExpMacroAssembler
         jit::Label* label;
         size_t labelOffset;
 
-        jit::CodeOffsetLabel patchOffset;
+        jit::CodeOffset patchOffset;
 
-        LabelPatch(jit::Label* label, jit::CodeOffsetLabel patchOffset)
+        LabelPatch(jit::Label* label, jit::CodeOffset patchOffset)
           : label(label), labelOffset(0), patchOffset(patchOffset)
         {}
     };

@@ -8,6 +8,7 @@
 
 #include "nsHttpBasicAuth.h"
 #include "plbase64.h"
+#include "plstr.h"
 #include "nsString.h"
 
 namespace mozilla {
@@ -97,5 +98,5 @@ nsHttpBasicAuth::GetAuthFlags(uint32_t *flags)
     return NS_OK;
 }
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

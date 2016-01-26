@@ -1,10 +1,16 @@
 $inherits:
-  from: 'tasks/build.yml'
+  from: 'tasks/builds/b2g_base.yml'
 task:
+  scopes:
+    - 'docker-worker:cache:tooltool-cache'
+
   metadata:
     description: |
       Android emulators + b2g environment used in full stack testing.
   payload:
+    cache:
+      tooltool-cache: '/home/worker/tooltool-cache'
+
     env:
       TARGET: 'emulator'
       B2G_DEBUG: 0
@@ -27,6 +33,7 @@ task:
     # files are located.
     locations:
       build: 'public/build/emulator.tar.gz'
-      tests: 'public/build/b2g-tests.zip'
       symbols: 'public/build/b2g-crashreporter-symbols.zip'
       sources: 'public/build/sources.xml'
+    url:
+      busybox: 'https://api.pub.build.mozilla.org/tooltool/sha512/0748e900821820f1a42e2f1f3fa4d9002ef257c351b9e6b78e7de0ddd0202eace351f440372fbb1ae0b7e69e8361b036f6bd3362df99e67fc585082a311fc0df'

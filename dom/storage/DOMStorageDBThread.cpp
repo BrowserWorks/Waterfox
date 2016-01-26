@@ -5,7 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DOMStorageDBThread.h"
+#include "DOMStorageDBUpdater.h"
 #include "DOMStorageCache.h"
+#include "DOMStorageManager.h"
 
 #include "nsIEffectiveTLDService.h"
 #include "nsDirectoryServiceUtils.h"
@@ -19,10 +21,12 @@
 #include "mozIStorageBindingParams.h"
 #include "mozIStorageValueArray.h"
 #include "mozIStorageFunction.h"
+#include "mozilla/BasePrincipal.h"
 #include "nsIObserverService.h"
-#include "nsIVariant.h"
+#include "nsVariant.h"
 #include "mozilla/IOInterposer.h"
 #include "mozilla/Services.h"
+#include "mozilla/Tokenizer.h"
 
 // How long we collect write oprerations
 // before they are flushed to the database
@@ -32,8 +36,42 @@
 // Write Ahead Log's maximum size is 512KB
 #define MAX_WAL_SIZE_BYTES 512 * 1024
 
+// Current version of the database schema
+#define CURRENT_SCHEMA_VERSION 1
+
 namespace mozilla {
 namespace dom {
+
+namespace { // anon
+
+// This is only a compatibility code for schema version 0.  Returns the 'scope' key
+// in the schema version 0 format for the scope column.
+nsCString
+Scheme0Scope(DOMStorageCacheBridge* aCache)
+{
+  nsCString result;
+
+  nsCString suffix = aCache->OriginSuffix();
+
+  PrincipalOriginAttributes oa;
+  if (!suffix.IsEmpty()) {
+    oa.PopulateFromSuffix(suffix);
+  }
+
+  if (oa.mAppId != nsIScriptSecurityManager::NO_APP_ID || oa.mInBrowser) {
+    result.AppendInt(oa.mAppId);
+    result.Append(':');
+    result.Append(oa.mInBrowser ? 't' : 'f');
+    result.Append(':');
+  }
+
+  result.Append(aCache->OriginNoSuffix());
+
+  return result;
+}
+
+} // anon
+
 
 DOMStorageDBBridge::DOMStorageDBBridge()
 {
@@ -116,6 +154,7 @@ DOMStorageDBThread::Shutdown()
 void
 DOMStorageDBThread::SyncPreload(DOMStorageCacheBridge* aCache, bool aForceSync)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::STORAGE);
   if (!aForceSync && aCache->LoadedCount()) {
     // Preload already started for this cache, just wait for it to finish.
     // LoadWait will exit after LoadDone on the cache has been called.
@@ -132,8 +171,8 @@ DOMStorageDBThread::SyncPreload(DOMStorageCacheBridge* aCache, bool aForceSync)
     bool pendingTasks;
     {
       MonitorAutoLock monitor(mThreadObserver->GetMonitor());
-      pendingTasks = mPendingTasks.IsScopeUpdatePending(aCache->Scope()) ||
-                     mPendingTasks.IsScopeClearPending(aCache->Scope());
+      pendingTasks = mPendingTasks.IsOriginUpdatePending(aCache->OriginSuffix(), aCache->OriginNoSuffix()) ||
+                     mPendingTasks.IsOriginClearPending(aCache->OriginSuffix(), aCache->OriginNoSuffix());
     }
 
     if (!pendingTasks) {
@@ -164,30 +203,19 @@ DOMStorageDBThread::AsyncFlush()
 }
 
 bool
-DOMStorageDBThread::ShouldPreloadScope(const nsACString& aScope)
+DOMStorageDBThread::ShouldPreloadOrigin(const nsACString& aOrigin)
 {
   MonitorAutoLock monitor(mThreadObserver->GetMonitor());
-  return mScopesHavingData.Contains(aScope);
+  return mOriginsHavingData.Contains(aOrigin);
 }
-
-namespace { // anon
-
-PLDHashOperator
-GetScopesHavingDataEnum(nsCStringHashKey* aKey, void* aArg)
-{
-  InfallibleTArray<nsCString>* scopes =
-      static_cast<InfallibleTArray<nsCString>*>(aArg);
-  scopes->AppendElement(aKey->GetKey());
-  return PL_DHASH_NEXT;
-}
-
-} // anon
 
 void
-DOMStorageDBThread::GetScopesHavingData(InfallibleTArray<nsCString>* aScopes)
+DOMStorageDBThread::GetOriginsHavingData(InfallibleTArray<nsCString>* aOrigins)
 {
   MonitorAutoLock monitor(mThreadObserver->GetMonitor());
-  mScopesHavingData.EnumerateEntries(GetScopesHavingDataEnum, aScopes);
+  for (auto iter = mOriginsHavingData.Iter(); !iter.Done(); iter.Next()) {
+    aOrigins->AppendElement(iter.Get()->GetKey());
+  }
 }
 
 nsresult
@@ -198,29 +226,29 @@ DOMStorageDBThread::InsertDBOp(DOMStorageDBThread::DBOperation* aOperation)
   // Sentinel to don't forget to delete the operation when we exit early.
   nsAutoPtr<DOMStorageDBThread::DBOperation> opScope(aOperation);
 
-  if (mStopIOThread) {
-    // Thread use after shutdown demanded.
-    MOZ_ASSERT(false);
-    return NS_ERROR_NOT_INITIALIZED;
-  }
-
   if (NS_FAILED(mStatus)) {
     MonitorAutoUnlock unlock(mThreadObserver->GetMonitor());
     aOperation->Finalize(mStatus);
     return mStatus;
   }
 
+  if (mStopIOThread) {
+    // Thread use after shutdown demanded.
+    MOZ_ASSERT(false);
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
   switch (aOperation->Type()) {
   case DBOperation::opPreload:
   case DBOperation::opPreloadUrgent:
-    if (mPendingTasks.IsScopeUpdatePending(aOperation->Scope())) {
+    if (mPendingTasks.IsOriginUpdatePending(aOperation->OriginSuffix(), aOperation->OriginNoSuffix())) {
       // If there is a pending update operation for the scope first do the flush
       // before we preload the cache.  This may happen in an extremely rare case
       // when a child process throws away its cache before flush on the parent
       // has finished.  If we would preloaded the cache as a priority operation 
       // before the pending flush, we would have got an inconsistent cache content.
       mFlushImmediately = true;
-    } else if (mPendingTasks.IsScopeClearPending(aOperation->Scope())) {
+    } else if (mPendingTasks.IsOriginClearPending(aOperation->OriginSuffix(), aOperation->OriginNoSuffix())) {
       // The scope is scheduled to be cleared, so just quickly load as empty.
       // We need to do this to prevent load of the DB data before the scope has
       // actually been cleared from the database.  Preloads are processed
@@ -230,7 +258,7 @@ DOMStorageDBThread::InsertDBOp(DOMStorageDBThread::DBOperation* aOperation)
       aOperation->Finalize(NS_OK);
       return NS_OK;
     }
-    // NO BREAK
+    MOZ_FALLTHROUGH;
 
   case DBOperation::opGetUsage:
     if (aOperation->Type() == DBOperation::opPreloadUrgent) {
@@ -373,15 +401,13 @@ DOMStorageDBThread::ThreadObserver::OnDispatchedEvent(nsIThreadInternal *thread)
 
 NS_IMETHODIMP
 DOMStorageDBThread::ThreadObserver::OnProcessNextEvent(nsIThreadInternal *thread,
-                                       bool mayWait,
-                                       uint32_t recursionDepth)
+                                       bool mayWait)
 {
   return NS_OK;
 }
 
 NS_IMETHODIMP
 DOMStorageDBThread::ThreadObserver::AfterProcessNextEvent(nsIThreadInternal *thread,
-                                          uint32_t recursionDepth,
                                           bool eventWasProcessed)
 {
   return NS_OK;
@@ -390,45 +416,6 @@ DOMStorageDBThread::ThreadObserver::AfterProcessNextEvent(nsIThreadInternal *thr
 
 extern void
 ReverseString(const nsCSubstring& aSource, nsCSubstring& aResult);
-
-namespace { // anon
-
-class nsReverseStringSQLFunction final : public mozIStorageFunction
-{
-  ~nsReverseStringSQLFunction() {}
-
-  NS_DECL_ISUPPORTS
-  NS_DECL_MOZISTORAGEFUNCTION
-};
-
-NS_IMPL_ISUPPORTS(nsReverseStringSQLFunction, mozIStorageFunction)
-
-NS_IMETHODIMP
-nsReverseStringSQLFunction::OnFunctionCall(
-    mozIStorageValueArray* aFunctionArguments, nsIVariant** aResult)
-{
-  nsresult rv;
-
-  nsAutoCString stringToReverse;
-  rv = aFunctionArguments->GetUTF8String(0, stringToReverse);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoCString result;
-  ReverseString(stringToReverse, result);
-
-  nsCOMPtr<nsIWritableVariant> outVar(do_CreateInstance(
-      NS_VARIANT_CONTRACTID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = outVar->SetAsAUTF8String(result);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  *aResult = outVar.get();
-  outVar.forget();
-  return NS_OK;
-}
-
-} // anon
 
 nsresult
 DOMStorageDBThread::OpenDatabaseConnection()
@@ -474,73 +461,7 @@ DOMStorageDBThread::InitDatabase()
   (void)mWorkerConnection->Clone(true, getter_AddRefs(mReaderConnection));
   NS_ENSURE_TRUE(mReaderConnection, NS_ERROR_FAILURE);
 
-  mozStorageTransaction transaction(mWorkerConnection, false);
-
-  // Ensure Gecko 1.9.1 storage table
-  rv = mWorkerConnection->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-         "CREATE TABLE IF NOT EXISTS webappsstore2 ("
-         "scope TEXT, "
-         "key TEXT, "
-         "value TEXT, "
-         "secure INTEGER, "
-         "owner TEXT)"));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = mWorkerConnection->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
-        "CREATE UNIQUE INDEX IF NOT EXISTS scope_key_index"
-        " ON webappsstore2(scope, key)"));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<mozIStorageFunction> function1(new nsReverseStringSQLFunction());
-  NS_ENSURE_TRUE(function1, NS_ERROR_OUT_OF_MEMORY);
-
-  rv = mWorkerConnection->CreateFunction(NS_LITERAL_CSTRING("REVERSESTRING"), 1, function1);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  bool exists;
-
-  // Check if there is storage of Gecko 1.9.0 and if so, upgrade that storage
-  // to actual webappsstore2 table and drop the obsolete table. First process
-  // this newer table upgrade to priority potential duplicates from older
-  // storage table.
-  rv = mWorkerConnection->TableExists(NS_LITERAL_CSTRING("webappsstore"),
-                                &exists);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (exists) {
-    rv = mWorkerConnection->ExecuteSimpleSQL(
-      NS_LITERAL_CSTRING("INSERT OR IGNORE INTO "
-                         "webappsstore2(scope, key, value, secure, owner) "
-                         "SELECT REVERSESTRING(domain) || '.:', key, value, secure, owner "
-                         "FROM webappsstore"));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = mWorkerConnection->ExecuteSimpleSQL(
-      NS_LITERAL_CSTRING("DROP TABLE webappsstore"));
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  // Check if there is storage of Gecko 1.8 and if so, upgrade that storage
-  // to actual webappsstore2 table and drop the obsolete table. Potential
-  // duplicates will be ignored.
-  rv = mWorkerConnection->TableExists(NS_LITERAL_CSTRING("moz_webappsstore"),
-                                &exists);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (exists) {
-    rv = mWorkerConnection->ExecuteSimpleSQL(
-      NS_LITERAL_CSTRING("INSERT OR IGNORE INTO "
-                         "webappsstore2(scope, key, value, secure, owner) "
-                         "SELECT REVERSESTRING(domain) || '.:', key, value, secure, domain "
-                         "FROM moz_webappsstore"));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = mWorkerConnection->ExecuteSimpleSQL(
-      NS_LITERAL_CSTRING("DROP TABLE moz_webappsstore"));
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  rv = transaction.Commit();
+  rv = DOMStorageDBUpdater::Update(mWorkerConnection);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Database open and all initiation operation are done.  Switching this flag
@@ -551,18 +472,21 @@ DOMStorageDBThread::InitDatabase()
 
   // List scopes having any stored data
   nsCOMPtr<mozIStorageStatement> stmt;
-  rv = mWorkerConnection->CreateStatement(NS_LITERAL_CSTRING("SELECT DISTINCT scope FROM webappsstore2"),
-                                    getter_AddRefs(stmt));
+  // Note: result of this select must match DOMStorageManager::CreateOrigin()
+  rv = mWorkerConnection->CreateStatement(NS_LITERAL_CSTRING(
+        "SELECT DISTINCT originAttributes || ':' || originKey FROM webappsstore2"),
+        getter_AddRefs(stmt));
   NS_ENSURE_SUCCESS(rv, rv);
   mozStorageStatementScoper scope(stmt);
 
+  bool exists;
   while (NS_SUCCEEDED(rv = stmt->ExecuteStep(&exists)) && exists) {
-    nsAutoCString foundScope;
-    rv = stmt->GetUTF8String(0, foundScope);
+    nsAutoCString foundOrigin;
+    rv = stmt->GetUTF8String(0, foundOrigin);
     NS_ENSURE_SUCCESS(rv, rv);
 
     MonitorAutoLock monitor(mThreadObserver->GetMonitor());
-    mScopesHavingData.PutEntry(foundScope);
+    mOriginsHavingData.PutEntry(foundOrigin);
   }
 
   return NS_OK;
@@ -742,7 +666,7 @@ DOMStorageDBThread::NotifyFlushCompletion()
 {
 #ifdef DOM_STORAGE_TESTS
   if (!NS_IsMainThread()) {
-    nsRefPtr<nsRunnableMethod<DOMStorageDBThread, void, false> > event =
+    RefPtr<nsRunnableMethod<DOMStorageDBThread, void, false> > event =
       NS_NewNonOwningRunnableMethod(this, &DOMStorageDBThread::NotifyFlushCompletion);
     NS_DispatchToMainThread(event);
     return;
@@ -755,6 +679,51 @@ DOMStorageDBThread::NotifyFlushCompletion()
 #endif
 }
 
+// Helper SQL function classes
+
+namespace {
+
+class OriginAttrsPatternMatchSQLFunction final : public mozIStorageFunction
+{
+  NS_DECL_ISUPPORTS
+  NS_DECL_MOZISTORAGEFUNCTION
+
+  explicit OriginAttrsPatternMatchSQLFunction(OriginAttributesPattern const& aPattern)
+    : mPattern(aPattern) {}
+
+private:
+  OriginAttrsPatternMatchSQLFunction() = delete;
+  ~OriginAttrsPatternMatchSQLFunction() {}
+
+  OriginAttributesPattern mPattern;
+};
+
+NS_IMPL_ISUPPORTS(OriginAttrsPatternMatchSQLFunction, mozIStorageFunction)
+
+NS_IMETHODIMP
+OriginAttrsPatternMatchSQLFunction::OnFunctionCall(
+    mozIStorageValueArray* aFunctionArguments, nsIVariant** aResult)
+{
+  nsresult rv;
+
+  nsAutoCString suffix;
+  rv = aFunctionArguments->GetUTF8String(0, suffix);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  PrincipalOriginAttributes oa;
+  oa.PopulateFromSuffix(suffix);
+  bool result = mPattern.Matches(oa);
+
+  RefPtr<nsVariant> outVar(new nsVariant());
+  rv = outVar->SetAsBool(result);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  outVar.forget(aResult);
+  return NS_OK;
+}
+
+} // namespace
+
 // DOMStorageDBThread::DBOperation
 
 DOMStorageDBThread::DBOperation::DBOperation(const OperationType aType,
@@ -766,6 +735,13 @@ DOMStorageDBThread::DBOperation::DBOperation(const OperationType aType,
 , mKey(aKey)
 , mValue(aValue)
 {
+  MOZ_ASSERT(mType == opPreload ||
+             mType == opPreloadUrgent ||
+             mType == opAddItem ||
+             mType == opUpdateItem ||
+             mType == opRemoveItem ||
+             mType == opClear ||
+             mType == opClearAll);
   MOZ_COUNT_CTOR(DOMStorageDBThread::DBOperation);
 }
 
@@ -774,15 +750,27 @@ DOMStorageDBThread::DBOperation::DBOperation(const OperationType aType,
 : mType(aType)
 , mUsage(aUsage)
 {
+  MOZ_ASSERT(mType == opGetUsage);
   MOZ_COUNT_CTOR(DOMStorageDBThread::DBOperation);
 }
 
 DOMStorageDBThread::DBOperation::DBOperation(const OperationType aType,
-                                             const nsACString& aScope)
+                                             const nsACString& aOriginNoSuffix)
 : mType(aType)
 , mCache(nullptr)
-, mScope(aScope)
+, mOrigin(aOriginNoSuffix)
 {
+  MOZ_ASSERT(mType == opClearMatchingOrigin);
+  MOZ_COUNT_CTOR(DOMStorageDBThread::DBOperation);
+}
+
+DOMStorageDBThread::DBOperation::DBOperation(const OperationType aType,
+                                             const OriginAttributesPattern& aOriginNoSuffix)
+: mType(aType)
+, mCache(nullptr)
+, mOriginPattern(aOriginNoSuffix)
+{
+  MOZ_ASSERT(mType == opClearMatchingOriginAttributes);
   MOZ_COUNT_CTOR(DOMStorageDBThread::DBOperation);
 }
 
@@ -792,26 +780,46 @@ DOMStorageDBThread::DBOperation::~DBOperation()
 }
 
 const nsCString
-DOMStorageDBThread::DBOperation::Scope()
+DOMStorageDBThread::DBOperation::OriginNoSuffix() const
 {
   if (mCache) {
-    return mCache->Scope();
+    return mCache->OriginNoSuffix();
   }
 
-  return mScope;
+  return EmptyCString();
 }
 
 const nsCString
-DOMStorageDBThread::DBOperation::Target()
+DOMStorageDBThread::DBOperation::OriginSuffix() const
+{
+  if (mCache) {
+    return mCache->OriginSuffix();
+  }
+
+  return EmptyCString();
+}
+
+const nsCString
+DOMStorageDBThread::DBOperation::Origin() const
+{
+  if (mCache) {
+    return mCache->Origin();
+  }
+
+  return mOrigin;
+}
+
+const nsCString
+DOMStorageDBThread::DBOperation::Target() const
 {
   switch (mType) {
     case opAddItem:
     case opUpdateItem:
     case opRemoveItem:
-      return Scope() + NS_LITERAL_CSTRING("|") + NS_ConvertUTF16toUTF8(mKey);
+      return Origin() + NS_LITERAL_CSTRING("|") + NS_ConvertUTF16toUTF8(mKey);
 
     default:
-      return Scope();
+      return Origin();
   }
 }
 
@@ -847,13 +855,17 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
     // It skips keys we have already loaded.
     nsCOMPtr<mozIStorageStatement> stmt = statements->GetCachedStatement(
         "SELECT key, value FROM webappsstore2 "
-        "WHERE scope = :scope ORDER BY key "
-        "LIMIT -1 OFFSET :offset");
+        "WHERE originAttributes = :originAttributes AND originKey = :originKey "
+        "ORDER BY key LIMIT -1 OFFSET :offset");
     NS_ENSURE_STATE(stmt);
     mozStorageStatementScoper scope(stmt);
 
-    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mCache->Scope());
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originAttributes"),
+                                    mCache->OriginSuffix());
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
+                                    mCache->OriginNoSuffix());
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = stmt->BindInt32ByName(NS_LITERAL_CSTRING("offset"),
@@ -882,15 +894,15 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
   case opGetUsage:
   {
     nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
-      "SELECT SUM(LENGTH(key) + LENGTH(value)) FROM webappsstore2"
-      " WHERE scope LIKE :scope"
+      "SELECT SUM(LENGTH(key) + LENGTH(value)) FROM webappsstore2 "
+      "WHERE (originAttributes || ':' || originKey) LIKE :usageOrigin"
     );
     NS_ENSURE_STATE(stmt);
 
     mozStorageStatementScoper scope(stmt);
 
-    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mUsage->Scope() + NS_LITERAL_CSTRING("%"));
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("usageOrigin"),
+                                    mUsage->OriginScope());
     NS_ENSURE_SUCCESS(rv, rv);
 
     bool exists;
@@ -913,15 +925,22 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
     MOZ_ASSERT(!NS_IsMainThread());
 
     nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
-      "INSERT OR REPLACE INTO webappsstore2 (scope, key, value) "
-      "VALUES (:scope, :key, :value) "
+      "INSERT OR REPLACE INTO webappsstore2 (originAttributes, originKey, scope, key, value) "
+      "VALUES (:originAttributes, :originKey, :scope, :key, :value) "
     );
     NS_ENSURE_STATE(stmt);
 
     mozStorageStatementScoper scope(stmt);
 
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originAttributes"),
+                                    mCache->OriginSuffix());
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
+                                    mCache->OriginNoSuffix());
+    NS_ENSURE_SUCCESS(rv, rv);
+    // Filling the 'scope' column just for downgrade compatibility reasons
     rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mCache->Scope());
+                                    Scheme0Scope(mCache));
     NS_ENSURE_SUCCESS(rv, rv);
     rv = stmt->BindStringByName(NS_LITERAL_CSTRING("key"),
                                 mKey);
@@ -933,7 +952,8 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
     rv = stmt->Execute();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aThread->mScopesHavingData.PutEntry(Scope());
+    MonitorAutoLock monitor(aThread->mThreadObserver->GetMonitor());
+    aThread->mOriginsHavingData.PutEntry(Origin());
     break;
   }
 
@@ -943,14 +963,17 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
 
     nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
       "DELETE FROM webappsstore2 "
-      "WHERE scope = :scope "
+      "WHERE originAttributes = :originAttributes AND originKey = :originKey "
         "AND key = :key "
     );
     NS_ENSURE_STATE(stmt);
     mozStorageStatementScoper scope(stmt);
 
-    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mCache->Scope());
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originAttributes"),
+                                    mCache->OriginSuffix());
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
+                                    mCache->OriginNoSuffix());
     NS_ENSURE_SUCCESS(rv, rv);
     rv = stmt->BindStringByName(NS_LITERAL_CSTRING("key"),
                                 mKey);
@@ -968,19 +991,23 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
 
     nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
       "DELETE FROM webappsstore2 "
-      "WHERE scope = :scope"
+      "WHERE originAttributes = :originAttributes AND originKey = :originKey"
     );
     NS_ENSURE_STATE(stmt);
     mozStorageStatementScoper scope(stmt);
 
-    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mCache->Scope());
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originAttributes"),
+                                    mCache->OriginSuffix());
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("originKey"),
+                                    mCache->OriginNoSuffix());
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = stmt->Execute();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aThread->mScopesHavingData.RemoveEntry(Scope());
+    MonitorAutoLock monitor(aThread->mThreadObserver->GetMonitor());
+    aThread->mOriginsHavingData.RemoveEntry(Origin());
     break;
   }
 
@@ -997,28 +1024,68 @@ DOMStorageDBThread::DBOperation::Perform(DOMStorageDBThread* aThread)
     rv = stmt->Execute();
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aThread->mScopesHavingData.Clear();
+    MonitorAutoLock monitor(aThread->mThreadObserver->GetMonitor());
+    aThread->mOriginsHavingData.Clear();
     break;
   }
 
-  case opClearMatchingScope:
+  case opClearMatchingOrigin:
   {
     MOZ_ASSERT(!NS_IsMainThread());
 
     nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
       "DELETE FROM webappsstore2"
-      " WHERE scope GLOB :scope"
+      " WHERE originKey GLOB :scope"
     );
     NS_ENSURE_STATE(stmt);
     mozStorageStatementScoper scope(stmt);
 
     rv = stmt->BindUTF8StringByName(NS_LITERAL_CSTRING("scope"),
-                                    mScope + NS_LITERAL_CSTRING("*"));
+                                    mOrigin + NS_LITERAL_CSTRING("*"));
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = stmt->Execute();
     NS_ENSURE_SUCCESS(rv, rv);
 
+    // No need to selectively clear mOriginsHavingData here.  That hashtable only
+    // prevents preload for scopes with no data.  Leaving a false record in it has
+    // a negligible effect on performance.
+    break;
+  }
+
+  case opClearMatchingOriginAttributes:
+  {
+    MOZ_ASSERT(!NS_IsMainThread());
+
+    // Register the ORIGIN_ATTRS_PATTERN_MATCH function, initialized with the pattern
+    nsCOMPtr<mozIStorageFunction> patternMatchFunction(
+      new OriginAttrsPatternMatchSQLFunction(mOriginPattern));
+
+    rv = aThread->mWorkerConnection->CreateFunction(
+      NS_LITERAL_CSTRING("ORIGIN_ATTRS_PATTERN_MATCH"), 1, patternMatchFunction);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<mozIStorageStatement> stmt = aThread->mWorkerStatements.GetCachedStatement(
+      "DELETE FROM webappsstore2"
+      " WHERE ORIGIN_ATTRS_PATTERN_MATCH(originAttributes)"
+    );
+
+    if (stmt) {
+      mozStorageStatementScoper scope(stmt);
+      rv = stmt->Execute();
+    } else {
+      rv = NS_ERROR_UNEXPECTED;
+    }
+
+    // Always remove the function
+    aThread->mWorkerConnection->RemoveFunction(
+      NS_LITERAL_CSTRING("ORIGIN_ATTRS_PATTERN_MATCH"));
+
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    // No need to selectively clear mOriginsHavingData here.  That hashtable only
+    // prevents preload for scopes with no data.  Leaving a false record in it has
+    // a negligible effect on performance.
     break;
   }
 
@@ -1071,34 +1138,48 @@ DOMStorageDBThread::PendingOperations::PendingOperations()
 }
 
 bool
-DOMStorageDBThread::PendingOperations::HasTasks()
+DOMStorageDBThread::PendingOperations::HasTasks() const
 {
   return !!mUpdates.Count() || !!mClears.Count();
 }
 
-namespace { // anon
+namespace {
+
+bool OriginPatternMatches(const nsACString& aOriginSuffix, const OriginAttributesPattern& aPattern)
+{
+  PrincipalOriginAttributes oa;
+  DebugOnly<bool> rv = oa.PopulateFromSuffix(aOriginSuffix);
+  MOZ_ASSERT(rv);
+  return aPattern.Matches(oa);
+}
 
 PLDHashOperator
-ForgetUpdatesForScope(const nsACString& aMapping,
+ForgetUpdatesForOrigin(const nsACString& aMapping,
                       nsAutoPtr<DOMStorageDBThread::DBOperation>& aPendingTask,
                       void* aArg)
 {
   DOMStorageDBThread::DBOperation* newOp = static_cast<DOMStorageDBThread::DBOperation*>(aArg);
 
   if (newOp->Type() == DOMStorageDBThread::DBOperation::opClear &&
-      aPendingTask->Scope() != newOp->Scope()) {
+      (aPendingTask->OriginNoSuffix() != newOp->OriginNoSuffix() ||
+       aPendingTask->OriginSuffix() != newOp->OriginSuffix())) {
     return PL_DHASH_NEXT;
   }
 
-  if (newOp->Type() == DOMStorageDBThread::DBOperation::opClearMatchingScope &&
-      !StringBeginsWith(aPendingTask->Scope(), newOp->Scope())) {
+  if (newOp->Type() == DOMStorageDBThread::DBOperation::opClearMatchingOrigin &&
+      !StringBeginsWith(aPendingTask->OriginNoSuffix(), newOp->Origin())) {
+    return PL_DHASH_NEXT;
+  }
+
+  if (newOp->Type() == DOMStorageDBThread::DBOperation::opClearMatchingOriginAttributes &&
+      !OriginPatternMatches(aPendingTask->OriginSuffix(), newOp->OriginPattern())) {
     return PL_DHASH_NEXT;
   }
 
   return PL_DHASH_REMOVE;
 }
 
-} // anon
+} // namespace
 
 bool
 DOMStorageDBThread::PendingOperations::CheckForCoalesceOpportunity(DBOperation* aNewOp,
@@ -1125,7 +1206,7 @@ void
 DOMStorageDBThread::PendingOperations::Add(DOMStorageDBThread::DBOperation* aOperation)
 {
   // Optimize: when a key to remove has never been written to disk
-  // just bypass this operation.  A kew is new when an operation scheduled
+  // just bypass this operation.  A key is new when an operation scheduled
   // to write it to the database is of type opAddItem.
   if (CheckForCoalesceOpportunity(aOperation, DBOperation::opAddItem, DBOperation::opRemoveItem)) {
     mUpdates.Remove(aOperation->Target());
@@ -1163,12 +1244,13 @@ DOMStorageDBThread::PendingOperations::Add(DOMStorageDBThread::DBOperation* aOpe
   // Clear operations
 
   case DBOperation::opClear:
-  case DBOperation::opClearMatchingScope:
+  case DBOperation::opClearMatchingOrigin:
+  case DBOperation::opClearMatchingOriginAttributes:
     // Drop all update (insert/remove) operations for equivavelent or matching scope.
     // We do this as an optimization as well as a must based on the logic,
     // if we would not delete the update tasks, changes would have been stored
     // to the database after clear operations have been executed.
-    mUpdates.Enumerate(ForgetUpdatesForScope, aOperation);
+    mUpdates.Enumerate(ForgetUpdatesForOrigin, aOperation);
     mClears.Put(aOperation->Target(), aOperation);
     break;
 
@@ -1185,7 +1267,7 @@ DOMStorageDBThread::PendingOperations::Add(DOMStorageDBThread::DBOperation* aOpe
   }
 }
 
-namespace { // anon
+namespace {
 
 PLDHashOperator
 CollectTasks(const nsACString& aMapping, nsAutoPtr<DOMStorageDBThread::DBOperation>& aOperation, void* aArg)
@@ -1197,7 +1279,7 @@ CollectTasks(const nsACString& aMapping, nsAutoPtr<DOMStorageDBThread::DBOperati
   return PL_DHASH_NEXT;
 }
 
-} // anon
+} // namespace
 
 bool
 DOMStorageDBThread::PendingOperations::Prepare()
@@ -1268,62 +1350,51 @@ DOMStorageDBThread::PendingOperations::Finalize(nsresult aRv)
   return true;
 }
 
-namespace { // anon
+namespace {
 
-class FindPendingOperationForScopeData
+bool
+FindPendingClearForOrigin(const nsACString& aOriginSuffix, const nsACString& aOriginNoSuffix,
+                         DOMStorageDBThread::DBOperation* aPendingOperation)
 {
-public:
-  explicit FindPendingOperationForScopeData(const nsACString& aScope) : mScope(aScope), mFound(false) {}
-  nsCString mScope;
-  bool mFound;
-};
-
-PLDHashOperator
-FindPendingClearForScope(const nsACString& aMapping,
-                         DOMStorageDBThread::DBOperation* aPendingOperation,
-                         void* aArg)
-{
-  FindPendingOperationForScopeData* data =
-    static_cast<FindPendingOperationForScopeData*>(aArg);
-
   if (aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opClearAll) {
-    data->mFound = true;
-    return PL_DHASH_STOP;
+    return true;
   }
 
   if (aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opClear &&
-      data->mScope == aPendingOperation->Scope()) {
-    data->mFound = true;
-    return PL_DHASH_STOP;
-  }
-
-  if (aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opClearMatchingScope &&
-      StringBeginsWith(data->mScope, aPendingOperation->Scope())) {
-    data->mFound = true;
-    return PL_DHASH_STOP;
-  }
-
-  return PL_DHASH_NEXT;
-}
-
-} // anon
-
-bool
-DOMStorageDBThread::PendingOperations::IsScopeClearPending(const nsACString& aScope)
-{
-  // Called under the lock
-
-  FindPendingOperationForScopeData data(aScope);
-  mClears.EnumerateRead(FindPendingClearForScope, &data);
-  if (data.mFound) {
+      aOriginNoSuffix == aPendingOperation->OriginNoSuffix() &&
+      aOriginSuffix == aPendingOperation->OriginSuffix()) {
     return true;
   }
 
-  for (uint32_t i = 0; i < mExecList.Length(); ++i) {
-    DOMStorageDBThread::DBOperation* task = mExecList[i];
-    FindPendingClearForScope(EmptyCString(), task, &data);
+  if (aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opClearMatchingOrigin &&
+      StringBeginsWith(aOriginNoSuffix, aPendingOperation->Origin())) {
+    return true;
+  }
 
-    if (data.mFound) {
+  if (aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opClearMatchingOriginAttributes &&
+      OriginPatternMatches(aOriginSuffix, aPendingOperation->OriginPattern())) {
+    return true;
+  }
+
+  return false;
+}
+
+} // namespace
+
+bool
+DOMStorageDBThread::PendingOperations::IsOriginClearPending(const nsACString& aOriginSuffix,
+                                                            const nsACString& aOriginNoSuffix) const
+{
+  // Called under the lock
+
+  for (auto iter = mClears.ConstIter(); !iter.Done(); iter.Next()) {
+    if (FindPendingClearForOrigin(aOriginSuffix, aOriginNoSuffix, iter.UserData())) {
+      return true;
+    }
+  }
+
+  for (uint32_t i = 0; i < mExecList.Length(); ++i) {
+    if (FindPendingClearForOrigin(aOriginSuffix, aOriginNoSuffix, mExecList[i])) {
       return true;
     }
   }
@@ -1331,45 +1402,39 @@ DOMStorageDBThread::PendingOperations::IsScopeClearPending(const nsACString& aSc
   return false;
 }
 
-namespace { // anon
+namespace {
 
-PLDHashOperator
-FindPendingUpdateForScope(const nsACString& aMapping,
-                          DOMStorageDBThread::DBOperation* aPendingOperation,
-                          void* aArg)
+bool
+FindPendingUpdateForOrigin(const nsACString& aOriginSuffix, const nsACString& aOriginNoSuffix,
+                           DOMStorageDBThread::DBOperation* aPendingOperation)
 {
-  FindPendingOperationForScopeData* data =
-    static_cast<FindPendingOperationForScopeData*>(aArg);
-
   if ((aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opAddItem ||
        aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opUpdateItem ||
        aPendingOperation->Type() == DOMStorageDBThread::DBOperation::opRemoveItem) &&
-       data->mScope == aPendingOperation->Scope()) {
-    data->mFound = true;
-    return PL_DHASH_STOP;
-  }
-
-  return PL_DHASH_NEXT;
-}
-
-} // anon
-
-bool
-DOMStorageDBThread::PendingOperations::IsScopeUpdatePending(const nsACString& aScope)
-{
-  // Called under the lock
-
-  FindPendingOperationForScopeData data(aScope);
-  mUpdates.EnumerateRead(FindPendingUpdateForScope, &data);
-  if (data.mFound) {
+       aOriginNoSuffix == aPendingOperation->OriginNoSuffix() &&
+       aOriginSuffix == aPendingOperation->OriginSuffix()) {
     return true;
   }
 
-  for (uint32_t i = 0; i < mExecList.Length(); ++i) {
-    DOMStorageDBThread::DBOperation* task = mExecList[i];
-    FindPendingUpdateForScope(EmptyCString(), task, &data);
+  return false;
+}
 
-    if (data.mFound) {
+} // namespace
+
+bool
+DOMStorageDBThread::PendingOperations::IsOriginUpdatePending(const nsACString& aOriginSuffix,
+                                                             const nsACString& aOriginNoSuffix) const
+{
+  // Called under the lock
+
+  for (auto iter = mUpdates.ConstIter(); !iter.Done(); iter.Next()) {
+    if (FindPendingUpdateForOrigin(aOriginSuffix, aOriginNoSuffix, iter.UserData())) {
+      return true;
+    }
+  }
+
+  for (uint32_t i = 0; i < mExecList.Length(); ++i) {
+    if (FindPendingUpdateForOrigin(aOriginSuffix, aOriginNoSuffix, mExecList[i])) {
       return true;
     }
   }
@@ -1377,5 +1442,5 @@ DOMStorageDBThread::PendingOperations::IsScopeUpdatePending(const nsACString& aS
   return false;
 }
 
-} // ::dom
-} // ::mozilla
+} // namespace dom
+} // namespace mozilla

@@ -6,20 +6,20 @@
 
 // Test that the Shutdown Terminator reloads durations correctly
 
-const Cu = Components.utils;
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/osfile.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 
-let {Path, File, Constants} = OS;
+var {Path, File, Constants} = OS;
 
-let PATH;
+var PATH;
 
-let HISTOGRAMS = {
+var HISTOGRAMS = {
   "quit-application": "SHUTDOWN_PHASE_DURATION_TICKS_QUIT_APPLICATION",
   "profile-change-teardown": "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_CHANGE_TEARDOWN",
   "profile-before-change":  "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_BEFORE_CHANGE",

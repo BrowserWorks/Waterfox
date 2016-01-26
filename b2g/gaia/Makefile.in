@@ -2,7 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-GAIA_PATH := gaia/profile
+# For b2gdroid, gaia ends up in the assets/gaia folder in the APK.
+GAIA_PATH := $(if MOZ_B2GDROID,gaia/assets/gaia,gaia/profile)
+
+# For b2gdroid, we disable the screen timeout since this is managed by android.
+# We also limit the app set to the production ones.
+GAIA_OPTIONS := $(if MOZ_B2GDROID, \
+	GAIA_DISTRIBUTION_DIR=distros/b2gdroid \
+	NO_LOCK_SCREEN=1 \
+)
 
 GENERATED_DIRS += $(DIST)/bin/$(GAIA_PATH)
 
@@ -10,5 +18,5 @@ include $(topsrcdir)/config/rules.mk
 
 libs::
 	+$(MAKE) -j1 -C $(GAIADIR) clean
-	+$(MAKE) -j1 -C $(GAIADIR) profile
-	(cd $(GAIADIR)/profile && tar $(TAR_CREATE_FLAGS) - .) | (cd $(abspath $(DIST))/bin/$(GAIA_PATH) && tar -xf -)
+	+$(GAIA_OPTIONS) $(MAKE) -j1 -C $(GAIADIR) profile
+	(cd $(GAIADIR)/profile && tar $(TAR_CREATE_FLAGS) - .) | (cd $(ABS_DIST)/bin/$(GAIA_PATH) && tar -xf -)

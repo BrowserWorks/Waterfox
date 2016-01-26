@@ -10,7 +10,7 @@
 #ifndef nsXULPopupManager_h__
 #define nsXULPopupManager_h__
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsIContent.h"
 #include "nsIRollupListener.h"
 #include "nsIDOMEventListener.h"
@@ -99,6 +99,12 @@ enum nsNavigationDirection {
   eNavigationDirection_After
 };
 
+enum nsIgnoreKeys {
+  eIgnoreKeys_False,
+  eIgnoreKeys_True,
+  eIgnoreKeys_Handled,
+};
+
 #define NS_DIRECTION_IS_INLINE(dir) (dir == eNavigationDirection_Start ||     \
                                      dir == eNavigationDirection_End)
 #define NS_DIRECTION_IS_BLOCK(dir) (dir == eNavigationDirection_Before || \
@@ -129,7 +135,7 @@ private:
   nsPopupType mPopupType; // the popup type of the frame
   bool mIsContext; // true for context menus
   bool mOnMenuBar; // true if the menu is on a menu bar
-  bool mIgnoreKeys; // true if keyboard listeners should not be used
+  nsIgnoreKeys mIgnoreKeys; // indicates how keyboard listeners should be used
 
   nsMenuChainItem* mParent;
   nsMenuChainItem* mChild;
@@ -140,7 +146,7 @@ public:
       mPopupType(aPopupType),
       mIsContext(aIsContext),
       mOnMenuBar(false),
-      mIgnoreKeys(false),
+      mIgnoreKeys(eIgnoreKeys_False),
       mParent(nullptr),
       mChild(nullptr)
   {
@@ -158,9 +164,9 @@ public:
   nsPopupType PopupType() { return mPopupType; }
   bool IsMenu() { return mPopupType == ePopupTypeMenu; }
   bool IsContextMenu() { return mIsContext; }
-  bool IgnoreKeys() { return mIgnoreKeys; }
+  nsIgnoreKeys IgnoreKeys() { return mIgnoreKeys; }
+  void SetIgnoreKeys(nsIgnoreKeys aIgnoreKeys) { mIgnoreKeys = aIgnoreKeys; }
   bool IsOnMenuBar() { return mOnMenuBar; }
-  void SetIgnoreKeys(bool aIgnoreKeys) { mIgnoreKeys = aIgnoreKeys; }
   void SetOnMenuBar(bool aOnMenuBar) { mOnMenuBar = aOnMenuBar; }
   nsMenuChainItem* GetParent() { return mParent; }
   nsMenuChainItem* GetChild() { return mChild; }
@@ -342,9 +348,7 @@ public:
   // returns true if the menu item aContent is a valid menuitem which may
   // be navigated to. aIsPopup should be true for items on a popup, or false
   // for items on a menubar.
-  static bool IsValidMenuItem(nsPresContext* aPresContext,
-                                nsIContent* aContent,
-                                bool aOnPopup);
+  static bool IsValidMenuItem(nsIContent* aContent, bool aOnPopup);
 
   // inform the popup manager that a menu bar has been activated or deactivated,
   // either because one of its menus has opened or closed, or that the menubar
@@ -404,6 +408,16 @@ public:
                          int32_t aXPos, int32_t aYPos,
                          bool aIsContextMenu,
                          nsIDOMEvent* aTriggerEvent);
+
+  /* Open a popup anchored at a screen rectangle specified by aRect.
+   * The remaining arguments are similar to ShowPopup.
+   */
+  void ShowPopupAtScreenRect(nsIContent* aPopup,
+                             const nsAString& aPosition,
+                             const nsIntRect& aRect,
+                             bool aIsContextMenu,
+                             bool aAttributesOverride,
+                             nsIDOMEvent* aTriggerEvent);
 
   /**
    * Open a tooltip at a specific screen position specified by aXPos and aYPos,
@@ -622,12 +636,9 @@ protected:
   // return the topmost menu, skipping over invisible popups
   nsMenuChainItem* GetTopVisibleMenu();
 
-  // Hide all of the visible popups from the given list. aDeselectMenu
-  // indicates whether to deselect the menu of popups when hiding; this
-  // flag is passed as the first argument to HidePopup. This function
-  // can cause style changes and frame destruction.
-  void HidePopupsInList(const nsTArray<nsMenuPopupFrame *> &aFrames,
-                        bool aDeselectMenu);
+  // Hide all of the visible popups from the given list. This function can
+  // cause style changes and frame destruction.
+  void HidePopupsInList(const nsTArray<nsMenuPopupFrame *> &aFrames);
 
   // set the event that was used to trigger the popup, or null to clear the
   // event details. aTriggerContent will be set to the target of the event.

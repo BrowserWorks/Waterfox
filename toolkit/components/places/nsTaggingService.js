@@ -522,7 +522,9 @@ TagAutoCompleteResult.prototype = {
     return this._results.length;
   },
 
-  get typeAheadResult() false,
+  get typeAheadResult() {
+    return false;
+  },
 
   /**
    * Get the value of the result at the given index
@@ -634,7 +636,7 @@ TagAutoCompleteSearch.prototype = {
     
     var self = this;
     // generator: if yields true, not done
-    function doSearch() {
+    function* doSearch() {
       var i = 0;
       while (i < searchResults.length) {
         if (self._stopped)
@@ -642,7 +644,7 @@ TagAutoCompleteSearch.prototype = {
         // for each match, prepend what the user has typed so far
         if (searchResults[i].toLowerCase()
                             .indexOf(searchString.toLowerCase()) == 0 &&
-            comments.indexOf(searchResults[i]) == -1) {
+            !comments.includes(searchResults[i])) {
           results.push(before + searchResults[i]);
           comments.push(searchResults[i]);
         }
@@ -680,8 +682,7 @@ TagAutoCompleteSearch.prototype = {
     
     // chunk the search results via the generator
     var gen = doSearch();
-    while (gen.next());
-    gen.close();
+    while (gen.next().value);
   },
 
   /**
@@ -703,5 +704,5 @@ TagAutoCompleteSearch.prototype = {
   ])
 };
 
-let component = [TaggingService, TagAutoCompleteSearch];
+var component = [TaggingService, TagAutoCompleteSearch];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(component);

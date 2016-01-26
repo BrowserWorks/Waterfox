@@ -4,18 +4,20 @@
 
 "use strict";
 
-const Ci = Components.interfaces;
-const Cc = Components.classes;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "MatchPattern",
+                                  "resource://gre/modules/MatchPattern.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WebRequestCommon",
                                   "resource://gre/modules/WebRequestCommon.jsm");
 
-let ContentPolicy = {
+var ContentPolicy = {
   _classDescription: "WebRequest content policy",
   _classID: Components.ID("938e5d24-9ccc-4b55-883e-c252a41f7ce9"),
   _contractID: "@mozilla.org/webrequest/policy;1",
@@ -43,21 +45,24 @@ let ContentPolicy = {
     if (this.contentPolicies.size == 0) {
       this.register();
     }
+    if (filter.urls) {
+      filter.urls = new MatchPattern(filter.urls);
+    }
     this.contentPolicies.set(id, {blocking, filter});
   },
 
   receiveMessage(msg) {
     switch (msg.name) {
-    case "WebRequest:AddContentPolicy":
-      this.addContentPolicy(msg.data);
-      break;
+      case "WebRequest:AddContentPolicy":
+        this.addContentPolicy(msg.data);
+        break;
 
-    case "WebRequest:RemoveContentPolicy":
-      this.contentPolicies.delete(msg.data.id);
-      if (this.contentPolicies.size == 0) {
-        this.unregister();
-      }
-      break;
+      case "WebRequest:RemoveContentPolicy":
+        this.contentPolicies.delete(msg.data.id);
+        if (this.contentPolicies.size == 0) {
+          this.unregister();
+        }
+        break;
     }
   },
 
@@ -77,8 +82,7 @@ let ContentPolicy = {
     let ids = [];
     for (let [id, {blocking, filter}] of this.contentPolicies.entries()) {
       if (WebRequestCommon.typeMatches(policyType, filter.types) &&
-          WebRequestCommon.urlMatches(contentLocation, filter.urls))
-      {
+          WebRequestCommon.urlMatches(contentLocation, filter.urls)) {
         if (blocking) {
           block = true;
         }
@@ -101,8 +105,7 @@ let ContentPolicy = {
     }
 
     if (policyType == Ci.nsIContentPolicy.TYPE_SUBDOCUMENT ||
-       (node instanceof Ci.nsIDOMXULElement && node.localName == "browser"))
-    {
+        (node instanceof Ci.nsIDOMXULElement && node.localName == "browser")) {
       // Chrome sets frameId to the ID of the sub-window. But when
       // Firefox loads an iframe, it sets |node| to the <iframe>
       // element, whose window is the parent window. We adopt the
@@ -135,7 +138,11 @@ let ContentPolicy = {
       try {
         // If e10s is disabled, this throws NS_NOINTERFACE for closed tabs.
         mm = ir.getInterface(Ci.nsIContentFrameMessageManager);
-      } catch (e if e.result == Cr.NS_NOINTERFACE) {}
+      } catch (e) {
+        if (e.result != Cr.NS_NOINTERFACE) {
+          throw e;
+        }
+      }
     }
 
     let data = {ids,

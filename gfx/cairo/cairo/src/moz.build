@@ -56,7 +56,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         ]
     else:
         DEFINES['CAIRO_OMIT_WIN32_PRINTING'] = True
-elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] in {'cocoa', 'uikit'}:
     EXPORTS.cairo += [
         'cairo-quartz-image.h',
         'cairo-quartz.h',
@@ -185,6 +185,9 @@ UNIFIED_SOURCES += [
     'cairo.c',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
+
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['PACKAGE_VERSION'] = '"moz"'
@@ -198,7 +201,7 @@ for var in ('MOZ_TREE_CAIRO', 'MOZ_TREE_PIXMAN'):
         DEFINES[var] = True
 
 if CONFIG['GNU_CC']:
-    DEFINES['HAVE_INTEL_ATOMIC_PRIMITIVES'] = True
+    DEFINES['HAVE_CXX11_ATOMIC_PRIMITIVES'] = True
     # We would normally use autoconf to set these up, using AC_CHECK_SIZEOF.
     # But AC_CHECK_SIZEOF requires running programs to determine the sizes,
     # and that doesn't work so well with cross-compiling.  So instead we
@@ -217,7 +220,7 @@ if CONFIG['MOZ_TREE_FREETYPE']:
     DEFINES['FT_LCD_FILTER_H'] = '%s/modules/freetype2/include/freetype/ftlcdfil.h' % TOPSRCDIR
 
 # Suppress warnings in third-party code.
-if CONFIG['GNU_CC']:
+if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
     CFLAGS += [
         '-Wno-enum-compare',
         '-Wno-int-to-pointer-cast',
@@ -226,12 +229,24 @@ if CONFIG['GNU_CC']:
         '-Wno-missing-field-initializers',
         '-Wno-conversion',
     ]
-    if CONFIG['CLANG_CXX']:
-        CFLAGS += [
-            '-Wno-incompatible-pointer-types',
-            '-Wno-tautological-compare',
-            '-Wno-tautological-constant-out-of-range-compare',
-        ]
+if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-incompatible-pointer-types',
+        '-Wno-tautological-compare',
+        '-Wno-tautological-constant-out-of-range-compare',
+        '-Wno-error=uninitialized',
+    ]
+if CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-deprecated-register',
+        '-Wno-macro-redefined',
+        '-Wno-unused-variable',
+    ]
+
+# See bug 386897.
+if CONFIG['GNU_CC'] and CONFIG['OS_TARGET'] == 'Android' and CONFIG['MOZ_OPTIMIZE']:
+    CFLAGS += ['-O2']
+    CXXFLAGS += ['-O2']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     CFLAGS += CONFIG['MOZ_QT_CFLAGS']

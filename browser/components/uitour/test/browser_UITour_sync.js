@@ -3,11 +3,9 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-
-Components.utils.import("resource:///modules/UITour.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
 function test() {
   registerCleanupFunction(function() {
@@ -16,7 +14,7 @@ function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   function test_checkSyncSetup_disabled(done) {
     function callback(result) {
       is(result.setup, false, "Sync shouldn't be setup by default");
@@ -50,9 +48,9 @@ let tests = [
       tabBrowser.addEventListener("load", function onload(evt) {
         tabBrowser.removeEventListener("load", onload, true);
 
-        ise(tabBrowser.contentDocument.location.href,
-            "about:accounts?action=signup&entrypoint=uitour",
-            "about:accounts should have replaced the tab");
+        is(tabBrowser.contentDocument.location.href,
+           "about:accounts?action=signup&entrypoint=uitour",
+           "about:accounts should have replaced the tab");
 
         // the iframe in about:accounts will still be loading, so we stop
         // that before resetting the pref.

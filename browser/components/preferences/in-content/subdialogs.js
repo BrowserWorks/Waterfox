@@ -4,7 +4,7 @@
 
 "use strict";
 
-let gSubDialog = {
+var gSubDialog = {
   _closingCallback: null,
   _closingEvent: null,
   _isClosing: false,
@@ -97,7 +97,7 @@ let gSubDialog = {
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
       case "command":
-        this.close(aEvent);
+        this._frame.contentWindow.close();
         break;
       case "dialogclosing":
         this._onDialogClosing(aEvent);
@@ -127,7 +127,7 @@ let gSubDialog = {
 
   _onUnload: function(aEvent) {
     if (aEvent.target.location.href == this._openedURL) {
-      this.close(this._closingEvent);
+      this._frame.contentWindow.close();
     }
   },
 

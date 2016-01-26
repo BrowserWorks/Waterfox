@@ -8,7 +8,12 @@ EXPORTS.mozilla += [
     'BrowserElementParent.h',
 ]
 
+EXPORTS.mozilla.dom += [
+    'BrowserElementAudioChannel.h',
+]
+
 SOURCES += [
+    'BrowserElementAudioChannel.cpp',
     'BrowserElementParent.cpp',
 ]
 
@@ -21,13 +26,13 @@ XPIDL_MODULE = 'browser-element'
 EXTRA_COMPONENTS += [
     'BrowserElementParent.js',
     'BrowserElementParent.manifest',
+    'BrowserElementProxy.js',
+    'BrowserElementProxy.manifest',
 ]
 
 EXTRA_JS_MODULES += [
     'BrowserElementPromptService.jsm',
 ]
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '../bluetooth',
@@ -49,3 +54,7 @@ MOCHITEST_MANIFESTS += [
     'mochitest/mochitest.ini',
     'mochitest/priority/mochitest.ini',
 ]
+MOCHITEST_CHROME_MANIFESTS += ['mochitest/chrome.ini']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

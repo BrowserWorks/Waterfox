@@ -7,6 +7,12 @@
 #define GMPUtils_h_
 
 #include "mozilla/UniquePtr.h"
+#include "nsTArray.h"
+#include "nsCOMPtr.h"
+
+class nsIFile;
+class nsCString;
+class nsISimpleEnumerator;
 
 namespace mozilla {
 
@@ -24,6 +30,35 @@ using GMPUniquePtr = mozilla::UniquePtr<T, DestroyPolicy<T>>;
 bool GetEMEVoucherPath(nsIFile** aPath);
 
 bool EMEVoucherFileExists();
+
+void
+SplitAt(const char* aDelims,
+        const nsACString& aInput,
+        nsTArray<nsCString>& aOutTokens);
+
+nsCString
+ToBase64(const nsTArray<uint8_t>& aBytes);
+
+bool
+FileExists(nsIFile* aFile);
+
+// Enumerate directory entries for a specified path.
+class DirectoryEnumerator {
+public:
+
+  enum Mode {
+    DirsOnly, // Enumeration only includes directories.
+    FilesAndDirs // Enumeration includes directories and non-directory files.
+  };
+
+  DirectoryEnumerator(nsIFile* aPath, Mode aMode);
+
+  already_AddRefed<nsIFile> Next();
+
+private:
+  Mode mMode;
+  nsCOMPtr<nsISimpleEnumerator> mIter;
+};
 
 } // namespace mozilla
 

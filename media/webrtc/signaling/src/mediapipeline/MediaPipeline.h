@@ -26,6 +26,7 @@
 #include "databuffer.h"
 #include "runnable_utils.h"
 #include "transportflow.h"
+#include "AudioPacketizer.h"
 
 #if defined(MOZILLA_INTERNAL_API)
 #include "VideoSegment.h"
@@ -142,6 +143,11 @@ class MediaPipeline : public sigslot::has_slots<> {
                          RefPtr<TransportFlow> rtcp_transport,
                          nsAutoPtr<MediaPipelineFilter> filter);
 
+  // Used only for testing; installs a MediaPipelineFilter that filters
+  // everything but the nth ssrc
+  void SelectSsrc_m(size_t ssrc_index);
+  void SelectSsrc_s(size_t ssrc_index);
+
   virtual Direction direction() const { return direction_; }
   virtual const std::string& trackid() const { return track_id_; }
   virtual int level() const { return level_; }
@@ -191,8 +197,8 @@ class MediaPipeline : public sigslot::has_slots<> {
     virtual nsresult SendRtcpPacket(const void* data, int len);
 
    private:
-    virtual nsresult SendRtpPacket_s(nsAutoPtr<DataBuffer> data);
-    virtual nsresult SendRtcpPacket_s(nsAutoPtr<DataBuffer> data);
+    nsresult SendRtpRtcpPacket_s(nsAutoPtr<DataBuffer> data,
+                                 bool is_rtp);
 
     MediaPipeline *pipeline_;  // Raw pointer to avoid cycles
     nsCOMPtr<nsIEventTarget> sts_thread_;
@@ -287,6 +293,8 @@ class MediaPipeline : public sigslot::has_slots<> {
   int64_t rtp_bytes_sent_;
   int64_t rtp_bytes_received_;
 
+  std::vector<uint32_t> ssrcs_received_;
+
   // Written on Init. Read on STS thread.
   std::string pc_;
   std::string description_;
@@ -361,7 +369,7 @@ class GenericReceiveCallback : public TrackAddedCallback
 class ConduitDeleteEvent: public nsRunnable
 {
 public:
-  explicit ConduitDeleteEvent(TemporaryRef<MediaSessionConduit> aConduit) :
+  explicit ConduitDeleteEvent(already_AddRefed<MediaSessionConduit> aConduit) :
     mConduit(aConduit) {}
 
   /* we exist solely to proxy release of the conduit */
@@ -387,7 +395,7 @@ public:
                         RefPtr<TransportFlow> rtcp_transport,
                         nsAutoPtr<MediaPipelineFilter> filter) :
       MediaPipeline(pc, TRANSMIT, main_thread, sts_thread,
-                    domstream->GetStream(), track_id, level,
+                    domstream->GetOwnedStream(), track_id, level,
                     conduit, rtp_transport, rtcp_transport, filter),
       listener_(new PipelineListener(conduit)),
       domstream_(domstream),
@@ -402,7 +410,7 @@ public:
   // Index used to refer to this before we know the TrackID
   // Note: unlike MediaPipeline::trackid(), this is threadsafe
   // Not set until first media is received
-  virtual TrackID const trackid_locked() { return listener_->trackid(); }
+  virtual TrackID trackid_locked() const { return listener_->trackid(); }
   // written and used from MainThread
   virtual bool IsVideo() const override { return is_video_; }
 
@@ -446,9 +454,7 @@ public:
         active_(false),
         enabled_(false),
         direct_connect_(false),
-        samples_10ms_buffer_(nullptr),
-        buffer_current_(0),
-        samplenum_10ms_(0)
+        packetizer_(nullptr)
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
         , last_img_(-1)
 #endif // MOZILLA_INTERNAL_API
@@ -483,7 +489,9 @@ public:
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) override;
+                                          const MediaSegment& queued_media,
+                                          MediaStream* input_stream,
+                                          TrackID input_tid) override;
     virtual void NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) override {}
 
     // Implement MediaStreamDirectListener
@@ -526,16 +534,7 @@ public:
 
     bool direct_connect_;
 
-
-    // These vars handle breaking audio samples into exact 10ms chunks:
-    // The buffer of 10ms audio samples that we will send once full
-    // (can be carried over from one call to another).
-    nsAutoArrayPtr<int16_t> samples_10ms_buffer_;
-    // The location of the pointer within that buffer (in units of samples).
-    int64_t buffer_current_;
-    // The number of samples in a 10ms audio chunk.
-    int64_t samplenum_10ms_;
-
+    nsAutoPtr<AudioPacketizer<int16_t, int16_t>> packetizer_;
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
     int32_t last_img_; // serial number of last Image
 #endif // MOZILLA_INTERNAL_API
@@ -639,7 +638,9 @@ class MediaPipelineReceiveAudio : public MediaPipelineReceive {
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) override {}
+                                          const MediaSegment& queued_media,
+                                          MediaStream* input_stream,
+                                          TrackID input_tid) override {}
     virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) override;
 
    private:
@@ -707,17 +708,30 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
     // Implement VideoRenderer
     virtual void FrameSizeChange(unsigned int width,
                                  unsigned int height,
-                                 unsigned int number_of_streams) {
+                                 unsigned int number_of_streams) override {
       pipeline_->listener_->FrameSizeChange(width, height, number_of_streams);
     }
 
     virtual void RenderVideoFrame(const unsigned char* buffer,
-                                  unsigned int buffer_size,
+                                  size_t buffer_size,
                                   uint32_t time_stamp,
                                   int64_t render_time,
-                                  const ImageHandle& handle) {
-      pipeline_->listener_->RenderVideoFrame(buffer, buffer_size, time_stamp,
-                                             render_time,
+                                  const ImageHandle& handle) override {
+      pipeline_->listener_->RenderVideoFrame(buffer, buffer_size,
+                                             time_stamp, render_time,
+                                             handle.GetImage());
+    }
+
+    virtual void RenderVideoFrame(const unsigned char* buffer,
+                                  size_t buffer_size,
+                                  uint32_t y_stride,
+                                  uint32_t cbcr_stride,
+                                  uint32_t time_stamp,
+                                  int64_t render_time,
+                                  const ImageHandle& handle) override {
+      pipeline_->listener_->RenderVideoFrame(buffer, buffer_size,
+                                             y_stride, cbcr_stride,
+                                             time_stamp, render_time,
                                              handle.GetImage());
     }
 
@@ -735,7 +749,9 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) override {}
+                                          const MediaSegment& queued_media,
+                                          MediaStream* input_stream,
+                                          TrackID input_tid) override {}
     virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) override;
 
     // Accessors for external writes from the renderer
@@ -749,7 +765,14 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
     }
 
     void RenderVideoFrame(const unsigned char* buffer,
-                          unsigned int buffer_size,
+                          size_t buffer_size,
+                          uint32_t time_stamp,
+                          int64_t render_time,
+                          const RefPtr<layers::Image>& video_image);
+    void RenderVideoFrame(const unsigned char* buffer,
+                          size_t buffer_size,
+                          uint32_t y_stride,
+                          uint32_t cbcr_stride,
                           uint32_t time_stamp,
                           int64_t render_time,
                           const RefPtr<layers::Image>& video_image);
@@ -758,10 +781,10 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
     int width_;
     int height_;
 #if defined(MOZILLA_XPCOMRT_API)
-    nsRefPtr<mozilla::SimpleImageBuffer> image_;
+    RefPtr<mozilla::SimpleImageBuffer> image_;
 #elif defined(MOZILLA_INTERNAL_API)
-    nsRefPtr<layers::ImageContainer> image_container_;
-    nsRefPtr<layers::Image> image_;
+    RefPtr<layers::ImageContainer> image_container_;
+    RefPtr<layers::Image> image_;
 #endif
     mozilla::ReentrantMonitor monitor_; // Monitor for processing WebRTC frames.
                                         // Protects image_ against:

@@ -13,9 +13,9 @@ function run_test() {
 
   var secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
   const kURI1 = "http://example.com";
-  var app1 = secMan.getAppCodebasePrincipal(createURI(kURI1), 1, false);
-  var app10 = secMan.getAppCodebasePrincipal(createURI(kURI1), 10, false);
-  var app1browser = secMan.getAppCodebasePrincipal(createURI(kURI1), 1, true);
+  var app1 = secMan.createCodebasePrincipal(createURI(kURI1), {appId: 1});
+  var app10 = secMan.createCodebasePrincipal(createURI(kURI1),{appId: 10});
+  var app1browser = secMan.createCodebasePrincipal(createURI(kURI1), {appId: 1, inBrowser: true});
 
   var am = Cc["@mozilla.org/network/http-auth-manager;1"].
            getService(Ci.nsIHttpAuthManager);
@@ -23,12 +23,8 @@ function run_test() {
   am.setAuthIdentity("http", "a.example.com", -1, "basic", "realm", "", "example.com", "user3", "pass3", false, app1browser);
   am.setAuthIdentity("http", "a.example.com", -1, "basic", "realm", "", "example.com", "user2", "pass2", false, app10);
 
-  let subject = {
-    appId: 1,
-    browserOnly: true,
-    QueryInterface: XPCOMUtils.generateQI([Ci.mozIApplicationClearPrivateDataParams])
-  };
-  Services.obs.notifyObservers(subject, "webapps-clear-data", null);
+  let attrs_inBrowser = JSON.stringify({ appId:1, inBrowser:true });
+  Services.obs.notifyObservers(null, "clear-origin-data", attrs_inBrowser);
   
   var domain = {value: ""}, user = {value: ""}, pass = {value: ""};
   try {

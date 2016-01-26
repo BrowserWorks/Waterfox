@@ -6,11 +6,26 @@
 
 #include "vm/DateTime.h"
 
+#include "mozilla/Atomics.h"
+
 #include <time.h>
 
 #include "jsutil.h"
 
+#include "js/Date.h"
+#if ENABLE_INTL_API
+#include "unicode/timezone.h"
+#endif
+
+using mozilla::Atomic;
+using mozilla::ReleaseAcquire;
 using mozilla::UnspecifiedNaN;
+
+/* static */ js::DateTimeInfo
+js::DateTimeInfo::instance;
+
+/* static */ mozilla::Atomic<bool, mozilla::ReleaseAcquire>
+js::DateTimeInfo::AcquireLock::spinLock;
 
 static bool
 ComputeLocalTime(time_t local, struct tm* ptm)
@@ -131,7 +146,7 @@ UTCToLocalStandardOffsetSeconds()
 }
 
 void
-js::DateTimeInfo::updateTimeZoneAdjustment()
+js::DateTimeInfo::internalUpdateTimeZoneAdjustment()
 {
     /*
      * The difference between local standard time and UTC will never change for
@@ -164,12 +179,19 @@ js::DateTimeInfo::updateTimeZoneAdjustment()
  * negative numbers to ensure the first computation is always a cache miss and
  * doesn't return a bogus offset.
  */
-js::DateTimeInfo::DateTimeInfo()
+/* static */ void
+js::DateTimeInfo::init()
 {
+    DateTimeInfo* dtInfo = &DateTimeInfo::instance;
+
+    MOZ_ASSERT(dtInfo->localTZA_ == 0,
+               "we should be initializing only once, and the static instance "
+               "should have started out zeroed");
+
     // Set to a totally impossible TZA so that the comparison above will fail
     // and all fields will be properly initialized.
-    localTZA_ = UnspecifiedNaN<double>();
-    updateTimeZoneAdjustment();
+    dtInfo->localTZA_ = UnspecifiedNaN<double>();
+    dtInfo->internalUpdateTimeZoneAdjustment();
 }
 
 int64_t
@@ -201,7 +223,7 @@ js::DateTimeInfo::computeDSTOffsetMilliseconds(int64_t utcSeconds)
 }
 
 int64_t
-js::DateTimeInfo::getDSTOffsetMilliseconds(int64_t utcMilliseconds)
+js::DateTimeInfo::internalGetDSTOffsetMilliseconds(int64_t utcMilliseconds)
 {
     sanityCheck();
 
@@ -287,4 +309,46 @@ js::DateTimeInfo::sanityCheck()
                   rangeStartSeconds >= 0 && rangeEndSeconds >= 0);
     MOZ_ASSERT_IF(rangeStartSeconds != INT64_MIN,
                   rangeStartSeconds <= MaxUnixTimeT && rangeEndSeconds <= MaxUnixTimeT);
+}
+
+static struct IcuTimeZoneInfo
+{
+    Atomic<bool, ReleaseAcquire> locked;
+    enum { Valid = 0, NeedsUpdate } status;
+
+    void acquire() {
+        while (!locked.compareExchange(false, true))
+            continue;
+    }
+
+    void release() {
+        MOZ_ASSERT(locked, "should have been acquired");
+        locked = false;
+    }
+} TZInfo;
+
+
+JS_PUBLIC_API(void)
+JS::ResetTimeZone()
+{
+    js::DateTimeInfo::updateTimeZoneAdjustment();
+
+#if ENABLE_INTL_API && defined(ICU_TZ_HAS_RECREATE_DEFAULT)
+    TZInfo.acquire();
+    TZInfo.status = IcuTimeZoneInfo::NeedsUpdate;
+    TZInfo.release();
+#endif
+}
+
+void
+js::ResyncICUDefaultTimeZone()
+{
+#if ENABLE_INTL_API && defined(ICU_TZ_HAS_RECREATE_DEFAULT)
+    TZInfo.acquire();
+    if (TZInfo.status == IcuTimeZoneInfo::NeedsUpdate) {
+        icu::TimeZone::recreateDefault();
+        TZInfo.status = IcuTimeZoneInfo::Valid;
+    }
+    TZInfo.release();
+#endif
 }

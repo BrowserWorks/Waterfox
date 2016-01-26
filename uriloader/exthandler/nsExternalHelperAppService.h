@@ -6,7 +6,7 @@
 #ifndef nsExternalHelperAppService_h__
 #define nsExternalHelperAppService_h__
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prtime.h"
 
 #include "nsIExternalHelperAppService.h"
@@ -483,7 +483,7 @@ protected:
    */
   nsCOMPtr<nsIRequest> mRequest;
 
-  nsRefPtr<nsExternalHelperAppService> mExtProtSvc;
+  RefPtr<nsExternalHelperAppService> mExtProtSvc;
 };
 
 #endif // nsExternalHelperAppService_h__

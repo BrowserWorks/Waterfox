@@ -8,7 +8,7 @@
 #define nsAutoPtr_h
 
 #include "nsCOMPtr.h"
-#include "nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 #include "nsCycleCollectionNoteChild.h"
 #include "mozilla/MemoryReporting.h"
@@ -97,7 +97,7 @@ public:
   }
 
   template <typename I>
-  nsAutoPtr(nsAutoPtr<I>& aSmartPtr)
+  MOZ_IMPLICIT nsAutoPtr(nsAutoPtr<I>& aSmartPtr)
     : mRawPtr(aSmartPtr.forget())
     // Construct by transferring ownership from another smart pointer.
   {
@@ -110,7 +110,7 @@ public:
   }
 
   template <typename I>
-  nsAutoPtr(nsAutoPtr<I>&& aSmartPtr)
+  MOZ_IMPLICIT nsAutoPtr(nsAutoPtr<I>&& aSmartPtr)
     : mRawPtr(aSmartPtr.forget())
     // Construct by transferring ownership from another smart pointer.
   {
@@ -197,19 +197,32 @@ public:
     return get();
   }
 
-  // This operator is needed for gcc <= 4.0.* and for Sun Studio; it
-  // causes internal compiler errors for some MSVC versions.  (It's not
-  // clear to me whether it should be needed.)
-#ifndef _MSC_VER
-  template <class U, class V>
-  U&
-  operator->*(U V::* aMember)
+  template <typename R, typename... Args>
+  class Proxy
+  {
+    typedef R (T::*member_function)(Args...);
+    T* mRawPtr;
+    member_function mFunction;
+  public:
+    Proxy(T* aRawPtr, member_function aFunction)
+      : mRawPtr(aRawPtr),
+        mFunction(aFunction)
+    {
+    }
+    template<typename... ActualArgs>
+    R operator()(ActualArgs&&... aArgs)
+    {
+      return ((*mRawPtr).*mFunction)(mozilla::Forward<ActualArgs>(aArgs)...);
+    }
+  };
+
+  template <typename R, typename C, typename... Args>
+  Proxy<R, Args...> operator->*(R (C::*aFptr)(Args...)) const
   {
     NS_PRECONDITION(mRawPtr != 0,
                     "You can't dereference a NULL nsAutoPtr with operator->*().");
-    return get()->*aMember;
+    return Proxy<R, Args...>(get(), aFptr);
   }
-#endif
 
   nsAutoPtr<T>*
   get_address()
@@ -401,38 +414,34 @@ operator!=(U* aLhs, const nsAutoPtr<T>& aRhs)
 
 
 
-// Comparing an |nsAutoPtr| to |0|
+// Comparing an |nsAutoPtr| to |nullptr|
 
 template <class T>
 inline bool
-operator==(const nsAutoPtr<T>& aLhs, NSCAP_Zero* aRhs)
-// specifically to allow |smartPtr == 0|
+operator==(const nsAutoPtr<T>& aLhs, decltype(nullptr))
 {
-  return static_cast<const void*>(aLhs.get()) == reinterpret_cast<const void*>(aRhs);
+  return aLhs.get() == nullptr;
 }
 
 template <class T>
 inline bool
-operator==(NSCAP_Zero* aLhs, const nsAutoPtr<T>& aRhs)
-// specifically to allow |0 == smartPtr|
+operator==(decltype(nullptr), const nsAutoPtr<T>& aRhs)
 {
-  return reinterpret_cast<const void*>(aLhs) == static_cast<const void*>(aRhs.get());
+  return nullptr == aRhs.get();
 }
 
 template <class T>
 inline bool
-operator!=(const nsAutoPtr<T>& aLhs, NSCAP_Zero* aRhs)
-// specifically to allow |smartPtr != 0|
+operator!=(const nsAutoPtr<T>& aLhs, decltype(nullptr))
 {
-  return static_cast<const void*>(aLhs.get()) != reinterpret_cast<const void*>(aRhs);
+  return aLhs.get() != nullptr;
 }
 
 template <class T>
 inline bool
-operator!=(NSCAP_Zero* aLhs, const nsAutoPtr<T>& aRhs)
-// specifically to allow |0 != smartPtr|
+operator!=(decltype(nullptr), const nsAutoPtr<T>& aRhs)
 {
-  return reinterpret_cast<const void*>(aLhs) != static_cast<const void*>(aRhs.get());
+  return nullptr != aRhs.get();
 }
 
 
@@ -753,38 +762,34 @@ operator!=(U* aLhs, const nsAutoArrayPtr<T>& aRhs)
 
 
 
-// Comparing an |nsAutoArrayPtr| to |0|
+// Comparing an |nsAutoArrayPtr| to |nullptr|
 
 template <class T>
 inline bool
-operator==(const nsAutoArrayPtr<T>& aLhs, NSCAP_Zero* aRhs)
-// specifically to allow |smartPtr == 0|
+operator==(const nsAutoArrayPtr<T>& aLhs, decltype(nullptr))
 {
-  return static_cast<const void*>(aLhs.get()) == reinterpret_cast<const void*>(aRhs);
+  return aLhs.get() == nullptr;
 }
 
 template <class T>
 inline bool
-operator==(NSCAP_Zero* aLhs, const nsAutoArrayPtr<T>& aRhs)
-// specifically to allow |0 == smartPtr|
+operator==(decltype(nullptr), const nsAutoArrayPtr<T>& aRhs)
 {
-  return reinterpret_cast<const void*>(aLhs) == static_cast<const void*>(aRhs.get());
+  return nullptr == aRhs.get();
 }
 
 template <class T>
 inline bool
-operator!=(const nsAutoArrayPtr<T>& aLhs, NSCAP_Zero* aRhs)
-// specifically to allow |smartPtr != 0|
+operator!=(const nsAutoArrayPtr<T>& aLhs, decltype(nullptr))
 {
-  return static_cast<const void*>(aLhs.get()) != reinterpret_cast<const void*>(aRhs);
+  return aLhs.get() != nullptr;
 }
 
 template <class T>
 inline bool
-operator!=(NSCAP_Zero* aLhs, const nsAutoArrayPtr<T>& aRhs)
-// specifically to allow |0 != smartPtr|
+operator!=(decltype(nullptr), const nsAutoArrayPtr<T>& aRhs)
 {
-  return reinterpret_cast<const void*>(aLhs) != static_cast<const void*>(aRhs.get());
+  return nullptr != aRhs.get();
 }
 
 

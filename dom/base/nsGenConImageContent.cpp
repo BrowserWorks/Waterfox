@@ -49,8 +49,8 @@ public:
   virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override
   {
     MOZ_ASSERT(IsInNativeAnonymousSubtree());
-    if (aVisitor.mEvent->message == NS_LOAD ||
-        aVisitor.mEvent->message == NS_LOAD_ERROR) {
+    if (aVisitor.mEvent->mMessage == eLoad ||
+        aVisitor.mEvent->mMessage == eLoadError) {
       // Don't propagate the events to the parent.
       return NS_OK;
     }
@@ -76,8 +76,6 @@ NS_NewGenConImageContent(nsIContent** aResult, already_AddRefed<mozilla::dom::No
 {
   NS_PRECONDITION(aImageRequest, "Must have request!");
   nsGenConImageContent *it = new nsGenConImageContent(aNodeInfo);
-  if (!it)
-    return NS_ERROR_OUT_OF_MEMORY;
   NS_ADDREF(*aResult = it);
   nsresult rv = it->Init(aImageRequest);
   if (NS_FAILED(rv))

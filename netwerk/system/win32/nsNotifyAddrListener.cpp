@@ -19,7 +19,7 @@
 #include <netioapi.h>
 #include <iprtrmib.h>
 #include "plstr.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
@@ -35,8 +35,8 @@
 
 using namespace mozilla;
 
-static PRLogModuleInfo *gNotifyAddrLog = nullptr;
-#define LOG(args) PR_LOG(gNotifyAddrLog, PR_LOG_DEBUG, args)
+static LazyLogModule gNotifyAddrLog("nsNotifyAddr");
+#define LOG(args) MOZ_LOG(gNotifyAddrLog, mozilla::LogLevel::Debug, args)
 
 static HMODULE sNetshell;
 static decltype(NcFreeNetconProperties)* sNcFreeNetconProperties;
@@ -46,6 +46,10 @@ static decltype(NotifyIpInterfaceChange)* sNotifyIpInterfaceChange;
 static decltype(CancelMibChangeNotify2)* sCancelMibChangeNotify2;
 
 #define NETWORK_NOTIFY_CHANGED_PREF "network.notify.changed"
+
+// period during which to absorb subsequent network change events, in
+// milliseconds
+static const unsigned int kNetworkChangeCoalescingPeriod  = 1000;
 
 static void InitIphlpapi(void)
 {
@@ -98,9 +102,11 @@ nsNotifyAddrListener::nsNotifyAddrListener()
     : mLinkUp(true)  // assume true by default
     , mStatusKnown(false)
     , mCheckAttempted(false)
-    , mShutdownEvent(nullptr)
+    , mCheckEvent(nullptr)
+    , mShutdown(false)
     , mIPInterfaceChecksum(0)
     , mAllowChangedEvent(true)
+    , mCoalescingActive(false)
 {
     InitIphlpapi();
 }
@@ -149,12 +155,30 @@ static void WINAPI OnInterfaceChange(PVOID callerContext,
     notify->CheckLinkStatus();
 }
 
+DWORD
+nsNotifyAddrListener::nextCoalesceWaitTime()
+{
+    // check if coalescing period should continue
+    double period = (TimeStamp::Now() - mChangeTime).ToMilliseconds();
+    if (period >= kNetworkChangeCoalescingPeriod) {
+        SendEvent(NS_NETWORK_LINK_DATA_CHANGED);
+        mCoalescingActive = false;
+        return INFINITE; // return default
+    } else {
+        // wait no longer than to the end of the period
+        return static_cast<DWORD>
+            (kNetworkChangeCoalescingPeriod - period);
+    }
+}
+
 NS_IMETHODIMP
 nsNotifyAddrListener::Run()
 {
     PR_SetCurrentThreadName("Link Monitor");
 
-    mChangedTime = TimeStamp::Now();
+    mStartTime = TimeStamp::Now();
+
+    DWORD waitTime = INFINITE;
 
     if (!sNotifyIpInterfaceChange || !sCancelMibChangeNotify2) {
         // For Windows versions which are older than Vista which lack
@@ -162,7 +186,7 @@ nsNotifyAddrListener::Run()
         HANDLE ev = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         NS_ENSURE_TRUE(ev, NS_ERROR_OUT_OF_MEMORY);
 
-        HANDLE handles[2] = { ev, mShutdownEvent };
+        HANDLE handles[2] = { ev, mCheckEvent };
         OVERLAPPED overlapped = { 0 };
         bool shuttingDown = false;
 
@@ -172,9 +196,11 @@ nsNotifyAddrListener::Run()
             DWORD ret = NotifyAddrChange(&h, &overlapped);
 
             if (ret == ERROR_IO_PENDING) {
-                ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+                ret = WaitForMultipleObjects(2, handles, FALSE, waitTime);
                 if (ret == WAIT_OBJECT_0) {
                     CheckLinkStatus();
+                } else if (!mShutdown) {
+                    waitTime = nextCoalesceWaitTime();
                 } else {
                     shuttingDown = true;
                 }
@@ -194,9 +220,15 @@ nsNotifyAddrListener::Run()
             false, // no initial notification
             &interfacechange);
 
-        if (ret == NO_ERROR) {
-            ret = WaitForSingleObject(mShutdownEvent, INFINITE);
-        }
+        do {
+            ret = WaitForSingleObject(mCheckEvent, waitTime);
+            if (!mShutdown) {
+                waitTime = nextCoalesceWaitTime();
+            }
+            else {
+                break;
+            }
+        } while (ret != WAIT_FAILED);
         sCancelMibChangeNotify2(interfacechange);
     }
     return NS_OK;
@@ -216,9 +248,6 @@ nsNotifyAddrListener::Observe(nsISupports *subject,
 nsresult
 nsNotifyAddrListener::Init(void)
 {
-    if (!gNotifyAddrLog)
-        gNotifyAddrLog = PR_NewLogModule("nsNotifyAddr");
-
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
     if (!observerService)
@@ -231,8 +260,8 @@ nsNotifyAddrListener::Init(void)
     Preferences::AddBoolVarCache(&mAllowChangedEvent,
                                  NETWORK_NOTIFY_CHANGED_PREF, true);
 
-    mShutdownEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    NS_ENSURE_TRUE(mShutdownEvent, NS_ERROR_OUT_OF_MEMORY);
+    mCheckEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    NS_ENSURE_TRUE(mCheckEvent, NS_ERROR_OUT_OF_MEMORY);
 
     rv = NS_NewThread(getter_AddRefs(mThread), this);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -249,10 +278,11 @@ nsNotifyAddrListener::Shutdown(void)
     if (observerService)
         observerService->RemoveObserver(this, "xpcom-shutdown-threads");
 
-    if (!mShutdownEvent)
+    if (!mCheckEvent)
         return NS_OK;
 
-    SetEvent(mShutdownEvent);
+    mShutdown = true;
+    SetEvent(mCheckEvent);
 
     nsresult rv = mThread->Shutdown();
 
@@ -261,10 +291,31 @@ nsNotifyAddrListener::Shutdown(void)
     // via its mRunnable
     mThread = nullptr;
 
-    CloseHandle(mShutdownEvent);
-    mShutdownEvent = nullptr;
+    CloseHandle(mCheckEvent);
+    mCheckEvent = nullptr;
 
     return rv;
+}
+
+/*
+ * A network event has been registered. Delay the actual sending of the event
+ * for a while and absorb subsequent events in the mean time in an effort to
+ * squash potentially many triggers into a single event.
+ * Only ever called from the same thread.
+ */
+nsresult
+nsNotifyAddrListener::NetworkChanged()
+{
+    if (mCoalescingActive) {
+        LOG(("NetworkChanged: absorbed an event (coalescing active)\n"));
+    } else {
+        // A fresh trigger!
+        mChangeTime = TimeStamp::Now();
+        mCoalescingActive = true;
+        SetEvent(mCheckEvent);
+        LOG(("NetworkChanged: coalescing period started\n"));
+    }
+    return NS_OK;
 }
 
 /* Sends the given event.  Assumes aEventID never goes out of scope (static
@@ -335,7 +386,7 @@ nsNotifyAddrListener::CheckICSStatus(PWCHAR aAdapterName)
     bool isICSGatewayAdapter = false;
 
     HRESULT hr;
-    nsRefPtr<INetSharingManager> netSharingManager;
+    RefPtr<INetSharingManager> netSharingManager;
     hr = CoCreateInstance(
                 CLSID_NetSharingManager,
                 nullptr,
@@ -343,16 +394,16 @@ nsNotifyAddrListener::CheckICSStatus(PWCHAR aAdapterName)
                 IID_INetSharingManager,
                 getter_AddRefs(netSharingManager));
 
-    nsRefPtr<INetSharingPrivateConnectionCollection> privateCollection;
+    RefPtr<INetSharingPrivateConnectionCollection> privateCollection;
     if (SUCCEEDED(hr)) {
         hr = netSharingManager->get_EnumPrivateConnections(
                     ICSSC_DEFAULT,
                     getter_AddRefs(privateCollection));
     }
 
-    nsRefPtr<IEnumNetSharingPrivateConnection> privateEnum;
+    RefPtr<IEnumNetSharingPrivateConnection> privateEnum;
     if (SUCCEEDED(hr)) {
-        nsRefPtr<IUnknown> privateEnumUnknown;
+        RefPtr<IUnknown> privateEnumUnknown;
         hr = privateCollection->get__NewEnum(getter_AddRefs(privateEnumUnknown));
         if (SUCCEEDED(hr)) {
             hr = privateEnumUnknown->QueryInterface(
@@ -378,7 +429,7 @@ nsNotifyAddrListener::CheckICSStatus(PWCHAR aAdapterName)
                 continue;
             }
 
-            nsRefPtr<INetConnection> connection;
+            RefPtr<INetConnection> connection;
             if (SUCCEEDED(connectionVariant.punkVal->QueryInterface(
                               IID_INetConnection,
                               getter_AddRefs(connection)))) {
@@ -517,12 +568,12 @@ nsNotifyAddrListener::CheckLinkStatus(void)
         }
 
         if (mLinkUp && (prevCsum != mIPInterfaceChecksum)) {
-            TimeDuration since = TimeStamp::Now() - mChangedTime;
+            TimeDuration since = TimeStamp::Now() - mStartTime;
 
             // Network is online. Topology has changed. Always send CHANGED
             // before UP - if allowed to and having cooled down.
             if (mAllowChangedEvent && (since.ToMilliseconds() > 2000)) {
-                SendEvent(NS_NETWORK_LINK_DATA_CHANGED);
+                NetworkChanged();
             }
         }
         if (prevLinkUp != mLinkUp) {

@@ -3,15 +3,18 @@
 "clang_version": "r200213"
 }, 
 {
-"size": 47, 
-"digest": "2005a41fe97a5e00997063705f39d42b6a43b1cf7ba306cbc7b1513de34cdcd050fc6326efa2107f19ba0cc67914745dbf13154fa748010a93cf072481ef4aaa", 
-"algorithm": "sha512", 
-"filename": "setup.sh"
-}, 
-{
 "size": 71282740, 
 "digest": "ee9edb1ef3afd9ab29e39565145545ad57e8d8d2538be4d822d7dbd64038f4529b0b287cecf48bf83def52a26ac2c6faa331686c3ad5e8b4ba4c22686ee0808f", 
 "algorithm": "sha512", 
-"filename": "clang.tar.bz2"
+"filename": "clang.tar.bz2",
+"unpack": true
+},
+{
+"size": 12057960,
+"digest": "6105d6432943141cffb40020dc5ba3a793650bdeb3af9bd5e56d3796c5f03df9962a73e521646cd71fbfb5e266c1e74716ad722fb6055589dfb7d35175bca89e",
+"algorithm": "sha512",
+"filename": "gtk3.tar.xz",
+"setup": "setup.sh",
+"unpack": true
 }
 ]

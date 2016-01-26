@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let FormHistory = (Components.utils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
+var FormHistory = (Components.utils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
 
 /** Test for Bug 472396 **/
 function test() {
@@ -57,7 +57,7 @@ function test() {
   function testOnWindow(aOptions, aCallback) {
     whenNewWindowLoaded(aOptions, function(aWin) {
       windowsToClose.push(aWin);
-      executeSoon(function() aCallback(aWin));
+      executeSoon(() => aCallback(aWin));
     });
   };
 

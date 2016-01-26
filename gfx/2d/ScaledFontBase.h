@@ -14,8 +14,8 @@
 #endif
 
 #ifdef USE_SKIA
-#include "skia/SkPath.h"
-#include "skia/SkTypeface.h"
+#include "skia/include/core/SkPath.h"
+#include "skia/include/core/SkTypeface.h"
 #endif
 #ifdef USE_CAIRO_SCALED_FONT
 #include "cairo.h"
@@ -31,7 +31,7 @@ public:
   explicit ScaledFontBase(Float aSize);
   virtual ~ScaledFontBase();
 
-  virtual TemporaryRef<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
+  virtual already_AddRefed<Path> GetPathForGlyphs(const GlyphBuffer &aBuffer, const DrawTarget *aTarget);
 
   virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint);
 
@@ -45,6 +45,7 @@ public:
   virtual FontType GetType() const { return FontType::SKIA; }
 
 #ifdef USE_CAIRO_SCALED_FONT
+  bool PopulateCairoScaledFont();
   cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
   void SetCairoScaledFont(cairo_scaled_font_t* font);
 #endif
@@ -56,12 +57,14 @@ protected:
   SkPath GetSkiaPathForGlyphs(const GlyphBuffer &aBuffer);
 #endif
 #ifdef USE_CAIRO_SCALED_FONT
+  // Overridders should ensure the cairo_font_face_t has been addrefed.
+  virtual cairo_font_face_t* GetCairoFontFace() { return nullptr; }
   cairo_scaled_font_t* mScaledFont;
 #endif
   Float mSize;
 };
 
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_SCALEDFONTBASE_H_ */

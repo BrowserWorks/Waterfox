@@ -10,6 +10,8 @@
 #include "plstr.h"
 #include "nsDebug.h"
 #include "prprf.h"
+#include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/Snprintf.h"
 
 /* ==================================================================== */
 
@@ -24,7 +26,7 @@ int ParseFTPList(const char *line, struct list_state *state,
                  struct list_result *result )
 {
   unsigned int carry_buf_len; /* copy of state->carry_buf_len */
-  unsigned int linelen, pos;
+  unsigned int pos;
   const char *p;
 
   if (!line || !state || !result)
@@ -37,8 +39,6 @@ int ParseFTPList(const char *line, struct list_state *state,
   carry_buf_len = state->carry_buf_len;
   state->carry_buf_len = 0;
 
-  linelen = 0;
-
   /* strip leading whitespace */
   while (*line == ' ' || *line == '\t')
     line++;
@@ -47,7 +47,7 @@ int ParseFTPList(const char *line, struct list_state *state,
   p = line;
   while (*p && *p != '\n')
     p++;
-  linelen = p - line;
+  unsigned int linelen = p - line;
 
   if (linelen > 0 && *p == '\n' && *(p-1) == '\r')
     linelen--;
@@ -487,8 +487,7 @@ int ParseFTPList(const char *line, struct list_state *state,
                * than not showing the size at all.
               */
               uint64_t fsz = uint64_t(strtoul(tokens[1], (char **)0, 10) * 512);
-              PR_snprintf(result->fe_size, sizeof(result->fe_size), 
-                          "%lld", fsz);
+              snprintf_literal(result->fe_size, "%" PRId64, fsz);
             } 
 
           } /* if (result->fe_type != 'd') */

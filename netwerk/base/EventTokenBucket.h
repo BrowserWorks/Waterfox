@@ -7,6 +7,7 @@
 #ifndef NetEventTokenBucket_h__
 #define NetEventTokenBucket_h__
 
+#include "ARefBase.h"
 #include "nsCOMPtr.h"
 #include "nsDeque.h"
 #include "nsITimer.h"
@@ -59,7 +60,7 @@ namespace net {
 
 class EventTokenBucket;
 
-class ATokenBucketEvent 
+class ATokenBucketEvent
 {
 public:
   virtual void OnTokenBucketAdmitted() = 0;
@@ -67,10 +68,8 @@ public:
 
 class TokenBucketCancelable;
 
-class EventTokenBucket : public nsITimerCallback
+class EventTokenBucket : public nsITimerCallback, public ARefBase
 {
-  virtual ~EventTokenBucket();
-
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
@@ -87,12 +86,15 @@ public:
   // credits. ClearCredits can be used before unpausing if desired.
   void Pause();
   void UnPause();
-  void Stop() { mStopped = true; }
+  void Stop();
 
   // The returned cancelable event can only be canceled from the socket thread
   nsresult SubmitEvent(ATokenBucketEvent *event, nsICancelable **cancelable);
 
 private:
+  virtual ~EventTokenBucket();
+  void CleanupTimers();
+
   friend class RunNotifyEvent;
   friend class SetTimerEvent;
 
@@ -141,7 +143,7 @@ private:
 #endif
 };
 
-} // ::mozilla::net
-} // ::mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

@@ -30,6 +30,7 @@
 #include "nsGkAtoms.h"
 #include "nsImageFrame.h"
 #include "nsLayoutStylesheetCache.h"
+#include "mozilla/RuleProcessorCache.h"
 #include "nsPrincipal.h"
 #include "nsRange.h"
 #include "nsRegion.h"
@@ -67,10 +68,12 @@
 #include "FrameLayerBuilder.h"
 #include "mozilla/dom/RequestSyncWifiService.h"
 #include "AnimationCommon.h"
+#include "LayerAnimationInfo.h"
 
 #include "AudioChannelService.h"
 #include "mozilla/dom/DataStoreService.h"
 #include "mozilla/dom/PromiseDebugging.h"
+#include "mozilla/dom/WebCryptoThreadPool.h"
 
 #ifdef MOZ_XUL
 #include "nsXULPopupManager.h"
@@ -94,25 +97,12 @@
 #include "AndroidMediaPluginHost.h"
 #endif
 
-#ifdef MOZ_WMF
-#include "WMFDecoder.h"
-#endif
-
-#ifdef MOZ_GSTREAMER
-#include "GStreamerFormatHelper.h"
-#endif
-
-#ifdef MOZ_FFMPEG
-#include "FFmpegRuntimeLinker.h"
-#endif
-
 #include "CubebUtils.h"
 #include "Latency.h"
 #include "WebAudioUtils.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsVolumeService.h"
-#include "SpeakerManagerService.h"
 using namespace mozilla::system;
 #endif
 
@@ -139,6 +129,8 @@ using namespace mozilla::system;
 #include "CameraPreferences.h"
 #include "TouchManager.h"
 #include "MediaDecoder.h"
+#include "mozilla/layers/CompositorLRU.h"
+#include "mozilla/dom/devicestorage/DeviceStorageStatics.h"
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -265,6 +257,7 @@ nsLayoutStatics::Initialize()
   }
 
   AsyncLatencyLogger::InitializeStatics();
+  MediaManager::StartupInit();
   CubebUtils::InitLibrary();
 
   nsContentSink::InitializeStatics();
@@ -287,7 +280,7 @@ nsLayoutStatics::Initialize()
 
   ProcessPriorityManager::Init();
 
-  nsPermissionManager::AppClearDataObserverInit();
+  nsPermissionManager::ClearOriginDataObserverInit();
   nsCookieService::AppClearDataObserverInit();
   nsApplicationCacheService::AppClearDataObserverInit();
 
@@ -313,12 +306,18 @@ nsLayoutStatics::Initialize()
 
 #ifdef DEBUG
   nsStyleContext::Initialize();
-  mozilla::css::CommonAnimationManager::Initialize();
+  mozilla::LayerAnimationInfo::Initialize();
 #endif
 
   MediaDecoder::InitStatics();
 
   PromiseDebugging::Init();
+
+  layers::CompositorLRU::Init();
+
+  mozilla::dom::devicestorage::DeviceStorageStatics::Initialize();
+
+  mozilla::dom::WebCryptoThreadPool::Initialize();
 
   return NS_OK;
 }
@@ -377,6 +376,7 @@ nsLayoutStatics::Shutdown()
   nsAttrValue::Shutdown();
   nsContentUtils::Shutdown();
   nsLayoutStylesheetCache::Shutdown();
+  RuleProcessorCache::Shutdown();
 
   ShutdownJSEnvironment();
   nsGlobalWindow::ShutDown();
@@ -390,25 +390,12 @@ nsLayoutStatics::Shutdown()
   AndroidMediaPluginHost::Shutdown();
 #endif
 
-#ifdef MOZ_GSTREAMER
-  GStreamerFormatHelper::Shutdown();
-#endif
-
-#ifdef MOZ_FFMPEG
-  FFmpegRuntimeLinker::Unlink();
-#endif
-
   CubebUtils::ShutdownLibrary();
   AsyncLatencyLogger::ShutdownLogger();
   WebAudioUtils::Shutdown();
 
-#ifdef MOZ_WMF
-  WMFDecoder::UnloadDLLs();
-#endif
-
 #ifdef MOZ_WIDGET_GONK
   nsVolumeService::Shutdown();
-  SpeakerManagerService::Shutdown();
 #endif
 
 #ifdef MOZ_WEBSPEECH
@@ -437,8 +424,6 @@ nsLayoutStatics::Shutdown()
 
   nsHyphenationManager::Shutdown();
   nsDOMMutationObserver::Shutdown();
-
-  AudioChannelService::Shutdown();
 
   DataStoreService::Shutdown();
 

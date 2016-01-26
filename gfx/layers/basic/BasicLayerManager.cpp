@@ -16,15 +16,13 @@
 #include "RenderTrace.h"                // for RenderTraceLayers, etc
 #include "basic/BasicImplData.h"        // for BasicImplData
 #include "basic/BasicLayers.h"          // for BasicLayerManager, etc
-#include "gfx3DMatrix.h"                // for gfx3DMatrix
 #include "gfxASurface.h"                // for gfxASurface, etc
-#include "gfxColor.h"                   // for gfxRGBA
 #include "gfxContext.h"                 // for gfxContext, etc
 #include "gfxImageSurface.h"            // for gfxImageSurface
 #include "gfxMatrix.h"                  // for gfxMatrix
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPrefs.h"                   // for gfxPrefs
-#include "gfxPoint.h"                   // for gfxIntSize, gfxPoint
+#include "gfxPoint.h"                   // for IntSize, gfxPoint
 #include "gfxRect.h"                    // for gfxRect
 #include "gfxUtils.h"                   // for gfxUtils
 #include "gfx2DGlue.h"                  // for thebes --> moz2d transition
@@ -47,8 +45,8 @@
 #include "nsRegion.h"                   // for nsIntRegion, etc
 #include "nsTArray.h"                   // for nsAutoTArray
 #ifdef MOZ_ENABLE_SKIA
-#include "skia/SkCanvas.h"              // for SkCanvas
-#include "skia/SkBitmapDevice.h"        // for SkBitmapDevice
+#include "skia/include/core/SkCanvas.h"         // for SkCanvas
+#include "skia/include/core/SkBitmapDevice.h"   // for SkBitmapDevice
 #else
 #define PIXMAN_DONT_DEFINE_STDINT
 #include "pixman.h"                     // for pixman_f_transform, etc
@@ -83,16 +81,63 @@ ClipToContain(gfxContext* aContext, const IntRect& aRect)
   return aContext->DeviceToUser(deviceRect).IsEqualInterior(userRect);
 }
 
-already_AddRefed<gfxContext>
-BasicLayerManager::PushGroupForLayer(gfxContext* aContext, Layer* aLayer,
-                                     const nsIntRegion& aRegion,
-                                     bool* aNeedsClipToVisibleRegion)
+BasicLayerManager::PushedGroup
+BasicLayerManager::PushGroupForLayer(gfxContext* aContext, Layer* aLayer, const nsIntRegion& aRegion)
 {
+  PushedGroup group;
+
+  group.mVisibleRegion = aRegion;
+  group.mFinalTarget = aContext;
+  group.mOperator = GetEffectiveOperator(aLayer);
+  group.mOpacity = aLayer->GetEffectiveOpacity();
+
   // If we need to call PushGroup, we should clip to the smallest possible
   // area first to minimize the size of the temporary surface.
   bool didCompleteClip = ClipToContain(aContext, aRegion.GetBounds());
 
-  nsRefPtr<gfxContext> result;
+  bool canPushGroup = group.mOperator == CompositionOp::OP_OVER ||
+    (group.mOperator == CompositionOp::OP_SOURCE && (aLayer->CanUseOpaqueSurface() || aLayer->GetContentFlags() & Layer::CONTENT_COMPONENT_ALPHA));
+
+  if (!canPushGroup) {
+    aContext->Save();
+    gfxUtils::ClipToRegion(group.mFinalTarget, group.mVisibleRegion);
+
+    // PushGroup/PopGroup do not support non operator over.
+    gfxMatrix oldMat = aContext->CurrentMatrix();
+    aContext->SetMatrix(gfxMatrix());
+    gfxRect rect = aContext->GetClipExtents();
+    aContext->SetMatrix(oldMat);
+    rect.RoundOut();
+    IntRect surfRect;
+    ToRect(rect).ToIntRect(&surfRect);
+
+    if (!surfRect.IsEmpty()) {
+      RefPtr<DrawTarget> dt = aContext->GetDrawTarget()->CreateSimilarDrawTarget(surfRect.Size(), SurfaceFormat::B8G8R8A8);
+
+      RefPtr<gfxContext> ctx = new gfxContext(dt, ToRect(rect).TopLeft());
+      ctx->SetMatrix(oldMat);
+
+      group.mGroupOffset = surfRect.TopLeft();
+      group.mGroupTarget = ctx;
+
+      group.mMaskSurface = GetMaskForLayer(aLayer, &group.mMaskTransform);
+      return group;
+    }
+  }
+
+  Matrix maskTransform;
+  RefPtr<SourceSurface> maskSurf = GetMaskForLayer(aLayer, &maskTransform);
+
+  if (maskSurf) {
+    // The returned transform will transform the mask to device space on the
+    // destination. Since the User->Device space transform will be applied
+    // to the mask by PopGroupAndBlend we need to adjust the transform to
+    // transform the mask to user space.
+    Matrix currentTransform = ToMatrix(group.mFinalTarget->CurrentMatrix());
+    currentTransform.Invert();
+    maskTransform = maskTransform * currentTransform;
+  }
+
   if (aLayer->CanUseOpaqueSurface() &&
       ((didCompleteClip && aRegion.GetNumRects() == 1) ||
        !aContext->CurrentMatrix().HasNonIntegerTranslation())) {
@@ -100,19 +145,65 @@ BasicLayerManager::PushGroupForLayer(gfxContext* aContext, Layer* aLayer,
     // group. We need to make sure that only pixels inside the layer's visible
     // region are copied back to the destination. Remember if we've already
     // clipped precisely to the visible region.
-    *aNeedsClipToVisibleRegion = !didCompleteClip || aRegion.GetNumRects() > 1;
-    aContext->PushGroup(gfxContentType::COLOR);
-    result = aContext;
+    group.mNeedsClipToVisibleRegion = !didCompleteClip || aRegion.GetNumRects() > 1;
+    if (group.mNeedsClipToVisibleRegion) {
+      group.mFinalTarget->Save();
+      gfxUtils::ClipToRegion(group.mFinalTarget, group.mVisibleRegion);
+    }
+
+    aContext->PushGroupForBlendBack(gfxContentType::COLOR, group.mOpacity, maskSurf, maskTransform);
   } else {
-    *aNeedsClipToVisibleRegion = false;
-    result = aContext;
     if (aLayer->GetContentFlags() & Layer::CONTENT_COMPONENT_ALPHA) {
-      aContext->PushGroupAndCopyBackground(gfxContentType::COLOR_ALPHA);
+      aContext->PushGroupAndCopyBackground(gfxContentType::COLOR_ALPHA, group.mOpacity, maskSurf, maskTransform);
     } else {
-      aContext->PushGroup(gfxContentType::COLOR_ALPHA);
+      aContext->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, group.mOpacity, maskSurf, maskTransform);
     }
   }
-  return result.forget();
+
+  group.mGroupTarget = group.mFinalTarget;
+  return group;
+}
+
+void
+BasicLayerManager::PopGroupForLayer(PushedGroup &group)
+{
+  if (group.mFinalTarget == group.mGroupTarget) {
+    group.mFinalTarget->PopGroupAndBlend();
+    if (group.mNeedsClipToVisibleRegion) {
+      group.mFinalTarget->Restore();
+    }
+    return;
+  }
+
+  DrawTarget* dt = group.mFinalTarget->GetDrawTarget();
+  RefPtr<DrawTarget> sourceDT = group.mGroupTarget->GetDrawTarget();
+  group.mGroupTarget = nullptr;
+
+  RefPtr<SourceSurface> src = sourceDT->Snapshot();
+
+  if (group.mMaskSurface) {
+    Point finalOffset = group.mFinalTarget->GetDeviceOffset();
+    dt->SetTransform(group.mMaskTransform * Matrix::Translation(-finalOffset));
+    Matrix surfTransform = group.mMaskTransform;
+    surfTransform.Invert();
+    dt->MaskSurface(SurfacePattern(src, ExtendMode::CLAMP, surfTransform *
+                                                           Matrix::Translation(group.mGroupOffset.x, group.mGroupOffset.y)),
+                    group.mMaskSurface, Point(0, 0), DrawOptions(group.mOpacity, group.mOperator));
+  } else {
+    // For now this is required since our group offset is in device space of the final target,
+    // context but that may still have its own device offset. Once PushGroup/PopGroup logic is
+    // migrated to DrawTargets this can go as gfxContext::GetDeviceOffset will essentially
+    // always become null.
+    dt->SetTransform(Matrix::Translation(-group.mFinalTarget->GetDeviceOffset()));
+    dt->DrawSurface(src, Rect(group.mGroupOffset.x, group.mGroupOffset.y, src->GetSize().width, src->GetSize().height),
+                    Rect(0, 0, src->GetSize().width, src->GetSize().height), DrawSurfaceOptions(Filter::POINT), DrawOptions(group.mOpacity, group.mOperator));
+  }
+
+  if (group.mNeedsClipToVisibleRegion) {
+    dt->PopClip();
+  }
+
+  group.mFinalTarget->Restore();
 }
 
 static IntRect
@@ -168,7 +259,7 @@ public:
   // Set the opaque rect to match the bounds of the visible region.
   void AnnotateOpaqueRect()
   {
-    const nsIntRegion& visibleRegion = mLayer->GetEffectiveVisibleRegion();
+    const nsIntRegion visibleRegion = mLayer->GetEffectiveVisibleRegion().ToUnknownRegion();
     const IntRect& bounds = visibleRegion.GetBounds();
 
     DrawTarget *dt = mTarget->GetDrawTarget();
@@ -326,7 +417,7 @@ MarkLayersHidden(Layer* aLayer, const IntRect& aClipRect,
   {
     const Maybe<ParentLayerIntRect>& clipRect = aLayer->GetEffectiveClipRect();
     if (clipRect) {
-      IntRect cr = ParentLayerIntRect::ToUntyped(*clipRect);
+      IntRect cr = clipRect->ToUnknownRect();
       // clipRect is in the container's coordinate system. Get it into the
       // global coordinate system.
       if (aLayer->GetParent()) {
@@ -355,7 +446,7 @@ MarkLayersHidden(Layer* aLayer, const IntRect& aClipRect,
       return;
     }
 
-    nsIntRegion region = aLayer->GetEffectiveVisibleRegion();
+    nsIntRegion region = aLayer->GetEffectiveVisibleRegion().ToUnknownRegion();
     IntRect r = region.GetBounds();
     TransformIntRect(r, transform, ToOutsideIntRect);
     r.IntersectRect(r, aDirtyRect);
@@ -406,7 +497,7 @@ ApplyDoubleBuffering(Layer* aLayer, const IntRect& aVisibleRect)
   {
     const Maybe<ParentLayerIntRect>& clipRect = aLayer->GetEffectiveClipRect();
     if (clipRect) {
-      IntRect cr = ParentLayerIntRect::ToUntyped(*clipRect);
+      IntRect cr = clipRect->ToUnknownRect();
       // clipRect is in the container's coordinate system. Get it into the
       // global coordinate system.
       if (aLayer->GetParent()) {
@@ -426,8 +517,8 @@ ApplyDoubleBuffering(Layer* aLayer, const IntRect& aVisibleRect)
   BasicContainerLayer* container =
     static_cast<BasicContainerLayer*>(aLayer->AsContainerLayer());
   // Layers that act as their own backbuffers should be drawn to the destination
-  // using OPERATOR_SOURCE to ensure that alpha values in a transparent window
-  // are cleared. This can also be faster than OPERATOR_OVER.
+  // using OP_SOURCE to ensure that alpha values in a transparent window are
+  // cleared. This can also be faster than OP_OVER.
   if (!container) {
     data->SetOperator(CompositionOp::OP_SOURCE);
     data->SetDrawAtomically(true);
@@ -585,7 +676,7 @@ BasicLayerManager::FlashWidgetUpdateArea(gfxContext *aContext)
     float r = float(rand()) / RAND_MAX;
     float g = float(rand()) / RAND_MAX;
     float b = float(rand()) / RAND_MAX;
-    aContext->SetColor(gfxRGBA(r, g, b, 0.2));
+    aContext->SetColor(Color(r, g, b, 0.2f));
     aContext->Paint();
   }
 }
@@ -613,7 +704,7 @@ BasicLayerManager::SetRoot(Layer* aLayer)
 
 #ifdef MOZ_ENABLE_SKIA
 static SkMatrix
-BasicLayerManager_Matrix3DToSkia(const gfx3DMatrix& aMatrix)
+BasicLayerManager_Matrix3DToSkia(const Matrix4x4& aMatrix)
 {
   SkMatrix transform;
   transform.setAll(aMatrix._11,
@@ -632,7 +723,7 @@ BasicLayerManager_Matrix3DToSkia(const gfx3DMatrix& aMatrix)
 static void
 Transform(const gfxImageSurface* aDest,
           RefPtr<DataSourceSurface> aSrc,
-          const gfx3DMatrix& aTransform,
+          const Matrix4x4& aTransform,
           gfxPoint aDestOffset)
 {
   if (aTransform.IsSingular()) {
@@ -658,20 +749,20 @@ Transform(const gfxImageSurface* aDest,
   src.setInfo(srcInfo, aSrc->Stride());
   src.setPixels((uint32_t*)aSrc->GetData());
 
-  gfx3DMatrix transform = aTransform;
-  transform.TranslatePost(Point3D(-aDestOffset.x, -aDestOffset.y, 0));
+  Matrix4x4 transform = aTransform;
+  transform.PostTranslate(Point3D(-aDestOffset.x, -aDestOffset.y, 0));
   destCanvas.setMatrix(BasicLayerManager_Matrix3DToSkia(transform));
 
   SkPaint paint;
   paint.setXfermodeMode(SkXfermode::kSrc_Mode);
   paint.setAntiAlias(true);
-  paint.setFilterLevel(SkPaint::kLow_FilterLevel);
+  paint.setFilterQuality(kLow_SkFilterQuality);
   SkRect destRect = SkRect::MakeXYWH(0, 0, srcSize.width, srcSize.height);
-  destCanvas.drawBitmapRectToRect(src, nullptr, destRect, &paint);
+  destCanvas.drawBitmapRect(src, destRect, &paint);
 }
 #else
 static pixman_transform
-BasicLayerManager_Matrix3DToPixman(const gfx3DMatrix& aMatrix)
+BasicLayerManager_Matrix3DToPixman(const Matrix4x4& aMatrix)
 {
   pixman_f_transform transform;
 
@@ -694,11 +785,11 @@ BasicLayerManager_Matrix3DToPixman(const gfx3DMatrix& aMatrix)
 static void
 Transform(const gfxImageSurface* aDest,
           RefPtr<DataSourceSurface> aSrc,
-          const gfx3DMatrix& aTransform,
+          const Matrix4x4& aTransform,
           gfxPoint aDestOffset)
 {
   IntSize destSize = aDest->GetSize();
-  pixman_image_t* dest = pixman_image_create_bits(aDest->Format() == gfxImageFormat::ARGB32 ? PIXMAN_a8r8g8b8 : PIXMAN_x8r8g8b8,
+  pixman_image_t* dest = pixman_image_create_bits(aDest->Format() == SurfaceFormat::A8R8G8B8_UINT32 ? PIXMAN_a8r8g8b8 : PIXMAN_x8r8g8b8,
                                                   destSize.width,
                                                   destSize.height,
                                                   (uint32_t*)aDest->Data(),
@@ -743,7 +834,7 @@ Transform(const gfxImageSurface* aDest,
 #endif
 
 /**
- * Transform a surface using a gfx3DMatrix and blit to the destination if
+ * Transform a surface using a Matrix4x4 and blit to the destination if
  * it is efficient to do so.
  *
  * @param aSource       Source surface.
@@ -759,27 +850,25 @@ static already_AddRefed<gfxASurface>
 Transform3D(RefPtr<SourceSurface> aSource,
             gfxContext* aDest,
             const gfxRect& aBounds,
-            const gfx3DMatrix& aTransform,
+            const Matrix4x4& aTransform,
             gfxRect& aDestRect)
 {
-  // Find the transformed rectangle of our layer.
-  gfxRect offsetRect = aTransform.TransformBounds(aBounds);
-
-  // Intersect the transformed layer with the destination rectangle.
+  // Find the transformed rectangle of our layer, intersected with the
+  // destination rectangle.
   // This is in device space since we have an identity transform set on aTarget.
-  aDestRect = aDest->GetClipExtents();
-  aDestRect.IntersectRect(aDestRect, offsetRect);
+  aDestRect = ThebesRect(aTransform.TransformAndClipBounds(
+                ToRectDouble(aBounds),
+                ToRectDouble(aDest->GetClipExtents())));
   aDestRect.RoundOut();
 
   // Create a surface the size of the transformed object.
-  nsRefPtr<gfxASurface> dest = aDest->CurrentSurface();
-  nsRefPtr<gfxImageSurface> destImage = new gfxImageSurface(gfxIntSize(aDestRect.width,
-                                                                       aDestRect.height),
-                                                            gfxImageFormat::ARGB32);
+  RefPtr<gfxImageSurface> destImage = new gfxImageSurface(IntSize(aDestRect.width,
+                                                                    aDestRect.height),
+                                                            SurfaceFormat::A8R8G8B8_UINT32);
   gfxPoint offset = aDestRect.TopLeft();
 
   // Include a translation to the correct origin.
-  gfx3DMatrix translation = gfx3DMatrix::Translation(aBounds.x, aBounds.y, 0);
+  Matrix4x4 translation = Matrix4x4::Translation(aBounds.x, aBounds.y, 0);
 
   // Transform the content and offset it such that the content begins at the origin.
   Transform(destImage, aSource->GetDataSurface(), translation * aTransform, offset);
@@ -793,6 +882,7 @@ void
 BasicLayerManager::PaintSelfOrChildren(PaintLayerContext& aPaintContext,
                                        gfxContext* aGroupTarget)
 {
+  MOZ_ASSERT(aGroupTarget);
   BasicImplData* data = ToData(aPaintContext.mLayer);
 
   /* Only paint ourself, or our children - This optimization relies on this! */
@@ -812,7 +902,15 @@ BasicLayerManager::PaintSelfOrChildren(PaintLayerContext& aPaintContext,
     nsAutoTArray<Layer*, 12> children;
     container->SortChildrenBy3DZOrder(children);
     for (uint32_t i = 0; i < children.Length(); i++) {
-      PaintLayer(aGroupTarget, children.ElementAt(i), aPaintContext.mCallback,
+      Layer* layer = children.ElementAt(i);
+      if (layer->IsBackfaceHidden()) {
+        continue;
+      }
+      if (!layer->AsContainerLayer() && !layer->IsVisible()) {
+        continue;
+      }
+
+      PaintLayer(aGroupTarget, layer, aPaintContext.mCallback,
           aPaintContext.mCallbackData);
       if (mTransactionIncomplete)
         break;
@@ -835,15 +933,53 @@ BasicLayerManager::FlushGroup(PaintLayerContext& aPaintContext, bool aNeedsClipT
   if (!mTransactionIncomplete) {
     if (aNeedsClipToVisibleRegion) {
       gfxUtils::ClipToRegion(aPaintContext.mTarget,
-                             aPaintContext.mLayer->GetEffectiveVisibleRegion());
+                             aPaintContext.mLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
     }
 
     CompositionOp op = GetEffectiveOperator(aPaintContext.mLayer);
-    AutoSetOperator setOperator(aPaintContext.mTarget, ThebesOp(op));
+    AutoSetOperator setOperator(aPaintContext.mTarget, op);
 
     PaintWithMask(aPaintContext.mTarget, aPaintContext.mLayer->GetEffectiveOpacity(),
                   aPaintContext.mLayer->GetMaskLayer());
   }
+}
+
+/**
+ * Install the clip applied to the layer on the given gfxContext.  The
+ * given gfxContext is the buffer that the layer will be painted to.
+ */
+static void
+InstallLayerClipPreserves3D(gfxContext* aTarget, Layer* aLayer)
+{
+  const Maybe<ParentLayerIntRect> &clipRect = aLayer->GetEffectiveClipRect();
+
+  if (!clipRect) {
+    return;
+  }
+  MOZ_ASSERT(!aLayer->Extend3DContext() ||
+             !aLayer->Combines3DTransformWithAncestors(),
+             "Layers in a preserve 3D context have no clip"
+             " except leaves and the estabisher!");
+
+  Layer* parent = aLayer->GetParent();
+  Matrix4x4 transform3d =
+    parent && parent->Extend3DContext() ?
+    parent->GetEffectiveTransform() :
+    Matrix4x4();
+  Matrix transform;
+  if (!transform3d.CanDraw2D(&transform)) {
+    gfxDevCrash(LogReason::CannotDraw3D) << "GFX: We should not have a 3D transform that CanDraw2D() is false!";
+  }
+  gfxMatrix oldTransform = aTarget->CurrentMatrix();
+  transform *= ToMatrix(oldTransform);
+  aTarget->SetMatrix(ThebesMatrix(transform));
+
+  aTarget->NewPath();
+  aTarget->SnappedRectangle(gfxRect(clipRect->x, clipRect->y,
+                                    clipRect->width, clipRect->height));
+  aTarget->Clip();
+
+  aTarget->SetMatrix(oldTransform);
 }
 
 void
@@ -852,6 +988,8 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
                               DrawPaintedLayerCallback aCallback,
                               void* aCallbackData)
 {
+  MOZ_ASSERT(aTarget);
+
   PROFILER_LABEL("BasicLayerManager", "PaintLayer",
     js::ProfileEntry::Category::GRAPHICS);
 
@@ -883,23 +1021,30 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
   gfxMatrix transform;
   // Will return an identity matrix for 3d transforms, and is handled separately below.
   bool is2D = paintLayerContext.Setup2DTransform();
-  MOZ_ASSERT(is2D || needsGroup || !container, "Must PushGroup for 3d transforms!");
+  MOZ_ASSERT(is2D || needsGroup || !container ||
+             container->Extend3DContext() ||
+             container->Is3DContextLeaf(),
+             "Must PushGroup for 3d transforms!");
 
+  Layer* parent = aLayer->GetParent();
+  bool inPreserves3DChain = parent && parent->Extend3DContext();
   bool needsSaveRestore =
-    needsGroup || clipRect || needsClipToVisibleRegion || !is2D;
+    needsGroup || clipRect || needsClipToVisibleRegion || !is2D ||
+    inPreserves3DChain;
   if (needsSaveRestore) {
     contextSR.SetContext(aTarget);
 
-    if (clipRect) {
-      aTarget->NewPath();
-      aTarget->SnappedRectangle(gfxRect(clipRect->x, clipRect->y, clipRect->width, clipRect->height));
-      aTarget->Clip();
+    // The clips on ancestors on the preserved3d chain should be
+    // installed on the aTarget before painting the layer.
+    InstallLayerClipPreserves3D(aTarget, aLayer);
+    for (Layer* l = parent; l && l->Extend3DContext(); l = l->GetParent()) {
+      InstallLayerClipPreserves3D(aTarget, l);
     }
   }
 
   paintLayerContext.Apply2DTransform();
 
-  const nsIntRegion& visibleRegion = aLayer->GetEffectiveVisibleRegion();
+  const nsIntRegion visibleRegion = aLayer->GetEffectiveVisibleRegion().ToUnknownRegion();
   // If needsGroup is true, we'll clip to the visible region after we've popped the group
   if (needsClipToVisibleRegion && !needsGroup) {
     gfxUtils::ClipToRegion(aTarget, visibleRegion);
@@ -911,7 +1056,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
     paintLayerContext.AnnotateOpaqueRect();
   }
 
-  bool clipIsEmpty = !aTarget || aTarget->GetClipExtents().IsEmpty();
+  bool clipIsEmpty = aTarget->GetClipExtents().IsEmpty();
   if (clipIsEmpty) {
     PaintSelfOrChildren(paintLayerContext, aTarget);
     return;
@@ -919,15 +1064,19 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
 
   if (is2D) {
     if (needsGroup) {
-      nsRefPtr<gfxContext> groupTarget = PushGroupForLayer(aTarget, aLayer, aLayer->GetEffectiveVisibleRegion(),
-                                      &needsClipToVisibleRegion);
-      PaintSelfOrChildren(paintLayerContext, groupTarget);
-      aTarget->PopGroupToSource();
-      FlushGroup(paintLayerContext, needsClipToVisibleRegion);
+      PushedGroup pushedGroup =
+        PushGroupForLayer(aTarget, aLayer, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
+      PaintSelfOrChildren(paintLayerContext, pushedGroup.mGroupTarget);
+      PopGroupForLayer(pushedGroup);
     } else {
       PaintSelfOrChildren(paintLayerContext, aTarget);
     }
   } else {
+    if (!needsGroup && container) {
+      PaintSelfOrChildren(paintLayerContext, aTarget);
+      return;
+    }
+
     const IntRect& bounds = visibleRegion.GetBounds();
     RefPtr<DrawTarget> untransformedDT =
       gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(IntSize(bounds.width, bounds.height),
@@ -936,7 +1085,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
       return;
     }
 
-    nsRefPtr<gfxContext> groupTarget = new gfxContext(untransformedDT,
+    RefPtr<gfxContext> groupTarget = new gfxContext(untransformedDT,
                                                       Point(bounds.x, bounds.y));
 
     PaintSelfOrChildren(paintLayerContext, groupTarget);
@@ -948,20 +1097,18 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
     gfxRect destRect;
 #ifdef DEBUG
     if (aLayer->GetDebugColorIndex() != 0) {
-      gfxRGBA  color((aLayer->GetDebugColorIndex() & 1) ? 1.0 : 0.0,
-                     (aLayer->GetDebugColorIndex() & 2) ? 1.0 : 0.0,
-                     (aLayer->GetDebugColorIndex() & 4) ? 1.0 : 0.0,
-                     1.0);
+      Color color((aLayer->GetDebugColorIndex() & 1) ? 1.f : 0.f,
+                  (aLayer->GetDebugColorIndex() & 2) ? 1.f : 0.f,
+                  (aLayer->GetDebugColorIndex() & 4) ? 1.f : 0.f);
 
-      nsRefPtr<gfxContext> temp = new gfxContext(untransformedDT, Point(bounds.x, bounds.y));
+      RefPtr<gfxContext> temp = new gfxContext(untransformedDT, Point(bounds.x, bounds.y));
       temp->SetColor(color);
       temp->Paint();
     }
 #endif
-    gfx3DMatrix effectiveTransform;
-    effectiveTransform = gfx::To3DMatrix(aLayer->GetEffectiveTransform());
-    nsRefPtr<gfxASurface> result =
-      Transform3D(untransformedDT->Snapshot(), aTarget, bounds,
+    Matrix4x4 effectiveTransform = aLayer->GetEffectiveTransform();
+    RefPtr<gfxASurface> result =
+      Transform3D(untransformedDT->Snapshot(), aTarget, ThebesRect(bounds),
                   effectiveTransform, destRect);
 
     if (result) {
@@ -1001,9 +1148,9 @@ already_AddRefed<ReadbackLayer>
 BasicLayerManager::CreateReadbackLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ReadbackLayer> layer = new BasicReadbackLayer(this);
+  RefPtr<ReadbackLayer> layer = new BasicReadbackLayer(this);
   return layer.forget();
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

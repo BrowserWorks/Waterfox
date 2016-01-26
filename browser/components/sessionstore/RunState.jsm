@@ -17,15 +17,7 @@ const STATE_CLOSING = 3;
 const STATE_CLOSED = 4;
 
 // We're initially stopped.
-let state = STATE_STOPPED;
-
-function observer(subj, topic) {
-  Services.obs.removeObserver(observer, topic);
-  state = STATE_QUITTING;
-}
-
-// Listen for when the application is quitting.
-Services.obs.addObserver(observer, "quit-application-granted", false);
+var state = STATE_STOPPED;
 
 /**
  * This module keeps track of SessionStore's current run state. We will
@@ -95,5 +87,14 @@ this.RunState = Object.freeze({
     if (this.isClosing) {
       state = STATE_CLOSED;
     }
-  }
+  },
+
+  // Switch the run state to STATE_QUITTING. This should be called once we're
+  // certain that the browser is going away and before we start collecting the
+  // final window states to save in the session file.
+  setQuitting() {
+    if (this.isRunning) {
+      state = STATE_QUITTING;
+    }
+  },
 });

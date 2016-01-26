@@ -152,7 +152,7 @@ DisplayItemClip::FillIntersectionOfRoundedRectClips(gfxContext* aContext,
   }
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 DisplayItemClip::MakeRoundedRectPath(DrawTarget& aDrawTarget,
                                      int32_t A2D,
                                      const RoundedRect &aRoundRect) const
@@ -475,4 +475,4 @@ DisplayItemClip::ToString() const
   return str;
 }
 
-}
+} // namespace mozilla

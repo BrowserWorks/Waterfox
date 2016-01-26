@@ -12,6 +12,7 @@
 #include "mozilla/dom/Headers.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "nsWeakReference.h"
+#include "mozilla/dom/ImageBitmapSource.h"
 
 namespace mozilla {
 namespace dom {
@@ -51,12 +52,14 @@ class WorkerGlobalScope : public DOMEventTargetHelper,
 {
   typedef mozilla::dom::indexedDB::IDBFactory IDBFactory;
 
-  nsRefPtr<Console> mConsole;
-  nsRefPtr<WorkerLocation> mLocation;
-  nsRefPtr<WorkerNavigator> mNavigator;
-  nsRefPtr<Performance> mPerformance;
-  nsRefPtr<IDBFactory> mIndexedDB;
-  nsRefPtr<cache::CacheStorage> mCacheStorage;
+  RefPtr<Console> mConsole;
+  RefPtr<WorkerLocation> mLocation;
+  RefPtr<WorkerNavigator> mNavigator;
+  RefPtr<Performance> mPerformance;
+  RefPtr<IDBFactory> mIndexedDB;
+  RefPtr<cache::CacheStorage> mCacheStorage;
+
+  uint32_t mWindowInteractionsAllowed;
 
 protected:
   WorkerPrivate* mWorkerPrivate;
@@ -153,6 +156,33 @@ public:
 
   already_AddRefed<cache::CacheStorage>
   GetCaches(ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  CreateImageBitmap(const ImageBitmapSource& aImage, ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  CreateImageBitmap(const ImageBitmapSource& aImage,
+                    int32_t aSx, int32_t aSy, int32_t aSw, int32_t aSh,
+                    ErrorResult& aRv);
+
+  bool
+  WindowInteractionAllowed() const
+  {
+    return mWindowInteractionsAllowed > 0;
+  }
+
+  void
+  AllowWindowInteraction()
+  {
+    mWindowInteractionsAllowed++;
+  }
+
+  void
+  ConsumeWindowInteraction()
+  {
+    MOZ_ASSERT(mWindowInteractionsAllowed > 0);
+    mWindowInteractionsAllowed--;
+  }
 };
 
 class DedicatedWorkerGlobalScope final : public WorkerGlobalScope
@@ -199,8 +229,8 @@ public:
 class ServiceWorkerGlobalScope final : public WorkerGlobalScope
 {
   const nsString mScope;
-  nsRefPtr<ServiceWorkerClients> mClients;
-  nsRefPtr<ServiceWorkerRegistrationWorkerThread> mRegistration;
+  RefPtr<ServiceWorkerClients> mClients;
+  RefPtr<ServiceWorkerRegistrationWorkerThread> mRegistration;
 
   ~ServiceWorkerGlobalScope();
 
@@ -208,12 +238,19 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerGlobalScope,
                                            WorkerGlobalScope)
+  IMPL_EVENT_HANDLER(notificationclick)
 
   ServiceWorkerGlobalScope(WorkerPrivate* aWorkerPrivate, const nsACString& aScope);
 
   virtual bool
   WrapGlobalObject(JSContext* aCx,
                    JS::MutableHandle<JSObject*> aReflector) override;
+
+  static bool
+  InterceptionEnabled(JSContext* aCx, JSObject* aObj);
+
+  static bool
+  OpenWindowEnabled(JSContext* aCx, JSObject* aObj);
 
   void
   GetScope(nsString& aScope) const
@@ -227,9 +264,10 @@ public:
   ServiceWorkerRegistrationWorkerThread*
   Registration();
 
+  already_AddRefed<Promise>
+  SkipWaiting(ErrorResult& aRv);
+
   IMPL_EVENT_HANDLER(activate)
-  IMPL_EVENT_HANDLER(beforeevicted)
-  IMPL_EVENT_HANDLER(evicted)
   IMPL_EVENT_HANDLER(fetch)
   IMPL_EVENT_HANDLER(install)
   IMPL_EVENT_HANDLER(message)

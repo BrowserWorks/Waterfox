@@ -18,17 +18,28 @@ UNIFIED_SOURCES += [
 
 DEFINES['EXPORT_JS_API'] = True
 
+# Also set in ../moz.build
+DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
+
 if CONFIG['_MSC_VER']:
     # unnecessary PGO for js shell.  But gcc cannot turn off pgo because it is
     # necessary to link PGO lib on gcc when a object/static lib are compiled
     # for PGO.
     NO_PGO = True
 
-LOCAL_INCLUDES += ['..']
-GENERATED_INCLUDES += ['..']
+LOCAL_INCLUDES += [
+    '!..',
+    '..',
+]
 
 OS_LIBS += CONFIG['EDITLINE_LIBS']
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
-if CONFIG['GNU_CXX']:
-    FAIL_ON_WARNINGS = True
+# Prepare module loader JS code for embedding
+GENERATED_FILES += ['shellmoduleloader.out.h']
+shellmoduleloader = GENERATED_FILES['shellmoduleloader.out.h']
+shellmoduleloader.script = '../builtin/embedjs.py:generate_shellmoduleloader'
+shellmoduleloader.inputs = [
+    '../js.msg',
+    'ModuleLoader.js',
+]

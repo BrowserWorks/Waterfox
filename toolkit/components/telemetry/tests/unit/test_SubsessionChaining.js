@@ -15,7 +15,6 @@ const MS_IN_ONE_HOUR  = 60 * 60 * 1000;
 const MS_IN_ONE_DAY   = 24 * MS_IN_ONE_HOUR;
 
 const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_ARCHIVE_ENABLED = PREF_BRANCH + "archive.enabled";
 
 const REASON_ABORTED_SESSION = "aborted-session";
@@ -27,7 +26,7 @@ XPCOMUtils.defineLazyGetter(this, "DATAREPORTING_PATH", function() {
   return OS.Path.join(OS.Constants.Path.profileDir, "datareporting");
 });
 
-let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
+var promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
   // The list of ping reasons which mark the session end (and must reset the subsession
   // count).
   const SESSION_END_PING_REASONS = new Set([ REASON_ABORTED_SESSION, REASON_SHUTDOWN ]);
@@ -42,6 +41,8 @@ let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
   let previousPing = yield TelemetryArchive.promiseArchivedPingById(list[0].id);
   Assert.equal(aExpectedReasons.shift(), previousPing.payload.info.reason,
                "Telemetry should only get pings with expected reasons.");
+  Assert.equal(previousPing.payload.info.previousSessionId, null,
+               "The first session must report a null previous session id.");
   Assert.equal(previousPing.payload.info.previousSubsessionId, null,
                "The first subsession must report a null previous subsession id.");
   Assert.equal(previousPing.payload.info.profileSubsessionCounter, 1,
@@ -50,6 +51,7 @@ let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
                "subsessionCounter must be 1 the first time.");
 
   let expectedSubsessionCounter = 1;
+  let expectedPreviousSessionId = previousPing.payload.info.sessionId;
 
   for (let i = 1; i < list.length; i++) {
     let currentPing = yield TelemetryArchive.promiseArchivedPingById(list[i].id);
@@ -59,6 +61,8 @@ let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
 
     Assert.equal(aExpectedReasons.shift(), currentInfo.reason,
                  "Telemetry should only get pings with expected reasons.");
+    Assert.equal(currentInfo.previousSessionId, expectedPreviousSessionId,
+                 "Telemetry must correctly chain session identifiers.");
     Assert.equal(currentInfo.previousSubsessionId, previousInfo.subsessionId,
                  "Telemetry must correctly chain subsession identifiers.");
     Assert.equal(currentInfo.profileSubsessionCounter, previousInfo.profileSubsessionCounter + 1,
@@ -70,8 +74,13 @@ let promiseValidateArchivedPings = Task.async(function*(aExpectedReasons) {
     previousPing = currentPing;
     // Reset the expected subsession counter, if required. Otherwise increment the expected
     // subsession counter.
-    expectedSubsessionCounter =
-      SESSION_END_PING_REASONS.has(currentInfo.reason) ? 1 : (expectedSubsessionCounter + 1);
+    // If this is the final subsession of a session we need to update expected values accordingly.
+    if (SESSION_END_PING_REASONS.has(currentInfo.reason)) {
+      expectedSubsessionCounter = 1;
+      expectedPreviousSessionId = currentInfo.sessionId;
+    } else {
+      expectedSubsessionCounter++;
+    }
   }
 });
 
@@ -82,7 +91,7 @@ function run_test() {
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
-  Preferences.set(PREF_ENABLED, true);
+  Preferences.set(PREF_TELEMETRY_ENABLED, true);
 
   run_next_test();
 }
@@ -95,7 +104,7 @@ add_task(function* test_subsessionsChaining() {
 
   const PREF_TEST = PREF_BRANCH + "test.pref1";
   const PREFS_TO_WATCH = new Map([
-    [PREF_TEST, TelemetryEnvironment.RECORD_PREF_VALUE],
+    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_VALUE}],
   ]);
   Preferences.reset(PREF_TEST);
 
@@ -223,5 +232,6 @@ add_task(function* test_subsessionsChaining() {
 });
 
 add_task(function* () {
+  yield TelemetrySend.shutdown();
   do_test_finished();
 });

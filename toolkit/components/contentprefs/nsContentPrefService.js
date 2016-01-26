@@ -59,7 +59,7 @@ ContentPrefService.prototype = {
       Ci.nsIContentPrefService,
       Ci.nsISupports,
     ];
-    if (supportedIIDs.some(function (i) iid.equals(i)))
+    if (supportedIIDs.some(i => iid.equals(i)))
       return this;
     if (iid.equals(Ci.nsIContentPrefService2)) {
       if (!this._contentPrefService2) {
@@ -525,7 +525,7 @@ ContentPrefService.prototype = {
    * Notify all observers about the removal of a preference.
    */
   _notifyPrefRemoved: function ContentPrefService__notifyPrefRemoved(aGroup, aName) {
-    for each (var observer in this._getObservers(aName)) {
+    for (var observer of this._getObservers(aName)) {
       try {
         observer.onContentPrefRemoved(aGroup, aName);
       }
@@ -539,7 +539,7 @@ ContentPrefService.prototype = {
    * Notify all observers about a preference change.
    */
   _notifyPrefSet: function ContentPrefService__notifyPrefSet(aGroup, aName, aValue) {
-    for each (var observer in this._getObservers(aName)) {
+    for (var observer of this._getObservers(aName)) {
       try {
         observer.onContentPrefSet(aGroup, aName, aValue);
       }
@@ -1070,7 +1070,9 @@ ContentPrefService.prototype = {
       }
       // If the connection isn't ready after we open the database, that means
       // the database has been corrupted, so we back it up and then recreate it.
-      catch (e if e.result == Cr.NS_ERROR_FILE_CORRUPTED) {
+      catch (e) {
+        if (e.result != Cr.NS_ERROR_FILE_CORRUPTED)
+          throw e;
         dbConnection = this._dbBackUpAndRecreate(dbService, dbFile,
                                                  dbConnection);
       }

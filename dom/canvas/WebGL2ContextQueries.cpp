@@ -6,6 +6,8 @@
 #include "WebGL2Context.h"
 #include "GLContext.h"
 #include "WebGLQuery.h"
+#include "gfxPrefs.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
 
@@ -100,7 +102,7 @@ WebGL2Context::CreateQuery()
          */
     }
 
-    nsRefPtr<WebGLQuery> globj = new WebGLQuery(this);
+    RefPtr<WebGLQuery> globj = new WebGLQuery(this);
 
     return globj.forget();
 }
@@ -255,6 +257,7 @@ WebGL2Context::EndQuery(GLenum target)
     }
 
     UpdateBoundQuery(target, nullptr);
+    NS_DispatchToCurrentThread(new WebGLQuery::AvailableRunnable(activeQuery));
 }
 
 already_AddRefed<WebGLQuery>
@@ -275,9 +278,27 @@ WebGL2Context::GetQuery(GLenum target, GLenum pname)
     }
 
     WebGLRefPtr<WebGLQuery>& targetSlot = GetQuerySlotByTarget(target);
+    RefPtr<WebGLQuery> tmp = targetSlot.get();
+    if (tmp && tmp->mType != target) {
+        // Query in slot doesn't match target
+        return nullptr;
+    }
 
-    nsRefPtr<WebGLQuery> tmp = targetSlot.get();
     return tmp.forget();
+}
+
+static bool
+ValidateQueryEnum(WebGLContext* webgl, GLenum pname, const char* info)
+{
+    switch (pname) {
+    case LOCAL_GL_QUERY_RESULT_AVAILABLE:
+    case LOCAL_GL_QUERY_RESULT:
+        return true;
+
+    default:
+        webgl->ErrorInvalidEnum("%s: invalid pname: %s", info, webgl->EnumName(pname));
+        return false;
+    }
 }
 
 void
@@ -287,6 +308,9 @@ WebGL2Context::GetQueryParameter(JSContext*, WebGLQuery* query, GLenum pname,
     retval.set(JS::NullValue());
 
     if (IsContextLost())
+        return;
+
+    if (!ValidateQueryEnum(this, pname, "getQueryParameter"))
         return;
 
     if (!query) {
@@ -318,6 +342,14 @@ WebGL2Context::GetQueryParameter(JSContext*, WebGLQuery* query, GLenum pname,
          *     mean that query->mGLName is not a query object yet.
          */
         ErrorInvalidOperation("getQueryObject: `query` has never been active.");
+        return;
+    }
+
+    // We must wait for an event loop before the query can be available
+    if (!query->mCanBeAvailable && !gfxPrefs::WebGLImmediateQueries()) {
+        if (pname == LOCAL_GL_QUERY_RESULT_AVAILABLE) {
+            retval.set(JS::BooleanValue(false));
+        }
         return;
     }
 

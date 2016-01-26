@@ -112,7 +112,7 @@ FileLocation::GetURIString(nsACString& aResult) const
   if (mBaseFile) {
     net_GetURLSpecFromActualFile(mBaseFile, aResult);
   } else if (mBaseZip) {
-    nsRefPtr<nsZipHandle> handler = mBaseZip->GetFD();
+    RefPtr<nsZipHandle> handler = mBaseZip->GetFD();
     handler->mFile.GetURIString(aResult);
   }
   if (IsZip()) {
@@ -128,7 +128,7 @@ FileLocation::GetBaseFile()
 {
 #if !defined(MOZILLA_XPCOMRT_API)
   if (IsZip() && mBaseZip) {
-    nsRefPtr<nsZipHandle> handler = mBaseZip->GetFD();
+    RefPtr<nsZipHandle> handler = mBaseZip->GetFD();
     if (handler) {
       return handler->mFile.GetBaseFile();
     }
@@ -156,11 +156,11 @@ FileLocation::Equals(const FileLocation& aFile) const
   const FileLocation* b = &aFile;
 #if !defined(MOZILLA_XPCOMRT_API)
   if (a->mBaseZip) {
-    nsRefPtr<nsZipHandle> handler = a->mBaseZip->GetFD();
+    RefPtr<nsZipHandle> handler = a->mBaseZip->GetFD();
     a = &handler->mFile;
   }
   if (b->mBaseZip) {
-    nsRefPtr<nsZipHandle> handler = b->mBaseZip->GetFD();
+    RefPtr<nsZipHandle> handler = b->mBaseZip->GetFD();
     b = &handler->mFile;
   }
 #endif // !defined(MOZILLA_XPCOMRT_API)
@@ -233,7 +233,11 @@ FileLocation::Data::Copy(char* aBuf, uint32_t aLen)
                        aLen, true);
     uint32_t readLen;
     cursor.Copy(&readLen);
-    return (readLen == aLen) ? NS_OK : NS_ERROR_FILE_CORRUPTED;
+    if (readLen != aLen) {
+      nsZipArchive::sFileCorruptedReason = "FileLocation::Data: insufficient data";
+      return NS_ERROR_FILE_CORRUPTED;
+    }
+    return NS_OK;
   }
 #endif // !defined(MOZILLA_XPCOMRT_API)
   return NS_ERROR_NOT_INITIALIZED;

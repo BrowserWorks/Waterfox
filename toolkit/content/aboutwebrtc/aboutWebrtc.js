@@ -5,7 +5,7 @@
 
 /* global WebrtcGlobalInformation, document */
 
-const Cu = Components.utils;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -24,11 +24,11 @@ const formatString = strings.formatStringFromName;
 const LOGFILE_NAME_DEFAULT = "aboutWebrtc.html";
 const WEBRTC_TRACE_ALL = 65535;
 
-let reportsRetrieved = new Promise(resolve =>
+var reportsRetrieved = new Promise(resolve =>
   WebrtcGlobalInformation.getAllStats(stats => resolve(stats))
 );
 
-let logRetrieved = new Promise(resolve =>
+var logRetrieved = new Promise(resolve =>
   WebrtcGlobalInformation.getLogging("", log => resolve(log))
 );
 
@@ -62,7 +62,7 @@ function onLoad() {
     });
 }
 
-let ControlSet = {
+var ControlSet = {
   render: function() {
     let controls = document.createElement("div");
     let control = document.createElement("div");
@@ -273,7 +273,7 @@ AecLogging.prototype.onClick = function () {
   this.update();
 };
 
-let AboutWebRTC = {
+var AboutWebRTC = {
   _reports: [],
   _log: [],
 
@@ -524,10 +524,9 @@ RTPStats.prototype = {
     return line;
   },
 
-  renderTransportStats: function(stats, type) {
-    let label = this.labelize(type);
+  renderTransportStats: function(stats, typeLabel) {
     let time  = new Date(stats.timestamp).toTimeString();
-    let statsString = `${label}: ${time} ${stats.type} SSRC: ${stats.ssrc}`;
+    let statsString = `${typeLabel}: ${time} ${stats.type} SSRC: ${stats.ssrc}`;
 
     if (stats.packetsReceived) {
       statsString += ` ${getString("received_label")}: ${stats.packetsReceived} ${getString("packets")}`;
@@ -565,18 +564,14 @@ RTPStats.prototype = {
     }
 
     div.appendChild(this.renderCoderStats(stats));
-    div.appendChild(this.renderTransportStats(stats, getString("local")));
+    div.appendChild(this.renderTransportStats(stats, getString("typeLocal")));
 
     if (stats.remoteId && stats.remoteRtpStats) {
-      div.appendChild(this.renderTransportStats(stats.remoteRtpStats, getString("remote")));
+      div.appendChild(this.renderTransportStats(stats.remoteRtpStats, getString("typeRemote")));
     }
 
     return div;
   },
-
-  labelize: function(label) {
-    return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
-  }
 };
 
 function ICEStats(report) {
@@ -635,7 +630,7 @@ ICEStats.prototype = {
         stat = {
           localcandidate: this.candidateToString(local),
           state: pair.state,
-          priority: pair.mozPriority,
+          priority: pair.priority,
           nominated: pair.nominated,
           selected: pair.selected
         };

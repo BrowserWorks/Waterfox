@@ -35,13 +35,6 @@ static BOOL CALLBACK EnumDisplayMonitorsCallback(HMONITOR hMonitor, HDC hdc,
     failureMsgs->push_back("FAIL GetMonitorInfoA call failed");
   }
 
-  DISPLAY_DEVICEA dd;
-  ZeroMemory(&dd, sizeof(dd));
-  dd.cb = sizeof(dd);
-  if (!EnumDisplayDevicesA(miex.szDevice, 0, &dd, 1)) {
-    failureMsgs->push_back("FAIL EnumDisplayDevicesA call failed");
-  }
-
   ULONG numVideoOutputs = 0;
   IOPMVideoOutput** opmVideoOutputArray = nullptr;
   HRESULT hr = sOPMGetVideoOutputsFromHMONITORProc(hMonitor,
@@ -49,12 +42,19 @@ static BOOL CALLBACK EnumDisplayMonitorsCallback(HMONITOR hMonitor, HDC hdc,
                                                    &numVideoOutputs,
                                                    &opmVideoOutputArray);
   if (S_OK != hr) {
-    if (0x8007001f != hr && 0x80070032 != hr) {
+    if (0x8007001f != hr && 0x80070032 != hr && 0xc02625e5 != hr) {
       char msg[100];
       sprintf(msg, "FAIL OPMGetVideoOutputsFromHMONITOR call failed: HRESULT=0x%08x", hr);
       failureMsgs->push_back(msg);
     }
     return true;
+  }
+
+  DISPLAY_DEVICEA dd;
+  ZeroMemory(&dd, sizeof(dd));
+  dd.cb = sizeof(dd);
+  if (!EnumDisplayDevicesA(miex.szDevice, 0, &dd, 1)) {
+    failureMsgs->push_back("FAIL EnumDisplayDevicesA call failed");
   }
 
   for (ULONG i = 0; i < numVideoOutputs; ++i) {
@@ -126,5 +126,5 @@ TestOuputProtectionAPIs()
   return;
 }
 
-} // gmptest
-} // mozilla
+} // namespace gmptest
+} // namespace mozilla

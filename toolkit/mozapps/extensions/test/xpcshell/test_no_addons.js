@@ -8,7 +8,7 @@
 Components.utils.import("resource://gre/modules/Promise.jsm");
 
 // Load XPI Provider to get schema version ID
-let XPIScope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
+var XPIScope = Components.utils.import("resource://gre/modules/addons/XPIProvider.jsm");
 const DB_SCHEMA = XPIScope.DB_SCHEMA;
 
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
@@ -56,14 +56,14 @@ function check_empty_state() {
 // bootstrap add-ons preference is not found
 // add-on directory state preference is an empty array
 // no pending operations
-add_task(function first_run() {
+add_task(function* first_run() {
   startupManager();
   check_empty_state();
   yield true;
 });
 
 // Now do something that causes a DB load, and re-check
-function trigger_db_load() {
+function* trigger_db_load() {
   let addonDefer = Promise.defer();
   AddonManager.getAddonsByTypes(['extension'], addonDefer.resolve);
   let addonList = yield addonDefer.promise;
@@ -76,7 +76,7 @@ function trigger_db_load() {
 add_task(trigger_db_load);
 
 // Now restart the manager and check again
-add_task(function restart_and_recheck() {
+add_task(function* restart_and_recheck() {
   restartManager();
   check_empty_state();
   yield true;

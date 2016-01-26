@@ -38,20 +38,16 @@ namespace dom {
 #define TEST_PREFERENCE_ENABLE "media.webspeech.test.enable"
 #define TEST_PREFERENCE_FAKE_FSM_EVENTS "media.webspeech.test.fake_fsm_events"
 #define TEST_PREFERENCE_FAKE_RECOGNITION_SERVICE "media.webspeech.test.fake_recognition_service"
+#define TEST_PREFERENCE_RECOGNITION_ENABLE "media.webspeech.recognition.enable"
+#define TEST_PREFERENCE_RECOGNITION_FORCE_ENABLE "media.webspeech.recognition.force_enable"
 #define SPEECH_RECOGNITION_TEST_EVENT_REQUEST_TOPIC "SpeechRecognitionTest:RequestEvent"
 #define SPEECH_RECOGNITION_TEST_END_TOPIC "SpeechRecognitionTest:End"
 
 class GlobalObject;
 class SpeechEvent;
 
-#ifdef PR_LOGGING
-PRLogModuleInfo* GetSpeechRecognitionLog();
-#define SR_LOG(...) PR_LOG(GetSpeechRecognitionLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#else
-#define SR_LOG(...)
-#endif
-
-already_AddRefed<nsISpeechRecognitionService> GetSpeechRecognitionService();
+LogModule* GetSpeechRecognitionLog();
+#define SR_LOG(...) MOZ_LOG(GetSpeechRecognitionLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 class SpeechRecognition final : public DOMEventTargetHelper,
                                 public nsIObserver,
@@ -62,35 +58,38 @@ public:
   explicit SpeechRecognition(nsPIDOMWindow* aOwnerWindow);
 
   NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SpeechRecognition, DOMEventTargetHelper)
 
   NS_DECL_NSIOBSERVER
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  static bool IsAuthorized(JSContext* aCx, JSObject* aGlobal);
 
   static already_AddRefed<SpeechRecognition>
   Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);
 
-  already_AddRefed<SpeechGrammarList> GetGrammars(ErrorResult& aRv) const;
+  already_AddRefed<SpeechGrammarList> Grammars() const;
 
-  void SetGrammars(mozilla::dom::SpeechGrammarList& aArg, ErrorResult& aRv);
+  void SetGrammars(mozilla::dom::SpeechGrammarList& aArg);
 
-  void GetLang(nsString& aRetVal, ErrorResult& aRv) const;
+  void GetLang(nsString& aRetVal) const;
 
-  void SetLang(const nsAString& aArg, ErrorResult& aRv);
+  void SetLang(const nsAString& aArg);
 
   bool GetContinuous(ErrorResult& aRv) const;
 
   void SetContinuous(bool aArg, ErrorResult& aRv);
 
-  bool GetInterimResults(ErrorResult& aRv) const;
+  bool InterimResults() const;
 
-  void SetInterimResults(bool aArg, ErrorResult& aRv);
+  void SetInterimResults(bool aArg);
 
-  uint32_t GetMaxAlternatives(ErrorResult& aRv) const;
+  uint32_t MaxAlternatives() const;
 
-  void SetMaxAlternatives(uint32_t aArg, ErrorResult& aRv);
+  void SetMaxAlternatives(uint32_t aArg);
 
   void GetServiceURI(nsString& aRetVal, ErrorResult& aRv) const;
 
@@ -128,8 +127,8 @@ public:
 
   void DispatchError(EventType aErrorType, SpeechRecognitionErrorCode aErrorCode, const nsAString& aMessage);
   uint32_t FillSamplesBuffer(const int16_t* aSamples, uint32_t aSampleCount);
-  uint32_t SplitSamplesBuffer(const int16_t* aSamplesBuffer, uint32_t aSampleCount, nsTArray<nsRefPtr<SharedBuffer>>& aResult);
-  AudioSegment* CreateAudioSegment(nsTArray<nsRefPtr<SharedBuffer>>& aChunks);
+  uint32_t SplitSamplesBuffer(const int16_t* aSamplesBuffer, uint32_t aSampleCount, nsTArray<RefPtr<SharedBuffer>>& aResult);
+  AudioSegment* CreateAudioSegment(nsTArray<RefPtr<SharedBuffer>>& aChunks);
   void FeedAudioData(already_AddRefed<SharedBuffer> aSamples, uint32_t aDuration, MediaStreamListener* aProvider, TrackRate aTrackRate);
 
   static struct TestConfig
@@ -176,6 +175,9 @@ private:
   void SetState(FSMState state);
   bool StateBetween(FSMState begin, FSMState end);
 
+  bool SetRecognitionService(ErrorResult& aRv);
+  bool ValidateAndSetGrammarList(ErrorResult& aRv);
+
   class GetUserMediaSuccessCallback : public nsIDOMGetUserMediaSuccessCallback
   {
   public:
@@ -189,7 +191,7 @@ private:
   private:
     virtual ~GetUserMediaSuccessCallback() {}
 
-    nsRefPtr<SpeechRecognition> mRecognition;
+    RefPtr<SpeechRecognition> mRecognition;
   };
 
   class GetUserMediaErrorCallback : public nsIDOMGetUserMediaErrorCallback
@@ -205,7 +207,7 @@ private:
   private:
     virtual ~GetUserMediaErrorCallback() {}
 
-    nsRefPtr<SpeechRecognition> mRecognition;
+    RefPtr<SpeechRecognition> mRecognition;
   };
 
   NS_IMETHOD StartRecording(DOMMediaStream* aDOMStream);
@@ -230,8 +232,8 @@ private:
   void AbortSilently(SpeechEvent* aEvent);
   void AbortError(SpeechEvent* aEvent);
 
-  nsRefPtr<DOMMediaStream> mDOMStream;
-  nsRefPtr<SpeechStreamListener> mSpeechListener;
+  RefPtr<DOMMediaStream> mDOMStream;
+  RefPtr<SpeechStreamListener> mSpeechListener;
   nsCOMPtr<nsISpeechRecognitionService> mRecognitionService;
 
   FSMState mCurrentState;
@@ -243,11 +245,37 @@ private:
 
   // buffer holds one chunk of mAudioSamplesPerChunk
   // samples before feeding it to mEndpointer
-  nsRefPtr<SharedBuffer> mAudioSamplesBuffer;
+  RefPtr<SharedBuffer> mAudioSamplesBuffer;
   uint32_t mBufferedSamples;
 
   nsCOMPtr<nsITimer> mSpeechDetectionTimer;
   bool mAborted;
+
+  nsString mLang;
+
+  RefPtr<SpeechGrammarList> mSpeechGrammarList;
+
+  // WebSpeechAPI (http://bit.ly/1gIl7DC) states:
+  //
+  // 1. Default value MUST be false
+  // 2. If true, interim results SHOULD be returned
+  // 3. If false, interim results MUST NOT be returned
+  //
+  // Pocketsphinx does not return interm results; so, defaulting
+  // mInterimResults to false, then ignoring its subsequent value
+  // is a conforming implementation.
+  bool mInterimResults;
+
+  // WebSpeechAPI (http://bit.ly/1JAiqeo) states:
+  //
+  // 1. Default value is 1
+  // 2. Subsequent value is the "maximum number of SpeechRecognitionAlternatives per result"
+  //
+  // Pocketsphinx can only return at maximum a single SpeechRecognitionAlternative
+  // per SpeechRecognitionResult. So defaulting mMaxAlternatives to 1, for all non
+  // zero values ignoring mMaxAlternatives while for a 0 value returning no
+  // SpeechRecognitionAlternative per result is a conforming implementation.
+  uint32_t mMaxAlternatives;
 
   void ProcessTestEventRequest(nsISupports* aSubject, const nsAString& aEventName);
 
@@ -272,8 +300,8 @@ public:
 
   NS_IMETHOD Run() override;
   AudioSegment* mAudioSegment;
-  nsRefPtr<SpeechRecognitionResultList> mRecognitionResultList; // TODO: make this a session being passed which also has index and stuff
-  nsRefPtr<SpeechRecognitionError> mError;
+  RefPtr<SpeechRecognitionResultList> mRecognitionResultList; // TODO: make this a session being passed which also has index and stuff
+  RefPtr<SpeechRecognitionError> mError;
 
   friend class SpeechRecognition;
 private:
@@ -283,7 +311,7 @@ private:
   // of the data (i.e., the SpeechStreamListener) to ensure it
   // is kept alive (and keeps SpeechRecognition alive) until this
   // event gets processed.
-  nsRefPtr<MediaStreamListener> mProvider;
+  RefPtr<MediaStreamListener> mProvider;
   SpeechRecognition::EventType mType;
   TrackRate mTrackRate;
 };
@@ -295,6 +323,7 @@ ToSupports(dom::SpeechRecognition* aRec)
 {
   return ToSupports(static_cast<DOMEventTargetHelper*>(aRec));
 }
+
 } // namespace mozilla
 
 #endif

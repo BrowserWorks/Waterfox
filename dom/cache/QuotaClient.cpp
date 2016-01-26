@@ -8,9 +8,9 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/cache/Manager.h"
-#include "mozilla/dom/cache/OfflineStorage.h"
 #include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/dom/quota/UsageInfo.h"
+#include "mozilla/ipc/BackgroundParent.h"
 #include "nsIFile.h"
 #include "nsISimpleEnumerator.h"
 #include "nsThreadUtils.h"
@@ -18,12 +18,13 @@
 namespace {
 
 using mozilla::DebugOnly;
+using mozilla::dom::ContentParentId;
 using mozilla::dom::cache::Manager;
-using mozilla::dom::cache::OfflineStorage;
 using mozilla::dom::quota::Client;
 using mozilla::dom::quota::PersistenceType;
 using mozilla::dom::quota::QuotaManager;
 using mozilla::dom::quota::UsageInfo;
+using mozilla::ipc::AssertIsOnBackgroundThread;
 
 static nsresult
 GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
@@ -62,41 +63,6 @@ GetBodyUsage(nsIFile* aDir, UsageInfo* aUsageInfo)
   return NS_OK;
 }
 
-class StoragesDestroyedRunnable final : public nsRunnable
-{
-  uint32_t mExpectedCalls;
-  nsCOMPtr<nsIRunnable> mCallback;
-
-public:
-  StoragesDestroyedRunnable(uint32_t aExpectedCalls, nsIRunnable* aCallback)
-    : mExpectedCalls(aExpectedCalls)
-    , mCallback(aCallback)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(mExpectedCalls);
-    MOZ_ASSERT(mCallback);
-  }
-
-  NS_IMETHOD Run() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(mExpectedCalls);
-    mExpectedCalls -= 1;
-    if (!mExpectedCalls) {
-      mCallback->Run();
-    }
-    return NS_OK;
-  }
-
-private:
-  ~StoragesDestroyedRunnable()
-  {
-    // This is a callback runnable and not used for thread dispatch.  It should
-    // always be destroyed on the main thread.
-    MOZ_ASSERT(NS_IsMainThread());
-  }
-};
-
 class CacheQuotaClient final : public Client
 {
 public:
@@ -110,7 +76,13 @@ public:
   InitOrigin(PersistenceType aPersistenceType, const nsACString& aGroup,
              const nsACString& aOrigin, UsageInfo* aUsageInfo) override
   {
-    return NS_OK;
+    // The QuotaManager passes a nullptr UsageInfo if there is no quota being
+    // enforced against the origin.
+    if (!aUsageInfo) {
+      return NS_OK;
+    }
+
+    return GetUsageForOrigin(aPersistenceType, aGroup, aOrigin, aUsageInfo);
   }
 
   virtual nsresult
@@ -118,6 +90,8 @@ public:
                     const nsACString& aOrigin,
                     UsageInfo* aUsageInfo) override
   {
+    MOZ_ASSERT(aUsageInfo);
+
     QuotaManager* qm = QuotaManager::Get();
     MOZ_ASSERT(qm);
 
@@ -161,10 +135,11 @@ public:
         continue;
       }
 
-      // Ignore transient sqlite files
+      // Ignore transient sqlite files and marker files
       if (leafName.EqualsLiteral("caches.sqlite-journal") ||
           leafName.EqualsLiteral("caches.sqlite-shm") ||
-          leafName.Find(NS_LITERAL_CSTRING("caches.sqlite-mj"), false, 0, 0) == 0) {
+          leafName.Find(NS_LITERAL_CSTRING("caches.sqlite-mj"), false, 0, 0) == 0 ||
+          leafName.EqualsLiteral("context_open.marker")) {
         continue;
       }
 
@@ -200,44 +175,54 @@ public:
   }
 
   virtual void
-  WaitForStoragesToComplete(nsTArray<nsIOfflineStorage*>& aStorages,
-                            nsIRunnable* aCallback) override
+  AbortOperations(const nsACString& aOrigin) override
   {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(!aStorages.IsEmpty());
+    AssertIsOnBackgroundThread();
 
-    nsCOMPtr<nsIRunnable> callback =
-      new StoragesDestroyedRunnable(aStorages.Length(), aCallback);
-
-    for (uint32_t i = 0; i < aStorages.Length(); ++i) {
-      MOZ_ASSERT(aStorages[i]->GetClient());
-      MOZ_ASSERT(aStorages[i]->GetClient()->GetType() == Client::DOMCACHE);
-      nsRefPtr<OfflineStorage> storage =
-        static_cast<OfflineStorage*>(aStorages[i]);
-      storage->AddDestroyCallback(callback);
-    }
+    Manager::Abort(aOrigin);
   }
 
+  virtual void
+  AbortOperationsForProcess(ContentParentId aContentParentId) override
+  {
+    // The Cache and Context can be shared by multiple client processes.  They
+    // are not exclusively owned by a single process.
+    //
+    // As far as I can tell this is used by QuotaManager to abort operations
+    // when a particular process goes away.  We definitely don't want this
+    // since we are shared.  Also, the Cache actor code already properly
+    // handles asynchronous actor destruction when the child process dies.
+    //
+    // Therefore, do nothing here.
+  }
+
+  virtual void
+  StartIdleMaintenance() override
+  { }
+
+  virtual void
+  StopIdleMaintenance() override
+  { }
 
   virtual void
   ShutdownWorkThreads() override
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
 
     // spins the event loop and synchronously shuts down all Managers
-    Manager::ShutdownAllOnMainThread();
+    Manager::ShutdownAll();
   }
 
 private:
   ~CacheQuotaClient()
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
   }
 
   NS_INLINE_DECL_REFCOUNTING(CacheQuotaClient, override)
 };
 
-} // anonymous namespace;
+} // namespace
 
 namespace mozilla {
 namespace dom {
@@ -245,7 +230,9 @@ namespace cache {
 
 already_AddRefed<quota::Client> CreateQuotaClient()
 {
-  nsRefPtr<CacheQuotaClient> ref = new CacheQuotaClient();
+  AssertIsOnBackgroundThread();
+
+  RefPtr<CacheQuotaClient> ref = new CacheQuotaClient();
   return ref.forget();
 }
 

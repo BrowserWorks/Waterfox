@@ -37,14 +37,14 @@ GenerateRequest(IDBIndex* aIndex)
 
   IDBTransaction* transaction = aIndex->ObjectStore()->Transaction();
 
-  nsRefPtr<IDBRequest> request =
+  RefPtr<IDBRequest> request =
     IDBRequest::Create(aIndex, transaction->Database(), transaction);
   MOZ_ASSERT(request);
 
   return request.forget();
 }
 
-} // anonymous namespace
+} // namespace
 
 IDBIndex::IDBIndex(IDBObjectStore* aObjectStore, const IndexMetadata* aMetadata)
   : mObjectStore(aObjectStore)
@@ -75,7 +75,7 @@ IDBIndex::Create(IDBObjectStore* aObjectStore,
   MOZ_ASSERT(aObjectStore);
   aObjectStore->AssertIsOnOwningThread();
 
-  nsRefPtr<IDBIndex> index = new IDBIndex(aObjectStore, &aMetadata);
+  RefPtr<IDBIndex> index = new IDBIndex(aObjectStore, &aMetadata);
 
   return index.forget();
 }
@@ -168,6 +168,15 @@ IDBIndex::MultiEntry() const
   return mMetadata->multiEntry();
 }
 
+bool
+IDBIndex::LocaleAware() const
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mMetadata);
+
+  return mMetadata->locale().IsEmpty();
+}
+
 const KeyPath&
 IDBIndex::GetKeyPath() const
 {
@@ -175,6 +184,37 @@ IDBIndex::GetKeyPath() const
   MOZ_ASSERT(mMetadata);
 
   return mMetadata->keyPath();
+}
+
+void
+IDBIndex::GetLocale(nsString& aLocale) const
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mMetadata);
+
+  if (mMetadata->locale().IsEmpty()) {
+    SetDOMStringToNull(aLocale);
+  } else {
+    aLocale.AssignWithConversion(mMetadata->locale());
+  }
+}
+
+const nsCString&
+IDBIndex::Locale() const
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mMetadata);
+
+  return mMetadata->locale();
+}
+
+bool
+IDBIndex::IsAutoLocale() const
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mMetadata);
+
+  return mMetadata->autoLocale();
 }
 
 nsPIDOMWindow*
@@ -223,13 +263,18 @@ IDBIndex::GetInternal(bool aKeyOnly,
 {
   AssertIsOnOwningThread();
 
+  if (mDeletedMetadata) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
+    return nullptr;
+  }
+
   IDBTransaction* transaction = mObjectStore->Transaction();
   if (!transaction->IsOpen()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
-  nsRefPtr<IDBKeyRange> keyRange;
+  RefPtr<IDBKeyRange> keyRange;
   aRv = IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange));
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
@@ -244,24 +289,18 @@ IDBIndex::GetInternal(bool aKeyOnly,
   const int64_t objectStoreId = mObjectStore->Id();
   const int64_t indexId = Id();
 
-  OptionalKeyRange optionalKeyRange;
-  if (keyRange) {
-    SerializedKeyRange serializedKeyRange;
-    keyRange->ToSerialized(serializedKeyRange);
-    optionalKeyRange = serializedKeyRange;
-  } else {
-    optionalKeyRange = void_t();
-  }
+  SerializedKeyRange serializedKeyRange;
+  keyRange->ToSerialized(serializedKeyRange);
 
   RequestParams params;
 
   if (aKeyOnly) {
-    params = IndexGetKeyParams(objectStoreId, indexId, optionalKeyRange);
+    params = IndexGetKeyParams(objectStoreId, indexId, serializedKeyRange);
   } else {
-    params = IndexGetParams(objectStoreId, indexId, optionalKeyRange);
+    params = IndexGetParams(objectStoreId, indexId, serializedKeyRange);
   }
 
-  nsRefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(this);
   MOZ_ASSERT(request);
 
   if (aKeyOnly) {
@@ -306,13 +345,18 @@ IDBIndex::GetAllInternal(bool aKeysOnly,
 {
   AssertIsOnOwningThread();
 
+  if (mDeletedMetadata) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
+    return nullptr;
+  }
+
   IDBTransaction* transaction = mObjectStore->Transaction();
   if (!transaction->IsOpen()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
-  nsRefPtr<IDBKeyRange> keyRange;
+  RefPtr<IDBKeyRange> keyRange;
   aRv = IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange));
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
@@ -340,7 +384,7 @@ IDBIndex::GetAllInternal(bool aKeysOnly,
     params = IndexGetAllParams(objectStoreId, indexId, optionalKeyRange, limit);
   }
 
-  nsRefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
@@ -387,13 +431,18 @@ IDBIndex::OpenCursorInternal(bool aKeysOnly,
 {
   AssertIsOnOwningThread();
 
+  if (mDeletedMetadata) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
+    return nullptr;
+  }
+
   IDBTransaction* transaction = mObjectStore->Transaction();
   if (!transaction->IsOpen()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
-  nsRefPtr<IDBKeyRange> keyRange;
+  RefPtr<IDBKeyRange> keyRange;
   aRv = IDBKeyRange::FromJSVal(aCx, aRange, getter_AddRefs(keyRange));
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
@@ -434,7 +483,7 @@ IDBIndex::OpenCursorInternal(bool aKeysOnly,
     params = Move(openParams);
   }
 
-  nsRefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
@@ -483,13 +532,18 @@ IDBIndex::Count(JSContext* aCx,
 {
   AssertIsOnOwningThread();
 
+  if (mDeletedMetadata) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR);
+    return nullptr;
+  }
+
   IDBTransaction* transaction = mObjectStore->Transaction();
   if (!transaction->IsOpen()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
-  nsRefPtr<IDBKeyRange> keyRange;
+  RefPtr<IDBKeyRange> keyRange;
   aRv = IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange));
   if (aRv.Failed()) {
     return nullptr;
@@ -507,7 +561,7 @@ IDBIndex::Count(JSContext* aCx,
     params.optionalKeyRange() = void_t();
   }
 
-  nsRefPtr<IDBRequest> request = GenerateRequest(this);
+  RefPtr<IDBRequest> request = GenerateRequest(this);
   MOZ_ASSERT(request);
 
   IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "

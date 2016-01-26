@@ -17,7 +17,6 @@
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsIFile.h"
-#include "nsNetUtil.h"
 #include "nsIStringBundle.h"
 #include "nsIPrintSettingsService.h"
 #include "nsIDOMWindow.h"
@@ -117,7 +116,7 @@ class nsPrintDialogWidgetGTK {
     nsPrintDialogWidgetGTK(nsIDOMWindow *aParent, nsIPrintSettings *aPrintSettings);
     ~nsPrintDialogWidgetGTK() { gtk_widget_destroy(dialog); }
     NS_ConvertUTF16toUTF8 GetUTF8FromBundle(const char* aKey);
-    const gint Run();
+    gint Run();
 
     nsresult ImportSettings(nsIPrintSettings *aNSSettings);
     nsresult ExportSettings(nsIPrintSettings *aNSSettings);
@@ -344,7 +343,7 @@ nsPrintDialogWidgetGTK::OptionWidgetToString(GtkWidget *dropdown)
     return header_footer_tags[index];
 }
 
-const gint
+gint
 nsPrintDialogWidgetGTK::Run()
 {
   const gint response = gtk_dialog_run(GTK_DIALOG(dialog));

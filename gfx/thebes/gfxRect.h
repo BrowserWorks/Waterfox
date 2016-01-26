@@ -12,7 +12,10 @@
 #include "nsRect.h"
 #include "mozilla/gfx/BaseMargin.h"
 #include "mozilla/gfx/BaseRect.h"
+#include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/Assertions.h"
+
+struct gfxQuad;
 
 struct gfxMargin : public mozilla::gfx::BaseMargin<gfxFloat, gfxMargin> {
   typedef mozilla::gfx::BaseMargin<gfxFloat, gfxMargin> Super;
@@ -34,8 +37,8 @@ namespace mozilla {
             eCornerBottomLeft = 3,
             eNumCorners = 4
         };
-    }
-}
+    } // namespace css
+} // namespace mozilla
 #define NS_CORNER_TOP_LEFT mozilla::css::eCornerTopLeft
 #define NS_CORNER_TOP_RIGHT mozilla::css::eCornerTopRight
 #define NS_CORNER_BOTTOM_RIGHT mozilla::css::eCornerBottomRight
@@ -63,8 +66,6 @@ struct gfxRect :
         Super(aPos, aSize) {}
     gfxRect(gfxFloat aX, gfxFloat aY, gfxFloat aWidth, gfxFloat aHeight) :
         Super(aX, aY, aWidth, aHeight) {}
-    MOZ_IMPLICIT gfxRect(const mozilla::gfx::IntRect& aRect) :
-        Super(aRect.x, aRect.y, aRect.width, aRect.height) {}
 
     /**
      * Return true if all components of this rect are within
@@ -137,6 +138,11 @@ struct gfxRect :
         width /= k;
         height /= k;
     }
+
+    /*
+     * Transform this rectangle with aMatrix, resulting in a gfxQuad.
+     */
+    gfxQuad TransformToQuad(const mozilla::gfx::Matrix4x4 &aMatrix) const;
 };
 
 #endif /* GFX_RECT_H */

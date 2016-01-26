@@ -122,10 +122,10 @@ AudioListener::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = aMallocSizeOf(this);
   // AudioNodes are tracked separately
-  amount += mPanners.SizeOfExcludingThis(aMallocSizeOf);
+  amount += mPanners.ShallowSizeOfExcludingThis(aMallocSizeOf);
   return amount;
 }
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 

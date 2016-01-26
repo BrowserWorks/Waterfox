@@ -24,7 +24,7 @@ function check_keyword(aURI, aKeyword) {
   }
 }
 
-function check_orphans() {
+function* check_orphans() {
   let db = yield PlacesUtils.promiseDBConnection();
   let rows = yield db.executeCached(
     `SELECT id FROM moz_keywords k
@@ -44,7 +44,7 @@ function expectNotifications() {
       }
 
       if (name.startsWith("onItemChanged")) {
-        return (id, prop, isAnno, val, lastMod, itemType, parentId, guid, parentGuid) => {
+        return function(id, prop, isAnno, val, lastMod, itemType, parentId, guid, parentGuid, oldVal) {
           if (prop != "keyword")
             return;
           let args = Array.from(arguments, arg => {
@@ -80,7 +80,7 @@ add_task(function test_invalid_input() {
                 /NS_ERROR_ILLEGAL_VALUE/);
 });
 
-add_task(function test_addBookmarkAndKeyword() {
+add_task(function* test_addBookmarkAndKeyword() {
   check_keyword(URI1, null);
   let fc = yield foreign_count(URI1);
   let observer = expectNotifications();
@@ -97,7 +97,7 @@ add_task(function test_addBookmarkAndKeyword() {
                      arguments: [ itemId, "keyword", false, "keyword",
                                   bookmark.lastModified, bookmark.type,
                                   (yield PlacesUtils.promiseItemId(bookmark.parentGuid)),
-                                  bookmark.guid, bookmark.parentGuid ] }
+                                  bookmark.guid, bookmark.parentGuid, "" ] }
                  ]);
   yield PlacesTestUtils.promiseAsyncUpdates();
 
@@ -108,7 +108,7 @@ add_task(function test_addBookmarkAndKeyword() {
   yield check_orphans();
 });
 
-add_task(function test_addBookmarkToURIHavingKeyword() {
+add_task(function* test_addBookmarkToURIHavingKeyword() {
   // The uri has already a keyword.
   check_keyword(URI1, "keyword");
   let fc = yield foreign_count(URI1);
@@ -126,7 +126,7 @@ add_task(function test_addBookmarkToURIHavingKeyword() {
   check_orphans();
 });
 
-add_task(function test_sameKeywordDifferentURI() {
+add_task(function* test_sameKeywordDifferentURI() {
   let fc1 = yield foreign_count(URI1);
   let fc2 = yield foreign_count(URI2);
   let observer = expectNotifications();
@@ -148,12 +148,12 @@ add_task(function test_sameKeywordDifferentURI() {
                                   "keyword", false, "",
                                   bookmark1.lastModified, bookmark1.type,
                                   (yield PlacesUtils.promiseItemId(bookmark1.parentGuid)),
-                                  bookmark1.guid, bookmark1.parentGuid ] },
+                                  bookmark1.guid, bookmark1.parentGuid, "" ] },
                     { name: "onItemChanged",
                      arguments: [ itemId, "keyword", false, "keyword",
                                   bookmark2.lastModified, bookmark2.type,
                                   (yield PlacesUtils.promiseItemId(bookmark2.parentGuid)),
-                                  bookmark2.guid, bookmark2.parentGuid ] }
+                                  bookmark2.guid, bookmark2.parentGuid, "" ] }
                  ]);
   yield PlacesTestUtils.promiseAsyncUpdates();
 
@@ -167,7 +167,7 @@ add_task(function test_sameKeywordDifferentURI() {
   check_orphans();
 });
 
-add_task(function test_sameURIDifferentKeyword() {
+add_task(function* test_sameURIDifferentKeyword() {
   let fc = yield foreign_count(URI2);
   let observer = expectNotifications();
 
@@ -187,13 +187,13 @@ add_task(function test_sameURIDifferentKeyword() {
                                   "keyword", false, "keyword2",
                                   bookmarks[0].lastModified, bookmarks[0].type,
                                   (yield PlacesUtils.promiseItemId(bookmarks[0].parentGuid)),
-                                  bookmarks[0].guid, bookmarks[0].parentGuid ] },
+                                  bookmarks[0].guid, bookmarks[0].parentGuid, "" ] },
                     { name: "onItemChanged",
                      arguments: [ (yield PlacesUtils.promiseItemId(bookmarks[1].guid)),
                                   "keyword", false, "keyword2",
                                   bookmarks[1].lastModified, bookmarks[1].type,
                                   (yield PlacesUtils.promiseItemId(bookmarks[1].parentGuid)),
-                                  bookmarks[1].guid, bookmarks[1].parentGuid ] }
+                                  bookmarks[1].guid, bookmarks[1].parentGuid, "" ] }
                  ]);
   yield PlacesTestUtils.promiseAsyncUpdates();
 
@@ -204,7 +204,7 @@ add_task(function test_sameURIDifferentKeyword() {
   check_orphans();
 });
 
-add_task(function test_removeBookmarkWithKeyword() {
+add_task(function* test_removeBookmarkWithKeyword() {
   let fc = yield foreign_count(URI2);
   let itemId =
     PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
@@ -222,7 +222,7 @@ add_task(function test_removeBookmarkWithKeyword() {
   check_orphans();
 });
 
-add_task(function test_unsetKeyword() {
+add_task(function* test_unsetKeyword() {
   let fc = yield foreign_count(URI2);
   let observer = expectNotifications();
 
@@ -243,19 +243,19 @@ add_task(function test_unsetKeyword() {
                                   "keyword", false, "",
                                   bookmarks[0].lastModified, bookmarks[0].type,
                                   (yield PlacesUtils.promiseItemId(bookmarks[0].parentGuid)),
-                                  bookmarks[0].guid, bookmarks[0].parentGuid ] },
+                                  bookmarks[0].guid, bookmarks[0].parentGuid, "" ] },
                     { name: "onItemChanged",
                      arguments: [ (yield PlacesUtils.promiseItemId(bookmarks[1].guid)),
                                   "keyword", false, "",
                                   bookmarks[1].lastModified, bookmarks[1].type,
                                   (yield PlacesUtils.promiseItemId(bookmarks[1].parentGuid)),
-                                  bookmarks[1].guid, bookmarks[1].parentGuid ] },
+                                  bookmarks[1].guid, bookmarks[1].parentGuid, "" ] },
                     { name: "onItemChanged",
                      arguments: [ (yield PlacesUtils.promiseItemId(bookmarks[2].guid)),
                                   "keyword", false, "",
                                   bookmarks[2].lastModified, bookmarks[2].type,
                                   (yield PlacesUtils.promiseItemId(bookmarks[2].parentGuid)),
-                                  bookmarks[2].guid, bookmarks[2].parentGuid ] }
+                                  bookmarks[2].guid, bookmarks[2].parentGuid, "" ] }
                  ]);
 
   check_keyword(URI1, null);
@@ -266,7 +266,7 @@ add_task(function test_unsetKeyword() {
   check_orphans();
 });
 
-add_task(function test_addRemoveBookmark() {
+add_task(function* test_addRemoveBookmark() {
   let fc = yield foreign_count(URI3);
   let observer = expectNotifications();
 
@@ -286,7 +286,7 @@ add_task(function test_addRemoveBookmark() {
                                   "keyword", false, "keyword",
                                   bookmark.lastModified, bookmark.type,
                                   parentId,
-                                  bookmark.guid, bookmark.parentGuid ] }
+                                  bookmark.guid, bookmark.parentGuid, "" ] }
                  ]);
 
   check_keyword(URI3, null);

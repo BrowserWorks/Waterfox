@@ -16,21 +16,19 @@
 namespace mozilla {
 namespace layers {
 
-HRESULT
-D3D11ShareHandleImage::SetData(const Data& aData)
+D3D11ShareHandleImage::D3D11ShareHandleImage(const gfx::IntSize& aSize,
+                                             const gfx::IntRect& aRect)
+ : Image(nullptr, ImageFormat::D3D11_SHARE_HANDLE_TEXTURE),
+   mSize(aSize),
+   mPictureRect(aRect)
 {
-  NS_ENSURE_TRUE(aData.mTexture, E_POINTER);
-  mTexture = aData.mTexture;
-  mPictureRect = aData.mRegion;
+}
 
-  D3D11_TEXTURE2D_DESC frameDesc;
-  mTexture->GetDesc(&frameDesc);
-
-  mFormat = gfx::SurfaceFormat::B8G8R8A8;
-  mSize.width = frameDesc.Width;
-  mSize.height = frameDesc.Height;
-
-  return S_OK;
+bool
+D3D11ShareHandleImage::AllocateTexture(D3D11RecycleAllocator* aAllocator)
+{
+  mTextureClient = aAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::B8G8R8A8, mSize);
+  return !!mTextureClient;
 }
 
 gfx::IntSize
@@ -42,29 +40,23 @@ D3D11ShareHandleImage::GetSize()
 TextureClient*
 D3D11ShareHandleImage::GetTextureClient(CompositableClient* aClient)
 {
-  if (!mTextureClient) {
-    mTextureClient = TextureClientD3D11::Create(aClient->GetForwarder(),
-                                                mFormat,
-                                                TextureFlags::DEFAULT,
-                                                mTexture,
-                                                mSize);
-  }
   return mTextureClient;
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 D3D11ShareHandleImage::GetAsSourceSurface()
 {
-  if (!mTexture) {
+  RefPtr<ID3D11Texture2D> texture = GetTexture();
+  if (!texture) {
     NS_WARNING("Cannot readback from shared texture because no texture is available.");
     return nullptr;
   }
 
   RefPtr<ID3D11Device> device;
-  mTexture->GetDevice(byRef(device));
+  texture->GetDevice(getter_AddRefs(device));
 
   RefPtr<IDXGIKeyedMutex> keyedMutex;
-  if (FAILED(mTexture->QueryInterface(static_cast<IDXGIKeyedMutex**>(byRef(keyedMutex))))) {
+  if (FAILED(texture->QueryInterface(static_cast<IDXGIKeyedMutex**>(getter_AddRefs(keyedMutex))))) {
     NS_WARNING("Failed to QueryInterface for IDXGIKeyedMutex, strange.");
     return nullptr;
   }
@@ -75,7 +67,7 @@ D3D11ShareHandleImage::GetAsSourceSurface()
   }
 
   D3D11_TEXTURE2D_DESC desc;
-  mTexture->GetDesc(&desc);
+  texture->GetDesc(&desc);
 
   CD3D11_TEXTURE2D_DESC softDesc(desc.Format, desc.Width, desc.Height);
   softDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
@@ -87,7 +79,7 @@ D3D11ShareHandleImage::GetAsSourceSurface()
   RefPtr<ID3D11Texture2D> softTexture;
   HRESULT hr = device->CreateTexture2D(&softDesc,
                                        NULL,
-                                       static_cast<ID3D11Texture2D**>(byRef(softTexture)));
+                                       static_cast<ID3D11Texture2D**>(getter_AddRefs(softTexture)));
 
   if (FAILED(hr)) {
     NS_WARNING("Failed to create 2D staging texture.");
@@ -96,13 +88,13 @@ D3D11ShareHandleImage::GetAsSourceSurface()
   }
 
   RefPtr<ID3D11DeviceContext> context;
-  device->GetImmediateContext(byRef(context));
+  device->GetImmediateContext(getter_AddRefs(context));
   if (!context) {
     keyedMutex->ReleaseSync(0);
     return nullptr;
   }
 
-  context->CopyResource(softTexture, mTexture);
+  context->CopyResource(softTexture, texture);
   keyedMutex->ReleaseSync(0);
 
   RefPtr<gfx::DataSourceSurface> surface =
@@ -137,8 +129,33 @@ D3D11ShareHandleImage::GetAsSourceSurface()
 
 ID3D11Texture2D*
 D3D11ShareHandleImage::GetTexture() const {
-  return mTexture;
+  return static_cast<D3D11TextureData*>(mTextureClient->GetInternalData())->GetD3D11Texture();
 }
 
-} /* layers */
-} /* mozilla */
+already_AddRefed<TextureClient>
+D3D11RecycleAllocator::Allocate(gfx::SurfaceFormat aFormat,
+                                gfx::IntSize aSize,
+                                BackendSelector aSelector,
+                                TextureFlags aTextureFlags,
+                                TextureAllocationFlags aAllocFlags)
+{
+  return CreateD3D11TextureClientWithDevice(aSize, aFormat,
+                                            aTextureFlags, aAllocFlags,
+                                            mDevice, mSurfaceAllocator);
+}
+
+already_AddRefed<TextureClient>
+D3D11RecycleAllocator::CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
+                                             const gfx::IntSize& aSize)
+{
+  RefPtr<TextureClient> textureClient =
+    CreateOrRecycle(aFormat,
+                    aSize,
+                    BackendSelector::Content,
+                    layers::TextureFlags::DEFAULT);
+  return textureClient.forget();
+}
+
+
+} // namespace layers
+} // namespace mozilla

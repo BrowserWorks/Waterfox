@@ -65,8 +65,8 @@ public:
   }
 
 private:
-  nsRefPtr<nsIFilePicker> mFilePicker;
-  nsRefPtr<nsIFilePickerShownCallback> mCallback;
+  RefPtr<nsIFilePicker> mFilePicker;
+  RefPtr<nsIFilePickerShownCallback> mCallback;
 };
 
 class nsBaseFilePickerEnumerator : public nsISimpleEnumerator
@@ -75,9 +75,11 @@ public:
   NS_DECL_ISUPPORTS
 
   explicit nsBaseFilePickerEnumerator(nsPIDOMWindow* aParent,
-                                      nsISimpleEnumerator* iterator)
+                                      nsISimpleEnumerator* iterator,
+                                      int16_t aMode)
     : mIterator(iterator)
     , mParent(aParent)
+    , mMode(aMode)
   {}
 
   NS_IMETHOD
@@ -96,8 +98,31 @@ public:
       return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<nsIDOMFile> domFile = File::CreateFromFile(mParent, localFile);
-    domFile.forget(aResult);
+    RefPtr<File> domFile = File::CreateFromFile(mParent, localFile);
+
+    // Right now we're on the main thread of the chrome process. We need
+    // to call SetIsDirectory on the BlobImpl, but it's preferable not to
+    // call nsIFile::IsDirectory to determine what argument to pass since
+    // IsDirectory does synchronous I/O. It's true that since we've just
+    // been called synchronously directly after nsIFilePicker::Show blocked
+    // the main thread while the picker was being shown and the OS did file
+    // system access, doing more I/O to stat the selected files probably
+    // wouldn't be the end of the world. However, we can simply check
+    // mMode and avoid calling IsDirectory.
+    //
+    // In future we may take advantage of OS X's ability to allow both
+    // files and directories to be picked at the same time, so we do assert
+    // in debug builds that the mMode trick produces the correct results.
+    // If we do add that support maybe it's better to use IsDirectory
+    // directly, but in an nsRunnable punted off to a background thread.
+#ifdef DEBUG
+    bool isDir;
+    localFile->IsDirectory(&isDir);
+    MOZ_ASSERT(isDir == (mMode == nsIFilePicker::modeGetFolder));
+#endif
+    domFile->Impl()->SetIsDirectory(mMode == nsIFilePicker::modeGetFolder);
+
+    nsCOMPtr<nsIDOMBlob>(domFile).forget(aResult);
     return NS_OK;
   }
 
@@ -114,6 +139,7 @@ protected:
 private:
   nsCOMPtr<nsISimpleEnumerator> mIterator;
   nsCOMPtr<nsPIDOMWindow> mParent;
+  int16_t mMode;
 };
 
 NS_IMPL_ISUPPORTS(nsBaseFilePickerEnumerator, nsISimpleEnumerator)
@@ -311,33 +337,34 @@ nsBaseFilePicker::GetMode(int16_t* aMode)
 }
 
 NS_IMETHODIMP
-nsBaseFilePicker::GetDomfile(nsIDOMFile** aDomfile)
+nsBaseFilePicker::GetDomFileOrDirectory(nsISupports** aValue)
 {
   nsCOMPtr<nsIFile> localFile;
   nsresult rv = GetFile(getter_AddRefs(localFile));
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (!localFile) {
-    *aDomfile = nullptr;
+    *aValue = nullptr;
     return NS_OK;
   }
 
-  nsRefPtr<File> domFile = File::CreateFromFile(mParent, localFile);
-  domFile.forget(aDomfile);
+  RefPtr<File> domFile = File::CreateFromFile(mParent, localFile);
+  domFile->Impl()->SetIsDirectory(mMode == nsIFilePicker::modeGetFolder);
+  nsCOMPtr<nsIDOMBlob>(domFile).forget(aValue);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsBaseFilePicker::GetDomfiles(nsISimpleEnumerator** aDomfiles)
+nsBaseFilePicker::GetDomFileOrDirectoryEnumerator(nsISimpleEnumerator** aValue)
 {
   nsCOMPtr<nsISimpleEnumerator> iter;
   nsresult rv = GetFiles(getter_AddRefs(iter));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<nsBaseFilePickerEnumerator> retIter =
-    new nsBaseFilePickerEnumerator(mParent, iter);
+  RefPtr<nsBaseFilePickerEnumerator> retIter =
+    new nsBaseFilePickerEnumerator(mParent, iter, mMode);
 
-  retIter.forget(aDomfiles);
+  retIter.forget(aValue);
   return NS_OK;
 }
 

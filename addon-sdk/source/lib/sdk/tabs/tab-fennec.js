@@ -9,7 +9,7 @@ const { tabNS, rawTabNS } = require('./namespace');
 const { EventTarget } = require('../event/target');
 const { activateTab, getTabTitle, setTabTitle, closeTab, getTabURL,
         getTabContentWindow, getTabForBrowser, setTabURL, getOwnerWindow,
-        getTabContentDocument, getTabContentType, getTabId } = require('./utils');
+        getTabContentDocument, getTabContentType, getTabId, isTab } = require('./utils');
 const { emit } = require('../event/core');
 const { isPrivate } = require('../private-browsing/utils');
 const { isWindowPrivate } = require('../window/utils');
@@ -17,6 +17,7 @@ const { when: unload } = require('../system/unload');
 const { BLANK } = require('../content/thumbnail');
 const { viewFor } = require('../view/core');
 const { EVENTS } = require('./events');
+const { modelFor } = require('../model/core');
 
 const ERR_FENNEC_MSG = 'This method is not yet supported by Fennec';
 
@@ -57,8 +58,12 @@ const Tab = Class({
    * Changing this property changes an actual title.
    * @type {String}
    */
-  get title() getTabTitle(tabNS(this).tab),
-  set title(title) setTabTitle(tabNS(this).tab, title),
+  get title() {
+    return getTabTitle(tabNS(this).tab);
+  },
+  set title(title) {
+    setTabTitle(tabNS(this).tab, title);
+  },
 
   /**
    * Location of the page currently loaded in this tab.
@@ -68,26 +73,8 @@ const Tab = Class({
   get url() {
     return tabNS(this).closed ? undefined : getTabURL(tabNS(this).tab);
   },
-  set url(url) setTabURL(tabNS(this).tab, url),
-
-  /**
-   * URI of the favicon for the page currently loaded in this tab.
-   * @type {String}
-   */
-  get favicon() {
-    /*
-     * Synchronous favicon services were never supported on Fennec,
-     * and as of FF22, are now deprecated. When/if favicon services
-     * are supported for Fennec, this getter should reference
-     * `require('sdk/places/favicon').getFavicon`
-     */
-    console.error(
-      'tab.favicon is deprecated, and currently ' +
-      'favicon helpers are not yet supported by Fennec'
-    );
-
-    // return 16x16 blank default
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAEklEQVQ4jWNgGAWjYBSMAggAAAQQAAF/TXiOAAAAAElFTkSuQmCC';
+  set url(url) {
+    setTabURL(tabNS(this).tab, url);
   },
 
   getThumbnail: function() {
@@ -150,7 +137,9 @@ const Tab = Class({
    * rendered as.
    * @type {String}
    */
-  get contentType() getTabContentType(tabNS(this).tab),
+  get contentType() {
+    return getTabContentType(tabNS(this).tab);
+  },
 
   /**
    * Create a worker for this tab, first argument is options given to Worker.

@@ -20,8 +20,12 @@ UNIFIED_SOURCES += [
     'xpcAccessibleValue.cpp',
 ]
 
-GENERATED_SOURCES += [
-    'xpcAccEvents.cpp',
+SOURCES += [
+    '!xpcAccEvents.cpp',
+]
+
+EXPORTS += [
+    '!xpcAccEvents.h',
 ]
 
 LOCAL_INCLUDES += [
@@ -46,7 +50,17 @@ else:
         '/accessible/other',
     ]
 
-FINAL_LIBRARY = 'xul'
+GENERATED_FILES += [
+    'xpcAccEvents.cpp',
+    'xpcAccEvents.h',
+]
 
-if CONFIG['GNU_CXX']:
-    FAIL_ON_WARNINGS = True
+xpc_acc_events_h = GENERATED_FILES['xpcAccEvents.h']
+xpc_acc_events_h.script = 'AccEventGen.py:gen_header_file'
+xpc_acc_events_h.inputs += ['AccEvents.conf']
+
+xpc_acc_events_cpp = GENERATED_FILES['xpcAccEvents.cpp']
+xpc_acc_events_cpp.script = 'AccEventGen.py:gen_cpp_file'
+xpc_acc_events_cpp.inputs += ['AccEvents.conf']
+
+FINAL_LIBRARY = 'xul'

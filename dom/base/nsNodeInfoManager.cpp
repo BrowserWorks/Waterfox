@@ -34,11 +34,9 @@
 using namespace mozilla;
 using mozilla::dom::NodeInfo;
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
-#ifdef PR_LOGGING
-static PRLogModuleInfo* gNodeInfoManagerLeakPRLog;
-#endif
+static LazyLogModule gNodeInfoManagerLeakPRLog("NodeInfoManagerLeak");
 
 PLHashNumber
 nsNodeInfoManager::GetNodeInfoInnerHashValue(const void *key)
@@ -117,14 +115,9 @@ nsNodeInfoManager::nsNodeInfoManager()
 {
   nsLayoutStatics::AddRef();
 
-#ifdef PR_LOGGING
-  if (!gNodeInfoManagerLeakPRLog)
-    gNodeInfoManagerLeakPRLog = PR_NewLogModule("NodeInfoManagerLeak");
-
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p created", this));
-#endif
 
   mNodeInfoHash = PL_NewHashTable(32, GetNodeInfoInnerHashValue,
                                   NodeInfoInnerKeyCompare,
@@ -142,11 +135,9 @@ nsNodeInfoManager::~nsNodeInfoManager()
 
   mBindingManager = nullptr;
 
-#ifdef PR_LOGGING
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p destroyed", this));
-#endif
 
   nsLayoutStatics::Release();
 }
@@ -201,11 +192,9 @@ nsNodeInfoManager::Init(nsIDocument *aDocument)
 
   mDocument = aDocument;
 
-#ifdef PR_LOGGING
   if (gNodeInfoManagerLeakPRLog)
-    PR_LOG(gNodeInfoManagerLeakPRLog, PR_LOG_DEBUG,
+    MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
            ("NODEINFOMANAGER %p Init document=%p", this, aDocument));
-#endif
 
   return NS_OK;
 }
@@ -246,12 +235,12 @@ nsNodeInfoManager::GetNodeInfo(nsIAtom *aName, nsIAtom *aPrefix,
   void *node = PL_HashTableLookup(mNodeInfoHash, &tmpKey);
 
   if (node) {
-    nsRefPtr<NodeInfo> nodeInfo = static_cast<NodeInfo*>(node);
+    RefPtr<NodeInfo> nodeInfo = static_cast<NodeInfo*>(node);
 
     return nodeInfo.forget();
   }
 
-  nsRefPtr<NodeInfo> newNodeInfo =
+  RefPtr<NodeInfo> newNodeInfo =
     new NodeInfo(aName, aPrefix, aNamespaceID, aNodeType, aExtraName, this);
 
   DebugOnly<PLHashEntry*> he =
@@ -296,7 +285,7 @@ nsNodeInfoManager::GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
   nsCOMPtr<nsIAtom> nameAtom = do_GetAtom(aName);
   NS_ENSURE_TRUE(nameAtom, NS_ERROR_OUT_OF_MEMORY);
 
-  nsRefPtr<NodeInfo> newNodeInfo =
+  RefPtr<NodeInfo> newNodeInfo =
     new NodeInfo(nameAtom, aPrefix, aNamespaceID, aNodeType, nullptr, this);
   NS_ENSURE_TRUE(newNodeInfo, NS_ERROR_OUT_OF_MEMORY);
 
@@ -335,7 +324,7 @@ nsNodeInfoManager::GetNodeInfo(const nsAString& aName, nsIAtom *aPrefix,
 already_AddRefed<NodeInfo>
 nsNodeInfoManager::GetTextNodeInfo()
 {
-  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo;
 
   if (!mTextNodeInfo) {
     nodeInfo = GetNodeInfo(nsGkAtoms::textTagName, nullptr, kNameSpaceID_None,
@@ -352,7 +341,7 @@ nsNodeInfoManager::GetTextNodeInfo()
 already_AddRefed<NodeInfo>
 nsNodeInfoManager::GetCommentNodeInfo()
 {
-  nsRefPtr<NodeInfo> nodeInfo;
+  RefPtr<NodeInfo> nodeInfo;
 
   if (!mCommentNodeInfo) {
     nodeInfo = GetNodeInfo(nsGkAtoms::commentTagName, nullptr,
@@ -371,7 +360,7 @@ nsNodeInfoManager::GetCommentNodeInfo()
 already_AddRefed<NodeInfo>
 nsNodeInfoManager::GetDocumentNodeInfo()
 {
-  nsRefPtr<NodeInfo> nodeInfo;
+  RefPtr<NodeInfo> nodeInfo;
 
   if (!mDocumentNodeInfo) {
     NS_ASSERTION(mDocument, "Should have mDocument!");

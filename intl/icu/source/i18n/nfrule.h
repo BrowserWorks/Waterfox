@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2008, International Business Machines
+* Copyright (C) 1997-2015, International Business Machines
 * Corporation and others. All Rights Reserved.
 *******************************************************************************
 */
@@ -25,6 +25,7 @@ class NFRuleList;
 class NFRuleSet;
 class NFSubstitution;
 class ParsePosition;
+class PluralFormat;
 class RuleBasedNumberFormat;
 class UnicodeString;
 
@@ -37,17 +38,19 @@ public:
         kImproperFractionRule = -2,
         kProperFractionRule = -3,
         kMasterRule = -4,
-        kOtherRule = -5
+        kInfinityRule = -5,
+        kNaNRule = -6,
+        kOtherRule = -7
     };
 
     static void makeRules(UnicodeString& definition,
-                          const NFRuleSet* ruleSet, 
+                          NFRuleSet* ruleSet, 
                           const NFRule* predecessor, 
                           const RuleBasedNumberFormat* rbnf, 
                           NFRuleList& ruleList,
                           UErrorCode& status);
 
-    NFRule(const RuleBasedNumberFormat* rbnf);
+    NFRule(const RuleBasedNumberFormat* rbnf, const UnicodeString &ruleText, UErrorCode &status);
     ~NFRule();
 
     UBool operator==(const NFRule& rhs) const;
@@ -59,10 +62,12 @@ public:
     int64_t getBaseValue() const { return baseValue; }
     void setBaseValue(int64_t value, UErrorCode& status);
 
+    UChar getDecimalPoint() const { return decimalPoint; }
+
     double getDivisor() const { return uprv_pow(radix, exponent); }
 
-    void doFormat(int64_t number, UnicodeString& toAppendTo, int32_t pos) const;
-    void doFormat(double  number, UnicodeString& toAppendTo, int32_t pos) const;
+    void doFormat(int64_t number, UnicodeString& toAppendTo, int32_t pos, int32_t recursionCount, UErrorCode& status) const;
+    void doFormat(double  number, UnicodeString& toAppendTo, int32_t pos, int32_t recursionCount, UErrorCode& status) const;
 
     UBool doParse(const UnicodeString& text, 
                   ParsePosition& pos, 
@@ -74,13 +79,18 @@ public:
 
     void _appendRuleText(UnicodeString& result) const;
 
+    int32_t findTextLenient(const UnicodeString& str, const UnicodeString& key, 
+                     int32_t startingAt, int32_t* resultCount) const;
+
+    void setDecimalFormatSymbols(const DecimalFormatSymbols &newSymbols, UErrorCode& status);
+
 private:
     void parseRuleDescriptor(UnicodeString& descriptor, UErrorCode& status);
-    void extractSubstitutions(const NFRuleSet* ruleSet, const NFRule* predecessor, const RuleBasedNumberFormat* rbnf, UErrorCode& status);
-    NFSubstitution* extractSubstitution(const NFRuleSet* ruleSet, const NFRule* predecessor, const RuleBasedNumberFormat* rbnf, UErrorCode& status);
+    void extractSubstitutions(const NFRuleSet* ruleSet, const UnicodeString &ruleText, const NFRule* predecessor, UErrorCode& status);
+    NFSubstitution* extractSubstitution(const NFRuleSet* ruleSet, const NFRule* predecessor, UErrorCode& status);
     
     int16_t expectedExponent() const;
-    int32_t indexOfAny(const UChar* const strings[]) const;
+    int32_t indexOfAnyRulePrefix() const;
     double matchToDelimiter(const UnicodeString& text, int32_t startPos, double baseValue,
                             const UnicodeString& delimiter, ParsePosition& pp, const NFSubstitution* sub, 
                             double upperBound) const;
@@ -95,10 +105,12 @@ private:
     int64_t baseValue;
     int32_t radix;
     int16_t exponent;
+    UChar decimalPoint;
     UnicodeString ruleText;
     NFSubstitution* sub1;
     NFSubstitution* sub2;
     const RuleBasedNumberFormat* formatter;
+    const PluralFormat* rulePatternFormat;
 
     NFRule(const NFRule &other); // forbid copying of this class
     NFRule &operator=(const NFRule &other); // forbid copying of this class

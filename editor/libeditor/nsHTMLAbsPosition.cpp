@@ -62,10 +62,10 @@ nsHTMLEditor::AbsolutePositionSelection(bool aEnabled)
                                  aEnabled ? EditAction::setAbsolutePosition :
                                             EditAction::removeAbsolutePosition,
                                  nsIEditor::eNext);
-  
+
   // the line below does not match the code; should it be removed?
   // Find out if the selection is collapsed:
-  nsRefPtr<Selection> selection = GetSelection();
+  RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
 
   nsTextRulesInfo ruleInfo(aEnabled ? EditAction::setAbsolutePosition :
@@ -76,7 +76,7 @@ nsHTMLEditor::AbsolutePositionSelection(bool aEnabled)
   nsresult res = mRules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
   if (NS_FAILED(res) || cancel)
     return res;
-  
+
   return mRules->DidDoAction(selection, &ruleInfo, res);
 }
 
@@ -102,7 +102,7 @@ nsHTMLEditor::GetAbsolutelyPositionedSelectionContainer(nsIDOMElement **_retval)
     }
   }
 
-  element = do_QueryInterface(resultNode ); 
+  element = do_QueryInterface(resultNode );
   *_retval = element;
   NS_IF_ADDREF(*_retval);
   return NS_OK;
@@ -171,10 +171,10 @@ nsHTMLEditor::RelativeChangeZIndex(int32_t aChange)
                                  (aChange < 0) ? EditAction::decreaseZIndex :
                                                  EditAction::increaseZIndex,
                                  nsIEditor::eNext);
-  
+
   // brade: can we get rid of this comment?
   // Find out if the selection is collapsed:
-  nsRefPtr<Selection> selection = GetSelection();
+  RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
   nsTextRulesInfo ruleInfo(aChange < 0 ? EditAction::decreaseZIndex :
                                          EditAction::increaseZIndex);
@@ -184,7 +184,7 @@ nsHTMLEditor::RelativeChangeZIndex(int32_t aChange)
   nsresult res = mRules->WillDoAction(selection, &ruleInfo, &cancel, &handled);
   if (cancel || NS_FAILED(res))
     return res;
-  
+
   return mRules->DidDoAction(selection, &ruleInfo, res);
 }
 
@@ -421,7 +421,7 @@ nsHTMLEditor::EndMoving()
 
   mGrabberClicked = false;
   mIsMoving = false;
-  nsRefPtr<Selection> selection = GetSelection();
+  RefPtr<Selection> selection = GetSelection();
   if (!selection) {
     return NS_ERROR_NOT_INITIALIZED;
   }
@@ -500,7 +500,7 @@ nsHTMLEditor::AbsolutelyPositionElement(nsIDOMElement* aElement,
 
     AddPositioningOffset(x, y);
     SnapToGrid(x, y);
-    SetElementPosition(aElement, x, y);
+    SetElementPosition(*element, x, y);
 
     // we may need to create a br if the positioned element is alone in its
     // container
@@ -534,7 +534,7 @@ nsHTMLEditor::AbsolutelyPositionElement(nsIDOMElement* aElement,
     nsCOMPtr<dom::Element> element = do_QueryInterface(aElement);
     if (element && element->IsHTMLElement(nsGkAtoms::div) &&
         !HasStyleOrIdOrClass(element)) {
-      nsRefPtr<nsHTMLEditRules> htmlRules = static_cast<nsHTMLEditRules*>(mRules.get());
+      RefPtr<nsHTMLEditRules> htmlRules = static_cast<nsHTMLEditRules*>(mRules.get());
       NS_ENSURE_TRUE(htmlRules, NS_ERROR_FAILURE);
       nsresult res = htmlRules->MakeSureElemStartsOrEndsOnCR(aElement);
       NS_ENSURE_SUCCESS(res, res);
@@ -579,11 +579,17 @@ nsHTMLEditor::SetElementPosition(nsIDOMElement *aElement, int32_t aX, int32_t aY
 {
   nsCOMPtr<Element> element = do_QueryInterface(aElement);
   NS_ENSURE_STATE(element);
-  nsAutoEditBatch batchIt(this);
 
-  mHTMLCSSUtils->SetCSSPropertyPixels(*element, *nsGkAtoms::left, aX);
-  mHTMLCSSUtils->SetCSSPropertyPixels(*element, *nsGkAtoms::top, aY);
+  SetElementPosition(*element, aX, aY);
   return NS_OK;
+}
+
+void
+nsHTMLEditor::SetElementPosition(dom::Element& aElement, int32_t aX, int32_t aY)
+{
+  nsAutoEditBatch batchIt(this);
+  mHTMLCSSUtils->SetCSSPropertyPixels(aElement, *nsGkAtoms::left, aX);
+  mHTMLCSSUtils->SetCSSPropertyPixels(aElement, *nsGkAtoms::top, aY);
 }
 
 // self-explanatory
@@ -614,7 +620,7 @@ nsHTMLEditor::CheckPositionedElementBGandFG(nsIDOMElement * aElement,
   NS_ENSURE_STATE(element || !aElement);
 
   aReturn.Truncate();
-  
+
   nsAutoString bgImageStr;
   nsresult res =
     mHTMLCSSUtils->GetComputedProperty(*element, *nsGkAtoms::background_image,
@@ -627,13 +633,13 @@ nsHTMLEditor::CheckPositionedElementBGandFG(nsIDOMElement * aElement,
                                          bgColorStr);
     NS_ENSURE_SUCCESS(res, res);
     if (bgColorStr.EqualsLiteral("transparent")) {
-      nsRefPtr<nsComputedDOMStyle> cssDecl =
+      RefPtr<nsComputedDOMStyle> cssDecl =
         mHTMLCSSUtils->GetComputedStyle(element);
       NS_ENSURE_STATE(cssDecl);
 
       // from these declarations, get the one we want and that one only
       ErrorResult error;
-      nsRefPtr<dom::CSSValue> cssVal = cssDecl->GetPropertyCSSValue(NS_LITERAL_STRING("color"), error);
+      RefPtr<dom::CSSValue> cssVal = cssDecl->GetPropertyCSSValue(NS_LITERAL_STRING("color"), error);
       NS_ENSURE_TRUE(!error.Failed(), error.StealNSResult());
 
       nsROCSSPrimitiveValue* val = cssVal->AsPrimitiveValue();

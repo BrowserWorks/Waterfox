@@ -136,7 +136,8 @@ XPathResult::AttributeChanged(nsIDocument* aDocument,
                               Element* aElement,
                               int32_t aNameSpaceID,
                               nsIAtom* aAttribute,
-                              int32_t aModType)
+                              int32_t aModType,
+                              const nsAttrValue* aOldValue)
 {
     Invalidate(aElement);
 }
@@ -301,7 +302,7 @@ XPathResult::GetExprResult(txAExprResult** aExprResult)
         return NS_ERROR_DOM_INVALID_STATE_ERR;
     }
 
-    nsRefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
+    RefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
     if (!nodeSet) {
         return NS_ERROR_OUT_OF_MEMORY;
     }

@@ -93,10 +93,10 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_transitions()
+add_task(function* test_transitions()
 {
   let timeNow = Date.now();
-  for each (let item in testData) {
+  for (let item of testData) {
     yield PlacesTestUtils.addVisits({
       uri: uri(item.uri),
       transition: item.transType,

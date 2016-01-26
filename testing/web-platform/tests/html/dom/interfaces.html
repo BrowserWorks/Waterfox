@@ -11,16 +11,6 @@
 <h1>HTML IDL tests</h1>
 <div id=log></div>
 
-<!-- URLUtils* stubs -->
-<script type=text/plain class=untested>
-interface URLUtils {
-  stringifier;
-};
-interface URLUtilsReadOnly {
-  stringifier;
-};
-</script>
-<!-- DOM IDLs -->
 <script type=text/plain class=untested>
 [Constructor(DOMString type, optional EventInit eventInitDict)/*,
  Exposed=(Window,Worker)*/]
@@ -235,6 +225,7 @@ interface Document : Node {
   readonly attribute DOMString origin;
   readonly attribute DOMString compatMode;
   readonly attribute DOMString characterSet;
+  readonly attribute DOMString charset; // legacy alias of .characterSet
   readonly attribute DOMString inputEncoding; // legacy alias of .characterSet
   readonly attribute DOMString contentType;
 
@@ -867,6 +858,21 @@ typedef (Int8Array or Uint8Array or Uint8ClampedArray or
          Float32Array or Float64Array or
          DataView) ArrayBufferView;
 
+[NoInterfaceObject, Exposed=Window]
+interface HTMLHyperlinkElementUtils {
+  stringifier attribute USVString href;
+           attribute USVString origin;
+           attribute USVString protocol;
+           attribute USVString username;
+           attribute USVString password;
+           attribute USVString host;
+           attribute USVString hostname;
+           attribute USVString port;
+           attribute USVString pathname;
+           attribute USVString search;
+           attribute USVString hash;
+};
+
 interface HTMLAllCollection : HTMLCollection {
   // inherits length and 'getter'
   Element? item(unsigned long index);
@@ -905,7 +911,7 @@ interface PropertyNodeList : NodeList {
   PropertyValueArray getValues();
 };
 
-[OverrideBuiltins, Exposed=Window,Worker]
+[OverrideBuiltins, Exposed=(Window,Worker)]
 interface DOMStringMap {
   getter DOMString (DOMString name);
   setter creator void (DOMString name, DOMString value);
@@ -1124,19 +1130,17 @@ interface HTMLDivElement : HTMLElement {
 };
 
 interface HTMLAnchorElement : HTMLElement {
-           attribute DOMString target;
-           attribute DOMString download;
-  [PutForwards=value] attribute DOMSettableTokenList ping;
-           attribute DOMString rel;
+  attribute DOMString target;
+  attribute DOMString download;
+  [PutForwards=value] readonly attribute DOMSettableTokenList ping;
+  attribute DOMString rel;
   readonly attribute DOMTokenList relList;
-           attribute DOMString hreflang;
-           attribute DOMString type;
+  attribute DOMString hreflang;
+  attribute DOMString type;
 
-           attribute DOMString text;
-
-  // also has obsolete members
+  attribute DOMString text;
 };
-HTMLAnchorElement implements URLUtils;
+HTMLAnchorElement implements HTMLHyperlinkElementUtils;
 
 interface HTMLDataElement : HTMLElement {
            attribute DOMString value;
@@ -1493,20 +1497,17 @@ interface HTMLMapElement : HTMLElement {
 };
 
 interface HTMLAreaElement : HTMLElement {
-           attribute DOMString alt;
-           attribute DOMString coords;
-           attribute DOMString shape;
-           attribute DOMString target;
-           attribute DOMString download;
-  [PutForwards=value] attribute DOMSettableTokenList ping;
-           attribute DOMString rel;
+  attribute DOMString alt;
+  attribute DOMString coords;
+  attribute DOMString shape;
+  attribute DOMString target;
+  attribute DOMString download;
+  [PutForwards=value] readonly attribute DOMSettableTokenList ping;
+  attribute DOMString rel;
   readonly attribute DOMTokenList relList;
-           attribute DOMString hreflang;
-           attribute DOMString type;
-
-  // also has obsolete members
+  // hreflang and type are not reflected
 };
-HTMLAreaElement implements URLUtils;
+HTMLAreaElement implements HTMLHyperlinkElementUtils;
 
 interface HTMLTableElement : HTMLElement {
            attribute HTMLTableCaptionElement? caption;
@@ -1976,7 +1977,7 @@ interface HTMLCanvasElement : HTMLElement {
   void toBlob(FileCallback? _callback, optional DOMString type, any... arguments);
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface CanvasProxy {
   void setContext(RenderingContext context);
 };
@@ -1990,7 +1991,7 @@ typedef (HTMLImageElement or
 
 enum CanvasFillRule { "nonzero", "evenodd" };
 
-[Constructor(optional unsigned long width, unsigned long height), Exposed=Window,Worker]
+[Constructor(optional unsigned long width, unsigned long height), Exposed=(Window,Worker)]
 interface CanvasRenderingContext2D {
 
   // back-reference to the canvas
@@ -2085,7 +2086,7 @@ interface CanvasRenderingContext2D {
 CanvasRenderingContext2D implements CanvasDrawingStyles;
 CanvasRenderingContext2D implements CanvasPathMethods;
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface CanvasDrawingStyles {
   // line caps/joins
            attribute unrestricted double lineWidth; // (default 1)
@@ -2105,7 +2106,7 @@ interface CanvasDrawingStyles {
            attribute DOMString direction; // "ltr", "rtl", "inherit" (default: "inherit")
 };
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface CanvasPathMethods {
   // shared path API methods
   void closePath();
@@ -2120,19 +2121,19 @@ interface CanvasPathMethods {
   void ellipse(unrestricted double x, unrestricted double y, unrestricted double radiusX, unrestricted double radiusY, unrestricted double rotation, unrestricted double startAngle, unrestricted double endAngle, optional boolean anticlockwise = false);
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface CanvasGradient {
   // opaque object
   void addColorStop(double offset, DOMString color);
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface CanvasPattern {
   // opaque object
   void setTransform(SVGMatrix transform);
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface TextMetrics {
   // x-direction
   readonly attribute double width; // advance width
@@ -2166,21 +2167,21 @@ dictionary HitRegionOptions {
 
 [Constructor(unsigned long sw, unsigned long sh),
  Constructor(Uint8ClampedArray data, unsigned long sw, optional unsigned long sh),
- Exposed=Window,Worker]
+ Exposed=(Window,Worker)]
 interface ImageData {
   readonly attribute unsigned long width;
   readonly attribute unsigned long height;
   readonly attribute Uint8ClampedArray data;
 };
 
-[Constructor(optional Element scope), Exposed=Window,Worker]
+[Constructor(optional Element scope), Exposed=(Window,Worker)]
 interface DrawingStyle { };
 DrawingStyle implements CanvasDrawingStyles;
 
 [Constructor,
  Constructor(Path2D path),
  Constructor(Path2D[] paths, optional CanvasFillRule fillRule = "nonzero"),
- Constructor(DOMString d), Exposed=Window,Worker]
+ Constructor(DOMString d), Exposed=(Window,Worker)]
 interface Path2D {
   void addPath(Path2D path, optional SVGMatrix? transformation = null);
   void addPathByStrokingPath(Path2D path, CanvasDrawingStyles styles, optional SVGMatrix? transformation = null);
@@ -2247,6 +2248,10 @@ dictionary DragEventInit : MouseEventInit {
   DataTransfer? dataTransfer;
 };
 
+// For purposes of this test, just treat WindowProxy as the same thing as
+// Window.
+typedef Window WindowProxy;
+
 [PrimaryGlobal]
 /*sealed*/ interface Window : EventTarget {
   // the current browsing context
@@ -2274,7 +2279,7 @@ dictionary DragEventInit : MouseEventInit {
   [Replaceable] readonly attribute unsigned long length;
   [Unforgeable] readonly attribute WindowProxy top;
            attribute any opener;
-  readonly attribute WindowProxy parent;
+  [Replaceable] readonly attribute WindowProxy parent;
   readonly attribute Element? frameElement;
   WindowProxy open(optional DOMString url = "about:blank", optional DOMString target = "_blank", [TreatNullAs=EmptyString] optional DOMString features = "", optional boolean replace = false);
   getter WindowProxy (unsigned long index);
@@ -2315,13 +2320,24 @@ interface History {
 };
 
 [Unforgeable] interface Location {
-  void assign(DOMString url);
-  void replace(DOMString url);
-  void reload();
-};
-Location implements URLUtils;
+  stringifier attribute USVString href;
+           attribute USVString origin;
+           attribute USVString protocol;
+           attribute USVString host;
+           attribute USVString hostname;
+           attribute USVString port;
+           attribute USVString pathname;
+           attribute USVString search;
+           attribute USVString hash;
 
-[Constructor(DOMString type, optional PopStateEventInit eventInitDict), Exposed=Window,Worker]
+  void assign(USVString url);
+  void replace(USVString url);
+  void reload();
+
+  [SameObject] readonly attribute USVString[] ancestorOrigins;
+};
+
+[Constructor(DOMString type, optional PopStateEventInit eventInitDict), Exposed=(Window,Worker)]
 interface PopStateEvent : Event {
   readonly attribute any state;
 };
@@ -2330,7 +2346,7 @@ dictionary PopStateEventInit : EventInit {
   any state;
 };
 
-[Constructor(DOMString type, optional HashChangeEventInit eventInitDict), Exposed=Window,Worker]
+[Constructor(DOMString type, optional HashChangeEventInit eventInitDict), Exposed=(Window,Worker)]
 interface HashChangeEvent : Event {
   readonly attribute DOMString oldURL;
   readonly attribute DOMString newURL;
@@ -2341,7 +2357,7 @@ dictionary HashChangeEventInit : EventInit {
   DOMString newURL;
 };
 
-[Constructor(DOMString type, optional PageTransitionEventInit eventInitDict), Exposed=Window,Worker]
+[Constructor(DOMString type, optional PageTransitionEventInit eventInitDict), Exposed=(Window,Worker)]
 interface PageTransitionEvent : Event {
   readonly attribute boolean persisted;
 };
@@ -2382,12 +2398,12 @@ interface ApplicationCache : EventTarget {
            attribute EventHandler onobsolete;
 };
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorOnLine {
   readonly attribute boolean onLine;
 };
 
-[Constructor(DOMString type, optional ErrorEventInit eventInitDict), Exposed=Window,Worker]
+[Constructor(DOMString type, optional ErrorEventInit eventInitDict), Exposed=(Window,Worker)]
 interface ErrorEvent : Event {
   readonly attribute DOMString message;
   readonly attribute DOMString filename;
@@ -2500,14 +2516,14 @@ interface WindowEventHandlers {
            attribute EventHandler onunload;
 };
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface WindowBase64 {
   DOMString btoa(DOMString btoa);
   DOMString atob(DOMString atob);
 };
 Window implements WindowBase64;
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface WindowTimers {
   long setTimeout(Function handler, optional long timeout = 0, any... arguments);
   long setTimeout(DOMString handler, optional long timeout = 0, any... arguments);
@@ -2534,7 +2550,7 @@ Navigator implements NavigatorContentUtils;
 Navigator implements NavigatorStorageUtils;
 Navigator implements NavigatorPlugins;
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorID {
   readonly attribute DOMString appCodeName; // constant "Mozilla"
   readonly attribute DOMString appName;
@@ -2545,7 +2561,7 @@ interface NavigatorID {
   readonly attribute DOMString userAgent;
 };
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorLanguage {
   readonly attribute DOMString? language;
   readonly attribute DOMString[] languages;
@@ -2609,7 +2625,7 @@ interface External {
   unsigned long IsSearchProviderInstalled(DOMString engineURL);
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface ImageBitmap {
   readonly attribute unsigned long width;
   readonly attribute unsigned long height;
@@ -2623,14 +2639,14 @@ typedef (HTMLImageElement or
          CanvasRenderingContext2D or
          ImageBitmap) ImageBitmapSource;
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface ImageBitmapFactories {
   Promise createImageBitmap(ImageBitmapSource image, optional long sx, long sy, long sw, long sh);
 };
 Window implements ImageBitmapFactories;
 WorkerGlobalScope implements ImageBitmapFactories;
 
-[Constructor(DOMString type, optional MessageEventInit eventInitDict), Exposed=Window,Worker]
+[Constructor(DOMString type, optional MessageEventInit eventInitDict), Exposed=(Window,Worker)]
 interface MessageEvent : Event {
   readonly attribute any data;
   readonly attribute DOMString origin;
@@ -2649,7 +2665,7 @@ dictionary MessageEventInit : EventInit {
   sequence<MessagePort> ports;
 };
 
-[Constructor(DOMString url, optional EventSourceInit eventSourceInitDict), Exposed=Window,Worker]
+[Constructor(DOMString url, optional EventSourceInit eventSourceInitDict), Exposed=(Window,Worker)]
 interface EventSource : EventTarget {
   readonly attribute DOMString url;
   readonly attribute boolean withCredentials;
@@ -2672,7 +2688,7 @@ dictionary EventSourceInit {
 };
 
 enum BinaryType { "blob", "arraybuffer" };
-[Constructor(DOMString url, optional (DOMString or DOMString[]) protocols), Exposed=Window,Worker]
+[Constructor(DOMString url, optional (DOMString or DOMString[]) protocols), Exposed=(Window,Worker)]
 interface WebSocket : EventTarget {
   readonly attribute DOMString url;
 
@@ -2685,23 +2701,23 @@ interface WebSocket : EventTarget {
   readonly attribute unsigned long bufferedAmount;
 
   // networking
-           attribute EventHandler onopen;
-           attribute EventHandler onerror;
-           attribute EventHandler onclose;
+  attribute EventHandler onopen;
+  attribute EventHandler onerror;
+  attribute EventHandler onclose;
   readonly attribute DOMString extensions;
   readonly attribute DOMString protocol;
-  void close([Clamp] optional unsigned short code, optional DOMString reason);
+  void close([Clamp] optional unsigned short code, optional USVString reason);
 
   // messaging
-           attribute EventHandler onmessage;
-           attribute BinaryType binaryType;
-  void send(DOMString data);
+  attribute EventHandler onmessage;
+  attribute BinaryType binaryType;
+  void send(USVString data);
   void send(Blob data);
   void send(ArrayBuffer data);
   void send(ArrayBufferView data);
 };
 
-[Constructor(DOMString type, optional CloseEventInit eventInitDict), Exposed=Window,Worker]
+[Constructor(DOMString type, optional CloseEventInit eventInitDict), Exposed=(Window,Worker)]
 interface CloseEvent : Event {
   readonly attribute boolean wasClean;
   readonly attribute unsigned short code;
@@ -2714,13 +2730,13 @@ dictionary CloseEventInit : EventInit {
   DOMString reason;
 };
 
-[Constructor, Exposed=Window,Worker]
+[Constructor, Exposed=(Window,Worker)]
 interface MessageChannel {
   readonly attribute MessagePort port1;
   readonly attribute MessagePort port2;
 };
 
-[Exposed=Window,Worker]
+[Exposed=(Window,Worker)]
 interface MessagePort : EventTarget {
   void postMessage(any message, optional sequence<Transferable> transfer);
   void start();
@@ -2731,7 +2747,7 @@ interface MessagePort : EventTarget {
 };
 // MessagePort implements Transferable;
 
-[Constructor, Exposed=Window,Worker]
+[Constructor, Exposed=(Window,Worker)]
 interface PortCollection {
   void add(MessagePort port);
   void remove(MessagePort port);
@@ -2741,7 +2757,7 @@ interface PortCollection {
 
 callback PortCollectionCallback = void (MessagePort port);
 
-[Constructor(DOMString channel), Exposed=Window,Worker]
+[Constructor(DOMString channel), Exposed=(Window,Worker)]
 interface BroadcastChannel : EventTarget {
   readonly attribute DOMString name;
   void postMessage(any message);
@@ -2776,12 +2792,12 @@ interface WorkerGlobalScope : EventTarget {
            attribute EventHandler onconnect;
 };
 
-[NoInterfaceObject, Exposed=Window,Worker]
+[NoInterfaceObject, Exposed=(Window,Worker)]
 interface AbstractWorker {
            attribute EventHandler onerror;
 };
 
-[Constructor(DOMString scriptURL), Exposed=Window,Worker]
+[Constructor(DOMString scriptURL), Exposed=(Window,Worker)]
 interface Worker : EventTarget {
   void terminate();
 
@@ -2790,7 +2806,7 @@ interface Worker : EventTarget {
 };
 Worker implements AbstractWorker;
 
-[Constructor(DOMString scriptURL, optional DOMString name), Exposed=Window,Worker]
+[Constructor(DOMString scriptURL, optional DOMString name), Exposed=(Window,Worker)]
 interface SharedWorker : EventTarget {
   readonly attribute MessagePort port;
 };
@@ -2811,8 +2827,17 @@ WorkerNavigator implements NavigatorLanguage;
 WorkerNavigator implements NavigatorOnLine;
 
 [Exposed=Worker]
-interface WorkerLocation { };
-WorkerLocation implements URLUtilsReadOnly;
+interface WorkerLocation {
+  stringifier readonly attribute USVString href;
+  readonly attribute USVString origin;
+  readonly attribute USVString protocol;
+  readonly attribute USVString host;
+  readonly attribute USVString hostname;
+  readonly attribute USVString port;
+  readonly attribute USVString pathname;
+  readonly attribute USVString search;
+  readonly attribute USVString hash;
+};
 
 interface Storage {
   readonly attribute unsigned long length;
@@ -3218,6 +3243,7 @@ window.onload = function() {
       'document.createElement("acronym")',
     ],
     HTMLUnknownElement: [
+      'document.createElement("blink")',
       'document.createElement("quasit")',
       'document.createElement("bgsound")',
       'document.createElement("isindex")',
@@ -3328,7 +3354,7 @@ window.onload = function() {
     HTMLSelectElement: ['document.createElement("select")'],
     HTMLDataListElement: ['document.createElement("datalist")'],
     HTMLOptGroupElement: ['document.createElement("optgroup")'],
-    HTMLOptionElement: ['document.createElement("option")'],
+    HTMLOptionElement: ['document.createElement("option")', 'new Option()'],
     HTMLTextAreaElement: ['document.createElement("textarea")'],
     HTMLKeygenElement: ['document.createElement("keygen")'],
     HTMLOutputElement: ['document.createElement("output")'],
@@ -3362,6 +3388,8 @@ window.onload = function() {
     PeerConnection: [],
     MediaStreamEvent: [],
     ErrorEvent: [],
+    WebSocket: ['new WebSocket("ws://foo")'],
+    CloseEvent: ['new CloseEvent("close")'],
     AbstractWorker: [],
     Worker: [],
     SharedWorker: [],

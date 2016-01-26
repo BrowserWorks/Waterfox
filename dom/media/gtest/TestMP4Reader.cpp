@@ -6,11 +6,11 @@
 #include "gtest/gtest.h"
 #include "MP4Reader.h"
 #include "MP4Decoder.h"
-#include "SharedThreadPool.h"
+#include "mozilla/SharedThreadPool.h"
 #include "MockMediaResource.h"
 #include "MockMediaDecoderOwner.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/dom/TimeRanges.h"
+#include "TimeUnits.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -20,9 +20,9 @@ class TestBinding
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TestBinding);
 
-  nsRefPtr<MP4Decoder> decoder;
-  nsRefPtr<MockMediaResource> resource;
-  nsRefPtr<MP4Reader> reader;
+  RefPtr<MP4Decoder> decoder;
+  RefPtr<MockMediaResource> resource;
+  RefPtr<MP4Reader> reader;
 
   explicit TestBinding(const char* aFileName = "gizmo.mp4")
     : decoder(new MP4Decoder())
@@ -30,19 +30,15 @@ public:
     , reader(new MP4Reader(decoder))
   {
     EXPECT_EQ(NS_OK, Preferences::SetBool(
-                       "media.fragmented-mp4.use-blank-decoder", true));
+                       "media.use-blank-decoder", true));
 
     EXPECT_EQ(NS_OK, resource->Open(nullptr));
     decoder->SetResource(resource);
 
     reader->Init(nullptr);
-    reader->EnsureTaskQueue();
-    {
-      // This needs to be done before invoking GetBuffered. This is normally
-      // done by MediaDecoderStateMachine.
-      ReentrantMonitorAutoEnter mon(decoder->GetReentrantMonitor());
-      reader->SetStartTime(0);
-    }
+    // This needs to be done before invoking GetBuffered. This is normally
+    // done by MediaDecoderStateMachine.
+    reader->DispatchSetStartTime(0);
   }
 
   void Init() {
@@ -57,7 +53,7 @@ private:
   virtual ~TestBinding()
   {
     {
-      nsRefPtr<MediaTaskQueue> queue = reader->GetTaskQueue();
+      RefPtr<TaskQueue> queue = reader->OwnerThread();
       nsCOMPtr<nsIRunnable> task = NS_NewRunnableMethod(reader, &MP4Reader::Shutdown);
       // Hackily bypass the tail dispatcher so that we can AwaitShutdownAndIdle.
       // In production code we'd use BeginShutdown + promises.
@@ -68,7 +64,7 @@ private:
     decoder = nullptr;
     resource = nullptr;
     reader = nullptr;
-    SharedThreadPool::SpinUntilShutdown();
+    SharedThreadPool::SpinUntilEmpty();
   }
 
   void ReadMetadata()
@@ -81,26 +77,21 @@ private:
 
 TEST(MP4Reader, BufferedRange)
 {
-  nsRefPtr<TestBinding> b = new TestBinding();
+  RefPtr<TestBinding> b = new TestBinding();
   b->Init();
 
   // Video 3-4 sec, audio 2.986666-4.010666 sec
   b->resource->MockAddBufferedRange(248400, 327455);
 
-  nsRefPtr<TimeRanges> ranges = new TimeRanges();
-  EXPECT_EQ(NS_OK, b->reader->GetBuffered(ranges));
-  EXPECT_EQ(1U, ranges->Length());
-  double start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(0, &start));
-  EXPECT_NEAR(270000 / 90000.0, start, 0.000001);
-  double end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(0, &end));
-  EXPECT_NEAR(360000 / 90000.0, end, 0.000001);
+  media::TimeIntervals ranges = b->reader->GetBuffered();
+  EXPECT_EQ(1U, ranges.Length());
+  EXPECT_NEAR(270000 / 90000.0, ranges.Start(0).ToSeconds(), 0.000001);
+  EXPECT_NEAR(360000 / 90000.0, ranges.End(0).ToSeconds(), 0.000001);
 }
 
 TEST(MP4Reader, BufferedRangeMissingLastByte)
 {
-  nsRefPtr<TestBinding> b = new TestBinding();
+  RefPtr<TestBinding> b = new TestBinding();
   b->Init();
 
   // Dropping the last byte of the video
@@ -108,20 +99,15 @@ TEST(MP4Reader, BufferedRangeMissingLastByte)
   b->resource->MockAddBufferedRange(248400, 324912);
   b->resource->MockAddBufferedRange(324913, 327455);
 
-  nsRefPtr<TimeRanges> ranges = new TimeRanges();
-  EXPECT_EQ(NS_OK, b->reader->GetBuffered(ranges));
-  EXPECT_EQ(1U, ranges->Length());
-  double start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(0, &start));
-  EXPECT_NEAR(270000.0 / 90000.0, start, 0.000001);
-  double end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(0, &end));
-  EXPECT_NEAR(357000 / 90000.0, end, 0.000001);
+  media::TimeIntervals ranges = b->reader->GetBuffered();
+  EXPECT_EQ(1U, ranges.Length());
+  EXPECT_NEAR(270000.0 / 90000.0, ranges.Start(0).ToSeconds(), 0.000001);
+  EXPECT_NEAR(357000 / 90000.0, ranges.End(0).ToSeconds(), 0.000001);
 }
 
 TEST(MP4Reader, BufferedRangeSyncFrame)
 {
-  nsRefPtr<TestBinding> b = new TestBinding();
+  RefPtr<TestBinding> b = new TestBinding();
   b->Init();
 
   // Check that missing the first byte at 2 seconds skips right through to 3
@@ -129,20 +115,15 @@ TEST(MP4Reader, BufferedRangeSyncFrame)
   b->resource->MockClearBufferedRanges();
   b->resource->MockAddBufferedRange(146336, 327455);
 
-  nsRefPtr<TimeRanges> ranges = new TimeRanges();
-  EXPECT_EQ(NS_OK, b->reader->GetBuffered(ranges));
-  EXPECT_EQ(1U, ranges->Length());
-  double start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(0, &start));
-  EXPECT_NEAR(270000.0 / 90000.0, start, 0.000001);
-  double end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(0, &end));
-  EXPECT_NEAR(360000 / 90000.0, end, 0.000001);
+  media::TimeIntervals ranges = b->reader->GetBuffered();
+  EXPECT_EQ(1U, ranges.Length());
+  EXPECT_NEAR(270000.0 / 90000.0, ranges.Start(0).ToSeconds(), 0.000001);
+  EXPECT_NEAR(360000 / 90000.0, ranges.End(0).ToSeconds(), 0.000001);
 }
 
 TEST(MP4Reader, CompositionOrder)
 {
-  nsRefPtr<TestBinding> b = new TestBinding("mediasource_test.mp4");
+  RefPtr<TestBinding> b = new TestBinding("mediasource_test.mp4");
   b->Init();
 
   // The first 5 video samples of this file are:
@@ -187,28 +168,19 @@ TEST(MP4Reader, CompositionOrder)
   b->resource->MockAddBufferedRange(12616, 13196);
   b->resource->MockAddBufferedRange(13220, 13901);
 
-  nsRefPtr<TimeRanges> ranges = new TimeRanges();
-  EXPECT_EQ(NS_OK, b->reader->GetBuffered(ranges));
-  EXPECT_EQ(2U, ranges->Length());
+  media::TimeIntervals ranges = b->reader->GetBuffered();
+  EXPECT_EQ(2U, ranges.Length());
 
-  double start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(0, &start));
-  EXPECT_NEAR(166.0 / 2500.0, start, 0.000001);
-  double end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(0, &end));
-  EXPECT_NEAR(332.0 / 2500.0, end, 0.000001);
+  EXPECT_NEAR(166.0 / 2500.0, ranges.Start(0).ToSeconds(), 0.000001);
+  EXPECT_NEAR(332.0 / 2500.0, ranges.End(0).ToSeconds(), 0.000001);
 
-  start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(1, &start));
-  EXPECT_NEAR(581.0 / 2500.0, start, 0.000001);
-  end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(1, &end));
-  EXPECT_NEAR(11255.0 / 44100.0, end, 0.000001);
+  EXPECT_NEAR(581.0 / 2500.0, ranges.Start(1).ToSeconds(), 0.000001);
+  EXPECT_NEAR(11255.0 / 44100.0, ranges.End(1).ToSeconds(), 0.000001);
 }
 
 TEST(MP4Reader, Normalised)
 {
-  nsRefPtr<TestBinding> b = new TestBinding("mediasource_test.mp4");
+  RefPtr<TestBinding> b = new TestBinding("mediasource_test.mp4");
   b->Init();
 
   // The first 5 video samples of this file are:
@@ -237,14 +209,9 @@ TEST(MP4Reader, Normalised)
   b->resource->MockClearBufferedRanges();
   b->resource->MockAddBufferedRange(48, 13901);
 
-  nsRefPtr<TimeRanges> ranges = new TimeRanges();
-  EXPECT_EQ(NS_OK, b->reader->GetBuffered(ranges));
-  EXPECT_EQ(1U, ranges->Length());
+  media::TimeIntervals ranges = b->reader->GetBuffered();
+  EXPECT_EQ(1U, ranges.Length());
 
-  double start = 0;
-  EXPECT_EQ(NS_OK, ranges->Start(0, &start));
-  EXPECT_NEAR(166.0 / 2500.0, start, 0.000001);
-  double end = 0;
-  EXPECT_EQ(NS_OK, ranges->End(0, &end));
-  EXPECT_NEAR(11255.0 / 44100.0, end, 0.000001);
+  EXPECT_NEAR(166.0 / 2500.0, ranges.Start(0).ToSeconds(), 0.000001);
+  EXPECT_NEAR(11255.0 / 44100.0, ranges.End(0).ToSeconds(), 0.000001);
 }

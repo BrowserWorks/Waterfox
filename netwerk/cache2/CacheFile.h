@@ -56,7 +56,9 @@ public:
   nsresult Init(const nsACString &aKey,
                 bool aCreateNew,
                 bool aMemoryOnly,
+                bool aSkipSizeCheck,
                 bool aPriority,
+                bool aPinned,
                 CacheFileListener *aCallback);
 
   NS_IMETHOD OnChunkRead(nsresult aResult, CacheFileChunk *aChunk) override;
@@ -102,6 +104,7 @@ public:
   bool DataSize(int64_t* aSize);
   void Key(nsACString& aKey) { aKey = mKey; }
   bool IsDoomed();
+  bool IsPinned() const { return mPinned; }
   bool IsWriteInProgress();
 
   // Memory reporting
@@ -121,7 +124,7 @@ private:
   void     Lock();
   void     Unlock();
   void     AssertOwnsLock() const;
-  void     ReleaseOutsideLock(nsRefPtr<nsISupports> aObject);
+  void     ReleaseOutsideLock(RefPtr<nsISupports> aObject);
 
   enum ECallerType {
     READER    = 0,
@@ -166,22 +169,7 @@ private:
   void WriteMetadataIfNeededLocked(bool aFireAndForget = false);
   void PostWriteTimer();
 
-  static PLDHashOperator WriteAllCachedChunks(const uint32_t& aIdx,
-                                              nsRefPtr<CacheFileChunk>& aChunk,
-                                              void* aClosure);
-
-  static PLDHashOperator FailListenersIfNonExistentChunk(
-                           const uint32_t& aIdx,
-                           nsAutoPtr<mozilla::net::ChunkListeners>& aListeners,
-                           void* aClosure);
-
-  static PLDHashOperator FailUpdateListeners(const uint32_t& aIdx,
-                                             nsRefPtr<CacheFileChunk>& aChunk,
-                                             void* aClosure);
-
-  static PLDHashOperator CleanUpCachedChunks(const uint32_t& aIdx,
-                                             nsRefPtr<CacheFileChunk>& aChunk,
-                                             void* aClosure);
+  void CleanUpCachedChunks();
 
   nsresult PadChunkWithZeroes(uint32_t aChunkIdx);
 
@@ -193,7 +181,9 @@ private:
   bool           mOpeningFile;
   bool           mReady;
   bool           mMemoryOnly;
+  bool           mSkipSizeCheck;
   bool           mOpenAsMemoryOnly;
+  bool           mPinned;
   bool           mPriority;
   bool           mDataAccessed;
   bool           mDataIsDirty;
@@ -204,8 +194,8 @@ private:
   int64_t        mDataSize;
   nsCString      mKey;
 
-  nsRefPtr<CacheFileHandle>    mHandle;
-  nsRefPtr<CacheFileMetadata>  mMetadata;
+  RefPtr<CacheFileHandle>      mHandle;
+  RefPtr<CacheFileMetadata>    mMetadata;
   nsCOMPtr<CacheFileListener>  mListener;
   nsCOMPtr<CacheFileIOListener>   mDoomAfterOpenListener;
 
@@ -216,7 +206,7 @@ private:
   nsTArray<CacheFileInputStream*> mInputs;
   CacheFileOutputStream          *mOutput;
 
-  nsTArray<nsRefPtr<nsISupports>> mObjsToRelease;
+  nsTArray<RefPtr<nsISupports>> mObjsToRelease;
 };
 
 class CacheFileAutoLock {
@@ -246,11 +236,11 @@ public:
   }
 
 private:
-  nsRefPtr<CacheFile> mFile;
+  RefPtr<CacheFile> mFile;
   bool mLocked;
 };
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

@@ -53,15 +53,18 @@
 </preferences>
 
 <keyset>
-  <key key="&focusSearch1.key;" modifiers="accel" id="focusSearch1"/>
-  <key key="&focusSearch2.key;" modifiers="accel" id="focusSearch2"/>
+  <!-- These <key>s have oncommand attributes because of bug 371900 -->
+  <key key="&focusSearch1.key;" modifiers="accel" id="focusSearch1" oncommand=";"/>
+  <key key="&focusSearch2.key;" modifiers="accel" id="focusSearch2" oncommand=";"/>
 </keyset>
 
 <hbox id="header-application"
       class="header"
       hidden="true"
       data-category="paneApplications">
-  <label class="header-name">&paneApplications.title;</label>
+  <label class="header-name" flex="1">&paneApplications.title;</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
 </hbox>
 
 <vbox id="applicationsContent"

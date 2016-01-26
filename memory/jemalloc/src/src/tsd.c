@@ -22,7 +22,7 @@ void
 malloc_tsd_dalloc(void *wrapper)
 {
 
-	a0free(wrapper);
+	a0dalloc(wrapper);
 }
 
 void
@@ -73,6 +73,9 @@ tsd_cleanup(void *arg)
 	tsd_t *tsd = (tsd_t *)arg;
 
 	switch (tsd->state) {
+	case tsd_state_uninitialized:
+		/* Do nothing. */
+		break;
 	case tsd_state_nominal:
 #define O(n, t)								\
 		n##_cleanup(tsd);
@@ -151,7 +154,7 @@ _tls_callback(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #  pragma section(".CRT$XLY",long,read)
 #endif
 JEMALLOC_SECTION(".CRT$XLY") JEMALLOC_ATTR(used)
-static const BOOL	(WINAPI *tls_callback)(HINSTANCE hinstDLL,
+static BOOL	(WINAPI *const tls_callback)(HINSTANCE hinstDLL,
     DWORD fdwReason, LPVOID lpvReserved) = _tls_callback;
 #endif
 

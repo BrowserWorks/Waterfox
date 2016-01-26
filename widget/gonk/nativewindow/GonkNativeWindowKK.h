@@ -67,7 +67,7 @@ class GonkNativeWindow: public GonkConsumerBase
     // access at the same time.
     // controlledByApp tells whether this consumer is controlled by the
     // application.
-    GonkNativeWindow(int bufferCount = GonkBufferQueue::MIN_UNDEQUEUED_BUFFERS);
+    B2G_ACL_EXPORT GonkNativeWindow(int bufferCount = GonkBufferQueue::MIN_UNDEQUEUED_BUFFERS);
     GonkNativeWindow(const sp<GonkBufferQueue>& bq, uint32_t consumerUsage,
             int bufferCount = GonkBufferQueue::MIN_UNDEQUEUED_BUFFERS,
             bool controlledByApp = false);
@@ -112,15 +112,15 @@ class GonkNativeWindow: public GonkConsumerBase
     status_t setDefaultBufferFormat(uint32_t defaultFormat);
 
     // Get next frame from the queue, caller owns the returned buffer.
-    mozilla::TemporaryRef<TextureClient> getCurrentBuffer();
+    B2G_ACL_EXPORT already_AddRefed<TextureClient> getCurrentBuffer();
 
     // Return the buffer to the queue and mark it as FREE. After that
     // the buffer is useable again for the decoder.
     void returnBuffer(TextureClient* client);
 
-    mozilla::TemporaryRef<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
+    already_AddRefed<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
 
-    void setNewFrameCallback(GonkNativeWindowNewFrameCallback* callback);
+    B2G_ACL_EXPORT void setNewFrameCallback(GonkNativeWindowNewFrameCallback* callback);
 
     static void RecycleCallback(TextureClient* client, void* closure);
 

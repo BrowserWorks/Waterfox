@@ -7,7 +7,7 @@ task:
   created: '{{now}}'
   deadline: '{{#from_now}}24 hours{{/from_now}}'
   metadata:
-    source: http://todo.com/soon
+    source: '{{source}}'
     owner: mozilla-taskcluster-maintenance@mozilla.com
 
   tags:
@@ -24,7 +24,7 @@ task:
   scopes:
     # Nearly all of our build tasks use tc-vcs so just include the scope across
     # the board.
-    - 'docker-worker:cache:tc-vcs'
+    - 'docker-worker:cache:level-{{level}}-{{project}}-tc-vcs'
     - 'docker-worker:image:{{#docker_image}}phone-builder{{/docker_image}}'
 
   payload:
@@ -34,7 +34,7 @@ task:
     maxRunTime: 3600
 
     cache:
-      tc-vcs: '/home/worker/.tc-vcs'
+      level-{{level}}-{{project}}-tc-vcs: '/home/worker/.tc-vcs'
 
     # All builds share a common artifact directory for ease of uploading.
     artifacts:
@@ -50,15 +50,16 @@ task:
 
     env:
       # Common environment variables for checking out gecko
+      MOZ_BUILD_DATE: '{{pushdate}}'
       GECKO_BASE_REPOSITORY: '{{base_repository}}'
       GECKO_HEAD_REPOSITORY: '{{head_repository}}'
       GECKO_HEAD_REV: '{{head_rev}}'
       GECKO_HEAD_REF: '{{head_ref}}'
-      MOZHARNESS_REPOSITORY: '{{mozharness_repository}}'
-      MOZHARNESS_REV: '{{mozharness_rev}}'
-      MOZHARNESS_REF: '{{mozharness_ref}}'
 
   extra:
+    build_product: 'b2g'
+    build_name: '{{build_name}}'
+    build_type: '{{build_type}}'
     index:
       rank: {{pushlog_id}}
     treeherder:

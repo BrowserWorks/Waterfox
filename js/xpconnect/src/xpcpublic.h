@@ -30,6 +30,8 @@ class nsIPrincipal;
 class nsScriptNameSpaceManager;
 class nsIMemoryReporterCallback;
 
+typedef void (* xpcGCCallback)(JSGCStatus status);
+
 namespace xpc {
 
 class Scriptability {
@@ -139,20 +141,17 @@ XrayAwareCalleeGlobal(JSObject* fun);
 void
 TraceXPCGlobal(JSTracer* trc, JSObject* obj);
 
-uint64_t
-GetCompartmentCPOWMicroseconds(JSCompartment* compartment);
-
 } /* namespace xpc */
 
 namespace JS {
 
 struct RuntimeStats;
 
-}
+} // namespace JS
 
 #define XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(n)                            \
     JSCLASS_DOM_GLOBAL | JSCLASS_HAS_PRIVATE |                                \
-    JSCLASS_PRIVATE_IS_NSISUPPORTS | JSCLASS_IMPLEMENTS_BARRIERS |            \
+    JSCLASS_PRIVATE_IS_NSISUPPORTS |                                          \
     JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(DOM_GLOBAL_SLOTS + n)
 
 #define XPCONNECT_GLOBAL_EXTRA_SLOT_OFFSET (JSCLASS_GLOBAL_SLOT_COUNT + DOM_GLOBAL_SLOTS)
@@ -231,7 +230,7 @@ public:
         JS::Zone* zone = js::GetContextZone(cx);
         ZoneStringCache* cache = static_cast<ZoneStringCache*>(JS_GetZoneUserData(zone));
         if (cache && buf == cache->mBuffer) {
-            MOZ_ASSERT(JS::GetTenuredGCThingZone(cache->mString) == zone);
+            MOZ_ASSERT(JS::GetStringZone(cache->mString) == zone);
             JS::MarkStringAsLive(zone, cache->mString);
             rval.setString(cache->mString);
             *sharedBuffer = false;
@@ -372,7 +371,7 @@ public:
     ZoneStatsExtras()
     {}
 
-    nsAutoCString pathPrefix;
+    nsCString pathPrefix;
 
 private:
     ZoneStatsExtras(const ZoneStatsExtras& other) = delete;
@@ -384,11 +383,13 @@ private:
 class CompartmentStatsExtras {
 public:
     CompartmentStatsExtras()
+      : sizeOfXPCPrivate(0)
     {}
 
-    nsAutoCString jsPathPrefix;
-    nsAutoCString domPathPrefix;
+    nsCString jsPathPrefix;
+    nsCString domPathPrefix;
     nsCOMPtr<nsIURI> location;
+    size_t sizeOfXPCPrivate;
 
 private:
     CompartmentStatsExtras(const CompartmentStatsExtras& other) = delete;
@@ -492,6 +493,9 @@ bool
 ShouldDiscardSystemSource();
 
 bool
+SharedMemoryEnabled();
+
+bool
 SetAddonInterposition(const nsACString& addonId, nsIAddonInterposition* interposition);
 
 bool
@@ -511,6 +515,7 @@ class ErrorReport {
     void Init(JSErrorReport* aReport, const char* aFallbackMessage,
               bool aIsChrome, uint64_t aWindowID);
     void LogToConsole();
+    void LogToConsoleWithStack(JS::HandleObject aStack);
 
   public:
 
@@ -531,6 +536,18 @@ class ErrorReport {
 void
 DispatchScriptErrorEvent(nsPIDOMWindow* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
                          JS::Handle<JS::Value> exception);
+
+// Return a name for the compartment.
+// This function makes reasonable efforts to make this name both mostly human-readable
+// and unique. However, there are no guarantees of either property.
+extern void
+GetCurrentCompartmentName(JSContext*, nsCString& name);
+
+JSRuntime*
+GetJSRuntime();
+
+void AddGCCallback(xpcGCCallback cb);
+void RemoveGCCallback(xpcGCCallback cb);
 
 } // namespace xpc
 

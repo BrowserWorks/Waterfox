@@ -57,24 +57,24 @@ using namespace mozilla;
 
 class nsSiteWindow : public nsIEmbeddingSiteWindow
 {
+  // nsSiteWindow shares a lifetime with nsContentTreeOwner, and proxies it's
+  // AddRef and Release calls to said object.
+  // When nsContentTreeOwner is destroyed, nsSiteWindow will be destroyed as well.
+  // nsContentTreeOwner is a friend class of nsSiteWindow such that it can call
+  // nsSiteWindow's destructor, which is private, as public destructors
+  // on reference counted classes are generally unsafe.
+  friend class nsContentTreeOwner;
+
 public:
   explicit nsSiteWindow(nsContentTreeOwner *aAggregator);
-  virtual ~nsSiteWindow();
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIEMBEDDINGSITEWINDOW
 
 private:
+  virtual ~nsSiteWindow();
   nsContentTreeOwner *mAggregator;
 };
-
-namespace mozilla {
-template<>
-struct HasDangerousPublicDestructor<nsSiteWindow>
-{
-  static const bool value = true;
-};
-}
 
 //*****************************************************************************
 //***    nsContentTreeOwner: Object Management
@@ -245,7 +245,7 @@ NS_IMETHODIMP nsContentTreeOwner::FindItemWithName(const char16_t* aName,
        xulWindow->GetPrimaryContentShell(aFoundItem);
      } else {
        // Get all the targetable windows from xulWindow and search them
-       nsRefPtr<nsXULWindow> win;
+       RefPtr<nsXULWindow> win;
        xulWindow->QueryInterface(NS_GET_IID(nsXULWindow), getter_AddRefs(win));
        if (win) {
          int32_t count = win->mTargetableShells.Count();
@@ -310,6 +310,27 @@ nsContentTreeOwner::GetPrimaryContentShell(nsIDocShellTreeItem** aShell)
 {
    NS_ENSURE_STATE(mXULWindow);
    return mXULWindow->GetPrimaryContentShell(aShell);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::TabParentAdded(nsITabParent* aTab, bool aPrimary)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->TabParentAdded(aTab, aPrimary);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::TabParentRemoved(nsITabParent* aTab)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->TabParentRemoved(aTab);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::GetPrimaryTabParent(nsITabParent** aTab)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->GetPrimaryTabParent(aTab);
 }
 
 NS_IMETHODIMP nsContentTreeOwner::SizeShellTo(nsIDocShellTreeItem* aShellItem,
@@ -598,6 +619,12 @@ NS_IMETHODIMP nsContentTreeOwner::GetUnscaledDevicePixelsPerCSSPixel(double* aSc
 {
    NS_ENSURE_STATE(mXULWindow);
    return mXULWindow->GetUnscaledDevicePixelsPerCSSPixel(aScale);
+}
+
+NS_IMETHODIMP nsContentTreeOwner::GetDevicePixelsPerDesktopPixel(double* aScale)
+{
+   NS_ENSURE_STATE(mXULWindow);
+   return mXULWindow->GetDevicePixelsPerDesktopPixel(aScale);
 }
 
 NS_IMETHODIMP nsContentTreeOwner::SetPosition(int32_t aX, int32_t aY)
@@ -1115,7 +1142,7 @@ nsSiteWindow::Blur(void)
       return NS_OK;
     }
 
-    nsCOMPtr<nsIDOMWindow> domWindow(docshell->GetWindow());
+    nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(docshell->GetWindow());
     if (domWindow)
       domWindow->Focus();
   }

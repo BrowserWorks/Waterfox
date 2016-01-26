@@ -358,7 +358,12 @@ nsXULTooltipListener::CheckTreeBodyMove(nsIDOMMouseEvent* aMouseEvent)
     // determine if we are going to need a titletip
     // XXX check the disabletitletips attribute on the tree content
     mNeedTitletip = false;
-    if (row >= 0 && obj.EqualsLiteral("text")) {
+    int16_t colType = -1;
+    if (col) {
+      col->GetType(&colType);
+    }
+    if (row >= 0 && obj.EqualsLiteral("text") &&
+        colType != nsITreeColumn::TYPE_PASSWORD) {
       obx->IsCellCropped(row, col, &mNeedTitletip);
     }
 
@@ -564,10 +569,7 @@ nsXULTooltipListener::FindTooltip(nsIContent* aTarget, nsIContent** aTooltip)
     return NS_OK;
   }
 
-  bool closed;
-  window->GetClosed(&closed);
-
-  if (closed) {
+  if (window->Closed()) {
     return NS_OK;
   }
 
@@ -697,7 +699,7 @@ nsXULTooltipListener::KillTooltipTimer()
 void
 nsXULTooltipListener::sTooltipCallback(nsITimer *aTimer, void *aListener)
 {
-  nsRefPtr<nsXULTooltipListener> instance = mInstance;
+  RefPtr<nsXULTooltipListener> instance = mInstance;
   if (instance)
     instance->ShowTooltip();
 }

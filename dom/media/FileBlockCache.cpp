@@ -23,7 +23,7 @@ nsresult FileBlockCache::Open(PRFileDesc* aFD)
     MonitorAutoLock mon(mDataMonitor);
     nsresult res = NS_NewThread(getter_AddRefs(mThread),
                                 nullptr,
-                                MEDIA_THREAD_STACK_SIZE);
+                                SharedThreadPool::kStackSize);
     mIsOpen = NS_SUCCEEDED(res);
     return res;
   }
@@ -74,9 +74,16 @@ void FileBlockCache::Close()
     // opening more streams, while the media cache is shutting down and
     // releasing memory etc! Also note we close mFD in the destructor so
     // as to not disturb any IO that's currently running.
-    nsCOMPtr<nsIRunnable> event = new ShutdownThreadEvent(mThread);
-    mThread = nullptr;
-    NS_DispatchToMainThread(event);
+    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+    if (mainThread) {
+      nsCOMPtr<nsIRunnable> event = new ShutdownThreadEvent(mThread);
+      mainThread->Dispatch(event.forget(), NS_DISPATCH_NORMAL);
+    } else {
+      // we're on Mainthread already, *and* the event queues are already
+      // shut down, so no events should occur - certainly not creations of
+      // new streams.
+      mThread->Shutdown();
+    }
   }
 }
 
@@ -211,7 +218,7 @@ nsresult FileBlockCache::Run()
     // overwrites the mBlockChanges entry for this block while we drop
     // mDataMonitor to take mFileMonitor.
     int32_t blockIndex = mChangeIndexList.PopFront();
-    nsRefPtr<BlockChange> change = mBlockChanges[blockIndex];
+    RefPtr<BlockChange> change = mBlockChanges[blockIndex];
     MOZ_ASSERT(change,
                "Change index list should only contain entries for blocks "
                "with changes");
@@ -258,7 +265,7 @@ nsresult FileBlockCache::Read(int64_t aOffset,
     // If the block is not yet written to file, we can just read from
     // the memory buffer, otherwise we need to read from file.
     int32_t bytesRead = 0;
-    nsRefPtr<BlockChange> change = mBlockChanges[blockIndex];
+    RefPtr<BlockChange> change = mBlockChanges[blockIndex];
     if (change && change->IsWrite()) {
       // Block isn't yet written to file. Read from memory buffer.
       const uint8_t* blockData = change->mData.get();

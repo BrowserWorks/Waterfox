@@ -29,6 +29,7 @@
 #include "nsIPresShell.h"
 #include "nsIScriptError.h"
 #include "nsIWindowMediator.h"
+#include "nsIPrefService.h"
 
 nsChromeRegistry* nsChromeRegistry::gChromeRegistry;
 
@@ -264,7 +265,9 @@ NS_IMETHODIMP
 nsChromeRegistry::ConvertChromeURL(nsIURI* aChromeURI, nsIURI* *aResult)
 {
   nsresult rv;
-  NS_ASSERTION(aChromeURI, "null url!");
+  if (NS_WARN_IF(!aChromeURI)) {
+    return NS_ERROR_INVALID_ARG;
+  }
 
   if (mOverrideTable.Get(aChromeURI, aResult))
     return NS_OK;
@@ -310,15 +313,10 @@ nsChromeRegistry::ConvertChromeURL(nsIURI* aChromeURI, nsIURI* *aResult)
 // theme stuff
 
 
-static void FlushSkinBindingsForWindow(nsIDOMWindow* aWindow)
+static void FlushSkinBindingsForWindow(nsPIDOMWindow* aWindow)
 {
-  // Get the DOM document.
-  nsCOMPtr<nsIDOMDocument> domDocument;
-  aWindow->GetDocument(getter_AddRefs(domDocument));
-  if (!domDocument)
-    return;
-
-  nsCOMPtr<nsIDocument> document = do_QueryInterface(domDocument);
+  // Get the document.
+  nsCOMPtr<nsIDocument> document = aWindow->GetDoc();
   if (!document)
     return;
 
@@ -342,7 +340,7 @@ NS_IMETHODIMP nsChromeRegistry::RefreshSkins()
     nsCOMPtr<nsISupports> protoWindow;
     windowEnumerator->GetNext(getter_AddRefs(protoWindow));
     if (protoWindow) {
-      nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(protoWindow);
+      nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(protoWindow);
       if (domWindow)
         FlushSkinBindingsForWindow(domWindow);
     }
@@ -357,7 +355,7 @@ NS_IMETHODIMP nsChromeRegistry::RefreshSkins()
     nsCOMPtr<nsISupports> protoWindow;
     windowEnumerator->GetNext(getter_AddRefs(protoWindow));
     if (protoWindow) {
-      nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(protoWindow);
+      nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(protoWindow);
       if (domWindow)
         RefreshWindow(domWindow);
     }
@@ -379,28 +377,23 @@ nsChromeRegistry::FlushSkinCaches()
 }
 
 // XXXbsmedberg: move this to windowmediator
-nsresult nsChromeRegistry::RefreshWindow(nsIDOMWindow* aWindow)
+nsresult nsChromeRegistry::RefreshWindow(nsPIDOMWindow* aWindow)
 {
   // Deal with our subframes first.
-  nsCOMPtr<nsIDOMWindowCollection> frames;
-  aWindow->GetFrames(getter_AddRefs(frames));
+  nsCOMPtr<nsIDOMWindowCollection> frames = aWindow->GetFrames();
   uint32_t length;
   frames->GetLength(&length);
   uint32_t j;
   for (j = 0; j < length; j++) {
     nsCOMPtr<nsIDOMWindow> childWin;
     frames->Item(j, getter_AddRefs(childWin));
-    RefreshWindow(childWin);
+    nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(childWin);
+    RefreshWindow(piWindow);
   }
 
   nsresult rv;
-  // Get the DOM document.
-  nsCOMPtr<nsIDOMDocument> domDocument;
-  aWindow->GetDocument(getter_AddRefs(domDocument));
-  if (!domDocument)
-    return NS_OK;
-
-  nsCOMPtr<nsIDocument> document = do_QueryInterface(domDocument);
+  // Get the document.
+  nsCOMPtr<nsIDocument> document = aWindow->GetDoc();
   if (!document)
     return NS_OK;
 
@@ -408,29 +401,27 @@ nsresult nsChromeRegistry::RefreshWindow(nsIDOMWindow* aWindow)
   nsCOMPtr<nsIPresShell> shell = document->GetShell();
   if (shell) {
     // Reload only the chrome URL agent style sheets.
-    nsCOMArray<nsIStyleSheet> agentSheets;
+    nsTArray<RefPtr<CSSStyleSheet>> agentSheets;
     rv = shell->GetAgentStyleSheets(agentSheets);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMArray<nsIStyleSheet> newAgentSheets;
-    for (int32_t l = 0; l < agentSheets.Count(); ++l) {
-      nsIStyleSheet *sheet = agentSheets[l];
-
+    nsTArray<RefPtr<CSSStyleSheet>> newAgentSheets;
+    for (CSSStyleSheet* sheet : agentSheets) {
       nsIURI* uri = sheet->GetSheetURI();
 
       if (IsChromeURI(uri)) {
         // Reload the sheet.
-        nsRefPtr<CSSStyleSheet> newSheet;
+        RefPtr<CSSStyleSheet> newSheet;
         rv = document->LoadChromeSheetSync(uri, true,
                                            getter_AddRefs(newSheet));
         if (NS_FAILED(rv)) return rv;
         if (newSheet) {
-          rv = newAgentSheets.AppendObject(newSheet) ? NS_OK : NS_ERROR_FAILURE;
+          rv = newAgentSheets.AppendElement(newSheet) ? NS_OK : NS_ERROR_FAILURE;
           if (NS_FAILED(rv)) return rv;
         }
       }
       else {  // Just use the same sheet.
-        rv = newAgentSheets.AppendObject(sheet) ? NS_OK : NS_ERROR_FAILURE;
+        rv = newAgentSheets.AppendElement(sheet) ? NS_OK : NS_ERROR_FAILURE;
         if (NS_FAILED(rv)) return rv;
       }
     }
@@ -439,41 +430,35 @@ nsresult nsChromeRegistry::RefreshWindow(nsIDOMWindow* aWindow)
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  // Build an array of nsIURIs of style sheets we need to load.
-  nsCOMArray<nsIStyleSheet> oldSheets;
-  nsCOMArray<nsIStyleSheet> newSheets;
-
   int32_t count = document->GetNumberOfStyleSheets();
 
-  // Iterate over the style sheets.
-  int32_t i;
-  for (i = 0; i < count; i++) {
-    // Get the style sheet
-    nsIStyleSheet *styleSheet = document->GetStyleSheetAt(i);
+  // Build an array of style sheets we need to reload.
+  nsTArray<RefPtr<CSSStyleSheet>> oldSheets(count);
+  nsTArray<RefPtr<CSSStyleSheet>> newSheets(count);
 
-    if (!oldSheets.AppendObject(styleSheet)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+  // Iterate over the style sheets.
+  for (int32_t i = 0; i < count; i++) {
+    // Get the style sheet
+    CSSStyleSheet* styleSheet = document->GetStyleSheetAt(i);
+    oldSheets.AppendElement(styleSheet);
   }
 
   // Iterate over our old sheets and kick off a sync load of the new
   // sheet if and only if it's a chrome URL.
-  for (i = 0; i < count; i++) {
-    nsRefPtr<CSSStyleSheet> sheet = do_QueryObject(oldSheets[i]);
+  for (CSSStyleSheet* sheet : oldSheets) {
     nsIURI* uri = sheet ? sheet->GetOriginalURI() : nullptr;
 
     if (uri && IsChromeURI(uri)) {
       // Reload the sheet.
-      nsRefPtr<CSSStyleSheet> newSheet;
+      RefPtr<CSSStyleSheet> newSheet;
       // XXX what about chrome sheets that have a title or are disabled?  This
       // only works by sheer dumb luck.
       document->LoadChromeSheetSync(uri, false, getter_AddRefs(newSheet));
       // Even if it's null, we put in in there.
-      newSheets.AppendObject(newSheet);
-    }
-    else {
+      newSheets.AppendElement(newSheet);
+    } else {
       // Just use the same sheet.
-      newSheets.AppendObject(sheet);
+      newSheets.AppendElement(sheet);
     }
   }
 
@@ -518,10 +503,9 @@ nsChromeRegistry::ReloadChrome()
         nsCOMPtr<nsISupports> protoWindow;
         rv = windowEnumerator->GetNext(getter_AddRefs(protoWindow));
         if (NS_SUCCEEDED(rv)) {
-          nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(protoWindow);
+          nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(protoWindow);
           if (domWindow) {
-            nsCOMPtr<nsIDOMLocation> location;
-            domWindow->GetLocation(getter_AddRefs(location));
+            nsIDOMLocation* location = domWindow->GetLocation();
             if (location) {
               rv = location->Reload(false);
               if (NS_FAILED(rv)) return rv;
@@ -657,6 +641,31 @@ nsChromeRegistry::MustLoadURLRemotely(nsIURI *aURI, bool *aResult)
   return NS_OK;
 }
 
+bool
+nsChromeRegistry::GetDirectionForLocale(const nsACString& aLocale)
+{
+  // first check the intl.uidirection.<locale> preference, and if that is not
+  // set, check the same preference but with just the first two characters of
+  // the locale. If that isn't set, default to left-to-right.
+  nsAutoCString prefString = NS_LITERAL_CSTRING("intl.uidirection.") + aLocale;
+  nsCOMPtr<nsIPrefBranch> prefBranch (do_GetService(NS_PREFSERVICE_CONTRACTID));
+  if (!prefBranch) {
+    return false;
+  }
+
+  nsXPIDLCString dir;
+  prefBranch->GetCharPref(prefString.get(), getter_Copies(dir));
+  if (dir.IsEmpty()) {
+    int32_t hyphen = prefString.FindChar('-');
+    if (hyphen >= 1) {
+      nsAutoCString shortPref(Substring(prefString, 0, hyphen));
+      prefBranch->GetCharPref(shortPref.get(), getter_Copies(dir));
+    }
+  }
+
+  return dir.EqualsLiteral("rtl");
+}
+
 NS_IMETHODIMP_(bool)
 nsChromeRegistry::WrappersEnabled(nsIURI *aURI)
 {
@@ -683,11 +692,11 @@ already_AddRefed<nsChromeRegistry>
 nsChromeRegistry::GetSingleton()
 {
   if (gChromeRegistry) {
-    nsRefPtr<nsChromeRegistry> registry = gChromeRegistry;
+    RefPtr<nsChromeRegistry> registry = gChromeRegistry;
     return registry.forget();
   }
 
-  nsRefPtr<nsChromeRegistry> cr;
+  RefPtr<nsChromeRegistry> cr;
   if (GeckoProcessType_Content == XRE_GetProcessType())
     cr = new nsChromeRegistryContent();
   else

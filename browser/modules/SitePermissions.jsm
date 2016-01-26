@@ -6,7 +6,7 @@ this.EXPORTED_SYMBOLS = [ "SitePermissions" ];
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 
-let gStringBundle =
+var gStringBundle =
   Services.strings.createBundle("chrome://browser/locale/sitePermissions.properties");
 
 this.SitePermissions = {
@@ -93,14 +93,15 @@ this.SitePermissions = {
     if (!this.isSupportedURI(aURI))
       return;
 
-    Services.perms.remove(aURI.host, aPermissionID);
+    Services.perms.remove(aURI, aPermissionID);
   },
 
   /* Returns the localized label for the permission with the given ID, to be
    * used in a UI for managing permissions.
    */
   getPermissionLabel: function (aPermissionID) {
-    return gStringBundle.GetStringFromName("permission." + aPermissionID + ".label");
+    let labelID = gPermissionObject[aPermissionID].labelID || aPermissionID;
+    return gStringBundle.GetStringFromName("permission." + labelID + ".label");
   },
 
   /* Returns the localized label for the given permission state, to be used in
@@ -122,7 +123,7 @@ this.SitePermissions = {
   }
 };
 
-let gPermissionObject = {
+var gPermissionObject = {
   /* Holds permission ID => options pairs.
    *
    * Supported options:
@@ -135,6 +136,10 @@ let gPermissionObject = {
    *    Called to get the permission's default state.
    *    Defaults to UNKNOWN, indicating that the user will be asked each time
    *    a page asks for that permissions.
+   *
+   *  - labelID
+   *    Use the given ID instead of the permission name for looking up strings.
+   *    e.g. "desktop-notification2" to use permission.desktop-notification2.label
    *
    *  - states
    *    Array of permission states to be exposed to the user.
@@ -161,7 +166,10 @@ let gPermissionObject = {
     }
   },
 
-  "desktop-notification": {},
+  "desktop-notification": {
+    exactHostMatch: true,
+    labelID: "desktop-notification2",
+  },
 
   "camera": {},
   "microphone": {},
@@ -186,13 +194,7 @@ let gPermissionObject = {
 
   "indexedDB": {},
 
-  "fullscreen": {},
-
   "pointerLock": {
-    exactHostMatch: true
-  },
-
-  "push": {
     exactHostMatch: true
   }
 };

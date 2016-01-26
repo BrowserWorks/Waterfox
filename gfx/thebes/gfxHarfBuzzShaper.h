@@ -10,6 +10,7 @@
 
 #include "harfbuzz/hb.h"
 #include "nsUnicodeProperties.h"
+#include "mozilla/gfx/2D.h"
 
 class gfxHarfBuzzShaper : public gfxFontShaper {
 public:
@@ -21,12 +22,12 @@ public:
      * FontCallbackData struct
      */
     struct FontCallbackData {
-        gfxHarfBuzzShaper *mShaper;
-        gfxContext        *mContext;
+        gfxHarfBuzzShaper* mShaper;
+        mozilla::gfx::DrawTarget* mDrawTarget;
     };
 
     bool Initialize();
-    virtual bool ShapeText(gfxContext      *aContext,
+    virtual bool ShapeText(DrawTarget      *aDrawTarget,
                            const char16_t *aText,
                            uint32_t         aOffset,
                            uint32_t         aLength,
@@ -60,11 +61,6 @@ public:
                        hb_codepoint_t glyph, void *user_data);
 
     static hb_bool_t
-    HBGetGlyphHOrigin(hb_font_t *font, void *font_data,
-                      hb_codepoint_t glyph,
-                      hb_position_t *x, hb_position_t *y,
-                      void *user_data);
-    static hb_bool_t
     HBGetGlyphVOrigin(hb_font_t *font, void *font_data,
                       hb_codepoint_t glyph,
                       hb_position_t *x, hb_position_t *y,
@@ -75,6 +71,11 @@ public:
 
     hb_bool_t GetGlyphExtents(hb_codepoint_t aGlyph,
                               hb_glyph_extents_t *aExtents) const;
+
+    bool UseVerticalPresentationForms() const
+    {
+        return mUseVerticalPresentationForms;
+    }
 
     static hb_script_t
     GetHBScriptUsedForShaping(int32_t aScript) {
@@ -92,7 +93,7 @@ public:
     }
 
 protected:
-    nsresult SetGlyphsFromRun(gfxContext     *aContext,
+    nsresult SetGlyphsFromRun(DrawTarget     *aDrawTarget,
                               gfxShapedText  *aShapedText,
                               uint32_t        aOffset,
                               uint32_t        aLength,
@@ -175,6 +176,10 @@ protected:
 
     bool mInitialized;
     bool mVerticalInitialized;
+
+    // Whether to use vertical presentation forms for CJK characters
+    // when available (only set if the 'vert' feature is not available).
+    bool mUseVerticalPresentationForms;
 
     // these are set from the FindGlyf callback on first use of the glyf data
     mutable bool mLoadedLocaGlyf;

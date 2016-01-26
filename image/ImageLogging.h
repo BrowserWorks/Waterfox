@@ -7,116 +7,117 @@
 #ifndef mozilla_image_ImageLogging_h
 #define mozilla_image_ImageLogging_h
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prinrval.h"
 #include "nsString.h"
 
-// Declared in imgRequest.cpp.
-extern PRLogModuleInfo* GetImgLog();
+static mozilla::LazyLogModule gImgLog("imgRequest");
 
 #define GIVE_ME_MS_NOW() PR_IntervalToMilliseconds(PR_IntervalNow())
+
+using mozilla::LogLevel;
 
 class LogScope {
 public:
 
-  LogScope(PRLogModuleInfo* aLog, void* aFrom, const char* aFunc)
+  LogScope(mozilla::LogModule* aLog, void* aFrom, const char* aFunc)
     : mLog(aLog)
     , mFrom(aFrom)
     , mFunc(aFunc)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc));
   }
 
   /* const char * constructor */
-  LogScope(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogScope(mozilla::LogModule* aLog, void* from, const char* fn,
            const char* paramName, const char* paramValue)
     : mLog(aLog)
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%s\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%s\") {ENTER}\n",
                                  GIVE_ME_MS_NOW(), mFrom, mFunc,
                                  paramName, paramValue));
   }
 
   /* void ptr constructor */
-  LogScope(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogScope(mozilla::LogModule* aLog, void* from, const char* fn,
            const char* paramName, const void* paramValue)
     : mLog(aLog)
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=%p) {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=%p) {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
 
   /* int32_t constructor */
-  LogScope(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogScope(mozilla::LogModule* aLog, void* from, const char* fn,
            const char* paramName, int32_t paramValue)
     : mLog(aLog)
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
 
   /* uint32_t constructor */
-  LogScope(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogScope(mozilla::LogModule* aLog, void* from, const char* fn,
            const char* paramName, uint32_t paramValue)
     : mLog(aLog)
     , mFrom(from)
     , mFunc(fn)
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\") {ENTER}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc,
                                 paramName, paramValue));
   }
 
   ~LogScope()
   {
-    PR_LOG(mLog, PR_LOG_DEBUG, ("%d [this=%p] %s {EXIT}\n",
+    MOZ_LOG(mLog, LogLevel::Debug, ("%d [this=%p] %s {EXIT}\n",
                                 GIVE_ME_MS_NOW(), mFrom, mFunc));
   }
 
 private:
-  PRLogModuleInfo* mLog;
+  mozilla::LogModule* mLog;
   void* mFrom;
   const char* mFunc;
 };
 
 class LogFunc {
 public:
-  LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn)
+  LogFunc(mozilla::LogModule* aLog, void* from, const char* fn)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s\n",
                                 GIVE_ME_MS_NOW(), from, fn));
   }
 
-  LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogFunc(mozilla::LogModule* aLog, void* from, const char* fn,
           const char* paramName, const char* paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%s\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%s\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
 
-  LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogFunc(mozilla::LogModule* aLog, void* from, const char* fn,
           const char* paramName, const void* paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%p\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%p\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
 
 
-  LogFunc(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogFunc(mozilla::LogModule* aLog, void* from, const char* fn,
           const char* paramName, uint32_t paramValue)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s (%s=\"%d\")\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s (%s=\"%d\")\n",
                                 GIVE_ME_MS_NOW(), from, fn,
                                 paramName, paramValue));
   }
@@ -126,10 +127,10 @@ public:
 
 class LogMessage {
 public:
-  LogMessage(PRLogModuleInfo* aLog, void* from, const char* fn,
+  LogMessage(mozilla::LogModule* aLog, void* from, const char* fn,
              const char* msg)
   {
-    PR_LOG(aLog, PR_LOG_DEBUG, ("%d [this=%p] %s -- %s\n",
+    MOZ_LOG(aLog, LogLevel::Debug, ("%d [this=%p] %s -- %s\n",
                                 GIVE_ME_MS_NOW(), from, fn, msg));
   }
 };

@@ -64,7 +64,7 @@
 
 "use strict";
 
-let { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -98,22 +98,33 @@ const DownloadsPanel = {
   _state: 0,
 
   /** The panel is not linked to downloads data yet. */
-  get kStateUninitialized() 0,
+  get kStateUninitialized() {
+    return 0;
+  },
   /** This object is linked to data, but the panel is invisible. */
-  get kStateHidden() 1,
+  get kStateHidden() {
+    return 1;
+  },
   /** The panel will be shown as soon as possible. */
-  get kStateWaitingData() 2,
+  get kStateWaitingData() {
+    return 2;
+  },
   /** The panel is almost shown - we're just waiting to get a handle on the
       anchor. */
-  get kStateWaitingAnchor() 3,
+  get kStateWaitingAnchor() {
+    return 3;
+  },
   /** The panel is open. */
-  get kStateShown() 4,
+  get kStateShown() {
+    return 4;
+  },
 
   /**
    * Location of the panel overlay.
    */
-  get kDownloadsOverlay()
-      "chrome://browser/content/downloads/downloadsOverlay.xul",
+  get kDownloadsOverlay() {
+    return "chrome://browser/content/downloads/downloadsOverlay.xul";
+  },
 
   /**
    * Starts loading the download data in background, without opening the panel.
@@ -287,8 +298,14 @@ const DownloadsPanel = {
    * visualization.
    */
   handleEvent(aEvent) {
-    if (aEvent.type == "mousemove") {
-      this.keyFocusing = false;
+    switch (aEvent.type) {
+      case "mousemove":
+        this.keyFocusing = false;
+        break;
+      case "keydown":
+        return this._onKeyDown(aEvent);
+      case "keypress":
+        return this._onKeyPress(aEvent);
     }
   },
 
@@ -378,10 +395,10 @@ const DownloadsPanel = {
    */
   _attachEventListeners() {
     // Handle keydown to support accel-V.
-    this.panel.addEventListener("keydown", this._onKeyDown.bind(this), false);
+    this.panel.addEventListener("keydown", this, false);
     // Handle keypress to be able to preventDefault() events before they reach
     // the richlistbox, for keyboard navigation.
-    this.panel.addEventListener("keypress", this._onKeyPress.bind(this), false);
+    this.panel.addEventListener("keypress", this, false);
   },
 
   /**
@@ -389,10 +406,8 @@ const DownloadsPanel = {
    * is called automatically on panel termination.
    */
   _unattachEventListeners() {
-    this.panel.removeEventListener("keydown", this._onKeyDown.bind(this),
-                                   false);
-    this.panel.removeEventListener("keypress", this._onKeyPress.bind(this),
-                                   false);
+    this.panel.removeEventListener("keydown", this, false);
+    this.panel.removeEventListener("keypress", this, false);
   },
 
   _onKeyPress(aEvent) {
@@ -456,11 +471,7 @@ const DownloadsPanel = {
     }
 
     let pasting = aEvent.keyCode == Ci.nsIDOMKeyEvent.DOM_VK_V &&
-#ifdef XP_MACOSX
-                  aEvent.metaKey;
-#else
-                  aEvent.ctrlKey;
-#endif
+                  aEvent.getModifierState("Accel");
 
     if (!pasting) {
       return;
@@ -565,6 +576,8 @@ const DownloadsPanel = {
   },
 };
 
+XPCOMUtils.defineConstant(this, "DownloadsPanel", DownloadsPanel);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsOverlayLoader
 
@@ -642,6 +655,8 @@ const DownloadsOverlayLoader = {
     }
   },
 };
+
+XPCOMUtils.defineConstant(this, "DownloadsOverlayLoader", DownloadsOverlayLoader);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsView
@@ -989,6 +1004,8 @@ const DownloadsView = {
   },
 }
 
+XPCOMUtils.defineConstant(this, "DownloadsView", DownloadsView);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsViewItem
 
@@ -1127,6 +1144,8 @@ const DownloadsViewController = {
   }
 };
 
+XPCOMUtils.defineConstant(this, "DownloadsViewController", DownloadsViewController);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsViewItemController
 
@@ -1262,7 +1281,7 @@ DownloadsViewItemController.prototype = {
     downloadsCmd_copyLocation() {
       let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
                       .getService(Ci.nsIClipboardHelper);
-      clipboard.copyString(this.download.source.url, document);
+      clipboard.copyString(this.download.source.url);
     },
 
     downloadsCmd_doDefault() {
@@ -1325,7 +1344,9 @@ const DownloadsSummary = {
   /**
    * Returns the active state of the downloads summary.
    */
-  get active() this._active,
+  get active() {
+    return this._active;
+  },
 
   _active: false,
 
@@ -1471,7 +1492,9 @@ const DownloadsSummary = {
     delete this._detailsNode;
     return this._detailsNode = node;
   }
-}
+};
+
+XPCOMUtils.defineConstant(this, "DownloadsSummary", DownloadsSummary);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsFooter
@@ -1525,3 +1548,5 @@ const DownloadsFooter = {
     return this._footerNode = node;
   }
 };
+
+XPCOMUtils.defineConstant(this, "DownloadsFooter", DownloadsFooter);

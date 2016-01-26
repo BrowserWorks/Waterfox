@@ -20,9 +20,11 @@ class nsDragService : public nsBaseDragService
 public:
   nsDragService();
 
+  // nsBaseDragService
+  virtual nsresult InvokeDragSessionImpl(nsISupportsArray* anArrayTransferables,
+                                         nsIScriptableRegion* aRegion,
+                                         uint32_t aActionType);
   // nsIDragService
-  NS_IMETHOD InvokeDragSession(nsIDOMNode *aDOMNode, nsISupportsArray * anArrayTransferables,
-                               nsIScriptableRegion * aRegion, uint32_t aActionType);
   NS_IMETHOD EndDragSession(bool aDoneDrag);
 
   // nsIDragSession
@@ -38,6 +40,11 @@ private:
   NSImage* ConstructDragImage(nsIDOMNode* aDOMNode,
                               nsIntRect* aDragRect,
                               nsIScriptableRegion* aRegion);
+  bool IsValidType(NSString* availableType, bool allowFileURL);
+  NSString* GetStringForType(NSPasteboardItem* item, const NSString* type,
+                             bool allowFileURL = false);
+  NSString* GetTitleForURL(NSPasteboardItem* item);
+  NSString* GetFilePath(NSPasteboardItem* item);
 
   nsCOMPtr<nsISupportsArray> mDataItems; // only valid for a drag started within gecko
   NSView* mNativeDragView;

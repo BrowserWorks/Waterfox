@@ -6,9 +6,9 @@
 
 // Pass an empty scope object to the import to prevent "leaked window property"
 // errors in tests.
-let Preferences = Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
-let PromiseUtils = Cu.import("resource://gre/modules/PromiseUtils.jsm", {}).PromiseUtils;
-let SelfSupportBackend =
+var Preferences = Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
+var PromiseUtils = Cu.import("resource://gre/modules/PromiseUtils.jsm", {}).PromiseUtils;
+var SelfSupportBackend =
   Cu.import("resource:///modules/SelfSupportBackend.jsm", {}).SelfSupportBackend;
 
 const PREF_SELFSUPPORT_ENABLED = "browser.selfsupport.enabled";
@@ -112,7 +112,7 @@ add_task(function* setupEnvironment() {
   Services.perms.add(pageURI, "uitour", Services.perms.ALLOW_ACTION);
 
   registerCleanupFunction(() => {
-    Services.perms.remove("example.com", "uitour");
+    Services.perms.remove(pageURI, "uitour");
     Preferences.set(PREF_SELFSUPPORT_ENABLED, selfSupportEnabled);
     Preferences.set(PREF_UITOUR_ENABLED, uitourEnabled);
     Preferences.set(PREF_SELFSUPPORT_URL, selfSupportURL);
@@ -146,6 +146,29 @@ add_task(function* test_selfSupport() {
     uitourAPI.ping(resolve);
   });
   yield pingPromise;
+  info("Ping succeeded");
+
+  let observePromise = ContentTask.spawn(selfSupportBrowser, null, function* checkObserve() {
+    yield new Promise(resolve => {
+      let win = Cu.waiveXrays(content);
+      win.Mozilla.UITour.observe((event, data) => {
+        if (event != "Heartbeat:Engaged") {
+          return;
+        }
+        is(data.flowId, "myFlowID", "Check flowId");
+        ok(!!data.timestamp, "Check timestamp");
+        resolve(data);
+      }, () => {});
+    });
+  });
+
+  info("Notifying Heartbeat:Engaged");
+  UITour.notify("Heartbeat:Engaged", {
+    flowId: "myFlowID",
+    timestamp: Date.now(),
+  });
+  yield observePromise;
+  info("Observed in the hidden frame");
 
   // Close SelfSupport from content.
   contentWindow.close();

@@ -7,11 +7,14 @@
 #ifndef vm_TypedArrayObject_h
 #define vm_TypedArrayObject_h
 
+#include "mozilla/Attributes.h"
+
 #include "jsobj.h"
 
 #include "gc/Barrier.h"
 #include "js/Class.h"
 #include "vm/ArrayBufferObject.h"
+#include "vm/SharedArrayObject.h"
 
 typedef struct JSProperty JSProperty;
 
@@ -25,26 +28,9 @@ namespace js {
  * the subclasses.
  */
 
-/*
- * TypedArrayObject and SharedTypedArrayObject are unrelated types in
- * both C++ and JS, and that is deliberate to avoid one substituting
- * for the other.  However, they share a fixed representation and have
- * some variable attributes, all of which are encapsulated in the
- * TypedArrayLayout class.  The sharing avoids a lot of pointless
- * duplication in the JITs: one code path can be used, with occasional
- * decision points based on the attributes.
- */
-
-class TypedArrayLayout
+class TypedArrayObject : public NativeObject
 {
-    const bool isShared_;
-    const bool isNeuterable_;
-    const Class* firstClass_;
-    const Class* maxClass_;
-
   public:
-    TypedArrayLayout(bool isShared, bool isNeuterable, const Class* firstClass, const Class* maxClass);
-
     // Underlying (Shared)ArrayBufferObject.
     static const size_t BUFFER_SLOT = 0;
     static_assert(BUFFER_SLOT == JS_TYPEDARRAYLAYOUT_BUFFER_SLOT,
@@ -65,35 +51,35 @@ class TypedArrayLayout
 
     static const size_t RESERVED_SLOTS = 3;
 
+    static int lengthOffset();
+    static int dataOffset();
+
     // The raw pointer to the buffer memory, the "private" value.
     //
     // This offset is exposed for performance reasons - so that it
     // need not be looked up on accesses.
     static const size_t DATA_SLOT = 3;
 
-    static int lengthOffset();
-    static int dataOffset();
-
-    bool isSharedMemory() const { return isShared_; }
-    bool isNeuterable() const { return isNeuterable_; }
-    const Class* addressOfFirstClass() const { return firstClass_; }
-    const Class* addressOfMaxClass() const { return maxClass_; }
-
-  protected:
     static_assert(js::detail::TypedArrayLengthSlot == LENGTH_SLOT,
                   "bad inlined constant in jsfriendapi.h");
-};
 
-class TypedArrayObject : public NativeObject
-{
-  public:
     typedef TypedArrayObject SomeTypedArray;
     typedef ArrayBufferObject BufferType;
 
     template<typename T> struct OfType;
 
     static bool sameBuffer(Handle<TypedArrayObject*> a, Handle<TypedArrayObject*> b) {
-        return a->buffer() == b->buffer();
+        // Inline buffers.
+        if (!a->hasBuffer() || !b->hasBuffer())
+            return a.get() == b.get();
+
+        // Shared buffers.
+        if (a->isSharedMemory() && b->isSharedMemory()) {
+            return (a->bufferObject()->as<SharedArrayBufferObject>().globalID() ==
+                    b->bufferObject()->as<SharedArrayBufferObject>().globalID());
+        }
+
+        return a->bufferObject() == b->bufferObject();
     }
 
     static const Class classes[Scalar::MaxTypedArrayViewType];
@@ -110,7 +96,7 @@ class TypedArrayObject : public NativeObject
         return &protoClasses[type];
     }
 
-    static const size_t FIXED_DATA_START = TypedArrayLayout::DATA_SLOT + 1;
+    static const size_t FIXED_DATA_START = DATA_SLOT + 1;
 
     // For typed arrays which can store their data inline, the array buffer
     // object is created lazily.
@@ -131,16 +117,16 @@ class TypedArrayObject : public NativeObject
     inline size_t bytesPerElement() const;
 
     static Value bufferValue(TypedArrayObject* tarr) {
-        return tarr->getFixedSlot(TypedArrayLayout::BUFFER_SLOT);
+        return tarr->getFixedSlot(BUFFER_SLOT);
     }
     static Value byteOffsetValue(TypedArrayObject* tarr) {
-        return tarr->getFixedSlot(TypedArrayLayout::BYTEOFFSET_SLOT);
+        return tarr->getFixedSlot(BYTEOFFSET_SLOT);
     }
     static Value byteLengthValue(TypedArrayObject* tarr) {
-        return Int32Value(tarr->getFixedSlot(TypedArrayLayout::LENGTH_SLOT).toInt32() * tarr->bytesPerElement());
+        return Int32Value(tarr->getFixedSlot(LENGTH_SLOT).toInt32() * tarr->bytesPerElement());
     }
     static Value lengthValue(TypedArrayObject* tarr) {
-        return tarr->getFixedSlot(TypedArrayLayout::LENGTH_SLOT);
+        return tarr->getFixedSlot(LENGTH_SLOT);
     }
 
     static bool
@@ -149,11 +135,8 @@ class TypedArrayObject : public NativeObject
     bool hasBuffer() const {
         return bufferValue(const_cast<TypedArrayObject*>(this)).isObject();
     }
-    ArrayBufferObject* buffer() const {
-        JSObject* obj = bufferValue(const_cast<TypedArrayObject*>(this)).toObjectOrNull();
-        if (!obj)
-            return nullptr;
-        return &obj->as<ArrayBufferObject>();
+    JSObject* bufferObject() const {
+        return bufferValue(const_cast<TypedArrayObject*>(this)).toObjectOrNull();
     }
     uint32_t byteOffset() const {
         return byteOffsetValue(const_cast<TypedArrayObject*>(this)).toInt32();
@@ -163,11 +146,6 @@ class TypedArrayObject : public NativeObject
     }
     uint32_t length() const {
         return lengthValue(const_cast<TypedArrayObject*>(this)).toInt32();
-    }
-
-    void* viewData() const {
-        // Keep synced with js::Get<Type>ArrayLengthAndData in jsfriendapi.h!
-        return static_cast<void*>(getPrivate(TypedArrayLayout::DATA_SLOT));
     }
 
     Value getElement(uint32_t index);
@@ -183,21 +161,71 @@ class TypedArrayObject : public NativeObject
 
     static bool isOriginalLengthGetter(Native native);
 
-  private:
-    static TypedArrayLayout layout_;
-
-  public:
-    static const TypedArrayLayout& layout() {
-        return layout_;
+    ArrayBufferObject* bufferUnshared() const {
+        MOZ_ASSERT(!isSharedMemory());
+        JSObject* obj = bufferValue(const_cast<TypedArrayObject*>(this)).toObjectOrNull();
+        if (!obj)
+            return nullptr;
+        return &obj->as<ArrayBufferObject>();
+    }
+    SharedArrayBufferObject* bufferShared() const {
+        MOZ_ASSERT(isSharedMemory());
+        JSObject* obj = bufferValue(const_cast<TypedArrayObject*>(this)).toObjectOrNull();
+        if (!obj)
+            return nullptr;
+        return &obj->as<SharedArrayBufferObject>();
+    }
+    ArrayBufferObjectMaybeShared* bufferEither() const {
+        JSObject* obj = bufferValue(const_cast<TypedArrayObject*>(this)).toObjectOrNull();
+        if (!obj)
+            return nullptr;
+        if (isSharedMemory())
+            return &obj->as<SharedArrayBufferObject>();
+        return &obj->as<ArrayBufferObject>();
     }
 
+    SharedMem<void*> viewDataShared() const {
+        return SharedMem<void*>::shared(viewDataEither_());
+    }
+    SharedMem<void*> viewDataEither() const {
+        if (isSharedMemory())
+            return SharedMem<void*>::shared(viewDataEither_());
+        return SharedMem<void*>::unshared(viewDataEither_());
+    }
+    void initViewData(SharedMem<uint8_t*> viewData) {
+        // Install a pointer to the buffer location that corresponds
+        // to offset zero within the typed array.
+        //
+        // The following unwrap is safe because the DATA_SLOT is
+        // accessed only from jitted code and from the
+        // viewDataEither_() accessor below; in neither case does the
+        // raw pointer escape untagged into C++ code.
+        initPrivate(viewData.unwrap(/*safe - see above*/));
+    }
+    void* viewDataUnshared() const {
+        MOZ_ASSERT(!isSharedMemory());
+        return viewDataEither_();
+    }
+
+    bool isNeutered() const {
+        return !isSharedMemory() && bufferUnshared() && bufferUnshared()->isNeutered();
+    }
+
+  private:
+    void* viewDataEither_() const {
+        // Note, do not check whether shared or not
+        // Keep synced with js::Get<Type>ArrayLengthAndData in jsfriendapi.h!
+        return static_cast<void*>(getPrivate(DATA_SLOT));
+    }
+
+  public:
     static void trace(JSTracer* trc, JSObject* obj);
 
     /* Initialization bits */
 
     template<Value ValueGetter(TypedArrayObject* tarr)>
     static bool
-    GetterImpl(JSContext* cx, CallArgs args)
+    GetterImpl(JSContext* cx, const CallArgs& args)
     {
         MOZ_ASSERT(is(args.thisv()));
         args.rval().set(ValueGetter(&args.thisv().toObject().as<TypedArrayObject>()));
@@ -287,8 +315,8 @@ IsTypedArrayIndex(jsid id, uint64_t* indexp)
 }
 
 /*
- * Implements [[DefineOwnProperty]] for TypedArrays and SharedTypedArrays
- * when the property key is a TypedArray index.
+ * Implements [[DefineOwnProperty]] for TypedArrays when the property
+ * key is a TypedArray index.
  */
 bool
 DefineTypedArrayElement(JSContext* cx, HandleObject arr, uint64_t index,
@@ -356,7 +384,7 @@ class DataViewObject : public NativeObject
 
     template<Value ValueGetter(DataViewObject* view)>
     static bool
-    getterImpl(JSContext* cx, CallArgs args);
+    getterImpl(JSContext* cx, const CallArgs& args);
 
     template<Value ValueGetter(DataViewObject* view)>
     static bool
@@ -366,23 +394,33 @@ class DataViewObject : public NativeObject
     static bool
     defineGetter(JSContext* cx, PropertyName* name, HandleNativeObject proto);
 
+    static bool getAndCheckConstructorArgs(JSContext* cx, JSObject* bufobj, const CallArgs& args,
+                                           uint32_t *byteOffset, uint32_t* byteLength);
+    static bool constructSameCompartment(JSContext* cx, HandleObject bufobj, const CallArgs& args);
+    static bool constructWrapped(JSContext* cx, HandleObject bufobj, const CallArgs& args);
+
+    friend bool ArrayBufferObject::createDataViewForThisImpl(JSContext* cx, const CallArgs& args);
+    static DataViewObject*
+    create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
+           Handle<ArrayBufferObject*> arrayBuffer, JSObject* proto);
+
   public:
     static const Class class_;
 
     static Value byteOffsetValue(DataViewObject* view) {
-        Value v = view->getReservedSlot(TypedArrayLayout::BYTEOFFSET_SLOT);
+        Value v = view->getFixedSlot(TypedArrayObject::BYTEOFFSET_SLOT);
         MOZ_ASSERT(v.toInt32() >= 0);
         return v;
     }
 
     static Value byteLengthValue(DataViewObject* view) {
-        Value v = view->getReservedSlot(TypedArrayLayout::LENGTH_SLOT);
+        Value v = view->getFixedSlot(TypedArrayObject::LENGTH_SLOT);
         MOZ_ASSERT(v.toInt32() >= 0);
         return v;
     }
 
     static Value bufferValue(DataViewObject* view) {
-        return view->getReservedSlot(TypedArrayLayout::BUFFER_SLOT);
+        return view->getFixedSlot(TypedArrayObject::BUFFER_SLOT);
     }
 
     uint32_t byteOffset() const {
@@ -402,70 +440,63 @@ class DataViewObject : public NativeObject
     }
 
     static bool class_constructor(JSContext* cx, unsigned argc, Value* vp);
-    static bool constructWithProto(JSContext* cx, unsigned argc, Value* vp);
-    static bool construct(JSContext* cx, JSObject* bufobj, const CallArgs& args,
-                          HandleObject proto);
 
-    static inline DataViewObject*
-    create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
-           Handle<ArrayBufferObject*> arrayBuffer, JSObject* proto);
-
-    static bool getInt8Impl(JSContext* cx, CallArgs args);
+    static bool getInt8Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getInt8(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getUint8Impl(JSContext* cx, CallArgs args);
+    static bool getUint8Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getUint8(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getInt16Impl(JSContext* cx, CallArgs args);
+    static bool getInt16Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getInt16(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getUint16Impl(JSContext* cx, CallArgs args);
+    static bool getUint16Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getUint16(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getInt32Impl(JSContext* cx, CallArgs args);
+    static bool getInt32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getInt32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getUint32Impl(JSContext* cx, CallArgs args);
+    static bool getUint32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getUint32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getFloat32Impl(JSContext* cx, CallArgs args);
+    static bool getFloat32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getFloat32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool getFloat64Impl(JSContext* cx, CallArgs args);
+    static bool getFloat64Impl(JSContext* cx, const CallArgs& args);
     static bool fun_getFloat64(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setInt8Impl(JSContext* cx, CallArgs args);
+    static bool setInt8Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setInt8(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setUint8Impl(JSContext* cx, CallArgs args);
+    static bool setUint8Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setUint8(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setInt16Impl(JSContext* cx, CallArgs args);
+    static bool setInt16Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setInt16(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setUint16Impl(JSContext* cx, CallArgs args);
+    static bool setUint16Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setUint16(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setInt32Impl(JSContext* cx, CallArgs args);
+    static bool setInt32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setInt32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setUint32Impl(JSContext* cx, CallArgs args);
+    static bool setUint32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setUint32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setFloat32Impl(JSContext* cx, CallArgs args);
+    static bool setFloat32Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setFloat32(JSContext* cx, unsigned argc, Value* vp);
 
-    static bool setFloat64Impl(JSContext* cx, CallArgs args);
+    static bool setFloat64Impl(JSContext* cx, const CallArgs& args);
     static bool fun_setFloat64(JSContext* cx, unsigned argc, Value* vp);
 
     static bool initClass(JSContext* cx);
     static void neuter(JSObject* view);
     template<typename NativeType>
     static bool read(JSContext* cx, Handle<DataViewObject*> obj,
-                     CallArgs& args, NativeType* val, const char* method);
+                     const CallArgs& args, NativeType* val, const char* method);
     template<typename NativeType>
     static bool write(JSContext* cx, Handle<DataViewObject*> obj,
-                      CallArgs& args, const char* method);
+                      const CallArgs& args, const char* method);
 
     void neuter(void* newData);
 

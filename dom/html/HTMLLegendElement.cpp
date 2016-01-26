@@ -128,13 +128,14 @@ HTMLLegendElement::Focus(ErrorResult& aError)
                          getter_AddRefs(result));
 }
 
-void
+bool
 HTMLLegendElement::PerformAccesskey(bool aKeyCausesActivation,
                                     bool aIsTrustedEvent)
 {
   // just use the same behaviour as the focus method
   ErrorResult rv;
   Focus(rv);
+  return NS_SUCCEEDED(rv.StealNSResult());
 }
 
 already_AddRefed<HTMLFormElement>
@@ -142,7 +143,7 @@ HTMLLegendElement::GetForm()
 {
   Element* form = GetFormElement();
   MOZ_ASSERT_IF(form, form->IsHTMLElement(nsGkAtoms::form));
-  nsRefPtr<HTMLFormElement> ret = static_cast<HTMLFormElement*>(form);
+  RefPtr<HTMLFormElement> ret = static_cast<HTMLFormElement*>(form);
   return ret.forget();
 }
 

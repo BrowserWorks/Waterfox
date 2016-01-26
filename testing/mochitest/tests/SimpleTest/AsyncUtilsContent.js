@@ -6,11 +6,15 @@
 // Set up a dummy environment so that EventUtils works. We need to be careful to
 // pass a window object into each EventUtils method we call rather than having
 // it rely on the |window| global.
-let EventUtils = {};
+var EventUtils = {};
 EventUtils.window = {};
 EventUtils.parent = EventUtils.window;
 EventUtils._EU_Ci = Components.interfaces;
 EventUtils._EU_Cc = Components.classes;
+// EventUtils' `sendChar` function relies on the navigator to synthetize events.
+EventUtils.navigator = content.document.defaultView.navigator;
+EventUtils.KeyboardEvent = content.document.defaultView.KeyboardEvent;
+
 Services.scriptloader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/EventUtils.js", EventUtils);
 
 addMessageListener("Test:SynthesizeMouse", (message) => {
@@ -18,6 +22,13 @@ addMessageListener("Test:SynthesizeMouse", (message) => {
   let target = data.target;
   if (typeof target == "string") {
     target = content.document.querySelector(target);
+  }
+  else if (typeof data.targetFn == "string") {
+    let runnablestr = `
+      (() => {
+        return (${data.targetFn});
+      })();`
+    target = eval(runnablestr)();
   }
   else {
     target = message.objects.object;
@@ -38,4 +49,12 @@ addMessageListener("Test:SynthesizeMouse", (message) => {
 
   let result = EventUtils.synthesizeMouseAtPoint(left, top, data.event, content);
   sendAsyncMessage("Test:SynthesizeMouseDone", { defaultPrevented: result });
+});
+
+addMessageListener("Test:SendChar", message => {
+  let result = EventUtils.sendChar(message.data.char, content);
+  sendAsyncMessage("Test:SendCharDone", {
+    sendCharResult: result,
+    seq: message.data.seq
+  });
 });

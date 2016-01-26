@@ -27,7 +27,7 @@
 #include "nsID.h"
 #include "nsIDOMEvent.h"
 #include "nsString.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 // Include this last to avoid path problems on Windows.
 #include "ActorsChild.h"
@@ -279,12 +279,12 @@ LoggingHelper(bool aUseProfiler, const char* aFmt, ...)
                IndexedDatabaseManager::Logging_Disabled);
   MOZ_ASSERT(aFmt);
 
-  PRLogModuleInfo* logModule = IndexedDatabaseManager::GetLoggingModule();
+  mozilla::LogModule* logModule = IndexedDatabaseManager::GetLoggingModule();
   MOZ_ASSERT(logModule);
 
-  static const PRLogModuleLevel logLevel = PR_LOG_WARNING;
+  static const mozilla::LogLevel logLevel = LogLevel::Warning;
 
-  if (PR_LOG_TEST(logModule, logLevel) ||
+  if (MOZ_LOG_TEST(logModule, logLevel) ||
       (aUseProfiler && profiler_is_active())) {
     nsAutoCString message;
 
@@ -297,7 +297,7 @@ LoggingHelper(bool aUseProfiler, const char* aFmt, ...)
       va_end(args);
     }
 
-    PR_LOG(logModule, logLevel, ("%s", message.get()));
+    MOZ_LOG(logModule, logLevel, ("%s", message.get()));
 
     if (aUseProfiler) {
       PROFILER_MARKER(message.get());

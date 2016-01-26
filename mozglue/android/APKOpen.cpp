@@ -19,7 +19,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <zlib.h>
@@ -33,6 +32,9 @@
 #include "NSSBridge.h"
 #include "ElfLoader.h"
 #include "application.ini.h"
+
+#include "mozilla/TimeStamp.h"
+#include "mozilla/UniquePtr.h"
 
 /* Android headers don't define RUSAGE_THREAD */
 #ifndef RUSAGE_THREAD
@@ -79,24 +81,6 @@ enum StartupEvent {
 };
 
 using namespace mozilla;
-
-/**
- * Local TimeStamp::Now()-compatible implementation used to record timestamps
- * which will be passed to XRE_StartupTimelineRecord().
- */
-
-static uint64_t TimeStamp_Now()
-{
-  struct timespec ts;
-  int rv = clock_gettime(CLOCK_MONOTONIC, &ts);
-
-  if (rv != 0) {
-    return 0;
-  }
-
-  uint64_t baseNs = (uint64_t)ts.tv_sec * 1000000000;
-  return baseNs + (uint64_t)ts.tv_nsec;
-}
 
 static struct mapping_info * lib_mapping = nullptr;
 
@@ -206,19 +190,28 @@ report_mapping(char *name, void *base, uint32_t len, uint32_t offset)
   info->offset = offset;
 }
 
+static void*
+dlopenAPKLibrary(const char* apkName, const char* libraryName)
+{
+#define APK_ASSETS_PATH "!/assets/" ANDROID_CPU_ARCH "/"
+  size_t filenameLength = strlen(apkName) +
+    sizeof(APK_ASSETS_PATH) + 	// includes \0 terminator
+    strlen(libraryName);
+  auto file = MakeUnique<char[]>(filenameLength);
+  snprintf(file.get(), filenameLength, "%s" APK_ASSETS_PATH "%s",
+	   apkName, libraryName);
+  return __wrap_dlopen(file.get(), RTLD_GLOBAL | RTLD_LAZY);
+#undef APK_ASSETS_PATH
+}
 static mozglueresult
 loadGeckoLibs(const char *apkName)
 {
-  uint64_t t0 = TimeStamp_Now();
+  TimeStamp t0 = TimeStamp::Now();
   struct rusage usage1_thread, usage1;
   getrusage(RUSAGE_THREAD, &usage1_thread);
   getrusage(RUSAGE_SELF, &usage1);
-  
-  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libxul.so")];
-  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libxul.so", apkName);
-  xul_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
-  delete[] file;
 
+  xul_handle = dlopenAPKLibrary(apkName, "libxul.so");
   if (!xul_handle) {
     __android_log_print(ANDROID_LOG_ERROR, "GeckoLibLoad", "Couldn't get a handle to libxul!");
     return FAILURE;
@@ -228,10 +221,10 @@ loadGeckoLibs(const char *apkName)
 #include "jni-stubs.inc"
 #undef JNI_BINDINGS
 
-  void (*XRE_StartupTimelineRecord)(int, uint64_t);
+  void (*XRE_StartupTimelineRecord)(int, TimeStamp);
   xul_dlsym("XRE_StartupTimelineRecord", &XRE_StartupTimelineRecord);
 
-  uint64_t t1 = TimeStamp_Now();
+  TimeStamp t1 = TimeStamp::Now();
   struct rusage usage2_thread, usage2;
   getrusage(RUSAGE_THREAD, &usage2_thread);
   getrusage(RUSAGE_SELF, &usage2);
@@ -240,8 +233,8 @@ loadGeckoLibs(const char *apkName)
   ((u2.ru_ ## field.tv_sec - u1.ru_ ## field.tv_sec) * 1000 + \
    (u2.ru_ ## field.tv_usec - u1.ru_ ## field.tv_usec) / 1000)
 
-  __android_log_print(ANDROID_LOG_ERROR, "GeckoLibLoad", "Loaded libs in %lldms total, %ldms(%ldms) user, %ldms(%ldms) system, %ld(%ld) faults",
-                      (t1 - t0) / 1000000,
+  __android_log_print(ANDROID_LOG_ERROR, "GeckoLibLoad", "Loaded libs in %fms total, %ldms(%ldms) user, %ldms(%ldms) system, %ld(%ld) faults",
+                      (t1 - t0).ToMilliseconds(),
                       RUSAGE_TIMEDIFF(usage1_thread, usage2_thread, utime),
                       RUSAGE_TIMEDIFF(usage1, usage2, utime),
                       RUSAGE_TIMEDIFF(usage1_thread, usage2_thread, stime),
@@ -270,11 +263,7 @@ loadSQLiteLibs(const char *apkName)
     lib_mapping = (struct mapping_info *)calloc(MAX_MAPPING_INFO, sizeof(*lib_mapping));
   }
 
-  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libmozsqlite3.so")];
-  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libmozsqlite3.so", apkName);
-  sqlite_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
-  delete [] file;
-
+  sqlite_handle = dlopenAPKLibrary(apkName, "libmozsqlite3.so");
   if (!sqlite_handle) {
     __android_log_print(ANDROID_LOG_ERROR, "GeckoLibLoad", "Couldn't get a handle to libmozsqlite3!");
     return FAILURE;
@@ -295,21 +284,12 @@ loadNSSLibs(const char *apkName)
     lib_mapping = (struct mapping_info *)calloc(MAX_MAPPING_INFO, sizeof(*lib_mapping));
   }
 
-  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libnss3.so")];
-  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libnss3.so", apkName);
-  nss_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
-  delete [] file;
+  nss_handle = dlopenAPKLibrary(apkName, "libnss3.so");
 
 #ifndef MOZ_FOLD_LIBS
-  file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libnspr4.so")];
-  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libnspr4.so", apkName);
-  nspr_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
-  delete [] file;
+  nspr_handle = dlopenAPKLibrary(apkName, "libnspr4.so");
 
-  file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libplc4.so")];
-  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libplc4.so", apkName);
-  plc_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
-  delete [] file;
+  plc_handle = dlopenAPKLibrary(apkName, "libplc4.so");
 #endif
 
   if (!nss_handle) {
@@ -332,7 +312,7 @@ loadNSSLibs(const char *apkName)
   return setup_nss_functions(nss_handle, nspr_handle, plc_handle);
 }
 
-extern "C" NS_EXPORT void JNICALL
+extern "C" NS_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadGeckoLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName)
 {
   jenv->GetJavaVM(&sJavaVM);
@@ -351,7 +331,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadGeckoLibsNative(JNIEnv *jenv, jcl
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-extern "C" NS_EXPORT void JNICALL
+extern "C" NS_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadSQLiteLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName) {
   const char* str;
   // XXX: java doesn't give us true UTF8, we should figure out something
@@ -369,7 +349,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadSQLiteLibsNative(JNIEnv *jenv, jc
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-extern "C" NS_EXPORT void JNICALL
+extern "C" NS_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_loadNSSLibsNative(JNIEnv *jenv, jclass jGeckoAppShellClass, jstring jApkName) {
   const char* str;
   // XXX: java doesn't give us true UTF8, we should figure out something
@@ -387,9 +367,9 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_loadNSSLibsNative(JNIEnv *jenv, jclas
   jenv->ReleaseStringUTFChars(jApkName, str);
 }
 
-typedef void (*GeckoStart_t)(void *, const nsXREAppData *);
+typedef void (*GeckoStart_t)(JNIEnv*, char*, const nsXREAppData*);
 
-extern "C" NS_EXPORT void JNICALL
+extern "C" NS_EXPORT void MOZ_JNICALL
 Java_org_mozilla_gecko_mozglue_GeckoLoader_nativeRun(JNIEnv *jenv, jclass jc, jstring jargs)
 {
   GeckoStart_t GeckoStart;
@@ -404,7 +384,7 @@ Java_org_mozilla_gecko_mozglue_GeckoLoader_nativeRun(JNIEnv *jenv, jclass jc, js
   jenv->GetStringUTFRegion(jargs, 0, len, args);
   args[len] = '\0';
   ElfLoader::Singleton.ExpectShutdown(false);
-  GeckoStart(args, &sAppData);
+  GeckoStart(jenv, args, &sAppData);
   ElfLoader::Singleton.ExpectShutdown(true);
   free(args);
 }

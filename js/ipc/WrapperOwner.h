@@ -40,7 +40,7 @@ class WrapperOwner : public virtual JavaScriptShared
     bool preventExtensions(JSContext* cx, JS::HandleObject proxy, JS::ObjectOpResult& result);
     bool isExtensible(JSContext* cx, JS::HandleObject proxy, bool* extensible);
     bool has(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, bool* bp);
-    bool get(JSContext* cx, JS::HandleObject proxy, JS::HandleObject receiver,
+    bool get(JSContext* cx, JS::HandleObject proxy, JS::HandleValue receiver,
              JS::HandleId id, JS::MutableHandleValue vp);
     bool set(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, JS::HandleValue v,
              JS::HandleValue receiver, JS::ObjectOpResult& result);
@@ -54,7 +54,8 @@ class WrapperOwner : public virtual JavaScriptShared
     bool getOwnEnumerablePropertyKeys(JSContext* cx, JS::HandleObject proxy,
                                       JS::AutoIdVector& props);
     bool hasInstance(JSContext* cx, JS::HandleObject proxy, JS::MutableHandleValue v, bool* bp);
-    bool objectClassIs(JSContext* cx, JS::HandleObject obj, js::ESClassValue classValue);
+    bool getBuiltinClass(JSContext* cx, JS::HandleObject proxy, js::ESClassValue* classValue);
+    bool isArray(JSContext* cx, JS::HandleObject proxy, JS::IsArrayAnswer* answer);
     const char* className(JSContext* cx, JS::HandleObject proxy);
     bool getPrototype(JSContext* cx, JS::HandleObject proxy, JS::MutableHandleObject protop);
 
@@ -72,6 +73,8 @@ class WrapperOwner : public virtual JavaScriptShared
     bool domInstanceOf(JSContext* cx, JSObject* obj, int prototypeID, int depth, bool* bp);
 
     bool active() { return !inactive_; }
+
+    virtual bool allowMessage(JSContext* cx) = 0;
 
     void drop(JSObject* obj);
     void updatePointer(JSObject* obj, const JSObject* old);
@@ -125,7 +128,7 @@ class WrapperOwner : public virtual JavaScriptShared
                          ReturnStatus* rs, bool* bp) = 0;
     virtual bool SendHasOwn(const ObjectId& objId, const JSIDVariant& id,
                             ReturnStatus* rs, bool* bp) = 0;
-    virtual bool SendGet(const ObjectId& objId, const ObjectVariant& receiverVar,
+    virtual bool SendGet(const ObjectId& objId, const JSVariant& receiverVar,
                          const JSIDVariant& id,
                          ReturnStatus* rs, JSVariant* result) = 0;
     virtual bool SendSet(const ObjectId& objId, const JSIDVariant& id, const JSVariant& value,
@@ -138,8 +141,10 @@ class WrapperOwner : public virtual JavaScriptShared
                                      nsTArray<JSParam>* outparams) = 0;
     virtual bool SendHasInstance(const ObjectId& objId, const JSVariant& v,
                                  ReturnStatus* rs, bool* bp) = 0;
-    virtual bool SendObjectClassIs(const ObjectId& objId, const uint32_t& classValue,
-                                   bool* result) = 0;
+    virtual bool SendGetBuiltinClass(const ObjectId& objId, ReturnStatus* rs,
+                                     uint32_t* classValue) = 0;
+    virtual bool SendIsArray(const ObjectId& objId, ReturnStatus* rs,
+                             uint32_t* answer) = 0;
     virtual bool SendClassName(const ObjectId& objId, nsCString* result) = 0;
     virtual bool SendGetPrototype(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result) = 0;
     virtual bool SendRegExpToShared(const ObjectId& objId, ReturnStatus* rs, nsString* source,
@@ -153,7 +158,7 @@ class WrapperOwner : public virtual JavaScriptShared
                                    ReturnStatus* rs, bool* instanceof) = 0;
 };
 
-} // jsipc
-} // mozilla
+} // namespace jsipc
+} // namespace mozilla
 
 #endif // mozilla_jsipc_WrapperOwner_h__

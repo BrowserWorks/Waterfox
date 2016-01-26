@@ -5,22 +5,12 @@
 
 include $(topsrcdir)/config/config.mk
 
-vpath %.xml @srcdir@/en-US/searchplugins
-vpath %.xml $(LOCALE_SRCDIR)/searchplugins
-
 ifdef LOCALE_MERGEDIR
 vpath crashreporter%.ini $(LOCALE_MERGEDIR)/browser/crashreporter
 endif
 vpath crashreporter%.ini $(LOCALE_SRCDIR)/crashreporter
 ifdef LOCALE_MERGEDIR
 vpath crashreporter%.ini @srcdir@/en-US/crashreporter
-endif
-ifdef LOCALE_MERGEDIR
-vpath book%.inc $(LOCALE_MERGEDIR)/browser/profile
-endif
-vpath book%.inc $(LOCALE_SRCDIR)/profile
-ifdef LOCALE_MERGEDIR
-vpath book%.inc @srcdir@/en-US/profile
 endif
 
 
@@ -38,8 +28,8 @@ PWD := $(CURDIR)
 # pulls. You may override them if you provide your own files. You _must_
 # override them when MOZ_PKG_PRETTYNAMES is defined - the defaults will not
 # work in that case.
-ZIP_IN ?= $(_ABS_DIST)/$(PACKAGE)
-WIN32_INSTALLER_IN ?= $(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
+ZIP_IN ?= $(ABS_DIST)/$(PACKAGE)
+WIN32_INSTALLER_IN ?= $(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
 RETRIEVE_WINDOWS_INSTALLER = 1
 
 MOZ_LANGPACK_EID=langpack-$(AB_CD)@firefox.mozilla.org
@@ -50,9 +40,9 @@ L10N_PREF_JS_EXPORTS_FLAGS = $(PREF_PPFLAGS) --silence-missing-directive-warning
 PP_TARGETS += L10N_PREF_JS_EXPORTS
 
 ifneq (,$(filter cocoa,$(MOZ_WIDGET_TOOLKIT)))
-MOZ_PKG_MAC_DSSTORE=$(_ABS_DIST)/branding/dsstore
-MOZ_PKG_MAC_BACKGROUND=$(_ABS_DIST)/branding/background.png
-MOZ_PKG_MAC_ICON=$(_ABS_DIST)/branding/disk.icns
+MOZ_PKG_MAC_DSSTORE=$(ABS_DIST)/branding/dsstore
+MOZ_PKG_MAC_BACKGROUND=$(ABS_DIST)/branding/background.png
+MOZ_PKG_MAC_ICON=$(ABS_DIST)/branding/disk.icns
 MOZ_PKG_MAC_EXTRA=--symlink '/Applications:/ '
 endif
 
@@ -60,25 +50,31 @@ ifeq (WINNT,$(OS_ARCH))
 UNINSTALLER_PACKAGE_HOOK = $(RM) -r $(STAGEDIST)/uninstall; \
     $(NSINSTALL) -D $(STAGEDIST)/uninstall; \
     cp ../installer/windows/l10ngen/helper.exe $(STAGEDIST)/uninstall; \
-    $(RM) $(_ABS_DIST)/l10n-stage/setup.exe; \
-    cp ../installer/windows/l10ngen/setup.exe $(_ABS_DIST)/l10n-stage; \
+    $(RM) $(ABS_DIST)/l10n-stage/setup.exe; \
+    cp ../installer/windows/l10ngen/setup.exe $(ABS_DIST)/l10n-stage; \
     $(NULL)
 
-STUB_HOOK = $(NSINSTALL) -D '$(_ABS_DIST)/$(PKG_INST_PATH)'; \
-    $(RM) '$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
-    cp ../installer/windows/l10ngen/stub.exe '$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
-    chmod 0755 '$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
+STUB_HOOK = $(NSINSTALL) -D '$(ABS_DIST)/$(PKG_INST_PATH)'; \
+    $(RM) '$(ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
+    cp ../installer/windows/l10ngen/stub.exe '$(ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
+    chmod 0755 '$(ABS_DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe'; \
     $(NULL)
 endif
 
 SEARCHPLUGINS_NAMES = $(shell cat $(call MERGE_FILE,/searchplugins/list.txt)) ddg
-SEARCHPLUGINS_PATH := $(FINAL_TARGET)/searchplugins
+SEARCHPLUGINS_FILENAMES = $(subst :hidden,,$(SEARCHPLUGINS_NAMES))
+SEARCHPLUGINS_PATH := .deps/generated_$(AB_CD)
 SEARCHPLUGINS_TARGET := libs searchplugins
-SEARCHPLUGINS := $(foreach plugin,$(addsuffix .xml,$(SEARCHPLUGINS_NAMES)),$(or $(wildcard $(call EN_US_OR_L10N_FILE,searchplugins/$(plugin))),$(info Missing searchplugin: $(plugin))))
+SEARCHPLUGINS := $(foreach plugin,$(addsuffix .xml,$(SEARCHPLUGINS_FILENAMES)),$(or $(wildcard $(call EN_US_OR_L10N_FILE,searchplugins/$(plugin))),$(warning Missing searchplugin: $(plugin))))
 # Some locale-specific search plugins may have preprocessor directives, but the
 # default en-US ones do not.
 SEARCHPLUGINS_FLAGS := --silence-missing-directive-warnings
 PP_TARGETS += SEARCHPLUGINS
+
+list-txt = $(SEARCHPLUGINS_PATH)/list.txt
+GARBAGE += $(list-txt)
+
+libs:: searchplugins
 
 # Required for l10n.mk - defines a list of app sub dirs that should
 # be included in langpack xpis.
@@ -88,48 +84,34 @@ include $(topsrcdir)/config/rules.mk
 
 include $(topsrcdir)/toolkit/locales/l10n.mk
 
+$(list-txt): $(call mkdir_deps,$(SEARCHPLUGINS_PATH)) $(if $(IS_LANGUAGE_REPACK),FORCE)
+	$(RM) $(list-txt)
+	$(foreach plugin,$(SEARCHPLUGINS_NAMES),printf '$(plugin)\n' >> $(list-txt);)
+searchplugins:: $(list-txt)
+
 $(STAGEDIST): $(DIST)/branding
 
 $(DIST)/branding:
 	$(NSINSTALL) -D $@
 
-PROFILE_FILES = \
-	localstore.rdf \
-	mimeTypes.rdf \
-	$(NULL)
-
-PROFILE_CHROME = userChrome-example.css userContent-example.css
-
-NO_JA_JP_MAC_AB_CD := $(if $(filter ja-JP-mac, $(AB_CD)),ja,$(AB_CD))
-
-%/defaults/profile/bookmarks.html: bookmarks.inc generic/profile/bookmarks.html.in
-	$(call py_action,preprocessor, \
-	  -I $< \
-	  -DAB_CD=$(NO_JA_JP_MAC_AB_CD) \
-	  $(srcdir)/generic/profile/bookmarks.html.in \
-	  -o $@)
-
-libs:: $(FINAL_TARGET)/defaults/profile/bookmarks.html ;
-
-libs:: $(addprefix generic/profile/,$(PROFILE_FILES))
-	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)/defaults/profile
-
-libs:: $(call MERGE_FILES,$(addprefix profile/chrome/,$(PROFILE_CHROME)))
-	$(SYSINSTALL) $(IFLAGS1) $^ $(FINAL_TARGET)/defaults/profile/chrome
+DEFINES += -DBOOKMARKS_INCLUDE_DIR=$(dir $(call MERGE_FILE,profile/bookmarks.inc))
 
 libs-%:
 	$(NSINSTALL) -D $(DIST)/install
-	@$(MAKE) -C ../../toolkit/locales libs-$*
+	@$(MAKE) -C ../../toolkit/locales libs-$* XPI_ROOT_APPID='$(XPI_ROOT_APPID)'
 	@$(MAKE) -C ../../services/sync/locales AB_CD=$* XPI_NAME=locale-$*
 ifdef MOZ_WEBAPP_RUNTIME
 	@$(MAKE) -C ../../webapprt/locales AB_CD=$* XPI_NAME=locale-$*
 endif
 	@$(MAKE) -C ../../extensions/spellcheck/locales AB_CD=$* XPI_NAME=locale-$*
+	@$(MAKE) -C ../extensions/pocket/locales AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) -C ../../intl/locales AB_CD=$* XPI_NAME=locale-$*
+	@$(MAKE) -C ../../devtools/client/locales AB_CD=$* XPI_NAME=locale-$* XPI_ROOT_APPID='$(XPI_ROOT_APPID)'
+	@$(MAKE) -B searchplugins AB_CD=$* XPI_NAME=locale-$*
 	@$(MAKE) libs AB_CD=$* XPI_NAME=locale-$* PREF_DIR=$(PREF_DIR)
 	@$(MAKE) -C $(DEPTH)/$(MOZ_BRANDING_DIRECTORY)/locales AB_CD=$* XPI_NAME=locale-$*
 
-repackage-win32-installer: WIN32_INSTALLER_OUT=$(_ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
+repackage-win32-installer: WIN32_INSTALLER_OUT=$(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe
 repackage-win32-installer: $(call ESCAPE_WILDCARD,$(WIN32_INSTALLER_IN)) $(SUBMAKEFILES) libs-$(AB_CD)
 	@echo 'Repackaging $(WIN32_INSTALLER_IN) into $(WIN32_INSTALLER_OUT).'
 	$(MAKE) -C $(DEPTH)/$(MOZ_BRANDING_DIRECTORY) export
@@ -158,8 +140,7 @@ clobber-zip:
 	  $(STAGEDIST)/webapprt/chrome/$(AB_CD).jar \
 	  $(STAGEDIST)/webapprt/chrome/$(AB_CD).manifest \
 	  $(STAGEDIST)/$(PREF_DIR)/firefox-l10n.js
-	$(RM) -rf  $(STAGEDIST)/searchplugins \
-	  $(STAGEDIST)/dictionaries \
+	$(RM) -rf  $(STAGEDIST)/dictionaries \
 	  $(STAGEDIST)/hyphenation \
 	  $(STAGEDIST)/defaults/profile \
 	  $(STAGEDIST)/chrome/$(AB_CD) \
@@ -219,6 +200,9 @@ l10n-check::
 	$(RM) -rf x-test
 	$(NSINSTALL) -D x-test/toolkit
 	echo '#define MOZ_LANG_TITLE Just testing' > x-test/toolkit/defines.inc
-	$(MAKE) installers-x-test L10NBASEDIR='$(PWD)' LOCALE_MERGEDIR='$(PWD)/mergedir'
+	@# ZIP_IN='$(ZIP_IN)' will pass down the *current* value of ZIP_IN, based
+	@# on MOZ_SIMPLE_PACKAGE_NAME not being reset, overwriting the value it
+	@# would get with MOZ_SIMPLE_PACKAGE_NAME reset.
+	$(MAKE) installers-x-test L10NBASEDIR='$(PWD)' LOCALE_MERGEDIR='$(PWD)/mergedir' ZIP_IN='$(ZIP_IN)' MOZ_SIMPLE_PACKAGE_NAME=
 	$(PYTHON) $(topsrcdir)/toolkit/mozapps/installer/unpack.py $(DIST)/l10n-stage/$(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)
 	cd $(DIST)/l10n-stage && test $$(cat $(STAGEPATH)$(MOZ_PKG_DIR)$(_BINPATH)/update.locale) = x-test

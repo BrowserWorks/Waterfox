@@ -74,6 +74,30 @@ CSSLexer::ColumnNumber()
 }
 
 void
+CSSLexer::PerformEOFFixup(const nsAString& aInputString, bool aPreserveBackslash,
+                          nsAString& aResult)
+{
+  aResult.Append(aInputString);
+  uint32_t eofChars = mScanner.GetEOFCharacters();
+
+  if (aPreserveBackslash &&
+      (eofChars & (nsCSSScanner::eEOFCharacters_DropBackslash |
+                   nsCSSScanner::eEOFCharacters_ReplacementChar)) != 0) {
+    eofChars &= ~(nsCSSScanner::eEOFCharacters_DropBackslash |
+                  nsCSSScanner::eEOFCharacters_ReplacementChar);
+    aResult.Append('\\');
+  }
+
+  if ((eofChars & nsCSSScanner::eEOFCharacters_DropBackslash) != 0 &&
+      aResult.Length() > 0 && aResult.Last() == '\\') {
+    aResult.Truncate(aResult.Length() - 1);
+  }
+
+  nsCSSScanner::AppendImpliedEOFCharacters(nsCSSScanner::EOFCharacters(eofChars),
+                                           aResult);
+}
+
+void
 CSSLexer::NextToken(Nullable<CSSToken>& aResult)
 {
   nsCSSToken token;
@@ -101,7 +125,7 @@ CSSLexer::NextToken(Nullable<CSSToken>& aResult)
 
     case eCSSToken_Dimension:
       resultToken.mText.Construct(token.mIdent);
-      /* FALLTHROUGH */
+      MOZ_FALLTHROUGH;
     case eCSSToken_Number:
     case eCSSToken_Percentage:
       resultToken.mNumber.Construct(token.mNumber);

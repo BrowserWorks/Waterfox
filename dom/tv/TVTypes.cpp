@@ -20,6 +20,7 @@ NS_IMPL_ISUPPORTS(TVTunerData, nsITVTunerData)
 TVTunerData::TVTunerData()
   : mSupportedSourceTypes(nullptr)
   , mCount(0)
+  , mStreamType(0)
 {
 }
 
@@ -45,6 +46,20 @@ TVTunerData::SetId(const nsAString& aId)
   }
 
   mId = aId;
+  return NS_OK;
+}
+
+/* virtual */ NS_IMETHODIMP
+TVTunerData::GetStreamType(uint16_t* aStreamType)
+{
+  *aStreamType = mStreamType;
+  return NS_OK;
+}
+
+/* virtual */ NS_IMETHODIMP
+TVTunerData::SetStreamType(const uint16_t aStreamType)
+{
+  mStreamType = aStreamType;
   return NS_OK;
 }
 
@@ -261,7 +276,9 @@ TVChannelData::SetIsFree(bool aIsFree)
 NS_IMPL_ISUPPORTS(TVProgramData, nsITVProgramData)
 
 TVProgramData::TVProgramData()
-  : mAudioLanguages(nullptr)
+  : mStartTime(0)
+  , mDuration(0)
+  , mAudioLanguages(nullptr)
   , mAudioLanguageCount(0)
   , mSubtitleLanguages(nullptr)
   , mSubtitleLanguageCount(0)

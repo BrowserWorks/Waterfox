@@ -6,6 +6,7 @@
 
 //#define __INCREMENTAL 1
 
+#include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 
 #include "nsScanner.h"
@@ -13,7 +14,6 @@
 #include "nsReadableUtils.h"
 #include "nsIInputStream.h"
 #include "nsIFile.h"
-#include "nsNetUtil.h"
 #include "nsUTF8Utils.h" // for LossyConvertEncoding
 #include "nsCRT.h"
 #include "nsParser.h"
@@ -241,7 +241,12 @@ nsresult nsScanner::Append(const char* aBuffer, uint32_t aLen,
   nsresult res = NS_OK;
   if (mUnicodeDecoder) {
     int32_t unicharBufLen = 0;
-    mUnicodeDecoder->GetMaxLength(aBuffer, aLen, &unicharBufLen);
+
+    nsresult rv = mUnicodeDecoder->GetMaxLength(aBuffer, aLen, &unicharBufLen);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
     nsScannerString::Buffer* buffer = nsScannerString::AllocBuffer(unicharBufLen + 1);
     NS_ENSURE_TRUE(buffer,NS_ERROR_OUT_OF_MEMORY);
     char16_t *unichars = buffer->DataStart();
@@ -418,6 +423,7 @@ nsresult nsScanner::SkipWhitespace(int32_t& aNewlinesSkipped) {
     switch(theChar) {
       case '\n':
       case '\r': ++aNewlinesSkipped;
+                 MOZ_FALLTHROUGH;
       case ' ' :
       case '\t':
         {
@@ -773,6 +779,7 @@ nsresult nsScanner::ReadWhitespace(nsScannerIterator& aStart,
     switch(theChar) {
       case '\n':
       case '\r': ++aNewlinesSkipped;
+                 MOZ_FALLTHROUGH;
       case ' ' :
       case '\t':
         {

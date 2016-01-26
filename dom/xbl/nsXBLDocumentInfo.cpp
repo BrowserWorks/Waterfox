@@ -39,42 +39,14 @@ using namespace mozilla::dom;
 static const char kXBLCachePrefix[] = "xblcache";
 
 /* Implementation file */
-
-static PLDHashOperator
-TraverseProtos(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  nsCycleCollectionTraversalCallback *cb =
-    static_cast<nsCycleCollectionTraversalCallback*>(aClosure);
-  aProto->Traverse(*cb);
-  return PL_DHASH_NEXT;
-}
-
-static PLDHashOperator
-UnlinkProto(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  aProto->Unlink();
-  return PL_DHASH_NEXT;
-}
-
-struct ProtoTracer
-{
-  const TraceCallbacks &mCallbacks;
-  void *mClosure;
-};
-
-static PLDHashOperator
-TraceProtos(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  ProtoTracer* closure = static_cast<ProtoTracer*>(aClosure);
-  aProto->Trace(closure->mCallbacks, closure->mClosure);
-  return PL_DHASH_NEXT;
-}
-
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsXBLDocumentInfo)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsXBLDocumentInfo)
   if (tmp->mBindingTable) {
-    tmp->mBindingTable->EnumerateRead(UnlinkProto, nullptr);
+    for (auto iter = tmp->mBindingTable->ConstIter();
+         !iter.Done(); iter.Next()) {
+      iter.UserData()->Unlink();
+    }
   }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mDocument)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -86,28 +58,26 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsXBLDocumentInfo)
   }
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDocument)
   if (tmp->mBindingTable) {
-    tmp->mBindingTable->EnumerateRead(TraverseProtos, &cb);
+    for (auto iter = tmp->mBindingTable->ConstIter();
+         !iter.Done(); iter.Next()) {
+      iter.UserData()->Traverse(cb);
+    }
   }
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(nsXBLDocumentInfo)
   if (tmp->mBindingTable) {
-    ProtoTracer closure = { aCallbacks, aClosure };
-    tmp->mBindingTable->EnumerateRead(TraceProtos, &closure);
+    for (auto iter = tmp->mBindingTable->ConstIter();
+         !iter.Done(); iter.Next()) {
+      iter.UserData()->Trace(aCallbacks, aClosure);
+    }
   }
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 static void
 UnmarkXBLJSObject(JS::GCCellPtr aPtr, const char* aName, void* aClosure)
 {
-  JS::ExposeObjectToActiveJS(aPtr.toObject());
-}
-
-static PLDHashOperator
-UnmarkProtos(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  aProto->Trace(TraceCallbackFunc(UnmarkXBLJSObject), nullptr);
-  return PL_DHASH_NEXT;
+  JS::ExposeObjectToActiveJS(&aPtr.as<JSObject>());
 }
 
 void
@@ -118,7 +88,9 @@ nsXBLDocumentInfo::MarkInCCGeneration(uint32_t aGeneration)
   }
   // Unmark any JS we hold
   if (mBindingTable) {
-    mBindingTable->EnumerateRead(UnmarkProtos, nullptr);
+    for (auto iter = mBindingTable->Iter(); !iter.Done(); iter.Next()) {
+      iter.UserData()->Trace(TraceCallbackFunc(UnmarkXBLJSObject), nullptr);
+    }
   }
 }
 
@@ -213,16 +185,6 @@ nsXBLDocumentInfo::RemovePrototypeBinding(const nsACString& aRef)
   }
 }
 
-// Callback to enumerate over the bindings from this document and write them
-// out to the cache.
-static PLDHashOperator
-WriteBinding(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  aProto->Write((nsIObjectOutputStream*)aClosure);
-
-  return PL_DHASH_NEXT;
-}
-
 // static
 nsresult
 nsXBLDocumentInfo::ReadPrototypeBindings(nsIURI* aURI, nsXBLDocumentInfo** aDocInfo)
@@ -271,7 +233,7 @@ nsXBLDocumentInfo::ReadPrototypeBindings(nsIURI* aURI, nsXBLDocumentInfo** aDocI
 
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(domdoc);
   NS_ASSERTION(doc, "Must have a document!");
-  nsRefPtr<nsXBLDocumentInfo> docInfo = new nsXBLDocumentInfo(doc);
+  RefPtr<nsXBLDocumentInfo> docInfo = new nsXBLDocumentInfo(doc);
 
   while (1) {
     uint8_t flags;
@@ -315,7 +277,9 @@ nsXBLDocumentInfo::WritePrototypeBindings()
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (mBindingTable) {
-    mBindingTable->EnumerateRead(WriteBinding, stream);
+    for (auto iter = mBindingTable->Iter(); !iter.Done(); iter.Next()) {
+      iter.UserData()->Write(stream);
+    }
   }
 
   // write a end marker at the end
@@ -339,18 +303,13 @@ nsXBLDocumentInfo::SetFirstPrototypeBinding(nsXBLPrototypeBinding* aBinding)
   mFirstBinding = aBinding;
 }
 
-static PLDHashOperator
-FlushScopedSkinSheets(const nsACString &aKey, nsXBLPrototypeBinding *aProto, void* aClosure)
-{
-  aProto->FlushSkinSheets();
-  return PL_DHASH_NEXT;
-}
-
 void
 nsXBLDocumentInfo::FlushSkinStylesheets()
 {
   if (mBindingTable) {
-    mBindingTable->EnumerateRead(FlushScopedSkinSheets, nullptr);
+    for (auto iter = mBindingTable->Iter(); !iter.Done(); iter.Next()) {
+      iter.UserData()->FlushSkinSheets();
+    }
   }
 }
 

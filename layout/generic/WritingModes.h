@@ -24,11 +24,18 @@
 // (In some cases, there are internal (private) methods that don't do this;
 // such methods should only be used by other methods that have already checked
 // the writing modes.)
+// The check ignores the eSidewaysMask bit of writing mode, because this does
+// not affect the interpretation of logical coordinates.
 
 #define CHECK_WRITING_MODE(param) \
-   NS_ASSERTION(param == GetWritingMode(), "writing-mode mismatch")
+   NS_ASSERTION(param.IgnoreSideways() == GetWritingMode().IgnoreSideways(), \
+                "writing-mode mismatch")
 
 namespace mozilla {
+
+namespace widget {
+struct IMENotification;
+} // namespace widget
 
 // Physical axis constants.
 enum PhysicalAxis {
@@ -200,7 +207,15 @@ public:
   BidiDir GetBidiDir() const { return BidiDir(mWritingMode & eBidiMask); }
 
   /**
-   * Return true if LTR. (Convenience method)
+   * Return true if the inline flow direction is against physical direction
+   * (i.e. right-to-left or bottom-to-top).
+   * This occurs when writing-mode is sideways-lr OR direction is rtl (but not
+   * if both of those are true).
+   */
+  bool IsInlineReversed() const { return !!(mWritingMode & eInlineFlowMask); }
+
+  /**
+   * Return true if bidi direction is LTR. (Convenience method)
    */
   bool IsBidiLTR() const { return eBidiLTR == GetBidiDir(); }
 
@@ -222,9 +237,7 @@ public:
 
   /**
    * True if line-over/line-under are inverted from block-start/block-end.
-   * This is true when
-   *   - writing-mode is vertical-rl && text-orientation is sideways-left
-   *   - writing-mode is vertical-lr && text-orientation is not sideways-left
+   * This is true only when writing-mode is vertical-lr.
    */
   bool IsLineInverted() const { return !!(mWritingMode & eLineOrientMask); }
 
@@ -248,6 +261,13 @@ public:
    * baseline remains centered.
    */
   bool IsSideways() const { return !!(mWritingMode & eSidewaysMask); }
+
+#ifdef DEBUG // Used by CHECK_WRITING_MODE to compare modes without regard
+             // for the eSidewaysMask flag.
+  WritingMode IgnoreSideways() const {
+    return WritingMode(mWritingMode & ~eSidewaysMask);
+  }
+#endif
 
   static mozilla::PhysicalAxis PhysicalAxisForLogicalAxis(
                                               uint8_t aWritingModeValue,
@@ -294,7 +314,13 @@ public:
       { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // vertical-lr
     };
 
+    // Ignore the SIDEWAYS_MASK bit of the writing-mode value, as this has no
+    // effect on the side mappings.
+    aWritingModeValue &= ~NS_STYLE_WRITING_MODE_SIDEWAYS_MASK;
+
+    // What's left of the writing-mode should be in the range 0-3:
     NS_ASSERTION(aWritingModeValue < 4, "invalid aWritingModeValue value");
+
     return kLogicalBlockSides[aWritingModeValue][aEdge];
   }
 
@@ -305,23 +331,27 @@ public:
     //   bit 1 = the eInlineFlowMask value
     //   bit 2 = the eBlockFlowMask value
     //   bit 3 = the eLineOrientMask value
+    // Not all of these combinations can actually be specified via CSS: there
+    // is no horizontal-bt writing-mode, and no text-orientation value that
+    // produces "inverted" text. (The former 'sideways-left' value, no longer
+    // in the spec, would have produced this in vertical-rl mode.)
     static const mozilla::css::Side kLogicalInlineSides[][2] = {
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb                  ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                    ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb                  rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                    rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted)    ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr      sideways-left rtl
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted)    rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr      sideways-left ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted)    rtl
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      sideways-left rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted)    ltr
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      sideways-left ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)                ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                    ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)                rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                    rtl
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb               ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                 ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb               rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                 rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted) ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // sideways-lr                 rtl
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted) rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // sideways-lr                 ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted) rtl
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      (inverted) rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted) ltr
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      (inverted) ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)             ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                 ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)             rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                 rtl
     };
 
     // Inline axis sides depend on all three of writing-mode, text-orientation
@@ -353,6 +383,62 @@ public:
   }
 
   /**
+   * Returns the logical side corresponding to the specified physical side,
+   * given the current writing mode.
+   * (This is the inverse of the PhysicalSide() method above.)
+   */
+  LogicalSide LogicalSideForPhysicalSide(mozilla::css::Side aSide) const
+  {
+    // indexes are four-bit values:
+    //   bit 0 = the eOrientationMask value
+    //   bit 1 = the eInlineFlowMask value
+    //   bit 2 = the eBlockFlowMask value
+    //   bit 3 = the eLineOrientMask value
+    static const LogicalSide kPhysicalToLogicalSides[][4] = {
+      // top                right
+      // bottom             left
+      { eLogicalSideBStart, eLogicalSideIEnd,
+        eLogicalSideBEnd,   eLogicalSideIStart },  // horizontal-tb         ltr
+      { eLogicalSideIStart, eLogicalSideBStart,
+        eLogicalSideIEnd,   eLogicalSideBEnd   },  // vertical-rl           ltr
+      { eLogicalSideBStart, eLogicalSideIStart,
+        eLogicalSideBEnd,   eLogicalSideIEnd   },  // horizontal-tb         rtl
+      { eLogicalSideIEnd,   eLogicalSideBStart,
+        eLogicalSideIStart, eLogicalSideBEnd   },  // vertical-rl           rtl
+      { eLogicalSideBEnd,   eLogicalSideIStart,
+        eLogicalSideBStart, eLogicalSideIEnd   },  // (horizontal-bt) (inv) ltr
+      { eLogicalSideIStart, eLogicalSideBEnd,
+        eLogicalSideIEnd,   eLogicalSideBStart },  // vertical-lr   sw-left rtl
+      { eLogicalSideBEnd,   eLogicalSideIEnd,
+        eLogicalSideBStart, eLogicalSideIStart },  // (horizontal-bt) (inv) rtl
+      { eLogicalSideIEnd,   eLogicalSideBEnd,
+        eLogicalSideIStart, eLogicalSideBStart },  // vertical-lr   sw-left ltr
+      { eLogicalSideBStart, eLogicalSideIEnd,
+        eLogicalSideBEnd,   eLogicalSideIStart },  // horizontal-tb   (inv) rtl
+      { eLogicalSideIStart, eLogicalSideBStart,
+        eLogicalSideIEnd,   eLogicalSideBEnd   },  // vertical-rl   sw-left rtl
+      { eLogicalSideBStart, eLogicalSideIStart,
+        eLogicalSideBEnd,   eLogicalSideIEnd   },  // horizontal-tb   (inv) ltr
+      { eLogicalSideIEnd,   eLogicalSideBStart,
+        eLogicalSideIStart, eLogicalSideBEnd   },  // vertical-rl   sw-left ltr
+      { eLogicalSideBEnd,   eLogicalSideIEnd,
+        eLogicalSideBStart, eLogicalSideIStart },  // (horizontal-bt)       ltr
+      { eLogicalSideIStart, eLogicalSideBEnd,
+        eLogicalSideIEnd,   eLogicalSideBStart },  // vertical-lr           ltr
+      { eLogicalSideBEnd,   eLogicalSideIStart,
+        eLogicalSideBStart, eLogicalSideIEnd   },  // (horizontal-bt)       rtl
+      { eLogicalSideIEnd,   eLogicalSideBEnd,
+        eLogicalSideIStart, eLogicalSideBStart },  // vertical-lr           rtl
+    };
+
+    static_assert(eOrientationMask == 0x01 && eInlineFlowMask == 0x02 &&
+                  eBlockFlowMask == 0x04 && eLineOrientMask == 0x08,
+                  "unexpected mask values");
+    int index = mWritingMode & 0x0F;
+    return kPhysicalToLogicalSides[index][aSide];
+  }
+
+  /**
    * Returns the logical side corresponding to the specified
    * line-relative direction, given the current writing mode.
    */
@@ -360,7 +446,7 @@ public:
   {
     auto side = static_cast<LogicalSide>(aDir);
     if (IsInline(side)) {
-      return IsBidiLTR() ? side : GetOppositeSide(side);
+      return !IsInlineReversed() ? side : GetOppositeSide(side);
     }
     return !IsLineInverted() ? side : GetOppositeSide(side);
   }
@@ -380,10 +466,19 @@ public:
   explicit WritingMode(nsStyleContext* aStyleContext)
   {
     NS_ASSERTION(aStyleContext, "we need an nsStyleContext here");
+    InitFromStyleVisibility(aStyleContext->StyleVisibility());
+  }
 
-    const nsStyleVisibility* styleVisibility = aStyleContext->StyleVisibility();
+  explicit WritingMode(const nsStyleVisibility* aStyleVisibility)
+  {
+    NS_ASSERTION(aStyleVisibility, "we need an nsStyleVisibility here");
+    InitFromStyleVisibility(aStyleVisibility);
+  }
 
-    switch (styleVisibility->mWritingMode) {
+private:
+  void InitFromStyleVisibility(const nsStyleVisibility* aStyleVisibility)
+  {
+    switch (aStyleVisibility->mWritingMode) {
       case NS_STYLE_WRITING_MODE_HORIZONTAL_TB:
         mWritingMode = 0;
         break;
@@ -393,13 +488,8 @@ public:
         mWritingMode = eBlockFlowMask |
                        eLineOrientMask |
                        eOrientationMask;
-        uint8_t textOrientation = aStyleContext->StyleVisibility()->mTextOrientation;
-#if 0 // not yet implemented
-        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT) {
-          mWritingMode &= ~eLineOrientMask;
-        }
-#endif
-        if (textOrientation >= NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT) {
+        uint8_t textOrientation = aStyleVisibility->mTextOrientation;
+        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS) {
           mWritingMode |= eSidewaysMask;
         }
         break;
@@ -408,17 +498,24 @@ public:
       case NS_STYLE_WRITING_MODE_VERTICAL_RL:
       {
         mWritingMode = eOrientationMask;
-        uint8_t textOrientation = aStyleContext->StyleVisibility()->mTextOrientation;
-#if 0 // not yet implemented
-        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT) {
-          mWritingMode |= eLineOrientMask;
-        }
-#endif
-        if (textOrientation >= NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT) {
+        uint8_t textOrientation = aStyleVisibility->mTextOrientation;
+        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS) {
           mWritingMode |= eSidewaysMask;
         }
         break;
       }
+
+      case NS_STYLE_WRITING_MODE_SIDEWAYS_LR:
+        mWritingMode = eBlockFlowMask |
+                       eInlineFlowMask |
+                       eOrientationMask |
+                       eSidewaysMask;
+        break;
+
+      case NS_STYLE_WRITING_MODE_SIDEWAYS_RL:
+        mWritingMode = eOrientationMask |
+                       eSidewaysMask;
+        break;
 
       default:
         NS_NOTREACHED("unknown writing mode!");
@@ -426,24 +523,34 @@ public:
         break;
     }
 
-    if (NS_STYLE_DIRECTION_RTL == styleVisibility->mDirection) {
-      mWritingMode |= eInlineFlowMask | //XXX needs update when text-orientation added
-                      eBidiMask;
+    if (NS_STYLE_DIRECTION_RTL == aStyleVisibility->mDirection) {
+      mWritingMode ^= eInlineFlowMask | eBidiMask;
     }
   }
+public:
 
-  // For unicode-bidi: plaintext, reset the direction of the writing mode from
-  // the bidi paragraph level of the content
-
-  //XXX change uint8_t to UBiDiLevel after bug 924851
+  /**
+   * This function performs fixup for elements with 'unicode-bidi: plaintext',
+   * where inline directionality is derived from the Unicode bidi categories
+   * of the element's content, and not the CSS 'direction' property.
+   *
+   * The WritingMode constructor will have already incorporated the 'direction'
+   * property into our flag bits, so such elements need to use this method
+   * (after resolving the bidi level of their content) to update the direction
+   * bits as needed.
+   *
+   * If it turns out that our bidi direction already matches what plaintext
+   * resolution determined, there's nothing to do here. If it didn't (i.e. if
+   * the rtl-ness doesn't match), then we correct the direction by flipping the
+   * same bits that get flipped in the constructor's CSS 'direction'-based
+   * chunk.
+   *
+   * XXX change uint8_t to UBiDiLevel after bug 924851
+   */
   void SetDirectionFromBidiLevel(uint8_t level)
   {
-    if (IS_LEVEL_RTL(level)) {
-      // set RTL
-      mWritingMode |= eBidiMask;
-    } else {
-      // set LTR
-      mWritingMode &= ~eBidiMask;
+    if (IS_LEVEL_RTL(level) == IsBidiLTR()) {
+      mWritingMode ^= eBidiMask | eInlineFlowMask;
     }
   }
 
@@ -468,6 +575,21 @@ public:
     return IsVertical() != aOther.IsVertical();
   }
 
+  uint8_t GetBits() const { return mWritingMode; }
+
+  const char* DebugString() const {
+    return IsVertical()
+      ? IsVerticalLR()
+        ? IsBidiLTR()
+          ? IsSideways() ? "sw-lr-ltr" : "v-lr-ltr"
+          : IsSideways() ? "sw-lr-rtl" : "v-lr-rtl"
+        : IsBidiLTR()
+          ? IsSideways() ? "sw-rl-ltr" : "v-rl-ltr"
+          : IsSideways() ? "sw-rl-rtl" : "v-rl-rtl"
+      : IsBidiLTR() ? "h-ltr" : "h-rtl"
+      ;
+  }
+
 private:
   friend class LogicalPoint;
   friend class LogicalSize;
@@ -475,6 +597,10 @@ private:
   friend class LogicalRect;
 
   friend struct IPC::ParamTraits<WritingMode>;
+  // IMENotification cannot store this class directly since this has some
+  // constructors.  Therefore, it stores mWritingMode and recreate the
+  // instance from it.
+  friend struct widget::IMENotification;
 
   /**
    * Return a WritingMode representing an unknown value.
@@ -504,7 +630,10 @@ private:
     // Note: We have one excess bit of info; WritingMode can pack into 4 bits.
     // But since we have space, we're caching interesting things for fast access.
 
-    eSidewaysMask    = 0x20, // true means text-orientation is sideways-*,
+    eSidewaysMask    = 0x20, // true means text is being rendered vertically
+                             // using rotated glyphs (i.e. writing-mode is
+                             // sideways-*, or writing-mode is vertical-* AND
+                             // text-orientation is sideways),
                              // which means we'll use alphabetic instead of
                              // centered default baseline for vertical text
 
@@ -575,27 +704,29 @@ public:
   { }
 
   // Construct from a writing mode and a physical point, within a given
-  // containing rectangle's width (defining the conversion between LTR
-  // and RTL coordinates).
+  // containing rectangle's size (defining the conversion between LTR
+  // and RTL coordinates, and between TTB and BTT coordinates).
   LogicalPoint(WritingMode aWritingMode,
                const nsPoint& aPoint,
-               nscoord aContainerWidth)
+               const nsSize& aContainerSize)
 #ifdef DEBUG
     : mWritingMode(aWritingMode)
 #endif
   {
     if (aWritingMode.IsVertical()) {
-      I() = aPoint.y;
-      B() = aWritingMode.IsVerticalLR() ? aPoint.x : aContainerWidth - aPoint.x;
+      I() = aWritingMode.IsInlineReversed() ? aContainerSize.height - aPoint.y
+                                            : aPoint.y;
+      B() = aWritingMode.IsVerticalLR() ? aPoint.x
+                                        : aContainerSize.width - aPoint.x;
     } else {
-      I() = aWritingMode.IsBidiLTR() ? aPoint.x : aContainerWidth - aPoint.x;
+      I() = aWritingMode.IsInlineReversed() ? aContainerSize.width - aPoint.x
+                                            : aPoint.x;
       B() = aPoint.y;
     }
   }
 
   /**
-   * Read-only (const) access to the coordinates, in both logical
-   * and physical terms.
+   * Read-only (const) access to the logical coordinates.
    */
   nscoord I(WritingMode aWritingMode) const // inline-axis
   {
@@ -606,21 +737,6 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return mPoint.y;
-  }
-
-  nscoord X(WritingMode aWritingMode, nscoord aContainerWidth) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      return aWritingMode.IsVerticalLR() ? B() : aContainerWidth - B();
-    } else {
-      return aWritingMode.IsBidiLTR() ? I() : aContainerWidth - I();
-    }
-  }
-  nscoord Y(WritingMode aWritingMode) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ? I() : B();
   }
 
   /**
@@ -639,40 +755,21 @@ public:
   }
 
   /**
-   * Setters for the physical coordinates.
-   */
-  void SetX(WritingMode aWritingMode, nscoord aX, nscoord aContainerWidth)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      B() = aWritingMode.IsVerticalLR() ? aX : aContainerWidth - aX;
-    } else {
-      I() = aWritingMode.IsBidiLTR() ? aX : aContainerWidth - aX;
-    }
-  }
-  void SetY(WritingMode aWritingMode, nscoord aY)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      B() = aY;
-    } else {
-      I() = aY;
-    }
-  }
-
-  /**
    * Return a physical point corresponding to our logical coordinates,
    * converted according to our writing mode.
    */
   nsPoint GetPhysicalPoint(WritingMode aWritingMode,
-                           nscoord aContainerWidth) const
+                           const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     if (aWritingMode.IsVertical()) {
-      return nsPoint(aWritingMode.IsVerticalLR() ? B() : aContainerWidth - B(),
-                     I());
+      return nsPoint(aWritingMode.IsVerticalLR()
+                     ? B() : aContainerSize.width - B(),
+                     aWritingMode.IsInlineReversed()
+                     ? aContainerSize.height - I() : I());
     } else {
-      return nsPoint(aWritingMode.IsBidiLTR() ? I() : aContainerWidth - I(),
+      return nsPoint(aWritingMode.IsInlineReversed()
+                     ? aContainerSize.width - I() : I(),
                      B());
     }
   }
@@ -681,13 +778,13 @@ public:
    * Return the equivalent point in a different writing mode.
    */
   LogicalPoint ConvertTo(WritingMode aToMode, WritingMode aFromMode,
-                         nscoord aContainerWidth) const
+                         const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aFromMode);
     return aToMode == aFromMode ?
       *this : LogicalPoint(aToMode,
-                           GetPhysicalPoint(aFromMode, aContainerWidth),
-                           aContainerWidth);
+                           GetPhysicalPoint(aFromMode, aContainerSize),
+                           aContainerSize);
   }
 
   bool operator==(const LogicalPoint& aOther) const
@@ -863,7 +960,7 @@ public:
   }
 
   /**
-   * Writable references to the logical and physical dimensions
+   * Writable references to the logical dimensions
    */
   nscoord& ISize(WritingMode aWritingMode) // inline-size
   {
@@ -874,17 +971,6 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return mSize.height;
-  }
-
-  nscoord& Width(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ? BSize() : ISize();
-  }
-  nscoord& Height(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ? ISize() : BSize();
   }
 
   /**
@@ -912,7 +998,7 @@ public:
     // optimization for non-DEBUG builds where LogicalSize doesn't store
     // the writing mode
     return (aToMode == aFromMode || !aToMode.IsOrthogonalTo(aFromMode))
-             ? *this : LogicalSize(aToMode, BSize(), ISize());
+           ? *this : LogicalSize(aToMode, BSize(), ISize());
 #endif
   }
 
@@ -1039,22 +1125,22 @@ public:
         mMargin.top = aPhysicalMargin.right;
         mMargin.bottom = aPhysicalMargin.left;
       }
-      if (aWritingMode.IsBidiLTR()) {
-        mMargin.left = aPhysicalMargin.top;
-        mMargin.right = aPhysicalMargin.bottom;
-      } else {
+      if (aWritingMode.IsInlineReversed()) {
         mMargin.left = aPhysicalMargin.bottom;
         mMargin.right = aPhysicalMargin.top;
+      } else {
+        mMargin.left = aPhysicalMargin.top;
+        mMargin.right = aPhysicalMargin.bottom;
       }
     } else {
       mMargin.top = aPhysicalMargin.top;
       mMargin.bottom = aPhysicalMargin.bottom;
-      if (aWritingMode.IsBidiLTR()) {
-        mMargin.left = aPhysicalMargin.left;
-        mMargin.right = aPhysicalMargin.right;
-      } else {
+      if (aWritingMode.IsInlineReversed()) {
         mMargin.left = aPhysicalMargin.right;
         mMargin.right = aPhysicalMargin.left;
+      } else {
+        mMargin.left = aPhysicalMargin.left;
+        mMargin.right = aPhysicalMargin.right;
       }
     }
   }
@@ -1112,6 +1198,29 @@ public:
     return mMargin.TopBottom();
   }
 
+  /*
+   * Return margin values for line-relative sides, as defined in
+   * http://www.w3.org/TR/css-writing-modes-3/#line-directions:
+   *
+   * line-left
+   *     Nominally the side from which LTR text would start.
+   * line-right
+   *     Nominally the side from which RTL text would start. (Opposite of
+   *     line-left.)
+   */
+  nscoord LineLeft(WritingMode aWritingMode) const
+  {
+    // We don't need to CHECK_WRITING_MODE here because the IStart or IEnd
+    // accessor that we call will do it.
+    return aWritingMode.IsBidiLTR()
+           ? IStart(aWritingMode) : IEnd(aWritingMode);
+  }
+  nscoord LineRight(WritingMode aWritingMode) const
+  {
+    return aWritingMode.IsBidiLTR()
+           ? IEnd(aWritingMode) : IStart(aWritingMode);
+  }
+
   /**
    * Return a LogicalSize representing the total size of the inline-
    * and block-dimension margins.
@@ -1130,14 +1239,14 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd()) : BStart();
+      (aWritingMode.IsInlineReversed() ? IEnd() : IStart()) : BStart();
   }
 
   nscoord Bottom(WritingMode aWritingMode) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart()) : BEnd();
+      (aWritingMode.IsInlineReversed() ? IStart() : IEnd()) : BEnd();
   }
 
   nscoord Left(WritingMode aWritingMode) const
@@ -1145,7 +1254,7 @@ public:
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
       (aWritingMode.IsVerticalLR() ? BStart() : BEnd()) :
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd());
+      (aWritingMode.IsInlineReversed() ? IEnd() : IStart());
   }
 
   nscoord Right(WritingMode aWritingMode) const
@@ -1153,7 +1262,7 @@ public:
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
       (aWritingMode.IsVerticalLR() ? BEnd() : BStart()) :
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart());
+      (aWritingMode.IsInlineReversed() ? IStart() : IEnd());
   }
 
   nscoord LeftRight(WritingMode aWritingMode) const
@@ -1175,49 +1284,23 @@ public:
     mMargin.SizeTo(aBStart, aIEnd, aBEnd, aIStart);
   }
 
-  nscoord& Top(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd()) : BStart();
-  }
-
-  nscoord& Bottom(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart()) : BEnd();
-  }
-
-  nscoord& Left(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ?
-      (aWritingMode.IsVerticalLR() ? BStart() : BEnd()) :
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd());
-  }
-
-  nscoord& Right(WritingMode aWritingMode)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ?
-      (aWritingMode.IsVerticalLR() ? BEnd() : BStart()) :
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart());
-  }
-
   /**
    * Return an nsMargin containing our physical coordinates
    */
   nsMargin GetPhysicalMargin(WritingMode aWritingMode) const
   {
     CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ?
-      (aWritingMode.IsVerticalLR() ?
-        nsMargin(IStart(), BEnd(), IEnd(), BStart()) :
-        nsMargin(IStart(), BStart(), IEnd(), BEnd())) :
-      (aWritingMode.IsBidiLTR() ?
-        nsMargin(BStart(), IEnd(), BEnd(), IStart()) :
-        nsMargin(BStart(), IStart(), BEnd(), IEnd()));
+    return aWritingMode.IsVertical()
+           ? (aWritingMode.IsVerticalLR()
+             ? (aWritingMode.IsInlineReversed()
+               ? nsMargin(IEnd(), BEnd(), IStart(), BStart())
+               : nsMargin(IStart(), BEnd(), IEnd(), BStart()))
+             : (aWritingMode.IsInlineReversed()
+               ? nsMargin(IEnd(), BStart(), IStart(), BEnd())
+               : nsMargin(IStart(), BStart(), IEnd(), BEnd())))
+           : (aWritingMode.IsInlineReversed()
+             ? nsMargin(BStart(), IStart(), BEnd(), IEnd())
+             : nsMargin(BStart(), IEnd(), BEnd(), IStart()));
   }
 
   /**
@@ -1376,28 +1459,23 @@ public:
 
   LogicalRect(WritingMode aWritingMode,
               const nsRect& aRect,
-              nscoord aContainerWidth)
+              const nsSize& aContainerSize)
 #ifdef DEBUG
     : mWritingMode(aWritingMode)
 #endif
   {
     if (aWritingMode.IsVertical()) {
-      if (aWritingMode.IsVerticalLR()) {
-        mRect.y = aRect.x;
-      } else {
-        mRect.y = aContainerWidth - aRect.XMost();
-      }
+      mRect.y = aWritingMode.IsVerticalLR()
+                ? aRect.x : aContainerSize.width - aRect.XMost();
+      mRect.x = aWritingMode.IsInlineReversed()
+                ? aContainerSize.height - aRect.YMost() : aRect.y;
       mRect.height = aRect.width;
-      mRect.x = aRect.y;
       mRect.width = aRect.height;
     } else {
-      if (aWritingMode.IsBidiLTR()) {
-        mRect.x = aRect.x;
-      } else {
-        mRect.x = aContainerWidth - aRect.XMost();
-      }
-      mRect.width = aRect.width;
+      mRect.x = aWritingMode.IsInlineReversed()
+                ? aContainerSize.width - aRect.XMost() : aRect.x;
       mRect.y = aRect.y;
+      mRect.width = aRect.width;
       mRect.height = aRect.height;
     }
   }
@@ -1465,25 +1543,27 @@ public:
   /**
    * Accessors for line-relative coordinates
    */
-  nscoord LineLeft(WritingMode aWritingMode, nscoord aContainerWidth) const
+  nscoord LineLeft(WritingMode aWritingMode,
+                   const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      return IStart(); // sideways-left will require aContainerHeight
-    } else {
-      return aWritingMode.IsBidiLTR() ? IStart()
-                                      : aContainerWidth - IEnd();
+    if (aWritingMode.IsBidiLTR()) {
+      return IStart();
     }
+    nscoord containerISize =
+      aWritingMode.IsVertical() ? aContainerSize.height : aContainerSize.width;
+    return containerISize - IEnd();
   }
-  nscoord LineRight(WritingMode aWritingMode, nscoord aContainerWidth) const
+  nscoord LineRight(WritingMode aWritingMode,
+                    const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      return IEnd(); // sideways-left will require aContainerHeight
-    } else {
-      return aWritingMode.IsBidiLTR() ? IEnd()
-                                      : aContainerWidth - IStart();
+    if (aWritingMode.IsBidiLTR()) {
+      return IEnd();
     }
+    nscoord containerISize =
+      aWritingMode.IsVertical() ? aContainerSize.height : aContainerSize.width;
+    return containerISize - IStart();
   }
 
   /**
@@ -1496,42 +1576,19 @@ public:
       return aWritingMode.IsVerticalLR() ?
              mRect.Y() : aContainerWidth - mRect.YMost();
     } else {
-      return aWritingMode.IsBidiLTR() ?
-             mRect.X() : aContainerWidth - mRect.XMost();
+      return aWritingMode.IsInlineReversed() ?
+             aContainerWidth - mRect.XMost() : mRect.X();
     }
   }
 
-  void SetX(WritingMode aWritingMode, nscoord aX, nscoord aContainerWidth)
+  nscoord Y(WritingMode aWritingMode, nscoord aContainerHeight) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     if (aWritingMode.IsVertical()) {
-      if (aWritingMode.IsVerticalLR()) {
-        BStart() = aX;
-      } else {
-        BStart() = aContainerWidth - aX - BSize();
-      }
+      return aWritingMode.IsInlineReversed() ? aContainerHeight - mRect.XMost()
+                                             : mRect.X();
     } else {
-      if (aWritingMode.IsBidiLTR()) {
-        IStart() = aX;
-      } else {
-        IStart() = aContainerWidth - aX - ISize();
-      }
-    }
-  }
-
-  nscoord Y(WritingMode aWritingMode) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ? mRect.X() : mRect.Y();
-  }
-
-  void SetY(WritingMode aWritingMode, nscoord aY)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      IStart() = aY;
-    } else {
-      BStart() = aY;
+      return mRect.Y();
     }
   }
 
@@ -1541,39 +1598,10 @@ public:
     return aWritingMode.IsVertical() ? mRect.Height() : mRect.Width();
   }
 
-  // When setting the Width of a rect, we keep its physical X-coord fixed
-  // and modify XMax. This means that in the RTL case, we'll be moving
-  // the IStart, so that IEnd remains constant.
-  void SetWidth(WritingMode aWritingMode, nscoord aWidth)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      if (!aWritingMode.IsVerticalLR()) {
-        BStart() = BStart() + BSize() - aWidth;
-      }
-      BSize() = aWidth;
-    } else {
-      if (!aWritingMode.IsBidiLTR()) {
-        IStart() = IStart() + ISize() - aWidth;
-      }
-      ISize() = aWidth;
-    }
-  }
-
   nscoord Height(WritingMode aWritingMode) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ? mRect.Width() : mRect.Height();
-  }
-
-  void SetHeight(WritingMode aWritingMode, nscoord aHeight)
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      ISize() = aHeight;
-    } else {
-      BSize() = aHeight;
-    }
   }
 
   nscoord XMost(WritingMode aWritingMode, nscoord aContainerWidth) const
@@ -1583,15 +1611,20 @@ public:
       return aWritingMode.IsVerticalLR() ?
              mRect.YMost() : aContainerWidth - mRect.Y();
     } else {
-      return aWritingMode.IsBidiLTR() ?
-             mRect.XMost() : aContainerWidth - mRect.X();
+      return aWritingMode.IsInlineReversed() ?
+             aContainerWidth - mRect.X() : mRect.XMost();
     }
   }
 
-  nscoord YMost(WritingMode aWritingMode) const
+  nscoord YMost(WritingMode aWritingMode, nscoord aContainerHeight) const
   {
     CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsVertical() ? mRect.XMost() : mRect.YMost();
+    if (aWritingMode.IsVertical()) {
+      return aWritingMode.IsInlineReversed() ? aContainerHeight - mRect.x
+                                             : mRect.XMost();
+    } else {
+      return mRect.YMost();
+    }
   }
 
   bool IsEmpty() const
@@ -1693,19 +1726,21 @@ public:
 
   /**
    * Return an nsRect containing our physical coordinates within the given
-   * container width
+   * container size.
    */
   nsRect GetPhysicalRect(WritingMode aWritingMode,
-                         nscoord aContainerWidth) const
+                         const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     if (aWritingMode.IsVertical()) {
-      return nsRect(aWritingMode.IsVerticalLR() ?
-                      BStart() : aContainerWidth - BEnd(),
-                    IStart(), BSize(), ISize());
+      return nsRect(aWritingMode.IsVerticalLR()
+                    ? BStart() : aContainerSize.width - BEnd(),
+                    aWritingMode.IsInlineReversed()
+                    ?  aContainerSize.height - IEnd() : IStart(),
+                    BSize(), ISize());
     } else {
-      return nsRect(aWritingMode.IsBidiLTR() ?
-                      IStart() : aContainerWidth - IEnd(),
+      return nsRect(aWritingMode.IsInlineReversed()
+                    ? aContainerSize.width - IEnd() : IStart(),
                     BStart(), ISize(), BSize());
     }
   }
@@ -1714,12 +1749,12 @@ public:
    * Return a LogicalRect representing this rect in a different writing mode
    */
   LogicalRect ConvertTo(WritingMode aToMode, WritingMode aFromMode,
-                        nscoord aContainerWidth) const
+                        const nsSize& aContainerSize) const
   {
     CHECK_WRITING_MODE(aFromMode);
     return aToMode == aFromMode ?
-      *this : LogicalRect(aToMode, GetPhysicalRect(aFromMode, aContainerWidth),
-                          aContainerWidth);
+      *this : LogicalRect(aToMode, GetPhysicalRect(aFromMode, aContainerSize),
+                          aContainerSize);
   }
 
   /**
@@ -1940,6 +1975,30 @@ nsStylePosition::MaxBSizeDependsOnContainer(mozilla::WritingMode aWM) const
 {
   return aWM.IsVertical() ? MaxWidthDependsOnContainer()
                           : MaxHeightDependsOnContainer();
+}
+
+inline uint8_t
+nsStyleDisplay::PhysicalFloats(mozilla::WritingMode aWM) const
+{
+  if (mFloats == NS_STYLE_FLOAT_INLINE_START) {
+    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_LEFT : NS_STYLE_FLOAT_RIGHT;
+  }
+  if (mFloats == NS_STYLE_FLOAT_INLINE_END) {
+    return aWM.IsBidiLTR() ? NS_STYLE_FLOAT_RIGHT : NS_STYLE_FLOAT_LEFT;
+  }
+  return mFloats;
+}
+
+inline uint8_t
+nsStyleDisplay::PhysicalBreakType(mozilla::WritingMode aWM) const
+{
+  if (mBreakType == NS_STYLE_CLEAR_INLINE_START) {
+    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_LEFT : NS_STYLE_CLEAR_RIGHT;
+  }
+  if (mBreakType == NS_STYLE_CLEAR_INLINE_END) {
+    return aWM.IsBidiLTR() ? NS_STYLE_CLEAR_RIGHT : NS_STYLE_CLEAR_LEFT;
+  }
+  return mBreakType;
 }
 
 #endif // WritingModes_h_

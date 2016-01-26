@@ -10,7 +10,6 @@
 #include "jsapi.h"
 #include "xpcpublic.h"
 
-#include "nsIJSRuntimeService.h"
 #include "nsIAddonInterposition.h"
 #include "nsIAppStartup.h"
 #include "nsIDirectoryEnumerator.h"
@@ -52,6 +51,9 @@
 #endif
 #ifdef XP_UNIX
 #include <ctype.h>
+#endif
+#ifdef XP_IOS
+#include "UIKitDirProvider.h"
 #endif
 
 #if defined(XP_MACOSX)
@@ -296,11 +298,7 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
   rv = NS_ERROR_FAILURE;
   nsCOMPtr<nsIFile> file;
 
-  if (!strcmp(aProperty, NS_APP_PROFILE_DEFAULTS_50_DIR) ||
-           !strcmp(aProperty, NS_APP_PROFILE_DEFAULTS_NLOC_50_DIR)) {
-    return GetProfileDefaultsDir(aFile);
-  }
-  else if (!strcmp(aProperty, NS_APP_PREF_DEFAULTS_50_DIR))
+  if (!strcmp(aProperty, NS_APP_PREF_DEFAULTS_50_DIR))
   {
     // return the GRE default prefs directory here, and the app default prefs
     // directory (if applicable) in NS_APP_PREFS_DEFAULTS_DIR_LIST.
@@ -387,6 +385,18 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
     if (NS_SUCCEEDED(rv))
       rv = file->AppendNative(NS_LITERAL_CSTRING("distribution"));
   }
+  else if (!strcmp(aProperty, XRE_APP_FEATURES_DIR)) {
+    rv = GetAppDir()->Clone(getter_AddRefs(file));
+    if (NS_SUCCEEDED(rv))
+      rv = file->AppendNative(NS_LITERAL_CSTRING("features"));
+  }
+  else if (!strcmp(aProperty, XRE_ADDON_APP_DIR)) {
+    nsCOMPtr<nsIDirectoryServiceProvider> dirsvc(do_GetService("@mozilla.org/file/directory_service;1", &rv));
+    if (NS_FAILED(rv))
+      return rv;
+    bool unused;
+    rv = dirsvc->GetFile("XCurProcD", &unused, getter_AddRefs(file));
+  }
   else if (NS_SUCCEEDED(GetProfileStartupDir(getter_AddRefs(file)))) {
     // We need to allow component, xpt, and chrome registration to
     // occur prior to the profile-after-change notification.
@@ -419,13 +429,11 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
       }
       else {
         rv = file->AppendNative(NS_LITERAL_CSTRING("localstore.rdf"));
-        EnsureProfileFileExists(file);
         ensureFilePermissions = true;
       }
     }
     else if (!strcmp(aProperty, NS_APP_USER_MIMETYPES_50_FILE)) {
       rv = file->AppendNative(NS_LITERAL_CSTRING("mimeTypes.rdf"));
-      EnsureProfileFileExists(file);
       ensureFilePermissions = true;
     }
     else if (!strcmp(aProperty, NS_APP_DOWNLOADS_50_FILE)) {
@@ -618,29 +626,50 @@ nsXREDirProvider::LoadExtensionBundleDirectories()
   if (!mozilla::Preferences::GetBool("extensions.defaultProviders.enabled", true))
     return;
 
-  if (mProfileDir && !gSafeMode) {
-    nsCOMPtr<nsIFile> extensionsINI;
-    mProfileDir->Clone(getter_AddRefs(extensionsINI));
-    if (!extensionsINI)
-      return;
+  if (mProfileDir) {
+    if (!gSafeMode) {
+      nsCOMPtr<nsIFile> extensionsINI;
+      mProfileDir->Clone(getter_AddRefs(extensionsINI));
+      if (!extensionsINI)
+        return;
 
-    extensionsINI->AppendNative(NS_LITERAL_CSTRING("extensions.ini"));
+      extensionsINI->AppendNative(NS_LITERAL_CSTRING("extensions.ini"));
 
-    nsCOMPtr<nsIFile> extensionsINILF =
-      do_QueryInterface(extensionsINI);
-    if (!extensionsINILF)
-      return;
+      nsCOMPtr<nsIFile> extensionsINILF =
+        do_QueryInterface(extensionsINI);
+      if (!extensionsINILF)
+        return;
 
-    nsINIParser parser;
-    nsresult rv = parser.Init(extensionsINILF);
-    if (NS_FAILED(rv))
-      return;
+      nsINIParser parser;
+      nsresult rv = parser.Init(extensionsINILF);
+      if (NS_FAILED(rv))
+        return;
 
-    RegisterExtensionInterpositions(parser);
-    LoadExtensionDirectories(parser, "ExtensionDirs", mExtensionDirectories,
-                             NS_EXTENSION_LOCATION);
-    LoadExtensionDirectories(parser, "ThemeDirs", mThemeDirectories,
-                             NS_SKIN_LOCATION);
+      RegisterExtensionInterpositions(parser);
+      LoadExtensionDirectories(parser, "ExtensionDirs", mExtensionDirectories,
+                               NS_EXTENSION_LOCATION);
+      LoadExtensionDirectories(parser, "ThemeDirs", mThemeDirectories,
+                               NS_SKIN_LOCATION);
+/* non-Firefox applications that use overrides in their default theme should
+ * define AC_DEFINE(MOZ_SEPARATE_MANIFEST_FOR_THEME_OVERRIDES) in their
+ * configure.in */
+#if defined(MOZ_BUILD_APP_IS_BROWSER) || defined(MOZ_SEPARATE_MANIFEST_FOR_THEME_OVERRIDES)
+    } else {
+      // In safe mode, still load the default theme directory:
+      nsCOMPtr<nsIFile> themeManifest;
+      mXULAppDir->Clone(getter_AddRefs(themeManifest));
+      themeManifest->AppendNative(NS_LITERAL_CSTRING("extensions"));
+      themeManifest->AppendNative(NS_LITERAL_CSTRING("{972ce4c6-7e08-4474-a285-3208198ce6fd}.xpi"));
+      bool exists = false;
+      if (NS_SUCCEEDED(themeManifest->Exists(&exists)) && exists) {
+        XRE_AddJarManifestLocation(NS_SKIN_LOCATION, themeManifest);
+      } else {
+        themeManifest->SetNativeLeafName(NS_LITERAL_CSTRING("{972ce4c6-7e08-4474-a285-3208198ce6fd}"));
+        themeManifest->AppendNative(NS_LITERAL_CSTRING("chrome.manifest"));
+        XRE_AddManifestLocation(NS_SKIN_LOCATION, themeManifest);
+      }
+#endif
+    }
   }
 }
 
@@ -881,6 +910,8 @@ nsXREDirProvider::DoStartup()
 void
 nsXREDirProvider::DoShutdown()
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
   if (mProfileNotified) {
     nsCOMPtr<nsIObserverService> obsSvc =
       mozilla::services::GetObserverService();
@@ -893,14 +924,9 @@ nsXREDirProvider::DoShutdown()
       // Phase 2c: Now that things are torn down, force JS GC so that things which depend on
       // resources which are about to go away in "profile-before-change" are destroyed first.
 
-      nsCOMPtr<nsIJSRuntimeService> rtsvc
-        (do_GetService("@mozilla.org/js/xpc/RuntimeService;1"));
-      if (rtsvc)
-      {
-        JSRuntime *rt = nullptr;
-        rtsvc->GetRuntime(&rt);
-        if (rt)
-          ::JS_GC(rt);
+      JSRuntime *rt = xpc::GetJSRuntime();
+      if (rt) {
+        JS_GC(rt);
       }
 
       // Phase 3: Notify observers of a profile change
@@ -1241,6 +1267,14 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_SUCCESS(rv, rv);
 
   localDir = do_QueryInterface(dirFileMac, &rv);
+#elif defined(XP_IOS)
+  nsAutoCString userDir;
+  if (GetUIKitDirectory(aLocal, userDir)) {
+    rv = NS_NewNativeLocalFile(userDir, true, getter_AddRefs(localDir));
+  } else {
+    rv = NS_ERROR_FAILURE;
+  }
+  NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_WIN)
   nsString path;
   if (aLocal) {
@@ -1406,51 +1440,6 @@ nsXREDirProvider::EnsureDirectoryExists(nsIFile* aDirectory)
 #endif
 
   return rv;
-}
-
-void
-nsXREDirProvider::EnsureProfileFileExists(nsIFile *aFile)
-{
-  nsresult rv;
-  bool exists;
-
-  rv = aFile->Exists(&exists);
-  if (NS_FAILED(rv) || exists) return;
-
-  nsAutoCString leafName;
-  rv = aFile->GetNativeLeafName(leafName);
-  if (NS_FAILED(rv)) return;
-
-  nsCOMPtr<nsIFile> defaultsFile;
-  rv = GetProfileDefaultsDir(getter_AddRefs(defaultsFile));
-  if (NS_FAILED(rv)) return;
-
-  rv = defaultsFile->AppendNative(leafName);
-  if (NS_FAILED(rv)) return;
-
-  defaultsFile->CopyToNative(mProfileDir, EmptyCString());
-}
-
-nsresult
-nsXREDirProvider::GetProfileDefaultsDir(nsIFile* *aResult)
-{
-  NS_ASSERTION(mGREDir, "nsXREDirProvider not initialized.");
-  NS_PRECONDITION(aResult, "Null out-param");
-
-  nsresult rv;
-  nsCOMPtr<nsIFile> defaultsDir;
-
-  rv = GetAppDir()->Clone(getter_AddRefs(defaultsDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = defaultsDir->AppendNative(NS_LITERAL_CSTRING("defaults"));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = defaultsDir->AppendNative(NS_LITERAL_CSTRING("profile"));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  defaultsDir.forget(aResult);
-  return NS_OK;
 }
 
 nsresult

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * vim: set ts=4 et sw=4 tw=80:
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +11,7 @@
 #include "nsString.h"
 #include "gfxPoint.h"
 #include "gfxFont.h"
+#include "gfxFontConstants.h"
 #include "nsTArray.h"
 #include "gfxSkipChars.h"
 #include "gfxPlatform.h"
@@ -80,7 +82,6 @@ struct gfxTextRunDrawCallbacks {
  */
 class gfxTextRun : public gfxShapedText {
 public:
-
     // Override operator delete to properly free the object that was
     // allocated via malloc.
     void operator delete(void* p) {
@@ -90,6 +91,7 @@ public:
     virtual ~gfxTextRun();
 
     typedef gfxFont::RunMetrics Metrics;
+    typedef mozilla::gfx::DrawTarget DrawTarget;
 
     // Public textrun API for general use
 
@@ -127,9 +129,9 @@ public:
         NS_ASSERTION(aPos < GetLength(), "aPos out of range");
         return mCharacterGlyphs[aPos].CharIsNewline();
     }
-    bool CharIsLowSurrogate(uint32_t aPos) const {
+    bool CharMayHaveEmphasisMark(uint32_t aPos) const {
         NS_ASSERTION(aPos < GetLength(), "aPos out of range");
-        return mCharacterGlyphs[aPos].CharIsLowSurrogate();
+        return mCharacterGlyphs[aPos].CharMayHaveEmphasisMark();
     }
 
     // All uint32_t aStart, uint32_t aLength ranges below are restricted to
@@ -151,8 +153,7 @@ public:
      * breaks are the same as the old
      */
     virtual bool SetPotentialLineBreaks(uint32_t aStart, uint32_t aLength,
-                                          uint8_t *aBreakBefore,
-                                          gfxContext *aRefContext);
+                                        uint8_t *aBreakBefore);
 
     /**
      * Layout provides PropertyProvider objects. These allow detection of
@@ -193,7 +194,7 @@ public:
 
         // Returns a gfxContext that can be used to measure the hyphen glyph.
         // Only called if the hyphen width is requested.
-        virtual already_AddRefed<gfxContext> GetContext() = 0;
+        virtual already_AddRefed<DrawTarget> GetDrawTarget() = 0;
 
         // Return the appUnitsPerDevUnit value to be used when measuring.
         // Only called if the hyphen width is requested.
@@ -250,14 +251,24 @@ public:
               gfxTextRunDrawCallbacks *aCallbacks = nullptr);
 
     /**
+     * Draws the emphasis marks for this text run. Uses only GetSpacing
+     * from aProvider. The provided point is the baseline origin of the
+     * line of emphasis marks.
+     */
+    void DrawEmphasisMarks(gfxContext* aContext, gfxTextRun* aMark,
+                           gfxFloat aMarkAdvance, gfxPoint aPt,
+                           uint32_t aStart, uint32_t aLength,
+                           PropertyProvider* aProvider);
+
+    /**
      * Computes the ReflowMetrics for a substring.
      * Uses GetSpacing from aBreakProvider.
      * @param aBoundingBoxType which kind of bounding box (loose/tight)
      */
     Metrics MeasureText(uint32_t aStart, uint32_t aLength,
                         gfxFont::BoundingBoxType aBoundingBoxType,
-                        gfxContext *aRefContextForTightBoundingBox,
-                        PropertyProvider *aProvider);
+                        DrawTarget* aDrawTargetForTightBoundingBox,
+                        PropertyProvider* aProvider);
 
     /**
      * Computes just the advance width for a substring.
@@ -299,8 +310,7 @@ public:
      */
     virtual bool SetLineBreaks(uint32_t aStart, uint32_t aLength,
                                  bool aLineBreakBefore, bool aLineBreakAfter,
-                                 gfxFloat *aAdvanceWidthDelta,
-                                 gfxContext *aRefContext);
+                                 gfxFloat* aAdvanceWidthDelta);
 
     enum SuppressBreak {
       eNoSuppressBreak,
@@ -344,7 +354,7 @@ public:
      * @param aMetrics if non-null, we fill this in for the returned substring.
      * If a hyphenation break was used, the hyphen is NOT included in the returned metrics.
      * @param aBoundingBoxType whether to make the bounding box in aMetrics tight
-     * @param aRefContextForTightBoundingBox a reference context to get the
+     * @param aDrawTargetForTightBoundingbox a reference DrawTarget to get the
      * tight bounding box, if requested
      * @param aUsedHyphenation if non-null, records if we selected a hyphenation break
      * @param aLastBreak if non-null and result is aMaxLength, we set this to
@@ -372,18 +382,11 @@ public:
                                  gfxFloat *aTrimWhitespace,
                                  Metrics *aMetrics,
                                  gfxFont::BoundingBoxType aBoundingBoxType,
-                                 gfxContext *aRefContextForTightBoundingBox,
+                                 DrawTarget* aDrawTargetForTightBoundingBox,
                                  bool *aUsedHyphenation,
                                  uint32_t *aLastBreak,
                                  bool aCanWordWrap,
                                  gfxBreakPriority *aBreakPriority);
-
-    /**
-     * Update the reference context.
-     * XXX this is a hack. New text frame does not call this. Use only
-     * temporarily for old text frame.
-     */
-    void SetContext(gfxContext *aContext) {}
 
     // Utility getters
 
@@ -412,7 +415,7 @@ public:
 
     // The text is divided into GlyphRuns as necessary
     struct GlyphRun {
-        nsRefPtr<gfxFont> mFont;   // never null
+        RefPtr<gfxFont> mFont;   // never null
         uint32_t          mCharacterOffset; // into original UTF16 string
         uint8_t           mMatchType;
         uint16_t          mOrientation; // gfxTextRunFactory::TEXT_ORIENT_* value
@@ -478,7 +481,7 @@ public:
     void SortGlyphRuns();
     void SanitizeGlyphRuns();
 
-    CompressedGlyph* GetCharacterGlyphs() {
+    CompressedGlyph* GetCharacterGlyphs() final {
         NS_ASSERTION(mCharacterGlyphs, "failed to initialize mCharacterGlyphs");
         return mCharacterGlyphs;
     }
@@ -486,8 +489,8 @@ public:
     // clean out results from shaping in progress, used for fallback scenarios
     void ClearGlyphsAndCharacters();
 
-    void SetSpaceGlyph(gfxFont *aFont, gfxContext *aContext, uint32_t aCharIndex,
-                       uint16_t aOrientation);
+    void SetSpaceGlyph(gfxFont* aFont, DrawTarget* aDrawTarget,
+                       uint32_t aCharIndex, uint16_t aOrientation);
 
     // Set the glyph data for the given character index to the font's
     // space glyph, IF this can be done as a "simple" glyph record
@@ -502,9 +505,8 @@ public:
     // Returns true if it was able to set simple glyph data for the space;
     // if it returns false, the caller needs to fall back to some other
     // means to create the necessary (detailed) glyph data.
-    bool SetSpaceGlyphIfSimple(gfxFont *aFont, gfxContext *aContext,
-                               uint32_t aCharIndex, char16_t aSpaceChar,
-                               uint16_t aOrientation);
+    bool SetSpaceGlyphIfSimple(gfxFont *aFont, uint32_t aCharIndex,
+                               char16_t aSpaceChar, uint16_t aOrientation);
 
     // Record the positions of specific characters that layout may need to
     // detect in the textrun, even though it doesn't have an explicit copy
@@ -513,30 +515,13 @@ public:
     // to "complex" ones as the Tab and Newline flags are not present in
     // simple CompressedGlyph records.
     void SetIsTab(uint32_t aIndex) {
-        CompressedGlyph *g = &mCharacterGlyphs[aIndex];
-        if (g->IsSimpleGlyph()) {
-            DetailedGlyph *details = AllocateDetailedGlyphs(aIndex, 1);
-            details->mGlyphID = g->GetSimpleGlyph();
-            details->mAdvance = g->GetSimpleAdvance();
-            details->mXOffset = details->mYOffset = 0;
-            SetGlyphs(aIndex, CompressedGlyph().SetComplex(true, true, 1), details);
-        }
-        g->SetIsTab();
+        EnsureComplexGlyph(aIndex).SetIsTab();
     }
     void SetIsNewline(uint32_t aIndex) {
-        CompressedGlyph *g = &mCharacterGlyphs[aIndex];
-        if (g->IsSimpleGlyph()) {
-            DetailedGlyph *details = AllocateDetailedGlyphs(aIndex, 1);
-            details->mGlyphID = g->GetSimpleGlyph();
-            details->mAdvance = g->GetSimpleAdvance();
-            details->mXOffset = details->mYOffset = 0;
-            SetGlyphs(aIndex, CompressedGlyph().SetComplex(true, true, 1), details);
-        }
-        g->SetIsNewline();
+        EnsureComplexGlyph(aIndex).SetIsNewline();
     }
-    void SetIsLowSurrogate(uint32_t aIndex) {
-        SetGlyphs(aIndex, CompressedGlyph().SetComplex(false, false, 0), nullptr);
-        mCharacterGlyphs[aIndex].SetIsLowSurrogate();
+    void SetNoEmphasisMark(uint32_t aIndex) {
+        EnsureComplexGlyph(aIndex).SetNoEmphasisMark();
     }
 
     /**
@@ -545,7 +530,7 @@ public:
      * that some glyph extents might not be fetched due to OOM or other
      * errors.
      */
-    void FetchGlyphExtents(gfxContext *aRefContext);
+    void FetchGlyphExtents(DrawTarget* aRefDrawTarget);
 
     uint32_t CountMissingGlyphs();
     const GlyphRun *GetGlyphRuns(uint32_t *aNumGlyphRuns) {
@@ -626,6 +611,24 @@ public:
         mShapingState = aShapingState;
     }
 
+    int32_t GetAdvanceForGlyph(uint32_t aIndex)
+    {
+        const CompressedGlyph& glyphData = mCharacterGlyphs[aIndex];
+        if (glyphData.IsSimpleGlyph()) {
+            return glyphData.GetSimpleAdvance();
+        }
+        uint32_t glyphCount = glyphData.GetGlyphCount();
+        if (!glyphCount) {
+            return 0;
+        }
+        const DetailedGlyph* details = GetDetailedGlyphs(aIndex);
+        int32_t advance = 0;
+        for (uint32_t j = 0; j < glyphCount; ++j, ++details) {
+            advance += details->mAdvance;
+        }
+        return advance;
+    }
+
 #ifdef DEBUG
     void Dump(FILE* aOutput);
 #endif
@@ -666,6 +669,12 @@ private:
                                    uint32_t aSpacingStart, uint32_t aSpacingEnd,
                                    nsTArray<PropertyProvider::Spacing> *aSpacing);
 
+    CompressedGlyph& EnsureComplexGlyph(uint32_t aIndex)
+    {
+        gfxShapedText::EnsureComplexGlyph(aIndex, mCharacterGlyphs[aIndex]);
+        return mCharacterGlyphs[aIndex];
+    }
+
     //  **** ligature helpers ****
     // (Platforms do the actual ligaturization, but we need to do a bunch of stuff
     // to handle requests that begin or end inside a ligature)
@@ -686,7 +695,7 @@ private:
     void AccumulatePartialLigatureMetrics(gfxFont *aFont,
                                           uint32_t aStart, uint32_t aEnd,
                                           gfxFont::BoundingBoxType aBoundingBoxType,
-                                          gfxContext *aRefContext,
+                                          DrawTarget* aRefDrawTarget,
                                           PropertyProvider *aProvider,
                                           uint16_t aOrientation,
                                           Metrics *aMetrics);
@@ -694,7 +703,7 @@ private:
     // **** measurement helper ****
     void AccumulateMetricsForRun(gfxFont *aFont, uint32_t aStart, uint32_t aEnd,
                                  gfxFont::BoundingBoxType aBoundingBoxType,
-                                 gfxContext *aRefContext,
+                                 DrawTarget* aRefDrawTarget,
                                  PropertyProvider *aProvider,
                                  uint32_t aSpacingStart, uint32_t aSpacingEnd,
                                  uint16_t aOrientation,
@@ -732,8 +741,10 @@ public:
     static void Shutdown(); // platform must call this to release the languageAtomService
 
     gfxFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                 const gfxFontStyle *aStyle,
-                 gfxUserFontSet *aUserFontSet = nullptr);
+                 const gfxFontStyle* aStyle,
+                 gfxTextPerfMetrics* aTextPerf,
+                 gfxUserFontSet* aUserFontSet,
+                 gfxFloat aDevToCssSize);
 
     virtual ~gfxFontGroup();
 
@@ -781,14 +792,14 @@ public:
      * a full Parameters record.
      */
     template<typename T>
-    gfxTextRun *MakeTextRun(const T *aString, uint32_t aLength,
-                            gfxContext *aRefContext,
+    gfxTextRun* MakeTextRun(const T* aString, uint32_t aLength,
+                            DrawTarget* aRefDrawTarget,
                             int32_t aAppUnitsPerDevUnit,
                             uint32_t aFlags,
                             gfxMissingFontRecorder *aMFR)
     {
         gfxTextRunFactory::Parameters params = {
-            aRefContext, nullptr, nullptr, nullptr, 0, aAppUnitsPerDevUnit
+            aRefDrawTarget, nullptr, nullptr, nullptr, 0, aAppUnitsPerDevUnit
         };
         return MakeTextRun(aString, aLength, &params, aFlags, aMFR);
     }
@@ -808,7 +819,7 @@ public:
      * The caller is responsible for deleting the returned text run
      * when no longer required.
      */
-    gfxTextRun *MakeHyphenTextRun(gfxContext *aCtx,
+    gfxTextRun* MakeHyphenTextRun(DrawTarget* aDrawTarget,
                                   uint32_t aAppUnitsPerDevUnit);
 
     /**
@@ -831,18 +842,6 @@ public:
                         int32_t aRunScript, gfxFont *aPrevMatchedFont,
                         uint8_t *aMatchType);
 
-    // search through pref fonts for a character, return nullptr if no matching pref font
-    virtual already_AddRefed<gfxFont> WhichPrefFontSupportsChar(uint32_t aCh);
-
-    already_AddRefed<gfxFont>
-        WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
-                                    int32_t aRunScript);
-
-    template<typename T>
-    void ComputeRanges(nsTArray<gfxTextRange>& mRanges,
-                       const T *aString, uint32_t aLength,
-                       int32_t aRunScript, uint16_t aOrientation);
-
     gfxUserFontSet* GetUserFontSet();
 
     // With downloadable fonts, the composition of the font group can change as fonts are downloaded
@@ -856,7 +855,6 @@ public:
 
     // used when logging text performance
     gfxTextPerfMetrics *GetTextPerfMetrics() { return mTextPerf; }
-    void SetTextPerfMetrics(gfxTextPerfMetrics *aTextPerf) { mTextPerf = aTextPerf; }
 
     // This will call UpdateUserFonts() if the user font set is changed.
     void SetUserFontSet(gfxUserFontSet *aUserFontSet);
@@ -872,9 +870,9 @@ public:
         return mSkipDrawing;
     }
 
-    class LazyReferenceContextGetter {
+    class LazyReferenceDrawTargetGetter {
     public:
-      virtual already_AddRefed<gfxContext> GetRefContext() = 0;
+      virtual already_AddRefed<DrawTarget> GetRefDrawTarget() = 0;
     };
     // The gfxFontGroup keeps ownership of this textrun.
     // It is only guaranteed to exist until the next call to GetEllipsisTextRun
@@ -882,25 +880,32 @@ public:
     // group, or until UpdateUserFonts is called, or the fontgroup is destroyed.
     // Get it/use it/forget it :) - don't keep a reference that might go stale.
     gfxTextRun* GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel, uint32_t aFlags,
-                                   LazyReferenceContextGetter& aRefContextGetter);
-
-    // helper method for resolving generic font families
-    static void
-    ResolveGenericFontNames(mozilla::FontFamilyType aGenericType,
-                            nsIAtom *aLanguage,
-                            nsTArray<nsString>& aGenericFamilies);
+                                   LazyReferenceDrawTargetGetter& aRefDrawTargetGetter);
 
 protected:
+    // search through pref fonts for a character, return nullptr if no matching pref font
+    already_AddRefed<gfxFont> WhichPrefFontSupportsChar(uint32_t aCh);
+
+    already_AddRefed<gfxFont>
+        WhichSystemFontSupportsChar(uint32_t aCh, uint32_t aNextCh,
+                                    int32_t aRunScript);
+
+    template<typename T>
+    void ComputeRanges(nsTArray<gfxTextRange>& mRanges,
+                       const T *aString, uint32_t aLength,
+                       int32_t aRunScript, uint16_t aOrientation);
+
     class FamilyFace {
     public:
         FamilyFace() : mFamily(nullptr), mFontEntry(nullptr),
                        mNeedsBold(false), mFontCreated(false),
-                       mLoading(false), mInvalid(false)
+                       mLoading(false), mInvalid(false),
+                       mCheckForFallbackFaces(false)
         { }
 
         FamilyFace(gfxFontFamily* aFamily, gfxFont* aFont)
             : mFamily(aFamily), mNeedsBold(false), mFontCreated(true),
-              mLoading(false), mInvalid(false)
+              mLoading(false), mInvalid(false), mCheckForFallbackFaces(false)
         {
             NS_ASSERTION(aFont, "font pointer must not be null");
             NS_ASSERTION(!aFamily ||
@@ -913,7 +918,7 @@ protected:
         FamilyFace(gfxFontFamily* aFamily, gfxFontEntry* aFontEntry,
                    bool aNeedsBold)
             : mFamily(aFamily), mNeedsBold(aNeedsBold), mFontCreated(false),
-              mLoading(false), mInvalid(false)
+              mLoading(false), mInvalid(false), mCheckForFallbackFaces(false)
         {
             NS_ASSERTION(aFontEntry, "font entry pointer must not be null");
             NS_ASSERTION(!aFamily ||
@@ -928,7 +933,8 @@ protected:
               mNeedsBold(aOtherFamilyFace.mNeedsBold),
               mFontCreated(aOtherFamilyFace.mFontCreated),
               mLoading(aOtherFamilyFace.mLoading),
-              mInvalid(aOtherFamilyFace.mInvalid)
+              mInvalid(aOtherFamilyFace.mInvalid),
+              mCheckForFallbackFaces(aOtherFamilyFace.mCheckForFallbackFaces)
         {
             if (mFontCreated) {
                 mFont = aOtherFamilyFace.mFont;
@@ -991,6 +997,8 @@ protected:
         void CheckState(bool& aSkipDrawing);
         void SetLoading(bool aIsLoading) { mLoading = aIsLoading; }
         void SetInvalid() { mInvalid = true; }
+        bool CheckForFallbackFaces() const { return mCheckForFallbackFaces; }
+        void SetCheckForFallbackFaces() { mCheckForFallbackFaces = true; }
 
         void SetFont(gfxFont* aFont)
         {
@@ -1009,7 +1017,7 @@ protected:
         bool EqualsUserFont(const gfxUserFontEntry* aUserFont) const;
 
     private:
-        nsRefPtr<gfxFontFamily> mFamily;
+        RefPtr<gfxFontFamily> mFamily;
         // either a font or a font entry exists
         union {
             gfxFont*            mFont;
@@ -1019,6 +1027,7 @@ protected:
         bool                    mFontCreated : 1;
         bool                    mLoading     : 1;
         bool                    mInvalid     : 1;
+        bool                    mCheckForFallbackFaces : 1;
     };
 
     // List of font families, either named or generic.
@@ -1030,13 +1039,14 @@ protected:
     // Code should be careful about addressing this array directly.
     nsTArray<FamilyFace> mFonts;
 
-    nsRefPtr<gfxFont> mDefaultFont;
+    RefPtr<gfxFont> mDefaultFont;
     gfxFontStyle mStyle;
 
     gfxFloat mUnderlineOffset;
     gfxFloat mHyphenWidth;
+    gfxFloat mDevToCssSize;
 
-    nsRefPtr<gfxUserFontSet> mUserFontSet;
+    RefPtr<gfxUserFontSet> mUserFontSet;
     uint64_t mCurrGeneration;  // track the current user font set generation, rebuild font list if needed
 
     gfxTextPerfMetrics *mTextPerf;
@@ -1046,8 +1056,8 @@ protected:
     nsAutoPtr<gfxTextRun>   mCachedEllipsisTextRun;
 
     // cache the most recent pref font to avoid general pref font lookup
-    nsRefPtr<gfxFontFamily> mLastPrefFamily;
-    nsRefPtr<gfxFont>       mLastPrefFont;
+    RefPtr<gfxFontFamily> mLastPrefFamily;
+    RefPtr<gfxFont>       mLastPrefFont;
     eFontPrefLang           mLastPrefLang;       // lang group for last pref font
     eFontPrefLang           mPageLang;
     bool                    mLastPrefFirstFont;  // is this the first font in the list of pref fonts for this lang group?
@@ -1091,7 +1101,7 @@ protected:
     // Set up the textrun glyphs for an entire text run:
     // find script runs, and then call InitScriptRun for each
     template<typename T>
-    void InitTextRun(gfxContext *aContext,
+    void InitTextRun(DrawTarget* aDrawTarget,
                      gfxTextRun *aTextRun,
                      const T *aString,
                      uint32_t aLength,
@@ -1100,7 +1110,7 @@ protected:
     // InitTextRun helper to handle a single script run, by finding font ranges
     // and calling each font's InitTextRun() as appropriate
     template<typename T>
-    void InitScriptRun(gfxContext *aContext,
+    void InitScriptRun(DrawTarget* aDrawTarget,
                        gfxTextRun *aTextRun,
                        const T *aString,
                        uint32_t aScriptRunStart,
@@ -1115,20 +1125,20 @@ protected:
     already_AddRefed<gfxFont>
     FindNonItalicFaceForChar(gfxFontFamily* aFamily, uint32_t aCh);
 
-    // helper methods for looking up fonts
+    // search all faces in a family for a fallback in cases where it's unclear
+    // whether the family might have a font for a given character
+    already_AddRefed<gfxFont>
+    FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh,
+                            int32_t aRunScript);
 
-    // iterate over the fontlist, lookup names and expand generics
-    void EnumerateFontList(nsIAtom *aLanguage, void *aClosure = nullptr);
-
-    // expand a generic to a list of specific names based on prefs
-    void FindGenericFonts(mozilla::FontFamilyType aGenericType,
-                          nsIAtom *aLanguage,
-                          void *aClosure);
+   // helper methods for looking up fonts
 
     // lookup and add a font with a given name (i.e. *not* a generic!)
-    virtual void FindPlatformFont(const nsAString& aName,
-                                  bool aUseFontSet,
-                                  void *aClosure);
+    void AddPlatformFont(const nsAString& aName,
+                         nsTArray<gfxFontFamily*>& aFamilyList);
+
+    // do style selection and add entries to list
+    void AddFamilyToFontList(gfxFontFamily* aFamily);
 
     static nsILanguageAtomService* gLangService;
 };

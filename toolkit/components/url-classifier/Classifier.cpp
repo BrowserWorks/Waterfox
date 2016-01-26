@@ -11,19 +11,15 @@
 #include "nsIInputStream.h"
 #include "nsISeekableStream.h"
 #include "nsIFile.h"
+#include "nsNetCID.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Telemetry.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 // NSPR_LOG_MODULES=UrlClassifierDbService:5
 extern PRLogModuleInfo *gUrlClassifierDbServiceLog;
-#if defined(PR_LOGGING)
-#define LOG(args) PR_LOG(gUrlClassifierDbServiceLog, PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(gUrlClassifierDbServiceLog, 4)
-#else
-#define LOG(args)
-#define LOG_ENABLED() (false)
-#endif
+#define LOG(args) MOZ_LOG(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug, args)
+#define LOG_ENABLED() MOZ_LOG_TEST(gUrlClassifierDbServiceLog, mozilla::LogLevel::Debug)
 
 #define STORE_DIRECTORY      NS_LITERAL_CSTRING("safebrowsing")
 #define TO_DELETE_DIR_SUFFIX NS_LITERAL_CSTRING("-to_delete")
@@ -247,22 +243,13 @@ Classifier::Check(const nsACString& aSpec,
     Completion lookupHash;
     lookupHash.FromPlaintext(fragments[i], mCryptoHash);
 
-    // Get list of host keys to look up
-    Completion hostKey;
-    rv = LookupCache::GetKey(fragments[i], &hostKey, mCryptoHash);
-    if (NS_FAILED(rv)) {
-      // Local host on the network.
-      continue;
-    }
-
-#if DEBUG && defined(PR_LOGGING)
     if (LOG_ENABLED()) {
       nsAutoCString checking;
       lookupHash.ToHexString(checking);
       LOG(("Checking fragment %s, hash %s (%X)", fragments[i].get(),
            checking.get(), lookupHash.ToUint32()));
     }
-#endif
+
     for (uint32_t i = 0; i < cacheArray.Length(); i++) {
       LookupCache *cache = cacheArray[i];
       bool has, complete;
@@ -304,12 +291,10 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
 {
   Telemetry::AutoTimer<Telemetry::URLCLASSIFIER_CL_UPDATE_TIME> timer;
 
-#if defined(PR_LOGGING)
   PRIntervalTime clockStart = 0;
-  if (LOG_ENABLED() || true) {
+  if (LOG_ENABLED()) {
     clockStart = PR_IntervalNow();
   }
-#endif
 
   LOG(("Backup before update."));
 
@@ -350,13 +335,11 @@ Classifier::ApplyUpdates(nsTArray<TableUpdate*>* aUpdates)
 
   LOG(("Done applying updates."));
 
-#if defined(PR_LOGGING)
-  if (LOG_ENABLED() || true) {
+  if (LOG_ENABLED()) {
     PRIntervalTime clockEnd = PR_IntervalNow();
     LOG(("update took %dms\n",
          PR_IntervalToMilliseconds(clockEnd - clockStart)));
   }
-#endif
 
   return NS_OK;
 }
@@ -375,6 +358,15 @@ Classifier::MarkSpoiled(nsTArray<nsCString>& aTables)
     }
   }
   return NS_OK;
+}
+
+void
+Classifier::SetLastUpdateTime(const nsACString &aTable,
+                              uint64_t updateTime)
+{
+  LOG(("Marking table %s as last updated on %u",
+       PromiseFlatCString(aTable).get(), updateTime));
+  mTableFreshness.Put(aTable, updateTime / PR_MSEC_PER_SEC);
 }
 
 void
@@ -676,7 +668,7 @@ Classifier::ApplyTableUpdates(nsTArray<TableUpdate*>* aUpdates,
   rv = prefixSet->Build(store.AddPrefixes(), store.AddCompletes());
   NS_ENSURE_SUCCESS(rv, rv);
 
-#if defined(DEBUG) && defined(PR_LOGGING)
+#if defined(DEBUG)
   prefixSet->Dump();
 #endif
   rv = prefixSet->WriteFile();

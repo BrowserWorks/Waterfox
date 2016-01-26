@@ -61,9 +61,9 @@ private:
 
   BackgroundCursorChild* mBackgroundActor;
 
-  nsRefPtr<IDBRequest> mRequest;
-  nsRefPtr<IDBObjectStore> mSourceObjectStore;
-  nsRefPtr<IDBIndex> mSourceIndex;
+  RefPtr<IDBRequest> mRequest;
+  RefPtr<IDBObjectStore> mSourceObjectStore;
+  RefPtr<IDBIndex> mSourceIndex;
 
   // mSourceObjectStore or mSourceIndex will hold this alive.
   IDBTransaction* mTransaction;
@@ -76,6 +76,7 @@ private:
   JS::Heap<JS::Value> mCachedValue;
 
   Key mKey;
+  Key mSortKey;
   Key mPrimaryKey;
   StructuredCloneReadInfo mCloneInfo;
 
@@ -102,12 +103,14 @@ public:
   static already_AddRefed<IDBCursor>
   Create(BackgroundCursorChild* aBackgroundActor,
          const Key& aKey,
+         const Key& aSortKey,
          const Key& aPrimaryKey,
          StructuredCloneReadInfo&& aCloneInfo);
 
   static already_AddRefed<IDBCursor>
   Create(BackgroundCursorChild* aBackgroundActor,
          const Key& aKey,
+         const Key& aSortKey,
          const Key& aPrimaryKey);
 
   static Direction
@@ -129,6 +132,8 @@ public:
 
   IDBCursorDirection
   GetDirection() const;
+
+  bool IsContinueCalled() const { return mContinueCalled; }
 
   void
   GetKey(JSContext* aCx,
@@ -167,10 +172,10 @@ public:
   Reset(Key&& aKey);
 
   void
-  Reset(Key&& aKey, Key&& aPrimaryKey, StructuredCloneReadInfo&& aValue);
+  Reset(Key&& aKey, Key&& aSortKey, Key&& aPrimaryKey, StructuredCloneReadInfo&& aValue);
 
   void
-  Reset(Key&& aKey, Key&& aPrimaryKey);
+  Reset(Key&& aKey, Key&& aSortKey, Key&& aPrimaryKey);
 
   void
   ClearBackgroundActor()
@@ -194,8 +199,17 @@ private:
 
   ~IDBCursor();
 
+#ifdef ENABLE_INTL_API
+  // Checks if this is a locale aware cursor (ie. the index's sortKey is unset)
+  bool
+  IsLocaleAware() const;
+#endif
+
   void
   DropJSObjects();
+
+  bool
+  IsSourceDeleted() const;
 };
 
 } // namespace indexedDB

@@ -10,7 +10,6 @@
 #define jit_arm_AtomicOperations_arm_h
 
 #include "jit/arm/Architecture-arm.h"
-#include "jit/AtomicOperations.h"
 
 #if defined(__clang__) || defined(__GNUC__)
 
@@ -181,6 +180,32 @@ js::jit::AtomicOperations::fetchXorSeqCst(T* addr, T val)
 # endif
 }
 
+template<typename T>
+inline T
+js::jit::AtomicOperations::loadSafeWhenRacy(T* addr)
+{
+    return *addr;               // FIXME (1208663): not yet safe
+}
+
+template<typename T>
+inline void
+js::jit::AtomicOperations::storeSafeWhenRacy(T* addr, T val)
+{
+    *addr = val;                // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memcpySafeWhenRacy(void* dest, const void* src, size_t nbytes)
+{
+    memcpy(dest, src, nbytes); // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memmoveSafeWhenRacy(void* dest, const void* src, size_t nbytes)
+{
+    memmove(dest, src, nbytes); // FIXME (1208663): not yet safe
+}
+
 template<size_t nbytes>
 inline void
 js::jit::RegionLock::acquire(void* addr)
@@ -191,8 +216,10 @@ js::jit::RegionLock::acquire(void* addr)
 # else
     uint32_t zero = 0;
     uint32_t one = 1;
-    while (!__atomic_compare_exchange(&spinlock, &zero, &one, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
+    while (!__atomic_compare_exchange(&spinlock, &zero, &one, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+        zero = 0;
         continue;
+    }
 # endif
 }
 
@@ -213,7 +240,7 @@ js::jit::RegionLock::release(void* addr)
 
 #elif defined(ENABLE_SHARED_ARRAY_BUFFER)
 
-# error "Either disable JS shared memory, use GCC or Clang, or add code here"
+# error "Either disable JS shared memory at compile time, use GCC or Clang, or add code here"
 
 #endif
 

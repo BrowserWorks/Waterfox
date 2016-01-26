@@ -89,7 +89,7 @@ hb_ot_map_builder_t::hb_ot_map_builder_t (hb_face_t *face_,
 
   for (unsigned int table_index = 0; table_index < 2; table_index++) {
     hb_tag_t table_tag = table_tags[table_index];
-    found_script[table_index] = hb_ot_layout_table_choose_script (face, table_tag, script_tags, &script_index[table_index], &chosen_script[table_index]);
+    found_script[table_index] = (bool) hb_ot_layout_table_choose_script (face, table_tag, script_tags, &script_index[table_index], &chosen_script[table_index]);
     hb_ot_layout_script_find_language (face, table_tag, script_index[table_index], language_tag, &language_index[table_index]);
   }
 }
@@ -215,6 +215,16 @@ hb_ot_map_builder_t::compile (hb_ot_map_t &m)
 						   language_index[table_index],
 						   info->tag,
 						   &feature_index[table_index]);
+    }
+    if (!found && (info->flags & F_GLOBAL_SEARCH))
+    {
+      for (unsigned int table_index = 0; table_index < 2; table_index++)
+      {
+	found |= hb_ot_layout_table_find_feature (face,
+						  table_tags[table_index],
+						  info->tag,
+						  &feature_index[table_index]);
+      }
     }
     if (!found && !(info->flags & F_HAS_FALLBACK))
       continue;

@@ -168,15 +168,33 @@ nsSVGOuterSVGFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
   DISPLAY_PREF_WIDTH(this, result);
 
   SVGSVGElement *svg = static_cast<SVGSVGElement*>(mContent);
-  nsSVGLength2 &width = svg->mLengthAttributes[SVGSVGElement::ATTR_WIDTH];
+  WritingMode wm = GetWritingMode();
+  const nsSVGLength2& isize = wm.IsVertical()
+    ? svg->mLengthAttributes[SVGSVGElement::ATTR_HEIGHT]
+    : svg->mLengthAttributes[SVGSVGElement::ATTR_WIDTH];
 
-  if (width.IsPercentage()) {
-    // It looks like our containing block's width may depend on our width. In
-    // that case our behavior is undefined according to CSS 2.1 section 10.3.2,
-    // so return zero.
+  if (isize.IsPercentage()) {
+    // It looks like our containing block's isize may depend on our isize. In
+    // that case our behavior is undefined according to CSS 2.1 section 10.3.2.
+    // As a last resort, we'll fall back to returning zero.
     result = nscoord(0);
+
+    // Returning zero may be unhelpful, however, as it leads to unexpected
+    // disappearance of %-sized SVGs in orthogonal contexts, where our
+    // containing block wants to shrink-wrap. So let's look for an ancestor
+    // with non-zero size in this dimension, and use that as a (somewhat
+    // arbitrary) result instead.
+    nsIFrame *parent = GetParent();
+    while (parent) {
+      nscoord parentISize = parent->GetLogicalSize(wm).ISize(wm);
+      if (parentISize > 0 && parentISize != NS_UNCONSTRAINEDSIZE) {
+        result = parentISize;
+        break;
+      }
+      parent = parent->GetParent();
+    }
   } else {
-    result = nsPresContext::CSSPixelsToAppUnits(width.GetAnimValue(svg));
+    result = nsPresContext::CSSPixelsToAppUnits(isize.GetAnimValue(svg));
     if (result < 0) {
       result = nscoord(0);
     }
@@ -623,19 +641,14 @@ nsDisplayOuterSVG::Paint(nsDisplayListBuilder* aBuilder,
 #endif
 }
 
-static PLDHashOperator CheckForeignObjectInvalidatedArea(nsPtrHashKey<nsSVGForeignObjectFrame>* aEntry, void* aData)
-{
-  nsRegion* region = static_cast<nsRegion*>(aData);
-  region->Or(*region, aEntry->GetKey()->GetInvalidRegion());
-  return PL_DHASH_NEXT;
-}
-
 nsRegion
 nsSVGOuterSVGFrame::FindInvalidatedForeignObjectFrameChildren(nsIFrame* aFrame)
 {
   nsRegion result;
   if (mForeignObjectHash && mForeignObjectHash->Count()) {
-    mForeignObjectHash->EnumerateEntries(CheckForeignObjectInvalidatedArea, &result);
+    for (auto it = mForeignObjectHash->Iter(); !it.Done(); it.Next()) {
+      result.Or(result, it.Get()->GetKey()->GetInvalidRegion());
+    }
   }
   return result;
 }
@@ -876,14 +889,13 @@ nsSVGOuterSVGFrame::IsRootOfReplacedElementSubDoc(nsIFrame **aEmbeddingFrame)
   if (!mContent->GetParent()) {
     // Our content is the document element
     nsCOMPtr<nsIDocShell> docShell = PresContext()->GetDocShell();
-    nsCOMPtr<nsIDOMWindow> window;
+    nsCOMPtr<nsPIDOMWindow> window;
     if (docShell) {
       window = docShell->GetWindow();
     }
 
     if (window) {
-      nsCOMPtr<nsIDOMElement> frameElement;
-      window->GetFrameElement(getter_AddRefs(frameElement));
+      nsCOMPtr<nsIDOMElement> frameElement = window->GetFrameElement();
       nsCOMPtr<nsIObjectLoadingContent> olc = do_QueryInterface(frameElement);
       if (olc) {
         // Our document is inside an HTML 'object', 'embed' or 'applet' element
@@ -970,8 +982,7 @@ nsSVGOuterSVGAnonChildFrame::HasChildrenOnlyTransform(gfx::Matrix *aTransform) c
     // Outer-<svg> doesn't use x/y, so we can pass eChildToUserSpace here.
     gfxMatrix identity;
     *aTransform = gfx::ToMatrix(
-      content->PrependLocalTransformsTo(identity,
-                                        nsSVGElement::eChildToUserSpace));
+      content->PrependLocalTransformsTo(identity, eChildToUserSpace));
   }
 
   return hasTransform;

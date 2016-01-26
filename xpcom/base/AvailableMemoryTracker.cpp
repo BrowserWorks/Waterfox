@@ -477,7 +477,7 @@ nsMemoryPressureWatcher::Observe(nsISupports* aSubject, const char* aTopic,
   return NS_OK;
 }
 
-} // anonymous namespace
+} // namespace
 
 namespace mozilla {
 namespace AvailableMemoryTracker {
@@ -514,7 +514,7 @@ Activate()
 #endif
 
   // This object is held alive by the observer service.
-  nsRefPtr<nsMemoryPressureWatcher> watcher = new nsMemoryPressureWatcher();
+  RefPtr<nsMemoryPressureWatcher> watcher = new nsMemoryPressureWatcher();
   watcher->Init();
 }
 

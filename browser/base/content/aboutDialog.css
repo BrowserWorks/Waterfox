@@ -4,6 +4,10 @@
 
 #aboutDialog {
   width: 620px;
+  /* Set an explicit line-height to avoid discrepancies in 'auto' spacing
+     across screens with different device DPI, which may cause font metrics
+     to round differently. */
+  line-height: 1.5;
 }
 
 #rightBox {
@@ -29,6 +33,16 @@
   -moz-user-select: text;
   -moz-user-focus: normal;
   cursor: text;
+}
+
+#version:-moz-locale-dir(rtl) {
+  direction: ltr;
+  text-align: right;
+  margin-right: 0;
+}
+
+#releasenotes {
+  margin-top: 10px;
 }
 
 #distribution,

@@ -31,7 +31,7 @@ SVGZoomEvent::SVGZoomEvent(EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            InternalSVGZoomEvent* aEvent)
   : UIEvent(aOwner, aPresContext,
-            aEvent ? aEvent : new InternalSVGZoomEvent(false, NS_SVG_ZOOM))
+            aEvent ? aEvent : new InternalSVGZoomEvent(false, eSVGZoom))
   , mPreviousScale(0)
   , mNewScale(0)
 {
@@ -90,13 +90,14 @@ SVGZoomEvent::~SVGZoomEvent()
 ////////////////////////////////////////////////////////////////////////
 // Exported creation functions:
 
-nsresult
-NS_NewDOMSVGZoomEvent(nsIDOMEvent** aInstancePtrResult,
-                      mozilla::dom::EventTarget* aOwner,
+using namespace mozilla;
+using namespace mozilla::dom;
+
+already_AddRefed<SVGZoomEvent>
+NS_NewDOMSVGZoomEvent(EventTarget* aOwner,
                       nsPresContext* aPresContext,
                       mozilla::InternalSVGZoomEvent* aEvent)
 {
-  mozilla::dom::SVGZoomEvent* it =
-    new mozilla::dom::SVGZoomEvent(aOwner, aPresContext, aEvent);
-  return CallQueryInterface(it, aInstancePtrResult);
+  RefPtr<SVGZoomEvent> it = new SVGZoomEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

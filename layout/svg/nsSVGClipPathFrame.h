@@ -43,15 +43,27 @@ public:
    * calling this method simply pushes a clip path onto the DrawTarget.  If the
    * SVG clipPath is not simple then calling this method will paint the
    * clipPath's contents (geometry being filled only, with opaque black) to the
-   * DrawTarget.  In this latter case callers are expected to first push a
-   * group before calling this method, then pop the group after calling and use
-   * it as a mask to mask the clipped frame.
+   * DrawTarget.
    *
    * XXXjwatt Maybe split this into two methods.
    */
   nsresult ApplyClipOrPaintClipMask(gfxContext& aContext,
                                     nsIFrame* aClippedFrame,
                                     const gfxMatrix &aMatrix);
+
+  /**
+   * If the SVG clipPath is simple (as determined by the IsTrivial() method),
+   * calling this method simply returns null.  If the SVG clipPath is not
+   * simple then calling this method will return a mask surface containing
+   * the clipped geometry. The reference context will be used to determine the
+   * backend for the SourceSurface as well as the size, which will be limited
+   * to the device clip extents on the context.
+   */
+  already_AddRefed<mozilla::gfx::SourceSurface>
+    GetClipMask(gfxContext& aReferenceContext, nsIFrame* aClippedFrame,
+                const gfxMatrix& aMatrix, Matrix* aMaskTransform,
+                mozilla::gfx::SourceSurface* aInputMask = nullptr,
+                const mozilla::gfx::Matrix& aInputMaskTransform = mozilla::gfx::Matrix());
 
   /**
    * aPoint is expected to be in aClippedFrame's SVG user space.
@@ -104,7 +116,7 @@ public:
   // automatically sets and clears the mInUse flag on the clip path frame
   // (to prevent nasty reference loops). It's easy to mess this up
   // and break things, so this helper makes the code far more robust.
-  class MOZ_STACK_CLASS AutoClipPathReferencer
+  class MOZ_RAII AutoClipPathReferencer
   {
   public:
     explicit AutoClipPathReferencer(nsSVGClipPathFrame *aFrame

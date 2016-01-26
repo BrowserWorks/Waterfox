@@ -21,7 +21,7 @@ using namespace mozilla::plugins::parent;
 
 /**
  * NPIdentifiers in the chrome process are stored as jsids. The difficulty is in
- * ensuring that string identifiers are rooted without interning them all. We
+ * ensuring that string identifiers are rooted without pinning them all. We
  * assume that all NPIdentifiers passed into nsJSNPRuntime will not be used
  * outside the scope of the NPAPI call (i.e., they won't be stored in the
  * heap). Rooting is done using the StackIdentifier class, which roots the
@@ -31,7 +31,7 @@ using namespace mozilla::plugins::parent;
  * generational or compacting GC. When Firefox implements a moving GC for
  * strings, we will need to ensure that no movement happens while NPAPI code is
  * on the stack: although StackIdentifier roots all identifiers used, the GC has
- * no way to no that a jsid cast to an NPIdentifier needs to be fixed up if it
+ * no way to know that a jsid cast to an NPIdentifier needs to be fixed up if it
  * is moved.
  */
 
@@ -39,7 +39,7 @@ class MOZ_STACK_CLASS StackIdentifier
 {
 public:
   explicit StackIdentifier(const PluginIdentifier& aIdentifier,
-                           bool aIntern = false);
+                           bool aAtomizeAndPin = false);
 
   bool Failed() const { return mFailed; }
   NPIdentifier ToNPIdentifier() const { return mIdentifier; }
@@ -51,7 +51,7 @@ private:
   JS::RootedId mId;
 };
 
-StackIdentifier::StackIdentifier(const PluginIdentifier& aIdentifier, bool aIntern)
+StackIdentifier::StackIdentifier(const PluginIdentifier& aIdentifier, bool aAtomizeAndPin)
 : mFailed(false),
   mId(mCx)
 {
@@ -64,8 +64,8 @@ StackIdentifier::StackIdentifier(const PluginIdentifier& aIdentifier, bool aInte
       mFailed = true;
       return;
     }
-    if (aIntern) {
-      str = JS_InternJSString(mCx, str);
+    if (aAtomizeAndPin) {
+      str = JS_AtomizeAndPinJSString(mCx, str);
       if (!str) {
         NS_ERROR("Id can't be allocated");
         mFailed = true;
@@ -118,7 +118,7 @@ ReleaseVariant(NPVariant& aVariant,
   }
 }
 
-} // anonymous namespace
+} // namespace
 
 // static
 NPObject*
@@ -166,6 +166,15 @@ PluginScriptableObjectParent::ScriptableDeallocate(NPObject* aObject)
   }
 
   ParentNPObject* object = reinterpret_cast<ParentNPObject*>(aObject);
+
+  if (object->asyncWrapperCount > 0) {
+    // In this case we should just drop the refcount to the asyncWrapperCount
+    // instead of deallocating because there are still some async wrappers
+    // out there that are referencing this object.
+    object->referenceCount = object->asyncWrapperCount;
+    return;
+  }
+
   PluginScriptableObjectParent* actor = object->parent;
   if (actor) {
     NS_ASSERTION(actor->Type() == Proxy, "Bad type!");
@@ -500,9 +509,9 @@ PluginScriptableObjectParent::ScriptableEnumerate(NPObject* aObject,
   }
 
   for (uint32_t index = 0; index < *aCount; index++) {
-    // We intern the ID to avoid a GC hazard here. This could probably be fixed
+    // We pin the ID to avoid a GC hazard here. This could probably be fixed
     // if the interface with nsJSNPRuntime were smarter.
-    StackIdentifier stackID(identifiers[index], true /* aIntern */);
+    StackIdentifier stackID(identifiers[index], true /* aAtomizeAndPin */);
     if (stackID.Failed()) {
       return false;
     }
@@ -715,7 +724,7 @@ PluginScriptableObjectParent::Unprotect()
 
   if (mType == LocalObject) {
     if (--mProtectCount == 0) {
-      unused << PluginScriptableObjectParent::Send__delete__(this);
+      Unused << PluginScriptableObjectParent::Send__delete__(this);
     }
   }
 }
@@ -735,7 +744,7 @@ PluginScriptableObjectParent::DropNPObject()
   instance->UnregisterNPObject(mObject);
   mObject = nullptr;
 
-  unused << SendUnprotect();
+  Unused << SendUnprotect();
 }
 
 void
@@ -824,7 +833,7 @@ PluginScriptableObjectParent::AnswerInvoke(const PluginIdentifier& aId,
   AutoFallibleTArray<NPVariant, 10> convertedArgs;
   uint32_t argCount = aArgs.Length();
 
-  if (!convertedArgs.SetLength(argCount)) {
+  if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
     return true;
@@ -907,7 +916,7 @@ PluginScriptableObjectParent::AnswerInvokeDefault(InfallibleTArray<Variant>&& aA
   AutoFallibleTArray<NPVariant, 10> convertedArgs;
   uint32_t argCount = aArgs.Length();
 
-  if (!convertedArgs.SetLength(argCount)) {
+  if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
     return true;
@@ -1227,7 +1236,7 @@ PluginScriptableObjectParent::AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
   AutoFallibleTArray<NPVariant, 10> convertedArgs;
   uint32_t argCount = aArgs.Length();
 
-  if (!convertedArgs.SetLength(argCount)) {
+  if (!convertedArgs.SetLength(argCount, fallible)) {
     *aResult = void_t();
     *aSuccess = false;
     return true;

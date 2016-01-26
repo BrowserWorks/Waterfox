@@ -28,9 +28,7 @@ using namespace mozilla;
 using namespace mozilla::widget;
 
 #ifdef DEBUG
-NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfo2, nsIGfxInfoDebug)
-#else
-NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfo2)
+NS_IMPL_ISUPPORTS_INHERITED(GfxInfo, GfxInfoBase, nsIGfxInfoDebug)
 #endif
 
 GfxInfo::GfxInfo()
@@ -88,27 +86,13 @@ GfxInfo::GetDeviceInfo()
   io_registry_entry_t dsp_port = CGDisplayIOServicePort(kCGDirectMainDisplay);
   CFTypeRef vendor_id_ref = SearchPortForProperty(dsp_port, CFSTR("vendor-id"));
   if (vendor_id_ref) {
-    mAdapterVendorID.AppendPrintf("0x%4x", IntValueOfCFData((CFDataRef)vendor_id_ref));
+    mAdapterVendorID.AppendPrintf("0x%04x", IntValueOfCFData((CFDataRef)vendor_id_ref));
     CFRelease(vendor_id_ref);
   }
   CFTypeRef device_id_ref = SearchPortForProperty(dsp_port, CFSTR("device-id"));
   if (device_id_ref) {
-    mAdapterDeviceID.AppendPrintf("0x%4x", IntValueOfCFData((CFDataRef)device_id_ref));
+    mAdapterDeviceID.AppendPrintf("0x%04x", IntValueOfCFData((CFDataRef)device_id_ref));
     CFRelease(device_id_ref);
-  }
-}
-
-void
-GfxInfo::GetSelectedCityInfo()
-{
-  NSDictionary* selected_city =
-    [[NSUserDefaults standardUserDefaults]
-      objectForKey:@"com.apple.preferences.timezone.selected_city"];
-  NSString *countryCode = (NSString *)
-    [selected_city objectForKey:@"CountryCode"];
-  const char *countryCodeUTF8 = [countryCode UTF8String];
-  if (countryCodeUTF8) {
-    AppendUTF8toUTF16(countryCodeUTF8, mCountryCode);
   }
 }
 
@@ -122,8 +106,6 @@ GfxInfo::Init()
   // use the device ids.
 
   GetDeviceInfo();
-
-  GetSelectedCityInfo();
 
   AddCrashReportAnnotations();
 
@@ -284,15 +266,6 @@ GfxInfo::GetIsGPU2Active(bool* aIsGPU2Active)
   return NS_ERROR_FAILURE;
 }
 
-/* interface nsIGfxInfo2 */
-/* readonly attribute DOMString countryCode; */
-NS_IMETHODIMP
-GfxInfo::GetCountryCode(nsAString & aCountryCode)
-{
-  aCountryCode = mCountryCode;
-  return NS_OK;
-}
-
 void
 GfxInfo::AddCrashReportAnnotations()
 {
@@ -377,6 +350,33 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   }
 
   return GfxInfoBase::GetFeatureStatusImpl(aFeature, aStatus, aSuggestedDriverVersion, aDriverInfo, &os);
+}
+
+nsresult
+GfxInfo::FindMonitors(JSContext* aCx, JS::HandleObject aOutArray)
+{
+  // Getting the refresh rate is a little hard on OS X. We could use
+  // CVDisplayLinkGetNominalOutputVideoRefreshPeriod, but that's a little
+  // involved. Ideally we could query it from vsync. For now, we leave it out.
+  int32_t deviceCount = 0;
+  for (NSScreen* screen in [NSScreen screens]) {
+    NSRect rect = [screen frame];
+
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
+
+    JS::Rooted<JS::Value> screenWidth(aCx, JS::Int32Value((int)rect.size.width));
+    JS_SetProperty(aCx, obj, "screenWidth", screenWidth);
+
+    JS::Rooted<JS::Value> screenHeight(aCx, JS::Int32Value((int)rect.size.height));
+    JS_SetProperty(aCx, obj, "screenHeight", screenHeight);
+
+    JS::Rooted<JS::Value> scale(aCx, JS::NumberValue(nsCocoaUtils::GetBackingScaleFactor(screen)));
+    JS_SetProperty(aCx, obj, "scale", scale);
+
+    JS::Rooted<JS::Value> element(aCx, JS::ObjectValue(*obj));
+    JS_SetElement(aCx, aOutArray, deviceCount++, element);
+  }
+  return NS_OK;
 }
 
 #ifdef DEBUG

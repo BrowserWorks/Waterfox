@@ -22,6 +22,11 @@
   <preference id="accessibility.blockautorefresh"
               name="accessibility.blockautorefresh"
               type="bool"/>
+#ifdef XP_WIN
+  <preference id="ui.osk.enabled"
+              name="ui.osk.enabled"
+              type="bool"/>
+#endif
 
   <preference id="general.autoScroll"
               name="general.autoScroll"
@@ -117,7 +122,9 @@
       class="header"
       hidden="true"
       data-category="paneAdvanced">
-  <label class="header-name">&paneAdvanced.title;</label>
+  <label class="header-name" flex="1">&paneAdvanced.title;</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
 </hbox>
 
 <tabbox id="advancedPrefs"
@@ -145,6 +152,13 @@
       <groupbox id="accessibilityGroup" align="start">
         <caption><label>&accessibility.label;</label></caption>
 
+#ifdef XP_WIN
+        <checkbox id="useOnScreenKeyboard"
+                  hidden="true"
+                  label="&useOnScreenKeyboard.label;"
+                  accesskey="&useOnScreenKeyboard.accesskey;"
+                  preference="ui.osk.enabled"/>
+#endif
         <checkbox id="useCursorNavigation"
                   label="&useCursorNavigation.label;"
                   accesskey="&useCursorNavigation.accesskey;"
@@ -271,10 +285,8 @@
             &limitCacheSizeBefore.label;
           </label>
           <textbox id="cacheSize" type="number" size="4" max="1024"
-                  preference="browser.cache.disk.capacity"
-                  onsyncfrompreference="return gAdvancedPane.readCacheSize();"
-                  onsynctopreference="return gAdvancedPane.writeCacheSize();"
-                  aria-labelledby="useCacheBefore cacheSize useCacheAfter"/>
+                   onchange="gAdvancedPane.updateCacheSizePref();"
+                   aria-labelledby="useCacheBefore cacheSize useCacheAfter"/>
           <label id="useCacheAfter" flex="1">&limitCacheSizeAfter.label;</label>
         </hbox>
       </groupbox>

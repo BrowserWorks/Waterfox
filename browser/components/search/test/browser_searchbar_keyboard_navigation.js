@@ -152,6 +152,23 @@ add_task(function* test_arrows() {
      "the textfield value should be back to initial value");
 });
 
+add_task(function* test_typing_clears_button_selection() {
+  is(Services.focus.focusedElement, textbox.inputField,
+     "the search bar should be focused"); // from the previous test.
+  ok(!textbox.selectedButton, "no button should be selected");
+
+  EventUtils.synthesizeKey("VK_UP", {});
+  is(textbox.selectedButton.getAttribute("anonid"), "search-settings",
+     "the settings item should be selected");
+
+  // Type a character.
+  EventUtils.synthesizeKey("a", {});
+  ok(!textbox.selectedButton, "the settings item should be de-selected");
+
+  // Remove the character.
+  EventUtils.synthesizeKey("VK_BACK_SPACE", {});
+});
+
 add_task(function* test_tab() {
   is(Services.focus.focusedElement, textbox.inputField,
      "the search bar should be focused"); // from the previous test.
@@ -364,20 +381,8 @@ add_task(function* test_tab_and_arrows() {
 });
 
 add_task(function* test_open_search() {
-  let tab = gBrowser.addTab();
-  gBrowser.selectedTab = tab;
-
-  let deferred = Promise.defer();
-  let browser = gBrowser.selectedBrowser;
-  browser.addEventListener("load", function onload() {
-    browser.removeEventListener("load", onload, true);
-    deferred.resolve();
-  }, true);
-
   let rootDir = getRootDirectory(gTestPath);
-  content.location = rootDir + "opensearch.html";
-
-  yield deferred.promise;
+  let tab = yield BrowserTestUtils.openNewForegroundTab(gBrowser, rootDir + "opensearch.html");
 
   let promise = promiseEvent(searchPopup, "popupshown");
   info("Opening search panel");

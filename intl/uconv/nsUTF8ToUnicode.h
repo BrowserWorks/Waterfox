@@ -49,19 +49,20 @@ protected:
   //--------------------------------------------------------------------
   // Subclassing of nsDecoderSupport class [declaration]
 
-  NS_IMETHOD GetMaxLength(const char * aSrc, int32_t aSrcLength, 
-      int32_t * aDestLength);
+  MOZ_WARN_UNUSED_RESULT NS_IMETHOD GetMaxLength(const char* aSrc,
+                                                 int32_t aSrcLength,
+                                                 int32_t* aDestLength) override;
 
   //--------------------------------------------------------------------
   // Subclassing of nsBasicDecoderSupport class [declaration]
 
   NS_IMETHOD Convert(const char * aSrc, int32_t * aSrcLength, 
-      char16_t * aDest, int32_t * aDestLength);
+      char16_t * aDest, int32_t * aDestLength) override;
 
   //--------------------------------------------------------------------
   // Subclassing of nsBasicDecoderSupport class [declaration]
 
-  NS_IMETHOD Reset();
+  NS_IMETHOD Reset() override;
 
 };
 

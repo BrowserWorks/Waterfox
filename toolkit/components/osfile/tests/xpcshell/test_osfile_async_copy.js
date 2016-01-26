@@ -15,7 +15,7 @@ function run_test() {
 /**
  * A file that we know exists and that can be used for reading.
  */
-let EXISTING_FILE = "test_osfile_async_copy.js";
+var EXISTING_FILE = "test_osfile_async_copy.js";
 
 /**
  * Fetch asynchronously the contents of a file using xpcom.
@@ -26,12 +26,13 @@ let EXISTING_FILE = "test_osfile_async_copy.js";
  * @return {promise}
  * @resolves {string} The contents of the file.
  */
-let reference_fetch_file = function reference_fetch_file(path) {
+var reference_fetch_file = function reference_fetch_file(path) {
   let promise = Promise.defer();
   let file = new FileUtils.File(path);
-  NetUtil.asyncFetch2(
-    file,
-    function(stream, status) {
+  NetUtil.asyncFetch({
+    uri: NetUtil.newURI(file),
+    loadUsingSystemPrincipal: true
+  }, function(stream, status) {
       if (!Components.isSuccessCode(status)) {
         promise.reject(status);
         return;
@@ -48,12 +49,7 @@ let reference_fetch_file = function reference_fetch_file(path) {
       } else {
         promise.resolve(result);
       }
-    },
-    null,      // aLoadingNode
-    Services.scriptSecurityManager.getSystemPrincipal(),
-    null,      // aTriggeringPrincipal
-    Ci.nsILoadInfo.SEC_NORMAL,
-    Ci.nsIContentPolicy.TYPE_OTHER);
+    });
 
   return promise.promise;
 };
@@ -68,7 +64,7 @@ let reference_fetch_file = function reference_fetch_file(path) {
  *
  * @resolves {null}
  */
-let reference_compare_files = function reference_compare_files(a, b) {
+var reference_compare_files = function reference_compare_files(a, b) {
   let a_contents = yield reference_fetch_file(a);
   let b_contents = yield reference_fetch_file(b);
   // Not using do_check_eq to avoid dumping the whole file to the log.

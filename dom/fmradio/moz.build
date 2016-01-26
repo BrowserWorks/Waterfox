@@ -27,10 +27,11 @@ IPDL_SOURCES += [
     'ipc/PFMRadioRequest.ipdl',
 ]
 
-FAIL_ON_WARNINGS = True
-
 LOCAL_INCLUDES += [
     '../base',
     '../system/gonk',
 ]
 include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

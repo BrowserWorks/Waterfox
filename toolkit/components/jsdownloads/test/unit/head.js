@@ -12,10 +12,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //// Globals
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -94,7 +94,7 @@ function run_test()
 /**
  * HttpServer object initialized before tests start.
  */
-let gHttpServer;
+var gHttpServer;
 
 /**
  * Given a file name, returns a string containing an URI that points to the file
@@ -109,7 +109,7 @@ function httpUrl(aFileName) {
 // used, on Windows these might still be pending deletion on the physical file
 // system.  Thus, start from a new base number every time, to make a collision
 // with a file that is still pending deletion highly unlikely.
-let gFileCounter = Math.floor(Math.random() * 1000000);
+var gFileCounter = Math.floor(Math.random() * 1000000);
 
 /**
  * Returns a reference to a temporary file, that is guaranteed not to exist, and
@@ -137,8 +137,19 @@ function getTempFile(aLeafName)
   do_check_false(file.exists());
 
   do_register_cleanup(function () {
-    if (file.exists()) {
-      file.remove(false);
+    try {
+      file.remove(false)
+    } catch (e) {
+      if (!(e instanceof Components.Exception &&
+            (e.result == Cr.NS_ERROR_FILE_ACCESS_DENIED ||
+             e.result == Cr.NS_ERROR_FILE_TARGET_DOES_NOT_EXIST ||
+             e.result == Cr.NS_ERROR_FILE_NOT_FOUND))) {
+        throw e;
+      }
+      // On Windows, we may get an access denied error if the file existed before,
+      // and was recently deleted.
+      // Don't bother checking file.exists() as that may also cause an access
+      // denied error.
     }
   });
 
@@ -398,11 +409,11 @@ function promiseStartExternalHelperAppServiceDownload(aSourceUrl) {
 
     let channel = NetUtil.newChannel({
       uri: sourceURI,
-      loadUsingSystemPrincipal: true,
+      loadUsingSystemPrincipal: true
     });
 
     // Start the actual download process.
-    channel.asyncOpen({
+    channel.asyncOpen2({
       contentListener: null,
 
       onStartRequest: function (aRequest, aContext)
@@ -424,7 +435,7 @@ function promiseStartExternalHelperAppServiceDownload(aSourceUrl) {
         this.contentListener.onDataAvailable(aRequest, aContext, aInputStream,
                                              aOffset, aCount);
       },
-    }, null);
+    });
   }.bind(this)).then(null, do_report_unexpected_exception);
 
   return deferred.promise;
@@ -521,7 +532,7 @@ function promiseNewList(aIsPrivate)
  */
 function promiseVerifyContents(aPath, aExpectedContents)
 {
-  return Task.spawn(function() {
+  return Task.spawn(function* () {
     let file = new FileUtils.File(aPath);
 
     if (!(yield OS.File.exists(aPath))) {
@@ -534,7 +545,7 @@ function promiseVerifyContents(aPath, aExpectedContents)
 
     let deferred = Promise.defer();
     NetUtil.asyncFetch(
-      file,
+      { uri: NetUtil.newURI(file), loadUsingSystemPrincipal: true },
       function(aInputStream, aStatus) {
         do_check_true(Components.isSuccessCode(aStatus));
         let contents = NetUtil.readInputStreamToString(aInputStream,
@@ -576,7 +587,7 @@ function startFakeServer()
 /**
  * This is an internal reference that should not be used directly by tests.
  */
-let _gDeferResponses = Promise.defer();
+var _gDeferResponses = Promise.defer();
 
 /**
  * Ensures that all the interruptible requests started after this function is
@@ -661,7 +672,7 @@ function isValidDate(aDate) {
  * Position of the first byte served by the "interruptible_resumable.txt"
  * handler during the most recent response.
  */
-let gMostRecentFirstBytePos;
+var gMostRecentFirstBytePos;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Initialization functions common to all tests
@@ -672,6 +683,14 @@ add_task(function test_common_initialize()
   gHttpServer = new HttpServer();
   gHttpServer.registerDirectory("/", do_get_file("../data"));
   gHttpServer.start(-1);
+  do_register_cleanup(() => {
+    return new Promise(resolve => {
+      // Ensure all the pending HTTP requests have a chance to finish.
+      continueResponses();
+      // Stop the HTTP server, calling resolve when it's done.
+      gHttpServer.stop(resolve);
+    });
+  });
 
   // Cache locks might prevent concurrent requests to the same resource, and
   // this may block tests that use the interruptible handlers.
@@ -779,6 +798,8 @@ add_task(function test_common_initialize()
   DownloadIntegration.dontOpenFileAndFolder = true;
   DownloadIntegration._deferTestOpenFile = Promise.defer();
   DownloadIntegration._deferTestShowDir = Promise.defer();
+  // Disable checking runtime permissions.
+  DownloadIntegration.dontCheckRuntimePermissions = true;
 
   // Avoid leaking uncaught promise errors
   DownloadIntegration._deferTestOpenFile.promise.then(null, () => undefined);

@@ -15,6 +15,7 @@ if CONFIG['MOZ_ANDROID_MLS_STUMBLER']:
     DIRS += ['stumbler']
 
 DIRS += [
+    'javaaddons', # Must be built before base.
     'base',
     'chrome',
     'components',
@@ -23,12 +24,12 @@ DIRS += [
     'app',
     'fonts',
     'geckoview_library',
-    'extensions',
 ]
 
-if not CONFIG['LIBXUL_SDK']:
-    DIRS += ['../../xulrunner/tools/redit']
+DIRS += ['../../xulrunner/tools/redit']
 
 TEST_DIRS += [
     'tests',
 ]
+
+SPHINX_TREES['fennec'] = 'docs'

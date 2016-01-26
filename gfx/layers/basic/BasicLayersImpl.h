@@ -20,7 +20,7 @@
 namespace mozilla {
 namespace gfx {
 class DrawTarget;
-}
+} // namespace gfx
 
 namespace layers {
 
@@ -28,20 +28,21 @@ class AutoMoz2DMaskData;
 class Layer;
 
 class AutoSetOperator {
+  typedef mozilla::gfx::CompositionOp CompositionOp;
 public:
-  AutoSetOperator(gfxContext* aContext, gfxContext::GraphicsOperator aOperator) {
-    if (aOperator != gfxContext::OPERATOR_OVER) {
-      aContext->SetOperator(aOperator);
+  AutoSetOperator(gfxContext* aContext, CompositionOp aOperator) {
+    if (aOperator != CompositionOp::OP_OVER) {
+      aContext->SetOp(aOperator);
       mContext = aContext;
     }
   }
   ~AutoSetOperator() {
     if (mContext) {
-      mContext->SetOperator(gfxContext::OPERATOR_OVER);
+      mContext->SetOp(CompositionOp::OP_OVER);
     }
   }
 private:
-  nsRefPtr<gfxContext> mContext;
+  RefPtr<gfxContext> mContext;
 };
 
 class BasicReadbackLayer : public ReadbackLayer,
@@ -61,7 +62,7 @@ protected:
   }
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion)
+  virtual void SetVisibleRegion(const LayerIntRegion& aRegion)
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");
@@ -86,6 +87,8 @@ bool
 GetMaskData(Layer* aMaskLayer,
             const gfx::Point& aDeviceOffset,
             AutoMoz2DMaskData* aMaskData);
+
+already_AddRefed<gfx::SourceSurface> GetMaskForLayer(Layer* aLayer, gfx::Matrix* aMaskTransform);
 
 // Paint the current source to a context using a mask, if present
 void
@@ -143,7 +146,7 @@ ToData(Layer* aLayer);
 gfx::CompositionOp
 GetEffectiveOperator(Layer* aLayer);
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

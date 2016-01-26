@@ -10,12 +10,9 @@ XPCSHELL_TESTS_MANIFESTS += ['unit/xpcshell.ini']
 
 JAR_MANIFESTS += ['jar.mn']
 
-#DEFINES['MOZILLA_INTERNAL_API'] = True
+TESTING_JS_MODULES += [
+    'UrlClassifierTestUtils.jsm',
+]
 
-# XXX Get this to work in libxul builds.
-## simple c++ tests (no xpcom)
-#CPP_UNIT_TESTS += [ \
-#    'TestUrlClassifierUtils', \
-#]
-#
-#SOURCES += sorted('%s.cpp' % t for t in CPP_UNIT_TESTS)
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['gtest']

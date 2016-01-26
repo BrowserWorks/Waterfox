@@ -25,7 +25,7 @@ public:
   NS_FORWARD_TO_EVENT
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioProcessingEvent, Event)
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void InitEvent(AudioBuffer* aInputBuffer,
                  uint32_t aNumberOfInputChannels,
@@ -72,14 +72,14 @@ private:
 
 private:
   double mPlaybackTime;
-  nsRefPtr<AudioBuffer> mInputBuffer;
-  nsRefPtr<AudioBuffer> mOutputBuffer;
-  nsRefPtr<ScriptProcessorNode> mNode;
+  RefPtr<AudioBuffer> mInputBuffer;
+  RefPtr<AudioBuffer> mOutputBuffer;
+  RefPtr<ScriptProcessorNode> mNode;
   uint32_t mNumberOfInputChannels;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

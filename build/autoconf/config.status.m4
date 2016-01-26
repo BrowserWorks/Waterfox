@@ -28,7 +28,7 @@ define([AC_SUBST_SET],
 [ifdef([AC_SUBST_SET_$1], ,
 [define([AC_SUBST_SET_$1], )dnl
 AC_DIVERT_PUSH(MOZ_DIVERSION_SUBST)dnl
-    (''' $1 ''', set(r''' [$]$1 '''.split()))
+    (''' $1 ''', unique_list(r''' [$]$1 '''.split()))
 AC_DIVERT_POP()dnl
 ])])])])
 
@@ -100,10 +100,6 @@ dnl Picked from autoconf 2.13
 trap '' 1 2 15
 AC_CACHE_SAVE
 
-test "x$prefix" = xNONE && prefix=$ac_default_prefix
-# Let make expand exec_prefix.
-test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-
 trap 'rm -f $CONFIG_STATUS conftest*; exit 1' 1 2 15
 : ${CONFIG_STATUS=./config.status}
 
@@ -128,6 +124,13 @@ if not os.path.isabs(topsrcdir):
 topsrcdir = os.path.normpath(topsrcdir)
 
 topobjdir = os.path.abspath(os.path.dirname(<<<__file__>>>))
+
+def unique_list(l):
+    result = []
+    for i in l:
+        if l not in result:
+            result.append(i)
+    return result
 
 dnl All defines and substs are stored with an additional space at the beginning
 dnl and at the end of the string, to avoid any problem with values starting or
@@ -221,4 +224,22 @@ MOZ_RUN_CONFIG_STATUS()],
 
 define([AC_CONFIG_HEADER],
 [m4_fatal([Use CONFIGURE_DEFINE_FILES in moz.build files to produce header files.])
+])
+
+define([MOZ_BUILD_BACKEND],
+[
+dnl For now, only enable the unified hybrid build system on artifact builds,
+dnl otherwise default to RecursiveMake /and/ FasterMake.
+if test -n "$MOZ_ARTIFACT_BUILDS"; then
+    BUILD_BACKENDS="FasterMake+RecursiveMake"
+else
+    BUILD_BACKENDS="RecursiveMake FasterMake"
+fi
+
+MOZ_ARG_ENABLE_STRING(build-backend,
+[  --enable-build-backend={$($(dirname ]$[0)/$1/mach python -c "from mozbuild.backend import backends; print ','.join(sorted(backends))")}
+                         Enable additional build backends],
+[ BUILD_BACKENDS="$BUILD_BACKENDS `echo $enableval | sed 's/,/ /g'`"])
+
+AC_SUBST_SET([BUILD_BACKENDS])
 ])

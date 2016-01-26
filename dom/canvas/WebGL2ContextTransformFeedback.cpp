@@ -9,8 +9,7 @@
 #include "WebGLTransformFeedback.h"
 #include "GLContext.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 // -------------------------------------------------------------------------
 // Transform Feedback
@@ -25,7 +24,7 @@ WebGL2Context::CreateTransformFeedback()
     MakeContextCurrent();
     gl->fGenTransformFeedbacks(1, &tf);
 
-    nsRefPtr<WebGLTransformFeedback> globj = new WebGLTransformFeedback(this, tf);
+    RefPtr<WebGLTransformFeedback> globj = new WebGLTransformFeedback(this, tf);
     return globj.forget();
 }
 
@@ -42,7 +41,7 @@ WebGL2Context::DeleteTransformFeedback(WebGLTransformFeedback* tf)
         return;
 
     if (mBoundTransformFeedback == tf)
-        BindTransformFeedback(LOCAL_GL_TRANSFORM_FEEDBACK, tf);
+        BindTransformFeedback(LOCAL_GL_TRANSFORM_FEEDBACK, nullptr);
 
     tf->RequestDelete();
 }
@@ -53,14 +52,14 @@ WebGL2Context::IsTransformFeedback(WebGLTransformFeedback* tf)
     if (IsContextLost())
         return false;
 
-    if (!ValidateObjectAllowDeleted("isTransformFeedback", tf))
+    if (!ValidateObjectAllowDeletedOrNull("isTransformFeedback", tf))
         return false;
 
-    if (tf->IsDeleted())
+    if (!tf || tf->IsDeleted())
         return false;
 
     MakeContextCurrent();
-    return gl->fIsTransformFeedback(tf->GLName());
+    return gl->fIsTransformFeedback(tf->mGLName);
 }
 
 void
@@ -84,11 +83,8 @@ WebGL2Context::BindTransformFeedback(GLenum target, WebGLTransformFeedback* tf)
     if (tf && tf->IsDeleted())
         return ErrorInvalidOperation("bindTransformFeedback: Attempt to bind deleted id");
 
-    if (tf)
-        tf->BindTo(LOCAL_GL_TRANSFORM_FEEDBACK);
-
     MakeContextCurrent();
-    gl->fBindTransformFeedback(target, tf ? tf->GLName() : 0);
+    gl->fBindTransformFeedback(target, tf ? tf->mGLName : 0);
     if (tf)
         mBoundTransformFeedback = tf;
     else
@@ -219,3 +215,5 @@ WebGL2Context::GetTransformFeedbackVarying(WebGLProgram* program, GLuint index)
 
     return program->GetTransformFeedbackVarying(index);
 }
+
+} // namespace mozilla

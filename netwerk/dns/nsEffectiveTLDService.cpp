@@ -15,6 +15,9 @@
 #include "nsIIDNService.h"
 #include "nsNetUtil.h"
 #include "prnetdb.h"
+#include "nsIURI.h"
+#include "nsNetCID.h"
+#include "nsServiceManagerUtils.h"
 
 using namespace mozilla;
 
@@ -119,7 +122,7 @@ size_t
 nsEffectiveTLDService::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
 {
   size_t n = aMallocSizeOf(this);
-  n += mHash.SizeOfExcludingThis(nullptr, aMallocSizeOf);
+  n += mHash.ShallowSizeOfExcludingThis(aMallocSizeOf);
 
   // Measurement of the following members may be added later if DMD finds it is
   // worthwhile:
@@ -251,7 +254,8 @@ nsEffectiveTLDService::GetBaseDomainInternal(nsCString  &aHostname,
   const char *currDomain = aHostname.get();
   const char *nextDot = strchr(currDomain, '.');
   const char *end = currDomain + aHostname.Length();
-  const char *eTLD = currDomain;
+  // Default value of *eTLD is currDomain as set in the while loop below
+  const char *eTLD = nullptr;
   while (1) {
     // sanity check the string we're about to look up: it should not begin with
     // a '.'; this would mean the hostname began with a '.' or had an

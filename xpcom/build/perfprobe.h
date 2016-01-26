@@ -18,7 +18,7 @@
 
 #include "nsError.h"
 #include "nsString.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include <windows.h>
@@ -149,7 +149,7 @@ public:
 protected:
   ~ProbeManager();
 
-  nsresult StartSession(nsTArray<nsRefPtr<Probe>>& aProbes);
+  nsresult StartSession(nsTArray<RefPtr<Probe>>& aProbes);
   nsresult Init(const nsCID& aApplicationUID,
                 const nsACString& aApplicationName);
 
@@ -174,7 +174,7 @@ protected:
   /**
    * All the probes that have been created for this manager.
    */
-  nsTArray<nsRefPtr<Probe>> mAllProbes;
+  nsTArray<RefPtr<Probe>> mAllProbes;
 
   /**
    * Handle used for triggering events
@@ -198,7 +198,7 @@ protected:
                                       PVOID aBuffer);  // Sets |mSessionHandle|
 };
 
-}  // namespace probes
-}  // namespace mozilla
+} // namespace probes
+} // namespace mozilla
 
 #endif //mozilla_perfprobe_h

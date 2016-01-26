@@ -6,13 +6,18 @@
 #ifndef mozilla_net_Http2Push_Internal_h
 #define mozilla_net_Http2Push_Internal_h
 
+// HTTP/2 - RFC 7540
+// https://www.rfc-editor.org/rfc/rfc7540.txt
+
 #include "Http2Session.h"
 #include "Http2Stream.h"
 
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/UniquePtr.h"
 #include "nsHttpRequestHead.h"
 #include "nsILoadGroup.h"
+#include "nsISchedulingContext.h"
 #include "nsString.h"
 #include "PSpdyPush.h"
 
@@ -41,8 +46,9 @@ public:
   // override of Http2Stream
   nsresult ReadSegments(nsAHttpSegmentReader *,  uint32_t, uint32_t *) override;
   nsresult WriteSegments(nsAHttpSegmentWriter *, uint32_t, uint32_t *) override;
+  void AdjustInitialWindow() override;
 
-  nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() override { return mLoadGroupCI; };
+  nsISchedulingContext *SchedulingContext() override { return mSchedulingContext; };
   void ConnectPushedStream(Http2Stream *consumer);
 
   bool TryOnPush();
@@ -65,7 +71,7 @@ private:
   Http2Stream *mConsumerStream; // paired request stream that consumes from
                                 // real http/2 one.. null until a match is made.
 
-  nsCOMPtr<nsILoadGroupConnectionInfo> mLoadGroupCI;
+  nsCOMPtr<nsISchedulingContext> mSchedulingContext;
 
   nsAHttpTransaction *mAssociatedTransaction;
 
@@ -110,13 +116,13 @@ private:
   Http2PushedStream *mPushStream;
   bool mIsDone;
 
-  nsAutoArrayPtr<char> mBufferedHTTP1;
+  UniquePtr<char[]> mBufferedHTTP1;
   uint32_t mBufferedHTTP1Size;
   uint32_t mBufferedHTTP1Used;
   uint32_t mBufferedHTTP1Consumed;
 };
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // mozilla_net_Http2Push_Internal_h

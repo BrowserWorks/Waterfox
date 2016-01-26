@@ -625,7 +625,7 @@ add_test(function test_write_disconnecting_cause() {
   let pduHelper = context.GsmPDUHelper;
   let tlvHelper = context.ComprehensionTlvHelper;
 
-  tlvHelper.writeCauseTlv(RIL_ERROR_TO_GECKO_ERROR[ERROR_GENERIC_FAILURE]);
+  tlvHelper.writeCauseTlv(RIL_CALL_FAILCAUSE_TO_GECKO_CALL_ERROR[CALL_FAIL_BUSY]);
   let tag = pduHelper.readHexOctet();
   equal(tag, COMPREHENSIONTLV_TAG_CAUSE | COMPREHENSIONTLV_FLAG_CR);
   let len = pduHelper.readHexOctet();
@@ -633,7 +633,7 @@ add_test(function test_write_disconnecting_cause() {
   let standard = pduHelper.readHexOctet();
   equal(standard, 0x60);
   let cause = pduHelper.readHexOctet();
-  equal(cause, 0x80 | ERROR_GENERIC_FAILURE);
+  equal(cause, 0x80 | CALL_FAIL_BUSY);
 
   run_next_test();
 });
@@ -751,12 +751,13 @@ add_test(function test_stk_proactive_command_search_for_selected_tags() {
 
   let tag_test = [
     0xD0,
-    0x3C,
+    0x3E,
     0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x31,
     0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x32,
     0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x33,
     0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x34,
-    0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x35];
+    0x85, 0x0A, 0x61, 0x6C, 0x70, 0x68, 0x61, 0x20, 0x69, 0x64, 0x20, 0x35,
+    0x85, 0x00];
 
   for (let i = 0; i < tag_test.length; i++) {
     pduHelper.writeHexOctet(tag_test[i]);
@@ -779,6 +780,15 @@ add_test(function test_stk_proactive_command_search_for_selected_tags() {
 
   tlv = selectedCtlvs.retrieve(COMPREHENSIONTLV_TAG_ALPHA_ID);
   equal(tlv.value.identifier, "alpha id 5");
+
+  // emulate that the alpha identifier is provided and is a null data object,
+  // which is converted to an empty string in ICCPDUHelper.
+  tlv = selectedCtlvs.retrieve(COMPREHENSIONTLV_TAG_ALPHA_ID);
+  strictEqual(tlv.value.identifier, "");
+
+  // emulate that the alpha identifier is not provided
+  tlv = selectedCtlvs.retrieve(COMPREHENSIONTLV_TAG_ALPHA_ID);
+  strictEqual(tlv, undefined);
 
   run_next_test();
 });

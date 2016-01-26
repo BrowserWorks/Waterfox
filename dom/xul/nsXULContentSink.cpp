@@ -41,7 +41,7 @@
 #include "nsXPIDLString.h"
 #include "nsReadableUtils.h"
 #include "nsXULElement.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "prmem.h"
 #include "nsCRT.h"
 
@@ -57,7 +57,7 @@
 #include "nsIScriptError.h"
 #include "nsContentTypeParser.h"
 
-static PRLogModuleInfo* gContentSinkLog;
+static mozilla::LazyLogModule gContentSinkLog("nsXULContentSink");;
 
 //----------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ XULContentSinkImpl::ContextStack::Pop(State* aState)
 
 
 nsresult
-XULContentSinkImpl::ContextStack::GetTopNode(nsRefPtr<nsXULPrototypeNode>& aNode)
+XULContentSinkImpl::ContextStack::GetTopNode(RefPtr<nsXULPrototypeNode>& aNode)
 {
     if (mDepth == 0)
         return NS_ERROR_UNEXPECTED;
@@ -162,9 +162,6 @@ XULContentSinkImpl::XULContentSinkImpl()
       mConstrainSize(true),
       mState(eInProlog)
 {
-
-    if (! gContentSinkLog)
-        gContentSinkLog = PR_NewLogModule("nsXULContentSink");
 }
 
 
@@ -354,7 +351,7 @@ XULContentSinkImpl::FlushText(bool aCreateTextNode)
         if (! aCreateTextNode)
             break;
 
-        nsRefPtr<nsXULPrototypeNode> node;
+        RefPtr<nsXULPrototypeNode> node;
         rv = mContextStack.GetTopNode(node);
         if (NS_FAILED(rv)) return rv;
 
@@ -412,7 +409,7 @@ XULContentSinkImpl::NormalizeAttributeString(const char16_t *aExpatName,
         return NS_OK;
     }
 
-    nsRefPtr<mozilla::dom::NodeInfo> ni;
+    RefPtr<mozilla::dom::NodeInfo> ni;
     ni = mNodeInfoManager->GetNodeInfo(localName, prefix,
                                        nameSpaceID,
                                        nsIDOMNode::ATTRIBUTE_NODE);
@@ -460,7 +457,7 @@ XULContentSinkImpl::HandleStartElement(const char16_t *aName,
   nsContentUtils::SplitExpatName(aName, getter_AddRefs(prefix),
                                  getter_AddRefs(localName), &nameSpaceID);
 
-  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nodeInfo = mNodeInfoManager->GetNodeInfo(localName, prefix, nameSpaceID,
                                            nsIDOMNode::ELEMENT_NODE);
 
@@ -477,7 +474,7 @@ XULContentSinkImpl::HandleStartElement(const char16_t *aName,
 
   case eInEpilog:
   case eInScript:
-      PR_LOG(gContentSinkLog, PR_LOG_WARNING,
+      MOZ_LOG(gContentSinkLog, LogLevel::Warning,
              ("xul: warning: unexpected tags in epilog at line %d",
              aLineNumber));
       rv = NS_ERROR_UNEXPECTED; // XXX
@@ -495,7 +492,7 @@ XULContentSinkImpl::HandleEndElement(const char16_t *aName)
     // the parser's little mind all over the planet.
     nsresult rv;
 
-    nsRefPtr<nsXULPrototypeNode> node;
+    RefPtr<nsXULPrototypeNode> node;
     rv = mContextStack.GetTopNode(node);
 
     if (NS_FAILED(rv)) {
@@ -618,7 +615,7 @@ XULContentSinkImpl::HandleProcessingInstruction(const char16_t *aTarget,
     const nsDependentString data(aData);
 
     // Note: the created nsXULPrototypePI has mRefCnt == 1
-    nsRefPtr<nsXULPrototypePI> pi = new nsXULPrototypePI();
+    RefPtr<nsXULPrototypePI> pi = new nsXULPrototypePI();
     pi->mTarget = target;
     pi->mData = data;
 
@@ -728,7 +725,7 @@ XULContentSinkImpl::OpenRoot(const char16_t** aAttributes,
 
     if (aNodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_XHTML) ||
         aNodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_XUL)) {
-        PR_LOG(gContentSinkLog, PR_LOG_ERROR,
+        MOZ_LOG(gContentSinkLog, LogLevel::Error,
                ("xul: script tag not allowed as root content element"));
 
         return NS_ERROR_UNEXPECTED;
@@ -739,10 +736,10 @@ XULContentSinkImpl::OpenRoot(const char16_t** aAttributes,
     rv = CreateElement(aNodeInfo, &element);
 
     if (NS_FAILED(rv)) {
-        if (PR_LOG_TEST(gContentSinkLog, PR_LOG_ERROR)) {
+        if (MOZ_LOG_TEST(gContentSinkLog, LogLevel::Error)) {
             nsAutoString anodeC;
             aNodeInfo->GetName(anodeC);
-            PR_LOG(gContentSinkLog, PR_LOG_ERROR,
+            MOZ_LOG(gContentSinkLog, LogLevel::Error,
                    ("xul: unable to create element '%s' at line %d",
                     NS_ConvertUTF16toUTF8(anodeC).get(),
                     -1)); // XXX pass in line number
@@ -780,10 +777,10 @@ XULContentSinkImpl::OpenTag(const char16_t** aAttributes,
     rv = CreateElement(aNodeInfo, &element);
 
     if (NS_FAILED(rv)) {
-        if (PR_LOG_TEST(gContentSinkLog, PR_LOG_ERROR)) {
+        if (MOZ_LOG_TEST(gContentSinkLog, LogLevel::Error)) {
             nsAutoString anodeC;
             aNodeInfo->GetName(anodeC);
-            PR_LOG(gContentSinkLog, PR_LOG_ERROR,
+            MOZ_LOG(gContentSinkLog, LogLevel::Error,
                    ("xul: unable to create element '%s' at line %d",
                     NS_ConvertUTF16toUTF8(anodeC).get(),
                     aLineNumber));
@@ -897,7 +894,7 @@ XULContentSinkImpl::OpenScript(const char16_t** aAttributes,
   nsCOMPtr<nsIScriptGlobalObject> globalObject;
   if (doc)
       globalObject = do_QueryInterface(doc->GetWindow());
-  nsRefPtr<nsXULPrototypeScript> script =
+  RefPtr<nsXULPrototypeScript> script =
       new nsXULPrototypeScript(aLineNumber, version);
 
   // If there is a SRC attribute...
@@ -977,7 +974,7 @@ XULContentSinkImpl::AddAttributes(const char16_t** aAttributes,
                                mDocumentURL);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      if (PR_LOG_TEST(gContentSinkLog, PR_LOG_DEBUG)) {
+      if (MOZ_LOG_TEST(gContentSinkLog, LogLevel::Debug)) {
           nsAutoString extraWhiteSpace;
           int32_t cnt = mContextStack.Depth();
           while (--cnt >= 0)
@@ -985,7 +982,7 @@ XULContentSinkImpl::AddAttributes(const char16_t** aAttributes,
           nsAutoString qnameC,valueC;
           qnameC.Assign(aAttributes[0]);
           valueC.Assign(aAttributes[1]);
-          PR_LOG(gContentSinkLog, PR_LOG_DEBUG,
+          MOZ_LOG(gContentSinkLog, LogLevel::Debug,
                  ("xul: %.5d. %s    %s=%s",
                   -1, // XXX pass in line number
                   NS_ConvertUTF16toUTF8(extraWhiteSpace).get(),
@@ -1024,7 +1021,13 @@ XULContentSinkImpl::AddText(const char16_t* aText,
             return rv;
         }
       } else {
-        mTextSize += aLength;
+        CheckedInt32 size = mTextSize;
+        size += aLength;
+        if (!size.isValid()) {
+          return NS_ERROR_OUT_OF_MEMORY;
+        }
+        mTextSize = size.value();
+
         mText = (char16_t *) realloc(mText, sizeof(char16_t) * mTextSize);
         if (nullptr == mText) {
             return NS_ERROR_OUT_OF_MEMORY;

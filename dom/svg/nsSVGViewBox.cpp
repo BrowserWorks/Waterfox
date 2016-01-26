@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsSVGViewBox.h"
+
+#include "mozilla/Move.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsSMILValue.h"
 #include "nsTextFormatter.h"
@@ -193,7 +195,7 @@ nsSVGViewBox::GetBaseValueString(nsAString& aValue) const
 already_AddRefed<dom::SVGAnimatedRect>
 nsSVGViewBox::ToSVGAnimatedRect(nsSVGElement* aSVGElement)
 {
-  nsRefPtr<dom::SVGAnimatedRect> domAnimatedRect =
+  RefPtr<dom::SVGAnimatedRect> domAnimatedRect =
     sSVGAnimatedRectTearoffTable.GetTearoff(this);
   if (!domAnimatedRect) {
     domAnimatedRect = new dom::SVGAnimatedRect(this, aSVGElement);
@@ -210,7 +212,7 @@ nsSVGViewBox::ToDOMBaseVal(nsSVGElement *aSVGElement)
     return nullptr;
   }
 
-  nsRefPtr<DOMBaseVal> domBaseVal =
+  RefPtr<DOMBaseVal> domBaseVal =
     sBaseSVGViewBoxTearoffTable.GetTearoff(this);
   if (!domBaseVal) {
     domBaseVal = new DOMBaseVal(this, aSVGElement);
@@ -233,7 +235,7 @@ nsSVGViewBox::ToDOMAnimVal(nsSVGElement *aSVGElement)
     return nullptr;
   }
 
-  nsRefPtr<DOMAnimVal> domAnimVal =
+  RefPtr<DOMAnimVal> domAnimVal =
     sAnimSVGViewBoxTearoffTable.GetTearoff(this);
   if (!domAnimVal) {
     domAnimVal = new DOMAnimVal(this, aSVGElement);
@@ -300,7 +302,7 @@ nsSVGViewBox::SMILViewBox
   }
   nsSMILValue val(&SVGViewBoxSMILType::sSingleton);
   *static_cast<nsSVGViewBoxRect*>(val.mU.mPtr) = viewBox;
-  aValue.Swap(val);
+  aValue = Move(val);
   aPreventCachingOfSandwich = false;
   
   return NS_OK;

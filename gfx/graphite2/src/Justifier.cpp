@@ -31,7 +31,7 @@ of the License or (at your option) any later version.
 #include "inc/CharInfo.h"
 #include "inc/Slot.h"
 #include "inc/Main.h"
-#include <math.h>
+#include <cmath>
 
 using namespace graphite2;
 
@@ -60,7 +60,7 @@ void JustifyTotal::accumulate(Slot *s, Segment *seg, int level)
     m_tWeight += s->getJustify(seg, level, 3);
 }
 
-float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUSED justFlags flags, Slot *pFirst, Slot *pLast)
+float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUSED justFlags jflags, Slot *pFirst, Slot *pLast)
 {
     Slot *s, *end;
     float currWidth = 0.0;
@@ -70,17 +70,24 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
     if (width < 0 && !(silf()->flags()))
         return width;
 
+    if ((m_dir & 1) != m_silf->dir() && m_silf->bidiPass() != m_silf->numPasses())
+    {
+        reverseSlots();
+        s = pFirst;
+        pFirst = pLast;
+        pLast = s;
+    }
     if (!pFirst) pFirst = pSlot;
     while (!pFirst->isBase()) pFirst = pFirst->attachedTo();
     if (!pLast) pLast = last();
     while (!pLast->isBase()) pLast = pLast->attachedTo();
     const float base = pFirst->origin().x / scale;
     width = width / scale;
-    if ((flags & gr_justEndInline) == 0)
+    if ((jflags & gr_justEndInline) == 0)
     {
         do {
             Rect bbox = theGlyphBBoxTemporary(pLast->glyph());
-            if (bbox.bl.x != 0. || bbox.bl.y != 0. || bbox.tr.x != 0. || bbox.tr.y == 0.)
+            if (bbox.bl.x != 0.f || bbox.bl.y != 0.f || bbox.tr.x != 0.f || bbox.tr.y == 0.f)
                 break;
             pLast = pLast->prev();
         } while (pLast != pFirst);
@@ -116,8 +123,7 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
         ++numLevels;
     }
 
-    JustifyTotal *stats = new JustifyTotal[numLevels];
-    if (!stats) return -1.0;
+    Vector<JustifyTotal> stats(numLevels);
     for (s = pFirst; s != end; s = s->nextSibling())
     {
         float w = s->origin().x / scale + s->advance() - base;
@@ -127,7 +133,7 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
         s->just(0);
     }
 
-    for (int i = (width < 0.0) ? -1 : numLevels - 1; i >= 0; --i)
+    for (int i = (width < 0.0f) ? -1 : numLevels - 1; i >= 0; --i)
     {
         float diff;
         float error = 0.;
@@ -159,7 +165,7 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
                     if (-pref > max) pref = -max;
                     else tWeight += w;
                 }
-                int actual = step ? int(pref / step) * step : int(pref);
+                int actual = int(pref / step) * step;
 
                 if (actual)
                 {
@@ -171,7 +177,7 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
                 }
             }
             currWidth += diff - error;
-        } while (i == 0 && int(abs(error)) > 0 && tWeight);
+        } while (i == 0 && int(std::abs(error)) > 0 && tWeight);
     }
 
     Slot *oldFirst = m_first;
@@ -197,14 +203,14 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
                     << "passes"     << json::array;
 #endif
 
-    if (m_silf->justificationPass() != m_silf->positionPass() && (width >= 0. || (silf()->flags() & 1)))
+    if (m_silf->justificationPass() != m_silf->positionPass() && (width >= 0.f || (silf()->flags() & 1)))
         m_silf->runGraphite(this, m_silf->justificationPass(), m_silf->positionPass());
 
 #if !defined GRAPHITE2_NTRACING
     if (dbgout)
     {
         *dbgout     << json::item << json::close; // Close up the passes array
-        positionSlots(NULL, pSlot, pLast);
+        positionSlots(NULL, pSlot, pLast, m_dir);
         Slot *lEnd = pLast->nextSibling();
         *dbgout << "output" << json::array;
         for(Slot * t = pSlot; t != lEnd; t = t->next())
@@ -213,7 +219,7 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
     }
 #endif
 
-    res = positionSlots(font, pSlot, pLast);
+    res = positionSlots(font, pSlot, pLast, m_dir);
 
     if (silf()->flags() & 1)
     {
@@ -222,6 +228,9 @@ float Segment::justify(Slot *pSlot, const Font *font, float width, GR_MAYBE_UNUS
     }
     m_first = oldFirst;
     m_last = oldLast;
+
+    if ((m_dir & 1) != m_silf->dir() && m_silf->bidiPass() != m_silf->numPasses())
+        reverseSlots();
     return res.x;
 }
 

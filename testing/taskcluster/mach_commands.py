@@ -4,13 +4,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
+from collections import defaultdict
 import os
-import os.path
 import json
 import copy
-import datetime
+import re
 import sys
-import urllib2
+import time
+from collections import namedtuple
 
 from mach.decorators import (
     CommandArgument,
@@ -18,55 +21,25 @@ from mach.decorators import (
     Command,
 )
 
-from taskcluster_graph.commit_parser import parse_commit
-from taskcluster_graph.slugid import slugid
-from taskcluster_graph.slugidjar import SlugidJar
-from taskcluster_graph.from_now import json_time_from_now, current_json_time
-from taskcluster_graph.templates import Templates
-
-import taskcluster_graph.build_task
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
 GECKO = os.path.realpath(os.path.join(ROOT, '..', '..'))
-DOCKER_ROOT = os.path.join(ROOT, '..', 'docker')
-MOZHARNESS_CONFIG = os.path.join(GECKO, 'testing', 'mozharness', 'mozharness.json')
 
 # XXX: If/when we have the taskcluster queue use construct url instead
 ARTIFACT_URL = 'https://queue.taskcluster.net/v1/task/{}/artifacts/{}'
-REGISTRY = open(os.path.join(DOCKER_ROOT, 'REGISTRY')).read().strip()
 
 DEFINE_TASK = 'queue:define-task:aws-provisioner-v1/{}'
 
-TREEHERDER_ROUTE_PREFIX = 'tc-treeherder-stage'
-TREEHERDER_ROUTES = {
-    'staging': 'tc-treeherder-stage',
-    'production': 'tc-treeherder'
-}
-
 DEFAULT_TRY = 'try: -b do -p all -u all'
 DEFAULT_JOB_PATH = os.path.join(
-    ROOT, 'tasks', 'branches', 'mozilla-central', 'job_flags.yml'
+    ROOT, 'tasks', 'branches', 'base_jobs.yml'
 )
 
-def load_mozharness_info():
-    with open(MOZHARNESS_CONFIG) as content:
-        return json.load(content)
-
-def docker_image(name):
-    ''' Determine the docker tag/revision from an in tree docker file '''
-    repository_path = os.path.join(DOCKER_ROOT, name, 'REPOSITORY')
-    repository = REGISTRY
-
-    version = open(os.path.join(DOCKER_ROOT, name, 'VERSION')).read().strip()
-
-    if os.path.isfile(repository_path):
-        repository = open(repository_path).read().strip()
-
-    return '{}/{}:{}'.format(repository, name, version)
-
-def get_task(task_id):
-    return json.load(urllib2.urlopen("https://queue.taskcluster.net/v1/task/" + task_id))
-
+def merge_dicts(*dicts):
+    merged_dict = {}
+    for dictionary in dicts:
+        merged_dict.update(dictionary)
+    return merged_dict
 
 def gaia_info():
     '''
@@ -97,27 +70,117 @@ def gaia_info():
             'gaia_ref': gaia['git']['branch'],
         }
 
-def decorate_task_treeherder_routes(task, suffix):
+def configure_dependent_task(task_path, parameters, taskid, templates, build_treeherder_config):
     """
-    Decorate the given task with treeherder routes.
+    Configure a build dependent task. This is shared between post-build and test tasks.
 
-    Uses task.extra.treeherderEnv if available otherwise defaults to only
-    staging.
-
-    :param dict task: task definition.
-    :param str suffix: The project/revision_hash portion of the route.
+    :param task_path: location to the task yaml
+    :param parameters: parameters to load the template
+    :param taskid: taskid of the dependent task
+    :param templates: reference to the template builder
+    :param build_treeherder_config: parent treeherder config
+    :return: the configured task
     """
+    task = templates.load(task_path, parameters)
+    task['taskId'] = taskid
 
-    if 'extra' not in task:
+    if 'requires' not in task:
+        task['requires'] = []
+
+    task['requires'].append(parameters['build_slugid'])
+
+    if 'treeherder' not in task['task']['extra']:
+        task['task']['extra']['treeherder'] = {}
+
+    # Copy over any treeherder configuration from the build so
+    # tests show up under the same platform...
+    treeherder_config = task['task']['extra']['treeherder']
+
+    treeherder_config['collection'] = \
+        build_treeherder_config.get('collection', {})
+
+    treeherder_config['build'] = \
+        build_treeherder_config.get('build', {})
+
+    treeherder_config['machine'] = \
+        build_treeherder_config.get('machine', {})
+
+    if 'routes' not in task['task']:
+        task['task']['routes'] = []
+
+    if 'scopes' not in task['task']:
+        task['task']['scopes'] = []
+
+    return task
+
+def set_interactive_task(task, interactive):
+    r"""Make the task interactive.
+
+    :param task: task definition.
+    :param interactive: True if the task should be interactive.
+    """
+    if not interactive:
         return
 
-    if 'routes' not in task:
-        task['routes'] = []
+    payload = task["task"]["payload"]
+    if "features" not in payload:
+        payload["features"] = {}
+    payload["features"]["interactive"] = True
 
-    treeheder_env = task['extra'].get('treeherderEnv', ['staging'])
+def remove_caches_from_task(task):
+    r"""Remove all caches but tc-vcs from the task.
 
-    for env in treeheder_env:
-        task['routes'].append('{}.{}'.format(TREEHERDER_ROUTES[env], suffix))
+    :param task: task definition.
+    """
+    whitelist = [
+        re.compile("^level-[123]-.*-tc-vcs(-public-sources)?$"),
+        re.compile("^tooltool-cache$"),
+    ]
+    try:
+        caches = task["task"]["payload"]["cache"]
+        for cache in caches.keys():
+            if not any(pat.match(cache) for pat in whitelist):
+                caches.pop(cache)
+    except KeyError:
+        pass
+
+def query_pushinfo(repository, revision):
+    """Query the pushdate and pushid of a repository/revision.
+    This is intended to be used on hg.mozilla.org/mozilla-central and
+    similar. It may or may not work for other hg repositories.
+    """
+    PushInfo = namedtuple('PushInfo', ['pushid', 'pushdate'])
+
+    try:
+        import urllib2
+        url = '%s/json-pushes?changeset=%s' % (repository, revision)
+        sys.stderr.write("Querying URL for pushdate: %s\n" % url)
+        contents = json.load(urllib2.urlopen(url))
+
+        # The contents should be something like:
+        # {
+        #   "28537": {
+        #    "changesets": [
+        #     "1d0a914ae676cc5ed203cdc05c16d8e0c22af7e5",
+        #    ],
+        #    "date": 1428072488,
+        #    "user": "user@mozilla.com"
+        #   }
+        # }
+        #
+        # So we grab the first element ("28537" in this case) and then pull
+        # out the 'date' field.
+        pushid = contents.iterkeys().next()
+        pushdate = contents[pushid]['date']
+        return PushInfo(pushid, pushdate)
+
+    except Exception:
+        sys.stderr.write(
+            "Error querying pushinfo for repository '%s' revision '%s'\n" % (
+                repository, revision,
+            )
+        )
+        return None
 
 @CommandProvider
 class DecisionTask(object):
@@ -142,6 +205,13 @@ class DecisionTask(object):
         help='email address of who owns this graph')
     @CommandArgument('task', help="Path to decision task to run.")
     def run_task(self, **params):
+        from taskcluster_graph.slugidjar import SlugidJar
+        from taskcluster_graph.from_now import (
+            json_time_from_now,
+            current_json_time,
+        )
+        from taskcluster_graph.templates import Templates
+
         templates = Templates(ROOT)
         # Template parameters used when expanding the graph
         parameters = dict(gaia_info().items() + {
@@ -154,7 +224,7 @@ class DecisionTask(object):
             'owner': params['owner'],
             'as_slugid': SlugidJar(),
             'from_now': json_time_from_now,
-            'now': datetime.datetime.now().isoformat()
+            'now': current_json_time()
         }.items())
         task = templates.load(params['task'], parameters)
         print(json.dumps(task, indent=4))
@@ -190,9 +260,49 @@ class Graph(object):
     @CommandArgument('--owner',
         required=True,
         help='email address of who owns this graph')
+    @CommandArgument('--level',
+        default="1",
+        help='SCM level of this repository')
     @CommandArgument('--extend-graph',
         action="store_true", dest="ci", help='Omit create graph arguments')
+    @CommandArgument('--interactive',
+        required=False,
+        default=False,
+        action="store_true",
+        dest="interactive",
+        help="Run the tasks with the interactive feature enabled")
+    @CommandArgument('--print-names-only',
+        action='store_true', default=False,
+        help="Only print the names of each scheduled task, one per line.")
+    @CommandArgument('--dry-run',
+        action='store_true', default=False,
+        help="Stub out taskIds and date fields from the task definitions.")
     def create_graph(self, **params):
+        from functools import partial
+
+        from slugid import nice as slugid
+
+        import taskcluster_graph.transform.routes as routes_transform
+        from taskcluster_graph.commit_parser import parse_commit
+        from taskcluster_graph.image_builder import (
+            docker_image,
+            normalize_image_details,
+            task_id_for_image
+        )
+        from taskcluster_graph.from_now import (
+            json_time_from_now,
+            current_json_time,
+        )
+        from taskcluster_graph.templates import Templates
+        import taskcluster_graph.build_task
+
+        if params['dry_run']:
+            from taskcluster_graph.dry_run import (
+                json_time_from_now,
+                current_json_time,
+                slugid,
+            )
+
         project = params['project']
         message = params.get('message', '') if project == 'try' else DEFAULT_TRY
 
@@ -211,24 +321,37 @@ class Graph(object):
         jobs = templates.load(job_path, {})
 
         job_graph = parse_commit(message, jobs)
-        mozharness = load_mozharness_info()
+
+        cmdline_interactive = params.get('interactive', False)
+
+        # Default to current time if querying the head rev fails
+        pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+        pushinfo = query_pushinfo(params['head_repository'], params['head_rev'])
+        if pushinfo:
+            pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(pushinfo.pushdate))
 
         # Template parameters used when expanding the graph
+        seen_images = {}
         parameters = dict(gaia_info().items() + {
+            'index': 'index',
             'project': project,
             'pushlog_id': params.get('pushlog_id', 0),
             'docker_image': docker_image,
+            'task_id_for_image': partial(task_id_for_image, seen_images, project),
             'base_repository': params['base_repository'] or \
                 params['head_repository'],
             'head_repository': params['head_repository'],
             'head_ref': params['head_ref'] or params['head_rev'],
             'head_rev': params['head_rev'],
+            'pushdate': pushdate,
+            'pushtime': pushdate[8:],
+            'year': pushdate[0:4],
+            'month': pushdate[4:6],
+            'day': pushdate[6:8],
             'owner': params['owner'],
+            'level': params['level'],
             'from_now': json_time_from_now,
-            'now': datetime.datetime.now().isoformat(),
-            'mozharness_repository': mozharness['repo'],
-            'mozharness_rev': mozharness['revision'],
-            'mozharness_ref':mozharness.get('reference', mozharness['revision']),
+            'now': current_json_time(),
             'revision_hash': params['revision_hash']
         }.items())
 
@@ -237,62 +360,96 @@ class Graph(object):
             params.get('revision_hash', '')
         )
 
+        routes_file = os.path.join(ROOT, 'routes.json')
+        with open(routes_file) as f:
+            contents = json.load(f)
+            json_routes = contents['routes']
+            # TODO: Nightly and/or l10n routes
+
         # Task graph we are generating for taskcluster...
         graph = {
             'tasks': [],
-            'scopes': []
+            'scopes': set(),
         }
 
         if params['revision_hash']:
-            for env in TREEHERDER_ROUTES:
-                graph['scopes'].append('queue:route:{}.{}'.format(TREEHERDER_ROUTES[env], treeherder_route))
+            for env in routes_transform.TREEHERDER_ROUTES:
+                route = 'queue:route:{}.{}'.format(
+                            routes_transform.TREEHERDER_ROUTES[env],
+                            treeherder_route)
+                graph['scopes'].add(route)
 
         graph['metadata'] = {
-            'source': 'http://todo.com/what/goes/here',
+            'source': '{repo}file/{rev}/testing/taskcluster/mach_commands.py'.format(repo=params['head_repository'], rev=params['head_rev']),
             'owner': params['owner'],
             # TODO: Add full mach commands to this example?
             'description': 'Task graph generated via ./mach taskcluster-graph',
             'name': 'task graph local'
         }
 
+        all_routes = {}
+
         for build in job_graph:
-            build_parameters = dict(parameters)
+            interactive = cmdline_interactive or build["interactive"]
+            build_parameters = merge_dicts(parameters, build['additional-parameters']);
             build_parameters['build_slugid'] = slugid()
+            build_parameters['source'] = '{repo}file/{rev}/testing/taskcluster/{file}'.format(repo=params['head_repository'], rev=params['head_rev'], file=build['task'])
             build_task = templates.load(build['task'], build_parameters)
 
-            if 'routes' not in build_task['task']:
-                build_task['task']['routes'] = []
+            # Copy build_* attributes to expose them to post-build tasks
+            # as well as json routes and tests
+            task_extra = build_task['task']['extra']
+            build_parameters['build_name'] = task_extra['build_name']
+            build_parameters['build_type'] = task_extra['build_type']
+            build_parameters['build_product'] = task_extra['build_product']
+
+            normalize_image_details(graph,
+                                    build_task,
+                                    seen_images,
+                                    build_parameters,
+                                    os.environ.get('TASK_ID', None))
+            set_interactive_task(build_task, interactive)
+
+            # try builds don't use cache
+            if project == "try":
+                remove_caches_from_task(build_task)
 
             if params['revision_hash']:
-                decorate_task_treeherder_routes(build_task['task'],
-                                                treeherder_route)
+                routes_transform.decorate_task_treeherder_routes(build_task['task'],
+                                                                 treeherder_route)
+                routes_transform.decorate_task_json_routes(build_task['task'],
+                                                           json_routes,
+                                                           build_parameters)
 
             # Ensure each build graph is valid after construction.
             taskcluster_graph.build_task.validate(build_task)
             graph['tasks'].append(build_task)
 
-            tests_url = ARTIFACT_URL.format(
-                build_parameters['build_slugid'],
-                build_task['task']['extra']['locations']['tests']
-            )
+            for location in build_task['task']['extra'].get('locations', {}):
+                build_parameters['{}_url'.format(location)] = ARTIFACT_URL.format(
+                    build_parameters['build_slugid'],
+                    build_task['task']['extra']['locations'][location]
+                )
 
-            build_url = ARTIFACT_URL.format(
-                build_parameters['build_slugid'],
-                build_task['task']['extra']['locations']['build']
-            )
-
-            # img_url is only necessary for device builds
-            img_url = ARTIFACT_URL.format(
-                build_parameters['build_slugid'],
-                build_task['task']['extra']['locations'].get('img', '')
-            )
+            for url in build_task['task']['extra'].get('url', {}):
+                build_parameters['{}_url'.format(url)] = \
+                    build_task['task']['extra']['url'][url]
 
             define_task = DEFINE_TASK.format(build_task['task']['workerType'])
 
-            graph['scopes'].append(define_task)
-            graph['scopes'].extend(build_task['task'].get('scopes', []))
+            for route in build_task['task'].get('routes', []):
+                if route.startswith('index.gecko.v2') and route in all_routes:
+                    raise Exception("Error: route '%s' is in use by multiple tasks: '%s' and '%s'" % (
+                        route,
+                        build_task['task']['metadata']['name'],
+                        all_routes[route],
+                    ))
+                all_routes[route] = build_task['task']['metadata']['name']
+
+            graph['scopes'].add(define_task)
+            graph['scopes'] |= set(build_task['task'].get('scopes', []))
             route_scopes = map(lambda route: 'queue:route:' + route, build_task['task'].get('routes', []))
-            graph['scopes'].extend(route_scopes)
+            graph['scopes'] |= set(route_scopes)
 
             # Treeherder symbol configuration for the graph required for each
             # build so tests know which platform they belong to.
@@ -313,61 +470,73 @@ class Graph(object):
                 message = '({}), extra.treeherder.collection must contain one type'
                 raise ValueError(message.fomrat(build['task']))
 
+            for post_build in build['post-build']:
+                # copy over the old parameters to update the template
+                # TODO additional-parameters is currently not an option, only
+                # enabled for build tasks
+                post_parameters = merge_dicts(build_parameters,
+                                              post_build.get('additional-parameters', {}))
+                post_task = configure_dependent_task(post_build['task'],
+                                                     post_parameters,
+                                                     slugid(),
+                                                     templates,
+                                                     build_treeherder_config)
+                normalize_image_details(graph,
+                                        post_task,
+                                        seen_images,
+                                        build_parameters,
+                                        os.environ.get('TASK_ID', None))
+                set_interactive_task(post_task, interactive)
+                graph['tasks'].append(post_task)
+
             for test in build['dependents']:
                 test = test['allowed_build_tasks'][build['task']]
+                # TODO additional-parameters is currently not an option, only
+                # enabled for build tasks
+                test_parameters = merge_dicts(build_parameters,
+                                              test.get('additional-parameters', {}))
                 test_parameters = copy.copy(build_parameters)
-                test_parameters['build_url'] = build_url
-                test_parameters['img_url'] = img_url
-                test_parameters['tests_url'] = tests_url
 
                 test_definition = templates.load(test['task'], {})['task']
-                chunk_config = test_definition['extra']['chunks']
+                chunk_config = test_definition['extra'].get('chunks', {})
 
                 # Allow branch configs to override task level chunking...
                 if 'chunks' in test:
                     chunk_config['total'] = test['chunks']
 
-                test_parameters['total_chunks'] = chunk_config['total']
+                chunked = 'total' in chunk_config
+                if chunked:
+                    test_parameters['total_chunks'] = chunk_config['total']
 
-                for chunk in range(1, chunk_config['total'] + 1):
-                    if 'only_chunks' in test and \
+                if 'suite' in test_definition['extra']:
+                    suite_config = test_definition['extra']['suite']
+                    test_parameters['suite'] = suite_config['name']
+                    test_parameters['flavor'] = suite_config.get('flavor', '')
+
+                for chunk in range(1, chunk_config.get('total', 1) + 1):
+                    if 'only_chunks' in test and chunked and \
                         chunk not in test['only_chunks']:
                         continue
 
-                    test_parameters['chunk'] = chunk
-                    test_task = templates.load(test['task'], test_parameters)
-                    test_task['taskId'] = slugid()
-
-                    if 'requires' not in test_task:
-                        test_task['requires'] = []
-
-                    test_task['requires'].append(test_parameters['build_slugid'])
-
-                    if 'treeherder' not in test_task['task']['extra']:
-                        test_task['task']['extra']['treeherder'] = {}
-
-                    # Copy over any treeherder configuration from the build so
-                    # tests show up under the same platform...
-                    test_treeherder_config = test_task['task']['extra']['treeherder']
-
-                    test_treeherder_config['collection'] = \
-                        build_treeherder_config.get('collection', {})
-
-                    test_treeherder_config['build'] = \
-                        build_treeherder_config.get('build', {})
-
-                    test_treeherder_config['machine'] = \
-                        build_treeherder_config.get('machine', {})
-
-                    if 'routes' not in test_task['task']:
-                        test_task['task']['routes'] = []
-
-                    if 'scopes' not in test_task['task']:
-                        test_task['task']['scopes'] = []
+                    if chunked:
+                        test_parameters['chunk'] = chunk
+                    test_task = configure_dependent_task(test['task'],
+                                                         test_parameters,
+                                                         slugid(),
+                                                         templates,
+                                                         build_treeherder_config)
+                    normalize_image_details(graph,
+                                            test_task,
+                                            seen_images,
+                                            build_parameters,
+                                            os.environ.get('TASK_ID', None))
+                    set_interactive_task(test_task, interactive)
 
                     if params['revision_hash']:
-                        decorate_task_treeherder_routes(
-                                test_task['task'], treeherder_route)
+                        routes_transform.decorate_task_treeherder_routes(
+                            test_task['task'],
+                            treeherder_route
+                        )
 
                     graph['tasks'].append(test_task)
 
@@ -375,14 +544,121 @@ class Graph(object):
                         test_task['task']['workerType']
                     )
 
-                    graph['scopes'].append(define_task)
-                    graph['scopes'].extend(test_task['task'].get('scopes', []))
+                    graph['scopes'].add(define_task)
+                    graph['scopes'] |= set(test_task['task'].get('scopes', []))
 
-        graph['scopes'] = list(set(graph['scopes']))
+        graph['scopes'] = sorted(graph['scopes'])
+
+        if params['print_names_only']:
+            tIDs = defaultdict(list)
+
+            def print_task(task, indent=0):
+                print('{}- {}'.format(' ' * indent, task['task']['metadata']['name']))
+
+                for child in tIDs[task['taskId']]:
+                    print_task(child, indent=indent+2)
+
+            # build a dependency map
+            for task in graph['tasks']:
+                if 'requires' in task:
+                    for tID in task['requires']:
+                        tIDs[tID].append(task)
+
+            # recursively print root tasks
+            for task in graph['tasks']:
+                if 'requires' not in task:
+                    print_task(task)
+            return
 
         # When we are extending the graph remove extra fields...
         if params['ci'] is True:
             graph.pop('scopes', None)
             graph.pop('metadata', None)
 
-        print(json.dumps(graph, indent=4))
+        print(json.dumps(graph, indent=4, sort_keys=True))
+
+@CommandProvider
+class CIBuild(object):
+    @Command('taskcluster-build', category='ci',
+        description="Create taskcluster try server build task")
+    @CommandArgument('--base-repository',
+        help='URL for "base" repository to clone')
+    @CommandArgument('--head-repository',
+        required=True,
+        help='URL for "head" repository to fetch revision from')
+    @CommandArgument('--head-ref',
+        help='Reference (this is same as rev usually for hg)')
+    @CommandArgument('--head-rev',
+        required=True,
+        help='Commit revision to use')
+    @CommandArgument('--owner',
+        default='foobar@mozilla.com',
+        help='email address of who owns this graph')
+    @CommandArgument('--level',
+        default="1",
+        help='SCM level of this repository')
+    @CommandArgument('build_task',
+        help='path to build task definition')
+    @CommandArgument('--interactive',
+        required=False,
+        default=False,
+        action="store_true",
+        dest="interactive",
+        help="Run the task with the interactive feature enabled")
+    def create_ci_build(self, **params):
+        from taskcluster_graph.templates import Templates
+        from taskcluster_graph.image_builder import docker_image
+        import taskcluster_graph.build_task
+
+        templates = Templates(ROOT)
+        # TODO handle git repos
+        head_repository = params['head_repository']
+        if not head_repository:
+            head_repository = get_hg_url()
+
+        head_rev = params['head_rev']
+        if not head_rev:
+            head_rev = get_latest_hg_revision(head_repository)
+
+        head_ref = params['head_ref'] or head_rev
+
+        # Default to current time if querying the head rev fails
+        pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+        pushinfo = query_pushinfo(params['head_repository'], params['head_rev'])
+        if pushinfo:
+            pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(pushinfo.pushdate))
+
+        from taskcluster_graph.from_now import (
+            json_time_from_now,
+            current_json_time,
+        )
+        build_parameters = dict(gaia_info().items() + {
+            'docker_image': docker_image,
+            'owner': params['owner'],
+            'level': params['level'],
+            'from_now': json_time_from_now,
+            'now': current_json_time(),
+            'base_repository': params['base_repository'] or head_repository,
+            'head_repository': head_repository,
+            'head_rev': head_rev,
+            'head_ref': head_ref,
+            'pushdate': pushdate,
+            'pushtime': pushdate[8:],
+            'year': pushdate[0:4],
+            'month': pushdate[4:6],
+            'day': pushdate[6:8],
+        }.items())
+
+        try:
+            build_task = templates.load(params['build_task'], build_parameters)
+            set_interactive_task(build_task, params.get('interactive', False))
+        except IOError:
+            sys.stderr.write(
+                "Could not load build task file.  Ensure path is a relative " \
+                "path from testing/taskcluster"
+            )
+            sys.exit(1)
+
+        taskcluster_graph.build_task.validate(build_task)
+
+        print(json.dumps(build_task['task'], indent=4))

@@ -16,6 +16,7 @@
 
 using namespace mozilla;
 using namespace mozilla::gfx;
+using namespace mozilla::image;
 
 class nsGroupBoxFrame : public nsBoxFrame {
 public:
@@ -38,8 +39,9 @@ public:
 
   virtual bool HonorPrintBackgroundSettings() override { return false; }
 
-  void PaintBorderBackground(nsRenderingContext& aRenderingContext,
-      nsPoint aPt, const nsRect& aDirtyRect);
+  DrawResult PaintBorderBackground(nsRenderingContext& aRenderingContext,
+                                   nsPoint aPt,
+                                   const nsRect& aDirtyRect);
 
   // make sure we our kids get our orient and align instead of us.
   // our child box has no content node so it will search for a parent with one.
@@ -49,7 +51,7 @@ public:
   virtual bool GetInitialVAlignment(Valignment& aValign) override { aValign = vAlign_Top; return true; } 
   virtual bool GetInitialAutoStretch(bool& aStretch) override { aStretch = true; return true; } 
 
-  nsIFrame* GetCaptionBox(nsPresContext* aPresContext, nsRect& aCaptionRect);
+  nsIFrame* GetCaptionBox(nsRect& aCaptionRect);
 };
 
 /*
@@ -93,6 +95,10 @@ public:
   }
 #endif
 
+  nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
+  void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
+                                 const nsDisplayItemGeometry* aGeometry,
+                                 nsRegion *aInvalidRegion) override;
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState, nsTArray<nsIFrame*> *aOutFrames) override {
     aOutFrames->AppendElement(mFrame);
@@ -102,12 +108,38 @@ public:
   NS_DISPLAY_DECL_NAME("XULGroupBackground", TYPE_XUL_GROUP_BACKGROUND)
 };
 
+nsDisplayItemGeometry*
+nsDisplayXULGroupBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
+{
+  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+}
+
+void
+nsDisplayXULGroupBackground::ComputeInvalidationRegion(
+  nsDisplayListBuilder* aBuilder,
+  const nsDisplayItemGeometry* aGeometry,
+  nsRegion* aInvalidRegion)
+{
+  auto geometry =
+    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
+
+  if (aBuilder->ShouldSyncDecodeImages() &&
+      geometry->ShouldInvalidateToSyncDecodeImages()) {
+    bool snap;
+    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
+  }
+
+  nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
+}
+
 void
 nsDisplayXULGroupBackground::Paint(nsDisplayListBuilder* aBuilder,
                                    nsRenderingContext* aCtx)
 {
-  static_cast<nsGroupBoxFrame*>(mFrame)->
-    PaintBorderBackground(*aCtx, ToReferenceFrame(), mVisibleRect);
+  DrawResult result = static_cast<nsGroupBoxFrame*>(mFrame)
+    ->PaintBorderBackground(*aCtx, ToReferenceFrame(), mVisibleRect);
+
+  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
 }
 
 void
@@ -126,7 +158,7 @@ nsGroupBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   BuildDisplayListForChildren(aBuilder, aDirtyRect, aLists);
 }
 
-void
+DrawResult
 nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
     nsPoint aPt, const nsRect& aDirtyRect) {
 
@@ -140,7 +172,7 @@ nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
   nsPresContext* presContext = PresContext();
 
   nsRect groupRect;
-  nsIFrame* groupBox = GetCaptionBox(presContext, groupRect);
+  nsIFrame* groupBox = GetCaptionBox(groupRect);
 
   if (groupBox) {        
     // if the border is smaller than the legend. Move the border down
@@ -157,9 +189,10 @@ nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
 
   groupRect += aPt;
 
-  nsCSSRendering::PaintBackground(presContext, aRenderingContext, this,
-                                  aDirtyRect, rect,
-                                  nsCSSRendering::PAINTBG_SYNC_DECODE_IMAGES);
+  DrawResult result =
+    nsCSSRendering::PaintBackground(presContext, aRenderingContext, this,
+                                    aDirtyRect, rect,
+                                    nsCSSRendering::PAINTBG_SYNC_DECODE_IMAGES);
 
   if (groupBox) {
     int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
@@ -174,8 +207,10 @@ nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
 
     gfx->Save();
     gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
-    nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
-                                aDirtyRect, rect, mStyleContext, skipSides);
+    result &=
+      nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
+                                  aDirtyRect, rect, mStyleContext,
+                                  PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
     gfx->Restore();
 
     // draw right side
@@ -186,8 +221,10 @@ nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
 
     gfx->Save();
     gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
-    nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
-                                aDirtyRect, rect, mStyleContext, skipSides);
+    result &=
+      nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
+                                  aDirtyRect, rect, mStyleContext,
+                                  PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
     gfx->Restore();
   
     // draw bottom
@@ -198,19 +235,25 @@ nsGroupBoxFrame::PaintBorderBackground(nsRenderingContext& aRenderingContext,
   
     gfx->Save();
     gfx->Clip(NSRectToSnappedRect(clipRect, appUnitsPerDevPixel, *drawTarget));
-    nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
-                                aDirtyRect, rect, mStyleContext, skipSides);
+    result &=
+      nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
+                                  aDirtyRect, rect, mStyleContext,
+                                  PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
     gfx->Restore();
     
   } else {
-    nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
-                                aDirtyRect, nsRect(aPt, GetSize()),
-                                mStyleContext, skipSides);
+    result &=
+      nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
+                                  aDirtyRect, nsRect(aPt, GetSize()),
+                                  mStyleContext,
+                                  PaintBorderFlags::SYNC_DECODE_IMAGES, skipSides);
   }
+
+  return result;
 }
 
 nsIFrame*
-nsGroupBoxFrame::GetCaptionBox(nsPresContext* aPresContext, nsRect& aCaptionRect)
+nsGroupBoxFrame::GetCaptionBox(nsRect& aCaptionRect)
 {
     // first child is our grouped area
     nsIFrame* box = nsBox::GetChildBox(this);

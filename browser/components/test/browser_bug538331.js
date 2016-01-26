@@ -110,8 +110,7 @@ var gOriginalOverrideURL;
 this.__defineGetter__("gBG", function() {
   delete this.gBG;
   return this.gBG = Cc["@mozilla.org/browser/browserglue;1"].
-                    getService(Ci.nsIBrowserGlue).
-                    QueryInterface(Ci.nsIObserver);
+                    getService(Ci.nsIObserver);
 });
 
 function test()
@@ -303,8 +302,7 @@ const BG_NOTIFY_TESTS = [
 // _showUpdateNotification in nsBrowserGlue.js
 function testShowNotification()
 {
-  let gTestBrowser = gBrowser.selectedBrowser;
-  let notifyBox = gBrowser.getNotificationBox(gTestBrowser);
+  let notifyBox = document.getElementById("high-priority-global-notificationbox");
 
   // Catches any windows opened by these tests (e.g. alert windows) and closes
   // them

@@ -33,12 +33,12 @@ public:
 
 private:
     nsCOMPtr<nsICanvasRenderingContextInternal> mCanvas;
-    nsRefPtr<gfxContext> mCanvasContext;
+    RefPtr<gfxContext> mCanvasContext;
 
     DISALLOW_EVIL_CONSTRUCTORS(DocumentRendererParent);
 };
 
-}
-}
+} // namespace ipc
+} // namespace mozilla
 
 #endif

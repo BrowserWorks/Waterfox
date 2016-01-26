@@ -129,21 +129,28 @@ toolbarbutton {
   -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton");
 }
 
+toolbarbutton.badged-button > toolbarbutton,
+toolbarbutton.badged-button {
+  -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton-badged");
+}
+
+.toolbarbutton-badge:not([value]),
+.toolbarbutton-badge[value=""] {
+  display: none;
+}
+
 toolbarbutton[type="menu"],
 toolbarbutton[type="panel"] {
   -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#menu");
 }
 
+toolbarbutton.badged-button[type="menu"],
+toolbarbutton.badged-button[type="panel"] {
+  -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton-badged-menu");
+}
+
 toolbarbutton[type="menu-button"] {
   -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#menu-button");
-}
-
-toolbarbutton.badged-button {
-  -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton-badged");
-}
-
-toolbarbutton.badged-button .toolbarbutton-badge[badge]:not([badge=""])::after {
-  content: attr(badge);
 }
 
 toolbar[mode="icons"] .toolbarbutton-text,
@@ -379,6 +386,10 @@ menuitem[type="radio"] {
 
 menuitem.menuitem-non-iconic {
   -moz-binding: url("chrome://global/content/bindings/menu.xml#menubutton-item");
+}
+
+menucaption {
+  -moz-binding: url("chrome://global/content/bindings/menu.xml#menucaption");
 }
 
 .menu-text {
@@ -950,6 +961,10 @@ menulist[type="description"] {
 
 menulist > menupopup > menuitem {
   -moz-binding: url("chrome://global/content/bindings/menu.xml#menuitem-iconic-noaccel");
+}
+
+menulist > menupopup > menucaption {
+  -moz-binding: url("chrome://global/content/bindings/menu.xml#menucaption-inmenulist");
 }
 
 dropmarker {

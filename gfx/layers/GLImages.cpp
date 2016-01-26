@@ -14,32 +14,44 @@ using namespace mozilla::gl;
 namespace mozilla {
 namespace layers {
 
-static nsRefPtr<GLContext> sSnapshotContext;
+static RefPtr<GLContext> sSnapshotContext;
+
+EGLImageImage::EGLImageImage(EGLImage aImage, EGLSync aSync,
+                             const gfx::IntSize& aSize, const gl::OriginPos& aOrigin,
+                             bool aOwns)
+ : GLImage(ImageFormat::EGLIMAGE),
+   mImage(aImage),
+   mSync(aSync),
+   mSize(aSize),
+   mPos(aOrigin),
+   mOwns(aOwns)
+{
+}
 
 EGLImageImage::~EGLImageImage()
 {
-  if (!mData.mOwns) {
+  if (!mOwns) {
     return;
   }
 
-  if (mData.mImage) {
-    sEGLLibrary.fDestroyImage(EGL_DISPLAY(), mData.mImage);
-    mData.mImage = nullptr;
+  if (mImage) {
+    sEGLLibrary.fDestroyImage(EGL_DISPLAY(), mImage);
+    mImage = nullptr;
   }
 
-  if (mData.mSync) {
-    sEGLLibrary.fDestroySync(EGL_DISPLAY(), mData.mSync);
-    mData.mSync = nullptr;
+  if (mSync) {
+    sEGLLibrary.fDestroySync(EGL_DISPLAY(), mSync);
+    mSync = nullptr;
   }
 }
 
-TemporaryRef<gfx::SourceSurface>
+already_AddRefed<gfx::SourceSurface>
 GLImage::GetAsSourceSurface()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on the main thread");
 
   if (!sSnapshotContext) {
-    sSnapshotContext = GLContextProvider::CreateHeadless(false);
+    sSnapshotContext = GLContextProvider::CreateHeadless(CreateContextFlags::NONE);
     if (!sSnapshotContext) {
       NS_WARNING("Failed to create snapshot GLContext");
       return nullptr;
@@ -59,7 +71,7 @@ GLImage::GetAsSourceSurface()
 
   ScopedFramebufferForTexture autoFBForTex(sSnapshotContext, scopedTex.Texture());
   if (!autoFBForTex.IsComplete()) {
-      MOZ_CRASH("ScopedFramebufferForTexture failed.");
+      MOZ_CRASH("GFX: ScopedFramebufferForTexture failed.");
   }
 
   const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;
@@ -82,5 +94,17 @@ GLImage::GetAsSourceSurface()
   return source.forget();
 }
 
-} // layers
-} // mozilla
+#ifdef MOZ_WIDGET_ANDROID
+SurfaceTextureImage::SurfaceTextureImage(gl::AndroidSurfaceTexture* aSurfTex,
+                                         const gfx::IntSize& aSize,
+                                         gl::OriginPos aOriginPos)
+ : GLImage(ImageFormat::SURFACE_TEXTURE),
+   mSurfaceTexture(aSurfTex),
+   mSize(aSize),
+   mOriginPos(aOriginPos)
+{
+}
+#endif
+
+} // namespace layers
+} // namespace mozilla

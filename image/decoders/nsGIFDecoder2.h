@@ -8,7 +8,7 @@
 #define mozilla_image_decoders_nsGIFDecoder2_h
 
 #include "Decoder.h"
-
+#include "Deinterlacer.h"
 #include "GIF2.h"
 #include "nsCOMPtr.h"
 
@@ -22,8 +22,6 @@ class RasterImage;
 class nsGIFDecoder2 : public Decoder
 {
 public:
-
-  explicit nsGIFDecoder2(RasterImage* aImage);
   ~nsGIFDecoder2();
 
   virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
@@ -31,11 +29,18 @@ public:
   virtual Telemetry::ID SpeedHistogram() override;
 
 private:
+  friend class DecoderFactory;
+
+  // Decoders should only be instantiated via DecoderFactory.
+  explicit nsGIFDecoder2(RasterImage* aImage);
+
+  uint8_t*  GetCurrentRowBuffer();
+  uint8_t*  GetRowBuffer(uint32_t aRow);
+
   // These functions will be called when the decoder has a decoded row,
   // frame size information, etc.
-
   void      BeginGIF();
-  void      BeginImageFrame(uint16_t aDepth);
+  nsresult  BeginImageFrame(uint16_t aDepth);
   void      EndImageFrame();
   void      FlushImageData();
   void      FlushImageData(uint32_t fromRow, uint32_t rows);
@@ -45,6 +50,8 @@ private:
   bool      DoLzw(const uint8_t* q);
   bool      SetHold(const uint8_t* buf, uint32_t count,
                     const uint8_t* buf2 = nullptr, uint32_t count2 = 0);
+  bool      CheckForTransparency(const gfx::IntRect& aFrameRect);
+  gfx::IntRect ClampToImageRect(const gfx::IntRect& aFrameRect);
 
   inline int ClearCode() const { return 1 << mGIFStruct.datasize; }
 
@@ -64,6 +71,7 @@ private:
   bool mSawTransparency;
 
   gif_struct mGIFStruct;
+  Maybe<Deinterlacer> mDeinterlacer;
 };
 
 } // namespace image

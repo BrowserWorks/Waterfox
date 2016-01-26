@@ -61,6 +61,7 @@ const DIR_UPDATED      = IS_MACOSX ? "Updated.app" : "updated";
 const FILE_APPLICATION_INI           = "application.ini";
 const FILE_BACKUP_LOG                = "backup-update.log";
 const FILE_LAST_LOG                  = "last-update.log";
+const FILE_PERMS_TEST                = "update.test";
 const FILE_UPDATER_INI               = "updater.ini";
 const FILE_UPDATES_DB                = "updates.xml";
 const FILE_UPDATE_ACTIVE             = "active-update.xml";
@@ -129,6 +130,10 @@ XPCOMUtils.defineLazyGetter(this, "gDefaultPrefBranch", function test_gDPB() {
 XPCOMUtils.defineLazyGetter(this, "gPrefRoot", function test_gPR() {
   return Services.prefs.getBranch(null);
 });
+
+XPCOMUtils.defineLazyServiceGetter(this, "gEnv",
+                                   "@mozilla.org/process/environment;1",
+                                   "nsIEnvironment");
 
 XPCOMUtils.defineLazyGetter(this, "gZipW", function test_gZipW() {
   return Cc["@mozilla.org/zipwriter;1"].

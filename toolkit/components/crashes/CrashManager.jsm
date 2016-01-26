@@ -5,15 +5,17 @@
 "use strict";
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+const myScope = this;
 
 Cu.import("resource://gre/modules/Log.jsm", this);
-Cu.import("resource://gre/modules/osfile.jsm", this)
+Cu.import("resource://gre/modules/osfile.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
-Cu.import("resource://services-common/utils.js", this);
+Cu.import("resource://gre/modules/TelemetryController.jsm");
+Cu.import("resource://gre/modules/KeyValueParser.jsm");
 
 this.EXPORTED_SYMBOLS = [
   "CrashManager",
@@ -267,19 +269,20 @@ this.CrashManager.prototype = Object.freeze({
                 Cu.reportError("Unhandled crash event file return code. Please " +
                                "file a bug: " + result);
             }
-          } catch (ex if ex instanceof OS.File.Error) {
-            this._log.warn("I/O error reading " + entry.path + ": " +
-                           CommonUtils.exceptionStr(ex));
           } catch (ex) {
-            // We should never encounter an exception. This likely represents
-            // a coding error because all errors should be detected and
-            // converted to return codes.
-            //
-            // If we get here, report the error and delete the source file
-            // so we don't see it again.
-            Cu.reportError("Exception when processing crash event file: " +
-                           CommonUtils.exceptionStr(ex));
-            deletePaths.push(entry.path);
+            if (ex instanceof OS.File.Error) {
+              this._log.warn("I/O error reading " + entry.path, ex);
+            } else {
+              // We should never encounter an exception. This likely represents
+              // a coding error because all errors should be detected and
+              // converted to return codes.
+              //
+              // If we get here, report the error and delete the source file
+              // so we don't see it again.
+              Cu.reportError("Exception when processing crash event file: " +
+                             Log.exceptionStr(ex));
+              deletePaths.push(entry.path);
+            }
           }
         }
 
@@ -292,8 +295,7 @@ this.CrashManager.prototype = Object.freeze({
           try {
             yield OS.File.remove(path);
           } catch (ex) {
-            this._log.warn("Error removing event file (" + path + "): " +
-                           CommonUtils.exceptionStr(ex));
+            this._log.warn("Error removing event file (" + path + ")", ex);
           }
         }
 
@@ -522,13 +524,35 @@ this.CrashManager.prototype = Object.freeze({
           // fall-through
         case "crash.main.2":
           let crashID = lines[0];
-          let metadata = {};
-          for (let i = 1; i < lines.length; i++) {
-            let [key, val] = lines[i].split("=");
-            metadata[key] = val;
-          }
+          let metadata = parseKeyValuePairsFromLines(lines.slice(1));
           store.addCrash(this.PROCESS_TYPE_MAIN, this.CRASH_TYPE_CRASH,
                          crashID, date, metadata);
+
+          // If we have a saved environment, use it. Otherwise report
+          // the current environment.
+          let crashEnvironment = null;
+          let reportMeta = Cu.cloneInto(metadata, myScope);
+          if ('TelemetryEnvironment' in reportMeta) {
+            try {
+              crashEnvironment = JSON.parse(reportMeta.TelemetryEnvironment);
+            } catch(e) {
+              Cu.reportError(e);
+            }
+            delete reportMeta.TelemetryEnvironment;
+          }
+          TelemetryController.submitExternalPing("crash",
+            {
+              version: 1,
+              crashDate: date.toISOString().slice(0, 10), // YYYY-MM-DD
+              metadata: reportMeta,
+              hasCrashEnvironment: (crashEnvironment !== null),
+            },
+            {
+              retentionDays: 180,
+              addClientId: true,
+              addEnvironment: true,
+              overrideEnvironment: crashEnvironment,
+            });
           break;
 
         case "crash.submission.1":
@@ -569,8 +593,11 @@ this.CrashManager.prototype = Object.freeze({
     return Task.spawn(function* () {
       try {
         yield OS.File.stat(path);
-      } catch (ex if ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
-          return [];
+      } catch (ex) {
+        if (!(ex instanceof OS.File.Error) || !ex.becauseNoSuchFile) {
+          throw ex;
+        }
+        return [];
       }
 
       let it = new OS.File.DirectoryIterator(path);
@@ -682,7 +709,7 @@ this.CrashManager.prototype = Object.freeze({
   },
 });
 
-let gCrashManager;
+var gCrashManager;
 
 /**
  * Interface to storage of crash data.
@@ -773,14 +800,10 @@ CrashStore.prototype = Object.freeze({
         // with "-submission", we will need to convert the data to be stored
         // as actual submissions.
         //
-        // TODO: The old way of storing submissions was used from FF33 - FF34.
-        // We should drop the conversion code after a few releases. See bug
-        // 1056157.
-        let hasSubmissionsStoredAsCrashes = false;
-
+        // The old way of storing submissions was used from FF33 - FF34. We
+        // drop this old data on the floor.
         for (let id in data.crashes) {
           if (id.endsWith("-submission")) {
-            hasSubmissionsStoredAsCrashes = true;
             continue;
           }
 
@@ -811,32 +834,6 @@ CrashStore.prototype = Object.freeze({
 
         }
 
-        if (hasSubmissionsStoredAsCrashes) {
-          for (let id in data.crashes) {
-            if (!id.endsWith("-submission")) {
-              continue;
-            }
-
-            // This type of record will contain e.g.:
-            // {
-            //   "id": "crash1-submission",
-            //   "type": "main-crash-submission-succeeded",
-            //   "crashDate": "...",
-            // }
-            let submissionData = this._denormalize(data.crashes[id]);
-
-            let crashID = id.replace(/-submission$/, "");
-            let result = submissionData.type.endsWith("-succeeded") ?
-              CrashManager.prototype.SUBMISSION_RESULT_OK :
-              CrashManager.prototype.SUBMISSION_RESULT_FAILED;
-
-            this.addSubmissionAttempt(crashID, "converted",
-                                      submissionData.crashDate);
-            this.addSubmissionResult(crashID, "converted",
-                                     submissionData.crashDate, result);
-          }
-        }
-
         // The validation in this loop is arguably not necessary. We perform
         // it as a defense against unknown bugs.
         for (let dayKey in data.countsByDay) {
@@ -860,16 +857,17 @@ CrashStore.prototype = Object.freeze({
             this._countsByDay.get(day).set(type, count);
           }
         }
-      } catch (ex if ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
-        // Missing files (first use) are allowed.
       } catch (ex) {
-        // If we can't load for any reason, mark a corrupt date in the instance
-        // and swallow the error.
-        //
-        // The marking of a corrupted file is intentionally not persisted to
-        // disk yet. Instead, we wait until the next save(). This is to give
-        // non-permanent failures the opportunity to recover on their own.
-        this._data.corruptDate = new Date();
+        // Missing files (first use) are allowed.
+        if (!(ex instanceof OS.File.Error) || !ex.becauseNoSuchFile) {
+          // If we can't load for any reason, mark a corrupt date in the instance
+          // and swallow the error.
+          //
+          // The marking of a corrupted file is intentionally not persisted to
+          // disk yet. Instead, we wait until the next save(). This is to give
+          // non-permanent failures the opportunity to recover on their own.
+          this._data.corruptDate = new Date();
+        }
       }
     }.bind(this));
   },
@@ -1160,21 +1158,8 @@ CrashStore.prototype = Object.freeze({
   },
 
   /**
-   * Obtain a particular crash submission from its ID.
-   *
-   * @return undefined | submission object
-   */
-  getSubmission: function (crashID, submissionID) {
-    let crash = this._data.crashes.get(crashID);
-    if (!crash || !submissionID) {
-      return undefined;
-    }
-
-    return crash.submissions.get(submissionID);
-  },
-
-  /**
    * Ensure the submission record is present in storage.
+   * @returns [submission, crash]
    */
   _ensureSubmissionRecord: function (crashID, submissionID) {
     let crash = this._data.crashes.get(crashID);
@@ -1190,19 +1175,22 @@ CrashStore.prototype = Object.freeze({
       });
     }
 
-    return crash.submissions.get(submissionID);
+    return [crash.submissions.get(submissionID), crash];
   },
 
   /**
    * @return boolean True if the attempt was recorded.
    */
   addSubmissionAttempt: function (crashID, submissionID, date) {
-    let submission = this._ensureSubmissionRecord(crashID, submissionID);
+    let [submission, crash] =
+      this._ensureSubmissionRecord(crashID, submissionID);
     if (!submission) {
       return false;
     }
 
     submission.requestDate = date;
+    Services.telemetry.getKeyedHistogramById("PROCESS_CRASH_SUBMIT_ATTEMPT")
+      .add(crash.type, 1);
     return true;
   },
 
@@ -1210,13 +1198,19 @@ CrashStore.prototype = Object.freeze({
    * @return boolean True if the response was recorded.
    */
   addSubmissionResult: function (crashID, submissionID, date, result) {
-    let submission = this.getSubmission(crashID, submissionID);
+    let crash = this._data.crashes.get(crashID);
+    if (!crash || !submissionID) {
+      return false;
+    }
+    let submission = crash.submissions.get(submissionID);
     if (!submission) {
       return false;
     }
 
     submission.responseDate = date;
     submission.result = result;
+    Services.telemetry.getKeyedHistogramById("PROCESS_CRASH_SUBMIT_SUCCESS")
+      .add(crash.type, result == "ok");
     return true;
   },
 

@@ -4,9 +4,14 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
+
 // Define elements that bound phone number containers.
 const PHONE_NUMBER_CONTAINERS = "td,div";
 const DEFER_CLOSE_TRIGGER_MS = 125; // Grace period delay before deferred _closeSelection()
+
+// Gecko AccessibleCaret pref names.
+const PREF_GECKO_ACCESSIBLECARET_ENABLED = "layout.accessiblecaret.enabled";
 
 var SelectionHandler = {
 
@@ -21,9 +26,11 @@ var SelectionHandler = {
   START_ERROR_SELECT_ALL_PARAGRAPH_FAILED: "Select-All Paragraph failed.",
   START_ERROR_NO_SELECTION: "Selection performed, but nothing resulted.",
   START_ERROR_PROXIMITY: "Selection target and result seem unrelated.",
+  START_ERROR_SELECTIONCARETS_ENABLED: "Native selectionCarets requested while Gecko enabled.",
 
   // Error codes returned during attachCaret().
   ATTACH_ERROR_INCOMPATIBLE: "Element disabled, handled natively, or not editable.",
+  ATTACH_ERROR_TOUCHCARET_ENABLED: "Native touchCaret requested while Gecko enabled.",
 
   HANDLE_TYPE_ANCHOR: "ANCHOR",
   HANDLE_TYPE_CARET: "CARET",
@@ -35,6 +42,10 @@ var SelectionHandler = {
 
   SELECT_ALL: 0,
   SELECT_AT_POINT: 1,
+
+  // Gecko TouchCaret/SelectionCaret pref values.
+  _accessibleCaretEnabledValue: null,
+  _selectionCaretEnabledValue: null,
 
   // Keeps track of data about the dimensions of the selection. Coordinates
   // stored here are relative to the _contentWindow window.
@@ -89,6 +100,20 @@ var SelectionHandler = {
     delete this._idService;
     return this._idService = Cc["@mozilla.org/uuid-generator;1"].
       getService(Ci.nsIUUIDGenerator);
+  },
+
+  // Are we supporting Accessible-core or native-Java carets?
+  get _accessibleCaretEnabled() {
+    if (this._accessibleCaretEnabledValue == null) {
+      try {
+        this._accessibleCaretEnabledValue = Services.prefs.getBoolPref(PREF_GECKO_ACCESSIBLECARET_ENABLED);
+      } catch (unused) { }
+      Services.prefs.addObserver(PREF_GECKO_ACCESSIBLECARET_ENABLED, function() {
+        SelectionHandler._accessibleCaretEnabledValue =
+          Services.prefs.getBoolPref(PREF_GECKO_ACCESSIBLECARET_ENABLED);
+      }, false);
+    }
+    return this._accessibleCaretEnabledValue;
   },
 
   _addObservers: function sh_addObservers() {
@@ -378,6 +403,11 @@ var SelectionHandler = {
    *                   y    - The y-coordinate for SELECT_AT_POINT.
    */
   startSelection: function sh_startSelection(aElement, aOptions = { mode: SelectionHandler.SELECT_ALL }) {
+    // Disable Native touchCarets if Gecko AccessibleCaret enabled.
+    if (this._accessibleCaretEnabled) {
+      return this.START_ERROR_SELECTIONCARETS_ENABLED;
+    }
+
     // Clear out any existing active selection
     this._closeSelection();
 
@@ -837,6 +867,11 @@ var SelectionHandler = {
    * @param aX, aY tap location in client coordinates.
    */
   attachCaret: function sh_attachCaret(aElement) {
+    // Disable Native touchCarets if Gecko AccessibleCaret enabled.
+    if (this._accessibleCaretEnabled) {
+      return this.ATTACH_ERROR_TOUCHCARET_ENABLED;
+    }
+
     // Clear out any existing active selection
     this._closeSelection();
 
@@ -1054,8 +1089,8 @@ var SelectionHandler = {
     let selectedText = this._getSelectedText();
     if (selectedText.length) {
       let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
-      clipboard.copyString(selectedText, this._contentWindow.document);
-      NativeWindow.toast.show(Strings.browser.GetStringFromName("selectionHelper.textCopied"), "short");
+      clipboard.copyString(selectedText);
+      Snackbars.show(Strings.browser.GetStringFromName("selectionHelper.textCopied"), Snackbars.LENGTH_SHORT);
     }
     this._closeSelection();
   },

@@ -85,7 +85,7 @@ template <typename T> T * gralloc(size_t n)
 #ifdef GRAPHITE2_TELEMETRY
     telemetry::count_bytes(sizeof(T) * n);
 #endif
-    return reinterpret_cast<T*>(malloc(sizeof(T) * n));
+    return static_cast<T*>(malloc(sizeof(T) * n));
 }
 
 template <typename T> T * grzeroalloc(size_t n)
@@ -93,7 +93,7 @@ template <typename T> T * grzeroalloc(size_t n)
 #ifdef GRAPHITE2_TELEMETRY
     telemetry::count_bytes(sizeof(T) * n);
 #endif
-    return reinterpret_cast<T*>(calloc(n, sizeof(T)));
+    return static_cast<T*>(calloc(n, sizeof(T)));
 }
 
 template <typename T>
@@ -120,8 +120,27 @@ inline T max(const T a, const T b)
     void operator delete[] (void * p)throw() { free(p); } \
     void operator delete[] (void *, void *) throw() {}
 
-#ifdef __GNUC__
+#if defined(__GNUC__)  || defined(__clang__)
 #define GR_MAYBE_UNUSED __attribute__((unused))
 #else
 #define GR_MAYBE_UNUSED
+#endif
+
+#if defined(__clang__) && __cplusplus >= 201103L
+   /* clang's fallthrough annotations are only available starting in C++11. */
+    #define GR_FALLTHROUGH [[clang::fallthrough]]
+#elif defined(_MSC_VER)
+   /*
+    * MSVC's __fallthrough annotations are checked by /analyze (Code Analysis):
+    * https://msdn.microsoft.com/en-us/library/ms235402%28VS.80%29.aspx
+    */
+    #include <sal.h>
+    #define GR_FALLTHROUGH __fallthrough
+#else
+    #define GR_FALLTHROUGH /* fallthrough */
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable: 4800)
+#pragma warning(disable: 4355)
 #endif

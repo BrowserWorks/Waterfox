@@ -5,7 +5,7 @@
 
 #include "TextureClientPool.h"
 #include "CompositableClient.h"
-#include "mozilla/layers/ISurfaceAllocator.h"
+#include "mozilla/layers/CompositableForwarder.h"
 
 #include "gfxPrefs.h"
 
@@ -24,11 +24,13 @@ ShrinkCallback(nsITimer *aTimer, void *aClosure)
 }
 
 TextureClientPool::TextureClientPool(gfx::SurfaceFormat aFormat,
+                                     TextureFlags aFlags,
                                      gfx::IntSize aSize,
                                      uint32_t aMaxTextureClients,
                                      uint32_t aShrinkTimeoutMsec,
-                                     ISurfaceAllocator *aAllocator)
+                                     CompositableForwarder* aAllocator)
   : mFormat(aFormat)
+  , mFlags(aFlags)
   , mSize(aSize)
   , mMaxTextureClients(aMaxTextureClients)
   , mShrinkTimeoutMsec(aShrinkTimeoutMsec)
@@ -81,7 +83,7 @@ static bool TestClientPool(const char* what,
 }
 #endif
 
-TemporaryRef<TextureClient>
+already_AddRefed<TextureClient>
 TextureClientPool::GetTextureClient()
 {
   // Try to fetch a client from the pool
@@ -96,7 +98,7 @@ TextureClientPool::GetTextureClient()
 #endif
     TCP_LOG("TexturePool %p giving %p from pool; size %u outstanding %u\n",
         this, textureClient.get(), mTextureClients.size(), mOutstandingClients);
-    return textureClient;
+    return textureClient.forget();
   }
 
   // We're increasing the number of outstanding TextureClients without reusing a
@@ -108,10 +110,10 @@ TextureClientPool::GetTextureClient()
     // gfx::BackendType::NONE means use the content backend
     textureClient = TextureClient::CreateForRawBufferAccess(mSurfaceAllocator,
       mFormat, mSize, gfx::BackendType::NONE,
-      TextureFlags::IMMEDIATE_UPLOAD, ALLOC_DEFAULT);
+      mFlags, ALLOC_DEFAULT);
   } else {
     textureClient = TextureClient::CreateForDrawing(mSurfaceAllocator,
-      mFormat, mSize, gfx::BackendType::NONE, TextureFlags::IMMEDIATE_UPLOAD);
+      mFormat, mSize, BackendSelector::Content, mFlags);
   }
 
   mOutstandingClients++;
@@ -122,7 +124,7 @@ TextureClientPool::GetTextureClient()
 #endif
   TCP_LOG("TexturePool %p giving new %p; size %u outstanding %u\n",
       this, textureClient.get(), mTextureClients.size(), mOutstandingClients);
-  return textureClient;
+  return textureClient.forget();
 }
 
 void
@@ -267,5 +269,5 @@ TextureClientPool::Clear()
   }
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

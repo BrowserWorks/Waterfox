@@ -6,11 +6,11 @@
 #if !defined(MediaQueue_h_)
 #define MediaQueue_h_
 
-#include "nsDeque.h"
-#include "nsTArray.h"
 #include "mozilla/ReentrantMonitor.h"
-#include "mozilla/RefPtr.h"
-#include "MediaTaskQueue.h"
+#include "mozilla/TaskQueue.h"
+
+#include "nsDeque.h"
+#include "MediaEventSource.h"
 
 namespace mozilla {
 
@@ -18,25 +18,25 @@ namespace mozilla {
 template <class T>
 class MediaQueueDeallocator : public nsDequeFunctor {
   virtual void* operator() (void* aObject) {
-    nsRefPtr<T> releaseMe = dont_AddRef(static_cast<T*>(aObject));
+    RefPtr<T> releaseMe = dont_AddRef(static_cast<T*>(aObject));
     return nullptr;
   }
 };
 
-template <class T> class MediaQueue : private nsDeque {
- public:
-
-   MediaQueue()
-     : nsDeque(new MediaQueueDeallocator<T>()),
-       mReentrantMonitor("mediaqueue"),
-       mEndOfStream(false)
-   {}
+template <class T>
+class MediaQueue : private nsDeque {
+public:
+  MediaQueue()
+    : nsDeque(new MediaQueueDeallocator<T>()),
+      mReentrantMonitor("mediaqueue"),
+      mEndOfStream(false)
+  {}
 
   ~MediaQueue() {
     Reset();
   }
 
-  inline int32_t GetSize() {
+  inline size_t GetSize() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     return nsDeque::GetSize();
   }
@@ -46,6 +46,7 @@ template <class T> class MediaQueue : private nsDeque {
     MOZ_ASSERT(aItem);
     NS_ADDREF(aItem);
     nsDeque::Push(aItem);
+    mPushEvent.Notify(RefPtr<T>(aItem));
   }
 
   inline void PushFront(T* aItem) {
@@ -53,13 +54,14 @@ template <class T> class MediaQueue : private nsDeque {
     MOZ_ASSERT(aItem);
     NS_ADDREF(aItem);
     nsDeque::PushFront(aItem);
+    mPushEvent.Notify(RefPtr<T>(aItem));
   }
 
   inline already_AddRefed<T> PopFront() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    nsRefPtr<T> rv = dont_AddRef(static_cast<T*>(nsDeque::PopFront()));
+    RefPtr<T> rv = dont_AddRef(static_cast<T*>(nsDeque::PopFront()));
     if (rv) {
-      NotifyPopListeners();
+      mPopEvent.Notify(rv);
     }
     return rv.forget();
   }
@@ -74,15 +76,10 @@ template <class T> class MediaQueue : private nsDeque {
     return static_cast<T*>(nsDeque::PeekFront());
   }
 
-  inline void Empty() {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    nsDeque::Empty();
-  }
-
   void Reset() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     while (GetSize() > 0) {
-      nsRefPtr<T> x = PopFront();
+      RefPtr<T> x = PopFront();
     }
     mEndOfStream = false;
   }
@@ -104,6 +101,7 @@ template <class T> class MediaQueue : private nsDeque {
   void Finish() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     mEndOfStream = true;
+    mFinishEvent.Notify();
   }
 
   // Returns the approximate number of microseconds of items in the queue.
@@ -124,11 +122,11 @@ template <class T> class MediaQueue : private nsDeque {
 
   // Extracts elements from the queue into aResult, in order.
   // Elements whose start time is before aTime are ignored.
-  void GetElementsAfter(int64_t aTime, nsTArray<nsRefPtr<T>>* aResult) {
+  void GetElementsAfter(int64_t aTime, nsTArray<RefPtr<T>>* aResult) {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    if (!GetSize())
+    if (GetSize() == 0)
       return;
-    int32_t i;
+    size_t i;
     for (i = GetSize() - 1; i > 0; --i) {
       T* v = static_cast<T*>(ObjectAt(i));
       if (v->GetEndTime() < aTime)
@@ -137,59 +135,45 @@ template <class T> class MediaQueue : private nsDeque {
     // Elements less than i have a end time before aTime. It's also possible
     // that the element at i has a end time before aTime, but that's OK.
     for (; i < GetSize(); ++i) {
-      nsRefPtr<T> elem = static_cast<T*>(ObjectAt(i));
+      RefPtr<T> elem = static_cast<T*>(ObjectAt(static_cast<size_t>(i)));
       aResult->AppendElement(elem);
+    }
+  }
+
+  void GetFirstElements(uint32_t aMaxElements, nsTArray<RefPtr<T>>* aResult) {
+    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+    for (size_t i = 0; i < aMaxElements && i < GetSize(); ++i) {
+      *aResult->AppendElement() = static_cast<T*>(ObjectAt(i));
     }
   }
 
   uint32_t FrameCount() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     uint32_t frames = 0;
-    for (int32_t i = 0; i < GetSize(); ++i) {
+    for (size_t i = 0; i < GetSize(); ++i) {
       T* v = static_cast<T*>(ObjectAt(i));
       frames += v->mFrames;
     }
     return frames;
   }
 
-  void ClearListeners() {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    mPopListeners.Clear();
+  MediaEventSource<RefPtr<T>>& PopEvent() {
+    return mPopEvent;
   }
 
-  void AddPopListener(nsIRunnable* aRunnable, MediaTaskQueue* aTarget) {
-    ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    mPopListeners.AppendElement(Listener(aRunnable, aTarget));
+  MediaEventSource<RefPtr<T>>& PushEvent() {
+    return mPushEvent;
+  }
+
+  MediaEventSource<void>& FinishEvent() {
+    return mFinishEvent;
   }
 
 private:
   mutable ReentrantMonitor mReentrantMonitor;
-
-  struct Listener {
-    Listener(nsIRunnable* aRunnable, MediaTaskQueue* aTarget)
-      : mRunnable(aRunnable)
-      , mTarget(aTarget)
-    {
-    }
-    Listener(const Listener& aOther)
-      : mRunnable(aOther.mRunnable)
-      , mTarget(aOther.mTarget)
-    {
-    }
-    nsCOMPtr<nsIRunnable> mRunnable;
-    RefPtr<MediaTaskQueue> mTarget;
-  };
-
-  nsTArray<Listener> mPopListeners;
-
-  void NotifyPopListeners() {
-    for (uint32_t i = 0; i < mPopListeners.Length(); i++) {
-      Listener& l = mPopListeners[i];
-      nsCOMPtr<nsIRunnable> r = l.mRunnable;
-      l.mTarget->Dispatch(r.forget());
-    }
-  }
-
+  MediaEventProducer<RefPtr<T>> mPopEvent;
+  MediaEventProducer<RefPtr<T>> mPushEvent;
+  MediaEventProducer<void> mFinishEvent;
   // True when we've decoded the last frame of data in the
   // bitstream for which we're queueing frame data.
   bool mEndOfStream;

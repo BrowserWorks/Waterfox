@@ -6,8 +6,7 @@
 
 Components.utils.import("resource://gre/modules/addons/AddonRepository.jsm");
 
-Components.utils.import("resource://testing-common/httpd.js");
-let gServer;
+var gServer;
 
 const PORT      = 4444;
 const BASE_URL  = "http://localhost:" + PORT;
@@ -22,7 +21,7 @@ const FILE_DATABASE = "addons.json";
 const ADDON_NAMES = ["test_AddonRepository_1",
                      "test_AddonRepository_2",
                      "test_AddonRepository_3"];
-const ADDON_IDS = ADDON_NAMES.map(function(aName) aName + "@tests.mozilla.org");
+const ADDON_IDS = ADDON_NAMES.map(aName => aName + "@tests.mozilla.org");
 const ADDON_FILES = ADDON_NAMES.map(do_get_addon);
 
 const PREF_ADDON0_CACHE_ENABLED = "extensions." + ADDON_IDS[0] + ".getAddons.cache.enabled";
@@ -402,7 +401,7 @@ const WITH_EXTENSION_CACHE = [{
   sourceURI:              NetUtil.newURI(ADDON_FILES[2]).spec
 }];
 
-let gDBFile = gProfD.clone();
+var gDBFile = gProfD.clone();
 gDBFile.append(FILE_DATABASE);
 
 /*
@@ -505,9 +504,8 @@ add_task(function* setup() {
   yield promiseInstallAllFiles(ADDON_FILES);
   yield promiseRestartManager();
 
-  gServer = new HttpServer();
+  gServer = createHttpServer(PORT);
   gServer.registerDirectory("/data/", do_get_file("data"));
-  gServer.start(PORT);
 });
 
 // Tests AddonRepository.cacheEnabled
@@ -703,8 +701,4 @@ add_task(function* run_test_17() {
   yield AddonManagerInternal.backgroundUpdateCheck();
   let aAddons = yield promiseAddonsByIDs(ADDON_IDS);
   check_results(aAddons, WITH_EXTENSION_CACHE);
-});
-
-add_task(function* end_test() {
-  yield new Promise((resolve, reject) => gServer.stop(resolve));
 });

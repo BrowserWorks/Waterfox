@@ -19,8 +19,10 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Maybe.h"
 
 #include "signaling/src/sdp/SdpEnum.h"
+#include "signaling/src/common/EncodingConstraints.h"
 
 namespace mozilla
 {
@@ -58,6 +60,7 @@ public:
     kPtimeAttribute,
     kRecvonlyAttribute,
     kRemoteCandidatesAttribute,
+    kRidAttribute,
     kRtcpAttribute,
     kRtcpFbAttribute,
     kRtcpMuxAttribute,
@@ -67,6 +70,7 @@ public:
     kSendonlyAttribute,
     kSendrecvAttribute,
     kSetupAttribute,
+    kSimulcastAttribute,
     kSsrcAttribute,
     kSsrcGroupAttribute,
     kLastAttribute = kSsrcGroupAttribute
@@ -176,14 +180,11 @@ inline std::ostream& operator<<(std::ostream& os,
 class SdpDirectionAttribute : public SdpAttribute
 {
 public:
-  static const unsigned kSendFlag = 1;
-  static const unsigned kRecvFlag = 1 << 1;
-
   enum Direction {
     kInactive = 0,
-    kSendonly = kSendFlag,
-    kRecvonly = kRecvFlag,
-    kSendrecv = kSendFlag | kRecvFlag
+    kSendonly = sdp::kSend,
+    kRecvonly = sdp::kRecv,
+    kSendrecv = sdp::kSend | sdp::kRecv
   };
 
   explicit SdpDirectionAttribute(Direction value)
@@ -605,7 +606,87 @@ class SdpImageattrAttributeList : public SdpAttribute
 public:
   SdpImageattrAttributeList() : SdpAttribute(kImageattrAttribute) {}
 
+  class XYRange
+  {
+    public:
+      XYRange() : min(0), max(0), step(1) {}
+      void Serialize(std::ostream& os) const;
+      bool Parse(std::istream& is, std::string* error);
+      bool ParseAfterBracket(std::istream& is, std::string* error);
+      bool ParseAfterMin(std::istream& is, std::string* error);
+      bool ParseDiscreteValues(std::istream& is, std::string* error);
+      std::vector<uint32_t> discreteValues;
+      // min/max are used iff discreteValues is empty
+      uint32_t min;
+      uint32_t max;
+      uint32_t step;
+  };
+
+  class SRange
+  {
+    public:
+      SRange() : min(0), max(0) {}
+      void Serialize(std::ostream& os) const;
+      bool Parse(std::istream& is, std::string* error);
+      bool ParseAfterBracket(std::istream& is, std::string* error);
+      bool ParseAfterMin(std::istream& is, std::string* error);
+      bool ParseDiscreteValues(std::istream& is, std::string* error);
+      bool IsSet() const
+      {
+        return !discreteValues.empty() || (min && max);
+      }
+      std::vector<float> discreteValues;
+      // min/max are used iff discreteValues is empty
+      float min;
+      float max;
+  };
+
+  class PRange
+  {
+    public:
+      PRange() : min(0), max(0) {}
+      void Serialize(std::ostream& os) const;
+      bool Parse(std::istream& is, std::string* error);
+      bool IsSet() const
+      {
+        return min && max;
+      }
+      float min;
+      float max;
+  };
+
+  class Set
+  {
+    public:
+      Set() : qValue(-1) {}
+      void Serialize(std::ostream& os) const;
+      bool Parse(std::istream& is, std::string* error);
+      XYRange xRange;
+      XYRange yRange;
+      SRange sRange;
+      PRange pRange;
+      float qValue;
+  };
+
+  class Imageattr
+  {
+    public:
+      Imageattr() : pt(), sendAll(false), recvAll(false) {}
+      void Serialize(std::ostream& os) const;
+      bool Parse(std::istream& is, std::string* error);
+      bool ParseSets(std::istream& is, std::string* error);
+      // If not set, this means all payload types
+      Maybe<uint16_t> pt;
+      bool sendAll;
+      std::vector<Set> sendSets;
+      bool recvAll;
+      std::vector<Set> recvSets;
+  };
+
   virtual void Serialize(std::ostream& os) const override;
+  bool PushEntry(const std::string& raw, std::string* error, size_t* errorPos);
+
+  std::vector<Imageattr> mImageattrs;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -692,6 +773,101 @@ public:
   std::vector<Candidate> mCandidates;
 };
 
+/*
+a=rid, draft-pthatcher-mmusic-rid-01
+
+   rid-syntax        = "a=rid:" rid-identifier SP rid-dir
+                       [ rid-pt-param-list / rid-param-list ]
+
+   rid-identifier    = 1*(alpha-numeric / "-" / "_")
+
+   rid-dir           = "send" / "recv"
+
+   rid-pt-param-list = SP rid-fmt-list *(";" rid-param)
+
+   rid-param-list    = SP rid-param *(";" rid-param)
+
+   rid-fmt-list      = "pt=" fmt *( "," fmt )
+                        ; fmt defined in {{RFC4566}}
+
+   rid-param         = rid-width-param
+                       / rid-height-param
+                       / rid-fps-param
+                       / rid-fs-param
+                       / rid-br-param
+                       / rid-pps-param
+                       / rid-depend-param
+                       / rid-param-other
+
+   rid-width-param   = "max-width" [ "=" int-param-val ]
+
+   rid-height-param  = "max-height" [ "=" int-param-val ]
+
+   rid-fps-param     = "max-fps" [ "=" int-param-val ]
+
+   rid-fs-param      = "max-fs" [ "=" int-param-val ]
+
+   rid-br-param      = "max-br" [ "=" int-param-val ]
+
+   rid-pps-param     = "max-pps" [ "=" int-param-val ]
+
+   rid-depend-param  = "depend=" rid-list
+
+   rid-param-other   = 1*(alpha-numeric / "-") [ "=" param-val ]
+
+   rid-list          = rid-identifier *( "," rid-identifier )
+
+   int-param-val     = 1*DIGIT
+
+   param-val         = *( %x20-58 / %x60-7E )
+                       ; Any printable character except semicolon
+*/
+class SdpRidAttributeList : public SdpAttribute
+{
+public:
+  explicit SdpRidAttributeList()
+    : SdpAttribute(kRidAttribute)
+  {}
+
+  struct Rid
+  {
+    Rid() :
+      direction(sdp::kSend)
+    {}
+
+    bool Parse(std::istream& is, std::string* error);
+    bool ParseParameters(std::istream& is, std::string* error);
+    bool ParseDepend(std::istream& is, std::string* error);
+    bool ParseFormats(std::istream& is, std::string* error);
+    void Serialize(std::ostream& os) const;
+    void SerializeParameters(std::ostream& os) const;
+    bool HasFormat(const std::string& format) const;
+    bool HasParameters() const
+    {
+      return !formats.empty() ||
+        constraints.maxWidth ||
+        constraints.maxHeight ||
+        constraints.maxFps ||
+        constraints.maxFs ||
+        constraints.maxBr ||
+        constraints.maxPps ||
+        !dependIds.empty();
+    }
+
+
+    std::string id;
+    sdp::Direction direction;
+    std::vector<uint16_t> formats; // Empty implies all
+    EncodingConstraints constraints;
+    std::vector<std::string> dependIds;
+  };
+
+  virtual void Serialize(std::ostream& os) const override;
+  bool PushEntry(const std::string& raw, std::string* error, size_t* errorPos);
+
+  std::vector<Rid> mRids;
+};
+
 ///////////////////////////////////////////////////////////////////////////
 // a=rtcp, RFC3605
 //-------------------------------------------------------------------------
@@ -700,16 +876,26 @@ public:
 class SdpRtcpAttribute : public SdpAttribute
 {
 public:
-  explicit SdpRtcpAttribute(uint16_t port,
-                            sdp::NetType netType = sdp::kNetTypeNone,
-                            sdp::AddrType addrType = sdp::kAddrTypeNone,
-                            const std::string& address = "")
+  explicit SdpRtcpAttribute(uint16_t port)
+    : SdpAttribute(kRtcpAttribute),
+      mPort(port),
+      mNetType(sdp::kNetTypeNone),
+      mAddrType(sdp::kAddrTypeNone)
+  {}
+
+  SdpRtcpAttribute(uint16_t port,
+                   sdp::NetType netType,
+                   sdp::AddrType addrType,
+                   const std::string& address)
       : SdpAttribute(kRtcpAttribute),
         mPort(port),
         mNetType(netType),
         mAddrType(addrType),
         mAddress(address)
   {
+    MOZ_ASSERT(netType != sdp::kNetTypeNone);
+    MOZ_ASSERT(addrType != sdp::kAddrTypeNone);
+    MOZ_ASSERT(!address.empty());
   }
 
   virtual void Serialize(std::ostream& os) const override;
@@ -1061,6 +1247,14 @@ public:
     {
     }
 
+    Fmtp(const std::string& aFormat, const std::string& aParametersString,
+         const Parameters& aParameters)
+        : format(aFormat),
+          parameters_string(aParametersString),
+          parameters(aParameters.Clone())
+    {
+    }
+
     // TODO: Rip all of this out when we have move semantics in the stl.
     Fmtp(const Fmtp& orig) { *this = orig; }
 
@@ -1203,6 +1397,71 @@ inline std::ostream& operator<<(std::ostream& os, SdpSetupAttribute::Role r)
   }
   return os;
 }
+
+// sc-attr     = "a=simulcast:" 1*2( WSP sc-str-list ) [WSP sc-pause-list]
+// sc-str-list = sc-dir WSP sc-id-type "=" sc-alt-list *( ";" sc-alt-list )
+// sc-pause-list = "paused=" sc-alt-list
+// sc-dir      = "send" / "recv"
+// sc-id-type  = "pt" / "rid" / token
+// sc-alt-list = sc-id *( "," sc-id )
+// sc-id       = fmt / rid-identifier / token
+// ; WSP defined in [RFC5234]
+// ; fmt, token defined in [RFC4566]
+// ; rid-identifier defined in [I-D.pthatcher-mmusic-rid]
+class SdpSimulcastAttribute : public SdpAttribute
+{
+public:
+  SdpSimulcastAttribute() : SdpAttribute(kSimulcastAttribute) {}
+
+  void Serialize(std::ostream& os) const override;
+  bool Parse(std::istream& is, std::string* error);
+
+  class Version
+  {
+    public:
+      void Serialize(std::ostream& os) const;
+      bool IsSet() const
+      {
+        return !choices.empty();
+      }
+      bool Parse(std::istream& is, std::string* error);
+      bool GetChoicesAsFormats(std::vector<uint16_t>* formats) const;
+
+      std::vector<std::string> choices;
+  };
+
+  class Versions : public std::vector<Version>
+  {
+    public:
+      enum Type {
+        kPt,
+        kRid
+      };
+
+      Versions() : type(kRid) {}
+      void Serialize(std::ostream& os) const;
+      bool IsSet() const
+      {
+        if (empty()) {
+          return false;
+        }
+
+        for (const Version& version : *this) {
+          if (version.IsSet()) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      bool Parse(std::istream& is, std::string* error);
+      Type type;
+  };
+
+  Versions sendVersions;
+  Versions recvVersions;
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // a=ssrc, RFC5576

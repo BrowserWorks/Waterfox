@@ -28,8 +28,8 @@
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
 
-#include "prlog.h"
-extern PRLogModuleInfo* gXULTemplateLog;
+#include "mozilla/Logging.h"
+extern mozilla::LazyLogModule gXULTemplateLog;
 
 class nsIContent;
 class nsXULTemplateResultRDF;
@@ -41,7 +41,7 @@ class nsXULTemplateQueryProcessorRDF final : public nsIXULTemplateQueryProcessor
                                              public nsIRDFObserver
 {
 public:
-    typedef nsTArray<nsRefPtr<nsXULTemplateResultRDF> > ResultArray;
+    typedef nsTArray<RefPtr<nsXULTemplateResultRDF> > ResultArray;
 
     nsXULTemplateQueryProcessorRDF();
 

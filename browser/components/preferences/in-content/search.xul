@@ -1,14 +1,20 @@
     <preferences id="searchPreferences" hidden="true" data-category="paneSearch">
 
-      <!-- Suggest -->
       <preference id="browser.search.suggest.enabled"
                   name="browser.search.suggest.enabled"
                   type="bool"/>
 
-      <!-- One off providers -->
+      <preference id="browser.urlbar.suggest.searches"
+                  name="browser.urlbar.suggest.searches"
+                  type="bool"/>
+
       <preference id="browser.search.hiddenOneOffs"
                   name="browser.search.hiddenOneOffs"
                   type="unichar"/>
+
+      <preference id="browser.search.redirectWindowsSearch"
+                  name="browser.search.redirectWindowsSearch"
+                  type="bool"/>
 
     </preferences>
 
@@ -21,7 +27,9 @@
           class="header"
           hidden="true"
           data-category="paneSearch">
-      <label class="header-name">&paneSearch.title;</label>
+      <label class="header-name" flex="1">&paneSearch.title;</label>
+      <button class="help-button"
+              aria-label="&helpButton.label;"/>
     </hbox>
 
     <!-- Default Search Engine -->
@@ -35,6 +43,19 @@
                 label="&provideSearchSuggestions.label;"
                 accesskey="&provideSearchSuggestions.accesskey;"
                 preference="browser.search.suggest.enabled"/>
+      <vbox class="indent">
+        <checkbox id="urlBarSuggestion" label="&showURLBarSuggestions.label;"
+                  accesskey="&showURLBarSuggestions.accesskey;"
+                  preference="browser.urlbar.suggest.searches"/>
+        <hbox id="urlBarSuggestionPermanentPBLabel"
+              align="center" class="indent">
+          <label flex="1">&urlBarSuggestionsPermanentPB.label;</label>
+        </hbox>
+      </vbox>
+      <checkbox id="redirectSearchCheckbox"
+                label="&redirectWindowsSearch.label;"
+                accesskey="&redirectWindowsSearch.accesskey;"
+                preference="browser.search.redirectWindowsSearch"/>
     </groupbox>
 
     <groupbox id="oneClickSearchProvidersGroup" data-category="paneSearch">

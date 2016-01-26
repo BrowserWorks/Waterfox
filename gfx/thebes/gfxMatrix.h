@@ -10,6 +10,7 @@
 #include "gfxTypes.h"
 #include "gfxRect.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/gfx/MatrixFwd.h"
 
 // XX - I don't think this class should use gfxFloat at all,
 // but should use 'double' and be called gfxDoubleMatrix;
@@ -78,6 +79,11 @@ public:
     gfxMatrix operator * (const gfxMatrix& m) const {
         return gfxMatrix(*this) *= m;
     }
+
+    /**
+     * Multiplies *this with aMatrix and returns the result.
+     */
+    mozilla::gfx::Matrix4x4 operator * (const mozilla::gfx::Matrix4x4& aMatrix) const;
 
     /* Returns true if the other matrix is fuzzy-equal to this matrix.
      * Note that this isn't a cheap comparison!

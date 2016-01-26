@@ -46,8 +46,7 @@ public:
 
   void InitClipboardEvent(const nsAString& aType, bool aCanBubble,
                           bool aCancelable,
-                          DataTransfer* aClipboardData,
-                          ErrorResult& aError);
+                          DataTransfer* aClipboardData);
 
 protected:
   ~ClipboardEvent() {}
@@ -55,5 +54,10 @@ protected:
 
 } // namespace dom
 } // namespace mozilla
+
+already_AddRefed<mozilla::dom::ClipboardEvent>
+NS_NewDOMClipboardEvent(mozilla::dom::EventTarget* aOwner,
+                        nsPresContext* aPresContext,
+                        mozilla::InternalClipboardEvent* aEvent);
 
 #endif // mozilla_dom_ClipboardEvent_h_

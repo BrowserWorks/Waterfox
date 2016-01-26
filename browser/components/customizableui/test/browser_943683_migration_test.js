@@ -7,14 +7,14 @@
 const kWidgetId = "test-addonbar-migration";
 const kWidgetId2 = "test-addonbar-migration2";
 
-let addonbar = document.getElementById(CustomizableUI.AREA_ADDONBAR);
-let navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
+var addonbar = document.getElementById(CustomizableUI.AREA_ADDONBAR);
+var navbar = document.getElementById(CustomizableUI.AREA_NAVBAR);
 
-let btn;
-let btn2;
+var btn;
+var btn2;
 
 // Check we migrate normal stuff to the navbar
-add_task(function() {
+add_task(function*() {
   btn = createDummyXULButton(kWidgetId, "Test");
   btn2 = createDummyXULButton(kWidgetId2, "Test2");
   addonbar.insertItem(btn.id);

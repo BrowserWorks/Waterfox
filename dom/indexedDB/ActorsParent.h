@@ -14,6 +14,7 @@ namespace mozilla {
 namespace dom {
 
 class Element;
+class FileHandleThreadPool;
 
 namespace quota {
 
@@ -25,6 +26,7 @@ namespace indexedDB {
 
 class LoggingInfo;
 class PBackgroundIDBFactoryParent;
+class PBackgroundIndexedDBUtilsParent;
 class PIndexedDBPermissionRequestParent;
 
 PBackgroundIDBFactoryParent*
@@ -36,6 +38,12 @@ RecvPBackgroundIDBFactoryConstructor(PBackgroundIDBFactoryParent* aActor,
 
 bool
 DeallocPBackgroundIDBFactoryParent(PBackgroundIDBFactoryParent* aActor);
+
+PBackgroundIndexedDBUtilsParent*
+AllocPBackgroundIndexedDBUtilsParent();
+
+bool
+DeallocPBackgroundIndexedDBUtilsParent(PBackgroundIndexedDBUtilsParent* aActor);
 
 PIndexedDBPermissionRequestParent*
 AllocPIndexedDBPermissionRequestParent(Element* aOwnerElement,
@@ -51,6 +59,9 @@ DeallocPIndexedDBPermissionRequestParent(
 
 already_AddRefed<mozilla::dom::quota::Client>
 CreateQuotaClient();
+
+FileHandleThreadPool*
+GetFileHandleThreadPool();
 
 } // namespace indexedDB
 } // namespace dom

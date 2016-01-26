@@ -5,6 +5,9 @@ MAINTAINER    Jonas Finnemann Jensen <jopsen@gmail.com>
 COPY sources.list /etc/apt/sources.list
 
 RUN useradd -d /home/worker -s /bin/bash -m worker
+# allow the worker user to access video devices
+RUN usermod -a -G video worker
+
 RUN apt-get update && apt-get install -y --force-yes \
   alsa-base \
   alsa-utils \
@@ -16,6 +19,7 @@ RUN apt-get update && apt-get install -y --force-yes \
   build-essential \
   ca-certificates \
   ccache \
+  clang \
   curl \
   fonts-kacst \
   fonts-kacst-one \
@@ -109,11 +113,13 @@ RUN apt-get update && apt-get install -y --force-yes \
   uuid \
   vim \
   wget \
+  x11-xserver-utils \
+  x11-utils \
   xvfb \
   yasm \
   zip
 
-ENV NODE_VERSION v0.10.36
+ENV NODE_VERSION v4.2.2
 RUN cd /usr/local/ && \
     curl https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz | tar -xz --strip-components 1 && \
     node -v

@@ -9,6 +9,7 @@
 
 #include "mozilla/a11y/Role.h"
 #include "nsIAccessibleText.h"
+#include "nsIAccessibleTypes.h"
 #include "Accessible.h"
 #include "nsString.h"
 #include "nsTArray.h"
@@ -18,6 +19,7 @@
 namespace mozilla {
 namespace a11y {
 
+class Accessible;
 class Attribute;
 class DocAccessibleParent;
 enum class RelationType;
@@ -29,7 +31,7 @@ public:
   ProxyAccessible(uint64_t aID, ProxyAccessible* aParent,
                   DocAccessibleParent* aDoc, role aRole) :
      mParent(aParent), mDoc(aDoc), mWrapper(0), mID(aID), mRole(aRole),
-     mOuterDoc(false)
+     mOuterDoc(false), mIsDoc(false)
   {
     MOZ_COUNT_CTOR(ProxyAccessible);
   }
@@ -44,10 +46,27 @@ public:
 
   uint32_t ChildrenCount() const { return mChildren.Length(); }
   ProxyAccessible* ChildAt(uint32_t aIdx) const { return mChildren[aIdx]; }
+  ProxyAccessible* FirstChild() const
+    { return mChildren.Length() ? mChildren[0] : nullptr; }
+  ProxyAccessible* LastChild() const
+    { return mChildren.Length() ? mChildren[mChildren.Length() - 1] : nullptr; }
+  ProxyAccessible* PrevSibling() const
+  {
+    size_t idx = IndexInParent();
+    return idx > 0 ? Parent()->mChildren[idx - 1] : nullptr;
+  }
+  ProxyAccessible* NextSibling() const
+  {
+    size_t idx = IndexInParent();
+    return idx < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
+    : nullptr;
+  }
 
   // XXX evaluate if this is fast enough.
-  size_t IndexInParent() const { return mParent->mChildren.IndexOf(this); }
+  size_t IndexInParent() const { return Parent()->mChildren.IndexOf(this); }
+  uint32_t EmbeddedChildCount() const;
   int32_t IndexOfEmbeddedChild(const ProxyAccessible*);
+  ProxyAccessible* EmbeddedChildAt(size_t aChildIdx);
   bool MustPruneChildren() const;
 
   void Shutdown();
@@ -65,6 +84,8 @@ public:
    */
   ProxyAccessible* Parent() const { return mParent; }
 
+  Accessible* OuterDocOfRemoteBrowser() const;
+
   /**
    * Get the role of the accessible we're proxying.
    */
@@ -76,6 +97,11 @@ public:
   uint64_t State() const;
 
   /*
+   * Return the native states for the proxied accessible.
+   */
+  uint64_t NativeState() const;
+
+  /*
    * Set aName to the name of the proxied accessible.
    */
   void Name(nsString& aName) const;
@@ -84,6 +110,11 @@ public:
    * Set aValue to the value of the proxied accessible.
    */
   void Value(nsString& aValue) const;
+
+  /*
+   * Set aHelp to the help string of the proxied accessible.
+   */
+  void Help(nsString& aHelp) const;
 
   /**
    * Set aDesc to the description of the proxied accessible.
@@ -106,8 +137,19 @@ public:
   void Relations(nsTArray<RelationType>* aTypes,
                  nsTArray<nsTArray<ProxyAccessible*>>* aTargetSets) const;
 
+  bool IsSearchbox() const;
+
+  nsIAtom* LandmarkRole() const;
+
+  nsIAtom* ARIARoleAtom() const;
+
+  int32_t GetLevelInternal();
+  void ScrollTo(uint32_t aScrollType);
+  void ScrollToPoint(uint32_t aScrollType, int32_t aX, int32_t aY);
+
+  int32_t CaretLineNumber();
   int32_t CaretOffset();
-  bool SetCaretOffset(int32_t aOffset);
+  void SetCaretOffset(int32_t aOffset);
 
   int32_t CharacterCount();
   int32_t SelectionCount();
@@ -140,7 +182,7 @@ public:
   void DefaultTextAttributes(nsTArray<Attribute>* aAttrs);
 
   nsIntRect TextBounds(int32_t aStartOffset, int32_t aEndOffset,
-                       uint32_t aCoordType);
+                       uint32_t aCoordType = nsIAccessibleCoordinateType::COORDTYPE_SCREEN_RELATIVE);
 
   nsIntRect CharBounds(int32_t aOffset, uint32_t aCoordType);
 
@@ -168,6 +210,8 @@ public:
                               uint32_t aCoordinateType,
                               int32_t aX, int32_t aY);
 
+  void Text(nsString* aText);
+
   void ReplaceText(const nsString& aText);
 
   bool InsertText(const nsString& aText, int32_t aPosition);
@@ -189,6 +233,27 @@ public:
   uint32_t EndOffset(bool* aOk);
 
   bool IsLinkValid();
+
+  // XXX checking mRole alone may not result in same behavior as Accessibles
+  // due to ARIA roles. See bug 1210477.
+  inline bool IsTable() const
+  {
+    return mRole == roles::TABLE || mRole == roles::MATHML_TABLE;
+  }
+  inline bool IsTableRow() const
+  {
+    return (mRole == roles::ROW ||
+            mRole == roles::MATHML_TABLE_ROW ||
+            mRole == roles::MATHML_LABELED_ROW);
+  }
+  inline bool IsTableCell() const
+  {
+    return (mRole == roles::CELL ||
+            mRole == roles::COLUMNHEADER ||
+            mRole == roles::ROWHEADER ||
+            mRole == roles::GRID_CELL ||
+            mRole == roles::MATHML_CELL);
+  }
 
   uint32_t AnchorCount(bool* aOk);
 
@@ -214,9 +279,9 @@ public:
 
   uint32_t RowExtent();
 
-  void ColHeaderCells(nsTArray<uint64_t>* aCells);
+  void ColHeaderCells(nsTArray<ProxyAccessible*>* aCells);
 
-  void RowHeaderCells(nsTArray<uint64_t>* aCells);
+  void RowHeaderCells(nsTArray<ProxyAccessible*>* aCells);
 
   bool IsCellSelected();
 
@@ -249,6 +314,8 @@ public:
   void TableUnselectColumn(uint32_t aCol);
   void TableUnselectRow(uint32_t aRow);
   bool TableIsProbablyForLayout();
+  ProxyAccessible* AtkTableColumnHeader(int32_t aCol);
+  ProxyAccessible* AtkTableRowHeader(int32_t aRow);
 
   void SelectedItems(nsTArray<ProxyAccessible*>* aSelectedItems);
   uint32_t SelectedItemCount();
@@ -259,12 +326,16 @@ public:
   bool SelectAll();
   bool UnselectAll();
 
+  void TakeSelection();
+  void SetSelected(bool aSelect);
+
   bool DoAction(uint8_t aIndex);
   uint8_t ActionCount();
   void ActionDescriptionAt(uint8_t aIndex, nsString& aDescription);
   void ActionNameAt(uint8_t aIndex, nsString& aName);
   KeyBinding AccessKey();
   KeyBinding KeyboardShortcut();
+  void AtkKeyBinding(nsString& aBinding);
 
   double CurValue();
   bool SetCurValue(double aValue);
@@ -273,16 +344,24 @@ public:
   double Step();
 
   void TakeFocus();
+  ProxyAccessible* FocusedChild();
   ProxyAccessible* ChildAtPoint(int32_t aX, int32_t aY,
                                 Accessible::EWhichChildAtPoint aWhichChild);
   nsIntRect Bounds();
 
   void Language(nsString& aLocale);
   void DocType(nsString& aType);
+  void Title(nsString& aTitle);
   void URL(nsString& aURL);
   void MimeType(nsString aMime);
   void URLDocTypeMimeType(nsString& aURL, nsString& aDocType,
                           nsString& aMimeType);
+
+  ProxyAccessible* AccessibleAtPoint(int32_t aX, int32_t aY,
+                                     bool aNeedsScreenCoords);
+
+  void Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,
+               int32_t* aWidth, int32_t* aHeight);
 
   /**
    * Allow the platform to store a pointers worth of data on us.
@@ -295,10 +374,22 @@ public:
    */
   uint64_t ID() const { return mID; }
 
+  /**
+   * Return the document containing this proxy, or the proxy itself if it is a
+   * document.
+   */
+  DocAccessibleParent* Document() const { return mDoc; }
+
+  /**
+   * Return true if this proxy is a DocAccessibleParent.
+   */
+  bool IsDoc() const { return mIsDoc; }
+  DocAccessibleParent* AsDoc() const { return IsDoc() ? mDoc : nullptr; }
+
 protected:
   explicit ProxyAccessible(DocAccessibleParent* aThisAsDoc) :
     mParent(nullptr), mDoc(aThisAsDoc), mWrapper(0), mID(0),
-    mRole(roles::DOCUMENT)
+    mRole(roles::DOCUMENT), mOuterDoc(false), mIsDoc(true)
   { MOZ_COUNT_CTOR(ProxyAccessible); }
 
 protected:
@@ -309,8 +400,9 @@ private:
   DocAccessibleParent* mDoc;
   uintptr_t mWrapper;
   uint64_t mID;
-  role mRole : 31;
+  role mRole : 30;
   bool mOuterDoc : 1;
+  const bool mIsDoc: 1;
 };
 
 enum Interfaces
@@ -322,6 +414,8 @@ enum Interfaces
   TABLE = 16,
   TABLECELL = 32,
   DOCUMENT = 64,
+  SELECTION = 128,
+  ACTION = 256,
 };
 
 }

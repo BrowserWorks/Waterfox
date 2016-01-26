@@ -15,6 +15,11 @@ class DualSurface
 public:
   inline explicit DualSurface(SourceSurface *aSurface)
   {
+    if (!aSurface) {
+      mA = mB = nullptr;
+      return;
+    }
+
     if (aSurface->GetType() != SurfaceType::DUAL_DT) {
       mA = mB = aSurface;
       return;
@@ -181,7 +186,17 @@ DrawTargetDual::Mask(const Pattern &aSource, const Pattern &aMask, const DrawOpt
   mB->Mask(*source.mB, *mask.mB, aOptions);
 }
 
-TemporaryRef<DrawTarget>
+void
+DrawTargetDual::PushLayer(bool aOpaque, Float aOpacity, SourceSurface* aMask,
+                          const Matrix& aMaskTransform, const IntRect& aBounds,
+                          bool aCopyBackground)
+{
+  DualSurface mask(aMask);
+  mA->PushLayer(aOpaque, aOpacity, mask.mA, aMaskTransform, aBounds, aCopyBackground);
+  mB->PushLayer(aOpaque, aOpacity, mask.mB, aMaskTransform, aBounds, aCopyBackground);
+}
+
+already_AddRefed<DrawTarget>
 DrawTargetDual::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const
 {
   RefPtr<DrawTarget> dtA = mA->CreateSimilarDrawTarget(aSize, aFormat);
@@ -192,8 +207,8 @@ DrawTargetDual::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFor
     return nullptr;
   }
 
-  return new DrawTargetDual(dtA, dtB);
+  return MakeAndAddRef<DrawTargetDual>(dtA, dtB);
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

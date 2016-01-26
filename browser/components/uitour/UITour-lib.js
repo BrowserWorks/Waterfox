@@ -99,15 +99,26 @@ if (typeof Mozilla == 'undefined') {
 	};
 
 	Mozilla.UITour.showHeartbeat = function(message, thankyouMessage, flowId, engagementURL,
-																					learnMoreLabel, learnMoreURL) {
-		_sendEvent('showHeartbeat', {
+						learnMoreLabel, learnMoreURL, options) {
+		var args = {
 			message: message,
 			thankyouMessage: thankyouMessage,
 			flowId: flowId,
 			engagementURL: engagementURL,
 			learnMoreLabel: learnMoreLabel,
 			learnMoreURL: learnMoreURL,
-		});
+		};
+
+		if (options) {
+			for (var option in options) {
+				if (!options.hasOwnProperty(option)) {
+					continue;
+				}
+				args[option] = options[option];
+			}
+		}
+
+		_sendEvent('showHeartbeat', args);
 	};
 
 	Mozilla.UITour.showHighlight = function(target, effect) {
@@ -285,10 +296,28 @@ if (typeof Mozilla == 'undefined') {
 		_sendEvent('forceShowReaderIcon');
 	};
 
-	Mozilla.UITour.toggleReaderMode = function(feature) {
+	Mozilla.UITour.toggleReaderMode = function() {
 		_sendEvent('toggleReaderMode');
 	};
 
+	Mozilla.UITour.openPreferences = function(pane) {
+		_sendEvent('openPreferences', {
+			pane: pane
+		});
+	};
+
+	/**
+	 * Closes the tab where this code is running. As usual, if the tab is in the
+	 * foreground, the tab that was displayed before is selected.
+	 *
+	 * The last tab in the current window will never be closed, in which case
+	 * this call will have no effect. The calling code is expected to take an
+	 * action after a small timeout in order to handle this case, for example by
+	 * displaying a goodbye message or a button to restart the tour.
+	 */
+	Mozilla.UITour.closeTab = function() {
+		_sendEvent('closeTab');
+	};
 })();
 
 // Make this library Require-able.

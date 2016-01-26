@@ -52,13 +52,17 @@ public:
                                  const nsAString& aName,
                                  ErrorResult& aRv);
 
+  already_AddRefed<nsISupports> GetCanvasContext(const nsAString& aElementId,
+                                                 const nsAString& aContextId,
+                                                 ErrorResult& aRv);
+
 private:
   ~AnonymousContent();
   Element* GetElementById(const nsAString& aElementId);
   nsCOMPtr<Element> mContentNode;
 };
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_AnonymousContent_h

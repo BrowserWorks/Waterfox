@@ -18,7 +18,7 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nscore.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #define UNIMPLEMENTED() { /* Logging this is too spammy to do by default */ }
 
@@ -27,34 +27,32 @@ class nsIStreamListener;
 namespace mozilla {
 
 class MediaDecoder;
-class MediaLargeByteBuffer;
+class MediaByteBuffer;
 
 namespace dom {
 
 class SourceBuffer;
 
-}  // namespace dom
+} // namespace dom
 
 class SourceBufferResource final : public MediaResource
 {
 public:
   explicit SourceBufferResource(const nsACString& aType);
-  virtual nsresult Close() override;
-  virtual void Suspend(bool aCloseImmediately) override { UNIMPLEMENTED(); }
-  virtual void Resume() override { UNIMPLEMENTED(); }
-  virtual already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override { UNIMPLEMENTED(); return nullptr; }
-  virtual already_AddRefed<MediaResource> CloneData(MediaDecoder* aDecoder) override { UNIMPLEMENTED(); return nullptr; }
-  virtual void SetReadMode(MediaCacheStream::ReadMode aMode) override { UNIMPLEMENTED(); }
-  virtual void SetPlaybackRate(uint32_t aBytesPerSecond) override { UNIMPLEMENTED(); }
-  virtual nsresult Read(char* aBuffer, uint32_t aCount, uint32_t* aBytes) override;
-  virtual nsresult ReadAt(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes) override;
-  virtual nsresult Seek(int32_t aWhence, int64_t aOffset) override;
-  virtual int64_t Tell() override { return mOffset; }
-  virtual void Pin() override { UNIMPLEMENTED(); }
-  virtual void Unpin() override { UNIMPLEMENTED(); }
-  virtual double GetDownloadRate(bool* aIsReliable) override { UNIMPLEMENTED(); *aIsReliable = false; return 0; }
-  virtual int64_t GetLength() override { return mInputBuffer.GetLength(); }
-  virtual int64_t GetNextCachedData(int64_t aOffset) override {
+  nsresult Close() override;
+  void Suspend(bool aCloseImmediately) override { UNIMPLEMENTED(); }
+  void Resume() override { UNIMPLEMENTED(); }
+  already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override { UNIMPLEMENTED(); return nullptr; }
+  already_AddRefed<MediaResource> CloneData(MediaResourceCallback*) override { UNIMPLEMENTED(); return nullptr; }
+  void SetReadMode(MediaCacheStream::ReadMode aMode) override { UNIMPLEMENTED(); }
+  void SetPlaybackRate(uint32_t aBytesPerSecond) override { UNIMPLEMENTED(); }
+  nsresult ReadAt(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes) override;
+  int64_t Tell() override { return mOffset; }
+  void Pin() override { UNIMPLEMENTED(); }
+  void Unpin() override { UNIMPLEMENTED(); }
+  double GetDownloadRate(bool* aIsReliable) override { UNIMPLEMENTED(); *aIsReliable = false; return 0; }
+  int64_t GetLength() override { return mInputBuffer.GetLength(); }
+  int64_t GetNextCachedData(int64_t aOffset) override {
     ReentrantMonitorAutoEnter mon(mMonitor);
     MOZ_ASSERT(aOffset >= 0);
     if (uint64_t(aOffset) < mInputBuffer.GetOffset()) {
@@ -64,28 +62,27 @@ public:
     }
     return aOffset;
   }
-  virtual int64_t GetCachedDataEnd(int64_t aOffset) override { UNIMPLEMENTED(); return -1; }
-  virtual bool IsDataCachedToEndOfResource(int64_t aOffset) override { return false; }
-  virtual bool IsSuspendedByCache() override { UNIMPLEMENTED(); return false; }
-  virtual bool IsSuspended() override { UNIMPLEMENTED(); return false; }
-  virtual nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
-  virtual bool IsTransportSeekable() override { UNIMPLEMENTED(); return true; }
-  virtual nsresult Open(nsIStreamListener** aStreamListener) override { UNIMPLEMENTED(); return NS_ERROR_FAILURE; }
+  int64_t GetCachedDataEnd(int64_t aOffset) override { UNIMPLEMENTED(); return -1; }
+  bool IsDataCachedToEndOfResource(int64_t aOffset) override { return false; }
+  bool IsSuspendedByCache() override { UNIMPLEMENTED(); return false; }
+  bool IsSuspended() override { UNIMPLEMENTED(); return false; }
+  nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
+  bool IsTransportSeekable() override { UNIMPLEMENTED(); return true; }
+  nsresult Open(nsIStreamListener** aStreamListener) override { UNIMPLEMENTED(); return NS_ERROR_FAILURE; }
 
-  virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) override
+  nsresult GetCachedRanges(MediaByteRangeSet& aRanges) override
   {
     ReentrantMonitorAutoEnter mon(mMonitor);
     if (mInputBuffer.GetLength()) {
-      aRanges.AppendElement(MediaByteRange(mInputBuffer.GetOffset(),
-                                           mInputBuffer.GetLength()));
+      aRanges += MediaByteRange(mInputBuffer.GetOffset(),
+                                mInputBuffer.GetLength());
     }
     return NS_OK;
   }
 
-  virtual const nsCString& GetContentType() const override { return mType; }
+  const nsCString& GetContentType() const override { return mType; }
 
-  virtual size_t SizeOfExcludingThis(
-                      MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     ReentrantMonitorAutoEnter mon(mMonitor);
 
@@ -96,14 +93,18 @@ public:
     return size;
   }
 
-  virtual size_t SizeOfIncludingThis(
-                      MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
+  bool IsExpectingMoreData() override
+  {
+    return false;
+  }
+
   // Used by SourceBuffer.
-  void AppendData(MediaLargeByteBuffer* aData);
+  void AppendData(MediaByteBuffer* aData);
   void Ended();
   bool IsEnded()
   {
@@ -112,10 +113,11 @@ public:
   }
   // Remove data from resource if it holds more than the threshold
   // number of bytes. Returns amount evicted.
-  uint32_t EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold);
+  uint32_t EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold,
+                     ErrorResult& aRv);
 
   // Remove data from resource before the given offset.
-  void EvictBefore(uint64_t aOffset);
+  void EvictBefore(uint64_t aOffset, ErrorResult& aRv);
 
   // Remove all data from the resource
   uint32_t EvictAll();
@@ -133,7 +135,7 @@ public:
 #endif
 
 private:
-  ~SourceBufferResource();
+  virtual ~SourceBufferResource();
   nsresult SeekInternal(int64_t aOffset);
   nsresult ReadInternal(char* aBuffer, uint32_t aCount, uint32_t* aBytes, bool aMayBlock);
   nsresult ReadAtInternal(int64_t aOffset, char* aBuffer, uint32_t aCount, uint32_t* aBytes, bool aMayBlock);

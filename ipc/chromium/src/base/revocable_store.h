@@ -20,9 +20,9 @@ class RevocableStore {
   class StoreRef final {
    public:
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(StoreRef)
-    explicit StoreRef(RevocableStore* store) : store_(store) { }
+    explicit StoreRef(RevocableStore* aStore) : store_(aStore) { }
 
-    void set_store(RevocableStore* store) { store_ = store; }
+    void set_store(RevocableStore* aStore) { store_ = aStore; }
     RevocableStore* store() const { return store_; }
 
    protected:
@@ -46,7 +46,7 @@ class RevocableStore {
   private:
     // We hold a reference to the store through this ref pointer.  We release
     // this reference on destruction.
-    nsRefPtr<StoreRef> store_reference_;
+    RefPtr<StoreRef> store_reference_;
 
     DISALLOW_EVIL_CONSTRUCTORS(Revocable);
   };
@@ -68,7 +68,7 @@ class RevocableStore {
   void Add(Revocable* item);
 
   // This is the reference the unrevoked items in the store hold.
-  nsRefPtr<StoreRef> owning_reference_;
+  RefPtr<StoreRef> owning_reference_;
 
   // The number of unrevoked items in the store.
   int count_;

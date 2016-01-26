@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import re
 import os
 from urlparse import urlparse
@@ -323,7 +325,7 @@ MANIFESTS_TYPES = dict([(c.type, c) for c in globals().values()
                        if type(c) == type and issubclass(c, ManifestEntry)
                        and hasattr(c, 'type') and c.type])
 
-MANIFEST_RE = re.compile(r'\s*#.*$')
+MANIFEST_RE = re.compile(r'^#.*$')
 
 
 def parse_manifest_line(base, line):

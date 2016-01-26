@@ -30,8 +30,8 @@ namespace mozilla {
 namespace dom {
 class AutoJSAPI;
 class EventTarget;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #define NS_HANDLER_TYPE_XBL_JS              (1 << 0)
 #define NS_HANDLER_TYPE_XBL_COMMAND         (1 << 1)
@@ -241,7 +241,7 @@ protected:
   // Prototype handlers are chained. We own the next handler in the chain.
   nsXBLPrototypeHandler* mNextHandler;
   nsCOMPtr<nsIAtom> mEventName; // The type of the event, e.g., "keypress"
-  nsRefPtr<nsXBLEventHandler> mHandler;
+  RefPtr<nsXBLEventHandler> mHandler;
   nsXBLPrototypeBinding* mPrototypeBinding; // the binding owns us
 };
 

@@ -48,6 +48,8 @@ assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { retur
 assertAsmTypeFail('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(5.); i = 5; return toF(i); } return f");
 assertAsmTypeFail('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(5.); i = 6.; return toF(i); } return f");
 
+assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(-0.); return toF(i); } return f"), this)(), -0);
+assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(0.); return toF(i); } return f"), this)(), 0);
 assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(5.); return toF(i); } return f"), this)(), 5);
 assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(5.); i = toF(42); return toF(i); } return f"), this)(), 42);
 assertEq(asmLink(asmCompile('glob', USE_ASM + TO_FLOAT32 + "function f() { var i = toF(5.); i = toF(6.); return toF(i); } return f"), this)(), 6);
@@ -62,6 +64,8 @@ assertEq(asmLink(asmCompile('glob', 'ffi', 'heap', USE_ASM + TO_FLOAT32 + HEAP32
 assertEq(asmLink(asmCompile('glob', 'ffi', 'heap', USE_ASM + TO_FLOAT32 + HEAP32 + "function f() { f32[0] = 1.5; return +f32[0]; } return f"), this, null, heap)(), 1.5);
 assertEq(asmLink(asmCompile('glob', 'ffi', 'heap', USE_ASM + TO_FLOAT32 + HEAP32 + HEAP64 + "function f() { f64[0] = 1.5; return toF(f64[0]); } return f"), this, null, heap)(), 1.5);
 assertEq(asmLink(asmCompile('glob', 'ffi', 'heap', USE_ASM + TO_FLOAT32 + HEAP32 + HEAP64 + "function f() { f32[0] = toF(42); f64[0] = f32[0]; return +f64[0]; } return f"), this, null, heap)(), 42);
+
+assertEq(asmLink(asmCompile('glob', 'ffi', 'heap', USE_ASM + TO_FLOAT32 + HEAP32 + "function f() { f32[0] = toF(-1.4013e-45) / toF(42.); } return f"), this, null, heap)(), undefined);
 
 // Coercions
 // -> from Float32

@@ -54,6 +54,14 @@ class WheelHandlingUtils
 {
 public:
   /**
+   * Returns true if aFrame is a scrollable frame and it can be scrolled to
+   * either aDirectionX or aDirectionY along each axis.  Or if aFrame is a
+   * plugin frame (in this case, aDirectionX and aDirectionY are ignored).
+   * Otherwise, false.
+   */
+  static bool CanScrollOn(nsIFrame* aFrame,
+                          double aDirectionX, double aDirectionY);
+  /**
    * Returns true if the scrollable frame can be scrolled to either aDirectionX
    * or aDirectionY along each axis.  Otherwise, false.
    */
@@ -95,8 +103,8 @@ protected:
 
 
   /**
-   * These two methods are called upon NS_WHEEL_START/NS_WHEEL_STOP events
-   * to show/hide the right scrollbars.
+   * These two methods are called upon eWheelOperationStart/eWheelOperationEnd
+   * events to show/hide the right scrollbars.
    */
   static void TemporarilyActivateAllPossibleScrollTargets(
                 EventStateManager* aESM,
@@ -117,13 +125,22 @@ class WheelTransaction
 {
 public:
   static nsIFrame* GetTargetFrame() { return sTargetFrame; }
-  static void BeginTransaction(nsIFrame* aTargetFrame,
-                               WidgetWheelEvent* aEvent);
-  // Be careful, UpdateTransaction may fire a DOM event, therefore, the target
-  // frame might be destroyed in the event handler.
-  static bool UpdateTransaction(WidgetWheelEvent* aEvent);
-  static void MayEndTransaction();
   static void EndTransaction();
+  /**
+   * WillHandleDefaultAction() is called before handling aWheelEvent on
+   * aTargetFrame.
+   *
+   * @return    false if the caller cannot continue to handle the default
+   *            action.  Otherwise, true.
+   */ 
+  static bool WillHandleDefaultAction(WidgetWheelEvent* aWheelEvent,
+                                      nsWeakFrame& aTargetWeakFrame);
+  static bool WillHandleDefaultAction(WidgetWheelEvent* aWheelEvent,
+                                      nsIFrame* aTargetFrame)
+  {
+    nsWeakFrame targetWeakFrame(aTargetFrame);
+    return WillHandleDefaultAction(aWheelEvent, targetWeakFrame);
+  }
   static void OnEvent(WidgetEvent* aEvent);
   static void Shutdown();
   static uint32_t GetTimeoutTime();
@@ -134,7 +151,13 @@ public:
                                           bool aAllowScrollSpeedOverride);
 
 protected:
-  static const uint32_t kScrollSeriesTimeout = 80; // in milliseconds
+  static void BeginTransaction(nsIFrame* aTargetFrame,
+                               WidgetWheelEvent* aEvent);
+  // Be careful, UpdateTransaction may fire a DOM event, therefore, the target
+  // frame might be destroyed in the event handler.
+  static bool UpdateTransaction(WidgetWheelEvent* aEvent);
+  static void MayEndTransaction();
+
   static nsIntPoint GetScreenPoint(WidgetGUIEvent* aEvent);
   static void OnFailToScrollTarget();
   static void OnTimeout(nsITimer* aTimer, void* aClosure);

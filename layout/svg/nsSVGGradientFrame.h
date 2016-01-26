@@ -39,11 +39,13 @@ typedef nsSVGPaintServerFrame nsSVGGradientFrameBase;
  */
 class nsSVGGradientFrame : public nsSVGGradientFrameBase
 {
+  typedef mozilla::gfx::ExtendMode ExtendMode;
+
 protected:
   explicit nsSVGGradientFrame(nsStyleContext* aContext);
 
 public:
-  NS_DECL_FRAMEARENA_HELPERS
+  NS_DECL_ABSTRACT_FRAME(nsSVGGradientFrame)
 
   // nsSVGPaintServerFrame methods:
   virtual already_AddRefed<gfxPattern>

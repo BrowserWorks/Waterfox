@@ -106,7 +106,7 @@ nsHostObjectURI::Serialize(mozilla::ipc::URIParams& aParams)
 
     hostParams.principal() = info;
   } else {
-    hostParams.principal() = void_t();
+    hostParams.principal() = mozilla::void_t();
   }
 
   aParams = hostParams;
@@ -135,6 +135,15 @@ nsHostObjectURI::Deserialize(const mozilla::ipc::URIParams& aParams)
   return mPrincipal != nullptr;
 }
 
+NS_IMETHODIMP
+nsHostObjectURI::SetScheme(const nsACString& aScheme)
+{
+  // Disallow setting the scheme, since that could cause us to be associated
+  // with a different protocol handler that doesn't expect us to be carrying
+  // around a principal with nsIURIWithPrincipal.
+  return NS_ERROR_FAILURE;
+}
+
 // nsIURI methods:
 nsresult
 nsHostObjectURI::CloneInternal(nsSimpleURI::RefHandlingEnum aRefHandlingMode,
@@ -146,7 +155,7 @@ nsHostObjectURI::CloneInternal(nsSimpleURI::RefHandlingEnum aRefHandlingMode,
   NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef DEBUG
-  nsRefPtr<nsHostObjectURI> uriCheck;
+  RefPtr<nsHostObjectURI> uriCheck;
   rv = simpleClone->QueryInterface(kHOSTOBJECTURICID, getter_AddRefs(uriCheck));
   MOZ_ASSERT(NS_SUCCEEDED(rv) && uriCheck);
 #endif
@@ -169,7 +178,7 @@ nsHostObjectURI::EqualsInternal(nsIURI* aOther,
     return NS_OK;
   }
   
-  nsRefPtr<nsHostObjectURI> otherUri;
+  RefPtr<nsHostObjectURI> otherUri;
   aOther->QueryInterface(kHOSTOBJECTURICID, getter_AddRefs(otherUri));
   if (!otherUri) {
     *aResult = false;

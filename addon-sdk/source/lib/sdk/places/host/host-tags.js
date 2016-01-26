@@ -60,7 +60,7 @@ function getURLsByTag (message) {
   };
 
   resData.data = taggingService
-    .getURIsForTag(data.tag).map(function (uri) uri.spec);
+    .getURIsForTag(data.tag).map(uri => uri.spec);
   respond(resData);
 }
 
@@ -79,7 +79,7 @@ function getTagsByURL (message) {
  * Hook into host
  */
 
-let reqStream = filter(request, function (data) {
+var reqStream = filter(request, function (data) {
   return /sdk-places-tags/.test(data.event);
 });
 

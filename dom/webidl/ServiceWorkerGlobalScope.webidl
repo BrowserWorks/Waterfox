@@ -13,14 +13,17 @@
 [Global=(Worker,ServiceWorker),
  Exposed=ServiceWorker]
 interface ServiceWorkerGlobalScope : WorkerGlobalScope {
-  readonly attribute Clients clients;
-  readonly attribute ServiceWorkerRegistration registration;
+  [SameObject] readonly attribute Clients clients;
+  [SameObject] readonly attribute ServiceWorkerRegistration registration;
+
+  [Throws, NewObject]
+  Promise<void> skipWaiting();
 
   attribute EventHandler oninstall;
   attribute EventHandler onactivate;
+
+  [Func="mozilla::dom::workers::ServiceWorkerGlobalScope::InterceptionEnabled"]
   attribute EventHandler onfetch;
-  attribute EventHandler onbeforeevicted;
-  attribute EventHandler onevicted;
 
   // The event.source of these MessageEvents are instances of Client
   attribute EventHandler onmessage;

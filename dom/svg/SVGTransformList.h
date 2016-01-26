@@ -16,7 +16,7 @@ namespace mozilla {
 
 namespace dom {
 class SVGTransform;
-}
+} // namespace dom
 
 /**
  * ATTENTION! WARNING! WATCH OUT!!
@@ -60,7 +60,7 @@ public:
   }
 
   bool SetCapacity(uint32_t size) {
-    return mItems.SetCapacity(size);
+    return mItems.SetCapacity(size, fallible);
   }
 
   void Compact() {
@@ -94,7 +94,7 @@ protected:
    * increased, in which case the list will be left unmodified.
    */
   bool SetLength(uint32_t aNumberOfItems) {
-    return mItems.SetLength(aNumberOfItems);
+    return mItems.SetLength(aNumberOfItems, fallible);
   }
 
 private:
@@ -113,7 +113,7 @@ private:
     if (aIndex >= mItems.Length()) {
       aIndex = mItems.Length();
     }
-    return !!mItems.InsertElementAt(aIndex, aTransform);
+    return !!mItems.InsertElementAt(aIndex, aTransform, fallible);
   }
 
   void ReplaceItem(uint32_t aIndex, const nsSVGTransform& aTransform) {
@@ -129,7 +129,7 @@ private:
   }
 
   bool AppendItem(const nsSVGTransform& aTransform) {
-    return !!mItems.AppendElement(aTransform);
+    return !!mItems.AppendElement(aTransform, fallible);
   }
 
 protected:

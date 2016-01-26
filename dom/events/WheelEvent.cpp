@@ -16,7 +16,7 @@ WheelEvent::WheelEvent(EventTarget* aOwner,
                        WidgetWheelEvent* aWheelEvent)
   : MouseEvent(aOwner, aPresContext,
                aWheelEvent ? aWheelEvent :
-                             new WidgetWheelEvent(false, 0, nullptr))
+                             new WidgetWheelEvent(false, eVoidEvent, nullptr))
   , mAppUnitsPerDevPixel(0)
 {
   if (aWheelEvent) {
@@ -155,7 +155,7 @@ WheelEvent::Constructor(const GlobalObject& aGlobal,
                         ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<WheelEvent> e = new WheelEvent(t, nullptr, nullptr);
+  RefPtr<WheelEvent> e = new WheelEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
   aRv = e->InitWheelEvent(aType, aParam.mBubbles, aParam.mCancelable,
                           aParam.mView, aParam.mDetail,
@@ -164,8 +164,7 @@ WheelEvent::Constructor(const GlobalObject& aGlobal,
                           aParam.mButton, aParam.mRelatedTarget,
                           EmptyString(), aParam.mDeltaX,
                           aParam.mDeltaY, aParam.mDeltaZ, aParam.mDeltaMode);
-  e->InitModifiers(aParam);
-  e->mEvent->AsWheelEvent()->buttons = aParam.mButtons;
+  e->InitializeExtraMouseEventDictionaryMembers(aParam);
   e->SetTrusted(trusted);
   return e.forget();
 }
@@ -176,14 +175,11 @@ WheelEvent::Constructor(const GlobalObject& aGlobal,
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMWheelEvent(nsIDOMEvent** aInstancePtrResult,
-                    EventTarget* aOwner,
+already_AddRefed<WheelEvent>
+NS_NewDOMWheelEvent(EventTarget* aOwner,
                     nsPresContext* aPresContext,
                     WidgetWheelEvent* aEvent)
 {
-  WheelEvent* it = new WheelEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<WheelEvent> it = new WheelEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

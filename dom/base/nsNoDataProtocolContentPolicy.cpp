@@ -16,7 +16,9 @@
 #include "nsIProtocolHandler.h"
 #include "nsIIOService.h"
 #include "nsIExternalProtocolHandler.h"
+#include "nsIURI.h"
 #include "nsNetUtil.h"
+#include "nsContentUtils.h"
 
 NS_IMPL_ISUPPORTS(nsNoDataProtocolContentPolicy, nsIContentPolicy)
 
@@ -30,6 +32,9 @@ nsNoDataProtocolContentPolicy::ShouldLoad(uint32_t aContentType,
                                           nsIPrincipal *aRequestPrincipal,
                                           int16_t *aDecision)
 {
+  MOZ_ASSERT(aContentType == nsContentUtils::InternalContentPolicyTypeToExternal(aContentType),
+             "We should only see external content policy types here.");
+
   *aDecision = nsIContentPolicy::ACCEPT;
 
   // Don't block for TYPE_OBJECT since such URIs are sometimes loaded by the

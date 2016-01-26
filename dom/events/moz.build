@@ -78,6 +78,7 @@ UNIFIED_SOURCES += [
     'CommandEvent.cpp',
     'CompositionEvent.cpp',
     'ContentEventHandler.cpp',
+    'CustomEvent.cpp',
     'DataContainerEvent.cpp',
     'DataTransfer.cpp',
     'DeviceMotionEvent.cpp',
@@ -117,14 +118,11 @@ UNIFIED_SOURCES += [
 
 # nsEventStateManager.cpp should be built separately because of Mac OS X headers.
 SOURCES += [
-    'CustomEvent.cpp',
     'EventStateManager.cpp',
 ]
 
 if CONFIG['MOZ_WEBSPEECH']:
     UNIFIED_SOURCES += ['SpeechRecognitionError.cpp']
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -135,6 +133,7 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/settings',
     '/dom/storage',
+    '/dom/svg',
     '/dom/workers',
     '/dom/xml',
     '/dom/xul',

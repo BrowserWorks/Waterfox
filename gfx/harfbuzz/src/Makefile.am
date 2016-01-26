@@ -14,12 +14,15 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-introspection
 #AM_CXXFLAGS =
 
 # Convenience targets:
-lib: libharfbuzz.la
+lib: $(BUILT_SOURCES) libharfbuzz.la
+fuzzing: $(BUILT_SOURCES) libharfbuzz-fuzzing.la
 
 lib_LTLIBRARIES = libharfbuzz.la
 
 HBCFLAGS =
 HBLIBS =
+HBNONPCLIBS =
+HBDEPS =
 HBSOURCES =  \
 	hb-atomic-private.hh \
 	hb-blob.cc \
@@ -39,11 +42,13 @@ HBSOURCES =  \
 	hb-open-file-private.hh \
 	hb-open-type-private.hh \
 	hb-ot-cmap-table.hh \
+	hb-ot-glyf-table.hh \
 	hb-ot-head-table.hh \
 	hb-ot-hhea-table.hh \
 	hb-ot-hmtx-table.hh \
 	hb-ot-maxp-table.hh \
 	hb-ot-name-table.hh \
+	hb-ot-os2-table.hh \
 	hb-ot-tag.cc \
 	hb-private.hh \
 	hb-set-private.hh \
@@ -93,6 +98,7 @@ HBSOURCES += \
 	hb-ot-shape.cc \
 	hb-ot-shape-complex-arabic.cc \
 	hb-ot-shape-complex-arabic-fallback.hh \
+	hb-ot-shape-complex-arabic-private.hh \
 	hb-ot-shape-complex-arabic-table.hh \
 	hb-ot-shape-complex-arabic-win1256.hh \
 	hb-ot-shape-complex-default.cc \
@@ -104,10 +110,12 @@ HBSOURCES += \
 	hb-ot-shape-complex-indic-table.cc \
 	hb-ot-shape-complex-myanmar.cc \
 	hb-ot-shape-complex-myanmar-machine.hh \
-	hb-ot-shape-complex-sea.cc \
-	hb-ot-shape-complex-sea-machine.hh \
 	hb-ot-shape-complex-thai.cc \
 	hb-ot-shape-complex-tibetan.cc \
+	hb-ot-shape-complex-use.cc \
+	hb-ot-shape-complex-use-machine.hh \
+	hb-ot-shape-complex-use-private.hh \
+	hb-ot-shape-complex-use-table.cc \
 	hb-ot-shape-complex-private.hh \
 	hb-ot-shape-normalize-private.hh \
 	hb-ot-shape-normalize.cc \
@@ -130,12 +138,13 @@ endif
 
 if HAVE_PTHREAD
 HBCFLAGS += $(PTHREAD_CFLAGS)
-HBLIBS   += $(PTHREAD_LIBS)
+HBNONPCLIBS += $(PTHREAD_LIBS)
 endif
 
 if HAVE_GLIB
 HBCFLAGS += $(GLIB_CFLAGS)
 HBLIBS   += $(GLIB_LIBS)
+HBDEPS   += $(GLIB_DEPS)
 HBSOURCES += hb-glib.cc
 HBHEADERS += hb-glib.h
 endif
@@ -143,6 +152,12 @@ endif
 if HAVE_FREETYPE
 HBCFLAGS += $(FREETYPE_CFLAGS)
 HBLIBS   += $(FREETYPE_LIBS)
+# XXX
+# The following creates a recursive dependency on FreeType if FreeType is
+# built with HarfBuzz support enabled.  Newer pkg-config handles that just
+# fine but pkg-config 0.26 as shipped in Ubuntu 14.04 crashes.  Remove
+# in a year or two, or otherwise work around it...
+#HBDEPS   += $(FREETYPE_DEPS)
 HBSOURCES += hb-ft.cc
 HBHEADERS += hb-ft.h
 endif
@@ -150,20 +165,21 @@ endif
 if HAVE_GRAPHITE2
 HBCFLAGS += $(GRAPHITE2_CFLAGS)
 HBLIBS   += $(GRAPHITE2_LIBS)
+HBDEPS   += $(GRAPHITE2_DEPS)
 HBSOURCES += hb-graphite2.cc
 HBHEADERS += hb-graphite2.h
 endif
 
 if HAVE_UNISCRIBE
 HBCFLAGS += $(UNISCRIBE_CFLAGS)
-HBLIBS   += $(UNISCRIBE_LIBS)
+HBNONPCLIBS += $(UNISCRIBE_LIBS)
 HBSOURCES += hb-uniscribe.cc
 HBHEADERS += hb-uniscribe.h
 endif
 
 if HAVE_CORETEXT
 HBCFLAGS += $(CORETEXT_CFLAGS)
-HBLIBS   += $(CORETEXT_LIBS)
+HBNONPCLIBS += $(CORETEXT_LIBS)
 HBSOURCES += hb-coretext.cc
 HBHEADERS += hb-coretext.h
 endif
@@ -178,6 +194,8 @@ DIST_SUBDIRS += hb-ucdn
 
 
 # Put the library together
+
+HBLIBS += $(HBNONPCLIBS)
 
 if OS_WIN32
 export_symbols = -export-symbols harfbuzz.def
@@ -202,6 +220,22 @@ nodist_pkginclude_HEADERS = $(HBNODISTHEADERS)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = harfbuzz.pc
 EXTRA_DIST += harfbuzz.pc.in
+
+FUZZING_CPPFLAGS= \
+	-DHB_MAX_NESTING_LEVEL=3 \
+	-DHB_SANITIZE_MAX_EDITS=3 \
+	-DHB_BUFFER_MAX_EXPANSION_FACTOR=3 \
+	-DHB_BUFFER_MAX_LEN_MIN=8 \
+	-DHB_BUFFER_MAX_LEN_DEFAULT=128 \
+	$(NULL)
+EXTRA_LTLIBRARIES = libharfbuzz-fuzzing.la
+libharfbuzz_fuzzing_la_LINK = $(libharfbuzz_la_LINK)
+libharfbuzz_fuzzing_la_SOURCES = $(libharfbuzz_la_SOURCES)
+libharfbuzz_fuzzing_la_CPPFLAGS = $(libharfbuzz_la_CPPFLAGS) $(FUZZING_CPPFLAGS)
+libharfbuzz_fuzzing_la_LDFLAGS = $(libharfbuzz_la_LDFLAGS)
+libharfbuzz_fuzzing_la_LIBADD = $(libharfbuzz_la_LIBADD)
+EXTRA_libharfbuzz_fuzzing_la_DEPENDENCIES = $(EXTRA_libharfbuzz_la_DEPENDENCIES)
+CLEANFILES += libharfbuzz-fuzzing.la
 
 if HAVE_ICU
 lib_LTLIBRARIES += libharfbuzz-icu.la
@@ -253,6 +287,8 @@ EXTRA_DIST += \
 		-e 's@%exec_prefix%@$(exec_prefix)@g' \
 		-e 's@%libdir%@$(libdir)@g' \
 		-e 's@%includedir%@$(includedir)@g' \
+		-e 's@%libs_private%@$(HBNONPCLIBS)@g' \
+		-e 's@%requires_private%@$(HBDEPS)@g' \
 		-e 's@%VERSION%@$(VERSION)@g' \
 	"$<" > "$@" \
 	|| ($(RM) "$@"; false)
@@ -267,7 +303,7 @@ harfbuzz.def: $(HBHEADERS) $(HBNODISTHEADERS)
 	$(EGREP) '^hb_.* \(' | \
 	sed -e 's/ (.*//' | \
 	LANG=C sort; \
-	echo LIBRARY libharfbuzz-$(HB_VERSION_MAJOR).dll; \
+	echo LIBRARY libharfbuzz-0.dll; \
 	) >"$@"
 	@ ! grep -q hb_ERROR "$@" \
 	|| ($(RM) "$@"; false)
@@ -276,29 +312,34 @@ harfbuzz.def: $(HBHEADERS) $(HBNODISTHEADERS)
 GENERATORS = \
 	gen-arabic-table.py \
 	gen-indic-table.py \
+	gen-use-table.py \
 	$(NULL)
 EXTRA_DIST += $(GENERATORS)
 
-unicode-tables: arabic-table indic-table
-
-indic-table: gen-indic-table.py IndicSyllabicCategory.txt IndicMatraCategory.txt Blocks.txt
-	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-indic-table.cc \
-	|| ($(RM) hb-ot-shape-complex-indic-table.cc; false)
+unicode-tables: arabic-table indic-table use-table
 
 arabic-table: gen-arabic-table.py ArabicShaping.txt UnicodeData.txt Blocks.txt
 	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-arabic-table.hh \
 	|| ($(RM) hb-ot-shape-complex-arabic-table.hh; false)
 
+indic-table: gen-indic-table.py IndicSyllabicCategory-7.0.0.txt IndicMatraCategory-7.0.0.txt Blocks.txt
+	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-indic-table.cc \
+	|| ($(RM) hb-ot-shape-complex-indic-table.cc; false)
+
+use-table: gen-use-table.py IndicSyllabicCategory.txt IndicPositionalCategory.txt UnicodeData.txt Blocks.txt
+	$(AM_V_GEN) $(builddir)/$^ > hb-ot-shape-complex-use-table.cc \
+	|| ($(RM) hb-ot-shape-complex-use-table.cc; false)
+
 built-sources: $(BUILT_SOURCES)
 
-.PHONY: unicode-tables arabic-table indic-table built-sources
+.PHONY: unicode-tables arabic-table indic-table use-table built-sources
 
 RAGEL_GENERATED = \
 	$(srcdir)/hb-buffer-deserialize-json.hh \
 	$(srcdir)/hb-buffer-deserialize-text.hh \
 	$(srcdir)/hb-ot-shape-complex-indic-machine.hh \
 	$(srcdir)/hb-ot-shape-complex-myanmar-machine.hh \
-	$(srcdir)/hb-ot-shape-complex-sea-machine.hh \
+	$(srcdir)/hb-ot-shape-complex-use-machine.hh \
 	$(NULL)
 BUILT_SOURCES += $(RAGEL_GENERATED)
 EXTRA_DIST += \
@@ -306,7 +347,7 @@ EXTRA_DIST += \
 	hb-buffer-deserialize-text.rl \
 	hb-ot-shape-complex-indic-machine.rl \
 	hb-ot-shape-complex-myanmar-machine.rl \
-	hb-ot-shape-complex-sea-machine.rl \
+	hb-ot-shape-complex-use-machine.rl \
 	$(NULL)
 MAINTAINERCLEANFILES += $(RAGEL_GENERATED)
 $(srcdir)/%.hh: $(srcdir)/%.rl
@@ -352,7 +393,14 @@ dist_check_SCRIPTS = \
 	check-symbols.sh \
 	$(NULL)
 
-TESTS = $(dist_check_SCRIPTS)
+check_PROGRAMS = \
+	test-ot-tag \
+	$(NULL)
+test_ot_tag_SOURCES = hb-ot-tag.cc
+test_ot_tag_CPPFLAGS = $(HBCFLAGS) -DMAIN
+test_ot_tag_LDADD = libharfbuzz.la $(HBLIBS)
+
+TESTS = $(dist_check_SCRIPTS) $(check_PROGRAMS)
 TESTS_ENVIRONMENT = \
 	srcdir="$(srcdir)" \
 	MAKE="$(MAKE) $(AM_MAKEFLAGS)" \
@@ -363,7 +411,7 @@ TESTS_ENVIRONMENT = \
 if HAVE_INTROSPECTION
 
 -include $(INTROSPECTION_MAKEFILE)
-INTROSPECTION_GIRS = HarfBuzz-$(HB_VERSION_MAJOR).0.gir # What does the 0 mean anyway?!
+INTROSPECTION_GIRS = HarfBuzz-0.0.gir # What does the 0 mean anyway?!
 INTROSPECTION_SCANNER_ARGS = -I$(srcdir) -n hb --identifier-prefix=hb_ --warn-all
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 INTROSPECTION_SCANNER_ENV = CC="$(CC)"
@@ -379,6 +427,7 @@ HarfBuzz_0_0_gir_CFLAGS = \
 	-DHB_OT_H_IN \
 	-DHB_GOBJECT_H \
 	-DHB_GOBJECT_H_IN \
+	-DHB_EXTERN= \
 	$(NULL)
 HarfBuzz_0_0_gir_LIBS = \
 	libharfbuzz.la \

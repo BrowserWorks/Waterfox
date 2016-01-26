@@ -41,8 +41,13 @@ int Plane::MaybeResize(int new_size) {
     return -1;
   if (new_size <= allocated_size_)
     return 0;
-  scoped_ptr<uint8_t, AlignedFreeDeleter> new_buffer(static_cast<uint8_t*>(
-      AlignedMalloc(new_size, kBufferAlignment)));
+  rtc::scoped_ptr<uint8_t, AlignedFreeDeleter> new_buffer(
+      static_cast<uint8_t*>(AlignedMalloc(new_size, kBufferAlignment)));
+
+  if (!new_buffer.get()) {
+    return -1;
+  }
+
   if (buffer_.get()) {
     memcpy(new_buffer.get(), buffer_.get(), plane_size_);
   }

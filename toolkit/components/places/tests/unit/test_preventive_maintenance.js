@@ -16,18 +16,18 @@ Components.utils.import("resource://gre/modules/PlacesDBUtils.jsm");
 const FINISHED_MAINTENANCE_NOTIFICATION_TOPIC = "places-maintenance-finished";
 
 // Get services and database connection
-let hs = PlacesUtils.history;
-let bs = PlacesUtils.bookmarks;
-let ts = PlacesUtils.tagging;
-let as = PlacesUtils.annotations;
-let fs = PlacesUtils.favicons;
+var hs = PlacesUtils.history;
+var bs = PlacesUtils.bookmarks;
+var ts = PlacesUtils.tagging;
+var as = PlacesUtils.annotations;
+var fs = PlacesUtils.favicons;
 
-let mDBConn = hs.QueryInterface(Ci.nsPIPlacesDatabase).DBConnection;
+var mDBConn = hs.QueryInterface(Ci.nsPIPlacesDatabase).DBConnection;
 
 //------------------------------------------------------------------------------
 // Helpers
 
-let defaultBookmarksMaxId = 0;
+var defaultBookmarksMaxId = 0;
 function cleanDatabase() {
   mDBConn.executeSimpleSQL("DELETE FROM moz_places");
   mDBConn.executeSimpleSQL("DELETE FROM moz_historyvisits");
@@ -70,7 +70,7 @@ function addBookmark(aPlaceId, aType, aParent, aKeywordId, aFolderType, aTitle) 
 //------------------------------------------------------------------------------
 // Tests
 
-let tests = [];
+var tests = [];
 
 //------------------------------------------------------------------------------
 
@@ -1074,7 +1074,7 @@ tests.push({
   name: "L.2",
   desc: "Recalculate visit_count and last_visit_date",
 
-  setup: function() {
+  setup: function* () {
     function setVisitCount(aURL, aValue) {
       let stmt = mDBConn.createStatement(
         "UPDATE moz_places SET visit_count = :count WHERE url = :url"
@@ -1225,7 +1225,9 @@ tests.push({
     do_check_true(this._separatorId > 0);
     ts.tagURI(this._uri1, ["testtag"]);
     fs.setAndFetchFaviconForPage(this._uri2, SMALLPNG_DATA_URI, false,
-                                 PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+                                 PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
+                                 null,
+                                 Services.scriptSecurityManager.getSystemPrincipal());
     yield PlacesUtils.keywords.insert({ url: this._uri1.spec, keyword: "testkeyword" });
     as.setPageAnnotation(this._uri2, "anno", "anno", 0, as.EXPIRE_NEVER);
     as.setItemAnnotation(this._bookmarkId, "anno", "anno", 0, as.EXPIRE_NEVER);
@@ -1265,7 +1267,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_preventive_maintenance()
+add_task(function* test_preventive_maintenance()
 {
   // Force initialization of the bookmarks hash. This test could cause
   // it to go out of sync due to direct queries on the database.

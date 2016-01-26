@@ -250,12 +250,19 @@ FlattenBezierCurveSegment(const BezierControlPoints &aControlPoints,
     Point cp21 = currentCP.mCP2 - currentCP.mCP3;
     Point cp31 = currentCP.mCP3 - currentCP.mCP1;
 
-    Float s3 = (cp31.x * cp21.y - cp31.y * cp21.x) / hypotf(cp21.x, cp21.y);
+    /* To remove divisions and check for divide-by-zero, this is optimized from:
+     * Float s3 = (cp31.x * cp21.y - cp31.y * cp21.x) / hypotf(cp21.x, cp21.y);
+     * t = 2 * Float(sqrt(aTolerance / (3. * std::abs(s3))));
+     */
+    Float cp21x31 = cp31.x * cp21.y - cp31.y * cp21.x;
+    Float h = hypotf(cp21.x, cp21.y);
+    if (cp21x31 * h == 0) {
+      break;
+    }
 
-    t = 2 * Float(sqrt(aTolerance / (3. * std::abs(s3))));
-
+    Float s3inv = h / cp21x31;
+    t = 2 * Float(sqrt(aTolerance * std::abs(s3inv) / 3.));
     if (t >= 1.0f) {
-      aSink->LineTo(aControlPoints.mCP4);
       break;
     }
 
@@ -264,6 +271,8 @@ FlattenBezierCurveSegment(const BezierControlPoints &aControlPoints,
 
     aSink->LineTo(currentCP.mCP1);
   }
+
+  aSink->LineTo(currentCP.mCP4);
 }
 
 static inline void
@@ -437,7 +446,7 @@ FlattenBezier(const BezierControlPoints &aControlPoints,
   FindInflectionPoints(aControlPoints, &t1, &t2, &count);
 
   // Check that at least one of the inflection points is inside [0..1]
-  if (count == 0 || ((t1 < 0 || t1 > 1.0) && ((t2 < 0 || t2 > 1.0) || count == 1)) ) {
+  if (count == 0 || ((t1 < 0 || t1 > 1.0) && (count == 1 || (t2 < 0 || t2 > 1.0))) ) {
     FlattenBezierCurveSegment(aControlPoints, aSink, aTolerance);
     return;
   }
@@ -526,5 +535,5 @@ FlattenBezier(const BezierControlPoints &aControlPoints,
   }
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

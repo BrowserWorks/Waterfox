@@ -165,7 +165,7 @@ public:
 
     // Hyperlink color extracted from the system, not affected by the
     // browser.anchor_color user pref.
-    // There is no OS-specified safe background color for this text, 
+    // There is no OS-specified safe background color for this text,
     // but it is used regularly within Windows and the Gnome DE on Dialog and
     // Window colors.
     eColorID__moz_nativehyperlinktext,
@@ -173,6 +173,9 @@ public:
     // Combo box widgets
     eColorID__moz_comboboxtext,
     eColorID__moz_combobox,
+
+    // GtkInfoBar
+    eColorID__moz_gtk_info_bar_text,
 
     // keep this one last, please
     eColorID_LAST_COLOR
@@ -393,18 +396,25 @@ public:
      * is shown.
      */
      eIntID_PhysicalHomeButton,
- 
+
      /*
       * Controls whether overlay scrollbars display when the user moves
       * the mouse in a scrollable frame.
       */
      eIntID_ScrollbarDisplayOnMouseMove,
- 
+
      /*
       * Overlay scrollbar animation constants.
       */
      eIntID_ScrollbarFadeBeginDelay,
-     eIntID_ScrollbarFadeDuration
+     eIntID_ScrollbarFadeDuration,
+      
+     /**
+      * Distance in pixels to offset the context menu from the cursor
+      * on open.
+      */
+     eIntID_ContextMenuOffsetVertical,
+     eIntID_ContextMenuOffsetHorizontal
   };
 
   /**
@@ -430,6 +440,7 @@ public:
     eOperatingSystemVersion_WindowsVista,
     eOperatingSystemVersion_Windows7,
     eOperatingSystemVersion_Windows8,
+    eOperatingSystemVersion_Windows10,
     eOperatingSystemVersion_Unknown
   };
 
@@ -444,7 +455,7 @@ public:
   enum {
     // single arrow at each end
     eScrollArrowStyle_Single =
-      eScrollArrow_StartBackward | eScrollArrow_EndForward, 
+      eScrollArrow_StartBackward | eScrollArrow_EndForward,
     // both arrows at bottom/right, none at top/left
     eScrollArrowStyle_BothAtBottom =
       eScrollArrow_EndBackward | eScrollArrow_EndForward,
@@ -514,6 +525,15 @@ public:
    *   color value.
    */
   static nsresult GetColor(ColorID aID, nscolor* aResult);
+
+   /**
+   * This variant of GetColor() takes an extra Boolean parameter that allows
+   * the caller to ask that hard-coded color values be substituted for
+   * native colors (used when it is desireable to hide system colors to
+   * avoid system fingerprinting).
+   */
+  static nsresult GetColor(ColorID aID, bool aUseStandinsForNativeColors,
+                           nscolor* aResult);
 
   /**
    * GetInt() and GetFloat() return a int or float value for aID.  The result

@@ -29,14 +29,16 @@ function get_observer_topic(aNotificationId) {
     topic = "addon-install-disabled";
   else if (topic == "addon-progress")
     topic = "addon-install-started";
+  else if (topic == "addon-install-restart")
+    topic = "addon-install-complete";
   return topic;
 }
 
-function wait_for_progress_notification(aCallback) {
-  wait_for_notification(PROGRESS_NOTIFICATION, aCallback, "popupshowing");
+function wait_for_progress_notification(aCallback, aExpectedCount = 1) {
+  wait_for_notification(PROGRESS_NOTIFICATION, aCallback, aExpectedCount, "popupshowing");
 }
 
-function wait_for_notification(aId, aCallback, aEvent = "popupshown") {
+function wait_for_notification(aId, aCallback, aExpectedCount = 1, aEvent = "popupshown") {
   info("Waiting for " + aId + " notification");
 
   let topic = get_observer_topic(aId);
@@ -68,10 +70,11 @@ function wait_for_notification(aId, aCallback, aEvent = "popupshown") {
   function verify() {
     info("Saw a notification");
     ok(PopupNotifications.isPanelOpen, "Panel should be open");
-    is(PopupNotifications.panel.childNodes.length, 1, "Should be only one notification");
+    is(PopupNotifications.panel.childNodes.length, aExpectedCount, "Should be the right number of notifications");
     if (PopupNotifications.panel.childNodes.length) {
-      is(PopupNotifications.panel.childNodes[0].id,
-         aId + "-notification", "Should have seen the right notification");
+      let nodes = Array.from(PopupNotifications.panel.childNodes);
+      let notification = nodes.find(n => n.id == aId + "-notification");
+      ok(notification, "Should have seen the right notification");
     }
     aCallback(PopupNotifications.panel);
   }
@@ -133,6 +136,15 @@ function accept_install_dialog() {
   }
 }
 
+function cancel_install_dialog() {
+  if (Preferences.get("xpinstall.customConfirmationUI", false)) {
+    document.getElementById("addon-install-confirmation-cancel").click();
+  } else {
+    let win = Services.wm.getMostRecentWindow("Addons:Install");
+    win.document.documentElement.cancelDialog();
+  }
+}
+
 function wait_for_single_notification(aCallback) {
   function inner_waiter() {
     info("Waiting for single notification");
@@ -182,8 +194,7 @@ function test_disabled_install() {
       gBrowser.removeTab(gBrowser.selectedTab);
 
       AddonManager.getAllInstalls(function(aInstalls) {
-        is(aInstalls.length, 1, "Should have been one install created");
-        aInstalls[0].cancel();
+        is(aInstalls.length, 0, "Shouldn't be any pending installs");
 
         runNextTest();
       });
@@ -205,7 +216,7 @@ function test_blocked_install() {
   wait_for_notification("addon-install-blocked", function(aPanel) {
     let notification = aPanel.childNodes[0];
     is(notification.button.label, "Allow", "Should have seen the right button");
-    is(notification.getAttribute("originhost"), "example.com",
+    is(notification.getAttribute("origin"), "example.com",
        "Should have seen the right origin host");
     is(notification.getAttribute("label"),
        gApp + " prevented this site from asking you to install software on your computer.",
@@ -214,7 +225,7 @@ function test_blocked_install() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -260,7 +271,7 @@ function test_whitelisted_install() {
          "tab selected in response to the addon-install-confirmation notification");
 
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -271,7 +282,7 @@ function test_whitelisted_install() {
           is(aInstalls.length, 1, "Should be one pending install");
           aInstalls[0].cancel();
 
-          Services.perms.remove("example.com", "install");
+          Services.perms.remove(makeURI("http://example.com/"), "install");
           wait_for_notification_close(runNextTest);
           gBrowser.removeTab(gBrowser.selectedTab);
         });
@@ -300,11 +311,10 @@ function test_failed_download() {
     wait_for_notification("addon-install-failed", function(aPanel) {
       let notification = aPanel.childNodes[0];
       is(notification.getAttribute("label"),
-         "The add-on could not be downloaded because of a connection failure " +
-         "on example.com.",
+         "The add-on could not be downloaded because of a connection failure.",
          "Should have seen the right message");
 
-      Services.perms.remove("example.com", "install");
+      Services.perms.remove(makeURI("http://example.com/"), "install");
       wait_for_notification_close(runNextTest);
       gBrowser.removeTab(gBrowser.selectedTab);
     });
@@ -327,11 +337,11 @@ function test_corrupt_file() {
     wait_for_notification("addon-install-failed", function(aPanel) {
       let notification = aPanel.childNodes[0];
       is(notification.getAttribute("label"),
-         "The add-on downloaded from example.com could not be installed " +
+         "The add-on downloaded from this site could not be installed " +
          "because it appears to be corrupt.",
          "Should have seen the right message");
 
-      Services.perms.remove("example.com", "install");
+      Services.perms.remove(makeURI("http://example.com/"), "install");
       wait_for_notification_close(runNextTest);
       gBrowser.removeTab(gBrowser.selectedTab);
     });
@@ -358,7 +368,7 @@ function test_incompatible() {
          gApp + " " + gVersion + ".",
          "Should have seen the right message");
 
-      Services.perms.remove("example.com", "install");
+      Services.perms.remove(makeURI("http://example.com/"), "install");
       wait_for_notification_close(runNextTest);
       gBrowser.removeTab(gBrowser.selectedTab);
     });
@@ -392,7 +402,7 @@ function test_restartless() {
           AddonManager.getAddonByID("restartless-xpi@tests.mozilla.org", function(aAddon) {
             aAddon.uninstall();
 
-            Services.perms.remove("example.com", "install");
+            Services.perms.remove(makeURI("http://example.com/"), "install");
             wait_for_notification_close(runNextTest);
             gBrowser.removeTab(gBrowser.selectedTab);
           });
@@ -419,7 +429,7 @@ function test_multiple() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -433,7 +443,7 @@ function test_multiple() {
           AddonManager.getAddonByID("restartless-xpi@tests.mozilla.org", function(aAddon) {
             aAddon.uninstall();
 
-            Services.perms.remove("example.com", "install");
+            Services.perms.remove(makeURI("http://example.com/"), "install");
             wait_for_notification_close(runNextTest);
             gBrowser.removeTab(gBrowser.selectedTab);
           });
@@ -449,6 +459,84 @@ function test_multiple() {
 
   var triggers = encodeURIComponent(JSON.stringify({
     "Unsigned XPI": "unsigned.xpi",
+    "Restartless XPI": "restartless.xpi"
+  }));
+  gBrowser.selectedTab = gBrowser.addTab();
+  gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
+},
+
+function test_sequential() {
+  // This test is only relevant if using the new doorhanger UI
+  if (!Preferences.get("xpinstall.customConfirmationUI", false)) {
+    runNextTest();
+    return;
+  }
+
+  // Wait for the progress notification
+  wait_for_progress_notification(function(aPanel) {
+    // Wait for the install confirmation dialog
+    wait_for_install_dialog(function() {
+      // Wait for the progress notification
+
+      // Should see the right add-on
+      let container = document.getElementById("addon-install-confirmation-content");
+      is(container.childNodes.length, 1, "Should be one item listed");
+      is(container.childNodes[0].firstChild.getAttribute("value"), "XPI Test", "Should have the right add-on");
+
+      wait_for_progress_notification(function(aPanel) {
+        // Should still have the right add-on in the confirmation notification
+        is(container.childNodes.length, 1, "Should be one item listed");
+        is(container.childNodes[0].firstChild.getAttribute("value"), "XPI Test", "Should have the right add-on");
+
+        // Wait for the install to complete, we won't see a new confirmation
+        // notification
+        Services.obs.addObserver(function observer() {
+          Services.obs.removeObserver(observer, "addon-install-confirmation");
+
+          // Make sure browser-addons.js executes first
+          executeSoon(function () {
+            // Should have dropped the progress notification
+            is(PopupNotifications.panel.childNodes.length, 1, "Should be the right number of notifications");
+            is(PopupNotifications.panel.childNodes[0].id, "addon-install-confirmation-notification",
+               "Should only be showing one install confirmation");
+
+            // Should still have the right add-on in the confirmation notification
+            is(container.childNodes.length, 1, "Should be one item listed");
+            is(container.childNodes[0].firstChild.getAttribute("value"), "XPI Test", "Should have the right add-on");
+
+            cancel_install_dialog();
+
+            ok(PopupNotifications.isPanelOpen, "Panel should still be open");
+            is(PopupNotifications.panel.childNodes.length, 1, "Should be the right number of notifications");
+            is(PopupNotifications.panel.childNodes[0].id, "addon-install-confirmation-notification",
+               "Should still have an install confirmation open");
+
+            // Should have the next add-on's confirmation dialog
+            is(container.childNodes.length, 1, "Should be one item listed");
+            is(container.childNodes[0].firstChild.getAttribute("value"), "Theme Test", "Should have the right add-on");
+
+            Services.perms.remove(makeURI("http://example.com"), "install");
+            wait_for_notification_close(() => {
+              gBrowser.removeTab(gBrowser.selectedTab);
+              runNextTest();
+            });
+
+            cancel_install_dialog();
+          });
+        }, "addon-install-confirmation", false);
+      }, 2);
+
+      var triggers = encodeURIComponent(JSON.stringify({
+        "Theme XPI": "theme.xpi"
+      }));
+      gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
+    });
+  });
+
+  var pm = Services.perms;
+  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
+
+  var triggers = encodeURIComponent(JSON.stringify({
     "Restartless XPI": "restartless.xpi"
   }));
   gBrowser.selectedTab = gBrowser.addTab();
@@ -482,7 +570,7 @@ function test_someunverified() {
       is(container.childNodes[1].childNodes.length, 1, "Shouldn't have the unverified marker");
 
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         AddonManager.getAddonsByIDs(["restartless-xpi@tests.mozilla.org",
                                      "theme-xpi@tests.mozilla.org"], function([a, t]) {
           a.uninstall();
@@ -491,7 +579,7 @@ function test_someunverified() {
           t.userDisabled = true;
           t.uninstall();
 
-          Services.perms.remove("example.com", "install");
+          Services.perms.remove(makeURI("http://example.com/"), "install");
           wait_for_notification_close(runNextTest);
           gBrowser.removeTab(gBrowser.selectedTab);
         });
@@ -539,7 +627,7 @@ function test_allunverified() {
         AddonManager.getAddonByID("restartless-xpi@tests.mozilla.org", function(aAddon) {
           aAddon.uninstall();
 
-          Services.perms.remove("example.com", "install");
+          Services.perms.remove(makeURI("http://example.com/"), "install");
           wait_for_notification_close(runNextTest);
           gBrowser.removeTab(gBrowser.selectedTab);
         });
@@ -565,7 +653,7 @@ function test_url() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -585,8 +673,10 @@ function test_url() {
     });
   });
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
+  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
+    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
+  });
 },
 
 function test_localfile() {
@@ -614,25 +704,115 @@ function test_localfile() {
   } catch (ex) {
     var path = CHROMEROOT + "corrupt.xpi";
   }
+  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
+    gBrowser.loadURI(path);
+  });
+},
+
+function test_tabclose() {
+  if (!Preferences.get("xpinstall.customConfirmationUI", false)) {
+    runNextTest();
+    return;
+  }
+
+  // Wait for the progress notification
+  wait_for_progress_notification(aPanel => {
+    // Wait for the install confirmation dialog
+    wait_for_install_dialog(() => {
+      AddonManager.getAllInstalls(aInstalls => {
+        is(aInstalls.length, 1, "Should be one pending install");
+
+        wait_for_notification_close(() => {
+          AddonManager.getAllInstalls(aInstalls => {
+            is(aInstalls.length, 0, "Should be no pending install since the tab is closed");
+            runNextTest();
+          });
+        });
+
+        gBrowser.removeTab(gBrowser.selectedTab);
+      });
+    });
+  });
+
+  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
+    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
+  });
+},
+
+// Add-ons should be cancelled and the install notification destroyed when
+// navigating to a new origin
+function test_tabnavigate() {
+  if (!Preferences.get("xpinstall.customConfirmationUI", false)) {
+    runNextTest();
+    return;
+  }
+
+  // Wait for the progress notification
+  wait_for_progress_notification(aPanel => {
+    // Wait for the install confirmation dialog
+    wait_for_install_dialog(() => {
+      wait_for_notification_close(() => {
+        AddonManager.getAllInstalls(aInstalls => {
+          is(aInstalls.length, 0, "Should be no pending install");
+
+          Services.perms.remove(makeURI("http://example.com/"), "install");
+          loadPromise.then(() => {
+            gBrowser.removeTab(gBrowser.selectedTab);
+            runNextTest();
+          });
+        });
+      });
+
+      let loadPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
+      gBrowser.loadURI("about:blank");
+    });
+  });
+
+  var pm = Services.perms;
+  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
+
+  var triggers = encodeURIComponent(JSON.stringify({
+    "Extension XPI": "unsigned.xpi"
+  }));
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.loadURI(path);
+  gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
+},
+
+function test_urlbar() {
+  wait_for_notification("addon-install-origin-blocked", function(aPanel) {
+    let notification = aPanel.childNodes[0];
+
+    is(notification.button.label, "", "Button to allow install should be hidden.");
+
+    wait_for_notification_close(() => {
+      runNextTest();
+    });
+
+    gBrowser.removeCurrentTab();
+  });
+
+  gBrowser.selectedTab = gBrowser.addTab("about:blank");
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
+    gURLBar.value = TESTROOT + "unsigned.xpi";
+    gURLBar.focus();
+    EventUtils.synthesizeKey("VK_RETURN", {});
+  });
 },
 
 function test_wronghost() {
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.addEventListener("load", function() {
-    if (gBrowser.currentURI.spec != TESTROOT2 + "enabled.html")
-      return;
 
-    gBrowser.removeEventListener("load", arguments.callee, true);
-
+  let requestedUrl = TESTROOT2 + "enabled.html";
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser, false, requestedUrl).then(() => {
     // Wait for the progress notification
     wait_for_progress_notification(function(aPanel) {
       // Wait for the complete notification
       wait_for_notification("addon-install-failed", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.getAttribute("label"),
-           "The add-on downloaded from example.com could not be installed " +
+           "The add-on downloaded from this site could not be installed " +
            "because it appears to be corrupt.",
            "Should have seen the right message");
 
@@ -642,7 +822,7 @@ function test_wronghost() {
     });
 
     gBrowser.loadURI(TESTROOT + "corrupt.xpi");
-  }, true);
+  });
   gBrowser.loadURI(TESTROOT2 + "enabled.html");
 },
 
@@ -652,7 +832,7 @@ function test_reload() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -665,23 +845,19 @@ function test_reload() {
 
         PopupNotifications.panel.addEventListener("popuphiding", test_fail, false);
 
-        gBrowser.addEventListener("load", function() {
-          if (gBrowser.currentURI.spec != TESTROOT2 + "enabled.html")
-            return;
-
-          gBrowser.removeEventListener("load", arguments.callee, true);
-
+        let requestedUrl = TESTROOT2 + "enabled.html";
+        BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser, false, requestedUrl).then(() => {
           PopupNotifications.panel.removeEventListener("popuphiding", test_fail, false);
 
           AddonManager.getAllInstalls(function(aInstalls) {
             is(aInstalls.length, 1, "Should be one pending install");
             aInstalls[0].cancel();
 
-            Services.perms.remove("example.com", "install");
+            Services.perms.remove(makeURI("http://example.com/"), "install");
             wait_for_notification_close(runNextTest);
             gBrowser.removeTab(gBrowser.selectedTab);
           });
-        }, true);
+        });
         gBrowser.loadURI(TESTROOT2 + "enabled.html");
       });
 
@@ -705,7 +881,7 @@ function test_theme() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         let notification = aPanel.childNodes[0];
         is(notification.button.label, "Restart Now", "Should have seen the right button");
         is(notification.getAttribute("label"),
@@ -721,7 +897,7 @@ function test_theme() {
             isnot(aAddon, null, "Test theme will have been installed");
             aAddon.uninstall();
 
-            Services.perms.remove("example.com", "install");
+            Services.perms.remove(makeURI("http://example.com/"), "install");
             wait_for_notification_close(runNextTest);
             gBrowser.removeTab(gBrowser.selectedTab);
           });
@@ -752,12 +928,16 @@ function test_renotify_blocked() {
       executeSoon(function () {
         wait_for_notification("addon-install-blocked", function(aPanel) {
           AddonManager.getAllInstalls(function(aInstalls) {
-          is(aInstalls.length, 2, "Should be two pending installs");
-            aInstalls[0].cancel();
-            aInstalls[1].cancel();
+            is(aInstalls.length, 2, "Should be two pending installs");
+
+            wait_for_notification_close(() => {
+              AddonManager.getAllInstalls(function(aInstalls) {
+                is(aInstalls.length, 0, "Should have cancelled the installs");
+                runNextTest();
+              });
+            });
 
             info("Closing browser tab");
-            wait_for_notification_close(runNextTest);
             gBrowser.removeTab(gBrowser.selectedTab);
           });
         });
@@ -783,7 +963,7 @@ function test_renotify_installed() {
     // Wait for the install confirmation dialog
     wait_for_install_dialog(function() {
       // Wait for the complete notification
-      wait_for_notification("addon-install-complete", function(aPanel) {
+      wait_for_notification("addon-install-restart", function(aPanel) {
         // Dismiss the notification
         wait_for_notification_close(function () {
           // Install another
@@ -795,12 +975,12 @@ function test_renotify_installed() {
                 info("Timeouts after this probably mean bug 589954 regressed");
 
                 // Wait for the complete notification
-                wait_for_notification("addon-install-complete", function(aPanel) {
+                wait_for_notification("addon-install-restart", function(aPanel) {
                   AddonManager.getAllInstalls(function(aInstalls) {
                   is(aInstalls.length, 1, "Should be one pending installs");
                     aInstalls[0].cancel();
 
-                    Services.perms.remove("example.com", "install");
+                    Services.perms.remove(makeURI("http://example.com/"), "install");
                     wait_for_notification_close(runNextTest);
                     gBrowser.removeTab(gBrowser.selectedTab);
                   });
@@ -868,7 +1048,7 @@ function test_cancel() {
           AddonManager.getAllInstalls(function(aInstalls) {
             is(aInstalls.length, 0, "Should be no pending install");
 
-            Services.perms.remove("example.com", "install");
+            Services.perms.remove(makeURI("http://example.com/"), "install");
             gBrowser.removeTab(gBrowser.selectedTab);
             runNextTest();
           });

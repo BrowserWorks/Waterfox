@@ -200,7 +200,7 @@ NS_NewSVGMaskFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsSVGMaskFrame)
 
-TemporaryRef<SourceSurface>
+already_AddRefed<SourceSurface>
 nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
                                       nsIFrame* aMaskedFrame,
                                       const gfxMatrix &aMatrix,
@@ -259,7 +259,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
   gfxMatrix maskSurfaceMatrix =
     aContext->CurrentMatrix() * gfxMatrix::Translation(-maskSurfaceRect.TopLeft());
 
-  nsRefPtr<gfxContext> tmpCtx = new gfxContext(maskDT);
+  RefPtr<gfxContext> tmpCtx = new gfxContext(maskDT);
   tmpCtx->SetMatrix(maskSurfaceMatrix);
 
   mMatrixForChildren = GetMaskTransform(aMaskedFrame) * aMatrix;
@@ -332,7 +332,7 @@ nsSVGMaskFrame::GetMaskForMaskedFrame(gfxContext* aContext,
   }
 
   *aMaskTransform = ToMatrix(maskSurfaceMatrix);
-  return destMaskSurface;
+  return destMaskSurface.forget();
 }
 
 nsresult

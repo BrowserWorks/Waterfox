@@ -355,10 +355,8 @@ add_test(function test_update_mwis() {
       // pin2.
       equal(this.readString(), null);
 
-      if (!ril.v5Legacy) {
-        // AID. Ignore because it's from modem.
-        this.readInt32();
-      }
+      // AID. Ignore because it's from modem.
+      this.readInt32();
     };
 
     ok(!isUpdated);
@@ -1314,7 +1312,7 @@ add_test(function test_read_cphs_info() {
   let recordHelper = context.SimRecordHelper;
   let buf  = context.Buf;
   let io  = context.ICCIOHelper;
-  let cphsPDU = Uint8Array(3);
+  let cphsPDU = new Uint8Array(3);
 
   io.loadTransparentEF = function(options) {
     if (cphsPDU) {

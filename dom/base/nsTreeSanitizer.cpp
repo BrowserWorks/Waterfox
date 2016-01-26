@@ -284,10 +284,6 @@ nsIAtom** const kElementsSVG[] = {
   &nsGkAtoms::altGlyph, // altGlyph
   &nsGkAtoms::altGlyphDef, // altGlyphDef
   &nsGkAtoms::altGlyphItem, // altGlyphItem
-  &nsGkAtoms::animate, // animate
-  &nsGkAtoms::animateColor, // animateColor
-  &nsGkAtoms::animateMotion, // animateMotion
-  &nsGkAtoms::animateTransform, // animateTransform
   &nsGkAtoms::circle, // circle
   &nsGkAtoms::clipPath, // clipPath
   &nsGkAtoms::colorProfile, // color-profile
@@ -351,7 +347,6 @@ nsIAtom** const kElementsSVG[] = {
   &nsGkAtoms::polyline, // polyline
   &nsGkAtoms::radialGradient, // radialGradient
   &nsGkAtoms::rect, // rect
-  &nsGkAtoms::set, // set
   &nsGkAtoms::stop, // stop
   &nsGkAtoms::svg, // svg
   &nsGkAtoms::svgSwitch, // switch
@@ -1071,17 +1066,12 @@ nsTreeSanitizer::MustPrune(int32_t aNamespace,
 }
 
 bool
-nsTreeSanitizer::SanitizeStyleRule(mozilla::css::StyleRule *aRule,
-                                   nsAutoString &aRuleText)
+nsTreeSanitizer::SanitizeStyleDeclaration(mozilla::css::Declaration* aDeclaration,
+                                          nsAutoString& aRuleText)
 {
-  bool didSanitize = false;
-  aRuleText.Truncate();
-  mozilla::css::Declaration* style = aRule->GetDeclaration();
-  if (style) {
-    didSanitize = style->HasProperty(eCSSProperty_binding);
-    style->RemoveProperty(eCSSProperty_binding);
-    style->ToString(aRuleText);
-  }
+  bool didSanitize = aDeclaration->HasProperty(eCSSProperty_binding);
+  aDeclaration->RemoveProperty(eCSSProperty_binding);
+  aDeclaration->ToString(aRuleText);
   return didSanitize;
 }
 
@@ -1097,13 +1087,14 @@ nsTreeSanitizer::SanitizeStyleSheet(const nsAString& aOriginal,
   // -moz-binding is blacklisted.
   bool didSanitize = false;
   // Create a sheet to hold the parsed CSS
-  nsRefPtr<CSSStyleSheet> sheet = new CSSStyleSheet(CORS_NONE, aDocument->GetReferrerPolicy());
+  RefPtr<CSSStyleSheet> sheet = new CSSStyleSheet(CORS_NONE, aDocument->GetReferrerPolicy());
   sheet->SetURIs(aDocument->GetDocumentURI(), nullptr, aBaseURI);
   sheet->SetPrincipal(aDocument->NodePrincipal());
   // Create the CSS parser, and parse the CSS text.
   nsCSSParser parser(nullptr, sheet);
   rv = parser.ParseSheet(aOriginal, aDocument->GetDocumentURI(), aBaseURI,
-                         aDocument->NodePrincipal(), 0, false);
+                         aDocument->NodePrincipal(), 0,
+                         mozilla::css::eAuthorSheetFeatures);
   NS_ENSURE_SUCCESS(rv, true);
   // Mark the sheet as complete.
   MOZ_ASSERT(!sheet->IsModified(),
@@ -1136,10 +1127,11 @@ nsTreeSanitizer::SanitizeStyleSheet(const nsAString& aOriginal,
       case mozilla::css::Rule::STYLE_RULE: {
         // For style rules, we will just look for and remove the
         // -moz-binding properties.
-        nsRefPtr<mozilla::css::StyleRule> styleRule = do_QueryObject(rule);
+        RefPtr<mozilla::css::StyleRule> styleRule = do_QueryObject(rule);
         NS_ASSERTION(styleRule, "Must be a style rule");
         nsAutoString decl;
-        bool sanitized = SanitizeStyleRule(styleRule, decl);
+        bool sanitized =
+          SanitizeStyleDeclaration(styleRule->GetDeclaration(), decl);
         didSanitize = sanitized || didSanitize;
         if (!sanitized) {
           styleRule->GetCssText(decl);
@@ -1161,10 +1153,7 @@ nsTreeSanitizer::SanitizeAttributes(mozilla::dom::Element* aElement,
 {
   uint32_t ac = aElement->GetAttrCount();
 
-  nsresult rv;
-
   for (int32_t i = ac - 1; i >= 0; --i) {
-    rv = NS_OK;
     const nsAttrName* attrName = aElement->GetAttrNameAt(i);
     int32_t attrNs = attrName->NamespaceID();
     nsCOMPtr<nsIAtom> attrLocal = attrName->LocalName();
@@ -1176,17 +1165,14 @@ nsTreeSanitizer::SanitizeAttributes(mozilla::dom::Element* aElement,
         // Pass the CSS Loader object to the parser, to allow parser error
         // reports to include the outer window ID.
         nsCSSParser parser(document->CSSLoader());
-        nsRefPtr<mozilla::css::StyleRule> rule;
         nsAutoString value;
         aElement->GetAttr(attrNs, attrLocal, value);
-        rv = parser.ParseStyleAttribute(value,
-                                        document->GetDocumentURI(),
-                                        baseURI,
-                                        document->NodePrincipal(),
-                                        getter_AddRefs(rule));
-        if (NS_SUCCEEDED(rv)) {
+        RefPtr<mozilla::css::Declaration> decl =
+          parser.ParseStyleAttribute(value, document->GetDocumentURI(),
+                                     baseURI, document->NodePrincipal());
+        if (decl) {
           nsAutoString cleanValue;
-          if (SanitizeStyleRule(rule, cleanValue)) {
+          if (SanitizeStyleDeclaration(decl, cleanValue)) {
             aElement->SetAttr(kNameSpaceID_None,
                               nsGkAtoms::style,
                               cleanValue,
@@ -1359,7 +1345,7 @@ nsTreeSanitizer::Sanitize(nsIDocument* aDocument)
   // in tree.
 #ifdef DEBUG
   NS_PRECONDITION(!aDocument->GetContainer(), "The document is in a shell.");
-  nsRefPtr<mozilla::dom::Element> root = aDocument->GetRootElement();
+  RefPtr<mozilla::dom::Element> root = aDocument->GetRootElement();
   NS_PRECONDITION(root->IsHTMLElement(nsGkAtoms::html), "Not HTML root.");
 #endif
 
@@ -1396,9 +1382,8 @@ nsTreeSanitizer::SanitizeChildren(nsINode* aRoot)
         NS_ASSERTION(ns == kNameSpaceID_XHTML || ns == kNameSpaceID_SVG,
             "Should have only HTML or SVG here!");
         nsAutoString styleText;
-        if (!nsContentUtils::GetNodeTextContent(node, false, styleText)) {
-          NS_RUNTIMEABORT("OOM");
-        }
+        nsContentUtils::GetNodeTextContent(node, false, styleText);
+
         nsAutoString sanitizedStyle;
         nsCOMPtr<nsIURI> baseURI = node->GetBaseURI();
         if (SanitizeStyleSheet(styleText,

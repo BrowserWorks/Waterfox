@@ -97,25 +97,9 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
                                         Register ptr, Label* fail);
     void cleanupAfterAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* mir, Register ptr);
 
-    // Label for the common return path.
-    NonAssertingLabel returnLabel_;
     NonAssertingLabel deoptLabel_;
 
-    inline Operand ToOperand(const LAllocation& a) {
-        if (a.isGeneralReg())
-            return Operand(a.toGeneralReg()->reg());
-        if (a.isFloatReg())
-            return Operand(a.toFloatReg()->reg());
-        return Operand(StackPointer, ToStackOffset(&a));
-    }
-    inline Operand ToOperand(const LAllocation* a) {
-        return ToOperand(*a);
-    }
-    inline Operand ToOperand(const LDefinition* def) {
-        return ToOperand(def->output());
-    }
-
-    MoveOperand toMoveOperand(const LAllocation* a) const;
+    MoveOperand toMoveOperand(LAllocation a) const;
 
     void bailoutIf(Assembler::Condition condition, LSnapshot* snapshot);
     void bailoutIf(Assembler::DoubleCondition condition, LSnapshot* snapshot);
@@ -162,8 +146,6 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     }
 
   protected:
-    bool generatePrologue();
-    bool generateEpilogue();
     bool generateOutOfLineCode();
 
     void emitCompare(MCompare::CompareType type, const LAllocation* left, const LAllocation* right);
@@ -256,8 +238,13 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     virtual void visitGuardClass(LGuardClass* guard);
     virtual void visitEffectiveAddress(LEffectiveAddress* ins);
     virtual void visitUDivOrMod(LUDivOrMod* ins);
+    virtual void visitUDivOrModConstant(LUDivOrModConstant *ins);
     virtual void visitAsmJSPassStackArg(LAsmJSPassStackArg* ins);
     virtual void visitMemoryBarrier(LMemoryBarrier* ins);
+    virtual void visitAtomicTypedArrayElementBinop(LAtomicTypedArrayElementBinop* lir);
+    virtual void visitAtomicTypedArrayElementBinopForEffect(LAtomicTypedArrayElementBinopForEffect* lir);
+    virtual void visitCompareExchangeTypedArrayElement(LCompareExchangeTypedArrayElement* lir);
+    virtual void visitAtomicExchangeTypedArrayElement(LAtomicExchangeTypedArrayElement* lir);
 
     void visitOutOfLineLoadTypedArrayOutOfBounds(OutOfLineLoadTypedArrayOutOfBounds* ool);
     void visitOffsetBoundsCheck(OffsetBoundsCheck* oolCheck);
@@ -275,11 +262,11 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     void visitInt32x4ToFloat32x4(LInt32x4ToFloat32x4* ins);
     void visitFloat32x4ToInt32x4(LFloat32x4ToInt32x4* ins);
     void visitSimdReinterpretCast(LSimdReinterpretCast* lir);
+    void visitSimdExtractElementB(LSimdExtractElementB* lir);
     void visitSimdExtractElementI(LSimdExtractElementI* lir);
     void visitSimdExtractElementF(LSimdExtractElementF* lir);
     void visitSimdInsertElementI(LSimdInsertElementI* lir);
     void visitSimdInsertElementF(LSimdInsertElementF* lir);
-    void visitSimdSignMaskX4(LSimdSignMaskX4* ins);
     void visitSimdSwizzleI(LSimdSwizzleI* lir);
     void visitSimdSwizzleF(LSimdSwizzleF* lir);
     void visitSimdShuffle(LSimdShuffle* lir);
@@ -292,6 +279,8 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     void visitSimdBinaryBitwiseX4(LSimdBinaryBitwiseX4* lir);
     void visitSimdShift(LSimdShift* lir);
     void visitSimdSelect(LSimdSelect* ins);
+    void visitSimdAllTrue(LSimdAllTrue* ins);
+    void visitSimdAnyTrue(LSimdAnyTrue* ins);
 
     template <class T, class Reg> void visitSimdGeneralShuffle(LSimdGeneralShuffleBase* lir, Reg temp);
     void visitSimdGeneralShuffleI(LSimdGeneralShuffleI* lir);
@@ -306,6 +295,17 @@ class CodeGeneratorX86Shared : public CodeGeneratorShared
     void visitOutOfLineTableSwitch(OutOfLineTableSwitch* ool);
     void visitOutOfLineSimdFloatToIntCheck(OutOfLineSimdFloatToIntCheck* ool);
     void generateInvalidateEpilogue();
+
+    // Generating a result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
+                                    const T& mem, Register temp1, Register temp2, AnyRegister output);
+
+    // Generating no result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value, const T& mem);
+
+    void setReturnDoubleRegs(LiveRegisterSet* regs);
 };
 
 // An out-of-line bailout thunk.

@@ -1,17 +1,26 @@
 [
 {
-"clang_version": "r183744"
+"clang_version": "r247539"
 }, 
 {
-"size": 47, 
-"digest": "2005a41fe97a5e00997063705f39d42b6a43b1cf7ba306cbc7b1513de34cdcd050fc6326efa2107f19ba0cc67914745dbf13154fa748010a93cf072481ef4aaa", 
-"algorithm": "sha512", 
-"filename": "setup.sh"
-}, 
+"size": 106877168,
+"digest": "1c50c6348eaf429ed59bb603cff63bcc1f870f59216dd3c234db5b1156cfd351d5ee7b820ec31be4d2661eb4213b2e0030e2ba2782b42905d1ec19c7f8bd322a",
+"algorithm": "sha512",
+"filename": "clang.tar.xz",
+"unpack": true
+},
 {
-"size": 70350828, 
-"digest": "6cd04e8ec44c6fef159349c22bd0476891e4a2d46479f9586283eaf3305e42f79c720d40dfec0e78d8899c1651189b12e285de60862ffd0612b0dac7a0c336c6", 
-"algorithm": "sha512", 
-"filename": "clang.tar.bz2"
+"size": 12057960,
+"digest": "6105d6432943141cffb40020dc5ba3a793650bdeb3af9bd5e56d3796c5f03df9962a73e521646cd71fbfb5e266c1e74716ad722fb6055589dfb7d35175bca89e",
+"algorithm": "sha512",
+"filename": "gtk3.tar.xz",
+"unpack": true
+},
+{
+"size": 167175,
+"digest": "0b71a936edf5bd70cf274aaa5d7abc8f77fe8e7b5593a208f805cc9436fac646b9c4f0b43c2b10de63ff3da671497d35536077ecbc72dba7f8159a38b580f831",
+"algorithm": "sha512",
+"filename": "sccache.tar.bz2",
+"unpack": true
 }
 ]

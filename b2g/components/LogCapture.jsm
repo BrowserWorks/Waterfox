@@ -10,6 +10,7 @@ const Cu = Components.utils;
 const Ci = Components.interfaces;
 const Cc = Components.classes;
 
+Cu.importGlobalProperties(['FileReader']);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Promise", "resource://gre/modules/Promise.jsm");
@@ -24,7 +25,7 @@ function debug(msg) {
   dump("LogCapture.jsm: " + msg + "\n");
 }
 
-let LogCapture = {
+var LogCapture = {
   ensureLoaded: function() {
     if (!this.ctypes) {
       this.load();
@@ -194,17 +195,24 @@ let LogCapture = {
    * as an ArrayBuffer.
    */
   getScreenshot: function() {
-    this.ensureLoaded();
     let deferred = Promise.defer();
+    try {
+      this.ensureLoaded();
 
-    let fr = Cc["@mozilla.org/files/filereader;1"]
-                .createInstance(Ci.nsIDOMFileReader);
+      let fr = new FileReader();
+      fr.onload = function(evt) {
+        deferred.resolve(new Uint8Array(evt.target.result));
+      };
 
-    fr.onload = function(evt) {
-      deferred.resolve(new Uint8Array(evt.target.result));
-    };
+      fr.onerror = function(evt) {
+        deferred.reject(evt);
+      };
 
-    fr.readAsArrayBuffer(Screenshot.get());
+      fr.readAsArrayBuffer(Screenshot.get());
+    } catch(e) {
+      // We pass any errors through to the deferred Promise
+      deferred.reject(e);
+    }
 
     return deferred.promise;
   }

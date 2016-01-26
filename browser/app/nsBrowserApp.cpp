@@ -14,12 +14,10 @@
 #include <fcntl.h>
 #elif defined(XP_UNIX)
 #include <sys/resource.h>
-#include <time.h>
 #include <unistd.h>
 #endif
 
 #ifdef XP_MACOSX
-#include <mach/mach_time.h>
 #include "MacQuirks.h"
 #endif
 
@@ -214,83 +212,6 @@ static int do_main(int argc, char* argv[], nsIFile *xreDirectory)
   return XRE_main(argc, argv, &appData, mainFlags);
 }
 
-#ifdef XP_WIN
-
-/**
- * Used only when GetTickCount64 is not available on the platform.
- * Last result of GetTickCount call. Kept in [ms].
- */
-static DWORD sLastGTCResult = 0;
-
-/**
- *  Higher part of the 64-bit value of MozGetTickCount64,
- * incremented atomically.
- */
-static DWORD sLastGTCRollover = 0;
-
-/**
- * Function protecting GetTickCount result from rolling over. The original
- * code comes from the Windows implementation of the TimeStamp class minus the
- * locking harness which isn't needed here.
- *
- * @returns The current time in milliseconds
- */
-static ULONGLONG WINAPI
-MozGetTickCount64()
-{
-  DWORD GTC = ::GetTickCount();
-
-  /* Pull the rollover counter forward only if new value of GTC goes way
-   * down under the last saved result */
-  if ((sLastGTCResult > GTC) && ((sLastGTCResult - GTC) > (1UL << 30)))
-    ++sLastGTCRollover;
-
-  sLastGTCResult = GTC;
-  return (ULONGLONG)sLastGTCRollover << 32 | sLastGTCResult;
-}
-
-typedef ULONGLONG (WINAPI* GetTickCount64_t)();
-static GetTickCount64_t sGetTickCount64 = nullptr;
-
-#endif
-
-/**
- * Local TimeStamp::Now()-compatible implementation used to record timestamps
- * which will be passed to XRE_StartupTimelineRecord().
- */
-static uint64_t
-TimeStamp_Now()
-{
-#ifdef XP_WIN
-  LARGE_INTEGER freq;
-  ::QueryPerformanceFrequency(&freq);
-
-  HMODULE kernelDLL = GetModuleHandleW(L"kernel32.dll");
-  sGetTickCount64 = reinterpret_cast<GetTickCount64_t>
-    (GetProcAddress(kernelDLL, "GetTickCount64"));
-
-  if (!sGetTickCount64) {
-    /* If the platform does not support the GetTickCount64 (Windows XP doesn't),
-     * then use our fallback implementation based on GetTickCount. */
-    sGetTickCount64 = MozGetTickCount64;
-  }
-
-  return sGetTickCount64() * freq.QuadPart;
-#elif defined(XP_MACOSX)
-  return mach_absolute_time();
-#elif defined(HAVE_CLOCK_MONOTONIC)
-  struct timespec ts;
-  int rv = clock_gettime(CLOCK_MONOTONIC, &ts);
-
-  if (rv != 0) {
-    return 0;
-  }
-
-  uint64_t baseNs = (uint64_t)ts.tv_sec * 1000000000;
-  return baseNs + (uint64_t)ts.tv_nsec;
-#endif
-}
-
 static bool
 FileExists(const char *path)
 {
@@ -304,11 +225,6 @@ FileExists(const char *path)
 #endif
 }
 
-#ifdef LIBXUL_SDK
-#  define XPCOM_PATH "xulrunner" XPCOM_FILE_PATH_SEPARATOR XPCOM_DLL
-#else
-#  define XPCOM_PATH XPCOM_DLL
-#endif
 static nsresult
 InitXPCOMGlue(const char *argv0, nsIFile **xreDirectory)
 {
@@ -321,55 +237,13 @@ InitXPCOMGlue(const char *argv0, nsIFile **xreDirectory)
   }
 
   char *lastSlash = strrchr(exePath, XPCOM_FILE_PATH_SEPARATOR[0]);
-  if (!lastSlash || (size_t(lastSlash - exePath) > MAXPATHLEN - sizeof(XPCOM_PATH) - 1))
+  if (!lastSlash || (size_t(lastSlash - exePath) > MAXPATHLEN -
+sizeof(XPCOM_DLL) - 1))
     return NS_ERROR_FAILURE;
 
-  strcpy(lastSlash + 1, XPCOM_PATH);
-  lastSlash += sizeof(XPCOM_PATH) - sizeof(XPCOM_DLL);
+  strcpy(lastSlash + 1, XPCOM_DLL);
 
   if (!FileExists(exePath)) {
-#if defined(LIBXUL_SDK) && defined(XP_MACOSX)
-    // Check for <bundle>/Contents/Frameworks/XUL.framework/libxpcom.dylib
-    bool greFound = false;
-    CFBundleRef appBundle = CFBundleGetMainBundle();
-    if (!appBundle)
-      return NS_ERROR_FAILURE;
-    CFURLRef fwurl = CFBundleCopyPrivateFrameworksURL(appBundle);
-    CFURLRef absfwurl = nullptr;
-    if (fwurl) {
-      absfwurl = CFURLCopyAbsoluteURL(fwurl);
-      CFRelease(fwurl);
-    }
-    if (absfwurl) {
-      CFURLRef xulurl =
-        CFURLCreateCopyAppendingPathComponent(nullptr, absfwurl,
-                                              CFSTR("XUL.framework"),
-                                              true);
-
-      if (xulurl) {
-        CFURLRef xpcomurl =
-          CFURLCreateCopyAppendingPathComponent(nullptr, xulurl,
-                                                CFSTR("libxpcom.dylib"),
-                                                false);
-
-        if (xpcomurl) {
-          if (CFURLGetFileSystemRepresentation(xpcomurl, true,
-                                               (UInt8*) exePath,
-                                               sizeof(exePath)) &&
-              access(tbuffer, R_OK | X_OK) == 0) {
-            if (realpath(tbuffer, exePath)) {
-              greFound = true;
-            }
-          }
-          CFRelease(xpcomurl);
-        }
-        CFRelease(xulurl);
-      }
-      CFRelease(absfwurl);
-    }
-  }
-  if (!greFound) {
-#endif
     Output("Could not find the Mozilla runtime.\n");
     return NS_ERROR_FAILURE;
   }
@@ -411,7 +285,7 @@ InitXPCOMGlue(const char *argv0, nsIFile **xreDirectory)
 
 int main(int argc, char* argv[])
 {
-  uint64_t start = TimeStamp_Now();
+  mozilla::TimeStamp start = mozilla::TimeStamp::Now();
 
 #ifdef XP_MACOSX
   TriggerQuirks();

@@ -1,6 +1,6 @@
 // Bug 960397: UDP multicast options
 
-const { Constructor: CC } = Components;
+var { Constructor: CC } = Components;
 
 const UDPSocket = CC("@mozilla.org/network/udp-socket;1",
                      "nsIUDPSocket",
@@ -19,7 +19,7 @@ const ua = Cc["@mozilla.org/network/protocol;1?name=http"]
            .getService(Ci.nsIHttpProtocolHandler).userAgent;
 const isWinXP = ua.indexOf("Windows NT 5.1") != -1;
 
-let gConverter;
+var gConverter;
 
 function run_test() {
   setup();

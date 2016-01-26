@@ -14,7 +14,7 @@
 // definition of "explicit expiration time" being used here.
 
 Cu.import("resource://testing-common/httpd.js");
-Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 var httpserver = new HttpServer();
 var index = 0;
@@ -22,15 +22,16 @@ var tests = [
     {url: "/freshness",   server: "0", expected: "0"},
     {url: "/freshness",   server: "1", expected: "0"}, // cached
 
-    // RFC 2616 section 13.9 2nd paragraph
+    // RFC 2616 section 13.9 2nd paragraph says not to heuristically cache
+    // querystring, but we allow it to maintain web compat
     {url: "/freshness?a", server: "2", expected: "2"},
-    {url: "/freshness?a", server: "3", expected: "3"},
+    {url: "/freshness?a", server: "3", expected: "2"},
 
     // explicit expiration dates in the future should be cached
     {url: "/freshness?b", server: "4", expected: "4",
      responseheader: "Expires: "+getDateString(1)},
     {url: "/freshness?b", server: "5", expected: "4"},// cached due to Expires
-    
+
     {url: "/freshness?c", server: "6", expected: "6",
      responseheader: "Cache-Control: max-age=3600"},
     {url: "/freshness?c", server: "7", expected: "6"}, // cached due to max-age
@@ -39,7 +40,7 @@ var tests = [
     {url: "/freshness?d", server: "8", expected: "8",
      responseheader: "Expires: "+getDateString(-1)},
     {url: "/freshness?d", server: "9", expected: "9"},
-    
+
     {url: "/freshness?e", server: "10", expected: "10",
      responseheader: "Cache-Control: max-age=0"},
     {url: "/freshness?e", server: "11", expected: "11"},
@@ -56,16 +57,10 @@ function logit(i, data) {
 }
 
 function setupChannel(suffix, value) {
-    var ios = Components.classes["@mozilla.org/network/io-service;1"].
-                         getService(Ci.nsIIOService);
-    var chan = ios.newChannel2("http://localhost:" + httpserver.identity.primaryPort + suffix,
-                               "",
-                               null,
-                               null,      // aLoadingNode
-                               Services.scriptSecurityManager.getSystemPrincipal(),
-                               null,      // aTriggeringPrincipal
-                               Ci.nsILoadInfo.SEC_NORMAL,
-                               Ci.nsIContentPolicy.TYPE_OTHER);
+    var chan = NetUtil.newChannel({
+        uri: "http://localhost:" + httpserver.identity.primaryPort + suffix,
+        loadUsingSystemPrincipal: true
+    });
     var httpChan = chan.QueryInterface(Components.interfaces.nsIHttpChannel);
     httpChan.requestMethod = "GET";
     httpChan.setRequestHeader("x-request", value, false);
@@ -74,7 +69,7 @@ function setupChannel(suffix, value) {
 
 function triggerNextTest() {
     var channel = setupChannel(tests[index].url, tests[index].server);
-    channel.asyncOpen(new ChannelListener(checkValueAndTrigger, null),null);
+    channel.asyncOpen2(new ChannelListener(checkValueAndTrigger, null));
 }
 
 function checkValueAndTrigger(request, data, ctx) {
@@ -104,7 +99,7 @@ function handler(metadata, response) {
     var body = metadata.getHeader("x-request");
     response.setHeader("Content-Type", "text/plain", false);
     response.setHeader("Date", getDateString(0), false);
-    
+
     var header = tests[index].responseheader;
     if (header == null) {
         response.setHeader("Last-Modified", getDateString(-1), false);
@@ -112,11 +107,11 @@ function handler(metadata, response) {
         var splitHdr = header.split(": ");
         response.setHeader(splitHdr[0], splitHdr[1], false);
     }
-    
+
     response.setStatusLine(metadata.httpVersion, 200, "OK");
     response.bodyOutputStream.write(body, body.length);
 }
- 
+
 function getDateString(yearDelta) {
     var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

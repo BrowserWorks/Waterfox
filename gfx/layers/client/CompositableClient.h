@@ -10,11 +10,11 @@
 #include <vector>                       // for vector
 #include <map>                          // for map
 #include "mozilla/Assertions.h"         // for MOZ_CRASH
-#include "mozilla/RefPtr.h"             // for TemporaryRef, RefCounted
+#include "mozilla/RefPtr.h"             // for already_AddRefed, RefCounted
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat
 #include "mozilla/layers/AsyncTransactionTracker.h" // for AsyncTransactionTracker
 #include "mozilla/layers/CompositorTypes.h"
-#include "mozilla/layers/LayersTypes.h"  // for LayersBackend
+#include "mozilla/layers/LayersTypes.h"  // for LayersBackend, TextureDumpMode
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "mozilla/layers/TextureClientRecycleAllocator.h" // for TextureClientRecycleAllocator
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
@@ -23,8 +23,8 @@ namespace mozilla {
 namespace layers {
 
 class CompositableClient;
-class BufferTextureClient;
 class ImageBridgeChild;
+class ImageContainer;
 class CompositableForwarder;
 class CompositableChild;
 class PCompositableChild;
@@ -34,7 +34,8 @@ class PCompositableChild;
  */
 class RemoveTextureFromCompositableTracker : public AsyncTransactionTracker {
 public:
-  RemoveTextureFromCompositableTracker()
+  explicit RemoveTextureFromCompositableTracker(AsyncTransactionWaiter* aWaiter = nullptr)
+    : AsyncTransactionTracker(aWaiter)
   {
     MOZ_COUNT_CTOR(RemoveTextureFromCompositableTracker);
   }
@@ -125,29 +126,38 @@ public:
 
   explicit CompositableClient(CompositableForwarder* aForwarder, TextureFlags aFlags = TextureFlags::NO_FLAGS);
 
+  virtual void Dump(std::stringstream& aStream,
+                    const char* aPrefix="",
+                    bool aDumpHtml=false,
+                    TextureDumpMode aCompress=TextureDumpMode::Compress) {};
+
   virtual TextureInfo GetTextureInfo() const = 0;
 
   LayersBackend GetCompositorBackendType() const;
 
-  TemporaryRef<BufferTextureClient>
+  already_AddRefed<TextureClient>
   CreateBufferTextureClient(gfx::SurfaceFormat aFormat,
                             gfx::IntSize aSize,
                             gfx::BackendType aMoz2dBackend = gfx::BackendType::NONE,
                             TextureFlags aFlags = TextureFlags::DEFAULT);
 
-  TemporaryRef<TextureClient>
+  already_AddRefed<TextureClient>
   CreateTextureClientForDrawing(gfx::SurfaceFormat aFormat,
                                 gfx::IntSize aSize,
-                                gfx::BackendType aMoz2DBackend,
+                                BackendSelector aSelector,
                                 TextureFlags aTextureFlags,
                                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT);
 
   /**
    * Establishes the connection with compositor side through IPDL
    */
-  virtual bool Connect();
+  virtual bool Connect(ImageContainer* aImageContainer = nullptr);
 
   void Destroy();
+
+  static bool DestroyFallback(PCompositableChild* aActor);
+
+  bool IsConnected() const;
 
   PCompositableChild* GetIPDLActor() const;
 
@@ -173,11 +183,6 @@ public:
    * Tells the Compositor to create a TextureHost for this TextureClient.
    */
   virtual bool AddTextureClient(TextureClient* aClient);
-
-  /**
-   * A hook for the Compositable to execute whatever it held off for next transaction.
-   */
-  virtual void OnTransaction();
 
   /**
    * A hook for the when the Compositable is detached from it's layer.
@@ -225,10 +230,12 @@ public:
 
   TextureClientRecycleAllocator* GetTextureClientRecycler();
 
-  static void DumpTextureClient(std::stringstream& aStream, TextureClient* aTexture);
+  static void DumpTextureClient(std::stringstream& aStream,
+                                TextureClient* aTexture,
+                                TextureDumpMode aCompress);
 protected:
   CompositableChild* mCompositableChild;
-  CompositableForwarder* mForwarder;
+  RefPtr<CompositableForwarder> mForwarder;
   // Some layers may want to enforce some flags to all their textures
   // (like disallowing tiling)
   TextureFlags mTextureFlags;
@@ -248,19 +255,14 @@ struct AutoRemoveTexture
     , mCompositable(aCompositable)
   {}
 
-  ~AutoRemoveTexture()
-  {
-    if (mCompositable && mTexture) {
-      mCompositable->RemoveTexture(mTexture);
-    }
-  }
+  ~AutoRemoveTexture();
 
   RefPtr<TextureClient> mTexture;
 private:
   CompositableClient* mCompositable;
 };
 
-} // namespace
-} // namespace
+} // namespace layers
+} // namespace mozilla
 
 #endif

@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Webapp Runtime')
+
 if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += ['win']
 elif CONFIG['OS_ARCH'] == 'Darwin':
@@ -26,7 +29,6 @@ EXTRA_COMPONENTS += [
 
 EXTRA_JS_MODULES += [
     'DownloadView.jsm',
-    'RemoteDebugger.jsm',
     'Startup.jsm',
     'WebappManager.jsm',
     'WebappRT.jsm',
@@ -43,18 +45,15 @@ MOCHITEST_WEBAPPRT_CONTENT_MANIFESTS += ['test/content/webapprt.ini']
 DIST_SUBDIR = 'webapprt'
 export('DIST_SUBDIR')
 
-if CONFIG['MOZ_DEBUG']:
-    DEFINES['MOZ_DEBUG'] = 1
-
-if CONFIG['MOZILLA_OFFICIAL']:
-    DEFINES['MOZILLA_OFFICIAL'] = True
-
 DEFINES['GRE_MILESTONE'] = CONFIG['GRE_MILESTONE']
 DEFINES['MOZ_APP_BASENAME'] = CONFIG['MOZ_APP_BASENAME']
 
 JAR_MANIFESTS += ['jar.mn']
 
-JS_PREFERENCE_FILES += [
+JS_PREFERENCE_PP_FILES += [
     'prefs.js',
 ]
 
+FINAL_TARGET_PP_FILES += [
+    'webapprt.ini',
+]

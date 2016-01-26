@@ -763,14 +763,14 @@
         <xul:image class="warning-icon"/>
         <xul:label anonid="warning" flex="1"/>
         <xul:label anonid="warning-link" class="text-link"/>
-        <xul:button anonid="warning-btn" class="button-link"/>
+        <xul:button anonid="warning-btn" class="button-link" hidden="true"/>
         <xul:spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
       </xul:hbox>
       <xul:hbox anonid="error-container"
                 class="error">
         <xul:image class="error-icon"/>
         <xul:label anonid="error" flex="1"/>
-        <xul:label anonid="error-link" class="text-link"/>
+        <xul:label anonid="error-link" class="text-link" hidden="true"/>
         <xul:spacer flex="5000"/> <!-- Necessary to allow the message to wrap -->
       </xul:hbox>
       <xul:hbox anonid="pending-container"
@@ -795,8 +795,7 @@
           <xul:hbox class="basicinfo-container">
               <xul:hbox class="name-container">
                 <xul:label anonid="name" class="name" crop="end" flex="1"
-                           xbl:inherits="value=name,tooltiptext=name"/>
-                <xul:label anonid="version" class="version"/>
+                           tooltip="addonitem-tooltip" xbl:inherits="value=name"/>
                 <xul:label class="disabled-postfix" value="&addon.disabled.postfix;"/>
                 <xul:label class="update-postfix" value="&addon.update.postfix;"/>
                 <xul:spacer flex="5000"/> <!-- Necessary to make the name crop -->
@@ -878,11 +877,6 @@
                         tooltiptext="&cmd.showPreferencesUnix.tooltip;"
 #endif
                         oncommand="document.getBindingParent(this).showPreferences();"/>
-                        <!-- label="&cmd.debugAddon.label;" -->
-            <xul:button anonid="debug-btn" class="addon-control debug"
-                        label="&cmd.debugAddon.label;"
-                        oncommand="document.getBindingParent(this).debug();"/>
-
             <xul:button anonid="enable-btn"  class="addon-control enable"
                         label="&cmd.enableAddon.label;"
                         oncommand="document.getBindingParent(this).userDisabled = false;"/>
@@ -920,6 +914,7 @@
 
     <implementation>
       <constructor><![CDATA[
+        this._installStatus = document.getAnonymousElementByAttribute(this, "anonid", "install-status");
         this._installStatus.mControl = this;
 
         this.setAttribute("contextmenu", "addonitem-popup");
@@ -979,9 +974,6 @@
         document.getAnonymousElementByAttribute(this, "anonid",
                                                 "info");
       </field>
-      <field name="_version">
-        document.getAnonymousElementByAttribute(this, "anonid", "version");
-      </field>
       <field name="_experimentState">
         document.getAnonymousElementByAttribute(this, "anonid", "experiment-state");
       </field>
@@ -1022,10 +1014,6 @@
       <field name="_enableBtn">
         document.getAnonymousElementByAttribute(this, "anonid",
                                                 "enable-btn");
-      </field>
-      <field name="_debugBtn">
-        document.getAnonymousElementByAttribute(this, "anonid",
-                                                "debug-btn");
       </field>
       <field name="_disableBtn">
         document.getAnonymousElementByAttribute(this, "anonid",
@@ -1112,16 +1100,11 @@
 
           this.setAttribute("name", aAddon.name);
 
-          var iconURL = this.mAddon.iconURL;
+          var iconURL = AddonManager.getPreferredIconURL(aAddon, 48, window);
           if (iconURL)
             this._icon.src = iconURL;
           else
             this._icon.src = "";
-
-          if (shouldShowVersionNumber(this.mAddon))
-            this._version.value = this.mAddon.version;
-          else
-            this._version.hidden = true;
 
           if (this.mAddon.description)
             this._description.value = this.mAddon.description;
@@ -1132,18 +1115,17 @@
               (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DISABLE ||
                (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DEFAULT &&
                 !AddonManager.autoUpdateDefault))) {
-            var self = this;
-            AddonManager.getAllInstalls(function(aInstallsList) {
+            AddonManager.getAllInstalls(aInstallsList => {
               // This can return after the binding has been destroyed,
               // so try to detect that and return early
-              if (!("onNewInstall" in self))
+              if (!("onNewInstall" in this))
                 return;
               for (let install of aInstallsList) {
                 if (install.existingAddon &&
-                    install.existingAddon.id == self.mAddon.id &&
+                    install.existingAddon.id == this.mAddon.id &&
                     install.state == AddonManager.STATE_AVAILABLE) {
-                  self.onNewInstall(install);
-                  self.onIncludeUpdateChanged();
+                  this.onNewInstall(install);
+                  this.onIncludeUpdateChanged();
                 }
               }
             });
@@ -1247,18 +1229,14 @@
               this._errorLink.value = gStrings.ext.GetStringFromName("notification.blocked.link");
               this._errorLink.href = this.mAddon.blocklistURL;
               this._errorLink.hidden = false;
-            } else if (!isUpgrade &&
-                       this.mAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
-              this.setAttribute("notification", this.mAddon.appDisabled ? "error" : "warning");
-              let msg = this.mAddon.appDisabled ? this._error : this._warning;
-              msg.textContent = gStrings.ext.formatStringFromName(
-                "notification.unsigned" + (this.mAddon.appDisabled ? "AndDisabled" : ""),
-                [this.mAddon.name, gStrings.brandShortName], 2
+            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon) && SIGNING_REQUIRED) {
+              this.setAttribute("notification", "error");
+              this._error.textContent = gStrings.ext.formatStringFromName(
+                "notification.unsignedAndDisabled", [this.mAddon.name, gStrings.brandShortName], 2
               );
-              let infoLink = this.mAddon.appDisabled ? this._errorLink : this._warningLink;
-              infoLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
-              infoLink.href = Services.prefs.getCharPref("xpinstall.signatures.infoURL");
-              infoLink.hidden = false;
+              this._errorLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
+              this._errorLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+              this._errorLink.hidden = false;
             } else if ((!isUpgrade && !this.mAddon.isCompatible) && (AddonManager.checkCompatibility
             || (this.mAddon.blocklistState != Ci.nsIBlocklistService.STATE_SOFTBLOCKED))) {
               this.setAttribute("notification", "warning");
@@ -1268,6 +1246,14 @@
               );
               this._warningLink.hidden = true;
               this._warningBtn.hidden = true;
+            } else if (!isUpgrade && !isCorrectlySigned(this.mAddon)) {
+              this.setAttribute("notification", "warning");
+              this._warning.textContent = gStrings.ext.formatStringFromName(
+                "notification.unsigned", [this.mAddon.name, gStrings.brandShortName], 2
+              );
+              this._warningLink.value = gStrings.ext.GetStringFromName("notification.unsigned.link");
+              this._warningLink.href = Services.urlFormatter.formatURLPref("app.support.baseURL") + "unsigned-addons";
+              this._warningLink.hidden = false;
             } else if (!isUpgrade && this.mAddon.blocklistState == Ci.nsIBlocklistService.STATE_SOFTBLOCKED) {
               this.setAttribute("notification", "warning");
               this._warning.textContent = gStrings.ext.formatStringFromName(
@@ -1375,12 +1361,6 @@
                              this.mAddon.install.state != AddonManager.STATE_INSTALLED);
           this._showStatus(showProgress ? "progress" : "none");
 
-          let debuggable = this.mAddon.isDebuggable &&
-                           Services.prefs.getBoolPref('devtools.chrome.enabled') &&
-                           Services.prefs.getBoolPref('devtools.debugger.remote-enabled');
-
-          this._debugBtn.disabled = this._debugBtn.hidden = !debuggable
-
           if (this.mAddon.type == "experiment") {
             this.removeAttribute("notification");
             let prefix = "experiment.";
@@ -1414,18 +1394,9 @@
         ]]></body>
       </method>
 
-      <method name="_updateUpgradeInfo">
-        <body><![CDATA[
-          // Only update the version string if we're displaying the upgrade info
-          if (this.hasAttribute("upgrade") && shouldShowVersionNumber(this.mAddon))
-            this._version.value = this.mManualUpdate.version;
-        ]]></body>
-      </method>
-
       <method name="_fetchReleaseNotes">
         <parameter name="aURI"/>
         <body><![CDATA[
-          var self = this;
           if (!aURI || this._relNotesLoaded) {
             sendToggleEvent();
             return;
@@ -1437,17 +1408,17 @@
           this._relNotesLoading.hidden = false;
           this._relNotesError.hidden = true;
 
-          function sendToggleEvent() {
+          let sendToggleEvent = () => {
             var event = document.createEvent("Events");
             event.initEvent("RelNotesToggle", true, true);
-            self.dispatchEvent(event);
+            this.dispatchEvent(event);
           }
 
-          function showRelNotes() {
+          let showRelNotes = () => {
             if (!relNotesData || !transformData)
               return;
 
-            self._relNotesLoading.hidden = true;
+            this._relNotesLoading.hidden = true;
 
             var processor = Components.classes["@mozilla.org/document-transformer;1?type=xslt"]
                                       .createInstance(Components.interfaces.nsIXSLTProcessor);
@@ -1455,20 +1426,20 @@
 
             processor.importStylesheet(transformData);
             var fragment = processor.transformToFragment(relNotesData, document);
-            self._relNotes.appendChild(fragment);
-            if (self.hasAttribute("show-relnotes")) {
-              var container = self._relNotesContainer;
+            this._relNotes.appendChild(fragment);
+            if (this.hasAttribute("show-relnotes")) {
+              var container = this._relNotesContainer;
               container.style.height = container.scrollHeight + "px";
             }
             sendToggleEvent();
           }
 
-          function handleError() {
+          let handleError = () => {
             dataReq.abort();
             styleReq.abort();
-            self._relNotesLoading.hidden = true;
-            self._relNotesError.hidden = false;
-            self._relNotesLoaded = false; // allow loading to be re-tried
+            this._relNotesLoading.hidden = true;
+            this._relNotesError.hidden = false;
+            this._relNotesLoaded = false; // allow loading to be re-tried
             sendToggleEvent();
           }
 
@@ -1568,12 +1539,6 @@
           } else {
             this.mAddon.uninstall();
           }
-        ]]></body>
-      </method>
-
-      <method name="debug">
-        <body><![CDATA[
-          gViewController.doCommand("cmd_debugItem", this.mAddon);
         ]]></body>
       </method>
 
@@ -1711,7 +1676,6 @@
 
           this.mManualUpdate = aInstall;
           this._showStatus("update-available");
-          this._updateUpgradeInfo();
         ]]></body>
       </method>
 
@@ -1913,8 +1877,7 @@
         </xul:vbox>
         <xul:vbox class="fade name-outer-container" flex="1">
           <xul:hbox class="name-container">
-            <xul:label anonid="name" class="name" crop="end"/>
-            <xul:label anonid="version" class="version" hidden="true"/>
+            <xul:label anonid="name" class="name" crop="end" tooltip="addonitem-tooltip"/>
           </xul:hbox>
         </xul:vbox>
         <xul:vbox class="install-status-container">
@@ -1935,9 +1898,6 @@
       </field>
       <field name="_name">
         document.getAnonymousElementByAttribute(this, "anonid", "name");
-      </field>
-      <field name="_version">
-        document.getAnonymousElementByAttribute(this, "anonid", "version");
       </field>
       <field name="_warning">
         document.getAnonymousElementByAttribute(this, "anonid", "warning");
@@ -1966,14 +1926,6 @@
             this._icon.src = this.mAddon.iconURL ||
                              (this.mInstall ? this.mInstall.iconURL : "");
             this._name.value = this.mAddon.name;
-
-            if (this.mAddon.version) {
-              this._version.value = this.mAddon.version;
-              this._version.hidden = false;
-            } else {
-              this._version.hidden = true;
-            }
-
           } else {
             this._icon.src = this.mInstall.iconURL;
             // AddonInstall.name isn't always available - fallback to filename
@@ -1986,13 +1938,6 @@
                        null, null);
               url.QueryInterface(Components.interfaces.nsIURL);
               this._name.value = url.fileName;
-            }
-
-            if (this.mInstall.version) {
-              this._version.value = this.mInstall.version;
-              this._version.hidden = false;
-            } else {
-              this._version.hidden = true;
             }
           }
 

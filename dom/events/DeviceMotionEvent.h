@@ -42,7 +42,7 @@ private:
   ~DeviceRotationRate();
 
 protected:
-  nsRefPtr<DeviceMotionEvent> mOwner;
+  RefPtr<DeviceMotionEvent> mOwner;
   Nullable<double> mAlpha, mBeta, mGamma;
 };
 
@@ -74,7 +74,7 @@ private:
   ~DeviceAcceleration();
 
 protected:
-  nsRefPtr<DeviceMotionEvent> mOwner;
+  RefPtr<DeviceMotionEvent> mOwner;
   Nullable<double> mX, mY, mZ;
 };
 
@@ -128,8 +128,7 @@ public:
          const DeviceAccelerationInit& aAcceleration,
          const DeviceAccelerationInit& aAccelerationIncludingGravity,
          const DeviceRotationRateInit& aRotationRate,
-         Nullable<double> aInterval,
-         ErrorResult& aRv);
+         Nullable<double> aInterval);
 
   static already_AddRefed<DeviceMotionEvent>
   Constructor(const GlobalObject& aGlobal,
@@ -140,13 +139,18 @@ public:
 protected:
   ~DeviceMotionEvent() {}
 
-  nsRefPtr<DeviceAcceleration> mAcceleration;
-  nsRefPtr<DeviceAcceleration> mAccelerationIncludingGravity;
-  nsRefPtr<DeviceRotationRate> mRotationRate;
+  RefPtr<DeviceAcceleration> mAcceleration;
+  RefPtr<DeviceAcceleration> mAccelerationIncludingGravity;
+  RefPtr<DeviceRotationRate> mRotationRate;
   Nullable<double> mInterval;
 };
 
 } // namespace dom
 } // namespace mozilla
+
+already_AddRefed<mozilla::dom::DeviceMotionEvent>
+NS_NewDOMDeviceMotionEvent(mozilla::dom::EventTarget* aOwner,
+                           nsPresContext* aPresContext,
+                           mozilla::WidgetEvent* aEvent);
 
 #endif // mozilla_dom_DeviceMotionEvent_h_

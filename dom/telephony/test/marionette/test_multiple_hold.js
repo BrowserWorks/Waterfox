@@ -6,11 +6,11 @@ MARIONETTE_HEAD_JS = 'head.js';
 
 const outNumber = "5555551111";
 const outInfo = gOutCallStrPool(outNumber);
-let outCall;
+var outCall;
 
 const inNumber = "5555552222";
 const inInfo = gInCallStrPool(inNumber);
-let inCall;
+var inCall;
 
 startTest(function() {
   gRemoteDial(inNumber)
@@ -46,9 +46,13 @@ startTest(function() {
     .then(() => gCheckAll(inCall, [inCall, outCall], "", [],
                           [inInfo.active, outInfo.held]))
 
-    .then(() => gHangUp(inCall))
-    .then(() => gCheckAll(null, [outCall], "", [], [outInfo.held]))
-
+    // Hangup the active call will automatically resume the held call.
+    .then(() => {
+      let p1 = gWaitForNamedStateEvent(outCall, "connected");
+      let p2 = gHangUp(inCall);
+      return Promise.all([p1, p2]);
+    })
+    .then(() => gCheckAll(outCall, [outCall], "", [], [outInfo.active]))
     .then(() => gHangUp(outCall))
     .then(() => gCheckAll(null, [], "", [], []))
 

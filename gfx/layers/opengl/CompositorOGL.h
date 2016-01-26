@@ -14,9 +14,10 @@
 #include "Units.h"                      // for ScreenPoint
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/Attributes.h"         // for override, final
-#include "mozilla/RefPtr.h"             // for TemporaryRef, RefPtr
+#include "mozilla/RefPtr.h"             // for already_AddRefed, RefPtr
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
+#include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for IntSize, Point
 #include "mozilla/gfx/Rect.h"           // for Rect, IntRect
 #include "mozilla/gfx/Types.h"          // for Float, SurfaceFormat, etc
@@ -27,23 +28,19 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
-#include "nsSize.h"                     // for nsIntSize
 #include "nsTArray.h"                   // for nsAutoTArray, nsTArray, etc
 #include "nsThreadUtils.h"              // for nsRunnable
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType
 #include "nscore.h"                     // for NS_IMETHOD
-#ifdef MOZ_WIDGET_GONK
-#include <ui/GraphicBuffer.h>
-#endif
 #include "gfxVR.h"
+
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+#include "nsTHashtable.h"               // for nsTHashtable
+#endif
 
 class nsIWidget;
 
 namespace mozilla {
-
-namespace gfx {
-class Matrix4x4;
-}
 
 namespace layers {
 
@@ -55,6 +52,11 @@ class TextureSource;
 struct Effect;
 struct EffectChain;
 class GLBlitTextureImageHelper;
+
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+class ImageHostOverlay;
+#endif
+
 /**
  * Interface for pools of temporary gl textures for the compositor.
  * The textures are fully owned by the pool, so the latter is responsible
@@ -187,6 +189,7 @@ class CompositorOGL final : public Compositor
   typedef mozilla::gl::GLContext GLContext;
 
   friend class GLManagerCompositor;
+  friend class CompositingRenderTargetOGL;
 
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
@@ -197,7 +200,7 @@ protected:
   virtual ~CompositorOGL();
 
 public:
-  virtual TemporaryRef<DataTextureSource>
+  virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
   virtual bool Initialize() override;
@@ -212,16 +215,19 @@ public:
                                GetMaxTextureSize(),
                                mFBOTextureTarget == LOCAL_GL_TEXTURE_2D,
                                SupportsPartialTextureUpdate());
-    result.mSupportedBlendModes += gfx::CompositionOp::OP_SCREEN;
-    result.mSupportedBlendModes += gfx::CompositionOp::OP_MULTIPLY;
     result.mSupportedBlendModes += gfx::CompositionOp::OP_SOURCE;
+    for (uint8_t op = 0; op < uint8_t(gfx::CompositionOp::OP_COUNT); op++) {
+      if (BlendOpIsMixBlendMode(gfx::CompositionOp(op))) {
+        result.mSupportedBlendModes += gfx::CompositionOp(op);
+      }
+    }
     return result;
   }
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTarget(const gfx::IntRect &aRect, SurfaceInitMode aInit) override;
 
-  virtual TemporaryRef<CompositingRenderTarget>
+  virtual already_AddRefed<CompositingRenderTarget>
   CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                                const CompositingRenderTarget *aSource,
                                const gfx::IntPoint &aSourcePoint) override;
@@ -233,11 +239,10 @@ public:
                         const gfx::Rect& aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
-                        const gfx::Matrix4x4 &aTransform) override;
+                        const gfx::Matrix4x4& aTransform,
+                        const gfx::Rect& aVisibleRect) override;
 
   virtual void EndFrame() override;
-  virtual void SetDispAcquireFence(Layer* aLayer) override;
-  virtual FenceHandle GetReleaseFence() override;
   virtual void EndFrameForExternalComposition(const gfx::Matrix& aTransform) override;
 
   virtual bool SupportsPartialTextureUpdate() override;
@@ -264,9 +269,6 @@ public:
 
   virtual void MakeCurrent(MakeCurrentFlags aFlags = 0) override;
 
-  virtual void PrepareViewport(const gfx::IntSize& aSize) override;
-
-
 #ifdef MOZ_DUMP_PAINTING
   virtual const char* Name() const override { return "OGL"; }
 #endif // MOZ_DUMP_PAINTING
@@ -279,6 +281,29 @@ public:
   virtual bool Resume() override;
 
   virtual nsIWidget* GetWidget() const override { return mWidget; }
+
+  virtual bool HasImageHostOverlays() override
+  {
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+    return mImageHostOverlays.Count() > 0;
+#else
+    return false;
+#endif
+  }
+
+  virtual void AddImageHostOverlay(ImageHostOverlay* aOverlay) override
+  {
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+    mImageHostOverlays.PutEntry(aOverlay);
+#endif
+  }
+
+  virtual void RemoveImageHostOverlay(ImageHostOverlay* aOverlay) override
+  {
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+    mImageHostOverlays.RemoveEntry(aOverlay);
+#endif
+  }
 
   GLContext* gl() const { return mGLContext; }
   /**
@@ -317,11 +342,6 @@ public:
   }
 
 private:
-  virtual gfx::IntSize GetWidgetSize() const override
-  {
-    return mWidgetSize;
-  }
-
   bool InitializeVR();
   void DestroyVR(GLContext *gl);
 
@@ -331,15 +351,17 @@ private:
                         gfx::Float aOpacity,
                         const gfx::Matrix4x4& aTransform);
 
+  void PrepareViewport(CompositingRenderTargetOGL *aRenderTarget);
+
   /** Widget associated with this compositor */
   nsIWidget *mWidget;
-  gfx::IntSize mWidgetSize;
-  nsRefPtr<GLContext> mGLContext;
+  LayoutDeviceIntSize mWidgetSize;
+  RefPtr<GLContext> mGLContext;
   UniquePtr<GLBlitTextureImageHelper> mBlitTextureImageHelper;
   gfx::Matrix4x4 mProjMatrix;
 
   /** The size of the surface we are rendering to */
-  nsIntSize mSurfaceSize;
+  gfx::IntSize mSurfaceSize;
 
   ScreenPoint mRenderOffset;
 
@@ -391,7 +413,8 @@ private:
   ShaderConfigOGL GetShaderConfigFor(Effect *aEffect,
                                      MaskType aMask = MaskType::MaskNone,
                                      gfx::CompositionOp aOp = gfx::CompositionOp::OP_OVER,
-                                     bool aColorMatrix = false) const;
+                                     bool aColorMatrix = false,
+                                     bool aDEAAEnabled = false) const;
   ShaderProgramOGL* GetShaderProgramFor(const ShaderConfigOGL &aConfig);
 
   /**
@@ -404,6 +427,7 @@ private:
   void CreateFBOWithTexture(const gfx::IntRect& aRect, bool aCopyFromSource,
                             GLuint aSourceFrameBuffer,
                             GLuint *aFBO, GLuint *aTexture);
+  GLuint CreateTexture(const gfx::IntRect& aRect, bool aCopyFromSource, GLuint aSourceFrameBuffer);
 
   void BindAndDrawQuads(ShaderProgramOGL *aProg,
                         int aQuads,
@@ -422,9 +446,16 @@ private:
                                       const gfx::Rect& aRect,
                                       const gfx::Rect& aTexCoordRect,
                                       TextureSource *aTexture);
-
+  gfx::Point3D GetLineCoefficients(const gfx::Point& aPoint1,
+                                   const gfx::Point& aPoint2);
   void ActivateProgram(ShaderProgramOGL *aProg);
   void CleanupResources();
+
+  /**
+   * Bind the texture behind the current render target as the backdrop for a
+   * mix-blend shader.
+   */
+  void BindBackdrop(ShaderProgramOGL* aProgram, GLuint aBackdrop, GLenum aTexUnit);
 
   /**
    * Copies the content of our backbuffer to the set transaction target.
@@ -441,7 +472,7 @@ private:
    * y-axis pointing downwards, for good reason as Web pages are typically
    * scrolled downwards. So, some flipping has to take place; FlippedY does it.
    */
-  GLint FlipY(GLint y) const { return mHeight - y; }
+  GLint FlipY(GLint y) const { return mViewportSize.height - y; }
 
   RefPtr<CompositorTexturePoolOGL> mTexturePool;
 
@@ -450,18 +481,22 @@ private:
   bool mDestroyed;
 
   /**
-   * Height of the OpenGL context's primary framebuffer in pixels. Used by
-   * FlipY for the y-flipping calculation.
+   * Size of the OpenGL context's primary framebuffer in pixels. Used by
+   * FlipY for the y-flipping calculation and by the DEAA shader.
    */
-  GLint mHeight;
+  gfx::IntSize mViewportSize;
 
-  FenceHandle mReleaseFenceHandle;
   ShaderProgramOGL *mCurrentProgram;
 
   CompositorOGLVRObjects mVR;
+
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+  nsTHashtable<nsPtrHashKey<ImageHostOverlay> > mImageHostOverlays;
+#endif
+
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* MOZILLA_GFX_COMPOSITOROGL_H */

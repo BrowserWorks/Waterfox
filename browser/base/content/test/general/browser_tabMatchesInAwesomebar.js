@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+requestLongerTimeout(2);
+
 const TEST_URL_BASES = [
   "http://example.org/browser/browser/base/content/test/general/dummy_page.html#tabmatch",
   "http://example.org/browser/browser/base/content/test/general/moz.png#tabmatch"
@@ -221,7 +223,7 @@ function checkAutocompleteResults(aExpected, aCallback)
     },
     setSelectedIndex: function() {},
     get searchCount() { return this.searches.length; },
-    getSearchAt: function(aIndex) this.searches[aIndex],
+    getSearchAt: function(aIndex) { return this.searches[aIndex]; },
     QueryInterface: XPCOMUtils.generateQI([
       Ci.nsIAutoCompleteInput,
       Ci.nsIAutoCompletePopup,

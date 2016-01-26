@@ -9,6 +9,7 @@
 #include "mozilla/layers/CompositableClient.h"  // for CompositableChild
 #include "mozilla/layers/PCompositableChild.h"  // for PCompositableChild
 #include "mozilla/layers/PLayerChild.h"  // for PLayerChild
+#include "mozilla/layers/PImageContainerChild.h"
 #include "mozilla/layers/ShadowLayers.h"  // for ShadowLayerForwarder
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT, etc
@@ -32,13 +33,14 @@ LayerTransactionChild::Destroy()
   // When it happens, IPCOpen() is still true.
   // See bug 1004191.
   mDestroyed = true;
-  MOZ_ASSERT(0 == ManagedPLayerChild().Length(),
+  MOZ_ASSERT(0 == ManagedPLayerChild().Count(),
              "layers should have been cleaned up by now");
 
-  for (size_t i = 0; i < ManagedPTextureChild().Length(); ++i) {
-    TextureClient* texture = TextureClient::AsTextureClient(ManagedPTextureChild()[i]);
+  const ManagedContainer<PTextureChild>& textures = ManagedPTextureChild();
+  for (auto iter = textures.ConstIter(); !iter.Done(); iter.Next()) {
+    TextureClient* texture = TextureClient::AsTextureClient(iter.Get()->GetKey());
     if (texture) {
-      texture->ForceRemove();
+      texture->Destroy();
     }
   }
 
@@ -125,6 +127,7 @@ LayerTransactionChild::ActorDestroy(ActorDestroyReason why)
 
 PTextureChild*
 LayerTransactionChild::AllocPTextureChild(const SurfaceDescriptor&,
+                                          const LayersBackend&,
                                           const TextureFlags&)
 {
   MOZ_ASSERT(!mDestroyed);
@@ -137,5 +140,5 @@ LayerTransactionChild::DeallocPTextureChild(PTextureChild* actor)
   return TextureClient::DestroyIPDLActor(actor);
 }
 
-}  // namespace layers
-}  // namespace mozilla
+} // namespace layers
+} // namespace mozilla

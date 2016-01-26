@@ -12,12 +12,11 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'AMRBox.cpp',
     'AVCBox.cpp',
+    'EVRCBox.cpp',
     'ISOControl.cpp',
     'ISOMediaBoxes.cpp',
     'ISOMediaWriter.cpp',
     'MP4ESDS.cpp',
 ]
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

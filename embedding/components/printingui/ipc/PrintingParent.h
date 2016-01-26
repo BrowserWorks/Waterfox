@@ -15,6 +15,10 @@ class PPrintProgressDialogParent;
 class PPrintSettingsDialogParent;
 
 namespace mozilla {
+namespace layout {
+class PRemotePrintJobParent;
+}
+
 namespace embedding {
 
 class PrintingParent final : public PPrintingParent
@@ -25,7 +29,7 @@ public:
                      PPrintProgressDialogParent* printProgressDialog,
                      const bool& isForPrinting,
                      bool* notifyOnOpen,
-                     bool* success);
+                     nsresult* result);
     virtual bool
     RecvShowPrintDialog(PPrintSettingsDialogParent* aDialog,
                         PBrowserParent* aParent,
@@ -49,6 +53,12 @@ public:
     virtual bool
     DeallocPPrintSettingsDialogParent(PPrintSettingsDialogParent* aActor);
 
+    virtual PRemotePrintJobParent*
+    AllocPRemotePrintJobParent();
+
+    virtual bool
+    DeallocPRemotePrintJobParent(PRemotePrintJobParent* aActor);
+
     virtual void
     ActorDestroy(ActorDestroyReason aWhy);
 
@@ -64,8 +74,8 @@ private:
                     const PrintData& data,
                     PrintData* result);
 };
+
 } // namespace embedding
 } // namespace mozilla
 
 #endif
-

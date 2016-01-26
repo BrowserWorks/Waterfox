@@ -2,11 +2,12 @@ $inherits:
   from: 'tasks/builds/b2g_emulator_base.yml'
   variables:
     build_name: 'emulator-l'
-    build_type: 'opt'
+    build_type: 'debug'
 task:
   workerType: emulator-l-debug
   scopes:
-    - 'docker-worker:cache:workspace-emulator-l-debug'
+    - 'docker-worker:cache:level-{{level}}-{{project}}-emulator-l-debug'
+    - 'docker-worker:cache:level-{{level}}-{{project}}-emulator-l-debug-objdir-gecko'
   metadata:
     name: '[TC] B2G Emulator L (Debug)'
 
@@ -24,7 +25,9 @@ task:
 
   payload:
     cache:
-      workspace-emulator-l-debug: /home/worker/workspace
+      level-{{level}}-{{project}}-emulator-l-debug: /home/worker/workspace
+      level-{{level}}-{{project}}-emulator-l-debug-objdir-gecko: /home/worker/objdir-gecko
     env:
       TARGET: 'emulator-l'
+      TOOLTOOL_MANIFEST: 'b2g/config/emulator-l/releng-emulator-l.tt'
       B2G_DEBUG: 1

@@ -21,6 +21,12 @@ random-if(d2d) == boxshadow-threecorners.html boxshadow-threecorners-ref.html
 == boxshadow-skiprect.html boxshadow-skiprect-ref.html
 == boxshadow-opacity.html boxshadow-opacity-ref.html
 == boxshadow-color-rounding.html boxshadow-color-rounding-ref.html
+== boxshadow-color-rounding-middle.html boxshadow-color-rounding-middle-ref.html
+fuzzy-if(OSX==1010,1,24) == boxshadow-large-border-radius.html boxshadow-large-border-radius-ref.html # Bug 1209649
+== boxshadow-border-radius-int.html boxshadow-border-radius-int-ref.html
+== boxshadow-inset-neg-spread.html about:blank
+== boxshadow-inset-neg-spread2.html boxshadow-inset-neg-spread2-ref.html
+fuzzy(26,3610) == boxshadow-rotated.html boxshadow-rotated-ref.html # Bug 1211264
 
 == overflow-not-scrollable-1.html overflow-not-scrollable-1-ref.html
 == overflow-not-scrollable-1.html overflow-not-scrollable-1-ref2.html
@@ -29,3 +35,7 @@ fails-if(B2G||Mulet) == 611574-1.html 611574-1-ref.html # Initial mulet triage: 
 fails-if(B2G||Mulet) == 611574-2.html 611574-2-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 fuzzy-if(winWidget,5,30) == fieldset.html fieldset-ref.html # minor anti-aliasing problem on Windows
 fuzzy-if(winWidget,5,30) == fieldset-inset.html fieldset-inset-ref.html # minor anti-aliasing problem on Windows
+== 1178575.html 1178575-ref.html
+== 1178575-2.html 1178575-2-ref.html
+fuzzy(159,2) fails-if(!d2d) == 1212823-1.html 1212823-1-ref.html
+== boxshadow-large-offset.html boxshadow-large-offset-ref.html

@@ -73,7 +73,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangePointListNotifier
 // Stack-based helper class to pair calls to WillChangePointList and
 // DidChangePointList.
-class MOZ_STACK_CLASS AutoChangePointListNotifier
+class MOZ_RAII AutoChangePointListNotifier
 {
 public:
   explicit AutoChangePointListNotifier(DOMSVGPointList* aPointList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -105,7 +105,7 @@ DOMSVGPointList::GetDOMWrapper(void *aList,
                                nsSVGElement *aElement,
                                bool aIsAnimValList)
 {
-  nsRefPtr<DOMSVGPointList> wrapper =
+  RefPtr<DOMSVGPointList> wrapper =
     SVGPointListTearoffTable().GetTearoff(aList);
   if (!wrapper) {
     wrapper = new DOMSVGPointList(aElement, aIsAnimValList);
@@ -152,7 +152,7 @@ DOMSVGPointList::InternalListWillChangeTo(const SVGPointList& aNewValue)
     newLength = nsISVGPoint::MaxListIndex();
   }
 
-  nsRefPtr<DOMSVGPointList> kungFuDeathGrip;
+  RefPtr<DOMSVGPointList> kungFuDeathGrip;
   if (newLength < oldLength) {
     // RemovingFromList() might clear last reference to |this|.
     // Retain a temporary reference to keep from dying before returning.
@@ -166,7 +166,7 @@ DOMSVGPointList::InternalListWillChangeTo(const SVGPointList& aNewValue)
     }
   }
 
-  if (!mItems.SetLength(newLength)) {
+  if (!mItems.SetLength(newLength, fallible)) {
     // We silently ignore SetLength OOM failure since being out of sync is safe
     // so long as we have *fewer* items than our internal list.
     mItems.Clear();
@@ -183,6 +183,13 @@ bool
 DOMSVGPointList::AttrIsAnimating() const
 {
   return InternalAList().IsAnimating();
+}
+
+bool
+DOMSVGPointList::AnimListMirrorsBaseList() const
+{
+  return GetDOMWrapperIfExists(InternalAList().GetAnimValKey()) &&
+           !AttrIsAnimating();
 }
 
 SVGPointList&
@@ -263,7 +270,7 @@ already_AddRefed<nsISVGPoint>
 DOMSVGPointList::GetItem(uint32_t index, ErrorResult& error)
 {
   bool found;
-  nsRefPtr<nsISVGPoint> item = IndexedGetter(index, found, error);
+  RefPtr<nsISVGPoint> item = IndexedGetter(index, found, error);
   if (!found) {
     error.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
   }
@@ -306,10 +313,20 @@ DOMSVGPointList::InsertItemBefore(nsISVGPoint& aNewItem, uint32_t aIndex,
   }
 
   // Ensure we have enough memory so we can avoid complex error handling below:
-  if (!mItems.SetCapacity(mItems.Length() + 1) ||
+  if (!mItems.SetCapacity(mItems.Length() + 1, fallible) ||
       !InternalList().SetCapacity(InternalList().Length() + 1)) {
     aError.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
+  }
+  if (AnimListMirrorsBaseList()) {
+    DOMSVGPointList *animVal =
+      GetDOMWrapperIfExists(InternalAList().GetAnimValKey());
+    MOZ_ASSERT(animVal, "animVal must be a valid pointer");
+    if (!animVal->mItems.SetCapacity(
+          animVal->mItems.Length() + 1, fallible)) {
+      aError.Throw(NS_ERROR_OUT_OF_MEMORY);
+      return nullptr;
+    }
   }
 
   AutoChangePointListNotifier notifier(this);
@@ -317,7 +334,7 @@ DOMSVGPointList::InsertItemBefore(nsISVGPoint& aNewItem, uint32_t aIndex,
   MaybeInsertNullInAnimValListAt(aIndex);
 
   InternalList().InsertItem(aIndex, domItem->ToSVGPoint());
-  mItems.InsertElementAt(aIndex, domItem);
+  MOZ_ALWAYS_TRUE(mItems.InsertElementAt(aIndex, domItem, fallible));
 
   // This MUST come after the insertion into InternalList(), or else under the
   // insertion into InternalList() the values read from domItem would be bad
@@ -386,7 +403,7 @@ DOMSVGPointList::RemoveItem(uint32_t aIndex, ErrorResult& aError)
   MaybeRemoveItemFromAnimValListAt(aIndex);
 
   // We have to return the removed item, so get it, creating it if necessary:
-  nsRefPtr<nsISVGPoint> result = GetItemAt(aIndex);
+  RefPtr<nsISVGPoint> result = GetItemAt(aIndex);
 
   // Notify the DOM item of removal *before* modifying the lists so that the
   // DOM item can copy its *old* value:
@@ -408,7 +425,7 @@ DOMSVGPointList::GetItemAt(uint32_t aIndex)
   if (!mItems[aIndex]) {
     mItems[aIndex] = new DOMSVGPoint(this, aIndex, IsAnimValList());
   }
-  nsRefPtr<nsISVGPoint> result = mItems[aIndex];
+  RefPtr<nsISVGPoint> result = mItems[aIndex];
   return result.forget();
 }
 
@@ -417,23 +434,18 @@ DOMSVGPointList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 {
   MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
-  if (AttrIsAnimating()) {
-    // animVal not a clone of baseVal
+  if (!AnimListMirrorsBaseList()) {
     return;
   }
 
   // The anim val list is in sync with the base val list
   DOMSVGPointList *animVal =
     GetDOMWrapperIfExists(InternalAList().GetAnimValKey());
-  if (!animVal) {
-    // No animVal list wrapper
-    return;
-  }
 
+  MOZ_ASSERT(animVal, "AnimListMirrorsBaseList() promised a non-null animVal");
   MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
              "animVal list not in sync!");
-
-  animVal->mItems.InsertElementAt(aIndex, static_cast<nsISVGPoint*>(nullptr));
+  MOZ_ALWAYS_TRUE(animVal->mItems.InsertElementAt(aIndex, nullptr, fallible));
 
   UpdateListIndicesFromIndex(animVal->mItems, aIndex + 1);
 }
@@ -443,20 +455,16 @@ DOMSVGPointList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
 {
   MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
-  if (AttrIsAnimating()) {
-    // animVal not a clone of baseVal
+  if (!AnimListMirrorsBaseList()) {
     return;
   }
 
   // This needs to be a strong reference; otherwise, the RemovingFromList call
   // below might drop the last reference to animVal before we're done with it.
-  nsRefPtr<DOMSVGPointList> animVal =
+  RefPtr<DOMSVGPointList> animVal =
     GetDOMWrapperIfExists(InternalAList().GetAnimValKey());
-  if (!animVal) {
-    // No animVal list wrapper
-    return;
-  }
 
+  MOZ_ASSERT(animVal, "AnimListMirrorsBaseList() promised a non-null animVal");
   MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
              "animVal list not in sync!");
 

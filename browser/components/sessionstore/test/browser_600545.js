@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let stateBackup = JSON.parse(ss.getBrowserState());
+requestLongerTimeout(2);
+
+var stateBackup = JSON.parse(ss.getBrowserState());
 
 function test() {
   /** Test for Bug 600545 **/
@@ -66,13 +68,16 @@ function done() {
   // Enumerate windows and close everything but our primary window. We can't
   // use waitForFocus() because apparently it's buggy. See bug 599253.
   let windowsEnum = Services.wm.getEnumerator("navigator:browser");
+  let closeWinPromises = [];
   while (windowsEnum.hasMoreElements()) {
     let currentWindow = windowsEnum.getNext();
     if (currentWindow != window)
-      currentWindow.close();
+      closeWinPromises.push(BrowserTestUtils.closeWindow(currentWindow));
   }
 
-  waitForBrowserState(stateBackup, finish);
+  Promise.all(closeWinPromises).then(() => {
+    waitForBrowserState(stateBackup, finish);
+  });
 }
 
 // Count up the number of tabs in the state data

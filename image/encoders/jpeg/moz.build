@@ -8,6 +8,7 @@ SOURCES += [
     'nsJPEGEncoder.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
-
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

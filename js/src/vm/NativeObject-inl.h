@@ -79,7 +79,10 @@ inline void
 NativeObject::initDenseElementWithType(ExclusiveContext* cx, uint32_t index, const Value& val)
 {
     MOZ_ASSERT(!shouldConvertDoubleElements());
-    AddTypePropertyId(cx, this, JSID_VOID, val);
+    if (val.isMagic(JS_ELEMENTS_HOLE))
+        markDenseElementsNotPacked(cx);
+    else
+        AddTypePropertyId(cx, this, JSID_VOID, val);
     initDenseElement(index, val);
 }
 
@@ -146,7 +149,7 @@ NativeObject::ensureDenseInitializedLength(ExclusiveContext* cx, uint32_t index,
     ensureDenseInitializedLengthNoPackedCheck(cx, index, extra);
 }
 
-NativeObject::EnsureDenseResult
+DenseElementResult
 NativeObject::extendDenseElements(ExclusiveContext* cx,
                                   uint32_t requiredCapacity, uint32_t extra)
 {
@@ -159,7 +162,7 @@ NativeObject::extendDenseElements(ExclusiveContext* cx,
      */
     if (!nonProxyIsExtensible() || watched()) {
         MOZ_ASSERT(getDenseCapacity() == 0);
-        return ED_SPARSE;
+        return DenseElementResult::Incomplete;
     }
 
     /*
@@ -168,7 +171,7 @@ NativeObject::extendDenseElements(ExclusiveContext* cx,
      * every time a new index is added.
      */
     if (isIndexed())
-        return ED_SPARSE;
+        return DenseElementResult::Incomplete;
 
     /*
      * We use the extra argument also as a hint about number of non-hole
@@ -176,16 +179,16 @@ NativeObject::extendDenseElements(ExclusiveContext* cx,
      */
     if (requiredCapacity > MIN_SPARSE_INDEX &&
         willBeSparseElements(requiredCapacity, extra)) {
-        return ED_SPARSE;
+        return DenseElementResult::Incomplete;
     }
 
     if (!growElements(cx, requiredCapacity))
-        return ED_FAILED;
+        return DenseElementResult::Failure;
 
-    return ED_OK;
+    return DenseElementResult::Success;
 }
 
-inline NativeObject::EnsureDenseResult
+inline DenseElementResult
 NativeObject::ensureDenseElements(ExclusiveContext* cx, uint32_t index, uint32_t extra)
 {
     MOZ_ASSERT(isNative());
@@ -194,7 +197,7 @@ NativeObject::ensureDenseElements(ExclusiveContext* cx, uint32_t index, uint32_t
         markDenseElementsNotPacked(cx);
 
     if (!maybeCopyElementsForWrite(cx))
-        return ED_FAILED;
+        return DenseElementResult::Failure;
 
     uint32_t currentCapacity = getDenseCapacity();
 
@@ -203,31 +206,31 @@ NativeObject::ensureDenseElements(ExclusiveContext* cx, uint32_t index, uint32_t
         /* Optimize for the common case. */
         if (index < currentCapacity) {
             ensureDenseInitializedLengthNoPackedCheck(cx, index, 1);
-            return ED_OK;
+            return DenseElementResult::Success;
         }
         requiredCapacity = index + 1;
         if (requiredCapacity == 0) {
             /* Overflow. */
-            return ED_SPARSE;
+            return DenseElementResult::Incomplete;
         }
     } else {
         requiredCapacity = index + extra;
         if (requiredCapacity < index) {
             /* Overflow. */
-            return ED_SPARSE;
+            return DenseElementResult::Incomplete;
         }
         if (requiredCapacity <= currentCapacity) {
             ensureDenseInitializedLengthNoPackedCheck(cx, index, extra);
-            return ED_OK;
+            return DenseElementResult::Success;
         }
     }
 
-    EnsureDenseResult edr = extendDenseElements(cx, requiredCapacity, extra);
-    if (edr != ED_OK)
-        return edr;
+    DenseElementResult result = extendDenseElements(cx, requiredCapacity, extra);
+    if (result != DenseElementResult::Success)
+        return result;
 
     ensureDenseInitializedLengthNoPackedCheck(cx, index, extra);
-    return ED_OK;
+    return DenseElementResult::Success;
 }
 
 inline Value
@@ -235,32 +238,7 @@ NativeObject::getDenseOrTypedArrayElement(uint32_t idx)
 {
     if (is<TypedArrayObject>())
         return as<TypedArrayObject>().getElement(idx);
-    if (is<SharedTypedArrayObject>())
-        return as<SharedTypedArrayObject>().getElement(idx);
     return getDenseElement(idx);
-}
-
-inline void
-NativeObject::initDenseElementsUnbarriered(uint32_t dstStart, const Value* src, uint32_t count) {
-    /*
-     * For use by parallel threads, which since they cannot see nursery
-     * things do not require a barrier.
-     */
-    MOZ_ASSERT(dstStart + count <= getDenseCapacity());
-    MOZ_ASSERT(!denseElementsAreCopyOnWrite());
-#ifdef DEBUG
-    /*
-     * This asserts a global invariant: parallel code does not
-     * observe objects inside the generational GC's nursery.
-     */
-    MOZ_ASSERT(!gc::IsInsideGGCNursery(this));
-    for (uint32_t index = 0; index < count; ++index) {
-        const Value& value = src[index];
-        if (value.isMarkable())
-            MOZ_ASSERT(!gc::IsInsideGGCNursery(static_cast<gc::Cell*>(value.toGCThing())));
-    }
-#endif
-    memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
 }
 
 /* static */ inline NativeObject*
@@ -424,7 +402,7 @@ CallResolveOp(JSContext* cx, HandleNativeObject obj, HandleId id, MutableHandleS
         return true;
     }
 
-    MOZ_ASSERT(!IsAnyTypedArray(obj));
+    MOZ_ASSERT(!obj->is<TypedArrayObject>());
 
     propp.set(obj->lookup(cx, id));
     return true;
@@ -470,10 +448,10 @@ LookupOwnPropertyInline(ExclusiveContext* cx,
     // Check for a typed array element. Integer lookups always finish here
     // so that integer properties on the prototype are ignored even for out
     // of bounds accesses.
-    if (IsAnyTypedArray(obj)) {
+    if (obj->template is<TypedArrayObject>()) {
         uint64_t index;
         if (IsTypedArrayIndex(id, &index)) {
-            if (index < AnyTypedArrayLength(obj)) {
+            if (index < obj->template as<TypedArrayObject>().length()) {
                 MarkDenseOrTypedArrayElementFound<allowGC>(propp);
             } else {
                 propp.set(nullptr);
@@ -538,10 +516,10 @@ NativeLookupOwnPropertyNoResolve(ExclusiveContext* cx, HandleNativeObject obj, H
     }
 
     // Check for a typed array element.
-    if (IsAnyTypedArray(obj)) {
+    if (obj->is<TypedArrayObject>()) {
         uint64_t index;
         if (IsTypedArrayIndex(id, &index)) {
-            if (index < AnyTypedArrayLength(obj))
+            if (index < obj->as<TypedArrayObject>().length())
                 MarkDenseOrTypedArrayElementFound<CanGC>(result);
             else
                 result.set(nullptr);
@@ -604,21 +582,20 @@ LookupPropertyInline(ExclusiveContext* cx,
 }
 
 inline bool
-WarnIfNotConstructing(JSContext* cx, const CallArgs& args, const char* builtinName)
-{
-    if (args.isConstructing())
-        return true;
-    return JS_ReportErrorFlagsAndNumber(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
-                                        JSMSG_BUILTIN_CTOR_NO_NEW, builtinName);
-}
-
-inline bool
 ThrowIfNotConstructing(JSContext *cx, const CallArgs &args, const char *builtinName)
 {
     if (args.isConstructing())
         return true;
     return JS_ReportErrorFlagsAndNumber(cx, JSREPORT_ERROR, GetErrorMessage, nullptr,
-                                        JSMSG_BUILTIN_CTOR_NO_NEW_FATAL, builtinName);
+                                        JSMSG_BUILTIN_CTOR_NO_NEW, builtinName);
+}
+
+inline bool
+IsPackedArray(JSObject* obj)
+{
+    return obj->is<ArrayObject>() && !obj->hasLazyGroup() &&
+           !obj->group()->hasAllFlags(OBJECT_FLAG_NON_PACKED) &&
+           obj->as<ArrayObject>().getDenseInitializedLength() == obj->as<ArrayObject>().length();
 }
 
 } // namespace js

@@ -19,10 +19,41 @@
 namespace mozilla {
 namespace css {
 
+NS_IMPL_QUERY_INTERFACE(ImportantStyleData, nsIStyleRule)
+NS_IMPL_ADDREF_USING_AGGREGATOR(ImportantStyleData, Declaration())
+NS_IMPL_RELEASE_USING_AGGREGATOR(ImportantStyleData, Declaration())
+
+/* virtual */ void
+ImportantStyleData::MapRuleInfoInto(nsRuleData* aRuleData)
+{
+  Declaration()->MapImportantRuleInfoInto(aRuleData);
+}
+
+/* virtual */ bool
+ImportantStyleData::MightMapInheritedStyleData()
+{
+  return Declaration()->MapsImportantInheritedStyleData();
+}
+
+#ifdef DEBUG
+/* virtual */ void
+ImportantStyleData::List(FILE* out, int32_t aIndent) const
+{
+  // Indent
+  nsAutoCString str;
+  for (int32_t index = aIndent; --index >= 0; ) {
+    str.AppendLiteral("  ");
+  }
+
+  str.AppendLiteral("! important rule\n");
+  fprintf_stderr(out, "%s", str.get());
+}
+#endif
+
 Declaration::Declaration()
   : mImmutable(false)
 {
-  MOZ_COUNT_CTOR(mozilla::css::Declaration);
+  mContainer.mRaw = uintptr_t(0);
 }
 
 Declaration::Declaration(const Declaration& aCopy)
@@ -39,12 +70,57 @@ Declaration::Declaration(const Declaration& aCopy)
         nullptr),
     mImmutable(false)
 {
-  MOZ_COUNT_CTOR(mozilla::css::Declaration);
+  mContainer.mRaw = uintptr_t(0);
 }
 
 Declaration::~Declaration()
 {
-  MOZ_COUNT_DTOR(mozilla::css::Declaration);
+}
+
+NS_INTERFACE_MAP_BEGIN(Declaration)
+  if (aIID.Equals(NS_GET_IID(mozilla::css::Declaration))) {
+    *aInstancePtr = this;
+    NS_ADDREF_THIS();
+    return NS_OK;
+  }
+  else
+  NS_INTERFACE_MAP_ENTRY(nsIStyleRule)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIStyleRule)
+NS_INTERFACE_MAP_END
+
+NS_IMPL_ADDREF(Declaration)
+NS_IMPL_RELEASE(Declaration)
+
+/* virtual */ void
+Declaration::MapRuleInfoInto(nsRuleData* aRuleData)
+{
+  MOZ_ASSERT(mData, "must call only while compressed");
+  mData->MapRuleInfoInto(aRuleData);
+  if (mVariables) {
+    mVariables->MapRuleInfoInto(aRuleData);
+  }
+}
+
+/* virtual */ bool
+Declaration::MightMapInheritedStyleData()
+{
+  MOZ_ASSERT(mData, "must call only while compressed");
+  if (mVariables && mVariables->Count() != 0) {
+    return true;
+  }
+  return mData->HasInheritedStyleData();
+}
+
+bool
+Declaration::MapsImportantInheritedStyleData() const
+{
+  MOZ_ASSERT(mData, "must call only while compressed");
+  MOZ_ASSERT(HasImportantData(), "must only be called for Declarations with "
+                                 "important data");
+  if (mImportantVariables && mImportantVariables->Count() != 0) {
+    return true;
+  }
+  return mImportantData ? mImportantData->HasInheritedStyleData() : false;
 }
 
 void
@@ -362,13 +438,14 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
       }
       // tweak aProperty and fall through
       aProperty = eCSSProperty_border_top;
+      MOZ_FALLTHROUGH;
     }
     case eCSSProperty_border_top:
     case eCSSProperty_border_right:
     case eCSSProperty_border_bottom:
     case eCSSProperty_border_left:
-    case eCSSProperty_border_start:
-    case eCSSProperty_border_end:
+    case eCSSProperty_border_inline_start:
+    case eCSSProperty_border_inline_end:
     case eCSSProperty_border_block_start:
     case eCSSProperty_border_block_end:
     case eCSSProperty__moz_column_rule:
@@ -583,9 +660,7 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
       } else {
         // properties reset by this shorthand property to their
         // initial values but not represented in its syntax
-        if (stretch->GetUnit() != eCSSUnit_Enumerated ||
-            stretch->GetIntValue() != NS_STYLE_FONT_STRETCH_NORMAL ||
-            sizeAdjust->GetUnit() != eCSSUnit_None ||
+        if (sizeAdjust->GetUnit() != eCSSUnit_None ||
             featureSettings->GetUnit() != eCSSUnit_Normal ||
             languageOverride->GetUnit() != eCSSUnit_Normal ||
             fontKerning->GetIntValue() != NS_FONT_KERNING_AUTO ||
@@ -623,6 +698,12 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
             weight->GetIntValue() != NS_FONT_WEIGHT_NORMAL) {
           weight->AppendToString(eCSSProperty_font_weight, aValue,
                                  aSerialization);
+          aValue.Append(char16_t(' '));
+        }
+        if (stretch->GetUnit() != eCSSUnit_Enumerated ||
+            stretch->GetIntValue() != NS_FONT_STRETCH_NORMAL) {
+          stretch->AppendToString(eCSSProperty_font_stretch, aValue,
+                                  aSerialization);
           aValue.Append(char16_t(' '));
         }
         size->AppendToString(eCSSProperty_font_size, aValue, aSerialization);
@@ -939,6 +1020,18 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
     // This can express either grid-template-{areas,columns,rows}
     // or grid-auto-{flow,columns,rows}, but not both.
     case eCSSProperty_grid: {
+      const nsCSSValue& columnGapValue =
+        *data->ValueFor(eCSSProperty_grid_column_gap);
+      if (columnGapValue.GetUnit() != eCSSUnit_Pixel ||
+          columnGapValue.GetFloatValue() != 0.0f) {
+        return; // Not serializable, bail.
+      }
+      const nsCSSValue& rowGapValue =
+        *data->ValueFor(eCSSProperty_grid_row_gap);
+      if (rowGapValue.GetUnit() != eCSSUnit_Pixel ||
+          rowGapValue.GetFloatValue() != 0.0f) {
+        return; // Not serializable, bail.
+      }
       const nsCSSValue& areasValue =
         *data->ValueFor(eCSSProperty_grid_template_areas);
       const nsCSSValue& columnsValue =
@@ -973,6 +1066,7 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
         return;
       }
       // Fall through to eCSSProperty_grid_template
+      MOZ_FALLTHROUGH;
     }
     case eCSSProperty_grid_template: {
       const nsCSSValue& areasValue =
@@ -1040,10 +1134,10 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
 
         } else if (unit == eCSSUnit_List || unit == eCSSUnit_ListDep) {
           // Non-empty <line-names>
-          aValue.Append('(');
+          aValue.Append('[');
           rowsItem->mValue.AppendToString(eCSSProperty_grid_template_rows,
                                           aValue, aSerialization);
-          aValue.Append(')');
+          aValue.Append(']');
 
         } else {
           nsStyleUtil::AppendEscapedCSSString(areas->mTemplates[row++], aValue);
@@ -1068,6 +1162,45 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
         if (addSpaceSeparator) {
           aValue.Append(char16_t(' '));
         }
+      }
+      break;
+    }
+    case eCSSProperty_grid_gap: {
+      const nsCSSProperty* subprops =
+        nsCSSProps::SubpropertyEntryFor(aProperty);
+      MOZ_ASSERT(subprops[2] == eCSSProperty_UNKNOWN,
+                 "must have exactly two subproperties");
+
+      nsAutoString val1, val2;
+      AppendValueToString(subprops[0], val1, aSerialization);
+      AppendValueToString(subprops[1], val2, aSerialization);
+      if (val1 == val2) {
+        aValue.Append(val1);
+      } else {
+        aValue.Append(val1);
+        aValue.Append(' ');
+        aValue.Append(val2);
+      }
+      break;
+    }
+    case eCSSProperty_text_emphasis: {
+      const nsCSSValue* emphasisStyle =
+        data->ValueFor(eCSSProperty_text_emphasis_style);
+      const nsCSSValue* emphasisColor =
+        data->ValueFor(eCSSProperty_text_emphasis_color);
+      bool isDefaultColor = emphasisColor->GetUnit() == eCSSUnit_EnumColor &&
+        emphasisColor->GetIntValue() == NS_COLOR_CURRENTCOLOR;
+
+      if (emphasisStyle->GetUnit() != eCSSUnit_None || isDefaultColor) {
+        AppendValueToString(eCSSProperty_text_emphasis_style,
+                            aValue, aSerialization);
+        if (!isDefaultColor) {
+          aValue.Append(char16_t(' '));
+        }
+      }
+      if (!isDefaultColor) {
+        AppendValueToString(eCSSProperty_text_emphasis_color,
+                            aValue, aSerialization);
       }
       break;
     }
@@ -1248,7 +1381,7 @@ Declaration::ToString(nsAString& aString) const
       continue;
     }
 
-    if (!nsCSSProps::IsEnabled(property)) {
+    if (!nsCSSProps::IsEnabled(property, nsCSSProps::eEnabledForAllContent)) {
       continue;
     }
     bool doneProperty = false;
@@ -1335,9 +1468,16 @@ Declaration::ToString(nsAString& aString) const
 }
 
 #ifdef DEBUG
-void
+/* virtual */ void
 Declaration::List(FILE* out, int32_t aIndent) const
 {
+  const Rule* owningRule = GetOwningRule();
+  if (owningRule) {
+    // More useful to print the selector and sheet URI too.
+    owningRule->List(out, aIndent);
+    return;
+  }
+
   nsAutoCString str;
   for (int32_t index = aIndent; --index >= 0; ) {
     str.AppendLiteral("  ");
@@ -1377,22 +1517,24 @@ Declaration::InitializeEmpty()
   mData = nsCSSCompressedDataBlock::CreateEmptyBlock();
 }
 
-Declaration*
+already_AddRefed<Declaration>
 Declaration::EnsureMutable()
 {
   MOZ_ASSERT(mData, "should only be called when not expanded");
+  RefPtr<Declaration> result;
   if (!IsMutable()) {
-    return new Declaration(*this);
+    result = new Declaration(*this);
   } else {
-    return this;
+    result = this;
   }
+  return result.forget();
 }
 
 size_t
 Declaration::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   size_t n = aMallocSizeOf(this);
-  n += mOrder.SizeOfExcludingThis(aMallocSizeOf);
+  n += mOrder.ShallowSizeOfExcludingThis(aMallocSizeOf);
   n += mData          ? mData         ->SizeOfIncludingThis(aMallocSizeOf) : 0;
   n += mImportantData ? mImportantData->SizeOfIncludingThis(aMallocSizeOf) : 0;
   if (mVariables) {
@@ -1534,5 +1676,5 @@ Declaration::GetVariableValueIsImportant(const nsAString& aName) const
   return mImportantVariables && mImportantVariables->Has(aName);
 }
 
-} // namespace mozilla::css
+} // namespace css
 } // namespace mozilla

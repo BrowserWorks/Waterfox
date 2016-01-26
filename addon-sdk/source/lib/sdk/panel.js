@@ -26,6 +26,7 @@ const { contract } = require("./util/contract");
 const { on, off, emit, setListeners } = require("./event/core");
 const { EventTarget } = require("./event/target");
 const domPanel = require("./panel/utils");
+const { getDocShell } = require('./frame/utils');
 const { events } = require("./panel/events");
 const systemEvents = require("./system/events");
 const { filter, pipe, stripListeners } = require("./event/utils");
@@ -36,19 +37,19 @@ const { number, boolean, object } = require('./deprecated/api-utils');
 const { Style } = require("./stylesheet/style");
 const { attach, detach } = require("./content/mod");
 
-let isRect = ({top, right, bottom, left}) => [top, right, bottom, left].
+var isRect = ({top, right, bottom, left}) => [top, right, bottom, left].
   some(value => isNumber(value) && !isNaN(value));
 
-let isSDKObj = obj => obj instanceof Class;
+var isSDKObj = obj => obj instanceof Class;
 
-let rectContract = contract({
+var rectContract = contract({
   top: number,
   right: number,
   bottom: number,
   left: number
 });
 
-let position = {
+var position = {
   is: object,
   map: v => (isNil(v) || isSDKObj(v) || !isObject(v)) ? v : rectContract(v),
   ok: v => isNil(v) || isSDKObj(v) || (isObject(v) && isRect(v)),
@@ -57,14 +58,14 @@ let position = {
         'values: top, right, bottom, left.'
 }
 
-let displayContract = contract({
+var displayContract = contract({
   width: number,
   height: number,
   focus: boolean,
   position: position
 });
 
-let panelContract = contract(merge({
+var panelContract = contract(merge({
   // contentStyle* / contentScript* are sharing the same validation constraints,
   // so they can be mostly reused, except for the messages.
   contentStyle: merge(Object.create(loaderContract.rules.contentScript), {
@@ -73,17 +74,36 @@ let panelContract = contract(merge({
   contentStyleFile: merge(Object.create(loaderContract.rules.contentScriptFile), {
     msg: 'The `contentStyleFile` option must be a local URL or an array of URLs'
   }),
-  contextMenu: boolean
+  contextMenu: boolean,
+  allow: {
+    is: ['object', 'undefined', 'null'],
+    map: function (allow) { return { script: !allow || allow.script !== false }}
+  },
 }, displayContract.rules, loaderContract.rules));
 
+function Allow(panel) {
+  return {
+    get script() { return getDocShell(viewFor(panel).backgroundFrame).allowJavascript; },
+    set script(value) { return setScriptState(panel, value); },
+  };
+}
 
-function isDisposed(panel) !views.has(panel);
+function setScriptState(panel, value) {
+  let view = viewFor(panel);
+  getDocShell(view.backgroundFrame).allowJavascript = value;
+  getDocShell(view.viewFrame).allowJavascript = value;
+  view.setAttribute("sdkscriptenabled", "" + value);
+}
 
-let panels = new WeakMap();
-let models = new WeakMap();
-let views = new WeakMap();
-let workers = new WeakMap();
-let styles = new WeakMap();
+function isDisposed(panel) {
+  return !views.has(panel);
+}
+
+var panels = new WeakMap();
+var models = new WeakMap();
+var views = new WeakMap();
+var workers = new WeakMap();
+var styles = new WeakMap();
 
 const viewFor = (panel) => views.get(panel);
 const modelFor = (panel) => models.get(panel);
@@ -93,7 +113,7 @@ const styleFor = (panel) => styles.get(panel);
 
 // Utility function takes `panel` instance and makes sure it will be
 // automatically hidden as soon as other panel is shown.
-let setupAutoHide = new function() {
+var setupAutoHide = new function() {
   let refs = new WeakMap();
 
   return function setupAutoHide(panel) {
@@ -147,7 +167,8 @@ const Panel = Class({
     }
 
     // Setup view
-    let view = domPanel.make();
+    let viewOptions = {allowJavascript: !model.allow || (model.allow.script !== false)};
+    let view = domPanel.make(null, viewOptions);
     panels.set(view, this);
     views.set(this, view);
 
@@ -182,27 +203,43 @@ const Panel = Class({
     views.delete(this);
   },
   /* Public API: Panel.width */
-  get width() modelFor(this).width,
-  set width(value) this.resize(value, this.height),
+  get width() {
+    return modelFor(this).width;
+  },
+  set width(value) {
+    this.resize(value, this.height);
+  },
   /* Public API: Panel.height */
-  get height() modelFor(this).height,
-  set height(value) this.resize(this.width, value),
+  get height() {
+    return modelFor(this).height;
+  },
+  set height(value) {
+    this.resize(this.width, value);
+  },
 
   /* Public API: Panel.focus */
-  get focus() modelFor(this).focus,
+  get focus() {
+    return modelFor(this).focus;
+  },
 
   /* Public API: Panel.position */
-  get position() modelFor(this).position,
+  get position() {
+    return modelFor(this).position;
+  },
 
   /* Public API: Panel.contextMenu */
-  get contextMenu() modelFor(this).contextMenu,
+  get contextMenu() {
+    return modelFor(this).contextMenu;
+  },
   set contextMenu(allow) {
     let model = modelFor(this);
     model.contextMenu = panelContract({ contextMenu: allow }).contextMenu;
     domPanel.allowContextMenu(viewFor(this), model.contextMenu);
   },
 
-  get contentURL() modelFor(this).contentURL,
+  get contentURL() {
+    return modelFor(this).contentURL;
+  },
   set contentURL(value) {
     let model = modelFor(this);
     model.contentURL = panelContract({ contentURL: value }).contentURL;
@@ -212,8 +249,16 @@ const Panel = Class({
     workerFor(this).detach();
   },
 
+  get allow() { return Allow(this); },
+  set allow(value) {
+    let allowJavascript = panelContract({ allow: value }).allow.script;
+    return setScriptState(this, value);
+  },
+
   /* Public API: Panel.isShowing */
-  get isShowing() !isDisposed(this) && domPanel.isOpen(viewFor(this)),
+  get isShowing() {
+    return !isDisposed(this) && domPanel.isOpen(viewFor(this));
+  },
 
   /* Public API: Panel.show */
   show: function show(options={}, anchor) {
@@ -280,27 +325,27 @@ exports.Panel = Panel;
 getActiveView.define(Panel, viewFor);
 
 // Filter panel events to only panels that are create by this module.
-let panelEvents = filter(events, ({target}) => panelFor(target));
+var panelEvents = filter(events, ({target}) => panelFor(target));
 
 // Panel events emitted after panel has being shown.
-let shows = filter(panelEvents, ({type}) => type === "popupshown");
+var shows = filter(panelEvents, ({type}) => type === "popupshown");
 
 // Panel events emitted after panel became hidden.
-let hides = filter(panelEvents, ({type}) => type === "popuphidden");
+var hides = filter(panelEvents, ({type}) => type === "popuphidden");
 
 // Panel events emitted after content inside panel is ready. For different
 // panels ready may mean different state based on `contentScriptWhen` attribute.
 // Weather given event represents readyness is detected by `getAttachEventType`
 // helper function.
-let ready = filter(panelEvents, ({type, target}) =>
+var ready = filter(panelEvents, ({type, target}) =>
   getAttachEventType(modelFor(panelFor(target))) === type);
 
 // Panel event emitted when the contents of the panel has been loaded.
-let readyToShow = filter(panelEvents, ({type}) => type === "DOMContentLoaded");
+var readyToShow = filter(panelEvents, ({type}) => type === "DOMContentLoaded");
 
 // Styles should be always added as soon as possible, and doesn't makes them
 // depends on `contentScriptWhen`
-let start = filter(panelEvents, ({type}) => type === "document-element-inserted");
+var start = filter(panelEvents, ({type}) => type === "document-element-inserted");
 
 // Forward panel show / hide events to panel's own event listeners.
 on(shows, "data", ({target}) => {

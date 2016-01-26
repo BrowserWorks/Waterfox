@@ -28,20 +28,20 @@ gfxQuartzImageSurface::~gfxQuartzImageSurface()
 {
 }
 
-gfxIntSize
+mozilla::gfx::IntSize
 gfxQuartzImageSurface::ComputeSize()
 {
   if (mSurfaceValid) {
     cairo_surface_t* isurf = cairo_quartz_image_surface_get_image(mSurface);
     if (isurf) {
-      return gfxIntSize(cairo_image_surface_get_width(isurf),
-                        cairo_image_surface_get_height(isurf));
+      return mozilla::gfx::IntSize(cairo_image_surface_get_width(isurf),
+                                   cairo_image_surface_get_height(isurf));
     }
   }
 
   // If we reach here then something went wrong. Just use the same default
   // value as gfxASurface::GetSize.
-  return gfxIntSize(-1, -1);
+  return mozilla::gfx::IntSize(-1, -1);
 }
 
 int32_t
@@ -49,7 +49,7 @@ gfxQuartzImageSurface::KnownMemoryUsed()
 {
   // This surface doesn't own any memory itself, but we want to report here the
   // amount of memory that the surface it wraps uses.
-  nsRefPtr<gfxImageSurface> imgSurface = GetAsImageSurface();
+  RefPtr<gfxImageSurface> imgSurface = GetAsImageSurface();
   if (imgSurface)
     return imgSurface->KnownMemoryUsed();
   return 0;
@@ -67,7 +67,7 @@ gfxQuartzImageSurface::GetAsImageSurface()
         return nullptr;
     }
 
-    nsRefPtr<gfxImageSurface> result = gfxASurface::Wrap(isurf).downcast<gfxImageSurface>();
+    RefPtr<gfxImageSurface> result = gfxASurface::Wrap(isurf).downcast<gfxImageSurface>();
     result->SetOpaqueRect(GetOpaqueRect());
 
     return result.forget();

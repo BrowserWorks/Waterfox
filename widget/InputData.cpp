@@ -20,32 +20,88 @@ already_AddRefed<Touch> SingleTouchData::ToNewDOMTouch() const
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only create dom::Touch instances on main thread");
-  nsRefPtr<Touch> touch = new Touch(mIdentifier,
-                                    LayoutDeviceIntPoint(mScreenPoint.x, mScreenPoint.y),
-                                    nsIntPoint(mRadius.width, mRadius.height),
-                                    mRotationAngle,
-                                    mForce);
+  RefPtr<Touch> touch = new Touch(mIdentifier,
+                                  LayoutDeviceIntPoint(mScreenPoint.x, mScreenPoint.y),
+                                  LayoutDeviceIntPoint(mRadius.width, mRadius.height),
+                                  mRotationAngle,
+                                  mForce);
   return touch.forget();
+}
+
+MouseInput::MouseInput(const WidgetMouseEventBase& aMouseEvent)
+  : InputData(MOUSE_INPUT, aMouseEvent.time, aMouseEvent.timeStamp,
+              aMouseEvent.modifiers)
+{
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only copy from WidgetTouchEvent on main thread");
+
+  mButtonType = NONE;
+
+  switch (aMouseEvent.button) {
+    case WidgetMouseEventBase::eLeftButton:
+      mButtonType = MouseInput::LEFT_BUTTON;
+      break;
+    case WidgetMouseEventBase::eMiddleButton:
+      mButtonType = MouseInput::MIDDLE_BUTTON;
+      break;
+    case WidgetMouseEventBase::eRightButton:
+      mButtonType = MouseInput::RIGHT_BUTTON;
+      break;
+  }
+
+  switch (aMouseEvent.mMessage) {
+    case eMouseMove:
+      mType = MOUSE_MOVE;
+      break;
+    case eMouseUp:
+      mType = MOUSE_UP;
+      break;
+    case eMouseDown:
+      mType = MOUSE_DOWN;
+      break;
+    case eDragStart:
+      mType = MOUSE_DRAG_START;
+      break;
+    case eDragEnd:
+      mType = MOUSE_DRAG_END;
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Mouse event type not supported");
+      break;
+  }
+}
+
+bool
+MouseInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
+{
+  Maybe<ParentLayerPoint> point = UntransformBy(aTransform, mOrigin);
+  if (!point) {
+    return false;
+  }
+  mLocalOrigin = *point;
+
+  return true;
 }
 
 MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
   : InputData(MULTITOUCH_INPUT, aTouchEvent.time, aTouchEvent.timeStamp,
               aTouchEvent.modifiers)
+  , mHandledByAPZ(aTouchEvent.mFlags.mHandledByAPZ)
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetTouchEvent on main thread");
 
-  switch (aTouchEvent.message) {
-    case NS_TOUCH_START:
+  switch (aTouchEvent.mMessage) {
+    case eTouchStart:
       mType = MULTITOUCH_START;
       break;
-    case NS_TOUCH_MOVE:
+    case eTouchMove:
       mType = MULTITOUCH_MOVE;
       break;
-    case NS_TOUCH_END:
+    case eTouchEnd:
       mType = MULTITOUCH_END;
       break;
-    case NS_TOUCH_CANCEL:
+    case eTouchCancel:
       mType = MULTITOUCH_CANCEL;
       break;
     default:
@@ -64,9 +120,8 @@ MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
     float force = domTouch->Force();
 
     SingleTouchData data(identifier,
-                         ScreenIntPoint::FromUnknownPoint(
-                           gfx::IntPoint(domTouch->mRefPoint.x,
-                                         domTouch->mRefPoint.y)),
+                         ViewAs<ScreenPixel>(domTouch->mRefPoint,
+                                             PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent),
                          ScreenSize(radiusX, radiusY),
                          rotationAngle,
                          force);
@@ -81,33 +136,34 @@ MultiTouchInput::ToWidgetTouchEvent(nsIWidget* aWidget) const
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only convert To WidgetTouchEvent on main thread");
 
-  uint32_t touchType = NS_EVENT_NULL;
+  EventMessage touchEventMessage = eVoidEvent;
   switch (mType) {
   case MULTITOUCH_START:
-    touchType = NS_TOUCH_START;
+    touchEventMessage = eTouchStart;
     break;
   case MULTITOUCH_MOVE:
-    touchType = NS_TOUCH_MOVE;
+    touchEventMessage = eTouchMove;
     break;
   case MULTITOUCH_END:
-    touchType = NS_TOUCH_END;
+    touchEventMessage = eTouchEnd;
     break;
   case MULTITOUCH_CANCEL:
-    touchType = NS_TOUCH_CANCEL;
+    touchEventMessage = eTouchCancel;
     break;
   default:
     MOZ_ASSERT_UNREACHABLE("Did not assign a type to WidgetTouchEvent in MultiTouchInput");
     break;
   }
 
-  WidgetTouchEvent event(true, touchType, aWidget);
-  if (touchType == NS_EVENT_NULL) {
+  WidgetTouchEvent event(true, touchEventMessage, aWidget);
+  if (touchEventMessage == eVoidEvent) {
     return event;
   }
 
   event.modifiers = this->modifiers;
   event.time = this->mTime;
   event.timeStamp = this->mTimeStamp;
+  event.mFlags.mHandledByAPZ = mHandledByAPZ;
 
   for (size_t i = 0; i < mTouches.Length(); i++) {
     *event.touches.AppendElement() = mTouches[i].ToNewDOMTouch();
@@ -122,24 +178,24 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only convert To WidgetMouseEvent on main thread");
 
-  uint32_t mouseEventType = NS_EVENT_NULL;
+  EventMessage mouseEventMessage = eVoidEvent;
   switch (mType) {
     case MultiTouchInput::MULTITOUCH_START:
-      mouseEventType = NS_MOUSE_BUTTON_DOWN;
+      mouseEventMessage = eMouseDown;
       break;
     case MultiTouchInput::MULTITOUCH_MOVE:
-      mouseEventType = NS_MOUSE_MOVE;
+      mouseEventMessage = eMouseMove;
       break;
     case MultiTouchInput::MULTITOUCH_CANCEL:
     case MultiTouchInput::MULTITOUCH_END:
-      mouseEventType = NS_MOUSE_BUTTON_UP;
+      mouseEventMessage = eMouseUp;
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Did not assign a type to WidgetMouseEvent");
       break;
   }
 
-  WidgetMouseEvent event(true, mouseEventType, aWidget,
+  WidgetMouseEvent event(true, mouseEventMessage, aWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
   const SingleTouchData& firstTouch = mTouches[0];
@@ -150,8 +206,9 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   event.button = WidgetMouseEvent::eLeftButton;
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
   event.modifiers = modifiers;
+  event.mFlags.mHandledByAPZ = mHandledByAPZ;
 
-  if (mouseEventType != NS_MOUSE_MOVE) {
+  if (mouseEventMessage != eMouseMove) {
     event.clickCount = 1;
   }
 
@@ -178,24 +235,25 @@ MultiTouchInput::IndexOfTouch(int32_t aTouchIdentifier)
 MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
   : InputData(MULTITOUCH_INPUT, aMouseEvent.time, aMouseEvent.timeStamp,
               aMouseEvent.modifiers)
+  , mHandledByAPZ(aMouseEvent.mFlags.mHandledByAPZ)
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetMouseEvent on main thread");
-  switch (aMouseEvent.message) {
-  case NS_MOUSE_BUTTON_DOWN:
+  switch (aMouseEvent.mMessage) {
+  case eMouseDown:
     mType = MULTITOUCH_START;
     break;
-  case NS_MOUSE_MOVE:
+  case eMouseMove:
     mType = MULTITOUCH_MOVE;
     break;
-  case NS_MOUSE_BUTTON_UP:
+  case eMouseUp:
     mType = MULTITOUCH_END;
     break;
   // The mouse pointer has been interrupted in an implementation-specific
   // manner, such as a synchronous event or action cancelling the touch, or a
   // touch point leaving the document window and going into a non-document
   // area capable of handling user interactions.
-  case NS_MOUSE_EXIT_WIDGET:
+  case eMouseExitFromWidget:
     mType = MULTITOUCH_CANCEL;
     break;
   default:
@@ -204,45 +262,171 @@ MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
   }
 
   mTouches.AppendElement(SingleTouchData(0,
-                                         ScreenIntPoint::FromUnknownPoint(
-                                           gfx::IntPoint(aMouseEvent.refPoint.x,
-                                                         aMouseEvent.refPoint.y)),
+                                         ViewAs<ScreenPixel>(aMouseEvent.refPoint,
+                                                             PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent),
                                          ScreenSize(1, 1),
                                          180.0f,
                                          1.0f));
 }
 
-void
-MultiTouchInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+bool
+MultiTouchInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
 {
   for (size_t i = 0; i < mTouches.Length(); i++) {
-    mTouches[i].mLocalScreenPoint = TransformTo<ParentLayerPixel>(aTransform, ScreenPoint(mTouches[i].mScreenPoint));
+    Maybe<ParentLayerIntPoint> point = UntransformBy(aTransform, mTouches[i].mScreenPoint);
+    if (!point) { 
+      return false;
+    }
+    mTouches[i].mLocalScreenPoint = *point;
+  }
+  return true;
+}
+
+bool
+PanGestureInput::IsMomentum() const
+{
+  switch (mType) {
+    case PanGestureInput::PANGESTURE_MOMENTUMSTART:
+    case PanGestureInput::PANGESTURE_MOMENTUMPAN:
+    case PanGestureInput::PANGESTURE_MOMENTUMEND:
+      return true;
+    default:
+      return false;
   }
 }
 
-void
-PanGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+WidgetWheelEvent
+PanGestureInput::ToWidgetWheelEvent(nsIWidget* aWidget) const
 {
-  mLocalPanStartPoint = TransformTo<ParentLayerPixel>(aTransform, mPanStartPoint);
-  mLocalPanDisplacement = TransformVector<ParentLayerPixel>(aTransform, mPanDisplacement, mPanStartPoint);
+  WidgetWheelEvent wheelEvent(true, eWheel, aWidget);
+  wheelEvent.modifiers = this->modifiers;
+  wheelEvent.time = mTime;
+  wheelEvent.timeStamp = mTimeStamp;
+  wheelEvent.refPoint =
+    RoundedToInt(ViewAs<LayoutDevicePixel>(mPanStartPoint,
+      PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent));
+  wheelEvent.buttons = 0;
+  wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_PIXEL;
+  wheelEvent.mayHaveMomentum = true; // pan inputs may have momentum
+  wheelEvent.isMomentum = IsMomentum();
+  wheelEvent.lineOrPageDeltaX = mLineOrPageDeltaX;
+  wheelEvent.lineOrPageDeltaY = mLineOrPageDeltaY;
+  wheelEvent.deltaX = mPanDisplacement.x;
+  wheelEvent.deltaY = mPanDisplacement.y;
+  wheelEvent.mFlags.mHandledByAPZ = mHandledByAPZ;
+  return wheelEvent;
 }
 
-void
-PinchGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
-{
-  mLocalFocusPoint = TransformTo<ParentLayerPixel>(aTransform, mFocusPoint);
+bool
+PanGestureInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
+{ 
+  Maybe<ParentLayerPoint> panStartPoint = UntransformBy(aTransform, mPanStartPoint);
+  if (!panStartPoint) {
+    return false;
+  }
+  mLocalPanStartPoint = *panStartPoint;
+  
+  Maybe<ParentLayerPoint> panDisplacement = UntransformVector(aTransform, mPanDisplacement, mPanStartPoint);
+  if (!panDisplacement) {
+    return false;
+  }
+  mLocalPanDisplacement = *panDisplacement;
+  return true;
 }
 
-void
-TapGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
-{
-  mLocalPoint = TransformTo<ParentLayerPixel>(aTransform, mPoint);
+bool
+PinchGestureInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
+{ 
+  Maybe<ParentLayerPoint> point = UntransformBy(aTransform, mFocusPoint);
+  if (!point) {
+    return false;
+  }
+  mLocalFocusPoint = *point;
+  return true;
 }
 
-void
-ScrollWheelInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+bool
+TapGestureInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
 {
-  mLocalOrigin = TransformTo<ParentLayerPixel>(aTransform, mOrigin);
+  Maybe<ParentLayerIntPoint> point = UntransformBy(aTransform, mPoint);
+  if (!point) {
+    return false;
+  }
+  mLocalPoint = *point;
+  return true;
+}
+
+static uint32_t
+DeltaModeForDeltaType(ScrollWheelInput::ScrollDeltaType aDeltaType)
+{
+  switch (aDeltaType) {
+    case ScrollWheelInput::SCROLLDELTA_LINE:
+      return nsIDOMWheelEvent::DOM_DELTA_LINE;
+    case ScrollWheelInput::SCROLLDELTA_PAGE:
+      return nsIDOMWheelEvent::DOM_DELTA_PAGE;
+    case ScrollWheelInput::SCROLLDELTA_PIXEL:
+    default:
+      return nsIDOMWheelEvent::DOM_DELTA_PIXEL;
+  }
+}
+
+ScrollWheelInput::ScrollWheelInput(const WidgetWheelEvent& aWheelEvent) :
+  InputData(SCROLLWHEEL_INPUT, aWheelEvent.time, aWheelEvent.timeStamp, aWheelEvent.modifiers),
+  mDeltaType(DeltaTypeForDeltaMode(aWheelEvent.deltaMode)),
+  mScrollMode(SCROLLMODE_INSTANT),
+  mHandledByAPZ(aWheelEvent.mFlags.mHandledByAPZ),
+  mDeltaX(aWheelEvent.deltaX),
+  mDeltaY(aWheelEvent.deltaY),
+  mLineOrPageDeltaX(aWheelEvent.lineOrPageDeltaX),
+  mLineOrPageDeltaY(aWheelEvent.lineOrPageDeltaY),
+  mUserDeltaMultiplierX(1.0),
+  mUserDeltaMultiplierY(1.0),
+  mMayHaveMomentum(aWheelEvent.mayHaveMomentum),
+  mIsMomentum(aWheelEvent.isMomentum)
+{
+  mOrigin =
+    ScreenPoint(ViewAs<ScreenPixel>(aWheelEvent.refPoint,
+      PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent));
+}
+
+WidgetWheelEvent
+ScrollWheelInput::ToWidgetWheelEvent(nsIWidget* aWidget) const
+{
+  WidgetWheelEvent wheelEvent(true, eWheel, aWidget);
+  wheelEvent.modifiers = this->modifiers;
+  wheelEvent.time = mTime;
+  wheelEvent.timeStamp = mTimeStamp;
+  wheelEvent.refPoint =
+    RoundedToInt(ViewAs<LayoutDevicePixel>(mOrigin,
+      PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent));
+  wheelEvent.buttons = 0;
+  wheelEvent.deltaMode = DeltaModeForDeltaType(mDeltaType);
+  wheelEvent.mayHaveMomentum = mMayHaveMomentum;
+  wheelEvent.isMomentum = mIsMomentum;
+  wheelEvent.deltaX = mDeltaX;
+  wheelEvent.deltaY = mDeltaY;
+  wheelEvent.lineOrPageDeltaX = mLineOrPageDeltaX;
+  wheelEvent.lineOrPageDeltaY = mLineOrPageDeltaY;
+  wheelEvent.mFlags.mHandledByAPZ = mHandledByAPZ;
+  return wheelEvent;
+}
+
+bool
+ScrollWheelInput::TransformToLocal(const ScreenToParentLayerMatrix4x4& aTransform)
+{
+  Maybe<ParentLayerPoint> point = UntransformBy(aTransform, mOrigin);
+  if (!point) {
+    return false;
+  }
+  mLocalOrigin = *point;
+  return true;
+}
+
+bool
+ScrollWheelInput::IsCustomizedByUserPrefs() const
+{
+  return mUserDeltaMultiplierX != 1.0 ||
+         mUserDeltaMultiplierY != 1.0;
 }
 
 } // namespace mozilla

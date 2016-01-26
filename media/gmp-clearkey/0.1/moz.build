@@ -9,6 +9,7 @@ SharedLibrary('clearkey')
 FINAL_TARGET = 'dist/bin/gmp-clearkey/0.1'
 
 UNIFIED_SOURCES += [
+    'ClearKeyAsyncShutdown.cpp',
     'ClearKeyBase64.cpp',
     'ClearKeyDecryptionManager.cpp',
     'ClearKeyPersistence.cpp',
@@ -56,19 +57,20 @@ USE_STATIC_LIBS = True
 DISABLE_STL_WRAPPING = True
 DEFINES['MOZ_NO_MOZALLOC'] = True
 
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']
+
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CXX']:
     CFLAGS += [
         '-Wno-missing-braces',
         '-Wno-pointer-to-int-cast',
         '-Wno-sign-compare',
-        '-include stdio.h',         # for sprintf() prototype
-        '-include unistd.h',        # for getpid() prototype
+        '-include', 'stdio.h',      # for sprintf() prototype
+        '-include', 'unistd.h',     # for getpid() prototype
     ]
 elif CONFIG['_MSC_VER']:
     CFLAGS += [
-        '-FI stdio.h',              # for sprintf() prototype
+        '-FI', 'stdio.h',           # for sprintf() prototype
         '-wd4090',                  # '=' : different 'const' qualifiers
     ]
-
-FAIL_ON_WARNINGS = True

@@ -1,0 +1,92 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+h2, h3, h4 {
+  margin-bottom: 5px;
+}
+
+button {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+#body {
+  display: flex;
+  flex-direction: row;
+}
+
+/* Category tabs */
+
+.category {
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+}
+
+.category-name {
+  cursor: default;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.tab {
+  max-width: 800px;
+}
+
+.tab:not(.active) {
+  display: none;
+}
+
+/* Prefs */
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Targets */
+
+.targets {
+  margin-bottom: 25px;
+}
+
+.target {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.target-icon {
+  height: 24px;
+  margin-right: 5px;
+}
+
+.target-icon:not([src]) {
+  display: none;
+}
+
+.inverted-icons .target-icon {
+  filter: invert(30%);
+}
+
+.target-details {
+  flex: 1;
+}
+
+.addon-controls {
+  display: flex;
+  flex-direction: row;
+}
+
+.addon-options {
+  flex: 1;
+}

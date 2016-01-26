@@ -7,7 +7,6 @@
 #ifndef mozilla_dom_FilePickerParent_h
 #define mozilla_dom_FilePickerParent_h
 
-#include "nsIDOMFile.h"
 #include "nsIEventTarget.h"
 #include "nsIFilePicker.h"
 #include "nsCOMArray.h"
@@ -30,7 +29,7 @@ class FilePickerParent : public PFilePickerParent
   virtual ~FilePickerParent();
 
   void Done(int16_t aResult);
-  void SendFiles(const nsTArray<nsRefPtr<BlobImpl>>& aDomBlobs);
+  void SendFiles(const nsTArray<RefPtr<BlobImpl>>& aDomBlobs);
 
   virtual bool RecvOpen(const int16_t& aSelectedType,
                         const bool& aAddToRecentDocs,
@@ -65,18 +64,19 @@ class FilePickerParent : public PFilePickerParent
   class FileSizeAndDateRunnable : public nsRunnable
   {
     FilePickerParent* mFilePickerParent;
-    nsTArray<nsRefPtr<BlobImpl>> mBlobs;
+    nsTArray<RefPtr<BlobImpl>> mBlobs;
     nsCOMPtr<nsIEventTarget> mEventTarget;
 
   public:
-    FileSizeAndDateRunnable(FilePickerParent *aFPParent, nsTArray<nsRefPtr<BlobImpl>>& aBlobs);
+    FileSizeAndDateRunnable(FilePickerParent *aFPParent,
+                            nsTArray<RefPtr<BlobImpl>>& aBlobs);
     bool Dispatch();
     NS_IMETHOD Run();
     void Destroy();
   };
 
-  nsRefPtr<FileSizeAndDateRunnable> mRunnable;
-  nsRefPtr<FilePickerShownCallback> mCallback;
+  RefPtr<FileSizeAndDateRunnable> mRunnable;
+  RefPtr<FilePickerShownCallback> mCallback;
   nsCOMPtr<nsIFilePicker> mFilePicker;
 
   nsString mTitle;
@@ -87,4 +87,4 @@ class FilePickerParent : public PFilePickerParent
 } // namespace dom
 } // namespace mozilla
 
-#endif
+#endif // mozilla_dom_FilePickerParent_h

@@ -10,11 +10,13 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/BasicEvents.h"
+#include "mozilla/CheckedInt.h"
 #include "mozilla/EventForwards.h" // for KeyNameIndex, temporarily
 #include "mozilla/TextRange.h"
 #include "mozilla/FontRange.h"
 #include "nsCOMPtr.h"
 #include "nsIDOMKeyEvent.h"
+#include "nsISelectionListener.h"
 #include "nsITransferable.h"
 #include "nsRect.h"
 #include "nsStringGlue.h"
@@ -36,8 +38,6 @@ enum
 };
 
 #undef NS_DEFINE_VK
-
-#define kLatestSeqno UINT32_MAX
 
 namespace mozilla {
 
@@ -82,13 +82,28 @@ private:
 
 protected:
   WidgetKeyboardEvent()
+    : keyCode(0)
+    , charCode(0)
+    , location(nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD)
+    , isChar(false)
+    , mIsRepeat(false)
+    , mIsComposing(false)
+    , mKeyNameIndex(mozilla::KEY_NAME_INDEX_Unidentified)
+    , mCodeNameIndex(CODE_NAME_INDEX_UNKNOWN)
+    , mNativeKeyEvent(nullptr)
+    , mUniqueId(0)
+#ifdef XP_MACOSX
+    , mNativeKeyCode(0)
+    , mNativeModifierFlags(0)
+#endif
   {
   }
 
 public:
   virtual WidgetKeyboardEvent* AsKeyboardEvent() override { return this; }
 
-  WidgetKeyboardEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget,
+  WidgetKeyboardEvent(bool aIsTrusted, EventMessage aMessage,
+                      nsIWidget* aWidget,
                       EventClassID aEventClassID = eKeyboardEventClass)
     : WidgetInputEvent(aIsTrusted, aMessage, aWidget, aEventClassID)
     , keyCode(0)
@@ -114,7 +129,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     WidgetKeyboardEvent* result =
-      new WidgetKeyboardEvent(false, message, nullptr);
+      new WidgetKeyboardEvent(false, mMessage, nullptr);
     result->AssignKeyEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -282,10 +297,10 @@ private:
  * This is extended from WidgetKeyboardEvent and is mapped to DOM event
  * "BeforeAfterKeyboardEvent".
  *
- * Event message: NS_KEY_BEFORE_DOWN
- *                NS_KEY_BEFORE_UP
- *                NS_KEY_AFTER_DOWN
- *                NS_KEY_AFTER_UP
+ * Event mMessage: eBeforeKeyDown
+ *                 eBeforeKeyUp
+ *                 eAfterKeyDown
+ *                 eAfterKeyUp
  ******************************************************************************/
 class InternalBeforeAfterKeyboardEvent : public WidgetKeyboardEvent
 {
@@ -307,9 +322,10 @@ public:
     return this;
   }
 
-  InternalBeforeAfterKeyboardEvent(bool aIsTrusted, uint32_t aMessage,
+  InternalBeforeAfterKeyboardEvent(bool aIsTrusted, EventMessage aMessage,
                                    nsIWidget* aWidget)
-    : WidgetKeyboardEvent(aIsTrusted, aMessage, aWidget, eBeforeAfterKeyboardEventClass)
+    : WidgetKeyboardEvent(aIsTrusted, aMessage, aWidget,
+                          eBeforeAfterKeyboardEventClass)
   {
   }
 
@@ -319,7 +335,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     InternalBeforeAfterKeyboardEvent* result =
-      new InternalBeforeAfterKeyboardEvent(false, message, nullptr);
+      new InternalBeforeAfterKeyboardEvent(false, mMessage, nullptr);
     result->AssignBeforeAfterKeyEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -352,12 +368,8 @@ private:
   friend class mozilla::dom::PBrowserChild;
 
   WidgetCompositionEvent()
-    : mSeqno(kLatestSeqno)
   {
   }
-
-public:
-  uint32_t mSeqno;
 
 public:
   virtual WidgetCompositionEvent* AsCompositionEvent() override
@@ -365,10 +377,11 @@ public:
     return this;
   }
 
-  WidgetCompositionEvent(bool aIsTrusted, uint32_t aMessage,
+  WidgetCompositionEvent(bool aIsTrusted, EventMessage aMessage,
                          nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eCompositionEventClass)
-    , mSeqno(kLatestSeqno)
+    , mNativeIMEContext(aWidget)
+    , mOriginalMessage(eVoidEvent)
   {
     // XXX compositionstart is cancelable in draft of DOM3 Events.
     //     However, it doesn't make sense for us, we cannot cancel composition
@@ -382,7 +395,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     WidgetCompositionEvent* result =
-      new WidgetCompositionEvent(false, message, nullptr);
+      new WidgetCompositionEvent(false, mMessage, nullptr);
     result->AssignCompositionEventData(*this, true);
     result->mFlags = mFlags;
     return result;
@@ -393,7 +406,15 @@ public:
   // TextComposition automatically.
   nsString mData;
 
-  nsRefPtr<TextRangeArray> mRanges;
+  RefPtr<TextRangeArray> mRanges;
+
+  // mNativeIMEContext stores the native IME context which causes the
+  // composition event.
+  widget::NativeIMEContext mNativeIMEContext;
+
+  // If the instance is a clone of another event, mOriginalMessage stores
+  // the another event's mMessage.
+  EventMessage mOriginalMessage;
 
   void AssignCompositionEventData(const WidgetCompositionEvent& aEvent,
                                   bool aCopyTargets)
@@ -401,6 +422,7 @@ public:
     AssignGUIEventData(aEvent, aCopyTargets);
 
     mData = aEvent.mData;
+    mOriginalMessage = aEvent.mOriginalMessage;
 
     // Currently, we don't need to copy the other members because they are
     // for internal use only (not available from JS).
@@ -416,6 +438,15 @@ public:
     return mRanges ? mRanges->TargetClauseOffset() : 0;
   }
 
+  uint32_t TargetClauseLength() const
+  {
+    uint32_t length = UINT32_MAX;
+    if (mRanges) {
+      length = mRanges->TargetClauseLength();
+    }
+    return length == UINT32_MAX ? mData.Length() : length;
+  }
+
   uint32_t RangeCount() const
   {
     return mRanges ? mRanges->Length() : 0;
@@ -423,16 +454,22 @@ public:
 
   bool CausesDOMTextEvent() const
   {
-    return message == NS_COMPOSITION_CHANGE ||
-           message == NS_COMPOSITION_COMMIT ||
-           message == NS_COMPOSITION_COMMIT_AS_IS;
+    return mMessage == eCompositionChange ||
+           mMessage == eCompositionCommit ||
+           mMessage == eCompositionCommitAsIs;
   }
 
   bool CausesDOMCompositionEndEvent() const
   {
-    return message == NS_COMPOSITION_END ||
-           message == NS_COMPOSITION_COMMIT ||
-           message == NS_COMPOSITION_COMMIT_AS_IS;
+    return mMessage == eCompositionEnd ||
+           mMessage == eCompositionCommit ||
+           mMessage == eCompositionCommitAsIs;
+  }
+
+  bool IsFollowedByCompositionEnd() const
+  {
+    return mOriginalMessage == eCompositionCommit ||
+           mOriginalMessage == eCompositionCommitAsIs;
   }
 };
 
@@ -447,6 +484,9 @@ private:
   friend class dom::PBrowserChild;
 
   WidgetQueryContentEvent()
+    : mSucceeded(false)
+    , mUseNativeLineBreak(true)
+    , mWithFontRanges(false)
   {
     MOZ_CRASH("WidgetQueryContentEvent is created without proper arguments");
   }
@@ -457,11 +497,10 @@ public:
     return this;
   }
 
-  WidgetQueryContentEvent(bool aIsTrusted, uint32_t aMessage,
+  WidgetQueryContentEvent(bool aIsTrusted, EventMessage aMessage,
                           nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eQueryContentEventClass)
     , mSucceeded(false)
-    , mWasAsync(false)
     , mUseNativeLineBreak(true)
     , mWithFontRanges(false)
   {
@@ -473,13 +512,12 @@ public:
     NS_ASSERTION(!IsAllowedToDispatchDOMEvent(),
       "WidgetQueryContentEvent needs to support Duplicate()");
     MOZ_CRASH("WidgetQueryContentEvent doesn't support Duplicate()");
-    return nullptr;
   }
 
   void InitForQueryTextContent(uint32_t aOffset, uint32_t aLength,
                                bool aUseNativeLineBreak = true)
   {
-    NS_ASSERTION(message == NS_QUERY_TEXT_CONTENT,
+    NS_ASSERTION(mMessage == eQueryTextContent,
                  "wrong initializer is called");
     mInput.mOffset = aOffset;
     mInput.mLength = aLength;
@@ -489,7 +527,7 @@ public:
   void InitForQueryCaretRect(uint32_t aOffset,
                              bool aUseNativeLineBreak = true)
   {
-    NS_ASSERTION(message == NS_QUERY_CARET_RECT,
+    NS_ASSERTION(mMessage == eQueryCaretRect,
                  "wrong initializer is called");
     mInput.mOffset = aOffset;
     mUseNativeLineBreak = aUseNativeLineBreak;
@@ -498,7 +536,7 @@ public:
   void InitForQueryTextRect(uint32_t aOffset, uint32_t aLength,
                             bool aUseNativeLineBreak = true)
   {
-    NS_ASSERTION(message == NS_QUERY_TEXT_RECT,
+    NS_ASSERTION(mMessage == eQueryTextRect,
                  "wrong initializer is called");
     mInput.mOffset = aOffset;
     mInput.mLength = aLength;
@@ -507,46 +545,53 @@ public:
 
   void InitForQueryDOMWidgetHittest(const mozilla::LayoutDeviceIntPoint& aPoint)
   {
-    NS_ASSERTION(message == NS_QUERY_DOM_WIDGET_HITTEST,
+    NS_ASSERTION(mMessage == eQueryDOMWidgetHittest,
                  "wrong initializer is called");
     refPoint = aPoint;
   }
 
   void RequestFontRanges()
   {
-    NS_ASSERTION(message == NS_QUERY_TEXT_CONTENT,
+    NS_ASSERTION(mMessage == eQueryTextContent,
                  "not querying text content");
     mWithFontRanges = true;
   }
 
   uint32_t GetSelectionStart(void) const
   {
-    NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT,
+    NS_ASSERTION(mMessage == eQuerySelectedText,
                  "not querying selection");
     return mReply.mOffset + (mReply.mReversed ? mReply.mString.Length() : 0);
   }
 
   uint32_t GetSelectionEnd(void) const
   {
-    NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT,
+    NS_ASSERTION(mMessage == eQuerySelectedText,
                  "not querying selection");
     return mReply.mOffset + (mReply.mReversed ? 0 : mReply.mString.Length());
   }
 
   mozilla::WritingMode GetWritingMode(void) const
   {
-    NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT ||
-                 message == NS_QUERY_TEXT_RECT,
+    NS_ASSERTION(mMessage == eQuerySelectedText ||
+                 mMessage == eQueryCaretRect ||
+                 mMessage == eQueryTextRect,
                  "not querying selection or text rect");
     return mReply.mWritingMode;
   }
 
   bool mSucceeded;
-  bool mWasAsync;
   bool mUseNativeLineBreak;
   bool mWithFontRanges;
   struct
   {
+    uint32_t EndOffset() const
+    {
+      CheckedInt<uint32_t> endOffset =
+        CheckedInt<uint32_t>(mOffset) + mLength;
+      return NS_WARN_IF(!endOffset.isValid()) ? UINT32_MAX : endOffset.value();
+    }
+
     uint32_t mOffset;
     uint32_t mLength;
   } mInput;
@@ -555,19 +600,23 @@ public:
   {
     void* mContentsRoot;
     uint32_t mOffset;
-    // mTentativeCaretOffset is used by only NS_QUERY_CHARACTER_AT_POINT.
+    // mTentativeCaretOffset is used by only eQueryCharacterAtPoint.
     // This is the offset where caret would be if user clicked at the refPoint.
     uint32_t mTentativeCaretOffset;
     nsString mString;
-    // Finally, the coordinates is system coordinates.
+    // mRect is used by eQueryTextRect, eQueryCaretRect, eQueryCharacterAtPoint
+    // and eQueryEditorRect. The coordinates is system coordinates relative to
+    // the top level widget of mFocusedWidget.  E.g., if a <xul:panel> which
+    // is owned by a window has focused editor, the offset of mRect is relative
+    // to the owner window, not the <xul:panel>.
     mozilla::LayoutDeviceIntRect mRect;
     // The return widget has the caret. This is set at all query events.
     nsIWidget* mFocusedWidget;
     // mozilla::WritingMode value at the end (focus) of the selection
     mozilla::WritingMode mWritingMode;
-    // used by NS_QUERY_SELECTION_AS_TRANSFERABLE
+    // Used by eQuerySelectionAsTransferable
     nsCOMPtr<nsITransferable> mTransferable;
-    // used by NS_QUERY_TEXT_CONTENT with font ranges requested
+    // Used by eQueryTextContent with font ranges requested
     nsAutoTArray<mozilla::FontRange, 1> mFontRanges;
     // true if selection is reversed (end < start)
     bool mReversed;
@@ -613,17 +662,14 @@ private:
   friend class mozilla::dom::PBrowserChild;
 
   WidgetSelectionEvent()
-    : mSeqno(kLatestSeqno)
-    , mOffset(0)
+    : mOffset(0)
     , mLength(0)
     , mReversed(false)
     , mExpandToClusterBoundary(true)
     , mSucceeded(false)
+    , mUseNativeLineBreak(true)
   {
   }
-
-public:
-  uint32_t mSeqno;
 
 public:
   virtual WidgetSelectionEvent* AsSelectionEvent() override
@@ -631,15 +677,16 @@ public:
     return this;
   }
 
-  WidgetSelectionEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget)
+  WidgetSelectionEvent(bool aIsTrusted, EventMessage aMessage,
+                       nsIWidget* aWidget)
     : WidgetGUIEvent(aIsTrusted, aMessage, aWidget, eSelectionEventClass)
-    , mSeqno(kLatestSeqno)
     , mOffset(0)
     , mLength(0)
     , mReversed(false)
     , mExpandToClusterBoundary(true)
     , mSucceeded(false)
     , mUseNativeLineBreak(true)
+    , mReason(nsISelectionListener::NO_REASON)
   {
   }
 
@@ -664,6 +711,9 @@ public:
   bool mSucceeded;
   // true if native line breaks are used for mOffset and mLength
   bool mUseNativeLineBreak;
+  // Fennec provides eSetSelection reason codes for downstream
+  // use in AccessibleCaret visibility logic.
+  int16_t mReason;
 };
 
 /******************************************************************************
@@ -684,7 +734,7 @@ public:
     return this;
   }
 
-  InternalEditorInputEvent(bool aIsTrusted, uint32_t aMessage,
+  InternalEditorInputEvent(bool aIsTrusted, EventMessage aMessage,
                            nsIWidget* aWidget)
     : InternalUIEvent(aIsTrusted, aMessage, aWidget, eEditorInputEventClass)
     , mIsComposing(false)
@@ -705,7 +755,7 @@ public:
                "Duplicate() must be overridden by sub class");
     // Not copying widget, it is a weak reference.
     InternalEditorInputEvent* result =
-      new InternalEditorInputEvent(false, message, nullptr);
+      new InternalEditorInputEvent(false, mMessage, nullptr);
     result->AssignEditorInputEventData(*this, true);
     result->mFlags = mFlags;
     return result;

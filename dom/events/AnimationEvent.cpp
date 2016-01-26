@@ -15,7 +15,7 @@ AnimationEvent::AnimationEvent(EventTarget* aOwner,
                                nsPresContext* aPresContext,
                                InternalAnimationEvent* aEvent)
   : Event(aOwner, aPresContext,
-          aEvent ? aEvent : new InternalAnimationEvent(false, 0))
+          aEvent ? aEvent : new InternalAnimationEvent(false, eVoidEvent))
 {
   if (aEvent) {
     mEventIsInternal = false;
@@ -41,10 +41,10 @@ AnimationEvent::Constructor(const GlobalObject& aGlobal,
                             ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<AnimationEvent> e = new AnimationEvent(t, nullptr, nullptr);
+  RefPtr<AnimationEvent> e = new AnimationEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
 
-  aRv = e->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
+  e->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
 
   InternalAnimationEvent* internalEvent = e->mEvent->AsAnimationEvent();
   internalEvent->animationName = aParam.mAnimationName;
@@ -88,14 +88,12 @@ AnimationEvent::GetPseudoElement(nsAString& aPseudoElement)
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsresult
-NS_NewDOMAnimationEvent(nsIDOMEvent** aInstancePtrResult,
-                        EventTarget* aOwner,
+already_AddRefed<AnimationEvent>
+NS_NewDOMAnimationEvent(EventTarget* aOwner,
                         nsPresContext* aPresContext,
                         InternalAnimationEvent* aEvent)
 {
-  AnimationEvent* it = new AnimationEvent(aOwner, aPresContext, aEvent);
-  NS_ADDREF(it);
-  *aInstancePtrResult = static_cast<Event*>(it);
-  return NS_OK;
+  RefPtr<AnimationEvent> it =
+    new AnimationEvent(aOwner, aPresContext, aEvent);
+  return it.forget();
 }

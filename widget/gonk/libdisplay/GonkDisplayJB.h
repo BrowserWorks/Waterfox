@@ -30,15 +30,11 @@ public:
     GonkDisplayJB();
     ~GonkDisplayJB();
 
-    virtual ANativeWindow* GetNativeWindow();
-
     virtual void SetEnabled(bool enabled);
 
     virtual void OnEnabled(OnEnabledCallbackType callback);
 
     virtual void* GetHWCDevice();
-
-    virtual void* GetDispSurface();
 
     virtual bool SwapBuffers(EGLDisplay dpy, EGLSurface sur);
 
@@ -48,14 +44,25 @@ public:
 
     virtual void UpdateDispSurface(EGLDisplay dpy, EGLSurface sur);
 
-    virtual void SetDispReleaseFd(int fd);
-
-    virtual int GetPrevDispAcquireFd();
-
     bool Post(buffer_handle_t buf, int fence);
 
+    virtual NativeData GetNativeData(
+        GonkDisplay::DisplayType aDisplayType,
+        android::IGraphicBufferProducer* aSink = nullptr);
+
+    virtual void NotifyBootAnimationStopped();
+
 private:
-    void StopBootAnim();
+    void CreateFramebufferSurface(android::sp<ANativeWindow>& aNativeWindow,
+                                  android::sp<android::DisplaySurface>& aDisplaySurface,
+                                  uint32_t aWidth, uint32_t aHeight);
+    void CreateVirtualDisplaySurface(android::IGraphicBufferProducer* aSink,
+                                     android::sp<ANativeWindow>& aNativeWindow,
+                                     android::sp<android::DisplaySurface>& aDisplaySurface);
+
+    void PowerOnDisplay(int aDpy);
+
+    int DoQueueBuffer(ANativeWindowBuffer* buf);
 
     hw_module_t const*        mModule;
     hw_module_t const*        mFBModule;
@@ -64,9 +71,9 @@ private:
     power_module_t*           mPowerModule;
     android::sp<android::DisplaySurface> mDispSurface;
     android::sp<ANativeWindow> mSTClient;
+    android::sp<android::DisplaySurface> mBootAnimDispSurface;
+    android::sp<ANativeWindow> mBootAnimSTClient;
     android::sp<android::IGraphicBufferAlloc> mAlloc;
-    android::sp<android::GraphicBuffer> mBootAnimBuffer;
-    int mFence;
     hwc_display_contents_1_t* mList;
     uint32_t mWidth;
     uint32_t mHeight;

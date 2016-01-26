@@ -5,22 +5,17 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.dom += [
-    'AbortablePromise.h',
     'Promise.h',
     'PromiseDebugging.h',
-    'PromiseNativeAbortCallback.h',
     'PromiseNativeHandler.h',
     'PromiseWorkerProxy.h',
 ]
 
 UNIFIED_SOURCES += [
-    'AbortablePromise.cpp',
     'Promise.cpp',
     'PromiseCallback.cpp',
     'PromiseDebugging.cpp'
 ]
-
-FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '../base',
@@ -35,4 +30,5 @@ FINAL_LIBRARY = 'xul'
 MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome.ini']
-BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
+
+XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']

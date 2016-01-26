@@ -33,7 +33,7 @@
  */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://services-sync/addonutils.js");
 Cu.import("resource://services-sync/addonsreconciler.js");
@@ -160,7 +160,7 @@ AddonsEngine.prototype = {
     // we assume this function is only called from within a sync.
     let reconcilerChanges = this._reconciler.getChangesSinceDate(lastSyncDate);
     let addons = this._reconciler.addons;
-    for each (let change in reconcilerChanges) {
+    for (let change of reconcilerChanges) {
       let changeTime = change[0];
       let id = change[2];
 
@@ -298,8 +298,16 @@ AddonsStore.prototype = {
     // engine and the record will try to be applied later.
     let results = cb.wait();
 
+    if (results.skipped.includes(record.addonID)) {
+      this._log.info("Add-on skipped: " + record.addonID);
+      // Just early-return for skipped addons - we don't want to arrange to
+      // try again next time because the condition that caused up to skip
+      // will remain true for this addon forever.
+      return;
+    }
+
     let addon;
-    for each (let a in results.addons) {
+    for (let a of results.addons) {
       if (a.id == record.addonID) {
         addon = a;
         break;
@@ -443,7 +451,8 @@ AddonsStore.prototype = {
     let ids = {};
 
     let addons = this.reconciler.addons;
-    for each (let addon in addons) {
+    for (let id in addons) {
+      let addon = addons[id];
       if (this.isAddonSyncable(addon)) {
         ids[addon.guid] = true;
       }
@@ -474,7 +483,7 @@ AddonsStore.prototype = {
       }
 
       this._log.info("Uninstalling add-on as part of wipe: " + addon.id);
-      Utils.catch(addon.uninstall)();
+      Utils.catch.call(this, () => addon.uninstall())();
     }
   },
 

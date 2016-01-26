@@ -146,13 +146,8 @@ hb_unicode_funcs_get_default (void)
 }
 
 #if !defined(HB_NO_UNICODE_FUNCS) && defined(HB_UNICODE_FUNCS_NIL)
-#ifdef _MSC_VER
-#pragma error("Could not find any Unicode functions implementation, you have to provide your own.")
-#pragma error("Consider building hb-ucdn.c.  If you absolutely want to build without any, check the code.")
-#else
 #error "Could not find any Unicode functions implementation, you have to provide your own"
 #error "Consider building hb-ucdn.c.  If you absolutely want to build without any, check the code."
-#endif
 #endif
 
 /**
@@ -163,7 +158,7 @@ hb_unicode_funcs_get_default (void)
  *
  * Return value: (transfer full):
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_unicode_funcs_t *
 hb_unicode_funcs_create (hb_unicode_funcs_t *parent)
@@ -209,7 +204,7 @@ const hb_unicode_funcs_t _hb_unicode_funcs_nil = {
  *
  * Return value: (transfer full):
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_unicode_funcs_t *
 hb_unicode_funcs_get_empty (void)
@@ -225,7 +220,7 @@ hb_unicode_funcs_get_empty (void)
  *
  * Return value: (transfer full):
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_unicode_funcs_t *
 hb_unicode_funcs_reference (hb_unicode_funcs_t *ufuncs)
@@ -239,7 +234,7 @@ hb_unicode_funcs_reference (hb_unicode_funcs_t *ufuncs)
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void
 hb_unicode_funcs_destroy (hb_unicode_funcs_t *ufuncs)
@@ -268,7 +263,7 @@ hb_unicode_funcs_destroy (hb_unicode_funcs_t *ufuncs)
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_unicode_funcs_set_user_data (hb_unicode_funcs_t *ufuncs,
@@ -289,7 +284,7 @@ hb_unicode_funcs_set_user_data (hb_unicode_funcs_t *ufuncs,
  *
  * Return value: (transfer none):
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void *
 hb_unicode_funcs_get_user_data (hb_unicode_funcs_t *ufuncs,
@@ -305,7 +300,7 @@ hb_unicode_funcs_get_user_data (hb_unicode_funcs_t *ufuncs,
  *
  * 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 void
 hb_unicode_funcs_make_immutable (hb_unicode_funcs_t *ufuncs)
@@ -324,7 +319,7 @@ hb_unicode_funcs_make_immutable (hb_unicode_funcs_t *ufuncs)
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_unicode_funcs_is_immutable (hb_unicode_funcs_t *ufuncs)
@@ -340,7 +335,7 @@ hb_unicode_funcs_is_immutable (hb_unicode_funcs_t *ufuncs)
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_unicode_funcs_t *
 hb_unicode_funcs_get_parent (hb_unicode_funcs_t *ufuncs)
@@ -400,7 +395,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_unicode_compose (hb_unicode_funcs_t *ufuncs,
@@ -422,7 +417,7 @@ hb_unicode_compose (hb_unicode_funcs_t *ufuncs,
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 hb_bool_t
 hb_unicode_decompose (hb_unicode_funcs_t *ufuncs,
@@ -443,7 +438,7 @@ hb_unicode_decompose (hb_unicode_funcs_t *ufuncs,
  *
  * Return value: 
  *
- * Since: 1.0
+ * Since: 0.9.2
  **/
 unsigned int
 hb_unicode_decompose_compatibility (hb_unicode_funcs_t *ufuncs,

@@ -27,7 +27,7 @@ registerCleanupFunction(function () {
   delete window.Troubleshoot;
 });
 
-let tests = [
+var tests = [
 
   function snapshotSchema(done) {
     Troubleshoot.snapshot(function (snapshot) {
@@ -64,10 +64,26 @@ let tests = [
          "The pref should be absent because it's blacklisted.");
       ok(!("network.proxy.troubleshoot" in p),
          "The pref should be absent because it's blacklisted.");
-      prefs.forEach(function (p) Services.prefs.deleteBranch(p));
+      prefs.forEach(p => Services.prefs.deleteBranch(p));
       done();
     });
   },
+
+  function unicodePreferences(done) {
+    let name = "font.name.sans-serif.x-western";
+    let utf8Value = "\xc4\x8capk\xc5\xafv Krasopis"
+    let unicodeValue = "\u010Capk\u016Fv Krasopis";
+
+    // set/getCharPref work with 8bit strings (utf8)
+    Services.prefs.setCharPref(name, utf8Value);
+
+    Troubleshoot.snapshot(function (snapshot) {
+      let p = snapshot.modifiedPreferences;
+      is(p[name], unicodeValue, "The pref should have correct Unicode value.");
+      Services.prefs.deleteBranch(name);
+      done();
+    });
+  }
 ];
 
 // This is inspired by JSON Schema, or by the example on its Wikipedia page
@@ -109,11 +125,17 @@ const SNAPSHOT_SCHEMA = {
           type: "boolean",
           required: true,
         },
+        autoStartStatus: {
+          type: "number",
+        },
         numTotalWindows: {
           type: "number",
         },
         numRemoteWindows: {
           type: "number",
+        },
+        safeMode: {
+          type: "boolean",
         },
       },
     },
@@ -200,7 +222,7 @@ const SNAPSHOT_SCHEMA = {
           type: "boolean",
         },
         supportsHardwareH264: {
-          type: "boolean",
+          type: "string",
         },
         numAcceleratedWindowsMessage: {
           type: "array",
@@ -471,7 +493,7 @@ function validateObject_array(array, schema) {
   if (typeof(schema.items) != "object")
     // Don't care what the array's elements are.
     return;
-  array.forEach(function (elt) validateObject(elt, schema.items));
+  array.forEach(elt => validateObject(elt, schema.items));
 }
 
 function validateObject_string(str, schema) {}

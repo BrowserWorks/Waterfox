@@ -10,9 +10,10 @@
  * liability, trademark and document use rules apply.
  */
 
-[Pref="media.webspeech.recognition.enable"]
+[Pref="media.webspeech.recognition.enable",
+ Func="SpeechRecognition::IsAuthorized"]
 interface SpeechRecognitionResult {
     readonly attribute unsigned long length;
     getter SpeechRecognitionAlternative item(unsigned long index);
-    readonly attribute boolean final;
+    readonly attribute boolean isFinal;
 };

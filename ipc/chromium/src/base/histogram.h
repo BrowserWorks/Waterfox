@@ -41,7 +41,9 @@
 #define BASE_METRICS_HISTOGRAM_H_
 #pragma once
 
+#include "mozilla/Atomics.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Mutex.h"
 
 #include <map>
 #include <string>
@@ -53,6 +55,10 @@
 class Pickle;
 
 namespace base {
+
+using mozilla::OffTheBooksMutex;
+using mozilla::OffTheBooksMutexAutoLock;
+
 //------------------------------------------------------------------------------
 // Provide easy general purpose histogram in a macro, just like stats counters.
 // The first four macros use 50 buckets.
@@ -292,7 +298,6 @@ class Histogram {
   enum Flags {
     kNoFlags = 0,
     kUmaTargetedHistogramFlag = 0x1,  // Histogram should be UMA uploaded.
-    kExtendedStatisticsFlag = 0x2, // OK to gather extended statistics on histograms.
 
     // Indicate that the histogram was pickled to be sent across an IPC Channel.
     // If we observe this flag on a histogram being aggregated into after IPC,
@@ -329,35 +334,78 @@ class Histogram {
     explicit SampleSet();
     ~SampleSet();
 
+    // This class contains a mozilla::OffTheBooksMutex, |mutex_|.
+    // Most of the methods are thread-safe: they acquire and release
+    // the mutex themselves.  A few are not thread-safe, and require
+    // the caller to provide evidence that the object is locked, by
+    // supplying a const OffTheBooksMutexAutoLock& parameter.  The
+    // parameter is ignored but must be present.  |mutex_| must be an
+    // OffTheBooks variant because some of the containing SampleSet
+    // objects are leaked until shutdown, so a standard Mutex can't be
+    // used, since that does leak checking, and causes test failures.
+
+    //---------------- THREAD SAFE METHODS ----------------//
+    //
+    // The caller must not already hold |this.mutex_|, otherwise we
+    // will end up deadlocking.
+
     // Adjust size of counts_ for use with given histogram.
     void Resize(const Histogram& histogram);
-    void CheckSize(const Histogram& histogram) const;
 
     // Accessor for histogram to make routine additions.
     void AccumulateWithLinearStats(Sample value, Count count, size_t index);
-    // Alternate routine for exponential histograms.
-    // computeExpensiveStatistics should be true if we want to compute log sums.
-    void AccumulateWithExponentialStats(Sample value, Count count, size_t index,
-					bool computeExtendedStatistics);
-
-    // Accessor methods.
-    Count counts(size_t i) const { return counts_[i]; }
-    Count TotalCount() const;
-    int64_t sum() const { return sum_; }
-    uint64_t sum_squares() const { return sum_squares_; }
-    double log_sum() const { return log_sum_; }
-    double log_sum_squares() const { return log_sum_squares_; }
-    int64_t redundant_count() const { return redundant_count_; }
-    size_t size() const { return counts_.size(); }
 
     // Arithmetic manipulation of corresponding elements of the set.
     void Add(const SampleSet& other);
-    void Subtract(const SampleSet& other);
 
     bool Serialize(Pickle* pickle) const;
     bool Deserialize(void** iter, const Pickle& pickle);
 
     size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf);
+
+    //---------------- THREAD UNSAFE METHODS ----------------//
+    //
+    // The caller must hold |this.mutex_|, and must supply evidence by passing
+    // a const reference to the relevant OffTheBooksMutexAutoLock used.
+
+    Count counts(const OffTheBooksMutexAutoLock& ev, size_t i) const {
+       return counts_[i];
+    }
+    Count TotalCount(const OffTheBooksMutexAutoLock& ev) const;
+    int64_t sum(const OffTheBooksMutexAutoLock& ev) const {
+       return sum_;
+    }
+    uint64_t sum_squares(const OffTheBooksMutexAutoLock& ev) const {
+       return sum_squares_;
+    }
+    double log_sum(const OffTheBooksMutexAutoLock& ev) const {
+       return log_sum_;
+    }
+    double log_sum_squares(const OffTheBooksMutexAutoLock& ev) const {
+       return log_sum_squares_;
+    }
+    int64_t redundant_count(const OffTheBooksMutexAutoLock& ev) const {
+       return redundant_count_;
+    }
+    size_t size(const OffTheBooksMutexAutoLock& ev) const {
+       return counts_.size();
+    }
+
+    // An assignment operator.  The presence of mozilla::OffTheBooksMutex
+    // in this class causes the default assignment operator to be deleted.
+    const SampleSet& operator=(const SampleSet& other) {
+       counts_          = other.counts_;
+       sum_             = other.sum_;
+       sum_squares_     = other.sum_squares_;
+       log_sum_         = other.log_sum_;
+       log_sum_squares_ = other.log_sum_squares_;
+       redundant_count_ = other.redundant_count_;
+       return *this;
+    }
+
+   private:
+    void Accumulate(const OffTheBooksMutexAutoLock& ev,
+                    Sample value, Count count, size_t index);
 
    protected:
     // Actual histogram data is stored in buckets, showing the count of values
@@ -375,9 +423,6 @@ class Histogram {
     double log_sum_;      // sum of logs of samples.
     double log_sum_squares_; // sum of squares of logs of samples
 
-   private:
-    void Accumulate(Sample value, Count count, size_t index);
-
     // To help identify memory corruption, we reduntantly save the number of
     // samples we've accumulated into all of our buckets.  We can compare this
     // count to the sum of the counts in all buckets, and detect problems.  Note
@@ -386,6 +431,13 @@ class Histogram {
     // and also the snapshotting code may asynchronously get a mismatch (though
     // generally either race based mismatch cause is VERY rare).
     int64_t redundant_count_;
+
+   private:
+    // Protects all data fields.
+    mutable OffTheBooksMutex mutex_;
+
+   public:
+    OffTheBooksMutex& mutex() const { return mutex_; }
   };
 
   //----------------------------------------------------------------------------
@@ -404,6 +456,12 @@ class Histogram {
 
   void Add(int value);
   void Subtract(int value);
+
+  // TODO: Currently recording_enabled_ is not used by any Histogram class, but
+  //       rather examined only by the telemetry code (via IsRecordingEnabled).
+  //       Move handling to Histogram's Add() etc after simplifying Histogram.
+  void SetRecordingEnabled(bool aEnabled) { recording_enabled_ = aEnabled; };
+  bool IsRecordingEnabled() const { return recording_enabled_; };
 
   // This method is an interface, used only by BooleanHistogram.
   virtual void AddBoolean(bool value);
@@ -452,7 +510,9 @@ class Histogram {
   // produce a false-alarm if a race occurred in the reading of the data during
   // a SnapShot process, but should otherwise be false at all times (unless we
   // have memory over-writes, or DRAM failures).
-  virtual Inconsistencies FindCorruption(const SampleSet& snapshot) const;
+  virtual Inconsistencies FindCorruption(const SampleSet& snapshot,
+                                         const OffTheBooksMutexAutoLock&
+                                               snapshotLockEvidence) const;
 
   //----------------------------------------------------------------------------
   // Accessors for factory constuction, serialization and testing.
@@ -464,8 +524,10 @@ class Histogram {
   virtual Sample ranges(size_t i) const;
   uint32_t range_checksum() const { return range_checksum_; }
   virtual size_t bucket_count() const;
-  // Snapshot the current complete set of sample data.
-  // Override with atomic/locked snapshot if needed.
+
+  // Do a safe atomic snapshot of sample data.  The caller is assumed to
+  // have exclusive access to the destination, |*sample|, and no locking
+  // of it is done here.  This routine does lock the source sample though.
   virtual void SnapshotSample(SampleSet* sample) const;
 
   virtual bool HasConstructorArguments(Sample minimum, Sample maximum,
@@ -541,10 +603,13 @@ class Histogram {
   // Helpers for emitting Ascii graphic.  Each method appends data to output.
 
   // Find out how large the (graphically) the largest bucket will appear to be.
-  double GetPeakBucketSize(const SampleSet& snapshot) const;
+  double GetPeakBucketSize(const SampleSet& snapshot,
+                           const OffTheBooksMutexAutoLock&
+                                 snapshotLockEvidence) const;
 
   // Write a common header message describing this histogram.
   void WriteAsciiHeader(const SampleSet& snapshot,
+                        const OffTheBooksMutexAutoLock& snapshotLockEvidence,
                         Count sample_count, std::string* output) const;
 
   // Write information about previous, current, and next buckets.
@@ -588,6 +653,9 @@ class Histogram {
   // are generated.  If ever there is ever a difference, then the histogram must
   // have been corrupted.
   uint32_t range_checksum_;
+
+  // When false, new samples are completely ignored.
+  mozilla::Atomic<bool, mozilla::Relaxed> recording_enabled_;
 
   DISALLOW_COPY_AND_ASSIGN(Histogram);
 };

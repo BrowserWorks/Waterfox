@@ -42,7 +42,10 @@ public:
   UDPSocketChild();
   virtual ~UDPSocketChild();
 
+  nsresult CreatePBackgroundSpinUntilDone();
+
   virtual bool RecvCallbackOpened(const UDPAddressInfo& aAddressInfo) override;
+  virtual bool RecvCallbackConnected(const UDPAddressInfo& aAddressInfo) override;
   virtual bool RecvCallbackClosed() override;
   virtual bool RecvCallbackReceivedData(const UDPAddressInfo& aAddressInfo,
                                         InfallibleTArray<uint8_t>&& aData) override;
@@ -55,6 +58,7 @@ private:
                             const uint8_t* aData,
                             const uint32_t aByteLength);
 
+  mozilla::ipc::PBackgroundChild* mBackgroundManager;
   uint16_t mLocalPort;
   nsCString mLocalAddress;
   nsCString mFilterName;

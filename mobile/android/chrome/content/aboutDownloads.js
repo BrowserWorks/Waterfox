@@ -3,7 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const Cu = Components.utils;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 
@@ -14,7 +14,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services", "resource://gre/modules/Services.jsm");
 
-let gStrings = Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties");
+var gStrings = Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties");
 XPCOMUtils.defineLazyGetter(this, "strings",
                             () => Services.strings.createBundle("chrome://browser/locale/aboutDownloads.properties"));
 
@@ -27,7 +27,7 @@ function deleteDownload(download) {
   });
 }
 
-let contextMenu = {
+var contextMenu = {
   _items: [],
   _targetDownload: null,
 
@@ -191,7 +191,7 @@ DownloadListView.prototype = {
   }
 };
 
-let downloadLists = {
+var downloadLists = {
   init: function () {
     this.publicDownloads = new DownloadListView(Downloads.PUBLIC, "public-downloads-list");
     this.privateDownloads = new DownloadListView(Downloads.PRIVATE, "private-downloads-list");
@@ -266,8 +266,12 @@ DownloadItem.prototype = {
       this);
   },
 
-  get download() this._download,
-  get element() this._element,
+  get download() {
+    return this._download;
+  },
+  get element() {
+    return this._element;
+  },
 
   createElement: function() {
     let template = document.getElementById("download-item");
@@ -312,10 +316,18 @@ DownloadItem.prototype = {
   },
 
   // template properties below
-  get domain() this._domain,
-  get fileName() this._fileName,
-  get id() this._id,
-  get iconUrl() this._iconUrl,
+  get domain() {
+    return this._domain;
+  },
+  get fileName() {
+    return this._fileName;
+  },
+  get id() {
+    return this._id;
+  },
+  get iconUrl() {
+    return this._iconUrl;
+  },
 
   get size() {
     if (this.download.hasProgress) {

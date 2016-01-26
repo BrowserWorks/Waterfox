@@ -10,44 +10,34 @@
 #include "nsIUGenCategory.h"
 #include "nsUnicodeScriptCodes.h"
 
-const nsCharProps1& GetCharProps1(uint32_t aCh);
 const nsCharProps2& GetCharProps2(uint32_t aCh);
 
 namespace mozilla {
 
 namespace unicode {
 
-extern nsIUGenCategory::nsUGenCategory sDetailedToGeneralCategory[];
+extern const nsIUGenCategory::nsUGenCategory sDetailedToGeneralCategory[];
 
+// Return whether the char has a mirrored-pair counterpart.
 uint32_t GetMirroredChar(uint32_t aCh);
 
-inline uint8_t GetCombiningClass(uint32_t aCh) {
-  return GetCharProps1(aCh).mCombiningClass;
-}
+bool HasMirroredChar(uint32_t aChr);
+
+uint8_t GetCombiningClass(uint32_t aCh);
 
 // returns the detailed General Category in terms of HB_UNICODE_* values
-inline uint8_t GetGeneralCategory(uint32_t aCh) {
-  return GetCharProps2(aCh).mCategory;
-}
+uint8_t GetGeneralCategory(uint32_t aCh);
 
 // returns the simplified Gen Category as defined in nsIUGenCategory
 inline nsIUGenCategory::nsUGenCategory GetGenCategory(uint32_t aCh) {
   return sDetailedToGeneralCategory[GetGeneralCategory(aCh)];
 }
 
-inline uint8_t GetEastAsianWidth(uint32_t aCh) {
-  return GetCharProps2(aCh).mEAW;
-}
+nsCharType GetBidiCat(uint32_t aCh);
 
-inline uint8_t GetScriptCode(uint32_t aCh) {
-  return GetCharProps2(aCh).mScriptCode;
-}
+uint8_t GetScriptCode(uint32_t aCh);
 
 uint32_t GetScriptTagForCode(int32_t aScriptCode);
-
-inline nsCharType GetBidiCat(uint32_t aCh) {
-  return nsCharType(GetCharProps2(aCh).mBidiCategory);
-}
 
 /* This MUST match the values assigned by genUnicodePropertyData.pl! */
 enum VerticalOrientation {
@@ -61,26 +51,34 @@ inline VerticalOrientation GetVerticalOrientation(uint32_t aCh) {
   return VerticalOrientation(GetCharProps2(aCh).mVertOrient);
 }
 
+/* This MUST match the values assigned by genUnicodePropertyData.pl! */
+enum PairedBracketType {
+  PAIRED_BRACKET_TYPE_NONE = 0,
+  PAIRED_BRACKET_TYPE_OPEN = 1,
+  PAIRED_BRACKET_TYPE_CLOSE = 2
+};
+
+PairedBracketType GetPairedBracketType(uint32_t aCh);
+uint32_t GetPairedBracket(uint32_t aCh);
+
 enum XidmodType {
-  XIDMOD_INCLUSION,
   XIDMOD_RECOMMENDED,
-  XIDMOD_DEFAULT_IGNORABLE,
-  XIDMOD_HISTORIC,
-  XIDMOD_LIMITED_USE,
-  XIDMOD_NOT_NFKC,
-  XIDMOD_NOT_XID,
-  XIDMOD_OBSOLETE,
+  XIDMOD_INCLUSION,
+  XIDMOD_UNCOMMON_USE,
   XIDMOD_TECHNICAL,
+  XIDMOD_OBSOLETE,
+  XIDMOD_ASPIRATIONAL,
+  XIDMOD_LIMITED_USE,
+  XIDMOD_EXCLUSION,
+  XIDMOD_NOT_XID,
+  XIDMOD_NOT_NFKC,
+  XIDMOD_DEFAULT_IGNORABLE,
+  XIDMOD_DEPRECATED,
   XIDMOD_NOT_CHARS
 };
 
 inline XidmodType GetIdentifierModification(uint32_t aCh) {
   return XidmodType(GetCharProps2(aCh).mXidmod);
-}
-
-inline bool IsRestrictedForIdentifiers(uint32_t aCh) {
-  XidmodType xm = GetIdentifierModification(aCh);
-  return (xm > XIDMOD_RECOMMENDED);
 }
 
 /**
@@ -89,10 +87,9 @@ inline bool IsRestrictedForIdentifiers(uint32_t aCh) {
  * To restrict to decimal digits, the caller should also check whether
  * GetGeneralCategory returns HB_UNICODE_GENERAL_CATEGORY_DECIMAL_NUMBER
  */
-inline int8_t GetNumericValue(uint32_t aCh) {
-  return GetCharProps2(aCh).mNumericValue;
-}
+int8_t GetNumericValue(uint32_t aCh);
 
+#if 0 // currently unused - bug 857481
 enum HanVariantType {
   HVT_NotHan = 0x0,
   HVT_SimplifiedOnly = 0x1,
@@ -101,6 +98,7 @@ enum HanVariantType {
 };
 
 HanVariantType GetHanVariant(uint32_t aCh);
+#endif
 
 uint32_t GetFullWidth(uint32_t aCh);
 
@@ -108,19 +106,6 @@ bool IsClusterExtender(uint32_t aCh, uint8_t aCategory);
 
 inline bool IsClusterExtender(uint32_t aCh) {
   return IsClusterExtender(aCh, GetGeneralCategory(aCh));
-}
-
-enum HSType {
-  HST_NONE = 0x00,
-  HST_L    = 0x01,
-  HST_V    = 0x02,
-  HST_T    = 0x04,
-  HST_LV   = 0x03,
-  HST_LVT  = 0x07
-};
-
-inline HSType GetHangulSyllableType(uint32_t aCh) {
-  return HSType(GetCharProps1(aCh).mHangulType);
 }
 
 // Case mappings for the full Unicode range;

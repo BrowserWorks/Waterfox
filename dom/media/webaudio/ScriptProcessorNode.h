@@ -28,42 +28,56 @@ public:
 
   IMPL_EVENT_HANDLER(audioprocess)
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  void EventListenerAdded(nsIAtom* aType) override;
+  void EventListenerRemoved(nsIAtom* aType) override;
 
-  virtual void Connect(AudioNode& aDestination, uint32_t aOutput,
-                       uint32_t aInput, ErrorResult& aRv) override
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+  AudioNode* Connect(AudioNode& aDestination, uint32_t aOutput,
+                     uint32_t aInput, ErrorResult& aRv) override
   {
-    AudioNode::Connect(aDestination, aOutput, aInput, aRv);
+    AudioNode* node = AudioNode::Connect(aDestination, aOutput, aInput, aRv);
     if (!aRv.Failed()) {
-      MarkActive();
+      UpdateConnectedStatus();
     }
+    return node;
   }
 
-  virtual void Connect(AudioParam& aDestination, uint32_t aOutput,
-                       ErrorResult& aRv) override
+  void Connect(AudioParam& aDestination, uint32_t aOutput,
+               ErrorResult& aRv) override
   {
     AudioNode::Connect(aDestination, aOutput, aRv);
     if (!aRv.Failed()) {
-      MarkActive();
+      UpdateConnectedStatus();
     }
   }
 
-  virtual void Disconnect(uint32_t aOutput, ErrorResult& aRv) override
+  void Disconnect(uint32_t aOutput, ErrorResult& aRv) override
   {
     AudioNode::Disconnect(aOutput, aRv);
-    if (!aRv.Failed() && OutputNodes().IsEmpty() && OutputParams().IsEmpty()) {
-      MarkInactive();
+    if (!aRv.Failed()) {
+      UpdateConnectedStatus();
     }
   }
+  void NotifyInputsChanged() override
+  {
+    UpdateConnectedStatus();
+  }
+  void NotifyHasPhantomInput() override
+  {
+    mHasPhantomInput = true;
+    // No need to UpdateConnectedStatus() because there was previously an
+    // input in InputNodes().
+  }
 
-  virtual void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv) override
+  void SetChannelCount(uint32_t aChannelCount, ErrorResult& aRv) override
   {
     if (aChannelCount != ChannelCount()) {
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     }
     return;
   }
-  virtual void SetChannelCountModeValue(ChannelCountMode aMode, ErrorResult& aRv) override
+  void SetChannelCountModeValue(ChannelCountMode aMode, ErrorResult& aRv) override
   {
     if (aMode != ChannelCountMode::Explicit) {
       aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
@@ -76,11 +90,6 @@ public:
     return mBufferSize;
   }
 
-  SharedBuffers* GetSharedBuffers() const
-  {
-    return mSharedBuffers;
-  }
-
   uint32_t NumberOfOutputChannels() const
   {
     return mNumberOfOutputChannels;
@@ -88,25 +97,26 @@ public:
 
   using DOMEventTargetHelper::DispatchTrustedEvent;
 
-  virtual const char* NodeType() const override
+  const char* NodeType() const override
   {
     return "ScriptProcessorNode";
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
-
-protected:
-  virtual ~ScriptProcessorNode();
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
 private:
-  nsAutoPtr<SharedBuffers> mSharedBuffers;
+  virtual ~ScriptProcessorNode();
+
+  void UpdateConnectedStatus();
+
   const uint32_t mBufferSize;
   const uint32_t mNumberOfOutputChannels;
+  bool mHasPhantomInput = false;
 };
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 #endif
 

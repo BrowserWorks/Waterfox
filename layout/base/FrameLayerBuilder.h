@@ -11,10 +11,11 @@
 #include "nsTArray.h"
 #include "nsRegion.h"
 #include "nsIFrame.h"
-#include "ImageLayers.h"
 #include "DisplayItemClip.h"
+#include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "LayerState.h"
+#include "LayerUserData.h"
 
 class nsDisplayListBuilder;
 class nsDisplayList;
@@ -23,16 +24,14 @@ class gfxContext;
 class nsDisplayItemGeometry;
 
 namespace mozilla {
+class DisplayItemScrollClip;
 namespace layers {
 class ContainerLayer;
 class LayerManager;
 class BasicLayerManager;
 class PaintedLayer;
-}
-
-namespace gfx {
-class Matrix4x4;
-}
+class ImageLayer;
+} // namespace layers
 
 class FrameLayerBuilder;
 class LayerManagerData;
@@ -56,20 +55,24 @@ struct ContainerLayerParameters {
     , mYScale(1)
     , mLayerContentsVisibleRect(nullptr)
     , mBackgroundColor(NS_RGBA(0,0,0,0))
+    , mScrollClip(nullptr)
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
     , mInLowPrecisionDisplayPort(false)
+    , mForEventsOnly(false)
   {}
   ContainerLayerParameters(float aXScale, float aYScale)
     : mXScale(aXScale)
     , mYScale(aYScale)
     , mLayerContentsVisibleRect(nullptr)
     , mBackgroundColor(NS_RGBA(0,0,0,0))
+    , mScrollClip(nullptr)
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
     , mInLowPrecisionDisplayPort(false)
+    , mForEventsOnly(false)
   {}
   ContainerLayerParameters(float aXScale, float aYScale,
                            const nsIntPoint& aOffset,
@@ -79,10 +82,12 @@ struct ContainerLayerParameters {
     , mLayerContentsVisibleRect(nullptr)
     , mOffset(aOffset)
     , mBackgroundColor(aParent.mBackgroundColor)
+    , mScrollClip(aParent.mScrollClip)
     , mInTransformedSubtree(aParent.mInTransformedSubtree)
     , mInActiveTransformedSubtree(aParent.mInActiveTransformedSubtree)
     , mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
     , mInLowPrecisionDisplayPort(aParent.mInLowPrecisionDisplayPort)
+    , mForEventsOnly(aParent.mForEventsOnly)
   {}
 
   float mXScale, mYScale;
@@ -103,14 +108,16 @@ struct ContainerLayerParameters {
   nsIntPoint mOffset;
 
   LayerIntPoint Offset() const {
-    return LayerIntPoint::FromUntyped(mOffset);
+    return LayerIntPoint::FromUnknownPoint(mOffset);
   }
 
   nscolor mBackgroundColor;
+  const DisplayItemScrollClip* mScrollClip;
   bool mInTransformedSubtree;
   bool mInActiveTransformedSubtree;
   bool mDisableSubpixelAntialiasingInDescendants;
   bool mInLowPrecisionDisplayPort;
+  bool mForEventsOnly;
   /**
    * When this is false, PaintedLayer coordinates are drawn to with an integer
    * translation and the scale in mXScale/mYScale.
@@ -172,20 +179,8 @@ public:
   typedef layers::BasicLayerManager BasicLayerManager;
   typedef layers::EventRegions EventRegions;
 
-  FrameLayerBuilder() :
-    mRetainingManager(nullptr),
-    mDetectedDOMModification(false),
-    mInvalidateAllLayers(false),
-    mInLayerTreeCompressionMode(false),
-    mContainerLayerGeneration(0),
-    mMaxContainerLayerGeneration(0)
-  {
-    MOZ_COUNT_CTOR(FrameLayerBuilder);
-  }
-  ~FrameLayerBuilder()
-  {
-    MOZ_COUNT_DTOR(FrameLayerBuilder);
-  }
+  FrameLayerBuilder();
+  ~FrameLayerBuilder();
 
   static void Shutdown();
 
@@ -226,7 +221,7 @@ public:
    * sets the container layer children to layers which together render
    * the contents of the display list. It reuses existing layers from
    * the retained layer manager if possible.
-   * aContainer may be null, in which case we construct a root layer.
+   * aContainerItem may be null, in which case we construct a root layer.
    * This gets called by display list code. It calls BuildLayer on the
    * items in the display list, making items with their own layers
    * children of the new container, and assigning all other items to
@@ -281,11 +276,15 @@ public:
    * This callback must be provided to EndTransaction. The callback data
    * must be the nsDisplayListBuilder containing this FrameLayerBuilder.
    * This function can be called multiple times in a row to draw
-   * different regions.
+   * different regions. This will occur when, for example, progressive paint is
+   * enabled. In these cases aDirtyRegion can be used to specify a larger region
+   * than aRegionToDraw that will be drawn during the transaction, possibly
+   * allowing the callback to make optimizations.
    */
   static void DrawPaintedLayer(PaintedLayer* aLayer,
                               gfxContext* aContext,
                               const nsIntRegion& aRegionToDraw,
+                              const nsIntRegion& aDirtyRegion,
                               mozilla::layers::DrawRegionClip aClip,
                               const nsIntRegion& aRegionToInvalidate,
                               void* aCallbackData);
@@ -318,14 +317,12 @@ public:
    * @param aLayer Layer that the display item will be rendered into
    * @param aItem Display item to be drawn.
    * @param aLayerState What LayerState the item is using.
-   * @param aTopLeft offset from active scrolled root to reference frame
    * @param aManager If the layer is in the LAYER_INACTIVE state,
    * then this is the temporary layer manager to draw with.
    */
   void AddLayerDisplayItem(Layer* aLayer,
                            nsDisplayItem* aItem,
                            LayerState aLayerState,
-                           const nsPoint& aTopLeft,
                            BasicLayerManager* aManager);
 
   /**
@@ -439,6 +436,7 @@ public:
     Layer* GetLayer() { return mLayer; }
     nsDisplayItemGeometry* GetGeometry() const { return mGeometry.get(); }
     void Invalidate() { mIsInvalid = true; }
+    void ClearAnimationCompositorState();
 
   private:
     DisplayItemData(LayerManagerData* aParent,
@@ -479,7 +477,7 @@ public:
      * longer than the transaction.
      *
      * Updates the geometry, frame list and clip.
-     * For items within a PaintedLayer, a geometry object must be specifed to retain
+     * For items within a PaintedLayer, a geometry object must be specified to retain
      * until the next transaction.
      *
      */
@@ -487,9 +485,9 @@ public:
     void EndUpdate();
 
     LayerManagerData* mParent;
-    nsRefPtr<Layer> mLayer;
-    nsRefPtr<Layer> mOptLayer;
-    nsRefPtr<BasicLayerManager> mInactiveManager;
+    RefPtr<Layer> mLayer;
+    RefPtr<Layer> mOptLayer;
+    RefPtr<BasicLayerManager> mInactiveManager;
     nsAutoTArray<nsIFrame*, 1> mFrameList;
     nsAutoPtr<nsDisplayItemGeometry> mGeometry;
     DisplayItemClip mClip;
@@ -563,8 +561,6 @@ protected:
                                                        uint32_t aDisplayItemKey, 
                                                        LayerManagerData* aData);
 
-  static PLDHashOperator DumpDisplayItemDataForFrame(nsRefPtrHashKey<DisplayItemData>* aEntry,
-                                                     void* aClosure);
   /**
    * We store one of these for each display item associated with a
    * PaintedLayer, in a hashtable that maps each PaintedLayer to an array
@@ -575,11 +571,7 @@ protected:
    * PaintedLayer.
    */
   struct ClippedDisplayItem {
-    ClippedDisplayItem(nsDisplayItem* aItem, uint32_t aGeneration)
-      : mItem(aItem), mContainerLayerGeneration(aGeneration)
-    {
-    }
-
+    ClippedDisplayItem(nsDisplayItem* aItem, uint32_t aGeneration);
     ~ClippedDisplayItem();
 
     nsDisplayItem* mItem;
@@ -589,7 +581,7 @@ protected:
      * layer, then this stores the layer manager being
      * used for the inactive transaction.
      */
-    nsRefPtr<LayerManager> mInactiveLayerManager;
+    RefPtr<LayerManager> mInactiveLayerManager;
 
     uint32_t mContainerLayerGeneration;
 
@@ -620,19 +612,9 @@ protected:
 public:
   class PaintedLayerItemsEntry : public nsPtrHashKey<PaintedLayer> {
   public:
-    explicit PaintedLayerItemsEntry(const PaintedLayer *key)
-      : nsPtrHashKey<PaintedLayer>(key)
-      , mContainerLayerFrame(nullptr)
-      , mLastCommonClipCount(0)
-      , mContainerLayerGeneration(0)
-      , mHasExplicitLastPaintOffset(false)
-      , mCommonClipCount(0)
-    {}
-    PaintedLayerItemsEntry(const PaintedLayerItemsEntry &toCopy) :
-      nsPtrHashKey<PaintedLayer>(toCopy.mKey), mItems(toCopy.mItems)
-    {
-      NS_ERROR("Should never be called, since we ALLOW_MEMMOVE");
-    }
+    explicit PaintedLayerItemsEntry(const PaintedLayer *key);
+    PaintedLayerItemsEntry(const PaintedLayerItemsEntry&);
+    ~PaintedLayerItemsEntry();
 
     nsTArray<ClippedDisplayItem> mItems;
     nsIFrame* mContainerLayerFrame;
@@ -681,14 +663,6 @@ public:
   void ComputeGeometryChangeForItem(DisplayItemData* aData);
 
 protected:
-  static PLDHashOperator ProcessRemovedDisplayItems(nsRefPtrHashKey<DisplayItemData>* aEntry,
-                                                    void* aUserArg);
-  static PLDHashOperator RestoreDisplayItemData(nsRefPtrHashKey<DisplayItemData>* aEntry,
-                                                void *aUserArg);
-
-  static PLDHashOperator RestorePaintedLayerItemEntries(PaintedLayerItemsEntry* aEntry,
-                                                       void *aUserArg);
-
   /**
    * Returns true if the DOM has been modified since we started painting,
    * in which case we should bail out and not paint anymore. This should
@@ -704,7 +678,7 @@ protected:
   /**
    * The root prescontext for the display list builder reference frame
    */
-  nsRefPtr<nsRootPresContext>         mRootPresContext;
+  RefPtr<nsRootPresContext>         mRootPresContext;
 
   /**
    * The display list builder being used.
@@ -743,6 +717,6 @@ protected:
   uint32_t                            mMaxContainerLayerGeneration;
 };
 
-}
+} // namespace mozilla
 
 #endif /* FRAMELAYERBUILDER_H_ */

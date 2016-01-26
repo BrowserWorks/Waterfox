@@ -108,13 +108,18 @@ class TlsSkipTest
   }
 };
 
-TEST_P(TlsSkipTest, SkipCertificate) {
+TEST_P(TlsSkipTest, SkipCertificateRsa) {
+  DisableDheAndEcdheCiphers();
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_HELLO_DONE);
 }
 
+TEST_P(TlsSkipTest, SkipCertificateDhe) {
+  ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
+  client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_SERVER_KEY_EXCH);
+}
+
 TEST_P(TlsSkipTest, SkipCertificateEcdhe) {
-  EnableSomeEcdheCiphers();
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeCertificate));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_SERVER_KEY_EXCH);
 }
@@ -126,8 +131,6 @@ TEST_P(TlsSkipTest, SkipCertificateEcdsa) {
 }
 
 TEST_P(TlsSkipTest, SkipServerKeyExchange) {
-  // Have to enable some ephemeral suites, or ServerKeyExchange doesn't appear.
-  EnableSomeEcdheCiphers();
   ServerSkipTest(new TlsHandshakeSkipFilter(kTlsHandshakeServerKeyExchange));
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_HELLO_DONE);
 }

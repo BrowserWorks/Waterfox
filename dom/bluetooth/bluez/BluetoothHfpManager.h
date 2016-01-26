@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothhfpmanager_h__
-#define mozilla_dom_bluetooth_bluetoothhfpmanager_h__
+#ifndef mozilla_dom_bluetooth_bluez_BluetoothHfpManager_h
+#define mozilla_dom_bluetooth_bluez_BluetoothHfpManager_h
 
 #include "BluetoothCommon.h"
 #include "BluetoothHfpManagerBase.h"
@@ -197,7 +197,7 @@ private:
 #ifdef MOZ_B2G_RIL
   bool mDialingRequestProcessed;
 #endif
-  nsString mDeviceAddress;
+  BluetoothAddress mDeviceAddress;
 #ifdef MOZ_B2G_RIL
   nsString mMsisdn;
   nsString mOperatorName;
@@ -205,21 +205,21 @@ private:
   nsTArray<Call> mCurrentCallArray;
   nsAutoPtr<BluetoothRilListener> mListener;
 #endif
-  nsRefPtr<BluetoothProfileController> mController;
-  nsRefPtr<BluetoothReplyRunnable> mScoRunnable;
+  RefPtr<BluetoothProfileController> mController;
+  RefPtr<BluetoothReplyRunnable> mScoRunnable;
 
   // If a connection has been established, mSocket will be the socket
   // communicating with the remote socket. We maintain the invariant that if
   // mSocket is non-null, mHandsfreeSocket and mHeadsetSocket must be null (and
   // vice versa).
-  nsRefPtr<BluetoothSocket> mSocket;
+  RefPtr<BluetoothSocket> mSocket;
 
   // Server sockets. Once an inbound connection is established, it will hand
   // over the ownership to mSocket, and get a new server socket while Listen()
   // is called.
-  nsRefPtr<BluetoothSocket> mHandsfreeSocket;
-  nsRefPtr<BluetoothSocket> mHeadsetSocket;
-  nsRefPtr<BluetoothSocket> mScoSocket;
+  RefPtr<BluetoothSocket> mHandsfreeSocket;
+  RefPtr<BluetoothSocket> mHeadsetSocket;
+  RefPtr<BluetoothSocket> mScoSocket;
   mozilla::ipc::SocketConnectionStatus mScoSocketStatus;
 
 #ifdef MOZ_B2G_RIL
@@ -230,4 +230,4 @@ private:
 
 END_BLUETOOTH_NAMESPACE
 
-#endif
+#endif // mozilla_dom_bluetooth_bluez_BluetoothHfpManager_h

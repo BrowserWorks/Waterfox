@@ -68,11 +68,9 @@ private:
     nsCString mUpdateDomain;
     nsCOMPtr<nsIURI> mManifestURI;
     nsCOMPtr<nsIURI> mDocumentURI;
+    nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
 
     nsCOMPtr<nsIObserverService> mObserverService;
-
-    uint32_t mAppID;
-    bool mInBrowser;
 
     /* Clients watching this update for changes */
     nsCOMArray<nsIWeakReference> mWeakObservers;
@@ -88,7 +86,7 @@ private:
     uint64_t mByteProgress;
 };
 
-}
-}
+} // namespace docshell
+} // namespace mozilla
 
 #endif

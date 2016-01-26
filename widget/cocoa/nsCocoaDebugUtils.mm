@@ -148,9 +148,11 @@ nsCocoaDebugUtils::PrintStackTrace()
 void
 nsCocoaDebugUtils::PrintAddress(void* aAddress)
 {
-  char* ownerName = "unknown";
-  char* addressString = "unknown + 0";
-  bool stringsNeedRelease = false;
+  const char* ownerName = "unknown";
+  const char* addressString = "unknown + 0";
+
+  char* allocatedOwnerName = nullptr;
+  char* allocatedAddressString = nullptr;
 
   CSSymbolOwnerRef owner = {0};
   CSSymbolicatorRef symbolicator = GetSymbolicatorRef();
@@ -162,16 +164,14 @@ nsCocoaDebugUtils::PrintAddress(void* aAddress)
                                                     kCSNow);
   }
   if (!CSIsNull(owner)) {
-    ownerName = GetOwnerNameInt(aAddress, owner);
-    addressString = GetAddressStringInt(aAddress, owner);
-    stringsNeedRelease = true;
+    ownerName = allocatedOwnerName = GetOwnerNameInt(aAddress, owner);
+    addressString = allocatedAddressString = GetAddressStringInt(aAddress, owner);
   }
   DebugLogInt(false, "    (%s) %s", ownerName, addressString);
 
-  if (stringsNeedRelease) {
-    free(ownerName);
-    free(addressString);
-  }
+  free(allocatedOwnerName);
+  free(allocatedAddressString);
+
   ReleaseSymbolicator();
 }
 
@@ -240,6 +240,9 @@ nsCocoaDebugUtils::GetAddressStringInt(void* aAddress, CSTypeRef aOwner)
       addressName = CSSymbolGetName(symbol);
       CSRange range = CSSymbolGetRange(symbol);
       addressOffset = (unsigned long long) aAddress - range.location;
+    } else {
+      addressOffset = (unsigned long long)
+        aAddress - CSSymbolOwnerGetBaseAddress(owner);
     }
   }
 
@@ -279,4 +282,3 @@ nsCocoaDebugUtils::ReleaseSymbolicator()
     CSRelease(sSymbolicator);
   }
 }
-

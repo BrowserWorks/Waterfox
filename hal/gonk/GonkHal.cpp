@@ -395,7 +395,7 @@ EnsureVibratorThreadInitialized()
   NS_NewThread(getter_AddRefs(thread), sVibratorRunnable);
 }
 
-} // anonymous namespace
+} // namespace
 
 void
 Vibrate(const nsTArray<uint32_t> &pattern, const hal::WindowIdentifier &)
@@ -472,7 +472,7 @@ public:
   }
 };
 
-} // anonymous namespace
+} // namespace
 
 class BatteryObserver final : public IUeventObserver
 {
@@ -502,7 +502,7 @@ protected:
   ~BatteryObserver() {}
 
 private:
-  nsRefPtr<BatteryUpdater> mUpdater;
+  RefPtr<BatteryUpdater> mUpdater;
 };
 
 // sBatteryObserver is owned by the IO thread. Only the IO thread may
@@ -632,6 +632,7 @@ GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo)
   if (aBatteryInfo->charging() != previousCharging){
     aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
     memset(&lastLevelChange, 0, sizeof(struct timespec));
+    remainingTime = 0.0;
   }
 
   if (aBatteryInfo->charging()) {
@@ -668,7 +669,37 @@ GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo)
     }
 
   } else {
-    aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+    if (aBatteryInfo->level() == 0.0) {
+      aBatteryInfo->remainingTime() = dom::battery::kDefaultRemainingTime;
+    } else if (aBatteryInfo->level() != previousLevel){
+      if (lastLevelChange.tv_sec != 0) {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        dtime = now.tv_sec - lastLevelChange.tv_sec;
+        dlevel = previousLevel - aBatteryInfo->level();
+
+        if (dlevel <= 0.0) {
+          aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+        } else {
+          remainingTime = (double) round(dtime / dlevel * aBatteryInfo->level());
+          aBatteryInfo->remainingTime() = remainingTime;
+        }
+
+        lastLevelChange = now;
+      } else { // lastLevelChange.tv_sec == 0
+        clock_gettime(CLOCK_MONOTONIC, &lastLevelChange);
+        aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+      }
+
+    } else {
+      clock_gettime(CLOCK_MONOTONIC, &now);
+      dtime = now.tv_sec - lastLevelChange.tv_sec;
+      if (dtime < remainingTime) {
+        aBatteryInfo->remainingTime() = round(remainingTime - dtime);
+      } else {
+        aBatteryInfo->remainingTime() = dom::battery::kUnknownRemainingTime;
+      }
+
+    }
   }
 
   previousCharging = aBatteryInfo->charging();
@@ -676,27 +707,6 @@ GetCurrentBatteryInformation(hal::BatteryInformation* aBatteryInfo)
 }
 
 namespace {
-
-/**
- * RAII class to help us remember to close file descriptors.
- */
-
-bool WriteToFile(const char *filename, const char *toWrite)
-{
-  int fd = open(filename, O_WRONLY);
-  ScopedClose autoClose(fd);
-  if (fd < 0) {
-    HAL_LOG("Unable to open file %s.", filename);
-    return false;
-  }
-
-  if (write(fd, toWrite, strlen(toWrite)) < 0) {
-    HAL_LOG("Unable to write to file %s.", filename);
-    return false;
-  }
-
-  return true;
-}
 
 // We can write to screenEnabledFilename to enable/disable the screen, but when
 // we read, we always get "mem"!  So we have to keep track ourselves whether
@@ -714,7 +724,7 @@ bool sCpuSleepAllowed = true;
 // when reading or writing this variable to ensure thread-safe.
 int32_t sInternalLockCpuCount = 0;
 
-} // anonymous namespace
+} // namespace
 
 bool
 GetScreenEnabled()
@@ -733,8 +743,11 @@ bool
 GetKeyLightEnabled()
 {
   LightConfiguration config;
-  GetLight(eHalLightID_Buttons, &config);
-  return (config.color != 0x00000000);
+  bool ok = GetLight(eHalLightID_Buttons, &config);
+  if (ok) {
+    return (config.color != 0x00000000);
+  }
+  return false;
 }
 
 void
@@ -767,10 +780,15 @@ GetScreenBrightness()
   LightConfiguration config;
   LightType light = eHalLightID_Backlight;
 
-  GetLight(light, &config);
-  // backlight is brightness only, so using one of the RGB elements as value.
-  int brightness = config.color & 0xFF;
-  return brightness / 255.0;
+  bool ok = GetLight(light, &config);
+  if (ok) {
+    // backlight is brightness only, so using one of the RGB elements as value.
+    int brightness = config.color & 0xFF;
+    return brightness / 255.0;
+  }
+  // If GetLight fails, it's because the light doesn't exist.  So return
+  // a value corresponding to "off".
+  return 0;
 }
 
 void
@@ -810,7 +828,7 @@ UpdateCpuSleepState()
 
   sInternalLockCpuMonitor->AssertCurrentThreadOwns();
   bool allowed = sCpuSleepAllowed && !sInternalLockCpuCount;
-  WriteToFile(allowed ? wakeUnlockFilename : wakeLockFilename, "gecko");
+  WriteSysFile(allowed ? wakeUnlockFilename : wakeLockFilename, "gecko");
 }
 
 static void
@@ -986,12 +1004,12 @@ DisableScreenConfigurationNotifications()
 void
 GetCurrentScreenConfiguration(hal::ScreenConfiguration* aScreenConfiguration)
 {
-  nsRefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
+  RefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
   *aScreenConfiguration = screen->GetConfiguration();
 }
 
 bool
-LockScreenOrientation(const dom::ScreenOrientation& aOrientation)
+LockScreenOrientation(const dom::ScreenOrientationInternal& aOrientation)
 {
   return OrientationObserver::GetInstance()->LockScreenOrientation(aOrientation);
 }
@@ -1086,7 +1104,7 @@ WaitForAlarm(void* aData)
       // *on time* (the system won't sleep during the process in any way),
       // we need to acquire a CPU wake lock before firing the alarm event.
       InternalLockCpu();
-      nsRefPtr<AlarmFiredEvent> event =
+      RefPtr<AlarmFiredEvent> event =
         new AlarmFiredEvent(alarmData->mGeneration);
       NS_DispatchToMainThread(event);
     }
@@ -1218,7 +1236,7 @@ public:
       mRegexes(nullptr)
   {
     // Enable timestamps in kernel's printk
-    WriteToFile("/sys/module/printk/parameters/time", "Y");
+    WriteSysFile("/sys/module/printk/parameters/time", "Y");
   }
 
   NS_DECL_ISUPPORTS
@@ -1520,16 +1538,16 @@ EnsureCpuCGroupExists(const nsACString &aGroup)
 
   nsAutoCString pathPrefix(kDevCpuCtl + aGroup + kSlash);
   nsAutoCString cpuSharesPath(pathPrefix + NS_LITERAL_CSTRING("cpu.shares"));
-  if (cpuShares && !WriteToFile(cpuSharesPath.get(),
-                                nsPrintfCString("%d", cpuShares).get())) {
+  if (cpuShares && !WriteSysFile(cpuSharesPath.get(),
+                                 nsPrintfCString("%d", cpuShares).get())) {
     HAL_LOG("Could not set the cpu share for group %s", cpuSharesPath.get());
     return false;
   }
 
   nsAutoCString notifyOnMigratePath(pathPrefix
     + NS_LITERAL_CSTRING("cpu.notify_on_migrate"));
-  if (!WriteToFile(notifyOnMigratePath.get(),
-                   nsPrintfCString("%d", cpuNotifyOnMigrate).get())) {
+  if (!WriteSysFile(notifyOnMigratePath.get(),
+                    nsPrintfCString("%d", cpuNotifyOnMigrate).get())) {
     HAL_LOG("Could not set the cpu migration notification flag for group %s",
             notifyOnMigratePath.get());
     return false;
@@ -1577,8 +1595,8 @@ EnsureMemCGroupExists(const nsACString &aGroup)
 
   nsAutoCString pathPrefix(kMemCtl + aGroup + kSlash);
   nsAutoCString memSwappinessPath(pathPrefix + NS_LITERAL_CSTRING("memory.swappiness"));
-  if (!WriteToFile(memSwappinessPath.get(),
-                   nsPrintfCString("%d", memSwappiness).get())) {
+  if (!WriteSysFile(memSwappinessPath.get(),
+                    nsPrintfCString("%d", memSwappiness).get())) {
     HAL_LOG("Could not set the memory.swappiness for group %s", memSwappinessPath.get());
     return false;
   }
@@ -1616,8 +1634,12 @@ PriorityClass::PriorityClass(ProcessPriority aPriority)
 
 PriorityClass::~PriorityClass()
 {
-  close(mCpuCGroupProcsFd);
-  close(mMemCGroupProcsFd);
+  if (mCpuCGroupProcsFd != -1) {
+    close(mCpuCGroupProcsFd);
+  }
+  if (mMemCGroupProcsFd != -1) {
+    close(mMemCGroupProcsFd);
+  }
 }
 
 PriorityClass::PriorityClass(const PriorityClass& aOther)
@@ -1766,9 +1788,9 @@ EnsureKernelLowMemKillerParamsSet()
   adjParams.Cut(adjParams.Length() - 1, 1);
   minfreeParams.Cut(minfreeParams.Length() - 1, 1);
   if (!adjParams.IsEmpty() && !minfreeParams.IsEmpty()) {
-    WriteToFile("/sys/module/lowmemorykiller/parameters/adj", adjParams.get());
-    WriteToFile("/sys/module/lowmemorykiller/parameters/minfree",
-                minfreeParams.get());
+    WriteSysFile("/sys/module/lowmemorykiller/parameters/adj", adjParams.get());
+    WriteSysFile("/sys/module/lowmemorykiller/parameters/minfree",
+                 minfreeParams.get());
   }
 
   // Set the low-memory-notification threshold.
@@ -1778,12 +1800,12 @@ EnsureKernelLowMemKillerParamsSet()
         &lowMemNotifyThresholdKB))) {
 
     // notify_trigger is in pages.
-    WriteToFile("/sys/module/lowmemorykiller/parameters/notify_trigger",
+    WriteSysFile("/sys/module/lowmemorykiller/parameters/notify_trigger",
       nsPrintfCString("%ld", lowMemNotifyThresholdKB * 1024 / page_size).get());
   }
 
   // Ensure OOM events appear in logcat
-  nsRefPtr<OomVictimLogger> oomLogger = new OomVictimLogger();
+  RefPtr<OomVictimLogger> oomLogger = new OomVictimLogger();
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
   if (os) {
     os->AddObserver(oomLogger, "ipc:content-shutdown", false);
@@ -1813,11 +1835,11 @@ SetProcessPriority(int aPid, ProcessPriority aPriority, uint32_t aLRU)
 
   // We try the newer interface first, and fall back to the older interface
   // on failure.
-  if (!WriteToFile(nsPrintfCString("/proc/%d/oom_score_adj", aPid).get(),
-                   nsPrintfCString("%d", oomScoreAdj).get()))
+  if (!WriteSysFile(nsPrintfCString("/proc/%d/oom_score_adj", aPid).get(),
+                    nsPrintfCString("%d", oomScoreAdj).get()))
   {
-    WriteToFile(nsPrintfCString("/proc/%d/oom_adj", aPid).get(),
-                nsPrintfCString("%d", OomAdjOfOomScoreAdj(oomScoreAdj)).get());
+    WriteSysFile(nsPrintfCString("/proc/%d/oom_adj", aPid).get(),
+                 nsPrintfCString("%d", OomAdjOfOomScoreAdj(oomScoreAdj)).get());
   }
 
   HAL_LOG("Assigning pid %d to cgroup %s", aPid, pc->CGroup().get());
@@ -1974,7 +1996,7 @@ private:
   hal::ThreadPriority mThreadPriority;
 };
 
-} // anonymous namespace
+} // namespace
 
 void
 SetCurrentThreadPriority(ThreadPriority aThreadPriority)

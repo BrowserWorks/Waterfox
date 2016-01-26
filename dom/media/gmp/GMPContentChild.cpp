@@ -4,6 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPContentChild.h"
+#include "GMPChild.h"
+#include "GMPAudioDecoderChild.h"
+#include "GMPDecryptorChild.h"
+#include "GMPVideoDecoderChild.h"
+#include "GMPVideoEncoderChild.h"
 
 namespace mozilla {
 namespace gmp {
@@ -93,13 +98,15 @@ GMPContentChild::DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor)
 PGMPVideoEncoderChild*
 GMPContentChild::AllocPGMPVideoEncoderChild()
 {
-  return new GMPVideoEncoderChild(this);
+  GMPVideoEncoderChild* actor = new GMPVideoEncoderChild(this);
+  actor->AddRef();
+  return actor;
 }
 
 bool
 GMPContentChild::DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor)
 {
-  delete aActor;
+  static_cast<GMPVideoEncoderChild*>(aActor)->Release();
   return true;
 }
 
@@ -111,13 +118,17 @@ GMPContentChild::RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor)
 
   void* session = nullptr;
   GMPErr err = mGMPChild->GetAPI(GMP_API_DECRYPTOR, host, &session);
-  if (err != GMPNoErr && !session) {
-    // XXX to remove in bug 1147692
-    err = mGMPChild->GetAPI(GMP_API_DECRYPTOR_COMPAT, host, &session);
-  }
-
   if (err != GMPNoErr || !session) {
-    return false;
+    // We Adapt the previous GMPDecryptor version to the current, so that
+    // Gecko thinks it's only talking to the current version. Helpfully,
+    // v7 is ABI compatible with v8, it only has different enumerations.
+    // If the GMP uses a v8-only enum value in an IPDL message, the IPC
+    // layer will terminate, so we rev'd the API version to signal to the
+    // GMP that it's safe to use the new enum values.
+    err = mGMPChild->GetAPI(GMP_API_DECRYPTOR_BACKWARDS_COMPAT, host, &session);
+    if (err != GMPNoErr || !session) {
+      return false;
+    }
   }
 
   child->Init(static_cast<GMPDecryptor*>(session));
@@ -179,28 +190,28 @@ void
 GMPContentChild::CloseActive()
 {
   // Invalidate and remove any remaining API objects.
-  const nsTArray<PGMPAudioDecoderChild*>& audioDecoders =
+  const ManagedContainer<PGMPAudioDecoderChild>& audioDecoders =
     ManagedPGMPAudioDecoderChild();
-  for (uint32_t i = audioDecoders.Length(); i > 0; i--) {
-    audioDecoders[i - 1]->SendShutdown();
+  for (auto iter = audioDecoders.ConstIter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->SendShutdown();
   }
 
-  const nsTArray<PGMPDecryptorChild*>& decryptors =
+  const ManagedContainer<PGMPDecryptorChild>& decryptors =
     ManagedPGMPDecryptorChild();
-  for (uint32_t i = decryptors.Length(); i > 0; i--) {
-    decryptors[i - 1]->SendShutdown();
+  for (auto iter = decryptors.ConstIter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->SendShutdown();
   }
 
-  const nsTArray<PGMPVideoDecoderChild*>& videoDecoders =
+  const ManagedContainer<PGMPVideoDecoderChild>& videoDecoders =
     ManagedPGMPVideoDecoderChild();
-  for (uint32_t i = videoDecoders.Length(); i > 0; i--) {
-    videoDecoders[i - 1]->SendShutdown();
+  for (auto iter = videoDecoders.ConstIter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->SendShutdown();
   }
 
-  const nsTArray<PGMPVideoEncoderChild*>& videoEncoders =
+  const ManagedContainer<PGMPVideoEncoderChild>& videoEncoders =
     ManagedPGMPVideoEncoderChild();
-  for (uint32_t i = videoEncoders.Length(); i > 0; i--) {
-    videoEncoders[i - 1]->SendShutdown();
+  for (auto iter = videoEncoders.ConstIter(); !iter.Done(); iter.Next()) {
+    iter.Get()->GetKey()->SendShutdown();
   }
 }
 

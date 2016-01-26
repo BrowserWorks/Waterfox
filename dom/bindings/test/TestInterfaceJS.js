@@ -64,13 +64,29 @@ TestInterfaceJS.prototype = {
   testSequenceOverload: function(arg) {},
   testSequenceUnion: function(arg) {},
 
-  testThrowDOMError: function() {
-    throw new this._win.DOMError("NotSupportedError", "We are a DOMError");
+  testThrowError: function() {
+    throw new this._win.Error("We are an Error");
   },
 
   testThrowDOMException: function() {
     throw new this._win.DOMException("We are a DOMException",
                                      "NotSupportedError");
+  },
+
+  testThrowTypeError: function() {
+    throw new this._win.TypeError("We are a TypeError");
+  },
+
+  testThrowCallbackError: function(callback) {
+    callback();
+  },
+
+  testThrowXraySelfHosted: function() {
+    this._win.Array.indexOf();
+  },
+
+  testThrowSelfHosted: function() {
+    Array.indexOf();
   },
 
   testPromiseWithThrowingChromePromiseInit: function() {
@@ -108,12 +124,11 @@ TestInterfaceJS.prototype = {
   },
 
   testPromiseWithThrowingChromeThenable: function() {
-    // We need to produce a thing that has a "then" property in the page
-    // compartment, since we plan to call the page-provided resolve function.
-    var thenable = new this._win.Object();
-    Cu.waiveXrays(thenable).then = function() {
-      noSuchMethodExistsYo3()
-    }
+    var thenable =  {
+      then: function() {
+        noSuchMethodExistsYo3()
+      }
+    };
     return new this._win.Promise(function(resolve) {
       resolve(thenable)
     });
@@ -128,18 +143,24 @@ TestInterfaceJS.prototype = {
   },
 
   testPromiseWithDOMExceptionThrowingThenable: function() {
-    // We need to produce a thing that has a "then" property in the page
-    // compartment, since we plan to call the page-provided resolve function.
-    var thenable = new this._win.Object();
-    Cu.waiveXrays(thenable).then = () => {
-      throw new this._win.DOMException("We are a fourth DOMException",
-                                       "TypeMismatchError");
-    }
+    var thenable =  {
+      then: () => {
+        throw new this._win.DOMException("We are a fourth DOMException",
+                                         "TypeMismatchError");
+      }
+    };
     return new this._win.Promise(function(resolve) {
       resolve(thenable)
     });
   },
 
+  get onsomething() {
+    return this.__DOM_IMPL__.getEventHandler("onsomething");
+  },
+
+  set onsomething(val) {
+    this.__DOM_IMPL__.setEventHandler("onsomething", val);
+  }
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([TestInterfaceJS])

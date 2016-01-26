@@ -44,7 +44,7 @@ class ScriptedDirectProxyHandler : public BaseProxyHandler {
     virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
 
     virtual bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
-    virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
+    virtual bool get(JSContext* cx, HandleObject proxy, HandleValue receiver, HandleId id,
                      MutableHandleValue vp) const override;
     virtual bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
                      HandleValue receiver, ObjectOpResult& result) const override;
@@ -67,11 +67,13 @@ class ScriptedDirectProxyHandler : public BaseProxyHandler {
 
     // A scripted proxy should not be treated as generic in most contexts.
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                            CallArgs args) const override;
+                            const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
                              bool* bp) const override;
-    virtual bool objectClassIs(HandleObject obj, ESClassValue classValue,
-                               JSContext* cx) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                 ESClassValue* classValue) const override;
+    virtual bool isArray(JSContext* cx, HandleObject proxy,
+                         JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
                                    unsigned indent) const override;
@@ -101,10 +103,10 @@ class ScriptedDirectProxyHandler : public BaseProxyHandler {
 };
 
 bool
-proxy(JSContext* cx, unsigned argc, jsval* vp);
+proxy(JSContext* cx, unsigned argc, Value* vp);
 
 bool
-proxy_revocable(JSContext* cx, unsigned argc, jsval* vp);
+proxy_revocable(JSContext* cx, unsigned argc, Value* vp);
 
 } /* namespace js */
 

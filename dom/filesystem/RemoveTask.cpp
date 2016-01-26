@@ -6,7 +6,6 @@
 
 #include "RemoveTask.h"
 
-#include "DOMError.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileSystemBase.h"
 #include "mozilla/dom/FileSystemUtils.h"
@@ -49,7 +48,7 @@ RemoveTask::RemoveTask(FileSystemBase* aFileSystem,
   , mRecursive(false)
   , mReturnValue(false)
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   MOZ_ASSERT(aFileSystem);
@@ -80,7 +79,7 @@ already_AddRefed<Promise>
 RemoveTask::GetPromise()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  return nsRefPtr<Promise>(mPromise).forget();
+  return RefPtr<Promise>(mPromise).forget();
 }
 
 FileSystemParams
@@ -92,7 +91,7 @@ RemoveTask::GetRequestParams(const nsString& aFileSystem) const
   param.directory() = mDirRealPath;
   param.recursive() = mRecursive;
   if (mTargetBlobImpl) {
-    nsRefPtr<Blob> blob = Blob::Create(mFileSystem->GetWindow(),
+    RefPtr<Blob> blob = Blob::Create(mFileSystem->GetWindow(),
                                        mTargetBlobImpl);
     BlobChild* actor
       = ContentChild::GetSingleton()->GetOrCreateActorForBlob(blob);
@@ -123,7 +122,7 @@ RemoveTask::SetSuccessRequestResult(const FileSystemResponseValue& aValue)
 nsresult
 RemoveTask::Work()
 {
-  MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
+  MOZ_ASSERT(XRE_IsParentProcess(),
              "Only call from parent process!");
   MOZ_ASSERT(!NS_IsMainThread(), "Only call on worker thread!");
 
@@ -187,9 +186,7 @@ RemoveTask::HandlerCallback()
   }
 
   if (HasError()) {
-    nsRefPtr<DOMError> domError = new DOMError(mFileSystem->GetWindow(),
-      mErrorValue);
-    mPromise->MaybeRejectBrokenly(domError);
+    mPromise->MaybeReject(mErrorValue);
     mPromise = nullptr;
     return;
   }

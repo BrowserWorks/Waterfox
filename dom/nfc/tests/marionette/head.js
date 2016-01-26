@@ -3,15 +3,15 @@
 
 const Cu = SpecialPowers.Cu;
 
-let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
-let nfc = window.navigator.mozNfc;
+var Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
+var nfc = window.navigator.mozNfc;
 
 SpecialPowers.addPermission("nfc-manager", true, document);
 
 /**
  * Emulator helper.
  */
-let emulator = (function() {
+var emulator = (function() {
   let pendingCmdCount = 0;
   let originalRunEmulatorCmd = runEmulatorCmd;
 
@@ -43,7 +43,7 @@ let emulator = (function() {
   };
 }());
 
-let sysMsgHelper = (function() {
+var sysMsgHelper = (function() {
   function techDiscovered(msg) {
     log("system message nfc-manager-tech-discovered");
     let discovered = mDiscovered.shift();
@@ -90,7 +90,7 @@ let sysMsgHelper = (function() {
   };
 }());
 
-let NCI = (function() {
+var NCI = (function() {
   function activateRE(re) {
     let deferred = Promise.defer();
     let cmd = 'nfc nci rf_intf_activated_ntf ' + re;
@@ -137,7 +137,7 @@ let NCI = (function() {
   };
 }());
 
-let TAG = (function() {
+var TAG = (function() {
   function setData(re, flag, tnf, type, payload) {
     let deferred = Promise.defer();
     let tnfNum = NDEF.getTNFNum(tnf);
@@ -168,7 +168,7 @@ let TAG = (function() {
   };
 }());
 
-let SNEP = (function() {
+var SNEP = (function() {
   function put(dsap, ssap, flags, tnf, type, id, payload) {
     let deferred = Promise.defer();
     let tnfNum = NDEF.getTNFNum(tnf);
@@ -194,20 +194,63 @@ let SNEP = (function() {
 function toggleNFC(enabled) {
   let deferred = Promise.defer();
 
-  let promise;
-  if (enabled) {
-    promise = nfc.startPoll();
-  } else {
-    promise = nfc.powerOff();
-  }
+  // In bug 1109592, nfcd will only run when nfc is enabled.
+  // The way we activate/deactivate nfcd is by using set property "ctl.start" & "ctl.stop".
+  // In emulator it seems sometimes enable/disable NFC too quick will cause nfcd won't starat,
+  // So here we use a simple workaround to delay enable or disable for 100ms, bug 1164786 is
+  // created to track this issue.
+  setTimeout(function() {
+    let promise;
+    if (enabled) {
+      promise = nfc.startPoll();
+    } else {
+      promise = nfc.powerOff();
+    }
 
-  promise.then(() => {
+    promise.then(() => {
+      deferred.resolve();
+    }).catch(() => {
+      ok(false, 'operation failed, error ' + req.error.name);
+      deferred.reject();
+      finish();
+    });
+  }, 100);
+
+  return deferred.promise;
+}
+
+function activateAndwaitForTechDiscovered(re) {
+  let deferred = Promise.defer();
+
+  sysMsgHelper.waitForTechDiscovered(function() {
     deferred.resolve();
-  }).catch(() => {
-    ok(false, 'operation failed, error ' + req.error.name);
-    deferred.reject();
-    finish();
   });
+
+  NCI.activateRE(re);
+
+  return deferred.promise;
+}
+
+function deactivateAndWaitForTechLost() {
+  let deferred = Promise.defer();
+
+  sysMsgHelper.waitForTechLost(function() {
+    deferred.resolve();
+  });
+
+  NCI.deactivate();
+
+  return deferred.promise;
+}
+
+function deactivateAndWaitForPeerLost() {
+  let deferred = Promise.defer();
+
+  nfc.onpeerlost = function() {
+    deferred.resolve();
+  };
+
+  NCI.deactivate();
 
   return deferred.promise;
 }

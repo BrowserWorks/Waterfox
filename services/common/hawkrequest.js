@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 this.EXPORTED_SYMBOLS = [
   "HAWKAuthenticatedRESTRequest",
@@ -168,7 +168,7 @@ this.Intl.prototype = {
       this._accepted = Services.prefs.getComplexValue(
         "intl.accept_languages", Ci.nsIPrefLocalizedString).data;
     } catch (err) {
-      this._log.error("Error reading intl.accept_languages pref: " + CommonUtils.exceptionStr(err));
+      this._log.error("Error reading intl.accept_languages pref", err);
     }
   },
 
@@ -181,7 +181,7 @@ this.Intl.prototype = {
 };
 
 // Singleton getter for Intl, creating an instance only when we first need it.
-let intl = null;
+var intl = null;
 function getIntl() {
   if (!intl) {
     intl = new Intl();

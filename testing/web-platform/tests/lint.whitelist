@@ -7,24 +7,23 @@
 
 ## Whitespace rules that we can't enforce yet ##
 
+CR AT EOL: svg/import/*
+
 INDENT TABS: .gitmodules
 INDENT TABS: app-uri/*
 INDENT TABS: conformance-checkers/*
 INDENT TABS: content-security-policy/*
 INDENT TABS: custom-elements/*
 INDENT TABS: DOMEvents/*
-INDENT TABS: eventsource/*
 INDENT TABS: html/editing/dnd/*
-INDENT TABS: html/syntax/*
-INDENT TABS: media-source/*
 INDENT TABS: old-tests/*
 INDENT TABS: pointerlock/*
 INDENT TABS: shadow-dom/*
+INDENT TABS: svg/import/*
 INDENT TABS: tools/*
 INDENT TABS: touch-events/*
 INDENT TABS: web-animations/*
 INDENT TABS: webaudio/*
-INDENT TABS: webdriver/*
 INDENT TABS: webvtt/*
 INDENT TABS: XMLHttpRequest/*
 
@@ -35,15 +34,14 @@ TRAILING WHITESPACE: content-security-policy/*
 TRAILING WHITESPACE: custom-elements/*
 TRAILING WHITESPACE: DOMEvents/*
 TRAILING WHITESPACE: html-longdesc/*
-TRAILING WHITESPACE: media-source/*
 TRAILING WHITESPACE: microdata/*
 TRAILING WHITESPACE: old-tests/*
 TRAILING WHITESPACE: pointerevents/*
 TRAILING WHITESPACE: progress-events/*
 TRAILING WHITESPACE: shadow-dom/*
+TRAILING WHITESPACE: svg/import/*
 TRAILING WHITESPACE: tools/*
 TRAILING WHITESPACE: webaudio/*
-TRAILING WHITESPACE: webdriver/*
 TRAILING WHITESPACE: WebIDL/*
 TRAILING WHITESPACE: webvtt/*
 TRAILING WHITESPACE: XMLHttpRequest/*
@@ -101,3 +99,26 @@ PARSE-FAILED:ext-xhtml-pubid/the-xhtml-syntax/parsing-xhtml-documents/xhtml-pubi
 
 # Test generation files containing print statements
 PRINT STATEMENT:dom/nodes/Document-createElement-namespace-tests/generate.py
+
+# Should probably be fixed.
+W3C-TEST.ORG:subresource-integrity/refresh-header.js.headers
+
+# semi-legitimate use of console.*
+CONSOLE:streams/resources/test-utils.js
+
+# Lint doesn't know about sub.svg I guess
+PARSE-FAILED:content-security-policy/svg/including.sub.svg
+
+#Helper files that aren't valid XML
+PARSE-FAILED:dom/nodes/Document-createElement-namespace-tests/empty.xml
+PARSE-FAILED:dom/nodes/Document-createElement-namespace-tests/minimal_html.xml
+
+# The patches may have trailing whitespace
+TRAILING WHITESPACE:webgl/tools/*.patch
+# The tests under this directory are not done by us
+*:webgl/conformance-1.0.3/*
+
+
+# Git submodules are not currently scanned
+*:tools/*
+*:resources/*

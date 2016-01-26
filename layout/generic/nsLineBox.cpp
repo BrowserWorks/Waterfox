@@ -8,6 +8,7 @@
 
 #include "nsLineBox.h"
 
+#include "mozilla/ArenaObjectID.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Likely.h"
 #include "mozilla/WritingModes.h"
@@ -16,7 +17,7 @@
 #include "nsIFrameInlines.h"
 #include "nsPresArena.h"
 #include "nsPrintfCString.h"
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 
 #ifdef DEBUG
 static int32_t ctorCount;
@@ -32,7 +33,7 @@ using namespace mozilla;
 
 nsLineBox::nsLineBox(nsIFrame* aFrame, int32_t aCount, bool aIsBlock)
   : mFirstChild(aFrame)
-  , mContainerWidth(-1)
+  , mContainerSize(-1, -1)
   , mBounds(WritingMode()) // mBounds will be initialized with the correct
                            // writing mode when it is set
 // NOTE: memory is already zeroed since we allocate with AllocateByObjectID.
@@ -80,7 +81,7 @@ NS_NewLineBox(nsIPresShell* aPresShell, nsLineBox* aFromLine,
 {
   nsLineBox* newLine = new (aPresShell) nsLineBox(aFrame, aCount, false);
   newLine->NoteFramesMovedFrom(aFromLine);
-  newLine->mContainerWidth = aFromLine->mContainerWidth;
+  newLine->mContainerSize = aFromLine->mContainerSize;
   return newLine;
 }
 
@@ -145,19 +146,17 @@ nsLineBox::NoteFramesMovedFrom(nsLineBox* aFromLine)
   }
 }
 
-// Overloaded new operator. Uses an arena (which comes from the presShell)
-// to perform the allocation.
 void*
 nsLineBox::operator new(size_t sz, nsIPresShell* aPresShell) CPP_THROW_NEW
 {
-  return aPresShell->AllocateByObjectID(nsPresArena::nsLineBox_id, sz);
+  return aPresShell->AllocateByObjectID(eArenaObjectID_nsLineBox, sz);
 }
 
 void
 nsLineBox::Destroy(nsIPresShell* aPresShell)
 {
   this->nsLineBox::~nsLineBox();
-  aPresShell->FreeByObjectID(nsPresArena::nsLineBox_id, this);
+  aPresShell->FreeByObjectID(eArenaObjectID_nsLineBox, this);
 }
 
 void
@@ -214,15 +213,15 @@ BreakTypeToString(uint8_t aBreakType)
 char*
 nsLineBox::StateToString(char* aBuf, int32_t aBufSize) const
 {
-  PR_snprintf(aBuf, aBufSize, "%s,%s,%s,%s,%s,before:%s,after:%s[0x%x]",
-              IsBlock() ? "block" : "inline",
-              IsDirty() ? "dirty" : "clean",
-              IsPreviousMarginDirty() ? "prevmargindirty" : "prevmarginclean",
-              IsImpactedByFloat() ? "impacted" : "not impacted",
-              IsLineWrapped() ? "wrapped" : "not wrapped",
-              BreakTypeToString(GetBreakTypeBefore()),
-              BreakTypeToString(GetBreakTypeAfter()),
-              mAllFlags);
+  snprintf(aBuf, aBufSize, "%s,%s,%s,%s,%s,before:%s,after:%s[0x%x]",
+           IsBlock() ? "block" : "inline",
+           IsDirty() ? "dirty" : "clean",
+           IsPreviousMarginDirty() ? "prevmargindirty" : "prevmarginclean",
+           IsImpactedByFloat() ? "impacted" : "not impacted",
+           IsLineWrapped() ? "wrapped" : "not wrapped",
+           BreakTypeToString(GetBreakTypeBefore()),
+           BreakTypeToString(GetBreakTypeAfter()),
+           mAllFlags);
   return aBuf;
 }
 
@@ -248,11 +247,14 @@ nsLineBox::List(FILE* out, const char* aPrefix, uint32_t aFlags) const
     str += nsPrintfCString("bm=%d ", GetCarriedOutBEndMargin().get());
   }
   nsRect bounds = GetPhysicalBounds();
-  str += nsPrintfCString("{%d,%d,%d,%d} {%d,%d,%d,%d;cw=%d} ",
-          bounds.x, bounds.y, bounds.width, bounds.height,
-          mBounds.IStart(mWritingMode), mBounds.BStart(mWritingMode),
-          mBounds.ISize(mWritingMode), mBounds.BSize(mWritingMode),
-          mContainerWidth);
+  str += nsPrintfCString("{%d,%d,%d,%d} ",
+          bounds.x, bounds.y, bounds.width, bounds.height);
+  if (mWritingMode.IsVertical() || !mWritingMode.IsBidiLTR()) {
+    str += nsPrintfCString("{%s: %d,%d,%d,%d; cs=%d,%d} ",
+                           mWritingMode.DebugString(),
+                           IStart(), BStart(), ISize(), BSize(),
+                           mContainerSize.width, mContainerSize.height);
+  }
   if (mData &&
       (!mData->mOverflowAreas.VisualOverflow().IsEqualEdges(bounds) ||
        !mData->mOverflowAreas.ScrollableOverflow().IsEqualEdges(bounds))) {
@@ -733,13 +735,13 @@ nsLineIterator::FindFrameAt(int32_t aLineNumber,
   nsIFrame* closestFromEnd = nullptr;
 
   WritingMode wm = line->mWritingMode;
-  nscoord cw = line->mContainerWidth;
+  nsSize containerSize = line->mContainerSize;
 
-  LogicalPoint pos(wm, aPos, cw);
+  LogicalPoint pos(wm, aPos, containerSize);
 
   int32_t n = line->GetChildCount();
   while (n--) {
-    LogicalRect rect = frame->GetLogicalRect(wm, cw);
+    LogicalRect rect = frame->GetLogicalRect(wm, containerSize);
     if (rect.ISize(wm) > 0) {
       // If pos.I() is inside this frame - this is it
       if (rect.IStart(wm) <= pos.I(wm) && rect.IEnd(wm) > pos.I(wm)) {
@@ -748,12 +750,14 @@ nsLineIterator::FindFrameAt(int32_t aLineNumber,
       }
       if (rect.IStart(wm) < pos.I(wm)) {
         if (!closestFromStart || 
-            rect.IEnd(wm) > closestFromStart->GetLogicalRect(wm, cw).IEnd(wm))
+            rect.IEnd(wm) > closestFromStart->
+                              GetLogicalRect(wm, containerSize).IEnd(wm))
           closestFromStart = frame;
       }
       else {
         if (!closestFromEnd ||
-            rect.IStart(wm) < closestFromEnd->GetLogicalRect(wm, cw).IStart(wm))
+            rect.IStart(wm) < closestFromEnd->
+                                GetLogicalRect(wm, containerSize).IStart(wm))
           closestFromEnd = frame;
       }
     }
@@ -775,12 +779,15 @@ nsLineIterator::FindFrameAt(int32_t aLineNumber,
     *aFrameFound = closestFromStart;
   }
   else { // we're between two frames
-    nscoord delta = closestFromEnd->GetLogicalRect(wm, cw).IStart(wm) -
-                    closestFromStart->GetLogicalRect(wm, cw).IEnd(wm);
-    if (pos.I(wm) < closestFromStart->GetLogicalRect(wm, cw).IEnd(wm) + delta/2)
+    nscoord delta =
+      closestFromEnd->GetLogicalRect(wm, containerSize).IStart(wm) -
+      closestFromStart->GetLogicalRect(wm, containerSize).IEnd(wm);
+    if (pos.I(wm) < closestFromStart->
+                      GetLogicalRect(wm, containerSize).IEnd(wm) + delta/2) {
       *aFrameFound = closestFromStart;
-    else
+    } else {
       *aFrameFound = closestFromEnd;
+    }
   }
   return NS_OK;
 }

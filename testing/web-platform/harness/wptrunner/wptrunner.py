@@ -40,20 +40,31 @@ def setup_logging(*args, **kwargs):
     global logger
     logger = wptlogging.setup(*args, **kwargs)
 
-def get_loader(test_paths, product, ssl_env, debug=False, **kwargs):
-    run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=debug)
+def get_loader(test_paths, product, ssl_env, debug=None, run_info_extras=None, **kwargs):
+    if run_info_extras is None:
+        run_info_extras = {}
+
+    run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=debug,
+                                    extras=run_info_extras)
 
     test_manifests = testloader.ManifestLoader(test_paths, force_manifest_update=kwargs["manifest_update"]).load()
 
-    test_filter = testloader.TestFilter(include=kwargs["include"],
-                                        exclude=kwargs["exclude"],
-                                        manifest_path=kwargs["include_manifest"],
-                                        test_manifests=test_manifests)
+    manifest_filters = []
+    meta_filters = []
+
+    if kwargs["include"] or kwargs["exclude"] or kwargs["include_manifest"]:
+        manifest_filters.append(testloader.TestFilter(include=kwargs["include"],
+                                                      exclude=kwargs["exclude"],
+                                                      manifest_path=kwargs["include_manifest"],
+                                                      test_manifests=test_manifests))
+    if kwargs["tags"]:
+        meta_filters.append(testloader.TagFilter(tags=kwargs["tags"]))
 
     test_loader = testloader.TestLoader(test_manifests,
                                         kwargs["test_types"],
-                                        test_filter,
                                         run_info,
+                                        manifest_filters=manifest_filters,
+                                        meta_filters=meta_filters,
                                         chunk_type=kwargs["chunk_type"],
                                         total_chunks=kwargs["total_chunks"],
                                         chunk_number=kwargs["this_chunk"],
@@ -104,17 +115,21 @@ def run_tests(config, test_paths, product, **kwargs):
         (check_args,
          browser_cls, get_browser_kwargs,
          executor_classes, get_executor_kwargs,
-         env_options) = products.load_product(config, product)
+         env_options, run_info_extras) = products.load_product(config, product)
 
         ssl_env = env.ssl_env(logger, **kwargs)
 
         check_args(**kwargs)
 
         if "test_loader" in kwargs:
-            run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=False)
+            run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=None,
+                                            extras=run_info_extras(**kwargs))
             test_loader = kwargs["test_loader"]
         else:
-            run_info, test_loader = get_loader(test_paths, product, ssl_env,
+            run_info, test_loader = get_loader(test_paths,
+                                               product,
+                                               ssl_env,
+                                               run_info_extras=run_info_extras(**kwargs),
                                                **kwargs)
 
         if kwargs["run_by_dir"] is False:
@@ -163,6 +178,7 @@ def run_tests(config, test_paths, product, **kwargs):
                     executor_kwargs = get_executor_kwargs(test_type,
                                                           test_environment.external_config,
                                                           test_environment.cache_manager,
+                                                          run_info,
                                                           **kwargs)
 
                     if executor_cls is None:
@@ -212,7 +228,7 @@ def main():
         elif kwargs["list_disabled"]:
             list_disabled(**kwargs)
         else:
-            return run_tests(**kwargs)
+            return not run_tests(**kwargs)
     except Exception:
         import pdb, traceback
         print traceback.format_exc()

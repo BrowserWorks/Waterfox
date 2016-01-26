@@ -72,7 +72,7 @@ class ErrorObject : public NativeObject
     static ErrorObject*
     create(JSContext* cx, JSExnType type, HandleObject stack, HandleString fileName,
            uint32_t lineNumber, uint32_t columnNumber, ScopedJSFreePtr<JSErrorReport>* report,
-           HandleString message);
+           HandleString message, HandleObject proto = nullptr);
 
     /*
      * Assign the initial error shape to the empty object.  (This shape does
@@ -108,7 +108,7 @@ class ErrorObject : public NativeObject
     // Getter and setter for the Error.prototype.stack accessor.
     static bool getStack(JSContext* cx, unsigned argc, Value* vp);
     static bool setStack(JSContext* cx, unsigned argc, Value* vp);
-    static bool setStack_impl(JSContext* cx, CallArgs args);
+    static bool setStack_impl(JSContext* cx, const CallArgs& args);
 };
 
 } // namespace js

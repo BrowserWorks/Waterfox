@@ -128,10 +128,11 @@ class GamepadService : public nsIObserver
   nsRefPtrHashtable<nsUint32HashKey, Gamepad> mGamepads;
   // Inner windows that are listening for gamepad events.
   // has been sent to that window.
-  nsTArray<nsRefPtr<nsGlobalWindow> > mListeners;
+  nsTArray<RefPtr<nsGlobalWindow> > mListeners;
   nsCOMPtr<nsITimer> mTimer;
 };
 
-}  // namespace dom
-}  // namespace mozilla
+} // namespace dom
+} // namespace mozilla
+
 #endif // mozilla_dom_GamepadService_h_

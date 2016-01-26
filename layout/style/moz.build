@@ -62,7 +62,6 @@ EXPORTS += [
     'nsICSSStyleRuleDOMWrapper.h',
     'nsIStyleRule.h',
     'nsIStyleRuleProcessor.h',
-    'nsIStyleSheet.h',
     'nsLayoutStylesheetCache.h',
     'nsRuleData.h',
     'nsRuleNode.h',
@@ -84,6 +83,11 @@ EXPORTS.mozilla += [
     'CSSVariableDeclarations.h',
     'CSSVariableResolver.h',
     'CSSVariableValues.h',
+    'IncrementalClearCOMRuleArray.h',
+    'LayerAnimationInfo.h',
+    'RuleNodeCacheConditions.h',
+    'RuleProcessorCache.h',
+    'SheetType.h',
     'StyleAnimationValue.h',
 ]
 
@@ -123,8 +127,11 @@ UNIFIED_SOURCES += [
     'Declaration.cpp',
     'ErrorReporter.cpp',
     'FontFace.cpp',
+    'FontFaceSet.cpp',
     'FontFaceSetIterator.cpp',
     'ImageLoader.cpp',
+    'IncrementalClearCOMRuleArray.cpp',
+    'LayerAnimationInfo.cpp',
     'Loader.cpp',
     'MediaQueryList.cpp',
     'nsAnimationManager.cpp',
@@ -161,15 +168,15 @@ UNIFIED_SOURCES += [
     'nsStyleTransformMatrix.cpp',
     'nsStyleUtil.cpp',
     'nsTransitionManager.cpp',
+    'RuleNodeCacheConditions.cpp',
+    'RuleProcessorCache.cpp',
     'StyleAnimationValue.cpp',
     'StyleRule.cpp',
     'SVGAttrAnimationRuleProcessor.cpp',
 ]
 
-# FontFaceSet.cpp needs to be built separately because it redefines LOG.
 # nsCSSRuleProcessor.cpp needs to be built separately because it uses plarena.h.
 SOURCES += [
-    'FontFaceSet.cpp',
     'nsCSSRuleProcessor.cpp',
 ]
 
@@ -177,8 +184,6 @@ EXTRA_COMPONENTS += [
     'CSSUnprefixingService.js',
     'CSSUnprefixingService.manifest',
 ]
-
-FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -193,6 +198,7 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/xbl',
     '/dom/xul',
+    '/image',
 ]
 
 JAR_MANIFESTS += ['jar.mn']
@@ -205,7 +211,14 @@ RESOURCE_FILES += [
     'TopLevelVideoDocument.css',
 ]
 
-GENERATED_FILES += ['nsStyleStructList.h']
+# nsCSSPropsGenerated.inc is generated from nsCSSPropsGenerated.inc.in by
+# GenerateCSSPropsGenerated.py; see the corresponding rules in Makefile.in.
+
+GENERATED_FILES += [
+    'nsCSSPropsGenerated.inc',
+    'nsStyleStructList.h',
+]
+
 style_struct_list = GENERATED_FILES['nsStyleStructList.h']
 style_struct_list.script = 'generate-stylestructlist.py'
 

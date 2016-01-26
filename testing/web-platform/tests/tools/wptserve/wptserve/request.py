@@ -1,6 +1,7 @@
 import base64
 import cgi
 import Cookie
+import os
 import StringIO
 import tempfile
 import urlparse
@@ -27,7 +28,15 @@ class Server(object):
     config = None
 
     def __init__(self, request):
-        self.stash = stash.Stash(request.url_parts.path)
+        self._stash = None
+        self._request = request
+
+    @property
+    def stash(self):
+        if self._stash is None:
+            address, authkey = stash.load_env_config()
+            self._stash = stash.Stash(self._request.url_parts.path, address, authkey)
+        return self._stash
 
 
 class InputFile(object):
@@ -170,6 +179,10 @@ class Request(object):
 
     Request path as it appears in the HTTP request.
 
+    .. attribute:: url_base
+
+    The prefix part of the path; typically / unless the handler has a url_base set
+
     .. attribute:: url
 
     Absolute URL for the request.
@@ -244,6 +257,7 @@ class Request(object):
                 host, port = host.split(":", 1)
 
         self.request_path = request_handler.path
+        self.url_base = "/"
 
         if self.request_path.startswith(scheme + "://"):
             self.url = request_handler.path

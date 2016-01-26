@@ -23,13 +23,13 @@ class Stream;
 class BoxContext
 {
 public:
-  BoxContext(Stream* aSource, const nsTArray<MediaByteRange>& aByteRanges)
+  BoxContext(Stream* aSource, const MediaByteRangeSet& aByteRanges)
     : mSource(aSource), mByteRanges(aByteRanges)
   {
   }
 
-  nsRefPtr<Stream> mSource;
-  const nsTArray<MediaByteRange>& mByteRanges;
+  RefPtr<Stream> mSource;
+  const MediaByteRangeSet& mByteRanges;
 };
 
 class Box
@@ -38,7 +38,7 @@ public:
   Box(BoxContext* aContext, uint64_t aOffset, const Box* aParent = nullptr);
   Box();
 
-  bool IsAvailable() const { return !mRange.IsNull(); }
+  bool IsAvailable() const { return !mRange.IsEmpty(); }
   uint64_t Offset() const { return mRange.mStart; }
   uint64_t Length() const { return mRange.mEnd - mRange.mStart; }
   uint64_t NextOffset() const { return mRange.mEnd; }
@@ -50,6 +50,8 @@ public:
   Box FirstChild() const;
   bool Read(nsTArray<uint8_t>* aDest);
   bool Read(nsTArray<uint8_t>* aDest, const MediaByteRange& aRange);
+
+  static const uint64_t kMAX_BOX_READ;
 
 private:
   bool Contains(MediaByteRange aRange) const;

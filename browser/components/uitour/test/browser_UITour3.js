@@ -3,12 +3,9 @@
 
 "use strict";
 
-let gTestTab;
-let gContentAPI;
-let gContentWindow;
-
-Components.utils.import("resource:///modules/UITour.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+var gTestTab;
+var gContentAPI;
+var gContentWindow;
 
 requestLongerTimeout(2);
 
@@ -16,7 +13,7 @@ function test() {
   UITourTest();
 }
 
-let tests = [
+var tests = [
   taskify(function* test_info_icon() {
     let popup = document.getElementById("UITourTooltip");
     let title = document.getElementById("UITourTooltipTitle");
@@ -34,7 +31,7 @@ let tests = [
     is(desc.textContent, "some text", "Popup should have correct description text");
 
     let imageURL = getRootDirectory(gTestPath) + "image.png";
-    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.com/");
+    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.org/");
     is(icon.src, imageURL,  "Popup should have correct icon shown");
 
     is(buttons.hasChildNodes(), false, "Popup should have no buttons");
@@ -54,20 +51,34 @@ let tests = [
     is(desc.textContent, "moar text", "Popup should have correct description text");
 
     let imageURL = getRootDirectory(gTestPath) + "image.png";
-    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.com/");
+    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.org/");
     is(icon.src, imageURL,  "Popup should have correct icon shown");
 
     buttons = document.getElementById("UITourTooltipButtons");
-    is(buttons.childElementCount, 2, "Popup should have two buttons");
+    is(buttons.childElementCount, 4, "Popup should have four buttons");
 
-    is(buttons.childNodes[0].getAttribute("label"), "Button 1", "First button should have correct label");
-    is(buttons.childNodes[0].getAttribute("image"), "", "First button should have no image");
+    is(buttons.childNodes[0].nodeName, "label", "Text label should be a <label>");
+    is(buttons.childNodes[0].getAttribute("value"), "Regular text", "Text label should have correct value");
+    is(buttons.childNodes[0].getAttribute("image"), "", "Text should have no image");
+    is(buttons.childNodes[0].className, "", "Text should have no class");
 
-    is(buttons.childNodes[1].getAttribute("label"), "Button 2", "Second button should have correct label");
-    is(buttons.childNodes[1].getAttribute("image"), imageURL, "Second button should have correct image");
+    is(buttons.childNodes[1].nodeName, "button", "Link should be a <button>");
+    is(buttons.childNodes[1].getAttribute("label"), "Link", "Link should have correct label");
+    is(buttons.childNodes[1].getAttribute("image"), "", "Link should have no image");
+    is(buttons.childNodes[1].className, "button-link", "Check link class");
+
+    is(buttons.childNodes[2].nodeName, "button", "Button 1 should be a <button>");
+    is(buttons.childNodes[2].getAttribute("label"), "Button 1", "First button should have correct label");
+    is(buttons.childNodes[2].getAttribute("image"), "", "First button should have no image");
+    is(buttons.childNodes[2].className, "", "Button 1 should have no class");
+
+    is(buttons.childNodes[3].nodeName, "button", "Button 2 should be a <button>");
+    is(buttons.childNodes[3].getAttribute("label"), "Button 2", "Second button should have correct label");
+    is(buttons.childNodes[3].getAttribute("image"), imageURL, "Second button should have correct image");
+    is(buttons.childNodes[3].className, "button-primary", "Check button 2 class");
 
     let promiseHidden = promisePanelElementHidden(window, popup);
-    EventUtils.synthesizeMouseAtCenter(buttons.childNodes[0], {}, window);
+    EventUtils.synthesizeMouseAtCenter(buttons.childNodes[2], {}, window);
     yield promiseHidden;
 
     ok(true, "Popup should close automatically");
@@ -90,20 +101,24 @@ let tests = [
     is(desc.textContent, "moar text", "Popup should have correct description text");
 
     let imageURL = getRootDirectory(gTestPath) + "image.png";
-    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.com/");
+    imageURL = imageURL.replace("chrome://mochitests/content/", "https://example.org/");
     is(icon.src, imageURL,  "Popup should have correct icon shown");
 
     buttons = document.getElementById("UITourTooltipButtons");
-    is(buttons.childElementCount, 2, "Popup should have two buttons");
+    is(buttons.childElementCount, 4, "Popup should have four buttons");
 
-    is(buttons.childNodes[0].getAttribute("label"), "Button 1", "First button should have correct label");
-    is(buttons.childNodes[0].getAttribute("image"), "", "First button should have no image");
+    is(buttons.childNodes[1].getAttribute("label"), "Link", "Link should have correct label");
+    is(buttons.childNodes[1].getAttribute("image"), "", "Link should have no image");
+    ok(buttons.childNodes[1].classList.contains("button-link"), "Link should have button-link class");
 
-    is(buttons.childNodes[1].getAttribute("label"), "Button 2", "Second button should have correct label");
-    is(buttons.childNodes[1].getAttribute("image"), imageURL, "Second button should have correct image");
+    is(buttons.childNodes[2].getAttribute("label"), "Button 1", "First button should have correct label");
+    is(buttons.childNodes[2].getAttribute("image"), "", "First button should have no image");
+
+    is(buttons.childNodes[3].getAttribute("label"), "Button 2", "Second button should have correct label");
+    is(buttons.childNodes[3].getAttribute("image"), imageURL, "Second button should have correct image");
 
     let promiseHidden = promisePanelElementHidden(window, popup);
-    EventUtils.synthesizeMouseAtCenter(buttons.childNodes[1], {}, window);
+    EventUtils.synthesizeMouseAtCenter(buttons.childNodes[3], {}, window);
     yield promiseHidden;
 
     ok(true, "Popup should close automatically");
@@ -176,24 +191,4 @@ let tests = [
     // only happens after a tick.
     waitForCondition(() => searchbar.value == "", done, "Search term cleared");
   },
-
-  function test_openSearchPanel(done) {
-    let searchbar = document.getElementById("searchbar");
-
-    // If suggestions are enabled, the panel will attempt to use the network to connect
-    // to the suggestions provider, causing the test suite to fail.
-    Services.prefs.setBoolPref("browser.search.suggest.enabled", false);
-    registerCleanupFunction(() => {
-      Services.prefs.clearUserPref("browser.search.suggest.enabled");
-    });
-
-    ok(!searchbar.textbox.open, "Popup starts as closed");
-    gContentAPI.openSearchPanel(() => {
-      ok(searchbar.textbox.open, "Popup was opened");
-      searchbar.textbox.closePopup();
-      ok(!searchbar.textbox.open, "Popup was closed");
-      done();
-    });
-  },
-
 ];

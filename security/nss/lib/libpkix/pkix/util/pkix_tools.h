@@ -1437,8 +1437,8 @@ extern PLHashNumber PR_CALLBACK pkix_ErrorGen_Hash (const void *key);
 typedef struct pkix_ClassTable_EntryStruct pkix_ClassTable_Entry;
 struct pkix_ClassTable_EntryStruct {
         char *description;
-        PKIX_Int32 objCounter;
-        PKIX_Int32 typeObjectSize;
+        PKIX_UInt32 objCounter;
+        PKIX_UInt32 typeObjectSize;
         PKIX_PL_DestructorCallback destructor;
         PKIX_PL_EqualsCallback equalsFunction;
         PKIX_PL_HashcodeCallback hashcodeFunction;
@@ -1458,8 +1458,8 @@ extern const char *PKIX_ERRORCLASSNAMES[PKIX_NUMERRORCLASSES];
 
 extern PRLogModuleInfo *pkixLog;
 
-#define PKIX_MAGIC_HEADER           LL_INIT(0xFEEDC0FF, 0xEEFACADE)
-#define PKIX_MAGIC_HEADER_DESTROYED LL_INIT(0xBAADF00D, 0xDEADBEEF)
+#define PKIX_MAGIC_HEADER           PR_UINT64(0xFEEDC0FFEEFACADE)
+#define PKIX_MAGIC_HEADER_DESTROYED PR_UINT64(0xBAADF00DDEADBEEF)
 
 /* see source file for function documentation */
 

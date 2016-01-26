@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import os
 import stat
 
@@ -33,17 +35,23 @@ class FileRegistry(object):
     def __init__(self):
         self._files = OrderedDict()
         self._required_directories = Counter()
+        self._partial_paths_cache = {}
 
     def _partial_paths(self, path):
         '''
         Turn "foo/bar/baz/zot" into ["foo/bar/baz", "foo/bar", "foo"].
         '''
-        partial_paths = []
-        partial_path = path
-        while partial_path:
-            partial_path = mozpath.dirname(partial_path)
-            if partial_path:
-                partial_paths.append(partial_path)
+        dir_name = path.rpartition('/')[0]
+        if not dir_name:
+            return []
+
+        partial_paths = self._partial_paths_cache.get(dir_name)
+        if partial_paths:
+            return partial_paths
+
+        partial_paths = [dir_name] + self._partial_paths(dir_name)
+
+        self._partial_paths_cache[dir_name] = partial_paths
         return partial_paths
 
     def add(self, path, content):
@@ -144,6 +152,52 @@ class FileRegistry(object):
         return set(k for k, v in self._required_directories.items() if v > 0)
 
 
+class FileRegistrySubtree(object):
+    '''A proxy class to give access to a subtree of an existing FileRegistry.
+
+    Note this doesn't implement the whole FileRegistry interface.'''
+    def __new__(cls, base, registry):
+        if not base:
+            return registry
+        return object.__new__(cls)
+
+    def __init__(self, base, registry):
+        self._base = base
+        self._registry = registry
+
+    def _get_path(self, path):
+        # mozpath.join will return a trailing slash if path is empty, and we
+        # don't want that.
+        return mozpath.join(self._base, path) if path else self._base
+
+    def add(self, path, content):
+        return self._registry.add(self._get_path(path), content)
+
+    def match(self, pattern):
+        return [mozpath.relpath(p, self._base)
+                for p in self._registry.match(self._get_path(pattern))]
+
+    def remove(self, pattern):
+        return self._registry.remove(self._get_path(pattern))
+
+    def paths(self):
+        return [p for p, f in self]
+
+    def __len__(self):
+        return len(self.paths())
+
+    def contains(self, pattern):
+        return self._registry.contains(self._get_path(pattern))
+
+    def __getitem__(self, path):
+        return self._registry[self._get_path(path)]
+
+    def __iter__(self):
+        for p, f in self._registry:
+            if mozpath.basedir(p, [self._base]):
+                yield mozpath.relpath(p, self._base), f
+
+
 class FileCopyResult(object):
     """Represents results of a FileCopier.copy operation."""
 
@@ -231,11 +285,6 @@ class FileCopier(FileRegistry):
         # friends.
 
         required_dirs = set([destination])
-        dest_files = set()
-
-        for p, f in self:
-            dest_files.add(os.path.normpath(os.path.join(destination, p)))
-
         required_dirs |= set(os.path.normpath(os.path.join(destination, d))
             for d in self.required_directories())
 
@@ -277,47 +326,58 @@ class FileCopier(FileRegistry):
                 os.umask(umask)
                 os.chmod(d, 0777 & ~umask)
 
-        # While we have remove_unaccounted, it doesn't apply to empty
-        # directories because it wouldn't make sense: an empty directory
-        # is empty, so removing it should have no effect.
-        existing_dirs = set()
-        existing_files = set()
-        for root, dirs, files in os.walk(destination):
-            # We need to perform the same symlink detection as above. os.walk()
-            # doesn't follow symlinks into directories by default, so we need
-            # to check dirs (we can't wait for root).
-            if have_symlinks:
-                filtered = []
-                for d in dirs:
-                    full = os.path.join(root, d)
-                    st = os.lstat(full)
-                    if stat.S_ISLNK(st.st_mode):
-                        # This directory symlink is not a required
-                        # directory: any such symlink would have been
-                        # removed and a directory created above.
-                        if remove_all_directory_symlinks:
-                            os.remove(full)
-                            result.removed_files.add(os.path.normpath(full))
+        if isinstance(remove_unaccounted, FileRegistry):
+            existing_files = set(os.path.normpath(os.path.join(destination, p))
+                                 for p in remove_unaccounted.paths())
+            existing_dirs = set(os.path.normpath(os.path.join(destination, p))
+                                for p in remove_unaccounted
+                                         .required_directories())
+            existing_dirs |= {os.path.normpath(destination)}
+        else:
+            # While we have remove_unaccounted, it doesn't apply to empty
+            # directories because it wouldn't make sense: an empty directory
+            # is empty, so removing it should have no effect.
+            existing_dirs = set()
+            existing_files = set()
+            for root, dirs, files in os.walk(destination):
+                # We need to perform the same symlink detection as above.
+                # os.walk() doesn't follow symlinks into directories by
+                # default, so we need to check dirs (we can't wait for root).
+                if have_symlinks:
+                    filtered = []
+                    for d in dirs:
+                        full = os.path.join(root, d)
+                        st = os.lstat(full)
+                        if stat.S_ISLNK(st.st_mode):
+                            # This directory symlink is not a required
+                            # directory: any such symlink would have been
+                            # removed and a directory created above.
+                            if remove_all_directory_symlinks:
+                                os.remove(full)
+                                result.removed_files.add(
+                                    os.path.normpath(full))
+                            else:
+                                existing_files.add(os.path.normpath(full))
                         else:
-                            existing_files.add(os.path.normpath(full))
-                    else:
-                        filtered.append(d)
+                            filtered.append(d)
 
-                dirs[:] = filtered
+                    dirs[:] = filtered
 
-            existing_dirs.add(os.path.normpath(root))
+                existing_dirs.add(os.path.normpath(root))
 
-            for d in dirs:
-                existing_dirs.add(os.path.normpath(os.path.join(root, d)))
+                for d in dirs:
+                    existing_dirs.add(os.path.normpath(os.path.join(root, d)))
 
-            for f in files:
-                existing_files.add(os.path.normpath(os.path.join(root, f)))
+                for f in files:
+                    existing_files.add(os.path.normpath(os.path.join(root, f)))
 
         # Now we reconcile the state of the world against what we want.
+        dest_files = set()
 
         # Install files.
         for p, f in self:
             destfile = os.path.normpath(os.path.join(destination, p))
+            dest_files.add(destfile)
             if f.copy(destfile, skip_if_older):
                 result.updated_files.add(destfile)
             else:
@@ -349,60 +409,44 @@ class FileCopier(FileRegistry):
         # Then don't remove directories if we didn't remove unaccounted files
         # and one of those files exists.
         if not remove_unaccounted:
+            parents = set()
+            pathsep = os.path.sep
             for f in existing_files:
-                parent = f
-                previous = ''
-                parents = set()
+                path = f
                 while True:
-                    parent = os.path.dirname(parent)
-                    parents.add(parent)
-
-                    if previous == parent:
+                    # All the paths are normalized and relative by this point,
+                    # so os.path.dirname would only do extra work.
+                    dirname = path.rpartition(pathsep)[0]
+                    if dirname in parents:
                         break
-
-                    previous = parent
-
-                remove_dirs -= parents
+                    parents.add(dirname)
+                    path = dirname
+            remove_dirs -= parents
 
         # Remove empty directories that aren't required.
         for d in sorted(remove_dirs, key=len, reverse=True):
-            # Permissions may not allow deletion. So ensure write access is
-            # in place before attempting delete.
-            os.chmod(d, 0700)
-            os.rmdir(d)
+            try:
+                try:
+                    os.rmdir(d)
+                except OSError as e:
+                    if e.errno in (errno.EPERM, errno.EACCES):
+                        # Permissions may not allow deletion. So ensure write
+                        # access is in place before attempting to rmdir again.
+                        os.chmod(d, 0700)
+                        os.rmdir(d)
+                    else:
+                        raise
+            except OSError as e:
+                # If remove_unaccounted is a # FileRegistry, then we have a
+                # list of directories that may not be empty, so ignore rmdir
+                # ENOTEMPTY errors for them.
+                if (isinstance(remove_unaccounted, FileRegistry) and
+                        e.errno == errno.ENOTEMPTY):
+                    continue
+                raise
             result.removed_directories.add(d)
 
         return result
-
-
-class FilePurger(FileCopier):
-    """A variation of FileCopier that is used to purge untracked files.
-
-    Callers create an instance then call .add() to register files/paths that
-    should exist. Once the canonical set of files that may exist is defined,
-    .purge() is called against a target directory. All files and empty
-    directories in the target directory that aren't in the registry will be
-    deleted.
-    """
-    class FakeFile(BaseFile):
-        def copy(self, dest, skip_if_older=True):
-            return True
-
-    def add(self, path):
-        """Record that a path should exist.
-
-        We currently do not track what kind of entity should be behind that
-        path. We presumably could add type tracking later and have purging
-        delete entities if there is a type mismatch.
-        """
-        return FileCopier.add(self, path, FilePurger.FakeFile())
-
-    def purge(self, dest):
-        """Deletes all files and empty directories not in the registry."""
-        return FileCopier.copy(self, dest)
-
-    def copy(self, *args, **kwargs):
-        raise Exception('copy() disabled on FilePurger. Use purge().')
 
 
 class Jarrer(FileRegistry, BaseFile):

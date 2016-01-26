@@ -90,7 +90,9 @@ Users can turn off the ping with in-new-tab-page controls.
 
 As the new tab page is rendered, any images for tiles are downloaded if not
 already cached. The default servers hosting the images are Mozilla CDN that
-don't use cookies: https://tiles.cdn.mozilla.net/
+don't use cookies: https://tiles.cdn.mozilla.net/ and Firefox enforces that the
+images come from mozilla.net or data URIs when using the default directory
+source.
 
 
 Source JSON Format
@@ -130,8 +132,11 @@ Below is an example directory source file::
       ],
       "suggested": [
           {
+              "adgroup_name": "open-source browser",
               "bgColor": "#cae1f4",
+              "check_inadjacency": true,
               "directoryId": 702,
+              "explanation": "Suggested for %1$S enthusiasts who visit sites like %2$S",
               "frecent_sites": [
                   "addons.mozilla.org",
                   "air.mozilla.org",
@@ -180,16 +185,26 @@ Suggested Link Object Extras
 
 A suggested link has additional values:
 
+- ``adgroup_name`` - string to override the hardcoded display name of the
+  triggering set of sites in Firefox.
+- ``check_inadjacency`` - boolean if true prevents the suggested link from being
+  shown if the new tab page is showing a site from an inadjacency list.
+- ``explanation`` - string to override the default explanation that appears
+  below a Suggested Tile. %1$S is replaced by the triggering adgroup name and
+  %2$S is replaced by the triggering site.
 - ``frecent_sites`` - array of strings of the sites that can trigger showing a
   Suggested Tile if the user has the site in one of the top 100 most-frecent
-  pages. Only preapproved array of strings that are hardcoded into the
-  DirectoryLinksProvider module are allowed.
+  pages.
 - ``frequency_caps`` - an object consisting of daily and total frequency caps
   that limit the number of times a Suggested Tile can be shown in the new tab
   per day and overall.
 - ``time_limits`` - an object consisting of start and end timestamps specifying
   when a Suggested Tile may start and has to stop showing in the newtab.
   The timestamp is expected in ISO_8601 format: '2014-01-10T20:00:00.000Z'
+
+The inadjacency list is packaged with Firefox as base64-encoded 1-way-hashed
+sites that tend to have adult, gambling, alcohol, drug, and similar content.
+Its location: chrome://browser/content/newtab/newTab.inadjacent.json
 
 The preapproved arrays follow a policy for determining what topic grouping is
 allowed as well as the composition of a grouping. The topics are broad
@@ -230,6 +245,7 @@ blocked::
           {
               "id": 702,
               "pin": 1,
+              "past_impressions": {"total": 5, "daily": 1},
           },
           {},
           {
@@ -248,6 +264,12 @@ none of the following optional values:
 - ``id`` - id that was provided as part of the downloaded link object (for all
   types of links: directory, suggested, enhanced); not present if the tile was
   created from user behavior, e.g., visiting pages
+- ``past_impressions`` - number of impressions (new tab "views") a suggested
+  tile was shown before it was clicked, pinned or blocked. Where the "total"
+  counter is the overall number of impressions accumulated prior to a click action,
+  and "daily" counter is the number impressions occurred on same calendar day of
+  a click. This infomration is submitted once per a suggested tile upon click,
+  pin or block
 - ``pinned`` - 1 if the tile is pinned; not present otherwise
 - ``pos`` - integer position if the tile is not in the natural order, e.g., a
   pinned tile after an empty slot; not present otherwise

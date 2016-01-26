@@ -11,7 +11,7 @@
  */
 
 // Define some shared uris and titles (each page needs its own uri)
-let kURIs = [
+var kURIs = [
   "http://url/",
   "http://url/2",
   "http://foo.bar/",
@@ -25,7 +25,7 @@ let kURIs = [
   "http://foo.bar/tag",
   "http://foo.bar/tag/2",
 ];
-let kTitles = [
+var kTitles = [
   "title",
   "foo.bar",
 ];
@@ -57,7 +57,7 @@ markTyped([3], 1);
 
 // Provide for each test: description; search terms; array of gPages indices of
 // pages that should match; optional function to be run before the test
-let gTests = [
+var gTests = [
   // Test restricting searches
   ["0: History restrict",
    "^", [0,1,2,3,5,10]],
@@ -78,31 +78,31 @@ let gTests = [
   ["6.1: foo ^ -> history",
    "foo ^", [1,2,3,5,10]],
   ["6.2: foo | -> history (change pref)",
-   "foo |", [1,2,3,5,10], function() { changeRestrict("history", "|"); }],
+   "foo |", [1,2,3,5,10], () => changeRestrict("history", "|")],
   ["7.1: foo * -> is star",
-   "foo *", [5,6,7,8,9,10,11], function() resetRestrict("history")],
+   "foo *", [5,6,7,8,9,10,11], () => resetRestrict("history")],
   ["7.2: foo | -> is star (change pref)",
-   "foo |", [5,6,7,8,9,10,11], function() changeRestrict("bookmark", "|")],
+   "foo |", [5,6,7,8,9,10,11], () => changeRestrict("bookmark", "|")],
   ["8.1: foo # -> in title",
-   "foo #", [1,3,5,7,8,9,10,11], function() resetRestrict("bookmark")],
+   "foo #", [1,3,5,7,8,9,10,11], () => resetRestrict("bookmark")],
   ["8.2: foo | -> in title (change pref)",
-   "foo |", [1,3,5,7,8,9,10,11], function() changeRestrict("title", "|")],
+   "foo |", [1,3,5,7,8,9,10,11], () => changeRestrict("title", "|")],
   ["9.1: foo @ -> in url",
-   "foo @", [2,3,6,7,10,11], function() resetRestrict("title")],
+   "foo @", [2,3,6,7,10,11], () => resetRestrict("title")],
   ["9.2: foo | -> in url (change pref)",
-   "foo |", [2,3,6,7,10,11], function() changeRestrict("url", "|")],
+   "foo |", [2,3,6,7,10,11], () => changeRestrict("url", "|")],
   ["10: foo + -> is tag",
-   "foo +", [8,9,10,11], function() resetRestrict("url")],
+   "foo +", [8,9,10,11], () => resetRestrict("url")],
   ["10.2: foo | -> is tag (change pref)",
-   "foo |", [8,9,10,11], function() changeRestrict("tag", "|")],
+   "foo |", [8,9,10,11], () => changeRestrict("tag", "|")],
   ["10.3: foo ~ -> is typed",
-   "foo ~", [3,10], function() resetRestrict("tag")],
+   "foo ~", [3,10], () => resetRestrict("tag")],
   ["10.4: foo | -> is typed (change pref)",
-   "foo |", [3,10], function() changeRestrict("typed", "|")],
+   "foo |", [3,10], () => changeRestrict("typed", "|")],
 
   // Test various pairs of special searches
   ["11: foo ^ * -> history, is star",
-   "foo ^ *", [5,10], function() resetRestrict("typed")],
+   "foo ^ *", [5,10], () => resetRestrict("typed")],
   ["12: foo ^ # -> history, in title",
    "foo ^ #", [1,3,5,10]],
   ["13: foo ^ @ -> history, in url",
@@ -136,9 +136,9 @@ let gTests = [
   ["21: foo -> default history",
    "foo", [1,2,3,5,10], function () { setPref({ history: true }); }],
   ["22: foo -> default history or is star",
-   "foo", [1,2,3,5,6,7,8,9,10,11], function() setPref({ history: true, bookmark: true })],
+   "foo", [1,2,3,5,6,7,8,9,10,11], () => setPref({ history: true, bookmark: true })],
   ["22.1: foo -> default history or is star, is typed",
-   "foo", [3,10], function() setPref({ history: true, bookmark: true, "history.onlyTyped": true })],
+   "foo", [3,10], () => setPref({ history: true, bookmark: true, "history.onlyTyped": true })],
 
 ];
 

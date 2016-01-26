@@ -4,10 +4,10 @@
 
 "use strict";
 
-let initialLocation = gBrowser.currentURI.spec;
-let newTab = null;
+var initialLocation = gBrowser.currentURI.spec;
+var newTab = null;
 
-add_task(function() {
+add_task(function*() {
   info("Check addons button existence and functionality");
 
   yield PanelUI.show();
@@ -18,15 +18,15 @@ add_task(function() {
   addonsButton.click();
 
   newTab = gBrowser.selectedTab;
-  yield waitForCondition(function() gBrowser.currentURI &&
-                                    gBrowser.currentURI.spec == "about:addons");
+  yield waitForCondition(() => gBrowser.currentURI &&
+                               gBrowser.currentURI.spec == "about:addons");
 
   let addonsPage = gBrowser.selectedBrowser.contentWindow.document.
                             getElementById("addons-page");
   ok(addonsPage, "Add-ons page was opened");
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   gBrowser.addTab(initialLocation);
   gBrowser.removeTab(gBrowser.selectedTab);
   info("Tabs were restored");

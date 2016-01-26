@@ -15,6 +15,7 @@
 #include "ApplicationAccessible.h"
 #include "nsEventShell.h"
 #include "nsTextEquivUtils.h"
+#include "DocAccessibleChild.h"
 #include "Relation.h"
 #include "Role.h"
 #include "RootAccessible.h"
@@ -65,7 +66,6 @@
 #include "nsIServiceManager.h"
 #include "nsWhitespaceTokenizer.h"
 #include "nsAttrName.h"
-#include "nsNetUtil.h"
 
 #ifdef DEBUG
 #include "nsIDOMCharacterData.h"
@@ -107,9 +107,10 @@ Accessible::Accessible(nsIContent* aContent, DocAccessible* aDoc) :
   mContent(aContent), mDoc(aDoc),
   mParent(nullptr), mIndexInParent(-1), mChildrenFlags(eChildrenUninitialized),
   mStateFlags(0), mContextFlags(0), mType(0), mGenericTypes(0),
-  mIndexOfEmbeddedChild(-1), mRoleMapEntry(nullptr)
+  mRoleMapEntry(nullptr)
 {
   mBits.groupInfo = nullptr;
+  mInt.mIndexOfEmbeddedChild = -1;
 }
 
 Accessible::~Accessible()
@@ -393,10 +394,12 @@ Accessible::VisibilityState()
   if (frame->GetType() == nsGkAtoms::textFrame &&
       !(frame->GetStateBits() & NS_FRAME_OUT_OF_FLOW) &&
       frame->GetRect().IsEmpty()) {
-    nsAutoString renderedText;
-    frame->GetRenderedText(&renderedText, nullptr, nullptr, 0, 1);
-    if (renderedText.IsEmpty())
+    nsIFrame::RenderedText text = frame->GetRenderedText(0,
+        UINT32_MAX, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
+        nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+    if (text.mString.IsEmpty()) {
       return states::INVISIBLE;
+    }
   }
 
   return 0;
@@ -534,10 +537,10 @@ Accessible::ChildAtPoint(int32_t aX, int32_t aY,
   nsIWidget* rootWidget = rootFrame->GetView()->GetNearestWidget(nullptr);
   NS_ENSURE_TRUE(rootWidget, nullptr);
 
-  nsIntRect rootRect;
+  LayoutDeviceIntRect rootRect;
   rootWidget->GetScreenBounds(rootRect);
 
-  WidgetMouseEvent dummyEvent(true, NS_MOUSE_MOVE, rootWidget,
+  WidgetMouseEvent dummyEvent(true, eMouseMove, rootWidget,
                               WidgetMouseEvent::eSynthesized);
   dummyEvent.refPoint = LayoutDeviceIntPoint(aX - rootRect.x, aY - rootRect.y);
 
@@ -832,6 +835,55 @@ nsresult
 Accessible::HandleAccEvent(AccEvent* aEvent)
 {
   NS_ENSURE_ARG_POINTER(aEvent);
+
+  if (IPCAccessibilityActive() && Document()) {
+    DocAccessibleChild* ipcDoc = mDoc->IPCDoc();
+    MOZ_ASSERT(ipcDoc);
+    if (ipcDoc) {
+      uint64_t id = aEvent->GetAccessible()->IsDoc() ? 0 :
+        reinterpret_cast<uintptr_t>(aEvent->GetAccessible());
+
+      switch(aEvent->GetEventType()) {
+        case nsIAccessibleEvent::EVENT_SHOW:
+          ipcDoc->ShowEvent(downcast_accEvent(aEvent));
+          break;
+
+        case nsIAccessibleEvent::EVENT_HIDE:
+          ipcDoc->SendHideEvent(id);
+          break;
+
+        case nsIAccessibleEvent::EVENT_REORDER:
+          // reorder events on the application acc aren't necessary to tell the parent
+          // about new top level documents.
+          if (!aEvent->GetAccessible()->IsApplication())
+            ipcDoc->SendEvent(id, aEvent->GetEventType());
+          break;
+        case nsIAccessibleEvent::EVENT_STATE_CHANGE: {
+                                                       AccStateChangeEvent* event = downcast_accEvent(aEvent);
+                                                       ipcDoc->SendStateChangeEvent(id, event->GetState(),
+                                                                                    event->IsStateEnabled());
+                                                       break;
+                                                     }
+        case nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED: {
+          AccCaretMoveEvent* event = downcast_accEvent(aEvent);
+          ipcDoc->SendCaretMoveEvent(id, event->GetCaretOffset());
+          break;
+        }
+        case nsIAccessibleEvent::EVENT_TEXT_INSERTED:
+        case nsIAccessibleEvent::EVENT_TEXT_REMOVED: {
+          AccTextChangeEvent* event = downcast_accEvent(aEvent);
+          ipcDoc->SendTextChangeEvent(id, event->ModifiedText(),
+                                      event->GetStartOffset(),
+                                      event->GetLength(),
+                                      event->IsTextInserted(),
+                                      event->IsFromUserInput());
+          break;
+                                                     }
+        default:
+                                                         ipcDoc->SendEvent(id, aEvent->GetEventType());
+      }
+    }
+  }
 
   nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
   NS_ENSURE_TRUE(obsService, NS_ERROR_FAILURE);
@@ -1188,11 +1240,13 @@ Accessible::ApplyARIAState(uint64_t* aState) const
       *aState &= ~states::READONLY;
 
     if (mContent->HasID()) {
-      // If has a role & ID and aria-activedescendant on the container, assume focusable
-      nsIContent *ancestorContent = mContent;
-      while ((ancestorContent = ancestorContent->GetParent()) != nullptr) {
-        if (ancestorContent->HasAttr(kNameSpaceID_None, nsGkAtoms::aria_activedescendant)) {
-            // ancestor has activedescendant property, this content could be active
+      // If has a role & ID and aria-activedescendant on the container, assume
+      // focusable.
+      const Accessible* ancestor = this;
+      while ((ancestor = ancestor->Parent()) && !ancestor->IsDoc()) {
+        dom::Element* el = ancestor->Elm();
+        if (el &&
+            el->HasAttr(kNameSpaceID_None, nsGkAtoms::aria_activedescendant)) {
           *aState |= states::FOCUSABLE;
           break;
         }
@@ -1201,12 +1255,12 @@ Accessible::ApplyARIAState(uint64_t* aState) const
   }
 
   if (*aState & states::FOCUSABLE) {
-    // Special case: aria-disabled propagates from ancestors down to any focusable descendant
-    nsIContent *ancestorContent = mContent;
-    while ((ancestorContent = ancestorContent->GetParent()) != nullptr) {
-      if (ancestorContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::aria_disabled,
-                                       nsGkAtoms::_true, eCaseMatters)) {
-          // ancestor has aria-disabled property, this is disabled
+    // Propogate aria-disabled from ancestors down to any focusable descendant.
+    const Accessible* ancestor = this;
+    while ((ancestor = ancestor->Parent()) && !ancestor->IsDoc()) {
+      dom::Element* el = ancestor->Elm();
+      if (el && el->AttrValueIs(kNameSpaceID_None, nsGkAtoms::aria_disabled,
+                                nsGkAtoms::_true, eCaseMatters)) {
         *aState |= states::UNAVAILABLE;
         break;
       }
@@ -1275,21 +1329,14 @@ Accessible::Value(nsString& aValue)
   if (mRoleMapEntry->Is(nsGkAtoms::combobox)) {
     Accessible* option = CurrentItem();
     if (!option) {
-      Accessible* listbox = nullptr;
-      ARIAOwnsIterator iter(this);
-      while ((listbox = iter.Next()) && !listbox->IsListControl());
-
-      if (!listbox) {
-        uint32_t childCount = ChildCount();
-        for (uint32_t idx = 0; idx < childCount; idx++) {
-          Accessible* child = mChildren.ElementAt(idx);
-          if (child->IsListControl())
-            listbox = child;
+      uint32_t childCount = ChildCount();
+      for (uint32_t idx = 0; idx < childCount; idx++) {
+        Accessible* child = mChildren.ElementAt(idx);
+        if (child->IsListControl()) {
+          option = child->GetSelectedItem(0);
+          break;
         }
       }
-
-      if (listbox)
-        option = listbox->GetSelectedItem(0);
     }
 
     if (option)
@@ -1560,8 +1607,7 @@ Accessible::RelationByType(RelationType aType)
     }
 
     case RelationType::NODE_CHILD_OF: {
-      Relation rel(new ARIAOwnedByIterator(this));
-
+      Relation rel;
       // This is an ARIA tree or treegrid that doesn't use owns, so we need to
       // get the parent the hard way.
       if (mRoleMapEntry && (mRoleMapEntry->role == roles::OUTLINEITEM ||
@@ -1590,8 +1636,6 @@ Accessible::RelationByType(RelationType aType)
     }
 
     case RelationType::NODE_PARENT_OF: {
-      Relation rel(new ARIAOwnsIterator(this));
-
       // ARIA tree or treegrid can do the hierarchy by @aria-level, ARIA trees
       // also can be organized by groups.
       if (mRoleMapEntry &&
@@ -1601,10 +1645,10 @@ Accessible::RelationByType(RelationType aType)
            mRoleMapEntry->role == roles::OUTLINE ||
            mRoleMapEntry->role == roles::LIST ||
            mRoleMapEntry->role == roles::TREE_TABLE)) {
-        rel.AppendIter(new ItemIterator(this));
+        return Relation(new ItemIterator(this));
       }
 
-      return rel;
+      return Relation();
     }
 
     case RelationType::CONTROLLED_BY:
@@ -1744,7 +1788,7 @@ Accessible::DoCommand(nsIContent *aContent, uint32_t aActionIndex)
     }
 
   private:
-    nsRefPtr<Accessible> mAcc;
+    RefPtr<Accessible> mAcc;
     nsCOMPtr<nsIContent> mContent;
     uint32_t mIdx;
   };
@@ -1780,15 +1824,19 @@ Accessible::DispatchClickEvent(nsIContent *aContent, uint32_t aActionIndex)
 
   nsSize size = frame->GetSize();
 
-  nsRefPtr<nsPresContext> presContext = presShell->GetPresContext();
+  RefPtr<nsPresContext> presContext = presShell->GetPresContext();
   int32_t x = presContext->AppUnitsToDevPixels(point.x + size.width / 2);
   int32_t y = presContext->AppUnitsToDevPixels(point.y + size.height / 2);
 
   // Simulate a touch interaction by dispatching touch events with mouse events.
-  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_START, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_DOWN, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchTouchEvent(NS_TOUCH_END, x, y, aContent, frame, presShell, widget);
-  nsCoreUtils::DispatchMouseEvent(NS_MOUSE_BUTTON_UP, x, y, aContent, frame, presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(eTouchStart, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(eMouseDown, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchTouchEvent(eTouchEnd, x, y, aContent, frame,
+                                  presShell, widget);
+  nsCoreUtils::DispatchMouseEvent(eMouseUp, x, y, aContent, frame,
+                                  presShell, widget);
 }
 
 void
@@ -1921,8 +1969,8 @@ Accessible::BindToParent(Accessible* aParent, uint32_t aIndexInParent)
   if (mParent) {
     if (mParent != aParent) {
       NS_ERROR("Adopting child!");
-      mParent->RemoveChild(this);
       mParent->InvalidateChildrenGroupInfo();
+      mParent->RemoveChild(this);
     } else {
       NS_ERROR("Binding to the same parent!");
       return;
@@ -1955,7 +2003,7 @@ Accessible::UnbindFromParent()
 #endif
   mParent = nullptr;
   mIndexInParent = -1;
-  mIndexOfEmbeddedChild = -1;
+  mInt.mIndexOfEmbeddedChild = -1;
   if (IsProxy())
     MOZ_CRASH("this should never be called on proxy wrappers");
 
@@ -2200,6 +2248,30 @@ Accessible::AnchorURIAt(uint32_t aAnchorIndex)
 {
   NS_PRECONDITION(IsLink(), "AnchorURIAt is called on not hyper link!");
   return nullptr;
+}
+
+void
+Accessible::ToTextPoint(HyperTextAccessible** aContainer, int32_t* aOffset,
+                        bool aIsBefore) const
+{
+  if (IsHyperText()) {
+    *aContainer = const_cast<Accessible*>(this)->AsHyperText();
+    *aOffset = aIsBefore ? 0 : (*aContainer)->CharacterCount();
+    return;
+  }
+
+  const Accessible* child = nullptr;
+  const Accessible* parent = this;
+  do {
+    child = parent;
+    parent = parent->Parent();
+  } while (parent && !parent->IsHyperText());
+
+  if (parent) {
+    *aContainer = const_cast<Accessible*>(parent)->AsHyperText();
+    *aOffset = (*aContainer)->GetChildOffset(
+      child->IndexInParent() + static_cast<int32_t>(!aIsBefore));
+  }
 }
 
 

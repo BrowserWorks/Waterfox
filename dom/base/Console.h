@@ -9,16 +9,18 @@
 
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/JSObjectHolder.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
 #include "nsIObserver.h"
+#include "nsWeakReference.h"
 #include "nsWrapperCache.h"
 #include "nsDOMNavigationTiming.h"
 #include "nsPIDOMWindow.h"
 
 class nsIConsoleAPIStorage;
-class nsIXPConnectJSObjectHolder;
+class nsIPrincipal;
 
 namespace mozilla {
 namespace dom {
@@ -28,12 +30,13 @@ struct ConsoleStackEntry;
 
 class Console final : public nsIObserver
                     , public nsWrapperCache
+                    , public nsSupportsWeakReference
 {
   ~Console();
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Console)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(Console, nsIObserver)
   NS_DECL_NSIOBSERVER
 
   explicit Console(nsPIDOMWindow* aWindow);
@@ -158,7 +161,7 @@ private:
   // finds based the format string. The index of the styles matches the indexes
   // of elements that need the custom styling from aSequence. For elements with
   // no custom styling the array is padded with null elements.
-  void
+  bool
   ProcessArguments(JSContext* aCx, const nsTArray<JS::Heap<JS::Value>>& aData,
                    Sequence<JS::Value>& aSequence,
                    Sequence<JS::Value>& aStyles);
@@ -182,7 +185,7 @@ private:
             DOMHighResTimeStamp aTimestamp);
 
   // The method populates a Sequence from an array of JS::Value.
-  void
+  bool
   ArgumentsToValueList(const nsTArray<JS::Heap<JS::Value>>& aData,
                        Sequence<JS::Value>& aSequence);
 
@@ -197,12 +200,12 @@ private:
   bool
   ShouldIncludeStackTrace(MethodName aMethodName);
 
-  nsIXPConnectJSObjectHolder*
+  JSObject*
   GetOrCreateSandbox(JSContext* aCx, nsIPrincipal* aPrincipal);
 
   nsCOMPtr<nsPIDOMWindow> mWindow;
   nsCOMPtr<nsIConsoleAPIStorage> mStorage;
-  nsCOMPtr<nsIXPConnectJSObjectHolder> mSandbox;
+  RefPtr<JSObjectHolder> mSandbox;
 
   nsDataHashtable<nsStringHashKey, DOMHighResTimeStamp> mTimerRegistry;
   nsDataHashtable<nsStringHashKey, uint32_t> mCounterRegistry;
@@ -216,7 +219,7 @@ private:
   friend class ConsoleProfileRunnable;
 };
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla
 
 #endif /* mozilla_dom_Console_h */

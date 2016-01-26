@@ -8,7 +8,7 @@ interface nsISupports;
 
 [ChromeOnly,
  JSImplementation="@mozilla.org/dom/peerconnectionobserver;1",
- Constructor (mozRTCPeerConnection domPC)]
+ Constructor (RTCPeerConnection domPC)]
 interface PeerConnectionObserver
 {
   /* JSEP callbacks */
@@ -42,6 +42,6 @@ interface PeerConnectionObserver
   /* Changes to MediaStreamTracks */
   void onAddStream(MediaStream stream);
   void onRemoveStream(MediaStream stream);
-  void onAddTrack(MediaStreamTrack track);
+  void onAddTrack(MediaStreamTrack track, sequence<MediaStream> streams);
   void onRemoveTrack(MediaStreamTrack track);
 };

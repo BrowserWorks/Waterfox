@@ -19,12 +19,13 @@
 #include "vm/BooleanObject.h"
 #include "vm/NumberObject.h"
 #include "vm/SharedArrayObject.h"
-#include "vm/SharedTypedArrayObject.h"
 #include "vm/StringObject.h"
 #include "vm/TypedArrayObject.h"
 #include "vm/UnboxedObject.h"
 
 #include "jscntxtinlines.h"
+
+#include "vm/ObjectGroup-inl.h"
 
 namespace js {
 
@@ -353,25 +354,8 @@ TrackPropertyTypes(ExclusiveContext* cx, JSObject* obj, jsid id)
     return true;
 }
 
-inline void
-EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id)
-{
-    id = IdToTypeId(id);
-
-    if (obj->isSingleton()) {
-        AutoEnterAnalysis enter(cx);
-        if (obj->hasLazyGroup() && !obj->getGroup(cx)) {
-            CrashAtUnhandlableOOM("Could not allocate ObjectGroup in EnsureTrackPropertyTypes");
-            return;
-        }
-        if (!obj->group()->unknownProperties() && !obj->group()->getProperty(cx, obj, id)) {
-            MOZ_ASSERT(obj->group()->unknownProperties());
-            return;
-        }
-    }
-
-    MOZ_ASSERT(obj->group()->unknownProperties() || TrackPropertyTypes(cx, obj, id));
-}
+void
+EnsureTrackPropertyTypes(JSContext* cx, JSObject* obj, jsid id);
 
 inline bool
 CanHaveEmptyPropertyTypesForOwnProperty(JSObject* obj)
@@ -445,7 +429,7 @@ MarkObjectGroupFlags(ExclusiveContext* cx, JSObject* obj, ObjectGroupFlags flags
 }
 
 inline void
-MarkObjectGroupUnknownProperties(JSContext* cx, ObjectGroup* obj)
+MarkObjectGroupUnknownProperties(ExclusiveContext* cx, ObjectGroup* obj)
 {
     if (!obj->unknownProperties())
         obj->markUnknown(cx);
@@ -467,18 +451,6 @@ MarkTypePropertyNonWritable(ExclusiveContext* cx, JSObject* obj, jsid id)
         obj->group()->markPropertyNonWritable(cx, obj, id);
 }
 
-inline bool
-IsTypePropertyIdMarkedNonData(JSObject* obj, jsid id)
-{
-    return obj->group()->isPropertyNonData(id);
-}
-
-inline bool
-IsTypePropertyIdMarkedNonWritable(JSObject* obj, jsid id)
-{
-    return obj->group()->isPropertyNonWritable(id);
-}
-
 /* Mark a state change on a particular object. */
 inline void
 MarkObjectStateChange(ExclusiveContext* cx, JSObject* obj)
@@ -488,8 +460,8 @@ MarkObjectStateChange(ExclusiveContext* cx, JSObject* obj)
 }
 
 /* Interface helpers for JSScript*. */
+extern void TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type);
 extern void TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const Value& rval);
-extern void TypeDynamicResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type);
 
 /////////////////////////////////////////////////////////////////////
 // Script interface functions
@@ -530,7 +502,7 @@ template <typename TYPESET>
 TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc, uint32_t* bytecodeMap,
                           uint32_t* hint, TYPESET* typeArray)
 {
-    MOZ_ASSERT(js_CodeSpec[*pc].format & JOF_TYPESET);
+    MOZ_ASSERT(CodeSpec[*pc].format & JOF_TYPESET);
     uint32_t offset = script->pcToOffset(pc);
 
     // See if this pc is the next typeset opcode after the last one looked up.
@@ -582,6 +554,12 @@ TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc)
 TypeScript::Monitor(JSContext* cx, JSScript* script, jsbytecode* pc, const js::Value& rval)
 {
     TypeMonitorResult(cx, script, pc, rval);
+}
+
+/* static */ inline void
+TypeScript::Monitor(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type)
+{
+    TypeMonitorResult(cx, script, pc, type);
 }
 
 /* static */ inline void
@@ -1093,18 +1071,6 @@ ObjectGroup::getProperty(unsigned i)
     }
     return propertySet[i];
 }
-
-template <>
-struct GCMethods<const TypeSet::Type>
-{
-    static TypeSet::Type initial() { return TypeSet::UnknownType(); }
-};
-
-template <>
-struct GCMethods<TypeSet::Type>
-{
-    static TypeSet::Type initial() { return TypeSet::UnknownType(); }
-};
 
 } // namespace js
 

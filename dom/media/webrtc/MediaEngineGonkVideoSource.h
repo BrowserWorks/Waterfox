@@ -60,15 +60,22 @@ public:
       Init();
     }
 
-  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                            const MediaEnginePrefs &aPrefs) override;
-  virtual nsresult Deallocate() override;
-  virtual nsresult Start(SourceMediaStream* aStream, TrackID aID) override;
-  virtual nsresult Stop(SourceMediaStream* aSource, TrackID aID) override;
-  virtual void NotifyPull(MediaStreamGraph* aGraph,
-                          SourceMediaStream* aSource,
-                          TrackID aId,
-                          StreamTime aDesiredTime) override;
+  nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
+                    const MediaEnginePrefs &aPrefs,
+                    const nsString& aDeviceId) override;
+  nsresult Deallocate() override;
+  nsresult Start(SourceMediaStream* aStream, TrackID aID) override;
+  nsresult Stop(SourceMediaStream* aSource, TrackID aID) override;
+  nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
+                   const MediaEnginePrefs &aPrefs,
+                   const nsString& aDeviceId) override;
+  void NotifyPull(MediaStreamGraph* aGraph,
+                  SourceMediaStream* aSource,
+                  TrackID aId,
+                  StreamTime aDesiredTime) override;
+  dom::MediaSourceEnum GetMediaSource() const override {
+    return dom::MediaSourceEnum::Camera;
+  }
 
   void OnHardwareStateChange(HardwareState aState, nsresult aReason) override;
   void GetRotation();
@@ -111,13 +118,13 @@ protected:
 
   mozilla::ReentrantMonitor mCallbackMonitor; // Monitor for camera callback handling
   // This is only modified on MainThread (AllocImpl and DeallocImpl)
-  nsRefPtr<ICameraControl> mCameraControl;
-  nsCOMPtr<nsIDOMFile> mLastCapture;
+  RefPtr<ICameraControl> mCameraControl;
+  RefPtr<dom::File> mLastCapture;
 
   android::sp<android::GonkCameraSource> mCameraSource;
 
   // These are protected by mMonitor in parent class
-  nsTArray<nsRefPtr<PhotoCallback>> mPhotoCallbacks;
+  nsTArray<RefPtr<PhotoCallback>> mPhotoCallbacks;
   int mRotation;
   int mCameraAngle; // See dom/base/ScreenOrientation.h
   bool mBackCamera;

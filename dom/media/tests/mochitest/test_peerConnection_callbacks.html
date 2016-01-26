@@ -27,8 +27,8 @@ function pcall(o, f, beforeArg) {
   });
 }
 
-var pc1 = new mozRTCPeerConnection();
-var pc2 = new mozRTCPeerConnection();
+var pc1 = new RTCPeerConnection();
+var pc2 = new RTCPeerConnection();
 
 var pc2_haveRemoteOffer = new Promise(resolve => {
   pc2.onsignalingstatechange =
@@ -65,7 +65,7 @@ runNetworkTest(function() {
   is(v2.currentTime, 0, "v2.currentTime is zero at outset");
 
   // not testing legacy gUM here
-  navigator.mediaDevices.getUserMedia({ fake: true, video: true, audio: true })
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => pc1.addStream(v1.mozSrcObject = stream))
     .then(() => pcall(pc1, pc1.createOffer))
     .then(offer => pcall(pc1, pc1.setLocalDescription, offer))

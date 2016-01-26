@@ -38,8 +38,8 @@ namespace layers {
   class ImageContainer;
   class ImageLayer;
   class LayerManager;
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 class nsImageListener : public imgINotificationObserver
 {
@@ -145,7 +145,6 @@ public:
   
   DrawResult DisplayAltFeedback(nsRenderingContext& aRenderingContext,
                                 const nsRect& aDirtyRect,
-                                imgIRequest* aRequest,
                                 nsPoint aPt,
                                 uint32_t aFlags);
 
@@ -220,9 +219,18 @@ protected:
                         const nsRect& aDirtyRect, imgIContainer* aImage,
                         uint32_t aFlags);
 
+  /**
+   * If we're ready to decode - that is, if our current request's image is
+   * available and our decoding heuristics are satisfied - then trigger a decode
+   * for our image at the size we predict it will be drawn next time it's
+   * painted.
+   */
+  void MaybeDecodeForPredictedSize();
+
 protected:
   friend class nsImageListener;
   friend class nsImageLoadingContent;
+  friend class PresShell;
 
   nsresult OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
   nsresult OnFrameUpdate(imgIRequest* aRequest, const nsIntRect* aRect);
@@ -232,6 +240,17 @@ protected:
    * Notification that aRequest will now be the current request.
    */
   void NotifyNewCurrentRequest(imgIRequest *aRequest, nsresult aStatus);
+
+  /// Always sync decode our image when painting if @aForce is true.
+  void SetForceSyncDecoding(bool aForce) { mForceSyncDecoding = aForce; }
+
+  /**
+   * Computes the predicted dest rect that we'll draw into, in app units, based
+   * upon the provided frame content box. (The content box is what
+   * nsDisplayImage::GetBounds() returns.)
+   * The result is not necessarily contained in the frame content box.
+   */
+  nsRect PredictedDestRect(const nsRect& aFrameContentBox);
 
 private:
   // random helpers
@@ -296,7 +315,7 @@ private:
   void InvalidateSelf(const nsIntRect* aLayerInvalidRect,
                       const nsRect* aFrameInvalidRect);
 
-  nsRefPtr<nsImageMap> mImageMap;
+  RefPtr<nsImageMap> mImageMap;
 
   nsCOMPtr<imgINotificationObserver> mListener;
 
@@ -308,6 +327,7 @@ private:
   bool mDisplayingIcon;
   bool mFirstFrameComplete;
   bool mReflowCallbackPosted;
+  bool mForceSyncDecoding;
 
   static nsIIOService* sIOService;
   
@@ -356,10 +376,11 @@ private:
 
 
   public:
-    nsRefPtr<imgRequestProxy> mLoadingImage;
-    nsRefPtr<imgRequestProxy> mBrokenImage;
+    RefPtr<imgRequestProxy> mLoadingImage;
+    RefPtr<imgRequestProxy> mBrokenImage;
     bool             mPrefForceInlineAltText;
     bool             mPrefShowPlaceholders;
+    bool             mPrefShowLoadingPlaceholder;
   };
   
 public:
@@ -405,7 +426,8 @@ public:
                                                         nsDisplayListBuilder* aBuilder) override;
 
   /**
-   * @return the dest rect we'll use when drawing this image, in app units.
+   * @return The dest rect we'll use when drawing this image, in app units.
+   *         Not necessarily contained in this item's bounds.
    */
   nsRect GetDestRect(bool* aSnap = nullptr);
 

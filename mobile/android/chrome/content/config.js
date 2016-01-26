@@ -3,7 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, manager: Cm, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, manager: Cm, utils: Cu} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 
 const VKB_ENTER_KEY = 13;   // User press of VKB enter key
@@ -13,8 +13,8 @@ const PAGE_SCROLL_TRIGGER = 200;     // Triggers additional getPrefsBuffer() on 
 const FILTER_CHANGE_TRIGGER = 200;     // Delay between responses to filterInput changes
 const INNERHTML_VALUE_DELAY = 100;    // Delay before providing prefs innerHTML value
 
-let gStringBundle = Services.strings.createBundle("chrome://browser/locale/config.properties");
-let gClipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+var gStringBundle = Services.strings.createBundle("chrome://browser/locale/config.properties");
+var gClipboardHelper = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
 
 
 /* ============================== NewPrefDialog ==============================

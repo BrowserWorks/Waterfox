@@ -160,7 +160,6 @@ function run_test() {
 
     do_check_false(Service.verifyAndFetchSymmetricKeys());
     do_check_eq(Service.status.login, LOGIN_FAILED_INVALID_PASSPHRASE);
-
   } finally {
     Svc.Prefs.resetBranch("");
     server.stop(do_test_finished);

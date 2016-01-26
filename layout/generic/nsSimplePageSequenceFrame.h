@@ -18,8 +18,8 @@ namespace dom {
 
 class HTMLCanvasElement;
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 //-----------------------------------------------
 // This class maintains all the data that 
@@ -154,7 +154,7 @@ protected:
   int32_t      mFromPageNum;
   int32_t      mToPageNum;
   nsTArray<int32_t> mPageRanges;
-  nsTArray<nsRefPtr<mozilla::dom::HTMLCanvasElement> > mCurrentCanvasList;
+  nsTArray<RefPtr<mozilla::dom::HTMLCanvasElement> > mCurrentCanvasList;
 
   // Selection Printing Info
   nscoord      mSelectionHeight;

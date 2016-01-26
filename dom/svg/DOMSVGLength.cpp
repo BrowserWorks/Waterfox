@@ -66,7 +66,7 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangeLengthNotifier
 // Stack-based helper class to pair calls to WillChangeLengthList and
 // DidChangeLengthList.
-class MOZ_STACK_CLASS AutoChangeLengthNotifier
+class MOZ_RAII AutoChangeLengthNotifier
 {
 public:
   explicit AutoChangeLengthNotifier(DOMSVGLength* aLength MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
@@ -160,7 +160,7 @@ DOMSVGLength::GetTearOff(nsSVGLength2* aVal, nsSVGElement* aSVGElement,
                          bool aAnimVal)
 {
   auto& table = aAnimVal ? sAnimSVGLengthTearOffTable : sBaseSVGLengthTearOffTable;
-  nsRefPtr<DOMSVGLength> domLength = table.GetTearoff(aVal);
+  RefPtr<DOMSVGLength> domLength = table.GetTearoff(aVal);
   if (!domLength) {
     domLength = new DOMSVGLength(aVal, aSVGElement, aAnimVal);
     table.AddTearoff(aVal, domLength);

@@ -11,12 +11,12 @@ this.EXPORTED_SYMBOLS = [
   "fakeSHA256HMAC",
 ];
 
-const {utils: Cu} = Components;
+var {utils: Cu} = Components;
 
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/util.js");
 
-let btoa = Cu.import("resource://gre/modules/Log.jsm").btoa;
+var btoa = Cu.import("resource://gre/modules/Log.jsm").btoa;
 
 this.FakeFilesystemService = function FakeFilesystemService(contents) {
   this.fakeContents = contents;

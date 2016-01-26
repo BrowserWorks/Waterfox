@@ -2974,7 +2974,7 @@ SVGTextDrawPathCallbacks::FillAndStrokeGeometry()
   bool pushedGroup = false;
   if (mColor == NS_40PERCENT_FOREGROUND_COLOR) {
     pushedGroup = true;
-    gfx->PushGroup(gfxContentType::COLOR_ALPHA);
+    gfx->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, 0.4f);
   }
 
   uint32_t paintOrder = mFrame->StyleSVG()->mPaintOrder;
@@ -2998,8 +2998,7 @@ SVGTextDrawPathCallbacks::FillAndStrokeGeometry()
   }
 
   if (pushedGroup) {
-    gfx->PopGroupToSource();
-    gfx->Paint(0.4);
+    gfx->PopGroupAndBlend();
   }
 }
 
@@ -3085,7 +3084,7 @@ SVGTextContextPaint::Paint::GetPattern(const DrawTarget* aDrawTarget,
                                        nsStyleSVGPaint nsStyleSVG::*aFillOrStroke,
                                        const gfxMatrix& aCTM)
 {
-  nsRefPtr<gfxPattern> pattern;
+  RefPtr<gfxPattern> pattern;
   if (mPatternCache.Get(aOpacity, getter_AddRefs(pattern))) {
     // Set the pattern matrix just in case it was messed with by a previous
     // caller. We should get the same matrix each time a pattern is constructed
@@ -3096,16 +3095,16 @@ SVGTextContextPaint::Paint::GetPattern(const DrawTarget* aDrawTarget,
 
   switch (mPaintType) {
   case eStyleSVGPaintType_None:
-    pattern = new gfxPattern(gfxRGBA(0.0f, 0.0f, 0.0f, 0.0f));
+    pattern = new gfxPattern(Color());
     mPatternMatrix = gfxMatrix();
     break;
-  case eStyleSVGPaintType_Color:
-    pattern = new gfxPattern(gfxRGBA(NS_GET_R(mPaintDefinition.mColor) / 255.0,
-                                     NS_GET_G(mPaintDefinition.mColor) / 255.0,
-                                     NS_GET_B(mPaintDefinition.mColor) / 255.0,
-                                     NS_GET_A(mPaintDefinition.mColor) / 255.0 * aOpacity));
+  case eStyleSVGPaintType_Color: {
+    Color color = Color::FromABGR(mPaintDefinition.mColor);
+    color.a *= aOpacity;
+    pattern = new gfxPattern(color);
     mPatternMatrix = gfxMatrix();
     break;
+  }
   case eStyleSVGPaintType_Server:
     pattern = mPaintDefinition.mPaintServerFrame->GetPaintServerPattern(mFrame,
                                                                         aDrawTarget,
@@ -3212,10 +3211,8 @@ void
 nsDisplaySVGText::Paint(nsDisplayListBuilder* aBuilder,
                         nsRenderingContext* aCtx)
 {
-  gfxContext* ctx = aCtx->ThebesContext();
-
-  gfxContextAutoDisableSubpixelAntialiasing
-    disable(ctx, mDisableSubpixelAA);
+  DrawTargetAutoDisableSubpixelAntialiasing
+    disable(aCtx->GetDrawTarget(), mDisableSubpixelAA);
 
   uint32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
 
@@ -3230,6 +3227,7 @@ nsDisplaySVGText::Paint(nsDisplayListBuilder* aBuilder,
   gfxMatrix tm = nsSVGIntegrationUtils::GetCSSPxToDevPxMatrix(mFrame) *
                    gfxMatrix::Translation(devPixelOffset);
 
+  gfxContext* ctx = aCtx->ThebesContext();
   ctx->Save();
   static_cast<SVGTextFrame*>(mFrame)->PaintSVG(*ctx, tm);
   ctx->Restore();
@@ -3467,7 +3465,8 @@ SVGTextFrame::MutationObserver::AttributeChanged(
                                                 mozilla::dom::Element* aElement,
                                                 int32_t aNameSpaceID,
                                                 nsIAtom* aAttribute,
-                                                int32_t aModType)
+                                                int32_t aModType,
+                                                const nsAttrValue* aOldValue)
 {
   if (!aElement->IsSVGElement()) {
     return;
@@ -3737,7 +3736,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
   aContext.Multiply(canvasTMForChildren);
   gfxMatrix currentMatrix = aContext.CurrentMatrix();
 
-  nsRefPtr<nsCaret> caret = presContext->PresShell()->GetCaret();
+  RefPtr<nsCaret> caret = presContext->PresShell()->GetCaret();
   nsRect caretRect;
   nsIFrame* caretFrame = caret->GetPaintGeometry(&caretRect);
 
@@ -3796,7 +3795,7 @@ SVGTextFrame::PaintSVG(gfxContext& aContext,
     if (frame == caretFrame && ShouldPaintCaret(run, caret)) {
       // XXX Should we be looking at the fill/stroke colours to paint the
       // caret with, rather than using the color property?
-      caret->PaintCaret(nullptr, aDrawTarget, frame, nsPoint());
+      caret->PaintCaret(aDrawTarget, frame, nsPoint());
       aContext.NewPath();
     }
 
@@ -3936,13 +3935,15 @@ SVGTextFrame::ReflowSVG()
     nsSVGEffects::UpdateEffects(this);
   }
 
+  // Now unset the various reflow bits. Do this before calling
+  // FinishAndStoreOverflow since FinishAndStoreOverflow can require glyph
+  // positions (to resolve transform-origin).
+  mState &= ~(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
+              NS_FRAME_HAS_DIRTY_CHILDREN);
+
   nsRect overflow = nsRect(nsPoint(0,0), mRect.Size());
   nsOverflowAreas overflowAreas(overflow, overflow);
   FinishAndStoreOverflow(overflowAreas, mRect.Size());
-
-  // Now unset the various reflow bits:
-  mState &= ~(NS_FRAME_FIRST_REFLOW | NS_FRAME_IS_DIRTY |
-              NS_FRAME_HAS_DIRTY_CHILDREN);
 
   // XXX nsSVGContainerFrame::ReflowSVG only looks at its nsISVGChildFrame
   // children, and calls ConsiderChildOverflow on them.  Does it matter
@@ -3977,10 +3978,22 @@ SVGTextFrame::GetBBoxContribution(const gfx::Matrix &aToBBoxUserspace,
                                   uint32_t aFlags)
 {
   NS_ASSERTION(GetFirstPrincipalChild(), "must have a child frame");
+  SVGBBox bbox;
+  nsIFrame* kid = GetFirstPrincipalChild();
+  if (kid && NS_SUBTREE_DIRTY(kid)) {
+    // Return an empty bbox if our kid's subtree is dirty. This may be called
+    // in that situation, e.g. when we're building a display list after an
+    // interrupted reflow. This can also be called during reflow before we've
+    // been reflowed, e.g. if an earlier sibling is calling FinishAndStoreOverflow and
+    // needs our parent's perspective matrix, which depends on the SVG bbox
+    // contribution of this frame. In the latter situation, when all siblings have
+    // been reflowed, the parent will compute its perspective and rerun
+    // FinishAndStoreOverflow for all its children.
+    return bbox;
+  }
 
   UpdateGlyphPositioning();
 
-  SVGBBox bbox;
   nsPresContext* presContext = PresContext();
 
   TextRenderedRunIterator it(this);
@@ -4147,7 +4160,7 @@ SVGTextFrame::SelectSubString(nsIContent* aContent,
   chit.NextWithinSubtree(nchars);
   nchars = chit.TextElementCharIndex() - charnum;
 
-  nsRefPtr<nsFrameSelection> frameSelection = GetFrameSelection();
+  RefPtr<nsFrameSelection> frameSelection = GetFrameSelection();
 
   frameSelection->HandleClick(content, charnum, charnum + nchars,
                               false, false, CARET_ASSOCIATE_BEFORE);
@@ -4931,7 +4944,7 @@ SVGTextFrame::GetTextPathPathElement(nsIFrame* aTextPathFrame)
     static_cast<SVGPathElement*>(element) : nullptr;
 }
 
-TemporaryRef<Path>
+already_AddRefed<Path>
 SVGTextFrame::GetTextPath(nsIFrame* aTextPathFrame)
 {
   SVGPathElement* element = GetTextPathPathElement(aTextPathFrame);
@@ -5027,7 +5040,7 @@ SVGTextFrame::DoTextPathLayout()
       Float rotation = vertical ? atan2f(-tangent.x, tangent.y)
                                 : atan2f(tangent.y, tangent.x);
       Point normal(-tangent.y, tangent.x); // Unit vector normal to the point.
-      Point offsetFromPath = normal * (vertical ? mPositions[i].mPosition.x
+      Point offsetFromPath = normal * (vertical ? -mPositions[i].mPosition.x
                                                 : mPositions[i].mPosition.y);
       pt += offsetFromPath;
       Point direction = tangent * sign;
@@ -5189,7 +5202,7 @@ SVGTextFrame::DoGlyphPositioning()
     float actualTextLength =
       static_cast<float>(presContext->AppUnitsToGfxUnits(frameLength) * factor);
 
-    nsRefPtr<SVGAnimatedEnumeration> lengthAdjustEnum = element->LengthAdjust();
+    RefPtr<SVGAnimatedEnumeration> lengthAdjustEnum = element->LengthAdjust();
     uint16_t lengthAdjust = lengthAdjustEnum->AnimVal();
     switch (lengthAdjust) {
       case SVG_LENGTHADJUST_SPACINGANDGLYPHS:
@@ -5756,7 +5769,7 @@ SetupInheritablePaint(const DrawTarget* aDrawTarget,
     nsSVGEffects::GetPaintServer(aFrame, &(style->*aFillOrStroke), aProperty);
 
   if (ps) {
-    nsRefPtr<gfxPattern> pattern =
+    RefPtr<gfxPattern> pattern =
       ps->GetPaintServerPattern(aFrame, aDrawTarget, aContextMatrix,
                                 aFillOrStroke, aOpacity);
     if (pattern) {
@@ -5765,7 +5778,7 @@ SetupInheritablePaint(const DrawTarget* aDrawTarget,
     }
   }
   if (aOuterContextPaint) {
-    nsRefPtr<gfxPattern> pattern;
+    RefPtr<gfxPattern> pattern;
     switch ((style->*aFillOrStroke).mType) {
     case eStyleSVGPaintType_ContextFill:
       pattern = aOuterContextPaint->GetFillPattern(aDrawTarget, aOpacity,

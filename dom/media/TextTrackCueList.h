@@ -28,7 +28,7 @@ public:
   // TextTrackCueList WebIDL
   explicit TextTrackCueList(nsISupports* aParent);
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject() const
   {
@@ -52,7 +52,7 @@ public:
   void RemoveCue(TextTrackCue& aCue, ErrorResult& aRv);
   void RemoveCueAt(uint32_t aIndex);
   void RemoveAll();
-  void GetArray(nsTArray<nsRefPtr<TextTrackCue> >& aCues);
+  void GetArray(nsTArray<RefPtr<TextTrackCue> >& aCues);
 
 private:
   ~TextTrackCueList();
@@ -61,7 +61,7 @@ private:
 
   // A sorted list of TextTrackCues sorted by earliest start time. If the start
   // times are equal then it will be sorted by end time, earliest first.
-  nsTArray< nsRefPtr<TextTrackCue> > mList;
+  nsTArray< RefPtr<TextTrackCue> > mList;
 };
 
 } // namespace dom

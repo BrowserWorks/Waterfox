@@ -1,0 +1,19 @@
+[
+{
+"clang_version": "r241773"
+}, 
+{
+"size": 89690541, 
+"digest": "470d258d9785a120fcba65eee90daa632a42affa0f97f57d70fc8285bd76bcc27d4d0d70b6c37577ab271a04c843b6269425391a8d6df1967718dba26dd3a73d", 
+"algorithm": "sha512", 
+"filename": "clang.tar.bz2",
+"unpack": true
+},
+{
+"size": 12057960,
+"digest": "6105d6432943141cffb40020dc5ba3a793650bdeb3af9bd5e56d3796c5f03df9962a73e521646cd71fbfb5e266c1e74716ad722fb6055589dfb7d35175bca89e",
+"algorithm": "sha512",
+"filename": "gtk3.tar.xz",
+"unpack": true
+}
+]

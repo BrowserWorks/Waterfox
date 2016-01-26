@@ -11,7 +11,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
 const HTTP_PATH = "http://example.com";
 const HTTP_ENDPOINT = "/browser/browser/base/content/test/general/browser_web_channel.html";
 
-let gTests = [
+// Keep this synced with /mobile/android/tests/browser/robocop/testWebChannel.js
+// as much as possible.  (We only have that since we can't run browser chrome
+// tests on Android.  Yet?)
+var gTests = [
   {
     desc: "WebChannel generic message",
     run: function* () {

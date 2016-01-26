@@ -104,7 +104,8 @@ ArchiveInputStream::Init()
   uint32_t offset = ArchiveZipItem::StrToInt32(mCentral.localhdr_offset);
 
   // The file is corrupt
-  if (offset + ZIPLOCAL_SIZE > mData.parentSize) {
+  if (mData.parentSize < ZIPLOCAL_SIZE ||
+      offset > mData.parentSize - ZIPLOCAL_SIZE) {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -139,7 +140,8 @@ ArchiveInputStream::Init()
             ArchiveZipItem::StrToInt16(local.extrafield_len);
 
   // The file is corrupt if there is not enough data
-  if (offset + mData.sizeToBeRead > mData.parentSize) {
+  if (mData.parentSize < mData.sizeToBeRead ||
+      offset > mData.parentSize - mData.sizeToBeRead) {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -355,26 +357,27 @@ ArchiveInputStream::SetEOF()
 
 // ArchiveZipBlobImpl
 
-nsresult
-ArchiveZipBlobImpl::GetInternalStream(nsIInputStream** aStream)
+void
+ArchiveZipBlobImpl::GetInternalStream(nsIInputStream** aStream,
+                                      ErrorResult& aRv)
 {
   if (mLength > INT32_MAX) {
-    return NS_ERROR_FAILURE;
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
   }
 
-  ErrorResult rv;
-  uint64_t size = mBlobImpl->GetSize(rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
+  uint64_t size = mBlobImpl->GetSize(aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
   }
 
   nsCOMPtr<nsIInputStream> inputStream;
-  rv = mBlobImpl->GetInternalStream(getter_AddRefs(inputStream));
-  if (NS_WARN_IF(rv.Failed()) || !inputStream) {
-    return NS_ERROR_UNEXPECTED;
+  mBlobImpl->GetInternalStream(getter_AddRefs(inputStream), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return;
   }
 
-  nsRefPtr<ArchiveInputStream> stream = new ArchiveInputStream(size,
+  RefPtr<ArchiveInputStream> stream = new ArchiveInputStream(size,
                                                                inputStream,
                                                                mFilename,
                                                                mStart,
@@ -382,7 +385,6 @@ ArchiveZipBlobImpl::GetInternalStream(nsIInputStream** aStream)
                                                                mCentral);
 
   stream.forget(aStream);
-  return NS_OK;
 }
 
 already_AddRefed<mozilla::dom::BlobImpl>
@@ -391,7 +393,7 @@ ArchiveZipBlobImpl::CreateSlice(uint64_t aStart,
                                 const nsAString& aContentType,
                                 mozilla::ErrorResult& aRv)
 {
-  nsRefPtr<BlobImpl> impl =
+  RefPtr<BlobImpl> impl =
     new ArchiveZipBlobImpl(mFilename, mContentType, aStart, mLength, mCentral,
                            mBlobImpl);
   return impl.forget();

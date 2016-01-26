@@ -9,24 +9,14 @@
 
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/ImageCaptureBinding.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 namespace mozilla {
 
-#ifdef PR_LOGGING
-
 #ifndef IC_LOG
-PRLogModuleInfo* GetICLog();
-#define IC_LOG(...) PR_LOG(GetICLog(), PR_LOG_DEBUG, (__VA_ARGS__))
+LogModule* GetICLog();
+#define IC_LOG(...) MOZ_LOG(GetICLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 #endif
-
-#else
-
-#ifndef IC_LOG
-#define IC_LOG(...)
-#endif
-
-#endif // PR_LOGGING
 
 namespace dom {
 
@@ -63,7 +53,7 @@ public:
   VideoStreamTrack* GetVideoStreamTrack() const;
 
   // nsWrapperCache member
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
     return ImageCaptureBinding::Wrap(aCx, this, aGivenProto);
   }
@@ -94,7 +84,7 @@ protected:
   // should return NS_ERROR_NOT_IMPLEMENTED.
   nsresult TakePhotoByMediaEngine();
 
-  nsRefPtr<VideoStreamTrack> mVideoStreamTrack;
+  RefPtr<VideoStreamTrack> mVideoStreamTrack;
 };
 
 } // namespace dom

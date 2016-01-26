@@ -12,6 +12,7 @@
 #include "nsNetUtil.h"
 #include "nsHttpHandler.h"
 #include "nsIHttpAuthenticator.h"
+#include "nsIHttpChannelInternal.h"
 #include "nsIAuthPrompt2.h"
 #include "nsIAuthPromptProvider.h"
 #include "nsIInterfaceRequestor.h"
@@ -24,6 +25,10 @@
 #include "nsIHttpAuthenticableChannel.h"
 #include "nsIURI.h"
 #include "nsContentUtils.h"
+#include "nsServiceManagerUtils.h"
+#include "nsILoadContext.h"
+#include "nsIURL.h"
+#include "mozilla/Telemetry.h"
 
 namespace mozilla {
 namespace net {
@@ -32,20 +37,21 @@ namespace net {
 #define SUBRESOURCE_AUTH_DIALOG_DISALLOW_CROSS_ORIGIN 1
 #define SUBRESOURCE_AUTH_DIALOG_ALLOW_ALL 2
 
+#define HTTP_AUTH_DIALOG_TOP_LEVEL_DOC 0
+#define HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE 1
+#define HTTP_AUTH_DIALOG_CROSS_ORIGIN_SUBRESOURCE 2
+
 static void
-GetAppIdAndBrowserStatus(nsIChannel* aChan, uint32_t* aAppId, bool* aInBrowserElem)
+GetOriginAttributesSuffix(nsIChannel* aChan, nsACString &aSuffix)
 {
-    nsCOMPtr<nsILoadContext> loadContext;
+    NeckoOriginAttributes oa;
+
+    // Deliberately ignoring the result and going with defaults
     if (aChan) {
-        NS_QueryNotificationCallbacks(aChan, loadContext);
+        NS_GetOriginAttributes(aChan, oa);
     }
-    if (!loadContext) {
-        *aAppId = NECKO_NO_APP_ID;
-        *aInBrowserElem = false;
-    } else {
-        loadContext->GetAppId(aAppId);
-        loadContext->GetIsInBrowserElement(aInBrowserElem);
-    }
+
+    oa.CreateSuffix(aSuffix);
 }
 
 nsHttpChannelAuthProvider::nsHttpChannelAuthProvider()
@@ -67,15 +73,15 @@ nsHttpChannelAuthProvider::~nsHttpChannelAuthProvider()
 }
 
 uint32_t nsHttpChannelAuthProvider::sAuthAllowPref =
-    SUBRESOURCE_AUTH_DIALOG_DISALLOW_CROSS_ORIGIN;
+    SUBRESOURCE_AUTH_DIALOG_ALLOW_ALL;
 
 void
 nsHttpChannelAuthProvider::InitializePrefs()
 {
   MOZ_ASSERT(NS_IsMainThread());
   mozilla::Preferences::AddUintVarCache(&sAuthAllowPref,
-                                        "network.auth.allow-subresource-auth",
-                                        SUBRESOURCE_AUTH_DIALOG_DISALLOW_CROSS_ORIGIN);
+                                        "network.auth.subresource-http-auth-allow",
+                                        SUBRESOURCE_AUTH_DIALOG_ALLOW_ALL);
 }
 
 NS_IMETHODIMP
@@ -173,7 +179,7 @@ nsHttpChannelAuthProvider::ProcessAuthentication(uint32_t httpStatus,
 }
 
 NS_IMETHODIMP
-nsHttpChannelAuthProvider::AddAuthorizationHeaders()
+nsHttpChannelAuthProvider::AddAuthorizationHeaders(bool aDontUseCachedWWWCreds)
 {
     LOG(("nsHttpChannelAuthProvider::AddAuthorizationHeaders? "
          "[this=%p channel=%p]\n", this, mAuthChannel));
@@ -197,14 +203,21 @@ nsHttpChannelAuthProvider::AddAuthorizationHeaders()
 
     // check if proxy credentials should be sent
     const char *proxyHost = ProxyHost();
-    if (proxyHost && UsingHttpProxy())
+    if (proxyHost && UsingHttpProxy()) {
         SetAuthorizationHeader(authCache, nsHttp::Proxy_Authorization,
                                "http", proxyHost, ProxyPort(),
                                nullptr, // proxy has no path
                                mProxyIdent);
+    }
 
     if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
         LOG(("Skipping Authorization header for anonymous load\n"));
+        return NS_OK;
+    }
+
+    if (aDontUseCachedWWWCreds) {
+        LOG(("Authorization header already present:"
+             " skipping adding auth header from cache\n"));
         return NS_OK;
     }
 
@@ -394,9 +407,8 @@ nsHttpChannelAuthProvider::GenCredsAndSetEntry(nsIHttpAuthenticator *auth,
     nsHttpAuthCache *authCache = gHttpHandler->AuthCache(mIsPrivate);
 
     nsCOMPtr<nsIChannel> chan = do_QueryInterface(mAuthChannel);
-    uint32_t appId;
-    bool isInBrowserElement;
-    GetAppIdAndBrowserStatus(chan, &appId, &isInBrowserElement);
+    nsAutoCString suffix;
+    GetOriginAttributesSuffix(chan, suffix);
 
     // create a cache entry.  we do this even though we don't yet know that
     // these credentials are valid b/c we need to avoid prompting the user
@@ -407,7 +419,7 @@ nsHttpChannelAuthProvider::GenCredsAndSetEntry(nsIHttpAuthenticator *auth,
     rv = authCache->SetAuthEntry(scheme, host, port, directory, realm,
                                  saveCreds ? *result : nullptr,
                                  saveChallenge ? challenge : nullptr,
-                                 appId, isInBrowserElement,
+                                 suffix,
                                  saveIdentity ? &ident : nullptr,
                                  sessionState);
     return rv;
@@ -670,9 +682,8 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
     }
 
     nsCOMPtr<nsIChannel> chan = do_QueryInterface(mAuthChannel);
-    uint32_t appId;
-    bool isInBrowserElement;
-    GetAppIdAndBrowserStatus(chan, &appId, &isInBrowserElement);
+    nsAutoCString suffix;
+    GetOriginAttributesSuffix(chan, suffix);
 
     //
     // if we already tried some credentials for this transaction, then
@@ -682,8 +693,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
     //
     nsHttpAuthEntry *entry = nullptr;
     authCache->GetAuthEntryForDomain(scheme.get(), host, port,
-                                     realm.get(), appId,
-                                     isInBrowserElement, &entry);
+                                     realm.get(), suffix, &entry);
 
     // hold reference to the auth session state (in case we clear our
     // reference to the entry).
@@ -714,7 +724,7 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
                     // corresponding entry from the auth cache.
                     authCache->ClearAuthEntry(scheme.get(), host,
                                               port, realm.get(),
-                                              appId, isInBrowserElement);
+                                              suffix);
                     entry = nullptr;
                     ident->Clear();
                 }
@@ -808,6 +818,16 @@ nsHttpChannelAuthProvider::GetCredentialsForChallenge(const char *challenge,
 bool
 nsHttpChannelAuthProvider::BlockPrompt()
 {
+    // Verify that it's ok to prompt for credentials here, per spec
+    // http://xhr.spec.whatwg.org/#the-send%28%29-method
+
+    nsCOMPtr<nsIHttpChannelInternal> chanInternal = do_QueryInterface(mAuthChannel);
+    MOZ_ASSERT(chanInternal);
+
+    if (chanInternal->GetBlockAuthPrompt()) {
+        return true;
+    }
+
     nsCOMPtr<nsIChannel> chan = do_QueryInterface(mAuthChannel);
     nsCOMPtr<nsILoadInfo> loadInfo;
     chan->GetLoadInfo(getter_AddRefs(loadInfo));
@@ -815,9 +835,27 @@ nsHttpChannelAuthProvider::BlockPrompt()
         return false;
     }
 
+    if (gHttpHandler->IsTelemetryEnabled()) {
+      if (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) {
+        Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS,
+                              HTTP_AUTH_DIALOG_TOP_LEVEL_DOC);
+      } else {
+        nsCOMPtr<nsIPrincipal> loadingPrincipal = loadInfo->LoadingPrincipal();
+        if (loadingPrincipal) {
+          if (NS_SUCCEEDED(loadingPrincipal->CheckMayLoad(mURI, false, false))) {
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS,
+              HTTP_AUTH_DIALOG_SAME_ORIGIN_SUBRESOURCE);
+          } else {
+            Telemetry::Accumulate(Telemetry::HTTP_AUTH_DIALOG_STATS,
+              HTTP_AUTH_DIALOG_CROSS_ORIGIN_SUBRESOURCE);
+          }
+        }
+      }
+    }
+
     // Allow if it is the top-level document or xhr.
-    if ((loadInfo->GetContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) ||
-        (loadInfo->GetContentPolicyType() == nsIContentPolicy::TYPE_XMLHTTPREQUEST)) {
+    if ((loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) ||
+        (loadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_XMLHTTPREQUEST)) {
         return false;
     }
 
@@ -1035,7 +1073,7 @@ nsHttpChannelAuthProvider::PromptForIdentity(uint32_t            level,
     if (authFlags & nsIHttpAuthenticator::IDENTITY_INCLUDES_DOMAIN)
         promptFlags |= nsIAuthInformation::NEED_DOMAIN;
 
-    nsRefPtr<nsHTTPAuthInformation> holder =
+    RefPtr<nsHTTPAuthInformation> holder =
         new nsHTTPAuthInformation(promptFlags, realmU,
                                   nsDependentCString(authType));
     if (!holder)
@@ -1099,15 +1137,13 @@ NS_IMETHODIMP nsHttpChannelAuthProvider::OnAuthAvailable(nsISupports *aContext,
     ParseRealm(mCurrentChallenge.get(), realm);
 
     nsCOMPtr<nsIChannel> chan = do_QueryInterface(mAuthChannel);
-    uint32_t appId;
-    bool isInBrowserElement;
-    GetAppIdAndBrowserStatus(chan, &appId, &isInBrowserElement);
+    nsAutoCString suffix;
+    GetOriginAttributesSuffix(chan, suffix);
 
     nsHttpAuthCache *authCache = gHttpHandler->AuthCache(mIsPrivate);
     nsHttpAuthEntry *entry = nullptr;
     authCache->GetAuthEntryForDomain(scheme.get(), host, port,
-                                     realm.get(), appId,
-                                     isInBrowserElement,
+                                     realm.get(), suffix,
                                      &entry);
 
     nsCOMPtr<nsISupports> sessionStateGrip;
@@ -1330,12 +1366,11 @@ nsHttpChannelAuthProvider::SetAuthorizationHeader(nsHttpAuthCache    *authCache,
     }
 
     nsCOMPtr<nsIChannel> chan = do_QueryInterface(mAuthChannel);
-    uint32_t appId;
-    bool isInBrowserElement;
-    GetAppIdAndBrowserStatus(chan, &appId, &isInBrowserElement);
+    nsAutoCString suffix;
+    GetOriginAttributesSuffix(chan, suffix);
 
     rv = authCache->GetAuthEntryForPath(scheme, host, port, path,
-                                        appId, isInBrowserElement, &entry);
+                                        suffix, &entry);
     if (NS_SUCCEEDED(rv)) {
         // if we are trying to add a header for origin server auth and if the
         // URL contains an explicit username, then try the given username first.
@@ -1424,5 +1459,5 @@ nsHttpChannelAuthProvider::GetCurrentPath(nsACString &path)
 NS_IMPL_ISUPPORTS(nsHttpChannelAuthProvider, nsICancelable,
                   nsIHttpChannelAuthProvider, nsIAuthPromptCallback)
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla

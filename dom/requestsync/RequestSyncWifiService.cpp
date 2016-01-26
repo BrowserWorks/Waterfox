@@ -21,12 +21,12 @@ namespace {
 
 StaticRefPtr<RequestSyncWifiService> sService;
 
-} // anonymous namespace
+} // namespace
 
 /* static */ void
 RequestSyncWifiService::Init()
 {
-  nsRefPtr<RequestSyncWifiService> service = GetInstance();
+  RefPtr<RequestSyncWifiService> service = GetInstance();
   if (!service) {
     NS_WARNING("Failed to initialize RequestSyncWifiService.");
   }
@@ -41,7 +41,7 @@ RequestSyncWifiService::GetInstance()
     ClearOnShutdown(&sService);
   }
 
-  nsRefPtr<RequestSyncWifiService> service = sService.get();
+  RefPtr<RequestSyncWifiService> service = sService.get();
   return service.forget();
 }
 
@@ -63,5 +63,5 @@ RequestSyncWifiService::Notify(const hal::NetworkInformation& aNetworkInfo)
   }
 }
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla

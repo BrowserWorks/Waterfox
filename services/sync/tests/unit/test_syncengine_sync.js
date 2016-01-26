@@ -852,6 +852,7 @@ add_test(function test_processIncoming_applyIncomingBatchSize_smaller() {
     do_check_eq(engine.previousFailed.length, 2);
     do_check_eq(engine.previousFailed[0], "record-no-0");
     do_check_eq(engine.previousFailed[1], "record-no-8");
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), 2);
 
   } finally {
     cleanAndGo(server);
@@ -905,6 +906,7 @@ add_test(function test_processIncoming_applyIncomingBatchSize_multiple() {
     // Records have been applied in 3 batches.
     do_check_eq(batchCalls, 3);
     do_check_attribute_count(engine._store.items, APPLY_BATCH_SIZE * 3);
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), 3);
 
   } finally {
     cleanAndGo(server);
@@ -980,6 +982,9 @@ add_test(function test_processIncoming_notify_count() {
     do_check_eq(counts.newFailed, 3);
     do_check_eq(counts.succeeded, 12);
 
+    // Make sure we recorded telemetry for the failed records.
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), 3);
+
     // Sync again, 1 of the failed items are the same, the rest didn't fail.
     engine._processIncoming();
 
@@ -993,6 +998,8 @@ add_test(function test_processIncoming_notify_count() {
     do_check_eq(counts.applied, 3);
     do_check_eq(counts.newFailed, 0);
     do_check_eq(counts.succeeded, 2);
+
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), 0);
 
     Svc.Obs.remove("weave:engine:sync:applied", onApplied);
   } finally {
@@ -1075,6 +1082,7 @@ add_test(function test_processIncoming_previousFailed() {
     do_check_eq(engine.previousFailed[1], "record-no-1");
     do_check_eq(engine.previousFailed[2], "record-no-8");
     do_check_eq(engine.previousFailed[3], "record-no-9");
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), 8);
 
     // Refetched items that didn't fail the second time are in engine._store.items.
     do_check_eq(engine._store.items['record-no-4'], "Record No. 4");
@@ -1188,6 +1196,7 @@ add_test(function test_processIncoming_failed_records() {
     do_check_eq(observerData, engine.name);
     do_check_eq(observerSubject.failed, BOGUS_RECORDS.length);
     do_check_eq(observerSubject.newFailed, BOGUS_RECORDS.length);
+    do_check_eq(sumHistogram("WEAVE_ENGINE_APPLY_NEW_FAILURES", { key: "rotary" }), BOGUS_RECORDS.length);
 
     // Testing batching of failed item fetches.
     // Try to sync again. Ensure that we split the request into chunks to avoid
@@ -1471,6 +1480,99 @@ add_test(function test_uploadOutgoing_MAX_UPLOAD_RECORDS() {
 
     // Ensure that the uploads were performed in batches of MAX_UPLOAD_RECORDS.
     do_check_eq(noOfUploads, Math.ceil(234/MAX_UPLOAD_RECORDS));
+
+  } finally {
+    cleanAndGo(server);
+  }
+});
+
+add_test(function test_uploadOutgoing_MAX_UPLOAD_BYTES() {
+  _("SyncEngine._uploadOutgoing uploads in batches of MAX_UPLOAD_BYTES");
+
+  Service.identity.username = "foo";
+  let collection = new ServerCollection();
+
+  // Let's count how many times the client posts to the server
+  let uploadCounts = [];
+  collection.post = (function(orig) {
+    return function(data) {
+      uploadCounts.push(JSON.parse(data).length);
+      return orig.call(this, data);
+    };
+  }(collection.post));
+
+  let engine = makeRotaryEngine();
+
+  // A helper function that calculates the overhead of a record as uploaded
+  // to the server - it returns the size of a record with an empty string.
+  // This is so we can calculate exactly how many records we can fit into a
+  // batch (ie, we expect the record size that's actually uploaded to be the
+  // result of this function + the length of the data)
+  let calculateRecordOverhead = function() {
+    engine._store.items["string-no-x"] = "";
+    let x = engine._createRecord("string-no-x");
+    x.encrypt(Service.collectionKeys.keyForCollection(engine.name));
+    delete engine._store.items["string-no-x"];
+    return JSON.stringify(x).length;
+  }
+
+  let allIds = [];
+  // Create a bunch of records (and server side handlers) - make 20 that will
+  // fit inside our byte limit.
+  let fullItemSize = (MAX_UPLOAD_BYTES - 2) / 20;
+  // fullItemSize includes the "," between records and quote characters (as we
+  // will use strings)
+  let itemSize = fullItemSize - calculateRecordOverhead() - (3 * 20);
+  // Add 21 of this size - the first 20 should fit in the first batch.
+  for (let i = 0; i < 21; i++) {
+    let id = 'string-no-' + i;
+    engine._store.items[id] = "X".repeat(itemSize);
+    engine._tracker.addChangedID(id, 0);
+    collection.insert(id);
+    allIds.push(id);
+  }
+  // Now a single large item that's greater than MAX_UPLOAD_BYTES. This should
+  // cause the 1 item that didn't fit in the previous batch to be uploaded
+  // by itself, then this large one by itself.
+  engine._store.items["large-item"] = "Y".repeat(MAX_UPLOAD_BYTES*2);
+  engine._tracker.addChangedID("large-item", 0);
+  collection.insert("large-item");
+    allIds.push("large-item");
+  // And a few more small items - these should all be uploaded together.
+  for (let i = 0; i < 20; i++) {
+    let id = 'small-no-' + i;
+    engine._store.items[id] = "ZZZZ";
+    engine._tracker.addChangedID(id, 0);
+    collection.insert(id);
+    allIds.push(id);
+  }
+
+  let meta_global = Service.recordManager.set(engine.metaURL,
+                                              new WBORecord(engine.metaURL));
+  meta_global.payload.engines = {rotary: {version: engine.version,
+                                         syncID: engine.syncID}};
+
+  let server = sync_httpd_setup({
+      "/1.1/foo/storage/rotary": collection.handler()
+  });
+
+  let syncTesting = new SyncTestingInfrastructure(server);
+
+  try {
+
+    // Confirm initial environment.
+    do_check_eq(uploadCounts.length, 0);
+
+    engine._syncStartup();
+    engine._uploadOutgoing();
+
+    // Ensure all records have been uploaded.
+    for (let checkId of allIds) {
+      do_check_true(!!collection.payload(checkId));
+    }
+
+    // Ensure that the uploads were performed in the batch sizes we expect.
+    Assert.deepEqual(uploadCounts, [20, 1, 1, 20]);
 
   } finally {
     cleanAndGo(server);

@@ -12,16 +12,26 @@
 #include "nsIPrincipal.h"
 #include "nsIWeakReferenceUtils.h" // for nsWeakPtr
 #include "nsIURI.h"
+#include "nsTArray.h"
+
+#include "mozilla/BasePrincipal.h"
 
 class nsINode;
+class nsPIDOMWindow;
+class nsXMLHttpRequest;
 
 namespace mozilla {
 
 namespace net {
-class HttpChannelParent;
-class FTPChannelParent;
-class WebSocketChannelParent;
-}
+class OptionalLoadInfoArgs;
+} // namespace net
+
+namespace ipc {
+// we have to forward declare that function so we can use it as a friend.
+nsresult
+LoadInfoArgsToLoadInfo(const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
+                       nsILoadInfo** outLoadInfo);
+} // namespace ipc
 
 /**
  * Class that provides an nsILoadInfo implementation.
@@ -42,32 +52,77 @@ public:
            nsIPrincipal* aTriggeringPrincipal,
            nsINode* aLoadingContext,
            nsSecurityFlags aSecurityFlags,
-           nsContentPolicyType aContentPolicyType,
-           nsIURI* aBaseURI = nullptr);
+           nsContentPolicyType aContentPolicyType);
+
+  // create an exact copy of the loadinfo
+  already_AddRefed<nsILoadInfo> Clone() const;
+  // creates a copy of the loadinfo which is appropriate to use for a
+  // separate request. I.e. not for a redirect or an inner channel, but
+  // when a separate request is made with the same security properties.
+  already_AddRefed<nsILoadInfo> CloneForNewRequest() const;
+
+  void SetIsPreflight();
 
 private:
   // private constructor that is only allowed to be called from within
   // HttpChannelParent and FTPChannelParent declared as friends undeneath.
   // In e10s we can not serialize nsINode, hence we store the innerWindowID.
+  // Please note that aRedirectChain uses swapElements.
   LoadInfo(nsIPrincipal* aLoadingPrincipal,
            nsIPrincipal* aTriggeringPrincipal,
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType,
-           uint32_t aInnerWindowID);
+           LoadTainting aTainting,
+           bool aUpgradeInsecureRequests,
+           uint64_t aInnerWindowID,
+           uint64_t aOuterWindowID,
+           uint64_t aParentOuterWindowID,
+           bool aEnforceSecurity,
+           bool aInitialSecurityCheckDone,
+           bool aIsThirdPartyRequest,
+           const NeckoOriginAttributes& aOriginAttributes,
+           nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChainIncludingInternalRedirects,
+           nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain,
+           const nsTArray<nsCString>& aUnsafeHeaders,
+           bool aForcePreflight,
+           bool aIsPreflight);
+  LoadInfo(const LoadInfo& rhs);
 
-  friend class net::HttpChannelParent;
-  friend class net::FTPChannelParent;
-  friend class net::WebSocketChannelParent;
+  friend nsresult
+  mozilla::ipc::LoadInfoArgsToLoadInfo(
+    const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
+    nsILoadInfo** outLoadInfo);
 
   ~LoadInfo();
 
-  nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
-  nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
-  nsWeakPtr mLoadingContext;
-  nsSecurityFlags mSecurityFlags;
-  nsContentPolicyType mContentPolicyType;
-  nsCOMPtr<nsIURI> mBaseURI;
-  uint32_t mInnerWindowID;
+  void ComputeIsThirdPartyContext(nsPIDOMWindow* aOuterWindow);
+
+  // This function is the *only* function which can change the securityflags
+  // of a loadinfo. It only exists because of the XHR code. Don't call it
+  // from anywhere else!
+  void SetIncludeCookiesSecFlag();
+  friend class ::nsXMLHttpRequest;
+
+  // if you add a member, please also update the copy constructor
+  nsCOMPtr<nsIPrincipal>           mLoadingPrincipal;
+  nsCOMPtr<nsIPrincipal>           mTriggeringPrincipal;
+  nsWeakPtr                        mLoadingContext;
+  nsSecurityFlags                  mSecurityFlags;
+  nsContentPolicyType              mInternalContentPolicyType;
+  LoadTainting                     mTainting;
+  bool                             mUpgradeInsecureRequests;
+  uint64_t                         mInnerWindowID;
+  uint64_t                         mOuterWindowID;
+  uint64_t                         mParentOuterWindowID;
+  bool                             mEnforceSecurity;
+  bool                             mInitialSecurityCheckDone;
+  bool                             mIsThirdPartyContext;
+  NeckoOriginAttributes            mOriginAttributes;
+  nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChainIncludingInternalRedirects;
+  nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChain;
+  nsTArray<nsCString>              mCorsUnsafeHeaders;
+  bool                             mForcePreflight;
+  bool                             mIsPreflight;
 };
 
 } // namespace mozilla

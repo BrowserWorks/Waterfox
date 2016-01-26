@@ -9,6 +9,7 @@
 
 #include "nsISupports.h"
 
+class nsAttrValue;
 class nsIAtom;
 class nsIContent;
 class nsIDocument;
@@ -21,8 +22,8 @@ class Element;
 } // namespace mozilla
 
 #define NS_IMUTATION_OBSERVER_IID \
-{ 0x16fe5e3e, 0xeadc, 0x4312, \
-  { 0x9d, 0x44, 0xb6, 0xbe, 0xdd, 0x6b, 0x54, 0x74 } }
+{ 0x6d674c17, 0x0fbc, 0x4633, \
+  { 0x8f, 0x46, 0x73, 0x4e, 0x87, 0xeb, 0xf0, 0xc7 } }
 
 /**
  * Information details about a characterdata change.  Basically, we
@@ -62,7 +63,7 @@ struct CharacterDataChangeInfo
    * mChangeStart + mReplaceLength.
    */
 
-  struct Details {
+  struct MOZ_STACK_CLASS Details {
     enum {
       eMerge,  // two text nodes are merged as a result of normalize()
       eSplit   // a text node is split as a result of splitText()
@@ -71,7 +72,7 @@ struct CharacterDataChangeInfo
      * For eMerge it's the text node that will be removed, for eSplit it's the
      * new text node.
      */
-    nsIContent* mNextSibling;
+    nsIContent* MOZ_NON_OWNING_REF mNextSibling;
   };
 
   /**
@@ -157,6 +158,8 @@ public:
    * @param aModType     Whether or not the attribute will be added, changed, or
    *                     removed. The constants are defined in
    *                     nsIDOMMutationEvent.h.
+   * @param aNewValue    The new value, IF it has been preparsed by
+   *                     BeforeSetAttr, otherwise null.
    *
    * @note Callers of this method might not hold a strong reference to the
    *       observer.  The observer is responsible for making sure it stays
@@ -168,7 +171,8 @@ public:
                                    mozilla::dom::Element* aElement,
                                    int32_t      aNameSpaceID,
                                    nsIAtom*     aAttribute,
-                                   int32_t      aModType) = 0;
+                                   int32_t      aModType,
+                                   const nsAttrValue* aNewValue) = 0;
 
   /**
    * Notification that an attribute of an element has changed.
@@ -180,6 +184,8 @@ public:
    * @param aModType     Whether or not the attribute was added, changed, or
    *                     removed. The constants are defined in
    *                     nsIDOMMutationEvent.h.
+   * @param aOldValue    The old value, if either the old value or the new
+   *                     value are StoresOwnData() (or absent); null otherwise.
    *
    * @note Callers of this method might not hold a strong reference to the
    *       observer.  The observer is responsible for making sure it stays
@@ -191,7 +197,20 @@ public:
                                 mozilla::dom::Element* aElement,
                                 int32_t      aNameSpaceID,
                                 nsIAtom*     aAttribute,
-                                int32_t      aModType) = 0;
+                                int32_t      aModType,
+                                const nsAttrValue* aOldValue) = 0;
+
+  /**
+   * Notification that the root of a native anonymous has been added
+   * or removed.
+   *
+   * @param aDocument    Owner doc of aContent
+   * @param aContent     Anonymous node that's been added or removed
+   * @param aIsRemove    True if it's a removal, false if an addition
+   */
+  virtual void NativeAnonymousChildListChange(nsIDocument* aDocument,
+                                              nsIContent* aContent,
+                                              bool aIsRemove) {}
 
   /**
    * Notification that an attribute of an element has been
@@ -336,14 +355,21 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsIMutationObserver, NS_IMUTATION_OBSERVER_IID)
                                      mozilla::dom::Element* aElement,        \
                                      int32_t aNameSpaceID,                   \
                                      nsIAtom* aAttribute,                    \
-                                     int32_t aModType) override;
+                                     int32_t aModType,                       \
+                                     const nsAttrValue* aNewValue) override;
+
+#define NS_DECL_NSIMUTATIONOBSERVER_NATIVEANONYMOUSCHILDLISTCHANGE           \
+    virtual void NativeAnonymousChildListChange(nsIDocument* aDocument,      \
+                                                nsIContent* aContent,        \
+                                                bool aIsRemove) override;
 
 #define NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTECHANGED                         \
     virtual void AttributeChanged(nsIDocument* aDocument,                    \
                                   mozilla::dom::Element* aElement,           \
                                   int32_t aNameSpaceID,                      \
                                   nsIAtom* aAttribute,                       \
-                                  int32_t aModType) override;
+                                  int32_t aModType,                          \
+                                  const nsAttrValue* aOldValue) override;
 
 #define NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED                          \
     virtual void ContentAppended(nsIDocument* aDocument,                     \
@@ -374,6 +400,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsIMutationObserver, NS_IMUTATION_OBSERVER_IID)
     NS_DECL_NSIMUTATIONOBSERVER_CHARACTERDATAWILLCHANGE                      \
     NS_DECL_NSIMUTATIONOBSERVER_CHARACTERDATACHANGED                         \
     NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTEWILLCHANGE                          \
+    NS_DECL_NSIMUTATIONOBSERVER_NATIVEANONYMOUSCHILDLISTCHANGE               \
     NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTECHANGED                             \
     NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED                              \
     NS_DECL_NSIMUTATIONOBSERVER_CONTENTINSERTED                              \
@@ -405,7 +432,14 @@ _class::AttributeWillChange(nsIDocument* aDocument,                       \
                             mozilla::dom::Element* aElement,              \
                             int32_t aNameSpaceID,                         \
                             nsIAtom* aAttribute,                          \
-                            int32_t aModType)                             \
+                            int32_t aModType,                             \
+                            const nsAttrValue* aNewValue)                 \
+{                                                                         \
+}                                                                         \
+void                                                                      \
+_class::NativeAnonymousChildListChange(nsIDocument* aDocument,            \
+                                       nsIContent* aContent,              \
+                                       bool aIsRemove)                    \
 {                                                                         \
 }                                                                         \
 void                                                                      \
@@ -413,7 +447,8 @@ _class::AttributeChanged(nsIDocument* aDocument,                          \
                          mozilla::dom::Element* aElement,                 \
                          int32_t aNameSpaceID,                            \
                          nsIAtom* aAttribute,                             \
-                         int32_t aModType)                                \
+                         int32_t aModType,                                \
+                         const nsAttrValue* aOldValue)                    \
 {                                                                         \
 }                                                                         \
 void                                                                      \

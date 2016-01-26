@@ -10,8 +10,6 @@
 
 #include <assert.h>
 
-#include "vpx_ports/mem.h"
-
 #include "vp9/common/vp9_filter.h"
 
 DECLARE_ALIGNED(256, const InterpKernel,

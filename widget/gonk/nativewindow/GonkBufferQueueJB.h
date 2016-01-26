@@ -385,7 +385,7 @@ public:
     // NATIVE_WINDOW_TRANSFORM_ROT_90.  The default is 0 (no transform).
     status_t setTransformHint(uint32_t hint);
 
-    mozilla::TemporaryRef<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
+    already_AddRefed<TextureClient> getTextureClientFromBuffer(ANativeWindowBuffer* buffer);
 
     int getSlotFromTextureClientLocked(TextureClient* client) const;
 
@@ -445,7 +445,7 @@ private:
         sp<GraphicBuffer> mGraphicBuffer;
 
         // mTextureClient is a thin abstraction over remotely allocated GraphicBuffer.
-        mozilla::RefPtr<TextureClient> mTextureClient;
+        RefPtr<TextureClient> mTextureClient;
 
         // BufferState represents the different states in which a buffer slot
         // can be.  All slots are initially FREE.

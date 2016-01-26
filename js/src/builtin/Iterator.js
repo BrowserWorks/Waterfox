@@ -11,7 +11,7 @@ var LegacyIteratorWrapperMap = new std_WeakMap();
 function LegacyIteratorNext(arg) {
     var iter = callFunction(std_WeakMap_get, LegacyIteratorWrapperMap, this);
     try {
-        return { value: iter.next(arg), done: false };
+        return { value: callContentFunction(iter.next, iter, arg), done: false };
     } catch (e) {
         if (e instanceof std_StopIteration)
             return { value: undefined, done: true };
@@ -22,7 +22,7 @@ function LegacyIteratorNext(arg) {
 function LegacyIteratorThrow(exn) {
     var iter = callFunction(std_WeakMap_get, LegacyIteratorWrapperMap, this);
     try {
-        return { value: iter.throw(exn), done: false };
+        return { value: callContentFunction(iter.throw, iter, exn), done: false };
     } catch (e) {
         if (e instanceof std_StopIteration)
             return { value: undefined, done: true };
@@ -83,4 +83,45 @@ function LegacyIteratorShim() {
 
 function LegacyGeneratorIteratorShim() {
     return NewLegacyIterator(ToObject(this), LegacyGeneratorIterator);
+}
+
+// 7.4.8 CreateListIterator()
+function CreateListIterator(array) {
+    let iterator = NewListIterator();
+    UnsafeSetReservedSlot(iterator, ITERATOR_SLOT_TARGET, array);
+    UnsafeSetReservedSlot(iterator, ITERATOR_SLOT_NEXT_INDEX, 0);
+
+    // 7.4.8.1 ListIterator next()
+    // The spec requires that we use a new next function per iterator object.
+    let next = function() {
+        if (!IsObject(this) || !IsListIterator(this))
+            return callFunction(CallListIteratorMethodIfWrapped, this, "ListIteratorNext");
+
+        if (ActiveFunction() !== UnsafeGetReservedSlot(this, ITERATOR_SLOT_NEXT_METHOD))
+            ThrowTypeError(JSMSG_INCOMPATIBLE_METHOD, "next", "method", ToString(this));
+
+        let array = UnsafeGetObjectFromReservedSlot(this, ITERATOR_SLOT_TARGET);
+        let index = UnsafeGetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX);
+
+        if (index >= ToLength(array.length)) {
+            UnsafeSetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX, 1/0);
+            return { value: undefined, done: true };
+        }
+
+        UnsafeSetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX, index + 1);
+        return { value: array[index], done: false };
+    };
+
+    UnsafeSetReservedSlot(iterator, ITERATOR_SLOT_NEXT_METHOD, next);
+    iterator.next = next;
+
+    iterator[std_iterator] = ListIteratorIdentity;
+    return iterator;
+}
+
+function ListIteratorIdentity() {
+    if (!IsObject(this) || !IsListIterator(this))
+        return callFunction(CallListIteratorMethodIfWrapped, this, "ListIteratorIdentity");
+
+    return this;
 }

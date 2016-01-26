@@ -6,19 +6,21 @@
 
 EXPORTS.mozilla.jni += [
     'Accessors.h',
+    'Natives.h',
     'Refs.h',
     'Types.h',
     'Utils.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'Utils.cpp',
 ]
-
-FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/widget/android',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

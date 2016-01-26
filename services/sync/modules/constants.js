@@ -4,7 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Process each item in the "constants hash" to add to "global" and give a name
-this.EXPORTED_SYMBOLS = [((this[key] = val), key) for ([key, val] in Iterator({
+this.EXPORTED_SYMBOLS = [];
+for (let [key, val] in Iterator({
 
 WEAVE_VERSION:                         "@weave_version@",
 
@@ -93,10 +94,10 @@ SCORE_UPDATE_DELAY:                    100,
 // observed spurious idle/back events and short enough to pre-empt user activity.
 IDLE_OBSERVER_BACK_DELAY:              100,
 
-// Number of records to upload in a single POST (multiple POSTS if exceeded)
-// FIXME: Record size limit is 256k (new cluster), so this can be quite large!
-// (Bug 569295)
+// Max number of records or bytes to upload in a single POST - we'll do multiple POSTS if either
+// MAX_UPLOAD_RECORDS or MAX_UPLOAD_BYTES is hit)
 MAX_UPLOAD_RECORDS:                    100,
+MAX_UPLOAD_BYTES:                      1024 * 1023, // just under 1MB
 MAX_HISTORY_UPLOAD:                    5000,
 MAX_HISTORY_DOWNLOAD:                  5000,
 
@@ -122,7 +123,6 @@ LOGIN_FAILED_NETWORK_ERROR:            "error.login.reason.network",
 LOGIN_FAILED_SERVER_ERROR:             "error.login.reason.server",
 LOGIN_FAILED_INVALID_PASSPHRASE:       "error.login.reason.recoverykey",
 LOGIN_FAILED_LOGIN_REJECTED:           "error.login.reason.account",
-LOGIN_FAILED_NOT_READY:                "error.login.reason.initializing",
 
 // sync failure status codes
 METARECORD_DOWNLOAD_FAIL:              "error.sync.reason.metarecord_download_fail",
@@ -182,4 +182,10 @@ MIN_PASS_LENGTH:                       8,
 
 LOG_DATE_FORMAT:                       "%Y-%m-%d %H:%M:%S",
 
-}))];
+DEVICE_TYPE_DESKTOP:                   "desktop",
+DEVICE_TYPE_MOBILE:                    "mobile",
+
+})) {
+  this[key] = val;
+  this.EXPORTED_SYMBOLS.push(key);
+}

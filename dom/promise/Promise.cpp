@@ -6,31 +6,39 @@
 
 #include "mozilla/dom/Promise.h"
 
-#include "jsfriendapi.h"
 #include "js/Debug.h"
-#include "mozilla/dom/BindingUtils.h"
-#include "mozilla/dom/DOMError.h"
-#include "mozilla/dom/OwningNonNull.h"
-#include "mozilla/dom/PromiseBinding.h"
-#include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/MediaStreamError.h"
+
 #include "mozilla/Atomics.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/OwningNonNull.h"
 #include "mozilla/Preferences.h"
+
+#include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/DOMError.h"
+#include "mozilla/dom/MediaStreamError.h"
+#include "mozilla/dom/PromiseBinding.h"
+#include "mozilla/dom/ScriptSettings.h"
+
+#include "jsfriendapi.h"
+#include "js/StructuredClone.h"
+#include "nsContentUtils.h"
+#include "nsGlobalWindow.h"
+#include "nsIScriptObjectPrincipal.h"
+#include "nsJSEnvironment.h"
+#include "nsJSPrincipals.h"
+#include "nsJSUtils.h"
+#include "nsPIDOMWindow.h"
 #include "PromiseCallback.h"
 #include "PromiseDebugging.h"
 #include "PromiseNativeHandler.h"
 #include "PromiseWorkerProxy.h"
-#include "nsContentUtils.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
-#include "nsJSPrincipals.h"
-#include "nsJSUtils.h"
-#include "nsPIDOMWindow.h"
-#include "nsJSEnvironment.h"
-#include "nsIScriptObjectPrincipal.h"
+#include "WrapperFactory.h"
 #include "xpcpublic.h"
-#include "nsGlobalWindow.h"
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 
 namespace mozilla {
 namespace dom {
@@ -38,40 +46,38 @@ namespace dom {
 namespace {
 // Generator used by Promise::GetID.
 Atomic<uintptr_t> gIDGenerator(0);
-}
+} // namespace
 
 using namespace workers;
 
-NS_IMPL_ISUPPORTS0(PromiseNativeHandler)
-
 // This class processes the promise's callbacks with promise's result.
-class PromiseCallbackTask final : public nsRunnable
+class PromiseReactionJob final : public nsRunnable
 {
 public:
-  PromiseCallbackTask(Promise* aPromise,
-                      PromiseCallback* aCallback,
-                      const JS::Value& aValue)
+  PromiseReactionJob(Promise* aPromise,
+                     PromiseCallback* aCallback,
+                     const JS::Value& aValue)
     : mPromise(aPromise)
     , mCallback(aCallback)
     , mValue(CycleCollectedJSRuntime::Get()->Runtime(), aValue)
   {
     MOZ_ASSERT(aPromise);
     MOZ_ASSERT(aCallback);
-    MOZ_COUNT_CTOR(PromiseCallbackTask);
+    MOZ_COUNT_CTOR(PromiseReactionJob);
   }
 
   virtual
-  ~PromiseCallbackTask()
+  ~PromiseReactionJob()
   {
-    NS_ASSERT_OWNINGTHREAD(PromiseCallbackTask);
-    MOZ_COUNT_DTOR(PromiseCallbackTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseReactionJob);
+    MOZ_COUNT_DTOR(PromiseReactionJob);
   }
 
 protected:
   NS_IMETHOD
   Run() override
   {
-    NS_ASSERT_OWNINGTHREAD(PromiseCallbackTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseReactionJob);
     ThreadsafeAutoJSContext cx;
     JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
     MOZ_ASSERT(wrapper); // It was preserved!
@@ -103,15 +109,10 @@ protected:
   }
 
 private:
-  nsRefPtr<Promise> mPromise;
-  nsRefPtr<PromiseCallback> mCallback;
+  RefPtr<Promise> mPromise;
+  RefPtr<PromiseCallback> mCallback;
   JS::PersistentRooted<JS::Value> mValue;
   NS_DECL_OWNINGTHREAD;
-};
-
-enum {
-  SLOT_PROMISE = 0,
-  SLOT_DATA
 };
 
 /*
@@ -128,9 +129,9 @@ void
 LinkThenableCallables(JSContext* aCx, JS::Handle<JSObject*> aResolveFunc,
                       JS::Handle<JSObject*> aRejectFunc)
 {
-  js::SetFunctionNativeReserved(aResolveFunc, SLOT_DATA,
+  js::SetFunctionNativeReserved(aResolveFunc, Promise::SLOT_DATA,
                                 JS::ObjectValue(*aRejectFunc));
-  js::SetFunctionNativeReserved(aRejectFunc, SLOT_DATA,
+  js::SetFunctionNativeReserved(aRejectFunc, Promise::SLOT_DATA,
                                 JS::ObjectValue(*aResolveFunc));
 }
 
@@ -141,18 +142,22 @@ LinkThenableCallables(JSContext* aCx, JS::Handle<JSObject*> aResolveFunc,
 bool
 MarkAsCalledIfNotCalledBefore(JSContext* aCx, JS::Handle<JSObject*> aFunc)
 {
-  JS::Value otherFuncVal = js::GetFunctionNativeReserved(aFunc, SLOT_DATA);
+  JS::Value otherFuncVal =
+    js::GetFunctionNativeReserved(aFunc, Promise::SLOT_DATA);
 
   if (!otherFuncVal.isObject()) {
     return false;
   }
 
   JSObject* otherFuncObj = &otherFuncVal.toObject();
-  MOZ_ASSERT(js::GetFunctionNativeReserved(otherFuncObj, SLOT_DATA).isObject());
+  MOZ_ASSERT(js::GetFunctionNativeReserved(otherFuncObj,
+                                           Promise::SLOT_DATA).isObject());
 
   // Break both references.
-  js::SetFunctionNativeReserved(aFunc, SLOT_DATA, JS::UndefinedValue());
-  js::SetFunctionNativeReserved(otherFuncObj, SLOT_DATA, JS::UndefinedValue());
+  js::SetFunctionNativeReserved(aFunc, Promise::SLOT_DATA,
+                                JS::UndefinedValue());
+  js::SetFunctionNativeReserved(otherFuncObj, Promise::SLOT_DATA,
+                                JS::UndefinedValue());
 
   return true;
 }
@@ -160,7 +165,8 @@ MarkAsCalledIfNotCalledBefore(JSContext* aCx, JS::Handle<JSObject*> aFunc)
 Promise*
 GetPromise(JSContext* aCx, JS::Handle<JSObject*> aFunc)
 {
-  JS::Value promiseVal = js::GetFunctionNativeReserved(aFunc, SLOT_PROMISE);
+  JS::Value promiseVal = js::GetFunctionNativeReserved(aFunc,
+                                                       Promise::SLOT_PROMISE);
 
   MOZ_ASSERT(promiseVal.isObject());
 
@@ -168,36 +174,36 @@ GetPromise(JSContext* aCx, JS::Handle<JSObject*> aFunc)
   UNWRAP_OBJECT(Promise, &promiseVal.toObject(), promise);
   return promise;
 }
-};
+} // namespace
 
 // Runnable to resolve thenables.
 // Equivalent to the specification's ResolvePromiseViaThenableTask.
-class ThenableResolverTask final : public nsRunnable
+class PromiseResolveThenableJob final : public nsRunnable
 {
 public:
-  ThenableResolverTask(Promise* aPromise,
-                        JS::Handle<JSObject*> aThenable,
-                        PromiseInit* aThen)
+  PromiseResolveThenableJob(Promise* aPromise,
+                            JS::Handle<JSObject*> aThenable,
+                            PromiseInit* aThen)
     : mPromise(aPromise)
     , mThenable(CycleCollectedJSRuntime::Get()->Runtime(), aThenable)
     , mThen(aThen)
   {
     MOZ_ASSERT(aPromise);
-    MOZ_COUNT_CTOR(ThenableResolverTask);
+    MOZ_COUNT_CTOR(PromiseResolveThenableJob);
   }
 
   virtual
-  ~ThenableResolverTask()
+  ~PromiseResolveThenableJob()
   {
-    NS_ASSERT_OWNINGTHREAD(ThenableResolverTask);
-    MOZ_COUNT_DTOR(ThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseResolveThenableJob);
+    MOZ_COUNT_DTOR(PromiseResolveThenableJob);
   }
 
 protected:
   NS_IMETHOD
   Run() override
   {
-    NS_ASSERT_OWNINGTHREAD(ThenableResolverTask);
+    NS_ASSERT_OWNINGTHREAD(PromiseResolveThenableJob);
     ThreadsafeAutoJSContext cx;
     JS::Rooted<JSObject*> wrapper(cx, mPromise->GetWrapper());
     MOZ_ASSERT(wrapper); // It was preserved!
@@ -233,9 +239,8 @@ protected:
     rv.WouldReportJSException();
     if (rv.Failed()) {
       JS::Rooted<JS::Value> exn(cx);
-      if (rv.IsJSException()) {
-        rv.StealJSException(cx, &exn);
-      } else {
+      { // Scope for JSAutoCompartment
+
         // Convert the ErrorResult to a JS exception object that we can reject
         // ourselves with.  This will be exactly the exception that would get
         // thrown from a binding method whose ErrorResult ended up with
@@ -267,53 +272,113 @@ protected:
   }
 
 private:
-  nsRefPtr<Promise> mPromise;
+  RefPtr<Promise> mPromise;
   JS::PersistentRooted<JSObject*> mThenable;
-  nsRefPtr<PromiseInit> mThen;
+  RefPtr<PromiseInit> mThen;
   NS_DECL_OWNINGTHREAD;
 };
 
-// Fast version of ThenableResolverTask for use in the cases when we know we're
-// calling the canonical Promise.prototype.then on an actual DOM Promise.  In
-// that case we can just bypass the jumping into and out of JS and call
-// AppendCallbacks on that promise directly.
-class FastThenableResolverTask final : public nsRunnable
+// A struct implementing
+// <http://www.ecma-international.org/ecma-262/6.0/#sec-promisecapability-records>.
+// While the spec holds on to these in some places, in practice those places
+// don't actually need everything from this struct, so we explicitly grab
+// members from it as needed in those situations.  That allows us to make this a
+// stack-only struct and keep the rooting simple.
+//
+// We also add an optimization for the (common) case when we discover that the
+// Promise constructor we're supposed to use is in fact the canonical Promise
+// constructor.  In that case we will just set mNativePromise in our
+// PromiseCapability and not set mPromise/mResolve/mReject; the correct
+// callbacks will be the standard Promise ones, and we don't really want to
+// synthesize JSFunctions for them in that situation.
+struct MOZ_STACK_CLASS Promise::PromiseCapability
 {
-public:
-  FastThenableResolverTask(PromiseCallback* aResolveCallback,
-                           PromiseCallback* aRejectCallback,
-                           Promise* aNextPromise)
-    : mResolveCallback(aResolveCallback)
-    , mRejectCallback(aRejectCallback)
-    , mNextPromise(aNextPromise)
-  {
-    MOZ_ASSERT(aResolveCallback);
-    MOZ_ASSERT(aRejectCallback);
-    MOZ_ASSERT(aNextPromise);
-    MOZ_COUNT_CTOR(FastThenableResolverTask);
-  }
+  explicit PromiseCapability(JSContext* aCx)
+    : mPromise(aCx)
+    , mResolve(aCx)
+    , mReject(aCx)
+  {}
 
-  virtual
-  ~FastThenableResolverTask()
-  {
-    NS_ASSERT_OWNINGTHREAD(FastThenableResolverTask);
-    MOZ_COUNT_DTOR(FastThenableResolverTask);
-  }
+  // Take an exception on aCx and try to convert it into a promise rejection.
+  // Note that this can result in a new exception being thrown on aCx, or an
+  // exception getting thrown on aRv.  On entry to this method, aRv is assumed
+  // to not be a failure.  This should only be called if NewPromiseCapability
+  // succeeded on this PromiseCapability.
+  void RejectWithException(JSContext* aCx, ErrorResult& aRv);
 
-protected:
-  NS_IMETHOD
-  Run() override
-  {
-    NS_ASSERT_OWNINGTHREAD(FastThenableResolverTask);
-    mNextPromise->AppendCallbacks(mResolveCallback, mRejectCallback);
-    return NS_OK;
-  }
+  // Return a JS::Value representing the promise.  This should only be called if
+  // NewPromiseCapability succeeded on this PromiseCapability.  It makes no
+  // guarantees about compartments (e.g. in the mNativePromise case it's in the
+  // compartment of the reflector, but in the mPromise case it might be in the
+  // compartment of some cross-compartment wrapper for a reflector).
+  JS::Value PromiseValue() const;
+
+  // All the JS::Value fields of this struct are actually objects, but for our
+  // purposes it's simpler to store them as JS::Value.
+
+  // [[Promise]].
+  JS::Rooted<JS::Value> mPromise;
+  // [[Resolve]].  Value in the context compartment.
+  JS::Rooted<JS::Value> mResolve;
+  // [[Reject]].  Value in the context compartment.
+  JS::Rooted<JS::Value> mReject;
+  // If mNativePromise is non-null, we should use it, not mPromise.
+  RefPtr<Promise> mNativePromise;
 
 private:
-  nsRefPtr<PromiseCallback> mResolveCallback;
-  nsRefPtr<PromiseCallback> mRejectCallback;
-  nsRefPtr<Promise> mNextPromise;
+  // We don't want to allow creation of temporaries of this type, ever.
+  PromiseCapability(const PromiseCapability&) = delete;
+  PromiseCapability(PromiseCapability&&) = delete;
 };
+
+void
+Promise::PromiseCapability::RejectWithException(JSContext* aCx,
+                                                ErrorResult& aRv)
+{
+  // This method basically implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-ifabruptrejectpromise
+  // or at least the parts of it that happen if we have an abrupt completion.
+
+  MOZ_ASSERT(!aRv.Failed());
+  MOZ_ASSERT(mNativePromise || !mPromise.isUndefined(),
+             "NewPromiseCapability didn't succeed");
+
+  JS::Rooted<JS::Value> exn(aCx);
+  if (!JS_GetPendingException(aCx, &exn)) {
+    // This is an uncatchable exception, so can't be converted into a rejection.
+    // Just rethrow that on aRv.
+    aRv.ThrowUncatchableException();
+    return;
+  }
+
+  JS_ClearPendingException(aCx);
+
+  // If we have a native promise, just reject it without trying to call out into
+  // JS.
+  if (mNativePromise) {
+    mNativePromise->MaybeRejectInternal(aCx, exn);
+    return;
+  }
+
+  JS::Rooted<JS::Value> ignored(aCx);
+  if (!JS::Call(aCx, JS::UndefinedHandleValue, mReject, JS::HandleValueArray(exn),
+                &ignored)) {
+    aRv.NoteJSContextException();
+  }
+}
+
+JS::Value
+Promise::PromiseCapability::PromiseValue() const
+{
+  MOZ_ASSERT(mNativePromise || !mPromise.isUndefined(),
+             "NewPromiseCapability didn't succeed");
+
+  if (mNativePromise) {
+    return JS::ObjectValue(*mNativePromise->GetWrapper());
+  }
+
+  return mPromise;
+}
 
 // Promise
 
@@ -348,9 +413,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(Promise)
   if (tmp->IsBlack()) {
-    if (tmp->mResult.isObject()) {
-      JS::ExposeObjectToActiveJS(&(tmp->mResult.toObject()));
-    }
+    JS::ExposeValueToActiveJS(tmp->mResult);
     if (tmp->mAllocationStack) {
       JS::ExposeObjectToActiveJS(tmp->mAllocationStack);
     }
@@ -419,10 +482,11 @@ Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 }
 
 already_AddRefed<Promise>
-Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
+Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
+                JS::Handle<JSObject*> aDesiredProto)
 {
-  nsRefPtr<Promise> p = new Promise(aGlobal);
-  p->CreateWrapper(aRv);
+  RefPtr<Promise> p = new Promise(aGlobal);
+  p->CreateWrapper(aDesiredProto, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -430,7 +494,7 @@ Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
 }
 
 void
-Promise::CreateWrapper(ErrorResult& aRv)
+Promise::CreateWrapper(JS::Handle<JSObject*> aDesiredProto, ErrorResult& aRv)
 {
   AutoJSAPI jsapi;
   if (!jsapi.Init(mGlobal)) {
@@ -440,7 +504,7 @@ Promise::CreateWrapper(ErrorResult& aRv)
   JSContext* cx = jsapi.cx();
 
   JS::Rooted<JS::Value> wrapper(cx);
-  if (!GetOrCreateDOMReflector(cx, this, &wrapper)) {
+  if (!GetOrCreateDOMReflector(cx, this, &wrapper, aDesiredProto)) {
     JS_ClearPendingException(cx);
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
@@ -474,7 +538,7 @@ Promise::MaybeReject(JSContext* aCx,
 }
 
 void
-Promise::MaybeReject(const nsRefPtr<MediaStreamError>& aArg) {
+Promise::MaybeReject(const RefPtr<MediaStreamError>& aArg) {
   MaybeSomething(aArg, &Promise::MaybeReject);
 }
 
@@ -507,6 +571,7 @@ Promise::PerformMicroTaskCheckpoint()
     if (cx.isSome()) {
       JS_CheckForInterrupt(cx.ref());
     }
+    runtime->AfterProcessMicrotask();
   } while (!microtaskQueue.empty());
 
   return true;
@@ -531,10 +596,10 @@ Promise::JSCallback(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
   PromiseCallback::Task task = static_cast<PromiseCallback::Task>(v.toInt32());
 
   if (task == PromiseCallback::Resolve) {
-    promise->MaybeResolveInternal(aCx, args.get(0));
     if (!promise->CaptureStack(aCx, promise->mFullfillmentStack)) {
       return false;
     }
+    promise->MaybeResolveInternal(aCx, args.get(0));
   } else {
     promise->MaybeRejectInternal(aCx, args.get(0));
     if (!promise->CaptureStack(aCx, promise->mRejectionStack)) {
@@ -593,6 +658,8 @@ Promise::JSCallbackThenableRejecter(JSContext* aCx,
 /* static */ JSObject*
 Promise::CreateFunction(JSContext* aCx, Promise* aPromise, int32_t aTask)
 {
+  // If this function ever changes, make sure to update
+  // WrapperPromiseCallback::GetDependentPromise.
   JSFunction* func = js::NewFunctionWithReserved(aCx, JSCallback,
                                                  1 /* nargs */, 0 /* flags */,
                                                  nullptr);
@@ -607,6 +674,7 @@ Promise::CreateFunction(JSContext* aCx, Promise* aPromise, int32_t aTask)
     return nullptr;
   }
 
+  JS::ExposeValueToActiveJS(promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_PROMISE, promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_DATA, JS::Int32Value(aTask));
 
@@ -634,14 +702,15 @@ Promise::CreateThenableFunction(JSContext* aCx, Promise* aPromise, uint32_t aTas
     return nullptr;
   }
 
+  JS::ExposeValueToActiveJS(promiseObj);
   js::SetFunctionNativeReserved(obj, SLOT_PROMISE, promiseObj);
 
   return obj;
 }
 
 /* static */ already_AddRefed<Promise>
-Promise::Constructor(const GlobalObject& aGlobal,
-                     PromiseInit& aInit, ErrorResult& aRv)
+Promise::Constructor(const GlobalObject& aGlobal, PromiseInit& aInit,
+                     ErrorResult& aRv, JS::Handle<JSObject*> aDesiredProto)
 {
   nsCOMPtr<nsIGlobalObject> global;
   global = do_QueryInterface(aGlobal.GetAsSupports());
@@ -650,7 +719,7 @@ Promise::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = Create(global, aRv);
+  RefPtr<Promise> promise = Create(global, aRv, aDesiredProto);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -689,62 +758,290 @@ Promise::CallInitFunction(const GlobalObject& aGlobal,
              CallbackObject::eRethrowExceptions, Compartment());
   aRv.WouldReportJSException();
 
-  if (aRv.IsJSException()) {
-    JS::Rooted<JS::Value> value(cx);
-    aRv.StealJSException(cx, &value);
+  if (aRv.Failed()) {
+    // There are two possibilities here.  Either we've got a rethrown exception,
+    // or we reported that already and synthesized a generic NS_ERROR_FAILURE on
+    // the ErrorResult.  In the former case, it doesn't much matter how we get
+    // the exception JS::Value from the ErrorResult to us, since we'll just end
+    // up wrapping it into the right compartment as needed if we hand it to
+    // someone.  But in the latter case we have to ensure that the new exception
+    // object we create is created in our reflector compartment, not in our
+    // current compartment, because in the case when we're a Promise constructor
+    // called over Xrays creating it in the current compartment would mean
+    // rejecting with a value that can't be accessed by code that can call
+    // then() on this Promise.
+    //
+    // Luckily, MaybeReject(aRv) does exactly what we want here: it enters our
+    // reflector compartment before trying to produce a JS::Value from the
+    // ErrorResult.
+    MaybeReject(aRv);
+  }
+}
 
-    // we want the same behavior as this JS implementation:
-    // function Promise(arg) { try { arg(a, b); } catch (e) { this.reject(e); }}
-    if (!JS_WrapValue(cx, &value)) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
+#define GET_CAPABILITIES_EXECUTOR_RESOLVE_SLOT 0
+#define GET_CAPABILITIES_EXECUTOR_REJECT_SLOT 1
+
+namespace {
+bool
+GetCapabilitiesExecutor(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
+{
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-getcapabilitiesexecutor-functions
+  // except we store the [[Resolve]] and [[Reject]] in our own internal slots,
+  // not in a PromiseCapability.  The PromiseCapability will then read them from
+  // us.
+  JS::CallArgs args = CallArgsFromVp(aArgc, aVp);
+
+  // Step 1 is an assert.
+
+  // Step 2 doesn't need to be done, because it's just giving a name to the
+  // PromiseCapability record which is supposed to be stored in an internal
+  // slot.  But we don't store that at all, per the comment above; we just
+  // directly store its [[Resolve]] and [[Reject]] members.
+
+  // Steps 3 and 4.
+  if (!js::GetFunctionNativeReserved(&args.callee(),
+                                     GET_CAPABILITIES_EXECUTOR_RESOLVE_SLOT).isUndefined() ||
+      !js::GetFunctionNativeReserved(&args.callee(),
+                                     GET_CAPABILITIES_EXECUTOR_REJECT_SLOT).isUndefined()) {
+    ErrorResult rv;
+    rv.ThrowTypeError<MSG_PROMISE_CAPABILITY_HAS_SOMETHING_ALREADY>();
+    return !rv.MaybeSetPendingException(aCx);
+  }
+
+  // Step 5.
+  js::SetFunctionNativeReserved(&args.callee(),
+                                GET_CAPABILITIES_EXECUTOR_RESOLVE_SLOT,
+                                args.get(0));
+
+  // Step 6.
+  js::SetFunctionNativeReserved(&args.callee(),
+                                GET_CAPABILITIES_EXECUTOR_REJECT_SLOT,
+                                args.get(1));
+
+  // Step 7.
+  args.rval().setUndefined();
+  return true;
+}
+} // anonymous namespace
+
+/* static */ void
+Promise::NewPromiseCapability(JSContext* aCx, nsIGlobalObject* aGlobal,
+                              JS::Handle<JS::Value> aConstructor,
+                              bool aForceCallbackCreation,
+                              PromiseCapability& aCapability,
+                              ErrorResult& aRv)
+{
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-newpromisecapability
+
+  if (!aConstructor.isObject() ||
+      !JS::IsConstructor(&aConstructor.toObject())) {
+    aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+    return;
+  }
+
+  // Step 2 is a note.
+  // Step 3 is already done because we got the PromiseCapability passed in.
+
+  // Optimization: Check whether constructor is in fact the canonical
+  // Promise constructor for aGlobal.
+  JS::Rooted<JSObject*> global(aCx, aGlobal->GetGlobalJSObject());
+  {
+    // Scope for the JSAutoCompartment, since we need to enter the compartment
+    // of global to get constructors from it.  Save the compartment we used to
+    // be in, though; we'll need it later.
+    JS::Rooted<JSObject*> callerGlobal(aCx, JS::CurrentGlobalOrNull(aCx));
+    JSAutoCompartment ac(aCx, global);
+
+    // Now wrap aConstructor into the compartment of aGlobal, so comparing it to
+    // the canonical Promise for that compartment actually makes sense.
+    JS::Rooted<JS::Value> constructorValue(aCx, aConstructor);
+    if (!MaybeWrapObjectValue(aCx, &constructorValue)) {
+      aRv.NoteJSContextException();
       return;
     }
 
-    MaybeRejectInternal(cx, value);
-  }
+    JSObject* defaultCtor = PromiseBinding::GetConstructorObject(aCx, global);
+    if (!defaultCtor) {
+      aRv.NoteJSContextException();
+      return;
+    }
+    if (defaultCtor == &constructorValue.toObject()) {
+      // This is the canonical Promise constructor.
+      aCapability.mNativePromise = Promise::Create(aGlobal, aRv);
+      if (aForceCallbackCreation) {
+        // We have to be a bit careful here.  We want to create these functions
+        // in the compartment in which they would be created if we actually
+        // invoked the constructor via JS::Construct below.  That means our
+        // callerGlobal compartment if aConstructor is an Xray and the reflector
+        // compartment of the promise we're creating otherwise.  But note that
+        // our callerGlobal compartment is precisely the reflector compartment
+        // unless the call was done over Xrays, because the reflector
+        // compartment comes from xpc::XrayAwareCalleeGlobal.  So we really just
+        // want to create these functions in the callerGlobal compartment.
+        MOZ_ASSERT(xpc::WrapperFactory::IsXrayWrapper(&aConstructor.toObject()) ||
+                   callerGlobal == global);
+        JSAutoCompartment ac2(aCx, callerGlobal);
 
-  // Else aRv is an error.  We _could_ reject ourselves with that error, but
-  // we're just going to propagate aRv out to the binding code, which will then
-  // throw us away and create a new promise rejected with the error on aRv.  So
-  // there's no need to worry about rejecting ourselves here; the bindings
-  // will do the right thing.
-}
+        JSObject* resolveFuncObj =
+          CreateFunction(aCx, aCapability.mNativePromise,
+                         PromiseCallback::Resolve);
+        if (!resolveFuncObj) {
+          aRv.NoteJSContextException();
+          return;
+        }
+        aCapability.mResolve.setObject(*resolveFuncObj);
 
-/* static */ already_AddRefed<Promise>
-Promise::Resolve(const GlobalObject& aGlobal,
-                 JS::Handle<JS::Value> aValue, ErrorResult& aRv)
-{
-  // If a Promise was passed, just return it.
-  if (aValue.isObject()) {
-    JS::Rooted<JSObject*> valueObj(aGlobal.Context(), &aValue.toObject());
-    Promise* nextPromise;
-    nsresult rv = UNWRAP_OBJECT(Promise, valueObj, nextPromise);
-
-    if (NS_SUCCEEDED(rv)) {
-      nsRefPtr<Promise> addRefed = nextPromise;
-      return addRefed.forget();
+        JSObject* rejectFuncObj =
+          CreateFunction(aCx, aCapability.mNativePromise,
+                         PromiseCallback::Reject);
+        if (!rejectFuncObj) {
+          aRv.NoteJSContextException();
+          return;
+        }
+        aCapability.mReject.setObject(*rejectFuncObj);
+      }
+      return;
     }
   }
+
+  // Step 4.
+  // We can create our get-capabilities function in the calling compartment.  It
+  // will work just as if we did |new promiseConstructor(function(a,b){}).
+  // Notably, if we're called over Xrays that's all fine, because we will end up
+  // creating the callbacks in the caller compartment in that case.
+  JSFunction* getCapabilitiesFunc =
+    js::NewFunctionWithReserved(aCx, GetCapabilitiesExecutor,
+                                2 /* nargs */,
+                                0 /* flags */,
+                                nullptr);
+  if (!getCapabilitiesFunc) {
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  JS::Rooted<JSObject*> getCapabilitiesObj(aCx);
+  getCapabilitiesObj = JS_GetFunctionObject(getCapabilitiesFunc);
+
+  // Step 5 doesn't need to be done, since we're not actually storing a
+  // PromiseCapability in the executor; see the comments in
+  // GetCapabilitiesExecutor above.
+
+  // Step 6 and step 7.
+  JS::Rooted<JS::Value> getCapabilities(aCx,
+                                        JS::ObjectValue(*getCapabilitiesObj));
+  JS::Rooted<JS::Value> promiseVal(aCx);
+  if (!JS::Construct(aCx, aConstructor,
+                     JS::HandleValueArray(getCapabilities),
+                     &promiseVal)) {
+    aRv.NoteJSContextException();
+    return;
+  }
+
+  // Step 8 plus copying over the value to the PromiseCapability.
+  JS::Rooted<JS::Value> v(aCx);
+  v = js::GetFunctionNativeReserved(getCapabilitiesObj,
+                                    GET_CAPABILITIES_EXECUTOR_RESOLVE_SLOT);
+  if (!v.isObject() || !JS::IsCallable(&v.toObject())) {
+    aRv.ThrowTypeError<MSG_PROMISE_RESOLVE_FUNCTION_NOT_CALLABLE>();
+    return;
+  }
+  aCapability.mResolve = v;
+
+  // Step 9 plus copying over the value to the PromiseCapability.
+  v = js::GetFunctionNativeReserved(getCapabilitiesObj,
+                                    GET_CAPABILITIES_EXECUTOR_REJECT_SLOT);
+  if (!v.isObject() || !JS::IsCallable(&v.toObject())) {
+    aRv.ThrowTypeError<MSG_PROMISE_REJECT_FUNCTION_NOT_CALLABLE>();
+    return;
+  }
+  aCapability.mReject = v;
+
+  // Step 10.
+  aCapability.mPromise = promiseVal;
+
+  // Step 11 doesn't need anything, since the PromiseCapability was passed in.
+}
+
+/* static */ void
+Promise::Resolve(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
+                 JS::Handle<JS::Value> aValue,
+                 JS::MutableHandle<JS::Value> aRetval, ErrorResult& aRv)
+{
+  // Implementation of
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
+
+  JSContext* cx = aGlobal.Context();
 
   nsCOMPtr<nsIGlobalObject> global =
     do_QueryInterface(aGlobal.GetAsSupports());
   if (!global) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
+    return;
   }
 
-  nsRefPtr<Promise> p = Resolve(global, aGlobal.Context(), aValue, aRv);
-  if (p) {
-    p->mFullfillmentStack = p->mAllocationStack;
+  // Steps 1 and 2.
+  if (!aThisv.isObject()) {
+    aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+    return;
   }
-  return p.forget();
+
+  // Step 3.  If a Promise was passed and matches our constructor, just return it.
+  if (aValue.isObject()) {
+    JS::Rooted<JSObject*> valueObj(cx, &aValue.toObject());
+    Promise* nextPromise;
+    nsresult rv = UNWRAP_OBJECT(Promise, valueObj, nextPromise);
+
+    if (NS_SUCCEEDED(rv)) {
+      JS::Rooted<JS::Value> constructor(cx);
+      if (!JS_GetProperty(cx, valueObj, "constructor", &constructor)) {
+        aRv.NoteJSContextException();
+        return;
+      }
+
+      // Cheat instead of calling JS_SameValue, since we know one's an object.
+      if (aThisv == constructor) {
+        aRetval.setObject(*valueObj);
+        return;
+      }
+    }
+  }
+
+  // Step 4.
+  PromiseCapability capability(cx);
+  NewPromiseCapability(cx, global, aThisv, false, capability, aRv);
+  // Step 5.
+  if (aRv.Failed()) {
+    return;
+  }
+
+  // Step 6.
+  Promise* p = capability.mNativePromise;
+  if (p) {
+    p->MaybeResolveInternal(cx, aValue);
+    p->mFullfillmentStack = p->mAllocationStack;
+  } else {
+    JS::Rooted<JS::Value> value(cx, aValue);
+    JS::Rooted<JS::Value> ignored(cx);
+    if (!JS::Call(cx, JS::UndefinedHandleValue /* thisVal */,
+                  capability.mResolve, JS::HandleValueArray(value),
+                  &ignored)) {
+      // Step 7.
+      aRv.NoteJSContextException();
+      return;
+    }
+  }
+
+  // Step 8.
+  aRetval.set(capability.PromiseValue());
 }
 
 /* static */ already_AddRefed<Promise>
 Promise::Resolve(nsIGlobalObject* aGlobal, JSContext* aCx,
                  JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = Create(aGlobal, aRv);
+  RefPtr<Promise> promise = Create(aGlobal, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -753,29 +1050,63 @@ Promise::Resolve(nsIGlobalObject* aGlobal, JSContext* aCx,
   return promise.forget();
 }
 
-/* static */ already_AddRefed<Promise>
-Promise::Reject(const GlobalObject& aGlobal,
-                JS::Handle<JS::Value> aValue, ErrorResult& aRv)
+/* static */ void
+Promise::Reject(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
+                JS::Handle<JS::Value> aValue,
+                JS::MutableHandle<JS::Value> aRetval, ErrorResult& aRv)
 {
+  // Implementation of
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject
+
+  JSContext* cx = aGlobal.Context();
+
   nsCOMPtr<nsIGlobalObject> global =
     do_QueryInterface(aGlobal.GetAsSupports());
   if (!global) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
+    return;
   }
 
-  nsRefPtr<Promise> p = Reject(global, aGlobal.Context(), aValue, aRv);
-  if (p) {
-    p->mRejectionStack = p->mAllocationStack;
+  // Steps 1 and 2.
+  if (!aThisv.isObject()) {
+    aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+    return;
   }
-  return p.forget();
+
+  // Step 3.
+  PromiseCapability capability(cx);
+  NewPromiseCapability(cx, global, aThisv, false, capability, aRv);
+  // Step 4.
+  if (aRv.Failed()) {
+    return;
+  }
+
+  // Step 5.
+  Promise* p = capability.mNativePromise;
+  if (p) {
+    p->MaybeRejectInternal(cx, aValue);
+    p->mRejectionStack = p->mAllocationStack;
+  } else {
+    JS::Rooted<JS::Value> value(cx, aValue);
+    JS::Rooted<JS::Value> ignored(cx);
+    if (!JS::Call(cx, JS::UndefinedHandleValue /* thisVal */,
+                  capability.mReject, JS::HandleValueArray(value),
+                  &ignored)) {
+      // Step 6.
+      aRv.NoteJSContextException();
+      return;
+    }
+  }
+
+  // Step 7.
+  aRetval.set(capability.PromiseValue());
 }
 
 /* static */ already_AddRefed<Promise>
 Promise::Reject(nsIGlobalObject* aGlobal, JSContext* aCx,
                 JS::Handle<JS::Value> aValue, ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = Create(aGlobal, aRv);
+  RefPtr<Promise> promise = Create(aGlobal, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -784,41 +1115,242 @@ Promise::Reject(nsIGlobalObject* aGlobal, JSContext* aCx,
   return promise.forget();
 }
 
-already_AddRefed<Promise>
-Promise::Then(JSContext* aCx, AnyCallback* aResolveCallback,
-              AnyCallback* aRejectCallback, ErrorResult& aRv)
+namespace {
+void
+SpeciesConstructor(JSContext* aCx,
+                   JS::Handle<JSObject*> promise,
+                   JS::Handle<JS::Value> defaultCtor,
+                   JS::MutableHandle<JS::Value> ctor,
+                   ErrorResult& aRv)
 {
-  nsRefPtr<Promise> promise = Create(GetParentObject(), aRv);
-  if (aRv.Failed()) {
-    return nullptr;
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-speciesconstructor
+
+  // Step 1.
+  MOZ_ASSERT(promise);
+
+  // Step 2.
+  JS::Rooted<JS::Value> constructorVal(aCx);
+  if (!JS_GetProperty(aCx, promise, "constructor", &constructorVal)) {
+    // Step 3.
+    aRv.NoteJSContextException();
+    return;
   }
 
+  // Step 4.
+  if (constructorVal.isUndefined()) {
+    ctor.set(defaultCtor);
+    return;
+  }
+
+  // Step 5.
+  if (!constructorVal.isObject()) {
+    aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+    return;
+  }
+
+  // Step 6.
+  JS::Rooted<jsid> species(aCx,
+    SYMBOL_TO_JSID(JS::GetWellKnownSymbol(aCx, JS::SymbolCode::species)));
+  JS::Rooted<JS::Value> speciesVal(aCx);
+  JS::Rooted<JSObject*> constructorObj(aCx, &constructorVal.toObject());
+  if (!JS_GetPropertyById(aCx, constructorObj, species, &speciesVal)) {
+    // Step 7.
+    aRv.NoteJSContextException();
+    return;
+  }
+
+  // Step 8.
+  if (speciesVal.isNullOrUndefined()) {
+    ctor.set(defaultCtor);
+    return;
+  }
+
+  // Step 9.
+  if (speciesVal.isObject() && JS::IsConstructor(&speciesVal.toObject())) {
+    ctor.set(speciesVal);
+    return;
+  }
+
+  // Step 10.
+  aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+}
+} // anonymous namespace
+
+void
+Promise::Then(JSContext* aCx, JS::Handle<JSObject*> aCalleeGlobal,
+              AnyCallback* aResolveCallback, AnyCallback* aRejectCallback,
+              JS::MutableHandle<JS::Value> aRetval, ErrorResult& aRv)
+{
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.then
+
+  // Step 1.
+  JS::Rooted<JS::Value> promiseVal(aCx, JS::ObjectValue(*GetWrapper()));
+  if (!MaybeWrapObjectValue(aCx, &promiseVal)) {
+    aRv.NoteJSContextException();
+    return;
+  }
+  JS::Rooted<JSObject*> promiseObj(aCx, &promiseVal.toObject());
+  MOZ_ASSERT(promiseObj);
+
+  // Step 2 was done by the bindings.
+
+  // Step 3.  We want to use aCalleeGlobal here because it will do the
+  // right thing for us via Xrays (where we won't find @@species on
+  // our promise constructor for now).
+  JS::Rooted<JSObject*> calleeGlobal(aCx, aCalleeGlobal);
+  JS::Rooted<JS::Value> defaultCtorVal(aCx);
+  { // Scope for JSAutoCompartment
+    JSAutoCompartment ac(aCx, aCalleeGlobal);
+    JSObject* defaultCtor =
+      PromiseBinding::GetConstructorObject(aCx, calleeGlobal);
+    if (!defaultCtor) {
+      aRv.NoteJSContextException();
+      return;
+    }
+    defaultCtorVal.setObject(*defaultCtor);
+  }
+  if (!MaybeWrapObjectValue(aCx, &defaultCtorVal)) {
+    aRv.NoteJSContextException();
+    return;
+  }
+
+  JS::Rooted<JS::Value> constructor(aCx);
+  SpeciesConstructor(aCx, promiseObj, defaultCtorVal, &constructor, aRv);
+  if (aRv.Failed()) {
+    // Step 4.
+    return;
+  }
+
+  // Step 5.
+  GlobalObject globalObj(aCx, GetWrapper());
+  if (globalObj.Failed()) {
+    aRv.NoteJSContextException();
+    return;
+  }
+  nsCOMPtr<nsIGlobalObject> globalObject =
+    do_QueryInterface(globalObj.GetAsSupports());
+  if (!globalObject) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return;
+  }
+  PromiseCapability capability(aCx);
+  NewPromiseCapability(aCx, globalObject, constructor, false, capability, aRv);
+  if (aRv.Failed()) {
+    // Step 6.
+    return;
+  }
+
+  // Now step 7: start
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-performpromisethen
+
+  // Step 1 and step 2 are just assertions.
+
+  // Step 3 and step 4 are kinda handled for us already; we use null
+  // to represent "Identity" and "Thrower".
+
+  // Steps 5 and 6.  These branch based on whether we know we have a
+  // vanilla Promise or not.
   JS::Rooted<JSObject*> global(aCx, JS::CurrentGlobalOrNull(aCx));
+  if (capability.mNativePromise) {
+    Promise* promise = capability.mNativePromise;
 
-  nsRefPtr<PromiseCallback> resolveCb =
-    PromiseCallback::Factory(promise, global, aResolveCallback,
-                             PromiseCallback::Resolve);
+    RefPtr<PromiseCallback> resolveCb =
+      PromiseCallback::Factory(promise, global, aResolveCallback,
+                               PromiseCallback::Resolve);
 
-  nsRefPtr<PromiseCallback> rejectCb =
-    PromiseCallback::Factory(promise, global, aRejectCallback,
-                             PromiseCallback::Reject);
+    RefPtr<PromiseCallback> rejectCb =
+      PromiseCallback::Factory(promise, global, aRejectCallback,
+                               PromiseCallback::Reject);
 
-  AppendCallbacks(resolveCb, rejectCb);
+    AppendCallbacks(resolveCb, rejectCb);
+  } else {
+    JS::Rooted<JSObject*> resolveObj(aCx, &capability.mResolve.toObject());
+    RefPtr<AnyCallback> resolveFunc =
+      new AnyCallback(aCx, resolveObj, GetIncumbentGlobal());
 
-  return promise.forget();
+    JS::Rooted<JSObject*> rejectObj(aCx, &capability.mReject.toObject());
+    RefPtr<AnyCallback> rejectFunc =
+      new AnyCallback(aCx, rejectObj, GetIncumbentGlobal());
+
+    if (!capability.mPromise.isObject()) {
+      aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+      return;
+    }
+    JS::Rooted<JSObject*> newPromiseObj(aCx, &capability.mPromise.toObject());
+    // We want to store the reflector itself.
+    newPromiseObj = js::CheckedUnwrap(newPromiseObj);
+    if (!newPromiseObj) {
+      // Just throw something.
+      aRv.ThrowTypeError<MSG_ILLEGAL_PROMISE_CONSTRUCTOR>();
+      return;
+    }
+
+    RefPtr<PromiseCallback> resolveCb;
+    if (aResolveCallback) {
+      resolveCb = new WrapperPromiseCallback(global, aResolveCallback,
+                                             newPromiseObj,
+                                             resolveFunc, rejectFunc);
+    } else {
+      resolveCb = new InvokePromiseFuncCallback(global, newPromiseObj,
+                                                resolveFunc);
+    }
+
+    RefPtr<PromiseCallback> rejectCb;
+    if (aRejectCallback) {
+      rejectCb = new WrapperPromiseCallback(global, aRejectCallback,
+                                            newPromiseObj,
+                                            resolveFunc, rejectFunc);
+    } else {
+      rejectCb = new InvokePromiseFuncCallback(global, newPromiseObj,
+                                               rejectFunc);
+    }
+
+    AppendCallbacks(resolveCb, rejectCb);
+  }
+
+  aRetval.set(capability.PromiseValue());
 }
 
-already_AddRefed<Promise>
-Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback, ErrorResult& aRv)
+void
+Promise::Catch(JSContext* aCx, AnyCallback* aRejectCallback,
+               JS::MutableHandle<JS::Value> aRetval,
+               ErrorResult& aRv)
 {
-  nsRefPtr<AnyCallback> resolveCb;
-  return Then(aCx, resolveCb, aRejectCallback, aRv);
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.catch
+
+  // We can't call Promise::Then directly, because someone might have
+  // overridden Promise.prototype.then.
+  JS::Rooted<JS::Value> promiseVal(aCx, JS::ObjectValue(*GetWrapper()));
+  if (!MaybeWrapObjectValue(aCx, &promiseVal)) {
+    aRv.NoteJSContextException();
+    return;
+  }
+  JS::Rooted<JSObject*> promiseObj(aCx, &promiseVal.toObject());
+  MOZ_ASSERT(promiseObj);
+  JS::AutoValueArray<2> callbacks(aCx);
+  callbacks[0].setUndefined();
+  if (aRejectCallback) {
+    callbacks[1].setObject(*aRejectCallback->Callable());
+    // It could be in any compartment, so put it in ours.
+    if (!MaybeWrapObjectValue(aCx, callbacks[1])) {
+      aRv.NoteJSContextException();
+      return;
+    }
+  } else {
+    callbacks[1].setNull();
+  }
+  if (!JS_CallFunctionName(aCx, promiseObj, "then", callbacks, aRetval)) {
+    aRv.NoteJSContextException();
+  }
 }
 
 /**
  * The CountdownHolder class encapsulates Promise.all countdown functions and
  * the countdown holder parts of the Promises spec. It maintains the result
- * array and AllResolveHandlers use SetValue() to set the array indices.
+ * array and AllResolveElementFunctions use SetValue() to set the array indices.
  */
 class CountdownHolder final : public nsISupports
 {
@@ -878,7 +1410,7 @@ public:
   }
 
 private:
-  nsRefPtr<Promise> mPromise;
+  RefPtr<Promise> mPromise;
   uint32_t mCountdown;
   JS::Heap<JSObject*> mValues;
 };
@@ -906,17 +1438,18 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CountdownHolder)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 /**
- * An AllResolveHandler is the per-promise part of the Promise.all() algorithm.
+ * An AllResolveElementFunction is the per-promise
+ * part of the Promise.all() algorithm.
  * Every Promise in the handler is handed an instance of this as a resolution
  * handler and it sets the relevant index in the CountdownHolder.
  */
-class AllResolveHandler final : public PromiseNativeHandler
+class AllResolveElementFunction final : public PromiseNativeHandler
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS(AllResolveHandler)
+  NS_DECL_CYCLE_COLLECTION_CLASS(AllResolveElementFunction)
 
-  AllResolveHandler(CountdownHolder* aHolder, uint32_t aIndex)
+  AllResolveElementFunction(CountdownHolder* aHolder, uint32_t aIndex)
     : mCountdownHolder(aHolder), mIndex(aIndex)
   {
     MOZ_ASSERT(aHolder);
@@ -932,49 +1465,345 @@ public:
   RejectedCallback(JSContext* aCx, JS::Handle<JS::Value> aValue) override
   {
     // Should never be attached to Promise as a reject handler.
-    MOZ_ASSERT(false, "AllResolveHandler should never be attached to a Promise's reject handler!");
+    MOZ_CRASH("AllResolveElementFunction should never be attached to a Promise's reject handler!");
   }
 
 private:
-  ~AllResolveHandler()
+  ~AllResolveElementFunction()
   {
   }
 
-  nsRefPtr<CountdownHolder> mCountdownHolder;
+  RefPtr<CountdownHolder> mCountdownHolder;
   uint32_t mIndex;
 };
 
-NS_IMPL_CYCLE_COLLECTING_ADDREF(AllResolveHandler)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(AllResolveHandler)
+NS_IMPL_CYCLE_COLLECTING_ADDREF(AllResolveElementFunction)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(AllResolveElementFunction)
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AllResolveHandler)
-NS_INTERFACE_MAP_END_INHERITING(PromiseNativeHandler)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(AllResolveElementFunction)
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION(AllResolveHandler, mCountdownHolder)
+NS_IMPL_CYCLE_COLLECTION(AllResolveElementFunction, mCountdownHolder)
 
-/* static */ already_AddRefed<Promise>
-Promise::All(const GlobalObject& aGlobal,
-             const Sequence<JS::Value>& aIterable, ErrorResult& aRv)
+static const JSClass PromiseAllDataHolderClass = {
+  "PromiseAllDataHolder", JSCLASS_HAS_RESERVED_SLOTS(3)
+};
+
+// Slot indices for objects of class PromiseAllDataHolderClass.
+#define DATA_HOLDER_REMAINING_ELEMENTS_SLOT 0
+#define DATA_HOLDER_VALUES_ARRAY_SLOT 1
+#define DATA_HOLDER_RESOLVE_FUNCTION_SLOT 2
+
+// Slot indices for PromiseAllResolveElement.
+// The RESOLVE_ELEMENT_INDEX_SLOT stores our index unless we've already been
+// called.  Then it stores INT32_MIN (which is never a valid index value).
+#define RESOLVE_ELEMENT_INDEX_SLOT 0
+// The RESOLVE_ELEMENT_DATA_HOLDER_SLOT slot stores an object of class
+// PromiseAllDataHolderClass.
+#define RESOLVE_ELEMENT_DATA_HOLDER_SLOT 1
+
+static bool
+PromiseAllResolveElement(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
 {
-  JSContext* cx = aGlobal.Context();
+  // Implements
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all-resolve-element-functions
+  //
+  // See the big comment about compartments in Promise::All "Substep 4" that
+  // explains what compartments the various stuff here lives in.
+  JS::CallArgs args = CallArgsFromVp(aArgc, aVp);
 
-  nsTArray<nsRefPtr<Promise>> promiseList;
-
-  for (uint32_t i = 0; i < aIterable.Length(); ++i) {
-    JS::Rooted<JS::Value> value(cx, aIterable.ElementAt(i));
-    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, value, aRv);
-
-    MOZ_ASSERT(!aRv.Failed());
-
-    promiseList.AppendElement(Move(nextPromise));
+  // Step 1.
+  int32_t index =
+    js::GetFunctionNativeReserved(&args.callee(),
+                                  RESOLVE_ELEMENT_INDEX_SLOT).toInt32();
+  // Step 2.
+  if (index == INT32_MIN) {
+    args.rval().setUndefined();
+    return true;
   }
 
-  return Promise::All(aGlobal, promiseList, aRv);
+  // Step 3.
+  js::SetFunctionNativeReserved(&args.callee(),
+                                RESOLVE_ELEMENT_INDEX_SLOT,
+                                JS::Int32Value(INT32_MIN));
+
+  // Step 4 already done.
+
+  // Step 5.
+  JS::Rooted<JSObject*> dataHolder(aCx,
+    &js::GetFunctionNativeReserved(&args.callee(),
+                                   RESOLVE_ELEMENT_DATA_HOLDER_SLOT).toObject());
+
+  JS::Rooted<JS::Value> values(aCx,
+    js::GetReservedSlot(dataHolder, DATA_HOLDER_VALUES_ARRAY_SLOT));
+
+  // Step 6, effectively.
+  JS::Rooted<JS::Value> resolveFunc(aCx,
+    js::GetReservedSlot(dataHolder, DATA_HOLDER_RESOLVE_FUNCTION_SLOT));
+
+  // Step 7.
+  int32_t remainingElements =
+    js::GetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT).toInt32();
+
+  // Step 8.
+  JS::Rooted<JSObject*> valuesObj(aCx, &values.toObject());
+  if (!JS_DefineElement(aCx, valuesObj, index, args.get(0), JSPROP_ENUMERATE)) {
+    return false;
+  }
+
+  // Step 9.
+  remainingElements -= 1;
+  js::SetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT,
+                      JS::Int32Value(remainingElements));
+
+  // Step 10.
+  if (remainingElements == 0) {
+    return JS::Call(aCx, JS::UndefinedHandleValue, resolveFunc,
+                    JS::HandleValueArray(values), args.rval());
+  }
+
+  // Step 11.
+  args.rval().setUndefined();
+  return true;
+}
+
+
+/* static */ void
+Promise::All(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
+             JS::Handle<JS::Value> aIterable,
+             JS::MutableHandle<JS::Value> aRetval, ErrorResult& aRv)
+{
+  // Implements http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all
+  nsCOMPtr<nsIGlobalObject> global =
+    do_QueryInterface(aGlobal.GetAsSupports());
+  if (!global) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return;
+  }
+
+  JSContext* cx = aGlobal.Context();
+
+  // Steps 1-5: nothing to do.  Note that the @@species bits got removed in
+  // https://github.com/tc39/ecma262/pull/211
+
+  // Step 6.
+  PromiseCapability capability(cx);
+  NewPromiseCapability(cx, global, aThisv, true, capability, aRv);
+  // Step 7.
+  if (aRv.Failed()) {
+    return;
+  }
+
+  MOZ_ASSERT(aThisv.isObject(), "How did NewPromiseCapability succeed?");
+  JS::Rooted<JSObject*> constructorObj(cx, &aThisv.toObject());
+
+  // After this point we have a useful promise value in "capability", so just go
+  // ahead and put it in our retval now.  Every single return path below would
+  // want to do that anyway.
+  aRetval.set(capability.PromiseValue());
+  if (!MaybeWrapValue(cx, aRetval)) {
+    aRv.NoteJSContextException();
+    return;
+  }
+
+  // The arguments we're going to be passing to "then" on each loop iteration.
+  // The second one we know already; the first one will be created on each
+  // iteration of the loop.
+  JS::AutoValueArray<2> callbackFunctions(cx);
+  callbackFunctions[1].set(capability.mReject);
+
+  // Steps 8 and 9.
+  JS::ForOfIterator iter(cx);
+  if (!iter.init(aIterable, JS::ForOfIterator::AllowNonIterable)) {
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  if (!iter.valueIsIterable()) {
+    ThrowErrorMessage(cx, MSG_PROMISE_ARG_NOT_ITERABLE,
+                      "Argument of Promise.all");
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  // Step 10 doesn't need to be done, because ForOfIterator handles it
+  // for us.
+
+  // Now we jump over to
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-performpromiseall
+  // and do its steps.
+
+  // Substep 4. Create our data holder that holds all the things shared across
+  // every step of the iterator.  In particular, this holds the
+  // remainingElementsCount (as an integer reserved slot), the array of values,
+  // and the resolve function from our PromiseCapability.
+  //
+  // We have to be very careful about which compartments we create things in
+  // here.  In particular, we have to maintain the invariant that anything
+  // stored in a reserved slot is same-compartment with the object whose
+  // reserved slot it's in.  But we want to create the values array in the
+  // Promise reflector compartment, because that array can get exposed to code
+  // that has access to the Promise reflector (in particular code from that
+  // compartment), and that should work, even if the Promise reflector
+  // compartment is less-privileged than our caller compartment.
+  //
+  // So the plan is as follows: Create the values array in the promise reflector
+  // compartment.  Create the PromiseAllResolveElement function and the data
+  // holder in our current compartment.  Store a cross-compartment wrapper to
+  // the values array in the holder.  This should be OK because the only things
+  // we hand the PromiseAllResolveElement function to are the "then" calls we do
+  // and in the case when the reflector compartment is not the current
+  // compartment those are happening over Xrays anyway, which means they get the
+  // canonical "then" function and content can't see our
+  // PromiseAllResolveElement.
+  JS::Rooted<JSObject*> dataHolder(cx);
+  dataHolder = JS_NewObjectWithGivenProto(cx, &PromiseAllDataHolderClass,
+                                          nullptr);
+  if (!dataHolder) {
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  JS::Rooted<JSObject*> reflectorGlobal(cx, global->GetGlobalJSObject());
+  JS::Rooted<JSObject*> valuesArray(cx);
+  { // Scope for JSAutoCompartment.
+    JSAutoCompartment ac(cx, reflectorGlobal);
+    valuesArray = JS_NewArrayObject(cx, 0);
+  }
+  if (!valuesArray) {
+    // It's important that we've exited the JSAutoCompartment by now, before
+    // calling RejectWithException and possibly invoking capability.mReject.
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  // The values array as a value we can pass to a function in our current
+  // compartment, or store in the holder's reserved slot.
+  JS::Rooted<JS::Value> valuesArrayVal(cx, JS::ObjectValue(*valuesArray));
+  if (!MaybeWrapObjectValue(cx, &valuesArrayVal)) {
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  js::SetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT,
+                      JS::Int32Value(1));
+  js::SetReservedSlot(dataHolder, DATA_HOLDER_VALUES_ARRAY_SLOT,
+                      valuesArrayVal);
+  js::SetReservedSlot(dataHolder, DATA_HOLDER_RESOLVE_FUNCTION_SLOT,
+                      capability.mResolve);
+
+  // Substep 5.
+  CheckedInt32 index = 0;
+
+  // Substep 6.
+  JS::Rooted<JS::Value> nextValue(cx);
+  while (true) {
+    bool done;
+    // Steps a, b, c, e, f, g.
+    if (!iter.next(&nextValue, &done)) {
+      capability.RejectWithException(cx, aRv);
+      return;
+    }
+
+    // Step d.
+    if (done) {
+      int32_t remainingCount =
+        js::GetReservedSlot(dataHolder,
+                            DATA_HOLDER_REMAINING_ELEMENTS_SLOT).toInt32();
+      remainingCount -= 1;
+      if (remainingCount == 0) {
+        JS::Rooted<JS::Value> ignored(cx);
+        if (!JS::Call(cx, JS::UndefinedHandleValue, capability.mResolve,
+                      JS::HandleValueArray(valuesArrayVal), &ignored)) {
+          capability.RejectWithException(cx, aRv);
+        }
+        return;
+      }
+      js::SetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT,
+                          JS::Int32Value(remainingCount));
+      // We're all set for now!
+      return;
+    }
+
+    // Step h.
+    { // Scope for the JSAutoCompartment we need to work with valuesArray.  We
+      // mostly do this for performance; we could go ahead and do the define via
+      // a cross-compartment proxy instead...
+      JSAutoCompartment ac(cx, valuesArray);
+      if (!JS_DefineElement(cx, valuesArray, index.value(),
+                            JS::UndefinedHandleValue, JSPROP_ENUMERATE)) {
+        // Have to go back into the caller compartment before we try to touch
+        // capability.mReject.  Luckily, capability.mReject is guaranteed to be
+        // an object in the right compartment here.
+        JSAutoCompartment ac2(cx, &capability.mReject.toObject());
+        capability.RejectWithException(cx, aRv);
+        return;
+      }
+    }
+
+    // Step i.  Sadly, we can't take a shortcut here even if
+    // capability.mNativePromise exists, because someone could have overridden
+    // "resolve" on the canonical Promise constructor.
+    JS::Rooted<JS::Value> nextPromise(cx);
+    if (!JS_CallFunctionName(cx, constructorObj, "resolve",
+                             JS::HandleValueArray(nextValue),
+                             &nextPromise)) {
+      // Step j.
+      capability.RejectWithException(cx, aRv);
+      return;
+    }
+
+    // Step k.
+    JS::Rooted<JSObject*> resolveElement(cx);
+    JSFunction* resolveFunc =
+      js::NewFunctionWithReserved(cx, PromiseAllResolveElement,
+                                  1 /* nargs */, 0 /* flags */, nullptr);
+    if (!resolveFunc) {
+      capability.RejectWithException(cx, aRv);
+      return;
+    }
+
+    resolveElement = JS_GetFunctionObject(resolveFunc);
+    // Steps l-p.
+    js::SetFunctionNativeReserved(resolveElement,
+                                  RESOLVE_ELEMENT_INDEX_SLOT,
+                                  JS::Int32Value(index.value()));
+    js::SetFunctionNativeReserved(resolveElement,
+                                  RESOLVE_ELEMENT_DATA_HOLDER_SLOT,
+                                  JS::ObjectValue(*dataHolder));
+
+    // Step q.
+    int32_t remainingElements =
+      js::GetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT).toInt32();
+    js::SetReservedSlot(dataHolder, DATA_HOLDER_REMAINING_ELEMENTS_SLOT,
+                        JS::Int32Value(remainingElements + 1));
+
+    // Step r.  And now we don't know whether nextPromise has an overridden
+    // "then" method, so no shortcuts here either.
+    callbackFunctions[0].setObject(*resolveElement);
+    JS::Rooted<JSObject*> nextPromiseObj(cx);
+    JS::Rooted<JS::Value> ignored(cx);
+    if (!JS_ValueToObject(cx, nextPromise, &nextPromiseObj) ||
+        !JS_CallFunctionName(cx, nextPromiseObj, "then", callbackFunctions,
+                             &ignored)) {
+      // Step s.
+      capability.RejectWithException(cx, aRv);
+    }
+
+    // Step t.
+    index += 1;
+    if (!index.isValid()) {
+      // Let's just claim OOM.
+      aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+      capability.RejectWithException(cx, aRv);
+    }
+  }
 }
 
 /* static */ already_AddRefed<Promise>
 Promise::All(const GlobalObject& aGlobal,
-             const nsTArray<nsRefPtr<Promise>>& aPromiseList, ErrorResult& aRv)
+             const nsTArray<RefPtr<Promise>>& aPromiseList, ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> global =
     do_QueryInterface(aGlobal.GetAsSupports());
@@ -997,11 +1826,11 @@ Promise::All(const GlobalObject& aGlobal,
     return Promise::Resolve(global, cx, value, aRv);
   }
 
-  nsRefPtr<Promise> promise = Create(global, aRv);
+  RefPtr<Promise> promise = Create(global, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
-  nsRefPtr<CountdownHolder> holder =
+  RefPtr<CountdownHolder> holder =
     new CountdownHolder(aGlobal, promise, aPromiseList.Length());
 
   JS::Rooted<JSObject*> obj(cx, JS::CurrentGlobalOrNull(cx));
@@ -1010,13 +1839,13 @@ Promise::All(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(promise, obj);
+  RefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(promise, obj);
 
   for (uint32_t i = 0; i < aPromiseList.Length(); ++i) {
-    nsRefPtr<PromiseNativeHandler> resolveHandler =
-      new AllResolveHandler(holder, i);
+    RefPtr<PromiseNativeHandler> resolveHandler =
+      new AllResolveElementFunction(holder, i);
 
-    nsRefPtr<PromiseCallback> resolveCb =
+    RefPtr<PromiseCallback> resolveCb =
       new NativePromiseCallback(resolveHandler, Resolved);
 
     // Every promise gets its own resolve callback, which will set the right
@@ -1027,56 +1856,124 @@ Promise::All(const GlobalObject& aGlobal,
   return promise.forget();
 }
 
-/* static */ already_AddRefed<Promise>
-Promise::Race(const GlobalObject& aGlobal,
-              const Sequence<JS::Value>& aIterable, ErrorResult& aRv)
+/* static */ void
+Promise::Race(const GlobalObject& aGlobal, JS::Handle<JS::Value> aThisv,
+              JS::Handle<JS::Value> aIterable, JS::MutableHandle<JS::Value> aRetval,
+              ErrorResult& aRv)
 {
+  // Implements http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
   nsCOMPtr<nsIGlobalObject> global =
     do_QueryInterface(aGlobal.GetAsSupports());
   if (!global) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
+    return;
   }
 
   JSContext* cx = aGlobal.Context();
 
-  JS::Rooted<JSObject*> obj(cx, JS::CurrentGlobalOrNull(cx));
-  if (!obj) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
-  }
+  // Steps 1-5: nothing to do.  Note that the @@species bits got removed in
+  // https://github.com/tc39/ecma262/pull/211
+  PromiseCapability capability(cx);
 
-  nsRefPtr<Promise> promise = Create(global, aRv);
+  // Step 6.
+  NewPromiseCapability(cx, global, aThisv, true, capability, aRv);
+  // Step 7.
   if (aRv.Failed()) {
-    return nullptr;
+    return;
   }
 
-  nsRefPtr<PromiseCallback> resolveCb =
-    new ResolvePromiseCallback(promise, obj);
+  MOZ_ASSERT(aThisv.isObject(), "How did NewPromiseCapability succeed?");
+  JS::Rooted<JSObject*> constructorObj(cx, &aThisv.toObject());
 
-  nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(promise, obj);
-
-  for (uint32_t i = 0; i < aIterable.Length(); ++i) {
-    JS::Rooted<JS::Value> value(cx, aIterable.ElementAt(i));
-    nsRefPtr<Promise> nextPromise = Promise::Resolve(aGlobal, value, aRv);
-    // According to spec, Resolve can throw, but our implementation never does.
-    // Well it does when window isn't passed on the main thread, but that is an
-    // implementation detail which should never be reached since we are checking
-    // for window above. Remove this when subclassing is supported.
-    MOZ_ASSERT(!aRv.Failed());
-    nextPromise->AppendCallbacks(resolveCb, rejectCb);
+  // After this point we have a useful promise value in "capability", so just go
+  // ahead and put it in our retval now.  Every single return path below would
+  // want to do that anyway.
+  aRetval.set(capability.PromiseValue());
+  if (!MaybeWrapValue(cx, aRetval)) {
+    aRv.NoteJSContextException();
+    return;
   }
 
-  return promise.forget();
+  // The arguments we're going to be passing to "then" on each loop iteration.
+  JS::AutoValueArray<2> callbackFunctions(cx);
+  callbackFunctions[0].set(capability.mResolve);
+  callbackFunctions[1].set(capability.mReject);
+
+  // Steps 8 and 9.
+  JS::ForOfIterator iter(cx);
+  if (!iter.init(aIterable, JS::ForOfIterator::AllowNonIterable)) {
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  if (!iter.valueIsIterable()) {
+    ThrowErrorMessage(cx, MSG_PROMISE_ARG_NOT_ITERABLE,
+                      "Argument of Promise.race");
+    capability.RejectWithException(cx, aRv);
+    return;
+  }
+
+  // Step 10 doesn't need to be done, because ForOfIterator handles it
+  // for us.
+
+  // Now we jump over to
+  // http://www.ecma-international.org/ecma-262/6.0/#sec-performpromiserace
+  // and do its steps.
+  JS::Rooted<JS::Value> nextValue(cx);
+  while (true) {
+    bool done;
+    // Steps a, b, c, e, f, g.
+    if (!iter.next(&nextValue, &done)) {
+      capability.RejectWithException(cx, aRv);
+      return;
+    }
+
+    // Step d.
+    if (done) {
+      // We're all set!
+      return;
+    }
+
+    // Step h.  Sadly, we can't take a shortcut here even if
+    // capability.mNativePromise exists, because someone could have overridden
+    // "resolve" on the canonical Promise constructor.
+    JS::Rooted<JS::Value> nextPromise(cx);
+    if (!JS_CallFunctionName(cx, constructorObj, "resolve",
+                             JS::HandleValueArray(nextValue), &nextPromise)) {
+      // Step i.
+      capability.RejectWithException(cx, aRv);
+      return;
+    }
+
+    // Step j.  And now we don't know whether nextPromise has an overridden
+    // "then" method, so no shortcuts here either.
+    JS::Rooted<JSObject*> nextPromiseObj(cx);
+    JS::Rooted<JS::Value> ignored(cx);
+    if (!JS_ValueToObject(cx, nextPromise, &nextPromiseObj) ||
+        !JS_CallFunctionName(cx, nextPromiseObj, "then", callbackFunctions,
+                             &ignored)) {
+      // Step k.
+      capability.RejectWithException(cx, aRv);
+    }
+  }
+}
+
+/* static */
+bool
+Promise::PromiseSpecies(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
+{
+  JS::CallArgs args = CallArgsFromVp(aArgc, aVp);
+  args.rval().set(args.thisv());
+  return true;
 }
 
 void
 Promise::AppendNativeHandler(PromiseNativeHandler* aRunnable)
 {
-  nsRefPtr<PromiseCallback> resolveCb =
+  RefPtr<PromiseCallback> resolveCb =
     new NativePromiseCallback(aRunnable, Resolved);
 
-  nsRefPtr<PromiseCallback> rejectCb =
+  RefPtr<PromiseCallback> rejectCb =
     new NativePromiseCallback(aRunnable, Rejected);
 
   AppendCallbacks(resolveCb, rejectCb);
@@ -1127,7 +2024,7 @@ Promise::AppendCallbacks(PromiseCallback* aResolveCallback,
   // callbacks with promise's result. If promise's state is rejected, queue a
   // task to process our reject callbacks with promise's result.
   if (mState != Pending) {
-    EnqueueCallbackTasks();
+    TriggerPromiseReactions();
   }
 }
 
@@ -1204,7 +2101,7 @@ Promise::MaybeReportRejected()
     return;
   }
 
-  nsRefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
+  RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
   bool isMainThread = MOZ_LIKELY(NS_IsMainThread());
   bool isChrome = isMainThread ? nsContentUtils::IsSystemPrincipal(nsContentUtils::ObjectPrincipal(obj))
                                : GetCurrentThreadWorkerPrivate()->IsChromeWorker();
@@ -1212,12 +2109,18 @@ Promise::MaybeReportRejected()
   xpcReport->Init(report.report(), report.message(), isChrome, win ? win->WindowID() : 0);
 
   // Now post an event to do the real reporting async
-  // Since Promises preserve their wrapper, it is essential to nsRefPtr<> the
+  // Since Promises preserve their wrapper, it is essential to RefPtr<> the
   // AsyncErrorReporter, otherwise if the call to DispatchToMainThread fails, it
-  // will leak. See Bug 958684.
-  nsRefPtr<AsyncErrorReporter> r =
-    new AsyncErrorReporter(CycleCollectedJSRuntime::Get()->Runtime(), xpcReport);
-  NS_DispatchToMainThread(r);
+  // will leak. See Bug 958684.  So... don't use DispatchToMainThread()
+  nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+  if (NS_WARN_IF(!mainThread)) {
+    // Would prefer NS_ASSERTION, but that causes failure in xpcshell tests
+    NS_WARNING("!!! Trying to report rejected Promise after MainThread shutdown");
+  }
+  if (mainThread) {
+    RefPtr<AsyncErrorReporter> r = new AsyncErrorReporter(xpcReport);
+    mainThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
+  }
 }
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
@@ -1274,40 +2177,30 @@ Promise::ResolveInternal(JSContext* aCx,
       // This is the then() function of the thenable aValueObj.
       JS::Rooted<JSObject*> thenObj(aCx, &then.toObject());
 
-      // Add a fast path for the case when we're resolved with an actual
-      // Promise.  This has two requirements:
+      // We used to have a fast path here for the case when the following
+      // requirements held:
       //
       // 1) valueObj is a Promise.
       // 2) thenObj is a JSFunction backed by our actual Promise::Then
       //    implementation.
       //
-      // If those requirements are satisfied, then we know exactly what
-      // thenObj.call(valueObj) will do, so we can optimize a bit and avoid ever
-      // entering JS for this stuff.
-      Promise* nextPromise;
-      if (PromiseBinding::IsThenMethod(thenObj) &&
-          NS_SUCCEEDED(UNWRAP_OBJECT(Promise, valueObj, nextPromise))) {
-        // If we were taking the codepath that involves ThenableResolverTask and
-        // PromiseInit below, then eventually, in ThenableResolverTask::Run, we
-        // would create some JSFunctions in the compartment of
-        // this->GetWrapper() and pass them to the PromiseInit. So by the time
-        // we'd see the resolution value it would be wrapped into the
-        // compartment of this->GetWrapper().  The global of that compartment is
-        // this->GetGlobalJSObject(), so use that as the global for
-        // ResolvePromiseCallback/RejectPromiseCallback.
-        JS::Rooted<JSObject*> glob(aCx, GlobalJSObject());
-        nsRefPtr<PromiseCallback> resolveCb = new ResolvePromiseCallback(this, glob);
-        nsRefPtr<PromiseCallback> rejectCb = new RejectPromiseCallback(this, glob);
-        nsRefPtr<FastThenableResolverTask> task =
-          new FastThenableResolverTask(resolveCb, rejectCb, nextPromise);
-        DispatchToMicroTask(task);
-        return;
-      }
+      // But now that we're doing subclassing in Promise.prototype.then we would
+      // also need the following requirements:
+      //
+      // 3) Getting valueObj.constructor has no side-effects.
+      // 4) Getting valueObj.constructor[@@species] has no side-effects.
+      // 5) valueObj.constructor[@@species] is a function and calling it has no
+      //    side-effects (e.g. it's the canonical Promise constructor) and it
+      //    provides some callback functions to call as arguments to its
+      //    argument.
+      //
+      // Ensuring that stuff while not inside SpiderMonkey is painful, so let's
+      // drop the fast path for now.
 
-      nsRefPtr<PromiseInit> thenCallback =
-        new PromiseInit(thenObj, mozilla::dom::GetIncumbentGlobal());
-      nsRefPtr<ThenableResolverTask> task =
-        new ThenableResolverTask(this, valueObj, thenCallback);
+      RefPtr<PromiseInit> thenCallback =
+        new PromiseInit(nullptr, thenObj, mozilla::dom::GetIncumbentGlobal());
+      RefPtr<PromiseResolveThenableJob> task =
+        new PromiseResolveThenableJob(this, valueObj, thenCallback);
       DispatchToMicroTask(task);
       return;
     }
@@ -1328,7 +2221,10 @@ Promise::RejectInternal(JSContext* aCx,
 void
 Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
 {
-  if (mGlobal->IsDying()) {
+  MOZ_ASSERT(mGlobal,
+             "We really should have a global here.  Except we sometimes don't "
+             "in the wild for some odd reason");
+  if (!mGlobal || mGlobal->IsDying()) {
     return;
   }
 
@@ -1375,7 +2271,7 @@ Promise::Settle(JS::Handle<JS::Value> aValue, PromiseState aState)
   }
 #endif // defined(DOM_PROMISE_DEPRECATED_REPORTING)
 
-  EnqueueCallbackTasks();
+  TriggerPromiseReactions();
 }
 
 void
@@ -1393,17 +2289,17 @@ Promise::MaybeSettle(JS::Handle<JS::Value> aValue,
 }
 
 void
-Promise::EnqueueCallbackTasks()
+Promise::TriggerPromiseReactions()
 {
-  nsTArray<nsRefPtr<PromiseCallback>> callbacks;
+  nsTArray<RefPtr<PromiseCallback>> callbacks;
   callbacks.SwapElements(mState == Resolved ? mResolveCallbacks
                                             : mRejectCallbacks);
   mResolveCallbacks.Clear();
   mRejectCallbacks.Clear();
 
   for (uint32_t i = 0; i < callbacks.Length(); ++i) {
-    nsRefPtr<PromiseCallbackTask> task =
-      new PromiseCallbackTask(this, callbacks[i], mResult);
+    RefPtr<PromiseReactionJob> task =
+      new PromiseReactionJob(this, callbacks[i], mResult);
     DispatchToMicroTask(task);
   }
 }
@@ -1442,7 +2338,7 @@ Promise::CaptureStack(JSContext* aCx, JS::Heap<JSObject*>& aTarget)
 }
 
 void
-Promise::GetDependentPromises(nsTArray<nsRefPtr<Promise>>& aPromises)
+Promise::GetDependentPromises(nsTArray<RefPtr<Promise>>& aPromises)
 {
   // We want to return promises that correspond to then() calls, Promise.all()
   // calls, and Promise.race() calls.
@@ -1468,19 +2364,15 @@ Promise::GetDependentPromises(nsTArray<nsRefPtr<Promise>>& aPromises)
 }
 
 // A WorkerRunnable to resolve/reject the Promise on the worker thread.
-
+// Calling thread MUST hold PromiseWorkerProxy's mutex before creating this.
 class PromiseWorkerProxyRunnable : public workers::WorkerRunnable
 {
 public:
   PromiseWorkerProxyRunnable(PromiseWorkerProxy* aPromiseWorkerProxy,
-                             const JSStructuredCloneCallbacks* aCallbacks,
-                             JSAutoStructuredCloneBuffer&& aBuffer,
                              PromiseWorkerProxy::RunCallbackFunc aFunc)
     : WorkerRunnable(aPromiseWorkerProxy->GetWorkerPrivate(),
                      WorkerThreadUnchangedBusyCount)
     , mPromiseWorkerProxy(aPromiseWorkerProxy)
-    , mCallbacks(aCallbacks)
-    , mBuffer(Move(aBuffer))
     , mFunc(aFunc)
   {
     MOZ_ASSERT(NS_IsMainThread());
@@ -1495,19 +2387,16 @@ public:
     MOZ_ASSERT(aWorkerPrivate == mWorkerPrivate);
 
     MOZ_ASSERT(mPromiseWorkerProxy);
-    nsRefPtr<Promise> workerPromise = mPromiseWorkerProxy->GetWorkerPromise();
-    MOZ_ASSERT(workerPromise);
+    RefPtr<Promise> workerPromise = mPromiseWorkerProxy->WorkerPromise();
 
     // Here we convert the buffer to a JS::Value.
     JS::Rooted<JS::Value> value(aCx);
-    if (!mBuffer.read(aCx, &value, mCallbacks, mPromiseWorkerProxy)) {
+    if (!mPromiseWorkerProxy->Read(aCx, &value)) {
       JS_ClearPendingException(aCx);
       return false;
     }
 
-    // TODO Bug 975246 - nsRefPtr should support operator |nsRefPtr->*funcType|.
-    (workerPromise.get()->*mFunc)(aCx,
-                                  value);
+    (workerPromise->*mFunc)(aCx, value);
 
     // Release the Promise because it has been resolved/rejected for sure.
     mPromiseWorkerProxy->CleanUp(aCx);
@@ -1518,9 +2407,7 @@ protected:
   ~PromiseWorkerProxyRunnable() {}
 
 private:
-  nsRefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
-  const JSStructuredCloneCallbacks* mCallbacks;
-  JSAutoStructuredCloneBuffer mBuffer;
+  RefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
 
   // Function pointer for calling Promise::{ResolveInternal,RejectInternal}.
   PromiseWorkerProxy::RunCallbackFunc mFunc;
@@ -1530,58 +2417,111 @@ private:
 already_AddRefed<PromiseWorkerProxy>
 PromiseWorkerProxy::Create(workers::WorkerPrivate* aWorkerPrivate,
                            Promise* aWorkerPromise,
-                           const JSStructuredCloneCallbacks* aCb)
+                           const PromiseWorkerProxyStructuredCloneCallbacks* aCb)
 {
   MOZ_ASSERT(aWorkerPrivate);
   aWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(aWorkerPromise);
+  MOZ_ASSERT_IF(aCb, !!aCb->Write && !!aCb->Read);
 
-  nsRefPtr<PromiseWorkerProxy> proxy =
+  RefPtr<PromiseWorkerProxy> proxy =
     new PromiseWorkerProxy(aWorkerPrivate, aWorkerPromise, aCb);
 
   // We do this to make sure the worker thread won't shut down before the
   // promise is resolved/rejected on the worker thread.
-  if (!aWorkerPrivate->AddFeature(aWorkerPrivate->GetJSContext(), proxy)) {
+  if (!proxy->AddRefObject()) {
     // Probably the worker is terminating. We cannot complete the operation
     // and we have to release all the resources.
-    proxy->mCleanedUp = true;
-    proxy->mWorkerPromise = nullptr;
+    proxy->CleanProperties();
     return nullptr;
   }
 
   return proxy.forget();
 }
 
+NS_IMPL_ISUPPORTS0(PromiseWorkerProxy)
+
 PromiseWorkerProxy::PromiseWorkerProxy(workers::WorkerPrivate* aWorkerPrivate,
                                        Promise* aWorkerPromise,
-                                       const JSStructuredCloneCallbacks* aCallbacks)
+                                       const PromiseWorkerProxyStructuredCloneCallbacks* aCallbacks)
   : mWorkerPrivate(aWorkerPrivate)
   , mWorkerPromise(aWorkerPromise)
   , mCleanedUp(false)
   , mCallbacks(aCallbacks)
   , mCleanUpLock("cleanUpLock")
+  , mFeatureAdded(false)
 {
 }
 
 PromiseWorkerProxy::~PromiseWorkerProxy()
 {
   MOZ_ASSERT(mCleanedUp);
+  MOZ_ASSERT(!mFeatureAdded);
   MOZ_ASSERT(!mWorkerPromise);
+  MOZ_ASSERT(!mWorkerPrivate);
+}
+
+void
+PromiseWorkerProxy::CleanProperties()
+{
+#ifdef DEBUG
+  workers::WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(worker);
+  worker->AssertIsOnWorkerThread();
+#endif
+  // Ok to do this unprotected from Create().
+  // CleanUp() holds the lock before calling this.
+  mCleanedUp = true;
+  mWorkerPromise = nullptr;
+  mWorkerPrivate = nullptr;
+
+  // Clear the StructuredCloneHolderBase class.
+  Clear();
+}
+
+bool
+PromiseWorkerProxy::AddRefObject()
+{
+  MOZ_ASSERT(mWorkerPrivate);
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  MOZ_ASSERT(!mFeatureAdded);
+  if (!mWorkerPrivate->AddFeature(mWorkerPrivate->GetJSContext(),
+                                  this)) {
+    return false;
+  }
+
+  mFeatureAdded = true;
+  // Maintain a reference so that we have a valid object to clean up when
+  // removing the feature.
+  AddRef();
+  return true;
 }
 
 workers::WorkerPrivate*
 PromiseWorkerProxy::GetWorkerPrivate() const
 {
-  // It's ok to race on |mCleanedUp|, because it will never cause us to fire
-  // the assertion when we should not.
+#ifdef DEBUG
+  if (NS_IsMainThread()) {
+    mCleanUpLock.AssertCurrentThreadOwns();
+  }
+#endif
+  // Safe to check this without a lock since we assert lock ownership on the
+  // main thread above.
   MOZ_ASSERT(!mCleanedUp);
+  MOZ_ASSERT(mFeatureAdded);
 
   return mWorkerPrivate;
 }
 
 Promise*
-PromiseWorkerProxy::GetWorkerPromise() const
+PromiseWorkerProxy::WorkerPromise() const
 {
+#ifdef DEBUG
+  workers::WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(worker);
+  worker->AssertIsOnWorkerThread();
+#endif
+  MOZ_ASSERT(mWorkerPromise);
   return mWorkerPromise;
 }
 
@@ -1595,14 +2535,6 @@ PromiseWorkerProxy::StoreISupports(nsISupports* aSupports)
   mSupportsArray.AppendElement(supports);
 }
 
-bool
-PromiseWorkerProxyControlRunnable::WorkerRun(JSContext* aCx,
-                                             workers::WorkerPrivate* aWorkerPrivate)
-{
-  mProxy->CleanUp(aCx);
-  return true;
-}
-
 void
 PromiseWorkerProxy::RunCallback(JSContext* aCx,
                                 JS::Handle<JS::Value> aValue,
@@ -1610,32 +2542,22 @@ PromiseWorkerProxy::RunCallback(JSContext* aCx,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  MutexAutoLock lock(mCleanUpLock);
+  MutexAutoLock lock(Lock());
   // If the worker thread's been cancelled we don't need to resolve the Promise.
-  if (mCleanedUp) {
+  if (CleanedUp()) {
     return;
   }
 
-  // The |aValue| is written into the buffer. Note that we also pass |this|
-  // into the structured-clone write in order to set its |mSupportsArray| to
-  // keep objects alive until the structured-clone read/write is done.
-  JSAutoStructuredCloneBuffer buffer;
-  if (!buffer.write(aCx, aValue, mCallbacks, this)) {
+  // The |aValue| is written into the StructuredCloneHolderBase.
+  if (!Write(aCx, aValue)) {
     JS_ClearPendingException(aCx);
-    MOZ_ASSERT(false, "cannot write the JSAutoStructuredCloneBuffer!");
+    MOZ_ASSERT(false, "cannot serialize the value with the StructuredCloneAlgorithm!");
   }
 
-  nsRefPtr<PromiseWorkerProxyRunnable> runnable =
-    new PromiseWorkerProxyRunnable(this,
-                                   mCallbacks,
-                                   Move(buffer),
-                                   aFunc);
+  RefPtr<PromiseWorkerProxyRunnable> runnable =
+    new PromiseWorkerProxyRunnable(this, aFunc);
 
-  if (!runnable->Dispatch(aCx)) {
-    nsRefPtr<WorkerControlRunnable> runnable =
-      new PromiseWorkerProxyControlRunnable(mWorkerPrivate, this);
-    mWorkerPrivate->DispatchControlRunnable(runnable);
-  }
+  runnable->Dispatch(aCx);
 }
 
 void
@@ -1655,10 +2577,6 @@ PromiseWorkerProxy::RejectedCallback(JSContext* aCx,
 bool
 PromiseWorkerProxy::Notify(JSContext* aCx, Status aStatus)
 {
-  MOZ_ASSERT(mWorkerPrivate);
-  mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
-
   if (aStatus >= Canceling) {
     CleanUp(aCx);
   }
@@ -1669,29 +2587,59 @@ PromiseWorkerProxy::Notify(JSContext* aCx, Status aStatus)
 void
 PromiseWorkerProxy::CleanUp(JSContext* aCx)
 {
-  MutexAutoLock lock(mCleanUpLock);
+  // Can't release Mutex while it is still locked, so scope the lock.
+  {
+    MutexAutoLock lock(Lock());
 
-  // |mWorkerPrivate| might not be safe to use anymore if we have already
-  // cleaned up and RemoveFeature(), so we need to check |mCleanedUp| first.
-  if (mCleanedUp) {
-    return;
+    // |mWorkerPrivate| is not safe to use anymore if we have already
+    // cleaned up and RemoveFeature(), so we need to check |mCleanedUp| first.
+    if (CleanedUp()) {
+      return;
+    }
+
+    MOZ_ASSERT(mWorkerPrivate);
+    mWorkerPrivate->AssertIsOnWorkerThread();
+    MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
+
+    // Release the Promise and remove the PromiseWorkerProxy from the features of
+    // the worker thread since the Promise has been resolved/rejected or the
+    // worker thread has been cancelled.
+    MOZ_ASSERT(mFeatureAdded);
+    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mFeatureAdded = false;
+    CleanProperties();
+  }
+  Release();
+}
+
+JSObject*
+PromiseWorkerProxy::CustomReadHandler(JSContext* aCx,
+                                      JSStructuredCloneReader* aReader,
+                                      uint32_t aTag,
+                                      uint32_t aIndex)
+{
+  if (NS_WARN_IF(!mCallbacks)) {
+    return nullptr;
   }
 
-  MOZ_ASSERT(mWorkerPrivate);
-  mWorkerPrivate->AssertIsOnWorkerThread();
-  MOZ_ASSERT(mWorkerPrivate->GetJSContext() == aCx);
+  return mCallbacks->Read(aCx, aReader, this, aTag, aIndex);
+}
 
-  // Release the Promise and remove the PromiseWorkerProxy from the features of
-  // the worker thread since the Promise has been resolved/rejected or the
-  // worker thread has been cancelled.
-  mWorkerPromise = nullptr;
-  mWorkerPrivate->RemoveFeature(aCx, this);
-  mCleanedUp = true;
+bool
+PromiseWorkerProxy::CustomWriteHandler(JSContext* aCx,
+                                       JSStructuredCloneWriter* aWriter,
+                                       JS::Handle<JSObject*> aObj)
+{
+  if (NS_WARN_IF(!mCallbacks)) {
+    return false;
+  }
+
+  return mCallbacks->Write(aCx, aWriter, this, aObj);
 }
 
 // Specializations of MaybeRejectBrokenly we actually support.
 template<>
-void Promise::MaybeRejectBrokenly(const nsRefPtr<DOMError>& aArg) {
+void Promise::MaybeRejectBrokenly(const RefPtr<DOMError>& aArg) {
   MaybeSomething(aArg, &Promise::MaybeReject);
 }
 template<>

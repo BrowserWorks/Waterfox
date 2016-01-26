@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2013, International Business Machines Corporation and
+* Copyright (C) 1997-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -126,6 +126,8 @@ DecimalFormatSymbols::operator=(const DecimalFormatSymbols& rhs)
         locale = rhs.locale;
         uprv_strcpy(validLocale, rhs.validLocale);
         uprv_strcpy(actualLocale, rhs.actualLocale);
+        fIsCustomCurrencySymbol = rhs.fIsCustomCurrencySymbol; 
+        fIsCustomIntlCurrencySymbol = rhs.fIsCustomIntlCurrencySymbol; 
     }
     return *this;
 }
@@ -138,6 +140,12 @@ DecimalFormatSymbols::operator==(const DecimalFormatSymbols& that) const
     if (this == &that) {
         return TRUE;
     }
+    if (fIsCustomCurrencySymbol != that.fIsCustomCurrencySymbol) { 
+        return FALSE; 
+    } 
+    if (fIsCustomIntlCurrencySymbol != that.fIsCustomIntlCurrencySymbol) { 
+        return FALSE; 
+    } 
     for(int32_t i = 0; i < (int32_t)kFormatSymbolCount; ++i) {
         if(fSymbols[(ENumberFormatSymbol)i] != that.fSymbols[(ENumberFormatSymbol)i]) {
             return FALSE;
@@ -189,6 +197,7 @@ DecimalFormatSymbols::initialize(const Locale& loc, UErrorCode& status, UBool us
         NULL, /* seven digit - get it from the numbering system */
         NULL, /* eight digit - get it from the numbering system */
         NULL, /* nine digit - get it from the numbering system */
+        "superscriptingExponent", /* Multiplication (x) symbol for exponents */
     };
 
     static const char *gLatn =  "latn";
@@ -420,6 +429,10 @@ DecimalFormatSymbols::initialize() {
     fSymbols[kNaNSymbol] = (UChar)0xfffd;               // SUB NaN
     fSymbols[kSignificantDigitSymbol] = (UChar)0x0040;  // '@' significant digit
     fSymbols[kMonetaryGroupingSeparatorSymbol].remove(); // 
+    fSymbols[kExponentMultiplicationSymbol] = (UChar)0xd7; // 'x' multiplication symbol for exponents
+    fIsCustomCurrencySymbol = FALSE; 
+    fIsCustomIntlCurrencySymbol = FALSE;
+
 }
 
 Locale

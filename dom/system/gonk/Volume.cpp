@@ -112,11 +112,33 @@ Volume::Dump(const char* aLabel) const
                            : (IsUnmounting() ? "y" : "n"));
 }
 
+void
+Volume::ResolveAndSetMountPoint(const nsCSubstring& aMountPoint)
+{
+  nsCString mountPoint(aMountPoint);
+  char realPathBuf[PATH_MAX];
+
+  // Call realpath so that we wind up with a path which is compatible with
+  // functions like nsVolumeService::GetVolumeByPath.
+
+  if (realpath(mountPoint.get(), realPathBuf) < 0) {
+    // The path we were handed doesn't exist. Warn about it, but use it
+    // anyways assuming that the user knows what they're doing.
+
+    ERR("ResolveAndSetMountPoint: realpath on '%s' failed: %d",
+        mountPoint.get(), errno);
+    mMountPoint = mountPoint;
+  } else {
+    mMountPoint = realPathBuf;
+  }
+  DBG("Volume %s: Setting mountpoint to '%s'", NameStr(), mMountPoint.get());
+}
+
 void Volume::SetFakeVolume(const nsACString& aMountPoint)
 {
   this->mMountLocked = false;
   this->mCanBeShared = false;
-  this->mMountPoint = aMountPoint;
+  ResolveAndSetMountPoint(aMountPoint);
   SetState(nsIVolume::STATE_MOUNTED);
 }
 
@@ -233,7 +255,7 @@ Volume::SetConfig(const nsCString& aConfigName, const nsCString& aConfigValue)
 void
 Volume::SetMediaPresent(bool aMediaPresent)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   // mMediaPresent is slightly redunant to the state, however
@@ -308,7 +330,7 @@ Volume::SetUnmountRequested(bool aUnmountRequested)
 void
 Volume::SetState(Volume::STATE aNewState)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
   if (aNewState == mState) {
     return;
@@ -380,20 +402,19 @@ Volume::SetState(Volume::STATE aNewState)
 void
 Volume::SetMountPoint(const nsCSubstring& aMountPoint)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   if (mMountPoint.Equals(aMountPoint)) {
     return;
   }
-  mMountPoint = aMountPoint;
-  DBG("Volume %s: Setting mountpoint to '%s'", NameStr(), mMountPoint.get());
+  ResolveAndSetMountPoint(aMountPoint);
 }
 
 void
 Volume::StartMount(VolumeResponseCallback* aCallback)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   StartCommand(new VolumeActionCommand(this, "mount", "", aCallback));
@@ -402,7 +423,7 @@ Volume::StartMount(VolumeResponseCallback* aCallback)
 void
 Volume::StartUnmount(VolumeResponseCallback* aCallback)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   StartCommand(new VolumeActionCommand(this, "unmount", "force", aCallback));
@@ -411,7 +432,7 @@ Volume::StartUnmount(VolumeResponseCallback* aCallback)
 void
 Volume::StartFormat(VolumeResponseCallback* aCallback)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   StartCommand(new VolumeActionCommand(this, "format", "", aCallback));
@@ -420,7 +441,7 @@ Volume::StartFormat(VolumeResponseCallback* aCallback)
 void
 Volume::StartShare(VolumeResponseCallback* aCallback)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   StartCommand(new VolumeActionCommand(this, "share", "ums", aCallback));
@@ -429,7 +450,7 @@ Volume::StartShare(VolumeResponseCallback* aCallback)
 void
 Volume::StartUnshare(VolumeResponseCallback* aCallback)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   StartCommand(new VolumeActionCommand(this, "unshare", "ums", aCallback));
@@ -438,7 +459,7 @@ Volume::StartUnshare(VolumeResponseCallback* aCallback)
 void
 Volume::StartCommand(VolumeCommand* aCommand)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   VolumeManager::PostCommand(aCommand);
@@ -448,7 +469,7 @@ Volume::StartCommand(VolumeCommand* aCommand)
 void
 Volume::RegisterVolumeObserver(Volume::EventObserver* aObserver, const char* aName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   sEventObserverList.AddObserver(aObserver);
@@ -468,7 +489,7 @@ Volume::RegisterVolumeObserver(Volume::EventObserver* aObserver, const char* aNa
 void
 Volume::UnregisterVolumeObserver(Volume::EventObserver* aObserver, const char* aName)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   sEventObserverList.RemoveObserver(aObserver);
@@ -483,7 +504,7 @@ Volume::UpdateMountLock(const nsACString& aVolumeName,
                         const int32_t& aMountGeneration,
                         const bool& aMountLocked)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   RefPtr<Volume> vol = VolumeManager::FindVolumeByName(aVolumeName);
@@ -500,7 +521,7 @@ Volume::UpdateMountLock(const nsACString& aVolumeName,
 void
 Volume::HandleVoldResponse(int aResponseCode, nsCWhitespaceTokenizer& aTokenizer)
 {
-  MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(MessageLoop::current() == XRE_GetIOMessageLoop());
 
   // The volume name will have already been parsed, and the tokenizer will point

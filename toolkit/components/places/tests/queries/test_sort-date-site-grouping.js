@@ -14,7 +14,7 @@
 // than six months range.
 // The correspondence between item in |testData| and date range is stored in
 // leveledTestData.
-let testData = [
+var testData = [
   {
     isVisit: true,
     uri: "file:///directory/1",
@@ -65,8 +65,8 @@ let testData = [
     isInQuery: true
   }
 ];
-let domainsInRange = [2, 3];
-let leveledTestData = [// Today
+var domainsInRange = [2, 3];
+var leveledTestData = [// Today
                        [[0],    // Today, local files
                         [1,2]], // Today, example.com
                        // Older than six months
@@ -77,7 +77,7 @@ let leveledTestData = [// Today
 
 // This test data is meant for live updating. The |levels| property indicates
 // date range index and then domain index.
-let testDataAddedLater = [
+var testDataAddedLater = [
   {
     isVisit: true,
     uri: "http://example.com/5",
@@ -117,7 +117,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_sort_date_site_grouping()
+add_task(function* test_sort_date_site_grouping()
 {
   yield task_populateDB(testData);
 
@@ -154,7 +154,7 @@ add_task(function test_sort_date_site_grouping()
   }
 
   // Test live updating.
-  testDataAddedLater.forEach(function(visit) {
+  for (let visit of testDataAddedLater) {
     yield task_populateDB([visit]);
     let oldLength = testData.length;
     let i = visit.levels[0];
@@ -162,8 +162,8 @@ add_task(function test_sort_date_site_grouping()
     testData.push(visit);
     leveledTestData[i][j].push(oldLength);
     compareArrayToResult(leveledTestData[i][j].
-                         map(function(x) testData[x]), roots[i][j]);
-  });
+                         map(x => testData[x]), roots[i][j]);
+  }
 
   for (let i = 0; i < roots.length; i++) {
     for (let j = 0; j < roots[i].length; j++)
@@ -219,7 +219,7 @@ function checkSecondLevel(index, secondIndex, child, roots) {
     // results.
     root.containerOpen = true;
     compareArrayToResult(leveledTestData[index][secondIndex].
-                         map(function(x) testData[x]), root);
+                         map(x => testData[x]), root);
     // We close |root|'s container later so that we can test live
     // updates into it.
 }

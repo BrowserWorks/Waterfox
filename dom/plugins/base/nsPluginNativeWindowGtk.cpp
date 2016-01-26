@@ -57,7 +57,7 @@ nsresult PLUG_NewPluginNativeWindow(nsPluginNativeWindow ** aPluginNativeWindow)
 {
   NS_ENSURE_ARG_POINTER(aPluginNativeWindow);
   *aPluginNativeWindow = new nsPluginNativeWindowGtk();
-  return *aPluginNativeWindow ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
+  return NS_OK;
 }
 
 nsresult PLUG_DeletePluginNativeWindow(nsPluginNativeWindow * aPluginNativeWindow)
@@ -68,11 +68,11 @@ nsresult PLUG_DeletePluginNativeWindow(nsPluginNativeWindow * aPluginNativeWindo
   return NS_OK;
 }
 
-nsresult nsPluginNativeWindowGtk::CallSetWindow(nsRefPtr<nsNPAPIPluginInstance> &aPluginInstance)
+nsresult nsPluginNativeWindowGtk::CallSetWindow(RefPtr<nsNPAPIPluginInstance> &aPluginInstance)
 {
   if (aPluginInstance) {
     if (type == NPWindowTypeWindow &&
-        XRE_GetProcessType() == GeckoProcessType_Content) {
+        XRE_IsContentProcess()) {
       // In this case, most of the initialization code here has already happened
       // in the chrome process. The window we have in content is the XID of the
       // socket widget we need to hand to plugins.

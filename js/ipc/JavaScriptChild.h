@@ -25,6 +25,8 @@ class JavaScriptChild : public JavaScriptBase<PJavaScriptChild>
 
     void drop(JSObject* obj);
 
+    bool allowMessage(JSContext* cx) override { return true; }
+
   protected:
     virtual bool isParent() override { return false; }
     virtual JSObject* scopeForTargetObjects() override;
@@ -34,7 +36,7 @@ class JavaScriptChild : public JavaScriptBase<PJavaScriptChild>
     bool ok(ReturnStatus* rs);
 };
 
-} // mozilla
-} // jsipc
+} // namespace jsipc
+} // namespace mozilla
 
 #endif

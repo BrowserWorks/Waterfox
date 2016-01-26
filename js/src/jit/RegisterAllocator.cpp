@@ -83,10 +83,11 @@ AllocationIntegrityState::check(bool populateSafepoints)
 {
     MOZ_ASSERT(!instructions.empty());
 
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     if (JitSpewEnabled(JitSpew_RegAlloc))
         dump();
-
+#endif
+#ifdef DEBUG
     for (size_t blockIndex = 0; blockIndex < graph.numBlocks(); blockIndex++) {
         LBlock* block = graph.getBlock(blockIndex);
 
@@ -191,8 +192,8 @@ AllocationIntegrityState::checkIntegrity(LBlock* block, LInstruction* ins,
         if (ins->isMoveGroup()) {
             LMoveGroup* group = ins->toMoveGroup();
             for (int i = group->numMoves() - 1; i >= 0; i--) {
-                if (*group->getMove(i).to() == alloc) {
-                    alloc = *group->getMove(i).from();
+                if (group->getMove(i).to() == alloc) {
+                    alloc = group->getMove(i).from();
                     break;
                 }
             }
@@ -290,7 +291,7 @@ AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
       case LDefinition::OBJECT:
         if (populateSafepoints) {
             JitSpew(JitSpew_RegAlloc, "Safepoint object v%u i%u %s",
-                    vreg, ins->id(), alloc.toString());
+                    vreg, ins->id(), alloc.toString().get());
             if (!safepoint->addGcPointer(alloc))
                 return false;
         }
@@ -299,7 +300,7 @@ AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
       case LDefinition::SLOTS:
         if (populateSafepoints) {
             JitSpew(JitSpew_RegAlloc, "Safepoint slots v%u i%u %s",
-                    vreg, ins->id(), alloc.toString());
+                    vreg, ins->id(), alloc.toString().get());
             if (!safepoint->addSlotsOrElementsPointer(alloc))
                 return false;
         }
@@ -313,7 +314,7 @@ AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
       case LDefinition::TYPE:
         if (populateSafepoints) {
             JitSpew(JitSpew_RegAlloc, "Safepoint type v%u i%u %s",
-                    vreg, ins->id(), alloc.toString());
+                    vreg, ins->id(), alloc.toString().get());
             if (!safepoint->addNunboxType(vreg, alloc))
                 return false;
         }
@@ -321,7 +322,7 @@ AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
       case LDefinition::PAYLOAD:
         if (populateSafepoints) {
             JitSpew(JitSpew_RegAlloc, "Safepoint payload v%u i%u %s",
-                    vreg, ins->id(), alloc.toString());
+                    vreg, ins->id(), alloc.toString().get());
             if (!safepoint->addNunboxPayload(vreg, alloc))
                 return false;
         }
@@ -331,7 +332,7 @@ AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
       case LDefinition::BOX:
         if (populateSafepoints) {
             JitSpew(JitSpew_RegAlloc, "Safepoint boxed value v%u i%u %s",
-                    vreg, ins->id(), alloc.toString());
+                    vreg, ins->id(), alloc.toString().get());
             if (!safepoint->addBoxedValue(alloc))
                 return false;
         }
@@ -390,9 +391,9 @@ AllocationIntegrityState::dump()
             fprintf(stderr, "[%u,%u Phi] [def %s] ",
                     input.bits(),
                     output.bits(),
-                    phi->getDef(0)->toString());
+                    phi->getDef(0)->toString().get());
             for (size_t j = 0; j < phi->numOperands(); j++)
-                fprintf(stderr, " [use %s]", info.inputs[j].toString());
+                fprintf(stderr, " [use %s]", info.inputs[j].toString().get());
             fprintf(stderr, "\n");
         }
 
@@ -411,29 +412,29 @@ AllocationIntegrityState::dump()
             if (ins->isMoveGroup()) {
                 LMoveGroup* group = ins->toMoveGroup();
                 for (int i = group->numMoves() - 1; i >= 0; i--) {
-                    // Use two printfs, as LAllocation::toString is not reentrant.
-                    fprintf(stderr, " [%s", group->getMove(i).from()->toString());
-                    fprintf(stderr, " -> %s]", group->getMove(i).to()->toString());
+                    fprintf(stderr, " [%s -> %s]",
+                            group->getMove(i).from().toString().get(),
+                            group->getMove(i).to().toString().get());
                 }
                 fprintf(stderr, "\n");
                 continue;
             }
 
             for (size_t i = 0; i < ins->numDefs(); i++)
-                fprintf(stderr, " [def %s]", ins->getDef(i)->toString());
+                fprintf(stderr, " [def %s]", ins->getDef(i)->toString().get());
 
             for (size_t i = 0; i < ins->numTemps(); i++) {
                 LDefinition* temp = ins->getTemp(i);
                 if (!temp->isBogusTemp())
                     fprintf(stderr, " [temp v%u %s]", info.temps[i].virtualRegister(),
-                           temp->toString());
+                            temp->toString().get());
             }
 
             size_t index = 0;
             for (LInstruction::InputIterator alloc(*ins); alloc.more(); alloc.next()) {
-                fprintf(stderr, " [use %s", info.inputs[index++].toString());
+                fprintf(stderr, " [use %s", info.inputs[index++].toString().get());
                 if (!alloc->isConstant())
-                    fprintf(stderr, " %s", alloc->toString());
+                    fprintf(stderr, " %s", alloc->toString().get());
                 fprintf(stderr, "]");
             }
 
@@ -445,7 +446,10 @@ AllocationIntegrityState::dump()
     // were discovered.
 
     Vector<IntegrityItem, 20, SystemAllocPolicy> seenOrdered;
-    seenOrdered.appendN(IntegrityItem(), seen.count());
+    if (!seenOrdered.appendN(IntegrityItem(), seen.count())) {
+        fprintf(stderr, "OOM while dumping allocations\n");
+        return;
+    }
 
     for (IntegrityItemSet::Enum iter(seen); !iter.empty(); iter.popFront()) {
         IntegrityItem item = iter.front();
@@ -458,7 +462,7 @@ AllocationIntegrityState::dump()
         for (size_t i = 0; i < seenOrdered.length(); i++) {
             IntegrityItem item = seenOrdered[i];
             fprintf(stderr, "  block %u reg v%u alloc %s\n",
-                   item.block->mir()->id(), item.vreg, item.alloc.toString());
+                    item.block->mir()->id(), item.vreg, item.alloc.toString().get());
         }
     }
 
@@ -534,9 +538,9 @@ RegisterAllocator::dumpInstructions()
             fprintf(stderr, "[%u,%u Phi] [def %s]",
                     inputOf(phi).bits(),
                     outputOf(phi).bits(),
-                    phi->getDef(0)->toString());
+                    phi->getDef(0)->toString().get());
             for (size_t j = 0; j < phi->numOperands(); j++)
-                fprintf(stderr, " [use %s]", phi->getOperand(j)->toString());
+                fprintf(stderr, " [use %s]", phi->getOperand(j)->toString().get());
             fprintf(stderr, "\n");
         }
 
@@ -552,25 +556,25 @@ RegisterAllocator::dumpInstructions()
                 LMoveGroup* group = ins->toMoveGroup();
                 for (int i = group->numMoves() - 1; i >= 0; i--) {
                     // Use two printfs, as LAllocation::toString is not reentant.
-                    fprintf(stderr, " [%s", group->getMove(i).from()->toString());
-                    fprintf(stderr, " -> %s]", group->getMove(i).to()->toString());
+                    fprintf(stderr, " [%s", group->getMove(i).from().toString().get());
+                    fprintf(stderr, " -> %s]", group->getMove(i).to().toString().get());
                 }
                 fprintf(stderr, "\n");
                 continue;
             }
 
             for (size_t i = 0; i < ins->numDefs(); i++)
-                fprintf(stderr, " [def %s]", ins->getDef(i)->toString());
+                fprintf(stderr, " [def %s]", ins->getDef(i)->toString().get());
 
             for (size_t i = 0; i < ins->numTemps(); i++) {
                 LDefinition* temp = ins->getTemp(i);
                 if (!temp->isBogusTemp())
-                    fprintf(stderr, " [temp %s]", temp->toString());
+                    fprintf(stderr, " [temp %s]", temp->toString().get());
             }
 
             for (LInstruction::InputIterator alloc(*ins); alloc.more(); alloc.next()) {
                 if (!alloc->isBogus())
-                    fprintf(stderr, " [use %s]", alloc->toString());
+                    fprintf(stderr, " [use %s]", alloc->toString().get());
             }
 
             fprintf(stderr, "\n");

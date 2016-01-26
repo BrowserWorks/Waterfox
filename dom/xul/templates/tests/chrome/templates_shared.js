@@ -158,7 +158,7 @@ function checkResults(root, step)
     // convert the tree's view data into the equivalent DOM structure
     // for easier comparison
     actualoutput = treeViewToDOM(root);
-    var treechildrenElements = [e for (e of output.children) if (e.localName === "treechildren")];
+    var treechildrenElements = [...output.children].filter((e) => e.localName === "treechildren");
     error = compareOutput(actualoutput, treechildrenElements[0], false);
   }
   else {
@@ -440,7 +440,7 @@ function compareConsoleMessages()
   var consoleService = Components.classes["@mozilla.org/consoleservice;1"].
                          getService(Components.interfaces.nsIConsoleService);
   var messages = consoleService.getMessageArray() || [];
-  messages = messages.map(function (m) m.message);
+  messages = messages.map(m => m.message);
   // Copy to avoid modifying expectedConsoleMessages
   var expect = expectedConsoleMessages.concat();
   for (var m = 0; m < messages.length; m++) {

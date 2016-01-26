@@ -208,8 +208,7 @@ LivemarkService.prototype = {
         title: aLivemarkInfo.title,
         index: aLivemarkInfo.index,
         guid: aLivemarkInfo.guid,
-        dateAdded: toDate(aLivemarkInfo.dateAdded) || toDate(aLivemarkInfo.lastModified),
-        lastModified: toDate(aLivemarkInfo.lastModified),
+        dateAdded: toDate(aLivemarkInfo.dateAdded) || toDate(aLivemarkInfo.lastModified)
       });
 
       // Set feed and site URI annotations.
@@ -231,6 +230,12 @@ LivemarkService.prototype = {
       livemark.writeFeedURI(aLivemarkInfo.feedURI);
       if (aLivemarkInfo.siteURI) {
         livemark.writeSiteURI(aLivemarkInfo.siteURI);
+      }
+
+      if (aLivemarkInfo.lastModified) {
+        yield PlacesUtils.bookmarks.update({ guid: folder.guid,
+                                             lastModified: toDate(aLivemarkInfo.lastModified) });
+        livemark.lastModified = aLivemarkInfo.lastModified;
       }
 
       livemarksMap.set(folder.guid, livemark);
@@ -448,7 +453,9 @@ function Livemark(aLivemarkInfo)
 }
 
 Livemark.prototype = {
-  get status() this._status,
+  get status() {
+    return this._status;
+  },
   set status(val) {
     if (this._status != val) {
       this._status = val;
@@ -523,8 +530,8 @@ Livemark.prototype = {
                       createInstance(Ci.nsILoadGroup);
       let channel = NetUtil.newChannel({
         uri: this.feedURI.spec,
-        loadingPrincipal: Services.scriptSecurityManager.getNoAppCodebasePrincipal(this.feedURI),
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_DATAREQUEST
+        loadingPrincipal: Services.scriptSecurityManager.createCodebasePrincipal(this.feedURI, {}),
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_XMLHTTPREQUEST
       }).QueryInterface(Ci.nsIHttpChannel);
       channel.loadGroup = loadgroup;
       channel.loadFlags |= Ci.nsIRequest.LOAD_BACKGROUND |
@@ -548,7 +555,9 @@ Livemark.prototype = {
     this.updateChildren(aForceUpdate);
   },
 
-  get children() this._children,
+  get children() {
+    return this._children;
+  },
   set children(val) {
     this._children = val;
 
@@ -586,23 +595,48 @@ Livemark.prototype = {
         // The QueryInterface is needed cause aContainerNode is a jsval.
         // This is required to avoid issues with scriptable wrappers that would
         // not allow the view to correctly set expandos.
-        get parent()
-          aContainerNode.QueryInterface(Ci.nsINavHistoryContainerResultNode),
-        get parentResult() this.parent.parentResult,
-        get uri() localChild.uri.spec,
-        get type() Ci.nsINavHistoryResultNode.RESULT_TYPE_URI,
-        get title() localChild.title,
-        get accessCount()
-          Number(livemark._isURIVisited(NetUtil.newURI(this.uri))),
-        get time() 0,
-        get icon() "",
-        get indentLevel() this.parent.indentLevel + 1,
-        get bookmarkIndex() -1,
-        get itemId() -1,
-        get dateAdded() now,
-        get lastModified() now,
-        get tags()
-          PlacesUtils.tagging.getTagsForURI(NetUtil.newURI(this.uri)).join(", "),
+        get parent() {
+          return aContainerNode.QueryInterface(Ci.nsINavHistoryContainerResultNode);
+        },
+        get parentResult() {
+          return this.parent.parentResult;
+        },
+        get uri() {
+          return localChild.uri.spec;
+        },
+        get type() {
+          return Ci.nsINavHistoryResultNode.RESULT_TYPE_URI;
+        },
+        get title() {
+          return localChild.title;
+        },
+        get accessCount() {
+          return Number(livemark._isURIVisited(NetUtil.newURI(this.uri)));
+        },
+        get time() {
+          return 0;
+        },
+        get icon() {
+          return "";
+        },
+        get indentLevel() {
+          return this.parent.indentLevel + 1;
+        },
+        get bookmarkIndex() {
+            return -1;
+        },
+        get itemId() {
+            return -1;
+        },
+        get dateAdded() {
+          return now;
+        },
+        get lastModified() {
+          return now;
+        },
+        get tags() {
+          return PlacesUtils.tagging.getTagsForURI(NetUtil.newURI(this.uri)).join(", ");
+        },
         QueryInterface: XPCOMUtils.generateQI([Ci.nsINavHistoryResultNode])
       };
       nodes.push(node);
@@ -647,8 +681,8 @@ Livemark.prototype = {
         let nodes = this._nodes.get(container);
         for (let node of nodes) {
           // Workaround for bug 449811.
-          localObserver = observer;
-          localNode = node;
+          let localObserver = observer;
+          let localNode = node;
           if (!aURI || node.uri == aURI.spec) {
             Services.tm.mainThread.dispatch(() => {
               localObserver.nodeHistoryDetailsChanged(localNode, 0, aVisitedStatus);

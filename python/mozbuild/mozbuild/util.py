@@ -5,16 +5,17 @@
 # This file contains miscellaneous utility functions that don't belong anywhere
 # in particular.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
+import argparse
 import collections
-import copy
 import difflib
 import errno
 import functools
 import hashlib
 import itertools
 import os
+import re
 import stat
 import sys
 import time
@@ -24,7 +25,10 @@ from collections import (
     defaultdict,
     OrderedDict,
 )
-from StringIO import StringIO
+from io import (
+    StringIO,
+    BytesIO,
+)
 
 
 if sys.version_info[0] == 3:
@@ -107,7 +111,24 @@ def ensureParentDir(path):
                 raise
 
 
-class FileAvoidWrite(StringIO):
+def simple_diff(filename, old_lines, new_lines):
+    """Returns the diff between old_lines and new_lines, in unified diff form,
+    as a list of lines.
+
+    old_lines and new_lines are lists of non-newline terminated lines to
+    compare.
+    old_lines can be None, indicating a file creation.
+    new_lines can be None, indicating a file deletion.
+    """
+
+    old_name = '/dev/null' if old_lines is None else filename
+    new_name = '/dev/null' if new_lines is None else filename
+
+    return difflib.unified_diff(old_lines or [], new_lines or [],
+                                old_name, new_name, n=4, lineterm='')
+
+
+class FileAvoidWrite(BytesIO):
     """File-like object that buffers output and only writes if content changed.
 
     We create an instance from an existing filename. New content is written to
@@ -118,12 +139,23 @@ class FileAvoidWrite(StringIO):
     Instances can optionally capture diffs of file changes. This feature is not
     enabled by default because it a) doesn't make sense for binary files b)
     could add unwanted overhead to calls.
+
+    Additionally, there is dry run mode where the file is not actually written
+    out, but reports whether the file was existing and would have been updated
+    still occur, as well as diff capture if requested.
     """
-    def __init__(self, filename, capture_diff=False):
-        StringIO.__init__(self)
+    def __init__(self, filename, capture_diff=False, dry_run=False, mode='rU'):
+        BytesIO.__init__(self)
         self.name = filename
         self._capture_diff = capture_diff
+        self._dry_run = dry_run
         self.diff = None
+        self.mode = mode
+
+    def write(self, buf):
+        if isinstance(buf, unicode):
+            buf = buf.encode('utf-8')
+        BytesIO.write(self, buf)
 
     def close(self):
         """Stop accepting writes, compare file contents, and rewrite if needed.
@@ -137,12 +169,12 @@ class FileAvoidWrite(StringIO):
         of the result.
         """
         buf = self.getvalue()
-        StringIO.close(self)
+        BytesIO.close(self)
         existed = False
         old_content = None
 
         try:
-            existing = open(self.name, 'rU')
+            existing = open(self.name, self.mode)
             existed = True
         except IOError:
             pass
@@ -156,17 +188,22 @@ class FileAvoidWrite(StringIO):
             finally:
                 existing.close()
 
-        ensureParentDir(self.name)
-        with open(self.name, 'w') as file:
-            file.write(buf)
+        if not self._dry_run:
+            ensureParentDir(self.name)
+            # Maintain 'b' if specified.  'U' only applies to modes starting with
+            # 'r', so it is dropped.
+            writemode = 'w'
+            if 'b' in self.mode:
+                writemode += 'b'
+            with open(self.name, writemode) as file:
+                file.write(buf)
 
         if self._capture_diff:
             try:
-                old_lines = old_content.splitlines() if old_content else []
+                old_lines = old_content.splitlines() if existed else None
                 new_lines = buf.splitlines()
 
-                self.diff = difflib.unified_diff(old_lines, new_lines,
-                    self.name, self.name, n=4, lineterm='')
+                self.diff = simple_diff(self.name, old_lines, new_lines)
             # FileAvoidWrite isn't unicode/bytes safe. So, files with non-ascii
             # content or opened and written in different modes may involve
             # implicit conversion and this will make Python unhappy. Since
@@ -174,7 +211,8 @@ class FileAvoidWrite(StringIO):
             # This can go away once FileAvoidWrite uses io.BytesIO and
             # io.StringIO. But that will require a lot of work.
             except (UnicodeDecodeError, UnicodeEncodeError):
-                self.diff = 'Binary or non-ascii file changed: %s' % self.name
+                self.diff = ['Binary or non-ascii file changed: %s' %
+                             self.name]
 
         return existed, True
 
@@ -417,6 +455,14 @@ def FlagsFactory(flags):
     return Flags
 
 
+class StrictOrderingOnAppendListWithFlags(StrictOrderingOnAppendList):
+    """A list with flags specialized for moz.build environments.
+
+    Each subclass has a set of typed flags; this class lets us use `isinstance`
+    for natural testing.
+    """
+
+
 def StrictOrderingOnAppendListWithFlagsFactory(flags):
     """Returns a StrictOrderingOnAppendList-like object, with optional
     flags on each item.
@@ -432,9 +478,9 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
         foo['a'].foo = True
         foo['b'].bar = 'bar'
     """
-    class StrictOrderingOnAppendListWithFlags(StrictOrderingOnAppendList):
+    class StrictOrderingOnAppendListWithFlagsSpecialization(StrictOrderingOnAppendListWithFlags):
         def __init__(self, iterable=[]):
-            StrictOrderingOnAppendList.__init__(self, iterable)
+            StrictOrderingOnAppendListWithFlags.__init__(self, iterable)
             self._flags_type = FlagsFactory(flags)
             self._flags = dict()
 
@@ -449,7 +495,50 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
             raise TypeError("'%s' object does not support item assignment" %
                             self.__class__.__name__)
 
-    return StrictOrderingOnAppendListWithFlags
+        def _update_flags(self, other):
+            if self._flags_type._flags != other._flags_type._flags:
+                raise ValueError('Expected a list of strings with flags like %s, not like %s' %
+                                 (self._flags_type._flags, other._flags_type._flags))
+            intersection = set(self._flags.keys()) & set(other._flags.keys())
+            if intersection:
+                raise ValueError('Cannot update flags: both lists of strings with flags configure %s' %
+                                 intersection)
+            self._flags.update(other._flags)
+
+        def extend(self, l):
+            result = super(StrictOrderingOnAppendList, self).extend(l)
+            if isinstance(l, StrictOrderingOnAppendListWithFlags):
+                self._update_flags(l)
+            return result
+
+        def __setslice__(self, i, j, sequence):
+            result = super(StrictOrderingOnAppendList, self).__setslice__(i, j, sequence)
+            # We may have removed items.
+            for name in set(self._flags.keys()) - set(self):
+                del self._flags[name]
+            if isinstance(sequence, StrictOrderingOnAppendListWithFlags):
+                self._update_flags(sequence)
+            return result
+
+        def __add__(self, other):
+            result = super(StrictOrderingOnAppendList, self).__add__(other)
+            if isinstance(other, StrictOrderingOnAppendListWithFlags):
+                # Result has flags from other but not from self, since
+                # internally we duplicate self and then extend with other, and
+                # only extend knows about flags.  Since we don't allow updating
+                # when the set of flag keys intersect, which we instance we pass
+                # to _update_flags here matters.  This needs to be correct but
+                # is an implementation detail.
+                result._update_flags(self)
+            return result
+
+        def __iadd__(self, other):
+            result = super(StrictOrderingOnAppendList, self).__iadd__(other)
+            if isinstance(other, StrictOrderingOnAppendListWithFlags):
+                self._update_flags(other)
+            return result
+
+    return StrictOrderingOnAppendListWithFlagsSpecialization
 
 
 class HierarchicalStringList(object):
@@ -472,6 +561,8 @@ class HierarchicalStringList(object):
     __slots__ = ('_strings', '_children')
 
     def __init__(self):
+        # Please change ContextDerivedTypedHierarchicalStringList in context.py
+        # if you make changes here.
         self._strings = StrictOrderingOnAppendList()
         self._children = {}
 
@@ -485,17 +576,6 @@ class HierarchicalStringList(object):
         def __len__(self):
             return len(self._hsl._strings)
 
-        def flags_for(self, value):
-            try:
-                # Solely for the side-effect of throwing AttributeError
-                object.__getattribute__(self._hsl, '__flag_slots__')
-                # We now know we have a HierarchicalStringListWithFlags.
-                # Get the flags, but use |get| so we don't create the
-                # flags if they're not already there.
-                return self._hsl._flags.get(value, None)
-            except AttributeError:
-                return None
-
     def walk(self):
         """Walk over all HierarchicalStringLists in the hierarchy.
 
@@ -503,11 +583,7 @@ class HierarchicalStringList(object):
 
         The path is '' for the root level and '/'-delimited strings for
         any descendants.  The sequence is a read-only sequence of the
-        strings contained at that level.  To support accessing the flags
-        for a given string (e.g. when walking over a
-        HierarchicalStringListWithFlagsFactory), the sequence supports a
-        flags_for() method.  Given a string, the flags_for() method returns
-        the flags for the string, if any, or None if there are no flags set.
+        strings contained at that level.
         """
 
         if self._strings:
@@ -545,8 +621,13 @@ class HierarchicalStringList(object):
         raise MozbuildDeletionError('Unable to delete attributes for this object')
 
     def __iadd__(self, other):
-        self._check_list(other)
-        self._strings += other
+        if isinstance(other, HierarchicalStringList):
+            self._strings += other._strings
+            for c in other._children:
+                self[c] += other[c]
+        else:
+            self._check_list(other)
+            self._strings += other
         return self
 
     def __getitem__(self, name):
@@ -556,13 +637,23 @@ class HierarchicalStringList(object):
         self._set_exportvariable(name, value)
 
     def _get_exportvariable(self, name):
-        return self._children.setdefault(name, HierarchicalStringList())
+        # Please change ContextDerivedTypedHierarchicalStringList in context.py
+        # if you make changes here.
+        child = self._children.get(name)
+        if not child:
+            child = self._children[name] = HierarchicalStringList()
+        return child
 
     def _set_exportvariable(self, name, value):
+        if name in self._children:
+            if value is self._get_exportvariable(name):
+                return
+            raise KeyError('global_ns', 'reassign',
+                           '<some variable>.%s' % name)
+
         exports = self._get_exportvariable(name)
-        if not isinstance(value, HierarchicalStringList):
-            exports._check_list(value)
-            exports._strings = value
+        exports._check_list(value)
+        exports._strings += value
 
     def _check_list(self, value):
         if not isinstance(value, list):
@@ -572,58 +663,6 @@ class HierarchicalStringList(object):
                 raise ValueError(
                     'Expected a list of strings, not an element of %s' % type(v))
 
-
-def HierarchicalStringListWithFlagsFactory(flags):
-    """Returns a HierarchicalStringList-like object, with optional
-    flags on each item.
-
-    The flags are defined in the dict given as argument, where keys are
-    the flag names, and values the type used for the value of that flag.
-
-    Example:
-        FooList = HierarchicalStringListWithFlagsFactory({
-            'foo': bool, 'bar': unicode
-        })
-        foo = FooList(['a', 'b', 'c'])
-        foo['a'].foo = True
-        foo['b'].bar = 'bar'
-        foo.sub = ['x, 'y']
-        foo.sub['x'].foo = False
-        foo.sub['y'].bar = 'baz'
-    """
-    class HierarchicalStringListWithFlags(HierarchicalStringList):
-        __flag_slots__ = ('_flags_type', '_flags')
-
-        def __init__(self):
-            HierarchicalStringList.__init__(self)
-            self._flags_type = FlagsFactory(flags)
-            self._flags = dict()
-
-        def __setattr__(self, name, value):
-            if name in self.__flag_slots__:
-                return object.__setattr__(self, name, value)
-            HierarchicalStringList.__setattr__(self, name, value)
-
-        def __getattr__(self, name):
-            if name in self.__flag_slots__:
-                return object.__getattr__(self, name)
-            return HierarchicalStringList.__getattr__(self, name)
-
-        def __getitem__(self, name):
-            if name not in self._flags:
-                if name not in self._strings:
-                    raise KeyError("'%s'" % name)
-                self._flags[name] = self._flags_type()
-            return self._flags[name]
-
-        def __setitem__(self, name, value):
-            raise TypeError("'%s' object does not support item assignment" %
-                            self.__class__.__name__)
-
-        def _get_exportvariable(self, name):
-            return self._children.setdefault(name, HierarchicalStringListWithFlags())
-
-    return HierarchicalStringListWithFlags
 
 class LockFile(object):
     """LockFile is used by the lock_file method to hold the lock.
@@ -706,56 +745,6 @@ def lock_file(lockfile, max_wait = 600):
     f.close()
 
     return LockFile(lockfile)
-
-
-class PushbackIter(object):
-    '''Utility iterator that can deal with pushed back elements.
-
-    This behaves like a regular iterable, just that you can call
-    iter.pushback(item) to get the given item as next item in the
-    iteration.
-    '''
-    def __init__(self, iterable):
-        self.it = iter(iterable)
-        self.pushed_back = []
-
-    def __iter__(self):
-        return self
-
-    def __nonzero__(self):
-        if self.pushed_back:
-            return True
-
-        try:
-            self.pushed_back.insert(0, self.it.next())
-        except StopIteration:
-            return False
-        else:
-            return True
-
-    def next(self):
-        if self.pushed_back:
-            return self.pushed_back.pop()
-        return self.it.next()
-
-    def pushback(self, item):
-        self.pushed_back.append(item)
-
-
-def shell_quote(s):
-    '''Given a string, returns a version enclosed with single quotes for use
-    in a shell command line.
-
-    As a special case, if given an int, returns a string containing the int,
-    not enclosed in quotes.
-    '''
-    if type(s) == int:
-        return '%d' % s
-    # Single quoted strings can contain any characters unescaped except the
-    # single quote itself, which can't even be escaped, so the string needs to
-    # be closed, an escaped single quote added, and reopened.
-    t = type(s)
-    return t("'%s'") % s.replace(t("'"), t("'\\''"))
 
 
 class OrderedDefaultDict(OrderedDict):
@@ -886,12 +875,7 @@ class TypedListMixin(object):
         if isinstance(l, self.__class__):
             return l
 
-        def normalize(e):
-            if not isinstance(e, self.TYPE):
-                e = self.TYPE(e)
-            return e
-
-        return [normalize(e) for e in l]
+        return [self.normalize(e) for e in l]
 
     def __init__(self, iterable=[]):
         iterable = self._ensure_type(iterable)
@@ -936,7 +920,12 @@ def TypedList(type, base_class=List):
        TypedList(unicode, StrictOrderingOnAppendList)
     '''
     class _TypedList(TypedListMixin, base_class):
-        TYPE = type
+        @staticmethod
+        def normalize(e):
+            if not isinstance(e, type):
+                e = type(e)
+            return e
+
     return _TypedList
 
 def group_unified_files(files, unified_prefix, unified_suffix,
@@ -976,3 +965,53 @@ def group_unified_files(files, unified_prefix, unified_suffix,
                                               files)):
         just_the_filenames = list(filter_out_dummy(unified_group))
         yield '%s%d.%s' % (unified_prefix, i, unified_suffix), just_the_filenames
+
+
+def pair(iterable):
+    '''Given an iterable, returns an iterable pairing its items.
+
+    For example,
+        list(pair([1,2,3,4,5,6]))
+    returns
+        [(1,2), (3,4), (5,6)]
+    '''
+    i = iter(iterable)
+    return itertools.izip_longest(i, i)
+
+
+VARIABLES_RE = re.compile('\$\((\w+)\)')
+
+
+def expand_variables(s, variables):
+    '''Given a string with $(var) variable references, replace those references
+    with the corresponding entries from the given `variables` dict.
+
+    If a variable value is not a string, it is iterated and its items are
+    joined with a whitespace.'''
+    result = ''
+    for s, name in pair(VARIABLES_RE.split(s)):
+        result += s
+        value = variables.get(name)
+        if not value:
+            continue
+        if not isinstance(value, types.StringTypes):
+            value = ' '.join(value)
+        result += value
+    return result
+
+
+class DefinesAction(argparse.Action):
+    '''An ArgumentParser action to handle -Dvar[=value] type of arguments.'''
+    def __call__(self, parser, namespace, values, option_string):
+        defines = getattr(namespace, self.dest)
+        if defines is None:
+            defines = {}
+        values = values.split('=', 1)
+        if len(values) == 1:
+            name, value = values[0], 1
+        else:
+            name, value = values
+            if value.isdigit():
+                value = int(value)
+        defines[name] = value
+        setattr(namespace, self.dest, defines)

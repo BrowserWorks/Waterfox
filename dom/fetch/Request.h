@@ -34,6 +34,11 @@ class Request final : public nsISupports
 public:
   Request(nsIGlobalObject* aOwner, InternalRequest* aRequest);
 
+  static bool
+  RequestContextEnabled(JSContext* aCx, JSObject* aObj);
+  static bool
+  RequestCacheEnabled(JSContext* aCx, JSObject* aObj);
+
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
@@ -55,9 +60,6 @@ public:
   RequestMode
   Mode() const
   {
-    if (mRequest->mMode == RequestMode::Cors_with_forced_preflight) {
-      return RequestMode::Cors;
-    }
     return mRequest->mMode;
   }
 
@@ -73,17 +75,16 @@ public:
     return mRequest->GetCacheMode();
   }
 
+  RequestRedirect
+  Redirect() const
+  {
+    return mRequest->GetRedirectMode();
+  }
+
   RequestContext
   Context() const
   {
     return mRequest->Context();
-  }
-
-  // [ChromeOnly]
-  void
-  SetContext(RequestContext aContext)
-  {
-    mRequest->SetContext(aContext);
   }
 
   void
@@ -109,6 +110,9 @@ public:
   void
   GetBody(nsIInputStream** aStream) { return mRequest->GetBody(aStream); }
 
+  void
+  SetBody(nsIInputStream* aStream) { return mRequest->SetBody(aStream); }
+
   static already_AddRefed<Request>
   Constructor(const GlobalObject& aGlobal, const RequestOrUSVString& aInput,
               const RequestInit& aInit, ErrorResult& rv);
@@ -127,9 +131,9 @@ private:
   ~Request();
 
   nsCOMPtr<nsIGlobalObject> mOwner;
-  nsRefPtr<InternalRequest> mRequest;
+  RefPtr<InternalRequest> mRequest;
   // Lazily created.
-  nsRefPtr<Headers> mHeaders;
+  RefPtr<Headers> mHeaders;
 };
 
 } // namespace dom

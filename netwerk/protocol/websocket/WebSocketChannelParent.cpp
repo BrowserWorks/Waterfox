@@ -26,15 +26,15 @@ NS_IMPL_ISUPPORTS(WebSocketChannelParent,
 
 WebSocketChannelParent::WebSocketChannelParent(nsIAuthPromptProvider* aAuthProvider,
                                                nsILoadContext* aLoadContext,
-                                               PBOverrideStatus aOverrideStatus)
+                                               PBOverrideStatus aOverrideStatus,
+                                               uint32_t aSerial)
   : mAuthProvider(aAuthProvider)
   , mLoadContext(aLoadContext)
   , mIPCOpen(true)
+  , mSerial(aSerial)
 {
   // Websocket channels can't have a private browsing override
   MOZ_ASSERT_IF(!aLoadContext, aOverrideStatus == kPBOverride_Unset);
-  if (!webSocketLog)
-    webSocketLog = PR_NewLogModule("nsWebSocket");
   mObserver = new OfflineObserver(this);
 }
 
@@ -60,19 +60,19 @@ WebSocketChannelParent::RecvDeleteSelf()
 bool
 WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
                                       const nsCString& aOrigin,
+                                      const uint64_t& aInnerWindowID,
                                       const nsCString& aProtocol,
                                       const bool& aSecure,
                                       const uint32_t& aPingInterval,
                                       const bool& aClientSetPingInterval,
                                       const uint32_t& aPingTimeout,
                                       const bool& aClientSetPingTimeout,
-                                      const WebSocketLoadInfoArgs& aLoadInfoArgs)
+                                      const OptionalLoadInfoArgs& aLoadInfoArgs)
 {
   LOG(("WebSocketChannelParent::RecvAsyncOpen() %p\n", this));
 
   nsresult rv;
   nsCOMPtr<nsIURI> uri;
-  nsCOMPtr<nsIPrincipal> requestingPrincipal, triggeringPrincipal;
   nsCOMPtr<nsILoadInfo> loadInfo;
 
   bool appOffline = false;
@@ -95,23 +95,15 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
   if (NS_FAILED(rv))
     goto fail;
 
-  requestingPrincipal =
-    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.requestingPrincipalInfo(), &rv);
-  if (NS_FAILED(rv)) {
+  rv = mChannel->SetSerial(mSerial);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     goto fail;
   }
 
-  triggeringPrincipal =
-    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.triggeringPrincipalInfo(), &rv);
-  if (NS_FAILED(rv)) {
+  rv = LoadInfoArgsToLoadInfo(aLoadInfoArgs, getter_AddRefs(loadInfo));
+  if (NS_FAILED(rv))
     goto fail;
-  }
 
-  loadInfo = new LoadInfo(requestingPrincipal,
-                          triggeringPrincipal,
-                          aLoadInfoArgs.securityFlags(),
-                          aLoadInfoArgs.contentPolicyType(),
-                          aLoadInfoArgs.innerWindowID());
   rv = mChannel->SetLoadInfo(loadInfo);
   if (NS_FAILED(rv)) {
     goto fail;
@@ -142,7 +134,7 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
     mChannel->SetPingTimeout(aPingTimeout / 1000);
   }
 
-  rv = mChannel->AsyncOpen(uri, aOrigin, this, nullptr);
+  rv = mChannel->AsyncOpen(uri, aOrigin, aInnerWindowID, this, nullptr);
   if (NS_FAILED(rv))
     goto fail;
 
@@ -219,7 +211,7 @@ WebSocketChannelParent::OnStart(nsISupports *aContext)
     mChannel->GetProtocol(protocol);
     mChannel->GetExtensions(extensions);
 
-    nsRefPtr<WebSocketChannel> channel;
+    RefPtr<WebSocketChannel> channel;
     channel = static_cast<WebSocketChannel*>(mChannel.get());
     MOZ_ASSERT(channel);
 
@@ -304,8 +296,8 @@ WebSocketChannelParent::GetInterface(const nsIID & iid, void **result)
 
   // Only support nsILoadContext if child channel's callbacks did too
   if (iid.Equals(NS_GET_IID(nsILoadContext)) && mLoadContext) {
-    NS_ADDREF(mLoadContext);
-    *result = static_cast<nsILoadContext*>(mLoadContext);
+    nsCOMPtr<nsILoadContext> copy = mLoadContext;
+    copy.forget(result);
     return NS_OK;
   }
 

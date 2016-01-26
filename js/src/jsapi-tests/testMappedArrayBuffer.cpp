@@ -83,7 +83,9 @@ bool VerifyObject(JS::HandleObject obj, uint32_t offset, uint32_t length, const 
         CHECK(JS_IsMappedArrayBufferObject(obj));
     else
         CHECK(!JS_IsMappedArrayBufferObject(obj));
-    const char* data = reinterpret_cast<const char*>(JS_GetArrayBufferData(obj, nogc));
+    bool sharedDummy;
+    const char* data =
+        reinterpret_cast<const char*>(JS_GetArrayBufferData(obj, &sharedDummy, nogc));
     CHECK(data);
     CHECK(memcmp(data, test_data + offset, length) == 0);
 
@@ -125,11 +127,10 @@ bool TestCloneObject()
     JS::RootedObject obj1(cx, CreateNewObject(8, 12));
     CHECK(obj1);
     JSAutoStructuredCloneBuffer cloned_buffer;
-    JS::RootedValue v1(cx, OBJECT_TO_JSVAL(obj1));
-    const JSStructuredCloneCallbacks* callbacks = js::GetContextStructuredCloneCallbacks(cx);
-    CHECK(cloned_buffer.write(cx, v1, callbacks, nullptr));
+    JS::RootedValue v1(cx, JS::ObjectValue(*obj1));
+    CHECK(cloned_buffer.write(cx, v1, nullptr, nullptr));
     JS::RootedValue v2(cx);
-    CHECK(cloned_buffer.read(cx, &v2, callbacks, nullptr));
+    CHECK(cloned_buffer.read(cx, &v2, nullptr, nullptr));
     JS::RootedObject obj2(cx, v2.toObjectOrNull());
     CHECK(VerifyObject(obj2, 8, 12, false));
 
@@ -152,20 +153,19 @@ bool TestTransferObject()
 {
     JS::RootedObject obj1(cx, CreateNewObject(8, 12));
     CHECK(obj1);
-    JS::RootedValue v1(cx, OBJECT_TO_JSVAL(obj1));
+    JS::RootedValue v1(cx, JS::ObjectValue(*obj1));
 
     // Create an Array of transferable values.
     JS::AutoValueVector argv(cx);
     argv.append(v1);
     JS::RootedObject obj(cx, JS_NewArrayObject(cx, JS::HandleValueArray::subarray(argv, 0, 1)));
     CHECK(obj);
-    JS::RootedValue transferable(cx, OBJECT_TO_JSVAL(obj));
+    JS::RootedValue transferable(cx, JS::ObjectValue(*obj));
 
     JSAutoStructuredCloneBuffer cloned_buffer;
-    const JSStructuredCloneCallbacks* callbacks = js::GetContextStructuredCloneCallbacks(cx);
-    CHECK(cloned_buffer.write(cx, v1, transferable, callbacks, nullptr));
+    CHECK(cloned_buffer.write(cx, v1, transferable, nullptr, nullptr));
     JS::RootedValue v2(cx);
-    CHECK(cloned_buffer.read(cx, &v2, callbacks, nullptr));
+    CHECK(cloned_buffer.read(cx, &v2, nullptr, nullptr));
     JS::RootedObject obj2(cx, v2.toObjectOrNull());
     CHECK(VerifyObject(obj2, 8, 12, true));
     CHECK(isNeutered(obj1));

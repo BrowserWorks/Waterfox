@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -9,24 +9,24 @@ XPCOMUtils.defineLazyServiceGetter(this, "nssProxy",
                                    "@mozilla.org/networkstatsServiceProxy;1",
                                    "nsINetworkStatsServiceProxy");
 
-function mokConvertNetworkInterface() {
-  NetworkStatsService.convertNetworkInterface = function(aNetwork) {
-    if (aNetwork.type != Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE &&
-        aNetwork.type != Ci.nsINetworkInterface.NETWORK_TYPE_WIFI) {
+function mokConvertNetworkInfo() {
+  NetworkStatsService.convertNetworkInfo = function(aNetworkInfo) {
+    if (aNetworkInfo.type != Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE &&
+        aNetworkInfo.type != Ci.nsINetworkInfo.NETWORK_TYPE_WIFI) {
       return null;
     }
 
     let id = '0';
-    if (aNetwork.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
+    if (aNetworkInfo.type == Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE) {
       id = '1234'
     }
 
-    let netId = this.getNetworkId(id, aNetwork.type);
+    let netId = this.getNetworkId(id, aNetworkInfo.type);
 
     if (!this._networks[netId]) {
       this._networks[netId] = Object.create(null);
       this._networks[netId].network = { id: id,
-                                        type: aNetwork.type };
+                                        type: aNetworkInfo.type };
     }
 
     return netId;
@@ -37,13 +37,12 @@ add_test(function test_saveAppStats() {
   var cachedStats = NetworkStatsService.cachedStats;
   var timestamp = NetworkStatsService.cachedStatsDate.getTime();
 
-  // Create to fake nsINetworkInterfaces. As nsINetworkInterface can not
-  // be instantiated, these two vars will emulate it by filling the properties
-  // that will be used.
-  var wifi = {type: Ci.nsINetworkInterface.NETWORK_TYPE_WIFI, id: "0"};
-  var mobile = {type: Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE, id: "1234"};
+  // Create to fake nsINetworkInfos. As nsINetworkInfo can not be instantiated,
+  // these two vars will emulate it by filling the properties that will be used.
+  var wifi = {type: Ci.nsINetworkInfo.NETWORK_TYPE_WIFI, id: "0"};
+  var mobile = {type: Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE, id: "1234"};
 
-  // Insert fake mobile network interface in NetworkStatsService
+  // Insert fake mobile network info in NetworkStatsService
   var mobileNetId = NetworkStatsService.getNetworkId(mobile.id, mobile.type);
 
   do_check_eq(Object.keys(cachedStats).length, 0);
@@ -62,16 +61,14 @@ add_test(function test_saveAppStats() {
       do_check_eq(cachedStats[key1].serviceType.length, 0);
       do_check_eq(cachedStats[key1].networkId, wifi.id);
       do_check_eq(cachedStats[key1].networkType, wifi.type);
-      do_check_eq(new Date(cachedStats[key1].date).getTime() / 1000,
-                  Math.floor(timestamp / 1000));
+      do_check_eq(cachedStats[key1].date.getTime(), timestamp);
       do_check_eq(cachedStats[key1].rxBytes, 10);
       do_check_eq(cachedStats[key1].txBytes, 20);
       do_check_eq(cachedStats[key2].appId, 1);
       do_check_eq(cachedStats[key1].serviceType.length, 0);
       do_check_eq(cachedStats[key2].networkId, mobile.id);
       do_check_eq(cachedStats[key2].networkType, mobile.type);
-      do_check_eq(new Date(cachedStats[key2].date).getTime() / 1000,
-                  Math.floor(timestamp / 1000));
+      do_check_eq(cachedStats[key2].date.getTime(), timestamp);
       do_check_eq(cachedStats[key2].rxBytes, 10);
       do_check_eq(cachedStats[key2].txBytes, 20);
 
@@ -83,13 +80,12 @@ add_test(function test_saveAppStats() {
 add_test(function test_saveServiceStats() {
   var timestamp = NetworkStatsService.cachedStatsDate.getTime();
 
-  // Create to fake nsINetworkInterfaces. As nsINetworkInterface can not
-  // be instantiated, these two vars will emulate it by filling the properties
-  // that will be used.
-  var wifi = {type: Ci.nsINetworkInterface.NETWORK_TYPE_WIFI, id: "0"};
-  var mobile = {type: Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE, id: "1234"};
+  // Create to fake nsINetworkInfos. As nsINetworkInfo can not be instantiated,
+  // these two vars will emulate it by filling the properties that will be used.
+  var wifi = {type: Ci.nsINetworkInfo.NETWORK_TYPE_WIFI, id: "0"};
+  var mobile = {type: Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE, id: "1234"};
 
-  // Insert fake mobile network interface in NetworkStatsService
+  // Insert fake mobile network info in NetworkStatsService
   var mobileNetId = NetworkStatsService.getNetworkId(mobile.id, mobile.type);
 
   NetworkStatsService.updateCachedStats(function (success, msg) {
@@ -115,16 +111,14 @@ add_test(function test_saveServiceStats() {
         do_check_eq(cachedStats[key1].serviceType, serviceType);
         do_check_eq(cachedStats[key1].networkId, wifi.id);
         do_check_eq(cachedStats[key1].networkType, wifi.type);
-        do_check_eq(new Date(cachedStats[key1].date).getTime() / 1000,
-                    Math.floor(timestamp / 1000));
+        do_check_eq(cachedStats[key1].date.getTime(), timestamp);
         do_check_eq(cachedStats[key1].rxBytes, 10);
         do_check_eq(cachedStats[key1].txBytes, 20);
         do_check_eq(cachedStats[key2].appId, 0);
         do_check_eq(cachedStats[key1].serviceType, serviceType);
         do_check_eq(cachedStats[key2].networkId, mobile.id);
         do_check_eq(cachedStats[key2].networkType, mobile.type);
-        do_check_eq(new Date(cachedStats[key2].date).getTime() / 1000,
-                    Math.floor(timestamp / 1000));
+        do_check_eq(cachedStats[key2].date.getTime(), timestamp);
         do_check_eq(cachedStats[key2].rxBytes, 10);
         do_check_eq(cachedStats[key2].txBytes, 20);
 
@@ -138,7 +132,7 @@ add_test(function test_saveStatsWithDifferentDates() {
   var today = NetworkStatsService.cachedStatsDate;
   var tomorrow = new Date(today.getTime() + (24 * 60 * 60 * 1000));
 
-  var mobile = {type: Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE, id: "1234"};
+  var mobile = {type: Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE, id: "1234"};
 
   NetworkStatsService.updateCachedStats(function (success, message) {
     do_check_eq(success, true);
@@ -159,8 +153,7 @@ add_test(function test_saveStatsWithDifferentDates() {
         do_check_eq(cachedStats[key].isInBrowser, false);
         do_check_eq(cachedStats[key].networkId, mobile.id);
         do_check_eq(cachedStats[key].networkType, mobile.type);
-        do_check_eq(new Date(cachedStats[key].date).getTime() / 1000,
-                    Math.floor(tomorrow.getTime() / 1000));
+        do_check_eq(cachedStats[key].date.getTime(), tomorrow.getTime());
         do_check_eq(cachedStats[key].rxBytes, 30);
         do_check_eq(cachedStats[key].txBytes, 40);
 
@@ -173,7 +166,7 @@ add_test(function test_saveStatsWithDifferentDates() {
 add_test(function test_saveStatsWithMaxCachedTraffic() {
   var timestamp = NetworkStatsService.cachedStatsDate.getTime();
   var maxtraffic = NetworkStatsService.maxCachedTraffic;
-  var wifi = {type: Ci.nsINetworkInterface.NETWORK_TYPE_WIFI, id: "0"};
+  var wifi = {type: Ci.nsINetworkInfo.NETWORK_TYPE_WIFI, id: "0"};
 
   NetworkStatsService.updateCachedStats(function (success, message) {
     do_check_eq(success, true);
@@ -199,11 +192,11 @@ add_test(function test_saveAppStats() {
   var cachedStats = NetworkStatsService.cachedStats;
   var timestamp = NetworkStatsService.cachedStatsDate.getTime();
 
-  // Create to fake nsINetworkInterfaces. As nsINetworkInterface can not
+  // Create to fake nsINetworkInfo. As nsINetworkInfo can not
   // be instantiated, these two vars will emulate it by filling the properties
   // that will be used.
-  var wifi = {type: Ci.nsINetworkInterface.NETWORK_TYPE_WIFI, id: "0"};
-  var mobile = {type: Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE, id: "1234"};
+  var wifi = {type: Ci.nsINetworkInfo.NETWORK_TYPE_WIFI, id: "0"};
+  var mobile = {type: Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE, id: "1234"};
 
   // Insert fake mobile network interface in NetworkStatsService
   var mobileNetId = NetworkStatsService.getNetworkId(mobile.id, mobile.type);
@@ -232,9 +225,9 @@ function run_test() {
 
   Cu.import("resource://gre/modules/NetworkStatsService.jsm");
 
-  // Function convertNetworkInterface of NetworkStatsService causes errors when dealing
+  // Function convertNetworkInfo of NetworkStatsService causes errors when dealing
   // with RIL to get the iccid, so overwrite it.
-  mokConvertNetworkInterface();
+  mokConvertNetworkInfo();
 
   run_next_test();
 }

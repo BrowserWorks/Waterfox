@@ -8,6 +8,16 @@ notification {
   color: InfoText;
   background-color: InfoBackground;
   text-shadow: none;
+  border-top: 1px solid ThreeDShadow;
+  border-bottom: 1px solid ThreeDShadow;
+}
+
+notificationbox[notificationside="top"] > notification {
+  border-top-style: none;
+}
+
+notificationbox[notificationside="bottom"] > notification {
+  border-bottom-style: none;
 }
 
 notification[type="info"] {
@@ -58,16 +68,16 @@ notification[type="critical"] {
 
 /* Popup notification */
 
-.popup-notification-description {
-  max-width: 24em;
+.popup-notification-body {
+  max-width: 25em;
 }
 
-.popup-notification-originHost:not([value]),
+.popup-notification-origin:not([value]),
 .popup-notification-learnmore-link:not([href]) {
   display: none;
 }
 
-.popup-notification-originHost {
+.popup-notification-origin {
   margin-bottom: .3em !important;
 }
 
@@ -192,4 +202,8 @@ XXX: apply styles to all themes until bug 509642 is fixed
 .popup-notification-closebutton {
   -moz-margin-end: -14px;
   margin-top: -10px;
+}
+
+.popup-notification-menubutton > .button-menubutton-button[disabled] {
+  opacity: 0.5;
 }

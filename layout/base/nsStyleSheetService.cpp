@@ -7,7 +7,6 @@
 /* implementation of interface for managing user and user-agent style sheets */
 
 #include "nsStyleSheetService.h"
-#include "nsIStyleSheet.h"
 #include "mozilla/CSSStyleSheet.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/unused.h"
@@ -18,6 +17,7 @@
 #include "nsCOMPtr.h"
 #include "nsICategoryManager.h"
 #include "nsISupportsPrimitives.h"
+#include "nsISimpleEnumerator.h"
 #include "nsNetUtil.h"
 #include "nsIObserverService.h"
 #include "nsLayoutStatics.h"
@@ -78,14 +78,14 @@ nsStyleSheetService::RegisterFromEnumerator(nsICategoryManager  *aManager,
 }
 
 int32_t
-nsStyleSheetService::FindSheetByURI(const nsCOMArray<nsIStyleSheet> &sheets,
-                                    nsIURI *sheetURI)
+nsStyleSheetService::FindSheetByURI(const nsTArray<RefPtr<CSSStyleSheet>>& aSheets,
+                                    nsIURI* aSheetURI)
 {
-  for (int32_t i = sheets.Count() - 1; i >= 0; i-- ) {
+  for (int32_t i = aSheets.Length() - 1; i >= 0; i-- ) {
     bool bEqual;
-    nsIURI* uri = sheets[i]->GetSheetURI();
+    nsIURI* uri = aSheets[i]->GetSheetURI();
     if (uri
-        && NS_SUCCEEDED(uri->Equals(sheetURI, &bEqual))
+        && NS_SUCCEEDED(uri->Equals(aSheetURI, &bEqual))
         && bEqual) {
       return i;
     }
@@ -101,7 +101,7 @@ nsStyleSheetService::Init()
   // SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded should be updated too.
 
   // Child processes get their style sheets from the ContentParent.
-  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+  if (XRE_IsContentProcess()) {
     return NS_OK;
   }
 
@@ -152,11 +152,12 @@ nsStyleSheetService::LoadAndRegisterSheet(nsIURI *aSheetURI,
     if (serv) {
       // We're guaranteed that the new sheet is the last sheet in
       // mSheets[aSheetType]
-      const nsCOMArray<nsIStyleSheet> & sheets = mSheets[aSheetType];
-      serv->NotifyObservers(sheets[sheets.Count() - 1], message, nullptr);
+      CSSStyleSheet* sheet = mSheets[aSheetType].LastElement();
+      serv->NotifyObservers(NS_ISUPPORTS_CAST(nsIDOMCSSStyleSheet*, sheet),
+                            message, nullptr);
     }
 
-    if (XRE_GetProcessType() == GeckoProcessType_Default) {
+    if (XRE_IsParentProcess()) {
       nsTArray<dom::ContentParent*> children;
       dom::ContentParent::GetAll(children);
 
@@ -168,7 +169,7 @@ nsStyleSheetService::LoadAndRegisterSheet(nsIURI *aSheetURI,
       SerializeURI(aSheetURI, uri);
 
       for (uint32_t i = 0; i < children.Length(); i++) {
-        unused << children[i]->SendLoadAndRegisterSheet(uri, aSheetType);
+        Unused << children[i]->SendLoadAndRegisterSheet(uri, aSheetType);
       }
     }
   }
@@ -179,22 +180,35 @@ nsresult
 nsStyleSheetService::LoadAndRegisterSheetInternal(nsIURI *aSheetURI,
                                                   uint32_t aSheetType)
 {
-  NS_ENSURE_ARG(aSheetType == AGENT_SHEET ||
-                aSheetType == USER_SHEET ||
-                aSheetType == AUTHOR_SHEET);
   NS_ENSURE_ARG_POINTER(aSheetURI);
 
-  nsRefPtr<css::Loader> loader = new css::Loader();
+  css::SheetParsingMode parsingMode;
+  switch (aSheetType) {
+    case AGENT_SHEET:
+      parsingMode = css::eAgentSheetFeatures;
+      break;
 
-  nsRefPtr<CSSStyleSheet> sheet;
-  // Allow UA sheets, but not user sheets, to use unsafe rules
-  nsresult rv = loader->LoadSheetSync(aSheetURI, aSheetType == AGENT_SHEET,
-                                      true, getter_AddRefs(sheet));
+    case USER_SHEET:
+      parsingMode = css::eUserSheetFeatures;
+      break;
+
+    case AUTHOR_SHEET:
+      parsingMode = css::eAuthorSheetFeatures;
+      break;
+
+    default:
+      NS_WARNING("invalid sheet type argument");
+      return NS_ERROR_INVALID_ARG;
+  }
+
+  RefPtr<css::Loader> loader = new css::Loader();
+
+  RefPtr<CSSStyleSheet> sheet;
+  nsresult rv = loader->LoadSheetSync(aSheetURI, parsingMode, true,
+                                      getter_AddRefs(sheet));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!mSheets[aSheetType].AppendObject(sheet)) {
-    rv = NS_ERROR_OUT_OF_MEMORY;
-  }
+  mSheets[aSheetType].AppendElement(sheet);
 
   return rv;
 }
@@ -218,18 +232,32 @@ NS_IMETHODIMP
 nsStyleSheetService::PreloadSheet(nsIURI *aSheetURI, uint32_t aSheetType,
                                   nsIDOMStyleSheet **aSheet)
 {
-  NS_ENSURE_ARG(aSheetType == AGENT_SHEET ||
-                aSheetType == USER_SHEET ||
-                aSheetType == AUTHOR_SHEET);
-  NS_ENSURE_ARG_POINTER(aSheetURI);
   NS_PRECONDITION(aSheet, "Null out param");
+  NS_ENSURE_ARG_POINTER(aSheetURI);
+  css::SheetParsingMode parsingMode;
+  switch (aSheetType) {
+    case AGENT_SHEET:
+      parsingMode = css::eAgentSheetFeatures;
+      break;
 
-  nsRefPtr<css::Loader> loader = new css::Loader();
+    case USER_SHEET:
+      parsingMode = css::eUserSheetFeatures;
+      break;
 
-  // Allow UA sheets, but not user sheets, to use unsafe rules
-  nsRefPtr<CSSStyleSheet> sheet;
-  nsresult rv = loader->LoadSheetSync(aSheetURI, aSheetType == AGENT_SHEET,
-                                      true, getter_AddRefs(sheet));
+    case AUTHOR_SHEET:
+      parsingMode = css::eAuthorSheetFeatures;
+      break;
+
+    default:
+      NS_WARNING("invalid sheet type argument");
+      return NS_ERROR_INVALID_ARG;
+  }
+
+  RefPtr<css::Loader> loader = new css::Loader();
+
+  RefPtr<CSSStyleSheet> sheet;
+  nsresult rv = loader->LoadSheetSync(aSheetURI, parsingMode, true,
+                                      getter_AddRefs(sheet));
   NS_ENSURE_SUCCESS(rv, rv);
   sheet.forget(aSheet);
   return NS_OK;
@@ -245,8 +273,8 @@ nsStyleSheetService::UnregisterSheet(nsIURI *aSheetURI, uint32_t aSheetType)
 
   int32_t foundIndex = FindSheetByURI(mSheets[aSheetType], aSheetURI);
   NS_ENSURE_TRUE(foundIndex >= 0, NS_ERROR_INVALID_ARG);
-  nsCOMPtr<nsIStyleSheet> sheet = mSheets[aSheetType][foundIndex];
-  mSheets[aSheetType].RemoveObjectAt(foundIndex);
+  RefPtr<CSSStyleSheet> sheet = mSheets[aSheetType][foundIndex];
+  mSheets[aSheetType].RemoveElementAt(foundIndex);
 
   const char* message;
   switch (aSheetType) {
@@ -262,10 +290,12 @@ nsStyleSheetService::UnregisterSheet(nsIURI *aSheetURI, uint32_t aSheetType)
   }
 
   nsCOMPtr<nsIObserverService> serv = services::GetObserverService();
-  if (serv)
-    serv->NotifyObservers(sheet, message, nullptr);
+  if (serv) {
+    serv->NotifyObservers(NS_ISUPPORTS_CAST(nsIDOMCSSStyleSheet*, sheet),
+                          message, nullptr);
+  }
 
-  if (XRE_GetProcessType() == GeckoProcessType_Default) {
+  if (XRE_IsParentProcess()) {
     nsTArray<dom::ContentParent*> children;
     dom::ContentParent::GetAll(children);
 
@@ -277,7 +307,7 @@ nsStyleSheetService::UnregisterSheet(nsIURI *aSheetURI, uint32_t aSheetType)
     SerializeURI(aSheetURI, uri);
 
     for (uint32_t i = 0; i < children.Length(); i++) {
-      unused << children[i]->SendUnregisterSheet(uri, aSheetType);
+      Unused << children[i]->SendUnregisterSheet(uri, aSheetType);
     }
   }
 
@@ -299,13 +329,6 @@ nsStyleSheetService::GetInstance()
   return gInstance;
 }
 
-static size_t
-SizeOfElementIncludingThis(nsIStyleSheet* aElement,
-                           MallocSizeOf aMallocSizeOf, void *aData)
-{
-  return aElement->SizeOfIncludingThis(aMallocSizeOf);
-}
-
 MOZ_DEFINE_MALLOC_SIZE_OF(StyleSheetServiceMallocSizeOf)
 
 NS_IMETHODIMP
@@ -322,13 +345,11 @@ size_t
 nsStyleSheetService::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   size_t n = aMallocSizeOf(this);
-  n += mSheets[AGENT_SHEET].SizeOfExcludingThis(SizeOfElementIncludingThis,
-                                                aMallocSizeOf);
-  n += mSheets[USER_SHEET].SizeOfExcludingThis(SizeOfElementIncludingThis,
-                                               aMallocSizeOf);
-  n += mSheets[AUTHOR_SHEET].SizeOfExcludingThis(SizeOfElementIncludingThis,
-                                                 aMallocSizeOf);
+  for (auto& sheetArray : mSheets) {
+    n += sheetArray.ShallowSizeOfExcludingThis(aMallocSizeOf);
+    for (CSSStyleSheet* sheet : sheetArray) {
+      n += sheet->SizeOfIncludingThis(aMallocSizeOf);
+    }
+  }
   return n;
 }
-
-

@@ -7,9 +7,9 @@ Cu.import("resource://services-sync/identity.js");
 Cu.import("resource://services-sync/resource.js");
 Cu.import("resource://services-sync/util.js");
 
-let logger;
+var logger;
 
-let fetched = false;
+var fetched = false;
 function server_open(metadata, response) {
   let body;
   if (metadata.method == "GET") {
@@ -45,7 +45,7 @@ function server_404(metadata, response) {
   response.bodyOutputStream.write(body, body.length);
 }
 
-let pacFetched = false;
+var pacFetched = false;
 function server_pac(metadata, response) {
   pacFetched = true;
   let body = 'function FindProxyForURL(url, host) { return "DIRECT"; }';
@@ -55,7 +55,7 @@ function server_pac(metadata, response) {
 }
 
 
-let sample_data = {
+var sample_data = {
   some: "sample_data",
   injson: "format",
   number: 42
@@ -140,7 +140,7 @@ function server_headers(metadata, response) {
   header_names = header_names.sort();
 
   headers = {};
-  for each (let header in header_names) {
+  for (let header of header_names) {
     headers[header] = metadata.getHeader(header);
   }
   let body = JSON.stringify(headers);

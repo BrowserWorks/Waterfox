@@ -8,9 +8,12 @@ import os
 import subprocess
 import traceback
 
-from mozlog.structured import get_default_logger
+from mozlog import get_default_logger
 from mozprocess import ProcessHandler
-import mozcrash
+try:
+    import mozcrash
+except ImportError:
+    mozcrash = None
 
 from ..application import DefaultContext
 from ..errors import RunnerNotStartedError
@@ -27,11 +30,13 @@ class BaseRunner(object):
     output_timeout = None
 
     def __init__(self, app_ctx=None, profile=None, clean_profile=True, env=None,
-                 process_class=None, process_args=None, symbols_path=None, dump_save_path=None):
+                 process_class=None, process_args=None, symbols_path=None,
+                 dump_save_path=None, addons=None):
         self.app_ctx = app_ctx or DefaultContext()
 
         if isinstance(profile, basestring):
-            self.profile = self.app_ctx.profile_class(profile=profile)
+            self.profile = self.app_ctx.profile_class(profile=profile,
+                                                      addons=addons)
         else:
             self.profile = profile or self.app_ctx.profile_class(**getattr(self.app_ctx, 'profile_args', {}))
 
@@ -190,21 +195,27 @@ class BaseRunner(object):
             if logger is not None:
                 if test_name is None:
                     test_name = "runner.py"
-                self.crashed += mozcrash.log_crashes(
-                    logger,
-                    dump_directory,
-                    self.symbols_path,
-                    dump_save_path=dump_save_path,
-                    test=test_name)
+                if mozcrash:
+                    self.crashed += mozcrash.log_crashes(
+                        logger,
+                        dump_directory,
+                        self.symbols_path,
+                        dump_save_path=dump_save_path,
+                        test=test_name)
+                else:
+                    logger.warning("Can not log crashes without mozcrash")
             else:
-                crashed = mozcrash.check_for_crashes(
-                    dump_directory,
-                    self.symbols_path,
-                    dump_save_path=dump_save_path,
-                    test_name=test_name,
-                    quiet=quiet)
-                if crashed:
-                    self.crashed += 1
+                if mozcrash:
+                    crashed = mozcrash.check_for_crashes(
+                        dump_directory,
+                        self.symbols_path,
+                        dump_save_path=dump_save_path,
+                        test_name=test_name,
+                        quiet=quiet)
+                    if crashed:
+                        self.crashed += 1
+                else:
+                    logger.warning("Can not log crashes without mozcrash")
         except:
             traceback.print_exc()
 

@@ -23,6 +23,7 @@
 #include "nsPresContext.h"
 #include "nsStyleUtil.h"
 #include "nsDeviceContext.h"
+#include "nsStyleSet.h"
 
 using namespace mozilla;
 
@@ -541,48 +542,48 @@ void nsCSSValue::SetPairValue(const nsCSSValue& xValue,
 
 void nsCSSValue::SetTripletValue(const nsCSSValueTriplet* aValue)
 {
-    // triplet should not be used for null/inherit/initial values
-    MOZ_ASSERT(aValue &&
-               aValue->mXValue.GetUnit() != eCSSUnit_Null &&
-               aValue->mYValue.GetUnit() != eCSSUnit_Null &&
-               aValue->mZValue.GetUnit() != eCSSUnit_Null &&
-               aValue->mXValue.GetUnit() != eCSSUnit_Inherit &&
-               aValue->mYValue.GetUnit() != eCSSUnit_Inherit &&
-               aValue->mZValue.GetUnit() != eCSSUnit_Inherit &&
-               aValue->mXValue.GetUnit() != eCSSUnit_Initial &&
-               aValue->mYValue.GetUnit() != eCSSUnit_Initial &&
-               aValue->mZValue.GetUnit() != eCSSUnit_Initial &&
-               aValue->mXValue.GetUnit() != eCSSUnit_Unset &&
-               aValue->mYValue.GetUnit() != eCSSUnit_Unset &&
-               aValue->mZValue.GetUnit() != eCSSUnit_Unset,
-               "missing or inappropriate triplet value");
-    Reset();
-    mUnit = eCSSUnit_Triplet;
-    mValue.mTriplet = new nsCSSValueTriplet_heap(aValue->mXValue, aValue->mYValue, aValue->mZValue);
-    mValue.mTriplet->AddRef();
+  // triplet should not be used for null/inherit/initial values
+  MOZ_ASSERT(aValue &&
+             aValue->mXValue.GetUnit() != eCSSUnit_Null &&
+             aValue->mYValue.GetUnit() != eCSSUnit_Null &&
+             aValue->mZValue.GetUnit() != eCSSUnit_Null &&
+             aValue->mXValue.GetUnit() != eCSSUnit_Inherit &&
+             aValue->mYValue.GetUnit() != eCSSUnit_Inherit &&
+             aValue->mZValue.GetUnit() != eCSSUnit_Inherit &&
+             aValue->mXValue.GetUnit() != eCSSUnit_Initial &&
+             aValue->mYValue.GetUnit() != eCSSUnit_Initial &&
+             aValue->mZValue.GetUnit() != eCSSUnit_Initial &&
+             aValue->mXValue.GetUnit() != eCSSUnit_Unset &&
+             aValue->mYValue.GetUnit() != eCSSUnit_Unset &&
+             aValue->mZValue.GetUnit() != eCSSUnit_Unset,
+             "missing or inappropriate triplet value");
+  Reset();
+  mUnit = eCSSUnit_Triplet;
+  mValue.mTriplet = new nsCSSValueTriplet_heap(aValue->mXValue, aValue->mYValue, aValue->mZValue);
+  mValue.mTriplet->AddRef();
 }
 
 void nsCSSValue::SetTripletValue(const nsCSSValue& xValue,
                                  const nsCSSValue& yValue,
                                  const nsCSSValue& zValue)
 {
-    // Only allow Null for the z component
-    MOZ_ASSERT(xValue.GetUnit() != eCSSUnit_Null &&
-               yValue.GetUnit() != eCSSUnit_Null &&
-               xValue.GetUnit() != eCSSUnit_Inherit &&
-               yValue.GetUnit() != eCSSUnit_Inherit &&
-               zValue.GetUnit() != eCSSUnit_Inherit &&
-               xValue.GetUnit() != eCSSUnit_Initial &&
-               yValue.GetUnit() != eCSSUnit_Initial &&
-               zValue.GetUnit() != eCSSUnit_Initial &&
-               xValue.GetUnit() != eCSSUnit_Unset &&
-               yValue.GetUnit() != eCSSUnit_Unset &&
-               zValue.GetUnit() != eCSSUnit_Unset,
-               "inappropriate triplet value");
-    Reset();
-    mUnit = eCSSUnit_Triplet;
-    mValue.mTriplet = new nsCSSValueTriplet_heap(xValue, yValue, zValue);
-    mValue.mTriplet->AddRef();
+  // Only allow Null for the z component
+  MOZ_ASSERT(xValue.GetUnit() != eCSSUnit_Null &&
+             yValue.GetUnit() != eCSSUnit_Null &&
+             xValue.GetUnit() != eCSSUnit_Inherit &&
+             yValue.GetUnit() != eCSSUnit_Inherit &&
+             zValue.GetUnit() != eCSSUnit_Inherit &&
+             xValue.GetUnit() != eCSSUnit_Initial &&
+             yValue.GetUnit() != eCSSUnit_Initial &&
+             zValue.GetUnit() != eCSSUnit_Initial &&
+             xValue.GetUnit() != eCSSUnit_Unset &&
+             yValue.GetUnit() != eCSSUnit_Unset &&
+             zValue.GetUnit() != eCSSUnit_Unset,
+             "inappropriate triplet value");
+  Reset();
+  mUnit = eCSSUnit_Triplet;
+  mValue.mTriplet = new nsCSSValueTriplet_heap(xValue, yValue, zValue);
+  mValue.mTriplet->AddRef();
 }
 
 nsCSSRect& nsCSSValue::SetRectValue()
@@ -738,7 +739,7 @@ bool nsCSSValue::IsNonTransparentColor() const
 nsCSSValue::Array*
 nsCSSValue::InitFunction(nsCSSKeyword aFunctionId, uint32_t aNumArgs)
 {
-  nsRefPtr<nsCSSValue::Array> func = Array::Create(aNumArgs + 1);
+  RefPtr<nsCSSValue::Array> func = Array::Create(aNumArgs + 1);
   func->Item(0).SetIntValue(aFunctionId, eCSSUnit_Enumerated);
   SetArrayValue(func, eCSSUnit_Function);
   return func;
@@ -764,7 +765,7 @@ nsCSSValue::EqualsFunction(nsCSSKeyword aFunctionId) const
 already_AddRefed<nsStringBuffer>
 nsCSSValue::BufferFromString(const nsString& aValue)
 {
-  nsRefPtr<nsStringBuffer> buffer = nsStringBuffer::FromString(aValue);
+  RefPtr<nsStringBuffer> buffer = nsStringBuffer::FromString(aValue);
   if (buffer) {
     return buffer.forget();
   }
@@ -828,7 +829,7 @@ private:
   nsCSSValue::Serialization mValueSerialization;
 };
 
-} // anonymous namespace
+} // namespace
 
 void
 nsCSSValue::AppendPolygonToString(nsCSSProperty aProperty, nsAString& aResult,
@@ -1008,6 +1009,36 @@ nsCSSValue::AppendInsetToString(nsCSSProperty aProperty, nsAString& aResult,
   }
 }
 
+/* static */ void
+nsCSSValue::AppendAlignJustifyValueToString(int32_t aValue, nsAString& aResult)
+{
+  auto legacy = aValue & NS_STYLE_ALIGN_LEGACY;
+  if (legacy) {
+    aValue &= ~legacy;
+    aResult.AppendLiteral("legacy ");
+  }
+  auto overflowPos = aValue & (NS_STYLE_ALIGN_SAFE | NS_STYLE_ALIGN_UNSAFE);
+  aValue &= ~overflowPos;
+  MOZ_ASSERT(!(aValue & NS_STYLE_ALIGN_FLAG_BITS),
+             "unknown bits in align/justify value");
+  MOZ_ASSERT((aValue != NS_STYLE_ALIGN_AUTO &&
+              aValue != NS_STYLE_ALIGN_NORMAL &&
+              aValue != NS_STYLE_ALIGN_BASELINE &&
+              aValue != NS_STYLE_ALIGN_LAST_BASELINE) ||
+             (!legacy && !overflowPos),
+             "auto/normal/baseline/last-baseline never have any flags");
+  MOZ_ASSERT(legacy == 0 || overflowPos == 0,
+             "'legacy' together with <overflow-position>");
+  const auto& kwtable(nsCSSProps::kAlignAllKeywords);
+  AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(aValue, kwtable), aResult);
+  // Don't serialize the 'unsafe' keyword; it's the default.
+  if (MOZ_UNLIKELY(overflowPos == NS_STYLE_ALIGN_SAFE)) {
+    aResult.Append(' ');
+    AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(overflowPos, kwtable),
+                       aResult);
+  }
+}
+
 void
 nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
                            Serialization aSerialization) const
@@ -1053,21 +1084,21 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
              eCSSProperty_transition_timing_function != aProperty) ||
             unit == eCSSUnit_Symbols)
           aResult.Append(' ');
-        else
+        else if (unit != eCSSUnit_Steps)
           aResult.AppendLiteral(", ");
       }
       if (unit == eCSSUnit_Steps && i == 1) {
-        MOZ_ASSERT(array->Item(i).GetUnit() == eCSSUnit_Enumerated &&
-                   (array->Item(i).GetIntValue() ==
-                     NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START ||
-                    array->Item(i).GetIntValue() ==
-                     NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END),
+        MOZ_ASSERT(array->Item(i).GetUnit() == eCSSUnit_Enumerated,
                    "unexpected value");
-        if (array->Item(i).GetIntValue() ==
-              NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START) {
-          aResult.AppendLiteral("start");
-        } else {
-          aResult.AppendLiteral("end");
+        int32_t side = array->Item(i).GetIntValue();
+        MOZ_ASSERT(side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START ||
+                   side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END ||
+                   side == -1,
+                   "unexpected value");
+        if (side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START) {
+          aResult.AppendLiteral(", start");
+        } else if (side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END) {
+          aResult.AppendLiteral(", end");
         }
         continue;
       }
@@ -1216,18 +1247,6 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
       }
       break;
 
-    case eCSSProperty_marks:
-      if (intValue == NS_STYLE_PAGE_MARKS_NONE) {
-        AppendASCIItoUTF16(nsCSSProps::LookupPropertyValue(aProperty, intValue),
-                           aResult);
-      } else {
-        nsStyleUtil::AppendBitmaskCSSValue(aProperty, intValue,
-                                           NS_STYLE_PAGE_MARKS_CROP,
-                                           NS_STYLE_PAGE_MARKS_REGISTER,
-                                           aResult);
-      }
-      break;
-
     case eCSSProperty_paint_order:
       static_assert
         (NS_STYLE_PAINT_ORDER_BITWIDTH * NS_STYLE_PAINT_ORDER_LAST_VALUE <= 8,
@@ -1291,6 +1310,60 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
                             nsCSSProps::kClipShapeSizingKTable),
                          aResult);
       break;
+
+    case eCSSProperty_contain:
+      if (intValue & NS_STYLE_CONTAIN_STRICT) {
+        NS_ASSERTION(intValue == (NS_STYLE_CONTAIN_STRICT | NS_STYLE_CONTAIN_ALL_BITS),
+                     "contain: strict should imply contain: layout style paint");
+        // Only output strict.
+        intValue = NS_STYLE_CONTAIN_STRICT;
+      }
+      nsStyleUtil::AppendBitmaskCSSValue(aProperty,
+                                         intValue,
+                                         NS_STYLE_CONTAIN_STRICT,
+                                         NS_STYLE_CONTAIN_PAINT,
+                                         aResult);
+      break;
+
+    case eCSSProperty_align_content:
+    case eCSSProperty_justify_content: {
+      AppendAlignJustifyValueToString(intValue & NS_STYLE_ALIGN_ALL_BITS, aResult);
+      auto fallback = intValue >> NS_STYLE_ALIGN_ALL_SHIFT;
+      if (fallback) {
+        MOZ_ASSERT(nsCSSProps::ValueToKeywordEnum(fallback & ~NS_STYLE_ALIGN_FLAG_BITS,
+                                                  nsCSSProps::kAlignSelfPosition)
+                   != eCSSKeyword_UNKNOWN, "unknown fallback value");
+        aResult.Append(' ');
+        AppendAlignJustifyValueToString(fallback, aResult);
+      }
+      break;
+    }
+
+    case eCSSProperty_align_items:
+    case eCSSProperty_align_self:
+    case eCSSProperty_justify_items:
+    case eCSSProperty_justify_self:
+      AppendAlignJustifyValueToString(intValue, aResult);
+      break;
+
+    case eCSSProperty_text_emphasis_position: {
+      nsStyleUtil::AppendBitmaskCSSValue(aProperty, intValue,
+                                         NS_STYLE_TEXT_EMPHASIS_POSITION_OVER,
+                                         NS_STYLE_TEXT_EMPHASIS_POSITION_RIGHT,
+                                         aResult);
+      break;
+    }
+
+    case eCSSProperty_text_emphasis_style: {
+      auto fill = intValue & NS_STYLE_TEXT_EMPHASIS_STYLE_FILL_MASK;
+      AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(
+        fill, nsCSSProps::kTextEmphasisStyleFillKTable), aResult);
+      aResult.Append(' ');
+      auto shape = intValue & NS_STYLE_TEXT_EMPHASIS_STYLE_SHAPE_MASK;
+      AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(
+        shape, nsCSSProps::kTextEmphasisStyleShapeKTable), aResult);
+      break;
+    }
 
     default:
       const nsAFlatCString& name = nsCSSProps::LookupPropertyValue(aProperty, intValue);
@@ -1472,7 +1545,7 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
                                                 aResult, aSerialization);
         aResult.Append(' ');
       }
-      if (gradient->mBgPos.mXValue.GetUnit() != eCSSUnit_None) {
+      if (gradient->mBgPos.mYValue.GetUnit() != eCSSUnit_None) {
         gradient->mBgPos.mYValue.AppendToString(eCSSProperty_background_position,
                                                 aResult, aSerialization);
         aResult.Append(' ');
@@ -1902,9 +1975,9 @@ nsCSSValueList::Clone() const
 void
 nsCSSValueList::CloneInto(nsCSSValueList* aList) const
 {
-    NS_ASSERTION(!aList->mNext, "Must be an empty list!");
-    aList->mValue = mValue;
-    aList->mNext = mNext ? mNext->Clone() : nullptr;
+  NS_ASSERTION(!aList->mNext, "Must be an empty list!");
+  aList->mValue = mValue;
+  aList->mNext = mNext ? mNext->Clone() : nullptr;
 }
 
 static void
@@ -1938,13 +2011,52 @@ AppendGridTemplateToString(const nsCSSValueList* val,
 
     if (unit == eCSSUnit_Enumerated &&
         val->mValue.GetIntValue() == NS_STYLE_GRID_TEMPLATE_SUBGRID) {
+      MOZ_ASSERT(!isSubgrid, "saw subgrid once already");
       isSubgrid = true;
       aResult.AppendLiteral("subgrid");
+
+    } else if (unit == eCSSUnit_Pair) {
+      // This is a repeat 'auto-fill' / 'auto-fit'.
+      const nsCSSValuePair& pair = val->mValue.GetPairValue();
+      switch (pair.mXValue.GetIntValue()) {
+        case NS_STYLE_GRID_REPEAT_AUTO_FILL:
+          aResult.AppendLiteral("repeat(auto-fill, ");
+          break;
+        case NS_STYLE_GRID_REPEAT_AUTO_FIT:
+          aResult.AppendLiteral("repeat(auto-fit, ");
+          break;
+        default:
+          MOZ_ASSERT_UNREACHABLE("unexpected enum value");
+      }
+      const nsCSSValueList* repeatList = pair.mYValue.GetListValue();
+      if (repeatList->mValue.GetUnit() != eCSSUnit_Null) {
+        aResult.Append('[');
+        AppendValueListToString(repeatList->mValue.GetListValue(), aProperty,
+                                aResult, aSerialization);
+        aResult.Append(']');
+        if (!isSubgrid) {
+          aResult.Append(' ');
+        }
+      } else if (isSubgrid) {
+        aResult.AppendLiteral("[]");
+      }
+      if (!isSubgrid) {
+        repeatList = repeatList->mNext;
+        repeatList->mValue.AppendToString(aProperty, aResult, aSerialization);
+        repeatList = repeatList->mNext;
+        if (repeatList->mValue.GetUnit() != eCSSUnit_Null) {
+          aResult.AppendLiteral(" [");
+          AppendValueListToString(repeatList->mValue.GetListValue(), aProperty,
+                                  aResult, aSerialization);
+          aResult.Append(']');
+        }
+      }
+      aResult.Append(')');
 
     } else if (unit == eCSSUnit_Null) {
       // Empty or omitted <line-names>.
       if (isSubgrid) {
-        aResult.AppendLiteral("()");
+        aResult.AppendLiteral("[]");
       } else {
         // Serializes to nothing.
         addSpaceSeparator = false;  // Avoid a double space.
@@ -1952,10 +2064,10 @@ AppendGridTemplateToString(const nsCSSValueList* val,
 
     } else if (unit == eCSSUnit_List || unit == eCSSUnit_ListDep) {
       // Non-empty <line-names>
-      aResult.Append('(');
+      aResult.Append('[');
       AppendValueListToString(val->mValue.GetListValue(), aProperty,
                               aResult, aSerialization);
-      aResult.Append(')');
+      aResult.Append(']');
 
     } else {
       // <track-size>
@@ -2192,15 +2304,15 @@ nsCSSValueTriplet::AppendToString(nsCSSProperty aProperty,
                                   nsAString& aResult,
                                   nsCSSValue::Serialization aSerialization) const
 {
-    mXValue.AppendToString(aProperty, aResult, aSerialization);
-    if (mYValue.GetUnit() != eCSSUnit_Null) {
-        aResult.Append(char16_t(' '));
-        mYValue.AppendToString(aProperty, aResult, aSerialization);
-        if (mZValue.GetUnit() != eCSSUnit_Null) {
-            aResult.Append(char16_t(' '));
-            mZValue.AppendToString(aProperty, aResult, aSerialization);
-        }
+  mXValue.AppendToString(aProperty, aResult, aSerialization);
+  if (mYValue.GetUnit() != eCSSUnit_Null) {
+    aResult.Append(char16_t(' '));
+    mYValue.AppendToString(aProperty, aResult, aSerialization);
+    if (mZValue.GetUnit() != eCSSUnit_Null) {
+      aResult.Append(char16_t(' '));
+      mZValue.AppendToString(aProperty, aResult, aSerialization);
     }
+  }
 }
 
 size_t
@@ -2326,7 +2438,6 @@ css::URLValue::URLValue(nsIURI* aURI, nsStringBuffer* aString,
     mURIResolved(true)
 {
   MOZ_ASSERT(aOriginPrincipal, "Must have an origin principal");
-  mString->AddRef();
 }
 
 css::URLValue::URLValue(nsStringBuffer* aString, nsIURI* aBaseURI,
@@ -2338,12 +2449,6 @@ css::URLValue::URLValue(nsStringBuffer* aString, nsIURI* aBaseURI,
     mURIResolved(false)
 {
   MOZ_ASSERT(aOriginPrincipal, "Must have an origin principal");
-  mString->AddRef();
-}
-
-css::URLValue::~URLValue()
-{
-  mString->Release();
 }
 
 bool
@@ -2399,8 +2504,7 @@ css::URLValue::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
   size_t n = aMallocSizeOf(this);
 
-  // This string is unshared.
-  n += mString->SizeOfIncludingThisMustBeUnshared(aMallocSizeOf);
+  n += mString->SizeOfIncludingThisIfUnshared(aMallocSizeOf);
 
   // Measurement of the following members may be added later if DMD finds it is
   // worthwhile:
@@ -2433,35 +2537,22 @@ css::ImageValue::ImageValue(nsIURI* aURI, nsStringBuffer* aString,
   }
 }
 
-static PLDHashOperator
-ClearRequestHashtable(nsISupports* aKey, nsRefPtr<imgRequestProxy>& aValue,
-                      void* aClosure)
-{
-  mozilla::css::ImageValue* image =
-    static_cast<mozilla::css::ImageValue*>(aClosure);
-  nsIDocument* doc = static_cast<nsIDocument*>(aKey);
-
-#ifdef DEBUG
-  {
-    nsCOMPtr<nsIDocument> slowDoc = do_QueryInterface(aKey);
-    MOZ_ASSERT(slowDoc == doc);
-  }
-#endif
-
-  if (doc) {
-    doc->StyleImageLoader()->DeregisterCSSImage(image);
-  }
-
-  if (aValue) {
-    aValue->CancelAndForgetObserver(NS_BINDING_ABORTED);
-  }
-
-  return PL_DHASH_REMOVE;
-}
-
 css::ImageValue::~ImageValue()
 {
-  mRequests.Enumerate(&ClearRequestHashtable, this);
+  for (auto iter = mRequests.Iter(); !iter.Done(); iter.Next()) {
+    nsIDocument* doc = iter.Key();
+    RefPtr<imgRequestProxy>& proxy = iter.Data();
+
+    if (doc) {
+      doc->StyleImageLoader()->DeregisterCSSImage(this);
+    }
+
+    if (proxy) {
+      proxy->CancelAndForgetObserver(NS_BINDING_ABORTED);
+    }
+
+    iter.Remove();
+  }
 }
 
 NS_IMPL_ADDREF(css::ImageValue)
@@ -2518,7 +2609,7 @@ nsCSSValueGradient::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) con
   n += mAngle.SizeOfExcludingThis(aMallocSizeOf);
   n += mRadialValues[0].SizeOfExcludingThis(aMallocSizeOf);
   n += mRadialValues[1].SizeOfExcludingThis(aMallocSizeOf);
-  n += mStops.SizeOfExcludingThis(aMallocSizeOf);
+  n += mStops.ShallowSizeOfExcludingThis(aMallocSizeOf);
   for (uint32_t i = 0; i < mStops.Length(); i++) {
     n += mStops[i].SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -2530,6 +2621,7 @@ nsCSSValueGradient::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) con
 nsCSSValueTokenStream::nsCSSValueTokenStream()
   : mPropertyID(eCSSProperty_UNKNOWN)
   , mShorthandPropertyID(eCSSProperty_UNKNOWN)
+  , mLevel(SheetType::Count)
 {
   MOZ_COUNT_CTOR(nsCSSValueTokenStream);
 }
@@ -2678,7 +2770,7 @@ nsCSSCornerSizes::corners[4] = {
 size_t
 mozilla::css::GridTemplateAreasValue::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 {
-  size_t n = mNamedAreas.SizeOfExcludingThis(aMallocSizeOf);
-  n += mTemplates.SizeOfExcludingThis(aMallocSizeOf);
+  size_t n = mNamedAreas.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  n += mTemplates.ShallowSizeOfExcludingThis(aMallocSizeOf);
   return n;
 }

@@ -13,11 +13,11 @@ namespace mp4_demuxer {
 
 BufferStream::BufferStream()
   : mStartOffset(0)
-  , mData(new mozilla::MediaLargeByteBuffer)
+  , mData(new mozilla::MediaByteBuffer)
 {
 }
 
-BufferStream::BufferStream(mozilla::MediaLargeByteBuffer* aBuffer)
+BufferStream::BufferStream(mozilla::MediaByteBuffer* aBuffer)
   : mStartOffset(0)
   , mData(aBuffer)
 {
@@ -36,7 +36,7 @@ BufferStream::ReadAt(int64_t aOffset, void* aData, size_t aLength,
   }
   *aBytesRead =
     std::min(aLength, size_t(mStartOffset + mData->Length() - aOffset));
-  memcpy(aData, &(*mData)[aOffset - mStartOffset], *aBytesRead);
+  memcpy(aData, mData->Elements() + aOffset - mStartOffset, *aBytesRead);
   return true;
 }
 
@@ -66,7 +66,7 @@ BufferStream::DiscardBefore(int64_t aOffset)
 bool
 BufferStream::AppendBytes(const uint8_t* aData, size_t aLength)
 {
-  return mData->AppendElements(aData, aLength);
+  return mData->AppendElements(aData, aLength, fallible);
 }
 
 MediaByteRange

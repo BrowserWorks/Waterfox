@@ -56,7 +56,9 @@ public:
   }
 
   // Overrides:
-  virtual nsresult GetInternalStream(nsIInputStream**) override;
+  virtual void GetInternalStream(nsIInputStream** aInputStream,
+                                 ErrorResult& aRv) override;
+
 protected:
   virtual ~ArchiveZipBlobImpl()
   {
@@ -69,7 +71,7 @@ protected:
 
 private: // Data
   ZipCentral mCentral;
-  nsRefPtr<BlobImpl> mBlobImpl;
+  RefPtr<BlobImpl> mBlobImpl;
 
   nsString mFilename;
 };

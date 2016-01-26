@@ -61,9 +61,7 @@ class VCMFrameBuffer : public VCMEncodedFrame {
   int Tl0PicId() const;
   bool NonReference() const;
 
-  // Set counted status (as counted by JB or not)
-  void SetCountedFrame(bool frameCounted);
-  bool GetCountedFrame() const;
+  void SetGofInfo(const GofInfoVP9& gof_info, size_t idx);
 
   // Increments a counter to keep track of the number of packets of this frame
   // which were NACKed before they arrived.
@@ -85,7 +83,6 @@ class VCMFrameBuffer : public VCMEncodedFrame {
   void SetState(VCMFrameBufferStateEnum state);  // Set state of frame
 
   VCMFrameBufferStateEnum    _state;         // Current state of the frame
-  bool                       _frameCounted;  // Was this frame counted by JB?
   VCMSessionInfo             _sessionInfo;
   uint16_t             _nackCount;
   int64_t              _latestPacketTimeMs;

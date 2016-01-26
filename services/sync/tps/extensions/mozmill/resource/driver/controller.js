@@ -5,9 +5,9 @@
 var EXPORTED_SYMBOLS = ["MozMillController", "globalEventRegistry",
                         "sleep", "windowMap"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 var EventUtils = {}; Cu.import('resource://mozmill/stdlib/EventUtils.js', EventUtils);
 
@@ -44,7 +44,11 @@ waitForEvents.prototype = {
     node.firedEvents = {};
     this.registry = {};
 
-    for each (var e in events) {
+    if (!events) {
+      return;
+    }
+    for (var key in events) {
+      var e = events[key];
       var listener = function (event) {
         this.firedEvents[event.type] = true;
       }

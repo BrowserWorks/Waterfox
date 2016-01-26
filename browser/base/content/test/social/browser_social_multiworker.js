@@ -12,7 +12,7 @@ function test() {
   });
 }
 
-let gProviders = [
+var gProviders = [
   {
     name: "provider 1",
     origin: "https://example.com",
@@ -52,8 +52,9 @@ var tests = {
       oneWorkerTest(p);
     }
 
-    waitForCondition(function() messageReceived == Social.providers.length,
-                     next, "received messages from all workers");
+    waitForCondition(() => messageReceived == Social.providers.length,
+                     next, "received messages from all workers",
+                     /* increase timeout because shutting down a child process is slow */ 60);
   },
 
    testMultipleWorkerEnabling: function(next) {

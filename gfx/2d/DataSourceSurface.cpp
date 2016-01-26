@@ -9,11 +9,13 @@
 namespace mozilla {
 namespace gfx {
 
-TemporaryRef<DataSourceSurface>
+already_AddRefed<DataSourceSurface>
 DataSourceSurface::GetDataSurface()
 {
-  return (GetType() == SurfaceType::DATA) ? this : new DataSourceSurfaceWrapper(this);
+  RefPtr<DataSourceSurface> surface =
+    (GetType() == SurfaceType::DATA) ? this : new DataSourceSurfaceWrapper(this);
+  return surface.forget();
 }
 
-}
-}
+} // namespace gfx
+} // namespace mozilla

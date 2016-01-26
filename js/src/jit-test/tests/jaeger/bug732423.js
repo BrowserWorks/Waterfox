@@ -19,5 +19,4 @@ function testNoSuchMethod(x, y) {
 }
 
 testNoSuchMethod(o, "f");
-testNoSuchMethod(o, "g");
-assertEq(o.res, 480);
+assertEq(o.res, 180);

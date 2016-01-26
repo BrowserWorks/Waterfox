@@ -7,26 +7,31 @@
 #ifndef jscompartment_h
 #define jscompartment_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Variant.h"
+#include "mozilla/XorShift128PlusRNG.h"
 
-#include "prmjtime.h"
 #include "builtin/RegExp.h"
+#include "gc/Barrier.h"
 #include "gc/Zone.h"
 #include "vm/GlobalObject.h"
 #include "vm/PIC.h"
 #include "vm/SavedStacks.h"
+#include "vm/Time.h"
 
 namespace js {
 
 namespace jit {
 class JitCompartment;
-}
+} // namespace jit
 
 namespace gc {
 template<class Node> class ComponentFinder;
-}
+} // namespace gc
 
 struct NativeIterator;
+class ClonedBlockObject;
 
 /*
  * A single-entry cache for some base-10 double-to-string conversions. This
@@ -103,6 +108,8 @@ struct CrossCompartmentKey
         MOZ_RELEASE_ASSERT(wrapped);
     }
 
+    bool needsSweep();
+
   private:
     CrossCompartmentKey() = delete;
 };
@@ -120,8 +127,92 @@ struct WrapperHasher : public DefaultHasher<CrossCompartmentKey>
     }
 };
 
-typedef HashMap<CrossCompartmentKey, ReadBarrieredValue,
-                WrapperHasher, SystemAllocPolicy> WrapperMap;
+using WrapperMap = GCRekeyableHashMap<CrossCompartmentKey, ReadBarrieredValue,
+                                      WrapperHasher, SystemAllocPolicy>;
+
+// We must ensure that all newly allocated JSObjects get their metadata
+// set. However, metadata callbacks may require the new object be in a sane
+// state (eg, have its reserved slots initialized so they can get the
+// sizeOfExcludingThis of the object). Therefore, for objects of certain
+// JSClasses (those marked with JSCLASS_DELAY_METADATA_CALLBACK), it is not safe
+// for the allocation paths to call the object metadata callback
+// immediately. Instead, the JSClass-specific "constructor" C++ function up the
+// stack makes a promise that it will ensure that the new object has its
+// metadata set after the object is initialized.
+//
+// To help those constructor functions keep their promise of setting metadata,
+// each compartment is in one of three states at any given time:
+//
+// * ImmediateMetadata: Allocators should set new object metadata immediately,
+//                      as usual.
+//
+// * DelayMetadata: Allocators should *not* set new object metadata, it will be
+//                  handled after reserved slots are initialized by custom code
+//                  for the object's JSClass. The newly allocated object's
+//                  JSClass *must* have the JSCLASS_DELAY_METADATA_CALLBACK flag
+//                  set.
+//
+// * PendingMetadata: This object has been allocated and is still pending its
+//                    metadata. This should never be the case when we begin an
+//                    allocation, as a constructor function was supposed to have
+//                    set the metadata of the previous object *before*
+//                    allocating another object.
+//
+// The js::AutoSetNewObjectMetadata RAII class provides an ergonomic way for
+// constructor functions to navigate state transitions, and its instances
+// collectively maintain a stack of previous states. The stack is required to
+// support the lazy resolution and allocation of global builtin constructors and
+// prototype objects. The initial (and intuitively most common) state is
+// ImmediateMetadata.
+//
+// Without the presence of internal errors (such as OOM), transitions between
+// the states are as follows:
+//
+//     ImmediateMetadata                 .----- previous state on stack
+//           |                           |          ^
+//           | via constructor           |          |
+//           |                           |          | via setting the new
+//           |        via constructor    |          | object's metadata
+//           |   .-----------------------'          |
+//           |   |                                  |
+//           V   V                                  |
+//     DelayMetadata -------------------------> PendingMetadata
+//                         via allocation
+//
+// In the presence of internal errors, we do not set the new object's metadata
+// (if it was even allocated) and reset to the previous state on the stack.
+
+struct ImmediateMetadata { };
+struct DelayMetadata { };
+using PendingMetadata = ReadBarrieredObject;
+
+using NewObjectMetadataState = mozilla::Variant<ImmediateMetadata,
+                                                DelayMetadata,
+                                                PendingMetadata>;
+
+class MOZ_RAII AutoSetNewObjectMetadata : private JS::CustomAutoRooter
+{
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
+
+    JSContext* cx_;
+    NewObjectMetadataState prevState_;
+
+    AutoSetNewObjectMetadata(const AutoSetNewObjectMetadata& aOther) = delete;
+    void operator=(const AutoSetNewObjectMetadata& aOther) = delete;
+
+  protected:
+    virtual void trace(JSTracer* trc) override {
+        if (prevState_.is<PendingMetadata>()) {
+            TraceRoot(trc,
+                      prevState_.as<PendingMetadata>().unsafeUnbarrieredForTracing(),
+                      "Object pending metadata");
+        }
+    }
+
+  public:
+    explicit AutoSetNewObjectMetadata(ExclusiveContext* ecx MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    ~AutoSetNewObjectMetadata();
+};
 
 } /* namespace js */
 
@@ -130,11 +221,12 @@ class DebugScopes;
 class ObjectWeakMap;
 class WatchpointMap;
 class WeakMapBase;
-}
+} // namespace js
 
 struct JSCompartment
 {
-    JS::CompartmentOptions       options_;
+    const JS::CompartmentCreationOptions creationOptions_;
+    JS::CompartmentBehaviors behaviors_;
 
   private:
     JS::Zone*                    zone_;
@@ -187,12 +279,9 @@ struct JSCompartment
   public:
     bool                         isSelfHosting;
     bool                         marked;
-    bool                         warnedAboutNoSuchMethod;
     bool                         warnedAboutFlagsArgument;
-
-    // A null add-on ID means that the compartment is not associated with an
-    // add-on.
-    JSAddonId*                   const addonId;
+    bool                         warnedAboutExprClosure;
+    bool                         warnedAboutRegExpMultiline;
 
 #ifdef DEBUG
     bool                         firedOnNewGlobalObject;
@@ -222,8 +311,10 @@ struct JSCompartment
 
     JS::Zone* zone() { return zone_; }
     const JS::Zone* zone() const { return zone_; }
-    JS::CompartmentOptions& options() { return options_; }
-    const JS::CompartmentOptions& options() const { return options_; }
+
+    const JS::CompartmentCreationOptions& creationOptions() const { return creationOptions_; }
+    JS::CompartmentBehaviors& behaviors() { return behaviors_; }
+    const JS::CompartmentBehaviors& behaviors() const { return behaviors_; }
 
     JSRuntime* runtimeFromMainThread() {
         MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime_));
@@ -282,6 +373,29 @@ struct JSCompartment
     // Non-zero if any typed objects in this compartment might be neutered.
     int32_t                      neuteredTypedObjects;
 
+  private:
+    friend class js::AutoSetNewObjectMetadata;
+    js::NewObjectMetadataState objectMetadataState;
+
+  public:
+    // Recompute the probability with which this compartment should record
+    // profiling data (stack traces, allocations log, etc.) about each
+    // allocation. We consult the probabilities requested by the Debugger
+    // instances observing us, if any.
+    void chooseAllocationSamplingProbability() { savedStacks_.chooseSamplingProbability(this); }
+
+    bool hasObjectPendingMetadata() const { return objectMetadataState.is<js::PendingMetadata>(); }
+
+    void setObjectPendingMetadata(JSContext* cx, JSObject* obj) {
+        MOZ_ASSERT(objectMetadataState.is<js::DelayMetadata>());
+        objectMetadataState = js::NewObjectMetadataState(js::PendingMetadata(obj));
+    }
+
+    void setObjectPendingMetadata(js::ExclusiveContext* ecx, JSObject* obj) {
+        if (JSContext* cx = ecx->maybeJSContext())
+            setObjectPendingMetadata(cx, obj);
+    }
+
   public:
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* tiAllocationSiteTables,
@@ -294,7 +408,8 @@ struct JSCompartment
                                 size_t* objectMetadataTables,
                                 size_t* crossCompartmentWrappers,
                                 size_t* regexpCompartment,
-                                size_t* savedStacksSet);
+                                size_t* savedStacksSet,
+                                size_t* nonSyntacticLexicalScopes);
 
     /*
      * Shared scope property tree, and arena-pool for allocating its nodes.
@@ -324,8 +439,8 @@ struct JSCompartment
      */
     js::ReadBarrieredScriptSourceObject selfHostingScriptSource;
 
-    // Keep track of the metadata objects which can be associated with each
-    // JS object.
+    // Keep track of the metadata objects which can be associated with each JS
+    // object. Both keys and values are in this compartment.
     js::ObjectWeakMap* objectMetadataTable;
 
     // Map from array buffers to views sharing that storage.
@@ -339,6 +454,13 @@ struct JSCompartment
     // All unboxed layouts in the compartment.
     mozilla::LinkedList<js::UnboxedLayout> unboxedLayouts;
 
+  private:
+    // All non-syntactic lexical scopes in the compartment. These are kept in
+    // a map because when loading scripts into a non-syntactic scope, we need
+    // to use the same lexical scope to persist lexical bindings.
+    js::ObjectWeakMap* nonSyntacticLexicalScopes_;
+
+  public:
     /* During GC, stores the index of this compartment in rt->compartments. */
     unsigned                     gcIndex;
 
@@ -351,24 +473,21 @@ struct JSCompartment
      */
     JSObject*                    gcIncomingGrayPointers;
 
-    /* Linked list of live weakmaps in this compartment. */
-    js::WeakMapBase*             gcWeakMapList;
-
   private:
-    /* Whether to preserve JIT code on non-shrinking GCs. */
-    bool                         gcPreserveJitCode;
-
     enum {
         IsDebuggee = 1 << 0,
         DebuggerObservesAllExecution = 1 << 1,
         DebuggerObservesAsmJS = 1 << 2,
-        DebuggerNeedsDelazification = 1 << 3
+        DebuggerObservesCoverage = 1 << 3,
+        DebuggerNeedsDelazification = 1 << 4
     };
 
-    unsigned                     debugModeBits;
+    unsigned debugModeBits;
+    friend class AutoRestoreCompartmentDebugMode;
 
     static const unsigned DebuggerObservesMask = IsDebuggee |
                                                  DebuggerObservesAllExecution |
+                                                 DebuggerObservesCoverage |
                                                  DebuggerObservesAsmJS;
 
     void updateDebuggerObservesFlag(unsigned flag);
@@ -379,15 +498,12 @@ struct JSCompartment
 
     bool init(JSContext* maybecx);
 
-    /* Mark cross-compartment wrappers. */
-    void markCrossCompartmentWrappers(JSTracer* trc);
-
     inline bool wrap(JSContext* cx, JS::MutableHandleValue vp,
-                     JS::HandleObject existing = js::NullPtr());
+                     JS::HandleObject existing = nullptr);
 
     bool wrap(JSContext* cx, js::MutableHandleString strp);
     bool wrap(JSContext* cx, JS::MutableHandleObject obj,
-              JS::HandleObject existingArg = js::NullPtr());
+              JS::HandleObject existingArg = nullptr);
     bool wrap(JSContext* cx, JS::MutableHandle<js::PropertyDescriptor> desc);
 
     template<typename T> bool wrap(JSContext* cx, JS::AutoVectorRooter<T>& vec) {
@@ -412,24 +528,51 @@ struct JSCompartment
         explicit WrapperEnum(JSCompartment* c) : js::WrapperMap::Enum(c->crossCompartmentWrappers) {}
     };
 
+    js::ClonedBlockObject* getOrCreateNonSyntacticLexicalScope(JSContext* cx,
+                                                               js::HandleObject enclosingStatic,
+                                                               js::HandleObject enclosingScope);
+    js::ClonedBlockObject* getNonSyntacticLexicalScope(JSObject* enclosingScope) const;
+
+    /*
+     * This method traces data that is live iff we know that this compartment's
+     * global is still live.
+     */
     void trace(JSTracer* trc);
-    void markRoots(JSTracer* trc);
-    bool preserveJitCode() { return gcPreserveJitCode; }
+    /*
+     * This method traces JSCompartment-owned GC roots that are considered live
+     * regardless of whether the JSCompartment itself is still live.
+     */
+    void traceRoots(JSTracer* trc, js::gc::GCRuntime::TraceOrMarkRuntime traceOrMark);
+    /*
+     * These methods mark pointers that cross compartment boundaries. They are
+     * called in per-zone GCs to prevent the wrappers' outgoing edges from
+     * dangling (full GCs naturally follow pointers across compartments) and
+     * when compacting to update cross-compartment pointers.
+     */
+    void traceOutgoingCrossCompartmentWrappers(JSTracer* trc);
+    static void traceIncomingCrossCompartmentEdgesForZoneGC(JSTracer* trc);
+
+    /* Whether to preserve JIT code on non-shrinking GCs. */
+    bool preserveJitCode() { return creationOptions_.preserveJitCode(); }
+
+    void sweepAfterMinorGC();
 
     void sweepInnerViews();
     void sweepCrossCompartmentWrappers();
     void sweepSavedStacks();
     void sweepGlobalObject(js::FreeOp* fop);
+    void sweepObjectPendingMetadata();
     void sweepSelfHostingScriptSource();
     void sweepJitCompartment(js::FreeOp* fop);
     void sweepRegExps();
     void sweepDebugScopes();
-    void sweepWeakMaps();
     void sweepNativeIterators();
+    void sweepTemplateObjects();
 
     void purge();
     void clearTables();
 
+    static void fixupCrossCompartmentWrappersAfterMovingGC(JSTracer* trc);
     void fixupInitialShapeTable();
     void fixupAfterMovingGC();
     void fixupGlobal();
@@ -452,8 +595,11 @@ struct JSCompartment
 
     js::DtoaCache dtoaCache;
 
-    /* Random number generator state, used by jsmath.cpp. */
-    uint64_t rngState;
+    // Random number generator for Math.random().
+    mozilla::Maybe<mozilla::non_crypto::XorShift128PlusRNG> randomNumberGenerator;
+
+    // Initialize randomNumberGenerator if needed.
+    void ensureRandomNumberGenerator();
 
   private:
     JSCompartment* thisForCtor() { return this; }
@@ -526,6 +672,19 @@ struct JSCompartment
         updateDebuggerObservesFlag(DebuggerObservesAsmJS);
     }
 
+    // True if this compartment's global is a debuggee of some Debugger object
+    // whose collectCoverageInfo flag is true.
+    bool debuggerObservesCoverage() const {
+        static const unsigned Mask = DebuggerObservesCoverage;
+        return (debugModeBits & Mask) == Mask;
+    }
+    void updateDebuggerObservesCoverage();
+
+    // The code coverage can be enabled either for each compartment, with the
+    // Debugger API, or for the entire runtime.
+    bool collectCoverage() const;
+    void clearScriptCounts();
+
     bool needsDelazificationForDebugger() const {
         return debugModeBits & DebuggerNeedsDelazification;
     }
@@ -574,6 +733,9 @@ struct JSCompartment
   private:
     js::jit::JitCompartment* jitCompartment_;
 
+    js::ReadBarriered<js::ArgumentsObject*> mappedArgumentsTemplate_;
+    js::ReadBarriered<js::ArgumentsObject*> unmappedArgumentsTemplate_;
+
   public:
     bool ensureJitCompartmentExists(JSContext* cx);
     js::jit::JitCompartment* jitCompartment() {
@@ -585,13 +747,17 @@ struct JSCompartment
         // NO LONGER USING 1
         DeprecatedLegacyGenerator = 2,      // JS 1.7+
         DeprecatedExpressionClosure = 3,    // Added in JS 1.8
-        DeprecatedLetBlock = 4,             // Added in JS 1.7
-        DeprecatedLetExpression = 5,        // Added in JS 1.7
-        DeprecatedNoSuchMethod = 6,         // JS 1.7+
+        // NO LONGER USING 4
+        // NO LONGER USING 5
+        // NO LONGER USING 6
         DeprecatedFlagsArgument = 7,        // JS 1.3 or older
-        RegExpSourceProperty = 8,           // ES5
+        // NO LONGER USING 8
+        // NO LONGER USING 9
+        DeprecatedBlockScopeFunRedecl = 10,
         DeprecatedLanguageExtensionCount
     };
+
+    js::ArgumentsObject* getOrCreateArgumentsTemplateObject(JSContext* cx, bool mapped);
 
   private:
     // Used for collecting telemetry on SpiderMonkey's deprecated language extensions.
@@ -601,6 +767,11 @@ struct JSCompartment
 
   public:
     void addTelemetry(const char* filename, DeprecatedLanguageExtension e);
+
+  public:
+    // Aggregated output used to collect JSScript hit counts when code coverage
+    // is enabled.
+    js::coverage::LCovCompartment lcovOutput;
 };
 
 inline bool
@@ -633,7 +804,7 @@ ExclusiveContext::global() const
     return Handle<GlobalObject*>::fromMarkedLocation(compartment_->global_.unsafeGet());
 }
 
-class AssertCompartmentUnchanged
+class MOZ_RAII AssertCompartmentUnchanged
 {
   public:
     explicit AssertCompartmentUnchanged(JSContext* cx
@@ -731,7 +902,7 @@ struct WrapperValue
     Value value;
 };
 
-class AutoWrapperVector : public JS::AutoVectorRooterBase<WrapperValue>
+class MOZ_RAII AutoWrapperVector : public JS::AutoVectorRooterBase<WrapperValue>
 {
   public:
     explicit AutoWrapperVector(JSContext* cx
@@ -744,7 +915,7 @@ class AutoWrapperVector : public JS::AutoVectorRooterBase<WrapperValue>
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
-class AutoWrapperRooter : private JS::AutoGCRooter {
+class MOZ_RAII AutoWrapperRooter : private JS::AutoGCRooter {
   public:
     AutoWrapperRooter(JSContext* cx, WrapperValue v
                       MOZ_GUARD_OBJECT_NOTIFIER_PARAM)

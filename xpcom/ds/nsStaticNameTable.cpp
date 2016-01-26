@@ -64,7 +64,7 @@ matchNameKeysCaseInsensitive(PLDHashTable*, const PLDHashEntryHdr* aHdr,
 }
 
 /*
- * caseInsensitiveHashKey is just like PL_DHashStringKey except it
+ * caseInsensitiveHashKey is just like PLDHashTable::HashStringKey except it
  * uses (*s & ~0x20) instead of simply *s.  This means that "aFOO" and
  * "afoo" and "aFoo" will all hash to the same thing.  It also means
  * that some strings that aren't case-insensensitively equal will hash
@@ -96,50 +96,25 @@ caseInsensitiveStringHashKey(PLDHashTable* aTable, const void* aKey)
 static const struct PLDHashTableOps nametable_CaseInsensitiveHashTableOps = {
   caseInsensitiveStringHashKey,
   matchNameKeysCaseInsensitive,
-  PL_DHashMoveEntryStub,
-  PL_DHashClearEntryStub,
+  PLDHashTable::MoveEntryStub,
+  PLDHashTable::ClearEntryStub,
   nullptr,
 };
 
-nsStaticCaseInsensitiveNameTable::nsStaticCaseInsensitiveNameTable()
+nsStaticCaseInsensitiveNameTable::nsStaticCaseInsensitiveNameTable(
+    const char* const aNames[], int32_t aLength)
   : mNameArray(nullptr)
+  , mNameTable(&nametable_CaseInsensitiveHashTableOps,
+               sizeof(NameTableEntry), aLength)
   , mNullStr("")
 {
   MOZ_COUNT_CTOR(nsStaticCaseInsensitiveNameTable);
-}
 
-nsStaticCaseInsensitiveNameTable::~nsStaticCaseInsensitiveNameTable()
-{
-  if (mNameArray) {
-    // manually call the destructor on placement-new'ed objects
-    for (uint32_t index = 0; index < mNameTable.EntryCount(); index++) {
-      mNameArray[index].~nsDependentCString();
-    }
-    free((void*)mNameArray);
-  }
-  if (mNameTable.IsInitialized()) {
-    PL_DHashTableFinish(&mNameTable);
-  }
-  MOZ_COUNT_DTOR(nsStaticCaseInsensitiveNameTable);
-}
-
-bool
-nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
-                                       int32_t aLength)
-{
-  NS_ASSERTION(!mNameArray, "double Init");
-  NS_ASSERTION(!mNameTable.IsInitialized(), "double Init");
-  NS_ASSERTION(aNames, "null name table");
-  NS_ASSERTION(aLength, "0 length");
+  MOZ_ASSERT(aNames, "null name table");
+  MOZ_ASSERT(aLength, "0 length");
 
   mNameArray = (nsDependentCString*)
     moz_xmalloc(aLength * sizeof(nsDependentCString));
-  if (!mNameArray) {
-    return false;
-  }
-
-  PL_DHashTableInit(&mNameTable, &nametable_CaseInsensitiveHashTableOps,
-                    sizeof(NameTableEntry), aLength);
 
   for (int32_t index = 0; index < aLength; ++index) {
     const char* raw = aNames[index];
@@ -149,10 +124,10 @@ nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
       nsAutoCString temp1(raw);
       nsDependentCString temp2(raw);
       ToLowerCase(temp1);
-      NS_ASSERTION(temp1.Equals(temp2), "upper case char in table");
-      NS_ASSERTION(nsCRT::IsAscii(raw),
-                   "non-ascii string in table -- "
-                   "case-insensitive matching won't work right");
+      MOZ_ASSERT(temp1.Equals(temp2), "upper case char in table");
+      MOZ_ASSERT(nsCRT::IsAscii(raw),
+                 "non-ascii string in table -- "
+                 "case-insensitive matching won't work right");
     }
 #endif
     // use placement-new to initialize the string object
@@ -161,8 +136,7 @@ nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
 
     NameTableKey key(strPtr);
 
-    NameTableEntry* entry = static_cast<NameTableEntry*>
-      (PL_DHashTableAdd(&mNameTable, &key, fallible));
+    auto entry = static_cast<NameTableEntry*>(mNameTable.Add(&key, fallible));
     if (!entry) {
       continue;
     }
@@ -173,22 +147,29 @@ nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
     entry->mIndex = index;
   }
 #ifdef DEBUG
-  PL_DHashMarkTableImmutable(&mNameTable);
+  mNameTable.MarkImmutable();
 #endif
-  return true;
+}
+
+nsStaticCaseInsensitiveNameTable::~nsStaticCaseInsensitiveNameTable()
+{
+  // manually call the destructor on placement-new'ed objects
+  for (uint32_t index = 0; index < mNameTable.EntryCount(); index++) {
+    mNameArray[index].~nsDependentCString();
+  }
+  free((void*)mNameArray);
+  MOZ_COUNT_DTOR(nsStaticCaseInsensitiveNameTable);
 }
 
 int32_t
 nsStaticCaseInsensitiveNameTable::Lookup(const nsACString& aName)
 {
   NS_ASSERTION(mNameArray, "not inited");
-  NS_ASSERTION(mNameTable.IsInitialized(), "not inited");
 
   const nsAFlatCString& str = PromiseFlatCString(aName);
 
   NameTableKey key(&str);
-  NameTableEntry* entry =
-    static_cast<NameTableEntry*>(PL_DHashTableSearch(&mNameTable, &key));
+  auto entry = static_cast<NameTableEntry*>(mNameTable.Search(&key));
 
   return entry ? entry->mIndex : nsStaticCaseInsensitiveNameTable::NOT_FOUND;
 }
@@ -197,13 +178,11 @@ int32_t
 nsStaticCaseInsensitiveNameTable::Lookup(const nsAString& aName)
 {
   NS_ASSERTION(mNameArray, "not inited");
-  NS_ASSERTION(mNameTable.IsInitialized(), "not inited");
 
   const nsAFlatString& str = PromiseFlatString(aName);
 
   NameTableKey key(&str);
-  NameTableEntry* entry =
-    static_cast<NameTableEntry*>(PL_DHashTableSearch(&mNameTable, &key));
+  auto entry = static_cast<NameTableEntry*>(mNameTable.Search(&key));
 
   return entry ? entry->mIndex : nsStaticCaseInsensitiveNameTable::NOT_FOUND;
 }
@@ -212,7 +191,6 @@ const nsAFlatCString&
 nsStaticCaseInsensitiveNameTable::GetStringValue(int32_t aIndex)
 {
   NS_ASSERTION(mNameArray, "not inited");
-  NS_ASSERTION(mNameTable.IsInitialized(), "not inited");
 
   if ((NOT_FOUND < aIndex) && ((uint32_t)aIndex < mNameTable.EntryCount())) {
     return mNameArray[aIndex];

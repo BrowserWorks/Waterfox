@@ -7,16 +7,18 @@
 #include "nsISupports.idl"
 
 %{C++
+#include "DrawResult.h"
 #include "gfxContext.h"
 #include "gfxMatrix.h"
 #include "gfxRect.h"
-#include "GraphicsFilter.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "nsRect.h"
 #include "nsSize.h"
 #include "limits.h"
+
+class nsIDocument;
 
 namespace mozilla {
 namespace layers {
@@ -38,50 +40,6 @@ namespace image {
 class ImageRegion;
 struct Orientation;
 
-/**
- * An enumeration representing the result of a drawing operation.
- *
- * Most users of DrawResult will only be interested in whether the value is
- * SUCCESS or not. The other values are primarily useful for debugging and error
- * handling.
- *
- * SUCCESS: We successfully drew a completely decoded frame of the requested
- * size. Drawing again with FLAG_SYNC_DECODE would not change the result.
- *
- * INCOMPLETE: We successfully drew a frame that was partially decoded. (Note
- * that successfully drawing a partially decoded frame may not actually draw any
- * pixels!) Drawing again with FLAG_SYNC_DECODE would improve the result.
- *
- * WRONG_SIZE: We successfully drew a wrongly-sized frame that had to be scaled.
- * This is only returned if drawing again with FLAG_SYNC_DECODE would improve
- * the result; if the size requested was larger than the intrinsic size of the
- * image, for example, we would generally have to scale whether FLAG_SYNC_DECODE
- * was specified or not, and therefore we would not return WRONG_SIZE.
- *
- * NOT_READY: We failed to draw because no decoded version of the image was
- * available. Drawing again with FLAG_SYNC_DECODE would improve the result.
- * (Though FLAG_SYNC_DECODE will not necessarily work until after the image's
- * load event!)
- *
- * TEMPORARY_ERROR: We failed to draw due to a temporary error. Drawing may
- * succeed at a later time.
- *
- * BAD_IMAGE: We failed to draw because the image has an error. This is a
- * permanent condition.
- *
- * BAD_ARGS: We failed to draw because bad arguments were passed to draw().
- */
-enum class DrawResult : uint8_t
-{
-  SUCCESS,
-  INCOMPLETE,
-  WRONG_SIZE,
-  NOT_READY,
-  TEMPORARY_ERROR,
-  BAD_IMAGE,
-  BAD_ARGS
-};
-
 }
 }
 
@@ -92,7 +50,7 @@ native DrawResult(mozilla::image::DrawResult);
 [ref] native gfxMatrix(gfxMatrix);
 [ref] native gfxRect(gfxRect);
 [ref] native gfxSize(gfxSize);
-native gfxGraphicsFilter(GraphicsFilter);
+native Filter(mozilla::gfx::Filter);
 [ref] native nsIntRect(nsIntRect);
 native nsIntRectByVal(nsIntRect);
 [ref] native nsIntSize(nsIntSize);
@@ -104,9 +62,10 @@ native TempRefImageContainer(already_AddRefed<mozilla::layers::ImageContainer>);
 native Orientation(mozilla::image::Orientation);
 [ref] native TimeStamp(mozilla::TimeStamp);
 [ref] native MaybeSVGImageContext(mozilla::Maybe<mozilla::SVGImageContext>);
-native TempRefSourceSurface(mozilla::TemporaryRef<mozilla::gfx::SourceSurface>);
+native TempRefSourceSurface(already_AddRefed<mozilla::gfx::SourceSurface>);
 native TempRefImgIContainer(already_AddRefed<imgIContainer>);
 native nsIntSizeByVal(nsIntSize);
+[ptr] native nsIDocument(nsIDocument);
 
 
 /**
@@ -116,7 +75,7 @@ native nsIntSizeByVal(nsIntSize);
  *
  * Internally, imgIContainer also manages animation of images.
  */
-[scriptable, builtinclass, uuid(f5e1230a-3733-477f-b49b-fee8717a786b)]
+[scriptable, builtinclass, uuid(a8dbee24-ff86-4755-b40e-51175caf31af)]
 interface imgIContainer : nsISupports
 {
   /**
@@ -162,7 +121,7 @@ interface imgIContainer : nsISupports
    */
   [notxpcom, nostdcall] nsIntSizeByVal
   optimalImageSizeForDest([const] in gfxSize aDest, in uint32_t aWhichFrame,
-                          in gfxGraphicsFilter aFilter, in uint32_t aFlags);
+                          in Filter aFilter, in uint32_t aFlags);
 
   /**
     * Enumerated values for the 'type' attribute (below).
@@ -263,6 +222,21 @@ interface imgIContainer : nsISupports
    */
   [noscript, notxpcom] TempRefSourceSurface getFrame(in uint32_t aWhichFrame,
                                                      in uint32_t aFlags);
+
+  /**
+   * Get a surface for the given frame at the specified size. Matching the
+   * requested size is best effort; it's not guaranteed that the surface you get
+   * will be a perfect match. (Some reasons you may get a surface of a different
+   * size include: if you requested upscaling, if downscale-during-decode is
+   * disabled, or if you didn't request the first frame.)
+   *
+   * @param aSize The desired size.
+   * @param aWhichFrame Frame specifier of the FRAME_* variety.
+   * @param aFlags Flags of the FLAG_* variety
+   */
+  [noscript, notxpcom] TempRefSourceSurface getFrameAtSize([const] in nsIntSize aSize,
+                                                           in uint32_t aWhichFrame,
+                                                           in uint32_t aFlags);
 
   /**
    * Whether this image is opaque (i.e., needs a background painted behind it).
@@ -403,28 +377,22 @@ interface imgIContainer : nsISupports
        [const] in nsIntSize aSize,
        [const] in ImageRegion aRegion,
        in uint32_t aWhichFrame,
-       in gfxGraphicsFilter aFilter,
+       in Filter aFilter,
        [const] in MaybeSVGImageContext aSVGContext,
        in uint32_t aFlags);
 
   /*
    * Ensures that an image is decoding. Calling this function guarantees that
-   * the image will at some point fire off decode notifications. Calling draw()
-   * or getFrame() triggers the same mechanism internally. Thus, if you want to
-   * be sure that the image will be decoded but don't want to access it until
-   * then, you must call requestDecode().
-   */
-  void requestDecode();
-
-  /*
-   * This is equivalent to requestDecode() but it also synchronously decodes
-   * images that can be decoded "quickly" according to some heuristic.
+   * the image will at some point fire off decode notifications. Images that
+   * can be decoded "quickly" according to some heuristic will be decoded
+   * synchronously.
    */
   [noscript] void startDecoding();
 
   /*
-   * This method is equivalent to requestDecode(), but enables the caller to
-   * provide more detailed information about the decode request.
+   * This method triggers decoding for an image, but unlike startDecoding() it
+   * enables the caller to provide more detailed information about the decode
+   * request.
    *
    * @param aSize The size to which the image should be scaled while decoding,
    *              if possible. If the image cannot be scaled to this size while
@@ -544,4 +512,10 @@ interface imgIContainer : nsISupports
    * Removes any ImageWrappers and returns the unwrapped base image.
    */
   [notxpcom, nostdcall] TempRefImgIContainer unwrap();
+
+  /*
+   * Propagate the use counters (if any) from this container to the passed in
+   * document.
+   */
+  [noscript, notxpcom] void propagateUseCounters(in nsIDocument aDocument);
 };

@@ -11,14 +11,22 @@
 #include "mozilla/Services.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIObserverService.h"
+#include "GMPVideoDecoderProxy.h"
+#include "GMPServiceParent.h"
+#include "GMPService.h"
+#include "GMPUtils.h"
+#include "mozilla/StaticPtr.h"
 
-#define GMP_DIR_NAME NS_LITERAL_STRING("gmp-fake")
+#define GMP_DIR_NAME NS_LITERAL_STRING("gmp-fakeopenh264")
 #define GMP_OLD_VERSION NS_LITERAL_STRING("1.0")
 #define GMP_NEW_VERSION NS_LITERAL_STRING("1.1")
 
 #define GMP_DELETED_TOPIC "gmp-directory-deleted"
 
 #define EXPECT_OK(X) EXPECT_TRUE(NS_SUCCEEDED(X))
+
+using namespace mozilla;
+using namespace mozilla::gmp;
 
 class GMPRemoveTest : public nsIObserver
                     , public GMPVideoDecoderCallbackProxy
@@ -100,7 +108,7 @@ private:
  */
 TEST(GeckoMediaPlugins, RemoveAndDeleteForcedSimple)
 {
-  nsRefPtr<GMPRemoveTest> test(new GMPRemoveTest());
+  RefPtr<GMPRemoveTest> test(new GMPRemoveTest());
 
   test->Setup();
   test->DeletePluginDirectory(false /* force immediate */);
@@ -112,7 +120,7 @@ TEST(GeckoMediaPlugins, RemoveAndDeleteForcedSimple)
  */
 TEST(GeckoMediaPlugins, RemoveAndDeleteDeferredSimple)
 {
-  nsRefPtr<GMPRemoveTest> test(new GMPRemoveTest());
+  RefPtr<GMPRemoveTest> test(new GMPRemoveTest());
 
   test->Setup();
   test->DeletePluginDirectory(true /* can defer */);
@@ -125,7 +133,7 @@ TEST(GeckoMediaPlugins, RemoveAndDeleteDeferredSimple)
  */
 TEST(GeckoMediaPlugins, RemoveAndDeleteForcedInUse)
 {
-  nsRefPtr<GMPRemoveTest> test(new GMPRemoveTest());
+  RefPtr<GMPRemoveTest> test(new GMPRemoveTest());
 
   test->Setup();
   EXPECT_TRUE(test->CreateVideoDecoder(NS_LITERAL_CSTRING("thisOrigin")));
@@ -150,7 +158,7 @@ TEST(GeckoMediaPlugins, RemoveAndDeleteForcedInUse)
  */
 TEST(GeckoMediaPlugins, RemoveAndDeleteDeferredInUse)
 {
-  nsRefPtr<GMPRemoveTest> test(new GMPRemoveTest());
+  RefPtr<GMPRemoveTest> test(new GMPRemoveTest());
 
   test->Setup();
   EXPECT_TRUE(test->CreateVideoDecoder(NS_LITERAL_CSTRING("thisOrigin")));
@@ -179,7 +187,7 @@ static GeckoMediaPluginService*
 GetService()
 {
   if (!gService) {
-    nsRefPtr<GeckoMediaPluginService> service =
+    RefPtr<GeckoMediaPluginService> service =
       GeckoMediaPluginService::GetGeckoMediaPluginService();
     gService = service;
   }
@@ -191,7 +199,7 @@ static GeckoMediaPluginServiceParent*
 GetServiceParent()
 {
   if (!gServiceParent) {
-    nsRefPtr<GeckoMediaPluginServiceParent> parent =
+    RefPtr<GeckoMediaPluginServiceParent> parent =
       GeckoMediaPluginServiceParent::GetSingleton();
     gServiceParent = parent;
   }
@@ -414,6 +422,10 @@ void
 GMPRemoveTest::Terminated()
 {
   mIsTerminated = true;
+  if (mDecoder) {
+    mDecoder->Close();
+    mDecoder = nullptr;
+  }
 }
 
 void
@@ -435,6 +447,17 @@ GMPRemoveTest::GeneratePlugin()
   rv = origDir->Append(GMP_OLD_VERSION);
   EXPECT_OK(rv);
 
+  rv = gmpDir->Clone(getter_AddRefs(tmpDir));
+  EXPECT_OK(rv);
+  rv = tmpDir->Append(GMP_NEW_VERSION);
+  EXPECT_OK(rv);
+  bool exists = false;
+  rv = tmpDir->Exists(&exists);
+  EXPECT_OK(rv);
+  if (exists) {
+    rv = tmpDir->Remove(true);
+    EXPECT_OK(rv);
+  }
   rv = origDir->CopyTo(gmpDir, GMP_NEW_VERSION);
   EXPECT_OK(rv);
 

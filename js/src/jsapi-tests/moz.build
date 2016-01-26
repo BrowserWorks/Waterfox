@@ -12,23 +12,25 @@ UNIFIED_SOURCES += [
     'testArgumentsObject.cpp',
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
-    'testBindCallable.cpp',
     'testBug604087.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
     'testClassGetter.cpp',
     'testCloneScript.cpp',
     'testContexts.cpp',
+    'testDateToLocaleString.cpp',
     'testDebugger.cpp',
     'testDeepFreeze.cpp',
     'testDefineGetterSetterNonEnumerable.cpp',
     'testDefineProperty.cpp',
     'testDefinePropertyIgnoredAttributes.cpp',
+    'testDifferentNewTargetInvokeConstructor.cpp',
     'testEnclosingFunction.cpp',
     'testErrorCopying.cpp',
     'testException.cpp',
     'testExternalStrings.cpp',
     'testFindSCCs.cpp',
+    'testForceLexicalInitialization.cpp',
     'testForOfIterator.cpp',
     'testForwardSetProperty.cpp',
     'testFreshGlobalEvalRedefinition.cpp',
@@ -42,10 +44,13 @@ UNIFIED_SOURCES += [
     'testGCMarking.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
+    'testGCUniqueId.cpp',
+    'testGCWeakRef.cpp',
     'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
     'testIndexToString.cpp',
     'testIntern.cpp',
+    'testIntlAvailableLocales.cpp',
     'testIntString.cpp',
     'testIntTypesABI.cpp',
     'testIsInsideNursery.cpp',
@@ -55,10 +60,10 @@ UNIFIED_SOURCES += [
     'testMappedArrayBuffer.cpp',
     'testMutedErrors.cpp',
     'testNewObject.cpp',
+    'testNewTargetInvokeConstructor.cpp',
     'testNullRoot.cpp',
     'testObjectEmulatingUndefined.cpp',
     'testOOM.cpp',
-    'testOps.cpp',
     'testParseJSON.cpp',
     'testPersistentRooted.cpp',
     'testPreserveJitCode.cpp',
@@ -82,8 +87,14 @@ UNIFIED_SOURCES += [
     'testUbiNode.cpp',
     'testUncaughtError.cpp',
     'testUTF8.cpp',
+    'testWasmLEB128.cpp',
     'testWeakMap.cpp',
     'testXDR.cpp',
+]
+
+SOURCES += [
+    # There are clashing definitions of js::jit::AssemblerBuffer.
+    'testAssemblerBuffer.cpp',
 ]
 
 if CONFIG['ENABLE_ION']:
@@ -91,7 +102,7 @@ if CONFIG['ENABLE_ION']:
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',
-        'testJitMoveEmitterCycles-mips.cpp',
+        'testJitMoveEmitterCycles-mips32.cpp',
         'testJitMoveEmitterCycles.cpp',
         'testJitRangeAnalysis.cpp',
         'testJitRegisterSet.cpp',
@@ -100,14 +111,13 @@ if CONFIG['ENABLE_ION']:
 
 DEFINES['EXPORT_JS_API'] = True
 
-LOCAL_INCLUDES += ['..']
-GENERATED_INCLUDES += ['..']
+LOCAL_INCLUDES += [
+    '!..',
+    '..',
+]
 
 USE_LIBS += [
     'static:js',
 ]
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
-
-if CONFIG['GNU_CXX']:
-    FAIL_ON_WARNINGS = True

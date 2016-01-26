@@ -22,7 +22,7 @@ namespace mozilla {
  */
 struct Module
 {
-  static const unsigned int kVersion = 41;
+  static const unsigned int kVersion = 47;
 
   struct CIDEntry;
 
@@ -115,7 +115,7 @@ struct Module
   UnloadFuncPtr unloadProc;
 };
 
-} // namespace
+} // namespace mozilla
 
 #if defined(MOZILLA_INTERNAL_API)
 #  define NSMODULE_NAME(_name) _name##_NSModule

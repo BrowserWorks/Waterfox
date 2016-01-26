@@ -10,7 +10,6 @@
   padding: 0;
   font: message-box;
   font-size: 1.25rem;
-  line-height: 22px;
 }
 
 * {
@@ -21,6 +20,27 @@ button,
 treecol {
   /* override the * rule */
   -moz-user-select: none;
+}
+
+#engineList treechildren::-moz-tree-image(engineShown, checked),
+#blocklistsTree treechildren::-moz-tree-image(selectionCol, checked) {
+  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
+  width: 21px;
+  height: 21px;
+}
+
+#engineList treechildren::-moz-tree-image(engineShown, checked, selected),
+#blocklistsTree treechildren::-moz-tree-image(selectionCol, checked, selected) {
+  list-style-image: url("chrome://global/skin/in-content/check.svg#check-inverted");
+}
+
+#engineList treechildren::-moz-tree-row,
+#blocklistsTree treechildren::-moz-tree-row {
+  min-height: 36px;
+}
+
+#selectionCol {
+  min-width: 26px;
 }
 
 /* Category List */
@@ -151,6 +171,10 @@ treecol {
   margin-right: 4px !important;
 }
 
+#notificationsPolicyLearnMore {
+  -moz-margin-start: 1.5em !important;
+}
+
 #defaultFontSizeLabel {
   /* !important needed to override common !important rule */
   -moz-margin-start: 4px !important;
@@ -196,15 +220,24 @@ treecol {
   -moz-margin-end: 8px !important;
 }
 
+/* Privacy pane */
+
+.doNotTrackLearnMore,
+#trackingProtectionPBMLearnMore,
+#trackingProtectionLearnMore {
+  -moz-margin-start: 1.5em !important;
+  margin-top: 0;
+  font-weight: normal;
+}
+
 /* Collapse the non-active vboxes in decks to use only the height the
    active vbox needs */
 #historyPane:not([selectedIndex="1"]) > #historyDontRememberPane,
 #historyPane:not([selectedIndex="2"]) > #historyCustomPane,
 #weavePrefsDeck:not([selectedIndex="1"]) > #hasAccount,
 #weavePrefsDeck:not([selectedIndex="2"]) > #needsUpdate,
-#weavePrefsDeck:not([selectedIndex="3"]) > #fxaDeterminingStatus,
-#weavePrefsDeck:not([selectedIndex="4"]) > #noFxaAccount,
-#weavePrefsDeck:not([selectedIndex="5"]) > #hasFxaAccount,
+#weavePrefsDeck:not([selectedIndex="3"]) > #noFxaAccount,
+#weavePrefsDeck:not([selectedIndex="4"]) > #hasFxaAccount,
 #fxaLoginStatus:not([selectedIndex="1"]) > #fxaLoginUnverified,
 #fxaLoginStatus:not([selectedIndex="2"]) > #fxaLoginRejected {
   visibility: collapse;
@@ -216,35 +249,13 @@ description > html|a {
   cursor: pointer;
 }
 
-#fxaProfileImage {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border-width: 5px;
-  border-color: red;
-  background-image: url(chrome://browser/skin/preferences/in-content/default-profile-image.svg);
-  background-size: contain;
-  cursor: pointer;
-  -moz-margin-end: 15px;
-}
-
-#fxaProfileImage:hover {
-  border-color: blue;
-}
-
-#noFxaAccount {
-  /* Overriding the margins from the base preferences.css theme file.
-     These overrides can be simplified by fixing bug 1027174 */
-  margin: 0;
-}
-
 #weavePrefsDeck > vbox > label,
 #weavePrefsDeck > vbox > groupbox,
 #weavePrefsDeck > vbox > description,
 #weavePrefsDeck > vbox > #pairDevice > label,
 #weavePrefsDeck > #needsUpdate > hbox > #loginError,
-#weavePrefsDeck > #hasFxaAccount > hbox:not(#tosPP-normal) > label,
-#weavePrefsDeck > #hasFxaAccount > hbox:not(#tosPP-small) > label {
+#weavePrefsDeck > #hasFxaAccount > vbox > label,
+#weavePrefsDeck > #hasFxaAccount > hbox:not(#tosPP-normal) > label {
   /* no margin-start for elements at the begin of a line */
   -moz-margin-start: 0;
 }
@@ -265,19 +276,13 @@ description > html|a {
 }
 
 .indent {
-  -moz-margin-start: 33px;
+  /* !important needed to override -moz-margin-start:0 !important; rule
+     define in common.css for labels */
+  -moz-margin-start: 33px !important;
 }
 
-#trackingProtectionImage {
-  width: 16px;
-  height: 16px;
-  list-style-image: url(chrome://browser/skin/bad-content-blocked-16.png);
-}
-
-@media (min-resolution: 2dppx) {
-  #trackingProtectionImage {
-    list-style-image: url(chrome://browser/skin/bad-content-blocked-16@2x.png);
-  }
+.text-link {
+  margin-bottom: 0;
 }
 
 #showUpdateHistory {
@@ -323,15 +328,17 @@ description > html|a {
 
 #dialogTitle {
   text-align: center;
+  -moz-user-select: none;
 }
 
 .close-icon {
   background-color: transparent !important;
   border: none;
   box-shadow: none;
-  height: 18px;
   padding: 0;
-  min-width: 18px;
+  height: auto;
+  min-height: 16px;
+  min-width: 0;
 }
 
 #dialogBox > .groupbox-body {
@@ -367,23 +374,226 @@ description > html|a {
 }
 
 /**
- * Sync migration
+ * Sync
  */
-#sync-migrate-upgrade-description {
-  /* description elts need a min-width to wrap correctly - bug 630864? */
-  min-width: 100px
+
+#fxaProfileImage {
+  max-width: 60px;
+  border-radius: 50%;
+  list-style-image: url(chrome://browser/skin/fxa/default-avatar.png);
+  margin-inline-end: 15px;
 }
 
-#sync-migration {
-  border: 1px solid rgba(0, 0, 0, 0.32);
-  background-color: InfoBackground;
-  color: InfoText;
-  text-shadow: none;
-  margin: 5px 0 0 0;
-  animation: fadein 3000ms;
+#fxaProfileImage.actionable {
+  cursor: pointer;
 }
 
-@keyframes fadein {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+#fxaProfileImage.actionable:hover {
+  box-shadow: 0px 0px 0px 1px #0095DD;
+}
+
+#fxaProfileImage.actionable:hover:active {
+  box-shadow: 0px 0px 0px 1px #ff9500;
+}
+
+#noFxaAccount {
+  /* Overriding the margins from the base preferences.css theme file.
+     These overrides can be simplified by fixing bug 1027174 */
+  margin: 0;
+  padding-top: 15px;
+}
+
+#fxaContentWrapper {
+  -moz-box-flex: 1;
+}
+
+#noFxaGroup {
+  -moz-box-flex: 1;
+  margin: 0;
+}
+
+#fxaContentWrapper {
+  padding-right: 15px;
+}
+
+#noFxaGroup > vbox,
+#fxaGroup {
+  -moz-box-align: start;
+}
+
+#syncStatusMessage {
+  visibility: collapse;
+  opacity: 0;
+  transition: opacity 1s linear;
+  padding: 14px 8px 14px 14px;
+  border-radius: 2px;
+}
+
+#syncStatusMessage[message-type] {
+  visibility: visible;
+  opacity: 1;
+}
+
+#syncStatusMessage[message-type="verify-success"] {
+  background-color: #74BF43;
+}
+
+#syncStatusMessage[message-type="verify-error"] {
+  background-color: #D74345;
+}
+
+#syncStatusMessage[message-type="migration"] {
+  background-color: #FF9500;
+}
+
+#syncStatusMessageWrapper {
+  -moz-box-flex: 1;
+  padding-right: 5px;
+}
+
+#syncStatusMessageTitle, #syncStatusMessageDescription {
+  color: #FBFBFB;
+}
+
+#syncStatusMessage[message-type="migration"] #syncStatusMessageTitle {
+  display: none;
+}
+
+#syncStatusMessageTitle {
+  font-weight: bold !important;
+  font-size: 16px;
+  line-height: 157%;
+  margin: 0 0 20px;
+}
+
+#syncStatusMessageDescription {
+  font-size: 14px;
+  line-height: 158%;
+  margin: 0 !important;
+}
+
+#syncStatusMessageClose {
+  margin: 0px;
+}
+
+#fxaSyncEngines > vbox:first-child {
+  margin-right: 80px;
+}
+
+#fxaSyncComputerName {
+  margin-inline-start: 0px;
+  -moz-box-flex: 1;
+}
+
+#tosPP-small-ToS {
+  margin-bottom: 14px;
+}
+
+#noFxaCaption {
+  font-weight: bold;
+  margin-bottom: 11px;
+}
+
+.fxaSyncIllustration {
+  margin-top: 35px;
+}
+
+#syncOptions caption {
+  margin-bottom: 11px;
+}
+
+#fxaDeviceName {
+  margin-bottom: 27.5px;
+}
+
+#noFxaDescription {
+  margin-bottom: 20px !important;
+}
+
+.separator {
+  border-bottom: 1px solid var(--in-content-header-border-color);
+}
+
+.fxaAccountBox {
+  border: 1px solid #D1D2D3;
+  border-radius: 5px;
+  padding: 14px 20px 14px 14px;
+}
+
+#signedOutAccountBoxTitle {
+  font-weight: bold;
+}
+
+.fxaAccountBoxButtons {
+  margin-bottom: 0 !important;
+  margin-top: 11px;
+}
+
+.fxaAccountBoxButtons > * {
+  -moz-box-flex: 1;
+}
+
+.fxaAccountBoxButtons > button {
+  text-align: center;
+  padding-left: 11px;
+  padding-right: 11px;
+  margin: 0;
+  min-width: 0;
+}
+
+.fxaAccountBoxButtons > button:first-child {
+  margin-right: 14px !important;
+}
+
+.fxaSyncIllustration {
+  width: 231px;
+  list-style-image: url(chrome://browser/skin/fxa/sync-illustration.png)
+}
+
+#fxaEmailAddress1,
+#fxaEmailAddress2,
+#fxaEmailAddress3 {
+  word-break: break-all;
+}
+
+.fxaFirefoxLogo {
+  list-style-image: url(chrome://browser/skin/fxa/logo.png);
+  max-width: 64px;
+  margin-inline-end: 14px;
+}
+
+.fxaMobilePromo {
+  margin-bottom: 31px;
+}
+
+#fxaLoginRejectedWarning {
+  list-style-image: url(chrome://browser/skin/warning.svg);
+  filter: drop-shadow(0 1px 0 hsla(206, 50%, 10%, .15));
+  margin: 4px 8px 0px 0px;
+}
+
+#syncOptions {
+  margin-bottom: 27.5px;
+}
+
+.androidLink,
+.iOSLink {
+  margin: 0;
+}
+
+#tosPP-small {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+@media (min-resolution: 1.1dppx) {
+  .fxaSyncIllustration {
+    list-style-image: url(chrome://browser/skin/fxa/sync-illustration@2x.png)
+  }
+  .fxaFirefoxLogo {
+    list-style-image: url(chrome://browser/skin/fxa/logo@2x.png);
+  }
+  #fxaProfileImage {
+    list-style-image: url(chrome://browser/skin/fxa/default-avatar@2x.png);
+  }
 }

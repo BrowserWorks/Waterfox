@@ -17,7 +17,6 @@ dictionary NetworkCommandOptions
   unsigned long prefixLength;         // for "removeNetworkRoute".
   DOMString domain;                   // for "setDNS"
   sequence<DOMString> dnses;          // for "setDNS", "setDefaultRouteAndDNS".
-  DOMString oldIfname;                // for "setDefaultRouteAndDNS".
   DOMString gateway;                  // for "addSecondaryRoute", "removeSecondaryRoute".
   sequence<DOMString> gateways;       // for "setDefaultRouteAndDNS", "removeDefaultRoute".
   DOMString mode;                     // for "setWifiOperationMode".
@@ -39,7 +38,7 @@ dictionary NetworkCommandOptions
   DOMString usbEndIp;                 // for "setWifiTethering".
   DOMString dns1;                     // for "setWifiTethering".
   DOMString dns2;                     // for "setWifiTethering".
-  long threshold;                     // for "setNetworkInterfaceAlarm",
+  long long threshold;                // for "setNetworkInterfaceAlarm",
                                       //     "enableNetworkInterfaceAlarm".
   DOMString startIp;                  // for "setDhcpServer".
   DOMString endIp;                    // for "setDhcpServer".
@@ -55,6 +54,8 @@ dictionary NetworkCommandOptions
   long gateway_long;                  // for "ifc_configure".
   long dns1_long;                     // for "ifc_configure".
   long dns2_long;                     // for "ifc_configure".
+
+  long mtu;                           // for "setMtu".
 };
 
 /**

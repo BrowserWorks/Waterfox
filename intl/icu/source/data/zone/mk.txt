@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2013 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/mk.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/mk.xml
- */
 mk{
-    Version{"2.0.92.87"}
+    Version{"2.1.19.14"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Абиџан"}
@@ -459,9 +456,6 @@ mk{
         "America:Montevideo"{
             ec{"Монтевидео"}
         }
-        "America:Montreal"{
-            ec{"Монтреал"}
-        }
         "America:Montserrat"{
             ec{"Монтсерат"}
         }
@@ -552,9 +546,6 @@ mk{
         "America:Scoresbysund"{
             ec{"Итокортормит"}
         }
-        "America:Shiprock"{
-            ec{"Шипрок"}
-        }
         "America:Sitka"{
             ec{"Ситка"}
         }
@@ -636,17 +627,17 @@ mk{
         "Antarctica:Rothera"{
             ec{"Ротера"}
         }
-        "Antarctica:South_Pole"{
-            ec{"Јужен пол"}
-        }
         "Antarctica:Syowa"{
             ec{"Сајова"}
+        }
+        "Antarctica:Troll"{
+            ec{"Трол"}
         }
         "Antarctica:Vostok"{
             ec{"Восток"}
         }
         "Arctic:Longyearbyen"{
-            ec{"Лонгјиербјен"}
+            ec{"Лонгјирбјен"}
         }
         "Asia:Aden"{
             ec{"Аден"}
@@ -693,11 +684,11 @@ mk{
         "Asia:Calcutta"{
             ec{"Колката"}
         }
+        "Asia:Chita"{
+            ec{"Чита"}
+        }
         "Asia:Choibalsan"{
             ec{"Чојбалсан"}
-        }
-        "Asia:Chongqing"{
-            ec{"Чонгчинг"}
         }
         "Asia:Colombo"{
             ec{"Коломбо"}
@@ -719,9 +710,6 @@ mk{
         }
         "Asia:Gaza"{
             ec{"Газа"}
-        }
-        "Asia:Harbin"{
-            ec{"Харбин"}
         }
         "Asia:Hebron"{
             ec{"Хеброн"}
@@ -752,9 +740,6 @@ mk{
         }
         "Asia:Karachi"{
             ec{"Карачи"}
-        }
-        "Asia:Kashgar"{
-            ec{"Кашгар"}
         }
         "Asia:Katmandu"{
             ec{"Катманду"}
@@ -843,6 +828,9 @@ mk{
         "Asia:Singapore"{
             ec{"Сингапур"}
         }
+        "Asia:Srednekolymsk"{
+            ec{"Среднеколимск"}
+        }
         "Asia:Taipei"{
             ec{"Тајпеј"}
         }
@@ -895,7 +883,7 @@ mk{
             ec{"Канарски Острови"}
         }
         "Atlantic:Cape_Verde"{
-            ec{"Зелен 'Рт"}
+            ec{"Зелен ‘Рт"}
         }
         "Atlantic:Faeroe"{
             ec{"Фарски Острови"}
@@ -952,7 +940,7 @@ mk{
             ec{"Сиднеј"}
         }
         "Etc:Unknown"{
-            ec{"Непознато"}
+            ec{"Непознат град"}
         }
         "Europe:Amsterdam"{
             ec{"Амстердам"}
@@ -992,7 +980,7 @@ mk{
         }
         "Europe:Dublin"{
             ec{"Даблин"}
-            ld{"Ирско летно време"}
+            ld{"Ирско стандардно време"}
         }
         "Europe:Gibraltar"{
             ec{"Гибралтар"}
@@ -1095,7 +1083,7 @@ mk{
             ec{"Тирана"}
         }
         "Europe:Uzhgorod"{
-            ec{"Ужгород"}
+            ec{"Ужхород"}
         }
         "Europe:Vaduz"{
             ec{"Вадуц"}
@@ -1162,6 +1150,9 @@ mk{
         }
         "Pacific:Auckland"{
             ec{"Окленд"}
+        }
+        "Pacific:Bougainville"{
+            ec{"Буганвил"}
         }
         "Pacific:Chatham"{
             ec{"Чатам"}
@@ -1323,6 +1314,16 @@ mk{
             lg{"Пацифичко време"}
             ls{"Пацифичко стандардно време"}
         }
+        "meta:Anadyr"{
+            ld{"Анадирско летно време"}
+            lg{"Анадирско време"}
+            ls{"Анадирско стандардно време"}
+        }
+        "meta:Apia"{
+            ld{"Летно време во Апија"}
+            lg{"Време во Апија"}
+            ls{"Стандардно време во Апија"}
+        }
         "meta:Arabian"{
             ld{"Арапски летно сметање на времето"}
             lg{"Арапско време"}
@@ -1398,9 +1399,9 @@ mk{
             ls{"Време во Брунеи Дарусалам"}
         }
         "meta:Cape_Verde"{
-            ld{"Летно време на Зелениот 'Рт"}
-            lg{"Време на Зелениот 'Рт"}
-            ls{"Стандардно време на Зелениот 'R"}
+            ld{"Летно време на Зелениот ‘Рт"}
+            lg{"Време на Зелениот ‘Рт"}
+            ls{"Стандардно време на Зелениот ‘Рт"}
         }
         "meta:Chamorro"{
             ls{"Време во Чаморо"}
@@ -1450,7 +1451,7 @@ mk{
             ls{"Време во Дејвис"}
         }
         "meta:DumontDUrville"{
-            ls{"Димон-дурвил време"}
+            ls{"Време во Димон-дурвил"}
         }
         "meta:East_Timor"{
             ls{"Време во Источен Тимор"}
@@ -1464,7 +1465,7 @@ mk{
             ls{"Време во Еквадор"}
         }
         "meta:Europe_Central"{
-            ld{"Средноевропско летно сметање на времето"}
+            ld{"Средноевропско летно време"}
             lg{"Средноевропско време"}
             ls{"Средноевропско стандардно време"}
             sd{"CEST"}
@@ -1472,15 +1473,18 @@ mk{
             ss{"CET"}
         }
         "meta:Europe_Eastern"{
-            ld{"Источноевропско летно сметање на времето"}
+            ld{"Источноевропско летно време"}
             lg{"Источноевропско време"}
             ls{"Источноевропско стандардно време"}
             sd{"EEST"}
             sg{"EET"}
             ss{"EET"}
         }
+        "meta:Europe_Further_Eastern"{
+            ls{"Калининградско време"}
+        }
         "meta:Europe_Western"{
-            ld{"Западноевропско летно сметање на времето"}
+            ld{"Западноевропско летно време"}
             lg{"Западноевропско време"}
             ls{"Западноевропско стандардно време"}
             sd{"WEST"}
@@ -1646,6 +1650,16 @@ mk{
         }
         "meta:Mawson"{
             ls{"Време во Мосон"}
+        }
+        "meta:Mexico_Northwest"{
+            ld{"Летно сметање на времето во северозападно Мексико"}
+            lg{"Време во северозападно Мексико"}
+            ls{"Стандардно време во северозападно Мексико"}
+        }
+        "meta:Mexico_Pacific"{
+            ld{"Летно тихоокеанско време во Мексико"}
+            lg{"Тихоокеанско време во Мексико"}
+            ls{"Стандардно тихоокеанско време во Мексико"}
         }
         "meta:Mongolia"{
             ld{"Летно време во Улан Батор"}

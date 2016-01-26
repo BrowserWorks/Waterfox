@@ -52,7 +52,7 @@ public:
 private:
   ~VideoPlaybackQuality() {}
 
-  nsRefPtr<HTMLMediaElement> mElement;
+  RefPtr<HTMLMediaElement> mElement;
   DOMHighResTimeStamp mCreationTime;
   uint64_t mTotalFrames;
   uint64_t mDroppedFrames;
@@ -61,4 +61,5 @@ private:
 
 } // namespace dom
 } // namespace mozilla
+
 #endif /* mozilla_dom_VideoPlaybackQuality_h_ */

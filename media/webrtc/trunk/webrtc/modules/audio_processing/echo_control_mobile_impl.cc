@@ -40,22 +40,6 @@ int16_t MapSetting(EchoControlMobile::RoutingMode mode) {
   return -1;
 }
 
-AudioProcessing::Error MapError(int err) {
-  switch (err) {
-    case AECM_UNSUPPORTED_FUNCTION_ERROR:
-      return AudioProcessing::kUnsupportedFunctionError;
-    case AECM_NULL_POINTER_ERROR:
-      return AudioProcessing::kNullPointerError;
-    case AECM_BAD_PARAMETER_ERROR:
-      return AudioProcessing::kBadParameterError;
-    case AECM_BAD_PARAMETER_WARNING:
-      return AudioProcessing::kBadStreamParameterWarning;
-    default:
-      // AECM_UNSPECIFIED_ERROR
-      // AECM_UNINITIALIZED_ERROR
-      return AudioProcessing::kUnspecifiedError;
-  }
-}
 }  // namespace
 
 size_t EchoControlMobile::echo_path_size_bytes() {
@@ -83,7 +67,7 @@ int EchoControlMobileImpl::ProcessRenderAudio(const AudioBuffer* audio) {
     return apm_->kNoError;
   }
 
-  assert(audio->samples_per_split_channel() <= 160);
+  assert(audio->num_frames_per_band() <= 160);
   assert(audio->num_channels() == apm_->num_reverse_channels());
 
   int err = apm_->kNoError;
@@ -95,8 +79,8 @@ int EchoControlMobileImpl::ProcessRenderAudio(const AudioBuffer* audio) {
       Handle* my_handle = static_cast<Handle*>(handle(handle_index));
       err = WebRtcAecm_BufferFarend(
           my_handle,
-          audio->low_pass_split_data(j),
-          static_cast<int16_t>(audio->samples_per_split_channel()));
+          audio->split_bands_const(j)[kBand0To8kHz],
+          audio->num_frames_per_band());
 
       if (err != apm_->kNoError) {
         return GetHandleError(my_handle);  // TODO(ajm): warning possible?
@@ -118,7 +102,7 @@ int EchoControlMobileImpl::ProcessCaptureAudio(AudioBuffer* audio) {
     return apm_->kStreamParameterNotSetError;
   }
 
-  assert(audio->samples_per_split_channel() <= 160);
+  assert(audio->num_frames_per_band() <= 160);
   assert(audio->num_channels() == apm_->num_output_channels());
 
   int err = apm_->kNoError;
@@ -129,7 +113,7 @@ int EchoControlMobileImpl::ProcessCaptureAudio(AudioBuffer* audio) {
     // TODO(ajm): improve how this works, possibly inside AECM.
     //            This is kind of hacked up.
     const int16_t* noisy = audio->low_pass_reference(i);
-    int16_t* clean = audio->low_pass_split_data(i);
+    const int16_t* clean = audio->split_bands_const(i)[kBand0To8kHz];
     if (noisy == NULL) {
       noisy = clean;
       clean = NULL;
@@ -140,8 +124,8 @@ int EchoControlMobileImpl::ProcessCaptureAudio(AudioBuffer* audio) {
           my_handle,
           noisy,
           clean,
-          audio->low_pass_split_data(i),
-          static_cast<int16_t>(audio->samples_per_split_channel()),
+          audio->split_bands(i)[kBand0To8kHz],
+          audio->num_frames_per_band(),
           apm_->stream_delay_ms());
 
       if (err != apm_->kNoError) {
@@ -250,14 +234,7 @@ int EchoControlMobileImpl::Initialize() {
 }
 
 void* EchoControlMobileImpl::CreateHandle() const {
-  Handle* handle = NULL;
-  if (WebRtcAecm_Create(&handle) != apm_->kNoError) {
-    handle = NULL;
-  } else {
-    assert(handle != NULL);
-  }
-
-  return handle;
+  return WebRtcAecm_Create();
 }
 
 void EchoControlMobileImpl::DestroyHandle(void* handle) const {
@@ -296,6 +273,6 @@ int EchoControlMobileImpl::num_handles_required() const {
 
 int EchoControlMobileImpl::GetHandleError(void* handle) const {
   assert(handle != NULL);
-  return MapError(WebRtcAecm_get_error_code(static_cast<Handle*>(handle)));
+  return AudioProcessing::kUnspecifiedError;
 }
 }  // namespace webrtc

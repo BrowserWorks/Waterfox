@@ -2,8 +2,8 @@
  * Tests for imgITools
  */
 
-const Ci = Components.interfaces;
-const Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
 
 
 /*
@@ -130,7 +130,7 @@ if (!imgTools)
 // different set of reference images. nsIXULRuntime.OS doesn't seem to be
 // available in xpcshell, so we'll use this as a kludgy way to figure out if
 // we're running on Windows.
-var isWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+var isWindows = mozinfo.os == "win";
 
 
 /* ========== 1 ========== */
@@ -169,7 +169,7 @@ var encodedBytes = streamToArray(istream);
 var refName = "image1png16x16.jpg";
 var refFile = do_get_file(refName);
 istream = getFileInputStream(refFile);
-do_check_eq(istream.available(), 1078);
+do_check_eq(istream.available(), 1051);
 var referenceBytes = streamToArray(istream);
 
 // compare the encoder's output to the reference file.
@@ -228,7 +228,7 @@ encodedBytes = streamToArray(istream);
 refName = isWindows ? "image2jpg16x16-win.png" : "image2jpg16x16.png";
 refFile = do_get_file(refName);
 istream = getFileInputStream(refFile);
-do_check_eq(istream.available(), 948);
+do_check_eq(istream.available(), 950);
 referenceBytes = streamToArray(istream);
 
 // compare the encoder's output to the reference file.
@@ -691,8 +691,10 @@ var errsrc = "none";
 try {
   container = imgTools.decodeImage(istream, inMimeType);
 
-  // We should never hit this - decodeImage throws an assertion because the
-  // image decoded doesn't have enough frames.
+  // We expect to hit an error during encoding because the ICO header of the
+  // image is fine, but the actual resources are corrupt. Since decodeImage()
+  // only performs a metadata decode, it doesn't decode far enough to realize
+  // this, but we'll find out when we do a full decode during encodeImage().
   try {
       istream = imgTools.encodeImage(container, "image/png");
   } catch (e) {
@@ -704,7 +706,7 @@ try {
   errsrc = "decode";
 }
 
-do_check_eq(errsrc, "decode");
+do_check_eq(errsrc, "encode");
 checkExpectedError(/NS_ERROR_FAILURE/, err);
 
 

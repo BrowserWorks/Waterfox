@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 class Blob;
 class ImageCapture;
-}
+} // namespace dom
 
 /**
  * CaptureTask retrieves image from MediaStream and encodes the image to jpeg in
@@ -32,16 +32,18 @@ class CaptureTask : public MediaStreamListener,
 {
 public:
   // MediaStreamListener methods.
-  virtual void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
-                                        StreamTime aTrackOffset,
-                                        uint32_t aTrackEvents,
-                                        const MediaSegment& aQueuedMedia) override;
+  void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
+                                StreamTime aTrackOffset,
+                                uint32_t aTrackEvents,
+                                const MediaSegment& aQueuedMedia,
+                                MediaStream* aInputStream,
+                                TrackID aInputTrackID) override;
 
-  virtual void NotifyEvent(MediaStreamGraph* aGraph,
-                           MediaStreamGraphEvent aEvent) override;
+  void NotifyEvent(MediaStreamGraph* aGraph,
+                   MediaStreamGraphEvent aEvent) override;
 
   // DOMMediaStream::PrincipalChangeObserver method.
-  virtual void PrincipalChanged(DOMMediaStream* aMediaStream) override;
+  void PrincipalChanged(DOMMediaStream* aMediaStream) override;
 
   // CaptureTask methods.
 
@@ -77,7 +79,7 @@ protected:
   // The ImageCapture associates with this task. This reference count should not
   // change in this class unless it clears this reference after a blob or error
   // event to script.
-  nsRefPtr<dom::ImageCapture> mImageCapture;
+  RefPtr<dom::ImageCapture> mImageCapture;
 
   TrackID mTrackID;
 

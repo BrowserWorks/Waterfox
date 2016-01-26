@@ -3,16 +3,16 @@ var scrollbox = tabstrip._scrollbox;
 var originalSmoothScroll = tabstrip.smoothScroll;
 var tabs = gBrowser.tabs;
 
-function rect(ele)           ele.getBoundingClientRect();
-function width(ele)          rect(ele).width;
-function left(ele)           rect(ele).left;
-function right(ele)          rect(ele).right;
-function isLeft(ele, msg)    is(left(ele) + tabstrip._tabMarginLeft, left(scrollbox), msg);
-function isRight(ele, msg)   is(right(ele) - tabstrip._tabMarginRight, right(scrollbox), msg);
-function elementFromPoint(x) tabstrip._elementFromPoint(x);
-function nextLeftElement()   elementFromPoint(left(scrollbox) - 1);
-function nextRightElement()  elementFromPoint(right(scrollbox) + 1);
-function firstScrollable()   tabs[gBrowser._numPinnedTabs];
+var rect = ele => ele.getBoundingClientRect();
+var width = ele => rect(ele).width;
+var left = ele => rect(ele).left;
+var right = ele => rect(ele).right;
+var isLeft = (ele, msg) => is(left(ele) + tabstrip._tabMarginLeft, left(scrollbox), msg);
+var isRight = (ele, msg) => is(right(ele) - tabstrip._tabMarginRight, right(scrollbox), msg);
+var elementFromPoint = x => tabstrip._elementFromPoint(x);
+var nextLeftElement = () => elementFromPoint(left(scrollbox) - 1);
+var nextRightElement = () => elementFromPoint(right(scrollbox) + 1);
+var firstScrollable = () => tabs[gBrowser._numPinnedTabs];
 
 function test() {
   requestLongerTimeout(2);

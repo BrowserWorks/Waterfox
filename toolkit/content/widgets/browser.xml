@@ -4,11 +4,6 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!DOCTYPE bindings [
-  <!ENTITY % findBarDTD SYSTEM "chrome://global/locale/findbar.dtd" >
-  %findBarDTD;
-]>
-
 <bindings id="browserBindings"
           xmlns="http://www.mozilla.org/xbl"
           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -17,7 +12,7 @@
     <content clickthrough="never">
       <children/>
     </content>
-    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIFrameRequestCallback, nsIMessageListener">
+    <implementation type="application/javascript" implements="nsIObserver, nsIDOMEventListener, nsIMessageListener">
       <property name="autoscrollEnabled">
         <getter>
           <![CDATA[
@@ -290,6 +285,15 @@
         </setter>
       </property>
 
+      <method name="setDocShellIsActiveAndForeground">
+        <parameter name="isActive"/>
+        <body>
+          <![CDATA[
+            this.docShell && this.docShell.setIsActiveAndForeground(isActive);
+          ]]>
+        </body>
+      </method>
+
       <property name="imageDocument"
                 readonly="true">
         <getter>
@@ -411,6 +415,22 @@
         ]]></getter>
       </property>
 
+      <property name="innerWindowID" readonly="true">
+        <getter><![CDATA[
+          try {
+            return this.contentWindow
+                       .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                       .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                       .currentInnerWindowID;
+          } catch (e) {
+            if (e.result != Cr.NS_ERROR_NOT_AVAILABLE) {
+              throw e;
+            }
+            return null;
+          }
+        ]]></getter>
+      </property>
+
       <field name="_lastSearchString">null</field>
       <field name="_lastSearchHighlight">false</field>
 
@@ -500,6 +520,12 @@
       <property name="isSyntheticDocument">
         <getter><![CDATA[
           return this.contentDocument.mozSyntheticDocument;
+        ]]></getter>
+      </property>
+
+      <property name="hasContentOpener">
+        <getter><![CDATA[
+          return !!this.contentWindow.opener;
         ]]></getter>
       </property>
 
@@ -635,7 +661,7 @@
       <method name="updateBlockedPopups">
         <body>
           <![CDATA[
-            var event = document.createEvent("Events");
+            let event = document.createEvent("Events");
             event.initEvent("DOMUpdatePageReport", true, true);
             this.dispatchEvent(event);
           ]]>
@@ -656,6 +682,51 @@
       <property name="pageReport"
          onget="return this.blockedPopups;"
          readonly="true"/>
+
+      <method name="audioPlaybackStarted">
+        <body>
+          <![CDATA[
+            let event = document.createEvent("Events");
+            event.initEvent("DOMAudioPlaybackStarted", true, false);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+
+      <method name="audioPlaybackStopped">
+        <body>
+          <![CDATA[
+            let event = document.createEvent("Events");
+            event.initEvent("DOMAudioPlaybackStopped", true, false);
+            this.dispatchEvent(event);
+          ]]>
+        </body>
+      </method>
+
+      <field name="_audioMuted">false</field>
+      <property name="audioMuted"
+                onget="return this._audioMuted;"
+                readonly="true"/>
+
+      <method name="mute">
+        <body>
+          <![CDATA[
+            this._audioMuted = true;
+            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+                                                 {type: "mute"});
+          ]]>
+        </body>
+      </method>
+
+      <method name="unmute">
+        <body>
+          <![CDATA[
+            this._audioMuted = false;
+            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+                                                 {type: "unmute"});
+          ]]>
+        </body>
+      </method>
 
       <property name="securityUI">
         <getter>
@@ -807,6 +878,8 @@
             this.messageManager.addMessageListener("PopupBlocking:UpdateBlockedPopups", this);
             this.messageManager.addMessageListener("Autoscroll:Start", this);
             this.messageManager.addMessageListener("Autoscroll:Cancel", this);
+            this.messageManager.addMessageListener("AudioPlayback:Start", this);
+            this.messageManager.addMessageListener("AudioPlayback:Stop", this);
           }
         ]]>
       </constructor>
@@ -818,7 +891,10 @@
       </destructor>
 
       <!-- This is necessary because the destructor doesn't always get called when
-           we are removed from a tabbrowser. This will be explicitly called by tabbrowser -->
+           we are removed from a tabbrowser. This will be explicitly called by tabbrowser.
+
+           Note: this function is overriden in remote-browser.xml, so any clean-up that
+           also applies to browser.isRemoteBrowser = true must be duplicated there. -->
       <method name="destroy">
         <body>
           <![CDATA[
@@ -893,6 +969,12 @@
             case "Autoscroll:Cancel":
               this._autoScrollPopup.hidePopup();
               break;
+            case "AudioPlayback:Start":
+              this.audioPlaybackStarted();
+              break;
+            case "AudioPlayback:Stop":
+              this.audioPlaybackStopped();
+              break;
           }
         ]]></body>
       </method>
@@ -910,23 +992,18 @@
         <parameter name="aState"/>
         <body>
           <![CDATA[
-            if (aTopic != "browser:purge-session-history" || !this.sessionHistory)
+            if (aTopic != "browser:purge-session-history")
               return;
 
-            // place the entry at current index at the end of the history list, so it won't get removed
-            if (this.sessionHistory.index < this.sessionHistory.count - 1) {
-              var indexEntry = this.sessionHistory.getEntryAtIndex(this.sessionHistory.index, false);
-              this.sessionHistory.QueryInterface(Components.interfaces.nsISHistoryInternal);
-              indexEntry.QueryInterface(Components.interfaces.nsISHEntry);
-              this.sessionHistory.addEntry(indexEntry, true);
-            }
+            this.purgeSessionHistory();
+          ]]>
+        </body>
+      </method>
 
-            var purge = this.sessionHistory.count;
-            if (this.currentURI != "about:blank")
-              --purge; // Don't remove the page the user's staring at from shistory
-
-            if (purge > 0)
-              this.sessionHistory.PurgeHistory(purge);
+      <method name="purgeSessionHistory">
+        <body>
+          <![CDATA[
+            this.messageManager.sendAsyncMessage("Browser:PurgeSessionHistory");
           ]]>
         </body>
       </method>
@@ -996,6 +1073,7 @@
               this._autoScrollPopup.setAttribute("translucent", /Win|Mac/.test(navigator.platform));
             }
 
+            this._autoScrollPopup.setAttribute("noautofocus", "true");
             this._autoScrollPopup.setAttribute("scrolldir", scrolldir);
             this._autoScrollPopup.addEventListener("popuphidden", this, true);
             this._autoScrollPopup.showPopup(document.documentElement,
@@ -1015,8 +1093,8 @@
             window.addEventListener("keypress", this, true);
             window.addEventListener("keyup", this, true);
          ]]>
-       </body>
-     </method>
+        </body>
+      </method>
 
       <method name="handleEvent">
         <parameter name="aEvent"/>
@@ -1036,8 +1114,12 @@
               case "mouseup":
               case "mousedown":
               case "contextmenu": {
-                if (!this._ignoreMouseEvents)
-                  this._autoScrollPopup.hidePopup();
+                if (!this._ignoreMouseEvents) {
+                  // Use a timeout to prevent the mousedown from opening the popup again.
+                  // Ideally, we could use preventDefault here, but contenteditable
+                  // and middlemouse paste don't interact well. See bug 1188536.
+                  setTimeout(() => this._autoScrollPopup.hidePopup(), 0);
+                }
                 this._ignoreMouseEvents = false;
                 break;
               }
@@ -1097,6 +1179,7 @@
           if (this.isRemoteBrowser) {
             fieldsToSwap.push(...[
               "_remoteWebNavigation",
+              "_remoteWebNavigationImpl",
               "_remoteWebProgressManager",
               "_remoteWebProgress",
               "_remoteFinder",
@@ -1110,12 +1193,13 @@
               "_fullZoom",
               "_textZoom",
               "_isSyntheticDocument",
+              "_innerWindowID",
             ]);
           }
 
           var ourFieldValues = {};
           var otherFieldValues = {};
-          for each (var field in fieldsToSwap) {
+          for (var field of fieldsToSwap) {
             ourFieldValues[field] = this[field];
             otherFieldValues[field] = aOtherBrowser[field];
           }
@@ -1133,7 +1217,7 @@
             aOtherBrowser.detachFormFill();
           }
 
-          for each (var field in fieldsToSwap) {
+          for (var field of fieldsToSwap) {
             this[field] = otherFieldValues[field];
             aOtherBrowser[field] = ourFieldValues[field];
           }
@@ -1150,8 +1234,8 @@
           }
           else {
             // Rewire the remote listeners
-            this._remoteWebNavigation.swapBrowser(this);
-            aOtherBrowser._remoteWebNavigation.swapBrowser(aOtherBrowser);
+            this._remoteWebNavigationImpl.swapBrowser(this);
+            aOtherBrowser._remoteWebNavigationImpl.swapBrowser(aOtherBrowser);
 
             this._remoteWebProgressManager.swapBrowser(this);
             aOtherBrowser._remoteWebProgressManager.swapBrowser(aOtherBrowser);
@@ -1164,6 +1248,33 @@
         ]]>
         </body>
       </method>
+
+      <method name="getInPermitUnload">
+        <parameter name="aCallback"/>
+        <body>
+        <![CDATA[
+          if (!this.docShell || !this.docShell.contentViewer) {
+            aCallback(false);
+            return;
+          }
+          aCallback(this.docShell.contentViewer.inPermitUnload);
+        ]]>
+        </body>
+      </method>
+
+      <method name="permitUnload">
+        <body>
+        <![CDATA[
+          if (!this.docShell || !this.docShell.contentViewer) {
+            return true;
+          }
+          return {permitUnload: this.docShell.contentViewer.permitUnload(), timedOut: false};
+        ]]>
+        </body>
+      </method>
+
+      <!-- This will go away if the binding has been removed for some reason. -->
+      <field name="_alive">true</field>
     </implementation>
 
     <handlers>

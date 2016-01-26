@@ -69,7 +69,28 @@
         ]]>
         </body>
       </method>
-      
+
+      <method name="openPopupAtScreenRect">
+        <parameter name="aPosition"/>
+        <parameter name="aX"/>
+        <parameter name="aY"/>
+        <parameter name="aWidth"/>
+        <parameter name="aHeight"/>
+        <parameter name="aIsContextMenu"/>
+        <parameter name="aAttributesOverride"/>
+        <parameter name="aTriggerEvent"/>
+        <body>
+        <![CDATA[
+          try {
+            var popupBox = this.popupBoxObject;
+            if (popupBox)
+              popupBox.openPopupAtScreenRect(aPosition, aX, aY, aWidth, aHeight,
+                                             aIsContextMenu, aAttributesOverride, aTriggerEvent);
+          } catch(e) {}
+        ]]>
+        </body>
+      </method>
+
       <method name="showPopup">
         <parameter name="element"/>
         <parameter name="xpos"/>
@@ -94,7 +115,7 @@
         ]]>
         </body>
       </method>
-      
+
       <method name="hidePopup">
         <parameter name="cancel"/>
         <body>
@@ -251,7 +272,9 @@
             let tmp = {};
             Components.utils.import("resource://gre/modules/WindowDraggingUtils.jsm", tmp);
             let draghandle = new tmp.WindowDraggingElement(this);
-            draghandle.mouseDownCheck = function () this._dragBindingAlive;
+            draghandle.mouseDownCheck = function () {
+              return this._dragBindingAlive;
+            }
           } catch (e) {}
         }
       ]]>
@@ -592,7 +615,7 @@
             if (tipElement.nodeType == Node.ELEMENT_NODE) {
               if (tipElement.namespaceURI == XULNS)
                 XULtooltiptextText = tipElement.getAttribute("tooltiptext");
-              else
+              else if (!(tipElement instanceof SVGElement))
                 titleText = tipElement.getAttribute("title");
 
               if ((tipElement instanceof HTMLAnchorElement ||

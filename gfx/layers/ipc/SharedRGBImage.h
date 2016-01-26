@@ -18,12 +18,11 @@
 namespace mozilla {
 namespace layers {
 
-class BufferTextureClient;
 class ImageClient;
 class TextureClient;
 
 already_AddRefed<Image> CreateSharedRGBImage(ImageContainer* aImageContainer,
-                                             nsIntSize aSize,
+                                             gfx::IntSize aSize,
                                              gfxImageFormat aImageFormat);
 
 /**
@@ -45,15 +44,13 @@ public:
 
   gfx::IntSize GetSize() override;
 
-  size_t GetBufferSize();
-
-  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
+  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
   bool Allocate(gfx::IntSize aSize, gfx::SurfaceFormat aFormat);
 private:
   gfx::IntSize mSize;
   RefPtr<ImageClient> mCompositable;
-  RefPtr<BufferTextureClient> mTextureClient;
+  RefPtr<TextureClient> mTextureClient;
 };
 
 } // namespace layers

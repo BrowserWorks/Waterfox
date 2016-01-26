@@ -15,12 +15,36 @@
 from __future__ import print_function
 
 import os
+import redo
 import requests
 import sys
 
-from buildconfig import substs
+try:
+    from buildconfig import substs
+except ImportError:
+    # Allow standalone use of this script, for use in TaskCluster
+    from os import environ as substs
 
 url = 'https://crash-stats.mozilla.com/symbols/upload'
+# Allow overwriting of the upload url with an environmental variable
+if 'SOCORRO_SYMBOL_UPLOAD_URL' in os.environ:
+    url = os.environ['SOCORRO_SYMBOL_UPLOAD_URL']
+MAX_RETRIES = 5
+
+def print_error(r):
+    if r.status_code < 400:
+        print('Error: bad auth token? ({0}: {1})'.format(r.status_code,
+                                                         r.reason),
+              file=sys.stderr)
+    else:
+        print('Error: got HTTP response {0}: {1}'.format(r.status_code,
+                                                         r.reason),
+              file=sys.stderr)
+
+    print('Response body:\n{sep}\n{body}\n{sep}\n'.format(
+        sep='=' * 20,
+        body=r.text
+        ))
 
 def main():
     if len(sys.argv) != 2:
@@ -43,31 +67,35 @@ def main():
         return 1
     auth_token = open(token_file, 'r').read().strip()
 
-    print('Uploading symbol file "{0}" to "{1}"...'.format(sys.argv[1], url))
+    print('Uploading symbol file "{0}" to "{1}"'.format(sys.argv[1], url))
 
-    try:
-        r = requests.post(
-            url,
-            files={'symbols.zip': open(sys.argv[1], 'rb')},
-            headers={'Auth-Token': auth_token},
-            allow_redirects=False,
-            timeout=120,
-        )
-    except requests.exceptions.RequestException as e:
-        print('Error: {0}'.format(e))
+    for i, _ in enumerate(redo.retrier(attempts=MAX_RETRIES), start=1):
+        print('Attempt %d of %d...' % (i, MAX_RETRIES))
+        try:
+            r = requests.post(
+                url,
+                files={'symbols.zip': open(sys.argv[1], 'rb')},
+                headers={'Auth-Token': auth_token},
+                allow_redirects=False,
+                timeout=120)
+            # 500 is likely to be a transient failure.
+            # Break out for success or other error codes.
+            if r.status_code < 500:
+                break
+            print_error(r)
+        except requests.exceptions.RequestException as e:
+            print('Error: {0}'.format(e))
+        print('Retrying...')
+    else:
+        print('Maximum retries hit, giving up!')
         return 1
 
     if r.status_code >= 200 and r.status_code < 300:
         print('Uploaded successfully!')
-    elif r.status_code < 400:
-        print('Error: bad auth token? ({0})'.format(r.status_code),
-              file=sys.stderr)
-        return 1
-    else:
-        print('Error: got HTTP response {0}'.format(r.status_code),
-              file=sys.stderr)
-        return 1
-    return 0
+        return 0
+
+    print_error(r)
+    return 1
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -34,9 +34,6 @@ include gif/reftest.list
 # APNG tests
 include apng/reftest.list
 
-# Icon tests
-include icon/win/reftest.list
-
 # Generic image tests
 include generic/reftest.list
 
@@ -45,6 +42,9 @@ include color-management/reftest.list
 
 # Downscaling tests
 include downscaling/reftest.list
+
+# Blob URI tests
+include blob/reftest.list
 
 # Lossless encoders
 skip-if(Android||B2G) include encoders-lossless/reftest.list # bug 783621

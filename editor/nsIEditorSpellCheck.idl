@@ -2,23 +2,16 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 #include "nsISupports.idl"
 
 interface nsIEditor;
 interface nsITextServicesFilter;
 interface nsIEditorSpellCheckCallback;
 
-[scriptable, uuid(dd32ef3b-a7d8-43d1-9617-5f2dddbe29eb)]
+[scriptable, uuid(a171c25f-e4a8-4d08-adef-b797e6377bdc)]
 interface nsIEditorSpellCheck : nsISupports
 {
-
-  /**
-   * Call this on any change in installed dictionaries to ensure that the spell
-   * checker is not using a current dictionary which is no longer available.
-   * If the current dictionary is no longer available, then pick another one.
-   */
-  void checkCurrentDictionary();
 
  /**
    * Returns true if we can enable spellchecking. If there are no available

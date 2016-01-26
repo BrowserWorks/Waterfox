@@ -4,7 +4,7 @@ function test() {
 // Bug 632056: constant-folding
 program([exprStmt(ident("f")),
          ifStmt(lit(1),
-                funDecl(ident("f"), [], blockStmt([])),
+                blockStmt([funDecl(ident("f"), [], blockStmt([]))]),
                 null)]).assert(Reflect.parse("f; if (1) function f(){}"));
 // declarations
 
@@ -32,6 +32,12 @@ assertDecl("function foo(a=(function () {})) { function a() {} }",
            funDecl(ident("foo"), [ident("a")], blockStmt([funDecl(ident("a"), [], blockStmt([]))]),
                    [funExpr(null, [], blockStmt([]))]));
 
+// Bug 1018628: default paremeter for destructuring
+assertDecl("function f(a=1, [x,y]=[2,3]) { }",
+           funDecl(ident("f"),
+                   [ident("a"), arrPatt([ident("x"), ident("y")])],
+                   blockStmt([]),
+                   [lit(1), arrExpr([lit(2), lit(3)])]));
 
 // Bug 591437: rebound args have their defs turned into uses
 assertDecl("function f(a) { function a() { } }",
@@ -79,5 +85,13 @@ assertProg("f.p = 1; var f; f.p; function f(){}",
             exprStmt(dotExpr(ident("f"), ident("p"))),
             funDecl(ident("f"), [], blockStmt([]))]);
 }
+
+assertBlockStmt("{ function f(x) {} }",
+                blockStmt([funDecl(ident("f"), [ident("x")], blockStmt([]))]));
+
+// Annex B semantics should not change parse tree.
+assertBlockStmt("{ let f; { function f(x) {} } }",
+                blockStmt([letDecl([{ id: ident("f"), init: null }]),
+                           blockStmt([funDecl(ident("f"), [ident("x")], blockStmt([]))])]));
 
 runtest(test);

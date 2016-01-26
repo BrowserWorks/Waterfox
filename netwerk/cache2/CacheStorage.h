@@ -52,24 +52,30 @@ class CacheStorage : public nsICacheStorage
 public:
   CacheStorage(nsILoadContextInfo* aInfo,
                bool aAllowDisk,
-               bool aLookupAppCache);
+               bool aLookupAppCache,
+               bool aSkipSizeCheck,
+               bool aPinning);
 
 protected:
   virtual ~CacheStorage();
 
   nsresult ChooseApplicationCache(nsIURI* aURI, nsIApplicationCache** aCache);
 
-  nsRefPtr<LoadContextInfo> mLoadContextInfo;
+  RefPtr<LoadContextInfo> mLoadContextInfo;
   bool mWriteToDisk : 1;
   bool mLookupAppCache : 1;
+  bool mSkipSizeCheck: 1;
+  bool mPinning : 1;
 
 public:
   nsILoadContextInfo* LoadInfo() const { return mLoadContextInfo; }
   bool WriteToDisk() const { return mWriteToDisk && !mLoadContextInfo->IsPrivate(); }
   bool LookupAppCache() const { return mLookupAppCache; }
+  bool SkipSizeCheck() const { return mSkipSizeCheck; }
+  bool Pinning() const { return mPinning; }
 };
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

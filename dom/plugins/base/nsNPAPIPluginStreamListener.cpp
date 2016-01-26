@@ -90,8 +90,7 @@ nsPluginStreamToFile::Write(const char* aBuf, uint32_t aCount,
 {
   mOutputStream->Write(aBuf, aCount, aWriteCount);
   mOutputStream->Flush();
-  mOwner->GetURL(mFileURL.get(), mTarget, nullptr, nullptr, 0);
-  
+  mOwner->GetURL(mFileURL.get(), mTarget, nullptr, nullptr, 0, false);
   return NS_OK;
 }
 
@@ -122,7 +121,7 @@ NS_IMETHODIMP
 nsPluginStreamToFile::Close(void)
 {
   mOutputStream->Close();
-  mOwner->GetURL(mFileURL.get(), mTarget, nullptr, nullptr, 0);
+  mOwner->GetURL(mFileURL.get(), mTarget, nullptr, nullptr, 0, false);
   return NS_OK;
 }
 
@@ -193,7 +192,7 @@ nsNPAPIPluginStreamListener::CleanUpStream(NPReason reason)
   // Various bits of code in the rest of this method may result in the
   // deletion of this object. Use a KungFuDeathGrip to keep ourselves
   // alive during cleanup.
-  nsRefPtr<nsNPAPIPluginStreamListener> kungFuDeathGrip(this);
+  RefPtr<nsNPAPIPluginStreamListener> kungFuDeathGrip(this);
 
   if (mStreamCleanedUp)
     return NS_OK;
@@ -287,6 +286,7 @@ nsNPAPIPluginStreamListener::CallURLNotify(NPReason reason)
 nsresult
 nsNPAPIPluginStreamListener::OnStartBinding(nsPluginStreamListenerPeer* streamPeer)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
   if (!mInst || !mInst->CanFireNotifications() || mStreamCleanedUp)
     return NS_ERROR_FAILURE;
 
@@ -537,13 +537,14 @@ nsNPAPIPluginStreamListener::OnDataAvailable(nsPluginStreamListenerPeer* streamP
   nsresult rv = NS_OK;
   while (NS_SUCCEEDED(rv) && length > 0) {
     if (input && length) {
-      if (mStreamBufferSize < mStreamBufferByteCount + length && mIsSuspended) {
+      if (mStreamBufferSize < mStreamBufferByteCount + length) {
         // We're in the ::OnDataAvailable() call that we might get
         // after suspending a request, or we suspended the request
         // from within this ::OnDataAvailable() call while there's
-        // still data in the input, and we don't have enough space to
-        // store what we got off the network. Reallocate our internal
-        // buffer.
+        // still data in the input, or we have resumed a previously
+        // suspended request and our buffer is already full, and we
+        // don't have enough space to store what we got off the network.
+        // Reallocate our internal buffer.
         mStreamBufferSize = mStreamBufferByteCount + length;
         char *buf = (char*)PR_Realloc(mStreamBuffer, mStreamBufferSize);
         if (!buf)
@@ -551,10 +552,11 @@ nsNPAPIPluginStreamListener::OnDataAvailable(nsPluginStreamListenerPeer* streamP
         
         mStreamBuffer = buf;
       }
-      
+
       uint32_t bytesToRead =
       std::min(length, mStreamBufferSize - mStreamBufferByteCount);
-      
+      MOZ_ASSERT(bytesToRead > 0);
+
       uint32_t amountRead = 0;
       rv = input->Read(mStreamBuffer + mStreamBufferByteCount, bytesToRead,
                        &amountRead);

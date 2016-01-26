@@ -28,8 +28,8 @@ class nsSVGFilterPaintCallback;
 namespace mozilla {
 namespace dom {
 class UserSpaceMetrics;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 /**
  * This class performs all filter processing.
@@ -68,7 +68,7 @@ public:
                                                 const nsTArray<nsStyleFilter>& aFilterChain,
                                                 const UserSpaceMetrics& aMetrics,
                                                 const gfxRect& aBBox,
-                                                nsTArray<mozilla::RefPtr<SourceSurface>>& aOutAdditionalImages);
+                                                nsTArray<RefPtr<SourceSurface>>& aOutAdditionalImages);
 
   /**
    * Paint the given filtered frame.
@@ -77,7 +77,7 @@ public:
    *   border box).
    */
   static nsresult PaintFilteredFrame(nsIFrame *aFilteredFrame,
-                                     gfxContext& aContext,
+                                     DrawTarget* aDrawTarget,
                                      const gfxMatrix& aTransform,
                                      nsSVGFilterPaintCallback *aPaintCallback,
                                      const nsRegion* aDirtyArea);
@@ -150,14 +150,14 @@ public:
   bool IsInitialized() const { return mInitialized; }
 
   /**
-   * Draws the filter output into aContext. The area that
+   * Draws the filter output into aDrawTarget. The area that
    * needs to be painted must have been specified before calling this method
    * by passing it as the aPostFilterDirtyRegion argument to the
    * nsFilterInstance constructor.
    */
-  nsresult Render(gfxContext* aContext);
+  nsresult Render(DrawTarget* aDrawTarget);
 
-  const FilterDescription& ExtractDescriptionAndAdditionalImages(nsTArray<mozilla::RefPtr<SourceSurface>>& aOutAdditionalImages)
+  const FilterDescription& ExtractDescriptionAndAdditionalImages(nsTArray<RefPtr<SourceSurface>>& aOutAdditionalImages)
   {
     mInputImages.SwapElements(aOutAdditionalImages);
     return mFilterDescription;
@@ -206,7 +206,7 @@ private:
 
     // The surface that contains the input rendering.
     // Set by BuildSourceImage / BuildSourcePaint.
-    mozilla::RefPtr<SourceSurface> mSourceSurface;
+    RefPtr<SourceSurface> mSourceSurface;
 
     // The position and size of mSourceSurface in filter space.
     // Set by BuildSourceImage / BuildSourcePaint.
@@ -364,7 +364,7 @@ private:
    */
   gfxMatrix               mPaintTransform;
 
-  nsTArray<mozilla::RefPtr<SourceSurface>> mInputImages;
+  nsTArray<RefPtr<SourceSurface>> mInputImages;
   nsTArray<FilterPrimitiveDescription> mPrimitiveDescriptions;
   FilterDescription mFilterDescription;
   bool mInitialized;

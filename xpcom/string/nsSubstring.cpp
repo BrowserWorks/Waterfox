@@ -317,20 +317,9 @@ nsStringBuffer::ToString(uint32_t aLen, nsACString& aStr,
 }
 
 size_t
-nsStringBuffer::SizeOfIncludingThisMustBeUnshared(mozilla::MallocSizeOf aMallocSizeOf) const
-{
-  NS_ASSERTION(!IsReadonly(),
-               "shared StringBuffer in SizeOfIncludingThisMustBeUnshared");
-  return aMallocSizeOf(this);
-}
-
-size_t
 nsStringBuffer::SizeOfIncludingThisIfUnshared(mozilla::MallocSizeOf aMallocSizeOf) const
 {
-  if (!IsReadonly()) {
-    return SizeOfIncludingThisMustBeUnshared(aMallocSizeOf);
-  }
-  return 0;
+  return IsReadonly() ? 0 : aMallocSizeOf(this);
 }
 
 size_t
@@ -355,7 +344,7 @@ nsStringBuffer::SizeOfIncludingThisEvenIfShared(mozilla::MallocSizeOf aMallocSiz
 // Check that internal and external strings have the same size.
 // See https://bugzilla.mozilla.org/show_bug.cgi?id=430581
 
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsXPCOMStrings.h"
 
 static_assert(sizeof(nsStringContainer_base) == sizeof(nsSubstring),

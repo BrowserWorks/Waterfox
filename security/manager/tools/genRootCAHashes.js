@@ -10,10 +10,10 @@
 
 // <https://developer.mozilla.org/en/XPConnect/xpcshell/HOWTO>
 // <https://bugzilla.mozilla.org/show_bug.cgi?id=546628>
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 const nsX509CertDB = "@mozilla.org/security/x509certdb;1";
 const CertDb = Components.classes[nsX509CertDB].getService(Ci.nsIX509CertDB);
@@ -219,13 +219,13 @@ if (arguments.length < 1) {
   throw "Usage: genRootCAHashes.js <absolute path to current RootHashes.inc>";
 }
 
-let trustAnchorsFile = FileUtils.getFile("CurWorkD", [FILENAME_TRUST_ANCHORS]);
+var trustAnchorsFile = FileUtils.getFile("CurWorkD", [FILENAME_TRUST_ANCHORS]);
 // let rootHashesFile = FileUtils.getFile("CurWorkD", arguments[0]);
-let rootHashesFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+var rootHashesFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
 rootHashesFile.initWithPath(arguments[0]);
 
 // Open the known hashes file; this is to ensure stable bin numbers.
-let gTrustAnchors = loadTrustAnchors(trustAnchorsFile);
+var gTrustAnchors = loadTrustAnchors(trustAnchorsFile);
 
 // Collect all certificate entries
 insertTrustAnchorsFromDatabase();
@@ -249,6 +249,6 @@ gTrustAnchors.roots.sort(function(a, b) {
 });
 
 // Write the output file.
-let rootHashesFileOutputStream = FileUtils.openSafeFileOutputStream(rootHashesFile);
+var rootHashesFileOutputStream = FileUtils.openSafeFileOutputStream(rootHashesFile);
 writeRootHashes(rootHashesFileOutputStream);
 FileUtils.closeSafeFileOutputStream(rootHashesFileOutputStream);

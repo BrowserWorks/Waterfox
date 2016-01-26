@@ -2,14 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils, Cr = Components.results;
+var Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils, Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 function init() {
   // Include the build date and a warning about Telemetry
   // if this is an "a#" (nightly or aurora) build
-#expand const version = "__MOZ_APP_VERSION__";
+#expand const version = "__MOZ_APP_VERSION_DISPLAY__";
   if (/a\d+$/.test(version)) {
     let buildID = Services.appinfo.appBuildID;
     let buildDate = buildID.slice(0, 4) + "-" + buildID.slice(4, 6) + "-" + buildID.slice(6, 8);

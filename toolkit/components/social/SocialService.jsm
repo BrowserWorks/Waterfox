@@ -33,13 +33,15 @@ XPCOMUtils.defineLazyServiceGetter(this, "etld",
  */
 
 // Internal helper methods and state
-let SocialServiceInternal = {
-  get enabled() this.providerArray.length > 0,
+var SocialServiceInternal = {
+  get enabled() {
+    return this.providerArray.length > 0;
+  },
 
   get providerArray() {
-    return [p for ([, p] of Iterator(this.providers))];
+    return Object.keys(this.providers).map(origin => this.providers[origin]);
   },
-  get manifests() {
+  *manifestsGenerator() {
     // Retrieve the manifests of installed providers from prefs
     let MANIFEST_PREFS = Services.prefs.getBranch("social.manifest.");
     let prefs = MANIFEST_PREFS.getChildList("", []);
@@ -56,6 +58,9 @@ let SocialServiceInternal = {
                        ", exception: " + err);
       }
     }
+  },
+  get manifests() {
+    return this.manifestsGenerator();
   },
   getManifestPrefname: function(origin) {
     // Retrieve the prefname for a given origin/manifest.
@@ -94,13 +99,13 @@ let SocialServiceInternal = {
       p.frecency = 0;
       providers[p.domain] = p;
       hosts.push(p.domain);
-    };
+    }
 
     // cannot bind an array to stmt.params so we have to build the string
     let stmt = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase)
                                  .DBConnection.createAsyncStatement(
       "SELECT host, frecency FROM moz_hosts WHERE host IN (" +
-      [ '"' + host + '"' for each (host in hosts) ].join(",") + ") "
+      hosts.map(host => '"' + host + '"').join(",") + ") "
     );
 
     try {
@@ -122,7 +127,7 @@ let SocialServiceInternal = {
           // all enabled providers get sorted even with frecency zero.
           let providerList = SocialServiceInternal.providerArray;
           // reverse sort
-          aCallback(providerList.sort(function(a, b) b.frecency - a.frecency));
+          aCallback(providerList.sort((a, b) => b.frecency - a.frecency));
         }
       });
     } finally {
@@ -153,7 +158,7 @@ XPCOMUtils.defineLazyGetter(SocialServiceInternal, "providers", function () {
 function getOriginActivationType(origin) {
   // if this is an about uri, treat it as a directory
   let URI = Services.io.newURI(origin, null, null);
-  let principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(URI);
+  let principal = Services.scriptSecurityManager.createCodebasePrincipal(URI, {});
   if (Services.scriptSecurityManager.isSystemPrincipal(principal) || origin == "moz-safe-about:home") {
     return "internal";
   }
@@ -165,7 +170,7 @@ function getOriginActivationType(origin) {
   return "foreign";
 }
 
-let ActiveProviders = {
+var ActiveProviders = {
   get _providers() {
     delete this._providers;
     this._providers = {};
@@ -359,7 +364,7 @@ this.SocialService = {
     // not yet flushed so we check the active providers array
     for (let p in ActiveProviders._providers) {
       return true;
-    };
+    }
     return false;
   },
   get enabled() {
@@ -513,11 +518,11 @@ this.SocialService = {
     }
     // force/fixup origin
     let URI = Services.io.newURI(installOrigin, null, null);
-    principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(URI);
+    principal = Services.scriptSecurityManager.createCodebasePrincipal(URI, {});
     data.origin = principal.origin;
 
     // iconURL and name are required
-    let providerHasFeatures = [url for (url of featureURLs) if (data[url])].length > 0;
+    let providerHasFeatures = featureURLs.some(url => data[url]);
     if (!providerHasFeatures) {
       Cu.reportError("SocialService.manifestFromData manifest missing required urls.");
       return null;
@@ -714,7 +719,7 @@ function SocialProvider(input) {
   this.postActivationURL = input.postActivationURL;
   this.origin = input.origin;
   let originUri = Services.io.newURI(input.origin, null, null);
-  this.principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(originUri);
+  this.principal = Services.scriptSecurityManager.createCodebasePrincipal(originUri, {});
   this.ambientNotificationIcons = {};
   this.errorState = null;
   this.frecency = 0;
@@ -946,7 +951,7 @@ SocialProvider.prototype = {
       return null;
     }
   }
-}
+};
 
 function getAddonIDFromOrigin(origin) {
   let originUri = Services.io.newURI(origin, null, null);
@@ -986,10 +991,10 @@ function AddonInstaller(sourceURI, aManifest, installCallback) {
     installCallback(aManifest);
   };
   this.cancel = function() {
-    Services.prefs.clearUserPref(getPrefnameFromOrigin(aManifest.origin))
-  },
+    Services.prefs.clearUserPref(getPrefnameFromOrigin(aManifest.origin));
+  };
   this.addon = new AddonWrapper(aManifest);
-};
+}
 
 var SocialAddonProvider = {
   startup: function() {},
@@ -1027,7 +1032,7 @@ var SocialAddonProvider = {
       aCallback([]);
       return;
     }
-    aCallback([new AddonWrapper(a) for each (a in SocialServiceInternal.manifests)]);
+    aCallback([...SocialServiceInternal.manifests].map(a => new AddonWrapper(a)));
   },
 
   removeAddon: function(aAddon, aCallback) {
@@ -1040,7 +1045,7 @@ var SocialAddonProvider = {
     if (aCallback)
       schedule(aCallback);
   }
-}
+};
 
 
 function AddonWrapper(aManifest) {
@@ -1148,7 +1153,7 @@ AddonWrapper.prototype = {
     return this.manifest.name;
   },
   get version() {
-    return this.manifest.version ? this.manifest.version : "";
+    return this.manifest.version ? this.manifest.version.toString() : "";
   },
 
   get iconURL() {

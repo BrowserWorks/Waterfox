@@ -14,7 +14,7 @@ namespace mozilla {
 namespace layers {
 
 ImageLayer::ImageLayer(LayerManager* aManager, void* aImplData)
-: Layer(aManager, aImplData), mFilter(GraphicsFilter::FILTER_GOOD)
+: Layer(aManager, aImplData), mFilter(gfx::Filter::GOOD)
 , mScaleMode(ScaleMode::SCALE_NONE), mDisallowBigImage(false)
 {}
 
@@ -57,8 +57,8 @@ void ImageLayer::ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSu
     mEffectiveTransformForBuffer = mEffectiveTransform;
   }
 
-  ComputeEffectiveTransformForMaskLayer(aTransformToSurface);
+  ComputeEffectiveTransformForMaskLayers(aTransformToSurface);
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

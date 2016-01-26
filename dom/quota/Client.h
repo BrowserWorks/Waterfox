@@ -9,9 +9,10 @@
 
 #include "mozilla/dom/quota/QuotaCommon.h"
 
+#include "mozilla/dom/ipc/IdType.h"
+
 #include "PersistenceType.h"
 
-class nsIOfflineStorage;
 class nsIRunnable;
 
 #define IDB_DIRECTORY_NAME "idb"
@@ -110,10 +111,18 @@ public:
   virtual void
   ReleaseIOThreadObjects() = 0;
 
-  // Methods which are called on the main thred.
+  // Methods which are called on the background thred.
   virtual void
-  WaitForStoragesToComplete(nsTArray<nsIOfflineStorage*>& aStorages,
-                            nsIRunnable* aCallback) = 0;
+  AbortOperations(const nsACString& aOrigin) = 0;
+
+  virtual void
+  AbortOperationsForProcess(ContentParentId aContentParentId) = 0;
+
+  virtual void
+  StartIdleMaintenance() = 0;
+
+  virtual void
+  StopIdleMaintenance() = 0;
 
   virtual void
   ShutdownWorkThreads() = 0;

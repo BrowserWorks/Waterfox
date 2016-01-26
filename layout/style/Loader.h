@@ -20,6 +20,7 @@
 #include "nsURIHashKey.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CORSMode.h"
+#include "mozilla/CSSStyleSheet.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/net/ReferrerPolicy.h"
 
@@ -30,11 +31,10 @@ class nsMediaList;
 class nsIStyleSheetLinkingElement;
 
 namespace mozilla {
-class CSSStyleSheet;
 namespace dom {
 class Element;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 namespace mozilla {
 
@@ -131,6 +131,47 @@ namespace css {
 class SheetLoadData;
 class ImportRule;
 
+/*********************
+ * Style sheet reuse *
+ *********************/
+
+class MOZ_RAII LoaderReusableStyleSheets
+{
+public:
+  LoaderReusableStyleSheets()
+  {
+  }
+
+  /**
+   * Look for a reusable sheet (see AddReusableSheet) matching the
+   * given URL.  If found, set aResult, remove the reused sheet from
+   * the internal list, and return true.  If not found, return false;
+   * in this case, aResult is not modified.
+   *
+   * @param aURL the url to match
+   * @param aResult [out] the style sheet which can be reused
+   */
+  bool FindReusableStyleSheet(nsIURI* aURL, RefPtr<CSSStyleSheet>& aResult);
+
+  /**
+   * Indicate that a certain style sheet is available for reuse if its
+   * URI matches the URI of an @import.  Sheets should be added in the
+   * opposite order in which they are intended to be reused.
+   *
+   * @param aSheet the sheet which can be reused
+   */
+  void AddReusableSheet(CSSStyleSheet* aSheet) {
+    mReusableSheets.AppendElement(aSheet);
+  }
+
+private:
+  LoaderReusableStyleSheets(const LoaderReusableStyleSheets&) = delete;
+  LoaderReusableStyleSheets& operator=(const LoaderReusableStyleSheets&) = delete;
+
+  // The sheets that can be reused.
+  nsTArray<RefPtr<CSSStyleSheet>> mReusableSheets;
+};
+
 /***********************************************************************
  * Enum that describes the state of the sheet returned by CreateSheet. *
  ***********************************************************************/
@@ -223,6 +264,7 @@ public:
                          bool aHasAlternateRel,
                          CORSMode aCORSMode,
                          ReferrerPolicy aReferrerPolicy,
+                         const nsAString& aIntegrity,
                          nsICSSLoaderObserver* aObserver,
                          bool* aIsAlternate);
 
@@ -241,11 +283,14 @@ public:
    * @param aMedia the already-parsed media list for the child sheet
    * @param aRule the @import rule importing this child.  This is used to
    *              properly order the child sheet list of aParentSheet.
+   * @param aSavedSheets any saved style sheets which could be reused
+   *              for this load
    */
   nsresult LoadChildSheet(CSSStyleSheet* aParentSheet,
                           nsIURI* aURL,
                           nsMediaList* aMedia,
-                          ImportRule* aRule);
+                          ImportRule* aRule,
+                          LoaderReusableStyleSheets* aSavedSheets);
 
   /**
    * Synchronously load and return the stylesheet at aURL.  Any child sheets
@@ -255,13 +300,8 @@ public:
    * method can be used to load sheets not associated with a document.
    *
    * @param aURL the URL of the sheet to load
-   * @param aEnableUnsafeRules whether unsafe rules are enabled for this
-   * sheet load
-   * Unsafe rules are rules that can violate key Gecko invariants if misused.
-   * In particular, most anonymous box pseudoelements must be very carefully
-   * styled or we will have severe problems. Therefore unsafe rules should
-   * never be enabled for stylesheets controlled by untrusted sites; preferably
-   * unsafe rules should only be enabled for agent sheets.
+   * @param aParsingMode the mode in which to parse the sheet
+   *        (see comments at enum SheetParsingMode, above).
    * @param aUseSystemPrincipal if true, give the resulting sheet the system
    * principal no matter where it's being loaded from.
    * @param [out] aSheet the loaded, complete sheet.
@@ -274,22 +314,25 @@ public:
    * whether the data could be parsed as CSS and doesn't indicate anything
    * about the status of child sheets of the returned sheet.
    */
-  nsresult LoadSheetSync(nsIURI* aURL, bool aEnableUnsafeRules,
+  nsresult LoadSheetSync(nsIURI* aURL,
+                         SheetParsingMode aParsingMode,
                          bool aUseSystemPrincipal,
                          CSSStyleSheet** aSheet);
 
   /**
-   * As above, but aUseSystemPrincipal and aEnableUnsafeRules are assumed false.
+   * As above, but defaults aParsingMode to eAuthorSheetFeatures and
+   * aUseSystemPrincipal to false.
    */
   nsresult LoadSheetSync(nsIURI* aURL, CSSStyleSheet** aSheet) {
-    return LoadSheetSync(aURL, false, false, aSheet);
+    return LoadSheetSync(aURL, eAuthorSheetFeatures, false, aSheet);
   }
 
   /**
    * Asynchronously load the stylesheet at aURL.  If a successful result is
    * returned, aObserver is guaranteed to be notified asynchronously once the
    * sheet is loaded and marked complete.  This method can be used to load
-   * sheets not associated with a document.
+   * sheets not associated with a document.  This method cannot be used to
+   * load user or agent sheets.
    *
    * @param aURL the URL of the sheet to load
    * @param aOriginPrincipal the principal to use for security checks.  This
@@ -316,11 +359,13 @@ public:
    * not-yet-loaded sheet.
    */
   nsresult LoadSheet(nsIURI* aURL,
+                     bool aIsPreload,
                      nsIPrincipal* aOriginPrincipal,
                      const nsCString& aCharset,
                      nsICSSLoaderObserver* aObserver,
                      CORSMode aCORSMode = CORS_NONE,
-                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default);
+                     ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                     const nsAString& aIntegrity = EmptyString());
 
   /**
    * Stop loading all sheets.  All nsICSSLoaderObservers involved will be
@@ -384,7 +429,7 @@ public:
   // is selected and aHasAlternateRel is false.
   bool IsAlternate(const nsAString& aTitle, bool aHasAlternateRel);
 
-  typedef nsTArray<nsRefPtr<SheetLoadData> > LoadDataArray;
+  typedef nsTArray<RefPtr<SheetLoadData> > LoadDataArray;
 
   // Measure our size.
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
@@ -398,14 +443,17 @@ private:
 
   static PLDHashOperator
   RemoveEntriesWithURI(URIPrincipalReferrerPolicyAndCORSModeHashKey* aKey,
-                       nsRefPtr<CSSStyleSheet>& aSheet,
+                       RefPtr<CSSStyleSheet>& aSheet,
                        void* aUserData);
 
   // Note: null aSourcePrincipal indicates that the content policy and
   // CheckLoadURI checks should be skipped.
+  // aIsPreload indicates whether the html parser preloads that
+  // stylesheet or if it is a regular load.
   nsresult CheckLoadAllowed(nsIPrincipal* aSourcePrincipal,
                             nsIURI* aTargetURI,
-                            nsISupports* aContext);
+                            nsISupports* aContext,
+                            bool aIsPreload);
 
 
   // For inline style, the aURI param is null, but the aLinkingContent
@@ -417,6 +465,7 @@ private:
                        nsIPrincipal* aLoaderPrincipal,
                        CORSMode aCORSMode,
                        ReferrerPolicy aReferrerPolicy,
+                       const nsAString& aIntegrity,
                        bool aSyncLoad,
                        bool aHasAlternateRel,
                        const nsAString& aTitle,
@@ -443,14 +492,16 @@ private:
                             ImportRule* aParentRule);
 
   nsresult InternalLoadNonDocumentSheet(nsIURI* aURL,
-                                        bool aAllowUnsafeRules,
+                                        bool aIsPreload,
+                                        SheetParsingMode aParsingMode,
                                         bool aUseSystemPrincipal,
                                         nsIPrincipal* aOriginPrincipal,
                                         const nsCString& aCharset,
                                         CSSStyleSheet** aSheet,
                                         nsICSSLoaderObserver* aObserver,
                                         CORSMode aCORSMode = CORS_NONE,
-                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default);
+                                        ReferrerPolicy aReferrerPolicy = mozilla::net::RP_Default,
+                                        const nsAString& aIntegrity = EmptyString());
 
   // Post a load event for aObserver to be notified about aSheet.  The
   // notification will be sent with status NS_OK unless the load event is
@@ -473,7 +524,9 @@ private:
 
   // Note: LoadSheet is responsible for releasing aLoadData and setting the
   // sheet to complete on failure.
-  nsresult LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState);
+  nsresult LoadSheet(SheetLoadData* aLoadData,
+                     StyleSheetState aSheetState,
+                     bool aIsPreLoad);
 
   // Parse the stylesheet in aLoadData.  The sheet data comes from aInput.
   // Set aCompleted to true if the parse finished, false otherwise (e.g. if the
@@ -514,8 +567,9 @@ private:
   // Our array of "global" observers
   nsTObserverArray<nsCOMPtr<nsICSSLoaderObserver> > mObservers;
 
-  // the load data needs access to the document...
-  nsIDocument*      mDocument;  // the document we live for
+  // This reference is nulled by the Document in it's destructor through
+  // DropDocumentReference().
+  nsIDocument* MOZ_NON_OWNING_REF mDocument;  // the document we live for
 
 
   // Number of datas still waiting to be notified on if we're notifying on a

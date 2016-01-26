@@ -516,11 +516,11 @@ sp<NativeHandle> GonkBufferQueueConsumer::getSidebandStream() const {
     return mCore->mSidebandStream;
 }
 
-void GonkBufferQueueConsumer::dump(String8& result, const char* prefix) const {
+void GonkBufferQueueConsumer::dumpToString(String8& result, const char* prefix) const {
     mCore->dump(result, prefix);
 }
 
-TemporaryRef<GonkBufferSlot::TextureClient>
+already_AddRefed<GonkBufferSlot::TextureClient>
 GonkBufferQueueConsumer::getTextureClientFromBuffer(ANativeWindowBuffer* buffer)
 {
     Mutex::Autolock _l(mCore->mMutex);
@@ -531,7 +531,8 @@ GonkBufferQueueConsumer::getTextureClientFromBuffer(ANativeWindowBuffer* buffer)
 
     for (int i = 0; i < GonkBufferQueueDefs::NUM_BUFFER_SLOTS; i++) {
         if (mSlots[i].mGraphicBuffer != NULL && mSlots[i].mGraphicBuffer->handle == buffer->handle) {
-            return mSlots[i].mTextureClient;
+            RefPtr<TextureClient> client(mSlots[i].mTextureClient);
+            return client.forget();
         }
     }
     ALOGE("getSlotFromBufferLocked: unknown buffer: %p", buffer->handle);
@@ -554,4 +555,5 @@ GonkBufferQueueConsumer::getSlotFromTextureClientLocked(GonkBufferSlot::TextureC
     ALOGE("getSlotFromBufferLocked: unknown TextureClient: %p", client);
     return BAD_VALUE;
 }
+
 } // namespace android

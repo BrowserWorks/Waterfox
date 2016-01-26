@@ -25,7 +25,7 @@ const LoginInfo =
                              "nsILoginInfo", "init");
 
 // For now, we need consumers to provide a reference to Assert.jsm.
-let Assert = null;
+var Assert = null;
 
 this.LoginTestUtils = {
   set Assert(assert) {
@@ -69,6 +69,15 @@ this.LoginTestUtils = {
   assertLoginListsEqual(actual, expected) {
     Assert.equal(expected.length, actual.length);
     Assert.ok(expected.every(e => actual.some(a => a.equals(e))));
+  },
+
+  /**
+   * Checks that every login in "expected" matches one in "actual".
+   * The comparison uses the "matches" method of nsILoginInfo.
+   */
+  assertLoginListsMatches(actual, expected, ignorePassword) {
+    Assert.equal(expected.length, actual.length);
+    Assert.ok(expected.every(e => actual.some(a => a.matches(e, ignorePassword))));
   },
 
   /**
@@ -164,9 +173,6 @@ this.LoginTestUtils.testData = {
       // Forms found on the same host, but with different hostnames in the
       // "action" attribute, are handled independently.
       new LoginInfo("http://www3.example.com", "http://www.example.com", null,
-                    "the username", "the password",
-                    "form_field_username", "form_field_password"),
-      new LoginInfo("http://www3.example.com", "https://www.example.com", null,
                     "the username", "the password",
                     "form_field_username", "form_field_password"),
       new LoginInfo("http://www3.example.com", "http://example.com", null,

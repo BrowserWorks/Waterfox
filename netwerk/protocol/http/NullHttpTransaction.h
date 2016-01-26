@@ -70,14 +70,15 @@ private:
   bool mClaimed;
 
 protected:
-  nsRefPtr<nsAHttpConnection> mConnection;
+  RefPtr<nsAHttpConnection> mConnection;
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
-  nsRefPtr<nsHttpConnectionInfo> mConnectionInfo;
+  RefPtr<nsHttpConnectionInfo> mConnectionInfo;
   nsCOMPtr<nsIHttpActivityObserver> mActivityDistributor;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(NullHttpTransaction, NS_NULLHTTPTRANSACTION_IID)
 
-}} // namespace mozilla::net
+} // namespace net
+} // namespace mozilla
 
 #endif // mozilla_net_NullHttpTransaction_h

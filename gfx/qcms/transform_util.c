@@ -1,15 +1,9 @@
-#define _ISOC99_SOURCE  /* for INFINITY */
-
 #include <math.h>
 #include <assert.h>
 #include <string.h> //memcpy
 #include "qcmsint.h"
 #include "transform_util.h"
 #include "matrix.h"
-
-#if !defined(INFINITY)
-#define INFINITY HUGE_VAL
-#endif
 
 #define PARAMETRIC_CURVE_TYPE 0x70617261 //'para'
 
@@ -131,7 +125,7 @@ void compute_curve_gamma_table_type_parametric(float gamma_table[256], float par
                 c = 0;
                 e = 0;
                 f = 0;
-                interval = -INFINITY;
+                interval = -1;
         } else if(count == 1) {
                 a = parameter[1];
                 b = parameter[2];
@@ -167,12 +161,12 @@ void compute_curve_gamma_table_type_parametric(float gamma_table[256], float par
                 c = 0;
                 e = 0;
                 f = 0;
-                interval = -INFINITY;
-        }       
+                interval = -1;
+        }
         for (X = 0; X < 256; X++) {
                 if (X >= interval) {
-                        // XXX The equations are not exactly as definied in the spec but are
-                        //     algebraic equivilent.
+                        // XXX The equations are not exactly as defined in the spec but are
+                        //     algebraically equivalent.
                         // TODO Should division by 255 be for the whole expression.
                         gamma_table[X] = clamp_float(pow(a * X / 255. + b, y) + c + e);
                 } else {
@@ -263,25 +257,32 @@ uint16_fract_t lut_inverse_interp16(uint16_t Value, uint16_t LutTable[], int len
 
         // Does the curve belong to this case?
         if (NumZeroes > 1 || NumPoles > 1)
-        {               
+        {
                 int a, b;
 
-                // Identify if value fall downto 0 or FFFF zone             
+                // Identify if value fall downto 0 or FFFF zone
                 if (Value == 0) return 0;
-               // if (Value == 0xFFFF) return 0xFFFF;
+                // if (Value == 0xFFFF) return 0xFFFF;
 
                 // else restrict to valid zone
 
-                a = ((NumZeroes-1) * 0xFFFF) / (length-1);               
-                b = ((length-1 - NumPoles) * 0xFFFF) / (length-1);
-                                                                
-                l = a - 1;
-                r = b + 1;
+                if (NumZeroes > 1) {
+                        a = ((NumZeroes-1) * 0xFFFF) / (length-1);
+                        l = a - 1;
+                }
+                if (NumPoles > 1) {
+                        b = ((length-1 - NumPoles) * 0xFFFF) / (length-1);
+                        r = b + 1;
+                }
+        }
+
+        if (r <= l) {
+                // If this happens LutTable is not invertible
+                return 0;
         }
 
 
         // Seems not a degenerated case... apply binary search
-
         while (r > l) {
 
                 x = (l + r) / 2;
@@ -290,8 +291,8 @@ uint16_fract_t lut_inverse_interp16(uint16_t Value, uint16_t LutTable[], int len
 
                 if (res == Value) {
 
-                    // Found exact match. 
-                    
+                    // Found exact match.
+
                     return (uint16_fract_t) (x - 1);
                 }
 
@@ -301,9 +302,10 @@ uint16_fract_t lut_inverse_interp16(uint16_t Value, uint16_t LutTable[], int len
 
         // Not found, should we interpolate?
 
-                
         // Get surrounding nodes
-        
+
+        assert(x >= 1);
+
         val2 = (length-1) * ((double) (x - 1) / 65535.0);
 
         cell0 = (int) floor(val2);

@@ -4,12 +4,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIRequest.idl"
+#include "nsILoadInfo.idl"
 
 interface nsIURI;
 interface nsIInterfaceRequestor;
 interface nsIInputStream;
 interface nsIStreamListener;
-interface nsILoadInfo;
+
+%{C++
+#include "nsCOMPtr.h"
+%}
 
 /**
  * The nsIChannel interface allows clients to construct "GET" requests for
@@ -25,7 +29,7 @@ interface nsILoadInfo;
  *
  * This interface must be used only from the XPCOM main thread.
  */
-[scriptable, uuid(1bc48693-c45d-45f4-8ab1-46e323037fe1)]
+[scriptable, uuid(2c389865-23db-4aa7-9fe5-60cc7b00697e)]
 interface nsIChannel : nsIRequest
 {
     /**
@@ -79,7 +83,16 @@ interface nsIChannel : nsIRequest
     attribute nsIInterfaceRequestor notificationCallbacks;
 
     /**
-     * Transport-level security information (if any) corresponding to the channel.
+     * Transport-level security information (if any) corresponding to the
+     * channel.
+     *
+     * NOTE: In some circumstances TLS information is propagated onto
+     * non-nsIHttpChannel objects to indicate that their contents were likely
+     * delivered over TLS all the same.  For example, document.open() may
+     * create an nsWyciwygChannel to store the data that will be written to the
+     * document.  In that case, if the caller has TLS information, we propagate
+     * that info onto the nsWyciwygChannel given that it is likely that the
+     * caller will be writing data that was delivered over TLS to the document.
      */
     readonly attribute nsISupports securityInfo;
 
@@ -143,6 +156,11 @@ interface nsIChannel : nsIRequest
     nsIInputStream open();
 
     /**
+     * Performs content security check and calls open()
+     */
+    nsIInputStream open2();
+
+    /**
      * Asynchronously open this channel.  Data is fed to the specified stream
      * listener as it becomes available.  The stream listener's methods are
      * called on the thread that calls asyncOpen and are not called until
@@ -175,10 +193,15 @@ interface nsIChannel : nsIRequest
      */
     void asyncOpen(in nsIStreamListener aListener, in nsISupports aContext);
 
+    /**
+     * Performs content security check and calls asyncOpen().
+     */
+    void asyncOpen2(in nsIStreamListener aListener);
+
     /**************************************************************************
      * Channel specific load flags:
      *
-     * Bits 23-31 are reserved for future use by this interface or one of its
+     * Bits 26-31 are reserved for future use by this interface or one of its
      * derivatives (e.g., see nsICachingChannel).
      */
 
@@ -259,6 +282,13 @@ interface nsIChannel : nsIRequest
     const unsigned long LOAD_EXPLICIT_CREDENTIALS = 1 << 24;
 
     /**
+     * Set to force bypass of any service worker interception of the channel.
+     */
+    const unsigned long LOAD_BYPASS_SERVICE_WORKER = 1 << 25;
+
+    // nsICachingChannel load flags begin at bit 26.
+
+    /**
      * Access to the type implied or stated by the Content-Disposition header
      * if available and if applicable. This allows determining inline versus
      * attachment.
@@ -309,4 +339,15 @@ interface nsIChannel : nsIRequest
      * redirects and the like.
      */
     attribute nsILoadInfo loadInfo;
+
+%{ C++
+  inline already_AddRefed<nsILoadInfo> GetLoadInfo()
+  {
+    nsCOMPtr<nsILoadInfo> result;
+    mozilla::DebugOnly<nsresult> rv = GetLoadInfo(getter_AddRefs(result));
+    MOZ_ASSERT(NS_SUCCEEDED(rv) || !result);
+    return result.forget();
+  }
+%}
+
 };

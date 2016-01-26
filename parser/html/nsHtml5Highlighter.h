@@ -314,11 +314,6 @@ class nsHtml5Highlighter
     nsHtml5UTF16Buffer* mBuffer;
 
     /**
-     * Whether to highlight syntax visibly initially.
-     */
-    bool mSyntaxHighlight;
-
-    /**
      * The outgoing tree op queue.
      */
     nsTArray<nsHtml5TreeOperation> mOpQueue;
@@ -347,7 +342,7 @@ class nsHtml5Highlighter
     /**
      * Memory for element handles.
      */
-    nsAutoArrayPtr<nsIContent*> mHandles;
+    mozilla::UniquePtr<nsIContent*[]> mHandles;
 
     /**
      * Number of handles used in mHandles
@@ -357,7 +352,7 @@ class nsHtml5Highlighter
     /**
      * A holder for old contents of mHandles
      */
-    nsTArray<nsAutoArrayPtr<nsIContent*> > mOldHandles;
+    nsTArray<mozilla::UniquePtr<nsIContent*[]>> mOldHandles;
 
     /**
      * The element stack.

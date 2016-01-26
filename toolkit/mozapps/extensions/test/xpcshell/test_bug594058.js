@@ -12,7 +12,7 @@ Services.prefs.setBoolPref("extensions.showMismatchUI", true);
 
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
-const Ci = Components.interfaces;
+var Ci = Components.interfaces;
 const extDir = gProfD.clone();
 extDir.append("extensions");
 
@@ -20,7 +20,7 @@ var gCachePurged = false;
 
 // Override the window watcher
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, arguments) {
+  openWindow: function(parent, url, name, features, args) {
     do_check_false(gCachePurged);
   },
 

@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://testing-common/MockRegistrar.jsm");
@@ -60,13 +60,13 @@ var PluginHost = {
 // Don't need the full interface, attempts to call other methods will just
 // throw which is just fine
 var WindowWatcher = {
-  openWindow: function(parent, url, name, features, arguments) {
+  openWindow: function(parent, url, name, features, args) {
     // Should be called to list the newly blocklisted items
     do_check_eq(url, URI_EXTENSION_BLOCKLIST_DIALOG);
     // Should only include one item
-    do_check_eq(arguments.wrappedJSObject.list.length, 1);
+    do_check_eq(args.wrappedJSObject.list.length, 1);
     // And that item should be the blocked plugin, not the outdated one
-    var item = arguments.wrappedJSObject.list[0];
+    var item = args.wrappedJSObject.list[0];
     do_check_true(item.item instanceof Ci.nsIPluginTag);
     do_check_neq(item.name, "test_bug514327_outdated");
 

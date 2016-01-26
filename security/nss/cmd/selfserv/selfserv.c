@@ -65,7 +65,7 @@ static const char inheritableSockName[] = { "SELFSERV_LISTEN_SOCKET" };
 #define MAX_BULK_TEST     1048576 /* 1 MB */
 static PRBool testBulk;
 static PRUint32 testBulkSize       = DEFAULT_BULK_TEST;
-static PRUint32 testBulkTotal;
+static PRInt32 testBulkTotal;
 static char* testBulkBuf;
 static PRDescIdentity log_layer_id = PR_INVALID_IO_LAYER;
 static PRFileDesc *loggingFD;
@@ -74,10 +74,10 @@ static PRIOMethods loggingMethods;
 static PRBool logStats;
 static PRBool loggingLayer;
 static int logPeriod = 30;
-static PRUint32 loggerOps;
-static PRUint32 loggerBytes;
-static PRUint32 loggerBytesTCP;
-static PRUint32 bulkSentChunks;
+static PRInt32 loggerOps;
+static PRInt32 loggerBytes;
+static PRInt32 loggerBytesTCP;
+static PRInt32 bulkSentChunks;
 static enum ocspStaplingModeEnum {
     osm_disabled,  /* server doesn't support stapling */
     osm_good,      /* supply a signed good status */
@@ -119,16 +119,16 @@ const int ssl3CipherSuites[] = {
     TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA,	/* l */
     TLS_RSA_EXPORT1024_WITH_RC4_56_SHA,	        /* m */
     TLS_RSA_WITH_RC4_128_SHA,			/* n */
-    -1, /* TLS_DHE_DSS_WITH_RC4_128_SHA, 	 * o */
-    -1, /* TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,	 * p */
-    -1, /* TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA,	 * q */
-    -1, /* TLS_DHE_RSA_WITH_DES_CBC_SHA,	 * r */
-    -1, /* TLS_DHE_DSS_WITH_DES_CBC_SHA,	 * s */
-    -1, /* TLS_DHE_DSS_WITH_AES_128_CBC_SHA,	 * t */
-    -1, /* TLS_DHE_RSA_WITH_AES_128_CBC_SHA,	 * u */
+    TLS_DHE_DSS_WITH_RC4_128_SHA, 	 /* o */
+    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA,	 /* p */
+    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA,	 /* q */
+    TLS_DHE_RSA_WITH_DES_CBC_SHA,	 /* r */
+    TLS_DHE_DSS_WITH_DES_CBC_SHA,	 /* s */
+    TLS_DHE_DSS_WITH_AES_128_CBC_SHA,	 /* t */
+    TLS_DHE_RSA_WITH_AES_128_CBC_SHA,	 /* u */
     TLS_RSA_WITH_AES_128_CBC_SHA,     	    	/* v */
-    -1, /* TLS_DHE_DSS_WITH_AES_256_CBC_SHA,	 * w */
-    -1, /* TLS_DHE_RSA_WITH_AES_256_CBC_SHA,	 * x */
+    TLS_DHE_DSS_WITH_AES_256_CBC_SHA,	 /* w */
+    TLS_DHE_RSA_WITH_AES_256_CBC_SHA,	 /* x */
     TLS_RSA_WITH_AES_256_CBC_SHA,     	    	/* y */
     TLS_RSA_WITH_NULL_SHA,			/* z */
     0
@@ -141,6 +141,9 @@ static PRBool  noDelay;
 static int     requestCert;
 static int	verbose;
 static SECItem	bigBuf;
+static int configureDHE = -1; /* -1: don't configure, 0 disable, >=1 enable*/
+static int configureReuseECDHE = -1; /* -1: don't configure, 0 refresh, >=1 reuse*/
+static int configureWeakDHE = -1; /* -1: don't configure, 0 disable, >=1 enable*/
 
 static PRThread * acceptorThread;
 
@@ -160,11 +163,12 @@ PrintUsageHeader(const char *progName)
 "         [-f password_file] [-L [seconds]] [-M maxProcs] [-P dbprefix]\n"
 "         [-V [min-version]:[max-version]] [-a sni_name]\n"
 "         [ T <good|revoked|unknown|badsig|corrupted|none|ocsp>] [-A ca]\n"
+"         [-C SSLCacheEntries] [-S dsa_nickname]"
 #ifndef NSS_DISABLE_ECC
-"         [-C SSLCacheEntries] [-e ec_nickname]\n"
-#else
-"         [-C SSLCacheEntries]\n"
+                                                " [-e ec_nickname]"
 #endif /* NSS_DISABLE_ECC */
+"\n"
+"         -U [0|1] -H [0|1] -W [0|1]\n"
         ,progName);
 }
 
@@ -216,8 +220,12 @@ PrintParameterUsage()
 "           good, revoked, unknown, failure, badsig, corrupted\n"
 "   ocsp: fetch from external OCSP server using AIA, or none\n"
 "-A <ca> Nickname of a CA used to sign a stapled cert status\n"
+"-U override default ECDHE ephemeral key reuse, 0: refresh, 1: reuse\n"
+"-H override default DHE server support, 0: disable, 1: enable\n"
+"-W override default DHE server weak parameters support, 0: disable, 1: enable\n"
 "-c Restrict ciphers\n"
 "-Y prints cipher values allowed for parameter -c and exits\n"
+"-G enables the extended master secret extension [RFC7627]\n"
     , stderr);
 }
 
@@ -252,7 +260,16 @@ PrintCipherUsage(const char *progName)
 "l    SSL3 RSA EXPORT WITH DES CBC SHA\t(new)\n"
 "m    SSL3 RSA EXPORT WITH RC4 56 SHA\t(new)\n"
 "n    SSL3 RSA WITH RC4 128 SHA\n"
+"o    TLS_DHE_DSS_WITH_RC4_128_SHA\n"
+"p    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA\n"
+"q    TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA\n"
+"r    TLS_DHE_RSA_WITH_DES_CBC_SHA\n"
+"s    TLS_DHE_DSS_WITH_DES_CBC_SHA\n"
+"t    TLS_DHE_DSS_WITH_AES_128_CBC_SHA\n"
+"u    TLS_DHE_RSA_WITH_AES_128_CBC_SHA\n"
 "v    SSL3 RSA WITH AES 128 CBC SHA\n"
+"w    TLS_DHE_DSS_WITH_AES_256_CBC_SHA\n"
+"x    TLS_DHE_RSA_WITH_AES_256_CBC_SHA\n"
 "y    SSL3 RSA WITH AES 256 CBC SHA\n"
 "z    SSL3 RSA WITH NULL SHA\n"
 "\n"
@@ -412,10 +429,11 @@ printSecurityInfo(PRFileDesc *fd)
 	       suite.macBits, suite.macAlgorithmName);
 	    FPRINTF(stderr, 
 	    "selfserv: Server Auth: %d-bit %s, Key Exchange: %d-bit %s\n"
-	    "          Compression: %s\n",
+            "          Compression: %s, Extended Master Secret: %s\n",
 	       channel.authKeyBits, suite.authAlgorithmName,
 	       channel.keaKeyBits,  suite.keaTypeName,
-	       channel.compressionMethodName);
+               channel.compressionMethodName,
+               channel.extendedMasterSecretUsed ? "Yes": "No");
     	}
     }
     if (verbose) {
@@ -486,8 +504,8 @@ mySSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
 
     pwdata = SSL_RevealPinArg(fd);
 
-    for (;current && i < sniNameArrSize;i++) {
-        int j = 0;
+    for (;current && (PRUint32)i < sniNameArrSize;i++) {
+        unsigned int j = 0;
         for (;j < MAX_VIRT_SERVER_NAME_ARRAY_INDEX && nameArr[j];j++) {
             if (!PORT_Strncmp(nameArr[j],
                               (const char *)current[i].data,
@@ -735,8 +753,8 @@ logger(void *arg)
     PRIntervalTime period;
     PRIntervalTime previousTime;
     PRIntervalTime latestTime;
-    PRUint32 previousOps;
-    PRUint32 ops;
+    PRInt32 previousOps;
+    PRInt32 ops;
     PRIntervalTime logPeriodTicks = PR_TicksPerSecond();
     PRFloat64 secondsPerTick = 1.0 / (PRFloat64)logPeriodTicks;
     int iterations = 0;
@@ -755,7 +773,7 @@ logger(void *arg)
          */
         PR_Sleep(logPeriodTicks);
         secondsElapsed++;
-        totalPeriodBytes +=  PR_ATOMIC_SET(&loggerBytes, 0);
+        totalPeriodBytes += PR_ATOMIC_SET(&loggerBytes, 0);
         totalPeriodBytesTCP += PR_ATOMIC_SET(&loggerBytesTCP, 0);
         if (secondsElapsed != logPeriod) {
             continue;
@@ -821,6 +839,8 @@ PRBool testbypass      = PR_FALSE;
 PRBool enableSessionTickets = PR_FALSE;
 PRBool enableCompression    = PR_FALSE;
 PRBool failedToNegotiateName  = PR_FALSE;
+PRBool enableExtendedMasterSecret = PR_FALSE;
+
 static char  *virtServerNameArray[MAX_VIRT_SERVER_NAME_ARRAY_INDEX];
 static int                  virtServerNameIndex = 1;
 
@@ -1113,7 +1133,7 @@ makeSignedOCSPResponse(PLArenaPool *arena, ocspStaplingModeType osm,
     SECItemArray *result = NULL;
     SECItem *ocspResponse = NULL;
     CERTOCSPSingleResponse **singleResponses;
-    CERTOCSPSingleResponse *sr;
+    CERTOCSPSingleResponse *sr = NULL;
     CERTOCSPCertID *cid = NULL;
     CERTCertificate *ca;
     PRTime now = PR_Now();
@@ -1129,7 +1149,7 @@ makeSignedOCSPResponse(PLArenaPool *arena, ocspStaplingModeType osm,
     if (!cid)
 	errExit("cannot created cid");
 
-    nextUpdate = now + 60*60*24 * PR_USEC_PER_SEC; /* plus 1 day */
+    nextUpdate = now + (PRTime)60*60*24 * PR_USEC_PER_SEC; /* plus 1 day */
 
     switch (osm) {
 	case osm_good:
@@ -1144,7 +1164,7 @@ makeSignedOCSPResponse(PLArenaPool *arena, ocspStaplingModeType osm,
 	case osm_revoked:
 	    sr = CERT_CreateOCSPSingleResponseRevoked(arena, cid, now,
 		&nextUpdate,
-		now - 60*60*24 * PR_USEC_PER_SEC, /* minus 1 day */
+		now - (PRTime)60*60*24 * PR_USEC_PER_SEC, /* minus 1 day */
 		NULL);
 	    break;
 	default:
@@ -1905,6 +1925,34 @@ server_main(
         }
     }
 
+    if (configureDHE > -1) {
+	rv = SSL_OptionSet(model_sock, SSL_ENABLE_SERVER_DHE, (configureDHE > 0));
+        if (rv != SECSuccess) {
+            errExit("error configuring server side DHE support");
+        }
+    }
+
+    if (configureReuseECDHE > -1) {
+	rv = SSL_OptionSet(model_sock, SSL_REUSE_SERVER_ECDHE_KEY, (configureReuseECDHE > 0));
+        if (rv != SECSuccess) {
+            errExit("error configuring server side reuse of ECDHE key");
+        }
+    }
+
+    if (configureWeakDHE > -1) {
+	rv = SSL_EnableWeakDHEPrimeGroup(model_sock, (configureWeakDHE > 0));
+        if (rv != SECSuccess) {
+            errExit("error configuring weak DHE prime group");
+        }
+    }
+
+    if  (enableExtendedMasterSecret) {
+        rv = SSL_OptionSet(model_sock, SSL_ENABLE_EXTENDED_MASTER_SECRET, PR_TRUE);
+	if (rv != SECSuccess) {
+	    errExit("error enabling extended master secret ");
+	}
+    }
+
     for (kea = kt_rsa; kea < kt_kea_size; kea++) {
 	if (cert[kea] != NULL) {
 	    secStatus = SSL_ConfigSecureServer(model_sock, 
@@ -2136,6 +2184,7 @@ main(int argc, char **argv)
 #ifndef NSS_DISABLE_ECC
     char *               ecNickName   = NULL;
 #endif
+    char *               dsaNickName  = NULL;
     const char *         fileName    = NULL;
     char *               cipherString= NULL;
     const char *         dir         = ".";
@@ -2180,7 +2229,7 @@ main(int argc, char **argv)
     ** numbers, then capital letters, then lower case, alphabetical. 
     */
     optstate = PL_CreateOptState(argc, argv, 
-        "2:A:BC:DEL:M:NP:RT:V:Ya:bc:d:e:f:g:hi:jk:lmn:op:qrst:uvw:xyz");
+        "2:A:BC:DEGH:L:M:NP:RS:T:U:V:W:Ya:bc:d:e:f:g:hi:jk:lmn:op:qrst:uvw:xyz");
     while ((status = PL_GetNextOpt(optstate)) == PL_OPT_OK) {
 	++optionsFound;
 	switch(optstate->option) {
@@ -2194,6 +2243,9 @@ main(int argc, char **argv)
 
 	case 'D': noDelay = PR_TRUE; break;
 	case 'E': disableStepDown = PR_TRUE; break;
+	case 'H': configureDHE = (PORT_Atoi(optstate->value) != 0); break;
+
+        case 'G': enableExtendedMasterSecret = PR_TRUE; break;
 
 	case 'I': /* reserved for OCSP multi-stapling */ break;
 
@@ -2217,6 +2269,8 @@ main(int argc, char **argv)
 
 	case 'R': disableRollBack = PR_TRUE; break;
 
+	case 'S': dsaNickName = PORT_Strdup(optstate->value); break;
+
 	case 'T':
 	    if (enableOCSPStapling(optstate->value) != SECSuccess) {
 		fprintf(stderr, "Invalid OCSP stapling mode.\n");
@@ -2225,6 +2279,8 @@ main(int argc, char **argv)
 	    }
 	    break;
 
+	case 'U': configureReuseECDHE = (PORT_Atoi(optstate->value) != 0); break;
+
         case 'V': if (SECU_ParseSSLVersionRangeString(optstate->value,
                           enabledVersions, enableSSL2,
                           &enabledVersions, &enableSSL2) != SECSuccess) {
@@ -2232,10 +2288,12 @@ main(int argc, char **argv)
                   }
                   break;
 
+	case 'W': configureWeakDHE = (PORT_Atoi(optstate->value) != 0); break;
+
         case 'Y': PrintCipherUsage(progName); exit(0); break;
         
 	case 'a': if (virtServerNameIndex >= MAX_VIRT_SERVER_NAME_ARRAY_INDEX) {
-                      Usage(progName);
+                      Usage(progName); break;
                   }
                   virtServerNameArray[virtServerNameIndex++] =
                       PORT_Strdup(optstate->value); break;
@@ -2362,6 +2420,7 @@ main(int argc, char **argv)
     }
 
     if ((nickName == NULL)
+        && (dsaNickName == NULL)
  #ifndef NSS_DISABLE_ECC
 						&& (ecNickName == NULL)
  #endif
@@ -2593,6 +2652,33 @@ main(int argc, char **argv)
 	setupCertStatus(certStatusArena, ocspStaplingMode, cert[kt_rsa], kt_rsa,
 			&pwdata);
     }
+    if (dsaNickName) {
+	/* Investigate if ssl_kea_dh should be changed to ssl_auth_dsa.
+	 * See bug 102794.*/
+	cert[ssl_kea_dh] = PK11_FindCertFromNickname(dsaNickName, &pwdata);
+	if (cert[ssl_kea_dh] == NULL) {
+	    fprintf(stderr, "selfserv: Can't find certificate %s\n", dsaNickName);
+	    exit(12);
+	}
+	privKey[ssl_kea_dh] = PK11_FindKeyByAnyCert(cert[ssl_kea_dh], &pwdata);
+	if (privKey[ssl_kea_dh] == NULL) {
+	    fprintf(stderr, "selfserv: Can't find Private Key for cert %s\n",
+	            dsaNickName);
+	    exit(11);
+	}
+	if (testbypass) {
+	    PRBool bypassOK;
+	    if (SSL_CanBypass(cert[ssl_kea_dh], privKey[ssl_kea_dh], protos, cipherlist,
+	                      nciphers, &bypassOK, &pwdata) != SECSuccess) {
+		SECU_PrintError(progName, "Bypass test failed %s\n", nickName);
+		exit(14);
+	    }
+	    fprintf(stderr, "selfserv: %s can%s bypass\n", nickName,
+		    bypassOK ? "" : "not");
+	}
+	setupCertStatus(certStatusArena, ocspStaplingMode, cert[ssl_kea_dh], ssl_kea_dh,
+			&pwdata);
+    }
 #ifndef NSS_DISABLE_ECC
     if (ecNickName) {
 	cert[kt_ecdh] = PK11_FindCertFromNickname(ecNickName, &pwdata);
@@ -2624,6 +2710,13 @@ main(int argc, char **argv)
 
     if (testbypass)
 	goto cleanup;
+
+    if (configureWeakDHE > 0) {
+	fprintf(stderr, "selfserv: Creating dynamic weak DH parameters\n");
+	rv = SSL_EnableWeakDHEPrimeGroup(NULL, PR_TRUE);
+	fprintf(stderr, "selfserv: Done creating dynamic weak DH parameters\n");
+    }
+
 
 /* allocate the array of thread slots, and launch the worker threads. */
     rv = launch_threads(&jobLoop, 0, 0, requestCert, useLocalThreads);

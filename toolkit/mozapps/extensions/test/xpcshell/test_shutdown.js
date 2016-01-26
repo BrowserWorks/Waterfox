@@ -4,7 +4,8 @@
 
 // Verify that API functions fail if the Add-ons Manager isn't initialised.
 
-const IGNORE = ["escapeAddonURI", "shouldAutoUpdate", "getStartupChanges",
+const IGNORE = ["getPreferredIconURL", "escapeAddonURI",
+                "shouldAutoUpdate", "getStartupChanges",
                 "addTypeListener", "removeTypeListener",
                 "addAddonListener", "removeAddonListener",
                 "addInstallListener", "removeInstallListener",
@@ -27,9 +28,25 @@ function test_functions() {
     if (typeof AddonManager[prop] != "function")
       continue;
 
+    let args = [];
+
+    // Getter functions need a callback and in some cases not having one will
+    // throw before checking if the add-ons manager is initialized so pass in
+    // an empty one.
+    if (prop.startsWith("get")) {
+      // For now all getter functions with more than one argument take the
+      // callback in the second argument.
+      if (AddonManager[prop].length > 1) {
+        args.push(undefined, () => {});
+      }
+      else {
+        args.push(() => {});
+      }
+    }
+
     try {
       do_print("AddonManager." + prop);
-      AddonManager[prop]();
+      AddonManager[prop](...args);
       do_throw(prop + " did not throw an exception");
     }
     catch (e) {

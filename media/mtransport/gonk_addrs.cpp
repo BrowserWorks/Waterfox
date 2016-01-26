@@ -12,7 +12,7 @@ extern "C" {
 
 #include <vector>
 #include <string>
-#include "nsINetworkManager.h"
+#include "nsINetworkInterface.h"
 #include "nsINetworkInterfaceListService.h"
 #include "runnable_utils.h"
 #include "nsCOMPtr.h"
@@ -44,7 +44,8 @@ GetInterfaces(std::vector<NetworkInterface>* aInterfaces)
     nsINetworkInterfaceListService::LIST_NOT_INCLUDE_SUPL_INTERFACES |
     nsINetworkInterfaceListService::LIST_NOT_INCLUDE_MMS_INTERFACES |
     nsINetworkInterfaceListService::LIST_NOT_INCLUDE_IMS_INTERFACES |
-    nsINetworkInterfaceListService::LIST_NOT_INCLUDE_DUN_INTERFACES;
+    nsINetworkInterfaceListService::LIST_NOT_INCLUDE_DUN_INTERFACES |
+    nsINetworkInterfaceListService::LIST_NOT_INCLUDE_FOTA_INTERFACES;
   nsCOMPtr<nsINetworkInterfaceList> networkList;
   NS_ENSURE_SUCCESS(listService->GetDataInterfaceList(flags,
                                                       getter_AddRefs(networkList)),
@@ -57,8 +58,8 @@ GetInterfaces(std::vector<NetworkInterface>* aInterfaces)
   aInterfaces->clear();
 
   for (int32_t i = 0; i < listLength; i++) {
-    nsCOMPtr<nsINetworkInterface> iface;
-    if (NS_FAILED(networkList->GetInterface(i, getter_AddRefs(iface)))) {
+    nsCOMPtr<nsINetworkInfo> info;
+    if (NS_FAILED(networkList->GetInterfaceInfo(i, getter_AddRefs(info)))) {
       continue;
     }
 
@@ -70,7 +71,7 @@ GetInterfaces(std::vector<NetworkInterface>* aInterfaces)
     memset(&(interface.addr), 0, sizeof(interface.addr));
     interface.addr.sin_family = AF_INET;
 
-    if (NS_FAILED(iface->GetAddresses(&ips, &prefixs, &count))) {
+    if (NS_FAILED(info->GetAddresses(&ips, &prefixs, &count))) {
       continue;
     }
 
@@ -93,20 +94,20 @@ GetInterfaces(std::vector<NetworkInterface>* aInterfaces)
     }
 
     nsAutoString ifaceName;
-    if (NS_FAILED(iface->GetName(ifaceName))) {
+    if (NS_FAILED(info->GetName(ifaceName))) {
       continue;
     }
     interface.name = NS_ConvertUTF16toUTF8(ifaceName).get();
 
     int32_t type;
-    if (NS_FAILED(iface->GetType(&type))) {
+    if (NS_FAILED(info->GetType(&type))) {
       continue;
     }
     switch (type) {
-      case nsINetworkInterface::NETWORK_TYPE_WIFI:
+      case nsINetworkInfo::NETWORK_TYPE_WIFI:
         interface.type = NR_INTERFACE_TYPE_WIFI;
         break;
-      case nsINetworkInterface::NETWORK_TYPE_MOBILE:
+      case nsINetworkInfo::NETWORK_TYPE_MOBILE:
         interface.type = NR_INTERFACE_TYPE_MOBILE;
         break;
     }
@@ -119,7 +120,7 @@ GetInterfaces(std::vector<NetworkInterface>* aInterfaces)
 
 int
 nr_stun_get_addrs(nr_local_addr aAddrs[], int aMaxAddrs,
-                  int aDropLoopback, int* aCount)
+                  int aDropLoopback, int aDropLinkLocal, int* aCount)
 {
   nsresult rv;
   int r;
@@ -129,7 +130,7 @@ nr_stun_get_addrs(nr_local_addr aAddrs[], int aMaxAddrs,
   nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
   mozilla::SyncRunnable::DispatchToThread(
     mainThread.get(),
-    mozilla::WrapRunnableNMRet(&GetInterfaces, &interfaces, &rv),
+    mozilla::WrapRunnableNMRet(&rv, &GetInterfaces, &interfaces),
     false);
   if (NS_FAILED(rv)) {
     return R_FAILED;
@@ -141,7 +142,6 @@ nr_stun_get_addrs(nr_local_addr aAddrs[], int aMaxAddrs,
   for (size_t i = 0; i < num_interface; ++i) {
     NetworkInterface &interface = interfaces[i];
     if (nr_sockaddr_to_transport_addr((sockaddr*)&(interface.addr),
-                                      sizeof(struct sockaddr_in),
                                       IPPROTO_UDP, 0, &(aAddrs[n].addr))) {
       r_log(NR_LOG_STUN, LOG_WARNING, "Problem transforming address");
       return R_FAILED;
@@ -154,7 +154,7 @@ nr_stun_get_addrs(nr_local_addr aAddrs[], int aMaxAddrs,
   }
 
   *aCount = n;
-  r = nr_stun_remove_duplicate_addrs(aAddrs, aDropLoopback, aCount);
+  r = nr_stun_remove_duplicate_addrs(aAddrs, aDropLoopback, aDropLinkLocal, aCount);
   if (r != 0) {
     return r;
   }

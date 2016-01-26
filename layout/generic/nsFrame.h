@@ -12,7 +12,7 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/Likely.h"
 #include "nsBox.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 
 #include "nsIPresShell.h"
 #include "nsHTMLReflowState.h"
@@ -30,12 +30,12 @@
 #define NS_FRAME_TRACE_CHILD_REFLOW 0x4
 #define NS_FRAME_TRACE_NEW_FRAMES   0x8
 
-#define NS_FRAME_LOG_TEST(_lm,_bit) (int((_lm)->level) & (_bit))
+#define NS_FRAME_LOG_TEST(_lm,_bit) (int(((mozilla::LogModule*)_lm)->Level()) & (_bit))
 
 #ifdef DEBUG
 #define NS_FRAME_LOG(_bit,_args)                                \
   PR_BEGIN_MACRO                                                \
-    if (NS_FRAME_LOG_TEST(nsFrame::GetLogModuleInfo(),_bit)) {  \
+    if (NS_FRAME_LOG_TEST(nsFrame::sFrameLogModule,_bit)) {  \
       PR_LogPrint _args;                                        \
     }                                                           \
   PR_END_MACRO
@@ -52,14 +52,14 @@
 // XXX remove me
 #define NS_FRAME_TRACE_MSG(_bit,_args)                          \
   PR_BEGIN_MACRO                                                \
-    if (NS_FRAME_LOG_TEST(nsFrame::GetLogModuleInfo(),_bit)) {  \
+    if (NS_FRAME_LOG_TEST(nsFrame::sFrameLogModule,_bit)) {  \
       TraceMsg _args;                                           \
     }                                                           \
   PR_END_MACRO
 
 #define NS_FRAME_TRACE(_bit,_args)                              \
   PR_BEGIN_MACRO                                                \
-    if (NS_FRAME_LOG_TEST(nsFrame::GetLogModuleInfo(),_bit)) {  \
+    if (NS_FRAME_LOG_TEST(nsFrame::sFrameLogModule,_bit)) {  \
       TraceMsg _args;                                           \
     }                                                           \
   PR_END_MACRO
@@ -78,11 +78,14 @@
 #define NS_FRAME_TRACE_REFLOW_OUT(_method, _status)
 #endif
 
-// Frame allocation boilerplate macros.  Every subclass of nsFrame
-// must define its own operator new and GetAllocatedSize.  If they do
-// not, the per-frame recycler lists in nsPresArena will not work
-// correctly, with potentially catastrophic consequences (not enough
-// memory is allocated for a frame object).
+// Frame allocation boilerplate macros. Every subclass of nsFrame must
+// either use NS_{DECL,IMPL}_FRAMEARENA_HELPERS pair for allocating
+// memory correctly, or use NS_DECL_ABSTRACT_FRAME to declare a frame
+// class abstract and stop it from being instantiated. If a frame class
+// without its own operator new and GetFrameId gets instantiated, the
+// per-frame recycler lists in nsPresArena will not work correctly,
+// with potentially catastrophic consequences (not enough memory is
+// allocated for a frame object).
 
 #define NS_DECL_FRAMEARENA_HELPERS                                \
   void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE;    \
@@ -93,6 +96,10 @@
   { return aShell->AllocateFrame(nsQueryFrame::class##_id, sz); } \
   nsQueryFrame::FrameIID class::GetFrameId()                      \
   { return nsQueryFrame::class##_id; }
+
+#define NS_DECL_ABSTRACT_FRAME(class)                                   \
+  void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE = delete; \
+  virtual nsQueryFrame::FrameIID GetFrameId() override MOZ_MUST_OVERRIDE = 0;
 
 //----------------------------------------------------------------------
 
@@ -250,8 +257,7 @@ public:
                                  InlineMinISizeData *aData) override;
   virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
                                   InlinePrefISizeData *aData) override;
-  virtual IntrinsicISizeOffsetData
-    IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext) override;
+  virtual IntrinsicISizeOffsetData IntrinsicISizeOffsets() override;
   virtual mozilla::IntrinsicSize GetIntrinsicSize() override;
   virtual nsSize GetIntrinsicRatio() override;
 
@@ -267,7 +273,7 @@ public:
 
   // Compute tight bounds assuming this frame honours its border, background
   // and outline, its children's tight bounds, and nothing else.
-  nsRect ComputeSimpleTightBounds(gfxContext* aContext) const;
+  nsRect ComputeSimpleTightBounds(mozilla::gfx::DrawTarget* aDrawTarget) const;
   
   /**
    * A helper, used by |nsFrame::ComputeSize| (for frames that need to
@@ -340,12 +346,12 @@ public:
                             nsHTMLReflowMetrics&     aDesiredSize,
                             const nsHTMLReflowState& aReflowState,
                             nsReflowStatus&          aStatus,
-                            bool                     aConstrainHeight = true);
+                            bool                     aConstrainBSize = true);
   void FinishReflowWithAbsoluteFrames(nsPresContext*           aPresContext,
                                       nsHTMLReflowMetrics&     aDesiredSize,
                                       const nsHTMLReflowState& aReflowState,
                                       nsReflowStatus&          aStatus,
-                                      bool                     aConstrainHeight = true);
+                                      bool                     aConstrainBSize = true);
 
   /*
    * If this frame is dirty, marks all absolutely-positioned children of this
@@ -388,7 +394,6 @@ public:
   nsresult PeekBackwardAndForward(nsSelectionAmount aAmountBack,
                                   nsSelectionAmount aAmountForward,
                                   int32_t aStartPos,
-                                  nsPresContext* aPresContext,
                                   bool aJumpLines,
                                   uint32_t aSelectFlags);
 
@@ -406,7 +411,7 @@ public:
   virtual nsSize GetPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetMaxSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nscoord GetFlex(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nscoord GetFlex() override;
   virtual nscoord GetBoxAscent(nsBoxLayoutState& aBoxLayoutState) override;
 
   // We compute and store the HTML content's overflow area. So don't
@@ -583,8 +588,10 @@ public:
   static bool ShouldApplyOverflowClipping(const nsIFrame* aFrame,
                                           const nsStyleDisplay* aDisp)
   {
-    // clip overflow:-moz-hidden-unscrollable ...
-    if (MOZ_UNLIKELY(aDisp->mOverflowX == NS_STYLE_OVERFLOW_CLIP)) {
+    // clip overflow:-moz-hidden-unscrollable, except for nsListControlFrame,
+    // which is an nsHTMLScrollFrame.
+    if (MOZ_UNLIKELY(aDisp->mOverflowX == NS_STYLE_OVERFLOW_CLIP &&
+                     aFrame->GetType() != nsGkAtoms::listControlFrame)) {
       return true;
     }
 
@@ -668,6 +675,9 @@ private:
 
   NS_IMETHODIMP RefreshSizeCache(nsBoxLayoutState& aState);
 
+  // Returns true if this frame has any kind of CSS animations.
+  bool HasCSSAnimations();
+
 #ifdef DEBUG_FRAME_DUMP
 public:
   /**
@@ -712,14 +722,7 @@ public:
    */
   static void SetVerifyStyleTreeEnable(bool aEnabled);
 
-  /**
-   * The frame class and related classes share an nspr log module
-   * for logging frame activity.
-   *
-   * Note: the log module is created during library initialization which
-   * means that you cannot perform logging before then.
-   */
-  static PRLogModuleInfo* GetLogModuleInfo();
+  static mozilla::LazyLogModule sFrameLogModule;
 
   // Show frame borders when rendering
   static void ShowFrameBorders(bool aEnable);
@@ -732,12 +735,6 @@ public:
 #endif
 
 public:
-
-  static void PrintDisplayItem(nsDisplayListBuilder* aBuilder,
-                               nsDisplayItem* aItem,
-                               std::stringstream& aStream,
-                               bool aDumpSublist = false,
-                               bool aDumpHtml = false);
 
   static void PrintDisplayList(nsDisplayListBuilder* aBuilder,
                                const nsDisplayList& aList,
@@ -822,8 +819,7 @@ public:
 
   struct DR_init_offsets_cookie {
     DR_init_offsets_cookie(nsIFrame* aFrame, nsCSSOffsetState* aState,
-                           nscoord aHorizontalPercentBasis,
-                           nscoord aVerticalPercentBasis,
+                           const mozilla::LogicalSize& aPercentBasis,
                            const nsMargin* aBorder,
                            const nsMargin* aPadding);
     ~DR_init_offsets_cookie();
@@ -862,8 +858,8 @@ public:
                                  dr_bdr, dr_pad)                           \
   DR_init_constraints_cookie dr_cookie(dr_frame, dr_state, dr_cbw, dr_cbh, \
                                        dr_bdr, dr_pad)
-#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)  \
-  DR_init_offsets_cookie dr_cookie(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)
+#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)  \
+  DR_init_offsets_cookie dr_cookie(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)
 #define DISPLAY_INIT_TYPE(dr_frame, dr_result) \
   DR_init_type_cookie dr_cookie(dr_frame, dr_result)
 
@@ -880,7 +876,7 @@ public:
 #define DISPLAY_INIT_CONSTRAINTS(dr_frame, dr_state, dr_cbw, dr_cbh,       \
                                  dr_bdr, dr_pad)                           \
   PR_BEGIN_MACRO PR_END_MACRO
-#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_hpb, dr_vpb, dr_bdr, dr_pad)  \
+#define DISPLAY_INIT_OFFSETS(dr_frame, dr_state, dr_pb, dr_bdr, dr_pad)  \
   PR_BEGIN_MACRO PR_END_MACRO
 #define DISPLAY_INIT_TYPE(dr_frame, dr_result) PR_BEGIN_MACRO PR_END_MACRO
 

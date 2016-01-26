@@ -5,6 +5,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "SameProcessMessageQueue.h"
+#include "nsThreadUtils.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -34,7 +35,7 @@ SameProcessMessageQueue::Push(Runnable* aRunnable)
 void
 SameProcessMessageQueue::Flush()
 {
-  nsTArray<nsRefPtr<Runnable>> queue;
+  nsTArray<RefPtr<Runnable>> queue;
   mQueue.SwapElements(queue);
   for (size_t i = 0; i < queue.Length(); i++) {
     queue[i]->Run();

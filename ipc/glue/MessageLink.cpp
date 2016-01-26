@@ -14,6 +14,12 @@
 #include "ipc/Nuwa.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/PNuwa.h"
+#include "mozilla/hal_sandbox/PHal.h"
+#if defined(DEBUG) || defined(ENABLE_TESTS)
+#include "jsprf.h"
+extern "C" char* PrintJSStack();
+#endif
 #endif
 
 #include "mozilla/Assertions.h"
@@ -73,6 +79,7 @@ ProcessLink::ProcessLink(MessageChannel *aChan)
   , mExistingListener(nullptr)
 #ifdef MOZ_NUWA_PROCESS
   , mIsToNuwaProcess(false)
+  , mIsBlocked(false)
 #endif
 {
 }
@@ -137,7 +144,7 @@ ProcessLink::Open(mozilla::ipc::Transport* aTransport, MessageLoop *aIOLoop, Sid
         }
 
 #ifdef MOZ_NUWA_PROCESS
-        if (IsNuwaProcess() &&
+        if (IsNuwaProcess() && NS_IsMainThread() &&
             Preferences::GetBool("dom.ipc.processPrelaunch.testMode")) {
             // The pref value is turned on in a deadlock test against the Nuwa
             // process. The sleep here makes it easy to trigger the deadlock
@@ -173,11 +180,15 @@ ProcessLink::SendMessage(Message *msg)
     mChan->mMonitor->AssertCurrentThreadOwns();
 
 #ifdef MOZ_NUWA_PROCESS
+    // Parent to child: check whether we are sending some unexpected message to
+    // the Nuwa process.
     if (mIsToNuwaProcess && mozilla::dom::ContentParent::IsNuwaReady()) {
         switch (msg->type()) {
-        case mozilla::dom::PContent::Msg_NuwaFork__ID:
-        case mozilla::dom::PContent::Reply_AddNewProcess__ID:
+        case mozilla::dom::PNuwa::Msg_Fork__ID:
+        case mozilla::dom::PNuwa::Reply_AddNewProcess__ID:
         case mozilla::dom::PContent::Msg_NotifyPhoneStateChange__ID:
+        case mozilla::dom::PContent::Msg_ActivateA11y__ID:
+        case mozilla::hal_sandbox::PHal::Msg_NotifyNetworkChange__ID:
         case GOODBYE_MESSAGE_TYPE:
             break;
         default:
@@ -190,6 +201,19 @@ ProcessLink::SendMessage(Message *msg)
 #endif
         }
     }
+
+    // Nuwa to parent: check whether we are currently blocked.
+    if (IsNuwaProcess() && mIsBlocked) {
+#if defined(ENABLE_TESTS) || defined(DEBUG)
+        char* jsstack = PrintJSStack();
+        printf_stderr("Fatal error: sending a message to the chrome process"
+                      "with a blocked IPC channel from \n%s",
+                      jsstack ? jsstack : "<no JS stack>");
+        JS_smprintf_free(jsstack);
+        MOZ_CRASH();
+#endif
+    }
+
 #endif
 
     mIOLoop->PostTask(

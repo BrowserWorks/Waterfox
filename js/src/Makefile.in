@@ -12,22 +12,6 @@ ifneq ($(make_min_ver),$(firstword $(sort $(make_min_ver) $(MAKE_VERSION))))
 $(error GNU Make $(make_min_ver) or higher is required)
 endif
 
-TOPLEVEL_BUILD := 1
-
-run_for_side_effects := $(shell echo 'MAKE: $(MAKE)')
-
-ifdef JS_HAS_CTYPES
-ifdef MOZ_NATIVE_FFI
-LOCAL_INCLUDES = $(MOZ_FFI_CFLAGS)
-endif
-
-# Windows needs this to be linked with a static library.
-ifndef MOZ_NATIVE_FFI
-DEFINES += -DFFI_BUILDING
-endif
-
-endif # JS_HAS_CTYPES
-
 DASH_R		= -r
 
 # Define keyword generator before rules.mk, see bug 323979 comment 50
@@ -69,26 +53,6 @@ jsconfig_TARGET := export
 
 include $(topsrcdir)/config/rules.mk
 
-#############################################
-# BEGIN ECMAScript Internationalization API
-#
-
-# ICU headers need to be available whether we build with the complete
-# Internationalization API or not - ICU stubs rely on them.
-
-LOCAL_INCLUDES += $(MOZ_ICU_CFLAGS)
-
-ifdef ENABLE_INTL_API
-ifndef MOZ_NATIVE_ICU
-
-endif
-endif
-
-#
-# END ECMAScript Internationalization API
-#############################################
-
-
 # check_vanilla_allocations.py is tailored to Linux, so only run it there.
 # That should be enough to catch any problems.
 check-vanilla-allocations:
@@ -119,24 +83,30 @@ JITTEST_VALGRIND_FLAG = --valgrind
 endif
 endif
 
-ifdef MOZ_ASAN
 ifneq ($(LLVM_SYMBOLIZER),)
-# Use the LLVM symbolizer when running jit-tests under ASan, if available
-JITTEST_ASAN_ENV=ASAN_SYMBOLIZER_PATH='$(LLVM_SYMBOLIZER)'
+# Use the LLVM symbolizer when running jit-tests under ASan and TSan, if available
+ifdef MOZ_ASAN
+JITTEST_SANITIZER_ENV=ASAN_SYMBOLIZER_PATH='$(LLVM_SYMBOLIZER)'
+endif
+ifdef MOZ_TSAN
+JITTEST_SANITIZER_ENV=TSAN_OPTIONS='external_symbolizer_path=$(LLVM_SYMBOLIZER)'
 endif
 endif
 
 check-style::
 	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_spidermonkey_style.py);
 
+check-masm::
+	(cd $(srcdir) && $(PYTHON) $(topsrcdir)/config/check_macroassembler_style.py);
+
 check-jit-test::
-	$(JITTEST_ASAN_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
+	$(JITTEST_SANITIZER_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
 	        --no-slow --no-progress --format=automation --jitflags=all \
 			$(JITTEST_VALGRIND_FLAG) \
 			$(JITTEST_EXTRA_ARGS) \
-	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
+	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX) $(JITTEST_TEST_ARGS)
 
-check:: check-style
+check:: check-style check-masm
 
 check-jstests:
 	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
@@ -294,50 +264,6 @@ $(CURDIR)/javascript-trace.h: $(srcdir)/devtools/javascript-trace.d
 # we have to list them explicitly.
 $(addsuffix .$(OBJ_SUFFIX),Probes jsinterp jsobj): $(CURDIR)/javascript-trace.h
 endif
-
-# Prepare self-hosted JS code for embedding
-export:: selfhosting
-selfhosting:: selfhosted.out.h
-
-selfhosting_srcs := \
-  $(srcdir)/builtin/Utilities.js \
-  $(srcdir)/builtin/Array.js \
-  $(srcdir)/builtin/Date.js \
-  $(srcdir)/builtin/Error.js \
-  $(srcdir)/builtin/Generator.js \
-  $(srcdir)/builtin/Intl.js \
-  $(srcdir)/builtin/IntlData.js \
-  $(srcdir)/builtin/Iterator.js \
-  $(srcdir)/builtin/Map.js \
-  $(srcdir)/builtin/Number.js \
-  $(srcdir)/builtin/Object.js \
-  $(srcdir)/builtin/RegExp.js \
-  $(srcdir)/builtin/String.js \
-  $(srcdir)/builtin/Set.js \
-  $(srcdir)/builtin/TypedArray.js \
-  $(srcdir)/builtin/TypedObject.js \
-  $(srcdir)/builtin/WeakSet.js \
-  $(NULL)
-
-selfhosted_out_h_deps := \
-  $(selfhosting_srcs) \
-  $(srcdir)/js.msg \
-  $(srcdir)/builtin/embedjs.py \
-  $(srcdir)/builtin/TypedObjectConstants.h \
-  $(srcdir)/builtin/SelfHostingDefines.h \
-  $(NULL)
-
-SELFHOSTED_DEFINES += $(DEFINES) $(ACDEFINES)
-ifdef MOZ_DEBUG
-SELFHOSTED_DEFINES += $(MOZ_DEBUG_ENABLE_DEFS)
-else
-SELFHOSTED_DEFINES += $(MOZ_DEBUG_DISABLE_DEFS)
-endif
-
-selfhosted.out.h: $(selfhosted_out_h_deps)
-	$(PYTHON) $(srcdir)/builtin/embedjs.py $(SELFHOSTED_DEFINES) \
-	  -c '$(CCC)' -p '$(PREPROCESS_OPTION)' -m $(srcdir)/js.msg \
-	  -o $@ $(selfhosting_srcs)
 
 ###############################################
 # Generating source package tarballs

@@ -9,7 +9,7 @@
 interface nsIDOMDOMRequest;
 interface nsIFrameLoader;
 
-[scriptable, function, uuid(c0c2dd9b-41ef-42dd-a4c1-e456619c1941)]
+[scriptable, function, uuid(00d0e19d-bd67-491f-8e85-b9905224d3bb)]
 interface nsIBrowserElementNextPaintListener : nsISupports
 {
   void recvNextPaint();
@@ -26,9 +26,15 @@ interface nsIBrowserElementNextPaintListener : nsISupports
  * Interface to the BrowserElementParent implementation. All methods
  * but setFrameLoader throw when the remote process is dead.
  */
-[scriptable, uuid(3811446f-90bb-42c1-b2b6-aae3603b61e1)]
+[scriptable, uuid(57758c10-6036-11e5-a837-0800200c9a66)]
 interface nsIBrowserElementAPI : nsISupports
 {
+  const long FIND_CASE_SENSITIVE = 0;
+  const long FIND_CASE_INSENSITIVE = 1;
+
+  const long FIND_FORWARD = 0;
+  const long FIND_BACKWARD = 1;
+
   void setFrameLoader(in nsIFrameLoader frameLoader);
 
   void setVisible(in boolean visible);
@@ -67,10 +73,53 @@ interface nsIBrowserElementAPI : nsISupports
   nsIDOMDOMRequest getCanGoForward();
   nsIDOMDOMRequest getContentDimensions();
 
+  void findAll(in DOMString searchString, in long caseSensitivity);
+  void findNext(in long direction);
+  void clearMatch();
+
+  void mute();
+  void unmute();
+  nsIDOMDOMRequest getMuted();
+
+  void setVolume(in float volume);
+  nsIDOMDOMRequest getVolume();
+
   void addNextPaintListener(in nsIBrowserElementNextPaintListener listener);
   void removeNextPaintListener(in nsIBrowserElementNextPaintListener listener);
 
   nsIDOMDOMRequest setInputMethodActive(in boolean isActive);
 
+  nsIDOMDOMRequest getAudioChannelVolume(in uint32_t audioChannel);
+  nsIDOMDOMRequest setAudioChannelVolume(in uint32_t audioChannel, in float volume);
+
+  nsIDOMDOMRequest getAudioChannelMuted(in uint32_t audioChannel);
+  nsIDOMDOMRequest setAudioChannelMuted(in uint32_t audioChannel, in bool muted);
+
+  nsIDOMDOMRequest isAudioChannelActive(in uint32_t audioChannel);
+
+  nsIDOMDOMRequest notifyChannel(in DOMString event,
+                                 in DOMString manifest,
+                                 in uint32_t audioChannel);
+
   void setNFCFocus(in boolean isFocus);
+
+  nsIDOMDOMRequest executeScript(in DOMString script, in jsval options);
+
+  /**
+   * Returns an object that represents a Web Manifest:
+   * http://w3c.github.io/manifest/
+   */
+  nsIDOMDOMRequest getWebManifest();
+
+  /**
+   * Returns a JSON string representing Microdata objects on the page.
+   * Format is described at:
+   *   https://html.spec.whatwg.org/multipage/microdata.html#json
+   *
+   * Also contains hCard and hCalendar objects after converting them
+   * to equivalent Microdata objects described at:
+   *   https://html.spec.whatwg.org/multipage/microdata.html#vcard
+   *   https://html.spec.whatwg.org/multipage/microdata.html#vevent
+   */
+  nsIDOMDOMRequest getStructuredData();
 };

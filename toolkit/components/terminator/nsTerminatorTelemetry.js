@@ -31,7 +31,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
 
 function nsTerminatorTelemetry() {}
 
-let HISTOGRAMS = {
+var HISTOGRAMS = {
   "quit-application": "SHUTDOWN_PHASE_DURATION_TICKS_QUIT_APPLICATION",
   "profile-change-teardown": "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_CHANGE_TEARDOWN",
   "profile-before-change":  "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_BEFORE_CHANGE",
@@ -64,7 +64,10 @@ nsTerminatorTelemetry.prototype = {
       let raw;
       try {
         raw = yield OS.File.read(PATH, { encoding: "utf-8" });
-      } catch (ex if ex.becauseNoSuchFile) {
+      } catch (ex) {
+        if (!ex.becauseNoSuchFile) {
+          throw ex;
+        }
         return;
       }
       // Let other errors be reported by Promise's error-reporting.

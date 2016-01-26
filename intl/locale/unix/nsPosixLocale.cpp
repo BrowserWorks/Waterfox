@@ -6,7 +6,7 @@
 #include "nscore.h"
 #include "nsString.h"
 #include "nsPosixLocale.h"
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "plstr.h"
 #include "nsReadableUtils.h"
 
@@ -31,18 +31,18 @@ nsPosixLocale::GetPlatformLocale(const nsAString& locale, nsACString& posixLocal
 
     if (*country_code) {
       if (*extra) {
-        PR_snprintf(posix_locale,sizeof(posix_locale),"%s_%s.%s",lang_code,country_code,extra);
+        snprintf_literal(posix_locale,"%s_%s.%s",lang_code,country_code,extra);
       }
       else {
-        PR_snprintf(posix_locale,sizeof(posix_locale),"%s_%s",lang_code,country_code);
+        snprintf_literal(posix_locale,"%s_%s",lang_code,country_code);
       }
     }
     else {
       if (*extra) {
-        PR_snprintf(posix_locale,sizeof(posix_locale),"%s.%s",lang_code,extra);
+        snprintf_literal(posix_locale,"%s.%s",lang_code,extra);
       }
       else {
-        PR_snprintf(posix_locale,sizeof(posix_locale),"%s",lang_code);
+        snprintf_literal(posix_locale,"%s",lang_code);
       }
     }
 
@@ -66,6 +66,10 @@ nsPosixLocale::GetXPLocale(const char* posixLocale, nsAString& locale)
       locale.AssignLiteral("en-US");
       return NS_OK;
     }
+    if (strcmp(posixLocale,"C.UTF-8")==0) {
+      locale.AssignLiteral("en-US.UTF-8");
+      return NS_OK;
+    }
     if (!ParseLocaleString(posixLocale,lang_code,country_code,extra,'_')) {
 //      * locale = "x-user-defined";
       // use posix if parse failed
@@ -80,10 +84,10 @@ nsPosixLocale::GetXPLocale(const char* posixLocale, nsAString& locale)
     }
 
     if (*country_code) {
-      PR_snprintf(posix_locale,sizeof(posix_locale),"%s-%s",lang_code,country_code);
+      snprintf_literal(posix_locale,"%s-%s",lang_code,country_code);
     } 
     else {
-      PR_snprintf(posix_locale,sizeof(posix_locale),"%s",lang_code);
+      snprintf_literal(posix_locale,"%s",lang_code);
     }
 
     CopyASCIItoUTF16(nsDependentCString(posix_locale), locale);

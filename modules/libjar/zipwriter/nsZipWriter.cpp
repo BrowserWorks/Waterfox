@@ -13,16 +13,21 @@
 #include "nsIAsyncStreamCopier.h"
 #include "nsIStreamListener.h"
 #include "nsIInputStreamPump.h"
+#include "nsILoadInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsMemory.h"
 #include "nsError.h"
 #include "nsStreamUtils.h"
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
+#include "nsIChannel.h"
+#include "nsIFile.h"
 #include "prio.h"
 
 #define ZIP_EOCDR_HEADER_SIZE 22
 #define ZIP_EOCDR_HEADER_SIGNATURE 0x06054b50
+
+using namespace mozilla;
 
 /**
  * nsZipWriter is used to create and add to zip files.
@@ -47,9 +52,10 @@ NS_IMPL_ISUPPORTS(nsZipWriter, nsIZipWriter,
                   nsIRequestObserver)
 
 nsZipWriter::nsZipWriter()
-{
-    mInQueue = false;
-}
+  : mCDSOffset(0)
+  , mCDSDirty(false)
+  , mInQueue(false)
+{}
 
 nsZipWriter::~nsZipWriter()
 {
@@ -57,7 +63,6 @@ nsZipWriter::~nsZipWriter()
         Close();
 }
 
-/* attribute AString comment; */
 NS_IMETHODIMP nsZipWriter::GetComment(nsACString & aComment)
 {
     if (!mStream)
@@ -77,14 +82,12 @@ NS_IMETHODIMP nsZipWriter::SetComment(const nsACString & aComment)
     return NS_OK;
 }
 
-/* readonly attribute boolean inQueue; */
 NS_IMETHODIMP nsZipWriter::GetInQueue(bool *aInQueue)
 {
     *aInQueue = mInQueue;
     return NS_OK;
 }
 
-/* readonly attribute nsIFile file; */
 NS_IMETHODIMP nsZipWriter::GetFile(nsIFile **aFile)
 {
     if (!mFile)
@@ -164,7 +167,7 @@ nsresult nsZipWriter::ReadFile(nsIFile *aFile)
                         inputStream->Close();
                         return NS_ERROR_FILE_CORRUPTED;
                     }
-                    nsAutoArrayPtr<char> field(new char[commentlen]);
+                    auto field = MakeUnique<char[]>(commentlen);
                     NS_ENSURE_TRUE(field, NS_ERROR_OUT_OF_MEMORY);
                     rv = seekable->Seek(nsISeekableStream::NS_SEEK_SET,
                                         seek + pos);
@@ -225,7 +228,6 @@ nsresult nsZipWriter::ReadFile(nsIFile *aFile)
     return NS_ERROR_UNEXPECTED;
 }
 
-/* void open (in nsIFile aFile, in int32_t aIoFlags); */
 NS_IMETHODIMP nsZipWriter::Open(nsIFile *aFile, int32_t aIoFlags)
 {
     if (mStream)
@@ -284,7 +286,6 @@ NS_IMETHODIMP nsZipWriter::Open(nsIFile *aFile, int32_t aIoFlags)
     return NS_OK;
 }
 
-/* nsIZipEntry getEntry (in AString aZipEntry); */
 NS_IMETHODIMP nsZipWriter::GetEntry(const nsACString & aZipEntry,
                                     nsIZipEntry **_retval)
 {
@@ -297,7 +298,6 @@ NS_IMETHODIMP nsZipWriter::GetEntry(const nsACString & aZipEntry,
     return NS_OK;
 }
 
-/* boolean hasEntry (in AString aZipEntry); */
 NS_IMETHODIMP nsZipWriter::HasEntry(const nsACString & aZipEntry,
                                     bool *_retval)
 {
@@ -306,8 +306,6 @@ NS_IMETHODIMP nsZipWriter::HasEntry(const nsACString & aZipEntry,
     return NS_OK;
 }
 
-/* void addEntryDirectory (in AUTF8String aZipEntry, in PRTime aModTime,
- *                         in boolean aQueue); */
 NS_IMETHODIMP nsZipWriter::AddEntryDirectory(const nsACString & aZipEntry,
                                              PRTime aModTime, bool aQueue)
 {
@@ -330,8 +328,6 @@ NS_IMETHODIMP nsZipWriter::AddEntryDirectory(const nsACString & aZipEntry,
     return InternalAddEntryDirectory(aZipEntry, aModTime, PERMISSIONS_DIR);
 }
 
-/* void addEntryFile (in AUTF8String aZipEntry, in int32_t aCompression,
- *                    in nsIFile aFile, in boolean aQueue); */
 NS_IMETHODIMP nsZipWriter::AddEntryFile(const nsACString & aZipEntry,
                                         int32_t aCompression, nsIFile *aFile,
                                         bool aQueue)
@@ -393,9 +389,6 @@ NS_IMETHODIMP nsZipWriter::AddEntryFile(const nsACString & aZipEntry,
     return inputStream->Close();
 }
 
-/* void addEntryChannel (in AUTF8String aZipEntry, in PRTime aModTime,
- *                       in int32_t aCompression, in nsIChannel aChannel,
- *                       in boolean aQueue); */
 NS_IMETHODIMP nsZipWriter::AddEntryChannel(const nsACString & aZipEntry,
                                            PRTime aModTime,
                                            int32_t aCompression,
@@ -425,7 +418,14 @@ NS_IMETHODIMP nsZipWriter::AddEntryChannel(const nsACString & aZipEntry,
         return NS_ERROR_FILE_ALREADY_EXISTS;
 
     nsCOMPtr<nsIInputStream> inputStream;
-    nsresult rv = aChannel->Open(getter_AddRefs(inputStream));
+    nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+    nsresult rv;
+    if (loadInfo && loadInfo->GetSecurityMode()) {
+        rv = aChannel->Open2(getter_AddRefs(inputStream));
+    }
+    else {
+        rv = aChannel->Open(getter_AddRefs(inputStream));
+    }
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = AddEntryStream(aZipEntry, aModTime, aCompression, inputStream,
@@ -435,9 +435,6 @@ NS_IMETHODIMP nsZipWriter::AddEntryChannel(const nsACString & aZipEntry,
     return inputStream->Close();
 }
 
-/* void addEntryStream (in AUTF8String aZipEntry, in PRTime aModTime,
- *                      in int32_t aCompression, in nsIInputStream aStream,
- *                      in boolean aQueue); */
 NS_IMETHODIMP nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
                                           PRTime aModTime,
                                           int32_t aCompression,
@@ -448,9 +445,6 @@ NS_IMETHODIMP nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
                           PERMISSIONS_FILE);
 }
 
-/* void addEntryStream (in AUTF8String aZipEntry, in PRTime aModTime,
- *                      in int32_t aCompression, in nsIInputStream aStream,
- *                      in boolean aQueue, in unsigned long aPermissions); */
 nsresult nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
                                      PRTime aModTime,
                                      int32_t aCompression,
@@ -480,7 +474,7 @@ nsresult nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
     if (mEntryHash.Get(aZipEntry, nullptr))
         return NS_ERROR_FILE_ALREADY_EXISTS;
 
-    nsRefPtr<nsZipHeader> header = new nsZipHeader();
+    RefPtr<nsZipHeader> header = new nsZipHeader();
     NS_ENSURE_TRUE(header, NS_ERROR_OUT_OF_MEMORY);
     header->Init(aZipEntry, aModTime, ZIP_ATTRS(aPermissions, ZIP_ATTRS_FILE),
                  mCDSOffset);
@@ -490,7 +484,7 @@ nsresult nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
         return rv;
     }
 
-    nsRefPtr<nsZipDataStream> stream = new nsZipDataStream();
+    RefPtr<nsZipDataStream> stream = new nsZipDataStream();
     if (!stream) {
         SeekCDS();
         return NS_ERROR_OUT_OF_MEMORY;
@@ -507,7 +501,6 @@ nsresult nsZipWriter::AddEntryStream(const nsACString & aZipEntry,
     return rv;
 }
 
-/* void removeEntry (in AUTF8String aZipEntry, in boolean aQueue); */
 NS_IMETHODIMP nsZipWriter::RemoveEntry(const nsACString & aZipEntry,
                                        bool aQueue)
 {
@@ -602,8 +595,6 @@ NS_IMETHODIMP nsZipWriter::RemoveEntry(const nsACString & aZipEntry,
     return NS_ERROR_FILE_NOT_FOUND;
 }
 
-/* void processQueue (in nsIRequestObserver aObserver,
- *                    in nsISupports aContext); */
 NS_IMETHODIMP nsZipWriter::ProcessQueue(nsIRequestObserver *aObserver,
                                         nsISupports *aContext)
 {
@@ -624,7 +615,6 @@ NS_IMETHODIMP nsZipWriter::ProcessQueue(nsIRequestObserver *aObserver,
     return NS_OK;
 }
 
-/* void close (); */
 NS_IMETHODIMP nsZipWriter::Close()
 {
     if (!mStream)
@@ -702,15 +692,12 @@ NS_IMETHODIMP nsZipWriter::Close()
 }
 
 // Our nsIRequestObserver monitors removal operations performed on the queue
-/* void onStartRequest (in nsIRequest aRequest, in nsISupports aContext); */
 NS_IMETHODIMP nsZipWriter::OnStartRequest(nsIRequest *aRequest,
                                           nsISupports *aContext)
 {
     return NS_OK;
 }
 
-/* void onStopRequest (in nsIRequest aRequest, in nsISupports aContext,
- *                                             in nsresult aStatusCode); */
 NS_IMETHODIMP nsZipWriter::OnStopRequest(nsIRequest *aRequest,
                                          nsISupports *aContext,
                                          nsresult aStatusCode)
@@ -863,7 +850,7 @@ nsresult nsZipWriter::InternalAddEntryDirectory(const nsACString & aZipEntry,
                                                 PRTime aModTime,
                                                 uint32_t aPermissions)
 {
-    nsRefPtr<nsZipHeader> header = new nsZipHeader();
+    RefPtr<nsZipHeader> header = new nsZipHeader();
     NS_ENSURE_TRUE(header, NS_ERROR_OUT_OF_MEMORY);
 
     uint32_t zipAttributes = ZIP_ATTRS(aPermissions, ZIP_ATTRS_DIRECTORY);
@@ -991,7 +978,7 @@ inline nsresult nsZipWriter::BeginProcessingAddition(nsZipQueueItem* aItem,
     uint32_t zipAttributes = ZIP_ATTRS(aItem->mPermissions, ZIP_ATTRS_FILE);
 
     if (aItem->mStream || aItem->mChannel) {
-        nsRefPtr<nsZipHeader> header = new nsZipHeader();
+        RefPtr<nsZipHeader> header = new nsZipHeader();
         NS_ENSURE_TRUE(header, NS_ERROR_OUT_OF_MEMORY);
 
         header->Init(aItem->mZipEntry, aItem->mModTime, zipAttributes,
@@ -999,7 +986,7 @@ inline nsresult nsZipWriter::BeginProcessingAddition(nsZipQueueItem* aItem,
         nsresult rv = header->WriteFileHeader(mStream);
         NS_ENSURE_SUCCESS(rv, rv);
 
-        nsRefPtr<nsZipDataStream> stream = new nsZipDataStream();
+        RefPtr<nsZipDataStream> stream = new nsZipDataStream();
         NS_ENSURE_TRUE(stream, NS_ERROR_OUT_OF_MEMORY);
         rv = stream->Init(this, mStream, header, aItem->mCompression);
         NS_ENSURE_SUCCESS(rv, rv);
@@ -1014,7 +1001,13 @@ inline nsresult nsZipWriter::BeginProcessingAddition(nsZipQueueItem* aItem,
             NS_ENSURE_SUCCESS(rv, rv);
         }
         else {
-            rv = aItem->mChannel->AsyncOpen(stream, nullptr);
+            nsCOMPtr<nsILoadInfo> loadInfo = aItem->mChannel->GetLoadInfo();
+            if (loadInfo && loadInfo->GetSecurityMode()) {
+                rv = aItem->mChannel->AsyncOpen2(stream);
+            }
+            else {
+                rv = aItem->mChannel->AsyncOpen(stream, nullptr);
+            }
             NS_ENSURE_SUCCESS(rv, rv);
         }
 

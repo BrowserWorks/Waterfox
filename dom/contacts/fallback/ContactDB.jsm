@@ -124,14 +124,10 @@ ContactDB.prototype = {
         }
       }
 
-      let chan = jsm.NetUtil.newChannel2(contactsFile,
-                                         null,
-                                         null,
-                                         null,      // aLoadingNode
-                                         Services.scriptSecurityManager.getSystemPrincipal(),
-                                         null,      // aTriggeringPrincipal
-                                         Ci.nsILoadInfo.SEC_NORMAL,
-                                         Ci.nsIContentPolicy.TYPE_OTHER);
+      let chan = jsm.NetUtil.newChannel({
+        uri: NetUtil.newURI(contactsFile),
+        loadUsingSystemPrincipal: true});
+
       let stream = chan.open();
       // Obtain a converter to read from a UTF-8 encoded input stream.
       let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
@@ -1043,7 +1039,7 @@ ContactDB.prototype = {
           contactsArray.push(aContacts[i]);
         }
 
-        let contactIdsArray = contactsArray.map(function(el) el.id);
+        let contactIdsArray = contactsArray.map(el => el.id);
 
         // save contact ids in cache
         this.newTxn("readwrite", SAVED_GETALL_STORE_NAME, function(txn, store) {

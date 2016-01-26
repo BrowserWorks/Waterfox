@@ -1,3 +1,7 @@
+/*
+ * Define simple versions of assertion macros that won't recurse in case
+ * of assertion failures in malloc_*printf().
+ */
 #define	assert(e) do {							\
 	if (config_debug && !(e)) {					\
 		malloc_write("<jemalloc>: Failed assertion\n");		\
@@ -81,10 +85,10 @@ buferror(int err, char *buf, size_t buflen)
 {
 
 #ifdef _WIN32
-	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0,
+	FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
 	    (LPSTR)buf, buflen, NULL);
 	return (0);
-#elif defined(_GNU_SOURCE)
+#elif defined(__GLIBC__) && defined(_GNU_SOURCE)
 	char *b = strerror_r(err, buf, buflen);
 	if (b != buf) {
 		strncpy(buf, b, buflen);
@@ -586,7 +590,7 @@ malloc_vsnprintf(char *str, size_t size, const char *format, va_list ap)
 	return (ret);
 }
 
-JEMALLOC_ATTR(format(printf, 3, 4))
+JEMALLOC_FORMAT_PRINTF(3, 4)
 int
 malloc_snprintf(char *str, size_t size, const char *format, ...)
 {
@@ -625,7 +629,7 @@ malloc_vcprintf(void (*write_cb)(void *, const char *), void *cbopaque,
  * Print to a callback function in such a way as to (hopefully) avoid memory
  * allocation.
  */
-JEMALLOC_ATTR(format(printf, 3, 4))
+JEMALLOC_FORMAT_PRINTF(3, 4)
 void
 malloc_cprintf(void (*write_cb)(void *, const char *), void *cbopaque,
     const char *format, ...)
@@ -638,7 +642,7 @@ malloc_cprintf(void (*write_cb)(void *, const char *), void *cbopaque,
 }
 
 /* Print to stderr in such a way as to avoid memory allocation. */
-JEMALLOC_ATTR(format(printf, 1, 2))
+JEMALLOC_FORMAT_PRINTF(1, 2)
 void
 malloc_printf(const char *format, ...)
 {
@@ -648,3 +652,12 @@ malloc_printf(const char *format, ...)
 	malloc_vcprintf(NULL, NULL, format, ap);
 	va_end(ap);
 }
+
+/*
+ * Restore normal assertion macros, in order to make it possible to compile all
+ * C files as a single concatenation.
+ */
+#undef assert
+#undef not_reached
+#undef not_implemented
+#include "jemalloc/internal/assert.h"

@@ -9,7 +9,7 @@
   <script type="application/javascript"
           src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js" />
   <script type="application/javascript"
-          src="utils.js" />
+          src="plugin-utils.js" />
   <script type="application/javascript"
           src="http://mochi.test:8888/chrome/dom/plugins/test/mochitest/hang_test.js" />
   <script type="application/javascript"
@@ -96,11 +96,6 @@ function finishTest() {
 }
 
 function runTests() {
-  if (!SimpleTest.testPluginIsOOP()) {
-    ok(true, "Skipping this test when test plugin is not OOP.");
-    SimpleTest.finish();
-  }
-
   resetVars();
 
   hanguiOperation("Prime ChromeWorker", 0, false, false, HANGUIOP_NOTHING, 0,

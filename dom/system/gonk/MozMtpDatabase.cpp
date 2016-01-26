@@ -22,6 +22,8 @@
 
 #include <dirent.h>
 #include <libgen.h>
+#include <utime.h>
+#include <sys/stat.h>
 
 using namespace android;
 using namespace mozilla;
@@ -31,6 +33,8 @@ MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCloseDir, PRDir, PR_CloseDir)
 }
 
 BEGIN_MTP_NAMESPACE
+
+static const char* kMtpWatcherNotify = "mtp-watcher-notify";
 
 #if 0
 // Some debug code for figuring out deadlocks, if you happen to run into
@@ -63,6 +67,7 @@ ObjectPropertyAsStr(MtpObjectProperty aProperty)
     case MTP_PROPERTY_PROTECTION_STATUS:  return "MTP_PROPERTY_PROTECTION_STATUS";
     case MTP_PROPERTY_OBJECT_SIZE:        return "MTP_PROPERTY_OBJECT_SIZE";
     case MTP_PROPERTY_OBJECT_FILE_NAME:   return "MTP_PROPERTY_OBJECT_FILE_NAME";
+    case MTP_PROPERTY_DATE_CREATED:       return "MTP_PROPERTY_DATE_CREATED";
     case MTP_PROPERTY_DATE_MODIFIED:      return "MTP_PROPERTY_DATE_MODIFIED";
     case MTP_PROPERTY_PARENT_OBJECT:      return "MTP_PROPERTY_PARENT_OBJECT";
     case MTP_PROPERTY_PERSISTENT_UID:     return "MTP_PROPERTY_PERSISTENT_UID";
@@ -74,6 +79,16 @@ ObjectPropertyAsStr(MtpObjectProperty aProperty)
     case MTP_PROPERTY_DISPLAY_NAME:       return "MTP_PROPERTY_DISPLAY_NAME";
   }
   return "MTP_PROPERTY_???";
+}
+
+static char*
+FormatDate(time_t aTime, char *aDateStr, size_t aDateStrSize)
+{
+  struct tm tm;
+  localtime_r(&aTime, &tm);
+  MTP_LOG("(%ld) tm_zone = %s off = %ld", aTime, tm.tm_zone, tm.tm_gmtoff);
+  strftime(aDateStr, aDateStrSize, "%Y%m%dT%H%M%S", &tm);
+  return aDateStr;
 }
 
 MozMtpDatabase::MozMtpDatabase()
@@ -154,7 +169,7 @@ MozMtpDatabase::FindEntryByPath(const nsACString& aPath)
   return 0;
 }
 
-TemporaryRef<MozMtpDatabase::DbEntry>
+already_AddRefed<MozMtpDatabase::DbEntry>
 MozMtpDatabase::GetEntry(MtpObjectHandle aHandle)
 {
   MutexAutoLock lock(mMutex);
@@ -164,7 +179,7 @@ MozMtpDatabase::GetEntry(MtpObjectHandle aHandle)
   if (aHandle > 0 && aHandle < mDb.Length()) {
     entry = mDb[aHandle];
   }
-  return entry;
+  return entry.forget();
 }
 
 void
@@ -222,18 +237,30 @@ MozMtpDatabase::UpdateEntry(MtpObjectHandle aHandle, DeviceStorageFile* aFile)
   int64_t fileSize = 0;
   aFile->mFile->GetFileSize(&fileSize);
   entry->mObjectSize = fileSize;
-  aFile->mFile->GetLastModifiedTime(&entry->mDateCreated);
-  entry->mDateModified = entry->mDateCreated;
-  MTP_DBG("UpdateEntry (0x%08x file %s)", entry->mHandle, entry->mPath.get());
+
+  PRTime dateModifiedMsecs;
+  // GetLastModifiedTime returns msecs
+  aFile->mFile->GetLastModifiedTime(&dateModifiedMsecs);
+  entry->mDateModified = dateModifiedMsecs / PR_MSEC_PER_SEC;
+  entry->mDateCreated = entry->mDateModified;
+  entry->mDateAdded = entry->mDateModified;
+
+  #if USE_DEBUG
+  char dateStr[20];
+  MTP_DBG("UpdateEntry (0x%08x file %s) modified (%ld) %s",
+          entry->mHandle, entry->mPath.get(),
+          entry->mDateModified,
+          FormatDate(entry->mDateModified, dateStr, sizeof(dateStr)));
+  #endif
 }
 
 
-class FileWatcherNotifyRunnable final : public nsRunnable
+class MtpWatcherNotifyRunnable final : public nsRunnable
 {
 public:
-  FileWatcherNotifyRunnable(nsACString& aStorageName,
-                            nsACString& aPath,
-                            const char* aEventType)
+  MtpWatcherNotifyRunnable(nsACString& aStorageName,
+                           nsACString& aPath,
+                           const char* aEventType)
     : mStorageName(aStorageName),
       mPath(aPath),
       mEventType(aEventType)
@@ -246,16 +273,16 @@ public:
     NS_ConvertUTF8toUTF16 storageName(mStorageName);
     NS_ConvertUTF8toUTF16 path(mPath);
 
-    nsRefPtr<DeviceStorageFile> dsf(
+    RefPtr<DeviceStorageFile> dsf(
       new DeviceStorageFile(NS_LITERAL_STRING(DEVICESTORAGE_SDCARD),
                             storageName, path));
     NS_ConvertUTF8toUTF16 eventType(mEventType);
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
 
-    MTP_DBG("Sending file-watcher-notify %s %s %s",
+    MTP_DBG("Sending mtp-watcher-notify %s %s %s",
             mEventType.get(), mStorageName.get(), mPath.get());
 
-    obs->NotifyObservers(dsf, "file-watcher-notify", eventType.get());
+    obs->NotifyObservers(dsf, kMtpWatcherNotify, eventType.get());
     return NS_OK;
   }
 
@@ -265,10 +292,10 @@ private:
   nsCString mEventType;
 };
 
-// FileWatcherNotify is used to tell DeviceStorage when a file was changed
+// MtpWatcherNotify is used to tell DeviceStorage when a file was changed
 // through the MTP server.
 void
-MozMtpDatabase::FileWatcherNotify(DbEntry* aEntry, const char* aEventType)
+MozMtpDatabase::MtpWatcherNotify(DbEntry* aEntry, const char* aEventType)
 {
   // This function gets called from the MozMtpServer::mServerThread
   MOZ_ASSERT(!NS_IsMainThread());
@@ -295,19 +322,19 @@ MozMtpDatabase::FileWatcherNotify(DbEntry* aEntry, const char* aEventType)
   nsAutoCString relPath(Substring(aEntry->mPath,
                                   storageEntry->mStoragePath.Length() + 1));
 
-  nsRefPtr<FileWatcherNotifyRunnable> r =
-    new FileWatcherNotifyRunnable(storageEntry->mStorageName, relPath, aEventType);
+  RefPtr<MtpWatcherNotifyRunnable> r =
+    new MtpWatcherNotifyRunnable(storageEntry->mStorageName, relPath, aEventType);
   DebugOnly<nsresult> rv = NS_DispatchToMainThread(r);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
 // Called to tell the MTP server about new or deleted files,
 void
-MozMtpDatabase::FileWatcherUpdate(RefCountedMtpServer* aMtpServer,
-                                  DeviceStorageFile* aFile,
-                                  const nsACString& aEventType)
+MozMtpDatabase::MtpWatcherUpdate(RefCountedMtpServer* aMtpServer,
+                                 DeviceStorageFile* aFile,
+                                 const nsACString& aEventType)
 {
-  // Runs on the FileWatcherUpdate->mIOThread (see MozMtpServer.cpp)
+  // Runs on the MtpWatcherUpdate->mIOThread (see MozMtpServer.cpp)
   MOZ_ASSERT(!NS_IsMainThread());
 
   // Figure out which storage the belongs to (if any)
@@ -454,14 +481,19 @@ MozMtpDatabase::CreateEntryForFileAndNotify(const nsACString& aPath,
       aFile->mFile->GetFileSize(&fileSize);
       entry->mObjectSize = fileSize;
 
-      aFile->mFile->GetLastModifiedTime(&entry->mDateCreated);
+      // Note: Even though PRTime records usec, GetLastModifiedTime returns
+      //       msecs.
+      PRTime dateModifiedMsecs;
+      aFile->mFile->GetLastModifiedTime(&dateModifiedMsecs);
+      entry->mDateModified = dateModifiedMsecs / PR_MSEC_PER_SEC;
     } else {
       // Found a slash, this makes this a directory component
       entry->mObjectFormat = MTP_FORMAT_ASSOCIATION;
       entry->mObjectSize = 0;
-      entry->mDateCreated = PR_Now();
+      time(&entry->mDateModified);
     }
-    entry->mDateModified = entry->mDateCreated;
+    entry->mDateCreated = entry->mDateModified;
+    entry->mDateAdded = entry->mDateModified;
 
     AddEntryAndNotify(entry, aMtpServer);
     MTP_LOG("About to call sendObjectAdded Handle 0x%08x file %s", entry->mHandle, entry->mPath.get());
@@ -503,8 +535,11 @@ MozMtpDatabase::AddDirectory(MtpStorageID aStorageID,
     entry->mObjectName = dirEntry->name;
     entry->mDisplayName = dirEntry->name;
     entry->mPath = filename;
-    entry->mDateCreated = fileInfo.creationTime;
-    entry->mDateModified = fileInfo.modifyTime;
+
+    // PR_GetFileInfo64 returns timestamps in usecs
+    entry->mDateModified = fileInfo.modifyTime / PR_USEC_PER_SEC;
+    entry->mDateCreated = fileInfo.creationTime / PR_USEC_PER_SEC;
+    time(&entry->mDateAdded);
 
     if (fileInfo.type == PR_FILE_FILE) {
       entry->mObjectFormat = MTP_FORMAT_DEFINED;
@@ -524,7 +559,7 @@ MozMtpDatabase::StorageArray::index_type
 MozMtpDatabase::FindStorage(MtpStorageID aStorageID)
 {
   // Currently, this routine is called from MozMtpDatabase::RemoveStorage
-  // and MozMtpDatabase::FileWatcherNotify, which both hold mMutex.
+  // and MozMtpDatabase::MtpWatcherNotify, which both hold mMutex.
 
   StorageArray::size_type numStorages = mStorage.Length();
   StorageArray::index_type storageIndex;
@@ -585,7 +620,7 @@ MozMtpDatabase::AddStorage(MtpStorageID aStorageID,
     return;
   }
 
-  nsRefPtr<StorageEntry> storageEntry = new StorageEntry;
+  RefPtr<StorageEntry> storageEntry = new StorageEntry;
 
   storageEntry->mStorageID = aStorageID;
   storageEntry->mStoragePath = aPath;
@@ -653,9 +688,71 @@ MozMtpDatabase::beginSendObject(const char* aPath,
   entry->mObjectFormat = aFormat;
   entry->mObjectSize = aSize;
 
+  if (aModified != 0) {
+    // Currently, due to the way that parseDateTime is coded in
+    // frameworks/av/media/mtp/MtpUtils.cpp, aModified winds up being the number
+    // of seconds from the epoch in local time, rather than UTC time. So we
+    // need to convert it back to being relative to UTC since that's what linux
+    // expects time_t to contain.
+    //
+    // In more concrete testable terms, if the host parses 2015-08-02 02:22:00
+    // as a local time in the Pacific timezone, aModified will come to us as
+    // 1438482120.
+    //
+    // What we want is what mktime would pass us with the same date. Using python
+    // (because its simple) with the current timezone set to be America/Vancouver:
+    //
+    // >>> import time
+    // >>> time.mktime((2015, 8, 2, 2, 22, 0, 0, 0, -1))
+    // 1438507320.0
+    // >>> time.localtime(1438507320)
+    // time.struct_time(tm_year=2015, tm_mon=8, tm_mday=2, tm_hour=2, tm_min=22, tm_sec=0, tm_wday=6, tm_yday=214, tm_isdst=1)
+    //
+    // Currently, when a file has a modification time of 2015-08-22 02:22:00 PDT
+    // then aModified will come in as 1438482120 which corresponds to
+    // 2015-08-22 02:22:00 UTC
+
+    struct tm tm;
+    if (gmtime_r(&aModified, &tm) != NULL) {
+      // GMT always comes back with tm_isdst = 0, so we set it to -1 in order
+      // to have mktime figure out dst based on the date.
+      tm.tm_isdst = -1;
+      aModified = mktime(&tm);
+      if (aModified == (time_t)-1) {
+        aModified = 0;
+      }
+    } else {
+      aModified = 0;
+    }
+  }
+  if (aModified == 0) {
+    // The ubuntu host doesn't pass in the modified/created times in the
+    // SENDOBJECT packet, so aModified winds up being zero. About the best
+    // we can do with that is to use the current time.
+    time(&aModified);
+  }
+
+  // And just an FYI for anybody else looking at timestamps. Under OSX you
+  // need to use the Android File Transfer program to copy files into the
+  // phone. That utility passes in both date modified and date created
+  // timestamps, but they're both equal to the time that the file was copied
+  // and not the times that are associated with the files.
+
+  // Now we have aModified in a traditional time_t format, which is the number
+  // of seconds from the UTC epoch.
+
+  entry->mDateModified = aModified;
+  entry->mDateCreated = entry->mDateModified;
+  entry->mDateAdded = entry->mDateModified;
+
   AddEntry(entry);
 
-  MTP_LOG("Handle: 0x%08x Parent: 0x%08x Path: '%s'", entry->mHandle, aParent, aPath);
+  #if USE_DEBUG
+  char dateStr[20];
+  MTP_LOG("Handle: 0x%08x Parent: 0x%08x Path: '%s' aModified %ld %s",
+          entry->mHandle, aParent, aPath, aModified,
+          FormatDate(entry->mDateModified, dateStr, sizeof(dateStr)));
+  #endif
 
   mBeginSendObjectCalled = true;
   return entry->mHandle;
@@ -677,7 +774,23 @@ MozMtpDatabase::endSendObject(const char* aPath,
   if (aSucceeded) {
     RefPtr<DbEntry> entry = GetEntry(aHandle);
     if (entry) {
-      FileWatcherNotify(entry, "modified");
+      // The android MTP server only copies the data in, it doesn't set the
+      // modified timestamp, so we do that here.
+
+      struct utimbuf new_times;
+      struct stat sb;
+
+      char dateStr[20];
+      MTP_LOG("Path: '%s' setting modified time to (%ld) %s",
+              entry->mPath.get(), entry->mDateModified,
+              FormatDate(entry->mDateModified, dateStr, sizeof(dateStr)));
+
+      stat(entry->mPath.get(), &sb);
+      new_times.actime = sb.st_atime;   // Preserve atime
+      new_times.modtime = entry->mDateModified;
+      utime(entry->mPath.get(), &new_times);
+
+      MtpWatcherNotify(entry, "modified");
     }
   } else {
     RemoveEntry(aHandle);
@@ -794,6 +907,7 @@ static const MtpObjectProperty sSupportedObjectProperties[] =
   MTP_PROPERTY_OBJECT_SIZE,
   MTP_PROPERTY_OBJECT_FILE_NAME,    // just the filename - no directory
   MTP_PROPERTY_NAME,
+  MTP_PROPERTY_DATE_CREATED,
   MTP_PROPERTY_DATE_MODIFIED,
   MTP_PROPERTY_PARENT_OBJECT,
   MTP_PROPERTY_PERSISTENT_UID,
@@ -874,6 +988,7 @@ GetTypeOfObjectProp(MtpObjectProperty aProperty)
     {MTP_PROPERTY_PROTECTION_STATUS, MTP_TYPE_UINT16  },
     {MTP_PROPERTY_OBJECT_SIZE,       MTP_TYPE_UINT64  },
     {MTP_PROPERTY_OBJECT_FILE_NAME,  MTP_TYPE_STR     },
+    {MTP_PROPERTY_DATE_CREATED,      MTP_TYPE_STR     },
     {MTP_PROPERTY_DATE_MODIFIED,     MTP_TYPE_STR     },
     {MTP_PROPERTY_PARENT_OBJECT,     MTP_TYPE_UINT32  },
     {MTP_PROPERTY_DISPLAY_NAME,      MTP_TYPE_STR     },
@@ -1130,6 +1245,8 @@ MozMtpDatabase::getObjectPropertyList(MtpObjectHandle aHandle,
   UnprotectedDbArray::size_type numEntries = result.Length();
   UnprotectedDbArray::index_type entryIdx;
 
+  char dateStr[20];
+
   aPacket.putUInt32(numObjectProperties * numEntries);
   for (entryIdx = 0; entryIdx < numEntries; entryIdx++) {
     RefPtr<DbEntry> entry = result[entryIdx];
@@ -1178,23 +1295,24 @@ MozMtpDatabase::getObjectPropertyList(MtpObjectHandle aHandle,
           aPacket.putUInt16(0); // 0 = No Protection
           break;
 
+        case MTP_PROPERTY_DATE_CREATED: {
+          aPacket.putUInt16(MTP_TYPE_STR);
+          aPacket.putString(FormatDate(entry->mDateCreated, dateStr, sizeof(dateStr)));
+          MTP_LOG("mDateCreated: (%ld) %s", entry->mDateCreated, dateStr);
+          break;
+        }
+
         case MTP_PROPERTY_DATE_MODIFIED: {
           aPacket.putUInt16(MTP_TYPE_STR);
-          PRExplodedTime explodedTime;
-          PR_ExplodeTime(entry->mDateModified, PR_LocalTimeParameters, &explodedTime);
-          char dateStr[20];
-          PR_FormatTime(dateStr, sizeof(dateStr), "%Y%m%dT%H%M%S", &explodedTime);
-          aPacket.putString(dateStr);
+          aPacket.putString(FormatDate(entry->mDateModified, dateStr, sizeof(dateStr)));
+          MTP_LOG("mDateModified: (%ld) %s", entry->mDateModified, dateStr);
           break;
         }
 
         case MTP_PROPERTY_DATE_ADDED: {
           aPacket.putUInt16(MTP_TYPE_STR);
-          PRExplodedTime explodedTime;
-          PR_ExplodeTime(entry->mDateCreated, PR_LocalTimeParameters, &explodedTime);
-          char dateStr[20];
-          PR_FormatTime(dateStr, sizeof(dateStr), "%Y%m%dT%H%M%S", &explodedTime);
-          aPacket.putString(dateStr);
+          aPacket.putString(FormatDate(entry->mDateAdded, dateStr, sizeof(dateStr)));
+          MTP_LOG("mDateAdded: (%ld) %s", entry->mDateAdded, dateStr);
           break;
         }
 
@@ -1245,6 +1363,12 @@ MozMtpDatabase::getObjectInfo(MtpObjectHandle aHandle,
   aInfo.mName = ::strdup(entry->mObjectName.get());
   aInfo.mDateCreated = entry->mDateCreated;
   aInfo.mDateModified = entry->mDateModified;
+
+  MTP_LOG("aInfo.mDateCreated = %ld entry->mDateCreated = %ld",
+          aInfo.mDateCreated, entry->mDateCreated);
+  MTP_LOG("aInfo.mDateModified = %ld entry->mDateModified = %ld",
+          aInfo.mDateModified, entry->mDateModified);
+
   aInfo.mKeywords = ::strdup("fxos,touch");
 
   return MTP_RESPONSE_OK;
@@ -1300,7 +1424,7 @@ MozMtpDatabase::deleteFile(MtpObjectHandle aHandle)
   RemoveEntry(aHandle);
 
   // Tell Device Storage that the file is gone.
-  FileWatcherNotify(entry, "deleted");
+  MtpWatcherNotify(entry, "deleted");
 
   return MTP_RESPONSE_OK;
 }
@@ -1380,6 +1504,7 @@ MozMtpDatabase::getObjectPropertyDesc(MtpObjectProperty aProperty,
     case MTP_PROPERTY_OBJECT_FILE_NAME:
       result = new MtpProperty(aProperty, MTP_TYPE_STR, true);
       break;
+    case MTP_PROPERTY_DATE_CREATED:
     case MTP_PROPERTY_DATE_MODIFIED:
     case MTP_PROPERTY_DATE_ADDED:
       result = new MtpProperty(aProperty, MTP_TYPE_STR);

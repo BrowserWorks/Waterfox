@@ -4,11 +4,11 @@
 
 [JSImplementation="@mozilla.org/networkstatsalarm;1",
  ChromeOnly,
- CheckPermissions="networkstats-manage",
+ CheckAnyPermissions="networkstats-manage",
  Pref="dom.mozNetworkStats.enabled"]
 interface MozNetworkStatsAlarm {
   readonly attribute unsigned long alarmId;
   readonly attribute MozNetworkStatsInterface network;
-  readonly attribute long threshold;
+  readonly attribute long long threshold;
   readonly attribute any data;
 };

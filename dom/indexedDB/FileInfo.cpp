@@ -52,7 +52,7 @@ private:
 class CleanupFileRunnable final
   : public nsRunnable
 {
-  nsRefPtr<FileManager> mFileManager;
+  RefPtr<FileManager> mFileManager;
   int64_t mFileId;
 
 public:
@@ -76,7 +76,7 @@ private:
   NS_DECL_NSIRUNNABLE
 };
 
-} // anonymous namespace
+} // namespace
 
 FileInfo::FileInfo(FileManager* aFileManager)
   : mFileManager(aFileManager)
@@ -133,7 +133,8 @@ FileInfo::UpdateReferences(ThreadSafeAutoRefCnt& aRefCount,
                            int32_t aDelta)
 {
   // XXX This can go away once DOM objects no longer hold FileInfo objects...
-  //     Looking at you, IDBMutableFile...
+  //     Looking at you, BlobImplBase...
+  //     BlobImplBase is being addressed in bug 1068975.
   if (IndexedDatabaseManager::IsClosed()) {
     MOZ_ASSERT(&aRefCount == &mRefCnt);
     MOZ_ASSERT(aDelta == 1 || aDelta == -1);
@@ -204,7 +205,7 @@ FileInfo::Cleanup()
 
   // IndexedDatabaseManager is main-thread only.
   if (!NS_IsMainThread()) {
-    nsRefPtr<CleanupFileRunnable> cleaner =
+    RefPtr<CleanupFileRunnable> cleaner =
       new CleanupFileRunnable(mFileManager, id);
 
     MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(cleaner)));
@@ -226,7 +227,7 @@ CleanupFileRunnable::DoCleanup(FileManager* aFileManager, int64_t aFileId)
     return;
   }
 
-  nsRefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::Get();
+  RefPtr<IndexedDatabaseManager> mgr = IndexedDatabaseManager::Get();
   MOZ_ASSERT(mgr);
 
   if (NS_FAILED(mgr->AsyncDeleteFile(aFileManager, aFileId))) {

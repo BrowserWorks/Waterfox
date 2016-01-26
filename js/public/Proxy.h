@@ -293,7 +293,7 @@ class JS_FRIEND_API(BaseProxyHandler)
      * They do not follow any standard. When in doubt, override them.
      */
     virtual bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const;
-    virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+    virtual bool get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                      HandleId id, MutableHandleValue vp) const;
     virtual bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
                      HandleValue receiver, ObjectOpResult& result) const;
@@ -319,14 +319,16 @@ class JS_FRIEND_API(BaseProxyHandler)
     virtual bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                               AutoIdVector& props) const;
-    virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl, CallArgs args) const;
+    virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
+                            const CallArgs& args) const;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp) const;
-    virtual bool objectClassIs(HandleObject obj, ESClassValue classValue, JSContext* cx) const;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                 ESClassValue* classValue) const;
+    virtual bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer) const;
     virtual const char* className(JSContext* cx, HandleObject proxy) const;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent) const;
     virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const;
     virtual bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp) const;
-    virtual bool defaultValue(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp) const;
     virtual void trace(JSTracer* trc, JSObject* proxy) const;
     virtual void finalize(JSFreeOp* fop, JSObject* proxy) const;
     virtual void objectMoved(JSObject* proxy, const JSObject* old) const;
@@ -393,7 +395,7 @@ class JS_FRIEND_API(DirectProxyHandler) : public BaseProxyHandler
     virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
     virtual bool has(JSContext* cx, HandleObject proxy, HandleId id,
                      bool* bp) const override;
-    virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+    virtual bool get(JSContext* cx, HandleObject proxy, HandleValue receiver,
                      HandleId id, MutableHandleValue vp) const override;
     virtual bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
                      HandleValue receiver, ObjectOpResult& result) const override;
@@ -408,11 +410,13 @@ class JS_FRIEND_API(DirectProxyHandler) : public BaseProxyHandler
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                               AutoIdVector& props) const override;
     virtual bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
-                            CallArgs args) const override;
+                            const CallArgs& args) const override;
     virtual bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v,
                              bool* bp) const override;
-    virtual bool objectClassIs(HandleObject obj, ESClassValue classValue,
-                               JSContext* cx) const override;
+    virtual bool getBuiltinClass(JSContext* cx, HandleObject proxy,
+                                 ESClassValue* classValue) const override;
+    virtual bool isArray(JSContext* cx, HandleObject proxy,
+                         JS::IsArrayAnswer* answer) const override;
     virtual const char* className(JSContext* cx, HandleObject proxy) const override;
     virtual JSString* fun_toString(JSContext* cx, HandleObject proxy,
                                    unsigned indent) const override;

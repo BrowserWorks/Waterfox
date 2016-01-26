@@ -11,7 +11,7 @@ namespace mozilla {
 
 namespace dom {
 class ContentParent;
-}
+} // namespace dom
 
 namespace plugins {
 
@@ -19,13 +19,15 @@ bool
 SetupBridge(uint32_t aPluginId, dom::ContentParent* aContentParent,
             bool aForceBridgeNow, nsresult* aResult, uint32_t* aRunID);
 
-bool
+nsresult
 FindPluginsForContent(uint32_t aPluginEpoch,
                       nsTArray<PluginTag>* aPlugins,
                       uint32_t* aNewPluginEpoch);
 
 void
-TerminatePlugin(uint32_t aPluginId);
+TerminatePlugin(uint32_t aPluginId,
+                const nsCString& aMonitorDescription,
+                const nsAString& aBrowserDumpId);
 
 } // namespace plugins
 } // namespace mozilla

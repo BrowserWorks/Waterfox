@@ -98,10 +98,6 @@ exports.testAutomaticDestroy = function(assert, done) {
 
 // TEST: tab properties
 exports.testTabProperties = function(assert, done) {
-  setPref(DEPRECATE_PREF, true);
-  let { loader, messages } = LoaderWithHookedConsole();
-  let tabs = loader.require('sdk/tabs');
-
   let url = "data:text/html;charset=utf-8,<html><head><title>foo</title></head><body>foo</body></html>";
   let tabsLen = tabs.length;
   tabs.open({
@@ -109,13 +105,6 @@ exports.testTabProperties = function(assert, done) {
     onReady: function(tab) {
       assert.equal(tab.title, "foo", "title of the new tab matches");
       assert.equal(tab.url, url, "URL of the new tab matches");
-      assert.ok(tab.favicon, "favicon of the new tab is not empty");
-      // TODO: remove need for this test by implementing the favicon feature
-      assert.equal(messages[0].msg,
-        "tab.favicon is deprecated, and " +
-        "currently favicon helpers are not yet supported " +
-        "by Fennec",
-        "favicon logs an error for now");
       assert.equal(tab.style, null, "style of the new tab matches");
       assert.equal(tab.index, tabsLen, "index of the new tab matches");
       assert.notEqual(tab.getThumbnail(), null, "thumbnail of the new tab matches");
@@ -140,8 +129,8 @@ exports.testTabsIteratorAndLength = function(assert, done) {
   assert.equal(startCount, tabs.length, "length property is correct");
 
   let url = "data:text/html;charset=utf-8,testTabsIteratorAndLength";
-  tabs.open({url: url, onOpen: function(tab) newTabs.push(tab)});
-  tabs.open({url: url, onOpen: function(tab) newTabs.push(tab)});
+  tabs.open({url: url, onOpen: tab => newTabs.push(tab)});
+  tabs.open({url: url, onOpen: tab => newTabs.push(tab)});
   tabs.open({
     url: url,
     onOpen: function(tab) {
@@ -151,7 +140,7 @@ exports.testTabsIteratorAndLength = function(assert, done) {
       assert.equal(startCount + 3, tabs.length, "iterated tab count matches length property");
 
       let newTabsLength = newTabs.length;
-      newTabs.forEach(function(t) t.close(function() {
+      newTabs.forEach(t => t.close(function() {
         if (--newTabsLength > 0) return;
 
         tab.close(done);
@@ -206,7 +195,7 @@ exports.testTabMove = function(assert, done) {
                            JSON.stringify([ERR_FENNEC_MSG]),
                            "setting tab.index logs error");
           // end test
-          tab1.close(function() tab.close(function() {
+          tab1.close(() => tab.close(function() {
             loader.unload();
             done();
           }));
@@ -419,19 +408,19 @@ exports.testTabsEvent_onCloseWindow = function(assert, done) {
   tabs.open({
     url: "data:text/html;charset=utf-8,tab2",
     onOpen: testCasePossiblyLoaded,
-    onClose: function() individualCloseCount++
+    onClose: () => individualCloseCount++
   });
 
   tabs.open({
     url: "data:text/html;charset=utf-8,tab3",
     onOpen: testCasePossiblyLoaded,
-    onClose: function() individualCloseCount++
+    onClose: () => individualCloseCount++
   });
 
   tabs.open({
     url: "data:text/html;charset=utf-8,tab4",
     onOpen: testCasePossiblyLoaded,
-    onClose: function() individualCloseCount++
+    onClose: () => individualCloseCount++
   });
 };
 

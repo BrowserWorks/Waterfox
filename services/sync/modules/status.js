@@ -4,10 +4,10 @@
 
 this.EXPORTED_SYMBOLS = ["Status"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://gre/modules/Log.jsm");
@@ -30,10 +30,7 @@ this.Status = {
                     .wrappedJSObject;
     let idClass = service.fxAccountsEnabled ? BrowserIDManager : IdentityManager;
     this.__authManager = new idClass();
-    // .initialize returns a promise, so we need to spin until it resolves.
-    let cb = Async.makeSpinningCallback();
-    this.__authManager.initialize().then(cb, cb);
-    cb.wait();
+    this.__authManager.initialize();
     return this.__authManager;
   },
 

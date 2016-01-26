@@ -1,6 +1,3 @@
-This directory contains the Graphite2 library from http://hg.palaso.org/graphitedev
-
-Current version derived from upstream changeset 1efd96aeade9
-
+This directory contains the Graphite2 library release 1.3.5 from
+https://github.com/silnrsi/graphite/releases/download/1.3.5/graphite2-minimal-1.3.5.tgz
 See gfx/graphite2/moz-gr-update.sh for update procedure.
-

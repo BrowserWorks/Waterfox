@@ -14,7 +14,7 @@ const {interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-let APP_INFO = {
+var APP_INFO = {
   vendor: "Mozilla",
   name: "xpcshell",
   ID: "xpcshell@tests.mozilla.org",
@@ -30,7 +30,9 @@ let APP_INFO = {
   invalidateCachesOnRestart() {},
 
   // nsIWinAppHelper
-  get userCanElevate() false,
+  get userCanElevate() {
+    return false;
+  },
 
   QueryInterface(iid) {
     let interfaces = [ Ci.nsIXULAppInfo, Ci.nsIXULRuntime ];

@@ -20,7 +20,7 @@ const { Ci, Cc } = require("chrome"),
     { ns } = require("./core/namespace"),
     { when: unload } = require("./system/unload"),
     { ignoreWindow } = require('./private-browsing/utils'),
-    { getTabs, getTabContentWindow, getTabForContentWindow,
+    { getTabs, getTabForContentWindow,
       getAllTabContentWindows } = require('./tabs/utils'),
     winUtils = require("./window/utils"),
     events = require("./system/events");
@@ -80,7 +80,7 @@ const Selection = Class({
 
 const selectionListener = {
   notifySelectionChanged: function (document, selection, reason) {
-    if (!["SELECTALL", "KEYPRESS", "MOUSEUP"].some(function(type) reason &
+    if (!["SELECTALL", "KEYPRESS", "MOUSEUP"].some(type => reason &
       Ci.nsISelectionListener[type + "_REASON"]) || selection.toString() == "")
         return;
 

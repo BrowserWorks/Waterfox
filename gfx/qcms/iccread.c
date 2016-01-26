@@ -312,17 +312,17 @@ qcms_bool qcms_profile_is_bogus(qcms_profile *profile)
        sum[2] = rZ + gZ + bZ;
 
        // Build our target vector (see mozilla bug 460629)
-       target[0] = 0.96420;
-       target[1] = 1.00000;
-       target[2] = 0.82491;
+       target[0] = 0.96420f;
+       target[1] = 1.00000f;
+       target[2] = 0.82491f;
 
        // Our tolerance vector - Recommended by Chris Murphy based on
        // conversion from the LAB space criterion of no more than 3 in any one
        // channel. This is similar to, but slightly more tolerant than Adobe's
        // criterion.
-       tolerance[0] = 0.02;
-       tolerance[1] = 0.02;
-       tolerance[2] = 0.04;
+       tolerance[0] = 0.02f;
+       tolerance[1] = 0.02f;
+       tolerance[2] = 0.04f;
 
        // Compare with our tolerance
        for (i = 0; i < 3; ++i) {
@@ -605,12 +605,14 @@ static struct lutmABType *read_tag_lutmABType(struct mem_source *src, struct tag
 	memset(lut, 0, sizeof(struct lutmABType));
 	lut->clut_table   = &lut->clut_table_data[0];
 
-	for (i = 0; i < num_in_channels; i++) {
-		lut->num_grid_points[i] = read_u8(src, clut_offset + i);
-		if (lut->num_grid_points[i] == 0) {
-			invalid_source(src, "bad grid_points");
+        if (clut_offset) {
+		for (i = 0; i < num_in_channels; i++) {
+			lut->num_grid_points[i] = read_u8(src, clut_offset + i);
+			if (lut->num_grid_points[i] == 0) {
+				invalid_source(src, "bad grid_points");
+			}
 		}
-	}
+        }
 
 	// Reverse the processing of transformation elements for mBA type.
 	lut->reversed = (type == LUT_MBA_TYPE);
@@ -713,6 +715,11 @@ static struct lutType *read_tag_lutType(struct mem_source *src, struct tag_index
 		return NULL;
 	}
 
+	if (clut_size <= 0) {
+		invalid_source(src, "CLUT must not be empty.");
+		return NULL;
+	}
+
 	if (in_chan != 3 || out_chan != 3) {
 		invalid_source(src, "CLUT only supports RGB");
 		return NULL;
@@ -744,7 +751,7 @@ static struct lutType *read_tag_lutType(struct mem_source *src, struct tag_index
 	lut->e21 = read_s15Fixed16Number(src, offset+40);
 	lut->e22 = read_s15Fixed16Number(src, offset+44);
 
-	for (i = 0; i < lut->num_input_table_entries * in_chan; i++) {
+	for (i = 0; i < (uint32_t)(lut->num_input_table_entries * in_chan); i++) {
 		if (type == LUT8_TYPE) {
 			lut->input_table[i] = uInt8Number_to_float(read_uInt8Number(src, offset + 52 + i * entry_size));
 		} else {
@@ -766,7 +773,7 @@ static struct lutType *read_tag_lutType(struct mem_source *src, struct tag_index
 	}
 
 	output_offset = clut_offset + clut_size * out_chan * entry_size;
-	for (i = 0; i < lut->num_output_table_entries * out_chan; i++) {
+	for (i = 0; i < (uint32_t)(lut->num_output_table_entries * out_chan); i++) {
 		if (type == LUT8_TYPE) {
 			lut->output_table[i] = uInt8Number_to_float(read_uInt8Number(src, output_offset + i*entry_size));
 		} else {
@@ -1303,7 +1310,7 @@ void qcms_data_from_unicode_path(const wchar_t *path, void **mem, size_t *size)
 #define ICC_PROFILE_HEADER_LENGTH 128
 void qcms_data_create_rgb_with_gamma(qcms_CIE_xyY white_point, qcms_CIE_xyYTRIPLE primaries, float gamma, void **mem, size_t *size)
 {
-	uint32_t length, offset, index, xyz_count, trc_count;
+	uint32_t length, index, xyz_count, trc_count;
 	size_t tag_table_offset, tag_data_offset;
 	void *data;
 	struct matrix colorants;

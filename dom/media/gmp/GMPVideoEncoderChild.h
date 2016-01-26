@@ -22,60 +22,51 @@ class GMPVideoEncoderChild : public PGMPVideoEncoderChild,
                              public GMPSharedMemManager
 {
 public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPVideoEncoderChild);
+
   explicit GMPVideoEncoderChild(GMPContentChild* aPlugin);
-  virtual ~GMPVideoEncoderChild();
 
   void Init(GMPVideoEncoder* aEncoder);
   GMPVideoHostImpl& Host();
 
   // GMPVideoEncoderCallback
-  virtual void Encoded(GMPVideoEncodedFrame* aEncodedFrame,
-                       const uint8_t* aCodecSpecificInfo,
-                       uint32_t aCodecSpecificInfoLength) override;
-  virtual void Error(GMPErr aError) override;
+  void Encoded(GMPVideoEncodedFrame* aEncodedFrame,
+               const uint8_t* aCodecSpecificInfo,
+               uint32_t aCodecSpecificInfoLength) override;
+  void Error(GMPErr aError) override;
 
   // GMPSharedMemManager
-  virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) override
-  {
-#ifndef SHMEM_ALLOC_IN_CHILD
-    return CallNeedShmem(aSize, aMem);
-#else
-#ifdef GMP_SAFE_SHMEM
-    return AllocShmem(aSize, aType, aMem);
-#else
-    return AllocUnsafeShmem(aSize, aType, aMem);
-#endif
-#endif
-  }
-  virtual void Dealloc(Shmem& aMem) override
-  {
-#ifndef SHMEM_ALLOC_IN_CHILD
-    SendParentShmemForPool(aMem);
-#else
-    DeallocShmem(aMem);
-#endif
-  }
+  bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType,
+    Shmem* aMem) override;
+  void Dealloc(Shmem& aMem) override;
 
 private:
+  virtual ~GMPVideoEncoderChild();
+
   // PGMPVideoEncoderChild
-  virtual bool RecvInitEncode(const GMPVideoCodec& aCodecSettings,
-                              InfallibleTArray<uint8_t>&& aCodecSpecific,
-                              const int32_t& aNumberOfCores,
-                              const uint32_t& aMaxPayloadSize) override;
-  virtual bool RecvEncode(const GMPVideoi420FrameData& aInputFrame,
-                          InfallibleTArray<uint8_t>&& aCodecSpecificInfo,
-                          InfallibleTArray<GMPVideoFrameType>&& aFrameTypes) override;
-  virtual bool RecvChildShmemForPool(Shmem&& aEncodedBuffer) override;
-  virtual bool RecvSetChannelParameters(const uint32_t& aPacketLoss,
-                                        const uint32_t& aRTT) override;
-  virtual bool RecvSetRates(const uint32_t& aNewBitRate,
-                            const uint32_t& aFrameRate) override;
-  virtual bool RecvSetPeriodicKeyFrames(const bool& aEnable) override;
-  virtual bool RecvEncodingComplete() override;
+  bool RecvInitEncode(const GMPVideoCodec& aCodecSettings,
+                      InfallibleTArray<uint8_t>&& aCodecSpecific,
+                      const int32_t& aNumberOfCores,
+                      const uint32_t& aMaxPayloadSize) override;
+  bool RecvEncode(const GMPVideoi420FrameData& aInputFrame,
+                  InfallibleTArray<uint8_t>&& aCodecSpecificInfo,
+                  InfallibleTArray<GMPVideoFrameType>&& aFrameTypes) override;
+  bool RecvChildShmemForPool(Shmem&& aEncodedBuffer) override;
+  bool RecvSetChannelParameters(const uint32_t& aPacketLoss,
+                                const uint32_t& aRTT) override;
+  bool RecvSetRates(const uint32_t& aNewBitRate,
+                    const uint32_t& aFrameRate) override;
+  bool RecvSetPeriodicKeyFrames(const bool& aEnable) override;
+  bool RecvEncodingComplete() override;
 
   GMPContentChild* mPlugin;
   GMPVideoEncoder* mVideoEncoder;
   GMPVideoHostImpl mVideoHost;
+
+  // Non-zero when a GMP is blocked spinning the IPC message loop while
+  // waiting on an NeedShmem to complete.
+  int mNeedShmemIntrCount;
+  bool mPendingEncodeComplete;
 };
 
 } // namespace gmp

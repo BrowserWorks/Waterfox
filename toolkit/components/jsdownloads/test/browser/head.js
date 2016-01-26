@@ -12,10 +12,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //// Globals
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -41,7 +41,7 @@ const TEST_TARGET_FILE_NAME_PDF = "test-download.pdf";
 // used, on Windows these might still be pending deletion on the physical file
 // system.  Thus, start from a new base number every time, to make a collision
 // with a file that is still pending deletion highly unlikely.
-let gFileCounter = Math.floor(Math.random() * 1000000);
+var gFileCounter = Math.floor(Math.random() * 1000000);
 
 /**
  * Returns a reference to a temporary file, that is guaranteed not to exist, and

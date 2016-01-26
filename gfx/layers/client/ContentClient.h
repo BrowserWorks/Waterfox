@@ -12,13 +12,14 @@
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "mozilla/Assertions.h"         // for MOZ_CRASH
 #include "mozilla/Attributes.h"         // for override
-#include "mozilla/RefPtr.h"             // for RefPtr, TemporaryRef
+#include "mozilla/RefPtr.h"             // for RefPtr, already_AddRefed
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
+#include "mozilla/layers/LayersTypes.h"  // for TextureDumpMode
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "ReadbackProcessor.h"          // For ReadbackProcessor::Update
@@ -31,7 +32,7 @@
 namespace mozilla {
 namespace gfx {
 class DrawTarget;
-}
+} // namespace gfx
 
 namespace layers {
 
@@ -78,7 +79,7 @@ public:
    * message will be sent to the compositor to create a corresponding content
    * host.
    */
-  static TemporaryRef<ContentClient> CreateContentClient(CompositableForwarder* aFwd);
+  static already_AddRefed<ContentClient> CreateContentClient(CompositableForwarder* aFwd);
 
   explicit ContentClient(CompositableForwarder* aForwarder)
   : CompositableClient(aForwarder)
@@ -87,10 +88,6 @@ public:
   {}
 
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
-
-  virtual void Dump(std::stringstream& aStream,
-                    const char* aPrefix="",
-                    bool aDumpHtml=false) {};
 
   virtual void Clear() = 0;
   virtual RotatedContentBuffer::PaintState BeginPaintBuffer(PaintedLayer* aLayer,
@@ -212,7 +209,8 @@ public:
 
   virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix="",
-                    bool aDumpHtml=false) override;
+                    bool aDumpHtml=false,
+                    TextureDumpMode aCompress=TextureDumpMode::Compress) override;
 
   virtual PaintState BeginPaintBuffer(PaintedLayer* aLayer,
                                       uint32_t aFlags) override
@@ -258,6 +256,11 @@ public:
 
   virtual void CreateBuffer(ContentType aType, const gfx::IntRect& aRect, uint32_t aFlags,
                             RefPtr<gfx::DrawTarget>* aBlackDT, RefPtr<gfx::DrawTarget>* aWhiteDT) override;
+
+  virtual TextureFlags ExtraTextureFlags() const
+  {
+    return TextureFlags::NO_FLAGS;
+  }
 
 protected:
   void DestroyBuffers();
@@ -346,7 +349,8 @@ public:
 
   virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix="",
-                    bool aDumpHtml=false) override;
+                    bool aDumpHtml=false,
+                    TextureDumpMode aCompress=TextureDumpMode::Compress) override;
 protected:
   virtual void DestroyFrontBuffer() override;
 
@@ -390,11 +394,16 @@ public:
 
   virtual TextureInfo GetTextureInfo() const override
   {
-    return TextureInfo(CompositableType::CONTENT_SINGLE, mTextureFlags);
+    return TextureInfo(CompositableType::CONTENT_SINGLE, mTextureFlags | ExtraTextureFlags());
+  }
+
+  virtual TextureFlags ExtraTextureFlags() const override
+  {
+    return TextureFlags::IMMEDIATE_UPLOAD;
   }
 };
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif

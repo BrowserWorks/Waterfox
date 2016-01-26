@@ -42,17 +42,19 @@ typedef nsTArray<float> AudioFloatArray;
 
 class PeriodicWave {
 public:
-    static PeriodicWave* createSine(float sampleRate);
-    static PeriodicWave* createSquare(float sampleRate);
-    static PeriodicWave* createSawtooth(float sampleRate);
-    static PeriodicWave* createTriangle(float sampleRate);
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(WebCore::PeriodicWave);
+
+    static already_AddRefed<PeriodicWave> createSine(float sampleRate);
+    static already_AddRefed<PeriodicWave> createSquare(float sampleRate);
+    static already_AddRefed<PeriodicWave> createSawtooth(float sampleRate);
+    static already_AddRefed<PeriodicWave> createTriangle(float sampleRate);
 
     // Creates an arbitrary periodic wave given the frequency components
     // (Fourier coefficients).
-    static PeriodicWave* create(float sampleRate,
-                                const float* real,
-                                const float* imag,
-                                size_t numberOfComponents);
+    static already_AddRefed<PeriodicWave> create(float sampleRate,
+                                                 const float* real,
+                                                 const float* imag,
+                                                 size_t numberOfComponents);
 
     // Returns pointers to the lower and higher wave data for the pitch range
     // containing the given fundamental frequency. These two tables are in
@@ -74,7 +76,8 @@ public:
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
-    explicit PeriodicWave(float sampleRate);
+    explicit PeriodicWave(float sampleRate, size_t numberOfComponents);
+    ~PeriodicWave() {}
 
     void generateBasicWaveform(mozilla::dom::OscillatorType);
 
@@ -82,6 +85,9 @@ private:
     unsigned m_periodicWaveSize;
     unsigned m_numberOfRanges;
     float m_centsPerRange;
+    unsigned m_numberOfComponents;
+    nsAutoPtr<AudioFloatArray> m_realComponents;
+    nsAutoPtr<AudioFloatArray> m_imagComponents;
 
     // The lowest frequency (in Hertz) where playback will include all of the
     // partials.  Playing back lower than this frequency will gradually lose
@@ -98,8 +104,10 @@ private:
 
     unsigned numberOfPartialsForRange(unsigned rangeIndex) const;
 
-    // Creates tables based on numberOfComponents Fourier coefficients.
-    void createBandLimitedTables(const float* real, const float* imag, unsigned numberOfComponents);
+    // Creates table for specified index based on fundamental frequency.
+    void createBandLimitedTables(float fundamentalFrequency, unsigned rangeIndex);
+    unsigned m_maxPartialsInBandLimitedTable;
+    float m_normalizationScale;
     nsTArray<nsAutoPtr<AlignedAudioFloatArray> > m_bandLimitedTables;
 };
 

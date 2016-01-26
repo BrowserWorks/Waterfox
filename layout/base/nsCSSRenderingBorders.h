@@ -15,33 +15,18 @@
 #include "nsColor.h"
 #include "nsCOMPtr.h"
 #include "nsStyleConsts.h"
+#include "nsPresContext.h"
 
 struct nsBorderColors;
 
 namespace mozilla {
 namespace gfx {
 class GradientStops;
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 // define this to enable a bunch of debug dump info
 #undef DEBUG_NEW_BORDERS
-
-//thickness of dashed line relative to dotted line
-#define DOT_LENGTH  1           //square
-#define DASH_LENGTH 3           //3 times longer than dot
-
-//some shorthand for side bits
-#define SIDE_BIT_TOP (1 << NS_SIDE_TOP)
-#define SIDE_BIT_RIGHT (1 << NS_SIDE_RIGHT)
-#define SIDE_BIT_BOTTOM (1 << NS_SIDE_BOTTOM)
-#define SIDE_BIT_LEFT (1 << NS_SIDE_LEFT)
-#define SIDE_BITS_ALL (SIDE_BIT_TOP|SIDE_BIT_RIGHT|SIDE_BIT_BOTTOM|SIDE_BIT_LEFT)
-
-#define C_TL NS_CORNER_TOP_LEFT
-#define C_TR NS_CORNER_TOP_RIGHT
-#define C_BR NS_CORNER_BOTTOM_RIGHT
-#define C_BL NS_CORNER_BOTTOM_LEFT
 
 /*
  * Helper class that handles border rendering.
@@ -85,7 +70,8 @@ class nsCSSBorderRenderer final
 
 public:
 
-  nsCSSBorderRenderer(DrawTarget* aDrawTarget,
+  nsCSSBorderRenderer(nsPresContext::nsPresContextType aPresContextType,
+                      DrawTarget* aDrawTarget,
                       Rect& aOuterRect,
                       const uint8_t* aBorderStyles,
                       const Float* aBorderWidths,
@@ -113,6 +99,9 @@ public:
 private:
 
   RectCornerRadii mBorderCornerDimensions;
+
+  // the PresContext type
+  nsPresContext::nsPresContextType mPresContextType;
 
   // destination DrawTarget
   DrawTarget* mDrawTarget;
@@ -165,7 +154,7 @@ private:
   // This code needs to make sure that the individual pieces
   // don't ever (mathematically) overlap; the pixel overlap
   // is taken care of by the ADD compositing.
-  mozilla::TemporaryRef<Path> GetSideClipSubPath(mozilla::css::Side aSide);
+  already_AddRefed<Path> GetSideClipSubPath(mozilla::css::Side aSide);
 
   // Given a set of sides to fill and a color, do so in the fastest way.
   //
@@ -210,12 +199,6 @@ private:
   // borders because they can be considered 'solid' borders of 0 width and
   // with no color effect.
   bool AllBordersSolid(bool *aHasCompositeColors);
-
-  // Azure variant of CreateCornerGradient.
-  mozilla::TemporaryRef<mozilla::gfx::GradientStops>
-  CreateCornerGradient(mozilla::css::Corner aCorner, nscolor aFirstColor,
-                       nscolor aSecondColor, mozilla::gfx::DrawTarget *aDT,
-                       mozilla::gfx::Point &aPoint1, mozilla::gfx::Point &aPoint2);
 
   // Draw a solid color border that is uniformly the same width.
   void DrawSingleWidthSolidBorder();
@@ -277,6 +260,6 @@ static inline void PrintAsStringNewline(const char *s = nullptr) {}
 static inline void PrintAsFormatString(const char *fmt, ...) {}
 #endif
 
-}
+} // namespace mozilla
 
 #endif /* NS_CSS_RENDERING_BORDERS_H */

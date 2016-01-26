@@ -18,7 +18,10 @@
 #include "nsCategoryCache.h"
 #include "nsISpeculativeConnect.h"
 #include "nsDataHashtable.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
+#include "prtime.h"
+#include "nsICaptivePortalService.h"
 
 #define NS_N(x) (sizeof(x)/sizeof(*x))
 
@@ -28,8 +31,8 @@
 #define NS_IPC_IOSERVICE_SET_OFFLINE_TOPIC "ipc:network:set-offline"
 #define NS_IPC_IOSERVICE_SET_CONNECTIVITY_TOPIC "ipc:network:set-connectivity"
 
-static const char gScheme[][sizeof("resource")] =
-    {"chrome", "file", "http", "https", "jar", "data", "resource"};
+static const char gScheme[][sizeof("moz-safe-about")] =
+    {"chrome", "file", "http", "https", "jar", "data", "about", "moz-safe-about", "resource"};
 
 class nsAsyncRedirectVerifyHelper;
 class nsINetworkLinkService;
@@ -78,6 +81,11 @@ public:
                                     nsAsyncRedirectVerifyHelper *helper);
 
     bool IsOffline() { return mOffline; }
+    PRIntervalTime LastOfflineStateChange() { return mLastOfflineStateChange; }
+    PRIntervalTime LastConnectivityChange() { return mLastConnectivityChange; }
+    PRIntervalTime LastNetworkLinkChange() { return mLastNetworkLinkChange; }
+    bool IsNetTearingDown() { return mShutdown || mOfflineForProfileChange; }
+    PRIntervalTime NetTearingDownStarted() { return mNetTearingDownStarted; }
     bool IsLinkUp();
 
     // Should only be called from NeckoChild. Use SetAppOffline instead.
@@ -100,6 +108,9 @@ private:
     nsresult CacheProtocolHandler(const char *scheme,
                                               nsIProtocolHandler* hdlr);
 
+    nsresult InitializeCaptivePortalService();
+    nsresult RecheckCaptivePortalIfLocalRedirect(nsIChannel* newChan);
+
     // Prefs wrangling
     void PrefsChanged(nsIPrefBranch *prefs, const char *pref = nullptr);
     void GetPrefBranch(nsIPrefBranch **);
@@ -115,7 +126,6 @@ private:
     // notify content processes of offline status
     // 'status' must be a nsIAppOfflineInfo mode constant.
     void NotifyAppOfflineStatus(uint32_t appId, int32_t status);
-    static PLDHashOperator EnumerateWifiAppsChangingState(const unsigned int &, int32_t, void*);
 
     nsresult NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
                                                      nsIURI* aProxyURI,
@@ -129,7 +139,7 @@ private:
 
 private:
     bool                                 mOffline;
-    bool                                 mOfflineForProfileChange;
+    mozilla::Atomic<bool, mozilla::Relaxed>  mOfflineForProfileChange;
     bool                                 mManageLinkStatus;
     bool                                 mConnectivity;
     // If true, the connectivity state will be mirrored by IOService.offline
@@ -141,11 +151,12 @@ private:
     bool                                 mSettingOffline;
     bool                                 mSetOfflineValue;
 
-    bool                                 mShutdown;
+    mozilla::Atomic<bool, mozilla::Relaxed> mShutdown;
 
     nsCOMPtr<nsPISocketTransportService> mSocketTransportService;
     nsCOMPtr<nsPIDNSService>             mDNSService;
     nsCOMPtr<nsIProtocolProxyService2>   mProxyService;
+    nsCOMPtr<nsICaptivePortalService>    mCaptivePortalService;
     nsCOMPtr<nsINetworkLinkService>      mNetworkLinkService;
     bool                                 mNetworkLinkServiceInitialized;
 
@@ -165,6 +176,17 @@ private:
     nsDataHashtable<nsUint32HashKey, int32_t> mAppsOfflineStatus;
 
     static bool                          sTelemetryEnabled;
+
+    // These timestamps are needed for collecting telemetry on PR_Connect,
+    // PR_ConnectContinue and PR_Close blocking time.  If we spend very long
+    // time in any of these functions we want to know if and what network
+    // change has happened shortly before.
+    mozilla::Atomic<PRIntervalTime> mLastOfflineStateChange;
+    mozilla::Atomic<PRIntervalTime> mLastConnectivityChange;
+    mozilla::Atomic<PRIntervalTime> mLastNetworkLinkChange;
+
+    // Time a network tearing down started.
+    mozilla::Atomic<PRIntervalTime> mNetTearingDownStarted;
 public:
     // Used for all default buffer sizes that necko allocates.
     static uint32_t   gDefaultSegmentSize;

@@ -4,10 +4,10 @@
 
 "use strict";
 
-let initialLocation = gBrowser.currentURI.spec;
-let globalClipboard;
+var initialLocation = gBrowser.currentURI.spec;
+var globalClipboard;
 
-add_task(function() {
+add_task(function*() {
   info("Check cut button existence and functionality");
 
   let testText = "cut text test";
@@ -18,7 +18,7 @@ add_task(function() {
 
   let cutButton = document.getElementById("cut-button");
   ok(cutButton, "Cut button exists in Panel Menu");
-  ok(cutButton.getAttribute("disabled"), "Cut button is disabled");
+  ok(cutButton.hasAttribute("disabled"), "Cut button is disabled");
 
   // cut text from URL bar
   gURLBar.value = testText;
@@ -27,7 +27,7 @@ add_task(function() {
   yield PanelUI.show();
   info("Menu panel was opened");
 
-  ok(!cutButton.hasAttribute("disabled"), "Cut button gets enabled");
+  ok(!cutButton.hasAttribute("disabled"), "Cut button is enabled when selecting");
   cutButton.click();
   is(gURLBar.value, "", "Selected text is removed from source when clicking on cut");
 
@@ -50,7 +50,7 @@ add_task(function() {
   is(clipboardValue, testText, "Data was copied to the clipboard.");
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   // clear the clipboard
   Services.clipboard.emptyClipboard(globalClipboard);
   info("Clipboard was cleared");

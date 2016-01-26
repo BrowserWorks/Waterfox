@@ -57,7 +57,7 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   let expectedAnnos = PlacesUtils.getAnnotationsForItem(aItem.id);
   if (expectedAnnos.length > 0) {
     let annosToString = annos => {
-      return [(a.name + ":" + a.value) for (a of annos)].sort().join(",");
+      return annos.map(a => a.name + ":" + a.value).sort().join(",");
     };
     do_check_true(Array.isArray(aItem.annos))
     do_check_eq(annosToString(aItem.annos), annosToString(expectedAnnos));
@@ -85,7 +85,7 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
       for (let i = 0; i < aNode.childCount; i++) {
         let childNode = aNode.getChild(i);
         if (childNode.itemId == PlacesUtils.tagsFolderId ||
-            aExcludedGuids.indexOf(childNode.bookmarkGuid) != -1) {
+            aExcludedGuids.includes(childNode.bookmarkGuid)) {
           continue;
         }
         expectedChildrenNodes.push(childNode);
@@ -163,7 +163,7 @@ function* compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
   return nodesCount;
 }
 
-let itemsCount = 0;
+var itemsCount = 0;
 function* new_bookmark(aInfo) {
   let currentItem = ++itemsCount;
   if (!("url" in aInfo))
@@ -211,17 +211,17 @@ function* test_promiseBookmarksTreeAgainstResult(aItemGuid = "",
 add_task(function* () {
   // Add some bookmarks to cover various use cases.
   yield new_bookmark({ parentGuid: PlacesUtils.bookmarks.toolbarGuid });
-  yield new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid
-                   , annotations: [{ name: "TestAnnoA", value: "TestVal"
-                                   , name: "TestAnnoB", value: 0 }]});
+  yield new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid,
+                     annotations: [{ name: "TestAnnoA", value: "TestVal" },
+                                   { name: "TestAnnoB", value: 0 }]});
   let sepInfo = { parentGuid: PlacesUtils.bookmarks.menuGuid };
   yield PlacesTransactions.NewSeparator(sepInfo).transact();
   let folderGuid = yield new_folder({ parentGuid: PlacesUtils.bookmarks.menuGuid });
-  yield new_bookmark({ title: null
-                     , parentGuid: folderGuid
-                     , keyword: "test_keyword"
-                     , tags: ["TestTagA", "TestTagB"]
-                     , annotations: [{ name: "TestAnnoA", value: "TestVal2"}]});
+  yield new_bookmark({ title: null,
+                       parentGuid: folderGuid,
+                       keyword: "test_keyword",
+                       tags: ["TestTagA", "TestTagB"],
+                       annotations: [{ name: "TestAnnoA", value: "TestVal2"}]});
   let urlWithCharsetAndFavicon = uri("http://charset.and.favicon");
   yield new_bookmark({ parentGuid: folderGuid, url: urlWithCharsetAndFavicon });
   yield PlacesUtils.setCharsetForURI(urlWithCharsetAndFavicon, "UTF-8");

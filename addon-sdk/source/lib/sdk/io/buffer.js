@@ -247,11 +247,11 @@ Object.defineProperties(Buffer.prototype, {
     value: function(string, offset, length, encoding = 'utf8') {
       // write(string, encoding);
       if (typeof(offset) === 'string' && Number.isNaN(parseInt(offset))) {
-        ([offset, length, encoding]) = [0, null, offset];
+        [offset, length, encoding] = [0, null, offset];
       }
       // write(string, offset, encoding);
       else if (typeof(length) === 'string')
-        ([length, encoding]) = [null, length];
+        [length, encoding] = [null, length];
 
       if (offset < 0 || offset > this.length)
         throw new RangeError('offset is outside of valid range');
@@ -323,7 +323,9 @@ Object.defineProperties(Buffer.prototype, {
  ['readUInt8', 'getUint8'],
  ['readInt8', 'getInt8']].forEach(([alias, name, littleEndian]) => {
   Object.defineProperty(Buffer.prototype, alias, {
-    value: function(offset) this.view[name](offset, littleEndian)
+    value: function(offset) {
+      return this.view[name](offset, littleEndian);
+    }
   });
 });
 
@@ -342,6 +344,8 @@ Object.defineProperties(Buffer.prototype, {
  ['writeUInt8', 'setUint8'],
  ['writeInt8', 'setInt8']].forEach(([alias, name, littleEndian]) => {
   Object.defineProperty(Buffer.prototype, alias, {
-    value: function(value, offset) this.view[name](offset, value, littleEndian)
+    value: function(value, offset) {
+      return this.view[name](offset, value, littleEndian);
+    }
   });
 });

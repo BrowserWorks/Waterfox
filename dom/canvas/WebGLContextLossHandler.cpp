@@ -8,8 +8,95 @@
 #include "nsITimer.h"
 #include "nsThreadUtils.h"
 #include "WebGLContext.h"
+#include "mozilla/dom/WorkerPrivate.h"
 
 namespace mozilla {
+
+// -------------------------------------------------------------------
+// Begin worker specific code
+// -------------------------------------------------------------------
+
+// On workers we can only dispatch CancelableRunnables, so we have to wrap the
+// timer's EventTarget to use our own cancelable runnable
+
+class ContextLossWorkerEventTarget final : public nsIEventTarget
+{
+public:
+    explicit ContextLossWorkerEventTarget(nsIEventTarget* aEventTarget)
+        : mEventTarget(aEventTarget)
+    {
+        MOZ_ASSERT(aEventTarget);
+    }
+
+    NS_DECL_NSIEVENTTARGET
+    NS_DECL_THREADSAFE_ISUPPORTS
+
+protected:
+    ~ContextLossWorkerEventTarget() {}
+
+private:
+    nsCOMPtr<nsIEventTarget> mEventTarget;
+};
+
+class ContextLossWorkerRunnable final : public nsICancelableRunnable
+{
+public:
+    explicit ContextLossWorkerRunnable(nsIRunnable* aRunnable)
+        : mRunnable(aRunnable)
+    {
+    }
+
+    NS_DECL_NSICANCELABLERUNNABLE
+    NS_DECL_THREADSAFE_ISUPPORTS
+
+    NS_FORWARD_NSIRUNNABLE(mRunnable->)
+
+protected:
+    ~ContextLossWorkerRunnable() {}
+
+private:
+    nsCOMPtr<nsIRunnable> mRunnable;
+};
+
+NS_IMPL_ISUPPORTS(ContextLossWorkerEventTarget, nsIEventTarget,
+                  nsISupports)
+
+NS_IMETHODIMP
+ContextLossWorkerEventTarget::DispatchFromScript(nsIRunnable* aEvent, uint32_t aFlags)
+{
+    nsCOMPtr<nsIRunnable> event(aEvent);
+    return Dispatch(event.forget(), aFlags);
+}
+
+NS_IMETHODIMP
+ContextLossWorkerEventTarget::Dispatch(already_AddRefed<nsIRunnable>&& aEvent,
+                                       uint32_t aFlags)
+{
+    nsCOMPtr<nsIRunnable> eventRef(aEvent);
+    RefPtr<ContextLossWorkerRunnable> wrappedEvent =
+        new ContextLossWorkerRunnable(eventRef);
+    return mEventTarget->Dispatch(wrappedEvent, aFlags);
+}
+
+NS_IMETHODIMP
+ContextLossWorkerEventTarget::IsOnCurrentThread(bool* aResult)
+{
+    return mEventTarget->IsOnCurrentThread(aResult);
+}
+
+NS_IMPL_ISUPPORTS(ContextLossWorkerRunnable, nsICancelableRunnable,
+                  nsIRunnable)
+
+NS_IMETHODIMP
+ContextLossWorkerRunnable::Cancel()
+{
+    mRunnable = nullptr;
+    return NS_OK;
+}
+
+// -------------------------------------------------------------------
+// End worker-specific code
+// -------------------------------------------------------------------
 
 WebGLContextLossHandler::WebGLContextLossHandler(WebGLContext* webgl)
     : mWeakWebGL(webgl)
@@ -17,6 +104,7 @@ WebGLContextLossHandler::WebGLContextLossHandler(WebGLContext* webgl)
     , mIsTimerRunning(false)
     , mShouldRunTimerAgain(false)
     , mIsDisabled(false)
+    , mFeatureAdded(false)
 #ifdef DEBUG
     , mThread(NS_GetCurrentThread())
 #endif
@@ -31,7 +119,7 @@ WebGLContextLossHandler::~WebGLContextLossHandler()
 void
 WebGLContextLossHandler::StartTimer(unsigned long delayMS)
 {
-    // We can't pass a TemporaryRef through InitWithFuncCallback, so we
+    // We can't pass an already_AddRefed through InitWithFuncCallback, so we
     // should do the AddRef/Release manually.
     this->AddRef();
 
@@ -57,12 +145,11 @@ void
 WebGLContextLossHandler::TimerCallback()
 {
     MOZ_ASSERT(NS_GetCurrentThread() == mThread);
+    MOZ_ASSERT(mIsTimerRunning);
+    mIsTimerRunning = false;
 
     if (mIsDisabled)
         return;
-
-    MOZ_ASSERT(mIsTimerRunning);
-    mIsTimerRunning = false;
 
     // If we need to run the timer again, restart it immediately.
     // Otherwise, the code we call into below might *also* try to
@@ -91,6 +178,17 @@ WebGLContextLossHandler::RunTimer()
         return;
     }
 
+    if (!NS_IsMainThread()) {
+        dom::workers::WorkerPrivate* workerPrivate =
+            dom::workers::GetCurrentThreadWorkerPrivate();
+        nsCOMPtr<nsIEventTarget> target = workerPrivate->GetEventTarget();
+        mTimer->SetTarget(new ContextLossWorkerEventTarget(target));
+        if (!mFeatureAdded) {
+            workerPrivate->AddFeature(workerPrivate->GetJSContext(), this);
+            mFeatureAdded = true;
+        }
+    }
+
     StartTimer(1000);
 
     mIsTimerRunning = true;
@@ -100,10 +198,18 @@ WebGLContextLossHandler::RunTimer()
 void
 WebGLContextLossHandler::DisableTimer()
 {
-    if (!mIsDisabled)
+    if (mIsDisabled)
         return;
 
     mIsDisabled = true;
+
+    if (mFeatureAdded) {
+        dom::workers::WorkerPrivate* workerPrivate =
+            dom::workers::GetCurrentThreadWorkerPrivate();
+        MOZ_RELEASE_ASSERT(workerPrivate);
+        workerPrivate->RemoveFeature(workerPrivate->GetJSContext(), this);
+        mFeatureAdded = false;
+    }
 
     // We can't just Cancel() the timer, as sometimes we end up
     // receiving a callback after calling Cancel(). This could cause us
@@ -115,6 +221,18 @@ WebGLContextLossHandler::DisableTimer()
         return;
 
     mTimer->SetDelay(0);
+}
+
+bool
+WebGLContextLossHandler::Notify(JSContext* aCx, dom::workers::Status aStatus)
+{
+    bool isWorkerRunning = aStatus < dom::workers::Closing;
+    if (!isWorkerRunning && mIsTimerRunning) {
+        mIsTimerRunning = false;
+        this->Release();
+    }
+
+    return true;
 }
 
 } // namespace mozilla

@@ -4,10 +4,10 @@
 
 this.EXPORTED_SYMBOLS = [ "DistributionCustomizer" ];
 
-const Ci = Components.interfaces;
-const Cc = Components.classes;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 const DISTRIBUTION_CUSTOMIZATION_COMPLETE_TOPIC =
   "distribution-customization-complete";
@@ -54,7 +54,7 @@ DistributionCustomizer.prototype = {
       // Unable to parse INI.
       Cu.reportError("Unable to parse distribution.ini");
     }
-    this.__defineGetter__("_ini", function() ini);
+    this.__defineGetter__("_ini", () => ini);
     return this._ini;
   },
 
@@ -66,27 +66,27 @@ DistributionCustomizer.prototype = {
     catch (e) {
       locale = "en-US";
     }
-    this.__defineGetter__("_locale", function() locale);
+    this.__defineGetter__("_locale", () => locale);
     return this._locale;
   },
 
   get _prefSvc() {
     let svc = Cc["@mozilla.org/preferences-service;1"].
               getService(Ci.nsIPrefService);
-    this.__defineGetter__("_prefSvc", function() svc);
+    this.__defineGetter__("_prefSvc", () => svc);
     return this._prefSvc;
   },
 
   get _prefs() {
     let branch = this._prefSvc.getBranch(null);
-    this.__defineGetter__("_prefs", function() branch);
+    this.__defineGetter__("_prefs", () => branch);
     return this._prefs;
   },
 
   get _ioSvc() {
     let svc = Cc["@mozilla.org/network/io-service;1"].
               getService(Ci.nsIIOService);
-    this.__defineGetter__("_ioSvc", function() svc);
+    this.__defineGetter__("_ioSvc", () => svc);
     return this._ioSvc;
   },
 
@@ -200,6 +200,31 @@ DistributionCustomizer.prototype = {
                                                     "bookmarkProperties/description",
                                                     item.description, 0,
                                                     PlacesUtils.annotations.EXPIRE_NEVER);
+        }
+
+        if (item.icon && item.iconData) {
+          try {
+            let faviconURI = this._makeURI(item.icon);
+            PlacesUtils.favicons.replaceFaviconDataFromDataURL(
+              faviconURI, item.iconData, 0,
+              Services.scriptSecurityManager.getSystemPrincipal());
+
+            PlacesUtils.favicons.setAndFetchFaviconForPage(
+              this._makeURI(item.link), faviconURI, false,
+              PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE, null,
+              Services.scriptSecurityManager.getSystemPrincipal());
+          } catch(e) {
+            Cu.reportError(e);
+          }
+        }
+
+        if (item.keyword) {
+          try {
+            yield PlacesUtils.keywords.insert({ keyword: item.keyword,
+                                                url: item.link });
+          } catch(e) {
+            Cu.reportError(e);
+          }
         }
 
         break;

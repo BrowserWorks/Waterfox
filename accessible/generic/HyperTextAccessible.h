@@ -62,6 +62,7 @@ public:
 
   virtual void InvalidateChildren() override;
   virtual bool RemoveChild(Accessible* aAccessible) override;
+  virtual Relation RelationByType(RelationType aType) override;
 
   // HyperTextAccessible (static helper method)
 
@@ -257,7 +258,7 @@ public:
    * @param  aInvalidateAfter [in, optional] indicates whether invalidate
    *                           cached offsets for next siblings of the child
    */
-  int32_t GetChildOffset(Accessible* aChild,
+  int32_t GetChildOffset(const Accessible* aChild,
                          bool aInvalidateAfter = false) const
   {
     int32_t index = GetIndexOf(aChild);
@@ -334,7 +335,7 @@ public:
    * @param [out] the widget containing the caret
    * @return      the caret rect
    */
-  nsIntRect GetCaretRect(nsIWidget** aWidget);
+  mozilla::LayoutDeviceIntRect GetCaretRect(nsIWidget** aWidget);
 
   /**
    * Return selected regions count within the accessible.
@@ -559,6 +560,12 @@ protected:
   void GetSpellTextAttr(nsINode* aNode, int32_t aNodeOffset,
                         uint32_t* aStartOffset, uint32_t* aEndOffset,
                         nsIPersistentProperties* aAttributes);
+
+  /**
+   * Set xml-roles attributes for MathML elements.
+   * @param aAttributes
+   */
+  void SetMathMLXMLRoles(nsIPersistentProperties* aAttributes);
 
 private:
   /**

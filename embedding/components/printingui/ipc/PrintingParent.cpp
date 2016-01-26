@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* vim: set sw=4 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,9 +19,11 @@
 #include "PrintDataUtils.h"
 #include "PrintProgressDialogParent.h"
 #include "PrintSettingsDialogParent.h"
+#include "mozilla/layout/RemotePrintJobParent.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::layout;
 
 namespace mozilla {
 namespace embedding {
@@ -30,9 +32,10 @@ PrintingParent::RecvShowProgress(PBrowserParent* parent,
                                  PPrintProgressDialogParent* printProgressDialog,
                                  const bool& isForPrinting,
                                  bool* notifyOnOpen,
-                                 bool* success)
+                                 nsresult* result)
 {
-  *success = false;
+  *result = NS_ERROR_FAILURE;
+  *notifyOnOpen = false;
 
   nsCOMPtr<nsIDOMWindow> parentWin = DOMWindowFromBrowserParent(parent);
   if (!parentWin) {
@@ -52,17 +55,16 @@ PrintingParent::RecvShowProgress(PBrowserParent* parent,
   nsCOMPtr<nsIWebProgressListener> printProgressListener;
   nsCOMPtr<nsIPrintProgressParams> printProgressParams;
 
-  nsresult rv = pps->ShowProgress(parentWin, nullptr, nullptr, observer,
-                                  isForPrinting,
-                                  getter_AddRefs(printProgressListener),
-                                  getter_AddRefs(printProgressParams),
-                                  notifyOnOpen);
-  NS_ENSURE_SUCCESS(rv, true);
+  *result = pps->ShowProgress(parentWin, nullptr, nullptr, observer,
+                              isForPrinting,
+                              getter_AddRefs(printProgressListener),
+                              getter_AddRefs(printProgressParams),
+                              notifyOnOpen);
+  NS_ENSURE_SUCCESS(*result, true);
 
   dialogParent->SetWebProgressListener(printProgressListener);
   dialogParent->SetPrintProgressParams(printProgressParams);
 
-  *success = true;
   return true;
 }
 
@@ -102,6 +104,10 @@ PrintingParent::ShowPrintDialog(PBrowserParent* aParent,
 
   // And send it back.
   rv = po->SerializeToPrintData(settings, nullptr, aResult);
+
+  PRemotePrintJobParent* remotePrintJob = new RemotePrintJobParent(settings);
+  aResult->remotePrintJobParent() = SendPRemotePrintJobConstructor(remotePrintJob);
+
   return rv;
 }
 
@@ -118,9 +124,9 @@ PrintingParent::RecvShowPrintDialog(PPrintSettingsDialogParent* aDialog,
   // with an async message which frees the child process from
   // its nested event loop.
   if (NS_FAILED(rv)) {
-    mozilla::unused << aDialog->Send__delete__(aDialog, rv);
+    mozilla::Unused << aDialog->Send__delete__(aDialog, rv);
   } else {
-    mozilla::unused << aDialog->Send__delete__(aDialog, resultData);
+    mozilla::Unused << aDialog->Send__delete__(aDialog, resultData);
   }
   return true;
 }
@@ -178,6 +184,20 @@ PrintingParent::AllocPPrintSettingsDialogParent()
 
 bool
 PrintingParent::DeallocPPrintSettingsDialogParent(PPrintSettingsDialogParent* aDoomed)
+{
+  delete aDoomed;
+  return true;
+}
+
+PRemotePrintJobParent*
+PrintingParent::AllocPRemotePrintJobParent()
+{
+  MOZ_ASSERT_UNREACHABLE("No default constructors for implementations.");
+  return nullptr;
+}
+
+bool
+PrintingParent::DeallocPRemotePrintJobParent(PRemotePrintJobParent* aDoomed)
 {
   delete aDoomed;
   return true;

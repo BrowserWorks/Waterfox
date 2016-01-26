@@ -8,6 +8,8 @@
 #define jit_shared_CodeGenerator_shared_h
 
 #include "mozilla/Alignment.h"
+#include "mozilla/Move.h"
+#include "mozilla/TypeTraits.h"
 
 #include "jit/JitFrames.h"
 #include "jit/LIR.h"
@@ -44,7 +46,7 @@ struct PatchableBackedgeInfo
 };
 
 struct ReciprocalMulConstants {
-    int32_t multiplier;
+    int64_t multiplier;
     int32_t shiftAmount;
 };
 
@@ -54,8 +56,8 @@ struct ReciprocalMulConstants {
 struct NativeToTrackedOptimizations
 {
     // [startOffset, endOffset]
-    CodeOffsetLabel startOffset;
-    CodeOffsetLabel endOffset;
+    CodeOffset startOffset;
+    CodeOffset endOffset;
     const TrackedOptimizations* optimizations;
 };
 
@@ -82,7 +84,12 @@ class CodeGeneratorShared : public LElementVisitor
     uint32_t lastOsiPointOffset_;
     SafepointWriter safepoints_;
     Label invalidate_;
-    CodeOffsetLabel invalidateEpilogueData_;
+    CodeOffset invalidateEpilogueData_;
+
+    // Label for the common return path.
+    NonAssertingLabel returnLabel_;
+
+    FallbackICStubSpace stubSpace_;
 
     js::Vector<SafepointIndex, 0, SystemAllocPolicy> safepointIndices_;
     js::Vector<OsiIndex, 0, SystemAllocPolicy> osiIndices_;
@@ -100,13 +107,13 @@ class CodeGeneratorShared : public LElementVisitor
     Vector<PatchableBackedgeInfo, 0, SystemAllocPolicy> patchableBackedges_;
 
 #ifdef JS_TRACE_LOGGING
-    js::Vector<CodeOffsetLabel, 0, SystemAllocPolicy> patchableTraceLoggers_;
-    js::Vector<CodeOffsetLabel, 0, SystemAllocPolicy> patchableTLScripts_;
+    js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTraceLoggers_;
+    js::Vector<CodeOffset, 0, SystemAllocPolicy> patchableTLScripts_;
 #endif
 
   public:
     struct NativeToBytecode {
-        CodeOffsetLabel nativeOffset;
+        CodeOffset nativeOffset;
         InlineScriptTree* tree;
         jsbytecode* pc;
     };
@@ -169,7 +176,7 @@ class CodeGeneratorShared : public LElementVisitor
 
   protected:
 #ifdef CHECK_OSIPOINT_REGISTERS
-    // See js_JitOptions.checkOsiPointRegisters. We set this here to avoid
+    // See JitOptions.checkOsiPointRegisters. We set this here to avoid
     // races when enableOsiPointRegisterChecks is called while we're generating
     // code off-thread.
     bool checkOsiPointRegisters;
@@ -189,72 +196,29 @@ class CodeGeneratorShared : public LElementVisitor
     FrameSizeClass frameClass_;
 
     // For arguments to the current function.
-    inline int32_t ArgToStackOffset(int32_t slot) const {
-        return masm.framePushed() +
-               (gen->compilingAsmJS() ? sizeof(AsmJSFrame) : sizeof(JitFrameLayout)) +
-               slot;
-    }
+    inline int32_t ArgToStackOffset(int32_t slot) const;
 
     // For the callee of the current function.
-    inline int32_t CalleeStackOffset() const {
-        return masm.framePushed() + JitFrameLayout::offsetOfCalleeToken();
-    }
+    inline int32_t CalleeStackOffset() const;
 
-    inline int32_t SlotToStackOffset(int32_t slot) const {
-        MOZ_ASSERT(slot > 0 && slot <= int32_t(graph.localSlotCount()));
-        int32_t offset = masm.framePushed() - frameInitialAdjustment_ - slot;
-        MOZ_ASSERT(offset >= 0);
-        return offset;
-    }
-    inline int32_t StackOffsetToSlot(int32_t offset) const {
-        // See: SlotToStackOffset. This is used to convert pushed arguments
-        // to a slot index that safepoints can use.
-        //
-        // offset = framePushed - frameInitialAdjustment - slot
-        // offset + slot = framePushed - frameInitialAdjustment
-        // slot = framePushed - frameInitialAdjustement - offset
-        return masm.framePushed() - frameInitialAdjustment_ - offset;
-    }
+    inline int32_t SlotToStackOffset(int32_t slot) const;
+    inline int32_t StackOffsetToSlot(int32_t offset) const;
 
     // For argument construction for calls. Argslots are Value-sized.
-    inline int32_t StackOffsetOfPassedArg(int32_t slot) const {
-        // A slot of 0 is permitted only to calculate %esp offset for calls.
-        MOZ_ASSERT(slot >= 0 && slot <= int32_t(graph.argumentSlotCount()));
-        int32_t offset = masm.framePushed() -
-                       graph.paddedLocalSlotsSize() -
-                       (slot * sizeof(Value));
+    inline int32_t StackOffsetOfPassedArg(int32_t slot) const;
 
-        // Passed arguments go below A function's local stack storage.
-        // When arguments are being pushed, there is nothing important on the stack.
-        // Therefore, It is safe to push the arguments down arbitrarily.  Pushing
-        // by sizeof(Value) is desirable since everything on the stack is a Value.
-        // Note that paddedLocalSlotCount() aligns to at least a Value boundary
-        // specifically to support this.
-        MOZ_ASSERT(offset >= 0);
-        MOZ_ASSERT(offset % sizeof(Value) == 0);
-        return offset;
-    }
-
-    inline int32_t ToStackOffset(const LAllocation* a) const {
-        if (a->isArgument())
-            return ArgToStackOffset(a->toArgument()->index());
-        return SlotToStackOffset(a->toStackSlot()->slot());
-    }
+    inline int32_t ToStackOffset(LAllocation a) const;
+    inline int32_t ToStackOffset(const LAllocation* a) const;
 
     uint32_t frameSize() const {
         return frameClass_ == FrameSizeClass::None() ? frameDepth_ : frameClass_.frameSize();
     }
 
-  protected:
-    // Ensure the cache is an IonCache while expecting the size of the derived
-    // class. We only need the cache list at GC time. Everyone else can just take
-    // runtimeData offsets.
-    size_t allocateCache(const IonCache&, size_t size) {
-        size_t dataOffset = allocateData(size);
-        masm.propagateOOM(cacheList_.append(dataOffset));
-        return dataOffset;
-    }
+    inline Operand ToOperand(const LAllocation& a);
+    inline Operand ToOperand(const LAllocation* a);
+    inline Operand ToOperand(const LDefinition* def);
 
+  protected:
 #ifdef CHECK_OSIPOINT_REGISTERS
     void resetOsiPointRegs(LSafepoint* safepoint);
     bool shouldVerifyOsiPointRegs(LSafepoint* safepoint);
@@ -299,17 +263,23 @@ class CodeGeneratorShared : public LElementVisitor
     };
 
   protected:
-
-    size_t allocateData(size_t size) {
+    MOZ_WARN_UNUSED_RESULT
+    bool allocateData(size_t size, size_t* offset) {
         MOZ_ASSERT(size % sizeof(void*) == 0);
-        size_t dataOffset = runtimeData_.length();
+        *offset = runtimeData_.length();
         masm.propagateOOM(runtimeData_.appendN(0, size));
-        return dataOffset;
+        return !masm.oom();
     }
 
+    // Ensure the cache is an IonCache while expecting the size of the derived
+    // class. We only need the cache list at GC time. Everyone else can just take
+    // runtimeData offsets.
     template <typename T>
     inline size_t allocateCache(const T& cache) {
-        size_t index = allocateCache(cache, sizeof(mozilla::AlignedStorage2<T>));
+        static_assert(mozilla::IsBaseOf<IonCache, T>::value, "T must inherit from IonCache");
+        size_t index;
+        masm.propagateOOM(allocateData(sizeof(mozilla::AlignedStorage2<T>), &index));
+        masm.propagateOOM(cacheList_.append(index));
         if (masm.oom())
             return SIZE_MAX;
         // Use the copy constructor on the allocated space.
@@ -331,7 +301,7 @@ class CodeGeneratorShared : public LElementVisitor
 
     // Encode all encountered safepoints in CG-order, and resolve |indices| for
     // safepoint offsets.
-    void encodeSafepoints();
+    bool encodeSafepoints();
 
     // Fixup offsets of native-to-bytecode map.
     bool createNativeToBytecodeScriptList(JSContext* cx);
@@ -367,7 +337,7 @@ class CodeGeneratorShared : public LElementVisitor
 
     void emitAsmJSCall(LAsmJSCall* ins);
 
-    void emitPreBarrier(Register base, const LAllocation* index);
+    void emitPreBarrier(Register base, const LAllocation* index, int32_t offsetAdjustment);
     void emitPreBarrier(Address address);
 
     // We don't emit code for trivial blocks, so if we want to branch to the
@@ -479,10 +449,13 @@ class CodeGeneratorShared : public LElementVisitor
                                     const StoreOutputTo& out);
 
     void addCache(LInstruction* lir, size_t cacheIndex);
-    size_t addCacheLocations(const CacheLocationList& locs, size_t* numLocs);
-    ReciprocalMulConstants computeDivisionConstants(int d);
+    bool addCacheLocations(const CacheLocationList& locs, size_t* numLocs, size_t* offset);
+    ReciprocalMulConstants computeDivisionConstants(uint32_t d, int maxLog);
 
   protected:
+    bool generatePrologue();
+    bool generateEpilogue();
+
     void addOutOfLineCode(OutOfLineCode* code, const MInstruction* mir);
     void addOutOfLineCode(OutOfLineCode* code, const BytecodeSite* site);
     bool generateOutOfLineCode();
@@ -496,7 +469,7 @@ class CodeGeneratorShared : public LElementVisitor
     void jumpToBlock(MBasicBlock* mir);
 
 // This function is not used for MIPS. MIPS has branchToBlock.
-#ifndef JS_CODEGEN_MIPS
+#if !defined(JS_CODEGEN_MIPS32) && !defined(JS_CODEGEN_MIPS64)
     void jumpToBlock(MBasicBlock* mir, Assembler::Condition cond);
 #endif
 
@@ -612,69 +585,57 @@ class OutOfLineCodeBase : public OutOfLineCode
 // ArgSeq store arguments for OutOfLineCallVM.
 //
 // OutOfLineCallVM are created with "oolCallVM" function. The third argument of
-// this function is an instance of a class which provides a "generate" function
-// to call the "pushArg" needed by the VMFunction call.  The list of argument
-// can be created by using the ArgList function which create an empty list of
-// arguments.  Arguments are added to this list by using the comma operator.
-// The type of the argument list is returned by the comma operator, and due to
-// templates arguments, it is quite painful to write by hand.  It is recommended
-// to use it directly as argument of a template function which would get its
-// arguments infered by the compiler (such as oolCallVM).  The list of arguments
-// must be written in the same order as if you were calling the function in C++.
+// this function is an instance of a class which provides a "generate" in charge
+// of pushing the argument, with "pushArg", for a VMFunction.
+//
+// Such list of arguments can be created by using the "ArgList" function which
+// creates one instance of "ArgSeq", where the type of the arguments are inferred
+// from the type of the arguments.
+//
+// The list of arguments must be written in the same order as if you were
+// calling the function in C++.
 //
 // Example:
-//   (ArgList(), ToRegister(lir->lhs()), ToRegister(lir->rhs()))
+//   ArgList(ToRegister(lir->lhs()), ToRegister(lir->rhs()))
 
-template <class SeqType, typename LastType>
-class ArgSeq : public SeqType
-{
-  private:
-    typedef ArgSeq<SeqType, LastType> ThisType;
-    LastType last_;
+template <typename... ArgTypes>
+class ArgSeq;
 
-  public:
-    ArgSeq(const SeqType& seq, const LastType& last)
-      : SeqType(seq),
-        last_(last)
-    { }
-
-    template <typename NextType>
-    inline ArgSeq<ThisType, NextType>
-    operator, (const NextType& last) const {
-        return ArgSeq<ThisType, NextType>(*this, last);
-    }
-
-    inline void generate(CodeGeneratorShared* codegen) const {
-        codegen->pushArg(last_);
-        this->SeqType::generate(codegen);
-    }
-};
-
-// Mark the end of an argument list.
 template <>
-class ArgSeq<void, void>
+class ArgSeq<>
 {
-  private:
-    typedef ArgSeq<void, void> ThisType;
-
   public:
     ArgSeq() { }
-    ArgSeq(const ThisType&) { }
-
-    template <typename NextType>
-    inline ArgSeq<ThisType, NextType>
-    operator, (const NextType& last) const {
-        return ArgSeq<ThisType, NextType>(*this, last);
-    }
 
     inline void generate(CodeGeneratorShared* codegen) const {
     }
 };
 
-inline ArgSeq<void, void>
-ArgList()
+template <typename HeadType, typename... TailTypes>
+class ArgSeq<HeadType, TailTypes...> : public ArgSeq<TailTypes...>
 {
-    return ArgSeq<void, void>();
+  private:
+    HeadType head_;
+
+  public:
+    explicit ArgSeq(HeadType&& head, TailTypes&&... tail)
+      : ArgSeq<TailTypes...>(mozilla::Move(tail)...),
+        head_(mozilla::Move(head))
+    { }
+
+    // Arguments are pushed in reverse order, from last argument to first
+    // argument.
+    inline void generate(CodeGeneratorShared* codegen) const {
+        this->ArgSeq<TailTypes...>::generate(codegen);
+        codegen->pushArg(head_);
+    }
+};
+
+template <typename... ArgTypes>
+inline ArgSeq<ArgTypes...>
+ArgList(ArgTypes... args)
+{
+    return ArgSeq<ArgTypes...>(mozilla::Move(args)...);
 }
 
 // Store wrappers, to generate the right move of data after the VM call.

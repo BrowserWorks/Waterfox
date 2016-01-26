@@ -16,51 +16,40 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/HTMLMediaElement.h"
-#include "mozilla/dom/TimeRanges.h"
 #include "mozilla/mozalloc.h"
 #include "nsContentTypeParser.h"
-#include "nsContentUtils.h"
 #include "nsDebug.h"
 #include "nsError.h"
-#include "nsIEffectiveTLDService.h"
 #include "nsIRunnable.h"
 #include "nsIScriptObjectPrincipal.h"
-#include "nsIURI.h"
-#include "nsNetCID.h"
 #include "nsPIDOMWindow.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsServiceManagerUtils.h"
+#include "gfxPlatform.h"
+
+#ifdef MOZ_WIDGET_ANDROID
+#include "AndroidBridge.h"
+#endif
 
 struct JSContext;
 class JSObject;
 
-#ifdef PR_LOGGING
-PRLogModuleInfo* GetMediaSourceLog()
+mozilla::LogModule* GetMediaSourceLog()
 {
-  static PRLogModuleInfo* sLogModule;
-  if (!sLogModule) {
-    sLogModule = PR_NewLogModule("MediaSource");
-  }
+  static mozilla::LazyLogModule sLogModule("MediaSource");
   return sLogModule;
 }
 
-PRLogModuleInfo* GetMediaSourceAPILog()
+mozilla::LogModule* GetMediaSourceAPILog()
 {
-  static PRLogModuleInfo* sLogModule;
-  if (!sLogModule) {
-    sLogModule = PR_NewLogModule("MediaSource");
-  }
+  static mozilla::LazyLogModule sLogModule("MediaSource");
   return sLogModule;
 }
 
-#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
-#define MSE_API(arg, ...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
-#else
-#define MSE_DEBUG(...)
-#define MSE_API(...)
-#endif
+#define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 
 // Arbitrary limit.
 static const unsigned int MAX_SOURCE_BUFFERS = 16;
@@ -75,6 +64,22 @@ static const char* const gMediaSourceTypes[6] = {
   nullptr
 };
 
+// Returns true if we should enable MSE webm regardless of preferences.
+// 1. If MP4/H264 isn't supported:
+//   * Windows XP
+//   * Windows Vista and Server 2008 without the optional "Platform Update Supplement"
+//   * N/KN editions (Europe and Korea) of Windows 7/8/8.1/10 without the
+//     optional "Windows Media Feature Pack"
+// 2. If H264 hardware acceleration is not available.
+static bool
+IsWebMForced()
+{
+  bool mp4supported =
+    DecoderTraits::IsMP4TypeAndEnabled(NS_LITERAL_CSTRING("video/mp4"));
+  bool hwsupported = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
+  return !mp4supported || !hwsupported;
+}
+
 static nsresult
 IsTypeSupported(const nsAString& aType)
 {
@@ -87,33 +92,41 @@ IsTypeSupported(const nsAString& aType)
   if (NS_FAILED(rv)) {
     return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
   }
-  bool found = false;
+  NS_ConvertUTF16toUTF8 mimeTypeUTF8(mimeType);
+
+  nsAutoString codecs;
+  bool hasCodecs = NS_SUCCEEDED(parser.GetParameter("codecs", codecs));
+
   for (uint32_t i = 0; gMediaSourceTypes[i]; ++i) {
     if (mimeType.EqualsASCII(gMediaSourceTypes[i])) {
-      if ((mimeType.EqualsASCII("video/mp4") ||
-           mimeType.EqualsASCII("audio/mp4")) &&
-          !Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
-        break;
+      if (DecoderTraits::IsMP4TypeAndEnabled(mimeTypeUTF8)) {
+        if (!Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+        }
+        if (hasCodecs &&
+            DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
+                                               codecs) == CANPLAY_NO) {
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+        }
+        return NS_OK;
+      } else if (DecoderTraits::IsWebMTypeAndEnabled(mimeTypeUTF8)) {
+        if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
+              (Preferences::GetBool("media.mediasource.webm.audio.enabled", true) &&
+               DecoderTraits::IsWebMAudioType(mimeTypeUTF8)) ||
+              IsWebMForced())) {
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+        }
+        if (hasCodecs &&
+            DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
+                                               codecs) == CANPLAY_NO) {
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+        }
+        return NS_OK;
       }
-      if ((mimeType.EqualsASCII("video/webm") ||
-           mimeType.EqualsASCII("audio/webm")) &&
-          !Preferences::GetBool("media.mediasource.webm.enabled", false)) {
-        break;
-      }
-      found = true;
-      break;
     }
   }
-  if (!found) {
-    return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-  }
-  // Check aType against HTMLMediaElement list of MIME types.  Since we've
-  // already restricted the container format, this acts as a specific check
-  // of any specified "codecs" parameter of aType.
-  if (dom::HTMLMediaElement::GetCanPlay(aType) == CANPLAY_NO) {
-    return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
-  }
-  return NS_OK;
+
+  return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
 }
 
 namespace dom {
@@ -128,7 +141,7 @@ MediaSource::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<MediaSource> mediaSource = new MediaSource(window);
+  RefPtr<MediaSource> mediaSource = new MediaSource(window);
   return mediaSource.forget();
 }
 
@@ -227,7 +240,7 @@ MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
     aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     return nullptr;
   }
-  nsRefPtr<SourceBuffer> sourceBuffer = new SourceBuffer(this, NS_ConvertUTF16toUTF8(mimeType));
+  RefPtr<SourceBuffer> sourceBuffer = new SourceBuffer(this, NS_ConvertUTF16toUTF8(mimeType));
   if (!sourceBuffer) {
     aRv.Throw(NS_ERROR_FAILURE); // XXX need a better error here
     return nullptr;
@@ -309,14 +322,10 @@ MediaSource::EndOfStream(const Optional<MediaSourceEndOfStreamError>& aError, Er
   }
   switch (aError.Value()) {
   case MediaSourceEndOfStreamError::Network:
-    // TODO: If media element has a readyState of:
-    //   HAVE_NOTHING -> run resource fetch algorithm
-    // > HAVE_NOTHING -> run "interrupted" steps of resource fetch
+    mDecoder->NetworkError();
     break;
   case MediaSourceEndOfStreamError::Decode:
-    // TODO: If media element has a readyState of:
-    //   HAVE_NOTHING -> run "unsupported" steps of resource fetch
-    // > HAVE_NOTHING -> run "corrupted" steps of resource fetch
+    mDecoder->DecodeError();
     break;
   default:
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
@@ -338,44 +347,7 @@ MediaSource::IsTypeSupported(const GlobalObject&, const nsAString& aType)
 /* static */ bool
 MediaSource::Enabled(JSContext* cx, JSObject* aGlobal)
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  // Don't use aGlobal across Preferences stuff, which the static
-  // analysis thinks can GC.
-  JS::Rooted<JSObject*> global(cx, aGlobal);
-
-  bool enabled = Preferences::GetBool("media.mediasource.enabled");
-  if (!enabled) {
-    return false;
-  }
-
-  // Check whether it's enabled everywhere or just whitelisted sites.
-  bool restrict = Preferences::GetBool("media.mediasource.whitelist", false);
-  if (!restrict) {
-    return true;
-  }
-
-  // We want to restrict to YouTube only.
-  // We define that as the origin being *.youtube.com.
-  // We also support *.youtube-nocookie.com
-  nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(global);
-  nsCOMPtr<nsIURI> uri;
-  if (NS_FAILED(principal->GetURI(getter_AddRefs(uri))) || !uri) {
-    return false;
-  }
-
-  nsCOMPtr<nsIEffectiveTLDService> tldServ =
-    do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID);
-  NS_ENSURE_TRUE(tldServ, false);
-
-  nsAutoCString eTLDplusOne;
-   if (NS_FAILED(tldServ->GetBaseDomain(uri, 0, eTLDplusOne))) {
-     return false;
-   }
-
-   return eTLDplusOne.EqualsLiteral("youtube.com") ||
-          eTLDplusOne.EqualsLiteral("youtube-nocookie.com") ||
-          eTLDplusOne.EqualsLiteral("netflix.com");
+  return Preferences::GetBool("media.mediasource.enabled");
 }
 
 bool
@@ -408,10 +380,7 @@ MediaSource::Detach()
     MOZ_ASSERT(mActiveSourceBuffers->IsEmpty() && mSourceBuffers->IsEmpty());
     return;
   }
-  mDecoder->DetachMediaSource();
-  mDecoder = nullptr;
   mMediaElement = nullptr;
-  mFirstSourceBufferInitialized = false;
   SetReadyState(MediaSourceReadyState::Closed);
   if (mActiveSourceBuffers) {
     mActiveSourceBuffers->Clear();
@@ -419,6 +388,8 @@ MediaSource::Detach()
   if (mSourceBuffers) {
     mSourceBuffers->Clear();
   }
+  mDecoder->DetachMediaSource();
+  mDecoder = nullptr;
 }
 
 MediaSource::MediaSource(nsPIDOMWindow* aWindow)
@@ -426,7 +397,6 @@ MediaSource::MediaSource(nsPIDOMWindow* aWindow)
   , mDecoder(nullptr)
   , mPrincipal(nullptr)
   , mReadyState(MediaSourceReadyState::Closed)
-  , mFirstSourceBufferInitialized(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
   mSourceBuffers = new SourceBufferList(this);
@@ -515,30 +485,6 @@ MediaSource::NotifyEvicted(double aStart, double aEnd)
   // Cycle through all SourceBuffers and tell them to evict data in
   // the given range.
   mSourceBuffers->Evict(aStart, aEnd);
-}
-
-void
-MediaSource::QueueInitializationEvent()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  if (mFirstSourceBufferInitialized) {
-    return;
-  }
-  mFirstSourceBufferInitialized = true;
-  MSE_DEBUG("");
-  nsCOMPtr<nsIRunnable> task =
-    NS_NewRunnableMethod(this, &MediaSource::InitializationEvent);
-  NS_DispatchToMainThread(task);
-}
-
-void
-MediaSource::InitializationEvent()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("");
-  if (mDecoder) {
-    mDecoder->PrepareReaderInitialization();
-  }
 }
 
 #if defined(DEBUG)

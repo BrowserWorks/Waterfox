@@ -1,7 +1,7 @@
 <head>
   <title>Plugin hanging</title>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="application/javascript" src="utils.js"></script>
+  <script type="application/javascript" src="plugin-utils.js"></script>
 
 <body>
   <script class="testbody" type="application/javascript">
@@ -9,12 +9,6 @@
   setTestPluginEnabledState(SpecialPowers.Ci.nsIPluginTag.STATE_ENABLED);
 
   window.frameLoaded = function frameLoaded_toCrash() {
-    if (!SimpleTest.testPluginIsOOP()) {
-      ok(true, "Skipping this test when test plugin is not OOP.");
-      SimpleTest.finish();
-      return;
-    }
-
     SimpleTest.expectChildProcessCrash();
 
     // the default timeout is annoying high for mochitest runs

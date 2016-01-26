@@ -11,8 +11,6 @@
 
 <!ENTITY abouthome.pageTitle "&brandFullName; Start Page">
 
-<!ENTITY abouthome.searchEngineButton.label "Search">
-
 <!-- LOCALIZATION NOTE (abouthome.defaultSnippet1.v1):
      text in <a/> will be linked to the Firefox features page on mozilla.com
 -->
@@ -33,6 +31,5 @@
      preferences/options item on about:home on Linux and OS X -->
 <!ENTITY abouthome.preferencesButtonUnix.label  "Preferences">
 <!ENTITY abouthome.addonsButton.label    "Add-ons">
-<!ENTITY abouthome.appsButton.label      "Marketplace">
 <!ENTITY abouthome.downloadsButton.label "Downloads">
 <!ENTITY abouthome.syncButton.label      "&syncBrand.shortName.label;">

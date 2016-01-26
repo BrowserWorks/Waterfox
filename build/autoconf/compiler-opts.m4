@@ -128,16 +128,14 @@ fi
 
 AC_SUBST(MOZ_NO_DEBUG_RTL)
 
-MOZ_DEBUG_ENABLE_DEFS="-DDEBUG -DTRACING"
+MOZ_DEBUG_ENABLE_DEFS="DEBUG TRACING"
 MOZ_ARG_WITH_STRING(debug-label,
 [  --with-debug-label=LABELS
                           Define DEBUG_<value> for each comma-separated
                           value given.],
 [ for option in `echo $withval | sed 's/,/ /g'`; do
-    MOZ_DEBUG_ENABLE_DEFS="$MOZ_DEBUG_ENABLE_DEFS -DDEBUG_${option}"
+    MOZ_DEBUG_ENABLE_DEFS="$MOZ_DEBUG_ENABLE_DEFS DEBUG_${option}"
 done])
-
-MOZ_DEBUG_DISABLE_DEFS="-DNDEBUG -DTRIMMED"
 
 if test -n "$MOZ_DEBUG"; then
     AC_MSG_CHECKING([for valid debug flags])
@@ -152,7 +150,13 @@ if test -n "$MOZ_DEBUG"; then
         AC_MSG_ERROR([These compiler flags are invalid: $MOZ_DEBUG_FLAGS])
     fi
     CFLAGS=$_SAVE_CFLAGS
+
+    MOZ_DEBUG_DEFINES="$MOZ_DEBUG_ENABLE_DEFS"
+else
+    MOZ_DEBUG_DEFINES="NDEBUG TRIMMED"
 fi
+
+AC_SUBST_LIST(MOZ_DEBUG_DEFINES)
 
 dnl ========================================================
 dnl = Enable generation of debug symbols
@@ -357,6 +361,20 @@ if test "$GNU_CC" -a -n "$MOZ_PIE"; then
 fi
 
 AC_SUBST(MOZ_PROGRAM_LDFLAGS)
+
+dnl ASan assumes no symbols are being interposed, and when that happens,
+dnl it's not happy with it. Unconveniently, since Firefox is exporting
+dnl libffi symbols and Gtk+3 pulls system libffi via libwayland-client,
+dnl system libffi interposes libffi symbols that ASan assumes are in
+dnl libxul, so it barfs about buffer overflows.
+dnl Using -Wl,-Bsymbolic ensures no exported symbol can be interposed.
+if test -n "$GCC_USE_GNU_LD"; then
+  case "$LDFLAGS" in
+  *-fsanitize=address*)
+    LDFLAGS="$LDFLAGS -Wl,-Bsymbolic"
+    ;;
+  esac
+fi
 
 ])
 

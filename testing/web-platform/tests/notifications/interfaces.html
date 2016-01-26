@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset=utf-8>
-<title>Web Notifications IDL tests</title>
+<title>Notification interface IDL tests</title>
 <div id=log></div>
 <script src=/resources/testharness.js></script>
 <script src=/resources/testharnessreport.js></script>
@@ -20,7 +20,7 @@ typedef EventHandlerNonNull? EventHandler;
 [Constructor(DOMString title, optional NotificationOptions options)]
 interface Notification : EventTarget {
   static readonly attribute NotificationPermission permission;
-  static void requestPermission(optional NotificationPermissionCallback callback);
+  static Promise<NotificationPermission> requestPermission(optional NotificationPermissionCallback callback);
 
   attribute EventHandler onclick;
   attribute EventHandler onshow;
@@ -74,7 +74,7 @@ var idlArray = new IdlArray();
   }
 });
 idlArray.add_objects({
-  Notification: ['new Notification("foo")'],
+  Notification: ['new Notification("Running idlharness.")'],
 });
 idlArray.test();
 </script>

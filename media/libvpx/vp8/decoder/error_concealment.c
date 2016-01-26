@@ -15,9 +15,7 @@
 #include "decodemv.h"
 #include "vpx_mem/vpx_mem.h"
 #include "vp8/common/findnearmv.h"
-
-#define MIN(x,y) (((x)<(y))?(x):(y))
-#define MAX(x,y) (((x)>(y))?(x):(y))
+#include "vp8/common/common.h"
 
 #define FLOOR(x,q) ((x) & -(1 << (q)))
 
@@ -352,7 +350,7 @@ static void estimate_missing_mvs(MB_OVERLAP *overlaps,
                                  unsigned int first_corrupt)
 {
     int mb_row, mb_col;
-    vpx_memset(overlaps, 0, sizeof(MB_OVERLAP) * mb_rows * mb_cols);
+    memset(overlaps, 0, sizeof(MB_OVERLAP) * mb_rows * mb_cols);
     /* First calculate the overlaps for all blocks */
     for (mb_row = 0; mb_row < mb_rows; ++mb_row)
     {

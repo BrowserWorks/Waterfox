@@ -11,7 +11,7 @@ function test() {
     windows: [{
       tabs: [{
         entries: [
-          { url: "http://www.mozilla.org/projects/minefield/", title: "Minefield Start Page" },
+          { url: "about:mozilla", title: "Mozilla" },
           {}
         ]
       }]
@@ -31,8 +31,7 @@ function test() {
           gotError = true;
       }
       ok(!gotError, "Didn't get a malformed URI error.");
-      theWin.close();
-      finish();
+      BrowserTestUtils.closeWindow(theWin).then(finish);
     });
   }, false);
 }

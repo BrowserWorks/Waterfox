@@ -9,9 +9,6 @@ ac_add_options --enable-update-packaging
 ac_add_options --enable-jemalloc
 ac_add_options --enable-signmar
 
-# Nightlies only since this has a cost in performance
-ac_add_options --enable-js-diagnostics
-
 # Needed to enable breakpad in application.ini
 export MOZILLA_OFFICIAL=1
 
@@ -30,7 +27,7 @@ export CXXFLAGS=-DMOZ_ENABLE_JS_DUMP
 GAIADIR=$topsrcdir/gaia
 
 # Include Firefox OS fonts.
-MOZTTDIR=$topsrcdir/moztt
+MOZTTDIR=$topsrcdir/moz-tt
 
 # Build simulator xpi and phone tweaks for b2g-desktop
 FXOS_SIMULATOR=1

@@ -6,9 +6,11 @@
 include LayersSurfaces;
 include LayersMessages;
 include protocol PCompositable;
+include protocol PImageContainer;
 include protocol PLayer;
 include protocol PTexture;
 include ProtocolTypes;
+include protocol PMediaSystemResourceManager;
 
 include "mozilla/GfxMessageUtils.h";
 
@@ -29,16 +31,21 @@ sync protocol PImageBridge
 {
   manages PCompositable;
   manages PTexture;
+  manages PMediaSystemResourceManager;
+  manages PImageContainer;
 
 child:
   async ParentAsyncMessages(AsyncParentMessageData[] aMessages);
 
-parent:
+  async DidComposite(ImageCompositeNotification[] aNotifications);
 
+parent:
   async ImageBridgeThreadId(PlatformThreadId aTreahdId);
 
-  sync Update(CompositableOperation[] ops) returns (EditReply[] reply);
-  async UpdateNoSwap(CompositableOperation[] ops);
+  sync Update(CompositableOperation[] ops, OpDestroy[] toDestroy)
+    returns (EditReply[] reply);
+
+  async UpdateNoSwap(CompositableOperation[] ops, OpDestroy[] toDestroy);
 
   // First step of the destruction sequence. This puts ImageBridge
   // in a state in which it can't send asynchronous messages
@@ -52,8 +59,11 @@ parent:
   // Second step
   sync Stop();
 
-  sync PCompositable(TextureInfo aInfo) returns (uint64_t id);
-  async PTexture(SurfaceDescriptor aSharedData, TextureFlags aTextureFlags);
+  sync PCompositable(TextureInfo aInfo,
+                     nullable PImageContainer aImageContainer) returns (uint64_t id);
+  async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags);
+  async PMediaSystemResourceManager();
+  async PImageContainer();
 
   async ChildAsyncMessages(AsyncChildMessageData[] aMessages);
 };

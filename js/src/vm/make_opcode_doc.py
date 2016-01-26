@@ -292,24 +292,24 @@ def format_flags(flags):
 
 def print_opcode(opcode):
     names_template = '{name} [-{nuses}, +{ndefs}]{flags}'
+    opcodes = sorted([opcode] + opcode.group,
+                     key=lambda opcode: opcode.name)
     names = map(lambda code: names_template.format(name=escape(code.name),
                                                    nuses=override(code.nuses,
                                                                   opcode.nuses_override),
                                                    ndefs=override(code.ndefs,
                                                                   opcode.ndefs_override),
                                                    flags=format_flags(code.flags)),
-                sorted([opcode] + opcode.group,
-                       key=lambda opcode: opcode.name))
-    if len(opcode.group) == 0:
+                opcodes)
+    if len(opcodes) == 1:
         values = ['{value} (0x{value:02x})'.format(value=opcode.value)]
     else:
         values_template = '{name}: {value} (0x{value:02x})'
         values = map(lambda code: values_template.format(name=escape(code.name),
                                                          value=code.value),
-                    sorted([opcode] + opcode.group,
-                           key=lambda opcode: opcode.name))
+                    opcodes)
 
-    print("""<dt>{names}</dt>
+    print("""<dt id="{id}">{names}</dt>
 <dd>
 <table class="standard-table">
 <tbody>
@@ -323,7 +323,8 @@ def print_opcode(opcode):
 
 {desc}
 </dd>
-""".format(names='<br>'.join(names),
+""".format(id=opcodes[0].name,
+           names='<br>'.join(names),
            values='<br>'.join(values),
            operands=escape(opcode.operands) or "&nbsp;",
            length=escape(override(opcode.length,
@@ -332,8 +333,27 @@ def print_opcode(opcode):
            stack_defs=escape(opcode.stack_defs) or "&nbsp;",
            desc=opcode.desc)) # desc is already escaped
 
-def make_element_id(name):
-    return name.replace(' ', '-')
+id_cache = dict()
+id_count = dict()
+
+def make_element_id(category, type=''):
+    key = '{}:{}'.format(category, type)
+    if key in id_cache:
+        return id_cache[key]
+
+    if type == '':
+        id = category.replace(' ', '_')
+    else:
+        id = type.replace(' ', '_')
+
+    if id in id_count:
+        id_count[id] += 1
+        id = '{}_{}'.format(id, id_count[id])
+    else:
+        id_count[id] = 1
+
+    id_cache[key] = id
+    return id
 
 def print_doc(version, index):
     print("""<div>{{{{SpiderMonkeySidebar("Internals")}}}}</div>
@@ -357,7 +377,7 @@ def print_doc(version, index):
         for (type_name, opcodes) in types:
             if type_name:
                 print('<h4 id="{id}">{name}</h4>'.format(name=type_name,
-                                                         id=make_element_id(type_name)))
+                                                         id=make_element_id(category_name, type_name)))
             print('<dl>')
             for opcode in sorted(opcodes,
                                  key=lambda opcode: opcode.sort_key):

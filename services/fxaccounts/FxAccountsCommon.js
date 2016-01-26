@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { interfaces: Ci, utils: Cu } = Components;
+var { interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -21,7 +21,7 @@ const PREF_LOG_LEVEL_DUMP = "identity.fxaccounts.log.appender.dump";
 // identifiable info, credentials, etc) will be logged.
 const PREF_LOG_SENSITIVE_DETAILS = "identity.fxaccounts.log.sensitive";
 
-let exports = Object.create(null);
+var exports = Object.create(null);
 
 XPCOMUtils.defineLazyGetter(exports, 'log', function() {
   let log = Log.repository.getLogger("FirefoxAccounts");
@@ -66,7 +66,6 @@ exports.FXACCOUNTS_PERMISSION = "firefox-accounts";
 
 exports.DATA_FORMAT_VERSION = 1;
 exports.DEFAULT_STORAGE_FILENAME = "signedInUser.json";
-exports.DEFAULT_OAUTH_TOKENS_FILENAME = "signedInUserOAuthTokens.json";
 
 // Token life times.
 // Having this parameter be short has limited security value and can cause
@@ -125,6 +124,10 @@ exports.ERRNO_INCORRECT_LOGIN_METHOD         = 117;
 exports.ERRNO_INCORRECT_KEY_RETRIEVAL_METHOD = 118;
 exports.ERRNO_INCORRECT_API_VERSION          = 119;
 exports.ERRNO_INCORRECT_EMAIL_CASE           = 120;
+exports.ERRNO_ACCOUNT_LOCKED                 = 121;
+exports.ERRNO_ACCOUNT_UNLOCKED               = 122;
+exports.ERRNO_UNKNOWN_DEVICE                 = 123;
+exports.ERRNO_DEVICE_SESSION_CONFLICT        = 124;
 exports.ERRNO_SERVICE_TEMP_UNAVAILABLE       = 201;
 exports.ERRNO_PARSE                          = 997;
 exports.ERRNO_NETWORK                        = 998;
@@ -151,7 +154,10 @@ exports.ERRNO_INVALID_CONTENT_TYPE           = 113 + exports.OAUTH_SERVER_ERRNO_
 // Errors.
 exports.ERROR_ACCOUNT_ALREADY_EXISTS         = "ACCOUNT_ALREADY_EXISTS";
 exports.ERROR_ACCOUNT_DOES_NOT_EXIST         = "ACCOUNT_DOES_NOT_EXIST ";
+exports.ERROR_ACCOUNT_LOCKED                 = "ACCOUNT_LOCKED";
+exports.ERROR_ACCOUNT_UNLOCKED               = "ACCOUNT_UNLOCKED";
 exports.ERROR_ALREADY_SIGNED_IN_USER         = "ALREADY_SIGNED_IN_USER";
+exports.ERROR_DEVICE_SESSION_CONFLICT        = "DEVICE_SESSION_CONFLICT";
 exports.ERROR_ENDPOINT_NO_LONGER_SUPPORTED   = "ENDPOINT_NO_LONGER_SUPPORTED";
 exports.ERROR_INCORRECT_API_VERSION          = "INCORRECT_API_VERSION";
 exports.ERROR_INCORRECT_EMAIL_CASE           = "INCORRECT_EMAIL_CASE";
@@ -177,6 +183,7 @@ exports.ERROR_OFFLINE                        = "OFFLINE";
 exports.ERROR_PERMISSION_DENIED              = "PERMISSION_DENIED";
 exports.ERROR_REQUEST_BODY_TOO_LARGE         = "REQUEST_BODY_TOO_LARGE";
 exports.ERROR_SERVER_ERROR                   = "SERVER_ERROR";
+exports.ERROR_SYNC_DISABLED                  = "SYNC_DISABLED";
 exports.ERROR_TOO_MANY_CLIENT_REQUESTS       = "TOO_MANY_CLIENT_REQUESTS";
 exports.ERROR_SERVICE_TEMP_UNAVAILABLE       = "SERVICE_TEMPORARY_UNAVAILABLE";
 exports.ERROR_UI_ERROR                       = "UI_ERROR";
@@ -184,6 +191,7 @@ exports.ERROR_UI_REQUEST                     = "UI_REQUEST";
 exports.ERROR_PARSE                          = "PARSE_ERROR";
 exports.ERROR_NETWORK                        = "NETWORK_ERROR";
 exports.ERROR_UNKNOWN                        = "UNKNOWN_ERROR";
+exports.ERROR_UNKNOWN_DEVICE                 = "UNKNOWN_DEVICE";
 exports.ERROR_UNVERIFIED_ACCOUNT             = "UNVERIFIED_ACCOUNT";
 
 // OAuth errors.
@@ -212,12 +220,23 @@ exports.ERROR_MSG_METHOD_NOT_ALLOWED         = "METHOD_NOT_ALLOWED";
 
 // FxAccounts has the ability to "split" the credentials between a plain-text
 // JSON file in the profile dir and in the login manager.
-// These constants relate to that.
+// In order to prevent new fields accidentally ending up in the "wrong" place,
+// all fields stored are listed here.
 
 // The fields we save in the plaintext JSON.
 // See bug 1013064 comments 23-25 for why the sessionToken is "safe"
-exports.FXA_PWDMGR_PLAINTEXT_FIELDS = ["email", "verified", "authAt",
-                                       "sessionToken", "uid"];
+exports.FXA_PWDMGR_PLAINTEXT_FIELDS = new Set(
+  ["email", "verified", "authAt", "sessionToken", "uid", "oauthTokens", "profile",
+  "deviceId", "isDeviceStale"]);
+
+// Fields we store in secure storage if it exists.
+exports.FXA_PWDMGR_SECURE_FIELDS = new Set(
+  ["kA", "kB", "keyFetchToken", "unwrapBKey", "assertion"]);
+
+// Fields we keep in memory and don't persist anywhere.
+exports.FXA_PWDMGR_MEMORY_FIELDS = new Set(
+  ["cert", "keyPair"]);
+
 // The pseudo-host we use in the login manager
 exports.FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
 // The realm we use in the login manager.
@@ -257,6 +276,10 @@ SERVER_ERRNO_TO_ERROR[ERRNO_INCORRECT_LOGIN_METHOD]         = ERROR_INCORRECT_LO
 SERVER_ERRNO_TO_ERROR[ERRNO_INCORRECT_KEY_RETRIEVAL_METHOD] = ERROR_INCORRECT_KEY_RETRIEVAL_METHOD;
 SERVER_ERRNO_TO_ERROR[ERRNO_INCORRECT_API_VERSION]          = ERROR_INCORRECT_API_VERSION;
 SERVER_ERRNO_TO_ERROR[ERRNO_INCORRECT_EMAIL_CASE]           = ERROR_INCORRECT_EMAIL_CASE;
+SERVER_ERRNO_TO_ERROR[ERRNO_ACCOUNT_LOCKED]                 = ERROR_ACCOUNT_LOCKED;
+SERVER_ERRNO_TO_ERROR[ERRNO_ACCOUNT_UNLOCKED]               = ERROR_ACCOUNT_UNLOCKED;
+SERVER_ERRNO_TO_ERROR[ERRNO_UNKNOWN_DEVICE]                 = ERROR_UNKNOWN_DEVICE;
+SERVER_ERRNO_TO_ERROR[ERRNO_DEVICE_SESSION_CONFLICT]        = ERROR_DEVICE_SESSION_CONFLICT;
 SERVER_ERRNO_TO_ERROR[ERRNO_SERVICE_TEMP_UNAVAILABLE]       = ERROR_SERVICE_TEMP_UNAVAILABLE;
 SERVER_ERRNO_TO_ERROR[ERRNO_UNKNOWN_ERROR]                  = ERROR_UNKNOWN;
 SERVER_ERRNO_TO_ERROR[ERRNO_NETWORK]                        = ERROR_NETWORK;
@@ -280,7 +303,10 @@ SERVER_ERRNO_TO_ERROR[ERRNO_INVALID_CONTENT_TYPE]           = ERROR_INVALID_CONT
 // Map internal errors to more generic error classes for consumers
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ACCOUNT_ALREADY_EXISTS]         = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ACCOUNT_DOES_NOT_EXIST]         = ERROR_AUTH_ERROR;
+ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ACCOUNT_LOCKED]                 = ERROR_AUTH_ERROR;
+ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ACCOUNT_UNLOCKED]               = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ALREADY_SIGNED_IN_USER]         = ERROR_AUTH_ERROR;
+ERROR_TO_GENERAL_ERROR_CLASS[ERROR_DEVICE_SESSION_CONFLICT]        = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_ENDPOINT_NO_LONGER_SUPPORTED]   = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_INCORRECT_API_VERSION]          = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_INCORRECT_EMAIL_CASE]           = ERROR_AUTH_ERROR;
@@ -304,6 +330,7 @@ ERROR_TO_GENERAL_ERROR_CLASS[ERROR_NO_SILENT_REFRESH_AUTH]         = ERROR_AUTH_
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_NOT_VALID_JSON_BODY]            = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_PERMISSION_DENIED]              = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_REQUEST_BODY_TOO_LARGE]         = ERROR_AUTH_ERROR;
+ERROR_TO_GENERAL_ERROR_CLASS[ERROR_UNKNOWN_DEVICE]                 = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_UNVERIFIED_ACCOUNT]             = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_UI_ERROR]                       = ERROR_AUTH_ERROR;
 ERROR_TO_GENERAL_ERROR_CLASS[ERROR_UI_REQUEST]                     = ERROR_AUTH_ERROR;

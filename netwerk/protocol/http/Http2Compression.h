@@ -6,12 +6,13 @@
 #ifndef mozilla_net_Http2Compression_Internal_h
 #define mozilla_net_Http2Compression_Internal_h
 
-// HPACK
-// tools.ietf.org/html/draft-ietf-httpbis-header-compression-04
+// HPACK - RFC 7541
+// https://www.rfc-editor.org/rfc/rfc7541.txt
 
 #include "mozilla/Attributes.h"
 #include "nsDeque.h"
 #include "nsString.h"
+#include "nsIMemoryReporter.h"
 
 namespace mozilla {
 namespace net {
@@ -29,6 +30,8 @@ nvPair(const nsACString &name, const nsACString &value)
   { }
 
   uint32_t Size() const { return mName.Length() + mValue.Length() + 32; }
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const;
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
   nsCString mName;
   nsCString mValue;
@@ -45,23 +48,25 @@ public:
   uint32_t ByteCount() const;
   uint32_t Length() const;
   uint32_t VariableLength() const;
-  uint32_t StaticLength() const;
+  size_t StaticLength() const;
   void Clear();
-  const nvPair *operator[] (int32_t index) const;
+  const nvPair *operator[] (size_t index) const;
 
 private:
   uint32_t mByteCount;
   nsDeque  mTable;
 };
 
+class HpackDynamicTableReporter;
+
 class Http2BaseCompressor
 {
 public:
   Http2BaseCompressor();
-  virtual ~Http2BaseCompressor() { };
+  virtual ~Http2BaseCompressor();
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 protected:
-  // this will become a HTTP/2 SETTINGS value in a future draft
   const static uint32_t kDefaultMaxBuffer = 4096;
 
   virtual void ClearHeaderTable();
@@ -72,6 +77,9 @@ protected:
   nvFIFO mHeaderTable;
 
   uint32_t mMaxBuffer;
+
+private:
+  RefPtr<HpackDynamicTableReporter> mDynamicReporter;
 };
 
 class Http2Compressor;
@@ -175,7 +183,7 @@ private:
   uint32_t mLowestBufferSizeWaiting;
 };
 
-} // namespace mozilla::net
+} // namespace net
 } // namespace mozilla
 
 #endif // mozilla_net_Http2Compression_Internal_h

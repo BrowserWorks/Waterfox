@@ -4,6 +4,9 @@
 // found in the LICENSE file.
 //
 
+#ifndef COMPILER_TRANSLATOR_VALIDATELIMITATIONS_H_
+#define COMPILER_TRANSLATOR_VALIDATELIMITATIONS_H_
+
 #include "compiler/translator/IntermNode.h"
 #include "compiler/translator/LoopInfo.h"
 
@@ -14,14 +17,16 @@ class TInfoSinkBase;
 class ValidateLimitations : public TIntermTraverser
 {
   public:
-    ValidateLimitations(sh::GLenum shaderType, TInfoSinkBase &sink);
+    ValidateLimitations(sh::GLenum shaderType, TInfoSinkBase *sink);
 
     int numErrors() const { return mNumErrors; }
 
-    virtual bool visitBinary(Visit, TIntermBinary *);
-    virtual bool visitUnary(Visit, TIntermUnary *);
-    virtual bool visitAggregate(Visit, TIntermAggregate *);
-    virtual bool visitLoop(Visit, TIntermLoop *);
+    bool visitBinary(Visit, TIntermBinary *) override;
+    bool visitUnary(Visit, TIntermUnary *) override;
+    bool visitAggregate(Visit, TIntermAggregate *) override;
+    bool visitLoop(Visit, TIntermLoop *) override;
+
+    static bool IsLimitedForLoop(TIntermLoop *node);
 
   private:
     void error(TSourceLoc loc, const char *reason, const char *token);
@@ -48,8 +53,11 @@ class ValidateLimitations : public TIntermTraverser
     bool validateIndexing(TIntermBinary *node);
 
     sh::GLenum mShaderType;
-    TInfoSinkBase &mSink;
+    TInfoSinkBase *mSink;
     int mNumErrors;
     TLoopStack mLoopStack;
+    bool mValidateIndexing;
+    bool mValidateInnerLoops;
 };
 
+#endif // COMPILER_TRANSLATOR_VALIDATELIMITATIONS_H_

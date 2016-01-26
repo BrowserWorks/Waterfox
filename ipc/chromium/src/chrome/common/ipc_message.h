@@ -190,16 +190,16 @@ class Message : public Pickle {
     return header()->seqno;
   }
 
-  void set_seqno(int32_t seqno) {
-    header()->seqno = seqno;
+  void set_seqno(int32_t aSeqno) {
+    header()->seqno = aSeqno;
   }
 
-  const char* const name() const {
+  const char* name() const {
     return name_;
   }
 
-  void set_name(const char* const name) {
-    name_ = name;
+  void set_name(const char* const aName) {
+    name_ = aName;
   }
 
 #if defined(OS_POSIX)
@@ -332,7 +332,7 @@ class Message : public Pickle {
 
 #if defined(OS_POSIX)
   // The set of file descriptors associated with this message.
-  nsRefPtr<FileDescriptorSet> file_descriptor_set_;
+  RefPtr<FileDescriptorSet> file_descriptor_set_;
 
   // Ensure that a FileDescriptorSet is allocated
   void EnsureFileDescriptorSet();

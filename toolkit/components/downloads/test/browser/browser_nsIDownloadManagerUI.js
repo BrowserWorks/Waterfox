@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-let Cr = Components.results;
+var Cr = Components.results;
 
 function test_visibility_open()
 {
@@ -95,7 +95,7 @@ function test()
     var win = Services.wm.getMostRecentWindow("Download:Manager");
 
     // Now we can run our tests
-    for each (var t in testFuncs)
+    for (var t of testFuncs)
       t(win);
 
     finish();

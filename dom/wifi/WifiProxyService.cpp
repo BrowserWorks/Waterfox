@@ -67,9 +67,6 @@ public:
   NS_IMETHOD Run()
   {
     MOZ_ASSERT(!NS_IsMainThread());
-#ifdef MOZ_NUWA_PROCESS
-    NS_SetIgnoreStatusOfCurrentThread();
-#endif
     nsAutoString event;
     gWpaSupplicant->WaitForEvent(event, mInterface);
     if (!event.IsEmpty()) {
@@ -153,7 +150,7 @@ WifiProxyService::~WifiProxyService()
 already_AddRefed<WifiProxyService>
 WifiProxyService::FactoryCreate()
 {
-  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+  if (!XRE_IsParentProcess()) {
     return nullptr;
   }
 
@@ -167,7 +164,7 @@ WifiProxyService::FactoryCreate()
     ClearOnShutdown(&gWpaSupplicant);
   }
 
-  nsRefPtr<WifiProxyService> service = gWifiProxyService.get();
+  RefPtr<WifiProxyService> service = gWifiProxyService.get();
   return service.forget();
 }
 
@@ -251,6 +248,10 @@ WifiProxyService::SendCommand(JS::Handle<JS::Value> aOptions,
     return NS_ERROR_FAILURE;
   }
 
+  if (!mControlThread) {
+    return NS_ERROR_FAILURE;
+  }
+
   // Dispatch the command to the control thread.
   CommandOptions commandOptions(options);
   nsCOMPtr<nsIRunnable> runnable = new ControlRunnable(commandOptions, aInterface);
@@ -296,8 +297,10 @@ WifiProxyService::DispatchWifiResult(const WifiResultOptions& aOptions, const ns
     return;
   }
 
-  // Call the listener with a JS value.
-  mListener->OnCommand(val, aInterface);
+  if (mListener) {
+    // Call the listener with a JS value.
+    mListener->OnCommand(val, aInterface);
+  }
 }
 
 void

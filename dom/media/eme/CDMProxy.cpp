@@ -18,6 +18,7 @@
 #include "mozilla/PodOperations.h"
 #include "mozilla/CDMCallbackProxy.h"
 #include "MediaData.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 
@@ -41,6 +42,7 @@ void
 CDMProxy::Init(PromiseId aPromiseId,
                const nsAString& aOrigin,
                const nsAString& aTopLevelOrigin,
+               const nsAString& aGMPName,
                bool aInPrivateBrowsing)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -56,20 +58,29 @@ CDMProxy::Init(PromiseId aPromiseId,
     nsCOMPtr<mozIGeckoMediaPluginService> mps =
       do_GetService("@mozilla.org/gecko-media-plugin-service;1");
     if (!mps) {
-      RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+      RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                    NS_LITERAL_CSTRING("Couldn't get MediaPluginService in CDMProxy::Init"));
       return;
     }
     mps->GetThread(getter_AddRefs(mGMPThread));
     if (!mGMPThread) {
-      RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+      RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                    NS_LITERAL_CSTRING("Couldn't get GMP thread CDMProxy::Init"));
       return;
     }
+  }
+
+  if (aGMPName.IsEmpty()) {
+    RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+      nsPrintfCString("Unknown GMP for keysystem '%s'", NS_ConvertUTF16toUTF8(mKeySystem).get()));
+    return;
   }
 
   nsAutoPtr<InitData> data(new InitData());
   data->mPromiseId = aPromiseId;
   data->mOrigin = aOrigin;
   data->mTopLevelOrigin = aTopLevelOrigin;
+  data->mGMPName = aGMPName;
   data->mInPrivateBrowsing = aInPrivateBrowsing;
   nsCOMPtr<nsIRunnable> task(
     NS_NewRunnableMethodWithArg<nsAutoPtr<InitData>>(this,
@@ -90,11 +101,17 @@ void
 CDMProxy::gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData)
 {
   EME_LOG("CDMProxy::gmp_InitDone");
-  if (!aCDM || mShutdownCalled) {
+  if (mShutdownCalled) {
     if (aCDM) {
       aCDM->Close();
     }
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("CDMProxy was shut down before init could complete"));
+    return;
+  }
+  if (!aCDM) {
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("GetGMPDecryptor failed to return a CDM"));
     return;
   }
 
@@ -124,7 +141,7 @@ public:
   }
 
 private:
-  nsRefPtr<CDMProxy> mCDMProxy;
+  RefPtr<CDMProxy> mCDMProxy;
   nsAutoPtr<CDMProxy::InitData> mData;
 };
 
@@ -144,7 +161,7 @@ public:
   }
 
 private:
-  nsRefPtr<CDMProxy> mCDMProxy;
+  RefPtr<CDMProxy> mCDMProxy;
   nsAutoPtr<CDMProxy::InitData> mData;
 };
 
@@ -156,7 +173,8 @@ CDMProxy::gmp_Init(nsAutoPtr<InitData>&& aData)
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (!mps) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Couldn't get MediaPluginService in CDMProxy::gmp_Init"));
     return;
   }
 
@@ -167,10 +185,12 @@ CDMProxy::gmp_Init(nsAutoPtr<InitData>&& aData)
     new gmp_InitGetGMPDecryptorCallback(this, Move(aData)));
   nsresult rv = mps->GetNodeId(data.mOrigin,
                                data.mTopLevelOrigin,
+                               data.mGMPName,
                                data.mInPrivateBrowsing,
                                Move(callback));
   if (NS_FAILED(rv)) {
-    RejectPromise(data.mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(data.mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Call to GetNodeId() failed early"));
   }
 }
 
@@ -181,7 +201,8 @@ CDMProxy::gmp_InitGetGMPDecryptor(nsresult aResult,
 {
   uint32_t promiseID = aData->mPromiseId;
   if (NS_FAILED(aResult)) {
-    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("GetNodeId() called back, but with a failure result"));
     return;
   }
 
@@ -191,7 +212,8 @@ CDMProxy::gmp_InitGetGMPDecryptor(nsresult aResult,
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (!mps) {
-    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Couldn't get MediaPluginService in CDMProxy::gmp_InitGetGMPDecryptor"));
     return;
   }
 
@@ -208,7 +230,8 @@ CDMProxy::gmp_InitGetGMPDecryptor(nsresult aResult,
                                                                        Move(aData)));
   nsresult rv = mps->GetGMPDecryptor(&tags, GetNodeId(), Move(callback));
   if (NS_FAILED(rv)) {
-    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(promiseID, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Call to GetGMPDecryptor() failed early"));
   }
 }
 
@@ -224,7 +247,8 @@ CDMProxy::OnCDMCreated(uint32_t aPromiseId)
     mKeys->OnCDMCreated(aPromiseId, GetNodeId(), mCDM->GetPluginId());
   } else {
     // No CDM? Just reject the promise.
-    mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                         NS_LITERAL_CSTRING("Null CDM in OnCDMCreated()"));
   }
 }
 
@@ -264,7 +288,8 @@ CDMProxy::gmp_CreateSession(nsAutoPtr<CreateSessionData> aData)
 {
   MOZ_ASSERT(IsOnGMPThread());
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_CreateSession"));
     return;
   }
   mCDM->CreateSession(aData->mCreateSessionToken,
@@ -295,7 +320,8 @@ CDMProxy::gmp_LoadSession(nsAutoPtr<SessionOpData> aData)
   MOZ_ASSERT(IsOnGMPThread());
 
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_LoadSession"));
     return;
   }
   mCDM->LoadSession(aData->mPromiseId, aData->mSessionId);
@@ -321,7 +347,8 @@ CDMProxy::gmp_SetServerCertificate(nsAutoPtr<SetServerCertificateData> aData)
 {
   MOZ_ASSERT(IsOnGMPThread());
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_SetServerCertificate"));
     return;
   }
   mCDM->SetServerCertificate(aData->mPromiseId, aData->mCert);
@@ -350,7 +377,8 @@ CDMProxy::gmp_UpdateSession(nsAutoPtr<UpdateSessionData> aData)
 {
   MOZ_ASSERT(IsOnGMPThread());
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_UpdateSession"));
     return;
   }
   mCDM->UpdateSession(aData->mPromiseId,
@@ -378,7 +406,8 @@ CDMProxy::gmp_CloseSession(nsAutoPtr<SessionOpData> aData)
 {
   MOZ_ASSERT(IsOnGMPThread());
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_CloseSession"));
     return;
   }
   mCDM->CloseSession(aData->mPromiseId, aData->mSessionId);
@@ -404,7 +433,8 @@ CDMProxy::gmp_RemoveSession(nsAutoPtr<SessionOpData> aData)
 {
   MOZ_ASSERT(IsOnGMPThread());
   if (!mCDM) {
-    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+    RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR,
+                  NS_LITERAL_CSTRING("Null CDM in gmp_RemoveSession"));
     return;
   }
   mCDM->RemoveSession(aData->mPromiseId, aData->mSessionId);
@@ -443,14 +473,16 @@ CDMProxy::gmp_Shutdown()
 }
 
 void
-CDMProxy::RejectPromise(PromiseId aId, nsresult aCode)
+CDMProxy::RejectPromise(PromiseId aId, nsresult aCode,
+                        const nsCString& aReason)
 {
   if (NS_IsMainThread()) {
     if (!mKeys.IsNull()) {
-      mKeys->RejectPromise(aId, aCode);
+      mKeys->RejectPromise(aId, aCode, aReason);
     }
   } else {
-    nsCOMPtr<nsIRunnable> task(new RejectPromiseTask(this, aId, aCode));
+    nsCOMPtr<nsIRunnable> task(new RejectPromiseTask(this, aId, aCode,
+                                                     aReason));
     NS_DispatchToMainThread(task);
   }
 }
@@ -488,7 +520,7 @@ CDMProxy::OnSetSessionId(uint32_t aCreateSessionToken,
     return;
   }
 
-  nsRefPtr<dom::MediaKeySession> session(mKeys->GetPendingSession(aCreateSessionToken));
+  RefPtr<dom::MediaKeySession> session(mKeys->GetPendingSession(aCreateSessionToken));
   if (session) {
     session->SetSessionId(aSessionId);
   }
@@ -524,7 +556,7 @@ CDMProxy::OnSessionMessage(const nsAString& aSessionId,
   if (mKeys.IsNull()) {
     return;
   }
-  nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
     session->DispatchKeyMessage(ToMediaKeyMessageType(aMessageType), aMessage);
   }
@@ -537,7 +569,7 @@ CDMProxy::OnKeyStatusesChange(const nsAString& aSessionId)
   if (mKeys.IsNull()) {
     return;
   }
-  nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
     session->DispatchKeyStatusesChange();
   }
@@ -548,7 +580,10 @@ CDMProxy::OnExpirationChange(const nsAString& aSessionId,
                              GMPTimestamp aExpiryTime)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  NS_WARNING("CDMProxy::OnExpirationChange() not implemented");
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  if (session) {
+    session->SetExpiration(static_cast<double>(aExpiryTime));
+  }
 }
 
 void
@@ -558,7 +593,7 @@ CDMProxy::OnSessionClosed(const nsAString& aSessionId)
   if (mKeys.IsNull()) {
     return;
   }
-  nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
     session->OnClosed();
   }
@@ -587,7 +622,7 @@ CDMProxy::OnSessionError(const nsAString& aSessionId,
   if (mKeys.IsNull()) {
     return;
   }
-  nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
     session->DispatchKeyError(aSystemCode);
   }
@@ -597,11 +632,10 @@ CDMProxy::OnSessionError(const nsAString& aSessionId,
 void
 CDMProxy::OnRejectPromise(uint32_t aPromiseId,
                           nsresult aDOMException,
-                          const nsAString& aMsg)
+                          const nsCString& aMsg)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  RejectPromise(aPromiseId, aDOMException);
-  LogToConsole(aMsg);
+  RejectPromise(aPromiseId, aDOMException, aMsg);
 }
 
 const nsString&
@@ -615,19 +649,20 @@ CDMProxy::Capabilites() {
   return mCapabilites;
 }
 
-void
-CDMProxy::Decrypt(MediaRawData* aSample,
-                  DecryptionClient* aClient,
-                  MediaTaskQueue* aTaskQueue)
+RefPtr<CDMProxy::DecryptPromise>
+CDMProxy::Decrypt(MediaRawData* aSample)
 {
-  nsRefPtr<DecryptJob> job(new DecryptJob(aSample, aClient, aTaskQueue));
+  RefPtr<DecryptJob> job(new DecryptJob(aSample));
+  RefPtr<DecryptPromise> promise(job->Ensure());
+
   nsCOMPtr<nsIRunnable> task(
-    NS_NewRunnableMethodWithArg<nsRefPtr<DecryptJob>>(this, &CDMProxy::gmp_Decrypt, job));
+    NS_NewRunnableMethodWithArg<RefPtr<DecryptJob>>(this, &CDMProxy::gmp_Decrypt, job));
   mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  return promise;
 }
 
 void
-CDMProxy::gmp_Decrypt(nsRefPtr<DecryptJob> aJob)
+CDMProxy::gmp_Decrypt(RefPtr<DecryptJob> aJob)
 {
   MOZ_ASSERT(IsOnGMPThread());
 
@@ -638,7 +673,7 @@ CDMProxy::gmp_Decrypt(nsRefPtr<DecryptJob> aJob)
 
   aJob->mId = ++mDecryptionJobCount;
   nsTArray<uint8_t> data;
-  data.AppendElements(aJob->mSample->mData, aJob->mSample->mSize);
+  data.AppendElements(aJob->mSample->Data(), aJob->mSample->Size());
   mCDM->Decrypt(aJob->mId, aJob->mSample->mCrypto, data);
   mDecryptionJobs.AppendElement(aJob.forget());
 }
@@ -679,15 +714,14 @@ CDMProxy::DecryptJob::PostResult(GMPErr aResult)
 void
 CDMProxy::DecryptJob::PostResult(GMPErr aResult, const nsTArray<uint8_t>& aDecryptedData)
 {
-  if (aDecryptedData.Length() != mSample->mSize) {
+  if (aDecryptedData.Length() != mSample->Size()) {
     NS_WARNING("CDM returned incorrect number of decrypted bytes");
   }
-  mResult = aResult;
   if (GMP_SUCCEEDED(aResult)) {
     nsAutoPtr<MediaRawDataWriter> writer(mSample->CreateWriter());
-    PodCopy(writer->mData,
+    PodCopy(writer->Data(),
             aDecryptedData.Elements(),
-            std::min<size_t>(aDecryptedData.Length(), mSample->mSize));
+            std::min<size_t>(aDecryptedData.Length(), mSample->Size()));
   } else if (aResult == GMPNoKeyErr) {
     NS_WARNING("CDM returned GMPNoKeyErr");
     // We still have the encrypted sample, so we can re-enqueue it to be
@@ -696,17 +730,8 @@ CDMProxy::DecryptJob::PostResult(GMPErr aResult, const nsTArray<uint8_t>& aDecry
     nsAutoCString str("CDM returned decode failure GMPErr=");
     str.AppendInt(aResult);
     NS_WARNING(str.get());
-    mSample = nullptr;
   }
-  mTaskQueue->Dispatch(RefPtr<nsIRunnable>(this).forget());
-}
-
-nsresult
-CDMProxy::DecryptJob::Run()
-{
-  MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
-  mClient->Decrypted(mResult, mSample);
-  return NS_OK;
+  mPromise.Resolve(DecryptResult(aResult, mSample), __func__);
 }
 
 void

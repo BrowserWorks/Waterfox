@@ -9,8 +9,11 @@
 #include "gfxFontUtils.h"
 #include "gfxTextRun.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/UniquePtrExtensions.h"
 
 #include <algorithm>
+
+#include <dlfcn.h>
 
 using namespace mozilla;
 
@@ -20,28 +23,85 @@ CTFontDescriptorRef gfxCoreTextShaper::sDisableLigaturesDescriptor = nullptr;
 CTFontDescriptorRef gfxCoreTextShaper::sIndicFeaturesDescriptor = nullptr;
 CTFontDescriptorRef gfxCoreTextShaper::sIndicDisableLigaturesDescriptor = nullptr;
 
+static CFStringRef sCTWritingDirectionAttributeName = nullptr;
+
+// See CTStringAttributes.h
+enum {
+    kMyCTWritingDirectionEmbedding = (0 << 1),
+    kMyCTWritingDirectionOverride = (1 << 1)
+};
+
+// Helper to create a CFDictionary with the right attributes for shaping our
+// text, including imposing the given directionality.
+// This will only be called if we're on 10.8 or later.
+CFDictionaryRef
+gfxCoreTextShaper::CreateAttrDict(bool aRightToLeft)
+{
+    // Because we always shape unidirectional runs, and may have applied
+    // directional overrides, we want to force a direction rather than
+    // allowing CoreText to do its own unicode-based bidi processing.
+    SInt16 dirOverride = kMyCTWritingDirectionOverride |
+                         (aRightToLeft ? kCTWritingDirectionRightToLeft
+                                       : kCTWritingDirectionLeftToRight);
+    CFNumberRef dirNumber =
+        ::CFNumberCreate(kCFAllocatorDefault,
+                         kCFNumberSInt16Type, &dirOverride);
+    CFArrayRef dirArray =
+        ::CFArrayCreate(kCFAllocatorDefault,
+                        (const void **) &dirNumber, 1,
+                        &kCFTypeArrayCallBacks);
+    ::CFRelease(dirNumber);
+    CFTypeRef attrs[] = { kCTFontAttributeName, sCTWritingDirectionAttributeName };
+    CFTypeRef values[] = { mCTFont, dirArray };
+    CFDictionaryRef attrDict =
+        ::CFDictionaryCreate(kCFAllocatorDefault,
+                             attrs, values, ArrayLength(attrs),
+                             &kCFTypeDictionaryKeyCallBacks,
+                             &kCFTypeDictionaryValueCallBacks);
+    ::CFRelease(dirArray);
+    return attrDict;
+}
+
+CFDictionaryRef
+gfxCoreTextShaper::CreateAttrDictWithoutDirection()
+{
+    CFTypeRef attrs[] = { kCTFontAttributeName };
+    CFTypeRef values[] = { mCTFont };
+    CFDictionaryRef attrDict =
+        ::CFDictionaryCreate(kCFAllocatorDefault,
+                             attrs, values, ArrayLength(attrs),
+                             &kCFTypeDictionaryKeyCallBacks,
+                             &kCFTypeDictionaryValueCallBacks);
+    return attrDict;
+}
+
 gfxCoreTextShaper::gfxCoreTextShaper(gfxMacFont *aFont)
     : gfxFontShaper(aFont)
+    , mAttributesDictLTR(nullptr)
+    , mAttributesDictRTL(nullptr)
 {
+    static bool sInitialized = false;
+    if (!sInitialized) {
+        CFStringRef* pstr = (CFStringRef*)
+            dlsym(RTLD_DEFAULT, "kCTWritingDirectionAttributeName");
+        if (pstr) {
+            sCTWritingDirectionAttributeName = *pstr;
+        }
+        sInitialized = true;
+    }
+
     // Create our CTFontRef
     mCTFont = CreateCTFontWithFeatures(aFont->GetAdjustedSize(),
                                        GetDefaultFeaturesDescriptor());
-
-    // Set up the default attribute dictionary that we will need each time we
-    // create a CFAttributedString (unless we need to use custom features,
-    // in which case a new dictionary will be created on the fly).
-    mAttributesDict = ::CFDictionaryCreate(kCFAllocatorDefault,
-                                           (const void**) &kCTFontAttributeName,
-                                           (const void**) &mCTFont,
-                                           1, // count of attributes
-                                           &kCFTypeDictionaryKeyCallBacks,
-                                           &kCFTypeDictionaryValueCallBacks);
 }
 
 gfxCoreTextShaper::~gfxCoreTextShaper()
 {
-    if (mAttributesDict) {
-        ::CFRelease(mAttributesDict);
+    if (mAttributesDictLTR) {
+        ::CFRelease(mAttributesDictLTR);
+    }
+    if (mAttributesDictRTL) {
+        ::CFRelease(mAttributesDictRTL);
     }
     if (mCTFont) {
         ::CFRelease(mCTFont);
@@ -55,7 +115,7 @@ IsBuggyIndicScript(int32_t aScript)
 }
 
 bool
-gfxCoreTextShaper::ShapeText(gfxContext      *aContext,
+gfxCoreTextShaper::ShapeText(DrawTarget      *aDrawTarget,
                              const char16_t *aText,
                              uint32_t         aOffset,
                              uint32_t         aLength,
@@ -64,54 +124,81 @@ gfxCoreTextShaper::ShapeText(gfxContext      *aContext,
                              gfxShapedText   *aShapedText)
 {
     // Create a CFAttributedString with text and style info, so we can use CoreText to lay it out.
-
     bool isRightToLeft = aShapedText->IsRightToLeft();
+    const UniChar* text = reinterpret_cast<const UniChar*>(aText);
     uint32_t length = aLength;
-
-    // we need to bidi-wrap the text if the run is RTL,
-    // or if it is an LTR run but may contain (overridden) RTL chars
-    bool bidiWrap = isRightToLeft;
-    if (!bidiWrap && !aShapedText->TextIs8Bit()) {
-        uint32_t i;
-        for (i = 0; i < length; ++i) {
-            if (gfxFontUtils::PotentialRTLChar(aText[i])) {
-                bidiWrap = true;
-                break;
-            }
-        }
-    }
-
-    // If there's a possibility of any bidi, we wrap the text with direction overrides
-    // to ensure neutrals or characters that were bidi-overridden in HTML behave properly.
-    const UniChar beginLTR[]    = { 0x202d, 0x20 };
-    const UniChar beginRTL[]    = { 0x202e, 0x20 };
-    const UniChar endBidiWrap[] = { 0x20, 0x2e, 0x202c };
 
     uint32_t startOffset;
     CFStringRef stringObj;
-    if (bidiWrap) {
-        startOffset = isRightToLeft ?
-            mozilla::ArrayLength(beginRTL) : mozilla::ArrayLength(beginLTR);
-        CFMutableStringRef mutableString =
-            ::CFStringCreateMutable(kCFAllocatorDefault,
-                                    length + startOffset + mozilla::ArrayLength(endBidiWrap));
-        ::CFStringAppendCharacters(mutableString,
-                                   isRightToLeft ? beginRTL : beginLTR,
-                                   startOffset);
-        ::CFStringAppendCharacters(mutableString, reinterpret_cast<const UniChar*>(aText), length);
-        ::CFStringAppendCharacters(mutableString,
-                                   endBidiWrap, mozilla::ArrayLength(endBidiWrap));
-        stringObj = mutableString;
-    } else {
+    CFDictionaryRef attrObj;
+
+    if (sCTWritingDirectionAttributeName) {
         startOffset = 0;
         stringObj = ::CFStringCreateWithCharactersNoCopy(kCFAllocatorDefault,
-                                                         reinterpret_cast<const UniChar*>(aText),
-                                                         length, kCFAllocatorNull);
+                                                         text, length,
+                                                         kCFAllocatorNull);
+
+        // Get an attributes dictionary suitable for shaping text in the
+        // current direction, creating it if necessary.
+        attrObj = isRightToLeft ? mAttributesDictRTL : mAttributesDictLTR;
+        if (!attrObj) {
+            attrObj = CreateAttrDict(isRightToLeft);
+            (isRightToLeft ? mAttributesDictRTL : mAttributesDictLTR) = attrObj;
+        }
+    } else {
+        // OS is too old to support kCTWritingDirectionAttributeName:
+        // we need to bidi-wrap the text if the run is RTL,
+        // or if it is an LTR run but may contain (overridden) RTL chars
+        bool bidiWrap = isRightToLeft;
+        if (!bidiWrap && !aShapedText->TextIs8Bit()) {
+            uint32_t i;
+            for (i = 0; i < length; ++i) {
+                if (gfxFontUtils::PotentialRTLChar(aText[i])) {
+                    bidiWrap = true;
+                    break;
+                }
+            }
+        }
+
+        // If there's a possibility of any bidi, we wrap the text with
+        // direction overrides to ensure neutrals or characters that were
+        // bidi-overridden in HTML behave properly.
+        static const UniChar beginLTR[]    = { 0x202d, 0x20 };
+        static const UniChar beginRTL[]    = { 0x202e, 0x20 };
+        static const UniChar endBidiWrap[] = { 0x20, 0x2e, 0x202c };
+
+        if (bidiWrap) {
+            startOffset = isRightToLeft ? ArrayLength(beginRTL)
+                                        : ArrayLength(beginLTR);
+            CFMutableStringRef mutableString =
+                ::CFStringCreateMutable(kCFAllocatorDefault,
+                                        length + startOffset +
+                                            ArrayLength(endBidiWrap));
+            ::CFStringAppendCharacters(mutableString,
+                                       isRightToLeft ? beginRTL : beginLTR,
+                                       startOffset);
+            ::CFStringAppendCharacters(mutableString, text, length);
+            ::CFStringAppendCharacters(mutableString, endBidiWrap,
+                                       ArrayLength(endBidiWrap));
+            stringObj = mutableString;
+        } else {
+            startOffset = 0;
+            stringObj =
+                ::CFStringCreateWithCharactersNoCopy(kCFAllocatorDefault,
+                                                     text, length,
+                                                     kCFAllocatorNull);
+        }
+
+        // Get an attributes dictionary suitable for shaping text,
+        // creating it if necessary. (This dict is not LTR-specific,
+        // but we use that field to store it anyway.)
+        if (!mAttributesDictLTR) {
+            mAttributesDictLTR = CreateAttrDictWithoutDirection();
+        }
+        attrObj = mAttributesDictLTR;
     }
 
-    CFDictionaryRef attrObj;
     CTFontRef tempCTFont = nullptr;
-
     if (IsBuggyIndicScript(aScript)) {
         // To work around buggy Indic AAT fonts shipped with OS X,
         // we re-enable the Line Initial Smart Swashes feature that is needed
@@ -131,21 +218,18 @@ gfxCoreTextShaper::ShapeText(gfxContext      *aContext,
                                      GetDisableLigaturesDescriptor());
     }
 
+    // For the disabled-ligature or buggy-indic-font case, we need to replace
+    // the standard CTFont in the attribute dictionary with a tweaked version.
+    CFMutableDictionaryRef mutableAttr = nullptr;
     if (tempCTFont) {
-        attrObj =
-            ::CFDictionaryCreate(kCFAllocatorDefault,
-                                 (const void**) &kCTFontAttributeName,
-                                 (const void**) &tempCTFont,
-                                 1, // count of attributes
-                                 &kCFTypeDictionaryKeyCallBacks,
-                                 &kCFTypeDictionaryValueCallBacks);
+        mutableAttr = ::CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 2,
+                                                      attrObj);
+        ::CFDictionaryReplaceValue(mutableAttr,
+                                   kCTFontAttributeName, tempCTFont);
         // Having created the dict, we're finished with our temporary
         // Indic and/or ligature-disabled CTFontRef.
         ::CFRelease(tempCTFont);
-    } else {
-        // The default case is to use our preallocated attr dict
-        attrObj = mAttributesDict;
-        ::CFRetain(attrObj);
+        attrObj = mutableAttr;
     }
 
     // Now we can create an attributed string
@@ -179,28 +263,36 @@ gfxCoreTextShaper::ShapeText(gfxContext      *aContext,
             // If Core Text manufactured a new dictionary, this may indicate
             // unexpected font substitution. In that case, we fail (and fall
             // back to harfbuzz shaping)...
-            const void* font1 = ::CFDictionaryGetValue(attrObj, kCTFontAttributeName);
-            const void* font2 = ::CFDictionaryGetValue(runAttr, kCTFontAttributeName);
+            const void* font1 =
+                ::CFDictionaryGetValue(attrObj, kCTFontAttributeName);
+            const void* font2 =
+                ::CFDictionaryGetValue(runAttr, kCTFontAttributeName);
             if (font1 != font2) {
                 // ...except that if the fallback was only for a variation
-                // selector that is otherwise unsupported, we just ignore it.
-                if (range.length == 1 &&
-                    gfxFontUtils::IsVarSelector(aText[range.location -
-                                                      startOffset])) {
-                    continue;
+                // selector or join control that is otherwise unsupported,
+                // we just ignore it.
+                if (range.length == 1) {
+                    char16_t ch = aText[range.location - startOffset];
+                    if (gfxFontUtils::IsJoinControl(ch) ||
+                        gfxFontUtils::IsVarSelector(ch)) {
+                        continue;
+                    }
                 }
                 NS_WARNING("unexpected font fallback in Core Text");
                 success = false;
                 break;
             }
         }
-        if (SetGlyphsFromRun(aShapedText, aOffset, aLength, aCTRun, startOffset) != NS_OK) {
+        if (SetGlyphsFromRun(aShapedText, aOffset, aLength, aCTRun,
+                             startOffset) != NS_OK) {
             success = false;
             break;
         }
     }
 
-    ::CFRelease(attrObj);
+    if (mutableAttr) {
+        ::CFRelease(mutableAttr);
+    }
     ::CFRelease(line);
 
     return success;
@@ -247,9 +339,9 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     }
 
     // retrieve the laid-out glyph data from the CTRun
-    nsAutoArrayPtr<CGGlyph> glyphsArray;
-    nsAutoArrayPtr<CGPoint> positionsArray;
-    nsAutoArrayPtr<CFIndex> glyphToCharArray;
+    UniquePtr<CGGlyph[]> glyphsArray;
+    UniquePtr<CGPoint[]> positionsArray;
+    UniquePtr<CFIndex[]> glyphToCharArray;
     const CGGlyph* glyphs = nullptr;
     const CGPoint* positions = nullptr;
     const CFIndex* glyphToChar = nullptr;
@@ -264,7 +356,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     // may become an attractive option.
     glyphs = ::CTRunGetGlyphsPtr(aCTRun);
     if (!glyphs) {
-        glyphsArray = new (std::nothrow) CGGlyph[numGlyphs];
+        glyphsArray = MakeUniqueFallible<CGGlyph[]>(numGlyphs);
         if (!glyphsArray) {
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -274,7 +366,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
 
     positions = ::CTRunGetPositionsPtr(aCTRun);
     if (!positions) {
-        positionsArray = new (std::nothrow) CGPoint[numGlyphs];
+        positionsArray = MakeUniqueFallible<CGPoint[]>(numGlyphs);
         if (!positionsArray) {
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -287,7 +379,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
     // or the stringRange of the glyph run
     glyphToChar = ::CTRunGetStringIndicesPtr(aCTRun);
     if (!glyphToChar) {
-        glyphToCharArray = new (std::nothrow) CFIndex[numGlyphs];
+        glyphToCharArray = MakeUniqueFallible<CFIndex[]>(numGlyphs);
         if (!glyphToCharArray) {
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -299,7 +391,6 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
                                                   nullptr, nullptr, nullptr);
 
     nsAutoTArray<gfxShapedText::DetailedGlyph,1> detailedGlyphs;
-    gfxShapedText::CompressedGlyph g;
     gfxShapedText::CompressedGlyph *charGlyphs =
         aShapedText->GetCharacterGlyphs() + aOffset;
 
@@ -315,7 +406,7 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
 
     static const int32_t NO_GLYPH = -1;
     AutoFallibleTArray<int32_t,SMALL_GLYPH_RUN> charToGlyphArray;
-    if (!charToGlyphArray.SetLength(stringRange.length)) {
+    if (!charToGlyphArray.SetLength(stringRange.length, fallible)) {
         return NS_ERROR_OUT_OF_MEMORY;
     }
     int32_t *charToGlyph = charToGlyphArray.Elements();
@@ -521,19 +612,20 @@ gfxCoreTextShaper::SetGlyphsFromRun(gfxShapedText *aShapedText,
                 advance = int32_t(toNextGlyph * appUnitsPerDevUnit);
             }
 
-            gfxTextRun::CompressedGlyph g;
-            g.SetComplex(charGlyphs[baseCharIndex].IsClusterStart(),
-                         true, detailedGlyphs.Length());
-            aShapedText->SetGlyphs(aOffset + baseCharIndex, g, detailedGlyphs.Elements());
+            gfxTextRun::CompressedGlyph textRunGlyph;
+            textRunGlyph.SetComplex(charGlyphs[baseCharIndex].IsClusterStart(),
+                                    true, detailedGlyphs.Length());
+            aShapedText->SetGlyphs(aOffset + baseCharIndex, textRunGlyph,
+                                   detailedGlyphs.Elements());
 
             detailedGlyphs.Clear();
         }
 
         // the rest of the chars in the group are ligature continuations, no associated glyphs
         while (++baseCharIndex != endCharIndex && baseCharIndex < wordLength) {
-            gfxShapedText::CompressedGlyph &g = charGlyphs[baseCharIndex];
-            NS_ASSERTION(!g.IsSimpleGlyph(), "overwriting a simple glyph");
-            g.SetComplex(inOrder && g.IsClusterStart(), false, 0);
+            gfxShapedText::CompressedGlyph &shapedTextGlyph = charGlyphs[baseCharIndex];
+            NS_ASSERTION(!shapedTextGlyph.IsSimpleGlyph(), "overwriting a simple glyph");
+            shapedTextGlyph.SetComplex(inOrder && shapedTextGlyph.IsClusterStart(), false, 0);
         }
 
         glyphStart = glyphEnd;

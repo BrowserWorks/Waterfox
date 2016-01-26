@@ -187,7 +187,12 @@ OpusTrackEncoder::Init(int aChannels, int aSamplingRate)
   mEncoder = opus_encoder_create(GetOutputSampleRate(), mChannels,
                                  OPUS_APPLICATION_AUDIO, &error);
 
+
   mInitialized = (error == OPUS_OK);
+
+  if (mAudioBitrate) {
+    opus_encoder_ctl(mEncoder, OPUS_SET_BITRATE(static_cast<int>(mAudioBitrate)));
+  }
 
   mReentrantMonitor.NotifyAll();
 
@@ -223,7 +228,7 @@ OpusTrackEncoder::GetMetadata()
     return nullptr;
   }
 
-  nsRefPtr<OpusMetadata> meta = new OpusMetadata();
+  RefPtr<OpusMetadata> meta = new OpusMetadata();
 
   mLookahead = 0;
   int error = opus_encoder_ctl(mEncoder, OPUS_GET_LOOKAHEAD(&mLookahead));
@@ -335,7 +340,7 @@ OpusTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     iter.Next();
   }
 
-  nsRefPtr<EncodedFrame> audiodata = new EncodedFrame();
+  RefPtr<EncodedFrame> audiodata = new EncodedFrame();
   audiodata->SetFrameType(EncodedFrame::OPUS_AUDIO_FRAME);
   int framesInPCM = frameCopied;
   if (mResampler) {
@@ -436,4 +441,4 @@ OpusTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
   return result >= 0 ? NS_OK : NS_ERROR_FAILURE;
 }
 
-}
+} // namespace mozilla

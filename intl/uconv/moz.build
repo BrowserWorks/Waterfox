@@ -7,7 +7,6 @@
 TEST_DIRS += ['tests']
 
 XPIDL_SOURCES += [
-    'nsICurrentCharsetListener.idl',
     'nsIScriptableUConv.idl',
     'nsITextToSubURI.idl',
     'nsIUTF8ConverterService.idl',
@@ -19,6 +18,7 @@ EXPORTS += [
     'nsEncoderDecoderUtils.h',
     'nsIUnicodeDecoder.h',
     'nsIUnicodeEncoder.h',
+    'nsNCRFallbackEncoderWrapper.h',
     'nsUConvCID.h',
     'nsUCSupport.h',
     'uconvutil.h',
@@ -27,7 +27,6 @@ EXPORTS += [
     'ucvja/nsUCVJACID.h',
     'ucvko/nsUCvKOCID.h',
     'ucvlatin/nsUCvLatinCID.h',
-    'ucvtw/nsUCvTWCID.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -35,6 +34,7 @@ UNIFIED_SOURCES += [
     'nsConverterOutputStream.cpp',
     'nsCP1252ToUnicode.cpp',
     'nsMacRomanToUnicode.cpp',
+    'nsNCRFallbackEncoderWrapper.cpp',
     'nsReplacementToUnicode.cpp',
     'nsScriptableUConv.cpp',
     'nsTextToSubURI.cpp',
@@ -137,10 +137,9 @@ UNIFIED_SOURCES += [
 ]
 
 UNIFIED_SOURCES += [
-    'ucvtw/nsBIG5HKSCSToUnicode.cpp',
+    'ucvtw/nsBIG5Data.cpp',
     'ucvtw/nsBIG5ToUnicode.cpp',
     'ucvtw/nsUnicodeToBIG5.cpp',
-    'ucvtw/nsUnicodeToBIG5HKSCS.cpp',
 ]
 
 UNIFIED_SOURCES += [

@@ -21,7 +21,7 @@
 using namespace mozilla;
 
 #define NS_ENSURE_NATIVE_COLUMN(_col)                                \
-  nsRefPtr<nsTreeColumn> col = nsTreeBodyFrame::GetColumnImpl(_col); \
+  RefPtr<nsTreeColumn> col = nsTreeBodyFrame::GetColumnImpl(_col); \
   if (!col) {                                                        \
     return NS_ERROR_INVALID_ARG;                                     \
   }
@@ -148,7 +148,7 @@ bool
 nsTreeContentView::CanTrustTreeSelection(nsISupports* aValue)
 {
   // Untrusted content is only allowed to specify known-good views
-  if (nsContentUtils::IsCallerChrome())
+  if (nsContentUtils::LegacyIsCallerChromeOrNativeCode())
     return true;
   nsCOMPtr<nsINativeTreeSelection> nativeTreeSel = do_QueryInterface(aValue);
   return nativeTreeSel && NS_SUCCEEDED(nativeTreeSel->EnsureNative());
@@ -715,7 +715,8 @@ nsTreeContentView::AttributeChanged(nsIDocument*  aDocument,
                                     dom::Element* aElement,
                                     int32_t       aNameSpaceID,
                                     nsIAtom*      aAttribute,
-                                    int32_t       aModType)
+                                    int32_t       aModType,
+                                    const nsAttrValue* aOldValue)
 {
   // Lots of codepaths under here that do all sorts of stuff, so be safe.
   nsCOMPtr<nsIMutationObserver> kungFuDeathGrip(this);

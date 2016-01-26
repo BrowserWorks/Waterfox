@@ -297,7 +297,7 @@ mp_err  mpp_pprime(mp_int *a, int nt)
   for(iter = 0; iter < nt; iter++) {
 
     /* Choose a random value for 1 < x < a      */
-    s_mp_pad(&x, USED(a));
+    MP_CHECKOK( s_mp_pad(&x, USED(a)) );
     mpp_random(&x);
     MP_CHECKOK( mp_mod(&x, a, &x) );
     if(mp_cmp_d(&x, 1) <= 0) {
@@ -394,7 +394,7 @@ mp_err mpp_make_prime(mp_int *start, mp_size nBits, mp_size strong,
 {
   mp_digit      np;
   mp_err        res;
-  int           i	= 0;
+  unsigned int i = 0;
   mp_int        trial;
   mp_int        q;
   mp_size       num_tests;

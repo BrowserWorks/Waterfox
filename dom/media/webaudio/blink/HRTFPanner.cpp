@@ -27,6 +27,7 @@
 
 #include "FFTConvolver.h"
 #include "HRTFDatabase.h"
+#include "AudioBlock.h"
 
 using namespace std;
 using namespace mozilla;
@@ -41,7 +42,7 @@ const double MaxDelayTimeSeconds = 0.002;
 const int UninitializedAzimuth = -1;
 const unsigned RenderingQuantum = WEBAUDIO_BLOCK_SIZE;
 
-HRTFPanner::HRTFPanner(float sampleRate, mozilla::TemporaryRef<HRTFDatabaseLoader> databaseLoader)
+HRTFPanner::HRTFPanner(float sampleRate, already_AddRefed<HRTFDatabaseLoader> databaseLoader)
     : m_databaseLoader(databaseLoader)
     , m_sampleRate(sampleRate)
     , m_crossfadeSelection(CrossfadeSelection1)
@@ -58,11 +59,6 @@ HRTFPanner::HRTFPanner(float sampleRate, mozilla::TemporaryRef<HRTFDatabaseLoade
 {
     MOZ_ASSERT(m_databaseLoader);
     MOZ_COUNT_CTOR(HRTFPanner);
-
-    m_tempL1.SetLength(RenderingQuantum);
-    m_tempR1.SetLength(RenderingQuantum);
-    m_tempL2.SetLength(RenderingQuantum);
-    m_tempR2.SetLength(RenderingQuantum);
 }
 
 HRTFPanner::~HRTFPanner()
@@ -80,10 +76,6 @@ size_t HRTFPanner::sizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) cons
     amount += m_convolverL2.sizeOfExcludingThis(aMallocSizeOf);
     amount += m_convolverR2.sizeOfExcludingThis(aMallocSizeOf);
     amount += m_delayLine.SizeOfExcludingThis(aMallocSizeOf);
-    amount += m_tempL1.SizeOfExcludingThis(aMallocSizeOf);
-    amount += m_tempL2.SizeOfExcludingThis(aMallocSizeOf);
-    amount += m_tempR1.SizeOfExcludingThis(aMallocSizeOf);
-    amount += m_tempR2.SizeOfExcludingThis(aMallocSizeOf);
 
     return amount;
 }
@@ -128,28 +120,28 @@ int HRTFPanner::calculateDesiredAzimuthIndexAndBlend(double azimuth, double& azi
     return desiredAzimuthIndex;
 }
 
-void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* inputBus, AudioChunk* outputBus)
+void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioBlock* inputBus, AudioBlock* outputBus)
 {
 #ifdef DEBUG
     unsigned numInputChannels =
-        inputBus->IsNull() ? 0 : inputBus->mChannelData.Length();
+        inputBus->IsNull() ? 0 : inputBus->ChannelCount();
 
     MOZ_ASSERT(numInputChannels <= 2);
-    MOZ_ASSERT(inputBus->mDuration == WEBAUDIO_BLOCK_SIZE);
+    MOZ_ASSERT(inputBus->GetDuration() == WEBAUDIO_BLOCK_SIZE);
 #endif
 
-    bool isOutputGood = outputBus && outputBus->mChannelData.Length() == 2 && outputBus->mDuration == WEBAUDIO_BLOCK_SIZE;
+    bool isOutputGood = outputBus && outputBus->ChannelCount() == 2 && outputBus->GetDuration() == WEBAUDIO_BLOCK_SIZE;
     MOZ_ASSERT(isOutputGood);
 
     if (!isOutputGood) {
         if (outputBus)
-            outputBus->SetNull(outputBus->mDuration);
+            outputBus->SetNull(outputBus->GetDuration());
         return;
     }
 
     HRTFDatabase* database = m_databaseLoader->database();
     if (!database) { // not yet loaded
-        outputBus->SetNull(outputBus->mDuration);
+        outputBus->SetNull(outputBus->GetDuration());
         return;
     }
 
@@ -159,7 +151,7 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* 
     bool isAzimuthGood = azimuth >= -180.0 && azimuth <= 180.0;
     MOZ_ASSERT(isAzimuthGood);
     if (!isAzimuthGood) {
-        outputBus->SetNull(outputBus->mDuration);
+        outputBus->SetNull(outputBus->GetDuration());
         return;
     }
 
@@ -223,7 +215,7 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* 
     bool areKernelsGood = kernelL1 && kernelR1 && kernelL2 && kernelR2;
     MOZ_ASSERT(areKernelsGood);
     if (!areKernelsGood) {
-        outputBus->SetNull(outputBus->mDuration);
+        outputBus->SetNull(outputBus->GetDuration());
         return;
     }
 
@@ -255,23 +247,26 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* 
 
     bool needsCrossfading = m_crossfadeIncr;
 
-    // Have the convolvers render directly to the final destination if we're not cross-fading.
-    float* convolutionDestinationL1 = needsCrossfading ? m_tempL1.Elements() : destinationL;
-    float* convolutionDestinationR1 = needsCrossfading ? m_tempR1.Elements() : destinationR;
-    float* convolutionDestinationL2 = needsCrossfading ? m_tempL2.Elements() : destinationL;
-    float* convolutionDestinationR2 = needsCrossfading ? m_tempR2.Elements() : destinationR;
+    const float* convolutionDestinationL1;
+    const float* convolutionDestinationR1;
+    const float* convolutionDestinationL2;
+    const float* convolutionDestinationR2;
 
     // Now do the convolutions.
     // Note that we avoid doing convolutions on both sets of convolvers if we're not currently cross-fading.
 
     if (m_crossfadeSelection == CrossfadeSelection1 || needsCrossfading) {
-        m_convolverL1.process(kernelL1->fftFrame(), destinationL, convolutionDestinationL1, WEBAUDIO_BLOCK_SIZE);
-        m_convolverR1.process(kernelR1->fftFrame(), destinationR, convolutionDestinationR1, WEBAUDIO_BLOCK_SIZE);
+        convolutionDestinationL1 =
+            m_convolverL1.process(kernelL1->fftFrame(), destinationL);
+        convolutionDestinationR1 =
+            m_convolverR1.process(kernelR1->fftFrame(), destinationR);
     }
 
     if (m_crossfadeSelection == CrossfadeSelection2 || needsCrossfading) {
-        m_convolverL2.process(kernelL2->fftFrame(), destinationL, convolutionDestinationL2, WEBAUDIO_BLOCK_SIZE);
-        m_convolverR2.process(kernelR2->fftFrame(), destinationR, convolutionDestinationR2, WEBAUDIO_BLOCK_SIZE);
+        convolutionDestinationL2 =
+            m_convolverL2.process(kernelL2->fftFrame(), destinationL);
+        convolutionDestinationR2 =
+            m_convolverR2.process(kernelR2->fftFrame(), destinationR);
     }
 
     if (needsCrossfading) {
@@ -297,6 +292,18 @@ void HRTFPanner::pan(double desiredAzimuth, double elevation, const AudioChunk* 
             m_crossfadeX = 0;
             m_crossfadeIncr = 0;
         }
+    } else {
+        const float* sourceL;
+        const float* sourceR;
+        if (m_crossfadeSelection == CrossfadeSelection1) {
+            sourceL = convolutionDestinationL1;
+            sourceR = convolutionDestinationR1;
+        } else {
+            sourceL = convolutionDestinationL2;
+            sourceR = convolutionDestinationR2;
+        }
+        PodCopy(destinationL, sourceL, WEBAUDIO_BLOCK_SIZE);
+        PodCopy(destinationR, sourceR, WEBAUDIO_BLOCK_SIZE);
     }
 }
 
@@ -306,10 +313,12 @@ int HRTFPanner::maxTailFrames() const
     // response, there is additional tail time from the approximations in the
     // implementation.  Because HRTFPanner is implemented with a DelayKernel
     // and a FFTConvolver, the tailTime of the HRTFPanner is the sum of the
-    // tailTime of the DelayKernel and the tailTime of the FFTConvolver.
-    // The FFTConvolver has a tail time of fftSize(), including latency of
-    // fftSize()/2.
-    return m_delayLine.MaxDelayTicks() + fftSize();
+    // tailTime of the DelayKernel and the tailTime of the FFTConvolver.  The
+    // FFTs of the convolver are fftSize(), half of which is latency, but this
+    // is aligned with blocks and so is reduced by the one block which is
+    // processed immediately.
+    return m_delayLine.MaxDelayTicks() +
+        m_convolverL1.fftSize()/2 + m_convolverL1.latencyFrames();
 }
 
 } // namespace WebCore

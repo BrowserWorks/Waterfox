@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 const { pathFor } = require('sdk/system');
@@ -66,12 +65,9 @@ exports.testBasename = function(assert) {
 
 exports.testList = function(assert) {
   let list = file.list(profilePath);
-  let found = [ true for (name of list)
-                    if (name === fileNameInProfile) ];
+  let found = list.filter(name => name === fileNameInProfile);
 
-  if (found.length > 1)
-    assert.fail("a dir can't contain two files of the same name!");
-  assert.equal(found[0], true, "file.list() should work");
+  assert.equal(found.length, 1, "file.list() should work");
 
   assert.throws(function() {
     file.list(filePathInProfile);
@@ -234,7 +230,7 @@ exports.testMkpathExistingNondirectory = function (assert) {
   var fname = file.join(profilePath, 'conflict.txt');
   file.open(fname, "w").close();
   assert.ok(file.exists(fname), "File should exist");
-  assert.throws(function() file.mkpath(fname),
+  assert.throws(() => file.mkpath(fname),
                     /^The path already exists and is not a directory: .+$/,
                     "mkpath on file should raise error");
   file.remove(fname);
@@ -249,7 +245,7 @@ exports.testRmdirNondirectory = function (assert) {
   }, ERRORS.NOT_A_DIRECTORY, "rmdir on file should raise error");
   file.remove(fname);
   assert.ok(!file.exists(fname), "File should not exist");
-  assert.throws(function () file.rmdir(fname),
+  assert.throws(() => file.rmdir(fname),
                     ERRORS.FILE_NOT_FOUND,
                     "rmdir on non-existing file should raise error");
 };
@@ -264,7 +260,7 @@ exports.testRmdirNonempty = function (assert) {
   file.open(filePath, "w").close();
   assert.ok(file.exists(filePath),
               "Sanity check: path should exist: " + filePath);
-  assert.throws(function () file.rmdir(path),
+  assert.throws(() => file.rmdir(path),
                     /^The directory is not empty: .+$/,
                     "rmdir on non-empty directory should raise error");
   file.remove(filePath);

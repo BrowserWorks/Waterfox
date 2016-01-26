@@ -8,7 +8,7 @@
 #define MOZILLA_LATENCY_H
 
 #include "mozilla/TimeStamp.h"
-#include "prlog.h"
+#include "mozilla/Logging.h"
 #include "nsCOMPtr.h"
 #include "nsIThread.h"
 #include "mozilla/Monitor.h"
@@ -17,7 +17,7 @@
 
 class AsyncLatencyLogger;
 
-PRLogModuleInfo* GetLatencyLog();
+mozilla::LogModule* GetLatencyLog();
 
 // This class is a singleton. It is refcounted.
 class AsyncLatencyLogger : public nsIObserver

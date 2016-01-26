@@ -21,6 +21,8 @@ function runTests(testFile, order) {
     return new Promise(function(resolve, reject) {
       SpecialPowers.pushPrefEnv({
         "set": [["dom.caches.enabled", true],
+                ["dom.caches.testing.enabled", true],
+                ["dom.requestcache.enabled", true],
                 ["dom.serviceWorkers.enabled", true],
                 ["dom.serviceWorkers.testing.enabled", true],
                 ["dom.serviceWorkers.exemptFromPerDomainMax", true]]
@@ -33,16 +35,11 @@ function runTests(testFile, order) {
   // adapted from dom/indexedDB/test/helpers.js
   function clearStorage() {
     return new Promise(function(resolve, reject) {
+      var qms = SpecialPowers.Services.qms;
       var principal = SpecialPowers.wrap(document).nodePrincipal;
-      var appId, inBrowser;
-      var nsIPrincipal = SpecialPowers.Components.interfaces.nsIPrincipal;
-      if (principal.appId != nsIPrincipal.UNKNOWN_APP_ID &&
-          principal.appId != nsIPrincipal.NO_APP_ID) {
-        appId = principal.appId;
-        inBrowser = principal.isInBrowserElement;
-      }
-      SpecialPowers.clearStorageForURI(document.documentURI, resolve, appId,
-                                       inBrowser);
+      var request = qms.clearStoragesForPrincipal(principal);
+      var cb = SpecialPowers.wrapCallback(resolve);
+      request.callback = cb;
     });
   }
 

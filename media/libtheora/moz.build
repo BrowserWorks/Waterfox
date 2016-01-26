@@ -13,19 +13,24 @@ EXPORTS.theora += [
     'include/theora/theoraenc.h',
 ]
 
-FINAL_LIBRARY = 'gkmedias'
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
 
-if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
-    NO_VISIBILITY_FLAGS = True
+FINAL_LIBRARY = 'gkmedias'
 
 # The encoder is currently not included.
 DEFINES['THEORA_DISABLE_ENCODE'] = True
 
 # Suppress warnings in third-party code.
-if CONFIG['GNU_CC']:
+if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
     CFLAGS += ['-Wno-type-limits']
-    if CONFIG['CLANG_CXX']:
-        CFLAGS += ['-Wno-tautological-compare']
+if CONFIG['CLANG_CXX'] or CONFIG['CLANG_CL']:
+    CFLAGS += ['-Wno-tautological-compare']
+if CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-pointer-sign',
+        '-Wno-shift-op-parentheses',
+    ]
 
 UNIFIED_SOURCES += [
     'lib/apiwrapper.c',
@@ -86,7 +91,7 @@ if CONFIG['GNU_AS']:
         if CONFIG['OS_TARGET'] == 'Android':
             DEFINES['__linux__'] = True
 
-        GENERATED_SOURCES += [ '%s.%s' % (f, CONFIG['ASM_SUFFIX']) for f in [
+        SOURCES += [ '!%s.%s' % (f, CONFIG['ASM_SUFFIX']) for f in [
             'armbits-gnu',
             'armfrag-gnu',
             'armidct-gnu',

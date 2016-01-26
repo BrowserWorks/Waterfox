@@ -178,14 +178,10 @@ function readURI(uri) {
     uri = proto.resolveURI(nsURI);
   }
 
-  let stream = NetUtil.newChannel2(uri,
-                                   'UTF-8',
-                                   null,
-                                   null,      // aLoadingNode
-                                   systemPrincipal,
-                                   null,      // aTriggeringPrincipal
-                                   Ci.nsILoadInfo.SEC_NORMAL,
-                                   Ci.nsIContentPolicy.TYPE_OTHER).open();
+  let stream = NetUtil.newChannel({
+    uri: NetUtil.newURI(uri, 'UTF-8'),
+    loadUsingSystemPrincipal: true}
+  ).open();
   let count = stream.available();
   let data = NetUtil.readInputStreamToString(stream, count, {
     charset: 'UTF-8'
@@ -198,14 +194,16 @@ function readURI(uri) {
 
 // Combines all arguments into a resolved, normalized path
 function join (...paths) {
-  let resolved = normalize(pathJoin(...paths))
-  // OS.File `normalize` strips out the second slash in
-  // `resource://` or `chrome://`, and third slash in
-  // `file:///`, so we work around this
-  resolved = resolved.replace(/^resource\:\/([^\/])/, 'resource://$1');
-  resolved = resolved.replace(/^file\:\/([^\/])/, 'file:///$1');
-  resolved = resolved.replace(/^chrome\:\/([^\/])/, 'chrome://$1');
-  return resolved;
+  let joined = pathJoin(...paths);
+  let resolved = normalize(joined);
+
+  // OS.File `normalize` strips out any additional slashes breaking URIs like
+  // `resource://`, `resource:///`, `chrome://` or `file:///`, so we work
+  // around this putting back the slashes originally given, for such schemes.
+  let re = /^(resource|file|chrome)(\:\/{1,3})([^\/])/;
+  let matches = joined.match(re);
+
+  return resolved.replace(re, (...args) => args[1] + matches[2] + args[3]);
 }
 Loader.join = join;
 
@@ -240,7 +238,8 @@ const Sandbox = iced(function Sandbox(options) {
     sandboxPrototype: 'prototype' in options ? options.prototype : {},
     invisibleToDebugger: 'invisibleToDebugger' in options ?
                          options.invisibleToDebugger : false,
-    metadata: 'metadata' in options ? options.metadata : {}
+    metadata: 'metadata' in options ? options.metadata : {},
+    waiveIntereposition: !!options.waiveIntereposition
   };
 
   if (options.metadata && options.metadata.addonID) {
@@ -365,7 +364,7 @@ const load = iced(function load(loader, module) {
       fileName: { value: fileName, writable: true, configurable: true },
       lineNumber: { value: lineNumber, writable: true, configurable: true },
       stack: { value: serializeStack(frames), writable: true, configurable: true },
-      toString: { value: function() toString, writable: true, configurable: true },
+      toString: { value: () => toString, writable: true, configurable: true },
     });
   }
 
@@ -558,8 +557,24 @@ const resolveURI = iced(function resolveURI(id, mapping) {
 
   while (index < count) {
     let [ path, uri ] = mapping[index++];
-    if (id.indexOf(path) === 0)
+
+    // Strip off any trailing slashes to make comparisons simpler
+    let stripped = path.endsWith('/') ? path.slice(0, -1) : path;
+
+    // We only want to match path segments explicitly. Examples:
+    // * "foo/bar" matches for "foo/bar"
+    // * "foo/bar" matches for "foo/bar/baz"
+    // * "foo/bar" does not match for "foo/bar-1"
+    // * "foo/bar/" does not match for "foo/bar"
+    // * "foo/bar/" matches for "foo/bar/baz"
+    //
+    // Check for an empty path, an exact match, or a substring match
+    // with the next character being a forward slash.
+    if(stripped === "" ||
+       (id.indexOf(stripped) === 0 &&
+        (id.length === path.length || id[stripped.length] === '/'))) {
       return normalizeExt(id.replace(path, uri));
+    }
   }
   return void 0; // otherwise we raise a warning, see bug 910304
 });
@@ -572,7 +587,8 @@ Loader.resolveURI = resolveURI;
 const Require = iced(function Require(loader, requirer) {
   let {
     modules, mapping, resolve: loaderResolve, load,
-    manifest, rootURI, isNative, requireMap
+    manifest, rootURI, isNative, requireMap,
+    overrideRequire
   } = loader;
 
   function require(id) {
@@ -580,6 +596,14 @@ const Require = iced(function Require(loader, requirer) {
       throw Error('You must provide a module name when calling require() from '
                   + requirer.id, requirer.uri);
 
+    if (overrideRequire) {
+      return overrideRequire(id, _require);
+    }
+
+    return _require(id);
+  }
+
+  function _require(id) {
     let { uri, requirement } = getRequirements(id);
     let module = null;
     // If module is already cached by loader then just use it.
@@ -719,7 +743,7 @@ const Require = iced(function Require(loader, requirer) {
   }
 
   // Expose the `resolve` function for this `Require` instance
-  require.resolve = function resolve(id) {
+  require.resolve = _require.resolve = function resolve(id) {
     let { uri } = getRequirements(id);
     return uri;
   }
@@ -784,14 +808,14 @@ Loader.unload = unload;
 function Loader(options) {
   let {
     modules, globals, resolve, paths, rootURI, manifest, requireMap, isNative,
-    metadata, sharedGlobal, sharedGlobalBlacklist, checkCompatibility
+    metadata, sharedGlobal, sharedGlobalBlacklist, checkCompatibility, waiveIntereposition
   } = override({
     paths: {},
     modules: {},
     globals: {
       get console() {
         // Import Console.jsm from here to prevent loading it until someone uses it
-        let { ConsoleAPI } = Cu.import("resource://gre/modules/devtools/Console.jsm");
+        let { ConsoleAPI } = Cu.import("resource://gre/modules/Console.jsm");
         let console = new ConsoleAPI({
           consoleID: options.id ? "addon/" + options.id : ""
         });
@@ -804,7 +828,8 @@ function Loader(options) {
       // Make the returned resolve function have the same signature
       (id, requirer) => Loader.nodeResolve(id, requirer, { rootURI: rootURI }) :
       Loader.resolve,
-    sharedGlobalBlacklist: ["sdk/indexed-db"]
+    sharedGlobalBlacklist: ["sdk/indexed-db"],
+    waiveIntereposition: false
   }, options);
 
   // Create overrides defaults, none at the moment
@@ -878,7 +903,8 @@ function Loader(options) {
       metadata: {
         addonID: options.id,
         URI: "Addon-SDK"
-      }
+      },
+      prototype: options.sandboxPrototype || {}
     });
   }
 
@@ -904,6 +930,7 @@ function Loader(options) {
                            value: options.invisibleToDebugger || false },
     load: { enumerable: false, value: options.load || load },
     checkCompatibility: { enumerable: false, value: checkCompatibility },
+    overrideRequire: { enumerable: false, value: options.require },
     // Main (entry point) module, it can be set only once, since loader
     // instance can have only one main module.
     main: new function() {
@@ -928,13 +955,13 @@ function Loader(options) {
 };
 Loader.Loader = Loader;
 
-let isJSONURI = uri => uri.substr(-5) === '.json';
-let isJSMURI = uri => uri.substr(-4) === '.jsm';
-let isJSURI = uri => uri.substr(-3) === '.js';
-let isAbsoluteURI = uri => uri.indexOf("resource://") >= 0 ||
+var isJSONURI = uri => uri.substr(-5) === '.json';
+var isJSMURI = uri => uri.substr(-4) === '.jsm';
+var isJSURI = uri => uri.substr(-3) === '.js';
+var isAbsoluteURI = uri => uri.indexOf("resource://") >= 0 ||
                            uri.indexOf("chrome://") >= 0 ||
                            uri.indexOf("file://") >= 0
-let isRelative = id => id[0] === '.'
+var isRelative = id => id[0] === '.'
 
 const generateMap = iced(function generateMap(options, callback) {
   let { rootURI, resolve, paths } = override({
@@ -1048,7 +1075,8 @@ function traverse (node, cb) {
     cb(node);
     keys(node).map(key => {
       if (key === 'parent' || !node[key]) return;
-      node[key].parent = node;
+      if (typeof node[key] === "object")
+        node[key].parent = node;
       traverse(node[key], cb);
     });
   }

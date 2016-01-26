@@ -31,37 +31,24 @@ function test() {
 
   checkPreviews(4, "Correct number of previews after adding");
 
-  for each (let preview in AeroPeek.previews)
+  for (let preview of AeroPeek.previews)
     ok(preview.visible, "Preview is shown as expected");
 
   gPrefService.setBoolPref(ENABLE_PREF_NAME, false);
   checkPreviews(4, "Previews are unchanged when disabling");
 
-  for each (let preview in AeroPeek.previews)
+  for (let preview of AeroPeek.previews)
     ok(!preview.visible, "Preview is not shown as expected after disabling");
 
   gPrefService.setBoolPref(ENABLE_PREF_NAME, true);
   checkPreviews(4, "Previews are unchanged when re-enabling");
-  for each (let preview in AeroPeek.previews)
+  for (let preview of AeroPeek.previews)
     ok(preview.visible, "Preview is shown as expected after re-enabling");
 
   [1,2,3,4].forEach(function (idx) {
     gBrowser.selectedTab = gBrowser.tabs[idx];
     ok(checkSelectedTab(), "Current tab is correctly selected");
   });
-
-  let currentSelectedTab = gBrowser.selectedTab;
-  for each (let idx in [1,2,3,4]) {
-    let preview = getPreviewForTab(gBrowser.tabs[0]);
-    let canvas = createThumbnailSurface(preview);
-    let ctx = canvas.getContext("2d");
-    preview.controller.drawThumbnail(ctx, canvas.width, canvas.height);
-    ok(currentSelectedTab.selected, "Drawing thumbnail does not change selection");
-    canvas = getCanvas(preview.controller.width, preview.controller.height);
-    ctx = canvas.getContext("2d");
-    preview.controller.drawPreview(ctx);
-    ok(currentSelectedTab.selected, "Drawing preview does not change selection");
-  }
 
   // Close #4
   getPreviewForTab(gBrowser.selectedTab).controller.onClose();
@@ -106,34 +93,15 @@ function test() {
     is(nPreviews, aPreviews, msg || "Got expected number of previews");
   }
 
-  function getPreviewForTab(tab)
-    window.gTaskbarTabGroup.previewFromTab(tab);
-
-  function checkSelectedTab()
-    getPreviewForTab(gBrowser.selectedTab).active;
-
-  function isTabSelected(idx)
-    gBrowser.tabs[idx].selected;
-
-  function createThumbnailSurface(p) {
-    let thumbnailWidth = 200,
-        thumbnailHeight = 120;
-    let ratio = p.controller.thumbnailAspectRatio;
-
-    if (thumbnailWidth/thumbnailHeight > ratio)
-      thumbnailWidth = thumbnailHeight * ratio;
-    else
-      thumbnailHeight = thumbnailWidth / ratio;
-
-    return getCanvas(thumbnailWidth, thumbnailHeight);
+  function getPreviewForTab(tab) {
+    return window.gTaskbarTabGroup.previewFromTab(tab);
   }
 
-  function getCanvas(width, height) {
-    let win = window.QueryInterface(Ci.nsIDOMWindow);
-    let doc = win.document;
-    let canvas = doc.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-    canvas.width = width;
-    canvas.height = height;
-    return canvas;
+  function checkSelectedTab() {
+    return getPreviewForTab(gBrowser.selectedTab).active;
+  }
+
+  function isTabSelected(idx) {
+    return gBrowser.tabs[idx].selected;
   }
 }

@@ -35,14 +35,15 @@
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
-struct AudioChunk;
-}
+class AudioBlock;
+} // namespace mozilla
 
 namespace WebCore {
 
-using mozilla::AudioChunk;
+using mozilla::AudioBlock;
 
 // DynamicsCompressor implements a flexible audio dynamics compression effect such as
 // is commonly used in musical production and game audio. It lowers the volume
@@ -73,7 +74,7 @@ public:
 
     DynamicsCompressor(float sampleRate, unsigned numberOfChannels);
 
-    void process(const AudioChunk* sourceChunk, AudioChunk* destinationChunk, unsigned framesToProcess);
+    void process(const AudioBlock* sourceChunk, AudioBlock* destinationChunk, unsigned framesToProcess);
     void reset();
     void setNumberOfChannels(unsigned);
     unsigned numberOfChannels() const { return m_numberOfChannels; }
@@ -115,8 +116,8 @@ protected:
     nsTArray<nsAutoPtr<ZeroPoleFilterPack4> > m_preFilterPacks;
     nsTArray<nsAutoPtr<ZeroPoleFilterPack4> > m_postFilterPacks;
 
-    nsAutoArrayPtr<const float*> m_sourceChannels;
-    nsAutoArrayPtr<float*> m_destinationChannels;
+    mozilla::UniquePtr<const float*[]> m_sourceChannels;
+    mozilla::UniquePtr<float*[]> m_destinationChannels;
 
     void setEmphasisStageParameters(unsigned stageIndex, float gain, float normalizedFrequency /* 0 -> 1 */);
     void setEmphasisParameters(float gain, float anchorFreq, float filterStageRatio);

@@ -28,9 +28,8 @@
 #include "nsWrapperCacheInlines.h"
 
 nsIAttribute::nsIAttribute(nsDOMAttributeMap* aAttrMap,
-                           already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
-                           bool aNsAware)
-: nsINode(aNodeInfo), mAttrMap(aAttrMap), mNsAware(aNsAware)
+                           already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
+: nsINode(aNodeInfo), mAttrMap(aAttrMap)
 {
 }
 
@@ -46,8 +45,8 @@ bool Attr::sInitialized;
 
 Attr::Attr(nsDOMAttributeMap *aAttrMap,
            already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
-           const nsAString  &aValue, bool aNsAware)
-  : nsIAttribute(aAttrMap, aNodeInfo, aNsAware), mValue(aValue)
+           const nsAString  &aValue)
+  : nsIAttribute(aAttrMap, aNodeInfo), mValue(aValue)
 {
   MOZ_ASSERT(mNodeInfo, "We must get a nodeinfo here!");
   MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::ATTRIBUTE_NODE,
@@ -144,7 +143,7 @@ Attr::SetOwnerDocument(nsIDocument* aDocument)
   NS_ASSERTION(doc != aDocument, "bad call to Attr::SetOwnerDocument");
   doc->DeleteAllPropertiesFor(this);
 
-  nsRefPtr<mozilla::dom::NodeInfo> newNodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> newNodeInfo;
   newNodeInfo = aDocument->NodeInfoManager()->
     GetNodeInfo(mNodeInfo->NameAtom(), mNodeInfo->GetPrefixAtom(),
                 mNodeInfo->NamespaceID(),
@@ -160,23 +159,6 @@ Attr::GetName(nsAString& aName)
 {
   aName = NodeName();
   return NS_OK;
-}
-
-already_AddRefed<nsIAtom>
-Attr::GetNameAtom(nsIContent* aContent)
-{
-  if (!mNsAware &&
-      mNodeInfo->NamespaceID() == kNameSpaceID_None &&
-      aContent->IsInHTMLDocument() &&
-      aContent->IsHTMLElement()) {
-    nsString name;
-    mNodeInfo->GetName(name);
-    nsAutoString lowercaseName;
-    nsContentUtils::ASCIIToLower(name, lowercaseName);
-    return do_GetAtom(lowercaseName);
-  }
-  nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
-  return nameAtom.forget();
 }
 
 NS_IMETHODIMP
@@ -278,8 +260,8 @@ Attr::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
   nsAutoString value;
   const_cast<Attr*>(this)->GetValue(value);
 
-  nsRefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
-  *aResult = new Attr(nullptr, ni.forget(), value, mNsAware);
+  RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
+  *aResult = new Attr(nullptr, ni.forget(), value);
   if (!*aResult) {
     return NS_ERROR_OUT_OF_MEMORY;
   }

@@ -5,16 +5,12 @@
 
 "use strict";
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-function ok(passed, text) {
-  do_report_result(passed, text, Components.stack.caller, false);
-}
-
 // We use a global variable to track the <browser> where the tests are happening
-let browser;
+var browser;
 
 function setHandlerFunc(handler, test) {
   browser.addEventListener("DOMLinkAdded", function linkAdded(event) {
@@ -37,7 +33,7 @@ add_test(function setup_browser() {
   }, true);
 });
 
-let searchDiscoveryTests = [
+var searchDiscoveryTests = [
   { text: "rel search discovered" },
   { rel: "SEARCH", text: "rel is case insensitive" },
   { rel: "-search-", pass: false, text: "rel -search- not discovered" },
@@ -88,7 +84,7 @@ function prep_search_test(test) {
   head.appendChild(link);
 }
 
-let feedDiscoveryTests = [
+var feedDiscoveryTests = [
   { text: "rel feed discovered" },
   { rel: "ALTERNATE", text: "rel is case insensitive" },
   { rel: "-alternate-", pass: false, text: "rel -alternate- not discovered" },
@@ -137,14 +133,14 @@ function prep_feed_test(test) {
   head.appendChild(link);
 }
 
-let searchTest;
+var searchTest;
 while ((searchTest = searchDiscoveryTests.shift())) {
   let title = searchTest.title || searchDiscoveryTests.length;
   searchTest.title = title;
   add_test(prep_search_test.bind(this, searchTest));
 }
 
-let feedTest;
+var feedTest;
 while ((feedTest = feedDiscoveryTests.shift())) {
   let title = feedTest.title || feedDiscoveryTests.length;
   feedTest.title = title;

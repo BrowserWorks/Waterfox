@@ -33,8 +33,8 @@ class Document;
 class DocumentFragment;
 class GlobalObject;
 
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 /* bacd8ad0-552f-11d3-a9f7-000064657374 */
 #define TRANSFORMIIX_XSLT_PROCESSOR_CID   \
@@ -166,9 +166,11 @@ private:
     void notifyError();
     nsresult ensureStylesheet();
 
+    nsIDocument* getLoaderDoc();
+
     nsCOMPtr<nsISupports> mOwner;
 
-    nsRefPtr<txStylesheet> mStylesheet;
+    RefPtr<txStylesheet> mStylesheet;
     nsIDocument* mStylesheetDocument; // weak
     nsCOMPtr<nsIContent> mEmbeddedStylesheetRoot;
 
@@ -179,16 +181,16 @@ private:
     nsCOMPtr<nsITransformObserver> mObserver;
     txOwningExpandedNameMap<txIGlobalParameter> mVariables;
     txNamespaceMap mParamNamespaceMap;
-    nsRefPtr<txResultRecycler> mRecycler;
+    RefPtr<txResultRecycler> mRecycler;
 
     uint32_t mFlags;
 };
 
 extern nsresult TX_LoadSheet(nsIURI* aUri, txMozillaXSLTProcessor* aProcessor,
-                             nsIDocument* aLoaderDocument,
-                             mozilla::net::ReferrerPolicy aReferrerPolicy);
+                             nsIDocument* aLoaderDocument);
 
 extern nsresult TX_CompileStylesheet(nsINode* aNode,
+                                     nsIDocument* aLoaderDocument,
                                      txMozillaXSLTProcessor* aProcessor,
                                      txStylesheet** aStylesheet);
 

@@ -12,7 +12,7 @@
 #define mozilla_ReverseIterator_h
 
 #include "mozilla/Attributes.h"
-#include "mozilla/IteratorTraits.h"
+#include "mozilla/TypeTraits.h"
 
 namespace mozilla {
 
@@ -20,9 +20,6 @@ template<typename IteratorT>
 class ReverseIterator
 {
 public:
-  typedef typename IteratorTraits<IteratorT>::ValueType ValueType;
-  typedef typename IteratorTraits<IteratorT>::DifferenceType DifferenceType;
-
   template<typename Iterator>
   explicit ReverseIterator(Iterator aIter)
     : mCurrent(aIter) { }
@@ -31,7 +28,7 @@ public:
   MOZ_IMPLICIT ReverseIterator(const ReverseIterator<Iterator>& aOther)
     : mCurrent(aOther.mCurrent) { }
 
-  ValueType& operator*() const
+  decltype(*DeclVal<IteratorT>()) operator*() const
   {
     IteratorT tmp = mCurrent;
     return *--tmp;
@@ -43,25 +40,6 @@ public:
   ReverseIterator& operator--() { ++mCurrent; return *this; }
   ReverseIterator operator++(int) { auto ret = *this; mCurrent--; return ret; }
   ReverseIterator operator--(int) { auto ret = *this; mCurrent++; return ret; }
-
-  ReverseIterator operator+(DifferenceType aN) const
-  {
-    return ReverseIterator(mCurrent - aN);
-  }
-  ReverseIterator operator-(DifferenceType aN) const
-  {
-    return ReverseIterator(mCurrent + aN);
-  }
-  ReverseIterator& operator+=(DifferenceType aN)
-  {
-    mCurrent -= aN;
-    return *this;
-  }
-  ReverseIterator& operator-=(DifferenceType aN)
-  {
-    mCurrent += aN;
-    return *this;
-  }
 
   /* Comparison operators */
 
@@ -148,11 +126,11 @@ public:
   typedef ReverseIterator<IteratorT> const_reverse_iterator;
 
   template<typename Iterator1, typename Iterator2>
-  IteratorRange(Iterator1 aIterBegin, Iterator2 aIterEnd)
+  MOZ_IMPLICIT IteratorRange(Iterator1 aIterBegin, Iterator2 aIterEnd)
     : mIterBegin(aIterBegin), mIterEnd(aIterEnd) { }
 
   template<typename Iterator>
-  IteratorRange(const IteratorRange<Iterator>& aOther)
+  MOZ_IMPLICIT IteratorRange(const IteratorRange<Iterator>& aOther)
     : mIterBegin(aOther.mIterBegin), mIterEnd(aOther.mIterEnd) { }
 
   iterator begin() const { return mIterBegin; }

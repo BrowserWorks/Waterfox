@@ -1,0 +1,53 @@
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ http://creativecommons.org/publicdomain/zero/1.0/ */
+
+"use strict";
+
+// Tests adding a new property and escapes the property name editor with a
+// value.
+
+const TEST_URI = `
+  <style type='text/css'>
+    #testid {
+      background-color: blue;
+    }
+    .testclass {
+      background-color: green;
+    }
+  </style>
+  <div id='testid' class='testclass'>Styled Node</div>
+`;
+
+add_task(function*() {
+  yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
+  let {inspector, view} = yield openRuleView();
+  yield selectNode("#testid", inspector);
+  yield testCancelNewOnEscape(inspector, view);
+});
+
+function* testCancelNewOnEscape(inspector, view) {
+  // Start at the beginning: start to add a rule to the element's style
+  // declaration, add some text, then press escape.
+
+  let elementRuleEditor = getRuleViewRuleEditor(view, 0);
+  let editor = yield focusEditableField(view, elementRuleEditor.closeBrace);
+
+  is(inplaceEditor(elementRuleEditor.newPropSpan), editor,
+    "Next focused editor should be the new property editor.");
+
+  EventUtils.sendString("background", view.styleWindow);
+
+  let onBlur = once(editor.input, "blur");
+  EventUtils.synthesizeKey("VK_ESCAPE", {});
+  yield onBlur;
+
+  ok(!elementRuleEditor.rule._applyingModifications,
+    "Shouldn't have an outstanding modification request after a cancel.");
+  is(elementRuleEditor.rule.textProps.length, 0,
+    "Should have canceled creating a new text property.");
+  ok(!elementRuleEditor.propertyList.hasChildNodes(),
+    "Should not have any properties.");
+  is(view.styleDocument.body, view.styleDocument.activeElement,
+    "Correct element has focus");
+}

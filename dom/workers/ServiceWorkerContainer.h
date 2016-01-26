@@ -19,7 +19,7 @@ struct RegistrationOptions;
 
 namespace workers {
 class ServiceWorker;
-}
+} // namespace workers
 
 // Lightweight serviceWorker APIs collection.
 class ServiceWorkerContainer final : public DOMEventTargetHelper
@@ -29,9 +29,10 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerContainer, DOMEventTargetHelper)
 
   IMPL_EVENT_HANDLER(controllerchange)
-  IMPL_EVENT_HANDLER(reloadpage)
   IMPL_EVENT_HANDLER(error)
   IMPL_EVENT_HANDLER(message)
+
+  static bool IsEnabled(JSContext* aCx, JSObject* aGlobal);
 
   explicit ServiceWorkerContainer(nsPIDOMWindow* aWindow);
 
@@ -63,17 +64,21 @@ public:
   // DOMEventTargetHelper
   void DisconnectFromOwner() override;
 
+  // Invalidates |mControllerWorker| and dispatches a "controllerchange"
+  // event.
+  void
+  ControllerChanged(ErrorResult& aRv);
+
 private:
   ~ServiceWorkerContainer();
 
   void RemoveReadyPromise();
 
   // This only changes when a worker hijacks everything in its scope by calling
-  // replace().
-  // FIXME(nsm): Bug 982711. Provide API to let SWM invalidate this.
-  nsRefPtr<workers::ServiceWorker> mControllerWorker;
+  // claim.
+  RefPtr<workers::ServiceWorker> mControllerWorker;
 
-  nsRefPtr<Promise> mReadyPromise;
+  RefPtr<Promise> mReadyPromise;
 };
 
 } // namespace dom

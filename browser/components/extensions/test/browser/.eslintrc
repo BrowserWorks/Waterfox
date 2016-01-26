@@ -1,0 +1,25 @@
+{
+  "extends": "../../../../../testing/mochitest/browser.eslintrc",
+
+  "env": {
+    "webextensions": true,
+  },
+
+  "globals": {
+    "NetUtil": true,
+    "XPCOMUtils": true,
+    "Task": true,
+
+    // Browser window globals.
+    "PanelUI": false,
+
+    // Test harness globals
+    "ExtensionTestUtils": false,
+
+    "clickBrowserAction": true,
+    "clickPageAction": true,
+    "CustomizableUI": true,
+    "focusWindow": true,
+    "makeWidgetId": true,
+  }
+}

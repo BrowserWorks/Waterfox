@@ -74,11 +74,11 @@ public:
   };
 
 private:
-  nsRefPtr<IDBDatabase> mDatabase;
-  nsRefPtr<DOMError> mError;
+  RefPtr<IDBDatabase> mDatabase;
+  RefPtr<DOMError> mError;
   nsTArray<nsString> mObjectStoreNames;
-  nsTArray<nsRefPtr<IDBObjectStore>> mObjectStores;
-  nsTArray<nsRefPtr<IDBObjectStore>> mDeletedObjectStores;
+  nsTArray<RefPtr<IDBObjectStore>> mObjectStores;
+  nsTArray<RefPtr<IDBObjectStore>> mDeletedObjectStores;
   nsAutoPtr<WorkerFeature> mWorkerFeature;
 
   // Tagged with mMode. If mMode is VERSION_CHANGE then mBackgroundActor will be
@@ -100,6 +100,7 @@ private:
 
   nsString mFilename;
   uint32_t mLineNo;
+  uint32_t mColumn;
 
   ReadyState mReadyState;
   Mode mMode;
@@ -166,10 +167,19 @@ public:
   IsOpen() const;
 
   bool
-  IsFinished() const
+  IsCommittingOrDone() const
   {
     AssertIsOnOwningThread();
-    return mReadyState > LOADING;
+
+    return mReadyState == COMMITTING || mReadyState == DONE;
+  }
+
+  bool
+  IsDone() const
+  {
+    AssertIsOnOwningThread();
+
+    return mReadyState == DONE;
   }
 
   bool
@@ -196,7 +206,8 @@ public:
   }
 
   void
-  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo) const;
+  GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo,
+                    uint32_t* aColumn) const;
 
   // 'Get' prefix is to avoid name collisions with the enum
   Mode
@@ -272,7 +283,7 @@ public:
   IMPL_EVENT_HANDLER(error)
 
   already_AddRefed<DOMStringList>
-  ObjectStoreNames();
+  ObjectStoreNames() const;
 
   void
   FireCompleteOrAbortEvents(nsresult aResult);

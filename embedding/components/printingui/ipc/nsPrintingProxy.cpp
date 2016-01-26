@@ -4,15 +4,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsPrintingProxy.h"
+
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/TabChild.h"
+#include "mozilla/layout/RemotePrintJobChild.h"
 #include "mozilla/unused.h"
 #include "nsIDocShell.h"
 #include "nsIDocShellTreeOwner.h"
 #include "nsIPrintingPromptService.h"
 #include "nsPIDOMWindow.h"
-#include "nsPrintingProxy.h"
 #include "nsPrintOptionsImpl.h"
 #include "PrintDataUtils.h"
 #include "PrintProgressDialogChild.h"
@@ -20,6 +22,7 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::embedding;
+using namespace mozilla::layout;
 
 static StaticRefPtr<nsPrintingProxy> sPrintingProxyInstance;
 
@@ -50,14 +53,14 @@ nsPrintingProxy::GetInstance()
     ClearOnShutdown(&sPrintingProxyInstance);
   }
 
-  nsRefPtr<nsPrintingProxy> inst = sPrintingProxyInstance.get();
+  RefPtr<nsPrintingProxy> inst = sPrintingProxyInstance.get();
   return inst.forget();
 }
 
 nsresult
 nsPrintingProxy::Init()
 {
-  mozilla::unused << ContentChild::GetSingleton()->SendPPrintingConstructor(this);
+  mozilla::Unused << ContentChild::GetSingleton()->SendPPrintingConstructor(this);
   return NS_OK;
 }
 
@@ -100,10 +103,10 @@ nsPrintingProxy::ShowPrintDialog(nsIDOMWindow *parent,
   // nested event loop while we wait for the results of the dialog
   // to be returned to us.
 
-  nsRefPtr<PrintSettingsDialogChild> dialog = new PrintSettingsDialogChild();
+  RefPtr<PrintSettingsDialogChild> dialog = new PrintSettingsDialogChild();
   SendPPrintSettingsDialogConstructor(dialog);
 
-  mozilla::unused << SendShowPrintDialog(dialog, pBrowser, inSettings);
+  mozilla::Unused << SendShowPrintDialog(dialog, pBrowser, inSettings);
 
   while(!dialog->returned()) {
     NS_ProcessNextEvent(nullptr, true);
@@ -144,15 +147,17 @@ nsPrintingProxy::ShowProgress(nsIDOMWindow*            parent,
   nsCOMPtr<nsITabChild> tabchild = do_GetInterface(owner);
   TabChild* pBrowser = static_cast<TabChild*>(tabchild.get());
 
-  nsRefPtr<PrintProgressDialogChild> dialogChild =
+  RefPtr<PrintProgressDialogChild> dialogChild =
     new PrintProgressDialogChild(openDialogObserver);
 
   SendPPrintProgressDialogConstructor(dialogChild);
 
-  bool success = false;
+  mozilla::Unused << SendShowProgress(pBrowser, dialogChild,
+                                      isForPrinting, notifyOnOpen, &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
-  mozilla::unused << SendShowProgress(pBrowser, dialogChild,
-                                      isForPrinting, notifyOnOpen, &success);
   NS_ADDREF(*webProgressListener = dialogChild);
   NS_ADDREF(*printProgressParams = dialogChild);
 
@@ -189,7 +194,7 @@ nsPrintingProxy::SavePrintSettings(nsIPrintSettings* aPS,
   rv = po->SerializeToPrintData(aPS, nullptr, &settings);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  unused << SendSavePrintSettings(settings, aUsePrinterNamePrefix, aFlags,
+  Unused << SendSavePrintSettings(settings, aUsePrinterNamePrefix, aFlags,
                                   &rv);
   return rv;
 }
@@ -229,5 +234,20 @@ nsPrintingProxy::DeallocPPrintSettingsDialogChild(PPrintSettingsDialogChild* aAc
 {
   // The PrintSettingsDialogChild implements refcounting, and
   // will take itself out.
+  return true;
+}
+
+PRemotePrintJobChild*
+nsPrintingProxy::AllocPRemotePrintJobChild()
+{
+  RefPtr<RemotePrintJobChild> remotePrintJob = new RemotePrintJobChild();
+  return remotePrintJob.forget().take();
+}
+
+bool
+nsPrintingProxy::DeallocPRemotePrintJobChild(PRemotePrintJobChild* aDoomed)
+{
+  RemotePrintJobChild* remotePrintJob = static_cast<RemotePrintJobChild*>(aDoomed);
+  NS_RELEASE(remotePrintJob);
   return true;
 }

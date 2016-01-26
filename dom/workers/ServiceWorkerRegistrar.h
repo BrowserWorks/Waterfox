@@ -16,17 +16,19 @@
 #include "nsTArray.h"
 
 #define SERVICEWORKERREGISTRAR_FILE "serviceworker.txt"
-#define SERVICEWORKERREGISTRAR_VERSION "1"
+#define SERVICEWORKERREGISTRAR_VERSION "3"
 #define SERVICEWORKERREGISTRAR_TERMINATOR "#"
 #define SERVICEWORKERREGISTRAR_TRUE "true"
 #define SERVICEWORKERREGISTRAR_FALSE "false"
-#define SERVICEWORKERREGISTRAR_SYSTEM_PRINCIPAL "system"
-#define SERVICEWORKERREGISTRAR_CONTENT_PRINCIPAL "content"
-
 
 class nsIFile;
 
 namespace mozilla {
+
+namespace ipc {
+class PrincipalInfo;
+} // namespace ipc
+
 namespace dom {
 
 class ServiceWorkerRegistrationData;
@@ -50,7 +52,9 @@ public:
   void GetRegistrations(nsTArray<ServiceWorkerRegistrationData>& aValues);
 
   void RegisterServiceWorker(const ServiceWorkerRegistrationData& aData);
-  void UnregisterServiceWorker(const nsACString& aScope);
+  void UnregisterServiceWorker(const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
+                               const nsACString& aScope);
+  void RemoveAll();
 
 protected:
   // These methods are protected because we test this class using gTest
@@ -73,6 +77,8 @@ private:
   void ShutdownCompleted();
   void MaybeScheduleShutdownCompleted();
 
+  bool IsSupportedVersion(const nsACString& aVersion) const;
+
   mozilla::Monitor mMonitor;
 
 protected:
@@ -87,7 +93,7 @@ protected:
   nsCOMPtr<nsIFile> mProfileDir;
 };
 
-} // dom namespace
-} // mozilla namespace
+} // namespace dom
+} // namespace mozilla
 
 #endif // mozilla_dom_workers_ServiceWorkerRegistrar_h

@@ -43,10 +43,21 @@ http://creativecommons.org/licenses/publicdomain/
     return p;
   }
 
+  function checkPermissionState(swr) {
+    return swr.pushManager.permissionState().then(function(state) {
+      ok(state === "granted", "permissionState() should resolve to granted.");
+      return swr;
+    }).catch(function(e) {
+      ok(false, "permissionState() should resolve to granted.");
+      return swr;
+    });
+  }
+
   function sendPushToPushServer(pushEndpoint) {
     // Work around CORS for now.
     var xhr = new XMLHttpRequest();
     xhr.open('GET', "http://mochi.test:8888/tests/dom/push/test/push-server.sjs", true);
+    xhr.setRequestHeader("X-Push-Method", "PUT");
     xhr.setRequestHeader("X-Push-Server", pushEndpoint);
     xhr.onload = function(e) {
       debug("xhr : " + this.status);
@@ -104,6 +115,7 @@ http://creativecommons.org/licenses/publicdomain/
   function runTest() {
     start()
     .then(createControlledIFrame)
+    .then(checkPermissionState)
     .then(setupPushNotification)
     .then(waitForPushNotification)
     .then(unregisterPushNotification)
@@ -119,7 +131,7 @@ http://creativecommons.org/licenses/publicdomain/
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true]
     ]}, runTest);
-  SpecialPowers.addPermission('push', true, document);
+  SpecialPowers.addPermission("desktop-notification", true, document);
   SimpleTest.waitForExplicitFinish();
 </script>
 </body>

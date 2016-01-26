@@ -16,6 +16,9 @@
 #include "ImageContainer.h"
 
 #include "webrtc/common_types.h"
+namespace webrtc {
+class I420VideoFrame;
+}
 
 #include <vector>
 
@@ -106,7 +109,14 @@ public:
    * inside until it's no longer needed.
    */
   virtual void RenderVideoFrame(const unsigned char* buffer,
-                                unsigned int buffer_size,
+                                size_t buffer_size,
+                                uint32_t time_stamp,
+                                int64_t render_time,
+                                const ImageHandle& handle) = 0;
+  virtual void RenderVideoFrame(const unsigned char* buffer,
+                                size_t buffer_size,
+                                uint32_t y_stride,
+                                uint32_t cbcr_stride,
                                 uint32_t time_stamp,
                                 int64_t render_time,
                                 const ImageHandle& handle) = 0;
@@ -228,7 +238,7 @@ class CodecPluginID
 public:
   virtual ~CodecPluginID() {}
 
-  virtual const uint64_t PluginID() = 0;
+  virtual uint64_t PluginID() const = 0;
 };
 
 class VideoEncoder : public CodecPluginID
@@ -300,6 +310,7 @@ public:
                                                unsigned short height,
                                                VideoType video_type,
                                                uint64_t capture_time) = 0;
+  virtual MediaConduitErrorCode SendVideoFrame(webrtc::I420VideoFrame& frame) = 0;
 
   virtual MediaConduitErrorCode ConfigureCodecMode(webrtc::VideoCodecMode) = 0;
   /**
@@ -387,7 +398,7 @@ public:
     * return: Concrete AudioSessionConduitObject or nullptr in the case
     *         of failure
     */
-  static mozilla::RefPtr<AudioSessionConduit> Create();
+  static RefPtr<AudioSessionConduit> Create();
 
   virtual ~AudioSessionConduit() {}
 

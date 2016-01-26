@@ -60,9 +60,9 @@ Omnijar::InitOne(nsIFile* aPath, Type aType)
     if ((aType == APP) && (!sPath[GRE])) {
       nsCOMPtr<nsIFile> greDir, appDir;
       bool equals;
-      nsDirectoryService::gService->Get(SPROP(GRE), NS_GET_IID(nsIFile),
+      nsDirectoryService::gService->Get(sProp[GRE], NS_GET_IID(nsIFile),
                                         getter_AddRefs(greDir));
-      nsDirectoryService::gService->Get(SPROP(APP), NS_GET_IID(nsIFile),
+      nsDirectoryService::gService->Get(sProp[APP], NS_GET_IID(nsIFile),
                                         getter_AddRefs(appDir));
       if (NS_SUCCEEDED(greDir->Equals(appDir, &equals)) && equals) {
         sIsUnified = true;
@@ -80,12 +80,12 @@ Omnijar::InitOne(nsIFile* aPath, Type aType)
     return;
   }
 
-  nsRefPtr<nsZipArchive> zipReader = new nsZipArchive();
+  RefPtr<nsZipArchive> zipReader = new nsZipArchive();
   if (NS_FAILED(zipReader->OpenArchive(file))) {
     return;
   }
 
-  nsRefPtr<nsZipHandle> handle;
+  RefPtr<nsZipHandle> handle;
   if (NS_SUCCEEDED(nsZipHandle::Init(zipReader, NS_STRINGIFY(OMNIJAR_NAME),
                                      getter_AddRefs(handle)))) {
     zipReader = new nsZipArchive();

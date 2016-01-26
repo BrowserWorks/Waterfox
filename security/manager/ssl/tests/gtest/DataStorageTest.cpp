@@ -12,6 +12,7 @@
 #include "nsNetUtil.h"
 #include "nsPrintfCString.h"
 #include "nsStreamUtils.h"
+#include "prtime.h"
 
 using namespace mozilla;
 
@@ -23,11 +24,11 @@ protected:
     const ::testing::TestInfo* const testInfo =
       ::testing::UnitTest::GetInstance()->current_test_info();
     NS_ConvertUTF8toUTF16 testName(testInfo->name());
-    storage = new DataStorage(testName);
+    storage = DataStorage::Get(testName);
     storage->Init(dataWillPersist);
   }
 
-  nsRefPtr<DataStorage> storage;
+  RefPtr<DataStorage> storage;
   bool dataWillPersist;
 };
 

@@ -1,6 +1,3 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
-
 "use strict";
 
 const PATH = "/browser/browser/components/sessionstore/test/";
@@ -87,7 +84,7 @@ add_task(function* test_run() {
  * different cookie domains given in the Set-Cookie header. See above for some
  * usage examples.
  */
-let testCookieCollection = Task.async(function (params) {
+var testCookieCollection = Task.async(function (params) {
   let tab = gBrowser.addTab("about:blank");
   let browser = tab.linkedBrowser;
 
@@ -140,14 +137,14 @@ let testCookieCollection = Task.async(function (params) {
  * browser's session history will be completely replaced. This function ensures
  * that the parent process has the lastest shistory data before resolving.
  */
-let replaceCurrentURI = Task.async(function* (browser, uri) {
+var replaceCurrentURI = Task.async(function* (browser, uri) {
   // Replace the tab's current URI with the parent domain.
   let flags = Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY;
   browser.loadURIWithFlags(uri, flags);
   yield promiseBrowserLoaded(browser);
 
   // Ensure the tab's session history is up-to-date.
-  TabState.flush(browser);
+  yield TabStateFlusher.flush(browser);
 });
 
 /**

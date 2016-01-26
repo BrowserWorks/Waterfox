@@ -90,7 +90,7 @@ nsSVGOrientType::SetBaseValue(uint16_t aValue,
 already_AddRefed<SVGAnimatedEnumeration>
 nsSVGOrientType::ToDOMAnimatedEnum(nsSVGElement *aSVGElement)
 {
-  nsRefPtr<SVGAnimatedEnumeration> toReturn =
+  RefPtr<SVGAnimatedEnumeration> toReturn =
     new DOMAnimatedEnum(this, aSVGElement);
   return toReturn.forget();
 }
@@ -177,6 +177,7 @@ SVGMarkerElement::SetOrientToAngle(SVGAngle& angle, ErrorResult& rv)
     rv.Throw(NS_ERROR_DOM_SVG_WRONG_TYPE_ERR);
     return;
   }
+  mOrientType.SetBaseValue(SVG_MARKER_ORIENT_ANGLE);
   mAngleAttributes[ORIENT].SetBaseValue(f, this, true);
 }
 
@@ -216,12 +217,14 @@ SVGMarkerElement::ParseAttribute(int32_t aNameSpaceID, nsIAtom* aName,
     if (aValue.EqualsLiteral("auto")) {
       mOrientType.SetBaseValue(SVG_MARKER_ORIENT_AUTO);
       aResult.SetTo(aValue);
+      mAngleAttributes[ORIENT].SetBaseValue(0.f, this, false);
       return true;
     }
     if (aValue.EqualsLiteral("auto-start-reverse") &&
         MarkerImprovementsPrefEnabled()) {
       mOrientType.SetBaseValue(SVG_MARKER_ORIENT_AUTO_START_REVERSE);
       aResult.SetTo(aValue);
+      mAngleAttributes[ORIENT].SetBaseValue(0.f, this, false);
       return true;
     }
     mOrientType.SetBaseValue(SVG_MARKER_ORIENT_ANGLE);

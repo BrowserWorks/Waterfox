@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-let gTests;
+var gTests;
 function test() {
   waitForExplicitFinish();
   requestLongerTimeout(2);
@@ -44,7 +44,7 @@ function setFile(downloadLastDir, aURI, aValue) {
 
 function clearHistoryAndWait() {
   clearHistory();
-  executeSoon(function() executeSoon(moveAlong));
+  executeSoon(() => executeSoon(moveAlong));
 }
 
 /*
@@ -73,7 +73,7 @@ function runTest() {
   registerCleanupFunction(function () {
     Services.prefs.clearUserPref("browser.download.lastDir.savePerSite");
     Services.prefs.clearUserPref("browser.download.lastDir");
-    [dir1, dir2, dir3].forEach(function(dir) dir.remove(true));
+    [dir1, dir2, dir3].forEach(dir => dir.remove(true));
     win.close();
     pbWin.close();
   });

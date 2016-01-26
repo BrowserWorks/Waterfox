@@ -3,7 +3,7 @@
 
 "use strict";
 
-const {utils: Cu} = Components;
+var {utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -22,7 +22,7 @@ const ORIGINAL_SENDERROR = AboutServiceWorkers.sendError;
 
 do_get_profile();
 
-let mockSendResult = (aId, aResult) => {
+var mockSendResult = (aId, aResult) => {
   let msg = {
     id: aId,
     result: aResult
@@ -30,7 +30,7 @@ let mockSendResult = (aId, aResult) => {
   Services.obs.notifyObservers({wrappedJSObject: msg}, CHROME_MSG, null);
 };
 
-let mockSendError = (aId, aError) => {
+var mockSendError = (aId, aError) => {
   let msg = {
     id: aId,
     result: aError
@@ -128,12 +128,15 @@ add_test(function test_swm() {
                 "SWM.getAllRegistrations exists");
   do_check_true(typeof gServiceWorkerManager.getAllRegistrations == "function",
                 "SWM.getAllRegistrations is a function");
-  do_check_true(gServiceWorkerManager.softUpdate, "SWM.softUpdate exists");
-  do_check_true(typeof gServiceWorkerManager.softUpdate == "function",
-                "SWM.softUpdate is a function");
-  do_check_true(gServiceWorkerManager.unregister, "SWM.unregister exists");
-  do_check_true(typeof gServiceWorkerManager.unregister == "function",
-                "SWM.unregister exists");
+  do_check_true(gServiceWorkerManager.propagateSoftUpdate,
+                "SWM.propagateSoftUpdate exists");
+  do_check_true(typeof gServiceWorkerManager.propagateSoftUpdate == "function",
+
+                "SWM.propagateSoftUpdate is a function");
+  do_check_true(gServiceWorkerManager.propagateUnregister,
+                "SWM.propagateUnregister exists");
+  do_check_true(typeof gServiceWorkerManager.propagateUnregister == "function",
+                "SWM.propagateUnregister exists");
 
   run_next_test();
 });

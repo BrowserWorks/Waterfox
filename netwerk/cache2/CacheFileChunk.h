@@ -150,7 +150,7 @@ private:
   uint32_t            mRWBufSize;
   CacheHash::Hash16_t mReadHash;
 
-  nsRefPtr<CacheFile>              mFile; // is null if chunk is cached to
+  RefPtr<CacheFile>                mFile; // is null if chunk is cached to
                                           // prevent reference cycles
   nsCOMPtr<CacheFileChunkListener> mListener;
   nsTArray<ChunkListenerItem *>    mUpdateListeners;
@@ -158,7 +158,7 @@ private:
 };
 
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

@@ -75,18 +75,10 @@ var ecmaGlobals =
     "Proxy",
     "RangeError",
     "ReferenceError",
+    "Reflect",
     "RegExp",
     "Set",
     {name: "SharedArrayBuffer", nightly: true},
-    {name: "SharedInt8Array", nightly: true},
-    {name: "SharedUint8Array", nightly: true},
-    {name: "SharedUint8ClampedArray", nightly: true},
-    {name: "SharedInt16Array", nightly: true},
-    {name: "SharedUint16Array", nightly: true},
-    {name: "SharedInt32Array", nightly: true},
-    {name: "SharedUint32Array", nightly: true},
-    {name: "SharedFloat32Array", nightly: true},
-    {name: "SharedFloat64Array", nightly: true},
     {name: "SIMD", nightly: true},
     {name: "Atomics", nightly: true},
     "StopIteration",
@@ -127,8 +119,6 @@ var legacyMozPrefixedInterfaces =
 var interfaceNamesInGlobalScope =
   [
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MozAbortablePromise", disabled: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AlarmsManager", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "AnalyserNode",
@@ -137,7 +127,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AnimationEffectReadOnly", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "AnimationEffectTimingReadOnly", release: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "AnimationEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "AnimationPlaybackEvent", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "AnimationTimeline", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -184,24 +178,81 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "BluetoothAdapter", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothAdapterEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothAttributeEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothClassOfDevice", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "BluetoothDevice", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "BluetoothDeviceEvent", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "BluetoothDiscoveryStateChangedEvent", b2g: true,
+    {name: "BluetoothDiscoveryHandle", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGatt", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattAttributeEvent", b2g: true,
      permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattCharacteristic", b2g: true,
+     permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattCharacteristicEvent", b2g: true,
+     permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattDescriptor", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattServer", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothGattService", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothLeDeviceEvent", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "BluetoothManager", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "BluetoothStatusChangedEvent", b2g: true, permission: ["bluetooth"]},
+    {name: "BluetoothMapFolderListingEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapGetMessageEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapMessagesListingEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapMessageUpdateEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapRequestHandle", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapSendMessageEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothMapSetMessageStatusEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothObexAuthEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothObexAuthHandle", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothPbapRequestHandle", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothPairingEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothPairingHandle", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothPhonebookPullingEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothStatusChangedEvent", b2g: true,
+     permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothVCardListingEvent", b2g: true, permission: ["bluetooth"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BluetoothVCardPullingEvent", b2g: true, permission: ["bluetooth"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "BoxObject", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "BrowserElementAudioChannel", b2g: true, permission: ["browser"] },
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "BroadcastChannel",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "Cache", release: false},
+    "Cache",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "CacheStorage", release: false},
+    "CacheStorage",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CallEvent", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -231,6 +282,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "CameraStateChangeEvent", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CanvasCaptureMediaStream"},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "CanvasGradient",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CanvasPattern",
@@ -248,6 +301,8 @@ var interfaceNamesInGlobalScope =
     "ChannelSplitterNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CharacterData",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ChromeNodeList", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ChromeWindow", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -273,11 +328,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSS2Properties",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CSSAnimation", release: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSConditionRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSCounterStyleRule",
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "CSSFontFaceLoadEvent", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSFontFaceRule",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -308,6 +363,8 @@ var interfaceNamesInGlobalScope =
     "CSSStyleSheet",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSSupportsRule",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "CSSTransition", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CSSValue",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -348,6 +405,8 @@ var interfaceNamesInGlobalScope =
     { name: "DeviceStorage", desktop: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "DeviceStorageChangeEvent", desktop: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "Directory",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "DisplayPortInputPort", b2g: true, permission: ["inputport"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -415,6 +474,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "External", b2g: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ExternalAppEvent", b2g: true, permission: ["external-app"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "File",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FileList",
@@ -427,9 +488,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "FormData",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "FontFace", release: false},
+    "FontFace",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "FontFaceSet", release: false},
+    "FontFaceSet",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "FontFaceSetLoadEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "GainNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -451,7 +514,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "HDMIInputPort", b2g: true, permission: ["inputport"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "HMDVRDevice", disabled: true},
+    {name: "HMDVRDevice", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLAllCollection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -492,6 +555,8 @@ var interfaceNamesInGlobalScope =
     "HTMLElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLEmbedElement",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "HTMLExternalAppElement", b2g: true, permission: ["external-app"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLFieldSetElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -637,6 +702,10 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Image",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "ImageBitmap",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "ImageBitmapRenderingContext",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ImageCapture", disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "ImageCaptureErrorEvent", disabled: true},
@@ -689,7 +758,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaRecorder",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MediaSource", android: false, linux: false, release: false},
+    "MediaSource",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MediaStream",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -704,6 +773,8 @@ var interfaceNamesInGlobalScope =
     "MediaStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MenuBoxObject", xbl: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "MessageChannel",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "MessageEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -731,11 +802,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozEmergencyCbModeEvent", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MozInputContext", b2g: true},
+    {name: "MozInputContext", b2g: true, permission: ["input"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "MozInputMethodManager", b2g: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "MozMmsMessage",
+    {name: "MozInputMethodManager", b2g: true, permission: ["input"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozMobileCellInfo", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -746,8 +815,6 @@ var interfaceNamesInGlobalScope =
     {name: "MozMobileConnectionInfo", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozMobileNetworkInfo", b2g: true},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "MozMobileMessageThread",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozNDEFRecord", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -764,8 +831,6 @@ var interfaceNamesInGlobalScope =
     "MozSettingsEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozSettingsTransactionEvent", permission: ["settings-api-read"]},
-// IMPORTANT: Do not change this list without review from a DOM peer!
-    "MozSmsMessage",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "MozSpeakerManager", b2g: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -815,6 +880,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "NotifyPaintEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "OffscreenCanvas", disabled: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "OfflineAudioCompletionEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "OfflineAudioContext",
@@ -851,7 +918,11 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PeriodicWave",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "Permissions",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PermissionSettings", b2g: true, permission: ["permissions"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "PermissionStatus",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PhoneNumberService", permission: ["phonenumberservice"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -859,7 +930,7 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PluginArray",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PointerEvent", disabled: true},
+    {name: "PointerEvent", nightly: true, desktop: true, disabled: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PopStateEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -867,11 +938,21 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PopupBoxObject", xbl: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PositionSensorVRDevice", disabled: true},
+    {name: "PositionSensorVRDevice", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "PresentationDeviceInfoManager",
      disabled: true,
      permission: ["presentation-device-manage"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "Presentation", disabled: true, permission: ["presentation"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationAvailability", disabled: true, permission: ["presentation"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationRequest", disabled: true, permission: ["presentation"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationSession", disabled: true, permission: ["presentation"]},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PresentationSessionConnectEvent", disabled: true, permission: ["presentation"]},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ProcessingInstruction",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -881,7 +962,9 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "PropertyNodeList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "PushManager", b2g: false, android: false, release: false},
+    {name: "PushManager", b2g: false, android: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "PushSubscription", b2g: false, android: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "RadioNodeList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -897,7 +980,13 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "RGBColor",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "RTCCertificate",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "RTCDataChannelEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "RTCIceCandidate",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "RTCPeerConnection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "RTCPeerConnectionIceEvent",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -905,9 +994,15 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "RTCRtpSender",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "RTCSessionDescription",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "RTCStatsReport",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "RTCTrackEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "Screen",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "ScreenOrientation",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ScriptProcessorNode",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -915,11 +1010,13 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Selection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorker", nightly: true, b2g: false},
+    {name: "ServiceWorker", b2g: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorkerContainer", nightly: true, b2g: false},
+    {name: "ServiceWorkerContainer", b2g: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "ServiceWorkerRegistration", nightly: true, b2g: false},
+    {name: "ServiceWorkerMessageEvent", b2g: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "ServiceWorkerRegistration", b2g: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "SettingsLock",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -933,17 +1030,19 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "SimpleTest", xbl: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SourceBuffer", android: false, linux: false, release: false},
+    "SourceBuffer",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SourceBufferList", android: false, linux: false, release: false},
+    "SourceBufferList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SpeechSynthesisEvent", b2g: true},
+    {name: "SpeechSynthesisErrorEvent", android: false, nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SpeechSynthesis", b2g: true},
+    {name: "SpeechSynthesisEvent", android: false, nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SpeechSynthesisUtterance", b2g: true},
+    {name: "SpeechSynthesis", android: false, nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "SpeechSynthesisVoice", b2g: true},
+    {name: "SpeechSynthesisUtterance", android: false, nightly: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "SpeechSynthesisVoice", android: false, nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     {name: "SpecialPowers", xbl: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1225,6 +1324,8 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "TextTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "TextTrackCue",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "TextTrackCueList",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "TextTrackList",
@@ -1287,17 +1388,19 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "ValidityState",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VideoPlaybackQuality", android: false, linux: false, release: false},
+    "VideoPlaybackQuality",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VideoStreamTrack",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRDevice", disabled: true},
+    {name: "VRDevice", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRPositionState", disabled: true},
+    {name: "VRPositionState", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRFieldOfView", disabled: true},
+    {name: "VREyeParameters", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "VRFieldOfViewReadOnly", disabled: true},
+    {name: "VRFieldOfView", release: false},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "VRFieldOfViewReadOnly", release: false},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "VTTCue",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1313,19 +1416,31 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLProgram",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebGLQuery", nightly: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLRenderbuffer",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLRenderingContext",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebGL2RenderingContext", nightly: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebGLSampler", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLShader",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLShaderPrecisionFormat",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebGLSync", nightly: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLTexture",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    {name: "WebGLTransformFeedback", nightly: true},
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebGLUniformLocation",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    "WebGLVertexArray",
+    {name: "WebGLVertexArrayObject", nightly: true},
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "WebKitCSSMatrix",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "WebSocket",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -1390,8 +1505,8 @@ function createInterfaceMap(isXBLScope) {
   var isB2G = !isDesktop && !navigator.userAgent.includes("Android");
   var isMac = /Mac OS/.test(navigator.oscpu);
   var isWindows = /Windows/.test(navigator.oscpu);
-  var isLinux = /Linux/.test(navigator.oscpu);
   var isAndroid = navigator.userAgent.includes("Android");
+  var isLinux = /Linux/.test(navigator.oscpu) && !isAndroid;
   var hasPermission = function (aPermissions) {
     var result = false;
     for (var p of aPermissions) {
@@ -1408,8 +1523,8 @@ function createInterfaceMap(isXBLScope) {
       if (typeof(entry) === "string") {
         interfaceMap[entry] = true;
       } else {
-	ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
-	if ((entry.nightly === !isNightly) ||
+        ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
+        if ((entry.nightly === !isNightly) ||
             (entry.xbl === !isXBLScope) ||
             (entry.desktop === !isDesktop) ||
             (entry.b2g === !isB2G) ||
@@ -1421,9 +1536,9 @@ function createInterfaceMap(isXBLScope) {
             (entry.permission && !hasPermission(entry.permission)) ||
             entry.disabled) {
           interfaceMap[entry.name] = false;
-	} else {
+        } else {
           interfaceMap[entry.name] = true;
-	}
+        }
       }
     }
   }

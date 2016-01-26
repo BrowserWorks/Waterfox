@@ -11,6 +11,7 @@
 #include "SharedSurfaceGL.h"            // for SurfaceFactory_GLTexture, etc
 #include "ClientLayerManager.h"         // for ClientLayerManager, etc
 #include "mozilla/gfx/Point.h"          // for IntSize
+#include "mozilla/layers/AsyncCanvasRenderer.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "nsCOMPtr.h"                   // for already_AddRefed
@@ -18,19 +19,6 @@
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
 #include "gfxPrefs.h"                   // for WebGLForceLayersReadback
-
-#ifdef XP_WIN
-#include "SharedSurfaceANGLE.h"         // for SurfaceFactory_ANGLEShareHandle
-#include "gfxWindowsPlatform.h"
-#endif
-
-#ifdef MOZ_WIDGET_GONK
-#include "SharedSurfaceGralloc.h"
-#endif
-
-#ifdef XP_MACOSX
-#include "SharedSurfaceIO.h"
-#endif
 
 using namespace mozilla::gfx;
 using namespace mozilla::gl;
@@ -70,56 +58,14 @@ ClientCanvasLayer::Initialize(const Data& aData)
   }
   MOZ_ASSERT(caps.alpha == aData.mHasAlpha);
 
-  UniquePtr<SurfaceFactory> factory;
+  auto forwarder = ClientManager()->AsShadowForwarder();
 
-  if (!gfxPrefs::WebGLForceLayersReadback()) {
-    switch (ClientManager()->AsShadowForwarder()->GetCompositorBackendType()) {
-      case mozilla::layers::LayersBackend::LAYERS_OPENGL: {
-        if (mGLContext->GetContextType() == GLContextType::EGL) {
-#ifdef MOZ_WIDGET_GONK
-          TextureFlags flags = TextureFlags::DEALLOCATE_CLIENT |
-                               TextureFlags::ORIGIN_BOTTOM_LEFT;
-          if (!aData.mIsGLAlphaPremult) {
-            flags |= TextureFlags::NON_PREMULTIPLIED;
-          }
-          factory = MakeUnique<SurfaceFactory_Gralloc>(mGLContext,
-                                                       caps,
-                                                       flags,
-                                                       ClientManager()->AsShadowForwarder());
-#else
-          bool isCrossProcess = !(XRE_GetProcessType() == GeckoProcessType_Default);
-          if (!isCrossProcess) {
-            // [Basic/OGL Layers, OMTC] WebGL layer init.
-            factory = SurfaceFactory_EGLImage::Create(mGLContext, caps);
-          } else {
-            // we could do readback here maybe
-            NS_NOTREACHED("isCrossProcess but not on native B2G!");
-          }
-#endif
-        } else {
-          // [Basic Layers, OMTC] WebGL layer init.
-          // Well, this *should* work...
-#ifdef XP_MACOSX
-          factory = SurfaceFactory_IOSurface::Create(mGLContext, caps);
-#else
-          GLContext* nullConsGL = nullptr; // Bug 1050044.
-          factory = MakeUnique<SurfaceFactory_GLTexture>(mGLContext, nullConsGL, caps);
-#endif
-        }
-        break;
-      }
-      case mozilla::layers::LayersBackend::LAYERS_D3D11: {
-#ifdef XP_WIN
-        if (mGLContext->IsANGLE() && DoesD3D11TextureSharingWork(gfxWindowsPlatform::GetPlatform()->GetD3D11Device())) {
-          factory = SurfaceFactory_ANGLEShareHandle::Create(mGLContext, caps);
-        }
-#endif
-        break;
-      }
-      default:
-        break;
-    }
+  mFlags = TextureFlags::ORIGIN_BOTTOM_LEFT;
+  if (!aData.mIsGLAlphaPremult) {
+    mFlags |= TextureFlags::NON_PREMULTIPLIED;
   }
+
+  UniquePtr<SurfaceFactory> factory = GLScreenBuffer::CreateFactory(mGLContext, caps, forwarder, mFlags);
 
   if (mGLFrontbuffer) {
     // We're using a source other than the one in the default screen.
@@ -127,7 +73,7 @@ ClientCanvasLayer::Initialize(const Data& aData)
     mFactory = Move(factory);
     if (!mFactory) {
       // Absolutely must have a factory here, so create a basic one
-      mFactory = MakeUnique<SurfaceFactory_Basic>(mGLContext, caps);
+      mFactory = MakeUnique<SurfaceFactory_Basic>(mGLContext, caps, mFlags);
     }
   } else {
     if (factory)
@@ -141,14 +87,7 @@ ClientCanvasLayer::RenderLayer()
   PROFILER_LABEL("ClientCanvasLayer", "RenderLayer",
     js::ProfileEntry::Category::GRAPHICS);
 
-  if (GetMaskLayer()) {
-    ToClientLayer(GetMaskLayer())->RenderLayer();
-  }
-
-  if (!IsDirty()) {
-    return;
-  }
-  Painted();
+  RenderMaskLayers(this);
 
   if (!mCanvasClient) {
     TextureFlags flags = TextureFlags::IMMEDIATE_UPLOAD;
@@ -172,10 +111,23 @@ ClientCanvasLayer::RenderLayer()
       return;
     }
     if (HasShadow()) {
-      mCanvasClient->Connect();
-      ClientManager()->AsShadowForwarder()->Attach(mCanvasClient, this);
+      if (mAsyncRenderer) {
+        static_cast<CanvasClientBridge*>(mCanvasClient.get())->SetLayer(this);
+      } else {
+        mCanvasClient->Connect();
+        ClientManager()->AsShadowForwarder()->Attach(mCanvasClient, this);
+      }
     }
   }
+
+  if (mCanvasClient && mAsyncRenderer) {
+    mCanvasClient->UpdateAsync(mAsyncRenderer);
+  }
+
+  if (!IsDirty()) {
+    return;
+  }
+  Painted();
 
   FirePreTransactionCallback();
   mCanvasClient->Update(gfx::IntSize(mBounds.width, mBounds.height), this);
@@ -184,12 +136,15 @@ ClientCanvasLayer::RenderLayer()
 
   ClientManager()->Hold(this);
   mCanvasClient->Updated();
-  mCanvasClient->OnTransaction();
 }
 
 CanvasClient::CanvasClientType
 ClientCanvasLayer::GetCanvasClientType()
 {
+  if (mAsyncRenderer) {
+    return CanvasClient::CanvasClientAsync;
+  }
+
   if (mGLContext) {
     return CanvasClient::CanvasClientTypeShSurf;
   }
@@ -200,11 +155,11 @@ already_AddRefed<CanvasLayer>
 ClientLayerManager::CreateCanvasLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ClientCanvasLayer> layer =
+  RefPtr<ClientCanvasLayer> layer =
     new ClientCanvasLayer(this);
   CREATE_SHADOW(Canvas);
   return layer.forget();
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

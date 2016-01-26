@@ -162,11 +162,18 @@ SECStatus
 ssl3_ECName2Params(PLArenaPool * arena, ECName curve, SECKEYECParams * params)
 {
     SECOidData *oidData = NULL;
+    PRUint32 policyFlags = 0;
 
     if ((curve <= ec_noName) || (curve >= ec_pastLastName) ||
         ((oidData = SECOID_FindOIDByTag(ecName2OIDTag[curve])) == NULL)) {
         PORT_SetError(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
         return SECFailure;
+    }
+
+    if ( (NSS_GetAlgorithmPolicy(ecName2OIDTag[curve], &policyFlags) 
+		== SECSuccess) && !(policyFlags & NSS_USE_ALG_IN_SSL_KX)) {
+        PORT_SetError(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+	return SECFailure;
     }
 
     SECITEM_AllocItem(arena, params, (2 + oidData->oid.len));
@@ -187,6 +194,7 @@ params2ecName(SECKEYECParams * params)
 {
     SECItem oid = { siBuffer, NULL, 0};
     SECOidData *oidData = NULL;
+    PRUint32 policyFlags = 0;
     ECName i;
 
     /*
@@ -198,6 +206,10 @@ params2ecName(SECKEYECParams * params)
     oid.len = params->len - 2;
     oid.data = params->data + 2;
     if ((oidData = SECOID_FindOID(&oid)) == NULL) return ec_noName;
+    if ((NSS_GetAlgorithmPolicy(oidData->offset, &policyFlags)
+		== SECSuccess) && !(policyFlags & NSS_USE_ALG_IN_SSL_KX)) {
+	return ec_noName;
+    }
     for (i = ec_noName + 1; i < ec_pastLastName; i++) {
         if (ecName2OIDTag[i] == oidData->offset)
             return i;
@@ -208,7 +220,7 @@ params2ecName(SECKEYECParams * params)
 
 /* Caller must set hiLevel error code. */
 static SECStatus
-ssl3_ComputeECDHKeyHash(SECOidTag hashAlg,
+ssl3_ComputeECDHKeyHash(SSLHashType hashAlg,
                         SECItem ec_params, SECItem server_ecpoint,
                         SSL3Random *client_rand, SSL3Random *server_rand,
                         SSL3Hashes *hashes, PRBool bypassPKCS11)
@@ -297,7 +309,7 @@ ssl3_SendECDHClientKeyExchange(sslSocket * ss, SECKEYPublicKey * svrPubKey)
                                         pubKey->u.ec.publicValue.len));
 
     if (isTLS12) {
-        target = CKM_NSS_TLS_MASTER_KEY_DERIVE_DH_SHA256;
+        target = CKM_TLS12_MASTER_KEY_DERIVE_DH;
     } else if (isTLS) {
         target = CKM_TLS_MASTER_KEY_DERIVE_DH;
     } else {
@@ -319,14 +331,6 @@ ssl3_SendECDHClientKeyExchange(sslSocket * ss, SECKEYPublicKey * svrPubKey)
     SECKEY_DestroyPrivateKey(privKey);
     privKey = NULL;
 
-    rv = ssl3_InitPendingCipherSpec(ss,  pms);
-    PK11_FreeSymKey(pms); pms = NULL;
-
-    if (rv != SECSuccess) {
-        ssl_MapLowLevelError(SSL_ERROR_CLIENT_KEY_EXCHANGE_FAILURE);
-        goto loser;
-    }
-
     rv = ssl3_AppendHandshakeHeader(ss, client_key_exchange,
                                         pubKey->u.ec.publicValue.len + 1);
     if (rv != SECSuccess) {
@@ -341,6 +345,14 @@ ssl3_SendECDHClientKeyExchange(sslSocket * ss, SECKEYPublicKey * svrPubKey)
 
     if (rv != SECSuccess) {
         goto loser;     /* err set by ssl3_AppendHandshake* */
+    }
+
+    rv = ssl3_InitPendingCipherSpec(ss,  pms);
+    PK11_FreeSymKey(pms); pms = NULL;
+
+    if (rv != SECSuccess) {
+        ssl_MapLowLevelError(SSL_ERROR_CLIENT_KEY_EXCHANGE_FAILURE);
+        goto loser;
     }
 
     rv = SECSuccess;
@@ -388,7 +400,7 @@ ssl3_HandleECDHClientKeyExchange(sslSocket *ss, SSL3Opaque *b,
     isTLS12 = (PRBool)(ss->ssl3.prSpec->version >= SSL_LIBRARY_VERSION_TLS_1_2);
 
     if (isTLS12) {
-        target = CKM_NSS_TLS_MASTER_KEY_DERIVE_DH_SHA256;
+        target = CKM_TLS12_MASTER_KEY_DERIVE_DH;
     } else if (isTLS) {
         target = CKM_TLS_MASTER_KEY_DERIVE_DH;
     } else {
@@ -609,9 +621,9 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     SECItem          ec_params = {siBuffer, NULL, 0};
     SECItem          ec_point  = {siBuffer, NULL, 0};
     unsigned char    paramBuf[3]; /* only for curve_type == named_curve */
-    SSL3SignatureAndHashAlgorithm sigAndHash;
+    SSLSignatureAndHashAlg sigAndHash;
 
-    sigAndHash.hashAlg = SEC_OID_UNKNOWN;
+    sigAndHash.hashAlg = ssl_hash_none;
 
     isTLS = (PRBool)(ss->ssl3.prSpec->version > SSL_LIBRARY_VERSION_3_0);
     isTLS12 = (PRBool)(ss->ssl3.prSpec->version >= SSL_LIBRARY_VERSION_TLS_1_2);
@@ -653,7 +665,7 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
             goto loser;         /* malformed or unsupported. */
         }
         rv = ssl3_CheckSignatureAndHashAlgorithmConsistency(
-                &sigAndHash, ss->sec.peerCert);
+            ss, &sigAndHash, ss->sec.peerCert);
         if (rv != SECSuccess) {
             goto loser;
         }
@@ -704,7 +716,7 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
         goto no_memory;
     }
 
-    ss->sec.peerKey = peerKey = PORT_ArenaZNew(arena, SECKEYPublicKey);
+    peerKey = PORT_ArenaZNew(arena, SECKEYPublicKey);
     if (peerKey == NULL) {
         goto no_memory;
     }
@@ -725,7 +737,6 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
     /* copy publicValue in peerKey */
     if (SECITEM_CopyItem(arena, &peerKey->u.ec.publicValue,  &ec_point))
     {
-        PORT_FreeArena(arena, PR_FALSE);
         goto no_memory;
     }
     peerKey->pkcs11Slot         = NULL;
@@ -739,10 +750,16 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, SSL3Opaque *b, PRUint32 length)
 alert_loser:
     (void)SSL3_SendAlert(ss, alert_fatal, desc);
 loser:
+    if (arena) {
+        PORT_FreeArena(arena, PR_FALSE);
+    }
     PORT_SetError( errCode );
     return SECFailure;
 
 no_memory:      /* no-memory error has already been set. */
+    if (arena) {
+        PORT_FreeArena(arena, PR_FALSE);
+    }
     ssl_MapLowLevelError(SSL_ERROR_SERVER_KEY_EXCHANGE_FAILURE);
     return SECFailure;
 }
@@ -750,7 +767,7 @@ no_memory:      /* no-memory error has already been set. */
 SECStatus
 ssl3_SendECDHServerKeyExchange(
     sslSocket *ss,
-    const SSL3SignatureAndHashAlgorithm *sigAndHash)
+    const SSLSignatureAndHashAlg *sigAndHash)
 {
     const ssl3KEADef * kea_def     = ss->ssl3.hs.kea_def;
     SECStatus          rv          = SECFailure;
@@ -967,9 +984,7 @@ ssl3_DisableECCSuites(sslSocket * ss, const ssl3CipherSuite * suite)
     if (!suite)
         suite = ecSuites;
     for (; *suite; ++suite) {
-        SECStatus rv      = ssl3_CipherPrefSet(ss, *suite, PR_FALSE);
-
-        PORT_Assert(rv == SECSuccess); /* else is coding error */
+        PORT_CheckSuccess(ssl3_CipherPrefSet(ss, *suite, PR_FALSE));
     }
     return SECSuccess;
 }
@@ -1054,31 +1069,25 @@ ssl3_IsECCEnabled(sslSocket * ss)
 /* Prefabricated TLS client hello extension, Elliptic Curves List,
  * offers only 3 curves, the Suite B curves, 23-25
  */
-static const PRUint8 suiteBECList[12] = {
-    BE(10),         /* Extension type */
-    BE( 8),         /* octets that follow ( 3 pairs + 1 length pair) */
-    BE( 6),         /* octets that follow ( 3 pairs) */
-    BE(23), BE(24), BE(25)
+static const PRUint8 suiteBECList[] = {
+    23, 24, 25
 };
 
 /* Prefabricated TLS client hello extension, Elliptic Curves List,
  * offers curves 1-25.
  */
-static const PRUint8 tlsECList[56] = {
-    BE(10),         /* Extension type */
-    BE(52),         /* octets that follow (25 pairs + 1 length pair) */
-    BE(50),         /* octets that follow (25 pairs) */
-            BE( 1), BE( 2), BE( 3), BE( 4), BE( 5), BE( 6), BE( 7),
-    BE( 8), BE( 9), BE(10), BE(11), BE(12), BE(13), BE(14), BE(15),
-    BE(16), BE(17), BE(18), BE(19), BE(20), BE(21), BE(22), BE(23),
-    BE(24), BE(25)
+static const PRUint8 tlsECList[] = {
+     1,  2,  3,  4,  5,  6,  7,  8,
+     9, 10, 11, 12, 13, 14, 15, 16,
+    17, 18, 19, 20, 21, 22, 23, 24,
+    25
 };
 
 static const PRUint8 ecPtFmt[6] = {
     BE(11),         /* Extension type */
     BE( 2),         /* octets that follow */
-             1,     /* octets that follow */
-                 0  /* uncompressed type only */
+         1,         /* octets that follow */
+         0          /* uncompressed type only */
 };
 
 /* This function already presumes we can do ECC, ssl3_IsECCEnabled must be
@@ -1105,6 +1114,13 @@ ssl3_SuiteBOnly(sslSocket *ss)
     return PR_FALSE;
 }
 
+#define APPEND_CURVE(CURVE_ID) \
+    if ((NSS_GetAlgorithmPolicy(ecName2OIDTag[CURVE_ID], &policy) \
+	       == SECFailure) || (policy & NSS_USE_ALG_IN_SSL_KX)) { \
+    	enabledCurves[pos++] = 0; \
+    	enabledCurves[pos++] = CURVE_ID; \
+    }
+
 /* Send our "canned" (precompiled) Supported Elliptic Curves extension,
  * which says that we support all TLS-defined named curves.
  */
@@ -1114,40 +1130,85 @@ ssl3_SendSupportedCurvesXtn(
                         PRBool      append,
                         PRUint32    maxBytes)
 {
+    unsigned char enabledCurves[64];
+    PRUint32 policy;
+    PRInt32 extension_length;
     PRInt32 ecListSize = 0;
-    const PRUint8 *ecList = NULL;
+    unsigned int pos = 0;
+    unsigned int i;
 
     if (!ss || !ssl3_IsECCEnabled(ss))
         return 0;
 
+    PORT_Assert(sizeof(enabledCurves) > sizeof(tlsECList)*2);
     if (ssl3_SuiteBOnly(ss)) {
-        ecListSize = sizeof suiteBECList;
-        ecList = suiteBECList;
+	for (i=0; i < sizeof(suiteBECList); i++) {
+	    APPEND_CURVE(suiteBECList[i]);
+	}
+        ecListSize = pos;
     } else {
-        ecListSize = sizeof tlsECList;
-        ecList = tlsECList;
+	for (i=0; i < sizeof(tlsECList); i++) {
+	    APPEND_CURVE(tlsECList[i]);
+	}
+        ecListSize = pos;
     }
+    extension_length =
+	2 /* extension type */ +
+	2 /* extension length */ +
+	2 /* elliptic curves length */ +
+	ecListSize;
 
-    if (append && maxBytes >= ecListSize) {
-        SECStatus rv = ssl3_AppendHandshake(ss, ecList, ecListSize);
-        if (rv != SECSuccess)
-            return -1;
+
+    if (maxBytes < (PRUint32)extension_length) {
+        return 0;
+    }
+ 
+    if (append) {
+	SECStatus rv;
+	rv = ssl3_AppendHandshakeNumber(ss, ssl_elliptic_curves_xtn, 2);
+ 	if (rv != SECSuccess)
+	    return -1;
+	rv = ssl3_AppendHandshakeNumber(ss, extension_length - 4, 2);
+ 	if (rv != SECSuccess)
+	    return -1;
+	rv = ssl3_AppendHandshakeVariable(ss, enabledCurves,ecListSize, 2);
+	if (rv != SECSuccess)
+	    return -1;
         if (!ss->sec.isServer) {
             TLSExtensionData *xtnData = &ss->xtnData;
             xtnData->advertised[xtnData->numAdvertised++] =
                 ssl_elliptic_curves_xtn;
         }
     }
-    return ecListSize;
+    return extension_length;
 }
 
 PRUint32
 ssl3_GetSupportedECCurveMask(sslSocket *ss)
 {
+    int i;
+    PRUint32 curves  = 0;
+    PRUint32 policyFlags = 0;
+
+    PORT_Assert(ec_pastLastName < sizeof(PRUint32)*8);
+   
     if (ssl3_SuiteBOnly(ss)) {
-        return SSL3_SUITE_B_SUPPORTED_CURVES_MASK;
+        curves = SSL3_SUITE_B_SUPPORTED_CURVES_MASK;
+    } else {
+	curves = SSL3_ALL_SUPPORTED_CURVES_MASK;
     }
-    return SSL3_ALL_SUPPORTED_CURVES_MASK;
+
+    for (i= ec_noName+1; i < ec_pastLastName; i++) {
+	PRUint32 curve_bit = (1U << i);
+	if ((curves & curve_bit) &&
+	   (NSS_GetAlgorithmPolicy(ecName2OIDTag[i], &policyFlags) 
+		== SECSuccess) &&
+	   !(policyFlags & NSS_USE_ALG_IN_SSL_KX)) {
+		curves &= ~curve_bit;
+	}
+    }
+    return curves;
+	
 }
 
 /* Send our "canned" (precompiled) Supported Point Formats extension,

@@ -6,15 +6,6 @@
 USE_RCS_MK := 1
 include $(topsrcdir)/config/makefiles/rcs.mk
 
-DEFINES += -DMOZ_APP_VERSION='"$(MOZ_APP_VERSION)"'
-
-ifdef MOZILLA_OFFICIAL
-MOZ_HISTOGRAMS_VERSION ?= $(call getSourceRepo)/rev/$(firstword $(shell hg -R $(topsrcdir) parent --template='{node|short}\n' 2>/dev/null))
-ifdef MOZ_HISTOGRAMS_VERSION
-DEFINES += -DHISTOGRAMS_FILE_VERSION='$(MOZ_HISTOGRAMS_VERSION)'
-endif
-endif
-
 INSTALL_TARGETS += histoenums
 histoenums_FILES := TelemetryHistogramEnums.h
 histoenums_DEST = $(DIST)/include/mozilla
@@ -22,30 +13,9 @@ histoenums_TARGET := export
 
 include $(topsrcdir)/config/rules.mk
 
-histograms_file := $(srcdir)/Histograms.json
-histogram_enum_file := TelemetryHistogramEnums.h
-histogram_data_file := TelemetryHistogramData.inc
-
-enum_python_deps := \
-  $(srcdir)/gen-histogram-enum.py \
-  $(srcdir)/histogram_tools.py \
-  $(NULL)
-
-data_python_deps := \
-  $(srcdir)/gen-histogram-data.py \
-  $(srcdir)/histogram_tools.py \
-  $(NULL)
-
-$(histogram_enum_file): $(histograms_file) $(enum_python_deps)
-	$(PYTHON) $(srcdir)/gen-histogram-enum.py $< > $@
-$(histogram_data_file): $(histograms_file) $(data_python_deps)
-	$(PYTHON) $(srcdir)/gen-histogram-data.py $< > $@
-
-GARBAGE += $(histogram_enum_file)
-
 # This is so hacky. Waiting on bug 988938.
 addondir = $(srcdir)/tests/addons
-testdir = $(abspath $(DEPTH)/_tests/xpcshell/toolkit/components/telemetry/tests/unit)
+testdir = $(topobjdir)/_tests/xpcshell/toolkit/components/telemetry/tests/unit
 
 misc:: $(call mkdir_deps,$(testdir))
 	$(EXIT_ON_ERROR) \

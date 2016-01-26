@@ -49,8 +49,8 @@ class nsIWidget;
 namespace mozilla {
 namespace gfx {
 class SourceSurface;
-}
-}
+} // namespace gfx
+} // namespace mozilla
 
 // Used to retain a Cocoa object for the remainder of a method's execution.
 class nsAutoRetainCocoaObject {
@@ -129,6 +129,8 @@ struct KeyBindingsCommand
 class nsCocoaUtils
 {
   typedef mozilla::gfx::SourceSurface SourceSurface;
+  typedef mozilla::LayoutDeviceIntPoint LayoutDeviceIntPoint;
+  typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
 
 public:
 
@@ -152,20 +154,20 @@ public:
     return NSToIntRound(aPts * aBackingScale);
   }
 
-  static nsIntPoint
+  static LayoutDeviceIntPoint
   CocoaPointsToDevPixels(const NSPoint& aPt, CGFloat aBackingScale)
   {
-    return nsIntPoint(NSToIntRound(aPt.x * aBackingScale),
-                      NSToIntRound(aPt.y * aBackingScale));
+    return LayoutDeviceIntPoint(NSToIntRound(aPt.x * aBackingScale),
+                                NSToIntRound(aPt.y * aBackingScale));
   }
 
-  static nsIntRect
+  static LayoutDeviceIntRect
   CocoaPointsToDevPixels(const NSRect& aRect, CGFloat aBackingScale)
   {
-    return nsIntRect(NSToIntRound(aRect.origin.x * aBackingScale),
-                     NSToIntRound(aRect.origin.y * aBackingScale),
-                     NSToIntRound(aRect.size.width * aBackingScale),
-                     NSToIntRound(aRect.size.height * aBackingScale));
+    return LayoutDeviceIntRect(NSToIntRound(aRect.origin.x * aBackingScale),
+                               NSToIntRound(aRect.origin.y * aBackingScale),
+                               NSToIntRound(aRect.size.width * aBackingScale),
+                               NSToIntRound(aRect.size.height * aBackingScale));
   }
 
   static CGFloat
@@ -183,7 +185,8 @@ public:
   }
 
   static NSRect
-  DevPixelsToCocoaPoints(const nsIntRect& aRect, CGFloat aBackingScale)
+  DevPixelsToCocoaPoints(const LayoutDeviceIntRect& aRect,
+                         CGFloat aBackingScale)
   {
     return NSMakeRect((CGFloat)aRect.x / aBackingScale,
                       (CGFloat)aRect.y / aBackingScale,
@@ -207,18 +210,20 @@ public:
   // in the bottom-left of the primary screen. Both nsRect and NSRect
   // contain width/height info, with no difference in their use.
   // This function does no scaling, so the Gecko coordinates are
-  // expected to be CSS pixels, which we treat as equal to Cocoa points.
-  static NSRect GeckoRectToCocoaRect(const nsIntRect &geckoRect);
+  // expected to be desktop pixels, which are equal to Cocoa points
+  // (by definition).
+  static NSRect GeckoRectToCocoaRect(const mozilla::DesktopIntRect &geckoRect);
 
   // Converts aGeckoRect in dev pixels to points in Cocoa coordinates
-  static NSRect GeckoRectToCocoaRectDevPix(const nsIntRect &aGeckoRect,
-                                           CGFloat aBackingScale);
+  static NSRect
+  GeckoRectToCocoaRectDevPix(const mozilla::LayoutDeviceIntRect &aGeckoRect,
+                             CGFloat aBackingScale);
 
   // See explanation for geckoRectToCocoaRect, guess what this does...
-  static nsIntRect CocoaRectToGeckoRect(const NSRect &cocoaRect);
+  static mozilla::DesktopIntRect CocoaRectToGeckoRect(const NSRect &cocoaRect);
 
-  static nsIntRect CocoaRectToGeckoRectDevPix(const NSRect &aCocoaRect,
-                                              CGFloat aBackingScale);
+  static mozilla::LayoutDeviceIntRect CocoaRectToGeckoRectDevPix(
+    const NSRect& aCocoaRect, CGFloat aBackingScale);
 
   // Gives the location for the event in screen coordinates. Do not call this
   // unless the window the event was originally targeted at is still alive!
@@ -244,9 +249,10 @@ public:
   static BOOL IsMomentumScrollEvent(NSEvent* aEvent);
   static BOOL HasPreciseScrollingDeltas(NSEvent* aEvent);
   static void GetScrollingDeltas(NSEvent* aEvent, CGFloat* aOutDeltaX, CGFloat* aOutDeltaY);
+  static BOOL EventHasPhaseInformation(NSEvent* aEvent);
 
   // Hides the Menu bar and the Dock. Multiple hide/show requests can be nested.
-  static void HideOSChromeOnScreen(bool aShouldHide, NSScreen* aScreen);
+  static void HideOSChromeOnScreen(bool aShouldHide);
 
   static nsIWidget* GetHiddenWindowWidget();
 
@@ -327,8 +333,12 @@ public:
    */
   static void InitInputEvent(mozilla::WidgetInputEvent &aInputEvent,
                              NSEvent* aNativeEvent);
-  static void InitInputEvent(mozilla::WidgetInputEvent &aInputEvent,
-                             NSUInteger aModifiers);
+
+  /**
+   * Converts the native modifiers from aNativeEvent into WidgetMouseEvent
+   * Modifiers. aNativeEvent can be null.
+   */
+  static mozilla::Modifiers ModifiersForEvent(NSEvent* aNativeEvent);
 
   /**
    * ConvertToCarbonModifier() returns carbon modifier flags for the cocoa

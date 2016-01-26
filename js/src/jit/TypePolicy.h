@@ -168,6 +168,18 @@ class ConvertToStringPolicy final : public TypePolicy
     }
 };
 
+// Expect an Boolean for operand Op. If the input is a Value, it is unboxed.
+template <unsigned Op>
+class BooleanPolicy final : private TypePolicy
+{
+  public:
+    EMPTY_DATA_;
+    static bool staticAdjustInputs(TempAllocator& alloc, MInstruction* def);
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* def) override {
+        return staticAdjustInputs(alloc, def);
+    }
+};
+
 // Expect an Int for operand Op. If the input is a Value, it is unboxed.
 template <unsigned Op>
 class IntPolicy final : private TypePolicy
@@ -183,6 +195,18 @@ class IntPolicy final : private TypePolicy
 // Expect an Int for operand Op. Else a ToInt32 instruction is inserted.
 template <unsigned Op>
 class ConvertToInt32Policy final : public TypePolicy
+{
+  public:
+    EMPTY_DATA_;
+    static bool staticAdjustInputs(TempAllocator& alloc, MInstruction* def);
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* def) override {
+        return staticAdjustInputs(alloc, def);
+    }
+};
+
+// Expect an Int for operand Op. Else a TruncateToInt32 instruction is inserted.
+template <unsigned Op>
+class TruncateToInt32Policy final : public TypePolicy
 {
   public:
     EMPTY_DATA_;
@@ -364,6 +388,18 @@ class BoxPolicy final : public TypePolicy
 // Boxes everything except inputs of type Type.
 template <unsigned Op, MIRType Type>
 class BoxExceptPolicy final : public TypePolicy
+{
+  public:
+    EMPTY_DATA_;
+    static bool staticAdjustInputs(TempAllocator& alloc, MInstruction* ins);
+    bool adjustInputs(TempAllocator& alloc, MInstruction* ins) {
+        return staticAdjustInputs(alloc, ins);
+    }
+};
+
+// Box if not a typical property id (string, symbol, int32).
+template <unsigned Op>
+class CacheIdPolicy final : public TypePolicy
 {
   public:
     EMPTY_DATA_;

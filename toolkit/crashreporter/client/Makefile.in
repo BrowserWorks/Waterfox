@@ -3,20 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-ifneq ($(OS_TARGET),Android)
-DIST_PROGRAM = crashreporter$(BIN_SUFFIX)
-endif
-
 ifeq ($(OS_ARCH),WINNT)
 MOZ_WINCONSOLE = 0
-endif
-
-ifdef MOZ_WIDGET_GTK
-OS_CXXFLAGS += $(TK_CFLAGS) $(MOZ_GTHREAD_CFLAGS)
-endif
-
-ifeq ($(OS_ARCH),SunOS)
-OS_CXXFLAGS += $(MOZ_GTK2_CFLAGS) $(MOZ_GTHREAD_CFLAGS)
 endif
 
 include $(topsrcdir)/config/rules.mk
@@ -29,7 +17,6 @@ libs::
 	  iconv -f UTF-8 -t UTF-16 > $(DIST)/bin/crashreporter.app/Contents/Resources/English.lproj/InfoPlist.strings
 	$(NSINSTALL) -D $(DIST)/bin/crashreporter.app/Contents/MacOS
 	$(NSINSTALL) $(DIST)/bin/crashreporter $(DIST)/bin/crashreporter.app/Contents/MacOS
-	rm -f $(DIST)/bin/crashreporter
 endif
 
 ifeq (,$(filter-out Linux SunOS,$(OS_ARCH)))

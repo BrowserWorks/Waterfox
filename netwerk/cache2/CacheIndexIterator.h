@@ -49,12 +49,12 @@ protected:
                      CacheIndexRecord *aNewRecord);
 
   nsresult                     mStatus;
-  nsRefPtr<CacheIndex>         mIndex;
+  RefPtr<CacheIndex>           mIndex;
   nsTArray<CacheIndexRecord *> mRecords;
   bool                         mAddNew;
 };
 
-} // net
-} // mozilla
+} // namespace net
+} // namespace mozilla
 
 #endif

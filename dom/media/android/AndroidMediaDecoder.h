@@ -15,15 +15,12 @@ class AndroidMediaDecoder : public MediaDecoder
 {
   nsCString mType;
 public:
-  AndroidMediaDecoder(const nsACString& aType);
+  AndroidMediaDecoder(MediaDecoderOwner* aOwner, const nsACString& aType);
 
-  const nsresult GetContentType(nsACString& aType) const {
-    aType = mType;
-    return NS_OK;
+  MediaDecoder* Clone(MediaDecoderOwner* aOwner) override {
+    return new AndroidMediaDecoder(aOwner, mType);
   }
-
-  virtual MediaDecoder* Clone() { return new AndroidMediaDecoder(mType); }
-  virtual MediaDecoderStateMachine* CreateStateMachine();
+  MediaDecoderStateMachine* CreateStateMachine() override;
 };
 
 } // namespace mozilla

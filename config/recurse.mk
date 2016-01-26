@@ -65,9 +65,10 @@ CURRENT_DIRS := $($(CURRENT_TIER)_dirs)
 
 # Need a list of compile targets because we can't use pattern rules:
 # https://savannah.gnu.org/bugs/index.php?42833
+# Only recurse the paths starting with RECURSE_BASE_DIR when provided.
 .PHONY: $(compile_targets)
 $(compile_targets):
-	$(call SUBMAKE,$(@F),$(@D))
+	$(if $(filter $(RECURSE_BASE_DIR)%,$@),$(call SUBMAKE,$(@F),$(@D)))
 
 # The compile tier has different rules from other tiers.
 ifneq ($(CURRENT_TIER),compile)
@@ -125,7 +126,8 @@ $(foreach subtier,$(filter-out compile,$(TIERS)),$(eval $(call CREATE_SUBTIER_TR
 
 ifndef TOPLEVEL_BUILD
 ifdef COMPILE_ENVIRONMENT
-libs:: target host
+compile::
+	@$(MAKE) -C $(DEPTH) compile RECURSE_BASE_DIR=$(relativesrcdir)/
 endif # COMPILE_ENVIRONMENT
 endif
 
@@ -144,6 +146,10 @@ accessible/xpcom/export: xpcom/xpidl/export
 
 # The widget binding generator code is part of the annotationProcessors.
 widget/android/bindings/export: build/annotationProcessors/export
+
+# The roboextender addon includes a classes.dex containing a test Java addon.
+# The test addon must be built first.
+mobile/android/tests/browser/robocop/roboextender/tools: mobile/android/tests/javaaddons/tools
 
 ifdef ENABLE_CLANG_PLUGIN
 $(filter-out build/clang-plugin/%,$(compile_targets)): build/clang-plugin/target build/clang-plugin/tests/target

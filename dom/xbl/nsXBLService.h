@@ -26,8 +26,8 @@ class nsIPrincipal;
 namespace mozilla {
 namespace dom {
 class EventTarget;
-}
-}
+} // namespace dom
+} // namespace mozilla
 
 class nsXBLService final : public nsSupportsWeakReference
 {
@@ -109,7 +109,7 @@ protected:
   nsresult GetBinding(nsIContent* aBoundElement, nsIURI* aURI,
                       bool aPeekFlag, nsIPrincipal* aOriginPrincipal,
                       bool* aIsReady, nsXBLBinding** aResult,
-                      nsTArray<nsIURI*>& aDontExtendURIs);
+                      nsTArray<nsCOMPtr<nsIURI>>& aDontExtendURIs);
 
 // MEMBER VARIABLES
 public:

@@ -45,8 +45,13 @@ public:
 };
 
 // WrapperPromiseCallback execs a JS Callback with a value, and then the return
-// value is sent to the aNextPromise->ResolveFunction() or to
-// aNextPromise->RejectFunction() if the JS Callback throws.
+// value is sent to either:
+// a) If aNextPromise is non-null, the aNextPromise->ResolveFunction() or to
+//    aNextPromise->RejectFunction() if the JS Callback throws.
+// or
+// b) If aNextPromise is null, in which case aResolveFunc and aRejectFunc must
+//    be non-null, then to aResolveFunc, unless aCallback threw, in which case
+//    aRejectFunc.
 class WrapperPromiseCallback final : public PromiseCallback
 {
 public:
@@ -57,20 +62,32 @@ public:
   nsresult Call(JSContext* aCx,
                 JS::Handle<JS::Value> aValue) override;
 
-  Promise* GetDependentPromise() override
-  {
-    return mNextPromise;
-  }
+  Promise* GetDependentPromise() override;
 
+  // Constructor for when we know we have a vanilla Promise.
   WrapperPromiseCallback(Promise* aNextPromise, JS::Handle<JSObject*> aGlobal,
                          AnyCallback* aCallback);
+
+  // Constructor for when all we have to work with are resolve/reject functions.
+  WrapperPromiseCallback(JS::Handle<JSObject*> aGlobal,
+                         AnyCallback* aCallback,
+                         JS::Handle<JSObject*> mNextPromiseObj,
+                         AnyCallback* aResolveFunc,
+                         AnyCallback* aRejectFunc);
 
 private:
   ~WrapperPromiseCallback();
 
-  nsRefPtr<Promise> mNextPromise;
+  // Either mNextPromise is non-null or all three of mNextPromiseObj,
+  // mResolveFund and mRejectFunc must are non-null.
+  RefPtr<Promise> mNextPromise;
+  // mNextPromiseObj is the reflector itself; it may not be in the
+  // same compartment as anything else we have.
+  JS::Heap<JSObject*> mNextPromiseObj;
+  RefPtr<AnyCallback> mResolveFunc;
+  RefPtr<AnyCallback> mRejectFunc;
   JS::Heap<JSObject*> mGlobal;
-  nsRefPtr<AnyCallback> mCallback;
+  RefPtr<AnyCallback> mCallback;
 };
 
 // ResolvePromiseCallback calls aPromise->ResolveFunction() with the value
@@ -95,7 +112,7 @@ public:
 private:
   ~ResolvePromiseCallback();
 
-  nsRefPtr<Promise> mPromise;
+  RefPtr<Promise> mPromise;
   JS::Heap<JSObject*> mGlobal;
 };
 
@@ -121,8 +138,34 @@ public:
 private:
   ~RejectPromiseCallback();
 
-  nsRefPtr<Promise> mPromise;
+  RefPtr<Promise> mPromise;
   JS::Heap<JSObject*> mGlobal;
+};
+
+// InvokePromiseFuncCallback calls the given function with the value
+// received by Call().
+class InvokePromiseFuncCallback final : public PromiseCallback
+{
+public:
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(InvokePromiseFuncCallback,
+                                                         PromiseCallback)
+
+  nsresult Call(JSContext* aCx,
+                JS::Handle<JS::Value> aValue) override;
+
+  Promise* GetDependentPromise() override;
+
+  InvokePromiseFuncCallback(JS::Handle<JSObject*> aGlobal,
+                            JS::Handle<JSObject*> aNextPromiseObj,
+                            AnyCallback* aPromiseFunc);
+
+private:
+  ~InvokePromiseFuncCallback();
+
+  JS::Heap<JSObject*> mGlobal;
+  JS::Heap<JSObject*> mNextPromiseObj;
+  RefPtr<AnyCallback> mPromiseFunc;
 };
 
 // NativePromiseCallback wraps a PromiseNativeHandler.
@@ -147,7 +190,7 @@ public:
 private:
   ~NativePromiseCallback();
 
-  nsRefPtr<PromiseNativeHandler> mHandler;
+  RefPtr<PromiseNativeHandler> mHandler;
   Promise::PromiseState mState;
 };
 

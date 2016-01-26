@@ -104,10 +104,6 @@ public:
   }
 
   gfx::CompositionOp GetOperator() const { return mOperator; }
-  gfxContext::GraphicsOperator DeprecatedGetOperator() const
-  {
-    return gfx::ThebesOp(mOperator);
-  }
 
   /**
    * Return a surface for this layer. Will use an existing surface, if
@@ -116,7 +112,7 @@ public:
    * return false if a surface cannot be created.  If true is
    * returned, only one of |aSurface| or |aDescriptor| is valid.
    */
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() { return nullptr; }
+  virtual already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() { return nullptr; }
 
   bool GetClipToVisibleRegion() { return mClipToVisibleRegion; }
   void SetClipToVisibleRegion(bool aClip) { mClipToVisibleRegion = aClip; }
@@ -130,7 +126,7 @@ protected:
   gfx::CompositionOp mOperator;
 };
 
-} // layers
-} // mozilla
+} // namespace layers
+} // namespace mozilla
 
 #endif
