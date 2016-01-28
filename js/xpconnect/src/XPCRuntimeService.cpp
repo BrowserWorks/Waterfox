@@ -79,8 +79,6 @@ BackstagePass::Enumerate(nsIXPConnectWrappedNative* wrapper, JSContext* cx,
 }
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 BackstagePass::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -184,7 +182,7 @@ BackstagePass::PreCreate(nsISupports* nativeObj, JSContext* cx,
 nsresult
 NS_NewBackstagePass(BackstagePass** ret)
 {
-    nsRefPtr<BackstagePass> bsp = new BackstagePass(
+    RefPtr<BackstagePass> bsp = new BackstagePass(
         nsContentUtils::GetSystemPrincipal());
     bsp.forget(ret);
     return NS_OK;

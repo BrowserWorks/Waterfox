@@ -3,7 +3,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
 
     <!--
         Base application styles. This could be overridden in other res/values-XXX/themes.xml.
@@ -258,19 +258,16 @@
         <item name="android:paddingRight">10dip</item>
     </style>
 
-    <style name="Widget.Home.PageButton">
+    <style name="Widget.Home.ActionButton">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">40dip</item>
-        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageTitle</item>
-        <item name="android:background">@drawable/action_bar_button</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:textColor">@color/text_and_tabs_tray_grey</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:background">@drawable/home_history_clear_button_bg</item>
         <item name="android:focusable">true</item>
-        <item name="android:gravity">center|left</item>
+        <item name="android:gravity">center</item>
         <item name="android:paddingLeft">10dip</item>
         <item name="android:paddingRight">10dip</item>
-    </style>
-
-    <style name="Widget.Home.ActionButton" parent="Widget.Home.PageButton">
-        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.PageAction</item>
     </style>
 
     <style name="Widget.Home.ActionItem">
@@ -294,6 +291,18 @@
         <item name="android:layout_weight">1</item>
         <item name="android:minHeight">48dp</item>
         <item name="android:textSize">14sp</item>
+    </style>
+
+    <!--
+        We are overriding the snackbar message style to guarantee a consistent style across Android versions (bug 1217416).
+    -->
+    <style name="TextAppearance.Design.Snackbar.Message" parent="android:TextAppearance" tools:override="true">
+        <!--
+            This is the value of "design_snackbar_text_size". As long as B2Gdroid does not include the
+            Android Design Support Library we cannot reference it here directly.
+        -->
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <!--
@@ -390,29 +399,15 @@
         <item name="android:textColor">@color/primary_text</item>
     </style>
 
-    <style name="TextAppearance.Widget.HomePagerTabStrip" parent="TextAppearance.Small">
-        <item name="android:textColor">?android:attr/textColorHint</item>
-    </style>
-
     <style name="TextAppearance.Widget.HomePagerTabMenuStrip" parent="TextAppearance.Small">
         <item name="android:textColor">?android:attr/textColorHint</item>
         <item name="android:textSize">14sp</item>
-    </style>
-
-    <style name="TextAppearance.Widget.SuggestionsPrompt" parent="TextAppearance.Small">
-        <item name="android:textColor">@color/url_bar_title</item>
     </style>
 
     <style name="TextAppearance.Widget.Home" />
 
     <style name="TextAppearance.Widget.Home.Header" parent="TextAppearance.Small">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
-    <style name="TextAppearance.Widget.Home.PageTitle" parent="TextAppearance.Medium" />
-
-    <style name="TextAppearance.Widget.Home.PageAction" parent="TextAppearance.Small">
-        <item name="android:textColor">#00ACFF</item>
     </style>
 
     <style name="TextAppearance.Widget.Home.ItemTitle" parent="TextAppearance.Medium"/>

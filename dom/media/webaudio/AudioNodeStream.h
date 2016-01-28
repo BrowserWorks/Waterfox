@@ -14,7 +14,7 @@ namespace mozilla {
 
 namespace dom {
 struct ThreeDPoint;
-class AudioParamTimeline;
+struct AudioTimelineEvent;
 class AudioContext;
 } // namespace dom
 
@@ -85,9 +85,10 @@ public:
                               double aStreamTime);
   void SetDoubleParameter(uint32_t aIndex, double aValue);
   void SetInt32Parameter(uint32_t aIndex, int32_t aValue);
-  void SetTimelineParameter(uint32_t aIndex, const dom::AudioParamTimeline& aValue);
   void SetThreeDPointParameter(uint32_t aIndex, const dom::ThreeDPoint& aValue);
   void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList>&& aBuffer);
+  // This sends a single event to the timeline on the MSG thread side.
+  void SendTimelineEvent(uint32_t aIndex, const dom::AudioTimelineEvent& aEvent);
   // This consumes the contents of aData.  aData will be emptied after this returns.
   void SetRawArrayData(nsTArray<float>& aData);
   void SetChannelMixingParameters(uint32_t aNumberOfChannels,
@@ -105,7 +106,17 @@ public:
     mAudioParamStream = true;
   }
 
+  /*
+   * Resume stream after updating its concept of current time by aAdvance.
+   * Main thread.  Used only from AudioDestinationNode when resuming a stream
+   * suspended to save running the MediaStreamGraph when there are no other
+   * nodes in the AudioContext.
+   */
+  void AdvanceAndResume(StreamTime aAdvance);
+
   virtual AudioNodeStream* AsAudioNodeStream() override { return this; }
+  virtual void AddInput(MediaInputPort* aPort) override;
+  virtual void RemoveInput(MediaInputPort* aPort) override;
 
   // Graph thread only
   void SetStreamTimeParameterImpl(uint32_t aIndex, MediaStream* aRelativeToStream,
@@ -120,7 +131,6 @@ public:
    * the output.  This is used only for DelayNodeEngine in a feedback loop.
    */
   void ProduceOutputBeforeInput(GraphTime aFrom);
-  StreamTime GetCurrentPosition();
   bool IsAudioParamStream() const
   {
     return mAudioParamStream;
@@ -140,33 +150,32 @@ public:
   AudioNodeEngine* Engine() { return mEngine; }
   TrackRate SampleRate() const { return mSampleRate; }
 
-  /**
-   * Convert a time in seconds on the destination stream to ticks
-   * on this stream, including fractional position between ticks.
-   */
-  double FractionalTicksFromDestinationTime(AudioNodeStream* aDestination,
-                                            double aSeconds);
-  /**
-   * Convert a time in seconds on the destination stream to StreamTime
-   * on this stream.
-   */
-  StreamTime TicksFromDestinationTime(MediaStream* aDestination,
-                                      double aSeconds);
-  /**
-   * Get the destination stream time in seconds corresponding to a position on
-   * this stream.
-   */
-  double DestinationTimeFromTicks(AudioNodeStream* aDestination,
-                                  StreamTime aPosition);
-
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
   void SizeOfAudioNodesIncludingThis(MallocSizeOf aMallocSizeOf,
                                      AudioNodeSizes& aUsage) const;
 
+  /*
+   * SetActive() is called when either an active input is added or the engine
+   * for a source node transitions from inactive to active.  This is not
+   * called from engines for processing nodes because they only become active
+   * when there are active input streams, in which case this stream is already
+   * active.
+   */
+  void SetActive();
+  /*
+   * CheckForInactive() is called when the engine transitions from active to
+   * inactive, or an active input is removed, or the stream finishes.  If the
+   * stream is now inactive, then mInputChunks will be cleared and mLastChunks
+   * will be set to null.  ProcessBlock() will not be called on the engine
+   * again until SetActive() is called.
+   */
+  void CheckForInactive();
 
 protected:
+  class AdvanceAndResumeMessage;
+
   virtual void DestroyImpl() override;
 
   void AdvanceOutputSegment();
@@ -180,6 +189,8 @@ protected:
 
   uint32_t ComputedNumberOfChannels(uint32_t aInputChannelCount);
   void ObtainInputBlock(AudioBlock& aTmpChunk, uint32_t aPortIndex);
+  void IncrementActiveInputCount();
+  void DecrementActiveInputCount();
 
   // The engine that will generate output for this node.
   nsAutoPtr<AudioNodeEngine> mEngine;
@@ -192,11 +203,16 @@ protected:
   const TrackRate mSampleRate;
   // Whether this is an internal or external stream
   const Flags mFlags;
+  // The number of input streams that may provide non-silent input.
+  uint32_t mActiveInputCount = 0;
   // The number of input channels that this stream requires. 0 means don't care.
   uint32_t mNumberOfInputChannels;
   // The mixing modes
   ChannelCountMode mChannelCountMode;
   ChannelInterpretation mChannelInterpretation;
+  // Streams are considered active if the stream has not finished and either
+  // the engine is active or there are active input streams.
+  bool mIsActive;
   // Whether the stream should be marked as finished as soon
   // as the current time range has been computed block by block.
   bool mMarkAsFinishedAfterThisBlock;

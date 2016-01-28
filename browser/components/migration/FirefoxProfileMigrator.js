@@ -239,13 +239,12 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
     }
   }
 
-  return [r for each (r in [places, cookies, passwords, formData,
-                            dictionary, bookmarksBackups, session,
-                            times, healthReporter]) if (r)];
+  return [places, cookies, passwords, formData, dictionary, bookmarksBackups,
+          session, times, healthReporter].filter(r => r);
 };
 
 Object.defineProperty(FirefoxProfileMigrator.prototype, "startupOnlyMigrator", {
-  get: function() true
+  get: () => true
 });
 
 

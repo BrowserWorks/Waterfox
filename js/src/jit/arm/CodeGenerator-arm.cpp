@@ -136,8 +136,9 @@ CodeGeneratorARM::bailoutIf(Assembler::Condition condition, LSnapshot* snapshot)
                   frameClass_.frameSize() == masm.framePushed());
 
     if (assignBailoutId(snapshot)) {
-        uint8_t* code = Assembler::BailoutTableStart(deoptTable_->raw()) + snapshot->bailoutId() * BAILOUT_TABLE_ENTRY_SIZE;
-        masm.ma_b(code, Relocation::HARDCODED, condition);
+        uint8_t* bailoutTable = Assembler::BailoutTableStart(deoptTable_->raw());
+        uint8_t* code = bailoutTable + snapshot->bailoutId() * BAILOUT_TABLE_ENTRY_SIZE;
+        masm.ma_b(code, condition);
         return;
     }
 
@@ -160,8 +161,8 @@ CodeGeneratorARM::bailoutFrom(Label* label, LSnapshot* snapshot)
     if (masm.bailed())
         return;
 
-    MOZ_ASSERT(label->used());
-    MOZ_ASSERT(!label->bound());
+    MOZ_ASSERT_IF(!masm.oom(), label->used());
+    MOZ_ASSERT_IF(!masm.oom(), !label->bound());
 
     encode(snapshot);
 

@@ -196,14 +196,20 @@ ReportWrapperDenial(JSContext* cx, HandleId id, WrapperDenialType type, const ch
 #endif
 
     nsAutoJSString propertyName;
-    if (!propertyName.init(cx, id))
+    RootedValue idval(cx);
+    if (!JS_IdToValue(cx, id, &idval))
+        return false;
+    JSString* str = JS_ValueToSource(cx, idval);
+    if (!str)
+        return false;
+    if (!propertyName.init(cx, str))
         return false;
     AutoFilename filename;
     unsigned line = 0, column = 0;
     DescribeScriptedCaller(cx, &filename, &line, &column);
 
     // Warn to the terminal for the logs.
-    NS_WARNING(nsPrintfCString("Silently denied access to property |%s|: %s (@%s:%u:%u)",
+    NS_WARNING(nsPrintfCString("Silently denied access to property %s: %s (@%s:%u:%u)",
                                NS_LossyConvertUTF16toASCII(propertyName).get(), reason,
                                filename.get(), line, column).get());
 
@@ -393,11 +399,28 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
         if (key == JSProto_Object || key == JSProto_Array) {
             return getOwnPropertyFromWrapperIfSafe(cx, wrapper, id, desc);
         } else if (IsTypedArrayKey(key)) {
-            if (IsArrayIndex(GetArrayIndexFromId(cx, id))) {
-                JS_ReportError(cx, "Accessing TypedArray data over Xrays is slow, and forbidden "
-                                   "in order to encourage performant code. To copy TypedArrays "
-                                   "across origin boundaries, consider using Components.utils.cloneInto().");
-                return false;
+            int32_t index = GetArrayIndexFromId(cx, id);
+            if (IsArrayIndex(index)) {
+                // WebExtensions can't use cloneInto(), so we just let them do
+                // the slow thing to maximize compatibility.
+                if (CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->isWebExtensionContentScript) {
+                    Rooted<JSPropertyDescriptor> innerDesc(cx);
+                    {
+                        JSAutoCompartment ac(cx, target);
+                        if (!JS_GetOwnPropertyDescriptorById(cx, target, id, &innerDesc))
+                            return false;
+                    }
+                    if (innerDesc.isDataDescriptor() && innerDesc.value().isNumber()) {
+                        desc.setValue(innerDesc.value());
+                        desc.object().set(wrapper);
+                    }
+                    return true;
+                } else {
+                    JS_ReportError(cx, "Accessing TypedArray data over Xrays is slow, and forbidden "
+                                       "in order to encourage performant code. To copy TypedArrays "
+                                       "across origin boundaries, consider using Components.utils.cloneInto().");
+                    return false;
+                }
             }
         } else if (key == JSProto_Function) {
             if (id == GetRTIdByIndex(cx, XPCJSRuntime::IDX_LENGTH)) {
@@ -518,12 +541,7 @@ JSXrayTraits::resolveOwnProperty(JSContext* cx, const Wrapper& jsWrapper,
     }
     if (fsMatch) {
         // Generate an Xrayed version of the method.
-        RootedFunction fun(cx);
-        if (fsMatch->selfHostedName) {
-            fun = JS::GetSelfHostedFunction(cx, fsMatch->selfHostedName, id, fsMatch->nargs);
-        } else {
-            fun = JS_NewFunctionById(cx, fsMatch->call.op, fsMatch->nargs, 0, id);
-        }
+        RootedFunction fun(cx, JS::NewFunctionFromSpec(cx, fsMatch, id));
         if (!fun)
             return false;
 
@@ -638,9 +656,9 @@ JSXrayTraits::defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
     // To avoid confusion, we disallow expandos on Object and Array instances, and
     // therefore raise an exception here if the above conditions aren't met.
     JSProtoKey key = getProtoKey(holder);
-    bool isObjectOrArrayInstance = (key == JSProto_Object || key == JSProto_Array) &&
-                                   !isPrototype(holder);
-    if (isObjectOrArrayInstance) {
+    bool isInstance = !isPrototype(holder);
+    bool isObjectOrArray = (key == JSProto_Object || key == JSProto_Array);
+    if (isObjectOrArray && isInstance) {
         RootedObject target(cx, getTargetObject(wrapper));
         if (desc.hasGetterOrSetter()) {
             JS_ReportError(cx, "Not allowed to define accessor property on [Object] or [Array] XrayWrapper");
@@ -668,6 +686,21 @@ JSXrayTraits::defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
         {
             return false;
         }
+        *defined = true;
+        return true;
+    }
+
+    // For WebExtensions content scripts, we forward the definition of indexed properties. By
+    // validating that the key and value are both numbers, we can avoid doing any wrapping.
+    if (isInstance && IsTypedArrayKey(key) &&
+        CompartmentPrivate::Get(JS::CurrentGlobalOrNull(cx))->isWebExtensionContentScript &&
+        desc.isDataDescriptor() && (desc.value().isNumber() || desc.value().isUndefined()) &&
+        IsArrayIndex(GetArrayIndexFromId(cx, id)))
+    {
+        RootedObject target(cx, getTargetObject(wrapper));
+        JSAutoCompartment ac(cx, target);
+        if (!JS_DefinePropertyById(cx, target, id, desc, result))
+            return false;
         *defined = true;
         return true;
     }
@@ -893,7 +926,7 @@ ExpandoObjectFinalize(JSFreeOp* fop, JSObject* obj)
 const JSClass ExpandoObjectClass = {
     "XrayExpandoObject",
     JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_EXPANDO_COUNT),
-    nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, ExpandoObjectFinalize
 };
 
@@ -1154,7 +1187,7 @@ void
 XPCWrappedNativeXrayTraits::preserveWrapper(JSObject* target)
 {
     XPCWrappedNative* wn = XPCWrappedNative::Get(target);
-    nsRefPtr<nsXPCClassInfo> ci;
+    RefPtr<nsXPCClassInfo> ci;
     CallQueryInterface(wn->Native(), getter_AddRefs(ci));
     if (ci)
         ci->PreserveWrapper(wn->Native());
@@ -2179,19 +2212,6 @@ const char*
 XrayWrapper<Base, Traits>::className(JSContext* cx, HandleObject wrapper) const
 {
     return Traits::className(cx, wrapper, Base::singleton);
-}
-
-template <typename Base, typename Traits>
-bool
-XrayWrapper<Base, Traits>::defaultValue(JSContext* cx, HandleObject wrapper,
-                                        JSType hint, MutableHandleValue vp) const
-{
-    // Even if this isn't a security wrapper, Xray semantics dictate that we
-    // run the OrdinaryToPrimitive algorithm directly on the Xray wrapper.
-    //
-    // NB: We don't have to worry about things with special [[DefaultValue]]
-    // behavior like Date because we'll never have an XrayWrapper to them.
-    return OrdinaryToPrimitive(cx, wrapper, hint, vp);
 }
 
 template <typename Base, typename Traits>

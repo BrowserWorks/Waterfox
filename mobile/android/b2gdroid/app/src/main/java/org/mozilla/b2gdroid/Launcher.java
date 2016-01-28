@@ -4,6 +4,8 @@
 
 package org.mozilla.b2gdroid;
 
+import java.util.Date;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.KeyguardManager;
@@ -13,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 
@@ -28,18 +31,27 @@ import org.mozilla.gecko.GeckoBatteryManager;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.IntentHelper;
+import org.mozilla.gecko.updater.UpdateServiceHelper;
 import org.mozilla.gecko.util.GeckoEventListener;
 
 import org.mozilla.b2gdroid.ScreenStateObserver;
 import org.mozilla.b2gdroid.Apps;
+import org.mozilla.b2gdroid.SettingsMapper;
 
-public class Launcher extends Activity
+public class Launcher extends FragmentActivity
                       implements GeckoEventListener, ContextGetter {
     private static final String LOGTAG = "B2G";
 
     private ContactService      mContactService;
     private ScreenStateObserver mScreenStateObserver;
     private Apps                mApps;
+    private SettingsMapper      mSettings;
+
+    private static final long   kHomeRepeat = 2;
+    private static final long   kHomeDelay  = 500; // delay in ms to tap kHomeRepeat times.
+    private long                mFirstHome;
+    private long                mLastHome;
+    private long                mHomeCount;
 
     /** ContextGetter */
     public Context getContext() {
@@ -57,6 +69,7 @@ public class Launcher extends Activity
         GeckoBatteryManager.getInstance().start(this);
         mContactService = new ContactService(EventDispatcher.getInstance(), this);
         mApps = new Apps(this);
+        mSettings = new SettingsMapper(this, null);
     }
 
     private void hideSplashScreen() {
@@ -86,10 +99,16 @@ public class Launcher extends Activity
 
         GeckoAppShell.setGeckoInterface(new BaseGeckoInterface(this));
 
+        UpdateServiceHelper.registerForUpdates(this);
+
         EventDispatcher.getInstance().registerGeckoThreadListener(this,
             "Launcher:Ready");
 
         setContentView(R.layout.launcher);
+
+        mHomeCount = 0;
+        mFirstHome = 0;
+        mLastHome = 0;
     }
 
     @Override
@@ -113,6 +132,7 @@ public class Launcher extends Activity
 
         mContactService.destroy();
         mApps.destroy();
+        mSettings.destroy();
     }
 
     @Override
@@ -131,10 +151,29 @@ public class Launcher extends Activity
             GeckoEvent e = GeckoEvent.createBroadcastEvent("Android:Launcher", obj.toString());
             GeckoAppShell.sendEventToGecko(e);
         } else if (Intent.ACTION_MAIN.equals(action)) {
-            Log.d(LOGTAG, "Let's dispatch a 'home' key event");
+            String message = "home-key";
+
+            // Check if we did a multiple home tap to trigger the task switcher.
+            long now = (new Date()).getTime();
+            if (now - mLastHome > kHomeDelay) {
+                mHomeCount = 0;
+            }
+            if (mHomeCount == 0) {
+                mFirstHome = now;
+            }
+            mHomeCount++;
+            if (mHomeCount == kHomeRepeat) {
+                mHomeCount = 0;
+                if (now - mFirstHome < kHomeDelay) {
+                    message = "task-switcher";
+                }
+            }
+            mLastHome = now;
+
+            Log.d(LOGTAG, "Let's dispatch a '" + message + "' key event");
             JSONObject obj = new JSONObject();
             try {
-                obj.put("action", "home-key");
+                obj.put("action", message);
             } catch(JSONException ex) {
                 Log.wtf(LOGTAG, "Error building Android:Launcher message", ex);
             }

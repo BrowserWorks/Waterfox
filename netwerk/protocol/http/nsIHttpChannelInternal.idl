@@ -39,8 +39,7 @@ interface nsIHttpUpgradeListener : nsISupports
  * using any feature exposed by this interface, be aware that this interface
  * will change and you will be broken.  You have been warned.
  */
-[scriptable, uuid(46ef729f-4c9b-4084-b9e2-498992a31aee)]
-
+[scriptable, uuid(9eabaac6-cc7c-4ca1-9430-65f2daaa578f)]
 interface nsIHttpChannelInternal : nsISupports
 {
     /**
@@ -203,6 +202,13 @@ interface nsIHttpChannelInternal : nsISupports
     attribute boolean responseTimeoutEnabled;
 
     /**
+     * If the underlying transport supports RWIN manipulation, this is the
+     * intiial window value for the channel. HTTP/2 implements this.
+     * 0 means no override from system default. Set before opening channel.
+     */
+    attribute unsigned long initialRwin;
+
+    /**
      * Get value of the URI passed to nsIHttpChannel.redirectTo() if any.
      * May return null when redirectTo() has not been called.
      */
@@ -216,6 +222,13 @@ interface nsIHttpChannelInternal : nsISupports
 
     readonly attribute PRTime lastModifiedTime;
 
+    /**
+     * Force a channel that has not been AsyncOpen'ed to skip any check for possible
+     * interception and proceed immediately to open a previously-synthesized cache
+     * entry using the provided ID.
+     */
+    void forceIntercepted(in uint64_t aInterceptionID);
+
     readonly attribute boolean responseSynthesized;
 
     /**
@@ -228,7 +241,6 @@ interface nsIHttpChannelInternal : nsISupports
     const unsigned long CORS_MODE_SAME_ORIGIN = 0;
     const unsigned long CORS_MODE_NO_CORS = 1;
     const unsigned long CORS_MODE_CORS = 2;
-    const unsigned long CORS_MODE_CORS_WITH_FORCED_PREFLIGHT = 3;
     /**
      * Set by nsCORSListenerProxy to indicate CORS load type. Defaults to CORS_MODE_NO_CORS.
      */

@@ -68,9 +68,14 @@ template<Op OP>
 static void
 WalkTheTree(Layer* aLayer,
             bool& aReady,
-            const TargetConfig& aTargetConfig)
+            const TargetConfig& aTargetConfig,
+            CompositorParent* aCompositor,
+            bool& aHasRemote,
+            bool aWillResolvePlugins,
+            bool& aDidResolvePlugins)
 {
   if (RefLayer* ref = aLayer->AsRefLayer()) {
+    aHasRemote = true;
     if (const CompositorParent::LayerTreeState* state = CompositorParent::GetIndirectShadowTree(ref->GetReferentId())) {
       if (Layer* referent = state->mRoot) {
         if (!ref->GetVisibleRegion().IsEmpty()) {
@@ -84,16 +89,26 @@ WalkTheTree(Layer* aLayer,
 
         if (OP == Resolve) {
           ref->ConnectReferentLayer(referent);
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+          if (aCompositor && aWillResolvePlugins) {
+            aDidResolvePlugins |=
+              aCompositor->UpdatePluginWindowState(ref->GetReferentId());
+          }
+#endif
         } else {
           ref->DetachReferentLayer(referent);
-          WalkTheTree<OP>(referent, aReady, aTargetConfig);
+          WalkTheTree<OP>(referent, aReady, aTargetConfig,
+                          aCompositor, aHasRemote, aWillResolvePlugins,
+                          aDidResolvePlugins);
         }
       }
     }
   }
   for (Layer* child = aLayer->GetFirstChild();
        child; child = child->GetNextSibling()) {
-    WalkTheTree<OP>(child, aReady, aTargetConfig);
+    WalkTheTree<OP>(child, aReady, aTargetConfig,
+                    aCompositor, aHasRemote, aWillResolvePlugins,
+                    aDidResolvePlugins);
   }
 }
 
@@ -111,16 +126,41 @@ AsyncCompositionManager::~AsyncCompositionManager()
 }
 
 void
-AsyncCompositionManager::ResolveRefLayers()
+AsyncCompositionManager::ResolveRefLayers(CompositorParent* aCompositor,
+                                          bool* aHasRemoteContent,
+                                          bool* aResolvePlugins)
 {
+  if (aHasRemoteContent) {
+    *aHasRemoteContent = false;
+  }
+
+  // If valid *aResolvePlugins indicates if we need to update plugin geometry
+  // when we walk the tree.
+  bool willResolvePlugins = (aResolvePlugins && *aResolvePlugins);
   if (!mLayerManager->GetRoot()) {
+    // Updated the return value since this result controls completing composition.
+    if (aResolvePlugins) {
+      *aResolvePlugins = false;
+    }
     return;
   }
 
   mReadyForCompose = true;
+  bool hasRemoteContent = false;
+  bool didResolvePlugins = false;
   WalkTheTree<Resolve>(mLayerManager->GetRoot(),
                        mReadyForCompose,
-                       mTargetConfig);
+                       mTargetConfig,
+                       aCompositor,
+                       hasRemoteContent,
+                       willResolvePlugins,
+                       didResolvePlugins);
+  if (aHasRemoteContent) {
+    *aHasRemoteContent = hasRemoteContent;
+  }
+  if (aResolvePlugins) {
+    *aResolvePlugins = didResolvePlugins;
+  }
 }
 
 void
@@ -129,9 +169,13 @@ AsyncCompositionManager::DetachRefLayers()
   if (!mLayerManager->GetRoot()) {
     return;
   }
+  CompositorParent* dummy = nullptr;
+  bool ignored = false;
   WalkTheTree<Detach>(mLayerManager->GetRoot(),
                       mReadyForCompose,
-                      mTargetConfig);
+                      mTargetConfig,
+                      dummy,
+                      ignored, ignored, ignored);
 }
 
 void
@@ -239,17 +283,21 @@ GetLayerFixedMarginsOffset(Layer* aLayer,
   // Because fixed layer margins are stored relative to the root scrollable
   // layer, we can just take the difference between these values.
   LayerPoint translation;
-  const LayerPoint& anchor = aLayer->GetFixedPositionAnchor();
+  int32_t sides = aLayer->GetFixedPositionSides();
 
-  if (anchor.x > 0) {
+  if ((sides & eSideBitsLeftRight) == eSideBitsLeftRight) {
+    translation.x += (aFixedLayerMargins.left - aFixedLayerMargins.right) / 2;
+  } else if (sides & eSideBitsRight) {
     translation.x -= aFixedLayerMargins.right;
-  } else {
+  } else if (sides & eSideBitsLeft) {
     translation.x += aFixedLayerMargins.left;
   }
 
-  if (anchor.y > 0) {
+  if ((sides & eSideBitsTopBottom) == eSideBitsTopBottom) {
+    translation.y += (aFixedLayerMargins.top - aFixedLayerMargins.bottom) / 2;
+  } else if (sides & eSideBitsBottom) {
     translation.y -= aFixedLayerMargins.bottom;
-  } else {
+  } else if (sides & eSideBitsTop) {
     translation.y += aFixedLayerMargins.top;
   }
 
@@ -268,6 +316,66 @@ IntervalOverlap(gfxFloat aTranslation, gfxFloat aMin, gfxFloat aMax)
   }
 }
 
+/**
+ * Finds the metrics on |aLayer| with scroll id |aScrollId|, and returns a
+ * LayerMetricsWrapper representing the (layer, metrics) pair, or the null
+ * LayerMetricsWrapper if no matching metrics could be found.
+ */
+static LayerMetricsWrapper
+FindMetricsWithScrollId(Layer* aLayer, FrameMetrics::ViewID aScrollId)
+{
+  for (uint64_t i = 0; i < aLayer->GetFrameMetricsCount(); ++i) {
+    if (aLayer->GetFrameMetrics(i).GetScrollId() == aScrollId) {
+      return LayerMetricsWrapper(aLayer, i);
+    }
+  }
+  return LayerMetricsWrapper();
+}
+
+/**
+ * Checks whether the (layer, metrics) pair (aTransformedLayer, aTransformedMetrics)
+ * is on the path from |aFixedLayer| to the metrics with scroll id
+ * |aFixedWithRespectTo|, inclusive.
+ */
+static bool
+AsyncTransformShouldBeUnapplied(Layer* aFixedLayer,
+                                FrameMetrics::ViewID aFixedWithRespectTo,
+                                Layer* aTransformedLayer,
+                                FrameMetrics::ViewID aTransformedMetrics)
+{
+  LayerMetricsWrapper transformed = FindMetricsWithScrollId(aTransformedLayer, aTransformedMetrics);
+  if (!transformed.IsValid()) {
+    return false;
+  }
+  // It's important to start at the bottom, because the fixed layer itself
+  // could have the transformed metrics, and they can be at the bottom.
+  LayerMetricsWrapper current(aFixedLayer, LayerMetricsWrapper::StartAt::BOTTOM);
+  bool encounteredTransformedLayer = false;
+  // The transformed layer is on the path from |aFixedLayer| to the fixed-to
+  // layer if as we walk up the (layer, metrics) tree starting from
+  // |aFixedLayer|, we *first* encounter the transformed layer, and *then* (or
+  // at the same time) the fixed-to layer.
+  while (current) {
+    if (!encounteredTransformedLayer && current == transformed) {
+      encounteredTransformedLayer = true;
+    }
+    if (current.Metrics().GetScrollId() == aFixedWithRespectTo) {
+      return encounteredTransformedLayer;
+    }
+    current = current.GetParent();
+    // It's possible that we reach a layers id boundary before we reach an
+    // ancestor with the scroll id |aFixedWithRespectTo| (this could happen
+    // e.g. if the scroll frame with that scroll id uses containerless
+    // scrolling). In such a case, stop the walk, as a new layers id could
+    // have a different layer with scroll id |aFixedWithRespectTo| which we
+    // don't intend to match.
+    if (current && current.AsRefLayer() != nullptr) {
+      break;
+    }
+  }
+  return false;
+}
+
 void
 AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aLayer,
                                                    Layer* aTransformedSubtreeRoot,
@@ -276,18 +384,27 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aLayer,
                                                    const Matrix4x4& aCurrentTransformForRoot,
                                                    const ScreenMargin& aFixedLayerMargins)
 {
-  bool isRootFixedForSubtree = aLayer->GetIsFixedPosition() &&
-    aLayer->GetFixedPositionScrollContainerId() == aTransformScrollId &&
+  FrameMetrics::ViewID fixedTo;  // the scroll id of the scroll frame we are fixed/sticky to
+  bool isRootOfFixedSubtree = aLayer->GetIsFixedPosition() &&
     !aLayer->GetParent()->GetIsFixedPosition();
-  bool isStickyForSubtree = aLayer->GetIsStickyPosition() &&
-    aLayer->GetStickyScrollContainerId() == aTransformScrollId;
-  bool isFixedOrSticky = (isRootFixedForSubtree || isStickyForSubtree);
+  if (isRootOfFixedSubtree) {
+    fixedTo = aLayer->GetFixedPositionScrollContainerId();
+  }
+  bool isSticky = aLayer->GetIsStickyPosition();
+  if (isSticky) {
+    fixedTo = aLayer->GetStickyScrollContainerId();
+  }
+  bool needsAsyncTransformUnapplied = false;
+  if (isRootOfFixedSubtree || isSticky) {
+    needsAsyncTransformUnapplied = AsyncTransformShouldBeUnapplied(aLayer,
+        fixedTo, aTransformedSubtreeRoot, aTransformScrollId);
+  }
 
-  // We want to process all the fixed and sticky children of
-  // aTransformedSubtreeRoot. Once we do encounter such a child, we don't
+  // We want to process all the fixed and sticky descendants of
+  // aTransformedSubtreeRoot. Once we do encounter such a descendant, we don't
   // need to recurse any deeper because the adjustment to the fixed or sticky
   // layer will apply to its subtree.
-  if (!isFixedOrSticky) {
+  if (!needsAsyncTransformUnapplied) {
     for (Layer* child = aLayer->GetFirstChild(); child; child = child->GetNextSibling()) {
       AlignFixedAndStickyLayers(child, aTransformedSubtreeRoot, aTransformScrollId,
                                 aPreviousTransformForRoot,
@@ -311,40 +428,45 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aLayer,
   if (newCumulativeTransform.IsSingular()) {
     return;
   }
-  Matrix4x4 newCumulativeTransformInverse = newCumulativeTransform.Inverse();
+
+  // Add in the layer's local transform, if it isn't already included in
+  // |aPreviousTransformForRoot| and |aCurrentTransformForRoot| (this happens
+  // when the fixed/sticky layer is itself the transformed subtree root).
+  Matrix4x4 localTransform;
+  GetBaseTransform(aLayer, &localTransform);
+  if (aLayer != aTransformedSubtreeRoot) {
+    oldCumulativeTransform = localTransform * oldCumulativeTransform;
+    newCumulativeTransform = localTransform * newCumulativeTransform;
+  }
 
   // Now work out the translation necessary to make sure the layer doesn't
   // move given the new sub-tree root transform.
-  Matrix4x4 layerTransform;
-  GetBaseTransform(aLayer, &layerTransform);
 
-  // Calculate any offset necessary, in previous transform sub-tree root
-  // space. This is used to make sure fixed position content respects
-  // content document fixed position margins.
-  LayerPoint offsetInOldSubtreeLayerSpace = GetLayerFixedMarginsOffset(aLayer, aFixedLayerMargins);
+  // Get the layer's fixed anchor point, in the layer's local coordinate space
+  // (before any cumulative transform is applied).
+  LayerPoint anchor = aLayer->GetFixedPositionAnchor();
 
-  // Add the above offset to the anchor point so we can offset the layer by
-  // and amount that's specified in old subtree layer space.
-  const LayerPoint& anchorInOldSubtreeLayerSpace = aLayer->GetFixedPositionAnchor();
-  LayerPoint offsetAnchorInOldSubtreeLayerSpace = anchorInOldSubtreeLayerSpace + offsetInOldSubtreeLayerSpace;
+  // Offset the layer's anchor point to make sure fixed position content
+  // respects content document fixed position margins.
+  LayerPoint offsetAnchor = anchor + GetLayerFixedMarginsOffset(aLayer, aFixedLayerMargins);
 
-  // Add the local layer transform to the two points to make the equation
-  // below this section more convenient.
-  Point anchor(anchorInOldSubtreeLayerSpace.x, anchorInOldSubtreeLayerSpace.y);
-  Point offsetAnchor(offsetAnchorInOldSubtreeLayerSpace.x, offsetAnchorInOldSubtreeLayerSpace.y);
-  Point locallyTransformedAnchor = layerTransform * anchor;
-  Point locallyTransformedOffsetAnchor = layerTransform * offsetAnchor;
+  // Additionally transform the anchor to compensate for the change
+  // from the old cumulative transform to the new cumulative transform. We do
+  // this by using the old transform to take the offset anchor back into
+  // subtree root space, and then the inverse of the new cumulative transform
+  // to bring it back to layer space.
+  LayerPoint transformedAnchor = ViewAs<LayerPixel>(
+      newCumulativeTransform.Inverse() *
+      (oldCumulativeTransform * offsetAnchor.ToUnknownPoint()));
 
-  // Transforming the locallyTransformedAnchor by oldCumulativeTransform
-  // returns the layer's anchor point relative to the parent of
-  // aTransformedSubtreeRoot, before the new transform was applied.
-  // Then, applying newCumulativeTransformInverse maps that point relative
-  // to the layer's parent, which is the same coordinate space as
-  // locallyTransformedAnchor again, allowing us to subtract them and find
-  // out the offset necessary to make sure the layer stays stationary.
-  Point oldAnchorPositionInNewSpace =
-    newCumulativeTransformInverse * (oldCumulativeTransform * locallyTransformedOffsetAnchor);
-  Point translation = oldAnchorPositionInNewSpace - locallyTransformedAnchor;
+  // We want to translate the layer by the difference between |transformedAnchor|
+  // and |anchor|. To achieve this, we will add a translation to the layer's
+  // transform. This translation will apply on top of the layer's local
+  // transform, but |anchor| and |transformedAnchor| are in a coordinate space
+  // where the local transform isn't applied yet, so apply it and then subtract
+  // to get the desired translation.
+  ParentLayerPoint translation = TransformTo<ParentLayerPixel>(localTransform, transformedAnchor)
+                               - TransformTo<ParentLayerPixel>(localTransform, anchor);
 
   if (aLayer->GetIsStickyPosition()) {
     // For sticky positioned layers, the difference between the two rectangles
@@ -355,6 +477,8 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aLayer,
     const LayerRect& stickyOuter = aLayer->GetStickyScrollRangeOuter();
     const LayerRect& stickyInner = aLayer->GetStickyScrollRangeInner();
 
+    // TODO: There's a unit mismatch here, as |translation| is in ParentLayer
+    //       space while |stickyOuter| and |stickyInner| are in Layer space.
     translation.y = IntervalOverlap(translation.y, stickyOuter.y, stickyOuter.YMost()) -
                     IntervalOverlap(translation.y, stickyInner.y, stickyInner.YMost());
     translation.x = IntervalOverlap(translation.x, stickyOuter.x, stickyOuter.XMost()) -
@@ -373,7 +497,7 @@ AsyncCompositionManager::AlignFixedAndStickyLayers(Layer* aLayer,
   // those.
   bool adjustClipRect = aLayer != aTransformedSubtreeRoot &&
                         aLayer->IsClipFixed();
-  TranslateShadowLayer(aLayer, ThebesPoint(translation), adjustClipRect);
+  TranslateShadowLayer(aLayer, ThebesPoint(translation.ToUnknownPoint()), adjustClipRect);
 }
 
 static void
@@ -703,6 +827,10 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
         mPaintSyncId = 0;
       }
     }
+#else
+    // Non-Android platforms still care about this flag being cleared after
+    // the first call to TransformShadowTree().
+    mIsFirstPaint = false;
 #endif
 
     // Transform the current local clip by this APZC's async transform. If we're

@@ -77,7 +77,6 @@ static const JSFunctionSpec exception_methods[] = {
         nullptr,                 /* enumerate */ \
         nullptr,                 /* resolve */ \
         nullptr,                 /* mayResolve */ \
-        nullptr,                 /* convert */ \
         exn_finalize, \
         nullptr,                 /* call        */ \
         nullptr,                 /* hasInstance */ \
@@ -108,7 +107,6 @@ ErrorObject::classes[JSEXN_LIMIT] = {
         nullptr,                 /* enumerate */
         nullptr,                 /* resolve */
         nullptr,                 /* mayResolve */
-        nullptr,                 /* convert */
         exn_finalize,
         nullptr,                 /* call        */
         nullptr,                 /* hasInstance */
@@ -1016,9 +1014,14 @@ js::ValueToSourceForError(JSContext* cx, HandleValue val, JSAutoByteString& byte
     StringBuffer sb(cx);
     if (val.isObject()) {
         RootedObject valObj(cx, val.toObjectOrNull());
-        if (JS_IsArrayObject(cx, valObj)) {
+        ESClassValue cls;
+        if (!GetBuiltinClass(cx, valObj, &cls)) {
+            JS_ClearPendingException(cx);
+            return "<<error determining class of value>>";
+        }
+        if (cls == ESClass_Array) {
             sb.append("the array ");
-        } else if (JS_IsArrayBufferObject(valObj)) {
+        } else if (cls == ESClass_ArrayBuffer) {
             sb.append("the array buffer ");
         } else if (JS_IsArrayBufferViewObject(valObj)) {
             sb.append("the typed array ");

@@ -37,18 +37,18 @@ var handleReport = function(aProcess, aPath, aKind, aUnits, aAmount, aDesc) {
 
 var finished = function () {
   ok(true, "Yay didn't crash!");
+  for (var resource in usages) {
+    ok(usages[resource] > 0, "Non-zero usage for " + resource);
+  };
   SimpleTest.finish();
 }
 
+SpecialPowers.Cc["@mozilla.org/memory-reporter-manager;1"].
+  getService(SpecialPowers.Ci.nsIMemoryReporterManager).
+  getReports(handleReport, null, finished, null, /* anonymized = */ false);
+
 // To test bug 1225003, run a failing decodeAudioData() job over a time when
-// getReports() is expected to run.
+// the tasks from getReports() are expected to run.
 ac.decodeAudioData(new ArrayBuffer(4), function(){}, function(){});
-
-SimpleTest.executeSoon(() => {
-  SpecialPowers.Cc["@mozilla.org/memory-reporter-manager;1"].
-    getService(SpecialPowers.Ci.nsIMemoryReporterManager).
-    getReports(handleReport, null, finished, null, /* anonymized = */ false);
-});
-
 </script>
 </html>

@@ -87,6 +87,7 @@ nsGonkCameraControl::nsGonkCameraControl(uint32_t aCameraId)
   , mCapturePoster(false)
   , mAutoFocusPending(false)
   , mAutoFocusCompleteExpired(0)
+  , mPrevFacesDetected(0)
   , mReentrantMonitor("GonkCameraControl::OnTakePicture.Monitor")
 {
   // Constructor runs on the main thread...
@@ -989,7 +990,7 @@ nsGonkCameraControl::SetThumbnailSize(const Size& aSize)
     }
 
   protected:
-    nsRefPtr<nsGonkCameraControl> mCameraControl;
+    RefPtr<nsGonkCameraControl> mCameraControl;
     Size mSize;
   };
 
@@ -1107,7 +1108,7 @@ nsGonkCameraControl::SetPictureSize(const Size& aSize)
     }
 
   protected:
-    nsRefPtr<nsGonkCameraControl> mCameraControl;
+    RefPtr<nsGonkCameraControl> mCameraControl;
     Size mSize;
   };
 
@@ -1247,7 +1248,7 @@ nsGonkCameraControl::StartRecordingImpl(DeviceStorageFileDescriptor* aFileDescri
   // close the file descriptor when we leave this function. Also note, that
   // since we're already off the main thread, we don't need to dispatch this.
   // We just let the CloseFileRunnable destructor do the work.
-  nsRefPtr<CloseFileRunnable> closer;
+  RefPtr<CloseFileRunnable> closer;
   if (aFileDescriptor->mFileDescriptor.IsValid()) {
     closer = new CloseFileRunnable(aFileDescriptor->mFileDescriptor);
   }
@@ -1302,12 +1303,12 @@ nsGonkCameraControl::StopRecordingImpl()
       MOZ_ASSERT(NS_IsMainThread());
 
       nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-      obs->NotifyObservers(mFile, "file-watcher-notify", NS_LITERAL_STRING("modified").get());
+      obs->NotifyObservers(mFile, "file-watcher-notify", MOZ_UTF16("modified"));
       return NS_OK;
     }
 
   private:
-    nsRefPtr<DeviceStorageFile> mFile;
+    RefPtr<DeviceStorageFile> mFile;
   };
 
   ReentrantMonitorAutoEnter mon(mRecorderMonitor);
@@ -1424,7 +1425,7 @@ protected:
   virtual ~AutoFocusMovingTimerCallback()
   { }
 
-  nsRefPtr<nsGonkCameraControl> mCameraControl;
+  RefPtr<nsGonkCameraControl> mCameraControl;
 };
 
 NS_IMPL_ISUPPORTS(AutoFocusMovingTimerCallback, nsITimerCallback);
@@ -1448,7 +1449,7 @@ nsGonkCameraControl::OnAutoFocusMoving(bool aIsMoving)
         mAutoFocusCompleteTimer->Cancel();
 
         if (!mAutoFocusPending) {
-          nsRefPtr<nsITimerCallback> timerCb = new AutoFocusMovingTimerCallback(this);
+          RefPtr<nsITimerCallback> timerCb = new AutoFocusMovingTimerCallback(this);
           nsresult rv = mAutoFocusCompleteTimer->InitWithCallback(timerCb,
                                                                   kAutoFocusCompleteTimeoutMs,
                                                                   nsITimer::TYPE_ONE_SHOT);
@@ -1488,7 +1489,7 @@ nsGonkCameraControl::OnAutoFocusComplete(bool aSuccess, bool aExpired)
     }
 
   protected:
-    nsRefPtr<nsGonkCameraControl> mCameraControl;
+    RefPtr<nsGonkCameraControl> mCameraControl;
     bool mSuccess;
     bool mExpired;
   };
@@ -1557,6 +1558,11 @@ nsGonkCameraControl::OnFacesDetected(camera_frame_metadata_t* aMetaData)
 
   nsTArray<Face> faces;
   uint32_t numFaces = aMetaData->number_of_faces;
+  if (numFaces == 0 && mPrevFacesDetected == 0) {
+    return;
+  }
+  mPrevFacesDetected = numFaces;
+
   DOM_CAMERA_LOGI("Camera detected %d face(s)", numFaces);
 
   faces.SetCapacity(numFaces);
@@ -1915,7 +1921,7 @@ public:
 
 protected:
   ~GonkRecorderListener() { }
-  nsRefPtr<nsGonkCameraControl> mCameraControl;
+  RefPtr<nsGonkCameraControl> mCameraControl;
 };
 
 void
@@ -2152,7 +2158,7 @@ nsresult
 nsGonkCameraControl::LoadRecorderProfiles()
 {
   if (mRecorderProfiles.Count() == 0) {
-    nsTArray<nsRefPtr<RecorderProfile>> profiles;
+    nsTArray<RefPtr<RecorderProfile>> profiles;
     nsresult rv = GonkRecorderProfile::GetAll(mCameraId, profiles);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -2341,8 +2347,8 @@ nsGonkCameraControl::CreatePoster(Image* aImage, uint32_t aWidth, uint32_t aHeig
     }
 
   private:
-    nsRefPtr<nsGonkCameraControl> mTarget;
-    nsRefPtr<Image> mImage;
+    RefPtr<nsGonkCameraControl> mTarget;
+    RefPtr<Image> mImage;
     int32_t mWidth;
     int32_t mHeight;
     int32_t mRotation;
@@ -2365,7 +2371,7 @@ nsGonkCameraControl::CreatePoster(Image* aImage, uint32_t aWidth, uint32_t aHeig
 void
 nsGonkCameraControl::OnPoster(void* aData, uint32_t aLength)
 {
-  nsRefPtr<BlobImpl> blobImpl;
+  RefPtr<BlobImpl> blobImpl;
   if (aData) {
     blobImpl = new BlobImplMemory(aData, aLength, NS_LITERAL_STRING("image/jpeg"));
   }
@@ -2376,7 +2382,7 @@ void
 nsGonkCameraControl::OnNewPreviewFrame(layers::TextureClient* aBuffer)
 {
 #ifdef MOZ_WIDGET_GONK
-  nsRefPtr<Image> frame = mImageContainer->CreateImage(ImageFormat::GRALLOC_PLANAR_YCBCR);
+  RefPtr<Image> frame = mImageContainer->CreateImage(ImageFormat::GRALLOC_PLANAR_YCBCR);
 
   GrallocImage* videoImage = static_cast<GrallocImage*>(frame.get());
 

@@ -22,6 +22,7 @@ H264Converter::H264Converter(PlatformDecoderModule* aPDM,
                              FlushableTaskQueue* aVideoTaskQueue,
                              MediaDataDecoderCallback* aCallback)
   : mPDM(aPDM)
+  , mOriginalConfig(aConfig)
   , mCurrentConfig(aConfig)
   , mLayersBackend(aLayersBackend)
   , mImageContainer(aImageContainer)
@@ -38,7 +39,7 @@ H264Converter::~H264Converter()
 {
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+RefPtr<MediaDataDecoder::InitPromise>
 H264Converter::Init()
 {
   if (mDecoder) {
@@ -53,14 +54,10 @@ H264Converter::Init()
 nsresult
 H264Converter::Input(MediaRawData* aSample)
 {
-  if (!mNeedAVCC) {
-    if (!mp4_demuxer::AnnexB::ConvertSampleToAnnexB(aSample)) {
-      return NS_ERROR_FAILURE;
-    }
-  } else {
-    if (!mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
-      return NS_ERROR_FAILURE;
-    }
+  if (!mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
+    // We need AVCC content to be able to later parse the SPS.
+    // This is a no-op if the data is already AVCC.
+    return NS_ERROR_FAILURE;
   }
 
   if (mInitPromiseRequest.Exists()) {
@@ -83,6 +80,11 @@ H264Converter::Input(MediaRawData* aSample)
     rv = CheckForSPSChange(aSample);
   }
   NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!mNeedAVCC &&
+      !mp4_demuxer::AnnexB::ConvertSampleToAnnexB(aSample)) {
+    return NS_ERROR_FAILURE;
+  }
 
   aSample->mExtraData = mCurrentConfig.mExtraData;
 
@@ -138,7 +140,7 @@ H264Converter::CreateDecoder()
   }
   UpdateConfigFromExtraData(mCurrentConfig.mExtraData);
 
-  mDecoder = mPDM->CreateVideoDecoder(mCurrentConfig,
+  mDecoder = mPDM->CreateVideoDecoder(mNeedAVCC ? mCurrentConfig : mOriginalConfig,
                                       mLayersBackend,
                                       mImageContainer,
                                       mVideoTaskQueue,
@@ -153,7 +155,7 @@ H264Converter::CreateDecoder()
 nsresult
 H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
 {
-  nsRefPtr<MediaByteBuffer> extra_data =
+  RefPtr<MediaByteBuffer> extra_data =
     mp4_demuxer::AnnexB::ExtractExtraData(aSample);
   if (!mp4_demuxer::AnnexB::HasSPS(extra_data)) {
     return NS_ERROR_NOT_INITIALIZED;
@@ -166,7 +168,7 @@ H264Converter::CreateDecoderAndInit(MediaRawData* aSample)
     // Queue the incoming sample.
     mMediaRawSamples.AppendElement(aSample);
 
-    nsRefPtr<H264Converter> self = this;
+    RefPtr<H264Converter> self = this;
 
     mInitPromiseRequest.Begin(mDecoder->Init()
       ->Then(AbstractThread::GetCurrent()->AsTaskQueue(), __func__, this,
@@ -198,7 +200,7 @@ H264Converter::OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReaso
 nsresult
 H264Converter::CheckForSPSChange(MediaRawData* aSample)
 {
-  nsRefPtr<MediaByteBuffer> extra_data =
+  RefPtr<MediaByteBuffer> extra_data =
     mp4_demuxer::AnnexB::ExtractExtraData(aSample);
   if (!mp4_demuxer::AnnexB::HasSPS(extra_data) ||
       mp4_demuxer::AnnexB::CompareExtraData(extra_data,

@@ -13,6 +13,7 @@ import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.tabs.TabHistoryController;
 import org.mozilla.gecko.menu.MenuItemActionBar;
 import org.mozilla.gecko.util.ColorUtils;
+import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.widget.themed.ThemedTextView;
 
 import android.content.Context;
@@ -20,6 +21,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -39,6 +41,8 @@ abstract class BrowserToolbarTabletBase extends BrowserToolbar {
 
     protected final BackButton backButton;
     protected final ForwardButton forwardButton;
+
+    protected final View menuButtonMarginView;
 
     private final PorterDuffColorFilter privateBrowsingTabletMenuItemColorFilter;
 
@@ -63,6 +67,11 @@ abstract class BrowserToolbarTabletBase extends BrowserToolbar {
 
         privateBrowsingTabletMenuItemColorFilter = new PorterDuffColorFilter(
                 ColorUtils.getColor(context, R.color.tabs_tray_icon_grey), PorterDuff.Mode.SRC_IN);
+
+        menuButtonMarginView = findViewById(R.id.menu_margin);
+        if (menuButtonMarginView != null && !HardwareUtils.hasMenuButton()) {
+            menuButtonMarginView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void initButtonListeners() {
@@ -102,7 +111,7 @@ abstract class BrowserToolbarTabletBase extends BrowserToolbar {
 
     @Override
     public boolean addActionItem(final View actionItem) {
-        actionItemBar.addView(actionItem);
+        actionItemBar.addView(actionItem, LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
         return true;
     }
 

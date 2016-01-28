@@ -119,9 +119,6 @@
       <field name="FormHistory" readonly="true">
         (Components.utils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
       </field>
-      <field name="PlacesUtils" readonly="true">
-        (Components.utils.import("resource://gre/modules/PlacesUtils.jsm", {})).PlacesUtils;
-      </field>
 
       <property name="engines" readonly="true">
         <getter><![CDATA[
@@ -265,9 +262,6 @@
         <parameter name="element"/>
         <parameter name="uri"/>
         <body><![CDATA[
-          if (uri) {
-            uri = this.PlacesUtils.getImageURLForResolution(window, uri);
-          }
           element.setAttribute("src", uri);
         ]]></body>
       </method>
@@ -446,13 +440,11 @@
         if (target.engine) {
           this.currentEngine = target.engine;
         } else if (target.classList.contains("addengine-item")) {
-          // We only detect OpenSearch files
-          var type = Ci.nsISearchEngine.DATA_XML;
           // Select the installed engine if the installation succeeds
           var installCallback = {
             onSuccess: engine => this.currentEngine = engine
           }
-          Services.search.addEngine(target.getAttribute("uri"), type,
+          Services.search.addEngine(target.getAttribute("uri"), null,
                                     target.getAttribute("src"), false,
                                     installCallback);
         }
@@ -1093,8 +1085,7 @@
           let currentEngine = Services.search.currentEngine;
           let uri = currentEngine.iconURI;
           if (uri) {
-            uri = uri.spec;
-            this.setAttribute("src", PlacesUtils.getImageURLForResolution(window, uri));
+            this.setAttribute("src", uri.spec);
           }
           else {
             // If the default has just been changed to a provider without icon,
@@ -1256,8 +1247,7 @@
             button.setAttribute("tooltiptext", engine.uri);
             button.setAttribute("uri", engine.uri);
             if (engine.icon) {
-              let uri = PlacesUtils.getImageURLForResolution(window, engine.icon);
-              button.setAttribute("image", uri);
+              button.setAttribute("image", engine.icon);
             }
             button.setAttribute("title", engine.title);
             addEngineList.appendChild(button);
@@ -1330,7 +1320,7 @@
           button.id = "searchbar-engine-one-off-item-" + engine.name.replace(/ /g, '-');
           let uri = "chrome://browser/skin/search-engine-placeholder.png";
           if (engine.iconURI) {
-            uri = PlacesUtils.getImageURLForResolution(window, engine.iconURI.spec);
+            uri = engine.iconURI.spec;
           }
           button.setAttribute("image", uri);
           button.setAttribute("class", "searchbar-engine-one-off-item");
@@ -1432,8 +1422,7 @@
               Components.utils.reportError("Error adding search engine: " + errorCode);
             }
           }
-          Services.search.addEngine(target.getAttribute("uri"),
-                                    Ci.nsISearchEngine.DATA_XML,
+          Services.search.addEngine(target.getAttribute("uri"), null,
                                     target.getAttribute("image"), false,
                                     installCallback);
         }
@@ -1453,7 +1442,7 @@
           button.id = "searchbar-engine-one-off-item-" + currentEngine.name.replace(/ /g, '-');
           let uri = "chrome://browser/skin/search-engine-placeholder.png";
           if (currentEngine.iconURI)
-            uri = PlacesUtils.getImageURLForResolution(window, currentEngine.iconURI.spec);
+            uri = currentEngine.iconURI.spec;
           button.setAttribute("image", uri);
           button.setAttribute("tooltiptext", currentEngine.name);
           button.engine = currentEngine;

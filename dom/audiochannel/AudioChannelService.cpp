@@ -91,24 +91,22 @@ void
 NotifyChannelActive(uint64_t aWindowID, AudioChannel aAudioChannel,
                     bool aActive)
 {
-  nsRefPtr<nsRunnable> runnable =
+  RefPtr<nsRunnable> runnable =
     new NotifyChannelActiveRunnable(aWindowID, aAudioChannel, aActive);
   NS_DispatchToCurrentThread(runnable);
 }
 
 already_AddRefed<nsPIDOMWindow>
-GetTopWindow(nsIDOMWindow* aWindow)
+GetTopWindow(nsPIDOMWindow* aWindow)
 {
   MOZ_ASSERT(aWindow);
 
-  nsCOMPtr<nsIDOMWindow> topWindow;
-  aWindow->GetScriptableTop(getter_AddRefs(topWindow));
+  nsCOMPtr<nsPIDOMWindow> topWindow = aWindow->GetScriptableTop();
   MOZ_ASSERT(topWindow);
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(topWindow);
-  window = window->GetOuterWindow();
+  topWindow = topWindow->GetOuterWindow();
 
-  return window.forget();
+  return topWindow.forget();
 }
 
 bool
@@ -133,8 +131,8 @@ public:
       observerService->NotifyObservers(
         ToSupports(mWindow),
         "audio-playback",
-        mActive ? NS_LITERAL_STRING("active").get()
-                : NS_LITERAL_STRING("inactive").get());
+        mActive ? MOZ_UTF16("active")
+                : MOZ_UTF16("inactive"));
     }
 
     return NS_OK;
@@ -176,7 +174,7 @@ AudioChannelService::CreateServiceIfNeeded()
 AudioChannelService::GetOrCreate()
 {
   CreateServiceIfNeeded();
-  nsRefPtr<AudioChannelService> service = gAudioChannelService.get();
+  RefPtr<AudioChannelService> service = gAudioChannelService.get();
   return service.forget();
 }
 
@@ -184,12 +182,14 @@ void
 AudioChannelService::Shutdown()
 {
   if (gAudioChannelService) {
-    if (IsParentProcess()) {
-      nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-      if (obs) {
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    if (obs) {
+      obs->RemoveObserver(gAudioChannelService, "xpcom-shutdown");
+      obs->RemoveObserver(gAudioChannelService, "outer-window-destroyed");
+
+      if (IsParentProcess()) {
         obs->RemoveObserver(gAudioChannelService, "ipc:content-shutdown");
-        obs->RemoveObserver(gAudioChannelService, "xpcom-shutdown");
-        obs->RemoveObserver(gAudioChannelService, "outer-window-destroyed");
+
 #ifdef MOZ_WIDGET_GONK
         // To monitor the volume settings based on audio channel.
         obs->RemoveObserver(gAudioChannelService, "mozsettings-changed");
@@ -216,12 +216,13 @@ AudioChannelService::AudioChannelService()
   , mContentOrNormalChannel(false)
   , mAnyChannel(false)
 {
-  if (IsParentProcess()) {
-    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    if (obs) {
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->AddObserver(this, "xpcom-shutdown", false);
+    obs->AddObserver(this, "outer-window-destroyed", false);
+    if (IsParentProcess()) {
       obs->AddObserver(this, "ipc:content-shutdown", false);
-      obs->AddObserver(this, "xpcom-shutdown", false);
-      obs->AddObserver(this, "outer-window-destroyed", false);
+
 #ifdef MOZ_WIDGET_GONK
       // To monitor the volume settings based on audio channel.
       obs->AddObserver(this, "mozsettings-changed", false);
@@ -262,7 +263,7 @@ AudioChannelService::RegisterAudioChannelAgent(AudioChannelAgent* aAgent,
   // If this is the first agent for this window, we must notify the observers.
   if (aNotifyPlayback == nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY &&
       winData->mAgents.Length() == 1) {
-    nsRefPtr<MediaPlaybackRunnable> runnable =
+    RefPtr<MediaPlaybackRunnable> runnable =
       new MediaPlaybackRunnable(aAgent->Window(), true /* active */);
     NS_DispatchToCurrentThread(runnable);
   }
@@ -306,7 +307,7 @@ AudioChannelService::UnregisterAudioChannelAgent(AudioChannelAgent* aAgent,
   // If this is the last agent for this window, we must notify the observers.
   if (aNotifyPlayback == nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY &&
       winData->mAgents.IsEmpty()) {
-    nsRefPtr<MediaPlaybackRunnable> runnable =
+    RefPtr<MediaPlaybackRunnable> runnable =
       new MediaPlaybackRunnable(aAgent->Window(), false /* active */);
     NS_DispatchToCurrentThread(runnable);
   }
@@ -322,12 +323,15 @@ AudioChannelService::GetState(nsPIDOMWindow* aWindow, uint32_t aAudioChannel,
   MOZ_ASSERT(aVolume && aMuted);
   MOZ_ASSERT(aAudioChannel < NUMBER_OF_AUDIO_CHANNELS);
 
-  *aVolume = 1.0;
-  *aMuted = false;
 
   if (!aWindow || !aWindow->IsOuterWindow()) {
+    *aVolume = 0.0;
+    *aMuted = true;
     return;
   }
+
+  *aVolume = 1.0;
+  *aMuted = false;
 
   AudioChannelWindow* winData = nullptr;
   nsCOMPtr<nsPIDOMWindow> window = aWindow;
@@ -344,8 +348,7 @@ AudioChannelService::GetState(nsPIDOMWindow* aWindow, uint32_t aAudioChannel,
     *aVolume *= window->GetAudioVolume();
     *aMuted = *aMuted || window->GetAudioMuted();
 
-    nsCOMPtr<nsIDOMWindow> win;
-    window->GetScriptableParent(getter_AddRefs(win));
+    nsCOMPtr<nsPIDOMWindow> win = window->GetScriptableParent();
     if (window == win) {
       break;
     }
@@ -359,9 +362,9 @@ AudioChannelService::GetState(nsPIDOMWindow* aWindow, uint32_t aAudioChannel,
 bool
 AudioChannelService::TelephonyChannelIsActive()
 {
-  nsTObserverArray<nsAutoPtr<AudioChannelWindow>>::ForwardIterator iter(mWindows);
-  while (iter.HasMore()) {
-    AudioChannelWindow* next = iter.GetNext();
+  nsTObserverArray<nsAutoPtr<AudioChannelWindow>>::ForwardIterator windowsIter(mWindows);
+  while (windowsIter.HasMore()) {
+    AudioChannelWindow* next = windowsIter.GetNext();
     if (next->mChannels[(uint32_t)AudioChannel::Telephony].mNumberOfAgents != 0 &&
         !next->mChannels[(uint32_t)AudioChannel::Telephony].mMuted) {
       return true;
@@ -370,9 +373,9 @@ AudioChannelService::TelephonyChannelIsActive()
 
   if (IsParentProcess()) {
     nsTObserverArray<nsAutoPtr<AudioChannelChildStatus>>::ForwardIterator
-      iter(mPlayingChildren);
-    while (iter.HasMore()) {
-      AudioChannelChildStatus* child = iter.GetNext();
+      childrenIter(mPlayingChildren);
+    while (childrenIter.HasMore()) {
+      AudioChannelChildStatus* child = childrenIter.GetNext();
       if (child->mActiveTelephonyChannel) {
         return true;
       }
@@ -537,14 +540,12 @@ AudioChannelService::RefreshAgentsVolume(nsPIDOMWindow* aWindow)
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(aWindow->IsOuterWindow());
 
-  nsCOMPtr<nsIDOMWindow> topWindow;
-  aWindow->GetScriptableTop(getter_AddRefs(topWindow));
-  nsCOMPtr<nsPIDOMWindow> pTopWindow = do_QueryInterface(topWindow);
-  if (!pTopWindow) {
+  nsCOMPtr<nsPIDOMWindow> topWindow = aWindow->GetScriptableTop();
+  if (!topWindow) {
     return;
   }
 
-  AudioChannelWindow* winData = GetWindowData(pTopWindow->WindowID());
+  AudioChannelWindow* winData = GetWindowData(topWindow->WindowID());
   if (!winData) {
     return;
   }
@@ -563,14 +564,12 @@ AudioChannelService::RefreshAgentsCapture(nsPIDOMWindow* aWindow,
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(aWindow->IsOuterWindow());
 
-  nsCOMPtr<nsIDOMWindow> topWindow;
-  aWindow->GetScriptableTop(getter_AddRefs(topWindow));
-  nsCOMPtr<nsPIDOMWindow> pTopWindow = do_QueryInterface(topWindow);
-  if (!pTopWindow) {
+  nsCOMPtr<nsPIDOMWindow> topWindow = aWindow->GetScriptableTop();
+  if (!topWindow) {
     return;
   }
 
-  AudioChannelWindow* winData = GetWindowData(pTopWindow->WindowID());
+  AudioChannelWindow* winData = GetWindowData(topWindow->WindowID());
 
   // This can happen, but only during shutdown, because the the outer window
   // changes ScriptableTop, so that its ID is different.
@@ -704,7 +703,8 @@ AudioChannelService::GetAudioChannelVolume(nsIDOMWindow* aWindow,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(aWindow);
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aWindow);
+  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(piWindow);
   MOZ_ASSERT(window->IsOuterWindow());
   *aVolume = GetAudioChannelVolume(window, (AudioChannel)aAudioChannel);
   return NS_OK;
@@ -731,7 +731,8 @@ AudioChannelService::SetAudioChannelVolume(nsIDOMWindow* aWindow,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(aWindow);
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aWindow);
+  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(piWindow);
   MOZ_ASSERT(window->IsOuterWindow());
   SetAudioChannelVolume(window, (AudioChannel)aAudioChannel, aVolume);
   return NS_OK;
@@ -756,7 +757,8 @@ AudioChannelService::GetAudioChannelMuted(nsIDOMWindow* aWindow,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(aWindow);
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aWindow);
+  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(piWindow);
   MOZ_ASSERT(window->IsOuterWindow());
   *aMuted = GetAudioChannelMuted(window, (AudioChannel)aAudioChannel);
   return NS_OK;
@@ -771,6 +773,11 @@ AudioChannelService::SetAudioChannelMuted(nsPIDOMWindow* aWindow,
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(aWindow->IsOuterWindow());
 
+  if (aAudioChannel == AudioChannel::System) {
+    // Workaround for bug1183033, system channel type can always playback.
+    return;
+  }
+
   AudioChannelWindow* winData = GetOrCreateWindowData(aWindow);
   winData->mChannels[(uint32_t)aAudioChannel].mMuted = aMuted;
   RefreshAgentsVolume(aWindow);
@@ -783,7 +790,8 @@ AudioChannelService::SetAudioChannelMuted(nsIDOMWindow* aWindow,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(aWindow);
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aWindow);
+  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(piWindow);
   MOZ_ASSERT(window->IsOuterWindow());
   SetAudioChannelMuted(window, (AudioChannel)aAudioChannel, aMuted);
   return NS_OK;
@@ -808,7 +816,8 @@ AudioChannelService::IsAudioChannelActive(nsIDOMWindow* aWindow,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(aWindow);
+  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aWindow);
+  nsCOMPtr<nsPIDOMWindow> window = GetTopWindow(piWindow);
   MOZ_ASSERT(window->IsOuterWindow());
   *aActive = IsAudioChannelActive(window, (AudioChannel)aAudioChannel);
   return NS_OK;

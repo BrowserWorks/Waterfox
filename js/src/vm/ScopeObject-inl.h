@@ -16,10 +16,18 @@
 
 namespace js {
 
+inline ClonedBlockObject&
+NearestEnclosingExtensibleLexicalScope(JSObject* scope)
+{
+    while (!IsExtensibleLexicalScope(scope))
+        scope = scope->enclosingScope();
+    return scope->as<ClonedBlockObject>();
+}
+
 inline void
 ScopeObject::setAliasedVar(JSContext* cx, ScopeCoordinate sc, PropertyName* name, const Value& v)
 {
-    MOZ_ASSERT(is<CallObject>() || is<ClonedBlockObject>());
+    MOZ_ASSERT(is<LexicalScopeBase>() || is<ClonedBlockObject>());
     JS_STATIC_ASSERT(CallObject::RESERVED_SLOTS == BlockObject::RESERVED_SLOTS);
 
     // name may be null if we don't need to track side effects on the object.
@@ -40,7 +48,8 @@ ScopeObject::setAliasedVar(JSContext* cx, ScopeCoordinate sc, PropertyName* name
 }
 
 inline void
-CallObject::setAliasedVar(JSContext* cx, AliasedFormalIter fi, PropertyName* name, const Value& v)
+LexicalScopeBase::setAliasedVar(JSContext* cx, AliasedFormalIter fi, PropertyName* name,
+                                const Value& v)
 {
     MOZ_ASSERT(name == fi->name());
     setSlot(fi.scopeSlot(), v);
@@ -49,7 +58,8 @@ CallObject::setAliasedVar(JSContext* cx, AliasedFormalIter fi, PropertyName* nam
 }
 
 inline void
-CallObject::setAliasedVarFromArguments(JSContext* cx, const Value& argsValue, jsid id, const Value& v)
+LexicalScopeBase::setAliasedVarFromArguments(JSContext* cx, const Value& argsValue, jsid id,
+                                             const Value& v)
 {
     setSlot(ArgumentsObject::SlotFromMagicScopeSlotValue(argsValue), v);
     if (isSingleton())
@@ -57,7 +67,7 @@ CallObject::setAliasedVarFromArguments(JSContext* cx, const Value& argsValue, js
 }
 
 inline void
-CallObject::initRemainingSlotsToUninitializedLexicals(uint32_t begin)
+LexicalScopeBase::initRemainingSlotsToUninitializedLexicals(uint32_t begin)
 {
     uint32_t end = slotSpan();
     for (uint32_t slot = begin; slot < end; slot++)
@@ -65,7 +75,7 @@ CallObject::initRemainingSlotsToUninitializedLexicals(uint32_t begin)
 }
 
 inline void
-CallObject::initAliasedLexicalsToThrowOnTouch(JSScript* script)
+LexicalScopeBase::initAliasedLexicalsToThrowOnTouch(JSScript* script)
 {
     initRemainingSlotsToUninitializedLexicals(script->bindings.aliasedBodyLevelLexicalBegin());
 }
@@ -108,8 +118,10 @@ StaticScopeIter<allowGC>::hasSyntacticDynamicScopeObject() const
     }
     if (obj->template is<ModuleObject>())
         return true;
-    if (obj->template is<StaticBlockObject>())
-        return obj->template as<StaticBlockObject>().needsClone();
+    if (obj->template is<StaticBlockObject>()) {
+        return obj->template as<StaticBlockObject>().needsClone() ||
+               obj->template as<StaticBlockObject>().isGlobal();
+    }
     if (obj->template is<StaticWithObject>())
         return true;
     if (obj->template is<StaticEvalObject>())

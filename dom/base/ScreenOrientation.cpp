@@ -4,9 +4,19 @@
 
 #include "ScreenOrientation.h"
 #include "nsIDeviceSensors.h"
+#include "nsIDocShell.h"
+#include "nsIDocument.h"
+#include "nsGlobalWindow.h"
 #include "nsSandboxFlags.h"
 #include "nsScreen.h"
 
+#include "mozilla/DOMEventTargetHelper.h"
+#include "mozilla/Hal.h"
+#include "mozilla/Preferences.h"
+
+#include "mozilla/dom/Promise.h"
+
+using namespace mozilla;
 using namespace mozilla::dom;
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ScreenOrientation,
@@ -113,8 +123,8 @@ public:
 protected:
   bool OrientationLockContains(OrientationType aOrientationType);
 
-  nsRefPtr<ScreenOrientation> mScreenOrientation;
-  nsRefPtr<Promise> mPromise;
+  RefPtr<ScreenOrientation> mScreenOrientation;
+  RefPtr<Promise> mPromise;
   ScreenOrientationInternal mOrientationLock;
   nsCOMPtr<nsIDocument> mDocument;
   bool mIsFullScreen;
@@ -293,7 +303,7 @@ ScreenOrientation::LockInternal(ScreenOrientationInternal aOrientation, ErrorRes
 
   nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(owner);
   MOZ_ASSERT(go);
-  nsRefPtr<Promise> p = Promise::Create(go, aRv);
+  RefPtr<Promise> p = Promise::Create(go, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -367,7 +377,7 @@ ScreenOrientation::LockDeviceOrientation(ScreenOrientationInternal aOrientation,
 void
 ScreenOrientation::Unlock(ErrorResult& aRv)
 {
-  nsRefPtr<Promise> p = LockInternal(eScreenOrientation_None, aRv);
+  RefPtr<Promise> p = LockInternal(eScreenOrientation_None, aRv);
 }
 
 void

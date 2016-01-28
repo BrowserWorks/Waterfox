@@ -242,6 +242,7 @@ load 416165.html
 load 416264-1.html
 load 416476-1.html
 load 417109-1.xhtml
+load 417848-1.xhtml
 load 417902-1.html
 load 417902-2.html
 load 418532-1.html
@@ -371,6 +372,7 @@ load 508168-1.html
 load 508816-1.xul
 load 508908-1.html
 load 505912-1.html
+load 508154-1.xhtml
 load 509749-1.html
 load 511482.html
 load 512724-1.html
@@ -406,6 +408,7 @@ load 551635-1.html
 load 553504-1.xhtml
 load 564368-1.xhtml
 load 564968.xhtml
+load 569193-1.html
 load 570160.html
 load 570289-1.html
 load 571618-1.svg
@@ -426,6 +429,7 @@ asserts(0-1) load 592118.html
 load 594808-1.html
 load 595435-1.xhtml
 load 595740-1.html
+load 597240-1.xhtml
 pref(layout.float-fragments-inside-column.enabled,true) load 600100.xhtml
 pref(layout.float-fragments-inside-column.enabled,false) load 600100.xhtml
 load 603490-1.html
@@ -479,6 +483,7 @@ load 734777.html
 load 737313-1.html
 load 737313-2.html
 load 737313-3.html
+test-pref(font.size.inflation.emPerLine,15) load 740199-1.xhtml
 load 747688.html
 load 750066.html
 pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLine,15) asserts-if(!browserIsRemote,1-100) load font-inflation-762332.html # bug 762332
@@ -495,6 +500,7 @@ load 783228.html
 skip-if(Android) load 784600.html
 load 785555.html
 load 786740-1.html
+load 790260-1.html
 asserts(0-4) test-pref(font.size.inflation.emPerLine,15) load 791601.xhtml # 3 counts of bug 871327, 1 bug 367185
 test-pref(font.size.inflation.minTwips,120) load 794693.html
 asserts-if(!Android,4) load 798020-1.html
@@ -566,6 +572,8 @@ asserts(1-2) load 1015563-2.html
 asserts(0-300) load 1015844.html # bug 574889
 load outline-on-frameset.xhtml
 pref(font.size.inflation.minTwips,200) load 1032450.html
+load 1032613-1.svg
+load 1032613-2.html
 load 1037903.html
 load 1039454-1.html
 load 1042489.html
@@ -584,6 +592,7 @@ load 1146103.html
 load 1146107.html
 load 1146114.html
 load 1156222.html
+pref(layout.css.grid.enabled,true) load 1156257.html
 load 1157011.html
 load 1169420-1.html
 load 1169420-2.html

@@ -197,7 +197,7 @@ VideoTrackEncoder::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph,
       VideoChunk chunk = *iter;
       if (!chunk.IsNull()) {
         gfx::IntSize imgsize = chunk.mFrame.GetImage()->GetSize();
-        gfxIntSize intrinsicSize = chunk.mFrame.GetIntrinsicSize();
+        gfx::IntSize intrinsicSize = chunk.mFrame.GetIntrinsicSize();
         nsresult rv = Init(imgsize.width, imgsize.height,
                            intrinsicSize.width, intrinsicSize.height,
                            aGraph->GraphRate());
@@ -232,7 +232,7 @@ VideoTrackEncoder::AppendVideoSegment(const VideoSegment& aSegment)
   VideoSegment::ChunkIterator iter(const_cast<VideoSegment&>(aSegment));
   while (!iter.IsEnded()) {
     VideoChunk chunk = *iter;
-    nsRefPtr<layers::Image> image = chunk.mFrame.GetImage();
+    RefPtr<layers::Image> image = chunk.mFrame.GetImage();
     mRawSegment.AppendFrame(image.forget(),
                             chunk.GetDuration(),
                             chunk.mFrame.GetIntrinsicSize(),

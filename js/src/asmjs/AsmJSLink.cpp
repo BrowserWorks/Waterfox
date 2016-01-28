@@ -230,7 +230,7 @@ ValidateArrayView(JSContext* cx, AsmJSModule::Global& global, HandleValue global
 
     bool tac = IsTypedArrayConstructor(v, global.viewType());
     bool stac = IsSharedTypedArrayConstructor(v, global.viewType());
-    if (!((tac || stac) && stac == isShared))
+    if (!(tac || (stac && isShared)))
         return LinkFail(cx, "bad typed array constructor");
 
     return true;
@@ -768,6 +768,8 @@ CallAsmJS(JSContext* cx, unsigned argc, Value* vp)
         // functions, the returned value is discarded and an empty object is
         // returned instead.
         PlainObject* obj = NewBuiltinClassInstance<PlainObject>(cx);
+        if (!obj)
+            return false;
         callArgs.rval().set(ObjectValue(*obj));
         return true;
     }
@@ -877,8 +879,7 @@ HandleDynamicLinkFailure(JSContext* cx, const CallArgs& args, AsmJSModule& modul
                                               ? SourceBufferHolder::GiveOwnership
                                               : SourceBufferHolder::NoOwnership;
     SourceBufferHolder srcBuf(chars, end - begin, ownership);
-    if (!frontend::CompileFunctionBody(cx, &fun, options, formals, srcBuf,
-                                       /* enclosingScope = */ nullptr))
+    if (!frontend::CompileFunctionBody(cx, &fun, options, formals, srcBuf))
         return false;
 
     // Call the function we just recompiled.

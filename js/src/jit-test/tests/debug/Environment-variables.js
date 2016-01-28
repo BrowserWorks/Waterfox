@@ -12,7 +12,6 @@ var cases = [
     // let, catch, and comprehension bindings
     "let x = VAL; @@",
     "{ let x = VAL; @@ }",
-    "let (x = VAL) { @@ }",
     "try { throw VAL; } catch (x) { @@ }",
     "try { throw VAL; } catch (x) { @@ }",
     "for (let x of [VAL]) { @@ }",
@@ -34,7 +33,6 @@ var cases = [
 
     // dynamic bindings
     "function f(s) { eval(s); @@ } f('var x = VAL');",
-    "function f(s) { let (x = 'fail') { eval(s); } x = VAL; @@ } f('var x;');",
     "var x = VAL; function f(s) { eval('var x = 0;'); eval(s); @@ } f('delete x;');",
     "function f(obj) { with (obj) { @@ } } f({x: VAL});",
     "function f(obj) { with (obj) { @@ } } f(Object.create({x: VAL}));",
@@ -81,7 +79,7 @@ for (var s of cases) {
     test(s, "debugMe(); assertEq(x, 'ok');");
 
     // Test triggering the debugger from a scope nested in x's scope.
-    test(s, "let (y = 'irrelevant') { (function (z) { let (zz = y) { debugger; }})(); } assertEq(x, 'ok');"),
+    test(s, "{ let y = 'irrelevant'; (function (z) { { let zz = y; debugger; } })(); } assertEq(x, 'ok');"),
 
     // Test closing over the variable and triggering the debugger later, after
     // leaving the variable's scope.

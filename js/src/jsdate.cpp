@@ -518,15 +518,6 @@ MakeTime(double hour, double min, double sec, double ms)
  * end of ECMA 'support' functions
  */
 
-static bool
-date_convert(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp)
-{
-    MOZ_ASSERT(hint == JSTYPE_NUMBER || hint == JSTYPE_STRING || hint == JSTYPE_VOID);
-    MOZ_ASSERT(obj->is<DateObject>());
-
-    return JS::OrdinaryToPrimitive(cx, obj, hint == JSTYPE_VOID ? JSTYPE_STRING : hint, vp);
-}
-
 /* for use by date_parse */
 
 static const char* const wtb[] = {
@@ -2879,17 +2870,19 @@ date_toString(JSContext* cx, unsigned argc, Value* vp)
     if (args.thisv().isObject()) {
         // Step 1.
         RootedObject obj(cx, &args.thisv().toObject());
+
         // Step 2.
-        if (ObjectClassIs(obj, ESClass_Date, cx)) {
+        ESClassValue cls;
+        if (!GetBuiltinClass(cx, obj, &cls))
+            return false;
+
+        if (cls == ESClass_Date) {
             // Step 3.a.
             RootedValue unboxed(cx);
             if (!Unbox(cx, obj, &unboxed))
                 return false;
             tv = unboxed.toNumber();
         }
-        // ObjectClassIs can throw for objects from other compartments.
-        if (cx->isExceptionPending())
-            return false;
     }
     // Step 4.
     return date_format(cx, tv, FORMATSPEC_FULL, args.rval());
@@ -2908,6 +2901,30 @@ js::date_valueOf(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     return CallNonGenericMethod<IsDate, date_valueOf_impl>(cx, args);
+}
+
+// ES6 20.3.4.45 Date.prototype[@@toPrimitive]
+static bool
+date_toPrimitive(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    // Steps 1-2.
+    if (!args.thisv().isObject()) {
+        ReportIncompatible(cx, args);
+        return false;
+    }
+
+    // Steps 3-5.
+    JSType hint;
+    if (!GetFirstArgumentAsTypeHint(cx, args, &hint))
+        return false;
+    if (hint == JSTYPE_VOID)
+        hint = JSTYPE_STRING;
+
+    args.rval().set(args.thisv());
+    RootedObject obj(cx, &args.thisv().toObject());
+    return OrdinaryToPrimitive(cx, obj, hint, args.rval());
 }
 
 static const JSFunctionSpec date_static_methods[] = {
@@ -2973,6 +2990,7 @@ static const JSFunctionSpec date_methods[] = {
 #endif
     JS_FN(js_toString_str,       date_toString,           0,0),
     JS_FN(js_valueOf_str,        date_valueOf,            0,0),
+    JS_SYM_FN(toPrimitive,       date_toPrimitive,        1,JSPROP_READONLY),
     JS_FS_END
 };
 
@@ -3012,11 +3030,26 @@ DateOneArgument(JSContext* cx, const CallArgs& args)
     MOZ_ASSERT(args.length() == 1);
 
     if (args.isConstructing()) {
-        ClippedTime t;
+        if (args[0].isObject()) {
+            RootedObject obj(cx, &args[0].toObject());
+
+            ESClassValue cls;
+            if (!GetBuiltinClass(cx, obj, &cls))
+                return false;
+
+            if (cls == ESClass_Date) {
+                RootedValue unboxed(cx);
+                if (!Unbox(cx, obj, &unboxed))
+                    return false;
+
+                return NewDateObject(cx, args, TimeClip(unboxed.toNumber()));
+            }
+        }
 
         if (!ToPrimitive(cx, args[0]))
             return false;
 
+        ClippedTime t;
         if (args[0].isString()) {
             JSLinearString* linearStr = args[0].toString()->ensureLinear(cx);
             if (!linearStr)
@@ -3164,7 +3197,6 @@ const Class DateObject::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    date_convert,
     nullptr, /* finalize */
     nullptr, /* call */
     nullptr, /* hasInstance */
@@ -3191,7 +3223,6 @@ const Class DateObject::protoClass_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
     nullptr, /* hasInstance */
@@ -3229,37 +3260,41 @@ js::NewDateObject(JSContext* cx, int year, int mon, int mday,
 }
 
 JS_FRIEND_API(bool)
-js::DateIsValid(JSContext* cx, JSObject* objArg)
+js::DateIsValid(JSContext* cx, HandleObject obj, bool* isValid)
 {
-    RootedObject obj(cx, objArg);
-    if (!ObjectClassIs(obj, ESClass_Date, cx))
+    ESClassValue cls;
+    if (!GetBuiltinClass(cx, obj, &cls))
         return false;
 
-    RootedValue unboxed(cx);
-    if (!Unbox(cx, obj, &unboxed)) {
-        // This can't actually happen, so we don't force consumers to deal with
-        // a clunky out-param API. Do something sane-ish if it does happen.
-        cx->clearPendingException();
-        return false;
+    if (cls != ESClass_Date) {
+        *isValid = false;
+        return true;
     }
 
-    return !IsNaN(unboxed.toNumber());
+    RootedValue unboxed(cx);
+    if (!Unbox(cx, obj, &unboxed))
+        return false;
+
+    *isValid = !IsNaN(unboxed.toNumber());
+    return true;
 }
 
-JS_FRIEND_API(double)
-js::DateGetMsecSinceEpoch(JSContext* cx, JSObject* objArg)
+JS_FRIEND_API(bool)
+js::DateGetMsecSinceEpoch(JSContext* cx, HandleObject obj, double* msecsSinceEpoch)
 {
-    RootedObject obj(cx, objArg);
-    if (!ObjectClassIs(obj, ESClass_Date, cx))
-        return 0;
+    ESClassValue cls;
+    if (!GetBuiltinClass(cx, obj, &cls))
+        return false;
 
-    RootedValue unboxed(cx);
-    if (!Unbox(cx, obj, &unboxed)) {
-        // This can't actually happen, so we don't force consumers to deal with
-        // a clunky out-param API. Do something sane-ish if it does happen.
-        cx->clearPendingException();
-        return 0;
+    if (cls != ESClass_Date) {
+        *msecsSinceEpoch = 0;
+        return true;
     }
 
-    return unboxed.toNumber();
+    RootedValue unboxed(cx);
+    if (!Unbox(cx, obj, &unboxed))
+        return false;
+
+    *msecsSinceEpoch = unboxed.toNumber();
+    return true;
 }

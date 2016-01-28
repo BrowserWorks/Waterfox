@@ -13,6 +13,7 @@
 #include "mozilla/net/WyciwygChannelParent.h"
 #include "mozilla/net/FTPChannelParent.h"
 #include "mozilla/net/WebSocketChannelParent.h"
+#include "mozilla/net/WebSocketEventListenerParent.h"
 #include "mozilla/net/DataChannelParent.h"
 #ifdef NECKO_PROTOCOL_rtsp
 #include "mozilla/net/RtspControllerParent.h"
@@ -44,6 +45,7 @@
 #include "mozilla/net/OfflineObserver.h"
 #include "nsISpeculativeConnect.h"
 
+using mozilla::OriginAttributes;
 using mozilla::dom::ContentParent;
 using mozilla::dom::TabContext;
 using mozilla::dom::TabParent;
@@ -109,12 +111,8 @@ PBOverrideStatusFromLoadContext(const SerializedLoadContext& aSerialized)
 const char*
 NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
                                  PContentParent* aContent,
-                                 uint32_t* aAppId,
-                                 bool* aInBrowserElement)
+                                 OriginAttributes& aAttrs)
 {
-  *aAppId = NECKO_UNKNOWN_APP_ID;
-  *aInBrowserElement = false;
-
   if (UsingNeckoIPCSecurity()) {
     if (!aSerialized.IsNotNull()) {
       return "SerializedLoadContext from child is null";
@@ -126,8 +124,9 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
   for (uint32_t i = 0; i < contextArray.Length(); i++) {
     TabContext tabContext = contextArray[i];
     uint32_t appId = tabContext.OwnOrContainingAppId();
-    bool inBrowserElement = aSerialized.IsNotNull() ? aSerialized.mIsInBrowserElement
-                                                    : tabContext.IsBrowserElement();
+    bool inBrowserElement = aSerialized.IsNotNull() ?
+                              aSerialized.mOriginAttributes.mInBrowser :
+                              tabContext.IsBrowserElement();
 
     if (appId == NECKO_UNKNOWN_APP_ID) {
       continue;
@@ -145,8 +144,7 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
         continue;
       }
     }
-    *aAppId = appId;
-    *aInBrowserElement = inBrowserElement;
+    aAttrs = OriginAttributes(appId, inBrowserElement);
     return nullptr;
   }
 
@@ -157,10 +155,9 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
   if (!UsingNeckoIPCSecurity()) {
     // We are running xpcshell tests
     if (aSerialized.IsNotNull()) {
-      *aAppId = aSerialized.mAppId;
-      *aInBrowserElement = aSerialized.mIsInBrowserElement;
+      aAttrs = aSerialized.mOriginAttributes;
     } else {
-      *aAppId = NECKO_NO_APP_ID;
+      aAttrs = OriginAttributes(NECKO_NO_APP_ID, false);
     }
     return nullptr;
   }
@@ -174,9 +171,8 @@ NeckoParent::CreateChannelLoadContext(const PBrowserOrId& aBrowser,
                                       const SerializedLoadContext& aSerialized,
                                       nsCOMPtr<nsILoadContext> &aResult)
 {
-  uint32_t appId = NECKO_UNKNOWN_APP_ID;
-  bool inBrowser = false;
-  const char* error = GetValidatedAppInfo(aSerialized, aContent, &appId, &inBrowser);
+  OriginAttributes attrs;
+  const char* error = GetValidatedAppInfo(aSerialized, aContent, attrs);
   if (error) {
     return error;
   }
@@ -187,20 +183,18 @@ NeckoParent::CreateChannelLoadContext(const PBrowserOrId& aBrowser,
     switch (aBrowser.type()) {
       case PBrowserOrId::TPBrowserParent:
       {
-        nsRefPtr<TabParent> tabParent =
+        RefPtr<TabParent> tabParent =
           TabParent::GetFrom(aBrowser.get_PBrowserParent());
         dom::Element* topFrameElement = nullptr;
         if (tabParent) {
           topFrameElement = tabParent->GetOwnerElement();
         }
-        aResult = new LoadContext(aSerialized, topFrameElement,
-                                  appId, inBrowser);
+        aResult = new LoadContext(aSerialized, topFrameElement, attrs);
         break;
       }
       case PBrowserOrId::TTabId:
       {
-        aResult = new LoadContext(aSerialized, aBrowser.get_TabId(),
-                                  appId, inBrowser);
+        aResult = new LoadContext(aSerialized, aBrowser.get_TabId(), attrs);
         break;
       }
       default:
@@ -326,7 +320,8 @@ NeckoParent::DeallocPWyciwygChannelParent(PWyciwygChannelParent* channel)
 
 PWebSocketParent*
 NeckoParent::AllocPWebSocketParent(const PBrowserOrId& browser,
-                                   const SerializedLoadContext& serialized)
+                                   const SerializedLoadContext& serialized,
+                                   const uint32_t& aSerial)
 {
   nsCOMPtr<nsILoadContext> loadContext;
   const char *error = CreateChannelLoadContext(browser, Manager(),
@@ -338,10 +333,11 @@ NeckoParent::AllocPWebSocketParent(const PBrowserOrId& browser,
     return nullptr;
   }
 
-  nsRefPtr<TabParent> tabParent = TabParent::GetFrom(browser.get_PBrowserParent());
+  RefPtr<TabParent> tabParent = TabParent::GetFrom(browser.get_PBrowserParent());
   PBOverrideStatus overrideStatus = PBOverrideStatusFromLoadContext(serialized);
   WebSocketChannelParent* p = new WebSocketChannelParent(tabParent, loadContext,
-                                                         overrideStatus);
+                                                         overrideStatus,
+                                                         aSerial);
   p->AddRef();
   return p;
 }
@@ -354,17 +350,34 @@ NeckoParent::DeallocPWebSocketParent(PWebSocketParent* actor)
   return true;
 }
 
+PWebSocketEventListenerParent*
+NeckoParent::AllocPWebSocketEventListenerParent(const uint64_t& aInnerWindowID)
+{
+  RefPtr<WebSocketEventListenerParent> c =
+    new WebSocketEventListenerParent(aInnerWindowID);
+  return c.forget().take();
+}
+
+bool
+NeckoParent::DeallocPWebSocketEventListenerParent(PWebSocketEventListenerParent* aActor)
+{
+  RefPtr<WebSocketEventListenerParent> c =
+    dont_AddRef(static_cast<WebSocketEventListenerParent*>(aActor));
+  MOZ_ASSERT(c);
+  return true;
+}
+
 PDataChannelParent*
 NeckoParent::AllocPDataChannelParent(const uint32_t &channelId)
 {
-  nsRefPtr<DataChannelParent> p = new DataChannelParent();
+  RefPtr<DataChannelParent> p = new DataChannelParent();
   return p.forget().take();
 }
 
 bool
 NeckoParent::DeallocPDataChannelParent(PDataChannelParent* actor)
 {
-  nsRefPtr<DataChannelParent> p = dont_AddRef(static_cast<DataChannelParent*>(actor));
+  RefPtr<DataChannelParent> p = dont_AddRef(static_cast<DataChannelParent*>(actor));
   return true;
 }
 
@@ -487,7 +500,7 @@ PUDPSocketParent*
 NeckoParent::AllocPUDPSocketParent(const Principal& /* unused */,
                                    const nsCString& /* unused */)
 {
-  nsRefPtr<UDPSocketParent> p = new UDPSocketParent(this);
+  RefPtr<UDPSocketParent> p = new UDPSocketParent(this);
 
   return p.forget().take();
 }
@@ -566,7 +579,7 @@ NeckoParent::AllocPRemoteOpenFileParent(const SerializedLoadContext& aSerialized
       // Note: this enforces that SerializedLoadContext.appID is one of the apps
       // in the child process, but there's currently no way to verify the
       // request is not from a different app in that process.
-      if (appId == aSerialized.mAppId) {
+      if (appId == aSerialized.mOriginAttributes.mAppId) {
         nsresult rv = appsService->GetAppByLocalId(appId, getter_AddRefs(mozApp));
         if (NS_FAILED(rv) || !mozApp) {
           break;
@@ -843,7 +856,7 @@ NeckoParent::RecvOnAuthAvailable(const uint64_t& aCallbackId,
   }
   CallbackMap().erase(aCallbackId);
 
-  nsRefPtr<nsAuthInformationHolder> holder =
+  RefPtr<nsAuthInformationHolder> holder =
     new nsAuthInformationHolder(0, EmptyString(), EmptyCString());
   holder->SetUsername(aUser);
   holder->SetPassword(aPassword);
@@ -878,11 +891,12 @@ NeckoParent::RecvPredPredict(const ipc::OptionalURIParams& aTargetURI,
   nsCOMPtr<nsIURI> sourceURI = DeserializeURI(aSourceURI);
 
   // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
-  // pass dummy params for nestFrameId, inBrowser and appId
+  // pass dummy params for nestFrameId, and originAttributes.
   uint64_t nestedFrameId = 0;
+  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
   nsCOMPtr<nsILoadContext> loadContext;
   if (aLoadContext.IsNotNull()) {
-    loadContext = new LoadContext(aLoadContext, nestedFrameId, NECKO_UNKNOWN_APP_ID, false);
+    loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);
   }
 
   // Get the current predictor
@@ -909,11 +923,12 @@ NeckoParent::RecvPredLearn(const ipc::URIParams& aTargetURI,
   nsCOMPtr<nsIURI> sourceURI = DeserializeURI(aSourceURI);
 
   // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
-  // pass dummy params for nestFrameId, inBrowser and appId
+  // pass dummy params for nestFrameId, and originAttributes;
   uint64_t nestedFrameId = 0;
+  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
   nsCOMPtr<nsILoadContext> loadContext;
   if (aLoadContext.IsNotNull()) {
-    loadContext = new LoadContext(aLoadContext, nestedFrameId, NECKO_UNKNOWN_APP_ID, false);
+    loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);
   }
 
   // Get the current predictor

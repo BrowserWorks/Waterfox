@@ -34,6 +34,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsJSUtils.h"
 #include "nsIXPConnect.h"
+#include "nsVariant.h"
 #include "mozilla/dom/DocumentFragment.h"
 #include "mozilla/dom/XSLTProcessorBinding.h"
 
@@ -290,7 +291,7 @@ private:
     static nsresult Convert(nsIVariant *aValue, txAExprResult** aResult);
 
     nsCOMPtr<nsIVariant> mValue;
-    nsRefPtr<txAExprResult> mTxValue;
+    RefPtr<txAExprResult> mTxValue;
 };
 
 inline void
@@ -488,7 +489,7 @@ txMozillaXSLTProcessor::AddXSLTParam(const nsString& aName,
         return NS_ERROR_FAILURE;
     }
 
-    nsRefPtr<txAExprResult> value;
+    RefPtr<txAExprResult> value;
     if (!aSelect.IsVoid()) {
 
         // Set up context
@@ -540,7 +541,7 @@ txMozillaXSLTProcessor::AddXSLTParam(const nsString& aName,
 
 class nsTransformBlockerEvent : public nsRunnable {
 public:
-  nsRefPtr<txMozillaXSLTProcessor> mProcessor;
+  RefPtr<txMozillaXSLTProcessor> mProcessor;
 
   explicit nsTransformBlockerEvent(txMozillaXSLTProcessor* processor)
     : mProcessor(processor)
@@ -598,7 +599,8 @@ txMozillaXSLTProcessor::ImportStylesheet(nsIDOMNode *aStyle)
     NS_ENSURE_TRUE(!mStylesheetDocument && !mStylesheet,
                    NS_ERROR_NOT_IMPLEMENTED);
 
-    if (!nsContentUtils::CanCallerAccess(aStyle)) {
+    nsCOMPtr<nsINode> node = do_QueryInterface(aStyle);
+    if (!node || !nsContentUtils::SubjectPrincipalOrSystemIfNativeCaller()->Subsumes(node->NodePrincipal())) {
         return NS_ERROR_DOM_SECURITY_ERR;
     }
     
@@ -713,8 +715,13 @@ txMozillaXSLTProcessor::TransformToFragment(nsIDOMNode *aSource,
     NS_ENSURE_ARG_POINTER(aResult);
     NS_ENSURE_SUCCESS(mCompileResult, mCompileResult);
 
-    if (!nsContentUtils::CanCallerAccess(aSource) ||
-        !nsContentUtils::CanCallerAccess(aOutput)) {
+    nsCOMPtr<nsINode> node = do_QueryInterface(aSource);
+    nsCOMPtr<nsIDocument> doc = do_QueryInterface(aOutput);
+    NS_ENSURE_TRUE(node && doc, NS_ERROR_DOM_SECURITY_ERR);
+    nsIPrincipal* subject = nsContentUtils::SubjectPrincipalOrSystemIfNativeCaller();
+    if (!subject->Subsumes(node->NodePrincipal()) ||
+        !subject->Subsumes(doc->NodePrincipal()))
+    {
         return NS_ERROR_DOM_SECURITY_ERR;
     }
 
@@ -811,7 +818,7 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
 
             nsCOMPtr<nsIXPathResult> xpathResult = do_QueryInterface(supports);
             if (xpathResult) {
-                nsRefPtr<txAExprResult> result;
+                RefPtr<txAExprResult> result;
                 nsresult rv = xpathResult->GetExprResult(getter_AddRefs(result));
                 NS_ENSURE_SUCCESS(rv, rv);
 
@@ -839,9 +846,7 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
                 rv = xpathResult->Clone(getter_AddRefs(clone));
                 NS_ENSURE_SUCCESS(rv, rv);
 
-                nsCOMPtr<nsIWritableVariant> variant =
-                    do_CreateInstance("@mozilla.org/variant;1", &rv);
-                NS_ENSURE_SUCCESS(rv, rv);
+                RefPtr<nsVariant> variant = new nsVariant();
 
                 rv = variant->SetAsISupports(clone);
                 NS_ENSURE_SUCCESS(rv, rv);
@@ -1289,7 +1294,7 @@ txMozillaXSLTProcessor::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenP
 txMozillaXSLTProcessor::Constructor(const GlobalObject& aGlobal,
                                     mozilla::ErrorResult& aRv)
 {
-    nsRefPtr<txMozillaXSLTProcessor> processor =
+    RefPtr<txMozillaXSLTProcessor> processor =
         new txMozillaXSLTProcessor(aGlobal.GetAsSupports());
     return processor.forget();
 }
@@ -1487,7 +1492,7 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
 
             nsCOMPtr<nsIDOMNodeList> nodeList = do_QueryInterface(supports);
             if (nodeList) {
-                nsRefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
+                RefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
                 if (!nodeSet) {
                     return NS_ERROR_OUT_OF_MEMORY;
                 }
@@ -1559,7 +1564,7 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
 
             nsISupports** values = static_cast<nsISupports**>(array);
 
-            nsRefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
+            RefPtr<txNodeSet> nodeSet = new txNodeSet(nullptr);
             if (!nodeSet) {
                 NS_FREE_XPCOM_ISUPPORTS_POINTER_ARRAY(count, values);
 

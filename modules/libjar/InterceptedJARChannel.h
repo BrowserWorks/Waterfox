@@ -13,7 +13,7 @@
 #include "nsIInputStreamPump.h"
 #include "nsINetworkInterceptController.h"
 #include "nsIOutputStream.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 #include "mozilla/Maybe.h"
 
@@ -33,7 +33,7 @@ class InterceptedJARChannel : public nsIInterceptedChannel
   nsCOMPtr<nsINetworkInterceptController> mController;
 
   // The actual channel being intercepted.
-  nsRefPtr<nsJARChannel> mChannel;
+  RefPtr<nsJARChannel> mChannel;
 
   // Reader-side of the synthesized response body.
   nsCOMPtr<nsIInputStream> mSynthesizedInput;
@@ -41,17 +41,15 @@ class InterceptedJARChannel : public nsIInterceptedChannel
   // The stream to write the body of the synthesized response.
   nsCOMPtr<nsIOutputStream> mResponseBody;
 
+  nsCOMPtr<nsISupports> mReleaseHandle;
+
   // The content type of the synthesized response.
   nsCString mContentType;
-
-  // Wether this intercepted channel was performing a navigation.
-  bool mIsNavigation;
 
   virtual ~InterceptedJARChannel() {};
 public:
   InterceptedJARChannel(nsJARChannel* aChannel,
-                        nsINetworkInterceptController* aController,
-                        bool aIsNavigation);
+                        nsINetworkInterceptController* aController);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIINTERCEPTEDCHANNEL

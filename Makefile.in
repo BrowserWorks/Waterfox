@@ -39,10 +39,8 @@ ifndef MOZ_PROFILE_USE
 # otherwise the rule in rules.mk doesn't run early enough.
 $(TIERS) binaries:: CLOBBER $(configure_dir)/configure config.status backend.RecursiveMakeBackend
 ifndef JS_STANDALONE
-ifndef LIBXUL_SDK
 ifdef COMPILE_ENVIRONMENT
 $(TIERS) binaries:: $(topsrcdir)/js/src/configure js/src/config.status
-endif
 endif
 endif
 endif
@@ -106,13 +104,11 @@ install_manifest_depends = \
   $(NULL)
 
 ifndef JS_STANDALONE
-ifndef LIBXUL_SDK
 ifdef COMPILE_ENVIRONMENT
 install_manifest_depends += \
   $(topsrcdir)/js/src/configure \
   js/src/config.status \
   $(NULL)
-endif
 endif
 endif
 
@@ -131,6 +127,9 @@ endif
 .PHONY: $(addprefix install-,$(install_manifests))
 $(addprefix install-,$(filter dist/%,$(install_manifests))): install-dist/%: $(install_manifest_depends)
 	$(call py_action,process_install_manifest,$(if $(NO_REMOVE),--no-remove )$(DIST)/$* _build_manifests/install/dist_$*)
+
+# Dummy wrapper rule to allow the faster backend to piggy back
+install-dist_%: install-dist/% ;
 
 install-_tests: $(install_manifest_depends)
 	$(call py_action,process_install_manifest,$(if $(NO_REMOVE),--no-remove )_tests _build_manifests/install/tests)

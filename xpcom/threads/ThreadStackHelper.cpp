@@ -9,7 +9,6 @@
 #include "nsJSPrincipals.h"
 #include "nsScriptSecurityManager.h"
 #include "jsfriendapi.h"
-#include "prprf.h"
 #ifdef MOZ_THREADSTACKHELPER_NATIVE
 #include "shared-libraries.h"
 #endif
@@ -21,6 +20,12 @@
 #include "mozilla/Scoped.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/MemoryChecking.h"
+#include "mozilla/Snprintf.h"
+
+#ifdef __GNUC__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wshadow"
+#endif
 
 #if defined(MOZ_VALGRIND)
 # include <valgrind/valgrind.h>
@@ -39,6 +44,10 @@
 #endif
 #include <unistd.h>
 #include <sys/syscall.h>
+#endif
+
+#ifdef __GNUC__
+# pragma GCC diagnostic pop // -Wshadow
 #endif
 
 #if defined(XP_LINUX) || defined(XP_MACOSX)
@@ -460,7 +469,7 @@ ThreadStackHelper::AppendJSEntry(const volatile StackEntry* aEntry,
       }
     }
 
-    size_t len = PR_snprintf(buffer, sizeof(buffer), "%s:%u", basename, lineno);
+    size_t len = snprintf_literal(buffer, "%s:%u", basename, lineno);
     if (len < sizeof(buffer)) {
       if (mStackToFill->IsSameAsEntry(aPrevLabel, buffer)) {
         return aPrevLabel;

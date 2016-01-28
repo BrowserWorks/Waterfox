@@ -25,6 +25,7 @@
 #include "js/RootingAPI.h"
 #include "js/TracingAPI.h"
 #include "js/TypeDecls.h"
+#include "js/Value.h"
 #include "js/Vector.h"
 
 // JS::ubi::Node
@@ -186,6 +187,7 @@ class DefaultDelete<JS::ubi::StackFrame> : public JS::DeletePolicy<JS::ubi::Stac
 namespace JS {
 namespace ubi {
 
+using mozilla::Forward;
 using mozilla::Maybe;
 using mozilla::Move;
 using mozilla::RangedPtr;
@@ -199,7 +201,29 @@ using mozilla::Variant;
 // heap snapshots store their strings as const char16_t*. In order to provide
 // zero-cost accessors to these strings in a single interface that works with
 // both cases, we use this variant type.
-using AtomOrTwoByteChars = Variant<JSAtom*, const char16_t*>;
+class AtomOrTwoByteChars : public Variant<JSAtom*, const char16_t*> {
+    using Base = Variant<JSAtom*, const char16_t*>;
+
+  public:
+    template<typename T>
+    MOZ_IMPLICIT AtomOrTwoByteChars(T&& rhs) : Base(Forward<T>(rhs)) { }
+
+    template<typename T>
+    AtomOrTwoByteChars& operator=(T&& rhs) {
+        MOZ_ASSERT(this != &rhs, "self-move disallowed");
+        this->~AtomOrTwoByteChars();
+        new (this) AtomOrTwoByteChars(Forward<T>(rhs));
+        return *this;
+    }
+
+    // Return the length of the given AtomOrTwoByteChars string.
+    size_t length();
+
+    // Copy the given AtomOrTwoByteChars string into the destination buffer,
+    // inflating if necessary. Does NOT null terminate. Returns the number of
+    // characters written to destination.
+    size_t copyToBuffer(RangedPtr<char16_t> destination, size_t length);
+};
 
 // The base class implemented by each ConcreteStackFrame<T> type. Subclasses
 // must not add data members to this class.
@@ -219,7 +243,7 @@ class BaseStackFrame {
 
     // Get a unique identifier for this StackFrame. The identifier is not valid
     // across garbage collections.
-    virtual uint64_t identifier() const { return reinterpret_cast<uint64_t>(ptr); }
+    virtual uint64_t identifier() const { return uint64_t(uintptr_t(ptr)); }
 
     // Get this frame's parent frame.
     virtual StackFrame parent() const = 0;
@@ -394,7 +418,11 @@ class StackFrame : public JS::Traceable {
     // Methods that forward to virtual calls through BaseStackFrame.
 
     void trace(JSTracer* trc) { base()->trace(trc); }
-    uint64_t identifier() const { return base()->identifier(); }
+    uint64_t identifier() const {
+        auto id = base()->identifier();
+        MOZ_ASSERT(JS::Value::isNumberRepresentable(id));
+        return id;
+    }
     uint32_t line() const { return base()->line(); }
     uint32_t column() const { return base()->column(); }
     AtomOrTwoByteChars source() const { return base()->source(); }
@@ -540,7 +568,7 @@ class Base {
     // caveats about multiple objects allocated at the same address for
     // 'ubi::Node::operator=='.)
     using Id = uint64_t;
-    virtual Id identifier() const { return reinterpret_cast<Id>(ptr); }
+    virtual Id identifier() const { return Id(uintptr_t(ptr)); }
 
     // Returns true if this node is pointing to something on the live heap, as
     // opposed to something from a deserialized core dump. Returns false,
@@ -569,7 +597,7 @@ class Base {
     //
     // If wantNames is true, compute names for edges. Doing so can be expensive
     // in time and memory.
-    virtual UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const = 0;
+    virtual UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const = 0;
 
     // Return the Zone to which this node's referent belongs, or nullptr if the
     // referent is not of a type allocated in SpiderMonkey Zones.
@@ -756,8 +784,8 @@ class Node {
         return base()->size(mallocSizeof);
     }
 
-    UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames = true) const {
-        return base()->edges(cx, wantNames);
+    UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames = true) const {
+        return base()->edges(rt, wantNames);
     }
 
     bool hasAllocationStack() const { return base()->hasAllocationStack(); }
@@ -766,7 +794,11 @@ class Node {
     }
 
     using Id = Base::Id;
-    Id identifier() const { return base()->identifier(); }
+    Id identifier() const {
+        auto id = base()->identifier();
+        MOZ_ASSERT(JS::Value::isNumberRepresentable(id));
+        return id;
+    }
 
     // A hash policy for ubi::Nodes.
     // This simply uses the stock PointerHasher on the ubi::Node's pointer.
@@ -786,18 +818,35 @@ class Node {
 
 /*** Edge and EdgeRange ***************************************************************************/
 
-// Edge is the abstract base class representing an outgoing edge of a node.
-// Edges are owned by EdgeRanges, and need not have assignment operators or copy
-// constructors.
-//
-// Each Edge class should inherit from this base class, overriding as
-// appropriate.
-class Edge {
-  protected:
-    Edge() : name(nullptr), referent() { }
-    virtual ~Edge() { }
+using EdgeName = UniquePtr<const char16_t[], JS::FreePolicy>;
 
+// An outgoing edge to a referent node.
+class Edge {
   public:
+    Edge() : name(nullptr), referent() { }
+
+    // Construct an initialized Edge, taking ownership of |name|.
+    Edge(char16_t* name, const Node& referent)
+        : name(name)
+        , referent(referent)
+    { }
+
+    // Move construction and assignment.
+    Edge(Edge&& rhs)
+        : name(mozilla::Move(rhs.name))
+        , referent(rhs.referent)
+    { }
+
+    Edge& operator=(Edge&& rhs) {
+        MOZ_ASSERT(&rhs != this);
+        this->~Edge();
+        new (this) Edge(mozilla::Move(rhs));
+        return *this;
+    }
+
+    Edge(const Edge&) = delete;
+    Edge& operator=(const Edge&) = delete;
+
     // This edge's name. This may be nullptr, if Node::edges was called with
     // false as the wantNames parameter.
     //
@@ -807,16 +856,11 @@ class Edge {
     // (In real life we'll want a better representation for names, to avoid
     // creating tons of strings when the names follow a pattern; and we'll need
     // to think about lifetimes carefully to ensure traversal stays cheap.)
-    const char16_t* name;
+    EdgeName name;
 
     // This edge's referent.
     Node referent;
-
-  private:
-    Edge(const Edge&) = delete;
-    Edge& operator=(const Edge&) = delete;
 };
-
 
 // EdgeRange is an abstract base class for iterating over a node's outgoing
 // edges. (This is modeled after js::HashTable<K,V>::Range.)
@@ -842,7 +886,8 @@ class EdgeRange {
     // The front edge of this range. This is owned by the EdgeRange, and is
     // only guaranteed to live until the next call to popFront, or until
     // the EdgeRange is destructed.
-    const Edge& front() { return *front_; }
+    const Edge& front() const { return *front_; }
+    Edge& front() { return *front_; }
 
     // Remove the front edge from this range. This should only be called if
     // !empty().
@@ -854,55 +899,22 @@ class EdgeRange {
 };
 
 
-// A dumb Edge concrete class. All but the most essential members have the
-// default behavior.
-class SimpleEdge : public Edge {
-    SimpleEdge(SimpleEdge&) = delete;
-    SimpleEdge& operator=(const SimpleEdge&) = delete;
-
-  public:
-    SimpleEdge() : Edge() { }
-
-    // Construct an initialized SimpleEdge, taking ownership of |name|.
-    SimpleEdge(char16_t* name, const Node& referent) {
-        this->name = name;
-        this->referent = referent;
-    }
-    ~SimpleEdge() {
-        js_free(const_cast<char16_t*>(name));
-    }
-
-    // Move construction and assignment.
-    SimpleEdge(SimpleEdge&& rhs) {
-        name = rhs.name;
-        referent = rhs.referent;
-
-        rhs.name = nullptr;
-    }
-    SimpleEdge& operator=(SimpleEdge&& rhs) {
-        MOZ_ASSERT(&rhs != this);
-        this->~SimpleEdge();
-        new(this) SimpleEdge(mozilla::Move(rhs));
-        return *this;
-    }
-};
-
-typedef mozilla::Vector<SimpleEdge, 8, js::TempAllocPolicy> SimpleEdgeVector;
+typedef mozilla::Vector<Edge, 8, js::SystemAllocPolicy> EdgeVector;
 
 // An EdgeRange concrete class that holds a pre-existing vector of
-// SimpleEdges. A PreComputedEdgeRange does not take ownership of its
-// SimpleEdgeVector; it is up to the PreComputedEdgeRange's consumer to manage
+// Edges. A PreComputedEdgeRange does not take ownership of its
+// EdgeVector; it is up to the PreComputedEdgeRange's consumer to manage
 // that lifetime.
 class PreComputedEdgeRange : public EdgeRange {
-    SimpleEdgeVector& edges;
-    size_t            i;
+    EdgeVector& edges;
+    size_t      i;
 
     void settle() {
         front_ = i < edges.length() ? &edges[i] : nullptr;
     }
 
   public:
-    explicit PreComputedEdgeRange(JSContext* cx, SimpleEdgeVector& edges)
+    explicit PreComputedEdgeRange(EdgeVector& edges)
       : edges(edges),
         i(0)
     {
@@ -935,7 +947,7 @@ class PreComputedEdgeRange : public EdgeRange {
 //
 //    {
 //        mozilla::Maybe<JS::AutoCheckCannotGC> maybeNoGC;
-//        JS::ubi::RootList rootList(cx, maybeNoGC);
+//        JS::ubi::RootList rootList(rt, maybeNoGC);
 //        if (!rootList.init())
 //            return false;
 //
@@ -948,13 +960,13 @@ class PreComputedEdgeRange : public EdgeRange {
 //    }
 class MOZ_STACK_CLASS RootList {
     Maybe<AutoCheckCannotGC>& noGC;
-    JSContext*               cx;
 
   public:
-    SimpleEdgeVector edges;
-    bool             wantNames;
+    JSRuntime* rt;
+    EdgeVector edges;
+    bool       wantNames;
 
-    RootList(JSContext* cx, Maybe<AutoCheckCannotGC>& noGC, bool wantNames = false);
+    RootList(JSRuntime* rt, Maybe<AutoCheckCannotGC>& noGC, bool wantNames = false);
 
     // Find all GC roots.
     bool init();
@@ -978,7 +990,7 @@ class MOZ_STACK_CLASS RootList {
 
 template<>
 struct Concrete<RootList> : public Base {
-    UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override;
+    UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
     const char16_t* typeName() const override { return concreteTypeName; }
 
   protected:
@@ -995,7 +1007,7 @@ struct Concrete<RootList> : public Base {
 template<typename Referent>
 class TracerConcrete : public Base {
     const char16_t* typeName() const override { return concreteTypeName; }
-    UniquePtr<EdgeRange> edges(JSContext*, bool wantNames) const override;
+    UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
     JS::Zone* zone() const override;
 
   protected:
@@ -1024,10 +1036,22 @@ class TracerConcreteWithCompartment : public TracerConcrete<Referent> {
 
 // Define specializations for some commonly-used public JSAPI types.
 // These can use the generic templates above.
-template<> struct Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> { };
+template<>
+struct Concrete<JS::Symbol> : TracerConcrete<JS::Symbol> {
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+  protected:
+    explicit Concrete(JS::Symbol* ptr) : TracerConcrete(ptr) { }
+
+  public:
+    static void construct(void* storage, JS::Symbol* ptr) {
+        new (storage) Concrete(ptr);
+    }
+};
 
 template<> struct Concrete<JSScript> : TracerConcreteWithCompartment<JSScript> {
     CoarseType coarseType() const final { return CoarseType::Script; }
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
 
   protected:
     explicit Concrete(JSScript *ptr) : TracerConcreteWithCompartment<JSScript>(ptr) { }
@@ -1076,7 +1100,7 @@ template<>
 class Concrete<void> : public Base {
     const char16_t* typeName() const override;
     Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
-    UniquePtr<EdgeRange> edges(JSContext* cx, bool wantNames) const override;
+    UniquePtr<EdgeRange> edges(JSRuntime* rt, bool wantNames) const override;
     JS::Zone* zone() const override;
     JSCompartment* compartment() const override;
     CoarseType coarseType() const final;

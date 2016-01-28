@@ -1,7 +1,7 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -13,9 +13,9 @@ catch(ex) {
 
 // Make sure to provide the right OS so crypto loads the right binaries
 var OS = "XPCShell";
-if ("@mozilla.org/windows-registry-key;1" in Cc)
+if (mozinfo.os == "win")
   OS = "WINNT";
-else if ("nsILocalFileMac" in Ci)
+else if (mozinfo.os == "mac")
   OS = "Darwin";
 else
   OS = "Linux";

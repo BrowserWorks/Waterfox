@@ -31,8 +31,7 @@ function test() {
 
   Services.obs.addObserver(observer, "browser-search-engine-modified", false);
   ss.addEngine("http://mochi.test:8888/browser/browser/components/search/test/testEngine_mozsearch.xml",
-               Ci.nsISearchEngine.DATA_XML, "data:image/x-icon,%00",
-               false);
+               null, "data:image/x-icon,%00", false);
 
   function startTest() {
     contextMenu = document.getElementById("contentAreaContextMenu");
@@ -68,7 +67,7 @@ function test() {
 
     function checkSearchURL(event) {
       is(event.originalTarget.URL,
-         "http://mochi.test:8888/browser/browser/components/search/test/?test=test+search&ie=utf-8&client=app&channel=contextsearch",
+         "http://mochi.test:8888/browser/browser/components/search/test/?test=test+search&ie=utf-8&channel=contextsearch",
          "Checking context menu search URL");
       // Remove the tab opened by the search
       gBrowser.removeCurrentTab();

@@ -6,6 +6,7 @@
 
 #include <CoreFoundation/CFString.h>
 
+#include "AppleDecoderModule.h"
 #include "AppleUtils.h"
 #include "AppleVDADecoder.h"
 #include "AppleVDALinker.h"
@@ -13,15 +14,18 @@
 #include "mp4_demuxer/H264.h"
 #include "MP4Decoder.h"
 #include "MediaData.h"
-#include "MacIOSurfaceImage.h"
 #include "mozilla/ArrayUtils.h"
 #include "nsAutoPtr.h"
-#include "nsCocoaFeatures.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Logging.h"
 #include "VideoUtils.h"
 #include <algorithm>
 #include "gfxPlatform.h"
+
+#ifndef MOZ_WIDGET_UIKIT
+#include "nsCocoaFeatures.h"
+#include "MacIOSurfaceImage.h"
+#endif
 
 extern PRLogModuleInfo* GetPDMLog();
 #define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
@@ -42,8 +46,13 @@ AppleVDADecoder::AppleVDADecoder(const VideoInfo& aConfig,
   , mDisplayHeight(aConfig.mDisplay.height)
   , mInputIncoming(0)
   , mIsShutDown(false)
+#ifdef MOZ_WIDGET_UIKIT
+  , mUseSoftwareImages(true)
+  , mIs106(false)
+#else
   , mUseSoftwareImages(false)
   , mIs106(!nsCocoaFeatures::OnLionOrLater())
+  #endif
   , mQueuedSamples(0)
   , mMonitor("AppleVideoDecoder")
   , mIsFlushing(false)
@@ -78,7 +87,7 @@ AppleVDADecoder::~AppleVDADecoder()
   MOZ_COUNT_DTOR(AppleVDADecoder);
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+RefPtr<MediaDataDecoder::InitPromise>
 AppleVDADecoder::Init()
 {
   return InitPromise::CreateAndResolve(TrackType::kVideoTrack, __func__);
@@ -124,10 +133,10 @@ AppleVDADecoder::Input(MediaRawData* aSample)
   mInputIncoming++;
 
   nsCOMPtr<nsIRunnable> runnable =
-      NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
+      NS_NewRunnableMethodWithArg<RefPtr<MediaRawData>>(
           this,
           &AppleVDADecoder::SubmitFrame,
-          nsRefPtr<MediaRawData>(aSample));
+          RefPtr<MediaRawData>(aSample));
   mTaskQueue->Dispatch(runnable.forget());
   return NS_OK;
 }
@@ -318,7 +327,7 @@ AppleVDADecoder::OutputFrame(CVPixelBufferRef aImage,
   }
 
   // Where our resulting image will end up.
-  nsRefPtr<VideoData> data;
+  RefPtr<VideoData> data;
   // Bounds.
   VideoInfo info;
   info.mDisplay = nsIntSize(mDisplayWidth, mDisplayHeight);
@@ -382,12 +391,13 @@ AppleVDADecoder::OutputFrame(CVPixelBufferRef aImage,
     // Unlock the returned image data.
     CVPixelBufferUnlockBaseAddress(aImage, kCVPixelBufferLock_ReadOnly);
   } else {
+#ifndef MOZ_WIDGET_UIKIT
     IOSurfacePtr surface = MacIOSurfaceLib::CVPixelBufferGetIOSurface(aImage);
     MOZ_ASSERT(surface, "Decoder didn't return an IOSurface backed buffer");
 
-    nsRefPtr<MacIOSurface> macSurface = new MacIOSurface(surface);
+    RefPtr<MacIOSurface> macSurface = new MacIOSurface(surface);
 
-    nsRefPtr<layers::Image> image =
+    RefPtr<layers::Image> image =
       mImageContainer->CreateImage(ImageFormat::MAC_IOSURFACE);
     layers::MacIOSurfaceImage* videoImage =
       static_cast<layers::MacIOSurfaceImage*>(image.get());
@@ -403,6 +413,9 @@ AppleVDADecoder::OutputFrame(CVPixelBufferRef aImage,
                                  aFrameRef.is_sync_point,
                                  aFrameRef.decode_timestamp.ToMicroseconds(),
                                  visible);
+#else
+    MOZ_ASSERT_UNREACHABLE("No MacIOSurface on iOS");
+#endif
   }
 
   if (!data) {
@@ -607,6 +620,7 @@ AppleVDADecoder::CreateOutputConfiguration()
                               &kCFTypeDictionaryValueCallBacks);
   }
 
+#ifndef MOZ_WIDGET_UIKIT
   // Construct IOSurface Properties
   const void* IOSurfaceKeys[] = { MacIOSurfaceLib::kPropIsGlobal };
   const void* IOSurfaceValues[] = { kCFBooleanTrue };
@@ -637,6 +651,9 @@ AppleVDADecoder::CreateOutputConfiguration()
                             ArrayLength(outputKeys),
                             &kCFTypeDictionaryKeyCallBacks,
                             &kCFTypeDictionaryValueCallBacks);
+#else
+  MOZ_ASSERT_UNREACHABLE("No MacIOSurface on iOS");
+#endif
 }
 
 /* static */
@@ -647,12 +664,12 @@ AppleVDADecoder::CreateVDADecoder(
   MediaDataDecoderCallback* aCallback,
   layers::ImageContainer* aImageContainer)
 {
-  if (!gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding()) {
+  if (!AppleDecoderModule::sCanUseHardwareVideoDecoder) {
     // This GPU is blacklisted for hardware decoding.
     return nullptr;
   }
 
-  nsRefPtr<AppleVDADecoder> decoder =
+  RefPtr<AppleVDADecoder> decoder =
     new AppleVDADecoder(aConfig, aVideoTaskQueue, aCallback, aImageContainer);
 
   if (NS_FAILED(decoder->InitializeSession())) {

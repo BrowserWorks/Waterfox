@@ -40,6 +40,7 @@ class SharedMemoryBasic;
 
 namespace layers {
 
+class AsyncDragMetrics;
 struct ScrollableLayerGuid;
 class CompositorParent;
 class GestureEventListener;
@@ -101,7 +102,7 @@ public:
 
   AsyncPanZoomController(uint64_t aLayersId,
                          APZCTreeManager* aTreeManager,
-                         const nsRefPtr<InputQueue>& aInputQueue,
+                         const RefPtr<InputQueue>& aInputQueue,
                          GeckoContentController* aController,
                          TaskThrottler* aPaintThrottler,
                          GestureBehavior aGestures = DEFAULT_GESTURES);
@@ -265,6 +266,9 @@ public:
    * *** The monitor must be held while calling this.
    */
   void SendAsyncScrollEvent();
+
+  nsEventStatus HandleDragEvent(const MouseInput& aEvent,
+                                const AsyncDragMetrics& aDragMetrics);
 
   /**
    * Handler for events which should not be intercepted by the touch listener.
@@ -611,7 +615,7 @@ protected:
   /**
    * Gets a ref to the input queue that is shared across the entire tree manager.
    */
-  const nsRefPtr<InputQueue>& GetInputQueue() const;
+  const RefPtr<InputQueue>& GetInputQueue() const;
 
   /**
    * Timeout function for mozbrowserasyncscroll event. Because we throttle
@@ -643,19 +647,20 @@ protected:
   // Common processing at the end of a touch block.
   void OnTouchEndOrCancel();
 
-  // This is called by OverscrollAnimation to notify us when the overscroll
-  // animation is ending.
-  void OverscrollAnimationEnding();
+  // This is called to request that the main thread snap the scroll position
+  // to a nearby snap position if appropriate. The current scroll position is
+  // used as the final destination.
+  void RequestSnap();
 
   uint64_t mLayersId;
-  nsRefPtr<CompositorParent> mCompositorParent;
-  nsRefPtr<TaskThrottler> mPaintThrottler;
+  RefPtr<CompositorParent> mCompositorParent;
+  RefPtr<TaskThrottler> mPaintThrottler;
 
   /* Access to the following two fields is protected by the mRefPtrMonitor,
      since they are accessed on the UI thread but can be cleared on the
      compositor thread. */
-  nsRefPtr<GeckoContentController> mGeckoContentController;
-  nsRefPtr<GestureEventListener> mGestureEventListener;
+  RefPtr<GeckoContentController> mGeckoContentController;
+  RefPtr<GestureEventListener> mGestureEventListener;
   mutable Monitor mRefPtrMonitor;
 
   // This is a raw pointer to avoid introducing a reference cycle between
@@ -740,7 +745,7 @@ private:
   // ensures the last mozbrowserasyncscroll event is always been fired.
   CancelableTask* mAsyncScrollTimeoutTask;
 
-  nsRefPtr<AsyncPanZoomAnimation> mAnimation;
+  RefPtr<AsyncPanZoomAnimation> mAnimation;
 
   friend class Axis;
 
@@ -836,7 +841,7 @@ public:
 private:
   void CancelAnimationAndGestureState();
 
-  nsRefPtr<InputQueue> mInputQueue;
+  RefPtr<InputQueue> mInputQueue;
   TouchBlockState* CurrentTouchBlock();
   bool HasReadyTouchBlock();
 
@@ -865,7 +870,7 @@ public:
    *            fling.
    */
   bool AttemptFling(ParentLayerPoint& aVelocity,
-                    const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
+                    const RefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
                     bool aHandoff);
 
 private:
@@ -885,13 +890,13 @@ private:
   // later in the handoff chain, or if there are no takers, continuing the
   // fling and entering an overscrolled state.
   void HandleFlingOverscroll(const ParentLayerPoint& aVelocity,
-                             const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain);
+                             const RefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain);
 
   void HandleSmoothScrollOverscroll(const ParentLayerPoint& aVelocity);
 
   // Helper function used by TakeOverFling() and HandleFlingOverscroll().
   void AcceptFling(ParentLayerPoint& aVelocity,
-                   const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
+                   const RefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain,
                    bool aHandoff);
 
   // Start an overscroll animation with the given initial velocity.
@@ -937,7 +942,7 @@ private:
   // |mTreeManager| belongs in this section but it's declaration is a bit
   // further above due to initialization-order constraints.
 
-  nsRefPtr<AsyncPanZoomController> mParent;
+  RefPtr<AsyncPanZoomController> mParent;
 
 
   /* ===================================================================
@@ -993,16 +998,16 @@ public:
    *   - When passing the chain to a function that uses it without storing it,
    *     pass it by reference-to-const (as in |const OverscrollHandoffChain&|).
    *   - When storing the chain, store it by RefPtr-to-const (as in
-   *     |nsRefPtr<const OverscrollHandoffChain>|). This ensures the chain is
+   *     |RefPtr<const OverscrollHandoffChain>|). This ensures the chain is
    *     kept alive. Note that queueing a task that uses the chain as an
    *     argument constitutes storing, as the task may outlive its queuer.
    *   - When passing the chain to a function that will store it, pass it as
-   *     |const nsRefPtr<const OverscrollHandoffChain>&|. This allows the
-   *     function to copy it into the |nsRefPtr<const OverscrollHandoffChain>|
+   *     |const RefPtr<const OverscrollHandoffChain>&|. This allows the
+   *     function to copy it into the |RefPtr<const OverscrollHandoffChain>|
    *     that will store it, while avoiding an unnecessary copy (and thus
    *     AddRef() and Release()) when passing it.
    */
-  nsRefPtr<const OverscrollHandoffChain> BuildOverscrollHandoffChain();
+  RefPtr<const OverscrollHandoffChain> BuildOverscrollHandoffChain();
 
 private:
   /**
@@ -1071,7 +1076,7 @@ private:
    * shared FrameMeterics used in progressive tile painting. */
   const uint32_t mAPZCId;
 
-  nsRefPtr<ipc::SharedMemoryBasic> mSharedFrameMetricsBuffer;
+  RefPtr<ipc::SharedMemoryBasic> mSharedFrameMetricsBuffer;
   CrossProcessMutex* mSharedLock;
   /**
    * Called when ever mFrameMetrics is updated so that if it is being

@@ -106,6 +106,8 @@ public:
   /** Do a deep clone.  Should be used only on the first in the linked list. */
   nsAttrSelector* Clone() const { return Clone(true); }
 
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
   nsString        mValue;
   nsAttrSelector* mNext;
   nsCOMPtr<nsIAtom> mLowercaseAttr;
@@ -386,8 +388,8 @@ private:
 private:
   nsCSSSelectorList*      mSelector; // null for style attribute
   Declaration*            mDeclaration;
-  nsRefPtr<ImportantRule> mImportantRule; // initialized by RuleMatched
-  nsRefPtr<DOMCSSStyleRule> mDOMRule;
+  RefPtr<ImportantRule> mImportantRule; // initialized by RuleMatched
+  RefPtr<DOMCSSStyleRule> mDOMRule;
 
 private:
   StyleRule& operator=(const StyleRule& aCopy) = delete;

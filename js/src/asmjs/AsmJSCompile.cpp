@@ -123,6 +123,11 @@ class ModuleCompiler
     bool finishGeneratingFunction(AsmFunction& func, CodeGenerator& codegen,
                                   const AsmJSFunctionLabels& labels)
     {
+        // If we have hit OOM then invariants which we assert below may not
+        // hold, so abort now.
+        if (masm().oom())
+            return false;
+
         // Code range
         unsigned line = func.lineno();
         unsigned column = func.column();
@@ -146,8 +151,8 @@ class ModuleCompiler
 
 #if defined(MOZ_VTUNE) || defined(JS_ION_PERF)
         // Perf and profiling information
-        unsigned begin = labels.begin.offset();
-        unsigned end = labels.end.offset();
+        unsigned begin = labels.nonProfilingEntry.offset();
+        unsigned end = labels.endAfterOOL.offset();
         AsmJSModule::ProfiledFunction profiledFunc(funcName, begin, end, line, column);
         if (!compileResults_->addProfiledFunction(profiledFunc))
             return false;
@@ -1033,6 +1038,61 @@ class FunctionCompiler
         return pos;
     }
 
+    void fixupRedundantPhis(MBasicBlock* b)
+    {
+        for (size_t i = 0, depth = b->stackDepth(); i < depth; i++) {
+            MDefinition* def = b->getSlot(i);
+            if (def->isUnused())
+                b->setSlot(i, def->toPhi()->getOperand(0));
+        }
+    }
+    template <typename T>
+    void fixupRedundantPhis(MBasicBlock* loopEntry, T& map)
+    {
+        if (!map.initialized())
+            return;
+        for (typename T::Enum e(map); !e.empty(); e.popFront()) {
+            BlockVector& blocks = e.front().value();
+            for (size_t i = 0; i < blocks.length(); i++) {
+                if (blocks[i]->loopDepth() >= loopEntry->loopDepth())
+                    fixupRedundantPhis(blocks[i]);
+            }
+        }
+    }
+    bool setLoopBackedge(MBasicBlock* loopEntry, MBasicBlock* backedge, MBasicBlock* afterLoop)
+    {
+        if (!loopEntry->setBackedgeAsmJS(backedge))
+            return false;
+
+        // Flag all redundant phis as unused.
+        for (MPhiIterator phi = loopEntry->phisBegin(); phi != loopEntry->phisEnd(); phi++) {
+            MOZ_ASSERT(phi->numOperands() == 2);
+            if (phi->getOperand(0) == phi->getOperand(1))
+                phi->setUnused();
+        }
+
+        // Fix up phis stored in the slots Vector of pending blocks.
+        if (afterLoop)
+            fixupRedundantPhis(afterLoop);
+        fixupRedundantPhis(loopEntry, labeledContinues_);
+        fixupRedundantPhis(loopEntry, labeledBreaks_);
+        fixupRedundantPhis(loopEntry, unlabeledContinues_);
+        fixupRedundantPhis(loopEntry, unlabeledBreaks_);
+
+        // Discard redundant phis and add to the free list.
+        for (MPhiIterator phi = loopEntry->phisBegin(); phi != loopEntry->phisEnd(); ) {
+            MPhi* entryDef = *phi++;
+            if (!entryDef->isUnused())
+                continue;
+
+            entryDef->justReplaceAllUsesWith(entryDef->getOperand(0));
+            loopEntry->discardPhi(entryDef);
+            mirGraph().addPhiToFreeList(entryDef);
+        }
+
+        return true;
+    }
+
   public:
     bool closeLoop(MBasicBlock* loopEntry, MBasicBlock* afterLoop)
     {
@@ -1048,7 +1108,7 @@ class FunctionCompiler
         if (curBlock_) {
             MOZ_ASSERT(curBlock_->loopDepth() == loopStack_.length() + 1);
             curBlock_->end(MGoto::New(alloc(), loopEntry));
-            if (!loopEntry->setBackedgeAsmJS(curBlock_))
+            if (!setLoopBackedge(loopEntry, curBlock_, afterLoop))
                 return false;
         }
         curBlock_ = afterLoop;
@@ -1071,7 +1131,7 @@ class FunctionCompiler
             if (cond->isConstant()) {
                 if (cond->toConstant()->valueToBoolean()) {
                     curBlock_->end(MGoto::New(alloc(), loopEntry));
-                    if (!loopEntry->setBackedgeAsmJS(curBlock_))
+                    if (!setLoopBackedge(loopEntry, curBlock_, nullptr))
                         return false;
                     curBlock_ = nullptr;
                 } else {
@@ -1086,7 +1146,7 @@ class FunctionCompiler
                 if (!newBlock(curBlock_, &afterLoop))
                     return false;
                 curBlock_->end(MTest::New(alloc(), cond, loopEntry, afterLoop));
-                if (!loopEntry->setBackedgeAsmJS(curBlock_))
+                if (!setLoopBackedge(loopEntry, curBlock_, afterLoop))
                     return false;
                 curBlock_ = afterLoop;
             }

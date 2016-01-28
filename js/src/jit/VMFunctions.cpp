@@ -167,25 +167,35 @@ CheckOverRecursedWithExtra(JSContext* cx, BaselineFrame* frame,
 }
 
 bool
-DefVarOrConst(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain)
+DefVar(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain)
 {
     // Given the ScopeChain, extract the VarObj.
     RootedObject obj(cx, scopeChain);
     while (!obj->isQualifiedVarObj())
         obj = obj->enclosingScope();
 
-    return DefVarOrConstOperation(cx, obj, dn, attrs);
+    return DefVarOperation(cx, obj, dn, attrs);
 }
 
 bool
-SetConst(JSContext* cx, HandlePropertyName name, HandleObject scopeChain, HandleValue rval)
+DefLexical(JSContext* cx, HandlePropertyName dn, unsigned attrs, HandleObject scopeChain)
 {
-    // Given the ScopeChain, extract the VarObj.
-    RootedObject obj(cx, scopeChain);
-    while (!obj->isQualifiedVarObj())
-        obj = obj->enclosingScope();
+    // Find the extensible lexical scope.
+    Rooted<ClonedBlockObject*> lexical(cx, &NearestEnclosingExtensibleLexicalScope(scopeChain));
 
-    return SetConstOperation(cx, obj, name, rval);
+    // Find the variables object.
+    RootedObject varObj(cx, scopeChain);
+    while (!varObj->isQualifiedVarObj())
+        varObj = varObj->enclosingScope();
+
+    return DefLexicalOperation(cx, lexical, varObj, dn, attrs);
+}
+
+bool
+DefGlobalLexical(JSContext* cx, HandlePropertyName dn, unsigned attrs)
+{
+    Rooted<ClonedBlockObject*> globalLexical(cx, &cx->global()->lexicalScope());
+    return DefLexicalOperation(cx, globalLexical, cx->global(), dn, attrs);
 }
 
 bool
@@ -495,7 +505,7 @@ NewCallObject(JSContext* cx, HandleShape shape, HandleObjectGroup group, uint32_
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
     if (!IsInsideNursery(obj))
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
+        cx->runtime()->gc.storeBuffer.putWholeCell(obj);
 
     return obj;
 }
@@ -512,7 +522,7 @@ NewSingletonCallObject(JSContext* cx, HandleShape shape, uint32_t lexicalBegin)
     // the call object tenured, so barrier as needed before re-entering.
     MOZ_ASSERT(!IsInsideNursery(obj),
                "singletons are created in the tenured heap");
-    cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
+    cx->runtime()->gc.storeBuffer.putWholeCell(obj);
 
     return obj;
 }
@@ -555,7 +565,7 @@ GetIntrinsicValue(JSContext* cx, HandlePropertyName name, MutableHandleValue rva
 }
 
 bool
-CreateThis(JSContext* cx, HandleObject callee, MutableHandleValue rval)
+CreateThis(JSContext* cx, HandleObject callee, HandleObject newTarget, MutableHandleValue rval)
 {
     rval.set(MagicValue(JS_IS_CONSTRUCTING));
 
@@ -565,10 +575,14 @@ CreateThis(JSContext* cx, HandleObject callee, MutableHandleValue rval)
             JSScript* script = fun->getOrCreateScript(cx);
             if (!script || !script->ensureHasTypes(cx))
                 return false;
-            JSObject* thisObj = CreateThisForFunction(cx, callee, GenericObject);
-            if (!thisObj)
-                return false;
-            rval.set(ObjectValue(*thisObj));
+            if (script->isDerivedClassConstructor()) {
+                rval.set(MagicValue(JS_UNINITIALIZED_LEXICAL));
+            } else {
+                JSObject* thisObj = CreateThisForFunction(cx, callee, newTarget, GenericObject);
+                if (!thisObj)
+                    return false;
+                rval.set(ObjectValue(*thisObj));
+            }
         }
     }
 
@@ -613,7 +627,7 @@ void
 PostWriteBarrier(JSRuntime* rt, JSObject* obj)
 {
     MOZ_ASSERT(!IsInsideNursery(obj));
-    rt->gc.storeBuffer.putWholeCellFromMainThread(obj);
+    rt->gc.storeBuffer.putWholeCell(obj);
 }
 
 void
@@ -835,9 +849,41 @@ GeneratorThrowOrClose(JSContext* cx, BaselineFrame* frame, Handle<GeneratorObjec
 }
 
 bool
-InitStrictEvalScopeObjects(JSContext* cx, BaselineFrame* frame)
+InitGlobalOrEvalScopeObjects(JSContext* cx, BaselineFrame* frame)
 {
-    return frame->initStrictEvalScopeObjects(cx);
+    RootedScript script(cx, frame->script());
+    RootedObject varObj(cx, frame->scopeChain());
+    while (!varObj->isQualifiedVarObj())
+        varObj = varObj->enclosingScope();
+
+    if (script->isForEval()) {
+        // Strict eval needs its own call object.
+        //
+        // Non-strict eval may introduce 'var' bindings that conflict with
+        // lexical bindings in an enclosing lexical scope.
+        if (script->strict()) {
+            if (!frame->initStrictEvalScopeObjects(cx))
+                return false;
+        } else {
+            RootedObject scopeChain(cx, frame->scopeChain());
+            if (!CheckEvalDeclarationConflicts(cx, script, scopeChain, varObj))
+                return false;
+        }
+    } else {
+        Rooted<ClonedBlockObject*> lexicalScope(cx,
+            &NearestEnclosingExtensibleLexicalScope(frame->scopeChain()));
+        if (!CheckGlobalDeclarationConflicts(cx, script, lexicalScope, varObj))
+            return false;
+    }
+
+    return true;
+}
+
+bool
+GlobalNameConflictsCheckFromIon(JSContext* cx, HandleScript script)
+{
+    Rooted<ClonedBlockObject*> lexicalScope(cx, &cx->global()->lexicalScope());
+    return CheckGlobalDeclarationConflicts(cx, script, lexicalScope, cx->global());
 }
 
 bool
@@ -1241,12 +1287,25 @@ MarkObjectGroupFromIon(JSRuntime* rt, ObjectGroup** groupp)
 }
 
 bool
-ThrowUninitializedLexical(JSContext* cx)
+ThrowRuntimeLexicalError(JSContext* cx, unsigned errorNumber)
 {
     ScriptFrameIter iter(cx);
     RootedScript script(cx, iter.script());
-    ReportUninitializedLexical(cx, script, iter.pc());
+    ReportRuntimeLexicalError(cx, errorNumber, script, iter.pc());
     return false;
+}
+
+bool
+ThrowBadDerivedReturn(JSContext* cx, HandleValue v)
+{
+    ReportValueError(cx, JSMSG_BAD_DERIVED_RETURN, JSDVG_IGNORE_STACK, v, nullptr);
+    return false;
+}
+
+bool
+BaselineThrowUninitializedThis(JSContext* cx, BaselineFrame* frame)
+{
+    return ThrowUninitializedThis(cx, frame);
 }
 
 } // namespace jit

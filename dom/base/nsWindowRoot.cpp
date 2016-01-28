@@ -68,7 +68,7 @@ NS_IMPL_DOMTARGET_DEFAULTS(nsWindowRoot)
 NS_IMETHODIMP
 nsWindowRoot::RemoveEventListener(const nsAString& aType, nsIDOMEventListener* aListener, bool aUseCapture)
 {
-  if (nsRefPtr<EventListenerManager> elm = GetExistingListenerManager()) {
+  if (RefPtr<EventListenerManager> elm = GetExistingListenerManager()) {
     elm->RemoveEventListener(aType, aListener, aUseCapture);
   }
   return NS_OK;
@@ -242,7 +242,7 @@ nsWindowRoot::GetControllers(nsIControllers** aResult)
       return focusedWindow->GetControllers(aResult);
   }
   else {
-    nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(focusedWindow);
+    nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(focusedWindow);
     if (domWindow)
       return domWindow->GetControllers(aResult);
   }
@@ -405,7 +405,7 @@ nsWindowRoot::EnumerateBrowsers(BrowserEnumerator aEnumFunc, void* aArg)
 {
   // Collect strong references to all browsers in a separate array in
   // case aEnumFunc alters mWeakBrowsers.
-  nsTArray<nsRefPtr<TabParent>> tabParents;
+  nsTArray<RefPtr<TabParent>> tabParents;
   for (auto iter = mWeakBrowsers.ConstIter(); !iter.Done(); iter.Next()) {
     nsCOMPtr<nsITabParent> tabParent(do_QueryReferent(iter.Get()->GetKey()));
     if (TabParent* tab = TabParent::GetFrom(tabParent)) {

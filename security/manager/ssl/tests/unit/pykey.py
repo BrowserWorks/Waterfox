@@ -35,7 +35,6 @@ from pyasn1.type import univ, namedtype
 from pyasn1_modules import rfc2459
 from ecc import encoding
 from ecc import Key
-from ecc.ecdsa import randkey
 import base64
 import binascii
 import mock
@@ -52,6 +51,7 @@ def byteStringToHexifiedBitString(string):
 class UnknownBaseError(Exception):
     """Base class for handling unexpected input in this module."""
     def __init__(self, value):
+        super(UnknownBaseError, self).__init__()
         self.value = value
         self.category = 'input'
 
@@ -65,13 +65,6 @@ class UnknownKeySpecificationError(UnknownBaseError):
     def __init__(self, value):
         UnknownBaseError.__init__(self, value)
         self.category = 'key specification'
-
-class ParameterError(UnknownBaseError):
-    """Exception type indicating that the key was misconfigured"""
-
-    def __init__(self, value):
-        UnknownBaseError.__init__(self, value)
-        self.category = 'key parameter'
 
 class RSAPublicKey(univ.Sequence):
     """Helper type for encoding an RSA public key"""
@@ -112,7 +105,7 @@ class PrivateKeyInfo(univ.Sequence):
     )
 
 
-class RSAKey:
+class RSAKey(object):
     # For reference, when encoded as a subject public key info, the
     # base64-encoded sha-256 hash of this key is
     # VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=
@@ -297,7 +290,7 @@ class RSAKey:
         'f24aef4ed6f149f94d96c9f7d78e647fc778a9017ff208d3b4a1768b1821'
         '62102cdab032fabbab38d5200a324649', 16)
     evRSA2040_P = long(
-         '0f3844d0d4d4d6a21acd76a6fc370b8550e1d7ec5a6234172e790f0029ae'
+        '0f3844d0d4d4d6a21acd76a6fc370b8550e1d7ec5a6234172e790f0029ae'
         '651f6d5c59330ab19802b9d7a207de7a1fb778e3774fdbdc411750633d8d'
         '1b3fe075006ffcfd1d10e763c7a9227d2d5f0c2dade1c9e659c350a159d3'
         '6bb986f12636d4f9942b288bc0fe21da8799477173144249ca2e389e6c5c'
@@ -560,12 +553,12 @@ class RSAKey:
         spki.setComponentByName('subjectPublicKey', subjectPublicKey)
         return spki
 
-    def sign(self, data, digest):
+    def sign(self, data, hashAlgorithmName):
         """Returns a hexified bit string representing a
         signature by this key over the specified data.
         Intended for use with pyasn1.type.univ.BitString"""
         rsaPrivateKey = rsa.PrivateKey(self.RSA_N, self.RSA_E, self.RSA_D, self.RSA_P, self.RSA_Q)
-        signature = rsa.sign(data, rsaPrivateKey, digest)
+        signature = rsa.sign(data, rsaPrivateKey, hashAlgorithmName)
         return byteStringToHexifiedBitString(signature)
 
 
@@ -597,7 +590,7 @@ def longToEvenLengthHexString(val):
 def notRandom(n):
     return n * '\x04'
 
-class ECCKey:
+class ECCKey(object):
     secp256k1Encoded = str('08fd87b04fba98090100004035ee7c7289d8fef7a8'
         '6afe5da66d8bc2ebb6a8543fd2fead089f45ce7acd0fa64382a9500c41dad'
         '770ffd4b511bf4b492eb1238800c32c4f76c73a3f3294e7c5002067cebc20'
@@ -629,7 +622,7 @@ class ECCKey:
         'e9471c940b858c69d2d05e8c01788a7d0b6e235aa5e783fc1bee807dcc386'
         '5f920e12cf8f2d29')
 
-    def __init__(self, specification = None):
+    def __init__(self, specification=None):
         if specification == 'secp256k1':
             self.key = Key.Key.decode(binascii.unhexlify(self.secp256k1Encoded))
             self.keyOID = secp256k1
@@ -671,14 +664,10 @@ class ECCKey:
         spki.setComponentByName('subjectPublicKey', subjectPublicKey)
         return spki
 
-    def sign(self, data, digest):
+    def sign(self, data, hashAlgorithmName):
         """Returns a hexified bit string representing a
         signature by this key over the specified data.
         Intended for use with pyasn1.type.univ.BitString"""
-        # This should really only be used with SHA-256
-        if digest != "SHA-256":
-            raise ParameterError(digest)
-
         # There is some non-determinism in ECDSA signatures. Work around
         # this by patching ecc.ecdsa.urandom to not be random.
         with mock.patch('ecc.ecdsa.urandom', side_effect=notRandom):
@@ -688,9 +677,9 @@ class ECCKey:
             # Also patch in secp256k1 if applicable.
             if self.keyOID == secp256k1:
                 with mock.patch('ecc.curves.DOMAINS', {256: secp256k1Params}):
-                    x, y = encoding.dec_point(self.key.sign(data, 'sha256'))
+                    x, y = encoding.dec_point(self.key.sign(data, hashAlgorithmName))
             else:
-                x, y = encoding.dec_point(self.key.sign(data, 'sha256'))
+                x, y = encoding.dec_point(self.key.sign(data, hashAlgorithmName))
             point = ECPoint()
             point.setComponentByName('x', x)
             point.setComponentByName('y', y)

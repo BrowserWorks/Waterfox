@@ -15,12 +15,12 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/EnumSet.h"
 #include "nsCOMPtr.h"
 #include "nsContainerFrame.h"
 #include "nsPoint.h"
 #include "nsRect.h"
 #include "plarena.h"
-#include "Layers.h"
 #include "nsRegion.h"
 #include "nsDisplayListInvalidation.h"
 #include "DisplayListClipState.h"
@@ -154,6 +154,8 @@ public:
     mMode = PLUGIN_GEOMETRY;
   }
 
+  mozilla::layers::LayerManager* GetWidgetLayerManager(nsView** aView = nullptr, bool* aAllowRetaining = nullptr);
+
   /**
    * @return true if the display is being built in order to determine which
    * frame is under the mouse position.
@@ -270,6 +272,13 @@ public:
   {
     *aOutScrollbarTarget = mCurrentScrollbarTarget;
     *aOutScrollbarFlags = mCurrentScrollbarFlags;
+  }
+  /**
+   * Returns true if building a scrollbar, and the scrollbar will not be
+   * layerized.
+   */
+  bool IsBuildingNonLayerizedScrollbar() const {
+    return mIsBuildingScrollbar && !mCurrentScrollbarWillHaveLayer;
   }
   /**
    * Calling this setter makes us include all out-of-flow descendant
@@ -505,8 +514,7 @@ public:
   /**
    * Notifies the builder that a particular themed widget exists
    * at the given rectangle within the currently built display list.
-   * For certain appearance values (currently only
-   * NS_THEME_MOZ_MAC_UNIFIED_TOOLBAR, NS_THEME_TOOLBAR and
+   * For certain appearance values (currently only NS_THEME_TOOLBAR and
    * NS_THEME_WINDOW_TITLEBAR) this gets called during every display list
    * construction, for every themed widget of the right type within the
    * display list, except for themed widgets which are transformed or have
@@ -712,15 +720,19 @@ public:
   class AutoCurrentScrollbarInfoSetter {
   public:
     AutoCurrentScrollbarInfoSetter(nsDisplayListBuilder* aBuilder, ViewID aScrollTargetID,
-                                   uint32_t aScrollbarFlags)
+                                   uint32_t aScrollbarFlags, bool aWillHaveLayer)
      : mBuilder(aBuilder) {
+      aBuilder->mIsBuildingScrollbar = true;
       aBuilder->mCurrentScrollbarTarget = aScrollTargetID;
       aBuilder->mCurrentScrollbarFlags = aScrollbarFlags;
+      aBuilder->mCurrentScrollbarWillHaveLayer = aWillHaveLayer;
     }
     ~AutoCurrentScrollbarInfoSetter() {
       // No need to restore old values because scrollbars cannot be nested.
+      mBuilder->mIsBuildingScrollbar = false;
       mBuilder->mCurrentScrollbarTarget = FrameMetrics::NULL_SCROLL_ID;
       mBuilder->mCurrentScrollbarFlags = 0;
+      mBuilder->mCurrentScrollbarWillHaveLayer = false;
     }
   private:
     nsDisplayListBuilder* mBuilder;
@@ -745,6 +757,13 @@ public:
 
   NS_DECLARE_FRAME_PROPERTY(OutOfFlowDisplayDataProperty,
                             DeleteValue<OutOfFlowDisplayData>)
+
+  static OutOfFlowDisplayData* GetOutOfFlowData(nsIFrame* aFrame)
+  {
+    return static_cast<OutOfFlowDisplayData*>(
+      aFrame->Properties().Get(OutOfFlowDisplayDataProperty()));
+  }
+
   NS_DECLARE_FRAME_PROPERTY(Preserve3DDirtyRectProperty, DeleteValue<nsRect>)
 
   nsPresContext* CurrentPresContext() {
@@ -941,7 +960,7 @@ private:
     }
 
     PLDHashNumber Hash() const {
-      return mozilla::HashBytes(this, sizeof(this));
+      return mozilla::HashBytes(this, sizeof(*this));
     }
 
     bool operator==(const AnimatedGeometryRootLookup& aOther) const {
@@ -983,6 +1002,8 @@ private:
   ViewID                         mCurrentScrollbarTarget;
   uint32_t                       mCurrentScrollbarFlags;
   BlendModeSet                   mContainedBlendModes;
+  bool                           mIsBuildingScrollbar;
+  bool                           mCurrentScrollbarWillHaveLayer;
   bool                           mBuildCaret;
   bool                           mIgnoreSuppression;
   bool                           mHadToIgnoreSuppression;
@@ -1284,7 +1305,7 @@ public:
    * @return true if the contents of this item are rendered fixed relative
    * to the nearest viewport.
    */
-  virtual bool ShouldFixToViewport(LayerManager* aManager)
+  virtual bool ShouldFixToViewport(nsDisplayListBuilder* aBuilder)
   { return false; }
 
   virtual bool ClearsBackground()
@@ -2199,7 +2220,7 @@ public:
   void SetNeedsCustomScrollClip() { mNeedsCustomScrollClip = true; }
 
 protected:
-  nsRefPtr<nsCaret> mCaret;
+  RefPtr<nsCaret> mCaret;
   nsRect mBounds;
   bool mNeedsCustomScrollClip;
 };
@@ -2398,7 +2419,7 @@ public:
   static nsRegion GetInsideClipRegion(nsDisplayItem* aItem, nsPresContext* aPresContext, uint8_t aClip,
                                       const nsRect& aRect, bool* aSnap);
 
-  virtual bool ShouldFixToViewport(LayerManager* aManager) override;
+  virtual bool ShouldFixToViewport(nsDisplayListBuilder* aBuilder) override;
 
 protected:
   typedef class mozilla::layers::ImageContainer ImageContainer;
@@ -2418,7 +2439,7 @@ protected:
   // mIsThemed is true or if FindBackground returned false.
   const nsStyleBackground* mBackgroundStyle;
   nsCOMPtr<imgIContainer> mImage;
-  nsRefPtr<ImageContainer> mImageContainer;
+  RefPtr<ImageContainer> mImageContainer;
   LayoutDeviceRect mDestRect;
   /* Bounds of this display item */
   nsRect mBounds;
@@ -2485,13 +2506,15 @@ protected:
 
 class nsDisplayBackgroundColor : public nsDisplayItem
 {
+  typedef mozilla::gfx::Color Color;
+
 public:
   nsDisplayBackgroundColor(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                            const nsStyleBackground* aBackgroundStyle,
                            nscolor aColor)
     : nsDisplayItem(aBuilder, aFrame)
     , mBackgroundStyle(aBackgroundStyle)
-    , mColor(gfxRGBA(aColor))
+    , mColor(Color::FromABGR(aColor))
   { }
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override;
@@ -2515,8 +2538,7 @@ public:
 
   virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override
   {
-    return new nsDisplaySolidColorGeometry(this, aBuilder,
-                                           NS_RGBA_FROM_GFXRGBA(mColor));
+    return new nsDisplaySolidColorGeometry(this, aBuilder, mColor.ToABGR());
   }
 
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
@@ -2524,7 +2546,7 @@ public:
                                          nsRegion* aInvalidRegion) override
   {
     const nsDisplaySolidColorGeometry* geometry = static_cast<const nsDisplaySolidColorGeometry*>(aGeometry);
-    if (NS_RGBA_FROM_GFXRGBA(mColor) != geometry->mColor) {
+    if (mColor.ToABGR() != geometry->mColor) {
       bool dummy;
       aInvalidRegion->Or(geometry->mBounds, GetBounds(aBuilder, &dummy));
       return;
@@ -2537,7 +2559,7 @@ public:
 
 protected:
   const nsStyleBackground* mBackgroundStyle;
-  gfxRGBA mColor;
+  mozilla::gfx::Color mColor;
 };
 
 class nsDisplayClearBackground : public nsDisplayItem
@@ -2748,7 +2770,6 @@ public:
     : nsDisplayItem(aBuilder, aFrame)
   {
     MOZ_COUNT_CTOR(nsDisplayLayerEventRegions);
-    AddFrame(aBuilder, aFrame);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
   virtual ~nsDisplayLayerEventRegions() {
@@ -3082,13 +3103,7 @@ public:
                                                const ContainerLayerParameters& aContainerParameters) override;
     virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                      LayerManager* aManager,
-                                     const ContainerLayerParameters& aParameters) override
-    {
-      if (mCanBeActive && aManager->SupportsMixBlendModes(mContainedBlendModes)) {
-        return mozilla::LAYER_ACTIVE;
-      }
-      return mozilla::LAYER_INACTIVE;
-    }
+                                     const ContainerLayerParameters& aParameters) override;
     virtual bool TryMerge(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem) override;
     virtual bool ShouldFlattenAway(nsDisplayListBuilder* aBuilder) override {
       return false;
@@ -3591,7 +3606,7 @@ public:
     }
 
     const nsIFrame* mFrame;
-    nsRefPtr<nsCSSValueSharedList> mTransformList;
+    RefPtr<nsCSSValueSharedList> mTransformList;
     const Point3D mToTransformOrigin;
     nscoord mChildPerspective;
 
@@ -3762,7 +3777,7 @@ public:
                                              const ContainerLayerParameters& aContainerParameters) override;
 
 protected:
-  nsRefPtr<mozilla::gfx::VRHMDInfo> mHMD;
+  RefPtr<mozilla::gfx::VRHMDInfo> mHMD;
 };
 
 #endif /*NSDISPLAYLIST_H_*/

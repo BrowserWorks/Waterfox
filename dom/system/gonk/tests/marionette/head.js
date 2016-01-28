@@ -40,6 +40,71 @@ ok(ril, "ril.constructor is " + ril.constructor);
 var radioInterface = ril.getRadioInterface(0);
 ok(radioInterface, "radioInterface.constructor is " + radioInterface.constrctor);
 
+var _pendingEmulatorShellCmdCount = 0;
+var _pendingEmulatorCmdCount = 0;
+
+/**
+ * Send emulator shell command with safe guard.
+ *
+ * We should only call |finish()| after all emulator shell command transactions
+ * end, so here comes with the pending counter.  Resolve when the emulator
+ * shell gives response. Never reject.
+ *
+ * Fulfill params:
+ *   result -- an array of emulator shell response lines.
+ *
+ * @param aCommands
+ *        A string array commands to be passed to emulator through adb shell.
+ *
+ * @return A deferred promise.
+ */
+function runEmulatorShellCmdSafe(aCommands) {
+  return new Promise(function(aResolve, aReject) {
+    ++_pendingEmulatorShellCmdCount;
+    runEmulatorShell(aCommands, function(aResult) {
+      --_pendingEmulatorShellCmdCount;
+
+      log("Emulator shell response: " + JSON.stringify(aResult));
+      aResolve(aResult);
+    });
+  });
+}
+
+/**
+ * Send emulator command with safe guard.
+ *
+ * We should only call |finish()| after all emulator command transactions
+ * end, so here comes with the pending counter.  Resolve when the emulator
+ * gives positive response, and reject otherwise.
+ *
+ * Fulfill params:
+ *   result -- an array of emulator response lines.
+ * Reject params:
+ *   result -- an array of emulator response lines.
+ *
+ * @param aCommand
+ *        A string command to be passed to emulator through its telnet console.
+ *
+ * @return A deferred promise.
+ */
+function runEmulatorCmdSafe(aCommand) {
+  log(aCommand);
+  return new Promise(function(aResolve, aReject) {
+    ++_pendingEmulatorCmdCount;
+    runEmulatorCmd(aCommand, function(aResult) {
+      --_pendingEmulatorCmdCount;
+
+      log("Emulator console response: " + JSON.stringify(aResult));
+      if (Array.isArray(aResult) &&
+          aResult[aResult.length - 1] === "OK") {
+        aResolve(aResult);
+      } else {
+        aReject(aResult);
+      }
+    });
+  });
+}
+
 /**
  * Get mozSettings value specified by @aKey.
  *
@@ -162,7 +227,7 @@ function waitForTargetEvent(aEventTarget, aEventName, aMatchFun) {
  * Set the default data connection enabling state, wait for
  * "network-connection-state-changed" event and verify state.
  *
- * Fulfill params: (none)
+ * Fulfill params: instance of nsIRilNetworkInfo of the network connected.
  *
  * @param aEnabled
  *        A boolean state.
@@ -181,17 +246,19 @@ function setDataEnabledAndWait(aEnabled) {
          aEnabled ? Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED
                   : Ci.nsINetworkInfo.NETWORK_STATE_DISCONNECTED,
          "subject.state should be " + aEnabled ? "CONNECTED" : "DISCONNECTED");
+
+      return aSubject;
     }));
   promises.push(setSettings(SETTINGS_KEY_DATA_ENABLED, aEnabled));
 
-  return Promise.all(promises);
+  return Promise.all(promises).then(aValues => aValues[0]);
 }
 
 /**
  * Setup a certain type of data connection, wait for
  * "network-connection-state-changed" event and verify state.
  *
- * Fulfill params: (none)
+ * Fulfill params: instance of nsIRilNetworkInfo of the network connected.
  *
  * @param aNetworkType
  *        The mobile network type to setup.
@@ -210,10 +277,12 @@ function setupDataCallAndWait(aNetworkType) {
          "subject.type should be " + aNetworkType);
       is(aSubject.state, Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED,
          "subject.state should be CONNECTED");
+
+      return aSubject;
     }));
   promises.push(radioInterface.setupDataCallByType(aNetworkType));
 
-  return Promise.all(promises);
+  return Promise.all(promises).then(aValues => aValues[0]);
 }
 
 /**
@@ -246,6 +315,19 @@ function deactivateDataCallAndWait(aNetworkType) {
 }
 
 /**
+ * Wait for pending emulator transactions and call |finish()|.
+ */
+function cleanUp() {
+  // Use ok here so that we have at least one test run.
+  ok(true, ":: CLEANING UP ::");
+
+  waitFor(finish, function() {
+    return _pendingEmulatorShellCmdCount === 0 &&
+           _pendingEmulatorCmdCount === 0;
+  });
+}
+
+/**
  * Basic test routine helper.
  *
  * This helper does nothing but clean-ups.
@@ -256,8 +338,8 @@ function deactivateDataCallAndWait(aNetworkType) {
 function startTestBase(aTestCaseMain) {
   Promise.resolve()
     .then(aTestCaseMain)
-    .then(finish, function(aException) {
+    .then(cleanUp, function(aException) {
       ok(false, "promise rejects during test: " + aException);
-      finish();
+      cleanUp();
     });
 }

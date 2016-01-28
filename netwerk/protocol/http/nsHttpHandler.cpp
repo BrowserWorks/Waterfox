@@ -173,7 +173,6 @@ nsHttpHandler::nsHttpHandler()
     , mLegacyAppVersion("5.0")
     , mProduct("Gecko")
     , mCompatFirefoxEnabled(false)
-    , mOverrideYouTubeUserAgent(false)
     , mUserAgentIsDirty(true)
     , mPromptTempRedirect(true)
     , mSendSecureXSiteReferrer(true)
@@ -198,6 +197,7 @@ nsHttpHandler::nsHttpHandler()
     , mSpdySendingChunkSize(ASpdySession::kSendingChunkSize)
     , mSpdySendBufferSize(ASpdySession::kTCPSendBufferSize)
     , mSpdyPushAllowance(32768)
+    , mSpdyPullAllowance(ASpdySession::kInitialRwin)
     , mDefaultSpdyConcurrent(ASpdySession::kDefaultMaxConcurrent)
     , mSpdyPingThreshold(PR_SecondsToInterval(58))
     , mSpdyPingTimeout(PR_SecondsToInterval(8))
@@ -296,7 +296,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
+    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -365,6 +365,8 @@ nsHttpHandler::Init()
         obsService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, true);
         obsService->AddObserver(this, "net:clear-active-logins", true);
         obsService->AddObserver(this, "net:prune-dead-connections", true);
+        // Sent by the TorButton add-on in the Tor Browser
+        obsService->AddObserver(this, "net:prune-all-connections", true);
         obsService->AddObserver(this, "net:failed-to-process-uri-content", true);
         obsService->AddObserver(this, "last-pb-context-exited", true);
         obsService->AddObserver(this, "webapps-clear-data", true);
@@ -382,18 +384,6 @@ nsHttpHandler::Init()
     if (pc) {
         pc->GetParentalControlsEnabled(&mParentalControlEnabled);
     }
-
-
-    rv = Preferences::AddBoolVarCache(&mOverrideYouTubeUserAgent,
-                                      "media.youtube-ua.override", false);
-    if (NS_FAILED(rv)) {
-        mOverrideYouTubeUserAgent = false;
-    }
-    mOverrideYouTubeUserAgentFrom =
-        NS_ConvertUTF16toUTF8(mozilla::Preferences::GetString("media.youtube-ua.override.from"));
-    mOverrideYouTubeUserAgentTo =
-        NS_ConvertUTF16toUTF8(mozilla::Preferences::GetString("media.youtube-ua.override.to"));
-
     return NS_OK;
 }
 
@@ -403,7 +393,7 @@ nsHttpHandler::MakeNewRequestTokenBucket()
     if (!mConnMgr)
         return;
 
-    nsRefPtr<EventTokenBucket> tokenBucket =
+    RefPtr<EventTokenBucket> tokenBucket =
         new EventTokenBucket(RequestTokenBucketHz(), RequestTokenBucketBurst());
     mConnMgr->UpdateRequestTokenBucket(tokenBucket);
 }
@@ -430,32 +420,40 @@ nsHttpHandler::InitConnectionMgr()
 }
 
 nsresult
-nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request, bool isForYouTube)
+nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request, bool isSecure)
 {
     nsresult rv;
 
     // Add the "User-Agent" header
-    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(isForYouTube),
+    rv = request->SetHeader(nsHttp::User_Agent, UserAgent(),
                             false, nsHttpHeaderArray::eVarietyDefault);
     if (NS_FAILED(rv)) return rv;
 
     // MIME based content negotiation lives!
-    // Add the "Accept" header
+    // Add the "Accept" header.  Note, this is set as an override because the
+    // service worker expects to see it.  The other "default" headers are
+    // hidden from service worker interception.
     rv = request->SetHeader(nsHttp::Accept, mAccept,
-                            false, nsHttpHeaderArray::eVarietyDefault);
+                            false, nsHttpHeaderArray::eVarietyOverride);
     if (NS_FAILED(rv)) return rv;
 
-    // Add the "Accept-Language" header
+    // Add the "Accept-Language" header.  This header is also exposed to the
+    // service worker.
     if (!mAcceptLanguages.IsEmpty()) {
         // Add the "Accept-Language" header
         rv = request->SetHeader(nsHttp::Accept_Language, mAcceptLanguages,
-                                false, nsHttpHeaderArray::eVarietyDefault);
+                                false, nsHttpHeaderArray::eVarietyOverride);
         if (NS_FAILED(rv)) return rv;
     }
 
     // Add the "Accept-Encoding" header
-    rv = request->SetHeader(nsHttp::Accept_Encoding, mAcceptEncodings,
-                            false, nsHttpHeaderArray::eVarietyDefault);
+    if (isSecure) {
+        rv = request->SetHeader(nsHttp::Accept_Encoding, mHttpsAcceptEncodings,
+                                false, nsHttpHeaderArray::eVarietyDefault);
+    } else {
+        rv = request->SetHeader(nsHttp::Accept_Encoding, mHttpAcceptEncodings,
+                                false, nsHttpHeaderArray::eVarietyDefault);
+    }
     if (NS_FAILED(rv)) return rv;
 
     // Add the "Do-Not-Track" header
@@ -495,24 +493,29 @@ nsHttpHandler::AddConnectionHeader(nsHttpHeaderArray *request,
 }
 
 bool
-nsHttpHandler::IsAcceptableEncoding(const char *enc)
+nsHttpHandler::IsAcceptableEncoding(const char *enc, bool isSecure)
 {
     if (!enc)
         return false;
 
-    // HTTP 1.1 allows servers to send x-gzip and x-compress instead
-    // of gzip and compress, for example.  So, we'll always strip off
-    // an "x-" prefix before matching the encoding to one we claim
-    // to accept.
-    if (!PL_strncasecmp(enc, "x-", 2))
-        enc += 2;
-
+    // we used to accept x-foo anytime foo was acceptable, but that's just
+    // continuing bad behavior.. so limit it to known x-* patterns
+    bool rv;
+    if (isSecure) {
+        rv = nsHttp::FindToken(mHttpsAcceptEncodings.get(), enc, HTTP_LWS ",") != nullptr;
+    } else {
+        rv = nsHttp::FindToken(mHttpAcceptEncodings.get(), enc, HTTP_LWS ",") != nullptr;
+    }
     // gzip and deflate are inherently acceptable in modern HTTP - always
     // process them if a stream converter can also be found.
-    if (!PL_strcasecmp(enc, "gzip") || !PL_strcasecmp(enc, "deflate"))
-        return true;
-
-    return nsHttp::FindToken(mAcceptEncodings.get(), enc, HTTP_LWS ",") != nullptr;
+    if (!rv &&
+        (!PL_strcasecmp(enc, "gzip") || !PL_strcasecmp(enc, "deflate") ||
+         !PL_strcasecmp(enc, "x-gzip") || !PL_strcasecmp(enc, "x-deflate"))) {
+        rv = true;
+    }
+    LOG(("nsHttpHandler::IsAceptableEncoding %s https=%d %d\n",
+         enc, isSecure, rv));
+    return rv;
 }
 
 nsresult
@@ -594,7 +597,7 @@ nsHttpHandler::AsyncOnChannelRedirect(nsIChannel* oldChan, nsIChannel* newChan,
                                  uint32_t flags)
 {
     // TODO E10S This helper has to be initialized on the other process
-    nsRefPtr<nsAsyncRedirectVerifyHelper> redirectCallbackHelper =
+    RefPtr<nsAsyncRedirectVerifyHelper> redirectCallbackHelper =
         new nsAsyncRedirectVerifyHelper();
 
     return redirectCallbackHelper->Init(oldChan, newChan, flags);
@@ -612,7 +615,7 @@ nsHttpHandler::GenerateHostPort(const nsCString& host, int32_t port,
 //-----------------------------------------------------------------------------
 
 const nsAFlatCString &
-nsHttpHandler::UserAgent(bool isForYouTube)
+nsHttpHandler::UserAgent()
 {
     if (mUserAgentOverride) {
         LOG(("using general.useragent.override : %s\n", mUserAgentOverride.get()));
@@ -622,10 +625,6 @@ nsHttpHandler::UserAgent(bool isForYouTube)
     if (mUserAgentIsDirty) {
         BuildUserAgent();
         mUserAgentIsDirty = false;
-    }
-
-    if (isForYouTube) {
-      return mYouTubeUserAgent;
     }
 
     return mUserAgent;
@@ -693,27 +692,18 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
+    bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
+        // "Firefox/x.y" (compatibility) app token
+        mUserAgent += ' ';
+        mUserAgent += mCompatFirefox;
+    }
+    if (!isFirefox) {
         // App portion
         mUserAgent += ' ';
         mUserAgent += mAppName;
         mUserAgent += '/';
         mUserAgent += mAppVersion;
-    }
-    if (!isFirefox) {
-	// "Firefox/x.y" (compatibility) app token
-        mUserAgent += ' ';
-        mUserAgent += mCompatFirefox;
-    }
-
-    if (mOverrideYouTubeUserAgent) {
-        mYouTubeUserAgent = mUserAgent;
-        if (!mOverrideYouTubeUserAgentFrom.IsEmpty() &&
-            !mOverrideYouTubeUserAgentTo.IsEmpty()) {
-            mYouTubeUserAgent.ReplaceSubstring(mOverrideYouTubeUserAgentFrom,
-                                               mOverrideYouTubeUserAgentTo);
-        }
     }
 }
 
@@ -745,7 +735,7 @@ nsHttpHandler::InitUserAgentComponents()
 #endif
 
 
-#if defined(ANDROID) || defined(FXOS_SIMULATOR)
+#ifdef ANDROID
     nsCOMPtr<nsIPropertyBag2> infoService = do_GetService("@mozilla.org/system-info;1");
     MOZ_ASSERT(infoService, "Could not find a system info service");
     nsresult rv;
@@ -766,15 +756,35 @@ nsHttpHandler::InitUserAgentComponents()
       }
     }
 #endif
-    // Add the `Mobile` or `Tablet` token when running on device or in the
-    // b2g desktop simulator.
+    // Add the `Mobile` or `Tablet` or `TV` token when running on device.
     bool isTablet;
     rv = infoService->GetPropertyAsBool(NS_LITERAL_STRING("tablet"), &isTablet);
-    if (NS_SUCCEEDED(rv) && isTablet)
+    if (NS_SUCCEEDED(rv) && isTablet) {
         mCompatDevice.AssignLiteral("Tablet");
-    else
-        mCompatDevice.AssignLiteral("Mobile");
-#endif
+    } else {
+        bool isTV;
+        rv = infoService->GetPropertyAsBool(NS_LITERAL_STRING("tv"), &isTV);
+        if (NS_SUCCEEDED(rv) && isTV) {
+            mCompatDevice.AssignLiteral("TV");
+        } else {
+            mCompatDevice.AssignLiteral("Mobile");
+        }
+    }
+#endif // ANDROID
+
+#ifdef FXOS_SIMULATOR
+    {
+        // Add the `Mobile` or `Tablet` or `TV` token when running in the b2g
+        // desktop simulator via preference.
+        nsCString deviceType;
+        nsresult rv = Preferences::GetCString("devtools.useragent.device_type", &deviceType);
+        if (NS_SUCCEEDED(rv)) {
+            mCompatDevice.Assign(deviceType);
+        } else {
+            mCompatDevice.AssignLiteral("Mobile");
+        }
+    }
+#endif // FXOS_SIMULATOR
 
 #if defined(MOZ_WIDGET_GONK)
     // Device model identifier should be a simple token, which can be composed
@@ -1181,8 +1191,18 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         nsXPIDLCString acceptEncodings;
         rv = prefs->GetCharPref(HTTP_PREF("accept-encoding"),
                                   getter_Copies(acceptEncodings));
-        if (NS_SUCCEEDED(rv))
-            SetAcceptEncodings(acceptEncodings);
+        if (NS_SUCCEEDED(rv)) {
+            SetAcceptEncodings(acceptEncodings, false);
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("accept-encoding.secure"))) {
+        nsXPIDLCString acceptEncodings;
+        rv = prefs->GetCharPref(HTTP_PREF("accept-encoding.secure"),
+                                  getter_Copies(acceptEncodings));
+        if (NS_SUCCEEDED(rv)) {
+            SetAcceptEncodings(acceptEncodings, true);
+        }
     }
 
     if (PREF_CHANGED(HTTP_PREF("default-socket-type"))) {
@@ -1338,6 +1358,14 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mSpdyPushAllowance =
                 static_cast<uint32_t>
                 (clamped(val, 1024, static_cast<int32_t>(ASpdySession::kInitialRwin)));
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("spdy.pull-allowance"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("spdy.pull-allowance"), &val);
+        if (NS_SUCCEEDED(rv)) {
+            mSpdyPullAllowance =
+                static_cast<uint32_t>(clamped(val, 1024, 0x7fffffff));
         }
     }
 
@@ -1611,7 +1639,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 void
 nsHttpHandler::TimerCallback(nsITimer * aTimer, void * aClosure)
 {
-    nsRefPtr<nsHttpHandler> thisObject = static_cast<nsHttpHandler*>(aClosure);
+    RefPtr<nsHttpHandler> thisObject = static_cast<nsHttpHandler*>(aClosure);
     if (!thisObject->mPipeliningEnabled)
         thisObject->mCapabilities &= ~NS_HTTP_ALLOW_PIPELINING;
 }
@@ -1771,9 +1799,18 @@ nsHttpHandler::SetAccept(const char *aAccept)
 }
 
 nsresult
-nsHttpHandler::SetAcceptEncodings(const char *aAcceptEncodings)
+nsHttpHandler::SetAcceptEncodings(const char *aAcceptEncodings, bool isSecure)
 {
-    mAcceptEncodings = aAcceptEncodings;
+    if (isSecure) {
+        mHttpsAcceptEncodings = aAcceptEncodings;
+    } else {
+        // use legacy list if a secure override is not specified
+        mHttpAcceptEncodings = aAcceptEncodings;
+        if (mHttpsAcceptEncodings.IsEmpty()) {
+            mHttpsAcceptEncodings = aAcceptEncodings;
+        }
+    }
+      
     return NS_OK;
 }
 
@@ -1876,7 +1913,7 @@ nsHttpHandler::NewProxiedChannel2(nsIURI *uri,
                                   nsILoadInfo* aLoadInfo,
                                   nsIChannel** result)
 {
-    nsRefPtr<HttpBaseChannel> httpChannel;
+    RefPtr<HttpBaseChannel> httpChannel;
 
     LOG(("nsHttpHandler::NewProxiedChannel [proxyInfo=%p]\n",
         givenProxyInfo));
@@ -2030,6 +2067,11 @@ nsHttpHandler::Observe(nsISupports *subject,
         mPrivateAuthCache.ClearAll();
     } else if (!strcmp(topic, "net:prune-dead-connections")) {
         if (mConnMgr) {
+            mConnMgr->PruneDeadConnections();
+        }
+    } else if (!strcmp(topic, "net:prune-all-connections")) {
+        if (mConnMgr) {
+            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
             mConnMgr->PruneDeadConnections();
         }
     } else if (!strcmp(topic, "net:failed-to-process-uri-content")) {
@@ -2188,13 +2230,12 @@ nsHttpHandler::TickleWifi(nsIInterfaceRequestor *cb)
     // If B2G requires a similar mechanism nsINetworkManager, currently only avail
     // on B2G, contains the necessary information on wifi and gateway
 
-    nsCOMPtr<nsIDOMWindow> domWindow;
-    cb->GetInterface(NS_GET_IID(nsIDOMWindow), getter_AddRefs(domWindow));
-    if (!domWindow)
+    nsCOMPtr<nsIDOMWindow> domWindow = do_GetInterface(cb);
+    nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(domWindow);
+    if (!piWindow)
         return;
 
-    nsCOMPtr<nsIDOMNavigator> domNavigator;
-    domWindow->GetNavigator(getter_AddRefs(domNavigator));
+    nsCOMPtr<nsIDOMNavigator> domNavigator = piWindow->GetNavigator();
     nsCOMPtr<nsIMozNavigatorNetwork> networkNavigator =
         do_QueryInterface(domNavigator);
     if (!networkNavigator)

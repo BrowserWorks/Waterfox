@@ -5,7 +5,6 @@
 
 #include "mozilla/layers/ContentClient.h"
 #include "BasicLayers.h"                // for BasicLayerManager
-#include "gfxColor.h"                   // for gfxRGBA
 #include "gfxContext.h"                 // for gfxContext, etc
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPrefs.h"                   // for gfxPrefs
@@ -185,7 +184,7 @@ public:
         continue;
       }
 
-      nsRefPtr<gfxContext> ctx =
+      RefPtr<gfxContext> ctx =
         sink->BeginUpdate(update.mUpdateRect + offset, update.mSequenceCounter);
 
       if (!ctx) {
@@ -403,21 +402,25 @@ ContentClientRemoteBuffer::SwapBuffers(const nsIntRegion& aFrontUpdatedRegion)
 void
 ContentClientRemoteBuffer::Dump(std::stringstream& aStream,
                                 const char* aPrefix,
-                                bool aDumpHtml)
+                                bool aDumpHtml, TextureDumpMode aCompress)
 {
   // TODO We should combine the OnWhite/OnBlack here an just output a single image.
-  aStream << "\n" << aPrefix << "Surface: ";
-  CompositableClient::DumpTextureClient(aStream, mTextureClient);
+  if (!aDumpHtml) {
+    aStream << "\n" << aPrefix << "Surface: ";
+  }
+  CompositableClient::DumpTextureClient(aStream, mTextureClient, aCompress);
 }
 
 void
 ContentClientDoubleBuffered::Dump(std::stringstream& aStream,
-                                const char* aPrefix,
-                                bool aDumpHtml)
+                                  const char* aPrefix,
+                                  bool aDumpHtml, TextureDumpMode aCompress)
 {
   // TODO We should combine the OnWhite/OnBlack here an just output a single image.
-  aStream << "\n" << aPrefix << "Surface: ";
-  CompositableClient::DumpTextureClient(aStream, mFrontClient);
+  if (!aDumpHtml) {
+    aStream << "\n" << aPrefix << "Surface: ";
+  }
+  CompositableClient::DumpTextureClient(aStream, mFrontClient, aCompress);
 }
 
 void
@@ -579,21 +582,21 @@ ContentClientDoubleBuffered::FinalizeFrame(const nsIntRegion& aRegionToDraw)
     // Restrict the DrawTargets and frontBuffer to a scope to make
     // sure there is no more external references to the DrawTargets
     // when we Unlock the TextureClients.
-  gfx::DrawTarget* dt = mFrontClient->BorrowDrawTarget();
-  gfx::DrawTarget* dtw = mFrontClientOnWhite ? mFrontClientOnWhite->BorrowDrawTarget() : nullptr;
-  if (dt && dt->IsValid()) {
-    RefPtr<SourceSurface> surf = dt->Snapshot();
-    RefPtr<SourceSurface> surfOnWhite = dtw ? dtw->Snapshot() : nullptr;
-    SourceRotatedBuffer frontBuffer(surf,
-                                    surfOnWhite,
-                                    mFrontBufferRect,
-                                    mFrontBufferRotation);
-    UpdateDestinationFrom(frontBuffer, updateRegion);
-  } else {
-    // We know this can happen, but we want to track it somewhat, in case it leads
-    // to other problems.
-    gfxCriticalNote << "Invalid draw target(s) " << hexa(dt) << " and " << hexa(dtw);
-  }
+    gfx::DrawTarget* dt = mFrontClient->BorrowDrawTarget();
+    gfx::DrawTarget* dtw = mFrontClientOnWhite ? mFrontClientOnWhite->BorrowDrawTarget() : nullptr;
+    if (dt && dt->IsValid()) {
+      RefPtr<SourceSurface> surf = dt->Snapshot();
+      RefPtr<SourceSurface> surfOnWhite = dtw ? dtw->Snapshot() : nullptr;
+      SourceRotatedBuffer frontBuffer(surf,
+                                      surfOnWhite,
+                                      mFrontBufferRect,
+                                      mFrontBufferRotation);
+      UpdateDestinationFrom(frontBuffer, updateRegion);
+    } else {
+      // We know this can happen, but we want to track it somewhat, in case it leads
+      // to other problems.
+      gfxCriticalNote << "Invalid draw target(s) " << hexa(dt) << " and " << hexa(dtw);
+    }
   }
 
   mFrontClient->Unlock();

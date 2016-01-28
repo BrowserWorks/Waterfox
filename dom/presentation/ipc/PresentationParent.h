@@ -64,6 +64,7 @@ private:
   bool mActorDestroyed;
   nsCOMPtr<nsIPresentationService> mService;
   nsTArray<nsString> mSessionIds;
+  nsTArray<uint64_t> mWindowIds;
 };
 
 class PresentationRequestParent final : public PPresentationRequestParent
@@ -88,7 +89,9 @@ private:
 
   nsresult DoRequest(const SendSessionMessageRequest& aRequest);
 
-  nsresult DoRequest(const TerminateRequest& aRequest);
+  nsresult DoRequest(const CloseSessionRequest& aRequest);
+
+  nsresult DoRequest(const TerminateSessionRequest& aRequest);
 
   bool mActorDestroyed;
   nsCOMPtr<nsIPresentationService> mService;

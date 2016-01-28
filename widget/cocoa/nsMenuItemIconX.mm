@@ -26,7 +26,7 @@
 #include "nsNameSpaceManager.h"
 #include "nsGkAtoms.h"
 #include "nsIDOMElement.h"
-#include "nsIDOMCSSStyleDeclaration.h"
+#include "nsICSSDeclaration.h"
 #include "nsIDOMCSSValue.h"
 #include "nsIDOMCSSPrimitiveValue.h"
 #include "nsIDOMRect.h"
@@ -42,8 +42,8 @@
 #include "nsContentUtils.h"
 #include "nsIContentPolicy.h"
 
+using mozilla::dom::Element;
 using mozilla::gfx::SourceSurface;
-using mozilla::RefPtr;
 
 static const uint32_t kIconWidth = 16;
 static const uint32_t kIconHeight = 16;
@@ -168,7 +168,7 @@ nsMenuItemIconX::GetIconURI(nsIURI** aIconURI)
 
   nsresult rv;
   nsCOMPtr<nsIDOMCSSValue> cssValue;
-  nsCOMPtr<nsIDOMCSSStyleDeclaration> cssStyleDecl;
+  nsCOMPtr<nsICSSDeclaration> cssStyleDecl;
   nsCOMPtr<nsIDOMCSSPrimitiveValue> primitiveValue;
   uint16_t primitiveType;
   if (!hasImageAttr) {
@@ -182,14 +182,19 @@ nsMenuItemIconX::GetIconURI(nsIURI** aIconURI)
     if (!window)
       return NS_ERROR_FAILURE;
 
-    nsCOMPtr<nsIDOMElement> domElement = do_QueryInterface(mContent);
+    window = window->GetCurrentInnerWindow();
+    if (!window)
+      return NS_ERROR_FAILURE;
+
+    nsCOMPtr<Element> domElement = do_QueryInterface(mContent);
     if (!domElement)
       return NS_ERROR_FAILURE;
 
-    rv = window->GetComputedStyle(domElement, EmptyString(),
-                                  getter_AddRefs(cssStyleDecl));
-    if (NS_FAILED(rv))
-      return rv;
+    ErrorResult dummy;
+    cssStyleDecl = window->GetComputedStyle(*domElement, EmptyString(), dummy);
+    dummy.SuppressException();
+    if (!cssStyleDecl)
+      return NS_ERROR_FAILURE;
 
     NS_NAMED_LITERAL_STRING(listStyleImage, "list-style-image");
     rv = cssStyleDecl->GetPropertyCSSValue(listStyleImage,
@@ -282,7 +287,7 @@ nsMenuItemIconX::LoadIcon(nsIURI* aIconURI)
   nsCOMPtr<nsILoadGroup> loadGroup = document->GetDocumentLoadGroup();
   if (!loadGroup) return NS_ERROR_FAILURE;
 
-  nsRefPtr<imgLoader> loader = nsContentUtils::GetImgLoaderForDocument(document);
+  RefPtr<imgLoader> loader = nsContentUtils::GetImgLoaderForDocument(document);
   if (!loader) return NS_ERROR_FAILURE;
 
   if (!mSetIcon) {
@@ -310,7 +315,7 @@ nsMenuItemIconX::LoadIcon(nsIURI* aIconURI)
                                   mozilla::net::RP_Default,
                                   nullptr, loadGroup, this,
                                   nullptr, nsIRequest::LOAD_NORMAL, nullptr,
-                                  nsIContentPolicy::TYPE_IMAGE, EmptyString(),
+                                  nsIContentPolicy::TYPE_INTERNAL_IMAGE, EmptyString(),
                                   getter_AddRefs(mIconRequest));
   if (NS_FAILED(rv)) return rv;
 

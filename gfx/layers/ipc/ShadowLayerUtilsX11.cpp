@@ -75,9 +75,11 @@ SurfaceDescriptorX11::SurfaceDescriptorX11(gfxXlibSurface* aSurf,
     mFormat = cairo_xlib_surface_get_visual(aSurf->CairoSurface())->visualid;
   }
 
+#ifdef GL_PROVIDER_GLX
   if (aForwardGLX) {
     mGLXPixmap = aSurf->GetGLXPixmap();
   }
+#endif
 }
 
 SurfaceDescriptorX11::SurfaceDescriptorX11(Drawable aDrawable, XID aFormatID,
@@ -94,7 +96,7 @@ SurfaceDescriptorX11::OpenForeign() const
   Display* display = DefaultXDisplay();
   Screen* screen = DefaultScreenOfDisplay(display);
 
-  nsRefPtr<gfxXlibSurface> surf;
+  RefPtr<gfxXlibSurface> surf;
   XRenderPictFormat* pictFormat = GetXRenderPictFormatFromId(display, mFormat);
   if (pictFormat) {
     surf = new gfxXlibSurface(screen, mId, pictFormat, mSize);

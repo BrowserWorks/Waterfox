@@ -104,16 +104,24 @@ struct StmtInfoBCE;
 typedef Vector<jsbytecode, 0> BytecodeVector;
 typedef Vector<jssrcnote, 0> SrcNotesVector;
 
-// This enum tells EmitVariables and the destructuring functions how emit the
-// given Parser::variables parse tree. In the base case, DefineVars, the caller
-// only wants variables to be defined in the prologue (if necessary). For
-// PushInitialValues, variable initializer expressions are evaluated and left
-// on the stack. For InitializeVars, the initializer expressions values are
-// assigned (to local variables) and popped.
+// This enum tells BytecodeEmitter::emitVariables and the destructuring
+// methods how emit the given Parser::variables parse tree.
 enum VarEmitOption {
-    DefineVars        = 0,
-    PushInitialValues = 1,
-    InitializeVars    = 2
+    // The normal case. Emit code to evaluate initializer expressions and
+    // assign them to local variables. Also emit JSOP_DEF{VAR,LET,CONST}
+    // opcodes in the prologue if the declaration occurs at toplevel.
+    InitializeVars,
+
+    // Emit only JSOP_DEFVAR opcodes, in the prologue, if necessary. This is
+    // used in one case: `for (var $BindingPattern in/of obj)`. If we're at
+    // toplevel, the variable(s) must be defined with JSOP_DEFVAR, but they're
+    // populated inside the loop, via emitAssignment.
+    DefineVars,
+
+    // Emit code to evaluate initializer expressions and leave those values on
+    // the stack. This is used to implement `for (let/const ...;;)` and
+    // deprecated `let` blocks.
+    PushInitialValues
 };
 
 struct BytecodeEmitter
@@ -237,10 +245,8 @@ struct BytecodeEmitter
     StmtInfoBCE* innermostStmt() const { return stmtStack.innermost(); }
     StmtInfoBCE* innermostScopeStmt() const { return stmtStack.innermostScopeStmt(); }
     JSObject* innermostStaticScope() const;
-    JSObject* blockScopeOfDef(ParseNode* pn) const {
-        MOZ_ASSERT(pn->resolve());
-        unsigned blockid = pn->resolve()->pn_blockid;
-        return parser->blockScopes[blockid];
+    JSObject* blockScopeOfDef(Definition* dn) const {
+        return parser->blockScopes[dn->pn_blockid];
     }
 
     bool atBodyLevel() const;
@@ -305,8 +311,6 @@ struct BytecodeEmitter
     // the main effect, the value left on the stack after the code executes,
     // will be discarded by a pop bytecode.
     bool checkSideEffects(ParseNode* pn, bool* answer);
-
-    bool inTryBlockWithFinally();
 
 #ifdef DEBUG
     bool checkStrictOrSloppy(JSOp op);
@@ -465,7 +469,9 @@ struct BytecodeEmitter
     bool emitNameIncDec(ParseNode* pn);
 
     bool maybeEmitVarDecl(JSOp prologueOp, ParseNode* pn, jsatomid* result);
-    bool emitVariables(ParseNode* pn, VarEmitOption emitOption, bool isLetExpr = false);
+    bool emitVariables(ParseNode* pn, VarEmitOption emitOption);
+    bool emitSingleVariable(ParseNode* pn, ParseNode* binding, ParseNode* initializer,
+                            VarEmitOption emitOption);
 
     bool emitNewInit(JSProtoKey key);
     bool emitSingletonInitialiser(ParseNode* pn);

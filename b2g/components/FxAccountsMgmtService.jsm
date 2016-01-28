@@ -101,7 +101,7 @@ this.FxAccountsMgmtService = {
     switch(data.method) {
       case "getAssertion":
         let principal = Services.scriptSecurityManager.getSystemPrincipal();
-        let audience = msg.audience || principal.originNoSuffix;
+        let audience = data.audience || principal.originNoSuffix;
         FxAccountsManager.getAssertion(audience, principal, {
           silent: msg.silent || false
         }).then(result => {
@@ -156,7 +156,8 @@ this.FxAccountsMgmtService = {
       case "signIn":
       case "signUp":
       case "refreshAuthentication":
-        FxAccountsManager[data.method](data.email, data.password).then(
+        FxAccountsManager[data.method](data.email, data.password,
+                                       data.fetchKeys).then(
           user => {
             self._onFulfill(msg.id, user);
           },

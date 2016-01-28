@@ -3,7 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/TestInterfaceMaplike.h"
-#include "mozilla/dom/TestInterfaceJSMaplikeSetlikeBinding.h"
+#include "mozilla/dom/TestInterfaceJSMaplikeSetlikeIterableBinding.h"
 #include "nsPIDOMWindow.h"
 #include "mozilla/dom/BindingUtils.h"
 
@@ -36,7 +36,7 @@ TestInterfaceMaplike::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<TestInterfaceMaplike> r = new TestInterfaceMaplike(window);
+  RefPtr<TestInterfaceMaplike> r = new TestInterfaceMaplike(window);
   return r.forget();
 }
 

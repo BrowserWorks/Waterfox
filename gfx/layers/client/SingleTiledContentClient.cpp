@@ -40,6 +40,19 @@ SingleTiledContentClient::UpdatedBuffer(TiledBufferType aType)
   mTiledBuffer->ClearPaintedRegion();
 }
 
+/* static */ bool
+SingleTiledContentClient::ClientSupportsLayerSize(const IntSize& aSize, ClientLayerManager* aManager)
+{
+  int32_t maxTextureSize = aManager->GetMaxTextureSize();
+  return aSize.width <= maxTextureSize && aSize.height <= maxTextureSize;
+}
+
+bool
+SingleTiledContentClient::SupportsLayerSize(const IntSize& aSize, ClientLayerManager* aManager) const
+{
+  return ClientSupportsLayerSize(aSize, aManager);
+}
+
 ClientSingleTiledLayerBuffer::ClientSingleTiledLayerBuffer(ClientTiledPaintedLayer* aPaintedLayer,
                                                            CompositableClient* aCompositableClient,
                                                            ClientLayerManager* aManager)
@@ -97,7 +110,7 @@ ClientSingleTiledLayerBuffer::GetTextureClient()
 {
   return mCompositableClient->CreateTextureClientForDrawing(
     gfx::ImageFormatToSurfaceFormat(mFormat), mSize, BackendSelector::Content,
-    TextureFlags::IMMEDIATE_UPLOAD);
+    TextureFlags::DISALLOW_BIGIMAGE | TextureFlags::IMMEDIATE_UPLOAD);
 }
 
 void
@@ -178,7 +191,7 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   }
 
   {
-    nsRefPtr<gfxContext> ctx = new gfxContext(dt);
+    RefPtr<gfxContext> ctx = new gfxContext(dt);
     ctx->SetMatrix(ctx->CurrentMatrix().Translate(-mTilingOrigin.x, -mTilingOrigin.y));
 
     aCallback(mPaintedLayer, ctx, paintRegion, paintRegion, DrawRegionClip::DRAW, nsIntRegion(), aCallbackData);

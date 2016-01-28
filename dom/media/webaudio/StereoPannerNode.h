@@ -60,8 +60,7 @@ protected:
   virtual ~StereoPannerNode();
 
 private:
-  static void SendPanToStream(AudioNode* aNode);
-  nsRefPtr<AudioParam> mPan;
+  RefPtr<AudioParam> mPan;
 };
 
 } // namespace dom

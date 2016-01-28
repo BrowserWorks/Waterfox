@@ -84,9 +84,9 @@ user_pref("geo.wifi.logging.enabled", true);
 // Make url-classifier updates so rare that they won't affect tests
 user_pref("urlclassifier.updateinterval", 172800);
 // Point the url-classifier to the local testing server for fast failures
+user_pref("browser.safebrowsing.appRepURL", "http://%(server)s/safebrowsing-dummy/update");
 user_pref("browser.safebrowsing.provider.google.gethashURL", "http://%(server)s/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.google.updateURL", "http://%(server)s/safebrowsing-dummy/update");
-user_pref("browser.safebrowsing.provider.google.appRepURL", "http://%(server)s/safebrowsing-dummy/update");
 user_pref("browser.safebrowsing.provider.mozilla.gethashURL", "http://%(server)s/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.mozilla.updateURL", "http://%(server)s/safebrowsing-dummy/update");
 user_pref("privacy.trackingprotection.introURL", "http://%(server)s/trackingprotection/tour");
@@ -95,6 +95,7 @@ user_pref("extensions.update.url", "http://%(server)s/extensions-dummy/updateURL
 user_pref("extensions.update.background.url", "http://%(server)s/extensions-dummy/updateBackgroundURL");
 user_pref("extensions.blocklist.url", "http://%(server)s/extensions-dummy/blocklistURL");
 user_pref("extensions.hotfix.url", "http://%(server)s/extensions-dummy/hotfixURL");
+user_pref("extensions.systemAddon.update.url", "http://%(server)s/dummy-system-addons.xml");
 // Turn off extension updates so they don't bother tests
 user_pref("extensions.update.enabled", false);
 // Make sure opening about:addons won't hit the network
@@ -113,6 +114,9 @@ user_pref("network.sntp.pools", "%(server)s");
 // port 135. The default number of retries (10) is excessive, but retrying
 // at least once will mean that codepath is still tested in automation.
 user_pref("network.sntp.maxRetryCount", 1);
+
+// Make sure the notification permission migration test doesn't hit the network.
+user_pref("app.support.baseURL", "http://%(server)s/support-dummy/");
 
 // Existing tests don't wait for the notification button security delay
 user_pref("security.notification_enable_delay", 0);
@@ -157,8 +161,8 @@ user_pref("layout.css.object-fit-and-position.enabled", true);
 // Enable CSS Ruby for testing
 user_pref("layout.css.ruby.enabled", true);
 
-// Enable unicode-range for testing
-user_pref("layout.css.unicode-range.enabled", true);
+// Enable webkit prefixed CSS features for testing
+user_pref("layout.css.prefixes.webkit", true);
 
 // Disable spammy layout warnings because they pollute test logs
 user_pref("layout.spammy_warnings.enabled", false);
@@ -166,13 +170,6 @@ user_pref("layout.spammy_warnings.enabled", false);
 // Enable Media Source Extensions for testing
 user_pref("media.mediasource.mp4.enabled", true);
 user_pref("media.mediasource.webm.enabled", true);
-
-// Enable fragmented MP4 parser for testing
-user_pref("media.fragmented-mp4.exposed", true);
-
-#if defined(LINUX)
-user_pref("media.fragmented-mp4.ffmpeg.enabled", true);
-#endif
 
 // Enable mozContacts
 user_pref("dom.mozContacts.enabled", true);
@@ -258,12 +255,13 @@ user_pref("identity.fxaccounts.remote.signin.uri", "https://%(server)s/fxa-signi
 user_pref("identity.fxaccounts.settings.uri", "https://%(server)s/fxa-settings");
 user_pref('identity.fxaccounts.remote.webchannel.uri', 'https://%(server)s/');
 
-// Increase the APZ content response timeout in tests to 15 seconds.
+// Increase the APZ content response timeout in tests to 1 minute.
 // This is to accommodate the fact that test environments tends to be slower
 // than production environments (with the b2g emulator being the slowest of them
 // all), resulting in the production timeout value sometimes being exceeded
-// and causing false-positive test failures. See bug 1176798, bug 1177018.
-user_pref("apz.content_response_timeout", 15000);
+// and causing false-positive test failures. See bug 1176798, bug 1177018,
+// bug 1210465.
+user_pref("apz.content_response_timeout", 60000);
 
 // Make sure SSL Error reports don't hit the network
 user_pref("security.ssl.errorReporting.url", "https://example.com/browser/browser/base/content/test/general/pinning_reports.sjs?succeed");

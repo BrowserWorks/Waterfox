@@ -28,6 +28,7 @@
 #include "mozilla/UseCounter.h"
 #include "mozilla/WeakPtr.h"
 #include "Units.h"
+#include "nsContentListDeclarations.h"
 #include "nsExpirationTracker.h"
 #include "nsClassHashtable.h"
 #include "prclist.h"
@@ -155,8 +156,8 @@ typedef CallbackObjectHolder<NodeFilter, nsIDOMNodeFilter> NodeFilterHolder;
 } // namespace mozilla
 
 #define NS_IDOCUMENT_IID \
-{ 0x72391609, 0x673d, 0x4bec, \
-  { 0xbd, 0x75, 0x64, 0xbf, 0x1f, 0x6a, 0x6b, 0x5e } }
+{ 0x5f51e18c, 0x9e0e, 0x4dc0, \
+  { 0x9f, 0x08, 0x7a, 0x32, 0x65, 0x52, 0xea, 0x11 } }
 
 // Enum for requesting a particular type of document when creating a doc
 enum DocumentFlavor {
@@ -175,11 +176,6 @@ enum DocumentFlavor {
 
 // Some function forward-declarations
 class nsContentList;
-
-already_AddRefed<nsContentList>
-NS_GetContentList(nsINode* aRootNode,
-                  int32_t aMatchNameSpaceId,
-                  const nsAString& aTagname);
 
 //----------------------------------------------------------------------
 
@@ -661,6 +657,8 @@ public:
     return GetBFCacheEntry() ? nullptr : mPresShell;
   }
 
+  // Instead using this method, what you probably want is
+  // RemoveFromBFCacheSync() as we do in MessagePort and BroadcastChannel.
   void DisallowBFCaching()
   {
     NS_ASSERTION(!mBFCacheEntry, "We're already in the bfcache!");
@@ -734,6 +732,19 @@ public:
    */
   Element* GetRootElement() const;
 
+  /**
+   * Retrieve information about the viewport as a data structure.
+   * This will return information in the viewport META data section
+   * of the document. This can be used in lieu of ProcessViewportInfo(),
+   * which places the viewport information in the document header instead
+   * of returning it directly.
+   *
+   * @param aDisplaySize size of the on-screen display area for this
+   * document, in device pixels.
+   *
+   * NOTE: If the site is optimized for mobile (via the doctype), this
+   * will return viewport information that specifies default information.
+   */
   virtual nsViewportInfo GetViewportInfo(const mozilla::ScreenIntSize& aDisplaySize) = 0;
 
   /**
@@ -773,7 +784,7 @@ public:
                          mozilla::ErrorResult& aError);
   void RemoveAnonymousContent(mozilla::dom::AnonymousContent& aContent,
                               mozilla::ErrorResult& aError);
-  nsTArray<nsRefPtr<mozilla::dom::AnonymousContent>>& GetAnonymousContents() {
+  nsTArray<RefPtr<mozilla::dom::AnonymousContent>>& GetAnonymousContents() {
     return mAnonymousContents;
   }
 
@@ -946,7 +957,7 @@ public:
     eAgentSheet,
     eUserSheet,
     eAuthorSheet,
-    SheetTypeCount
+    AdditionalSheetTypeCount
   };
 
   virtual nsresult LoadAdditionalStyleSheet(additionalSheetType aType, nsIURI* aSheetURI) = 0;
@@ -1093,6 +1104,11 @@ public:
    * this document.
    */
   virtual Element* GetFullScreenElement() = 0;
+
+  /**
+   * Returns all elements in the fullscreen stack in the insertion order.
+   */
+  virtual nsTArray<Element*> GetFullscreenStack() const = 0;
 
   /**
    * Asynchronously requests that the document make aElement the fullscreen
@@ -2124,7 +2140,7 @@ public:
                                         int32_t *aHandle);
   void CancelFrameRequestCallback(int32_t aHandle);
 
-  typedef nsTArray<nsRefPtr<mozilla::dom::FrameRequestCallback>> FrameRequestCallbackList;
+  typedef nsTArray<RefPtr<mozilla::dom::FrameRequestCallback>> FrameRequestCallbackList;
   /**
    * Put this document's frame request callbacks into the provided
    * list, and forget about them.
@@ -2602,6 +2618,16 @@ public:
 
   void PropagateUseCounters(nsIDocument* aParentDocument);
 
+  void SetUserHasInteracted(bool aUserHasInteracted)
+  {
+    mUserHasInteracted = aUserHasInteracted;
+  }
+
+  bool UserHasInteracted()
+  {
+    return mUserHasInteracted;
+  }
+
 protected:
   bool GetUseCounter(mozilla::UseCounter aUseCounter)
   {
@@ -2696,11 +2722,11 @@ protected:
   // This is a weak reference, but we hold a strong reference to mNodeInfo,
   // which in turn holds a strong reference to this mNodeInfoManager.
   nsNodeInfoManager* mNodeInfoManager;
-  nsRefPtr<mozilla::css::Loader> mCSSLoader;
-  nsRefPtr<mozilla::css::ImageLoader> mStyleImageLoader;
-  nsRefPtr<nsHTMLStyleSheet> mAttrStyleSheet;
-  nsRefPtr<nsHTMLCSSStyleSheet> mStyleAttrStyleSheet;
-  nsRefPtr<mozilla::SVGAttrAnimationRuleProcessor> mSVGAttrAnimationRuleProcessor;
+  RefPtr<mozilla::css::Loader> mCSSLoader;
+  RefPtr<mozilla::css::ImageLoader> mStyleImageLoader;
+  RefPtr<nsHTMLStyleSheet> mAttrStyleSheet;
+  RefPtr<nsHTMLCSSStyleSheet> mStyleAttrStyleSheet;
+  RefPtr<mozilla::SVGAttrAnimationRuleProcessor> mSVGAttrAnimationRuleProcessor;
 
   // The set of all object, embed, applet, video/audio elements or
   // nsIObjectLoadingContent or nsIDocumentActivity for which this is the
@@ -2715,7 +2741,7 @@ protected:
   nsTHashtable<nsPtrHashKey<mozilla::dom::Link> > mLinksToUpdate;
 
   // SMIL Animation Controller, lazily-initialized in GetAnimationController
-  nsRefPtr<nsSMILAnimationController> mAnimationController;
+  RefPtr<nsSMILAnimationController> mAnimationController;
 
   // Table of element properties for this document.
   nsPropertyTable mPropertyTable;
@@ -2725,7 +2751,7 @@ protected:
   nsCOMPtr<nsIHTMLCollection> mChildrenCollection;
 
   // container for per-context fonts (downloadable, SVG, etc.)
-  nsRefPtr<mozilla::dom::FontFaceSet> mFontFaceSet;
+  RefPtr<mozilla::dom::FontFaceSet> mFontFaceSet;
 
   // Compatibility mode
   nsCompatibility mCompatMode;
@@ -2833,10 +2859,6 @@ protected:
 
   // True if DisallowBFCaching has been called on this document.
   bool mBFCacheDisallowed : 1;
-
-  // If true, we have an input encoding.  If this is false, then the
-  // document was created entirely in memory
-  bool mHaveInputEncoding : 1;
 
   bool mHasHadDefaultView : 1;
 
@@ -2994,9 +3016,9 @@ protected:
 
   uint32_t mInSyncOperationCount;
 
-  nsRefPtr<mozilla::dom::XPathEvaluator> mXPathEvaluator;
+  RefPtr<mozilla::dom::XPathEvaluator> mXPathEvaluator;
 
-  nsTArray<nsRefPtr<mozilla::dom::AnonymousContent>> mAnonymousContents;
+  nsTArray<RefPtr<mozilla::dom::AnonymousContent>> mAnonymousContents;
 
   uint32_t mBlockDOMContentLoaded;
   bool mDidFireDOMContentLoaded:1;
@@ -3011,6 +3033,9 @@ protected:
   // Flags for whether we've notified our top-level "page" of a use counter
   // for this child document.
   std::bitset<mozilla::eUseCounter_Count> mNotifiedPageForUseCounter;
+
+  // Whether the user has interacted with the document or not:
+  bool mUserHasInteracted;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIDocument, NS_IDOCUMENT_IID)

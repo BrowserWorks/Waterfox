@@ -195,10 +195,10 @@ const STORE_ID_PENDING_PREFIX = "#unknownID#";
 
 this.DOMApplicationRegistry = {
   // pseudo-constants for the different application kinds.
-  get kPackaged()       "packaged",
-  get kHosted()         "hosted",
-  get kHostedAppcache() "hosted-appcache",
-  get kAndroid()        "android-native",
+  get kPackaged()       { return "packaged"; },
+  get kHosted()         { return "hosted"; },
+  get kHostedAppcache() { return "hosted-appcache"; },
+  get kAndroid()        { return "android-native"; },
 
   // Path to the webapps.json file where we store the registry data.
   appsFile: null,
@@ -696,7 +696,8 @@ this.DOMApplicationRegistry = {
           continue;
         // Remove the permissions, cookies and private data for this app.
         let localId = this.webapps[id].localId;
-        permMgr.removePermissionsForApp(localId, false);
+        let attrs = { appId: localId };
+        permMgr.removePermissionsWithAttributes(JSON.stringify(attrs));
         Services.cookies.removeCookiesForApp(localId, false);
         this._clearPrivateData(localId, false);
         delete this.webapps[id];
@@ -1937,8 +1938,7 @@ this.DOMApplicationRegistry = {
       PermissionsInstaller.installPermissions(
         { manifest: newManifest,
           origin: app.origin,
-          manifestURL: app.manifestURL,
-          kind: app.kind },
+          manifestURL: app.manifestURL },
         true);
     }
     this.updateDataStore(this.webapps[id].localId, app.origin,
@@ -1989,8 +1989,12 @@ this.DOMApplicationRegistry = {
         },
         id: aApp.id
       });
+      let appURI = NetUtil.newURI(aApp.origin, null, null);
+      let principal =
+        Services.scriptSecurityManager.createCodebasePrincipal(appURI,
+                                                               {appId: aApp.localId});
       let cacheUpdate = updateSvc.scheduleAppUpdate(
-        appcacheURI, docURI, aApp.localId, false, aProfileDir);
+        appcacheURI, docURI, principal, aApp.localId, false, aProfileDir);
 
       // We save the download details for potential further usage like
       // cancelling it.
@@ -2139,8 +2143,12 @@ this.DOMApplicationRegistry = {
           new ManifestHelper(manifest, aData.origin, aData.manifestURL);
         debug("onlyCheckAppCache - launch updateSvc.checkForUpdate for " +
               helper.fullAppcachePath());
+        let appURI = NetUtil.newURI(aApp.origin, null, null);
+        let principal =
+          Services.scriptSecurityManager.createCodebasePrincipal(appURI,
+                                                                 {appId: aApp.localId});
         updateSvc.checkForUpdate(Services.io.newURI(helper.fullAppcachePath(), null, null),
-                                 app.localId, false, updateObserver);
+                                 principal, app.localId, false, updateObserver);
       });
       return;
     }
@@ -2374,8 +2382,7 @@ this.DOMApplicationRegistry = {
         PermissionsInstaller.installPermissions({
           manifest: aApp.manifest,
           origin: aApp.origin,
-          manifestURL: aData.manifestURL,
-          kind: aApp.kind
+          manifestURL: aData.manifestURL
         }, true);
       }
 
@@ -2409,9 +2416,13 @@ this.DOMApplicationRegistry = {
             manifest.fullAppcachePath());
 
       let updateDeferred = Promise.defer();
+      let appURI = NetUtil.newURI(aApp.origin, null, null);
+      let principal =
+        Services.scriptSecurityManager.createCodebasePrincipal(appURI,
+                                                               {appId: aApp.localId});
 
       updateSvc.checkForUpdate(Services.io.newURI(manifest.fullAppcachePath(), null, null),
-                               aApp.localId, false,
+                               principal, aApp.localId, false,
                                (aSubject, aTopic, aData) => updateDeferred.resolve(aTopic));
 
       let topic = yield updateDeferred.promise;
@@ -3468,6 +3479,10 @@ this.DOMApplicationRegistry = {
       // nsILoadContext
       appId: aOldApp.installerAppId,
       isInBrowserElement: aOldApp.installerIsBrowser,
+      originAttributes: {
+        appId: aOldApp.installerAppId,
+        inBrowser: aOldApp.installerIsBrowser
+      },
       usePrivateBrowsing: false,
       isContent: false,
       associatedWindow: null,
@@ -3722,16 +3737,24 @@ this.DOMApplicationRegistry = {
     // true.
     if (useReviewerCerts) {
       let manifestPath = Services.io.newURI(aManifestURL, null, null).path;
+      let isReviewer = false;
+      // There are different reviewer paths for apps & addons so we keep
+      // them in a comma separated preference.
+      try {
+        let reviewerPaths =
+          Services.prefs.getCharPref("dom.apps.reviewer_paths").split(",");
+        isReviewer = reviewerPaths.some(path => { return manifestPath.startsWith(path); });
+      } catch(e) {}
 
       switch (aInstallOrigin) {
         case "https://marketplace.firefox.com":
-          root = manifestPath.startsWith("/reviewers/")
+          root = isReviewer
                ? Ci.nsIX509CertDB.AppMarketplaceProdReviewersRoot
                : Ci.nsIX509CertDB.AppMarketplaceProdPublicRoot;
           break;
 
         case "https://marketplace-dev.allizom.org":
-          root = manifestPath.startsWith("/reviewers/")
+          root = isReviewer
                ? Ci.nsIX509CertDB.AppMarketplaceDevReviewersRoot
                : Ci.nsIX509CertDB.AppMarketplaceDevPublicRoot;
           break;
@@ -3789,6 +3812,10 @@ this.DOMApplicationRegistry = {
         throw "INVALID_MANIFEST";
       }
       newManifest = UserCustomizations.convertManifest(newManifest);
+      // Keep track of the add-on version, to use for blocklisting.
+      if (newManifest.version) {
+        aNewApp.extensionVersion = newManifest.version;
+      }
     }
 
     if (!AppsUtils.checkManifest(newManifest, aOldApp)) {
@@ -4090,11 +4117,6 @@ this.DOMApplicationRegistry = {
   },
 
   doUninstall: Task.async(function*(aData, aMm) {
-    // The yields here could get stuck forever, so we only hold
-    // a weak reference to the message manager while yielding, to avoid
-    // leaking the whole page associationed with the message manager.
-    aMm = Cu.getWeakReference(aMm);
-
     let response = "Webapps:Uninstall:Return:OK";
 
     try {
@@ -4124,9 +4146,7 @@ this.DOMApplicationRegistry = {
       response = "Webapps:Uninstall:Return:KO";
     }
 
-    if ((aMm = aMm.get())) {
-      aMm.sendAsyncMessage(response, this.formatMessage(aData));
-    }
+    aMm.sendAsyncMessage(response, this.formatMessage(aData));
   }),
 
   uninstall: function(aManifestURL) {
@@ -4634,6 +4654,10 @@ this.DOMApplicationRegistry = {
     }
 
     return this.getManifestFor(aManifestURL).then((aManifest) => {
+      if (!aManifest) {
+        return Promise.reject("NoManifest");
+      }
+
       let manifest = aEntryPoint && aManifest.entry_points &&
                      aManifest.entry_points[aEntryPoint]
         ? aManifest.entry_points[aEntryPoint]

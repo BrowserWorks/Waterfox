@@ -66,12 +66,36 @@ using std::min;
 using namespace mozilla;
 using namespace mozilla::dom;
 
-#define NS_SET_IMAGE_REQUEST(method_, context_, request_)                   \
+void*
+nsConditionalResetStyleData::GetConditionalStyleData(nsStyleStructID aSID,
+                               nsStyleContext* aStyleContext) const
+{
+  Entry* e = static_cast<Entry*>(mEntries[aSID]);
+  MOZ_ASSERT(e, "if mConditionalBits bit is set, we must have at least one "
+                "conditional style struct");
+  do {
+    if (e->mConditions.Matches(aStyleContext)) {
+      void* data = e->mStyleStruct;
+
+      // For reset structs with conditions, we cache the data on the
+      // style context.
+      // Tell the style context that it doesn't own the data
+      aStyleContext->AddStyleBit(GetBitForSID(aSID));
+      aStyleContext->SetStyle(aSID, data);
+
+      return data;
+    }
+    e = e->mNext;
+  } while (e);
+  return nullptr;
+}
+
+#define NS_SET_IMAGE_REQUEST(method_, context_, request_)                     \
   if ((context_)->PresContext()->IsDynamic()) {                               \
-    method_(request_);                                                      \
-  } else {                                                                  \
-    nsRefPtr<imgRequestProxy> req = nsContentUtils::GetStaticRequest(request_); \
-    method_(req);                                                           \
+    method_(request_);                                                        \
+  } else {                                                                    \
+    RefPtr<imgRequestProxy> req = nsContentUtils::GetStaticRequest(request_); \
+    method_(req);                                                             \
   }
 
 #define NS_SET_IMAGE_REQUEST_WITH_DOC(method_, context_, requestgetter_)      \
@@ -303,7 +327,7 @@ GetMetricsFor(nsPresContext* aPresContext,
       orientation = gfxFont::eVertical;
     }
   }
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   aPresContext->DeviceContext()->GetMetricsFor(font,
                                                aStyleFont->mLanguage,
                                                aStyleFont->mExplicitLanguage,
@@ -469,7 +493,7 @@ static nscoord CalcLengthWith(const nsCSSValue& aValue,
       } else {
         // This is not the root element or we are calculating something other
         // than font size, so rem is relative to the root element's font size.
-        nsRefPtr<nsStyleContext> rootStyle;
+        RefPtr<nsStyleContext> rootStyle;
         const nsStyleFont *rootStyleFont = styleFont;
         Element* docElement = aPresContext->Document()->GetRootElement();
 
@@ -505,6 +529,10 @@ static nscoord CalcLengthWith(const nsCSSValue& aValue,
   }
   switch (aValue.GetUnit()) {
     case eCSSUnit_EM: {
+      if (aValue.GetFloatValue() == 0.0f) {
+        // Don't call SetFontSizeDependency for '0em'.
+        return 0;
+      }
       // CSS2.1 specifies that this unit scales to the computed font
       // size, not the em-width in the font metrics, despite the name.
       aConditions.SetFontSizeDependency(aFontSize);
@@ -512,7 +540,7 @@ static nscoord CalcLengthWith(const nsCSSValue& aValue,
     }
     case eCSSUnit_XHeight: {
       aPresContext->SetUsesExChUnits(true);
-      nsRefPtr<nsFontMetrics> fm =
+      RefPtr<nsFontMetrics> fm =
         GetMetricsFor(aPresContext, aStyleContext, styleFont,
                       aFontSize, aUseUserFontSet);
       aConditions.SetUncacheable();
@@ -520,7 +548,7 @@ static nscoord CalcLengthWith(const nsCSSValue& aValue,
     }
     case eCSSUnit_Char: {
       aPresContext->SetUsesExChUnits(true);
-      nsRefPtr<nsFontMetrics> fm =
+      RefPtr<nsFontMetrics> fm =
         GetMetricsFor(aPresContext, aStyleContext, styleFont,
                       aFontSize, aUseUserFontSet);
       gfxFloat zeroWidth =
@@ -958,7 +986,10 @@ static bool SetColor(const nsCSSValue& aValue, const nscolor aParentColor,
     int32_t intValue = aValue.GetIntValue();
     if (0 <= intValue) {
       LookAndFeel::ColorID colorID = (LookAndFeel::ColorID) intValue;
-      if (NS_SUCCEEDED(LookAndFeel::GetColor(colorID, &aResult))) {
+      bool useStandinsForNativeColors = aPresContext &&
+                                        !aPresContext->IsChrome();
+      if (NS_SUCCEEDED(LookAndFeel::GetColor(colorID,
+                                    useStandinsForNativeColors, &aResult))) {
         result = true;
       }
     }
@@ -1463,11 +1494,11 @@ nsRuleNode::DestroyInternal(nsRuleNode ***aDestroyQueueTail)
 nsRuleNode* nsRuleNode::CreateRootNode(nsPresContext* aPresContext)
 {
   return new (aPresContext)
-    nsRuleNode(aPresContext, nullptr, nullptr, 0xff, false);
+    nsRuleNode(aPresContext, nullptr, nullptr, SheetType::Unknown, false);
 }
 
 nsRuleNode::nsRuleNode(nsPresContext* aContext, nsRuleNode* aParent,
-                       nsIStyleRule* aRule, uint8_t aLevel,
+                       nsIStyleRule* aRule, SheetType aLevel,
                        bool aIsImportant)
   : mPresContext(aContext),
     mParent(aParent),
@@ -1502,9 +1533,9 @@ nsRuleNode::nsRuleNode(nsPresContext* aContext, nsRuleNode* aParent,
 
   // nsStyleSet::GetContext depends on there being only one animation
   // rule.
-  MOZ_ASSERT(IsRoot() || GetLevel() != nsStyleSet::eAnimationSheet ||
+  MOZ_ASSERT(IsRoot() || GetLevel() != SheetType::Animation ||
              mParent->IsRoot() ||
-             mParent->GetLevel() != nsStyleSet::eAnimationSheet,
+             mParent->GetLevel() != SheetType::Animation,
              "must be only one rule at animation level");
 }
 
@@ -1519,7 +1550,7 @@ nsRuleNode::~nsRuleNode()
 }
 
 nsRuleNode*
-nsRuleNode::Transition(nsIStyleRule* aRule, uint8_t aLevel,
+nsRuleNode::Transition(nsIStyleRule* aRule, SheetType aLevel,
                        bool aIsImportantRule)
 {
   nsRuleNode* next = nullptr;
@@ -2177,10 +2208,10 @@ nsRuleNode::ResolveVariableReferences(const nsStyleStructID aSID,
       &aContext->StyleVariables()->mVariables;
     nsCSSValueTokenStream* tokenStream = value->GetTokenStreamValue();
 
-    MOZ_ASSERT(tokenStream->mLevel != nsStyleSet::eSheetTypeCount,
+    MOZ_ASSERT(tokenStream->mLevel != SheetType::Count,
                "Token stream should have a defined level");
 
-    AutoRestore<uint16_t> saveLevel(aRuleData->mLevel);
+    AutoRestore<SheetType> saveLevel(aRuleData->mLevel);
     aRuleData->mLevel = tokenStream->mLevel;
 
     // Note that ParsePropertyWithVariableReferences relies on the fact
@@ -2341,6 +2372,11 @@ nsRuleNode::WalkRuleTree(const nsStyleStructID aSID,
     // branch that they never need to examine their rules for this particular struct type
     // ever again.
     PropagateDependentBit(aSID, ruleNode, startStruct);
+    // For inherited structs, mark the struct (which will be set on
+    // the context by our caller) as not being owned by the context.
+    if (!isReset) {
+      aContext->AddStyleBit(nsCachedStyleData::GetBitForSID(aSID));
+    }
     return startStruct;
   }
   if ((!startStruct && !isReset &&
@@ -2592,9 +2628,9 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
   nsStyle##type_* data_ = nullptr;                                            \
   mozilla::Maybe<nsStyle##type_> maybeFakeParentData;                         \
   const nsStyle##type_* parentdata_ = nullptr;                                \
-  RuleNodeCacheConditions conditions = aConditions;                                      \
+  RuleNodeCacheConditions conditions = aConditions;                           \
                                                                               \
-  /* If |conditions.Cacheable()| might be true by the time we're done, we */    \
+  /* If |conditions.Cacheable()| might be true by the time we're done, we */  \
   /* can't call parentContext->Style##type_() since it could recur into */    \
   /* setting the same struct on the same rule node, causing a leak. */        \
   if (aRuleDetail != eRuleFullReset &&                                        \
@@ -2621,7 +2657,7 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
     if (aRuleDetail != eRuleFullMixed && aRuleDetail != eRuleFullReset) {     \
       /* No question. We will have to inherit. Go ahead and init */           \
       /* with inherited vals from parent. */                                  \
-      conditions.SetUncacheable();                                              \
+      conditions.SetUncacheable();                                            \
       if (parentdata_)                                                        \
         data_ = new (mPresContext) nsStyle##type_(*parentdata_);              \
       else                                                                    \
@@ -2665,7 +2701,7 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
   else                                                                        \
     data_ = new (mPresContext) nsStyle##type_ ctorargs_;                      \
                                                                               \
-  /* If |conditions.Cacheable()| might be true by the time we're done, we */    \
+  /* If |conditions.Cacheable()| might be true by the time we're done, we */  \
   /* can't call parentContext->Style##type_() since it could recur into */    \
   /* setting the same struct on the same rule node, causing a leak. */        \
   mozilla::Maybe<nsStyle##type_> maybeFakeParentData;                         \
@@ -2689,13 +2725,13 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
  * @param data_ Variable holding the result of this function.
  */
 #define COMPUTE_END_INHERITED(type_, data_)                                   \
-  NS_POSTCONDITION(!conditions.CacheableWithoutDependencies() ||                \
+  NS_POSTCONDITION(!conditions.CacheableWithoutDependencies() ||              \
                    aRuleDetail == eRuleFullReset ||                           \
                    (aStartStruct && aRuleDetail == eRulePartialReset),        \
-                   "conditions.CacheableWithoutDependencies() must be false "   \
+                   "conditions.CacheableWithoutDependencies() must be false " \
                    "for inherited structs unless all properties have been "   \
                    "specified with values other than inherit");               \
-  if (conditions.CacheableWithoutDependencies()) {                              \
+  if (conditions.CacheableWithoutDependencies()) {                            \
     /* We were fully specified and can therefore be cached right on the */    \
     /* rule node. */                                                          \
     if (!aHighestNode->mStyleData.mInheritedData) {                           \
@@ -2710,11 +2746,10 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
     /* Propagate the bit down. */                                             \
     PropagateDependentBit(eStyleStruct_##type_, aHighestNode, data_);         \
     /* Tell the style context that it doesn't own the data */                 \
-    aContext->                                                                \
-      AddStyleBit(nsCachedStyleData::GetBitForSID(eStyleStruct_##type_));     \
+    aContext->AddStyleBit(NS_STYLE_INHERIT_BIT(type_));                       \
   }                                                                           \
-  /* Always cache inherited data on the style context */                      \
-  aContext->SetStyle##type_(data_);                                           \
+  /* For inherited structs, our caller will cache the data on the */          \
+  /* style context */                                                         \
                                                                               \
   return data_;
 
@@ -2725,14 +2760,14 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
  * @param data_ Variable holding the result of this function.
  */
 #define COMPUTE_END_RESET(type_, data_)                                       \
-  NS_POSTCONDITION(!conditions.CacheableWithoutDependencies() ||                \
+  NS_POSTCONDITION(!conditions.CacheableWithoutDependencies() ||              \
                    aRuleDetail == eRuleNone ||                                \
                    aRuleDetail == eRulePartialReset ||                        \
                    aRuleDetail == eRuleFullReset,                             \
-                   "conditions.CacheableWithoutDependencies() must be false "   \
+                   "conditions.CacheableWithoutDependencies() must be false " \
                    "for reset structs if any properties were specified as "   \
                    "inherit");                                                \
-  if (conditions.CacheableWithoutDependencies()) {                              \
+  if (conditions.CacheableWithoutDependencies()) {                            \
     /* We were fully specified and can therefore be cached right on the */    \
     /* rule node. */                                                          \
     if (!aHighestNode->mStyleData.mResetData) {                               \
@@ -2753,8 +2788,7 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
     mStyleData.mResetData->                                                   \
       SetStyleData(eStyleStruct_##type_, mPresContext, data_, conditions);    \
     /* Tell the style context that it doesn't own the data */                 \
-    aContext->                                                                \
-      AddStyleBit(nsCachedStyleData::GetBitForSID(eStyleStruct_##type_));     \
+    aContext->AddStyleBit(NS_STYLE_INHERIT_BIT(type_));                       \
     aContext->SetStyle(eStyleStruct_##type_, data_);                          \
   } else {                                                                    \
     /* We can't be cached in the rule node.  We have to be put right */       \
@@ -3763,6 +3797,36 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, nsStyleContext* aContext,
     languageOverrideValue->GetStringValue(aFont->mFont.languageOverride);
   }
 
+  // -moz-min-font-size-ratio: percent, inherit
+  const nsCSSValue* minFontSizeRatio = aRuleData->ValueForMinFontSizeRatio();
+  switch (minFontSizeRatio->GetUnit()) {
+    case eCSSUnit_Null:
+      break;
+    case eCSSUnit_Unset:
+    case eCSSUnit_Inherit:
+      aFont->mMinFontSizeRatio = aParentFont->mMinFontSizeRatio;
+      aConditions.SetUncacheable();
+      break;
+    case eCSSUnit_Initial:
+      aFont->mMinFontSizeRatio = 100; // 100%
+      break;
+    case eCSSUnit_Percent: {
+      // While percentages are parsed as floating point numbers, we
+      // only store an integer in the range [0, 255] since that's all
+      // we need for now.
+      float percent = minFontSizeRatio->GetPercentValue() * 100;
+      if (percent < 0) {
+        percent = 0;
+      } else if (percent > 255) {
+        percent = 255;
+      }
+      aFont->mMinFontSizeRatio = uint8_t(percent);
+      break;
+    }
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unknown unit for -moz-min-font-size-ratio");
+  }
+
   // font-size: enum, length, percent, inherit
   nscoord scriptLevelAdjustedParentSize = aParentFont->mSize;
   nscoord scriptLevelAdjustedUnconstrainedParentSize;
@@ -3801,6 +3865,8 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, nsStyleContext* aContext,
     nscoord minFontSize = aPresContext->MinFontSize(aFont->mLanguage);
     if (minFontSize < 0) {
       minFontSize = 0;
+    } else {
+      minFontSize = (minFontSize * aFont->mMinFontSizeRatio) / 100;
     }
     if (fontSize < minFontSize && !aPresContext->IsChrome()) {
       // override the minimum font-size constraint
@@ -4048,7 +4114,7 @@ nsRuleNode::GetShadowData(const nsCSSValueList* aList,
 
   MOZ_ASSERT(arrayLength > 0,
              "Non-null text-shadow list, yet we counted 0 items.");
-  nsRefPtr<nsCSSShadowArray> shadowList =
+  RefPtr<nsCSSShadowArray> shadowList =
     new(arrayLength) nsCSSShadowArray(arrayLength);
 
   if (!shadowList)
@@ -4306,24 +4372,16 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
               NS_STYLE_WORDBREAK_NORMAL, 0, 0, 0, 0);
 
   // word-spacing: normal, length, inherit
-  nsStyleCoord tempCoord;
   const nsCSSValue* wordSpacingValue = aRuleData->ValueForWordSpacing();
-  if (SetCoord(*wordSpacingValue, tempCoord,
-               nsStyleCoord(parentText->mWordSpacing,
-                            nsStyleCoord::CoordConstructor),
-               SETCOORD_LH | SETCOORD_NORMAL | SETCOORD_INITIAL_NORMAL |
-                 SETCOORD_CALC_LENGTH_ONLY | SETCOORD_UNSET_INHERIT,
-               aContext, mPresContext, conditions)) {
-    if (tempCoord.GetUnit() == eStyleUnit_Coord) {
-      text->mWordSpacing = tempCoord.GetCoordValue();
-    } else if (tempCoord.GetUnit() == eStyleUnit_Normal) {
-      text->mWordSpacing = 0;
-    } else {
-      NS_NOTREACHED("unexpected unit");
-    }
+  if (wordSpacingValue->GetUnit() == eCSSUnit_Normal) {
+    // Do this so that "normal" computes to 0px, as the CSS 2.1 spec requires.
+    text->mWordSpacing.SetCoordValue(0);
   } else {
-    NS_ASSERTION(wordSpacingValue->GetUnit() == eCSSUnit_Null,
-                 "unexpected unit");
+    SetCoord(*aRuleData->ValueForWordSpacing(),
+             text->mWordSpacing, parentText->mWordSpacing,
+             SETCOORD_LH | SETCOORD_INITIAL_ZERO |
+               SETCOORD_CALC_LENGTH_ONLY | SETCOORD_UNSET_INHERIT,
+             aContext, mPresContext, conditions);
   }
 
   // word-wrap: enum, inherit, initial
@@ -4816,8 +4874,9 @@ CountTransitionProps(const TransitionPropInfo* aInfo,
   return numTransitions;
 }
 
-static void
-ComputeTimingFunction(const nsCSSValue& aValue, nsTimingFunction& aResult)
+/* static */ void
+nsRuleNode::ComputeTimingFunction(const nsCSSValue& aValue,
+                                  nsTimingFunction& aResult)
 {
   switch (aValue.GetUnit()) {
     case eCSSUnit_Enumerated:
@@ -4845,13 +4904,18 @@ ComputeTimingFunction(const nsCSSValue& aValue, nsTimingFunction& aResult)
                      (array->Item(1).GetIntValue() ==
                        NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START ||
                       array->Item(1).GetIntValue() ==
-                       NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END),
+                       NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END ||
+                      array->Item(1).GetIntValue() == -1),
                      "unexpected second value");
         nsTimingFunction::Type type =
           (array->Item(1).GetIntValue() ==
-            NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END)
-            ? nsTimingFunction::StepEnd : nsTimingFunction::StepStart;
-        aResult = nsTimingFunction(type, array->Item(0).GetIntValue());
+            NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START) ?
+              nsTimingFunction::Type::StepStart :
+              nsTimingFunction::Type::StepEnd;
+        aResult = nsTimingFunction(type, array->Item(0).GetIntValue(),
+                                   array->Item(1).GetIntValue() == -1 ?
+                                     nsTimingFunction::Keyword::Implicit :
+                                     nsTimingFunction::Keyword::Explicit);
       }
       break;
     default:
@@ -5438,6 +5502,13 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
               parentDisplay->mIsolation, NS_STYLE_ISOLATION_AUTO,
               0, 0, 0, 0);
 
+  // -moz-top-layer: enum, inherit, initial
+  SetDiscrete(*aRuleData->ValueForTopLayer(), display->mTopLayer,
+              conditions,
+              SETDSC_ENUMERATED | SETDSC_UNSET_INITIAL,
+              parentDisplay->mTopLayer, NS_STYLE_TOP_LAYER_NONE,
+              0, 0, 0, 0);
+
   // Backup original display value for calculation of a hypothetical
   // box (CSS2 10.6.4/10.6.5), in addition to getting our style data right later.
   // See nsHTMLReflowState::CalculateHypotheticalBox
@@ -5477,6 +5548,22 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
               SETDSC_ENUMERATED | SETDSC_UNSET_INITIAL,
               parentDisplay->mPosition,
               NS_STYLE_POSITION_STATIC, 0, 0, 0, 0);
+  // If an element is put in the top layer, while it is not absolutely
+  // positioned, the position value should be computed to 'absolute' per
+  // the Fullscreen API spec.
+  if (display->mTopLayer != NS_STYLE_TOP_LAYER_NONE &&
+      // XXX We currently only support fixed top layer element. But per
+      // spec it should check IsAbsolutelyPositionedStyle() instead.
+      // This should be fixed as soon as we support <dialog> element
+      // in bug 840640. We have to restrict it now because addons may
+      // mess with UA-only styles and cause crashes. See bug 1230508.
+      display->mPosition != NS_STYLE_POSITION_FIXED) {
+    // XXX And we should set other values to absolute instead of fixed.
+    display->mPosition = NS_STYLE_POSITION_FIXED;
+    // We cannot cache this struct because otherwise it may be used as
+    // an aStartStruct for some other elements.
+    conditions.SetUncacheable();
+  }
 
   // clear: enum, inherit, initial
   SetDiscrete(*aRuleData->ValueForClear(), display->mBreakType, conditions,
@@ -6198,7 +6285,7 @@ ComputePositionValue(nsStyleContext* aStyleContext,
   NS_ASSERTION(aValue.GetUnit() == eCSSUnit_Array,
                "unexpected unit for CSS <position> value");
 
-  nsRefPtr<nsCSSValue::Array> positionArray = aValue.GetArrayValue();
+  RefPtr<nsCSSValue::Array> positionArray = aValue.GetArrayValue();
   const nsCSSValue &xEdge   = positionArray->Item(0);
   const nsCSSValue &xOffset = positionArray->Item(1);
   const nsCSSValue &yEdge   = positionArray->Item(2);
@@ -7532,7 +7619,7 @@ SetGridTrackList(const nsCSSValue& aValue,
 
 static void
 SetGridTemplateAreas(const nsCSSValue& aValue,
-                     nsRefPtr<css::GridTemplateAreasValue>* aResult,
+                     RefPtr<css::GridTemplateAreasValue>* aResult,
                      css::GridTemplateAreasValue* aParentValue,
                      RuleNodeCacheConditions& aConditions)
 {
@@ -7637,21 +7724,13 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
   // block-axis properties, we turn them into unset if we find them in
   // that case.
 
-  bool vertical;
-  switch (aContext->StyleVisibility()->mWritingMode) {
-    default:
-      MOZ_ASSERT(false, "unexpected writing-mode value");
-      // fall through
-    case NS_STYLE_WRITING_MODE_HORIZONTAL_TB:
-      vertical = false;
-      break;
-    case NS_STYLE_WRITING_MODE_VERTICAL_RL:
-    case NS_STYLE_WRITING_MODE_VERTICAL_LR:
-      vertical = true;
-      break;
-  }
+  WritingMode wm(aContext);
+  bool vertical = wm.IsVertical();
 
   const nsCSSValue* width = aRuleData->ValueForWidth();
+  if (width->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(width->GetUnit() == eCSSUnit_Enumerated && vertical ?
              nsCSSValue(eCSSUnit_Unset) : *width,
            pos->mWidth, parentPos->mWidth,
@@ -7660,6 +7739,9 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
            aContext, mPresContext, conditions);
 
   const nsCSSValue* minWidth = aRuleData->ValueForMinWidth();
+  if (minWidth->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(minWidth->GetUnit() == eCSSUnit_Enumerated && vertical ?
              nsCSSValue(eCSSUnit_Unset) : *minWidth,
            pos->mMinWidth, parentPos->mMinWidth,
@@ -7668,6 +7750,9 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
            aContext, mPresContext, conditions);
 
   const nsCSSValue* maxWidth = aRuleData->ValueForMaxWidth();
+  if (maxWidth->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(maxWidth->GetUnit() == eCSSUnit_Enumerated && vertical ?
              nsCSSValue(eCSSUnit_Unset) : *maxWidth,
            pos->mMaxWidth, parentPos->mMaxWidth,
@@ -7676,6 +7761,9 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
            aContext, mPresContext, conditions);
 
   const nsCSSValue* height = aRuleData->ValueForHeight();
+  if (height->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(height->GetUnit() == eCSSUnit_Enumerated && !vertical ?
              nsCSSValue(eCSSUnit_Unset) : *height,
            pos->mHeight, parentPos->mHeight,
@@ -7684,6 +7772,9 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
            aContext, mPresContext, conditions);
 
   const nsCSSValue* minHeight = aRuleData->ValueForMinHeight();
+  if (minHeight->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(minHeight->GetUnit() == eCSSUnit_Enumerated && !vertical ?
              nsCSSValue(eCSSUnit_Unset) : *minHeight,
            pos->mMinHeight, parentPos->mMinHeight,
@@ -7692,6 +7783,9 @@ nsRuleNode::ComputePositionData(void* aStartStruct,
            aContext, mPresContext, conditions);
 
   const nsCSSValue* maxHeight = aRuleData->ValueForMaxHeight();
+  if (maxHeight->GetUnit() == eCSSUnit_Enumerated) {
+    conditions.SetWritingModeDependency(wm.GetBits());
+  }
   SetCoord(maxHeight->GetUnit() == eCSSUnit_Enumerated && !vertical ?
              nsCSSValue(eCSSUnit_Unset) : *maxHeight,
            pos->mMaxHeight, parentPos->mMaxHeight,
@@ -8914,7 +9008,7 @@ nsRuleNode::SetStyleClipPathToCSSValue(nsStyleClipPath* aStyleClipPath,
   const nsCSSValueList* cur = aValue->GetListValue();
 
   uint8_t sizingBox = NS_STYLE_CLIP_SHAPE_SIZING_NOBOX;
-  nsRefPtr<nsStyleBasicShape> basicShape;
+  RefPtr<nsStyleBasicShape> basicShape;
   for (unsigned i = 0; i < 2; ++i) {
     if (!cur) {
       break;
@@ -9109,7 +9203,7 @@ nsRuleNode::SetStyleFilterToCSSValue(nsStyleFilter* aStyleFilter,
                             type);
   MOZ_ASSERT(foundKeyword, "unknown filter type");
   if (type == NS_STYLE_FILTER_DROP_SHADOW) {
-    nsRefPtr<nsCSSShadowArray> shadowArray = GetShadowData(
+    RefPtr<nsCSSShadowArray> shadowArray = GetShadowData(
       filterFunction->Item(1).GetListValue(),
       aStyleContext,
       false,
@@ -9334,15 +9428,23 @@ nsRuleNode::GetStyleData(nsStyleStructID aSID,
                "if we ever call this on rule nodes that aren't used "
                "directly, we should adjust handling of mDependentBits "
                "in some way.");
+  MOZ_ASSERT(!aContext->GetCachedStyleData(aSID),
+             "style context should not have cached data for struct");
 
   const void *data;
 
   // Never use cached data for animated style inside a pseudo-element;
   // see comment on cacheability in AnimValuesStyleRule::MapRuleInfoInto.
   if (!(HasAnimationData() && ParentHasPseudoElementData(aContext))) {
-    data = mStyleData.GetStyleData(aSID, aContext);
-    if (MOZ_LIKELY(data != nullptr))
+    data = mStyleData.GetStyleData(aSID, aContext, aComputeData);
+    if (MOZ_LIKELY(data != nullptr)) {
+      // For inherited structs, mark the struct (which will be set on
+      // the context by our caller) as not being owned by the context.
+      if (!nsCachedStyleData::IsReset(aSID)) {
+        aContext->AddStyleBit(nsCachedStyleData::GetBitForSID(aSID));
+      }
       return data; // We have a fully specified struct. Just return it.
+    }
   }
 
   if (MOZ_UNLIKELY(!aComputeData))
@@ -9633,8 +9735,8 @@ nsRuleNode::HasAuthorSpecifiedRules(nsStyleContext* aStyleContext,
 
         rule->MapRuleInfoInto(&ruleData);
 
-        if (ruleData.mLevel == nsStyleSet::eAgentSheet ||
-            ruleData.mLevel == nsStyleSet::eUserSheet) {
+        if (ruleData.mLevel == SheetType::Agent ||
+            ruleData.mLevel == SheetType::User) {
           // This is a rule whose effect we want to ignore, so if any of
           // the properties we care about were set, set them to the dummy
           // value that they'll never otherwise get.
@@ -9756,7 +9858,7 @@ nsRuleNode::ComputePropertiesOverridingAnimation(
       // property) for transitions yet (which will make their
       // MapRuleInfoInto skip the properties that are currently
       // animating), we should skip them explicitly.
-      if (ruleData.mLevel == nsStyleSet::eTransitionSheet) {
+      if (ruleData.mLevel == SheetType::Transition) {
         continue;
       }
 
@@ -9806,3 +9908,12 @@ nsRuleNode::ParentHasPseudoElementData(nsStyleContext* aContext)
   nsStyleContext* parent = aContext->GetParent();
   return parent && parent->HasPseudoElementData();
 }
+
+#ifdef DEBUG
+bool
+nsRuleNode::ContextHasCachedData(nsStyleContext* aContext,
+                                 nsStyleStructID aSID)
+{
+  return !!aContext->GetCachedStyleData(aSID);
+}
+#endif

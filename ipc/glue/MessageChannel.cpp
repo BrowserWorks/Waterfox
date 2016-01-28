@@ -922,6 +922,7 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
         return false;
     }
 
+    bool handleWindowsMessages = mListener->HandleWindowsMessages(*aMsg);
     mLink->SendMessage(msg.forget());
 
     while (true) {
@@ -942,7 +943,7 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
 
         MOZ_ASSERT(!mTimedOutMessageSeqno);
 
-        bool maybeTimedOut = !WaitForSyncNotify();
+        bool maybeTimedOut = !WaitForSyncNotify(handleWindowsMessages);
 
         if (!Connected()) {
             ReportConnectionError("MessageChannel::SendAndWait");
@@ -990,6 +991,7 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
 bool
 MessageChannel::Call(Message* aMsg, Message* aReply)
 {
+    nsAutoPtr<Message> msg(aMsg);
     AssertWorkerThread();
     mMonitor->AssertNotCurrentThreadOwns();
 
@@ -999,11 +1001,11 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
 
     // This must come before MonitorAutoLock, as its destructor acquires the
     // monitor lock.
-    CxxStackFrame cxxframe(*this, OUT_MESSAGE, aMsg);
+    CxxStackFrame cxxframe(*this, OUT_MESSAGE, msg);
 
     MonitorAutoLock lock(*mMonitor);
     if (!Connected()) {
-        ReportConnectionError("MessageChannel::Call", aMsg);
+        ReportConnectionError("MessageChannel::Call", msg);
         return false;
     }
 
@@ -1012,9 +1014,7 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
                "cannot issue Interrupt call while blocked on sync request");
     IPC_ASSERT(!DispatchingSyncMessage(),
                "violation of sync handler invariant");
-    IPC_ASSERT(aMsg->is_interrupt(), "can only Call() Interrupt messages here");
-
-    nsAutoPtr<Message> msg(aMsg);
+    IPC_ASSERT(msg->is_interrupt(), "can only Call() Interrupt messages here");
 
     msg->set_seqno(NextSeqno());
     msg->set_interrupt_remote_stack_depth_guess(mRemoteStackDepthGuess);
@@ -1576,7 +1576,7 @@ MessageChannel::WaitResponse(bool aWaitTimedOut)
 
 #ifndef OS_WIN
 bool
-MessageChannel::WaitForSyncNotify()
+MessageChannel::WaitForSyncNotify(bool /* aHandleWindowsMessages */)
 {
     PRIntervalTime timeout = (kNoTimeout == mTimeoutMs) ?
                              PR_INTERVAL_NO_TIMEOUT :
@@ -1594,7 +1594,7 @@ MessageChannel::WaitForSyncNotify()
 bool
 MessageChannel::WaitForInterruptNotify()
 {
-    return WaitForSyncNotify();
+    return WaitForSyncNotify(true);
 }
 
 void

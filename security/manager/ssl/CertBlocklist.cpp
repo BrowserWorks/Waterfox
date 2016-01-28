@@ -288,7 +288,6 @@ CertBlocklist::EnsureBackingFileInitialized(MutexAutoLock& lock)
   return NS_OK;
 }
 
-// void revokeCertBySubjectAndPubKey(in string subject, in string pubKeyHash);
 NS_IMETHODIMP
 CertBlocklist::RevokeCertBySubjectAndPubKey(const char* aSubject,
                                             const char* aPubKeyHash)
@@ -304,7 +303,6 @@ CertBlocklist::RevokeCertBySubjectAndPubKey(const char* aSubject,
                                 CertNewFromBlocklist, lock);
 }
 
-// void revokeCertByIssuerAndSerial(in string issuer, in string serialNumber);
 NS_IMETHODIMP
 CertBlocklist::RevokeCertByIssuerAndSerial(const char* aIssuer,
                                            const char* aSerialNumber)
@@ -348,14 +346,15 @@ CertBlocklist::AddRevokedCertInternal(const nsACString& aEncodedDN,
 
 
   if (aItemState == CertNewFromBlocklist) {
-    // we want SaveEntries to be a no-op if no new entries are added
-    if (!mBlocklist.Contains(item)) {
+    // We want SaveEntries to be a no-op if no new entries are added.
+    nsGenericHashKey<CertBlocklistItem>* entry = mBlocklist.GetEntry(item);
+    if (!entry) {
       mModified = true;
+    } else {
+      // Ensure that any existing item is replaced by a fresh one so we can
+      // use mIsCurrent to decide which entries to write out.
+      mBlocklist.RemoveEntry(entry);
     }
-
-    // Ensure that any existing item is replaced by a fresh one so we can
-    // use mIsCurrent to decide which entries to write out
-    mBlocklist.RemoveEntry(item);
     item.mIsCurrent = true;
   }
   mBlocklist.PutEntry(item);
@@ -507,14 +506,6 @@ CertBlocklist::SaveEntries()
   return NS_OK;
 }
 
-// boolean isCertRevoked([const, array, size_is(issuerLength)] in octet issuer,
-//                       in unsigned long issuerLength,
-//                       [const, array, size_is(serialLength)] in octet serial,
-//                       in unsigned long serialLength),
-//                       [const, array, size_is(subject_length)] in octet subject,
-//                       in unsigned long subject_length,
-//                       [const, array, size_is(pubkey_length)] in octet pubkey,
-//                       in unsigned long pubkey_length);
 NS_IMETHODIMP
 CertBlocklist::IsCertRevoked(const uint8_t* aIssuer,
                              uint32_t aIssuerLength,

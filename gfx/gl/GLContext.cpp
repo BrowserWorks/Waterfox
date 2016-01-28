@@ -39,7 +39,6 @@
 
 #ifdef XP_MACOSX
 #include <CoreServices/CoreServices.h>
-#include "gfxColor.h"
 #endif
 
 #if defined(MOZ_WIDGET_COCOA)
@@ -78,6 +77,7 @@ static const char *sExtensionNames[] = {
     "GL_ANGLE_timer_query",
     "GL_APPLE_client_storage",
     "GL_APPLE_framebuffer_multisample",
+    "GL_APPLE_sync",
     "GL_APPLE_texture_range",
     "GL_APPLE_vertex_array_object",
     "GL_ARB_ES2_compatibility",
@@ -306,7 +306,6 @@ GLContext::GLContext(const SurfaceCaps& caps,
     mRenderer(GLRenderer::Other),
     mHasRobustness(false),
     mTopError(LOCAL_GL_NO_ERROR),
-    mLocalErrorScope(nullptr),
     mSharedContext(sharedContext),
     mCaps(caps),
     mScreen(nullptr),
@@ -785,7 +784,6 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
         }
 
         if (!IsSupported(GLFeature::framebuffer_object)) {
-
             // Check for aux symbols based on extensions
             if (IsSupported(GLFeature::framebuffer_object_EXT_OES))
             {
@@ -813,11 +811,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 }
             }
 
-            if (IsExtensionSupported(GLContext::ANGLE_framebuffer_blit) ||
-                IsExtensionSupported(GLContext::EXT_framebuffer_blit) ||
-                IsExtensionSupported(GLContext::NV_framebuffer_blit))
-
-            {
+            if (IsSupported(GLFeature::framebuffer_blit)) {
                 SymLoadStruct extSymbols[] = {
                     EXT_SYMBOL3(BlitFramebuffer, ANGLE, EXT, NV),
                     END_SYMBOLS
@@ -828,11 +822,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 }
             }
 
-            if (IsExtensionSupported(GLContext::ANGLE_framebuffer_multisample) ||
-                IsExtensionSupported(GLContext::APPLE_framebuffer_multisample) ||
-                IsExtensionSupported(GLContext::EXT_framebuffer_multisample) ||
-                IsExtensionSupported(GLContext::EXT_multisampled_render_to_texture))
-            {
+            if (IsSupported(GLFeature::framebuffer_multisample)) {
                 SymLoadStruct extSymbols[] = {
                     EXT_SYMBOL3(RenderbufferStorageMultisample, ANGLE, APPLE, EXT),
                     END_SYMBOLS
@@ -1354,6 +1344,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
             SymLoadStruct mapBufferRangeSymbols[] = {
                 { (PRFuncPtr*) &mSymbols.fMapBufferRange, { "MapBufferRange", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fFlushMappedBufferRange, { "FlushMappedBufferRange", nullptr } },
+                { (PRFuncPtr*) &mSymbols.fUnmapBuffer, { "UnmapBuffer", nullptr } },
                 END_SYMBOLS
             };
 
@@ -1432,10 +1423,11 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
         }
 
         if (IsSupported(GLFeature::uniform_buffer_object)) {
+            // Note: Don't query for glGetActiveUniformName because it is not
+            // supported by GL ES 3.
             SymLoadStruct uboSymbols[] = {
                 { (PRFuncPtr*) &mSymbols.fGetUniformIndices, { "GetUniformIndices", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGetActiveUniformsiv, { "GetActiveUniformsiv", nullptr } },
-                { (PRFuncPtr*) &mSymbols.fGetActiveUniformName, { "GetActiveUniformName", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGetUniformBlockIndex, { "GetUniformBlockIndex", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGetActiveUniformBlockiv, { "GetActiveUniformBlockiv", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGetActiveUniformBlockName, { "GetActiveUniformBlockName", nullptr } },
@@ -1546,7 +1538,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
 
         if (IsSupported(GLFeature::read_buffer)) {
             SymLoadStruct extSymbols[] = {
-                { (PRFuncPtr*) &mSymbols.fReadBuffer, { "ReadBuffer",    nullptr } },
+                { (PRFuncPtr*) &mSymbols.fReadBuffer, { "ReadBuffer", nullptr } },
                 END_SYMBOLS
             };
 
@@ -1554,6 +1546,20 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 NS_ERROR("GL supports read_buffer without supplying its functions.");
 
                 MarkUnsupported(GLFeature::read_buffer);
+                ClearSymbols(extSymbols);
+            }
+        }
+
+        if (IsExtensionSupported(APPLE_framebuffer_multisample)) {
+            SymLoadStruct extSymbols[] = {
+                { (PRFuncPtr*) &mSymbols.fResolveMultisampleFramebufferAPPLE, { "ResolveMultisampleFramebufferAPPLE", nullptr } },
+                END_SYMBOLS
+            };
+
+            if (!LoadSymbols(&extSymbols[0], trygl, prefix)) {
+                NS_ERROR("GL supports APPLE_framebuffer_multisample without supplying its functions.");
+
+                MarkExtensionUnsupported(APPLE_framebuffer_multisample);
                 ClearSymbols(extSymbols);
             }
         }
@@ -2652,6 +2658,7 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
     }
 
     GLuint tempFB = 0;
+    GLuint tempTex = 0;
 
     {
         ScopedBindFramebuffer autoFB(this);
@@ -2683,6 +2690,24 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
             MOZ_ASSERT(status == LOCAL_GL_FRAMEBUFFER_COMPLETE);
         }
 
+        if (src->NeedsIndirectReads()) {
+            fGenTextures(1, &tempTex);
+            {
+                ScopedBindTexture autoTex(this, tempTex);
+
+                GLenum format = src->mHasAlpha ? LOCAL_GL_RGBA
+                                               : LOCAL_GL_RGB;
+                auto width = src->mSize.width;
+                auto height = src->mSize.height;
+                fCopyTexImage2D(LOCAL_GL_TEXTURE_2D, 0, format, 0, 0, width,
+                                height, 0);
+            }
+
+            fFramebufferTexture2D(LOCAL_GL_FRAMEBUFFER,
+                                  LOCAL_GL_COLOR_ATTACHMENT0,
+                                  LOCAL_GL_TEXTURE_2D, tempTex, 0);
+        }
+
         ReadPixelsIntoDataSurface(this, dest);
 
         src->ProducerReadRelease();
@@ -2690,6 +2715,10 @@ GLContext::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
 
     if (tempFB)
         fDeleteFramebuffers(1, &tempFB);
+
+    if (tempTex) {
+        fDeleteTextures(1, &tempTex);
+    }
 
     if (needsSwap) {
         src->UnlockProd();
@@ -2890,7 +2919,7 @@ GLContext::GetReadFB()
     if (mScreen)
         return mScreen->GetReadFB();
 
-    GLenum bindEnum = IsSupported(GLFeature::framebuffer_blit)
+    GLenum bindEnum = IsSupported(GLFeature::split_framebuffer)
                         ? LOCAL_GL_READ_FRAMEBUFFER_BINDING_EXT
                         : LOCAL_GL_FRAMEBUFFER_BINDING;
 
@@ -2938,6 +2967,60 @@ GLContext::IsDrawingToDefaultFramebuffer()
 {
     return Screen()->IsDrawFramebufferDefault();
 }
+
+GLuint
+CreateTexture(GLContext* aGL, GLenum aInternalFormat, GLenum aFormat,
+              GLenum aType, const gfx::IntSize& aSize, bool linear)
+{
+    GLuint tex = 0;
+    aGL->fGenTextures(1, &tex);
+    ScopedBindTexture autoTex(aGL, tex);
+
+    aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D,
+                        LOCAL_GL_TEXTURE_MIN_FILTER, linear ? LOCAL_GL_LINEAR
+                                                            : LOCAL_GL_NEAREST);
+    aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D,
+                        LOCAL_GL_TEXTURE_MAG_FILTER, linear ? LOCAL_GL_LINEAR
+                                                            : LOCAL_GL_NEAREST);
+    aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_S,
+                        LOCAL_GL_CLAMP_TO_EDGE);
+    aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_T,
+                        LOCAL_GL_CLAMP_TO_EDGE);
+
+    aGL->fTexImage2D(LOCAL_GL_TEXTURE_2D,
+                     0,
+                     aInternalFormat,
+                     aSize.width, aSize.height,
+                     0,
+                     aFormat,
+                     aType,
+                     nullptr);
+
+    return tex;
+}
+
+GLuint
+CreateTextureForOffscreen(GLContext* aGL, const GLFormats& aFormats,
+                          const gfx::IntSize& aSize)
+{
+    MOZ_ASSERT(aFormats.color_texInternalFormat);
+    MOZ_ASSERT(aFormats.color_texFormat);
+    MOZ_ASSERT(aFormats.color_texType);
+
+    GLenum internalFormat = aFormats.color_texInternalFormat;
+    GLenum unpackFormat = aFormats.color_texFormat;
+    GLenum unpackType = aFormats.color_texType;
+    if (aGL->IsANGLE()) {
+        MOZ_ASSERT(internalFormat == LOCAL_GL_RGBA);
+        MOZ_ASSERT(unpackFormat == LOCAL_GL_RGBA);
+        MOZ_ASSERT(unpackType == LOCAL_GL_UNSIGNED_BYTE);
+        internalFormat = LOCAL_GL_BGRA_EXT;
+        unpackFormat = LOCAL_GL_BGRA_EXT;
+    }
+
+    return CreateTexture(aGL, internalFormat, unpackFormat, unpackType, aSize);
+}
+
 
 } /* namespace gl */
 } /* namespace mozilla */

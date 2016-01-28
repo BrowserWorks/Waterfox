@@ -8,7 +8,6 @@
 
 #include "js/Value.h"
 #include "mozilla/dom/Directory.h"
-#include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileSystemBase.h"
 #include "mozilla/dom/FileSystemUtils.h"
@@ -59,7 +58,7 @@ already_AddRefed<Promise>
 GetDirectoryListingTask::GetPromise()
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  return nsRefPtr<Promise>(mPromise).forget();
+  return RefPtr<Promise>(mPromise).forget();
 }
 
 FileSystemParams
@@ -197,9 +196,7 @@ GetDirectoryListingTask::HandlerCallback()
   }
 
   if (HasError()) {
-    nsRefPtr<DOMError> domError = new DOMError(mFileSystem->GetWindow(),
-      mErrorValue);
-    mPromise->MaybeRejectBrokenly(domError);
+    mPromise->MaybeReject(mErrorValue);
     mPromise = nullptr;
     return;
   }

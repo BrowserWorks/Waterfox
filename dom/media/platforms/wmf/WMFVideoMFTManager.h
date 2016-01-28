@@ -27,18 +27,19 @@ public:
 
   bool Init();
 
-  virtual HRESULT Input(MediaRawData* aSample) override;
+  HRESULT Input(MediaRawData* aSample) override;
 
-  virtual HRESULT Output(int64_t aStreamOffset,
-                         nsRefPtr<MediaData>& aOutput) override;
+  HRESULT Output(int64_t aStreamOffset, RefPtr<MediaData>& aOutput) override;
 
-  virtual void Shutdown() override;
+  void Shutdown() override;
 
-  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
+  bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
 
-  virtual TrackInfo::TrackType GetType() override {
+  TrackInfo::TrackType GetType() override {
     return TrackInfo::kVideoTrack;
   }
+
+  void ConfigurationChanged(const TrackInfo& aConfig) override;
 
 private:
 
@@ -63,9 +64,6 @@ private:
   // Video frame geometry.
   VideoInfo mVideoInfo;
   uint32_t mVideoStride;
-  uint32_t mVideoWidth;
-  uint32_t mVideoHeight;
-  nsIntRect mPictureRegion;
 
   RefPtr<layers::ImageContainer> mImageContainer;
   nsAutoPtr<DXVA2Manager> mDXVA2Manager;

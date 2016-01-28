@@ -352,19 +352,24 @@ load 540760.xul
 load 540771-1.xhtml
 load 541869-1.xhtml
 load 541869-2.html
+load 543648-1.html
 load 559705.xhtml
 load 560441-1.xhtml
 load 560447-1.html
 load 564063-1.html
 load 567292-1.xhtml
 load 569018-1.html
+load 570038-1.html
 load 572003.xul
 load 572582-1.xhtml
 load 576649-1.html
 load 579655.html
+load 580129-1.html
 load 580494-1.html
 load 580834-1.xhtml
 asserts(0-13) load 589787.html # bug 574889
+load 591075-1.html
+load 591998-1.html
 load 595039-1.html
 load 597924-1.html
 load 606432-1.html
@@ -395,6 +400,7 @@ load 698335.html
 needs-focus pref(accessibility.browsewithcaret,true) load 699353-1.html
 load 701504.html
 load 707098.html
+load 709536-1.xhtml
 load 722137.html
 load 725535.html
 load 727601.html
@@ -461,3 +467,4 @@ load 1116104.html
 load 1107508-1.html
 load 1127198-1.html
 load 1140198.html
+pref(layout.css.grid.enabled,true) load 1156588.html

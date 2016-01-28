@@ -100,13 +100,7 @@ gfxAndroidPlatform::gfxAndroidPlatform()
 
     RegisterStrongMemoryReporter(new FreetypeReporter());
 
-    nsCOMPtr<nsIScreenManager> screenMgr = do_GetService("@mozilla.org/gfx/screenmanager;1");
-    nsCOMPtr<nsIScreen> screen;
-    screenMgr->GetPrimaryScreen(getter_AddRefs(screen));
-    mScreenDepth = 24;
-    screen->GetColorDepth(&mScreenDepth);
-
-    mOffscreenFormat = mScreenDepth == 16
+    mOffscreenFormat = GetScreenDepth() == 16
                        ? gfxImageFormat::RGB16_565
                        : gfxImageFormat::RGB24;
 
@@ -131,7 +125,7 @@ already_AddRefed<gfxASurface>
 gfxAndroidPlatform::CreateOffscreenSurface(const IntSize& aSize,
                                            gfxImageFormat aFormat)
 {
-    nsRefPtr<gfxASurface> newSurface;
+    RefPtr<gfxASurface> newSurface;
     newSurface = new gfxImageSurface(aSize, aFormat);
 
     return newSurface.forget();
@@ -334,26 +328,26 @@ gfxFontEntry*
 gfxAndroidPlatform::LookupLocalFont(const nsAString& aFontName,
                                     uint16_t aWeight,
                                     int16_t aStretch,
-                                    bool aItalic)
+                                    uint8_t aStyle)
 {
     return gfxPlatformFontList::PlatformFontList()->LookupLocalFont(aFontName,
                                                                     aWeight,
                                                                     aStretch,
-                                                                    aItalic);
+                                                                    aStyle);
 }
 
 gfxFontEntry* 
 gfxAndroidPlatform::MakePlatformFont(const nsAString& aFontName,
                                      uint16_t aWeight,
                                      int16_t aStretch,
-                                     bool aItalic,
+                                     uint8_t aStyle,
                                      const uint8_t* aFontData,
                                      uint32_t aLength)
 {
     return gfxPlatformFontList::PlatformFontList()->MakePlatformFont(aFontName,
                                                                      aWeight,
                                                                      aStretch,
-                                                                     aItalic,
+                                                                     aStyle,
                                                                      aFontData,
                                                                      aLength);
 }
@@ -416,12 +410,6 @@ gfxAndroidPlatform::RequiresLinearZoom()
 
     NS_NOTREACHED("oops, what platform is this?");
     return gfxPlatform::RequiresLinearZoom();
-}
-
-int
-gfxAndroidPlatform::GetScreenDepth() const
-{
-    return mScreenDepth;
 }
 
 bool
@@ -511,7 +499,7 @@ gfxAndroidPlatform::CreateHardwareVsyncSource()
     // L is android version 21, L-MR1 is 22, kit-kat is 19, 20 is kit-kat for
     // wearables.
 #if defined(MOZ_WIDGET_GONK) && (ANDROID_VERSION == 19 || ANDROID_VERSION >= 21)
-    nsRefPtr<GonkVsyncSource> vsyncSource = new GonkVsyncSource();
+    RefPtr<GonkVsyncSource> vsyncSource = new GonkVsyncSource();
     VsyncSource::Display& display = vsyncSource->GetGlobalDisplay();
     display.EnableVsync();
     if (!display.IsVsyncEnabled()) {

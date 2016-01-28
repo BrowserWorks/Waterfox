@@ -292,7 +292,7 @@ nsXULPopupManager::Rollup(uint32_t aCount, bool aFlush,
       }
 
       nsPresContext* presContext = item->Frame()->PresContext();
-      nsRefPtr<nsViewManager> viewManager = presContext->PresShell()->GetViewManager();
+      RefPtr<nsViewManager> viewManager = presContext->PresShell()->GetViewManager();
 
       HidePopup(item->Content(), true, true, false, true, lastPopup);
 
@@ -486,10 +486,9 @@ nsXULPopupManager::PopupMoved(nsIFrame* aFrame, nsIntPoint aPnt)
     menuPopupFrame->SetPopupPosition(nullptr, true, false);
   }
   else {
-    nsPresContext* presContext = menuPopupFrame->PresContext();
-    aPnt.x = presContext->DevPixelsToIntCSSPixels(aPnt.x);
-    aPnt.y = presContext->DevPixelsToIntCSSPixels(aPnt.y);
-    menuPopupFrame->MoveTo(aPnt.x, aPnt.y, false);
+    CSSPoint cssPos = LayoutDeviceIntPoint::FromUntyped(aPnt)
+                    / menuPopupFrame->PresContext()->CSSToDevPixelScale();
+    menuPopupFrame->MoveTo(RoundedToInt(cssPos), false);
   }
 }
 
@@ -831,10 +830,10 @@ CheckCaretDrawingState()
     if (!window)
       return;
 
-    nsCOMPtr<nsIDOMDocument> domDoc;
-    nsCOMPtr<nsIDocument> focusedDoc;
-    window->GetDocument(getter_AddRefs(domDoc));
-    focusedDoc = do_QueryInterface(domDoc);
+    nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(window);
+    MOZ_ASSERT(piWindow);
+
+    nsCOMPtr<nsIDocument> focusedDoc = piWindow->GetDoc();
     if (!focusedDoc)
       return;
 
@@ -842,7 +841,7 @@ CheckCaretDrawingState()
     if (!presShell)
       return;
 
-    nsRefPtr<nsCaret> caret = presShell->GetCaret();
+    RefPtr<nsCaret> caret = presShell->GetCaret();
     if (!caret)
       return;
     caret->SchedulePaint();
@@ -1501,7 +1500,7 @@ nsXULPopupManager::FirePopupHidingEvent(nsIContent* aPopup,
             return;
 
           if (nsLayoutUtils::HasCurrentTransitions(popupFrame)) {
-            nsRefPtr<TransitionEnder> ender = new TransitionEnder(aPopup, aDeselectMenu);
+            RefPtr<TransitionEnder> ender = new TransitionEnder(aPopup, aDeselectMenu);
             aPopup->AddSystemEventListener(NS_LITERAL_STRING("transitionend"),
                                            ender, false, false);
             return;
@@ -1894,7 +1893,7 @@ nsXULPopupManager::UpdateMenuItems(nsIContent* aPopup)
       grandChild->GetAttr(kNameSpaceID_None, nsGkAtoms::command, command);
       if (!command.IsEmpty()) {
         // We do! Look it up in our document
-        nsRefPtr<dom::Element> commandElement =
+        RefPtr<dom::Element> commandElement =
           document->GetElementById(command);
         if (commandElement) {
           nsAutoString commandValue;
@@ -2253,13 +2252,17 @@ nsXULPopupManager::HandleKeyboardEventWithKeyCode(
 #ifndef XP_MACOSX
     case nsIDOMKeyEvent::DOM_VK_F10:
 #endif
-      // close popups or deactivate menubar when Tab or F10 are pressed
-      if (aTopVisibleMenuItem) {
+      if (aTopVisibleMenuItem &&
+          !aTopVisibleMenuItem->Frame()->GetContent()->AttrValueIs(kNameSpaceID_None,
+           nsGkAtoms::activateontab, nsGkAtoms::_true, eCaseMatters)) {
+        // close popups or deactivate menubar when Tab or F10 are pressed
         Rollup(0, false, nullptr, nullptr);
+        break;
       } else if (mActiveMenuBar) {
         mActiveMenuBar->MenuClosed();
+        break;
       }
-      break;
+      // Intentional fall-through to RETURN case
 
     case nsIDOMKeyEvent::DOM_VK_RETURN: {
       // If there is a popup open, check if the current item needs to be opened.
@@ -2662,7 +2665,7 @@ nsXULMenuCommandEvent::Run()
 
     nsPresContext* presContext = menuFrame->PresContext();
     nsCOMPtr<nsIPresShell> shell = presContext->PresShell();
-    nsRefPtr<nsViewManager> kungFuDeathGrip = shell->GetViewManager();
+    RefPtr<nsViewManager> kungFuDeathGrip = shell->GetViewManager();
 
     // Deselect ourselves.
     if (mCloseMenuMode != CloseMenuMode_None)

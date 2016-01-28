@@ -204,7 +204,15 @@ public:
   BidiDir GetBidiDir() const { return BidiDir(mWritingMode & eBidiMask); }
 
   /**
-   * Return true if LTR. (Convenience method)
+   * Return true if the inline flow direction is against physical direction
+   * (i.e. right-to-left or bottom-to-top).
+   * This occurs when writing-mode is sideways-lr OR direction is rtl (but not
+   * if both of those are true).
+   */
+  bool IsInlineReversed() const { return !!(mWritingMode & eInlineFlowMask); }
+
+  /**
+   * Return true if bidi direction is LTR. (Convenience method)
    */
   bool IsBidiLTR() const { return eBidiLTR == GetBidiDir(); }
 
@@ -226,9 +234,7 @@ public:
 
   /**
    * True if line-over/line-under are inverted from block-start/block-end.
-   * This is true when
-   *   - writing-mode is vertical-rl && text-orientation is sideways-left
-   *   - writing-mode is vertical-lr && text-orientation is not sideways-left
+   * This is true only when writing-mode is vertical-lr.
    */
   bool IsLineInverted() const { return !!(mWritingMode & eLineOrientMask); }
 
@@ -298,7 +304,13 @@ public:
       { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // vertical-lr
     };
 
+    // Ignore the SIDEWAYS_MASK bit of the writing-mode value, as this has no
+    // effect on the side mappings.
+    aWritingModeValue &= ~NS_STYLE_WRITING_MODE_SIDEWAYS_MASK;
+
+    // What's left of the writing-mode should be in the range 0-3:
     NS_ASSERTION(aWritingModeValue < 4, "invalid aWritingModeValue value");
+
     return kLogicalBlockSides[aWritingModeValue][aEdge];
   }
 
@@ -309,23 +321,27 @@ public:
     //   bit 1 = the eInlineFlowMask value
     //   bit 2 = the eBlockFlowMask value
     //   bit 3 = the eLineOrientMask value
+    // Not all of these combinations can actually be specified via CSS: there
+    // is no horizontal-bt writing-mode, and no text-orientation value that
+    // produces "inverted" text. (The former 'sideways-left' value, no longer
+    // in the spec, would have produced this in vertical-rl mode.)
     static const mozilla::css::Side kLogicalInlineSides[][2] = {
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb                  ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                    ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb                  rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                    rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted)    ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr      sideways-left rtl
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted)    rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr      sideways-left ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted)    rtl
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      sideways-left rtl
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted)    ltr
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      sideways-left ltr
-      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)                ltr
-      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                    ltr
-      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)                rtl
-      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                    rtl
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb               ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                 ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb               rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                 rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted) ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // sideways-lr                 rtl
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted) rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // sideways-lr                 ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted) rtl
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      (inverted) rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted) ltr
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      (inverted) ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)             ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                 ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)             rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                 rtl
     };
 
     // Inline axis sides depend on all three of writing-mode, text-orientation
@@ -420,7 +436,7 @@ public:
   {
     auto side = static_cast<LogicalSide>(aDir);
     if (IsInline(side)) {
-      return IsBidiLTR() ? side : GetOppositeSide(side);
+      return !IsInlineReversed() ? side : GetOppositeSide(side);
     }
     return !IsLineInverted() ? side : GetOppositeSide(side);
   }
@@ -440,10 +456,19 @@ public:
   explicit WritingMode(nsStyleContext* aStyleContext)
   {
     NS_ASSERTION(aStyleContext, "we need an nsStyleContext here");
+    InitFromStyleVisibility(aStyleContext->StyleVisibility());
+  }
 
-    const nsStyleVisibility* styleVisibility = aStyleContext->StyleVisibility();
+  explicit WritingMode(const nsStyleVisibility* aStyleVisibility)
+  {
+    NS_ASSERTION(aStyleVisibility, "we need an nsStyleVisibility here");
+    InitFromStyleVisibility(aStyleVisibility);
+  }
 
-    switch (styleVisibility->mWritingMode) {
+private:
+  void InitFromStyleVisibility(const nsStyleVisibility* aStyleVisibility)
+  {
+    switch (aStyleVisibility->mWritingMode) {
       case NS_STYLE_WRITING_MODE_HORIZONTAL_TB:
         mWritingMode = 0;
         break;
@@ -453,13 +478,8 @@ public:
         mWritingMode = eBlockFlowMask |
                        eLineOrientMask |
                        eOrientationMask;
-        uint8_t textOrientation = aStyleContext->StyleVisibility()->mTextOrientation;
-#if 0 // not yet implemented
-        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT) {
-          mWritingMode &= ~eLineOrientMask;
-        }
-#endif
-        if (textOrientation >= NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT) {
+        uint8_t textOrientation = aStyleVisibility->mTextOrientation;
+        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS) {
           mWritingMode |= eSidewaysMask;
         }
         break;
@@ -468,17 +488,24 @@ public:
       case NS_STYLE_WRITING_MODE_VERTICAL_RL:
       {
         mWritingMode = eOrientationMask;
-        uint8_t textOrientation = aStyleContext->StyleVisibility()->mTextOrientation;
-#if 0 // not yet implemented
-        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT) {
-          mWritingMode |= eLineOrientMask;
-        }
-#endif
-        if (textOrientation >= NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT) {
+        uint8_t textOrientation = aStyleVisibility->mTextOrientation;
+        if (textOrientation == NS_STYLE_TEXT_ORIENTATION_SIDEWAYS) {
           mWritingMode |= eSidewaysMask;
         }
         break;
       }
+
+      case NS_STYLE_WRITING_MODE_SIDEWAYS_LR:
+        mWritingMode = eBlockFlowMask |
+                       eInlineFlowMask |
+                       eOrientationMask |
+                       eSidewaysMask;
+        break;
+
+      case NS_STYLE_WRITING_MODE_SIDEWAYS_RL:
+        mWritingMode = eOrientationMask |
+                       eSidewaysMask;
+        break;
 
       default:
         NS_NOTREACHED("unknown writing mode!");
@@ -486,11 +513,11 @@ public:
         break;
     }
 
-    if (NS_STYLE_DIRECTION_RTL == styleVisibility->mDirection) {
-      mWritingMode |= eInlineFlowMask | //XXX needs update when text-orientation added
-                      eBidiMask;
+    if (NS_STYLE_DIRECTION_RTL == aStyleVisibility->mDirection) {
+      mWritingMode ^= eInlineFlowMask | eBidiMask;
     }
   }
+public:
 
   /**
    * This function performs fixup for elements with 'unicode-bidi: plaintext',
@@ -540,6 +567,19 @@ public:
 
   uint8_t GetBits() const { return mWritingMode; }
 
+  const char* DebugString() const {
+    return IsVertical()
+      ? IsVerticalLR()
+        ? IsBidiLTR()
+          ? IsSideways() ? "sw-lr-ltr" : "v-lr-ltr"
+          : IsSideways() ? "sw-lr-rtl" : "v-lr-rtl"
+        : IsBidiLTR()
+          ? IsSideways() ? "sw-rl-ltr" : "v-rl-ltr"
+          : IsSideways() ? "sw-rl-rtl" : "v-rl-rtl"
+      : IsBidiLTR() ? "h-ltr" : "h-rtl"
+      ;
+  }
+
 private:
   friend class LogicalPoint;
   friend class LogicalSize;
@@ -580,7 +620,10 @@ private:
     // Note: We have one excess bit of info; WritingMode can pack into 4 bits.
     // But since we have space, we're caching interesting things for fast access.
 
-    eSidewaysMask    = 0x20, // true means text-orientation is sideways-*,
+    eSidewaysMask    = 0x20, // true means text is being rendered vertically
+                             // using rotated glyphs (i.e. writing-mode is
+                             // sideways-*, or writing-mode is vertical-* AND
+                             // text-orientation is sideways),
                              // which means we'll use alphabetic instead of
                              // centered default baseline for vertical text
 
@@ -661,13 +704,13 @@ public:
 #endif
   {
     if (aWritingMode.IsVertical()) {
-      I() = aWritingMode.IsBidiLTR() ? aPoint.y
-                                     : aContainerSize.height - aPoint.y;
+      I() = aWritingMode.IsInlineReversed() ? aContainerSize.height - aPoint.y
+                                            : aPoint.y;
       B() = aWritingMode.IsVerticalLR() ? aPoint.x
                                         : aContainerSize.width - aPoint.x;
     } else {
-      I() = aWritingMode.IsBidiLTR() ? aPoint.x
-                                     : aContainerSize.width - aPoint.x;
+      I() = aWritingMode.IsInlineReversed() ? aContainerSize.width - aPoint.x
+                                            : aPoint.x;
       B() = aPoint.y;
     }
   }
@@ -712,11 +755,11 @@ public:
     if (aWritingMode.IsVertical()) {
       return nsPoint(aWritingMode.IsVerticalLR()
                      ? B() : aContainerSize.width - B(),
-                     aWritingMode.IsBidiLTR()
-                     ? I() : aContainerSize.height - I());
+                     aWritingMode.IsInlineReversed()
+                     ? aContainerSize.height - I() : I());
     } else {
-      return nsPoint(aWritingMode.IsBidiLTR()
-                     ? I() : aContainerSize.width - I(),
+      return nsPoint(aWritingMode.IsInlineReversed()
+                     ? aContainerSize.width - I() : I(),
                      B());
     }
   }
@@ -1072,22 +1115,22 @@ public:
         mMargin.top = aPhysicalMargin.right;
         mMargin.bottom = aPhysicalMargin.left;
       }
-      if (aWritingMode.IsBidiLTR()) {
-        mMargin.left = aPhysicalMargin.top;
-        mMargin.right = aPhysicalMargin.bottom;
-      } else {
+      if (aWritingMode.IsInlineReversed()) {
         mMargin.left = aPhysicalMargin.bottom;
         mMargin.right = aPhysicalMargin.top;
+      } else {
+        mMargin.left = aPhysicalMargin.top;
+        mMargin.right = aPhysicalMargin.bottom;
       }
     } else {
       mMargin.top = aPhysicalMargin.top;
       mMargin.bottom = aPhysicalMargin.bottom;
-      if (aWritingMode.IsBidiLTR()) {
-        mMargin.left = aPhysicalMargin.left;
-        mMargin.right = aPhysicalMargin.right;
-      } else {
+      if (aWritingMode.IsInlineReversed()) {
         mMargin.left = aPhysicalMargin.right;
         mMargin.right = aPhysicalMargin.left;
+      } else {
+        mMargin.left = aPhysicalMargin.left;
+        mMargin.right = aPhysicalMargin.right;
       }
     }
   }
@@ -1186,14 +1229,14 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd()) : BStart();
+      (aWritingMode.IsInlineReversed() ? IEnd() : IStart()) : BStart();
   }
 
   nscoord Bottom(WritingMode aWritingMode) const
   {
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart()) : BEnd();
+      (aWritingMode.IsInlineReversed() ? IStart() : IEnd()) : BEnd();
   }
 
   nscoord Left(WritingMode aWritingMode) const
@@ -1201,7 +1244,7 @@ public:
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
       (aWritingMode.IsVerticalLR() ? BStart() : BEnd()) :
-      (aWritingMode.IsBidiLTR() ? IStart() : IEnd());
+      (aWritingMode.IsInlineReversed() ? IEnd() : IStart());
   }
 
   nscoord Right(WritingMode aWritingMode) const
@@ -1209,7 +1252,7 @@ public:
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical() ?
       (aWritingMode.IsVerticalLR() ? BEnd() : BStart()) :
-      (aWritingMode.IsBidiLTR() ? IEnd() : IStart());
+      (aWritingMode.IsInlineReversed() ? IStart() : IEnd());
   }
 
   nscoord LeftRight(WritingMode aWritingMode) const
@@ -1239,15 +1282,15 @@ public:
     CHECK_WRITING_MODE(aWritingMode);
     return aWritingMode.IsVertical()
            ? (aWritingMode.IsVerticalLR()
-             ? (aWritingMode.IsBidiLTR()
-               ? nsMargin(IStart(), BEnd(), IEnd(), BStart())
-               : nsMargin(IEnd(), BEnd(), IStart(), BStart()))
-             : (aWritingMode.IsBidiLTR()
-               ? nsMargin(IStart(), BStart(), IEnd(), BEnd())
-               : nsMargin(IEnd(), BStart(), IStart(), BEnd())))
-           : (aWritingMode.IsBidiLTR()
-             ? nsMargin(BStart(), IEnd(), BEnd(), IStart())
-             : nsMargin(BStart(), IStart(), BEnd(), IEnd()));
+             ? (aWritingMode.IsInlineReversed()
+               ? nsMargin(IEnd(), BEnd(), IStart(), BStart())
+               : nsMargin(IStart(), BEnd(), IEnd(), BStart()))
+             : (aWritingMode.IsInlineReversed()
+               ? nsMargin(IEnd(), BStart(), IStart(), BEnd())
+               : nsMargin(IStart(), BStart(), IEnd(), BEnd())))
+           : (aWritingMode.IsInlineReversed()
+             ? nsMargin(BStart(), IStart(), BEnd(), IEnd())
+             : nsMargin(BStart(), IEnd(), BEnd(), IStart()));
   }
 
   /**
@@ -1414,13 +1457,13 @@ public:
     if (aWritingMode.IsVertical()) {
       mRect.y = aWritingMode.IsVerticalLR()
                 ? aRect.x : aContainerSize.width - aRect.XMost();
-      mRect.x = aWritingMode.IsBidiLTR()
-                ? aRect.y : aContainerSize.height - aRect.YMost();
+      mRect.x = aWritingMode.IsInlineReversed()
+                ? aContainerSize.height - aRect.YMost() : aRect.y;
       mRect.height = aRect.width;
       mRect.width = aRect.height;
     } else {
-      mRect.x = aWritingMode.IsBidiLTR()
-                ? aRect.x : aContainerSize.width - aRect.XMost();
+      mRect.x = aWritingMode.IsInlineReversed()
+                ? aContainerSize.width - aRect.XMost() : aRect.x;
       mRect.y = aRect.y;
       mRect.width = aRect.width;
       mRect.height = aRect.height;
@@ -1523,8 +1566,8 @@ public:
       return aWritingMode.IsVerticalLR() ?
              mRect.Y() : aContainerWidth - mRect.YMost();
     } else {
-      return aWritingMode.IsBidiLTR() ?
-             mRect.X() : aContainerWidth - mRect.XMost();
+      return aWritingMode.IsInlineReversed() ?
+             aContainerWidth - mRect.XMost() : mRect.X();
     }
   }
 
@@ -1532,8 +1575,8 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     if (aWritingMode.IsVertical()) {
-      return aWritingMode.IsBidiLTR() ? mRect.X()
-                                      : aContainerHeight - mRect.XMost();
+      return aWritingMode.IsInlineReversed() ? aContainerHeight - mRect.XMost()
+                                             : mRect.X();
     } else {
       return mRect.Y();
     }
@@ -1558,8 +1601,8 @@ public:
       return aWritingMode.IsVerticalLR() ?
              mRect.YMost() : aContainerWidth - mRect.Y();
     } else {
-      return aWritingMode.IsBidiLTR() ?
-             mRect.XMost() : aContainerWidth - mRect.X();
+      return aWritingMode.IsInlineReversed() ?
+             aContainerWidth - mRect.X() : mRect.XMost();
     }
   }
 
@@ -1567,8 +1610,8 @@ public:
   {
     CHECK_WRITING_MODE(aWritingMode);
     if (aWritingMode.IsVertical()) {
-      return aWritingMode.IsBidiLTR() ? mRect.XMost()
-                                      : aContainerHeight - mRect.x;
+      return aWritingMode.IsInlineReversed() ? aContainerHeight - mRect.x
+                                             : mRect.XMost();
     } else {
       return mRect.YMost();
     }
@@ -1682,12 +1725,12 @@ public:
     if (aWritingMode.IsVertical()) {
       return nsRect(aWritingMode.IsVerticalLR()
                     ? BStart() : aContainerSize.width - BEnd(),
-                    aWritingMode.IsBidiLTR()
-                    ? IStart() : aContainerSize.height - IEnd(),
+                    aWritingMode.IsInlineReversed()
+                    ?  aContainerSize.height - IEnd() : IStart(),
                     BSize(), ISize());
     } else {
-      return nsRect(aWritingMode.IsBidiLTR()
-                    ? IStart() : aContainerSize.width - IEnd(),
+      return nsRect(aWritingMode.IsInlineReversed()
+                    ? aContainerSize.width - IEnd() : IStart(),
                     BStart(), ISize(), BSize());
     }
   }

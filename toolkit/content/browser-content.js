@@ -93,7 +93,7 @@ var ClickEventHandler = {
       // do not allow horizontal scrolling for select elements, it leads
       // to visual artifacts and is not the expected behavior anyway
       if (!(this._scrollable instanceof content.HTMLSelectElement) &&
-          this._scrollable.scrollLeftMax &&
+          this._scrollable.scrollLeftMin != this._scrollable.scrollLeftMax &&
           scrollingAllowed.indexOf(overflowx) >= 0) {
         this._scrolldir = scrollVert ? "NSEW" : "EW";
         break;
@@ -105,9 +105,10 @@ var ClickEventHandler = {
 
     if (!this._scrollable) {
       this._scrollable = aNode.ownerDocument.defaultView;
-      if (this._scrollable.scrollMaxX > 0) {
-        this._scrolldir = this._scrollable.scrollMaxY > 0 ? "NSEW" : "EW";
-      } else if (this._scrollable.scrollMaxY > 0) {
+      if (this._scrollable.scrollMaxX != this._scrollable.scrollMinX) {
+        this._scrolldir = this._scrollable.scrollMaxY !=
+                          this._scrollable.scrollMinY ? "NSEW" : "EW";
+      } else if (this._scrollable.scrollMaxY != this._scrollable.scrollMinY) {
         this._scrolldir = "NS";
       } else if (this._scrollable.frameElement) {
         this.findNearestScrollableElement(this._scrollable.frameElement);
@@ -353,7 +354,7 @@ PopupBlocking.init();
 
 XPCOMUtils.defineLazyGetter(this, "console", () => {
   // Set up console.* for frame scripts.
-  let Console = Components.utils.import("resource://gre/modules/devtools/Console.jsm", {});
+  let Console = Components.utils.import("resource://gre/modules/Console.jsm", {});
   return new Console.ConsoleAPI();
 });
 
@@ -583,11 +584,11 @@ var FindBar = {
   FAYT_TEXT_KEY: "/".charCodeAt(0),
 
   _findMode: 0,
-  get _findAsYouType() {
-    return Services.prefs.getBoolPref("accessibility.typeaheadfind");
-  },
+  _findAsYouType: false,
 
   init() {
+    this._findAsYouType =
+      Services.prefs.getBoolPref("accessibility.typeaheadfind");
     addMessageListener("Findbar:UpdateState", this);
     Services.els.addSystemEventListener(global, "keypress", this, false);
     Services.els.addSystemEventListener(global, "mouseup", this, false);

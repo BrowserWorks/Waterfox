@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const Cu = Components.utils;
+var Cu = Components.utils;
 
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/main.js");
@@ -159,7 +159,7 @@ var RemoteTabViewer = {
 
   _buildListRequested: false,
 
-  buildList: function (force) {
+  buildList: function (forceSync) {
     if (this._waitingForBuildList) {
       this._buildListRequested = true;
       return;
@@ -170,14 +170,15 @@ var RemoteTabViewer = {
 
     this._clearTabList();
 
-    if (Weave.Service.isLoggedIn && this._refetchTabs(force)) {
+    if (Weave.Service.isLoggedIn) {
+      this._refetchTabs(forceSync);
       this._generateWeaveTabList();
     } else {
       //XXXzpao We should say something about not being logged in & not having data
       //        or tell the appropriate condition. (bug 583344)
     }
 
-    function complete() {
+    let complete = () => {
       this._waitingForBuildList = false;
       if (this._buildListRequested) {
         CommonUtils.nextTick(this.buildList, this);
@@ -335,10 +336,15 @@ var RemoteTabViewer = {
   observe: function (subject, topic, data) {
     switch (topic) {
       case "weave:service:login:finish":
+        // A login has finished, which means that a Sync is about to start and
+        // we will eventually get to the "tabs" engine - but try and force the
+        // tab engine to sync first by passing |true| for the forceSync param.
         this.buildList(true);
         break;
       case "weave:engine:sync:finish":
-        if (subject == "tabs") {
+        if (data == "tabs") {
+          // The tabs engine just finished, so re-build the list without
+          // forcing a new sync of the tabs engine.
           this.buildList(false);
         }
         break;

@@ -15,15 +15,16 @@
   <project name="platform_build" path="build" remote="b2g" revision="c9d4fe680662ee44a4bdea42ae00366f5df399cf">
     <copyfile dest="Makefile" src="core/root.mk"/>
   </project>
-  <project name="gaia" path="gaia" remote="mozillaorg" revision="2d370fa35c1a0ee2a637e3772c0843586a5f96c9"/>
+  <project name="gaia" path="gaia" remote="mozillaorg" revision="91cac94948094cfdcd00cba5c6483e27e80cb3b0"/>
   <project name="fake-libdvm" path="dalvik" remote="b2g" revision="d50ae982b19f42f0b66d08b9eb306be81687869f"/>
-  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="9465d16f95ab87636b2ae07538ee88e5aeff2d7d"/>
+  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="956700d9754349b630a34551750ae6353614b6aa"/>
   <project name="librecovery" path="librecovery" remote="b2g" revision="1b3591a50ed352fc6ddb77462b7b35d0bfa555a3"/>
-  <project name="moztt" path="external/moztt" remote="b2g" revision="2782648aabf0af464dd9c4202b367b408898546d"/>
+  <project name="moztt" path="external/moztt" remote="b2g" revision="27de93fe66c3e80e157d157bd52ca99565351669"/>
   <project name="rilproxy" path="rilproxy" remote="b2g" revision="5ef30994f4778b4052e58a4383dbe7890048c87e"/>
-  <project name="valgrind" path="external/valgrind" remote="b2g" revision="daa61633c32b9606f58799a3186395fd2bbb8d8c"/>
-  <project name="vex" path="external/VEX" remote="b2g" revision="47f031c320888fe9f3e656602588565b52d43010"/>
-  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="a1f9532e4157df2dc8d3e9c8100120f80117dcd4"/>
+  <project name="valgrind" path="external/valgrind" remote="b2g" revision="5f931350fbc87c3df9db8b0ceb37734b8b471593"/>
+  <project name="vex" path="external/VEX" remote="b2g" revision="48d8c7c950745f1b166b42125e6f0d3293d71636"/>
+  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="1837d370a964a9719160c79155a07980f2ea4bdf"/>
+  <project name="platform_hardware_libhardware_moz" path="hardware/libhardware_moz" remote="b2g" revision="fdf3a143dc777e5f9d33a88373af7ea161d3b440"/>
   <!-- Stock Android things -->
   <project groups="pdk,linux" name="platform/prebuilts/clang/linux-x86/host/3.5" path="prebuilts/clang/linux-x86/host/3.5" revision="ffc05a232799fe8fcb3e47b7440b52b1fb4244c0"/>
   <project groups="pdk,linux,arm" name="platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" path="prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.8" revision="337e0ef5e40f02a1ae59b90db0548976c70a7226"/>
@@ -123,10 +124,9 @@
   <project name="platform/ndk" path="ndk" revision="42e85f81cc6c74af145056ee80b06e520cccb9a7"/>
   <project name="platform_prebuilts_misc" path="prebuilts/misc" remote="b2g" revision="f105a2d852c988fb1aa16a1e758ca7f93dd54fe9"/>
   <project name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="1d080491f26dfdfd76d5bbc3e6b40c660e8565af"/>
-  <project name="platform_prebuilts_qemu-kernel" path="prebuilts/qemu-kernel" remote="b2g" revision="2c0d193349c55337e37196a7f2d5cef37753ed3e"/>
   <project name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="61a10cbd19d6b7fc052a8cb92dfa1b37b93754f3"/>
   <project name="platform/prebuilts/tools" path="prebuilts/tools" revision="9e892a67a01671f312c76b0880dedaa6ba478148"/>
-  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="fd241573c00112ca6e456b8021fb68df0349f6dd"/>
+  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="07a49d1f7a7a0a1e7d70fef353c2700434ffdc5c"/>
   <project name="platform/system/extras" path="system/extras" revision="47fa016e2248b80aebd5928402c7409f8e0ca64e"/>
   <project name="platform_system_libfdio" path="system/libfdio" remote="b2g" revision="34adfb400e031f3dd3353d92413572db5e3a7376"/>
   <project name="platform/system/media" path="system/media" revision="70bfebc66d9c6a4c614a8c7efde90e8e7e1d8641"/>
@@ -145,6 +145,7 @@
   <project name="platform_external_qemu" path="external/qemu" remote="b2g" revision="59e434cbecc02653f44cedeb2ef5cc88dc8bb61b"/>
   <project name="platform_external_wpa_supplicant_8" path="external/wpa_supplicant_8" remote="b2g" revision="cbda29a58abc4ea1f7f4611fe354ab67b606219d"/>
   <project name="platform/development" path="development" revision="0c51f6e0aa2ee57fcb75ec3b2ff6bf754cece63e"/>
+  <project name="platform_prebuilts_qemu-kernel" path="prebuilts/qemu-kernel" remote="b2g" revision="2c0d193349c55337e37196a7f2d5cef37753ed3e"/>
   <project name="android-sdk" path="sdk" remote="b2g" revision="ff4190dc603f62a7caa48342aa268acf99863c5c"/>
   <project name="platform_hardware_ril" path="hardware/ril" remote="b2g" revision="10d289639ea62f2f6fcfb5bbf6121c484e95f767"/>
 </manifest>

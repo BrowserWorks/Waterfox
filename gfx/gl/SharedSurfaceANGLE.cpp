@@ -41,17 +41,14 @@ CreatePBufferSurface(GLLibraryEGL* egl,
 }
 
 /*static*/ UniquePtr<SharedSurface_ANGLEShareHandle>
-SharedSurface_ANGLEShareHandle::Create(GLContext* gl,
-                                       EGLContext context, EGLConfig config,
+SharedSurface_ANGLEShareHandle::Create(GLContext* gl, EGLConfig config,
                                        const gfx::IntSize& size, bool hasAlpha)
 {
     GLLibraryEGL* egl = &sEGLLibrary;
     MOZ_ASSERT(egl);
     MOZ_ASSERT(egl->IsExtensionSupported(
                GLLibraryEGL::ANGLE_surface_d3d_texture_2d_share_handle));
-
-    if (!context || !config)
-        return nullptr;
+    MOZ_ASSERT(config);
 
     EGLDisplay display = egl->Display();
     EGLSurface pbuffer = CreatePBufferSurface(egl, display, config, size);
@@ -82,8 +79,8 @@ SharedSurface_ANGLEShareHandle::Create(GLContext* gl,
     }
 
     typedef SharedSurface_ANGLEShareHandle ptrT;
-    UniquePtr<ptrT> ret( new ptrT(gl, egl, size, hasAlpha, context,
-                                  pbuffer, shareHandle, keyedMutex, fence) );
+    UniquePtr<ptrT> ret( new ptrT(gl, egl, size, hasAlpha, pbuffer, shareHandle,
+                                  keyedMutex, fence) );
     return Move(ret);
 }
 
@@ -97,7 +94,6 @@ SharedSurface_ANGLEShareHandle::SharedSurface_ANGLEShareHandle(GLContext* gl,
                                                                GLLibraryEGL* egl,
                                                                const gfx::IntSize& size,
                                                                bool hasAlpha,
-                                                               EGLContext context,
                                                                EGLSurface pbuffer,
                                                                HANDLE shareHandle,
                                                                const RefPtr<IDXGIKeyedMutex>& keyedMutex,
@@ -109,7 +105,6 @@ SharedSurface_ANGLEShareHandle::SharedSurface_ANGLEShareHandle(GLContext* gl,
                     hasAlpha,
                     true)
     , mEGL(egl)
-    , mContext(context)
     , mPBuffer(pbuffer)
     , mShareHandle(shareHandle)
     , mKeyedMutex(keyedMutex)
@@ -204,11 +199,11 @@ SharedSurface_ANGLEShareHandle::ConsumerAcquireImpl()
         RefPtr<ID3D11Texture2D> tex;
         HRESULT hr = gfxWindowsPlatform::GetPlatform()->GetD3D11Device()->OpenSharedResource(mShareHandle,
                                                                                              __uuidof(ID3D11Texture2D),
-                                                                                             (void**)(ID3D11Texture2D**)byRef(tex));
+                                                                                             (void**)(ID3D11Texture2D**)getter_AddRefs(tex));
         if (SUCCEEDED(hr)) {
             mConsumerTexture = tex;
             RefPtr<IDXGIKeyedMutex> mutex;
-            hr = tex->QueryInterface((IDXGIKeyedMutex**)byRef(mutex));
+            hr = tex->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
 
             if (SUCCEEDED(hr)) {
                 mConsumerKeyedMutex = mutex;
@@ -278,139 +273,140 @@ SharedSurface_ANGLEShareHandle::ToSurfaceDescriptor(layers::SurfaceDescriptor* c
     return true;
 }
 
+class ScopedLockTexture final
+{
+public:
+    explicit ScopedLockTexture(ID3D11Texture2D* texture, bool* succeeded)
+      : mIsLocked(false)
+      , mTexture(texture)
+    {
+        MOZ_ASSERT(mTexture);
+        MOZ_ASSERT(succeeded);
+        *succeeded = false;
+
+        HRESULT hr;
+        mTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mMutex));
+        if (mMutex) {
+            hr = mMutex->AcquireSync(0, 10000);
+            if (hr == WAIT_TIMEOUT) {
+                MOZ_CRASH();
+            }
+
+            if (FAILED(hr)) {
+                NS_WARNING("Failed to lock the texture");
+                return;
+            }
+        }
+
+        ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
+        device->GetImmediateContext(getter_AddRefs(mDeviceContext));
+
+        mTexture->GetDesc(&mDesc);
+        mDesc.BindFlags = 0;
+        mDesc.Usage = D3D11_USAGE_STAGING;
+        mDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        mDesc.MiscFlags = 0;
+
+        hr = device->CreateTexture2D(&mDesc, nullptr, getter_AddRefs(mCopiedTexture));
+
+        if (FAILED(hr)) {
+            return;
+        }
+
+        mDeviceContext->CopyResource(mCopiedTexture, mTexture);
+
+        hr = mDeviceContext->Map(mCopiedTexture, 0, D3D11_MAP_READ, 0, &mSubresource);
+        if (FAILED(hr)) {
+            return;
+        }
+
+        *succeeded = true;
+        mIsLocked = true;
+    }
+
+    ~ScopedLockTexture()
+    {
+        mDeviceContext->Unmap(mCopiedTexture, 0);
+        if (mMutex) {
+            HRESULT hr = mMutex->ReleaseSync(0);
+            if (FAILED(hr)) {
+                NS_WARNING("Failed to unlock the texture");
+            }
+        }
+        mIsLocked = false;
+    }
+
+    bool mIsLocked;
+    RefPtr<ID3D11Texture2D> mTexture;
+    RefPtr<ID3D11Texture2D> mCopiedTexture;
+    RefPtr<IDXGIKeyedMutex> mMutex;
+    RefPtr<ID3D11DeviceContext> mDeviceContext;
+    D3D11_TEXTURE2D_DESC mDesc;
+    D3D11_MAPPED_SUBRESOURCE mSubresource;
+};
+
+bool
+SharedSurface_ANGLEShareHandle::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surface)
+{
+    MOZ_ASSERT(out_surface);
+    RefPtr<ID3D11Texture2D> tex;
+    ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
+    HRESULT hr = device->OpenSharedResource(mShareHandle,
+                                            __uuidof(ID3D11Texture2D),
+                                            (void**)(ID3D11Texture2D**)getter_AddRefs(tex));
+
+    if (FAILED(hr)) {
+        return false;
+    }
+
+    bool succeeded = false;
+    ScopedLockTexture scopedLock(tex, &succeeded);
+    if (!succeeded) {
+        return false;
+    }
+
+    const uint8_t* data = reinterpret_cast<uint8_t*>(scopedLock.mSubresource.pData);
+    uint32_t srcStride = scopedLock.mSubresource.RowPitch;
+
+    gfx::DataSourceSurface::ScopedMap map(out_surface, gfx::DataSourceSurface::WRITE);
+    if (!map.IsMapped()) {
+        return false;
+    }
+
+    if (map.GetStride() == srcStride) {
+        memcpy(map.GetData(), data, out_surface->GetSize().height * map.GetStride());
+    } else {
+        const uint8_t bytesPerPixel = BytesPerPixel(out_surface->GetFormat());
+        for (int32_t i = 0; i < out_surface->GetSize().height; i++) {
+            memcpy(map.GetData() + i * map.GetStride(),
+                   data + i * srcStride,
+                   bytesPerPixel * out_surface->GetSize().width);
+        }
+    }
+
+    DXGI_FORMAT srcFormat = scopedLock.mDesc.Format;
+    MOZ_ASSERT(srcFormat == DXGI_FORMAT_B8G8R8A8_UNORM ||
+               srcFormat == DXGI_FORMAT_B8G8R8X8_UNORM ||
+               srcFormat == DXGI_FORMAT_R8G8B8A8_UNORM);
+    bool isSrcRGB = srcFormat == DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    gfx::SurfaceFormat destFormat = out_surface->GetFormat();
+    MOZ_ASSERT(destFormat == gfx::SurfaceFormat::R8G8B8X8 ||
+               destFormat == gfx::SurfaceFormat::R8G8B8A8 ||
+               destFormat == gfx::SurfaceFormat::B8G8R8X8 ||
+               destFormat == gfx::SurfaceFormat::B8G8R8A8);
+    bool isDestRGB = destFormat == gfx::SurfaceFormat::R8G8B8X8 ||
+                     destFormat == gfx::SurfaceFormat::R8G8B8A8;
+
+    if (isSrcRGB != isDestRGB) {
+        SwapRAndBComponents(out_surface);
+    }
+
+    return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Factory
-
-static void
-FillPBufferAttribs_ByBits(nsTArray<EGLint>& aAttrs,
-                          int redBits, int greenBits,
-                          int blueBits, int alphaBits,
-                          int depthBits, int stencilBits)
-{
-    aAttrs.Clear();
-
-#if defined(A1) || defined(A2)
-#error The temp-macro names we want are already defined.
-#endif
-
-#define A1(_x)      do { aAttrs.AppendElement(_x); } while (0)
-#define A2(_x,_y)   do { A1(_x); A1(_y); } while (0)
-
-    A2(LOCAL_EGL_RENDERABLE_TYPE, LOCAL_EGL_OPENGL_ES2_BIT);
-    A2(LOCAL_EGL_SURFACE_TYPE, LOCAL_EGL_PBUFFER_BIT);
-
-    A2(LOCAL_EGL_RED_SIZE, redBits);
-    A2(LOCAL_EGL_GREEN_SIZE, greenBits);
-    A2(LOCAL_EGL_BLUE_SIZE, blueBits);
-    A2(LOCAL_EGL_ALPHA_SIZE, alphaBits);
-
-    A2(LOCAL_EGL_DEPTH_SIZE, depthBits);
-    A2(LOCAL_EGL_STENCIL_SIZE, stencilBits);
-
-    A1(LOCAL_EGL_NONE);
-#undef A1
-#undef A2
-}
-
-static void
-FillPBufferAttribs_BySizes(nsTArray<EGLint>& attribs,
-                           bool bpp16, bool hasAlpha,
-                           int depthBits, int stencilBits)
-{
-    int red = 0;
-    int green = 0;
-    int blue = 0;
-    int alpha = 0;
-
-    if (bpp16) {
-        if (hasAlpha) {
-            red = green = blue = alpha = 4;
-        } else {
-            red = 5;
-            green = 6;
-            blue = 5;
-        }
-    } else {
-        red = green = blue = 8;
-        if (hasAlpha)
-            alpha = 8;
-    }
-
-    FillPBufferAttribs_ByBits(attribs, red, green, blue, alpha, depthBits,
-                              stencilBits);
-}
-
-static bool
-DoesAttribBitsMatchCapBool(GLLibraryEGL* egl, EGLConfig config, EGLint attrib,
-                           bool capBool)
-{
-    EGLint bits = 0;
-    egl->fGetConfigAttrib(egl->Display(), config, attrib, &bits);
-    MOZ_ASSERT(egl->fGetError() == LOCAL_EGL_SUCCESS);
-
-    bool hasBits = !!bits;
-
-    return hasBits == capBool;
-}
-
-static EGLConfig
-ChooseConfig(GLContext* gl, GLLibraryEGL* egl, const SurfaceCaps& caps)
-{
-    MOZ_ASSERT(egl);
-    MOZ_ASSERT(caps.color);
-
-    // We might want 24-bit depth, but we're only (fairly) sure to get 16-bit.
-    int depthBits = caps.depth ? 16 : 0;
-    int stencilBits = caps.stencil ? 8 : 0;
-
-    // Ok, now we have everything.
-    nsTArray<EGLint> attribs(32);
-    FillPBufferAttribs_BySizes(attribs, caps.bpp16, caps.alpha, depthBits,
-                               stencilBits);
-
-    // Time to try to get this config:
-    EGLConfig configs[64];
-    int numConfigs = sizeof(configs)/sizeof(EGLConfig);
-    int foundConfigs = 0;
-
-    if (!egl->fChooseConfig(egl->Display(), attribs.Elements(), configs,
-                            numConfigs, &foundConfigs) ||
-        !foundConfigs)
-    {
-        NS_WARNING("No configs found for the requested formats.");
-        return EGL_NO_CONFIG;
-    }
-
-    // The requests passed to ChooseConfig are treated as minimums. If you ask
-    // for 0 bits of alpha, we might still get 8 bits.
-    EGLConfig config = EGL_NO_CONFIG;
-    for (int i = 0; i < foundConfigs; i++) {
-        EGLConfig cur = configs[i];
-        if (!DoesAttribBitsMatchCapBool(egl, cur, LOCAL_EGL_ALPHA_SIZE,
-                                        caps.alpha) ||
-            !DoesAttribBitsMatchCapBool(egl, cur, LOCAL_EGL_DEPTH_SIZE,
-                                        caps.depth) ||
-            !DoesAttribBitsMatchCapBool(egl, cur, LOCAL_EGL_STENCIL_SIZE,
-                                        caps.stencil))
-        {
-            continue;
-        }
-
-        config = cur;
-        break;
-    }
-
-    if (config == EGL_NO_CONFIG) {
-        NS_WARNING("No acceptable EGLConfig found.");
-        return EGL_NO_CONFIG;
-    }
-
-    if (gl->DebugMode()) {
-        egl->DumpEGLConfig(config);
-    }
-
-    return config;
-}
 
 /*static*/ UniquePtr<SurfaceFactory_ANGLEShareHandle>
 SurfaceFactory_ANGLEShareHandle::Create(GLContext* gl, const SurfaceCaps& caps,
@@ -425,13 +421,10 @@ SurfaceFactory_ANGLEShareHandle::Create(GLContext* gl, const SurfaceCaps& caps,
     if (!egl->IsExtensionSupported(ext))
         return nullptr;
 
-    bool success;
+    EGLConfig config = GLContextEGL::Cast(gl)->mConfig;
+
     typedef SurfaceFactory_ANGLEShareHandle ptrT;
-    UniquePtr<ptrT> ret( new ptrT(gl, caps, allocator, flags, egl, &success) );
-
-    if (!success)
-        return nullptr;
-
+    UniquePtr<ptrT> ret( new ptrT(gl, caps, allocator, flags, egl, config) );
     return Move(ret);
 }
 
@@ -440,22 +433,12 @@ SurfaceFactory_ANGLEShareHandle::SurfaceFactory_ANGLEShareHandle(GLContext* gl,
                                                                  const RefPtr<layers::ISurfaceAllocator>& allocator,
                                                                  const layers::TextureFlags& flags,
                                                                  GLLibraryEGL* egl,
-                                                                 bool* const out_success)
+                                                                 EGLConfig config)
     : SurfaceFactory(SharedSurfaceType::EGLSurfaceANGLE, gl, caps, allocator, flags)
     , mProdGL(gl)
     , mEGL(egl)
-{
-    MOZ_ASSERT(out_success);
-    *out_success = false;
-
-    mContext = GLContextEGL::Cast(mProdGL)->GetEGLContext();
-    mConfig = ChooseConfig(mProdGL, mEGL, mReadCaps);
-    if (mConfig == EGL_NO_CONFIG)
-        return;
-
-    MOZ_ASSERT(mConfig && mContext);
-    *out_success = true;
-}
+    , mConfig(config)
+{ }
 
 } /* namespace gl */
 } /* namespace mozilla */

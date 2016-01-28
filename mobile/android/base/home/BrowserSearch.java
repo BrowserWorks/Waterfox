@@ -11,6 +11,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
+import android.content.SharedPreferences;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +19,7 @@ import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.EventDispatcher;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.SuggestClient;
@@ -25,16 +27,19 @@ import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.History;
 import org.mozilla.gecko.db.BrowserContract.URLColumns;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.SearchLoader.SearchCursorLoader;
+import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.toolbar.AutocompleteHandler;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -94,6 +99,7 @@ public class BrowserSearch extends HomeFragment
 
     // AsyncTask loader ID for suggestion query
     private static final int LOADER_ID_SUGGESTION = 1;
+    private static final int LOADER_ID_SAVED_SUGGESTION = 2;
 
     // Timeout for the suggestion client to respond
     private static final int SUGGESTION_TIMEOUT = 3000;
@@ -137,6 +143,9 @@ public class BrowserSearch extends HomeFragment
     // Access to this member must only occur from the UI thread.
     private List<SearchEngine> mSearchEngines;
 
+    // Search history suggestions
+    private ArrayList<String> mSearchHistorySuggestions;
+
     // Track the locale that was last in use when we filled mSearchEngines.
     // Access to this member must only occur from the UI thread.
     private Locale mLastLocale;
@@ -144,11 +153,15 @@ public class BrowserSearch extends HomeFragment
     // Whether search suggestions are enabled or not
     private boolean mSuggestionsEnabled;
 
+    // Whether history suggestions are enabled or not
+    private boolean mSavedSearchesEnabled;
+
     // Callbacks used for the search loader
     private CursorLoaderCallbacks mCursorLoaderCallbacks;
 
     // Callbacks used for the search suggestion loader
-    private SuggestionLoaderCallbacks mSuggestionLoaderCallbacks;
+    private SearchEngineSuggestionLoaderCallbacks mSearchEngineSuggestionLoaderCallbacks;
+    private SearchHistorySuggestionLoaderCallbacks mSearchHistorySuggestionLoaderCallback;
 
     // Autocomplete handler used when filtering results
     private AutocompleteHandler mAutocompleteHandler;
@@ -220,6 +233,7 @@ public class BrowserSearch extends HomeFragment
         super.onCreate(savedInstanceState);
 
         mSearchEngines = new ArrayList<SearchEngine>();
+        mSearchHistorySuggestions = new ArrayList<>();
     }
 
     @Override
@@ -230,8 +244,28 @@ public class BrowserSearch extends HomeFragment
     }
 
     @Override
+    public void onHiddenChanged(boolean hidden) {
+        if (!hidden) {
+            Tab tab = Tabs.getInstance().getSelectedTab();
+            final boolean isPrivate = (tab != null && tab.isPrivate());
+
+            // Removes Search Suggestions Loader if in private browsing mode
+            // Loader may have been inserted when browsing in normal tab
+            if (isPrivate) {
+                getLoaderManager().destroyLoader(LOADER_ID_SUGGESTION);
+            }
+
+            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SearchEngines:GetVisible", null));
+        }
+        super.onHiddenChanged(hidden);
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+
+        final SharedPreferences prefs = GeckoSharedPrefs.forApp(getContext());
+        mSavedSearchesEnabled = prefs.getBoolean(GeckoPreferences.PREFS_HISTORY_SAVED_SEARCH, true);
 
         // Fetch engines if we need to.
         if (mSearchEngines.isEmpty() || !Locale.getDefault().equals(mLastLocale)) {
@@ -352,7 +386,8 @@ public class BrowserSearch extends HomeFragment
         mList.setAdapter(mAdapter);
 
         // Only create an instance when we need it
-        mSuggestionLoaderCallbacks = null;
+        mSearchEngineSuggestionLoaderCallbacks = null;
+        mSearchHistorySuggestionLoaderCallback = null;
 
         // Create callbacks before the initial loader is started
         mCursorLoaderCallbacks = new CursorLoaderCallbacks();
@@ -507,16 +542,26 @@ public class BrowserSearch extends HomeFragment
         return null;
     }
 
+    public void resetScrollState() {
+        mSearchEngineBar.scrollToPosition(0);
+    }
+
     private void filterSuggestions() {
-        if (mSuggestClient == null || !mSuggestionsEnabled) {
+        if (mSuggestClient == null || (!mSuggestionsEnabled && !mSavedSearchesEnabled)) {
             return;
         }
 
-        if (mSuggestionLoaderCallbacks == null) {
-            mSuggestionLoaderCallbacks = new SuggestionLoaderCallbacks();
+        // Suggestions from search engine
+        if (mSearchEngineSuggestionLoaderCallbacks == null) {
+            mSearchEngineSuggestionLoaderCallbacks = new SearchEngineSuggestionLoaderCallbacks();
         }
+        getLoaderManager().restartLoader(LOADER_ID_SUGGESTION, null, mSearchEngineSuggestionLoaderCallbacks);
 
-        getLoaderManager().restartLoader(LOADER_ID_SUGGESTION, null, mSuggestionLoaderCallbacks);
+        // Saved suggestions
+        if (mSearchHistorySuggestionLoaderCallback == null) {
+            mSearchHistorySuggestionLoaderCallback = new SearchHistorySuggestionLoaderCallbacks();
+        }
+        getLoaderManager().restartLoader(LOADER_ID_SAVED_SUGGESTION, null, mSearchHistorySuggestionLoaderCallback);
     }
 
     private void setSuggestions(ArrayList<String> suggestions) {
@@ -524,6 +569,29 @@ public class BrowserSearch extends HomeFragment
 
         mSearchEngines.get(0).setSuggestions(suggestions);
         mAdapter.notifyDataSetChanged();
+    }
+
+    private void setSavedSuggestions(ArrayList<String> savedSuggestions) {
+        ThreadUtils.assertOnUiThread();
+
+        mSearchHistorySuggestions = savedSuggestions;
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private boolean shouldUpdateSearchEngine(ArrayList<SearchEngine> searchEngines) {
+        if (searchEngines.size() != mSearchEngines.size()) {
+            return true;
+        }
+
+        int size = searchEngines.size();
+
+        for (int i = 0; i < size; i++) {
+            if (!mSearchEngines.get(i).name.equals(searchEngines.get(i).name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void setSearchEngines(JSONObject data) {
@@ -571,20 +639,28 @@ public class BrowserSearch extends HomeFragment
                 }
             }
 
-            mSearchEngines = Collections.unmodifiableList(searchEngines);
-            mLastLocale = Locale.getDefault();
+            // checking if the new searchEngine is different from mSearchEngine, will have to re-layout if yes
+            boolean change = shouldUpdateSearchEngine(searchEngines);
 
-            if (mAdapter != null) {
+            if (mAdapter != null && change) {
+                mSearchEngines = Collections.unmodifiableList(searchEngines);
+                mLastLocale = Locale.getDefault();
+                updateSearchEngineBar();
+
                 mAdapter.notifyDataSetChanged();
             }
 
-            updateSearchEngineBar();
-
             // Show suggestions opt-in prompt only if suggestions are not enabled yet,
             // user hasn't been prompted and we're not on a private browsing tab.
+            // The prompt might have been inflated already when this view was previously called.
+            // Remove the opt-in prompt if it has been inflated in the view and dealt with by the user,
+            // or if we're on a private browsing tab
             if (!mSuggestionsEnabled && !suggestionsPrompted && mSuggestClient != null) {
                 showSuggestionsOptIn();
+            } else {
+                removeSuggestionsOptIn();
             }
+
         } catch (JSONException e) {
             Log.e(LOGTAG, "Error getting search engine JSON", e);
         }
@@ -614,7 +690,12 @@ public class BrowserSearch extends HomeFragment
     }
 
     private void maybeSetSuggestClient(final String suggestTemplate, final boolean isPrivate) {
-        if (mSuggestClient != null || isPrivate) {
+        if (isPrivate) {
+            mSuggestClient = null;
+            return;
+        }
+
+        if (mSuggestClient != null) {
             return;
         }
 
@@ -622,9 +703,11 @@ public class BrowserSearch extends HomeFragment
     }
 
     private void showSuggestionsOptIn() {
-        // Return if the ViewStub was already inflated - an inflated ViewStub is removed from the
-        // View hierarchy so a second call to findViewById will return null.
+        // Only make the ViewStub visible again if it has already previously been shown.
+        // (An inflated ViewStub is removed from the View hierarchy so a second call to findViewById will return null,
+        // which also further necessitates handling this separately.)
         if (mSuggestionsOptInPrompt != null) {
+            mSuggestionsOptInPrompt.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -661,6 +744,14 @@ public class BrowserSearch extends HomeFragment
                 }
             }
         });
+    }
+
+    private void removeSuggestionsOptIn() {
+        if (mSuggestionsOptInPrompt == null) {
+            return;
+        }
+
+        mSuggestionsOptInPrompt.setVisibility(View.GONE);
     }
 
     private void setSuggestionsEnabled(final boolean enabled) {
@@ -763,7 +854,7 @@ public class BrowserSearch extends HomeFragment
         mSearchTerm = searchTerm;
         mAutocompleteHandler = handler;
 
-        if (isVisible()) {
+        if (mAdapter != null) {
             if (isNewFilter) {
                 // The adapter depends on the search term to determine its number
                 // of items. Make it we notify the view about it.
@@ -781,20 +872,13 @@ public class BrowserSearch extends HomeFragment
         }
     }
 
-    private static class SuggestionAsyncLoader extends AsyncTaskLoader<ArrayList<String>> {
-        private final SuggestClient mSuggestClient;
-        private final String mSearchTerm;
+    abstract private static class SuggestionAsyncLoader extends AsyncTaskLoader<ArrayList<String>> {
+        protected final String mSearchTerm;
         private ArrayList<String> mSuggestions;
 
-        public SuggestionAsyncLoader(Context context, SuggestClient suggestClient, String searchTerm) {
+        public SuggestionAsyncLoader(Context context, String searchTerm) {
             super(context);
-            mSuggestClient = suggestClient;
             mSearchTerm = searchTerm;
-        }
-
-        @Override
-        public ArrayList<String> loadInBackground() {
-            return mSuggestClient.query(mSearchTerm);
         }
 
         @Override
@@ -828,6 +912,58 @@ public class BrowserSearch extends HomeFragment
 
             onStopLoading();
             mSuggestions = null;
+        }
+    }
+
+    private static class SearchEngineSuggestionAsyncLoader extends SuggestionAsyncLoader {
+        private final SuggestClient mSuggestClient;
+
+        public SearchEngineSuggestionAsyncLoader(Context context, SuggestClient suggestClient, String searchTerm) {
+            super(context, searchTerm);
+            mSuggestClient = suggestClient;
+        }
+
+        @Override
+        public ArrayList<String> loadInBackground() {
+            return mSuggestClient.query(mSearchTerm);
+        }
+    }
+
+    private static class SearchHistorySuggestionAsyncLoader extends SuggestionAsyncLoader {
+        public SearchHistorySuggestionAsyncLoader(Context context, String searchTerm) {
+            super(context, searchTerm);
+        }
+
+        @Override
+        public ArrayList<String> loadInBackground() {
+            final ContentResolver cr = getContext().getContentResolver();
+
+            String[] columns = new String[] { BrowserContract.SearchHistory.QUERY };
+            String actualQuery = BrowserContract.SearchHistory.QUERY + " LIKE ?";
+            String[] queryArgs = new String[] { '%' + mSearchTerm + '%' };
+
+            final int maxSavedSuggestions = getContext().getResources().getInteger(R.integer.max_saved_suggestions);
+            final String sortOrderAndLimit = BrowserContract.SearchHistory.DATE +" DESC LIMIT " + maxSavedSuggestions;
+            final Cursor result =  cr.query(BrowserContract.SearchHistory.CONTENT_URI, columns, actualQuery, queryArgs, sortOrderAndLimit);
+
+            if (result == null) {
+                return new ArrayList<>();
+            }
+
+            final ArrayList<String> savedSuggestions = new ArrayList<>();
+            try {
+                if (result.moveToFirst()) {
+                    final int searchColumn = result.getColumnIndexOrThrow(BrowserContract.SearchHistory.QUERY);
+                    do {
+                        final String savedSearch = result.getString(searchColumn);
+                        savedSuggestions.add(savedSearch);
+                    } while (result.moveToNext());
+                }
+            } finally {
+                result.close();
+            }
+
+            return savedSuggestions;
         }
     }
 
@@ -908,8 +1044,9 @@ public class BrowserSearch extends HomeFragment
                 row.setSearchTerm(mSearchTerm);
 
                 final SearchEngine engine = mSearchEngines.get(position);
-                final boolean animate = (mAnimateSuggestions && engine.hasSuggestions());
-                row.updateSuggestions(mSuggestionsEnabled, engine, mSearchTerm, animate);
+                final boolean haveSuggestions = (engine.hasSuggestions() || !mSearchHistorySuggestions.isEmpty());
+                final boolean animate = (mAnimateSuggestions && haveSuggestions);
+                row.updateSuggestions(mSuggestionsEnabled, engine, mSearchHistorySuggestions, animate);
                 if (animate) {
                     // Only animate suggestions the first time they are shown
                     mAnimateSuggestions = false;
@@ -933,28 +1070,32 @@ public class BrowserSearch extends HomeFragment
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
-            mAdapter.swapCursor(c);
+            if (mAdapter != null) {
+                mAdapter.swapCursor(c);
 
-            // We should handle autocompletion based on the search term
-            // associated with the loader that has just provided
-            // the results.
-            SearchCursorLoader searchLoader = (SearchCursorLoader) loader;
-            handleAutocomplete(searchLoader.getSearchTerm(), c);
+                // We should handle autocompletion based on the search term
+                // associated with the loader that has just provided
+                // the results.
+                SearchCursorLoader searchLoader = (SearchCursorLoader) loader;
+                handleAutocomplete(searchLoader.getSearchTerm(), c);
+            }
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-            mAdapter.swapCursor(null);
+            if (mAdapter != null) {
+                mAdapter.swapCursor(null);
+            }
         }
     }
 
-    private class SuggestionLoaderCallbacks implements LoaderCallbacks<ArrayList<String>> {
+    private class SearchEngineSuggestionLoaderCallbacks implements LoaderCallbacks<ArrayList<String>> {
         @Override
         public Loader<ArrayList<String>> onCreateLoader(int id, Bundle args) {
             // mSuggestClient is set to null in onDestroyView(), so using it
             // safely here relies on the fact that onCreateLoader() is called
             // synchronously in restartLoader().
-            return new SuggestionAsyncLoader(getActivity(), mSuggestClient, mSearchTerm);
+            return new SearchEngineSuggestionAsyncLoader(getActivity(), mSuggestClient, mSearchTerm);
         }
 
         @Override
@@ -965,6 +1106,26 @@ public class BrowserSearch extends HomeFragment
         @Override
         public void onLoaderReset(Loader<ArrayList<String>> loader) {
             setSuggestions(new ArrayList<String>());
+        }
+    }
+
+    private class SearchHistorySuggestionLoaderCallbacks implements LoaderCallbacks<ArrayList<String>> {
+        @Override
+        public Loader<ArrayList<String>> onCreateLoader(int id, Bundle args) {
+            // mSuggestClient is set to null in onDestroyView(), so using it
+            // safely here relies on the fact that onCreateLoader() is called
+            // synchronously in restartLoader().
+            return new SearchHistorySuggestionAsyncLoader(getActivity(), mSearchTerm);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<ArrayList<String>> loader, ArrayList<String> suggestions) {
+            setSavedSuggestions(suggestions);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<ArrayList<String>> loader) {
+            setSavedSuggestions(new ArrayList<String>());
         }
     }
 

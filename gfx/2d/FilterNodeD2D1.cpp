@@ -536,6 +536,27 @@ IsTransferFilterType(FilterType aType)
   }
 }
 
+static bool
+HasUnboundedOutputRegion(FilterType aType)
+{
+  if (IsTransferFilterType(aType)) {
+    return true;
+  }
+
+  switch (aType) {
+    case FilterType::COLOR_MATRIX:
+    case FilterType::POINT_DIFFUSE:
+    case FilterType::SPOT_DIFFUSE:
+    case FilterType::DISTANT_DIFFUSE:
+    case FilterType::POINT_SPECULAR:
+    case FilterType::SPOT_SPECULAR:
+    case FilterType::DISTANT_SPECULAR:
+      return true;
+    default:
+      return false;
+  }
+}
+
 /* static */
 already_AddRefed<FilterNode>
 FilterNodeD2D1::Create(ID2D1DeviceContext *aDC, FilterType aType)
@@ -547,7 +568,7 @@ FilterNodeD2D1::Create(ID2D1DeviceContext *aDC, FilterType aType)
   RefPtr<ID2D1Effect> effect;
   HRESULT hr;
 
-  hr = aDC->CreateEffect(GetCLDIDForFilterType(aType), byRef(effect));
+  hr = aDC->CreateEffect(GetCLDIDForFilterType(aType), getter_AddRefs(effect));
 
   if (FAILED(hr) || !effect) {
     gfxCriticalErrorOnce() << "Failed to create effect for FilterType: " << hexa(hr);
@@ -556,7 +577,7 @@ FilterNodeD2D1::Create(ID2D1DeviceContext *aDC, FilterType aType)
 
   RefPtr<FilterNodeD2D1> filter = new FilterNodeD2D1(effect, aType);
 
-  if (IsTransferFilterType(aType) || aType == FilterType::COLOR_MATRIX) {
+  if (HasUnboundedOutputRegion(aType)) {
     // These filters can produce non-transparent output from transparent
     // input pixels, and we want them to have an unbounded output region.
     filter = new FilterNodeExtendInputAdapterD2D1(aDC, filter, aType);
@@ -857,7 +878,7 @@ FilterNodeConvolveD2D1::FilterNodeConvolveD2D1(ID2D1DeviceContext *aDC)
 
   HRESULT hr;
   
-  hr = aDC->CreateEffect(CLSID_D2D1ConvolveMatrix, byRef(mEffect));
+  hr = aDC->CreateEffect(CLSID_D2D1ConvolveMatrix, getter_AddRefs(mEffect));
 
   if (FAILED(hr) || !mEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
@@ -866,14 +887,14 @@ FilterNodeConvolveD2D1::FilterNodeConvolveD2D1(ID2D1DeviceContext *aDC)
 
   mEffect->SetValue(D2D1_CONVOLVEMATRIX_PROP_BORDER_MODE, D2D1_BORDER_MODE_SOFT);
 
-  hr = aDC->CreateEffect(CLSID_ExtendInputEffect, byRef(mExtendInputEffect));
+  hr = aDC->CreateEffect(CLSID_ExtendInputEffect, getter_AddRefs(mExtendInputEffect));
 
   if (FAILED(hr) || !mExtendInputEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
     return;
   }
 
-  hr = aDC->CreateEffect(CLSID_D2D1Border, byRef(mBorderEffect));
+  hr = aDC->CreateEffect(CLSID_D2D1Border, getter_AddRefs(mBorderEffect));
 
   if (FAILED(hr) || !mBorderEffect) {
     gfxWarning() << "Failed to create ConvolveMatrix filter!";
@@ -1016,7 +1037,7 @@ FilterNodeExtendInputAdapterD2D1::FilterNodeExtendInputAdapterD2D1(ID2D1DeviceCo
 
   HRESULT hr;
 
-  hr = aDC->CreateEffect(CLSID_ExtendInputEffect, byRef(mExtendInputEffect));
+  hr = aDC->CreateEffect(CLSID_ExtendInputEffect, getter_AddRefs(mExtendInputEffect));
 
   if (FAILED(hr) || !mExtendInputEffect) {
     gfxWarning() << "Failed to create extend input effect for filter: " << hexa(hr);
@@ -1060,14 +1081,14 @@ FilterNodePremultiplyAdapterD2D1::FilterNodePremultiplyAdapterD2D1(ID2D1DeviceCo
   // filters is part of the FilterNode API.
   HRESULT hr;
 
-  hr = aDC->CreateEffect(CLSID_D2D1Premultiply, byRef(mPrePremultiplyEffect));
+  hr = aDC->CreateEffect(CLSID_D2D1Premultiply, getter_AddRefs(mPrePremultiplyEffect));
 
   if (FAILED(hr) || !mPrePremultiplyEffect) {
     gfxWarning() << "Failed to create ComponentTransfer filter!";
     return;
   }
 
-  hr = aDC->CreateEffect(CLSID_D2D1UnPremultiply, byRef(mPostUnpremultiplyEffect));
+  hr = aDC->CreateEffect(CLSID_D2D1UnPremultiply, getter_AddRefs(mPostUnpremultiplyEffect));
 
   if (FAILED(hr) || !mPostUnpremultiplyEffect) {
     gfxWarning() << "Failed to create ComponentTransfer filter!";

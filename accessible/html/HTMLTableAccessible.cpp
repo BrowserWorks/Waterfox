@@ -812,7 +812,7 @@ HTMLTableAccessible::AddRowOrColumnToSelection(int32_t aIndex, uint32_t aTarget)
     count = RowCount();
 
   nsIPresShell* presShell(mDoc->PresShell());
-  nsRefPtr<nsFrameSelection> tableSelection =
+  RefPtr<nsFrameSelection> tableSelection =
     const_cast<nsFrameSelection*>(presShell->ConstFrameSelection());
 
   for (uint32_t idx = 0; idx < count; idx++) {
@@ -838,7 +838,7 @@ HTMLTableAccessible::RemoveRowsOrColumnsFromSelection(int32_t aIndex,
     return NS_OK;
 
   nsIPresShell* presShell(mDoc->PresShell());
-  nsRefPtr<nsFrameSelection> tableSelection =
+  RefPtr<nsFrameSelection> tableSelection =
     const_cast<nsFrameSelection*>(presShell->ConstFrameSelection());
 
   bool doUnselectRow = (aTarget == nsISelectionPrivate::TABLESELECTION_ROW);
@@ -969,8 +969,8 @@ HTMLTableAccessible::IsProbablyLayoutTable()
     RETURN_LAYOUT_ANSWER(false, "Has role attribute, weak role, and role is table");
   }
 
-  if (!mContent->IsHTMLElement(nsGkAtoms::table))
-    RETURN_LAYOUT_ANSWER(true, "table built by CSS display:table style");
+  NS_ASSERTION(mContent->IsHTMLElement(nsGkAtoms::table),
+    "table should not be built by CSS display:table style");
 
   // Check if datatable attribute has "0" value.
   if (mContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::datatable,

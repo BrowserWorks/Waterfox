@@ -219,10 +219,10 @@ DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
 
   // Note, this DOM event should never reach JS. It is cloned later in
   // nsGlobalWindow.
-  nsRefPtr<StorageEvent> event =
+  RefPtr<StorageEvent> event =
     StorageEvent::Constructor(nullptr, NS_LITERAL_STRING("storage"), dict);
 
-  nsRefPtr<StorageNotifierRunnable> r =
+  RefPtr<StorageNotifierRunnable> r =
     new StorageNotifierRunnable(event,
                                 GetType() == LocalStorage
                                   ? MOZ_UTF16("localStorage")
@@ -232,8 +232,6 @@ DOMStorage::BroadcastChangeNotification(const nsSubstring& aKey,
 
 static const char kPermissionType[] = "cookie";
 static const char kStorageEnabled[] = "dom.storage.enabled";
-static const char kCookiesBehavior[] = "network.cookie.cookieBehavior";
-static const char kCookiesLifetimePolicy[] = "network.cookie.lifetimePolicy";
 
 // static, public
 bool

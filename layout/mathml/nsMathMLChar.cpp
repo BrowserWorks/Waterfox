@@ -9,6 +9,7 @@
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/MathAlgorithms.h"
+#include "mozilla/unused.h"
 
 #include "nsCOMPtr.h"
 #include "nsDeviceContext.h"
@@ -447,7 +448,7 @@ public:
   }
 
 private:
-  nsRefPtr<gfxFontEntry> mFontEntry;
+  RefPtr<gfxFontEntry> mFontEntry;
   FontFamilyName mFontFamilyName;
   uint32_t mGlyphID;
 
@@ -723,7 +724,7 @@ InitGlobals(nsPresContext* aPresContext)
 
   // Allocate the placeholders for the preferred parts and variants
   nsresult rv = NS_ERROR_OUT_OF_MEMORY;
-  nsRefPtr<nsGlyphTableList> glyphTableList = new nsGlyphTableList();
+  RefPtr<nsGlyphTableList> glyphTableList = new nsGlyphTableList();
   if (glyphTableList) {
     rv = glyphTableList->Initialize();
   }
@@ -980,7 +981,7 @@ nsMathMLChar::SetFontFamily(nsPresContext*          aPresContext,
                             const nsGlyphCode&      aGlyphCode,
                             const FontFamilyList&   aDefaultFamilyList,
                             nsFont&                 aFont,
-                            nsRefPtr<gfxFontGroup>* aFontGroup)
+                            RefPtr<gfxFontGroup>* aFontGroup)
 {
   FontFamilyList glyphCodeFont;
 
@@ -995,7 +996,7 @@ nsMathMLChar::SetFontFamily(nsPresContext*          aPresContext,
     nsFont font = aFont;
     font.fontlist = familyList;
     const nsStyleFont* styleFont = mStyleContext->StyleFont();
-    nsRefPtr<nsFontMetrics> fm;
+    RefPtr<nsFontMetrics> fm;
     aPresContext->DeviceContext()->
       GetMetricsFor(font,
                     styleFont->mLanguage,
@@ -1069,10 +1070,10 @@ public:
 
 private:
   bool TryVariants(nsGlyphTable* aGlyphTable,
-                   nsRefPtr<gfxFontGroup>* aFontGroup,
+                   RefPtr<gfxFontGroup>* aFontGroup,
                    const FontFamilyList& aFamilyList);
   bool TryParts(nsGlyphTable* aGlyphTable,
-                nsRefPtr<gfxFontGroup>* aFontGroup,
+                RefPtr<gfxFontGroup>* aFontGroup,
                 const FontFamilyList& aFamilyList);
 
   nsMathMLChar* mChar;
@@ -1102,7 +1103,7 @@ private:
 bool
 nsMathMLChar::
 StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
-                                nsRefPtr<gfxFontGroup>* aFontGroup,
+                                RefPtr<gfxFontGroup>* aFontGroup,
                                 const FontFamilyList& aFamilyList)
 {
   // Use our stretchy style context now that stretching is in progress
@@ -1253,7 +1254,7 @@ StretchEnumContext::TryVariants(nsGlyphTable* aGlyphTable,
 // Always updates the char if a better match is found.
 bool
 nsMathMLChar::StretchEnumContext::TryParts(nsGlyphTable* aGlyphTable,
-                                           nsRefPtr<gfxFontGroup>* aFontGroup,
+                                           RefPtr<gfxFontGroup>* aFontGroup,
                                            const FontFamilyList& aFamilyList)
 {
   // Use our stretchy style context now that stretching is in progress
@@ -1437,7 +1438,7 @@ nsMathMLChar::StretchEnumContext::EnumCallback(const FontFamilyName& aFamily,
   nsStyleContext *sc = context->mChar->mStyleContext;
   nsFont font = sc->StyleFont()->mFont;
   NormalizeDefaultFont(font, context->mFontSizeInflation);
-  nsRefPtr<gfxFontGroup> fontGroup;
+  RefPtr<gfxFontGroup> fontGroup;
   FontFamilyList family;
   family.Append(unquotedFamilyName);
   if (!aGeneric && !context->mChar->SetFontFamily(context->mPresContext,
@@ -1540,7 +1541,7 @@ nsMathMLChar::StretchInternal(nsPresContext*           aPresContext,
   NormalizeDefaultFont(font, aFontSizeInflation);
 
   const nsStyleFont* styleFont = mStyleContext->StyleFont();
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   aPresContext->DeviceContext()->
     GetMetricsFor(font,
                   styleFont->mLanguage,
@@ -2025,8 +2026,17 @@ void nsDisplayMathMLCharDebug::Paint(nsDisplayListBuilder* aBuilder,
   nsPresContext* presContext = mFrame->PresContext();
   nsStyleContext* styleContext = mFrame->StyleContext();
   nsRect rect = mRect + ToReferenceFrame();
-  nsCSSRendering::PaintBorder(presContext, *aCtx, mFrame,
-                              mVisibleRect, rect, styleContext, skipSides);
+
+  PaintBorderFlags flags = aBuilder->ShouldSyncDecodeImages()
+                         ? PaintBorderFlags::SYNC_DECODE_IMAGES
+                         : PaintBorderFlags();
+
+  // Since this is used only for debugging, we don't need to worry about
+  // tracking the DrawResult.
+  unused <<
+    nsCSSRendering::PaintBorder(presContext, *aCtx, mFrame, mVisibleRect,
+                                rect, styleContext, flags, skipSides);
+
   nsCSSRendering::PaintOutline(presContext, *aCtx, mFrame,
                                mVisibleRect, rect, styleContext);
 }
@@ -2127,7 +2137,7 @@ nsMathMLChar::PaintForeground(nsPresContext* aPresContext,
     styleContext = parentContext;
   }
 
-  nsRefPtr<gfxContext> thebesContext = aRenderingContext.ThebesContext();
+  RefPtr<gfxContext> thebesContext = aRenderingContext.ThebesContext();
 
   // Set color ...
   nscolor fgColor = styleContext->GetVisitedDependentColor(eCSSProperty_color);
@@ -2136,7 +2146,7 @@ nsMathMLChar::PaintForeground(nsPresContext* aPresContext,
     fgColor = LookAndFeel::GetColor(LookAndFeel::eColorID_TextSelectForeground,
                                     fgColor);
   }
-  thebesContext->SetColor(fgColor);
+  thebesContext->SetColor(Color::FromABGR(fgColor));
   thebesContext->Save();
   nsRect r = mRect + aPt;
   ApplyTransforms(thebesContext, aPresContext->AppUnitsPerDevPixel(), r);

@@ -46,10 +46,10 @@ TrapShmError(Display* aDisplay, XErrorEvent* aEvent)
 #endif
 
 already_AddRefed<nsShmImage>
-nsShmImage::Create(const gfxIntSize& aSize,
+nsShmImage::Create(const IntSize& aSize,
                    Display* aDisplay, Visual* aVisual, unsigned int aDepth)
 {
-    nsRefPtr<nsShmImage> shm = new nsShmImage();
+    RefPtr<nsShmImage> shm = new nsShmImage();
     shm->mDisplay = aDisplay;
     shm->mImage = XShmCreateImage(aDisplay, aVisual, aDepth,
                                   ZPixmap, nullptr,
@@ -112,7 +112,7 @@ nsShmImage::Create(const gfxIntSize& aSize,
         }
         goto unsupported;
     case 16:
-        shm->mFormat = SurfaceFormat::R5G6B5;
+        shm->mFormat = SurfaceFormat::R5G6B5_UINT16;
         break;
     unsupported:
     default:
@@ -180,9 +180,9 @@ nsShmImage::Put(QWindow* aWindow, QRect& aRect)
 #endif
 
 already_AddRefed<DrawTarget>
-nsShmImage::EnsureShmImage(const gfxIntSize& aSize,
+nsShmImage::EnsureShmImage(const IntSize& aSize,
                            Display* aDisplay, Visual* aVisual, unsigned int aDepth,
-                           nsRefPtr<nsShmImage>& aImage)
+                           RefPtr<nsShmImage>& aImage)
 {
     if (!aImage || aImage->Size() != aSize) {
         // Because we XSync() after XShmAttach() to trap errors, we

@@ -6,6 +6,7 @@
 package org.mozilla.gecko.preferences;
 
 import org.mozilla.gecko.AboutPages;
+import org.mozilla.gecko.AdjustConstants;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
@@ -27,7 +28,6 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.TelemetryContract.Method;
 import org.mozilla.gecko.background.common.GlobalConstants;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
 import org.mozilla.gecko.restrictions.Restriction;
 import org.mozilla.gecko.tabqueue.TabQueueHelper;
@@ -128,17 +128,22 @@ OnSharedPreferenceChangeListener
     private static final String PREFS_DEVTOOLS_REMOTE_WIFI_ENABLED = "devtools.remote.wifi.enabled";
     private static final String PREFS_DISPLAY_TITLEBAR_MODE = "browser.chrome.titlebarMode";
     private static final String PREFS_SYNC = NON_PREF_PREFIX + "sync";
+    private static final String PREFS_TRACKING_PROTECTION = "privacy.trackingprotection.state";
+    private static final String PREFS_TRACKING_PROTECTION_PB = "privacy.trackingprotection.pbmode.enabled";
     public static final String PREFS_OPEN_URLS_IN_PRIVATE = NON_PREF_PREFIX + "openExternalURLsPrivately";
     public static final String PREFS_VOICE_INPUT_ENABLED = NON_PREF_PREFIX + "voice_input_enabled";
     public static final String PREFS_QRCODE_ENABLED = NON_PREF_PREFIX + "qrcode_enabled";
     private static final String PREFS_DEVTOOLS = NON_PREF_PREFIX + "devtools.enabled";
     private static final String PREFS_DISPLAY = NON_PREF_PREFIX + "display.enabled";
     private static final String PREFS_CUSTOMIZE_HOME = NON_PREF_PREFIX + "customize_home";
+    private static final String PREFS_CUSTOMIZE_IMAGE_BLOCKING = "browser.image_blocking.enabled";
     private static final String PREFS_TRACKING_PROTECTION_PRIVATE_BROWSING = "privacy.trackingprotection.pbmode.enabled";
     private static final String PREFS_TRACKING_PROTECTION_LEARN_MORE = NON_PREF_PREFIX + "trackingprotection.learn_more";
     private static final String PREFS_CATEGORY_PRIVATE_DATA = NON_PREF_PREFIX + "category_private_data";
     private static final String PREFS_CATEGORY_HOMEPAGE = NON_PREF_PREFIX + "category_homepage";
     public static final String PREFS_HOMEPAGE = NON_PREF_PREFIX + "homepage";
+    public static final String PREFS_HISTORY_SAVED_SEARCH = NON_PREF_PREFIX + "search.search_history.enabled";
+    private static final String PREFS_FAQ_LINK = NON_PREF_PREFIX + "faq.link";
 
     private static final String ACTION_STUMBLER_UPLOAD_PREF = AppConstants.ANDROID_PACKAGE_NAME + ".STUMBLER_PREF";
 
@@ -244,6 +249,8 @@ OnSharedPreferenceChangeListener
             title = R.string.pref_category_vendor;
         } else if (res == R.xml.preferences_customize) {
             title = R.string.pref_category_customize;
+        } else if (res == R.xml.preferences_search) {
+            title = R.string.pref_category_search;
         }
         if (title != -1) {
             updateTitle(title);
@@ -732,14 +739,6 @@ OnSharedPreferenceChangeListener
                         continue;
                     }
                 }
-                if (PREFS_CATEGORY_HOMEPAGE.equals(key)) {
-                    // Only enable the home page setting on Nightly.
-                    if (!AppConstants.NIGHTLY_BUILD) {
-                        preferences.removePreference(pref);
-                        i--;
-                        continue;
-                    }
-                }
                 setupPreferences((PreferenceGroup) pref, prefs);
             } else {
                 pref.setOnPreferenceChangeListener(this);
@@ -759,6 +758,20 @@ OnSharedPreferenceChangeListener
                 } else if (PREFS_OPEN_URLS_IN_PRIVATE.equals(key)) {
                     // Remove UI for opening external links in private browsing on non-Nightly builds.
                     if (!AppConstants.NIGHTLY_BUILD || !RestrictedProfiles.isAllowed(this, Restriction.DISALLOW_PRIVATE_BROWSING)) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
+                } else if (PREFS_TRACKING_PROTECTION.equals(key)) {
+                    // Remove UI for global TP pref in non-Nightly builds.
+                    if (!AppConstants.NIGHTLY_BUILD) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
+                } else if (PREFS_TRACKING_PROTECTION_PB.equals(key)) {
+                    // Remove UI for private-browsing-only TP pref in Nightly builds.
+                    if (AppConstants.NIGHTLY_BUILD) {
                         preferences.removePreference(pref);
                         i--;
                         continue;
@@ -886,16 +899,25 @@ OnSharedPreferenceChangeListener
                         i--;
                         continue;
                     }
+                } else if (PREFS_CUSTOMIZE_IMAGE_BLOCKING.equals(key)) {
+                    // Only enable the ZoomedView / magnifying pref on Nightly.
+                    if (!AppConstants.NIGHTLY_BUILD) {
+                        preferences.removePreference(pref);
+                        i--;
+                        continue;
+                    }
                 } else if (PREFS_HOMEPAGE.equals(key)) {
                     String setUrl = GeckoSharedPrefs.forProfile(getBaseContext()).getString(PREFS_HOMEPAGE, AboutPages.HOME);
                     setHomePageSummary(pref, setUrl);
-                    pref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(final Preference preference, final Object newValue) {
-                            setHomePageSummary(pref, String.valueOf(newValue));
-                            return true;
-                        }
-                    });
+                    pref.setOnPreferenceChangeListener(this);
+                } else if (PREFS_FAQ_LINK.equals(key)) {
+                    // Format the FAQ link
+                    final String VERSION = AppConstants.MOZ_APP_VERSION;
+                    final String OS = AppConstants.OS_TARGET;
+                    final String LOCALE = Locales.getLanguageTag(Locale.getDefault());
+
+                    final String url = getResources().getString(R.string.faq_link, VERSION, OS, LOCALE);
+                    ((LinkPreference) pref).setUrl(url);
                 }
 
                 // Some Preference UI elements are not actually preferences,
@@ -1016,10 +1038,10 @@ OnSharedPreferenceChangeListener
      * <code>PREFS_HEALTHREPORT_UPLOAD_ENABLED</code> pref.
      */
     public static void broadcastHealthReportUploadPref(final Context context, final boolean value) {
-        broadcastPrefAction(context,
-                            HealthReportConstants.ACTION_HEALTHREPORT_UPLOAD_PREF,
-                            PREFS_HEALTHREPORT_UPLOAD_ENABLED,
-                            value);
+        //broadcastPrefAction(context,
+        //                    HealthReportConstants.ACTION_HEALTHREPORT_UPLOAD_PREF,
+        //                    PREFS_HEALTHREPORT_UPLOAD_ENABLED,
+        //                    value);
     }
 
     /**
@@ -1027,13 +1049,13 @@ OnSharedPreferenceChangeListener
      * <code>PREFS_HEALTHREPORT_UPLOAD_ENABLED</code> pref.
      */
     public static void broadcastHealthReportUploadPref(final Context context) {
-        final boolean value = getBooleanPref(context, PREFS_HEALTHREPORT_UPLOAD_ENABLED, true);
-        broadcastHealthReportUploadPref(context, value);
+        //final boolean value = getBooleanPref(context, PREFS_HEALTHREPORT_UPLOAD_ENABLED, true);
+        //broadcastHealthReportUploadPref(context, value);
     }
 
     public static void broadcastHealthReportPrune(final Context context) {
-        final Intent intent = new Intent(HealthReportConstants.ACTION_HEALTHREPORT_PRUNE);
-        broadcastAction(context, intent);
+        //final Intent intent = new Intent(HealthReportConstants.ACTION_HEALTHREPORT_PRUNE);
+        //broadcastAction(context, intent);
     }
 
     /**
@@ -1207,6 +1229,10 @@ OnSharedPreferenceChangeListener
             return false;
         }
 
+        if (PREFS_HOMEPAGE.equals(prefName)) {
+            setHomePageSummary(preference, String.valueOf(newValue));
+        }
+
         if (PREFS_BROWSER_LOCALE.equals(prefName)) {
             // Even though this is a list preference, we don't want to handle it
             // below, so we return here.
@@ -1224,7 +1250,9 @@ OnSharedPreferenceChangeListener
             // to Gecko, but we do broadcast intent to the health report
             // background uploader service, which will start or stop the
             // repeated background upload attempts.
-            broadcastHealthReportUploadPref(this, (Boolean) newValue);
+            final Boolean newBooleanValue = (Boolean) newValue;
+            broadcastHealthReportUploadPref(this, newBooleanValue);
+            AdjustConstants.getAdjustHelper().setEnabled(newBooleanValue);
         } else if (PREFS_GEO_REPORTING.equals(prefName)) {
             broadcastStumblerPref(this, (Boolean) newValue);
             // Translate boolean value to int for geo reporting pref.

@@ -42,7 +42,7 @@ class Headers final : public nsISupports
 
 private:
   nsCOMPtr<nsISupports> mOwner;
-  nsRefPtr<InternalHeaders> mInternalHeaders;
+  RefPtr<InternalHeaders> mInternalHeaders;
 
 public:
   explicit Headers(nsISupports* aOwner, InternalHeaders* aInternalHeaders)
@@ -100,6 +100,19 @@ public:
   void Set(const nsACString& aName, const nsACString& aValue, ErrorResult& aRv)
   {
     mInternalHeaders->Set(aName, aValue, aRv);
+  }
+
+  uint32_t GetIterableLength() const
+  {
+    return mInternalHeaders->GetIterableLength();
+  }
+  const nsString GetKeyAtIndex(unsigned aIndex) const
+  {
+    return mInternalHeaders->GetKeyAtIndex(aIndex);
+  }
+  const nsString GetValueAtIndex(unsigned aIndex) const
+  {
+    return mInternalHeaders->GetValueAtIndex(aIndex);
   }
 
   // ChromeOnly

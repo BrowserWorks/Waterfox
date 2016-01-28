@@ -17,6 +17,7 @@ this.EXPORTED_SYMBOLS = [
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
@@ -372,11 +373,14 @@ this.BrowserTestUtils = {
    *  event has fired and completed. Instead of a window, a browser is required
    *  to be passed to this function.
    *
-   * @param {string} target
-   *        A selector that identifies the element to target. The syntax is as
-   *        for querySelector. This may also be a CPOW element for easier
-   *        test-conversion. If this is null, then the offset is from the
-   *        content document's edge.
+   * @param target
+   *        One of the following:
+   *        - a selector string that identifies the element to target. The syntax is as
+   *        for querySelector.
+   *        - a CPOW element (for easier test-conversion).
+   *        - a function to be run in the content process that returns the element to
+   *        target
+   *        - null, in which case the offset is from the content document's edge.
    * @param {integer} offsetX
    *        x offset from target's left bounding edge
    * @param {integer} offsetY
@@ -399,13 +403,17 @@ this.BrowserTestUtils = {
       });
 
       let cpowObject = null;
-      if (typeof target != "string") {
+      let targetFn = null;
+      if (typeof target == "function") {
+        targetFn = target.toString();
+        target = null;
+      } else if (typeof target != "string") {
         cpowObject = target;
         target = null;
       }
 
       mm.sendAsyncMessage("Test:SynthesizeMouse",
-                          {target, target, x: offsetX, y: offsetY, event: event},
+                          {target, targetFn, x: offsetX, y: offsetY, event: event},
                           {object: cpowObject});
     });
   },
@@ -450,6 +458,201 @@ this.BrowserTestUtils = {
       if (!dontRemove && !tab.closing) {
         tab.ownerDocument.defaultView.gBrowser.removeTab(tab);
       }
+    });
+  },
+
+  /**
+   * Crashes a remote browser tab and cleans up the generated minidumps.
+   * Resolves with the data from the .extra file (the crash annotations).
+   *
+   * @param (Browser) browser
+   *        A remote <xul:browser> element. Must not be null.
+   *
+   * @returns (Promise)
+   * @resolves An Object with key-value pairs representing the data from the
+   *           crash report's extra file (if applicable).
+   */
+  crashBrowser: Task.async(function*(browser) {
+    let extra = {};
+    let KeyValueParser = {};
+    if (AppConstants.MOZ_CRASHREPORTER) {
+      Cu.import("resource://gre/modules/KeyValueParser.jsm", KeyValueParser);
+    }
+
+    if (!browser.isRemoteBrowser) {
+      throw new Error("<xul:browser> needs to be remote in order to crash");
+    }
+
+    /**
+     * Returns the directory where crash dumps are stored.
+     *
+     * @return nsIFile
+     */
+    function getMinidumpDirectory() {
+      let dir = Services.dirsvc.get('ProfD', Ci.nsIFile);
+      dir.append("minidumps");
+      return dir;
+    }
+
+    /**
+     * Removes a file from a directory. This is a no-op if the file does not
+     * exist.
+     *
+     * @param directory
+     *        The nsIFile representing the directory to remove from.
+     * @param filename
+     *        A string for the file to remove from the directory.
+     */
+    function removeFile(directory, filename) {
+      let file = directory.clone();
+      file.append(filename);
+      if (file.exists()) {
+        file.remove(false);
+      }
+    }
+
+    // This frame script is injected into the remote browser, and used to
+    // intentionally crash the tab. We crash by using js-ctypes and dereferencing
+    // a bad pointer. The crash should happen immediately upon loading this
+    // frame script.
+    let frame_script = () => {
+      const Cu = Components.utils;
+      Cu.import("resource://gre/modules/ctypes.jsm");
+
+      let dies = function() {
+        privateNoteIntentionalCrash();
+        let zero = new ctypes.intptr_t(8);
+        let badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
+        badptr.contents
+      };
+
+      dump("\nEt tu, Brute?\n");
+      dies();
+    }
+
+    let crashCleanupPromise = new Promise((resolve, reject) => {
+      let observer = (subject, topic, data) => {
+        if (topic != "ipc:content-shutdown") {
+          return reject("Received incorrect observer topic: " + topic);
+        }
+        if (!(subject instanceof Ci.nsIPropertyBag2)) {
+          return reject("Subject did not implement nsIPropertyBag2");
+        }
+        // we might see this called as the process terminates due to previous tests.
+        // We are only looking for "abnormal" exits...
+        if (!subject.hasKey("abnormal")) {
+          dump("\nThis is a normal termination and isn't the one we are looking for...\n");
+          return;
+        }
+
+        let dumpID;
+        if ('nsICrashReporter' in Ci) {
+          dumpID = subject.getPropertyAsAString('dumpID');
+          if (!dumpID) {
+            return reject("dumpID was not present despite crash reporting " +
+                          "being enabled");
+          }
+        }
+
+        if (dumpID) {
+          let minidumpDirectory = getMinidumpDirectory();
+          let extrafile = minidumpDirectory.clone();
+          extrafile.append(dumpID + '.extra');
+          if (extrafile.exists()) {
+            dump(`\nNo .extra file for dumpID: ${dumpID}\n`);
+            if (AppConstants.MOZ_CRASHREPORTER) {
+              extra = KeyValueParser.parseKeyValuePairsFromFile(extrafile);
+            } else {
+              dump('\nCrashReporter not enabled - will not return any extra data\n');
+            }
+          }
+
+          removeFile(minidumpDirectory, dumpID + '.dmp');
+          removeFile(minidumpDirectory, dumpID + '.extra');
+        }
+
+        Services.obs.removeObserver(observer, 'ipc:content-shutdown');
+        dump("\nCrash cleaned up\n");
+        resolve();
+      };
+
+      Services.obs.addObserver(observer, 'ipc:content-shutdown', false);
+    });
+
+    let aboutTabCrashedLoadPromise = new Promise((resolve, reject) => {
+      browser.addEventListener("AboutTabCrashedLoad", function onCrash() {
+        browser.removeEventListener("AboutTabCrashedLoad", onCrash, false);
+        dump("\nabout:tabcrashed loaded\n");
+        resolve();
+      }, false, true);
+    });
+
+    // This frame script will crash the remote browser as soon as it is
+    // evaluated.
+    let mm = browser.messageManager;
+    mm.loadFrameScript("data:,(" + frame_script.toString() + ")();", false);
+
+    yield Promise.all([crashCleanupPromise, aboutTabCrashedLoadPromise]);
+
+    let gBrowser = browser.ownerDocument.defaultView.gBrowser;
+    let tab = gBrowser.getTabForBrowser(browser);
+    if (tab.getAttribute("crashed") != "true") {
+      throw new Error("Tab should be marked as crashed");
+    }
+
+    return extra;
+  }),
+
+  /**
+   * Returns a promise that is resolved when element gains attribute (or,
+   * optionally, when it is set to value).
+   * @param {String} attr
+   *        The attribute to wait for
+   * @param {Element} element
+   *        The element which should gain the attribute
+   * @param {String} value (optional)
+   *        Optional, the value the attribute should have.
+   *
+   * @returns {Promise}
+   */
+  waitForAttribute(attr, element, value) {
+    let MutationObserver = element.ownerDocument.defaultView.MutationObserver;
+    return new Promise(resolve => {
+      let mut = new MutationObserver(mutations => {
+        if ((!value && element.getAttribute(attr)) ||
+            (value && element.getAttribute(attr) === value)) {
+          resolve();
+          mut.disconnect();
+          return;
+        }
+      });
+
+      mut.observe(element, {attributeFilter: [attr]});
+    });
+  },
+
+  /**
+   * Version of EventUtils' `sendChar` function; it will synthesize a keypress
+   * event in a child process and returns a Promise that will result when the
+   * event was fired. Instead of a Window, a Browser object is required to be
+   * passed to this function.
+   *
+   * @param {String} char
+   *        A character for the keypress event that is sent to the browser.
+   * @param {Browser} browser
+   *        Browser element, must not be null.
+   *
+   * @returns {Promise}
+   * @resolves True if the keypress event was synthesized.
+   */
+  sendChar(char, browser) {
+    return new Promise(resolve => {
+      let mm = browser.messageManager;
+      mm.addMessageListener("Test:SendCharDone", function charMsg(message) {
+        mm.removeMessageListener("Test:SendCharDone", charMsg);
+        resolve(message.data.sendCharResult);
+      });
+      mm.sendAsyncMessage("Test:SendChar", { char: char });
     });
   }
 };

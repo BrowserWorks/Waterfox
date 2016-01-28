@@ -396,8 +396,11 @@ class BaselineFrame
     bool isFunctionFrame() const {
         return CalleeTokenIsFunction(calleeToken());
     }
+    bool isModuleFrame() const {
+        return CalleeTokenIsModuleScript(calleeToken());
+    }
     bool isGlobalFrame() const {
-        return !CalleeTokenIsFunction(calleeToken());
+        return !isFunctionFrame() && !isModuleFrame();
     }
      bool isEvalFrame() const {
         return flags_ & EVAL;
@@ -408,9 +411,9 @@ class BaselineFrame
     bool isNonStrictEvalFrame() const {
         return isEvalFrame() && !script()->strict();
     }
-    bool isDirectEvalFrame() const;
+    bool isNonGlobalEvalFrame() const;
     bool isNonStrictDirectEvalFrame() const {
-        return isNonStrictEvalFrame() && isDirectEvalFrame();
+        return isNonStrictEvalFrame() && isNonGlobalEvalFrame();
     }
     bool isNonEvalFunctionFrame() const {
         return isFunctionFrame() && !isEvalFrame();

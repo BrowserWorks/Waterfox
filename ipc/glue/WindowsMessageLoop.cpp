@@ -15,6 +15,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsIXULAppInfo.h"
+#include "nsWindowsDllInterceptor.h"
 #include "WinUtils.h"
 
 #include "mozilla/ArrayUtils.h"
@@ -436,6 +437,95 @@ ProcessOrDeferMessage(HWND hwnd,
   return res;
 }
 
+/*
+ * It is bad to subclass a window when neutering is active because you'll end
+ * up subclassing the *neutered* window procedure instead of the real window
+ * procedure. Since CreateWindow* fires WM_CREATE (and could thus trigger
+ * neutering), we intercept these calls and suppress neutering for the duration
+ * of the call. This ensures that any subsequent subclassing replaces the
+ * correct window procedure.
+ */
+WindowsDllInterceptor sUser32Interceptor;
+typedef HWND (WINAPI *CreateWindowExWPtr)(DWORD,LPCWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HMENU,HINSTANCE,LPVOID);
+typedef HWND (WINAPI *CreateWindowExAPtr)(DWORD,LPCSTR,LPCSTR,DWORD,int,int,int,int,HWND,HMENU,HINSTANCE,LPVOID);
+typedef HWND (WINAPI *CreateWindowWPtr)(LPCWSTR,LPCWSTR,DWORD,int,int,int,int,HWND,HMENU,HINSTANCE,LPVOID);
+typedef HWND (WINAPI *CreateWindowAPtr)(LPCSTR,LPCSTR,DWORD,int,int,int,int,HWND,HMENU,HINSTANCE,LPVOID);
+
+CreateWindowExWPtr sCreateWindowExWStub = nullptr;
+CreateWindowExAPtr sCreateWindowExAStub = nullptr;
+CreateWindowWPtr sCreateWindowWStub = nullptr;
+CreateWindowAPtr sCreateWindowAStub = nullptr;
+
+HWND WINAPI
+CreateWindowExWHook(DWORD aExStyle, LPCWSTR aClassName, LPCWSTR aWindowName,
+                    DWORD aStyle, int aX, int aY, int aWidth, int aHeight,
+                    HWND aParent, HMENU aMenu, HINSTANCE aInstance,
+                    LPVOID aParam)
+{
+  SuppressedNeuteringRegion doNotNeuterThisWindowYet;
+  return sCreateWindowExWStub(aExStyle, aClassName, aWindowName, aStyle, aX, aY,
+                              aWidth, aHeight, aParent, aMenu, aInstance, aParam);
+}
+
+HWND WINAPI
+CreateWindowExAHook(DWORD aExStyle, LPCSTR aClassName, LPCSTR aWindowName,
+                    DWORD aStyle, int aX, int aY, int aWidth, int aHeight,
+                    HWND aParent, HMENU aMenu, HINSTANCE aInstance,
+                    LPVOID aParam)
+{
+  SuppressedNeuteringRegion doNotNeuterThisWindowYet;
+  return sCreateWindowExAStub(aExStyle, aClassName, aWindowName, aStyle, aX, aY,
+                              aWidth, aHeight, aParent, aMenu, aInstance, aParam);
+}
+
+HWND WINAPI
+CreateWindowWHook(LPCWSTR aClassName, LPCWSTR aWindowName, DWORD aStyle, int aX,
+                  int aY, int aWidth, int aHeight, HWND aParent, HMENU aMenu,
+                  HINSTANCE aInstance, LPVOID aParam)
+{
+  SuppressedNeuteringRegion doNotNeuterThisWindowYet;
+  return sCreateWindowWStub(aClassName, aWindowName, aStyle, aX, aY, aWidth,
+                            aHeight, aParent, aMenu, aInstance, aParam);
+}
+
+HWND WINAPI
+CreateWindowAHook(LPCSTR aClassName, LPCSTR aWindowName, DWORD aStyle, int aX,
+                  int aY, int aWidth, int aHeight, HWND aParent, HMENU aMenu,
+                  HINSTANCE aInstance, LPVOID aParam)
+{
+  SuppressedNeuteringRegion doNotNeuterThisWindowYet;
+  return sCreateWindowAStub(aClassName, aWindowName, aStyle, aX, aY, aWidth,
+                            aHeight, aParent, aMenu, aInstance, aParam);
+}
+
+void
+InitCreateWindowHook()
+{
+  // Forcing these interceptions to be detours due to conflicts with
+  // NVIDIA Optimus DLLs that are injected into our process.
+  sUser32Interceptor.Init("user32.dll");
+  if (!sCreateWindowExWStub) {
+    sUser32Interceptor.AddDetour("CreateWindowExW",
+                               reinterpret_cast<intptr_t>(CreateWindowExWHook),
+                               (void**) &sCreateWindowExWStub);
+  }
+  if (!sCreateWindowExAStub) {
+    sUser32Interceptor.AddDetour("CreateWindowExA",
+                               reinterpret_cast<intptr_t>(CreateWindowExAHook),
+                               (void**) &sCreateWindowExAStub);
+  }
+  if (!sCreateWindowWStub) {
+    sUser32Interceptor.AddDetour("CreateWindowW",
+                               reinterpret_cast<intptr_t>(CreateWindowWHook),
+                               (void**) &sCreateWindowWStub);
+  }
+  if (!sCreateWindowAStub) {
+    sUser32Interceptor.AddDetour("CreateWindowA",
+                               reinterpret_cast<intptr_t>(CreateWindowAHook),
+                               (void**) &sCreateWindowAStub);
+  }
+}
+
 } // namespace
 
 // We need the pointer value of this in PluginInstanceChild.
@@ -610,7 +700,9 @@ CallWindowProcedureHook(int nCode,
 
     HWND hWnd = reinterpret_cast<CWPSTRUCT*>(lParam)->hwnd;
 
-    if (!gNeuteredWindows->Contains(hWnd) && NeuterWindowProcedure(hWnd)) {
+    if (!gNeuteredWindows->Contains(hWnd) &&
+        !SuppressedNeuteringRegion::IsNeuteringSuppressed() &&
+        NeuterWindowProcedure(hWnd)) {
       if (!gNeuteredWindows->AppendElement(hWnd)) {
         NS_ERROR("Out of memory!");
         RestoreWindowProcedure(hWnd);
@@ -710,6 +802,8 @@ InitUIThread()
     gCOMWindow = FindCOMWindow();
   }
   MOZ_ASSERT(gWinEventHook);
+
+  InitCreateWindowHook();
 }
 
 } // namespace windows
@@ -943,8 +1037,28 @@ DeneuteredWindowRegion::~DeneuteredWindowRegion()
   }
 }
 
+SuppressedNeuteringRegion::SuppressedNeuteringRegion(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM_IN_IMPL)
+  : mReenable(::gUIThreadId == ::GetCurrentThreadId() && ::gWindowHook)
+{
+  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+  if (mReenable) {
+    MOZ_ASSERT(!sSuppressNeutering);
+    sSuppressNeutering = true;
+  }
+}
+
+SuppressedNeuteringRegion::~SuppressedNeuteringRegion()
+{
+  if (mReenable) {
+    MOZ_ASSERT(sSuppressNeutering);
+    sSuppressNeutering = false;
+  }
+}
+
+bool SuppressedNeuteringRegion::sSuppressNeutering = false;
+
 bool
-MessageChannel::WaitForSyncNotify()
+MessageChannel::WaitForSyncNotify(bool aHandleWindowsMessages)
 {
   mMonitor->AssertCurrentThreadOwns();
 
@@ -952,7 +1066,7 @@ MessageChannel::WaitForSyncNotify()
 
   // Use a blocking wait if this channel does not require
   // Windows message deferral behavior.
-  if (!(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
+  if (!(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION) || !aHandleWindowsMessages) {
     PRIntervalTime timeout = (kNoTimeout == mTimeoutMs) ?
                              PR_INTERVAL_NO_TIMEOUT :
                              PR_MillisecondsToInterval(mTimeoutMs);
@@ -996,6 +1110,8 @@ MessageChannel::WaitForSyncNotify()
     timerId = SetTimer(nullptr, 0, mTimeoutMs, nullptr);
     NS_ASSERTION(timerId, "SetTimer failed!");
   }
+
+  NeuteredWindowRegion neuteredRgn(true);
 
   {
     while (1) {
@@ -1088,7 +1204,7 @@ MessageChannel::WaitForInterruptNotify()
   // Re-use sync notification wait code if this channel does not require
   // Windows message deferral behavior. 
   if (!(mFlags & REQUIRE_DEFERRED_MESSAGE_PROTECTION)) {
-    return WaitForSyncNotify();
+    return WaitForSyncNotify(true);
   }
 
   if (!InterruptStackDepth() && !AwaitingIncomingMessage()) {

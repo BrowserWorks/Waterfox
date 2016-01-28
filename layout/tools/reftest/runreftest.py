@@ -188,9 +188,6 @@ class ReftestResolver(object):
                 manifests[manifest].add(filter_str)
 
         for key in manifests.iterkeys():
-            if os.path.split(key)[1] != self.defaultManifest(suite):
-                print >> sys.stderr, "Invalid manifest for suite %s, %s" %(options.suite, key)
-                sys.exit(1)
             if None in manifests[key]:
                 manifests[key] = None
             else:
@@ -337,6 +334,13 @@ class RefTest(object):
         browserEnv = self.environment(
             xrePath=options.xrePath, debugger=options.debugger)
         browserEnv["XPCOM_DEBUG_BREAK"] = "stack"
+
+        if mozinfo.info["asan"]:
+            # Disable leak checking for reftests for now
+            if "ASAN_OPTIONS" in browserEnv:
+                browserEnv["ASAN_OPTIONS"] += ":detect_leaks=0"
+            else:
+                browserEnv["ASAN_OPTIONS"] = "detect_leaks=0"
 
         for v in options.environment:
             ix = v.find("=")
@@ -585,7 +589,8 @@ class RefTest(object):
 
     def runApp(self, profile, binary, cmdargs, env,
                timeout=None, debuggerInfo=None,
-               symbolsPath=None, options=None):
+               symbolsPath=None, options=None,
+               valgrindPath=None, valgrindArgs=None, valgrindSuppFiles=None):
 
         def timeoutHandler():
             self.handleTimeout(

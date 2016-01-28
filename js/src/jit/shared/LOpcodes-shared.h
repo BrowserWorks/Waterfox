@@ -68,6 +68,7 @@
     _(InitPropGetterSetter)         \
     _(CheckOverRecursed)            \
     _(DefVar)                       \
+    _(DefLexical)                   \
     _(DefFun)                       \
     _(CallKnown)                    \
     _(CallGeneric)                  \
@@ -273,8 +274,6 @@
     _(GetPropertyCacheT)            \
     _(GetPropertyPolymorphicV)      \
     _(GetPropertyPolymorphicT)      \
-    _(GetElementCacheV)             \
-    _(GetElementCacheT)             \
     _(BindNameCache)                \
     _(CallGetProperty)              \
     _(GetNameCache)                 \
@@ -285,10 +284,7 @@
     _(CallSetProperty)              \
     _(CallDeleteProperty)           \
     _(CallDeleteElement)            \
-    _(SetPropertyCacheV)            \
-    _(SetPropertyCacheT)            \
-    _(SetElementCacheV)             \
-    _(SetElementCacheT)             \
+    _(SetPropertyCache)             \
     _(SetPropertyPolymorphicV)      \
     _(SetPropertyPolymorphicT)      \
     _(CallIteratorStart)            \
@@ -363,9 +359,11 @@
     _(AssertResultV)                \
     _(AssertResultT)                \
     _(LexicalCheck)                 \
-    _(ThrowUninitializedLexical)    \
+    _(ThrowRuntimeLexicalError)     \
+    _(GlobalNameConflictsCheck)     \
     _(Debugger)                     \
     _(NewTarget)                    \
-    _(ArrowNewTarget)
+    _(ArrowNewTarget)               \
+    _(CheckReturn)
 
 #endif /* jit_shared_LOpcodes_shared_h */

@@ -9,9 +9,11 @@
 
 #include "TimelineMarkerEnums.h" // for MarkerTracingType
 #include "nsDOMNavigationTiming.h" // for DOMHighResTimeStamp
+#include "nsXULAppAPI.h" // for GeckoProcessType
 #include "mozilla/UniquePtr.h"
 
 struct JSContext;
+class JSObject;
 
 namespace mozilla {
 class TimeStamp;
@@ -28,18 +30,18 @@ private:
   void operator=(const AbstractTimelineMarker& aOther) = delete;
 
 public:
-  AbstractTimelineMarker(const char* aName,
-                         MarkerTracingType aTracingType);
+  explicit AbstractTimelineMarker(const char* aName,
+                                  MarkerTracingType aTracingType);
 
-  AbstractTimelineMarker(const char* aName,
-                         const TimeStamp& aTime,
-                         MarkerTracingType aTracingType);
+  explicit AbstractTimelineMarker(const char* aName,
+                                  const TimeStamp& aTime,
+                                  MarkerTracingType aTracingType);
 
   virtual ~AbstractTimelineMarker();
 
   virtual UniquePtr<AbstractTimelineMarker> Clone();
+  virtual bool Equals(const AbstractTimelineMarker& aOther);
 
-  virtual bool Equals(const AbstractTimelineMarker& aOther) = 0;
   virtual void AddDetails(JSContext* aCx, dom::ProfileTimelineMarker& aMarker) = 0;
   virtual JSObject* GetStack() = 0;
 
@@ -47,13 +49,23 @@ public:
   DOMHighResTimeStamp GetTime() const { return mTime; }
   MarkerTracingType GetTracingType() const { return mTracingType; }
 
+  const uint8_t GetProcessType() const { return mProcessType; };
+  const bool IsOffMainThread() const { return mIsOffMainThread; };
+
 private:
   const char* mName;
   DOMHighResTimeStamp mTime;
   MarkerTracingType mTracingType;
 
+  uint8_t mProcessType; // @see `enum GeckoProcessType`.
+  bool mIsOffMainThread;
+
+protected:
   void SetCurrentTime();
   void SetCustomTime(const TimeStamp& aTime);
+  void SetCustomTime(DOMHighResTimeStamp aTime);
+  void SetProcessType(GeckoProcessType aProcessType);
+  void SetOffMainThread(bool aIsOffMainThread);
 };
 
 } // namespace mozilla

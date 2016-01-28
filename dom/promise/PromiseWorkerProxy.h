@@ -10,7 +10,7 @@
 // Required for Promise::PromiseTaskSync.
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
-#include "mozilla/dom/StructuredCloneHelper.h"
+#include "mozilla/dom/StructuredCloneHolder.h"
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
 #include "nsProxyRelease.h"
 
@@ -33,7 +33,7 @@ class WorkerPrivate;
 //   1. Create a Promise on the worker thread and return it to the content
 //      script:
 //
-//        nsRefPtr<Promise> promise = Promise::Create(workerPrivate->GlobalScope(), aRv);
+//        RefPtr<Promise> promise = Promise::Create(workerPrivate->GlobalScope(), aRv);
 //        if (aRv.Failed()) {
 //          return nullptr;
 //        }
@@ -42,7 +42,7 @@ class WorkerPrivate;
 //      worker is shutting down and you should fail the original call. This is
 //      only likely to happen in (Gecko-specific) worker onclose handlers.
 //
-//        nsRefPtr<PromiseWorkerProxy> proxy =
+//        RefPtr<PromiseWorkerProxy> proxy =
 //          PromiseWorkerProxy::Create(workerPrivate, promise);
 //        if (!proxy) {
 //          // You may also reject the Promise with an AbortError or similar.
@@ -82,7 +82,7 @@ class WorkerPrivate;
 //   2. Dispatch a runnable to the worker. Use GetWorkerPrivate() to acquire the
 //      worker.
 //
-//        nsRefPtr<FinishTaskWorkerRunnable> runnable =
+//        RefPtr<FinishTaskWorkerRunnable> runnable =
 //          new FinishTaskWorkerRunnable(proxy->GetWorkerPrivate(), proxy, result);
 //        AutoJSAPI jsapi;
 //        jsapi.Init();
@@ -101,7 +101,7 @@ class WorkerPrivate;
 //        WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
 //        {
 //          aWorkerPrivate->AssertIsOnWorkerThread();
-//          nsRefPtr<Promise> promise = mProxy->WorkerPromise();
+//          RefPtr<Promise> promise = mProxy->WorkerPromise();
 //          promise->MaybeResolve(mResult);
 //          mProxy->CleanUp(aCx);
 //        }
@@ -113,7 +113,7 @@ class WorkerPrivate;
 
 class PromiseWorkerProxy : public PromiseNativeHandler
                          , public workers::WorkerFeature
-                         , public StructuredCloneHelperInternal
+                         , public StructuredCloneHolderBase
 {
   friend class PromiseWorkerProxyRunnable;
 
@@ -169,16 +169,16 @@ public:
     return mCleanedUp;
   }
 
-  // StructuredCloneHelperInternal
+  // StructuredCloneHolderBase
 
-  JSObject* ReadCallback(JSContext* aCx,
-                         JSStructuredCloneReader* aReader,
-                         uint32_t aTag,
-                         uint32_t aIndex) override;
+  JSObject* CustomReadHandler(JSContext* aCx,
+                              JSStructuredCloneReader* aReader,
+                              uint32_t aTag,
+                              uint32_t aIndex) override;
 
-  bool WriteCallback(JSContext* aCx,
-                     JSStructuredCloneWriter* aWriter,
-                     JS::Handle<JSObject*> aObj) override;
+  bool CustomWriteHandler(JSContext* aCx,
+                          JSStructuredCloneWriter* aWriter,
+                          JS::Handle<JSObject*> aObj) override;
 
 protected:
   virtual void ResolvedCallback(JSContext* aCx,
@@ -213,7 +213,7 @@ private:
   workers::WorkerPrivate* mWorkerPrivate;
 
   // Worker thread only.
-  nsRefPtr<Promise> mWorkerPromise;
+  RefPtr<Promise> mWorkerPromise;
 
   // Modified on the worker thread.
   // It is ok to *read* this without a lock on the worker.

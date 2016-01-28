@@ -20,7 +20,7 @@ describe("loop.conversation", function() {
     navigator.mozLoop = {
       doNotDisturb: true,
       getStrings: function() {
-        return JSON.stringify({textContent: "fakeText"});
+        return JSON.stringify({ textContent: "fakeText" });
       },
       get locale() {
         return "en-US";
@@ -51,7 +51,7 @@ describe("loop.conversation", function() {
         };
       },
       getAudioBlob: sinon.spy(function(name, callback) {
-        callback(null, new Blob([new ArrayBuffer(10)], {type: "audio/ogg"}));
+        callback(null, new Blob([new ArrayBuffer(10)], { type: "audio/ogg" }));
       }),
       getSelectedTabMetadata: function(callback) {
         callback({});
@@ -136,7 +136,7 @@ describe("loop.conversation", function() {
   });
 
   describe("AppControllerView", function() {
-    var conversationStore, activeRoomStore, client, ccView, dispatcher;
+    var activeRoomStore, ccView, dispatcher;
     var conversationAppStore, roomStore, feedbackPeriodMs = 15770000000;
     var ROOM_STATES = loop.store.ROOM_STATES;
 
@@ -150,23 +150,7 @@ describe("loop.conversation", function() {
     }
 
     beforeEach(function() {
-      client = new loop.Client();
       dispatcher = new loop.Dispatcher();
-      conversationStore = new loop.store.ConversationStore(
-        dispatcher, {
-          client: client,
-          mozLoop: navigator.mozLoop,
-          sdkDriver: {}
-        });
-
-      conversationStore.setStoreState({contact: {
-        name: [ "Mr Smith" ],
-        email: [{
-          type: "home",
-          value: "fakeEmail",
-          pref: true
-        }]
-      }});
 
       activeRoomStore = new loop.store.ActiveRoomStore(dispatcher, {
         mozLoop: {},
@@ -183,8 +167,7 @@ describe("loop.conversation", function() {
       });
 
       loop.store.StoreMixin.register({
-        conversationAppStore: conversationAppStore,
-        conversationStore: conversationStore
+        conversationAppStore: conversationAppStore
       });
     });
 
@@ -192,27 +175,9 @@ describe("loop.conversation", function() {
       ccView = undefined;
     });
 
-    it("should display the CallControllerView for outgoing calls", function() {
-      conversationAppStore.setStoreState({windowType: "outgoing"});
-
-      ccView = mountTestComponent();
-
-      TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.CallControllerView);
-    });
-
-    it("should display the CallControllerView for incoming calls", function() {
-      conversationAppStore.setStoreState({windowType: "incoming"});
-
-      ccView = mountTestComponent();
-
-      TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.CallControllerView);
-    });
-
     it("should display the RoomView for rooms", function() {
-      conversationAppStore.setStoreState({windowType: "room"});
-      activeRoomStore.setStoreState({roomState: ROOM_STATES.READY});
+      conversationAppStore.setStoreState({ windowType: "room" });
+      activeRoomStore.setStoreState({ roomState: ROOM_STATES.READY });
 
       ccView = mountTestComponent();
 
@@ -220,24 +185,20 @@ describe("loop.conversation", function() {
         loop.roomViews.DesktopRoomConversationView);
     });
 
-    it("should display the DirectCallFailureView for failures", function() {
+    it("should display the RoomFailureView for failures", function() {
       conversationAppStore.setStoreState({
-        contact: {},
         outgoing: false,
         windowType: "failed"
-      });
-      conversationStore.setStoreState({
-        callStateReason: FAILURE_DETAILS.UNKNOWN
       });
 
       ccView = mountTestComponent();
 
       TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.DirectCallFailureView);
+        loop.roomViews.RoomFailureView);
     });
 
     it("should set the correct title when rendering feedback view", function() {
-      conversationAppStore.setStoreState({showFeedbackForm: true});
+      conversationAppStore.setStoreState({ showFeedbackForm: true });
 
       ccView = mountTestComponent();
 
@@ -246,7 +207,7 @@ describe("loop.conversation", function() {
 
     it("should render FeedbackView if showFeedbackForm state is true",
        function() {
-         conversationAppStore.setStoreState({showFeedbackForm: true});
+         conversationAppStore.setStoreState({ showFeedbackForm: true });
 
          ccView = mountTestComponent();
 
@@ -255,7 +216,7 @@ describe("loop.conversation", function() {
 
     it("should dispatch a ShowFeedbackForm action if timestamp is 0",
        function() {
-         conversationAppStore.setStoreState({feedbackTimestamp: 0});
+         conversationAppStore.setStoreState({ feedbackTimestamp: 0 });
          sandbox.stub(dispatcher, "dispatch");
 
          ccView = mountTestComponent();

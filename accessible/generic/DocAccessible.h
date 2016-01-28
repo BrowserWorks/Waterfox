@@ -32,7 +32,7 @@ class DocManager;
 class NotificationController;
 class DocAccessibleChild;
 class RelatedAccIterator;
-template<class Class, class Arg>
+template<class Class, class ... Args>
 class TNotification;
 
 class DocAccessible : public HyperTextAccessibleWrap,
@@ -282,6 +282,22 @@ public:
   Accessible* GetAccessibleOrDescendant(nsINode* aNode) const;
 
   /**
+   * Returns aria-owns seized child at the given index.
+   */
+  Accessible* ARIAOwnedAt(Accessible* aParent, uint32_t aIndex) const
+  {
+    nsTArray<nsIContent*>* childrenEl = mARIAOwnsHash.Get(aParent);
+    if (childrenEl) {
+      nsIContent* childEl = childrenEl->SafeElementAt(aIndex);
+      Accessible* child = GetAccessible(childEl);
+      if (child && child->IsRepositioned()) {
+        return child;
+      }
+    }
+    return nullptr;
+  }
+
+  /**
    * Return true if the given ID is referred by relation attribute.
    *
    * @note Different elements may share the same ID if they are hosted inside
@@ -406,7 +422,7 @@ protected:
    * @param aRelProvider [in] accessible that element has relation attribute
    * @param aRelAttr     [in, optional] relation attribute
    */
-  void AddDependentIDsFor(dom::Element* aRelProviderElm,
+  void AddDependentIDsFor(Accessible* aRelProvider,
                           nsIAtom* aRelAttr = nullptr);
 
   /**
@@ -417,8 +433,14 @@ protected:
    * @param aRelProvider [in] accessible that element has relation attribute
    * @param aRelAttr     [in, optional] relation attribute
    */
-  void RemoveDependentIDsFor(dom::Element* aRelProviderElm,
+  void RemoveDependentIDsFor(Accessible* aRelProvider,
                              nsIAtom* aRelAttr = nullptr);
+
+  /**
+   * Return true if given ARIA owner element and its referred content make
+   * the loop closed.
+   */
+  bool IsInARIAOwnsLoop(nsIContent* aOwnerEl, nsIContent* aDependentEl);
 
   /**
    * Update or recreate an accessible depending on a changed attribute.
@@ -490,6 +512,11 @@ protected:
 
   uint32_t UpdateTreeInternal(Accessible* aChild, bool aIsInsert,
                               AccReorderEvent* aReorderEvent);
+
+  /**
+   * Validates all aria-owns connections and updates the tree accordingly.
+   */
+  void ValidateARIAOwned();
 
   /**
    * Create accessible tree.
@@ -597,12 +624,12 @@ protected:
     bool mStateBitWasOn;
   };
 
-  nsTArray<nsRefPtr<DocAccessible> > mChildDocuments;
+  nsTArray<RefPtr<DocAccessible> > mChildDocuments;
 
   /**
    * The virtual cursor of the document.
    */
-  nsRefPtr<nsAccessiblePivot> mVirtualCursor;
+  RefPtr<nsAccessiblePivot> mVirtualCursor;
 
   /**
    * A storage class for pairing content with one of its relation attributes.
@@ -631,11 +658,6 @@ protected:
    */
   DependentIDsHashtable mDependentIDsHash;
 
-  static PLDHashOperator
-    CycleCollectorTraverseDepIDsEntry(const nsAString& aKey,
-                                      AttrRelProviderArray* aProviders,
-                                      void* aUserArg);
-
   friend class RelatedAccIterator;
 
   /**
@@ -647,9 +669,28 @@ protected:
   nsTArray<nsIContent*> mInvalidationList;
 
   /**
+   * Holds a list of aria-owns relations.
+   */
+  nsClassHashtable<nsPtrHashKey<Accessible>, nsTArray<nsIContent*> >
+    mARIAOwnsHash;
+
+  struct ARIAOwnsPair {
+    ARIAOwnsPair(Accessible* aOwner, nsIContent* aChild) :
+      mOwner(aOwner), mChild(aChild) { }
+    ARIAOwnsPair(const ARIAOwnsPair& aPair) :
+      mOwner(aPair.mOwner), mChild(aPair.mChild) { }
+    ARIAOwnsPair& operator =(const ARIAOwnsPair& aPair)
+      { mOwner = aPair.mOwner; mChild = aPair.mChild; return *this; }
+
+    RefPtr<Accessible> mOwner;
+    nsCOMPtr<nsIContent> mChild;
+  };
+  nsTArray<ARIAOwnsPair> mARIAOwnsInvalidationList;
+
+  /**
    * Used to process notification from core and accessible events.
    */
-  nsRefPtr<NotificationController> mNotificationController;
+  RefPtr<NotificationController> mNotificationController;
   friend class EventQueue;
   friend class NotificationController;
 

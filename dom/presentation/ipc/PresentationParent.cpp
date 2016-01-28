@@ -50,6 +50,11 @@ PresentationParent::ActorDestroy(ActorDestroyReason aWhy)
   }
   mSessionIds.Clear();
 
+  for (uint32_t i = 0; i < mWindowIds.Length(); i++) {
+    NS_WARN_IF(NS_FAILED(mService->UnregisterRespondingListener(mWindowIds[i])));
+  }
+  mWindowIds.Clear();
+
   mService->UnregisterAvailabilityListener(this);
   mService = nullptr;
 }
@@ -69,8 +74,11 @@ PresentationParent::RecvPPresentationRequestConstructor(
     case PresentationIPCRequest::TSendSessionMessageRequest:
       rv = actor->DoRequest(aRequest.get_SendSessionMessageRequest());
       break;
-    case PresentationIPCRequest::TTerminateRequest:
-      rv = actor->DoRequest(aRequest.get_TerminateRequest());
+    case PresentationIPCRequest::TCloseSessionRequest:
+      rv = actor->DoRequest(aRequest.get_CloseSessionRequest());
+      break;
+    case PresentationIPCRequest::TTerminateSessionRequest:
+      rv = actor->DoRequest(aRequest.get_TerminateSessionRequest());
       break;
     default:
       MOZ_CRASH("Unknown PresentationIPCRequest type");
@@ -84,7 +92,7 @@ PresentationParent::AllocPPresentationRequestParent(
   const PresentationIPCRequest& aRequest)
 {
   MOZ_ASSERT(mService);
-  nsRefPtr<PresentationRequestParent> actor = new PresentationRequestParent(mService);
+  RefPtr<PresentationRequestParent> actor = new PresentationRequestParent(mService);
   return actor.forget().take();
 }
 
@@ -92,7 +100,7 @@ bool
 PresentationParent::DeallocPPresentationRequestParent(
   PPresentationRequestParent* aActor)
 {
-  nsRefPtr<PresentationRequestParent> actor =
+  RefPtr<PresentationRequestParent> actor =
     dont_AddRef(static_cast<PresentationRequestParent*>(aActor));
   return true;
 }
@@ -149,6 +157,8 @@ PresentationParent::RecvUnregisterSessionHandler(const nsString& aSessionId)
 PresentationParent::RecvRegisterRespondingHandler(const uint64_t& aWindowId)
 {
   MOZ_ASSERT(mService);
+
+  mWindowIds.AppendElement(aWindowId);
   NS_WARN_IF(NS_FAILED(mService->RegisterRespondingListener(aWindowId, this)));
   return true;
 }
@@ -157,6 +167,7 @@ PresentationParent::RecvRegisterRespondingHandler(const uint64_t& aWindowId)
 PresentationParent::RecvUnregisterRespondingHandler(const uint64_t& aWindowId)
 {
   MOZ_ASSERT(mService);
+  mWindowIds.RemoveElement(aWindowId);
   NS_WARN_IF(NS_FAILED(mService->UnregisterRespondingListener(aWindowId)));
   return true;
 }
@@ -270,7 +281,7 @@ PresentationRequestParent::DoRequest(const SendSessionMessageRequest& aRequest)
 }
 
 nsresult
-PresentationRequestParent::DoRequest(const TerminateRequest& aRequest)
+PresentationRequestParent::DoRequest(const CloseSessionRequest& aRequest)
 {
   MOZ_ASSERT(mService);
 
@@ -281,7 +292,26 @@ PresentationRequestParent::DoRequest(const TerminateRequest& aRequest)
     return NotifyError(NS_ERROR_DOM_SECURITY_ERR);
   }
 
-  nsresult rv = mService->Terminate(aRequest.sessionId());
+  nsresult rv = mService->CloseSession(aRequest.sessionId());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NotifyError(rv);
+  }
+  return NotifySuccess();
+}
+
+nsresult
+PresentationRequestParent::DoRequest(const TerminateSessionRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+
+  // Validate the accessibility (primarily for receiver side) so that a
+  // compromised child process can't fake the ID.
+  if (NS_WARN_IF(!static_cast<PresentationService*>(mService.get())->
+                  IsSessionAccessible(aRequest.sessionId(), OtherPid()))) {
+    return NotifyError(NS_ERROR_DOM_SECURITY_ERR);
+  }
+
+  nsresult rv = mService->TerminateSession(aRequest.sessionId());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return NotifyError(rv);
   }

@@ -262,7 +262,7 @@
 
 }
 
-*|*:not(:root):-moz-full-screen {
+*|*:-moz-full-screen:not(:root) {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -280,11 +280,10 @@
   box-sizing: border-box !important;
 }
 
-/* If there is a full-screen element that is not the root then
-   we should hide the viewport scrollbar. We exclude the chrome
-   document to prevent reframing of contained plugins. */
-:not(xul|*):root:-moz-full-screen-ancestor {
-  overflow: hidden !important;
+/* Selectors here should match the check in
+ * nsViewportFrame.cpp:ShouldInTopLayerForFullscreen() */
+*|*:-moz-full-screen:not(:root):not(:-moz-browser-frame) {
+  -moz-top-layer: top !important;
 }
 
 /* XML parse error reporting */
@@ -344,16 +343,16 @@ div:-moz-native-anonymous.moz-accessiblecaret.no-bar > div.bar {
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-  background-image: url("resource://gre/res/text_caret.png");
+  background-image: url("resource://gre/res/accessiblecaret.png");
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-  background-image: url("resource://gre/res/text_caret_tilt_left.png");
+  background-image: url("resource://gre/res/accessiblecaret_tilt_left.png");
   margin-left: -39%;
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-  background-image: url("resource://gre/res/text_caret_tilt_right.png");
+  background-image: url("resource://gre/res/accessiblecaret_tilt_right.png");
   margin-left: 41%;
 }
 
@@ -363,43 +362,43 @@ div:-moz-native-anonymous.moz-accessiblecaret.none {
 
 @media (min-resolution: 1.5dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/text_caret@1.5x.png");
+    background-image: url("resource://gre/res/accessiblecaret@1.5x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_left@1.5x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_left@1.5x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_right@1.5x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_right@1.5x.png");
   }
 }
 
 @media (min-resolution: 2dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/text_caret@2x.png");
+    background-image: url("resource://gre/res/accessiblecaret@2x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_left@2x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_left@2x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_right@2x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_right@2x.png");
   }
 }
 
 @media (min-resolution: 2.25dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/text_caret@2.25x.png");
+    background-image: url("resource://gre/res/accessiblecaret@2.25x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_left@2.25x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_left@2.25x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/text_caret_tilt_right@2.25x.png");
+    background-image: url("resource://gre/res/accessiblecaret_tilt_right@2.25x.png");
   }
 }
 
@@ -515,12 +514,10 @@ div:-moz-native-anonymous.moz-selectioncaret-right.hidden > div {
    everything else, not reacting to pointer events. */
 div:-moz-native-anonymous.moz-custom-content-container {
   pointer-events: none;
-
+  -moz-top-layer: top;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
-  z-index: 2147483648;
 }

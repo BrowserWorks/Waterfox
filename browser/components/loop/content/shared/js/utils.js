@@ -42,7 +42,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     this.EXPORTED_SYMBOLS = ["utils"];
     mozL10n = { get: function() {
       throw new Error("mozL10n.get not availabled from chrome!");
-    }};
+    } };
   } else {
     mozL10n = document.mozL10n || navigator.mozL10n;
   }
@@ -62,25 +62,20 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     ROOM_FULL: 202
   };
 
-  var WEBSOCKET_REASONS = {
-    ANSWERED_ELSEWHERE: "answered-elsewhere",
-    BUSY: "busy",
-    CANCEL: "cancel",
-    CLOSED: "closed",
-    MEDIA_FAIL: "media-fail",
-    REJECT: "reject",
-    TIMEOUT: "timeout"
-  };
-
   var FAILURE_DETAILS = {
     MEDIA_DENIED: "reason-media-denied",
     NO_MEDIA: "reason-no-media",
+    ROOM_ALREADY_OPEN: "reason-room-already-open",
     UNABLE_TO_PUBLISH_MEDIA: "unable-to-publish-media",
     USER_UNAVAILABLE: "reason-user-unavailable",
     COULD_NOT_CONNECT: "reason-could-not-connect",
     NETWORK_DISCONNECTED: "reason-network-disconnected",
     EXPIRED_OR_INVALID: "reason-expired-or-invalid",
-    UNKNOWN: "reason-unknown"
+    // TOS_FAILURE reflects the sdk error code 1026:
+    // https://tokbox.com/developer/sdks/js/reference/ExceptionEvent.html
+    TOS_FAILURE: "reason-tos-failure",
+    UNKNOWN: "reason-unknown",
+    ICE_FAILED: "reason-ice-failed"
   };
 
   var ROOM_INFO_FAILURES = {
@@ -121,7 +116,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
    */
   function formatDate(timestamp) {
     var date = (new Date(timestamp * 1000));
-    var options = {year: "numeric", month: "long", day: "numeric"};
+    var options = { year: "numeric", month: "long", day: "numeric" };
     return date.toLocaleDateString(navigator.language, options);
   }
 
@@ -410,7 +405,7 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
         callUrl: callUrl
       });
     }
-    var bodyFooter =  body + footer;
+    var bodyFooter = body + footer;
     bodyFooter = bodyFooter.replace(/\r\n/g, "\n").replace(/\n/g, "\r\n");
     mozLoop.composeEmail(
       subject,
@@ -511,12 +506,12 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
    * @param {Number} chr The character code to decode.
    * @return {Number} The decoded value.
    */
-  function _b64ToUint6 (chr) {
-    return chr > 64 && chr < 91  ? chr - 65 :
+  function _b64ToUint6(chr) {
+    return chr > 64 && chr < 91 ? chr - 65 :
            chr > 96 && chr < 123 ? chr - 71 :
-           chr > 47 && chr < 58  ? chr + 4  :
-           chr === 43            ? 62       :
-           chr === 47            ? 63       : 0;
+           chr > 47 && chr < 58 ? chr + 4 :
+           chr === 43 ? 62 :
+           chr === 47 ? 63 : 0;
   }
 
   /**
@@ -527,12 +522,12 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
    * @param {Number} uint6 The number to encode.
    * @return {Number} The encoded value.
    */
-  function _uint6ToB64 (uint6) {
-    return uint6 < 26   ? uint6 + 65 :
-           uint6 < 52   ? uint6 + 71 :
-           uint6 < 62   ? uint6 - 4  :
-           uint6 === 62 ? 43         :
-           uint6 === 63 ? 47         : 65;
+  function _uint6ToB64(uint6) {
+    return uint6 < 26 ? uint6 + 65 :
+           uint6 < 52 ? uint6 + 71 :
+           uint6 < 62 ? uint6 - 4 :
+           uint6 === 62 ? 43 :
+           uint6 === 63 ? 47 : 65;
   }
 
   /**
@@ -551,10 +546,10 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     // Mapping.
     for (var mapIndex = 0; mapIndex < inLength; mapIndex++) {
       chr = inString.charCodeAt(mapIndex);
-      arrayLength += chr < 0x80      ? 1 :
-                     chr < 0x800     ? 2 :
-                     chr < 0x10000   ? 3 :
-                     chr < 0x200000  ? 4 :
+      arrayLength += chr < 0x80 ? 1 :
+                     chr < 0x800 ? 2 :
+                     chr < 0x10000 ? 3 :
+                     chr < 0x200000 ? 4 :
                      chr < 0x4000000 ? 5 : 6;
     }
 
@@ -781,7 +776,6 @@ var inChrome = typeof Components != "undefined" && "utils" in Components;
     CHAT_CONTENT_TYPES: CHAT_CONTENT_TYPES,
     FAILURE_DETAILS: FAILURE_DETAILS,
     REST_ERRNOS: REST_ERRNOS,
-    WEBSOCKET_REASONS: WEBSOCKET_REASONS,
     STREAM_PROPERTIES: STREAM_PROPERTIES,
     SCREEN_SHARE_STATES: SCREEN_SHARE_STATES,
     ROOM_INFO_FAILURES: ROOM_INFO_FAILURES,

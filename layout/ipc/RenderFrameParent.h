@@ -25,6 +25,7 @@ class InputEvent;
 
 namespace layers {
 class APZCTreeManager;
+class AsyncDragMetrics;
 class TargetConfig;
 struct TextureFactoryIdentifier;
 struct ScrollableLayerGuid;
@@ -36,6 +37,7 @@ class RemoteContentController;
 
 class RenderFrameParent : public PRenderFrameParent
 {
+  typedef mozilla::layers::AsyncDragMetrics AsyncDragMetrics;
   typedef mozilla::layers::FrameMetrics FrameMetrics;
   typedef mozilla::layers::ContainerLayer ContainerLayer;
   typedef mozilla::layers::Layer Layer;
@@ -77,8 +79,6 @@ public:
 
   void OwnerContentChanged(nsIContent* aContent);
 
-  void SetBackgroundColor(nscolor aColor) { mBackgroundColor = gfxRGBA(aColor); };
-
   void ZoomToRect(uint32_t aPresShellId, ViewID aViewId, const CSSRect& aRect);
 
   void ContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
@@ -94,6 +94,8 @@ public:
                              const Maybe<ZoomConstraints>& aConstraints);
 
   bool HitTest(const nsRect& aRect);
+
+  void StartScrollbarDrag(const AsyncDragMetrics& aDragMetrics);
 
   void GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier);
 
@@ -119,13 +121,13 @@ private:
   // context.
   uint64_t mLayersId;
 
-  nsRefPtr<nsFrameLoader> mFrameLoader;
-  nsRefPtr<ContainerLayer> mContainer;
+  RefPtr<nsFrameLoader> mFrameLoader;
+  RefPtr<ContainerLayer> mContainer;
   // When our scrolling behavior is ASYNC_PAN_ZOOM, we have a nonnull
   // APZCTreeManager. It's used to manipulate the shadow layer tree
   // on the compositor thread.
-  nsRefPtr<layers::APZCTreeManager> mApzcTreeManager;
-  nsRefPtr<RemoteContentController> mContentController;
+  RefPtr<layers::APZCTreeManager> mApzcTreeManager;
+  RefPtr<RemoteContentController> mContentController;
 
   layers::APZCTreeManager* GetApzcTreeManager();
 
@@ -144,8 +146,6 @@ private:
   // It's possible for mFrameLoader==null and
   // mFrameLoaderDestroyed==false.
   bool mFrameLoaderDestroyed;
-  // this is gfxRGBA because that's what ColorLayer wants.
-  gfxRGBA mBackgroundColor;
 
   nsRegion mTouchRegion;
 

@@ -569,10 +569,7 @@ nsXULTooltipListener::FindTooltip(nsIContent* aTarget, nsIContent** aTooltip)
     return NS_OK;
   }
 
-  bool closed;
-  window->GetClosed(&closed);
-
-  if (closed) {
+  if (window->Closed()) {
     return NS_OK;
   }
 
@@ -702,7 +699,7 @@ nsXULTooltipListener::KillTooltipTimer()
 void
 nsXULTooltipListener::sTooltipCallback(nsITimer *aTimer, void *aListener)
 {
-  nsRefPtr<nsXULTooltipListener> instance = mInstance;
+  RefPtr<nsXULTooltipListener> instance = mInstance;
   if (instance)
     instance->ShowTooltip();
 }

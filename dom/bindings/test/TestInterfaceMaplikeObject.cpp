@@ -4,7 +4,7 @@
 
 #include "mozilla/dom/TestInterfaceMaplikeObject.h"
 #include "mozilla/dom/TestInterfaceMaplike.h"
-#include "mozilla/dom/TestInterfaceJSMaplikeSetlikeBinding.h"
+#include "mozilla/dom/TestInterfaceJSMaplikeSetlikeIterableBinding.h"
 #include "nsPIDOMWindow.h"
 #include "mozilla/dom/BindingUtils.h"
 
@@ -37,7 +37,7 @@ TestInterfaceMaplikeObject::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<TestInterfaceMaplikeObject> r =
+  RefPtr<TestInterfaceMaplikeObject> r =
     new TestInterfaceMaplikeObject(window);
   return r.forget();
 }
@@ -58,7 +58,7 @@ TestInterfaceMaplikeObject::GetParentObject() const
 void
 TestInterfaceMaplikeObject::SetInternal(const nsAString& aKey)
 {
-  nsRefPtr<TestInterfaceMaplike> p(new TestInterfaceMaplike(mParent));
+  RefPtr<TestInterfaceMaplike> p(new TestInterfaceMaplike(mParent));
   ErrorResult rv;
   TestInterfaceMaplikeObjectBinding::MaplikeHelpers::Set(this, aKey, *p, rv);
 }

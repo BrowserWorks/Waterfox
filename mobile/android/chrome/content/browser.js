@@ -118,6 +118,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "GMPInstallManager",
 
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Snackbars", "resource://gre/modules/Snackbars.jsm");
+
 var lazilyLoadedBrowserScripts = [
   ["SelectHelper", "chrome://browser/content/SelectHelper.js"],
   ["InputWidgetHelper", "chrome://browser/content/InputWidgetHelper.js"],
@@ -188,17 +190,19 @@ lazilyLoadedObserverScripts.forEach(function (aScript) {
 // Lazily-loaded browser scripts that use message listeners.
 [
   ["Reader", [
-    "Reader:AddToList",
-    "Reader:ArticleGet",
-    "Reader:FaviconRequest",
-    "Reader:ListStatusRequest",
-    "Reader:RemoveFromList",
-    "Reader:Share",
-    "Reader:ToolbarHidden",
-    "Reader:SystemUIVisibility",
-    "Reader:UpdateReaderButton",
-    "Reader:SetIntPref",
-    "Reader:SetCharPref",
+    ["Reader:AddToList", false],
+    ["Reader:ArticleGet", false],
+    ["Reader:DropdownClosed", true], // 'true' allows us to survive mid-air cycle-collection.
+    ["Reader:DropdownOpened", false],
+    ["Reader:FaviconRequest", false],
+    ["Reader:ListStatusRequest", false],
+    ["Reader:RemoveFromList", false],
+    ["Reader:Share", false],
+    ["Reader:ToolbarHidden", false],
+    ["Reader:SystemUIVisibility", false],
+    ["Reader:UpdateReaderButton", false],
+    ["Reader:SetIntPref", false],
+    ["Reader:SetCharPref", false],
   ], "chrome://browser/content/Reader.js"],
 ].forEach(aScript => {
   let [name, messages, script] = aScript;
@@ -211,11 +215,21 @@ lazilyLoadedObserverScripts.forEach(function (aScript) {
   let mm = window.getGroupMessageManager("browsers");
   let listener = (message) => {
     mm.removeMessageListener(message.name, listener);
-    mm.addMessageListener(message.name, window[name]);
+    let listenAfterClose = false;
+    for (let [name, laClose] of messages) {
+      if (message.name === name) {
+        listenAfterClose = laClose;
+        break;
+      }
+    }
+
+    mm.addMessageListener(message.name, window[name], listenAfterClose);
     window[name].receiveMessage(message);
   };
+
   messages.forEach((message) => {
-    mm.addMessageListener(message, listener);
+    let [name, listenAfterClose] = message;
+    mm.addMessageListener(name, listener, listenAfterClose);
   });
 });
 
@@ -481,7 +495,6 @@ var BrowserApp = {
     NativeWindow.init();
     FormAssistant.init();
     IndexedDB.init();
-    HealthReportStatusListener.init();
     XPInstallObserver.init();
     CharacterEncoding.init();
     ActivityObserver.init();
@@ -492,14 +505,11 @@ var BrowserApp = {
     Tabs.init();
     SearchEngines.init();
 
-    let url = null;
     if ("arguments" in window) {
       if (window.arguments[0])
-        url = window.arguments[0];
+        gScreenWidth = window.arguments[0];
       if (window.arguments[1])
-        gScreenWidth = window.arguments[1];
-      if (window.arguments[2])
-        gScreenHeight = window.arguments[2];
+        gScreenHeight = window.arguments[1];
     }
 
     // XXX maybe we don't do this if the launch was kicked off from external
@@ -588,6 +598,8 @@ var BrowserApp = {
         InitLater(() => ShumwayUtils.init(), window, "ShumwayUtils");
         InitLater(() => Telemetry.addData("TRACKING_PROTECTION_ENABLED",
             Services.prefs.getBoolPref("privacy.trackingprotection.enabled")));
+        InitLater(() => Telemetry.addData("TRACKING_PROTECTION_PBM_DISABLED",
+            !Services.prefs.getBoolPref("privacy.trackingprotection.pbmode.enabled")));
         InitLater(() => WebcompatReporter.init());
       }
 
@@ -760,6 +772,7 @@ var BrowserApp = {
       },
       icon: "drawable://ic_menu_share",
       callback: function(aTarget) {
+        // share.1 telemetry is handled in Java via PromptList
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_share_link");
       }
     });
@@ -779,6 +792,7 @@ var BrowserApp = {
       },
       icon: "drawable://ic_menu_share",
       callback: function(aTarget) {
+        // share.1 telemetry is handled in Java via PromptList
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_share_email");
       }
     });
@@ -798,6 +812,7 @@ var BrowserApp = {
       },
       icon: "drawable://ic_menu_share",
       callback: function(aTarget) {
+        // share.1 telemetry is handled in Java via PromptList
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_share_phone");
       }
     });
@@ -877,6 +892,7 @@ var BrowserApp = {
       },
       icon: "drawable://ic_menu_share",
       callback: function(aTarget) {
+        // share.1 telemetry is handled in Java via PromptList
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_share_media");
       }
     });
@@ -919,7 +935,7 @@ var BrowserApp = {
         let doc = aTarget.ownerDocument;
         let imageCache = Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools)
                                                          .getImgCacheForDocument(doc);
-        let props = imageCache.findEntryProperties(aTarget.currentURI, doc.characterSet);
+        let props = imageCache.findEntryProperties(aTarget.currentURI, doc);
         let src = aTarget.src;
         return {
           title: src,
@@ -938,6 +954,7 @@ var BrowserApp = {
       NativeWindow.contextmenus.imageSaveableContext,
       function(aTarget) {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_save_image");
+        UITelemetry.addEvent("save.1", "contextmenu", null, "image");
 
         ContentAreaUtils.saveImageURL(aTarget.currentURI.spec, null, "SaveImageTitle",
                                       false, true, aTarget.ownerDocument.documentURIObject,
@@ -971,6 +988,7 @@ var BrowserApp = {
       }, NativeWindow.contextmenus.mediaSaveableContext,
       function(aTarget) {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_save_media");
+        UITelemetry.addEvent("save.1", "contextmenu", null, "media");
 
         let url = aTarget.currentSrc || aTarget.src;
         let filePickerTitleKey = (aTarget instanceof HTMLVideoElement &&
@@ -981,6 +999,14 @@ var BrowserApp = {
                                       filePickerTitleKey, null, aTarget.ownerDocument.documentURIObject,
                                       aTarget.ownerDocument, true, null);
       });
+
+    NativeWindow.contextmenus.add(stringGetter("contextmenu.showImage"),
+      NativeWindow.contextmenus.imageBlockingPolicyContext,
+      function(target) {
+        UITelemetry.addEvent("action.1", "contextmenu", null, "web_show_image");
+        target.setAttribute("data-ctv-show", "true");
+        target.setAttribute("src", target.getAttribute("data-ctv-src"));
+    });
   },
 
   onAppUpdated: function() {
@@ -1254,9 +1280,8 @@ var BrowserApp = {
         message = Strings.browser.GetStringFromName("undoCloseToast.messageDefault");
       }
 
-      NativeWindow.toast.show(message, "short", {
-        button: {
-          icon: "drawable://undo_button_icon",
+      Snackbars.show(message, Snackbars.LENGTH_SHORT, {
+        action: {
           label: Strings.browser.GetStringFromName("undoCloseToast.action2"),
           callback: function() {
             UITelemetry.addEvent("undo.1", "toast", null, "closetab");
@@ -1303,6 +1328,7 @@ var BrowserApp = {
    * @return the tab with the given URL, or null if no such tab exists
    */
   getTabWithURL: function getTabWithURL(aURL, aOptions) {
+    aOptions = aOptions || {};
     let uri = Services.io.newURI(aURL, null, null);
     for (let i = 0; i < this._tabs.length; ++i) {
       let tab = this._tabs[i];
@@ -1324,15 +1350,16 @@ var BrowserApp = {
    * Otherwise, a new tab is opened with the given URL.
    *
    * @param aURL URL to open
-   * @param  aFlags Options for the search. Currently supports:
+   * @param aParam Options used if a tab is created
+   * @param aFlags Options for the search. Currently supports:
    **  @option startsWith a Boolean indicating whether to search for a tab who's url starts with the
    *           requested url. Useful if you want to ignore hash codes on the end of a url. For instance
    *           to have about:downloads match about:downloads#123.
    */
-  selectOrOpenTab: function selectOrOpenTab(aURL, aFlags) {
+  selectOrAddTab: function selectOrAddTab(aURL, aParams, aFlags) {
     let tab = this.getTabWithURL(aURL, aFlags);
     if (tab == null) {
-      tab = this.addTab(aURL);
+      tab = this.addTab(aURL, aParams);
     } else {
       this.selectTab(tab);
     }
@@ -1408,6 +1435,11 @@ var BrowserApp = {
     }, this);
   },
 
+  // These values come from pref_tracking_protection_entries in arrays.xml.
+  PREF_TRACKING_PROTECTION_ENABLED: "2",
+  PREF_TRACKING_PROTECTION_ENABLED_PB: "1",
+  PREF_TRACKING_PROTECTION_DISABLED: "0",
+
   handlePreferencesRequest: function handlePreferencesRequest(aRequestId,
                                                               aPrefNames,
                                                               aListen) {
@@ -1446,6 +1478,18 @@ var BrowserApp = {
           pref.value = MasterPassword.enabled;
           prefs.push(pref);
           continue;
+        case "privacy.trackingprotection.state": {
+          pref.type = "string";
+          if (Services.prefs.getBoolPref("privacy.trackingprotection.enabled")) {
+            pref.value = this.PREF_TRACKING_PROTECTION_ENABLED;
+          } else if (Services.prefs.getBoolPref("privacy.trackingprotection.pbmode.enabled")) {
+            pref.value = this.PREF_TRACKING_PROTECTION_ENABLED_PB;
+          } else {
+            pref.value = this.PREF_TRACKING_PROTECTION_DISABLED;
+          }
+          prefs.push(pref);
+          continue;
+        }
         // Crash reporter submit pref must be fetched from nsICrashReporter service.
         case "datareporting.crashreporter.submitEnabled":
           let crashReporterBuilt = "nsICrashReporter" in Ci && Services.appinfo instanceof Ci.nsICrashReporter;
@@ -1528,6 +1572,29 @@ var BrowserApp = {
           MasterPassword.setPassword(json.value);
         return;
 
+      // "privacy.trackingprotection.state" is not a "real" pref name, but it's used in the setting menu.
+      // By default "privacy.trackingprotection.pbmode.enabled" is true,
+      // and "privacy.trackingprotection.enabled" is false.
+      case "privacy.trackingprotection.state": {
+        switch (json.value) {
+          // Tracking protection disabled.
+          case this.PREF_TRACKING_PROTECTION_DISABLED:
+            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", false);
+            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
+            break;
+          // Tracking protection only in private browsing,
+          case this.PREF_TRACKING_PROTECTION_ENABLED_PB:
+            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
+            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", false);
+            break;
+          // Tracking protection everywhere.
+          case this.PREF_TRACKING_PROTECTION_ENABLED:
+            Services.prefs.setBoolPref("privacy.trackingprotection.pbmode.enabled", true);
+            Services.prefs.setBoolPref("privacy.trackingprotection.enabled", true);
+            break;
+        }
+        return;
+      }
       // Enabling or disabling suggestions will prevent future prompts
       case SearchEngines.PREF_SUGGEST_ENABLED:
         Services.prefs.setBoolPref(SearchEngines.PREF_SUGGEST_PROMPTED, true);
@@ -2260,9 +2327,9 @@ var NativeWindow = {
       if (arguments.length == 1) {
         options = arguments[0];
       } else if (arguments.length == 3) {
+          Log.w("Browser", "This menu addon API has been deprecated. Instead, use the options object API.");
           options = {
             name: arguments[0],
-            icon: arguments[1],
             callback: arguments[2]
           };
       } else {
@@ -2515,12 +2582,24 @@ var NativeWindow = {
 
     imageLocationCopyableContext: {
       matches: function imageLinkCopyableContextMatches(aElement) {
+        if (aElement instanceof Ci.nsIDOMHTMLImageElement) {
+          // The image is blocked by Tap-to-load Images
+          if (aElement.hasAttribute("data-ctv-src") && !aElement.hasAttribute("data-ctv-show")) {
+            return false;
+          }
+        }
         return (aElement instanceof Ci.nsIImageLoadingContent && aElement.currentURI);
       }
     },
 
     imageSaveableContext: {
       matches: function imageSaveableContextMatches(aElement) {
+        if (aElement instanceof Ci.nsIDOMHTMLImageElement) {
+          // The image is blocked by Tap-to-load Images
+          if (aElement.hasAttribute("data-ctv-src") && !aElement.hasAttribute("data-ctv-show")) {
+            return false;
+          }
+        }
         if (aElement instanceof Ci.nsIImageLoadingContent && aElement.currentURI) {
           // The image must be loaded to allow saving
           let request = aElement.getRequest(Ci.nsIImageLoadingContent.CURRENT_REQUEST);
@@ -2534,6 +2613,23 @@ var NativeWindow = {
       matches: function mediaSaveableContextMatches(aElement) {
         return (aElement instanceof HTMLVideoElement ||
                aElement instanceof HTMLAudioElement);
+      }
+    },
+
+    imageBlockingPolicyContext: {
+      matches: function imageBlockingPolicyContextMatches(aElement) {
+        if (!Services.prefs.getBoolPref("browser.image_blocking.enabled")) {
+          return false;
+        }
+
+        if (aElement instanceof Ci.nsIDOMHTMLImageElement) {
+          // Only show the menuitem if we are blocking the image
+          if (aElement.getAttribute("data-ctv-show") == "true") {
+            return false;
+          }
+          return true;
+        }
+        return false;
       }
     },
 
@@ -2759,6 +2855,11 @@ var NativeWindow = {
           (node instanceof Ci.nsIDOMHTMLAreaElement && node.href)) {
         return this._getLinkURL(node);
       } else if (node instanceof Ci.nsIImageLoadingContent && node.currentURI) {
+        // The image is blocked by Tap-to-load Images
+        let originalURL = node.getAttribute("data-ctv-src");
+        if (originalURL) {
+          return originalURL;
+        }
         return node.currentURI.spec;
       } else if (node instanceof Ci.nsIDOMHTMLMediaElement) {
         return (node.currentSrc || node.src);
@@ -3174,6 +3275,10 @@ var LightWeightThemeWebInstaller = {
     let pm = Services.perms;
 
     let uri = node.ownerDocument.documentURIObject;
+    if (!uri.schemeIs("https")) {
+      return false;
+    }
+
     return pm.testPermission(uri, "install") == pm.ALLOW_ACTION;
   },
 
@@ -3621,6 +3726,9 @@ Tab.prototype = {
       return;
 
     let url = currentURI.spec;
+    // We need LOAD_FLAGS_BYPASS_CACHE here since we're changing the User-Agent
+    // string, and servers typically don't use the Vary: User-Agent header, so
+    // not doing this means that we'd get some of the previously cached content.
     let flags = Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE |
                 Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY;
     if (this.originalURI && !this.originalURI.equals(currentURI)) {
@@ -4403,10 +4511,7 @@ Tab.prototype = {
     if (!ParentalControls.isAllowed(ParentalControls.VISIT_FILE_URLS, fixedURI)) {
       aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
-      aRequest = this.browser.docShell.displayLoadError(Cr.NS_ERROR_UNKNOWN_PROTOCOL, fixedURI, null);
-      if (aRequest) {
-        fixedURI = aRequest.URI;
-      }
+      this.browser.docShell.displayLoadError(Cr.NS_ERROR_UNKNOWN_PROTOCOL, fixedURI, null);
     }
 
     let contentType = contentWin.document.contentType;
@@ -4459,7 +4564,13 @@ Tab.prototype = {
     let ss = Cc["@mozilla.org/browser/sessionstore;1"].getService(Ci.nsISessionStore);
     let appOrigin = ss.getTabValue(this, "appOrigin");
     if (appOrigin) {
-      let originHost = Services.io.newURI(appOrigin, null, null).host;
+      let originHost = "";
+      try {
+        let originHost = Services.io.newURI(appOrigin, null, null).host;
+      } catch (e if (e.result == Cr.NS_ERROR_FAILURE)) {
+        // NS_ERROR_FAILURE can be thrown by nsIURI.host if the URI scheme does not possess a host - in this case
+        // we just act as if we have an empty host.
+      }
       if (originHost != aLocationURI.host) {
         // Note: going 'back' will not make this tab pinned again
         ss.deleteTabValue(this, "appOrigin");
@@ -4668,6 +4779,14 @@ var BrowserEventHandler = {
 
     InitLater(() => BrowserApp.deck.addEventListener("click", InputWidgetHelper, true));
     InitLater(() => BrowserApp.deck.addEventListener("click", SelectHelper, true));
+    if (AppConstants.NIGHTLY_BUILD) {
+      InitLater(() => BrowserApp.deck.addEventListener("InsecureLoginFormsStateChange", IdentityHandler.sendLoginInsecure, true));
+    }
+
+    // ReaderViews support backPress listeners.
+    Messaging.addListener(() => {
+      return Reader.onBackPress(BrowserApp.selectedTab.id);
+    }, "Browser:OnBackPressed");
   },
 
   handleEvent: function(aEvent) {
@@ -5002,7 +5121,8 @@ var BrowserEventHandler = {
        * - It's a select element showing multiple rows
        */
       if (checkElem) {
-        if ((elem.scrollTopMax > 0 || elem.scrollLeftMax > 0) &&
+        if ((elem.scrollTopMin != elem.scrollTopMax ||
+             elem.scrollLeftMin != elem.scrollLeftMax) &&
             (this._hasScrollableOverflow(elem) ||
              elem.matches("textarea")) ||
             (elem instanceof HTMLInputElement && elem.mozIsTextField(false)) ||
@@ -5572,194 +5692,10 @@ var FormAssistant = {
   }
 };
 
-/**
- * An object to watch for Gecko status changes -- add-on installs, pref changes
- * -- and reflect them back to Java.
- */
-var HealthReportStatusListener = {
-  PREF_ACCEPT_LANG: "intl.accept_languages",
-  PREF_BLOCKLIST_ENABLED: "extensions.blocklist.enabled",
-
-  PREF_TELEMETRY_ENABLED: AppConstants.MOZ_TELEMETRY_REPORTING ?
-    "toolkit.telemetry.enabled" :
-    null,
-
-  init: function () {
-    try {
-      AddonManager.addAddonListener(this);
-    } catch (ex) {
-      dump("Failed to initialize add-on status listener. FHR cannot report add-on state. " + ex);
-    }
-
-    dump("Adding HealthReport:RequestSnapshot observer.");
-    Services.obs.addObserver(this, "HealthReport:RequestSnapshot", false);
-    Services.prefs.addObserver(this.PREF_ACCEPT_LANG, this, false);
-    Services.prefs.addObserver(this.PREF_BLOCKLIST_ENABLED, this, false);
-    if (this.PREF_TELEMETRY_ENABLED) {
-      Services.prefs.addObserver(this.PREF_TELEMETRY_ENABLED, this, false);
-    }
-  },
-
-  observe: function (aSubject, aTopic, aData) {
-    switch (aTopic) {
-      case "HealthReport:RequestSnapshot":
-        HealthReportStatusListener.sendSnapshotToJava();
-        break;
-      case "nsPref:changed":
-        let response = {
-          type: "Pref:Change",
-          pref: aData,
-          isUserSet: Services.prefs.prefHasUserValue(aData),
-        };
-
-        switch (aData) {
-          case this.PREF_ACCEPT_LANG:
-            response.value = Services.prefs.getCharPref(aData);
-            break;
-          case this.PREF_TELEMETRY_ENABLED:
-          case this.PREF_BLOCKLIST_ENABLED:
-            response.value = Services.prefs.getBoolPref(aData);
-            break;
-          default:
-            console.log("Unexpected pref in HealthReportStatusListener: " + aData);
-            return;
-        }
-
-        Messaging.sendRequest(response);
-        break;
-    }
-  },
-
-  MILLISECONDS_PER_DAY: 24 * 60 * 60 * 1000,
-
-  COPY_FIELDS: [
-    "blocklistState",
-    "userDisabled",
-    "appDisabled",
-    "version",
-    "type",
-    "scope",
-    "foreignInstall",
-    "hasBinaryComponents",
-  ],
-
-  // Add-on types for which full details are recorded in FHR.
-  // All other types are ignored.
-  FULL_DETAIL_TYPES: [
-    "plugin",
-    "extension",
-    "service",
-  ],
-
-  /**
-   * Return true if the add-on is not of a type for which we report full details.
-   * These add-ons will still make it over to Java, but will be filtered out.
-   */
-  _shouldIgnore: function (aAddon) {
-    return this.FULL_DETAIL_TYPES.indexOf(aAddon.type) == -1;
-  },
-
-  _dateToDays: function (aDate) {
-    return Math.floor(aDate.getTime() / this.MILLISECONDS_PER_DAY);
-  },
-
-  jsonForAddon: function (aAddon) {
-    let o = {};
-    if (aAddon.installDate) {
-      o.installDay = this._dateToDays(aAddon.installDate);
-    }
-    if (aAddon.updateDate) {
-      o.updateDay = this._dateToDays(aAddon.updateDate);
-    }
-
-    for (let field of this.COPY_FIELDS) {
-      o[field] = aAddon[field];
-    }
-
-    return o;
-  },
-
-  notifyJava: function (aAddon, aNeedsRestart, aAction="Addons:Change") {
-    let json = this.jsonForAddon(aAddon);
-    if (this._shouldIgnore(aAddon)) {
-      json.ignore = true;
-    }
-    Messaging.sendRequest({ type: aAction, id: aAddon.id, json: json });
-  },
-
-  // Add-on listeners.
-  onEnabling: function (aAddon, aNeedsRestart) {
-    this.notifyJava(aAddon, aNeedsRestart);
-  },
-  onDisabling: function (aAddon, aNeedsRestart) {
-    this.notifyJava(aAddon, aNeedsRestart);
-  },
-  onInstalling: function (aAddon, aNeedsRestart) {
-    this.notifyJava(aAddon, aNeedsRestart);
-  },
-  onUninstalling: function (aAddon, aNeedsRestart) {
-    this.notifyJava(aAddon, aNeedsRestart, "Addons:Uninstalling");
-  },
-  onPropertyChanged: function (aAddon, aProperties) {
-    this.notifyJava(aAddon);
-  },
-  onOperationCancelled: function (aAddon) {
-    this.notifyJava(aAddon);
-  },
-
-  sendSnapshotToJava: function () {
-    AddonManager.getAllAddons(function (aAddons) {
-        let jsonA = {};
-        if (aAddons) {
-          for (let i = 0; i < aAddons.length; ++i) {
-            let addon = aAddons[i];
-            try {
-              let addonJSON = HealthReportStatusListener.jsonForAddon(addon);
-              if (HealthReportStatusListener._shouldIgnore(addon)) {
-                addonJSON.ignore = true;
-              }
-              jsonA[addon.id] = addonJSON;
-            } catch (e) {
-              // Just skip this add-on.
-            }
-          }
-        }
-
-        // Now add prefs.
-        let jsonP = {};
-        for (let pref of [this.PREF_BLOCKLIST_ENABLED, this.PREF_TELEMETRY_ENABLED]) {
-          if (!pref) {
-            // This will be the case for PREF_TELEMETRY_ENABLED in developer builds.
-            continue;
-          }
-          jsonP[pref] = {
-            pref: pref,
-            value: Services.prefs.getBoolPref(pref),
-            isUserSet: Services.prefs.prefHasUserValue(pref),
-          };
-        }
-        for (let pref of [this.PREF_ACCEPT_LANG]) {
-          jsonP[pref] = {
-            pref: pref,
-            value: Services.prefs.getCharPref(pref),
-            isUserSet: Services.prefs.prefHasUserValue(pref),
-          };
-        }
-
-        console.log("Sending snapshot message.");
-        Messaging.sendRequest({
-          type: "HealthReport:Snapshot",
-          json: {
-            addons: jsonA,
-            prefs: jsonP,
-          },
-        });
-      }.bind(this));
-  },
-};
-
 var XPInstallObserver = {
   init: function() {
+    Services.obs.addObserver(this, "addon-install-origin-blocked", false);
+    Services.obs.addObserver(this, "addon-install-disabled", false);
     Services.obs.addObserver(this, "addon-install-blocked", false);
     Services.obs.addObserver(this, "addon-install-started", false);
     Services.obs.addObserver(this, "xpi-signature-changed", false);
@@ -5769,76 +5705,104 @@ var XPInstallObserver = {
   },
 
   observe: function(aSubject, aTopic, aData) {
+    let installInfo, tab, host;
+    if (aSubject && aSubject instanceof Ci.amIWebInstallInfo) {
+      installInfo = aSubject;
+      tab = BrowserApp.getTabForBrowser(installInfo.browser);
+      if (installInfo.originatingURI) {
+        host = installInfo.originatingURI.host;
+      }
+    }
+
+    let strings = Strings.browser;
+    let brandShortName = Strings.brand.GetStringFromName("brandShortName");
+
     switch (aTopic) {
       case "addon-install-started":
-        NativeWindow.toast.show(Strings.browser.GetStringFromName("alertAddonsDownloading"), "short");
+        NativeWindow.toast.show(strings.GetStringFromName("alertAddonsDownloading"), "short");
         break;
-      case "addon-install-blocked": {
-        let installInfo = aSubject.QueryInterface(Ci.amIWebInstallInfo);
-        let tab = BrowserApp.getTabForBrowser(installInfo.browser);
+      case "addon-install-disabled": {
         if (!tab)
           return;
 
-        let host = null;
-        if (installInfo.originatingURI) {
-          host = installInfo.originatingURI.host;
-        }
-
-        let brandShortName = Strings.brand.GetStringFromName("brandShortName");
-        let notificationName, buttons, message;
-        let strings = Strings.browser;
         let enabled = true;
         try {
           enabled = Services.prefs.getBoolPref("xpinstall.enabled");
-        }
-        catch (e) {}
+        } catch (e) {}
 
+        let buttons, message, callback;
         if (!enabled) {
-          notificationName = "xpinstall-disabled";
-          if (Services.prefs.prefIsLocked("xpinstall.enabled")) {
-            message = strings.GetStringFromName("xpinstallDisabledMessageLocked");
-            buttons = [];
-          } else {
-            message = strings.formatStringFromName("xpinstallDisabledMessage2", [brandShortName, host], 2);
-            buttons = [{
-              label: strings.GetStringFromName("xpinstallDisabledButton"),
-              callback: function editPrefs() {
-                Services.prefs.setBoolPref("xpinstall.enabled", true);
-                return false;
-              }
-            }];
-          }
+          message = strings.GetStringFromName("xpinstallDisabledMessageLocked");
+          buttons = [strings.GetStringFromName("unsignedAddonsDisabled.dismiss")];
+          callback: (data) => {};
         } else {
-          notificationName = "xpinstall";
-          if (host) {
-            // We have a host which asked for the install.
-            message = strings.formatStringFromName("xpinstallPromptWarning2", [brandShortName, host], 2);
-          } else {
-            // Without a host we address the add-on as the initiator of the install.
-            let addon = null;
-            if (installInfo.installs.length > 0) {
-              addon = installInfo.installs[0].name;
+          message = strings.formatStringFromName("xpinstallDisabledMessage2", [brandShortName, host], 2);
+          buttons = [
+              strings.GetStringFromName("xpinstallDisabledButton"),
+              strings.GetStringFromName("unsignedAddonsDisabled.dismiss")
+          ];
+          callback: (data) => {
+            if (data.button === 1) {
+              Services.prefs.setBoolPref("xpinstall.enabled", true)
             }
-            if (addon) {
-              // We have an addon name, show the regular message.
-              message = strings.formatStringFromName("xpinstallPromptWarningLocal", [brandShortName, addon], 2);
-            } else {
-              // We don't have an addon name, show an alternative message.
-              message = strings.formatStringFromName("xpinstallPromptWarningDirect", [brandShortName], 1);
-            }
-          }
-
-          buttons = [{
-            label: strings.GetStringFromName("xpinstallPromptAllowButton"),
-            callback: function() {
-              // Kick off the install
-              installInfo.install();
-              return false;
-            },
-            positive: true
-          }];
+          };
         }
-        NativeWindow.doorhanger.show(message, aTopic, buttons, tab.id);
+
+        new Prompt({
+          title: Strings.browser.GetStringFromName("addonError.titleError"),
+          message: message,
+          buttons: buttons
+        }).show(callback);
+        break;
+      }
+      case "addon-install-blocked": {
+        if (!tab)
+          return;
+
+        let message;
+        if (host) {
+          // We have a host which asked for the install.
+          message = strings.formatStringFromName("xpinstallPromptWarning2", [brandShortName, host], 2);
+        } else {
+          // Without a host we address the add-on as the initiator of the install.
+          let addon = null;
+          if (installInfo.installs.length > 0) {
+            addon = installInfo.installs[0].name;
+          }
+          if (addon) {
+            // We have an addon name, show the regular message.
+            message = strings.formatStringFromName("xpinstallPromptWarningLocal", [brandShortName, addon], 2);
+          } else {
+            // We don't have an addon name, show an alternative message.
+            message = strings.formatStringFromName("xpinstallPromptWarningDirect", [brandShortName], 1);
+          }
+        }
+
+        let buttons = [
+            strings.GetStringFromName("xpinstallPromptAllowButton"),
+            strings.GetStringFromName("unsignedAddonsDisabled.dismiss")
+        ];
+        new Prompt({
+          title: Strings.browser.GetStringFromName("addonError.titleBlocked"),
+          message: message,
+          buttons: buttons
+        }).show((data) => {
+          if (data.button === 0) {
+            // Kick off the install
+            installInfo.install();
+          }
+        });
+        break;
+      }
+      case "addon-install-origin-blocked": {
+        if (!tab)
+          return;
+
+        new Prompt({
+          title: Strings.browser.GetStringFromName("addonError.titleBlocked"),
+          message: strings.formatStringFromName("xpinstallPromptWarningDirect", [brandShortName], 1),
+          buttons: [strings.GetStringFromName("unsignedAddonsDisabled.dismiss")]
+        }).show((data) => {});
         break;
       }
       case "xpi-signature-changed": {
@@ -5872,7 +5836,7 @@ var XPInstallObserver = {
     }).show((data) => {
       if (data.button === 0) {
         // TODO: Open about:addons to show only unsigned add-ons?
-        BrowserApp.addTab("about:addons", { parentId: BrowserApp.selectedTab.id });
+        BrowserApp.selectOrAddTab("about:addons", { parentId: BrowserApp.selectedTab.id });
       }
     });
   },
@@ -5900,7 +5864,10 @@ var XPInstallObserver = {
           button: {
             icon: "drawable://alert_addon",
             label: Strings.browser.GetStringFromName("alertAddonsInstalledNoRestart.action2"),
-            callback: () => { BrowserApp.addTab("about:addons#" + aAddon.id, { parentId: BrowserApp.selectedTab.id }); },
+            callback: () => {
+              UITelemetry.addEvent("show.1", "toast", null, "addons");
+              BrowserApp.selectOrAddTab("about:addons", { parentId: BrowserApp.selectedTab.id });
+            },
           }
         });
       }
@@ -6482,6 +6449,18 @@ var IdentityHandler = {
     this.shieldHistogramAdd(aBrowser, 0);
     return this.TRACKING_MODE_UNKNOWN;
   },
+
+  sendLoginInsecure: function sendLoginInsecure() {
+    let loginInsecure = LoginManagerParent.hasInsecureLoginForms(BrowserApp.selectedBrowser);
+        if (loginInsecure) {
+          let message = {
+            type: "Content:LoginInsecure",
+            tabID: BrowserApp.selectedTab.id
+          };
+          Messaging.sendRequest(message);
+        }
+    },
+
 
   shieldHistogramAdd: function(browser, value) {
     if (PrivateBrowsingUtils.isBrowserPrivate(browser)) {

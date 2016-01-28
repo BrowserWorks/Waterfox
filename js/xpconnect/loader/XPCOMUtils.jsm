@@ -144,7 +144,9 @@ this.XPCOMUtils = {
         countRef.value = _interfaces.length;
         return _interfaces;
       },
-      getScriptableHelper: function XPCU_getScriptableHelper() null,
+      getScriptableHelper: function XPCU_getScriptableHelper() {
+        return null;
+      },
       contractID: classInfo.contractID,
       classDescription: classInfo.classDescription,
       classID: classInfo.classID,
@@ -366,6 +368,17 @@ this.XPCOMUtils = {
       },
       QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory])
     };
+  },
+
+  /**
+   * Defines a non-writable property on an object.
+   */
+  defineConstant: function XPCOMUtils__defineConstant(aObj, aName, aValue) {
+    Object.defineProperty(aObj, aName, {
+      value: aValue,
+      enumerable: true,
+      writable: false
+    });
   },
 };
 

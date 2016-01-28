@@ -20,6 +20,7 @@ function LoadContext(usePrivateBrowsing) {
 }
 
 LoadContext.prototype = {
+  originAttributes: {},
   usePrivateBrowsing: false,
   // don't bother defining rest of nsILoadContext fields: don't need 'em
 
@@ -33,7 +34,9 @@ LoadContext.prototype = {
     if (iid.equals(Ci.nsILoadContext))
       return this;
     throw Cr.NS_ERROR_NO_INTERFACE;
-  }
+  },
+
+  originAttributes: {}
 };
 
 PrivateBrowsingLoadContext = new LoadContext(true);

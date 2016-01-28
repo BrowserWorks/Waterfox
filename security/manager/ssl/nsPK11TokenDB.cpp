@@ -197,7 +197,7 @@ nsPK11Token::Login(bool force)
     rv = this->LogoutSimple();
     if (NS_FAILED(rv)) return rv;
   }
-  rv = setPassword(mSlot, mUIContext);
+  rv = setPassword(mSlot, mUIContext, locker);
   if (NS_FAILED(rv)) return rv;
   srv = PK11_Authenticate(mSlot, true, mUIContext);
   return (srv == SECSuccess) ? NS_OK : NS_ERROR_FAILURE;
@@ -329,9 +329,6 @@ nsPK11Token::GetAskPasswordTimeout(int32_t *rvAskTimeout)
     return NS_OK;
 }
 
-/* void setAskPasswordDefaults(in unsigned long askTimes,
- *                             in unsigned long timeout);
- */
 NS_IMETHODIMP 
 nsPK11Token::SetAskPasswordDefaults(const int32_t askTimes,
                                     const int32_t askTimeout)

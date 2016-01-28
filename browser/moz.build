@@ -20,7 +20,6 @@ DIRS += [
 ]
 
 DIRS += [
-    'devtools',
     'app',
 ]
 

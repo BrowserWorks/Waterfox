@@ -9,7 +9,6 @@
 #include <algorithm> // For <std::stable_sort>
 #include "nsIStyleRuleProcessor.h"
 #include "nsIStyleRule.h"
-#include "nsRefreshDriver.h"
 #include "nsChangeHint.h"
 #include "nsCSSProperty.h"
 #include "nsDisplayList.h" // For nsDisplayItem::Type
@@ -40,8 +39,7 @@ struct AnimationCollection;
 
 bool IsGeometricProperty(nsCSSProperty aProperty);
 
-class CommonAnimationManager : public nsIStyleRuleProcessor,
-                               public nsARefreshObserver {
+class CommonAnimationManager : public nsIStyleRuleProcessor {
 public:
   explicit CommonAnimationManager(nsPresContext *aPresContext);
 
@@ -63,9 +61,6 @@ public:
     const MOZ_MUST_OVERRIDE override;
   virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf)
     const MOZ_MUST_OVERRIDE override;
-
-  // nsARefreshObserver
-  void WillRefresh(TimeStamp aTime) override;
 
   // NOTE:  This can return null after Disconnect().
   nsPresContext* PresContext() const { return mPresContext; }
@@ -118,31 +113,21 @@ public:
     nsChangeHint mChangeHint;
   };
 
+  virtual bool IsAnimationManager() {
+    return false;
+  }
+
 protected:
   virtual ~CommonAnimationManager();
 
-  // For ElementCollectionRemoved
-  friend struct AnimationCollection;
-
   void AddElementCollection(AnimationCollection* aCollection);
-  void ElementCollectionRemoved() { MaybeStartOrStopObservingRefreshDriver(); }
   void RemoveAllElementCollections();
 
-  // We should normally only call MaybeStartOrStopObservingRefreshDriver in
-  // situations where we will also queue events since otherwise we may stop
-  // getting refresh driver ticks before we queue the necessary events.
-  void MaybeStartObservingRefreshDriver();
-  void MaybeStartOrStopObservingRefreshDriver();
   bool NeedsRefresh() const;
 
   virtual nsIAtom* GetAnimationsAtom() = 0;
   virtual nsIAtom* GetAnimationsBeforeAtom() = 0;
   virtual nsIAtom* GetAnimationsAfterAtom() = 0;
-
-  virtual bool IsAnimationManager() {
-    return false;
-  }
-
 
 public:
   // Return an AnimationCollection* if we have an animation for
@@ -167,7 +152,6 @@ public:
 protected:
   LinkedList<AnimationCollection> mElementCollections;
   nsPresContext *mPresContext; // weak (non-null from ctor to Disconnect)
-  bool mIsObservingRefreshDriver;
 };
 
 /**
@@ -218,7 +202,7 @@ private:
   InfallibleTArray<PropertyValuePair> mPropertyValuePairs;
 };
 
-typedef InfallibleTArray<nsRefPtr<dom::Animation>> AnimationPtrArray;
+typedef InfallibleTArray<RefPtr<dom::Animation>> AnimationPtrArray;
 
 struct AnimationCollection : public LinkedListElement<AnimationCollection>
 {
@@ -229,7 +213,7 @@ struct AnimationCollection : public LinkedListElement<AnimationCollection>
     , mManager(aManager)
     , mAnimationGeneration(0)
     , mCheckGeneration(0)
-    , mNeedsRefreshes(true)
+    , mStyleChanging(true)
     , mHasPendingAnimationRestyle(false)
 #ifdef DEBUG
     , mCalledPropertyDtor(false)
@@ -243,7 +227,6 @@ struct AnimationCollection : public LinkedListElement<AnimationCollection>
                "must call destructor through element property dtor");
     MOZ_COUNT_DTOR(AnimationCollection);
     remove();
-    mManager->ElementCollectionRemoved();
   }
 
   void Destroy()
@@ -392,7 +375,7 @@ public:
   // afterwards with animation.
   // NOTE: If we don't need to apply any styles, mStyleRule will be
   // null, but mStyleRuleRefreshTime will still be valid.
-  nsRefPtr<AnimValuesStyleRule> mStyleRule;
+  RefPtr<AnimValuesStyleRule> mStyleRule;
 
   // RestyleManager keeps track of the number of animation
   // 'mini-flushes' (see nsTransitionManager::UpdateAllThrottledStyles()).
@@ -427,7 +410,7 @@ public:
   // False when we know that our current style rule is valid
   // indefinitely into the future (because all of our animations are
   // either completed or paused).  May be invalidated by a style change.
-  bool mNeedsRefreshes;
+  bool mStyleChanging;
 
 private:
   // Whether or not we have already posted for animation restyle.
@@ -592,7 +575,7 @@ protected:
         }
       }
 
-      AnimationPtrComparator<nsRefPtr<dom::Animation>> comparator;
+      AnimationPtrComparator<RefPtr<dom::Animation>> comparator;
       return comparator.LessThan(a.mAnimation, b.mAnimation);
     }
   };

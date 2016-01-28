@@ -6,6 +6,7 @@
 #include "txURIUtils.h"
 #include "nsNetUtil.h"
 #include "nsIDocument.h"
+#include "nsIHttpChannelInternal.h"
 #include "nsIPrincipal.h"
 #include "mozilla/LoadInfo.h"
 
@@ -72,6 +73,7 @@ URIUtils::ResetWithSource(nsIDocument *aNewDoc, nsIDOMNode *aSourceNode)
             return;
         }
     }
+
     aNewDoc->Reset(channel, loadGroup);
     aNewDoc->SetPrincipal(sourcePrincipal);
     aNewDoc->SetBaseURI(sourceDoc->GetDocBaseURI());

@@ -296,7 +296,8 @@ protected:
 
   void     NotifyTSFOfTextChange(const TS_TEXTCHANGE& aTextChange);
   void     NotifyTSFOfSelectionChange();
-  bool     NotifyTSFOfLayoutChange(bool aFlush);
+  bool     NotifyTSFOfLayoutChange();
+  void     NotifyTSFOfLayoutChangeAgain();
 
   HRESULT  HandleRequestAttrs(DWORD aFlags,
                               ULONG aFilterCount,
@@ -310,15 +311,15 @@ protected:
   void     MaybeDestroyNativeCaret();
 
   // Holds the pointer to our current win32 widget
-  nsRefPtr<nsWindowBase>       mWidget;
+  RefPtr<nsWindowBase>       mWidget;
   // Document manager for the currently focused editor
-  nsRefPtr<ITfDocumentMgr>     mDocumentMgr;
+  RefPtr<ITfDocumentMgr>     mDocumentMgr;
   // Edit cookie associated with the current editing context
   DWORD                        mEditCookie;
   // Editing context at the bottom of mDocumentMgr's context stack
-  nsRefPtr<ITfContext>         mContext;
+  RefPtr<ITfContext>         mContext;
   // Currently installed notification sink
-  nsRefPtr<ITextStoreACPSink>  mSink;
+  RefPtr<ITextStoreACPSink>  mSink;
   // TS_AS_* mask of what events to notify
   DWORD                        mSinkMask;
   // 0 if not locked, otherwise TS_LF_* indicating the current lock
@@ -330,7 +331,7 @@ protected:
   {
   public:
     // nullptr if no composition is active, otherwise the current composition
-    nsRefPtr<ITfCompositionView> mView;
+    RefPtr<ITfCompositionView> mView;
 
     // Current copy of the active composition string. Only mString is
     // changed during a InsertTextAtSelection call if we have a composition.
@@ -520,7 +521,7 @@ protected:
     // For compositionupdate and compositionend
     nsString mData;
     // For compositionupdate
-    nsRefPtr<TextRangeArray> mRanges;
+    RefPtr<TextRangeArray> mRanges;
     // For selectionset
     bool mSelectionReversed;
     // For compositionupdate
@@ -620,7 +621,7 @@ protected:
   private:
     AutoPendingActionAndContentFlusher() {}
 
-    nsRefPtr<TSFTextStore> mTextStore;
+    RefPtr<TSFTextStore> mTextStore;
   };
 
   class Content final
@@ -782,7 +783,7 @@ protected:
     LONG RangeStart() const { return mStart; }
   
   private:
-    nsRefPtr<ITfMouseSink> mSink;
+    RefPtr<ITfMouseSink> mSink;
     LONG mStart;
     LONG mLength;
     DWORD mCookie;
@@ -828,11 +829,14 @@ protected:
   // mSink->OnSelectionChange() after mLock becomes 0.
   bool                         mPendingOnSelectionChange;
   // If GetTextExt() or GetACPFromPoint() is called and the layout hasn't been
-  // calculated yet, these methods return TS_E_NOLAYOUT.  Then, RequestLock()
-  // will call mSink->OnLayoutChange() and
-  // ITfContextOwnerServices::OnLayoutChange() after the layout is fixed and
-  // the document is unlocked.
-  bool                         mPendingOnLayoutChange;
+  // calculated yet, these methods return TS_E_NOLAYOUT.  At that time,
+  // mHasReturnedNoLayoutError is set to true.
+  bool                         mHasReturnedNoLayoutError;
+  // Before calling ITextStoreACPSink::OnLayoutChange() and
+  // ITfContextOwnerServices::OnLayoutChange(), mWaitingQueryLayout is set to
+  // true.  This is set to  false when GetTextExt() or GetACPFromPoint() is
+  // called.
+  bool                         mWaitingQueryLayout;
   // During the documet is locked, we shouldn't destroy the instance.
   // If this is true, the instance will be destroyed after unlocked.
   bool                         mPendingDestroy;

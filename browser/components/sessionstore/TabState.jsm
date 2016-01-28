@@ -13,7 +13,7 @@ Cu.import("resource://gre/modules/Promise.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 
 XPCOMUtils.defineLazyModuleGetter(this, "console",
-  "resource://gre/modules/devtools/Console.jsm");
+  "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivacyFilter",
   "resource:///modules/sessionstore/PrivacyFilter.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TabStateCache",
@@ -159,6 +159,10 @@ var TabStateInternal = {
     else
       delete tabData.pinned;
     tabData.hidden = tab.hidden;
+    if (browser.audioMuted)
+      tabData.muted = true;
+    else
+      delete tabData.muted;
 
     // Save tab attributes.
     tabData.attributes = TabAttributes.get(tab);

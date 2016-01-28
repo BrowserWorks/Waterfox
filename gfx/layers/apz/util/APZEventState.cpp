@@ -8,6 +8,7 @@
 #include "ActiveElementManager.h"
 #include "APZCCallbackHelper.h"
 #include "gfxPrefs.h"
+#include "LayersLogging.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
@@ -191,7 +192,7 @@ APZEventState::ProcessSingleTap(const CSSPoint& aPoint,
 
   APZES_LOG("Active element uses style, scheduling timer for click event\n");
   nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
-  nsRefPtr<DelayedFireSingleTapEvent> callback =
+  RefPtr<DelayedFireSingleTapEvent> callback =
     new DelayedFireSingleTapEvent(mWidget, currentPoint, aModifiers, timer);
   nsresult rv = timer->InitWithCallback(callback,
                                         sActiveDurationMs,
@@ -261,21 +262,27 @@ APZEventState::ProcessTouchEvent(const WidgetTouchEvent& aEvent,
   bool isTouchPrevented = TouchManager::gPreventMouseEvents ||
       aEvent.mFlags.mMultipleActionsPrevented;
   bool sentContentResponse = false;
+  APZES_LOG("Handling event type %d\n", aEvent.mMessage);
   switch (aEvent.mMessage) {
   case eTouchStart: {
     mTouchEndCancelled = false;
-    if (mPendingTouchPreventedResponse) {
-      // We can enter here if we get two TOUCH_STARTs in a row and didn't
-      // respond to the first one. Respond to it now.
-      mContentReceivedInputBlockCallback(mPendingTouchPreventedGuid,
-          mPendingTouchPreventedBlockId, false);
-      sentContentResponse = true;
-      mPendingTouchPreventedResponse = false;
+    sentContentResponse = SendPendingTouchPreventedResponse(false);
+    // sentContentResponse can be true here if we get two TOUCH_STARTs in a row
+    // and just responded to the first one.
+    if (!aEvent.mFlags.mHandledByAPZ) {
+      // This condition being true means this touchstart is synthetic and is
+      // coming from TabParent.injectTouchEvent.
+      // Since APZ doesn't know about it we don't want to send a response for
+      // this block; we want to just skip over it from the point of view of
+      // prevent-default notifications.
+      break;
     }
     if (isTouchPrevented) {
       mContentReceivedInputBlockCallback(aGuid, aInputBlockId, isTouchPrevented);
       sentContentResponse = true;
     } else {
+      APZES_LOG("Event not prevented; pending response for %" PRIu64 " %s\n",
+        aInputBlockId, Stringify(aGuid).c_str());
       mPendingTouchPreventedResponse = true;
       mPendingTouchPreventedGuid = aGuid;
       mPendingTouchPreventedBlockId = aInputBlockId;
@@ -288,10 +295,10 @@ APZEventState::ProcessTouchEvent(const WidgetTouchEvent& aEvent,
       mTouchEndCancelled = true;
       mEndTouchIsClick = false;
     }
-    // fall through
+    MOZ_FALLTHROUGH;
   case eTouchCancel:
     mActiveElementManager->HandleTouchEndEvent(mEndTouchIsClick);
-    // fall through
+    MOZ_FALLTHROUGH;
   case eTouchMove: {
     if (mPendingTouchPreventedResponse) {
       MOZ_ASSERT(aGuid == mPendingTouchPreventedGuid);
@@ -409,6 +416,8 @@ bool
 APZEventState::SendPendingTouchPreventedResponse(bool aPreventDefault)
 {
   if (mPendingTouchPreventedResponse) {
+    APZES_LOG("Sending response %d for pending guid: %s\n", aPreventDefault,
+      Stringify(mPendingTouchPreventedGuid).c_str());
     mContentReceivedInputBlockCallback(mPendingTouchPreventedGuid,
         mPendingTouchPreventedBlockId, aPreventDefault);
     mPendingTouchPreventedResponse = false;
@@ -426,4 +435,3 @@ APZEventState::GetWidget() const
 
 } // namespace layers
 } // namespace mozilla
-

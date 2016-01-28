@@ -1,8 +1,8 @@
 "use strict";
 
-const Cu = Components.utils;
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+var Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 if (SpecialPowers.isMainProcess()) {
   SpecialPowers.Cu.import("resource://gre/modules/SettingsRequestManager.jsm");
@@ -96,6 +96,10 @@ var tests = [
               ok(true, "JS object wrapped into subject");
               subject = subject.wrappedJSObject;
             }
+            if (subject["key"] != TEST_OBSERVER_KEY) {
+              return;
+            }
+
             function checkProp(name, type, value) {
               ok(name in subject, "subject." + name + " is present");
               is(typeof subject[name], type, "subject." + name + " is " + type);

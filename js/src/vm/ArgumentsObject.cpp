@@ -611,10 +611,11 @@ ArgumentsObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObject
         return 0;
     }
 
+    AutoEnterOOMUnsafeRegion oomUnsafe;
     uint32_t nbytes = nsrc->data()->dataBytes;
     uint8_t* data = nsrc->zone()->pod_malloc<uint8_t>(nbytes);
     if (!data)
-        CrashAtUnhandlableOOM("Failed to allocate ArgumentsObject data while tenuring.");
+        oomUnsafe.crash("Failed to allocate ArgumentsObject data while tenuring.");
     ndst->initFixedSlot(DATA_SLOT, PrivateValue(data));
 
     mozilla::PodCopy(data, reinterpret_cast<uint8_t*>(nsrc->data()), nbytes);
@@ -645,7 +646,6 @@ const Class MappedArgumentsObject::class_ = {
     MappedArgumentsObject::obj_enumerate,
     MappedArgumentsObject::obj_resolve,
     nullptr,                 /* mayResolve  */
-    nullptr,                 /* convert     */
     ArgumentsObject::finalize,
     nullptr,                 /* call        */
     nullptr,                 /* hasInstance */
@@ -671,7 +671,6 @@ const Class UnmappedArgumentsObject::class_ = {
     UnmappedArgumentsObject::obj_enumerate,
     UnmappedArgumentsObject::obj_resolve,
     nullptr,                 /* mayResolve  */
-    nullptr,                 /* convert     */
     ArgumentsObject::finalize,
     nullptr,                 /* call        */
     nullptr,                 /* hasInstance */

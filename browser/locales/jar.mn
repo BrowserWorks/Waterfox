@@ -28,6 +28,8 @@
     locale/browser/browser.properties              (%chrome/browser/browser.properties)
     locale/browser/browser-pocket.properties       (%chrome/browser/browser-pocket.properties)
     locale/browser/customizableui/customizableWidgets.properties (%chrome/browser/customizableui/customizableWidgets.properties)
+    locale/browser/devtools/aboutdebugging.dtd        (%chrome/browser/devtools/aboutdebugging.dtd)
+    locale/browser/devtools/aboutdebugging.properties (%chrome/browser/devtools/aboutdebugging.properties)
     locale/browser/devtools/animationinspector.dtd    (%chrome/browser/devtools/animationinspector.dtd)
     locale/browser/devtools/animationinspector.properties (%chrome/browser/devtools/animationinspector.properties)
     locale/browser/devtools/appcacheutils.properties  (%chrome/browser/devtools/appcacheutils.properties)
@@ -63,6 +65,7 @@
     locale/browser/devtools/promisedebugger.properties  (%chrome/browser/devtools/promisedebugger.properties)
     locale/browser/devtools/performance.dtd           (%chrome/browser/devtools/performance.dtd)
     locale/browser/devtools/performance.properties    (%chrome/browser/devtools/performance.properties)
+    locale/browser/devtools/memory.properties         (%chrome/browser/devtools/memory.properties)
     locale/browser/devtools/graphs.properties         (%chrome/browser/devtools/graphs.properties)
     locale/browser/devtools/layoutview.dtd            (%chrome/browser/devtools/layoutview.dtd)
     locale/browser/devtools/responsiveUI.properties   (%chrome/browser/devtools/responsiveUI.properties)
@@ -76,7 +79,6 @@
     locale/browser/devtools/connection-screen.properties (%chrome/browser/devtools/connection-screen.properties)
     locale/browser/devtools/font-inspector.dtd     (%chrome/browser/devtools/font-inspector.dtd)
     locale/browser/devtools/har.properties         (%chrome/browser/devtools/har.properties)
-    locale/browser/devtools/app-manager.dtd        (%chrome/browser/devtools/app-manager.dtd)
     locale/browser/devtools/app-manager.properties (%chrome/browser/devtools/app-manager.properties)
     locale/browser/devtools/webide.dtd             (%chrome/browser/devtools/webide.dtd)
     locale/browser/devtools/webide.properties      (%chrome/browser/devtools/webide.properties)
@@ -152,8 +154,13 @@
     locale/browser/syncQuota.properties         (%chrome/browser/syncQuota.properties)
 #endif
 % resource search-plugins chrome://browser/locale/searchplugins/
+#if BUILD_FASTER
+    locale/browser/searchplugins/list.txt       (%searchplugins/list.txt)
+    locale/browser/searchplugins/               (%searchplugins/*.xml)
+#else
     locale/browser/searchplugins/list.txt       (.deps/generated_@AB_CD@/list.txt)
     locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
+#endif
 % locale browser-region @AB_CD@ %locale/browser-region/
     locale/browser-region/region.properties        (%chrome/browser-region/region.properties)
 # the following files are browser-specific overrides

@@ -226,13 +226,12 @@ public:
   void clearStoredData();
   void loadVersionFallbackLimit();
   void setInsecureFallbackSites(const nsCString& str);
-  bool isInsecureFallbackSite(const nsACString& hostname);
+  void initInsecureFallbackSites();
+  bool isPublic() const;
+  void addInsecureFallbackSite(const nsCString& hostname, bool temporary);
+  void removeInsecureFallbackSite(const nsACString& hostname, uint16_t port);
 
   bool mFalseStartRequireNPN;
-  // Use the static list of sites that require insecure fallback
-  // to TLS 1.0 if true, set by the pref
-  // security.tls.insecure_fallback_hosts.use_static_list.
-  bool mUseStaticFallbackList;
   bool mUnrestrictedRC4Fallback;
   uint16_t mVersionFallbackLimit;
 private:

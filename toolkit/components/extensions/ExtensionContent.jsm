@@ -30,7 +30,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
-  runSafeWithoutClone,
+  runSafeSyncWithoutClone,
   MessageBroker,
   Messenger,
   ignoreEvent,
@@ -51,6 +51,10 @@ function isWhenBeforeOrSame(when1, when2)
 var api = context => { return {
   runtime: {
     connect: function(extensionId, connectInfo) {
+      if (!connectInfo) {
+        connectInfo = extensionId;
+        extensionId = null;
+      }
       let name = connectInfo && connectInfo.name || "";
       let recipient = extensionId ? {extensionId} : {extensionId: context.extensionId};
       return context.messenger.connect(context.messageManager, name, recipient);
@@ -60,7 +64,7 @@ var api = context => { return {
       return context.extension.getManifest();
     },
 
-    getURL: function(path) {
+    getURL: function(url) {
       return context.extension.baseURI.resolve(url);
     },
 
@@ -84,7 +88,7 @@ var api = context => { return {
   },
 
   extension: {
-    getURL: function(path) {
+    getURL: function(url) {
       return context.extension.baseURI.resolve(url);
     },
 
@@ -137,12 +141,12 @@ Script.prototype = {
 
       for (let url of this.css) {
         url = extension.baseURI.resolve(url);
-        runSafeWithoutClone(winUtils.loadSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
+        runSafeSyncWithoutClone(winUtils.loadSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
       }
 
       if (this.options.cssCode) {
         let url = "data:text/css;charset=utf-8," + encodeURIComponent(this.options.cssCode);
-        runSafeWithoutClone(winUtils.loadSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
+        runSafeSyncWithoutClone(winUtils.loadSheetUsingURIString, url, winUtils.AUTHOR_SHEET);
       }
     }
 
@@ -162,7 +166,7 @@ Script.prototype = {
           charset: "UTF-8",
           async: AppConstants.platform == "gonk"
         }
-        Services.scriptloader.loadSubScriptWithOptions(url, options);
+        runSafeSyncWithoutClone(Services.scriptloader.loadSubScriptWithOptions, url, options);
       }
 
       if (this.options.jsCode) {
@@ -194,6 +198,8 @@ function ExtensionContext(extensionId, contentWindow)
   this.extensionId = extensionId;
   this.contentWindow = contentWindow;
 
+  this.onClose = new Set();
+
   let utils = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIDOMWindowUtils);
   let outerWindowId = utils.outerWindowID;
@@ -209,7 +215,7 @@ function ExtensionContext(extensionId, contentWindow)
     prin = Cc["@mozilla.org/nullprincipal;1"].createInstance(Ci.nsIPrincipal);
   }
 
-  this.sandbox = Cu.Sandbox(prin, {sandboxPrototype: contentWindow, wantXrays: true});
+  this.sandbox = Cu.Sandbox(prin, {sandboxPrototype: contentWindow, wantXrays: true, isWebExtensionContentScript: true});
 
   let delegate = {
     getSender(context, target, sender) {
@@ -228,8 +234,6 @@ function ExtensionContext(extensionId, contentWindow)
   // reason. However, we waive here anyway in case that changes.
   Cu.waiveXrays(this.sandbox).chrome = Cu.waiveXrays(this.sandbox).browser;
   injectAPI(api(this), chromeObj);
-
-  this.onClose = new Set();
 }
 
 ExtensionContext.prototype = {
@@ -322,7 +326,13 @@ var DocumentManager = {
   },
 
   handleEvent: function(event) {
-    let window = event.target.defaultView;
+    let window = event.currentTarget;
+    if (event.target != window.document) {
+      // We use capturing listeners so we have precedence over content script
+      // listeners, but only care about events targeted to the element we're
+      // listening on.
+      return;
+    }
     window.removeEventListener(event.type, this, true);
 
     // Need to check if we're still on the right page? Greasemonkey does this.
@@ -483,6 +493,7 @@ var ExtensionManager = {
         extension = new BrowserExtensionContent(data);
         this.extensions.set(data.id, extension);
         DocumentManager.startupExtension(data.id);
+        Services.cpmm.sendAsyncMessage("Extension:StartupComplete");
         break;
       }
 

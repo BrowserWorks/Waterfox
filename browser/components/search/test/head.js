@@ -6,34 +6,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "Promise",
 
 function whenNewWindowLoaded(aOptions, aCallback) {
   let win = OpenBrowserWindow(aOptions);
-  let gotLoad = false;
-  let gotActivate = Services.focus.activeWindow == win;
-
-  function maybeRunCallback() {
-    if (gotLoad && gotActivate) {
-      executeSoon(function() { aCallback(win); });
-    }
-  }
-
-  if (!gotActivate) {
-    win.addEventListener("activate", function onActivate() {
-      info("Got activate.");
-      win.removeEventListener("activate", onActivate, false);
-      gotActivate = true;
-      maybeRunCallback();
-    }, false);
-  } else {
-    info("Was activated.");
-  }
-
-  Services.obs.addObserver(function observer(aSubject, aTopic) {
-    if (win == aSubject) {
-      info("Delayed startup finished");
-      Services.obs.removeObserver(observer, aTopic);
-      gotLoad = true;
-      maybeRunCallback();
-    }
-  }, "browser-delayed-startup-finished", false);
+  let focused = SimpleTest.promiseFocus(win);
+  let startupFinished = TestUtils.topicObserved("browser-delayed-startup-finished",
+                                                subject => subject == win).then(() => win);
+  Promise.all([focused, startupFinished])
+    .then(results => executeSoon(() => aCallback(results[1])));
 
   return win;
 }
@@ -146,7 +123,7 @@ function promiseNewEngine(basename, options = {}) {
       onInitComplete: function() {
         let url = getRootDirectory(gTestPath) + basename;
         let current = Services.search.currentEngine;
-        Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "", false, {
+        Services.search.addEngine(url, null, "", false, {
           onSuccess: function (engine) {
             info("Search engine added: " + basename);
             if (setAsCurrent) {

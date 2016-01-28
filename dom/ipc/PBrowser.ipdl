@@ -15,7 +15,6 @@ include protocol PFilePicker;
 include protocol PIndexedDBPermissionRequest;
 include protocol PRenderFrame;
 include protocol PPluginWidget;
-include protocol PWebBrowserPersistDocument;
 include DOMTypes;
 include JavaScriptTypes;
 include URIParams;
@@ -61,6 +60,7 @@ using mozilla::CommandInt from "mozilla/EventForwards.h";
 using mozilla::Modifiers from "mozilla/EventForwards.h";
 using mozilla::layers::GeckoContentController::APZStateChange from "mozilla/layers/GeckoContentController.h";
 using mozilla::WritingMode from "mozilla/WritingModes.h";
+using mozilla::layers::AsyncDragMetrics from "mozilla/layers/AsyncDragMetrics.h";
 using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 using nsIWidget::TouchPointerState from "nsIWidget.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
@@ -94,12 +94,6 @@ struct ShowInfo
   double defaultScale;
 };
 
-struct FrameScriptInfo
-{
-    nsString url;
-    bool runInGlobalScope;
-};
-
 prio(normal upto urgent) sync protocol PBrowser
 {
     manager PContent or PContentBridge;
@@ -111,7 +105,6 @@ prio(normal upto urgent) sync protocol PBrowser
     manages PIndexedDBPermissionRequest;
     manages PRenderFrame;
     manages PPluginWidget;
-    manages PWebBrowserPersistDocument;
 
 both:
     AsyncMessage(nsString aMessage, ClonedMessageData aData, CpowEntry[] aCpows,
@@ -122,8 +115,6 @@ both:
      * the page that is currently loaded in the <browser>.
      */
     PRenderFrame();
-
-    PWebBrowserPersistDocument(uint64_t aOuterWindowID);
 
 parent:
     /**
@@ -167,20 +158,6 @@ parent:
     MoveFocus(bool forward, bool forDocumentNavigation);
 
     Event(RemoteDOMEvent aEvent);
-
-    sync CreateWindow(PBrowser aNewTab,
-                      uint32_t aChromeFlags,
-                      bool aCalledFromJS,
-                      bool aPositionSpecified,
-                      bool aSizeSpecified,
-                      nsCString aURI,
-                      nsString aName,
-                      nsCString aFeatures,
-                      nsCString aBaseURI)
-      returns (nsresult rv,
-               bool windowOpened,
-               FrameScriptInfo[] frameScripts,
-               nsCString urlToLoad);
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
@@ -331,14 +308,6 @@ parent:
     sync IsParentWindowMainWidgetVisible() returns (bool visible);
 
     /**
-     * Returns the offset of this tab from the top level window
-     * origin in device pixels.
-     *
-     * aPoint offset values in device pixels.
-     */
-    prio(high) sync GetTabOffset() returns (LayoutDeviceIntPoint aPoint);
-
-    /**
      * Gets the DPI of the screen corresponding to this browser.
      */
     sync GetDPI() returns (float value);
@@ -386,8 +355,6 @@ parent:
     SetCustomCursor(nsCString cursorData, uint32_t width, uint32_t height,
                     uint32_t stride, uint8_t format,
                     uint32_t hotspotX, uint32_t hotspotY, bool force);
-
-    SetBackgroundColor(nscolor color);
 
     /**
      * Used to set the current text of the status tooltip.
@@ -559,6 +526,9 @@ parent:
     prio(high) sync DispatchMouseEvent(WidgetMouseEvent event);
     prio(high) sync DispatchKeyboardEvent(WidgetKeyboardEvent event);
 
+    // Start an APZ drag on a scrollbar
+    async StartScrollbarDrag(AsyncDragMetrics aDragMetrics);
+
     InvokeDragSession(IPCDataTransfer[] transfers, uint32_t action,
                       nsCString visualData, uint32_t width, uint32_t height,
                       uint32_t stride, uint8_t format, int32_t dragAreaX, int32_t dragAreaY);
@@ -641,7 +611,7 @@ child:
      * When two consecutive mouse move events would be added to the message queue,
      * they are 'compressed' by dumping the oldest one.
      */
-    RealMouseMoveEvent(WidgetMouseEvent event) compress;
+    RealMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId) compress;
     /**
      * Mouse move events with |reason == eSynthesized| are sent via a separate
      * message because they do not generate DOM 'mousemove' events, and the
@@ -649,8 +619,8 @@ child:
      * |reason == eReal| event being dropped in favour of an |eSynthesized|
      * event, and thus a DOM 'mousemove' event to be lost.
      */
-    SynthMouseMoveEvent(WidgetMouseEvent event);
-    RealMouseButtonEvent(WidgetMouseEvent event);
+    SynthMouseMoveEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    RealMouseButtonEvent(WidgetMouseEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     RealKeyEvent(WidgetKeyboardEvent event, MaybeNativeKeyBinding keyBinding);
     MouseWheelEvent(WidgetWheelEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     RealTouchEvent(WidgetTouchEvent aEvent,

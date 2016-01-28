@@ -6,6 +6,9 @@
 
 #include "ClosingService.h"
 #include "nsIOService.h"
+#ifdef MOZ_NUWA_PROCESS
+#include "ipc/Nuwa.h"
+#endif
 
 class ClosingLayerSecret
 {
@@ -20,7 +23,7 @@ public:
     mClosingService = nullptr;
   }
 
-  nsRefPtr<mozilla::net::ClosingService> mClosingService;
+  RefPtr<mozilla::net::ClosingService> mClosingService;
 };
 
 namespace mozilla {
@@ -119,6 +122,11 @@ ClosingService::StartInternal()
 nsresult
 ClosingService::AttachIOLayer(PRFileDesc *aFd)
 {
+  // We are going to remove ClosingService soon.
+  // This change is going to turn it off, so ClosingService is not used.
+  // Bug 1238010.
+  return NS_OK;
+
   if (!sTcpUdpPRCloseLayerMethodsPtr) {
     return NS_OK;
   }
@@ -184,6 +192,11 @@ ClosingService::ShutdownInternal()
 {
   {
     mozilla::MonitorAutoLock mon(mMonitor);
+    if (mShutdown) {
+      // This should not happen.
+      return;
+    }
+
     mShutdown = true;
     // If it is waiting on the empty queue, wake it up.
     if (mQueue.Length() == 0) {
@@ -200,6 +213,13 @@ ClosingService::ShutdownInternal()
 void
 ClosingService::ThreadFunc()
 {
+  PR_SetCurrentThreadName("Closing Service");
+#ifdef MOZ_NUWA_PROCESS
+  if (IsNuwaProcess()) {
+    NuwaMarkCurrentThread(nullptr, nullptr);
+  }
+#endif
+
   for (;;) {
     PRFileDesc *fd;
     {

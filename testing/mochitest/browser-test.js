@@ -31,7 +31,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "SelfSupportBackend",
 
 var nativeConsole = console;
 XPCOMUtils.defineLazyModuleGetter(this, "console",
-  "resource://gre/modules/devtools/Console.jsm");
+  "resource://gre/modules/Console.jsm");
 
 const SIMPLETEST_OVERRIDES =
   ["ok", "is", "isnot", "todo", "todo_is", "todo_isnot", "info", "expectAssertions", "requestCompleteLog"];
@@ -328,9 +328,9 @@ Tester.prototype = {
   finish: function Tester_finish(aSkipSummary) {
     this.Promise.Debugging.flushUncaughtErrors();
 
-    var passCount = this.tests.reduce(function(a, f) a + f.passCount, 0);
-    var failCount = this.tests.reduce(function(a, f) a + f.failCount, 0);
-    var todoCount = this.tests.reduce(function(a, f) a + f.todoCount, 0);
+    var passCount = this.tests.reduce((a, f) => a + f.passCount, 0);
+    var failCount = this.tests.reduce((a, f) => a + f.failCount, 0);
+    var todoCount = this.tests.reduce((a, f) => a + f.todoCount, 0);
 
     if (this.repeat > 0) {
       --this.repeat;

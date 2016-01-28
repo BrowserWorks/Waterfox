@@ -131,6 +131,10 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(RedirectChannelRegistrar)
 typedef mozilla::net::CacheStorageService CacheStorageService;
 NS_GENERIC_FACTORY_CONSTRUCTOR(CacheStorageService)
 
+#include "LoadContextInfo.h"
+typedef mozilla::net::LoadContextInfoFactory LoadContextInfoFactory;
+NS_GENERIC_FACTORY_CONSTRUCTOR(LoadContextInfoFactory)
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "mozilla/net/CaptivePortalService.h"
@@ -431,7 +435,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsTXTToHTMLConv, Init)
 
 nsresult NS_NewMultiMixedConv (nsMultiMixedConv** result);
 nsresult MOZ_NewTXTToHTMLConv (mozTXTToHTMLConv** result);
-nsresult NS_NewHTTPCompressConv  (nsHTTPCompressConv ** result);
+nsresult NS_NewHTTPCompressConv  (mozilla::net::nsHTTPCompressConv ** result);
 nsresult NS_NewStreamConv(nsStreamConverterService **aStreamConv);
 
 #define FTP_TO_INDEX                 "?from=text/ftp-dir&to=application/http-index-format"
@@ -443,6 +447,7 @@ nsresult NS_NewStreamConv(nsStreamConverterService **aStreamConv);
 #define UNKNOWN_CONTENT              "?from=" UNKNOWN_CONTENT_TYPE "&to=*/*"
 #define GZIP_TO_UNCOMPRESSED         "?from=gzip&to=uncompressed"
 #define XGZIP_TO_UNCOMPRESSED        "?from=x-gzip&to=uncompressed"
+#define BROTLI_TO_UNCOMPRESSED       "?from=br&to=uncompressed"
 #define COMPRESS_TO_UNCOMPRESSED     "?from=compress&to=uncompressed"
 #define XCOMPRESS_TO_UNCOMPRESSED    "?from=x-compress&to=uncompressed"
 #define DEFLATE_TO_UNCOMPRESSED      "?from=deflate&to=uncompressed"
@@ -462,6 +467,7 @@ static const mozilla::Module::CategoryEntry kNeckoCategories[] = {
     { NS_ISTREAMCONVERTER_KEY, UNKNOWN_CONTENT, "" },
     { NS_ISTREAMCONVERTER_KEY, GZIP_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, XGZIP_TO_UNCOMPRESSED, "" },
+    { NS_ISTREAMCONVERTER_KEY, BROTLI_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, COMPRESS_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, XCOMPRESS_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, DEFLATE_TO_UNCOMPRESSED, "" },
@@ -585,7 +591,7 @@ CreateNewHTTPCompressConvFactory (nsISupports* aOuter, REFNSIID aIID, void **aRe
         *aResult = nullptr;                                           
         return NS_ERROR_NO_AGGREGATION;                              
     }   
-    nsHTTPCompressConv* inst = nullptr;
+    mozilla::net::nsHTTPCompressConv* inst = nullptr;
     nsresult rv = NS_NewHTTPCompressConv (&inst);
     if (NS_FAILED(rv)) {                                             
         *aResult = nullptr;                                           
@@ -832,6 +838,7 @@ NS_DEFINE_NAMED_CID(NS_NETWORK_LINK_SERVICE_CID);
 NS_DEFINE_NAMED_CID(NS_SERIALIZATION_HELPER_CID);
 NS_DEFINE_NAMED_CID(NS_REDIRECTCHANNELREGISTRAR_CID);
 NS_DEFINE_NAMED_CID(NS_CACHE_STORAGE_SERVICE_CID);
+NS_DEFINE_NAMED_CID(NS_NSILOADCONTEXTINFOFACTORY_CID);
 NS_DEFINE_NAMED_CID(NS_NETWORKPREDICTOR_CID);
 NS_DEFINE_NAMED_CID(NS_CAPTIVEPORTAL_CID);
 NS_DEFINE_NAMED_CID(NS_SCHEDULINGCONTEXTSERVICE_CID);
@@ -983,6 +990,7 @@ static const mozilla::Module::CIDEntry kNeckoCIDs[] = {
     { &kNS_SERIALIZATION_HELPER_CID, false, nullptr, nsSerializationHelperConstructor },
     { &kNS_REDIRECTCHANNELREGISTRAR_CID, false, nullptr, RedirectChannelRegistrarConstructor },
     { &kNS_CACHE_STORAGE_SERVICE_CID, false, nullptr, CacheStorageServiceConstructor },
+    { &kNS_NSILOADCONTEXTINFOFACTORY_CID, false, nullptr, LoadContextInfoFactoryConstructor },
     { &kNS_NETWORKPREDICTOR_CID, false, nullptr, mozilla::net::Predictor::Create },
     { &kNS_CAPTIVEPORTAL_CID, false, nullptr, mozilla::net::CaptivePortalServiceConstructor },
     { &kNS_SCHEDULINGCONTEXTSERVICE_CID, false, nullptr, SchedulingContextServiceConstructor },
@@ -1050,6 +1058,7 @@ static const mozilla::Module::ContractIDEntry kNeckoContracts[] = {
     { NS_BINARYDETECTOR_CONTRACTID, &kNS_BINARYDETECTOR_CID },
     { NS_ISTREAMCONVERTER_KEY GZIP_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY XGZIP_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
+    { NS_ISTREAMCONVERTER_KEY BROTLI_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY COMPRESS_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY XCOMPRESS_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY DEFLATE_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
@@ -1139,6 +1148,7 @@ static const mozilla::Module::ContractIDEntry kNeckoContracts[] = {
     { NS_REDIRECTCHANNELREGISTRAR_CONTRACTID, &kNS_REDIRECTCHANNELREGISTRAR_CID },
     { NS_CACHE_STORAGE_SERVICE_CONTRACTID, &kNS_CACHE_STORAGE_SERVICE_CID },
     { NS_CACHE_STORAGE_SERVICE_CONTRACTID2, &kNS_CACHE_STORAGE_SERVICE_CID },
+    { NS_NSILOADCONTEXTINFOFACTORY_CONTRACTID, &kNS_NSILOADCONTEXTINFOFACTORY_CID },
     { NS_NETWORKPREDICTOR_CONTRACTID, &kNS_NETWORKPREDICTOR_CID },
     { NS_CAPTIVEPORTAL_CONTRACTID, &kNS_CAPTIVEPORTAL_CID },
     { NS_SCHEDULINGCONTEXTSERVICE_CONTRACTID, &kNS_SCHEDULINGCONTEXTSERVICE_CID },

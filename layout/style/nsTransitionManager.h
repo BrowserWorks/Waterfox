@@ -164,7 +164,6 @@ protected:
                     SyncNotifyFlag aSyncNotifyFlag) override;
 
   void QueueEvents();
-  bool HasEndEventToQueue() const override;
 
   // The (pseudo-)element whose computed transition-property refers to this
   // transition (if any).
@@ -195,8 +194,8 @@ protected:
 } // namespace dom
 
 struct TransitionEventInfo {
-  nsRefPtr<dom::Element> mElement;
-  nsRefPtr<dom::Animation> mAnimation;
+  RefPtr<dom::Element> mElement;
+  RefPtr<dom::Animation> mAnimation;
   InternalTransitionEvent mEvent;
   TimeStamp mTimeStamp;
 
@@ -263,7 +262,7 @@ public:
    */
   void StyleContextChanged(mozilla::dom::Element *aElement,
                            nsStyleContext *aOldStyleContext,
-                           nsRefPtr<nsStyleContext>* aNewStyleContext /* inout */);
+                           RefPtr<nsStyleContext>* aNewStyleContext /* inout */);
 
   /**
    * When we're resolving style for an element that previously didn't have

@@ -114,11 +114,6 @@ SVGFEImageElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
     // If there is a frame then it should deal with loading as the image
     // url may be animated.
     if (!GetPrimaryFrame()) {
-
-      // Prevent setting image.src by exiting early
-      if (nsContentUtils::IsImageSrcSetDisabled()) {
-        return NS_OK;
-      }
       if (aValue) {
         LoadSVGImage(true, aNotify);
       } else {
@@ -235,7 +230,7 @@ SVGFEImageElement::GetPrimitiveDescription(nsSVGFilterInstance* aInstance,
   Matrix TM = viewBoxTM;
   TM.PostTranslate(aFilterSubregion.x, aFilterSubregion.y);
 
-  Filter filter = ToFilter(nsLayoutUtils::GetGraphicsFilterForFrame(frame));
+  Filter filter = nsLayoutUtils::GetGraphicsFilterForFrame(frame);
 
   FilterPrimitiveDescription descr(PrimitiveType::Image);
   descr.Attributes().Set(eImageFilter, (uint32_t)filter);

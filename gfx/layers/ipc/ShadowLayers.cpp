@@ -431,23 +431,21 @@ ShadowLayerForwarder::RemoveTextureFromCompositableAsync(AsyncTransactionTracker
                                                      CompositableClient* aCompositable,
                                                      TextureClient* aTexture)
 {
+#ifdef MOZ_WIDGET_GONK
+  mPendingAsyncMessages.push_back(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
+                                  aAsyncTransactionTracker->GetId(),
+                                  nullptr, aCompositable->GetIPDLActor(),
+                                  nullptr, aTexture->GetIPDLActor()));
+#else
   if (mTxn->Opened() && !aCompositable->IsDestroyed()) {
     mTxn->AddEdit(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
                                        aAsyncTransactionTracker->GetId(),
                                        nullptr, aCompositable->GetIPDLActor(),
                                        nullptr, aTexture->GetIPDLActor()));
   } else {
-    // If the function is called outside of transaction,
-    // OpRemoveTextureAsync message is stored as pending message.
-#ifdef MOZ_WIDGET_GONK
-    mPendingAsyncMessages.push_back(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
-                                    aAsyncTransactionTracker->GetId(),
-                                    nullptr, aCompositable->GetIPDLActor(),
-                                    nullptr, aTexture->GetIPDLActor()));
-#else
     NS_RUNTIMEABORT("not reached");
-#endif
   }
+#endif
   CompositableClient::HoldUntilComplete(aCompositable->GetIPDLActor(),
                                         aAsyncTransactionTracker);
 }
@@ -583,6 +581,7 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
     if (mutant->GetIsFixedPosition()) {
       common.fixedPositionScrollContainerId() = mutant->GetFixedPositionScrollContainerId();
       common.fixedPositionAnchor() = mutant->GetFixedPositionAnchor();
+      common.fixedPositionSides() = mutant->GetFixedPositionSides();
       common.isClipFixed() = mutant->IsClipFixed();
     }
     common.isStickyPosition() = mutant->GetIsStickyPosition();
@@ -816,13 +815,14 @@ void ShadowLayerForwarder::AttachAsyncCompositable(uint64_t aCompositableID,
 
 PTextureChild*
 ShadowLayerForwarder::CreateTexture(const SurfaceDescriptor& aSharedData,
+                                    LayersBackend aLayersBackend,
                                     TextureFlags aFlags)
 {
   if (!HasShadowManager() ||
       !mShadowManager->IPCOpen()) {
     return nullptr;
   }
-  return mShadowManager->SendPTextureConstructor(aSharedData, aFlags);
+  return mShadowManager->SendPTextureConstructor(aSharedData, aLayersBackend, aFlags);
 }
 
 

@@ -42,6 +42,7 @@
 #include "gc/Zone.h"
 
 #include "jsatominlines.h"
+#include "jsobjinlines.h"
 
 using namespace std;
 using mozilla::NumericLimits;
@@ -545,7 +546,7 @@ static const JSClass sCABIClass = {
 static const JSClass sCTypeProtoClass = {
   "CType",
   JSCLASS_HAS_RESERVED_SLOTS(CTYPEPROTO_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
   ConstructAbstract, nullptr, ConstructAbstract
 };
@@ -560,7 +561,7 @@ static const JSClass sCDataProtoClass = {
 static const JSClass sCTypeClass = {
   "CType",
   JSCLASS_HAS_RESERVED_SLOTS(CTYPE_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, CType::Finalize,
   CType::ConstructData, CType::HasInstance, CType::ConstructData,
   CType::Trace
@@ -570,14 +571,14 @@ static const JSClass sCDataClass = {
   "CData",
   JSCLASS_HAS_RESERVED_SLOTS(CDATA_SLOTS),
   nullptr, nullptr, ArrayType::Getter, ArrayType::Setter,
-  nullptr, nullptr, nullptr, nullptr, CData::Finalize,
+  nullptr, nullptr, nullptr, CData::Finalize,
   FunctionType::Call, nullptr, FunctionType::Call
 };
 
 static const JSClass sCClosureClass = {
   "CClosure",
   JSCLASS_HAS_RESERVED_SLOTS(CCLOSURE_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, CClosure::Finalize,
   nullptr, nullptr, nullptr, CClosure::Trace
 };
@@ -599,7 +600,7 @@ static const JSClass sCDataFinalizerProtoClass = {
 static const JSClass sCDataFinalizerClass = {
   "CDataFinalizer",
   JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(CDATAFINALIZER_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, CDataFinalizer::Finalize
 };
 
@@ -785,14 +786,14 @@ static const JSClass sUInt64ProtoClass = {
 static const JSClass sInt64Class = {
   "Int64",
   JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, Int64Base::Finalize
 };
 
 static const JSClass sUInt64Class = {
   "UInt64",
   JSCLASS_HAS_RESERVED_SLOTS(INT64_SLOTS),
-  nullptr, nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, Int64Base::Finalize
 };
 
@@ -3183,77 +3184,81 @@ ImplicitConvert(JSContext* cx,
         return ConvError(cx, targetType, val, convType, funObj, argIndex,
                          arrObj, arrIndex);
       }
-
-    } else if (val.isObject() && JS_IsArrayObject(cx, valObj)) {
-      // Convert each element of the array by calling ImplicitConvert.
-      uint32_t sourceLength;
-      if (!JS_GetArrayLength(cx, valObj, &sourceLength) ||
-          targetLength != size_t(sourceLength)) {
-        MOZ_ASSERT(!funObj);
-        return ArrayLengthMismatch(cx, targetLength, targetType,
-                                   size_t(sourceLength), val, convType);
-      }
-
-      // Convert into an intermediate, in case of failure.
-      size_t elementSize = CType::GetSize(baseType);
-      size_t arraySize = elementSize * targetLength;
-      auto intermediate = cx->make_pod_array<char>(arraySize);
-      if (!intermediate) {
-        JS_ReportAllocationOverflow(cx);
+    } else {
+      ESClassValue cls;
+      if (!GetClassOfValue(cx, val, &cls))
         return false;
-      }
 
-      for (uint32_t i = 0; i < sourceLength; ++i) {
+      if (cls == ESClass_Array) {
+        // Convert each element of the array by calling ImplicitConvert.
+        uint32_t sourceLength;
+        if (!JS_GetArrayLength(cx, valObj, &sourceLength) ||
+            targetLength != size_t(sourceLength)) {
+          MOZ_ASSERT(!funObj);
+          return ArrayLengthMismatch(cx, targetLength, targetType,
+                                     size_t(sourceLength), val, convType);
+        }
+
+        // Convert into an intermediate, in case of failure.
+        size_t elementSize = CType::GetSize(baseType);
+        size_t arraySize = elementSize * targetLength;
+        auto intermediate = cx->make_pod_array<char>(arraySize);
+        if (!intermediate) {
+          JS_ReportAllocationOverflow(cx);
+          return false;
+        }
+
         RootedValue item(cx);
-        if (!JS_GetElement(cx, valObj, i, &item))
-          return false;
+        for (uint32_t i = 0; i < sourceLength; ++i) {
+          if (!JS_GetElement(cx, valObj, i, &item))
+            return false;
 
-        char* data = intermediate.get() + elementSize * i;
-        if (!ImplicitConvert(cx, item, baseType, data, convType, nullptr,
-                             funObj, argIndex, targetType, i))
-          return false;
-      }
+          char* data = intermediate.get() + elementSize * i;
+          if (!ImplicitConvert(cx, item, baseType, data, convType, nullptr,
+                               funObj, argIndex, targetType, i))
+            return false;
+        }
 
-      memcpy(buffer, intermediate.get(), arraySize);
+        memcpy(buffer, intermediate.get(), arraySize);
+      } else if (cls == ESClass_ArrayBuffer) {
+        // Check that array is consistent with type, then
+        // copy the array.
+        uint32_t sourceLength = JS_GetArrayBufferByteLength(valObj);
+        size_t elementSize = CType::GetSize(baseType);
+        size_t arraySize = elementSize * targetLength;
+        if (arraySize != size_t(sourceLength)) {
+          MOZ_ASSERT(!funObj);
+          return ArrayLengthMismatch(cx, arraySize, targetType,
+                                     size_t(sourceLength), val, convType);
+        }
+        JS::AutoCheckCannotGC nogc;
+        memcpy(buffer, JS_GetArrayBufferData(valObj, nogc), sourceLength);
+        break;
+      } else if (JS_IsTypedArrayObject(valObj)) {
+        // Check that array is consistent with type, then
+        // copy the array.
+        if (!CanConvertTypedArrayItemTo(baseType, valObj, cx)) {
+          return ConvError(cx, targetType, val, convType, funObj, argIndex,
+                           arrObj, arrIndex);
+        }
 
-    } else if (val.isObject() && JS_IsArrayBufferObject(valObj)) {
-      // Check that array is consistent with type, then
-      // copy the array.
-      uint32_t sourceLength = JS_GetArrayBufferByteLength(valObj);
-      size_t elementSize = CType::GetSize(baseType);
-      size_t arraySize = elementSize * targetLength;
-      if (arraySize != size_t(sourceLength)) {
-        MOZ_ASSERT(!funObj);
-        return ArrayLengthMismatch(cx, arraySize, targetType,
-                                   size_t(sourceLength), val, convType);
-      }
-      JS::AutoCheckCannotGC nogc;
-      memcpy(buffer, JS_GetArrayBufferData(valObj, nogc), sourceLength);
-      break;
-    } else if (val.isObject() && JS_IsTypedArrayObject(valObj)) {
-      // Check that array is consistent with type, then
-      // copy the array.
-      if(!CanConvertTypedArrayItemTo(baseType, valObj, cx)) {
+        uint32_t sourceLength = JS_GetTypedArrayByteLength(valObj);
+        size_t elementSize = CType::GetSize(baseType);
+        size_t arraySize = elementSize * targetLength;
+        if (arraySize != size_t(sourceLength)) {
+          MOZ_ASSERT(!funObj);
+          return ArrayLengthMismatch(cx, arraySize, targetType,
+                                     size_t(sourceLength), val, convType);
+        }
+        JS::AutoCheckCannotGC nogc;
+        memcpy(buffer, JS_GetArrayBufferViewData(valObj, nogc), sourceLength);
+        break;
+      } else {
+        // Don't implicitly convert to string. Users can implicitly convert
+        // with `String(x)` or `""+x`.
         return ConvError(cx, targetType, val, convType, funObj, argIndex,
                          arrObj, arrIndex);
       }
-
-      uint32_t sourceLength = JS_GetTypedArrayByteLength(valObj);
-      size_t elementSize = CType::GetSize(baseType);
-      size_t arraySize = elementSize * targetLength;
-      if (arraySize != size_t(sourceLength)) {
-        MOZ_ASSERT(!funObj);
-        return ArrayLengthMismatch(cx, arraySize, targetType,
-                                   size_t(sourceLength), val, convType);
-      }
-      JS::AutoCheckCannotGC nogc;
-      memcpy(buffer, JS_GetArrayBufferViewData(valObj, nogc), sourceLength);
-      break;
-    } else {
-      // Don't implicitly convert to string. Users can implicitly convert
-      // with `String(x)` or `""+x`.
-      return ConvError(cx, targetType, val, convType, funObj, argIndex,
-                       arrObj, arrIndex);
     }
     break;
   }
@@ -5219,6 +5224,8 @@ ArrayType::Getter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandle
   size_t length = GetLength(typeObj);
   bool ok = jsidToSize(cx, idval, true, &index);
   int32_t dummy;
+  if (!ok && JSID_IS_SYMBOL(idval))
+    return true;
   if (!ok && JSID_IS_STRING(idval) &&
       !StringToInteger(cx, JSID_TO_STRING(idval), &dummy)) {
     // String either isn't a number, or doesn't fit in size_t.
@@ -5257,6 +5264,8 @@ ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandle
   size_t length = GetLength(typeObj);
   bool ok = jsidToSize(cx, idval, true, &index);
   int32_t dummy;
+  if (!ok && JSID_IS_SYMBOL(idval))
+    return true;
   if (!ok && JSID_IS_STRING(idval) &&
       !StringToInteger(cx, JSID_TO_STRING(idval), &dummy)) {
     // String either isn't a number, or doesn't fit in size_t.
@@ -5438,10 +5447,16 @@ StructType::Create(JSContext* cx, unsigned argc, Value* vp)
     return false;
 
   if (args.length() == 2) {
-    RootedObject arr(cx, args[1].isPrimitive() ? nullptr : &args[1].toObject());
-    if (!arr || !JS_IsArrayObject(cx, arr)) {
-      return ArgumentTypeMismatch(cx, "second ", "StructType", "an array");
+    RootedObject arr(cx, args[1].isObject() ? &args[1].toObject() : nullptr);
+    bool isArray;
+    if (!arr) {
+        isArray = false;
+    } else {
+        if (!JS_IsArrayObject(cx, arr, &isArray))
+           return false;
     }
+    if (!isArray)
+      return ArgumentTypeMismatch(cx, "second ", "StructType", "an array");
 
     // Define the struct fields.
     if (!DefineInternal(cx, result, arr))
@@ -5705,17 +5720,26 @@ StructType::Define(JSContext* cx, unsigned argc, Value* vp)
     return ArgumentLengthError(cx, "StructType.prototype.define", "one", "");
   }
 
-  Value arg = args[0];
+  HandleValue arg = args[0];
   if (arg.isPrimitive()) {
     return ArgumentTypeMismatch(cx, "", "StructType.prototype.define",
                                 "an array");
   }
-  RootedObject arr(cx, arg.toObjectOrNull());
-  if (!JS_IsArrayObject(cx, arr)) {
+
+  bool isArray;
+  if (!arg.isObject()) {
+    isArray = false;
+  } else {
+    if (!JS_IsArrayObject(cx, arg, &isArray))
+      return false;
+  }
+
+  if (!isArray) {
     return ArgumentTypeMismatch(cx, "", "StructType.prototype.define",
                                 "an array");
   }
 
+  RootedObject arr(cx, &arg.toObject());
   return DefineInternal(cx, obj, arr);
 }
 
@@ -5895,7 +5919,6 @@ StructType::FieldsArrayGetter(JSContext* cx, const JS::CallArgs& args)
   }
 
   MOZ_ASSERT(args.rval().isObject());
-  MOZ_ASSERT(JS_IsArrayObject(cx, args.rval()));
   return true;
 }
 
@@ -6345,11 +6368,18 @@ FunctionType::Create(JSContext* cx, unsigned argc, Value* vp)
 
   if (args.length() == 3) {
     // Prepare an array of Values for the arguments.
-    if (args[2].isObject())
-      arrayObj = &args[2].toObject();
-    if (!arrayObj || !JS_IsArrayObject(cx, arrayObj)) {
-      return ArgumentTypeMismatch(cx, "third ", "FunctionType", "an array");
+    bool isArray;
+    if (!args[2].isObject()) {
+      isArray = false;
+    } else {
+      if (!JS_IsArrayObject(cx, args[2], &isArray))
+        return false;
     }
+
+    if (!isArray)
+      return ArgumentTypeMismatch(cx, "third ", "FunctionType", "an array");
+
+    arrayObj = &args[2].toObject();
 
     uint32_t len;
     ASSERT_OK(JS_GetArrayLength(cx, arrayObj, &len));

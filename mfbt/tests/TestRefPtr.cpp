@@ -5,9 +5,9 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/RefCounted.h"
 
 using mozilla::RefCounted;
-using mozilla::RefPtr;
 
 class Foo : public RefCounted<Foo>
 {
@@ -55,21 +55,10 @@ GetNewFoo(Foo** aFoo)
 }
 
 void
-GetPassedFoo(Foo** aFoo)
-{
-  // Kids, don't try this at home
-  (*aFoo)->AddRef();
-}
-
-void
 GetNewFoo(RefPtr<Foo>* aFoo)
 {
   *aFoo = new Bar();
 }
-
-void
-GetPassedFoo(RefPtr<Foo>* aFoo)
-{}
 
 already_AddRefed<Foo>
 GetNullFoo()
@@ -122,42 +111,28 @@ main()
 
   {
     RefPtr<Foo> f = new Foo();
-    GetNewFoo(byRef(f));
+    GetNewFoo(getter_AddRefs(f));
     MOZ_RELEASE_ASSERT(7 == Foo::sNumDestroyed);
   }
   MOZ_RELEASE_ASSERT(8 == Foo::sNumDestroyed);
 
   {
     RefPtr<Foo> f = new Foo();
-    GetPassedFoo(byRef(f));
-    MOZ_RELEASE_ASSERT(8 == Foo::sNumDestroyed);
-  }
-  MOZ_RELEASE_ASSERT(9 == Foo::sNumDestroyed);
-
-  {
-    RefPtr<Foo> f = new Foo();
     GetNewFoo(&f);
-    MOZ_RELEASE_ASSERT(10 == Foo::sNumDestroyed);
+    MOZ_RELEASE_ASSERT(9 == Foo::sNumDestroyed);
   }
-  MOZ_RELEASE_ASSERT(11 == Foo::sNumDestroyed);
-
-  {
-    RefPtr<Foo> f = new Foo();
-    GetPassedFoo(&f);
-    MOZ_RELEASE_ASSERT(11 == Foo::sNumDestroyed);
-  }
-  MOZ_RELEASE_ASSERT(12 == Foo::sNumDestroyed);
+  MOZ_RELEASE_ASSERT(10 == Foo::sNumDestroyed);
 
   {
     RefPtr<Foo> f1 = new Bar();
   }
-  MOZ_RELEASE_ASSERT(13 == Foo::sNumDestroyed);
+  MOZ_RELEASE_ASSERT(11 == Foo::sNumDestroyed);
 
   {
     RefPtr<Foo> f = GetNullFoo();
-    MOZ_RELEASE_ASSERT(13 == Foo::sNumDestroyed);
+    MOZ_RELEASE_ASSERT(11 == Foo::sNumDestroyed);
   }
-  MOZ_RELEASE_ASSERT(13 == Foo::sNumDestroyed);
+  MOZ_RELEASE_ASSERT(11 == Foo::sNumDestroyed);
 
   return 0;
 }

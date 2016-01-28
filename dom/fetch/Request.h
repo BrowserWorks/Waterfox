@@ -60,9 +60,6 @@ public:
   RequestMode
   Mode() const
   {
-    if (mRequest->mMode == RequestMode::Cors_with_forced_preflight) {
-      return RequestMode::Cors;
-    }
     return mRequest->mMode;
   }
 
@@ -134,9 +131,9 @@ private:
   ~Request();
 
   nsCOMPtr<nsIGlobalObject> mOwner;
-  nsRefPtr<InternalRequest> mRequest;
+  RefPtr<InternalRequest> mRequest;
   // Lazily created.
-  nsRefPtr<Headers> mHeaders;
+  RefPtr<Headers> mHeaders;
 };
 
 } // namespace dom

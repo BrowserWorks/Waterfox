@@ -286,7 +286,7 @@ ${EndIf}
     CreateShortCut "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR\${FileMainEXE}"
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -297,7 +297,7 @@ ${EndIf}
         ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWinXP}
+          ${If} ${AtLeastWin7}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -312,7 +312,7 @@ ${EndIf}
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -324,7 +324,7 @@ ${EndIf}
         ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
           ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                  "$INSTDIR"
-          ${If} ${AtLeastWinXP}
+          ${If} ${AtLeastWin7}
           ${AndIf} "$AppUserModelID" != ""
             ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
           ${EndIf}
@@ -334,7 +334,7 @@ ${EndIf}
   ${EndUnless}
 
   ; Windows 7 doesn't use the QuickLaunch directory
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
   ${AndUnless} ${FileExists} "$QUICKLAUNCH\${BrandFullName}.lnk"
     CreateShortCut "$QUICKLAUNCH\${BrandFullName}.lnk" \
                    "$INSTDIR\${FileMainEXE}"
@@ -1128,7 +1128,7 @@ ${EndIf}
     ${If} ${Errors}
       ClearErrors
       WriteIniStr "$0" "TASKBAR" "Migrated" "true"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; No need to check the default on Win8 and later
         ${If} ${AtMostWin2008R2}
           ; Check if the Firefox is the http handler for this user
@@ -1156,7 +1156,7 @@ ${EndIf}
 ; model ID removes a pinned pinned Start Menu shortcut this will also add a
 ; pinned Start Menu shortcut.
 !macro PinToTaskBar
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
     StrCpy $8 "false" ; Whether a shortcut had to be created
     ${IsPinnedToTaskBar} "$INSTDIR\${FileMainEXE}" $R9
     ${If} "$R9" == "false"
@@ -1258,7 +1258,7 @@ ${EndIf}
                 ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
                   ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                                          "$INSTDIR"
-                  ${If} ${AtLeastWinXP}
+                  ${If} ${AtLeastWin7}
                   ${AndIf} "$AppUserModelID" != ""
                     ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" \
                                        "$AppUserModelID" "true"
@@ -1471,7 +1471,7 @@ Function SetAsDefaultAppUserHKCU
 
   ${SetHandlers}
 
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     ; Only register as the handler on Vista and above if the app registry name
     ; exists under the RegisteredApplications registry key. The protocol and
     ; file handlers set previously at the user level will associate this install
@@ -1490,7 +1490,7 @@ FunctionEnd
 
 ; Helper for updating the shortcut application model IDs.
 Function FixShortcutAppModelIDs
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
   ${AndIf} "$AppUserModelID" != ""
     ${UpdateShortcutAppModelIDs} "$INSTDIR\${FileMainEXE}" "$AppUserModelID" $0
   ${EndIf}

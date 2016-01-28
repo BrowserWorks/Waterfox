@@ -35,6 +35,7 @@ load 448161-1.html
 load 448161-2.html
 load 452150-1.xhtml
 load 456196.html
+load 460209-1.html
 load 460217-1.html
 load 460323-1.html
 load 466845-1.html
@@ -45,9 +46,11 @@ HTTP(..) load 472237-1.html
 load 473720-1.html
 load 473892-1.html
 load 473914-1.html
+load 474377-1.xhtml
 load 478321-1.xhtml
 load 512851-1.xhtml
 load 539613-1.xhtml
+load 575464-1.html
 load 588627-1.html
 skip load long-url-list-stack-overflow.html # skipped due to being slow (bug 477490)
 load 495269-1.html
@@ -121,6 +124,7 @@ load 1163446-1.html
 load 1164813-1.html
 load 1167782-1.html
 load 1200568-1.html
+load 1206105-1.html
 load 1226400-1.html
 load large_border_image_width.html
 load border-image-visited-link.html

@@ -69,7 +69,7 @@ BasicImageLayer::Paint(DrawTarget* aDT,
     return;
   }
 
-  nsRefPtr<ImageFactory> originalIF = mContainer->GetImageFactory();
+  RefPtr<ImageFactory> originalIF = mContainer->GetImageFactory();
   mContainer->SetImageFactory(mManager->IsCompositingCheap() ? nullptr : BasicManager()->GetImageFactory());
 
   AutoLockImage autoLock(mContainer);
@@ -85,8 +85,8 @@ BasicImageLayer::Paint(DrawTarget* aDT,
   }
 
   gfx::IntSize size = mSize = surface->GetSize();
-  FillRectWithMask(aDT, aDeviceOffset, Rect(0, 0, size.width, size.height), 
-                   surface, ToFilter(mFilter),
+  FillRectWithMask(aDT, aDeviceOffset, Rect(0, 0, size.width, size.height),
+                   surface, mFilter,
                    DrawOptions(GetEffectiveOpacity(), GetEffectiveOperator(this)),
                    aMaskLayer);
 
@@ -112,7 +112,7 @@ already_AddRefed<ImageLayer>
 BasicLayerManager::CreateImageLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ImageLayer> layer = new BasicImageLayer(this);
+  RefPtr<ImageLayer> layer = new BasicImageLayer(this);
   return layer.forget();
 }
 

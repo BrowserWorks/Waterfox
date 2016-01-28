@@ -258,7 +258,7 @@ private:
 
   // By holding a strong reference to the service we guarantee that it won't be
   // destroyed before this runnable.
-  nsRefPtr<nsPicoService> mService;
+  RefPtr<nsPicoService> mService;
 };
 
 NS_IMPL_ISUPPORTS_INHERITED(PicoCallbackRunnable, nsRunnable, nsISpeechTaskCallback)
@@ -288,7 +288,7 @@ PicoCallbackRunnable::Run()
 
   const char* text = markedUpText.get();
   size_t buffer_size = 512, buffer_offset = 0;
-  nsRefPtr<SharedBuffer> buffer = SharedBuffer::Create(buffer_size);
+  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(buffer_size);
   int16_t text_offset = 0, bytes_recv = 0, bytes_sent = 0, out_data_type = 0;
   int16_t text_remaining = markedUpText.Length() + 1;
 
@@ -373,13 +373,13 @@ PicoCallbackRunnable::DispatchSynthDataRunnable(
     }
 
   private:
-    nsRefPtr<SharedBuffer> mBuffer;
+    RefPtr<SharedBuffer> mBuffer;
 
     size_t mBufferSize;
 
     bool mFirstData;
 
-    nsRefPtr<PicoCallbackRunnable> mCallback;
+    RefPtr<PicoCallbackRunnable> mCallback;
   };
 
   nsCOMPtr<nsIRunnable> sendEvent =
@@ -490,7 +490,7 @@ nsPicoService::Speak(const nsAString& aText, const nsAString& aUri,
   }
 
   mCurrentTask = aTask;
-  nsRefPtr<PicoCallbackRunnable> cb = new PicoCallbackRunnable(aText, voice, aRate, aPitch, aTask, this);
+  RefPtr<PicoCallbackRunnable> cb = new PicoCallbackRunnable(aText, voice, aRate, aPitch, aTask, this);
   return mThread->Dispatch(cb, NS_DISPATCH_NORMAL);
 }
 
@@ -501,39 +501,7 @@ nsPicoService::GetServiceType(SpeechServiceType* aServiceType)
   return NS_OK;
 }
 
-struct VoiceTraverserData
-{
-  nsPicoService* mService;
-  nsSynthVoiceRegistry* mRegistry;
-};
-
 // private methods
-
-static PLDHashOperator
-PicoAddVoiceTraverser(const nsAString& aUri,
-                      nsRefPtr<PicoVoice>& aVoice,
-                      void* aUserArg)
-{
-  // If we are missing either a language or a voice resource, it is invalid.
-  if (aVoice->mTaFile.IsEmpty() || aVoice->mSgFile.IsEmpty()) {
-    return PL_DHASH_REMOVE;
-  }
-
-  VoiceTraverserData* data = static_cast<VoiceTraverserData*>(aUserArg);
-
-  nsAutoString name;
-  name.AssignLiteral("Pico ");
-  name.Append(aVoice->mLanguage);
-
-  // This service is multi-threaded and can handle more than one utterance at a
-  // time before previous utterances end. So, aQueuesUtterances == false
-  DebugOnly<nsresult> rv =
-    data->mRegistry->AddVoice(
-      data->mService, aUri, name, aVoice->mLanguage, true, false);
-  NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to add voice");
-
-  return PL_DHASH_NEXT;
-}
 
 void
 nsPicoService::Init()
@@ -617,8 +585,28 @@ nsPicoService::Init()
 void
 nsPicoService::RegisterVoices()
 {
-  VoiceTraverserData data = { this, nsSynthVoiceRegistry::GetInstance() };
-  mVoices.Enumerate(PicoAddVoiceTraverser, &data);
+  nsSynthVoiceRegistry* registry = nsSynthVoiceRegistry::GetInstance();
+
+  for (auto iter = mVoices.Iter(); !iter.Done(); iter.Next()) {
+    const nsAString& uri = iter.Key();
+    RefPtr<PicoVoice>& voice = iter.Data();
+
+    // If we are missing either a language or a voice resource, it is invalid.
+    if (voice->mTaFile.IsEmpty() || voice->mSgFile.IsEmpty()) {
+      iter.Remove();
+      continue;
+    }
+
+    nsAutoString name;
+    name.AssignLiteral("Pico ");
+    name.Append(voice->mLanguage);
+
+    // This service is multi-threaded and can handle more than one utterance at a
+    // time before previous utterances end. So, aQueuesUtterances == false
+    DebugOnly<nsresult> rv =
+      registry->AddVoice(this, uri, name, voice->mLanguage, true, false);
+    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Failed to add voice");
+  }
 
   mInitialized = true;
 }
@@ -752,7 +740,7 @@ nsPicoService::GetInstance()
 already_AddRefed<nsPicoService>
 nsPicoService::GetInstanceForService()
 {
-  nsRefPtr<nsPicoService> picoService = GetInstance();
+  RefPtr<nsPicoService> picoService = GetInstance();
   return picoService.forget();
 }
 

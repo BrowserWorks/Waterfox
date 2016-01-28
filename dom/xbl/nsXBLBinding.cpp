@@ -92,7 +92,7 @@ static const JSClass gPrototypeJSClass = {
     // Our one reserved slot holds the relevant nsXBLPrototypeBinding
     JSCLASS_HAS_RESERVED_SLOTS(1),
     nullptr, nullptr, nullptr, nullptr,
-    XBLEnumerate, nullptr, nullptr,
+    XBLEnumerate, nullptr,
     nullptr, XBLFinalize,
     nullptr, nullptr, nullptr, nullptr
 };
@@ -759,7 +759,7 @@ nsXBLBinding::ChangeDocument(nsIDocument* aOldDocument, nsIDocument* aNewDocumen
             continue;
           }
 
-          nsRefPtr<nsXBLDocumentInfo> docInfo =
+          RefPtr<nsXBLDocumentInfo> docInfo =
             static_cast<nsXBLDocumentInfo*>(::JS_GetPrivate(proto));
           if (!docInfo) {
             // Not the proto we seek

@@ -99,7 +99,9 @@ this.MigratorPrototype = {
    * For a single-profile source (e.g. safari, ie), this returns null,
    * and not an empty array.  That is the default implementation.
    */
-  get sourceProfiles() null,
+  get sourceProfiles() {
+    return null;
+  },
 
   /**
    * MUST BE OVERRIDDEN.
@@ -160,19 +162,25 @@ this.MigratorPrototype = {
    *   The migrator can call MigrationUtils.profileStartup.doStartup
    *   at any point in order to initialize the profile.
    */
-  get startupOnlyMigrator() false,
+  get startupOnlyMigrator() {
+    return false;
+  },
 
   /**
    * OVERRIDE IF AND ONLY IF your migrator supports importing the homepage.
    * @see nsIBrowserProfileMigrator
    */
-  get sourceHomePageURL() "",
+  get sourceHomePageURL() {
+    return "";
+  },
 
   /**
    * Override if the data to migrate is locked/in-use and the user should
    * probably shutdown the source browser.
    */
-  get sourceLocked() false,
+  get sourceLocked() {
+    return false;
+  },
 
   /**
    * DO NOT OVERRIDE - After deCOMing migration, the UI will just call
@@ -181,8 +189,12 @@ this.MigratorPrototype = {
    * @see nsIBrowserProfileMigrator
    */
   getMigrateData: function MP_getMigrateData(aProfile) {
-    let types = [r.type for each (r in this._getMaybeCachedResources(aProfile))];
-    return types.reduce(function(a, b) a |= b, 0);
+    let resources = this._getMaybeCachedResources(aProfile);
+    if (!resources) {
+      return [];
+    }
+    let types = resources.map(r => r.type);
+    return types.reduce((a, b) => a |= b, 0);
   },
 
   /**
@@ -197,7 +209,7 @@ this.MigratorPrototype = {
       throw new Error("migrate called for a non-existent source");
 
     if (aItems != Ci.nsIBrowserProfileMigrator.ALL)
-      resources = [r for each (r in resources) if (aItems & r.type)];
+      resources = resources.filter(r => aItems & r.type);
 
     // Called either directly or through the bookmarks import callback.
     function doMigrate() {
@@ -267,7 +279,7 @@ this.MigratorPrototype = {
       // (=startupOnlyMigrator), as it just copies over the places database
       // from another profile.
       const BOOKMARKS = MigrationUtils.resourceTypes.BOOKMARKS;
-      let migratingBookmarks = resources.some(function(r) r.type == BOOKMARKS);
+      let migratingBookmarks = resources.some(r => r.type == BOOKMARKS);
       if (migratingBookmarks) {
         let browserGlue = Cc["@mozilla.org/browser/browserglue;1"].
                           getService(Ci.nsIObserver);
@@ -510,7 +522,7 @@ this.MigrationUtils = Object.freeze({
     // so that the wizard defaults to import from that browser.
     let defaultBrowserKey = getMigratorKeyForDefaultBrowser();
     if (defaultBrowserKey)
-      migratorKeysOrdered.sort(function (a, b) b == defaultBrowserKey ? 1 : 0);
+      migratorKeysOrdered.sort((a, b) => b == defaultBrowserKey ? 1 : 0);
 
     for (let migratorKey of migratorKeysOrdered) {
       let migrator = this.getMigrator(migratorKey);
@@ -520,7 +532,9 @@ this.MigrationUtils = Object.freeze({
   },
 
   // Whether or not we're in the process of startup migration
-  get isStartupMigration() gProfileStartup != null,
+  get isStartupMigration() {
+    return gProfileStartup != null;
+  },
 
   /**
    * In the case of startup migration, this is set to the nsIProfileStartup
@@ -528,7 +542,9 @@ this.MigrationUtils = Object.freeze({
    *
    * @see showMigrationWizard
    */
-  get profileStartup() gProfileStartup,
+  get profileStartup() {
+    return gProfileStartup;
+  },
 
   /**
    * Show the migration wizard.  On mac, this may just focus the wizard if it's

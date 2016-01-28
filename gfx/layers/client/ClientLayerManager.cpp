@@ -171,7 +171,7 @@ ClientLayerManager::Mutated(Layer* aLayer)
 already_AddRefed<ReadbackLayer>
 ClientLayerManager::CreateReadbackLayer()
 {
-  nsRefPtr<ReadbackLayer> layer = new ClientReadbackLayer(this);
+  RefPtr<ReadbackLayer> layer = new ClientReadbackLayer(this);
   return layer.forget();
 }
 
@@ -190,7 +190,7 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
   mPhase = PHASE_CONSTRUCTION;
 
   MOZ_ASSERT(mKeepAlive.IsEmpty(), "uncommitted txn?");
-  nsRefPtr<gfxContext> targetContext = aTarget;
+  RefPtr<gfxContext> targetContext = aTarget;
 
   // If the last transaction was incomplete (a failed DoEmptyTransaction),
   // don't signal a new transaction to ShadowLayerForwarder. Carry on adding
@@ -215,7 +215,7 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
   //
   // Desktop does not support async zoom yet, so we ignore this for those
   // platforms.
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_UIKIT)
   if (mWidget && mWidget->GetOwningTabChild()) {
     mCompositorMightResample = AsyncPanZoomEnabled();
   }
@@ -681,17 +681,19 @@ ClientLayerManager::SetIsFirstPaint()
 }
 
 TextureClientPool*
-ClientLayerManager::GetTexturePool(SurfaceFormat aFormat)
+ClientLayerManager::GetTexturePool(SurfaceFormat aFormat, TextureFlags aFlags)
 {
   for (size_t i = 0; i < mTexturePools.Length(); i++) {
-    if (mTexturePools[i]->GetFormat() == aFormat) {
+    if (mTexturePools[i]->GetFormat() == aFormat &&
+        mTexturePools[i]->GetFlags() == aFlags) {
       return mTexturePools[i];
     }
   }
 
   mTexturePools.AppendElement(
-      new TextureClientPool(aFormat, IntSize(gfxPlatform::GetPlatform()->GetTileWidth(),
-                                             gfxPlatform::GetPlatform()->GetTileHeight()),
+      new TextureClientPool(aFormat, aFlags,
+                            IntSize(gfxPlatform::GetPlatform()->GetTileWidth(),
+                                    gfxPlatform::GetPlatform()->GetTileHeight()),
                             gfxPrefs::LayersTileMaxPoolSize(),
                             gfxPrefs::LayersTileShrinkPoolTimeout(),
                             mForwarder));
@@ -701,17 +703,20 @@ ClientLayerManager::GetTexturePool(SurfaceFormat aFormat)
 
 void
 ClientLayerManager::ReturnTextureClientDeferred(TextureClient& aClient) {
-  GetTexturePool(aClient.GetFormat())->ReturnTextureClientDeferred(&aClient);
+  GetTexturePool(aClient.GetFormat(),
+                 aClient.GetFlags())->ReturnTextureClientDeferred(&aClient);
 }
 
 void
 ClientLayerManager::ReturnTextureClient(TextureClient& aClient) {
-  GetTexturePool(aClient.GetFormat())->ReturnTextureClient(&aClient);
+  GetTexturePool(aClient.GetFormat(),
+                 aClient.GetFlags())->ReturnTextureClient(&aClient);
 }
 
 void
 ClientLayerManager::ReportClientLost(TextureClient& aClient) {
-  GetTexturePool(aClient.GetFormat())->ReportClientLost();
+  GetTexturePool(aClient.GetFormat(),
+                 aClient.GetFlags())->ReportClientLost();
 }
 
 void

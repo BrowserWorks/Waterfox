@@ -131,7 +131,6 @@ class PackedScopeCoordinate
     F(CONTINUE) \
     F(VAR) \
     F(CONST) \
-    F(GLOBALCONST) \
     F(WITH) \
     F(RETURN) \
     F(NEW) \
@@ -176,6 +175,7 @@ class PackedScopeCoordinate
     F(CLASSNAMES) \
     F(NEWTARGET) \
     F(POSHOLDER) \
+    F(SUPERCALL) \
     \
     /* Unary operators. */ \
     F(TYPEOFNAME) \
@@ -314,14 +314,12 @@ IsDeleteKind(ParseNodeKind kind)
  * PNK_FOR      binary      pn_left: either PNK_FORIN (for-in statement),
  *                            PNK_FOROF (for-of) or PNK_FORHEAD (for(;;))
  *                          pn_right: body
- * PNK_FORIN    ternary     pn_kid1:  PNK_VAR to left of 'in', or nullptr
- *                            its pn_xflags may have PNX_POPVAR bit set
+ * PNK_FORIN    ternary     pn_kid1: PNK_VAR to left of 'in', or nullptr
  *                          pn_kid2: PNK_NAME or destructuring expr
  *                            to left of 'in'; if pn_kid1, then this
  *                            is a clone of pn_kid1->pn_head
  *                          pn_kid3: object expr to right of 'in'
- * PNK_FOROF    ternary     pn_kid1:  PNK_VAR to left of 'of', or nullptr
- *                            its pn_xflags may have PNX_POPVAR bit set
+ * PNK_FOROF    ternary     pn_kid1: PNK_VAR to left of 'of', or nullptr
  *                          pn_kid2: PNK_NAME or destructuring expr
  *                            to left of 'of'; if pn_kid1, then this
  *                            is a clone of pn_kid1->pn_head
@@ -356,8 +354,7 @@ IsDeleteKind(ParseNodeKind kind)
  *                                     pn_left: PNK_NAME with pn_used true and
  *                                              pn_lexdef (NOT pn_expr) set
  *                                     pn_right: initializer
- * PNK_RETURN   binary      pn_left: return expr or null
- *                          pn_right: .genrval name or null
+ * PNK_RETURN   unary       pn_kid: return expr or null
  * PNK_SEMI     unary       pn_kid: expr or null statement
  *                          pn_prologue: true if Directive Prologue member
  *                              in original source, not introduced via
@@ -758,15 +755,12 @@ class ParseNode
 #define PND_USE2DEF_FLAGS (PND_ASSIGNED | PND_CLOSED)
 
 /* PN_LIST pn_xflags bits. */
-#define PNX_POPVAR      0x01            /* PNK_VAR or PNK_CONST last result
-                                           needs popping */
-#define PNX_FUNCDEFS    0x02            /* contains top-level function statements */
-#define PNX_SETCALL     0x04            /* call expression in lvalue context */
-/* 0x08 is available */
-#define PNX_ARRAYHOLESPREAD 0x10        /* one or more of
+#define PNX_FUNCDEFS    0x01            /* contains top-level function statements */
+#define PNX_SETCALL     0x02            /* call expression in lvalue context */
+#define PNX_ARRAYHOLESPREAD 0x04        /* one or more of
                                            1. array initialiser has holes
                                            2. array initializer has spread node */
-#define PNX_NONCONST    0x20            /* initialiser has non-constants */
+#define PNX_NONCONST    0x08            /* initialiser has non-constants */
 
     static_assert(PNX_NONCONST < (1 << NumListFlagBits), "Not enough bits");
 
@@ -1571,8 +1565,7 @@ struct Definition : public ParseNode
     enum Kind {
         MISSING = 0,
         VAR,
-        GLOBALCONST,
-        CONST,
+        CONSTANT,
         LET,
         ARG,
         NAMED_LAMBDA,
@@ -1600,9 +1593,7 @@ struct Definition : public ParseNode
         if (isImport())
             return IMPORT;
         if (isLexical())
-            return isConst() ? CONST : LET;
-        if (isConst())
-            return GLOBALCONST;
+            return isConst() ? CONSTANT : LET;
         return VAR;
     }
 };

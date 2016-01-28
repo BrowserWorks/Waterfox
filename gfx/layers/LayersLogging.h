@@ -7,7 +7,6 @@
 #define GFX_LAYERSLOGGING_H
 
 #include "FrameMetrics.h"               // for FrameMetrics, etc
-#include "GraphicsFilter.h"             // for GraphicsFilter
 #include "mozilla/gfx/Point.h"          // for IntSize, etc
 #include "mozilla/gfx/Types.h"          // for Filter, SurfaceFormat
 #include "mozilla/layers/CompositorTypes.h"  // for TextureFlags
@@ -16,12 +15,10 @@
 #include "nsRegion.h"                   // for nsRegion, nsIntRegion
 #include "nscore.h"                     // for nsACString, etc
 
-struct gfxRGBA;
-
 namespace mozilla {
 namespace gfx {
 class Matrix4x4;
-template <class units> struct RectTyped;
+template <class units, class F> struct RectTyped;
 } // namespace gfx
 
 enum class ImageFormat;
@@ -33,15 +30,11 @@ AppendToString(std::stringstream& aStream, const void* p,
                const char* pfx="", const char* sfx="");
 
 void
-AppendToString(std::stringstream& aStream, const GraphicsFilter& f,
-               const char* pfx="", const char* sfx="");
-
-void
 AppendToString(std::stringstream& aStream, FrameMetrics::ViewID n,
                const char* pfx="", const char* sfx="");
 
 void
-AppendToString(std::stringstream& aStream, const gfxRGBA& c,
+AppendToString(std::stringstream& aStream, const gfx::Color& c,
                const char* pfx="", const char* sfx="");
 
 void

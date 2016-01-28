@@ -89,7 +89,7 @@ TEST(ServiceWorkerRegistrar, TestNoFile)
     ASSERT_EQ(NS_OK, rv) << "nsIFile::Remove cannot fail";
   }
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   rv = swr->TestReadData();
   ASSERT_EQ(NS_OK, rv) << "ReadData() should not fail";
@@ -102,7 +102,7 @@ TEST(ServiceWorkerRegistrar, TestEmptyFile)
 {
   ASSERT_TRUE(CreateFile(EmptyCString())) << "CreateFile should not fail";
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   nsresult rv = swr->TestReadData();
   ASSERT_NE(NS_OK, rv) << "ReadData() should fail if the file is empty";
@@ -115,7 +115,7 @@ TEST(ServiceWorkerRegistrar, TestRightVersionFile)
 {
   ASSERT_TRUE(CreateFile(nsAutoCString(SERVICEWORKERREGISTRAR_VERSION "\n"))) << "CreateFile should not fail";
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   nsresult rv = swr->TestReadData();
   ASSERT_EQ(NS_OK, rv) << "ReadData() should not fail when the version is correct";
@@ -128,7 +128,7 @@ TEST(ServiceWorkerRegistrar, TestWrongVersionFile)
 {
   ASSERT_TRUE(CreateFile(nsAutoCString(SERVICEWORKERREGISTRAR_VERSION "bla\n"))) << "CreateFile should not fail";
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   nsresult rv = swr->TestReadData();
   ASSERT_NE(NS_OK, rv) << "ReadData() should fail when the version is not correct";
@@ -151,7 +151,7 @@ TEST(ServiceWorkerRegistrar, TestReadData)
 
   ASSERT_TRUE(CreateFile(buffer)) << "CreateFile should not fail";
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   nsresult rv = swr->TestReadData();
   ASSERT_EQ(NS_OK, rv) << "ReadData() should not fail";
@@ -163,9 +163,8 @@ TEST(ServiceWorkerRegistrar, TestReadData)
   ASSERT_EQ(info0.type(), mozilla::ipc::PrincipalInfo::TContentPrincipalInfo) << "First principal must be content";
   const mozilla::ipc::ContentPrincipalInfo& cInfo0 = data[0].principal();
 
-  mozilla::OriginAttributes attrs0(cInfo0.appId(), cInfo0.isInBrowserElement());
   nsAutoCString suffix0;
-  attrs0.CreateSuffix(suffix0);
+  cInfo0.attrs().CreateSuffix(suffix0);
 
   ASSERT_STREQ("^appId=123&inBrowser=1", suffix0.get());
   ASSERT_STREQ("spec 0", cInfo0.spec().get());
@@ -179,9 +178,8 @@ TEST(ServiceWorkerRegistrar, TestReadData)
   ASSERT_EQ(info1.type(), mozilla::ipc::PrincipalInfo::TContentPrincipalInfo) << "First principal must be content";
   const mozilla::ipc::ContentPrincipalInfo& cInfo1 = data[1].principal();
 
-  mozilla::OriginAttributes attrs1(cInfo1.appId(), cInfo1.isInBrowserElement());
   nsAutoCString suffix1;
-  attrs1.CreateSuffix(suffix1);
+  cInfo1.attrs().CreateSuffix(suffix1);
 
   ASSERT_STREQ("", suffix1.get());
   ASSERT_STREQ("spec 1", cInfo1.spec().get());
@@ -196,7 +194,7 @@ TEST(ServiceWorkerRegistrar, TestDeleteData)
 {
   ASSERT_TRUE(CreateFile(nsAutoCString("Foobar"))) << "CreateFile should not fail";
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   swr->TestDeleteData();
 
@@ -212,7 +210,7 @@ TEST(ServiceWorkerRegistrar, TestDeleteData)
 TEST(ServiceWorkerRegistrar, TestWriteData)
 {
   {
-    nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+    RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
     nsTArray<ServiceWorkerRegistrationData>& data = swr->TestGetData();
 
@@ -221,7 +219,7 @@ TEST(ServiceWorkerRegistrar, TestWriteData)
 
       nsAutoCString spec;
       spec.AppendPrintf("spec write %d", i);
-      d->principal() = mozilla::ipc::ContentPrincipalInfo(i, i % 2, spec);
+      d->principal() = mozilla::ipc::ContentPrincipalInfo(mozilla::OriginAttributes(i, i % 2), spec);
       d->scope().AppendPrintf("scope write %d", i);
       d->scriptSpec().AppendPrintf("scriptSpec write %d", i);
       d->currentWorkerURL().AppendPrintf("currentWorkerURL write %d", i);
@@ -233,7 +231,7 @@ TEST(ServiceWorkerRegistrar, TestWriteData)
     ASSERT_EQ(NS_OK, rv) << "WriteData() should not fail";
   }
 
-  nsRefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
+  RefPtr<ServiceWorkerRegistrarTest> swr = new ServiceWorkerRegistrarTest;
 
   nsresult rv = swr->TestReadData();
   ASSERT_EQ(NS_OK, rv) << "ReadData() should not fail";
@@ -247,8 +245,12 @@ TEST(ServiceWorkerRegistrar, TestWriteData)
     ASSERT_EQ(data[i].principal().type(), mozilla::ipc::PrincipalInfo::TContentPrincipalInfo);
     const mozilla::ipc::ContentPrincipalInfo& cInfo = data[i].principal();
 
-    ASSERT_EQ((uint32_t)i, cInfo.appId());
-    ASSERT_EQ((uint32_t)(i % 2), (uint32_t)cInfo.isInBrowserElement());
+    mozilla::OriginAttributes attrs(i, i % 2);
+    nsAutoCString suffix, expectSuffix;
+    attrs.CreateSuffix(expectSuffix);
+    cInfo.attrs().CreateSuffix(suffix);
+
+    ASSERT_STREQ(expectSuffix.get(), suffix.get());
 
     test.AppendPrintf("spec write %d", i);
     ASSERT_STREQ(test.get(), cInfo.spec().get());

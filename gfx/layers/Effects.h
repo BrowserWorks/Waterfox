@@ -119,7 +119,7 @@ struct EffectVRDistortion : public Effect
   virtual const char* Name() { return "EffectVRDistortion"; }
   virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
 
-  nsRefPtr<gfx::VRHMDInfo> mHMD;
+  RefPtr<gfx::VRHMDInfo> mHMD;
   RefPtr<CompositingRenderTarget> mRenderTarget;
   TextureSource* mTexture;
 
@@ -267,7 +267,7 @@ CreateTexturedEffect(gfx::SurfaceFormat aFormat,
   case gfx::SurfaceFormat::B8G8R8A8:
   case gfx::SurfaceFormat::B8G8R8X8:
   case gfx::SurfaceFormat::R8G8B8X8:
-  case gfx::SurfaceFormat::R5G6B5:
+  case gfx::SurfaceFormat::R5G6B5_UINT16:
   case gfx::SurfaceFormat::R8G8B8A8:
     result = new EffectRGB(aSource, isAlphaPremultiplied, aFilter);
     break;

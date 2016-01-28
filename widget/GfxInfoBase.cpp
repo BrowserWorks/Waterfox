@@ -566,6 +566,15 @@ BlacklistEntryToDriverInfo(nsIDOMNode* aBlacklistEntry,
       aDriverInfo.mDriverVersion = version;
   }
 
+  // <driverVersionMax> 8.52.322.2202 </driverVersionMax>
+  if (BlacklistNodeGetChildByName(element, NS_LITERAL_STRING("driverVersionMax"),
+                                  getter_AddRefs(dataNode))) {
+    BlacklistNodeToTextValue(dataNode, dataValue);
+    uint64_t version;
+    if (ParseDriverVersion(dataValue, &version))
+      aDriverInfo.mDriverVersionMax = version;
+  }
+
   // <driverVersionComparator> LESS_THAN_OR_EQUAL </driverVersionComparator>
   if (BlacklistNodeGetChildByName(element, NS_LITERAL_STRING("driverVersionComparator"),
                                   getter_AddRefs(dataNode))) {
@@ -1010,7 +1019,7 @@ GfxInfoBase::EvaluateDownloadedBlacklist(nsTArray<GfxDriverInfo>& aDriverInfo)
           } else {
             RemovePrefForDriverVersion();
           }
-          // FALLTHROUGH
+          MOZ_FALLTHROUGH;
 
         case nsIGfxInfo::FEATURE_BLOCKED_MISMATCHED_VERSION:
         case nsIGfxInfo::FEATURE_BLOCKED_DEVICE:

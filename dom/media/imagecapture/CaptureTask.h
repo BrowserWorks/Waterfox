@@ -35,7 +35,9 @@ public:
   virtual void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
                                         StreamTime aTrackOffset,
                                         uint32_t aTrackEvents,
-                                        const MediaSegment& aQueuedMedia) override;
+                                        const MediaSegment& aQueuedMedia,
+                                        MediaStream* aInputStream,
+                                        TrackID aInputTrackID) override;
 
   virtual void NotifyEvent(MediaStreamGraph* aGraph,
                            MediaStreamGraphEvent aEvent) override;
@@ -77,7 +79,7 @@ protected:
   // The ImageCapture associates with this task. This reference count should not
   // change in this class unless it clears this reference after a blob or error
   // event to script.
-  nsRefPtr<dom::ImageCapture> mImageCapture;
+  RefPtr<dom::ImageCapture> mImageCapture;
 
   TrackID mTrackID;
 

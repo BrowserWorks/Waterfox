@@ -57,7 +57,7 @@ ChoosePixelFormat(AVCodecContext* aCodecContext, const PixelFormat* aFormats)
 {
   FFMPEG_LOG("Choosing FFmpeg pixel format for video decoding.");
   for (; *aFormats > -1; aFormats++) {
-    if (*aFormats == PIX_FMT_YUV420P) {
+    if (*aFormats == PIX_FMT_YUV420P || *aFormats == PIX_FMT_YUVJ420P) {
       FFMPEG_LOG("Requesting pixel format YUV420P.");
       return PIX_FMT_YUV420P;
     }
@@ -90,8 +90,8 @@ FFmpegDataDecoder<LIBAV_VER>::InitDecoder()
   // FFmpeg takes this as a suggestion for what format to use for audio samples.
   uint32_t major, minor;
   FFmpegDecoderModule<LIBAV_VER>::GetVersion(major, minor);
-  // LibAV 0.8 produces rubbish float interlaved samples, request 16 bits audio.
-  mCodecContext->request_sample_fmt = major == 53 && minor <= 34 ?
+  // LibAV 0.8 produces rubbish float interleaved samples, request 16 bits audio.
+  mCodecContext->request_sample_fmt = major == 53 ?
     AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_FLT;
 
   // FFmpeg will call back to this to negotiate a video pixel format.

@@ -36,6 +36,13 @@ if (typeof setImmutablePrototype !== "function")
   }
 }
 
+if (typeof immutablePrototypesEnabled !== "function" &&
+    typeof SpecialPowers !== "undefined")
+{
+  immutablePrototypesEnabled =
+    SpecialPowers.Cu.getJSTestingFunctions().immutablePrototypesEnabled;
+}
+
 if (typeof wrap !== "function")
 {
   // good enough
@@ -86,9 +93,11 @@ function checkPrototypeMutationFailure(obj, desc)
 
 function runNormalTests(global)
 {
-  if (typeof setImmutablePrototype !== "function")
+  if (typeof setImmutablePrototype !== "function" ||
+      typeof immutablePrototypesEnabled !== "function" ||
+      !immutablePrototypesEnabled())
   {
-    print("no usable setImmutablePrototype function available, skipping tests");
+    print("no testable setImmutablePrototype function available, skipping tests");
     return;
   }
 

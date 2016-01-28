@@ -8,7 +8,7 @@
 #define MediaDataDecoderProxy_h_
 
 #include "PlatformDecoderModule.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsThreadUtils.h"
 #include "nscore.h"
 
@@ -28,8 +28,8 @@ public:
   }
 
 private:
-  nsRefPtr<MediaDataDecoder> mDecoder;
-  nsRefPtr<MediaRawData> mSample;
+  RefPtr<MediaDataDecoder> mDecoder;
+  RefPtr<MediaRawData> mSample;
 };
 
 template<typename T>
@@ -68,27 +68,27 @@ public:
   {
   }
 
-  virtual void Output(MediaData* aData) override {
+  void Output(MediaData* aData) override {
     mProxyCallback->Output(aData);
   }
 
-  virtual void Error() override;
+  void Error() override;
 
-  virtual void InputExhausted() override {
+  void InputExhausted() override {
     mProxyCallback->InputExhausted();
   }
 
-  virtual void DrainComplete() override {
+  void DrainComplete() override {
     mProxyCallback->DrainComplete();
   }
 
-  virtual void ReleaseMediaResources() override {
+  void ReleaseMediaResources() override {
     mProxyCallback->ReleaseMediaResources();
   }
 
-  virtual void FlushComplete();
+  void FlushComplete();
 
-  virtual bool OnReaderTaskQueue() override
+  bool OnReaderTaskQueue() override
   {
     return mProxyCallback->OnReaderTaskQueue();
   }
@@ -132,17 +132,17 @@ public:
   // Init and Shutdown run synchronously on the proxy thread, all others are
   // asynchronously and responded to via the MediaDataDecoderCallback.
   // Note: the nsresults returned by the proxied decoder are lost.
-  virtual nsRefPtr<InitPromise> Init() override;
-  virtual nsresult Input(MediaRawData* aSample) override;
-  virtual nsresult Flush() override;
-  virtual nsresult Drain() override;
-  virtual nsresult Shutdown() override;
+  RefPtr<InitPromise> Init() override;
+  nsresult Input(MediaRawData* aSample) override;
+  nsresult Flush() override;
+  nsresult Drain() override;
+  nsresult Shutdown() override;
 
   // Called by MediaDataDecoderCallbackProxy.
   void FlushComplete();
 
 private:
-  nsRefPtr<InitPromise> InternalInit();
+  RefPtr<InitPromise> InternalInit();
 
 #ifdef DEBUG
   bool IsOnProxyThread() {
@@ -153,9 +153,9 @@ private:
   friend class InputTask;
   friend class InitTask;
 
-  nsRefPtr<MediaDataDecoder> mProxyDecoder;
+  RefPtr<MediaDataDecoder> mProxyDecoder;
   nsCOMPtr<nsIThread> mProxyThread;
-  nsRefPtr<AbstractThread> mProxyThreadWrapper;
+  RefPtr<AbstractThread> mProxyThreadWrapper;
 
   MediaDataDecoderCallbackProxy mProxyCallback;
 

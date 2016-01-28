@@ -33,7 +33,7 @@ public:
   MatchAll(const ClientQueryOptions& aOptions, ErrorResult& aRv);
 
   already_AddRefed<Promise>
-  OpenWindow(const nsAString& aUrl);
+  OpenWindow(const nsAString& aUrl, ErrorResult& aRv);
 
   already_AddRefed<Promise>
   Claim(ErrorResult& aRv);
@@ -52,7 +52,7 @@ private:
   {
   }
 
-  nsRefPtr<ServiceWorkerGlobalScope> mWorkerScope;
+  RefPtr<ServiceWorkerGlobalScope> mWorkerScope;
 };
 
 } // namespace workers

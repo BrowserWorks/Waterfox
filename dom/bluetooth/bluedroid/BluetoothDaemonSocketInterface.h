@@ -39,14 +39,14 @@ public:
   //
 
   nsresult ListenCmd(BluetoothSocketType aType,
-                     const nsAString& aServiceName,
-                     const uint8_t aServiceUuid[16],
+                     const BluetoothServiceName& aServiceName,
+                     const BluetoothUuid& aServiceUuid,
                      int aChannel, bool aEncrypt, bool aAuth,
                      BluetoothSocketResultHandler* aRes);
 
-  nsresult ConnectCmd(const nsAString& aBdAddr,
+  nsresult ConnectCmd(const BluetoothAddress& aBdAddr,
                       BluetoothSocketType aType,
-                      const uint8_t aUuid[16],
+                      const BluetoothUuid& aServiceUuid,
                       int aChannel, bool aEncrypt, bool aAuth,
                       BluetoothSocketResultHandler* aRes);
 
@@ -69,22 +69,27 @@ private:
   // Responses
   //
 
-  typedef mozilla::ipc::DaemonResultRunnable0<
-    BluetoothSocketResultHandler, void>
-    ResultRunnable;
+  typedef mozilla::ipc::DaemonResultRunnable3<
+    BluetoothSocketResultHandler, void, int, BluetoothAddress, int, int,
+    const BluetoothAddress&, int>
+    AcceptResultRunnable;
 
-  typedef mozilla::ipc::DaemonResultRunnable1<
-    BluetoothSocketResultHandler, void, int, int>
-    IntResultRunnable;
+  typedef mozilla::ipc::DaemonResultRunnable3<
+    BluetoothSocketResultHandler, void, int, BluetoothAddress, int, int,
+    const BluetoothAddress&, int>
+    ConnectResultRunnable;
 
   typedef mozilla::ipc::DaemonResultRunnable1<
     BluetoothSocketResultHandler, void, BluetoothStatus, BluetoothStatus>
     ErrorRunnable;
 
-  typedef mozilla::ipc::DaemonResultRunnable3<
-    BluetoothSocketResultHandler, void, int, nsString, int, int,
-    const nsAString_internal&, int>
-    IntStringIntResultRunnable;
+  typedef mozilla::ipc::DaemonResultRunnable1<
+    BluetoothSocketResultHandler, void, int, int>
+    ListenResultRunnable;
+
+  typedef mozilla::ipc::DaemonResultRunnable0<
+    BluetoothSocketResultHandler, void>
+    ResultRunnable;
 
   void ErrorRsp(const DaemonSocketPDUHeader& aHeader,
                 DaemonSocketPDU& aPDU,
@@ -107,14 +112,14 @@ public:
   ~BluetoothDaemonSocketInterface();
 
   void Listen(BluetoothSocketType aType,
-              const nsAString& aServiceName,
-              const uint8_t aServiceUuid[16],
+              const BluetoothServiceName& aServiceName,
+              const BluetoothUuid& aServiceUuid,
               int aChannel, bool aEncrypt, bool aAuth,
               BluetoothSocketResultHandler* aRes) override;
 
-  void Connect(const nsAString& aBdAddr,
+  void Connect(const BluetoothAddress& aBdAddr,
                BluetoothSocketType aType,
-               const uint8_t aUuid[16],
+               const BluetoothUuid& aServiceUuid,
                int aChannel, bool aEncrypt, bool aAuth,
                BluetoothSocketResultHandler* aRes) override;
 

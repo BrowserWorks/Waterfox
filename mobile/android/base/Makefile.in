@@ -49,20 +49,36 @@ GARBAGE_DIRS += classes db jars res sync services generated
 # over changes in behaviour between versions.
 JAVA_BOOTCLASSPATH := \
     $(ANDROID_SDK)/android.jar \
-    $(ANDROID_COMPAT_LIB) \
     $(NULL)
 
 JAVA_BOOTCLASSPATH := $(subst $(NULL) ,:,$(strip $(JAVA_BOOTCLASSPATH)))
 
-JAVA_CLASSPATH += $(ANDROID_RECYCLERVIEW_LIB)
+JAVA_CLASSPATH += \
+    $(ANDROID_SUPPORT_ANNOTATIONS_JAR_LIB) \
+    $(ANDROID_SUPPORT_V4_AAR_LIB) \
+    $(ANDROID_SUPPORT_V4_AAR_INTERNAL_LIB) \
+    $(ANDROID_APPCOMPAT_V7_AAR_LIB) \
+    $(ANDROID_DESIGN_AAR_LIB) \
+    $(ANDROID_RECYCLERVIEW_V7_AAR_LIB) \
+    $(NULL)
 
 # If native devices are enabled, add Google Play Services and some of the v7
 # compat libraries.
 ifdef MOZ_NATIVE_DEVICES
     JAVA_CLASSPATH += \
-        $(GOOGLE_PLAY_SERVICES_LIB) \
-        $(ANDROID_MEDIAROUTER_LIB) \
-        $(ANDROID_APPCOMPAT_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASE_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASEMENT_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_CAST_AAR_LIB) \
+        $(ANDROID_MEDIAROUTER_V7_AAR_LIB) \
+        $(ANDROID_MEDIAROUTER_V7_AAR_INTERNAL_LIB) \
+        $(NULL)
+endif
+
+ifdef MOZ_ANDROID_GCM
+    JAVA_CLASSPATH += \
+        $(ANDROID_PLAY_SERVICES_BASE_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASEMENT_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_GCM_AAR_LIB) \
         $(NULL)
 endif
 
@@ -71,18 +87,35 @@ JAVA_CLASSPATH := $(subst $(NULL) ,:,$(strip $(JAVA_CLASSPATH)))
 # Library jars that we're bundling: these are subject to Proguard before inclusion
 # into classes.dex.
 java_bundled_libs := \
-    $(ANDROID_COMPAT_LIB) \
-    $(ANDROID_RECYCLERVIEW_LIB) \
+    $(ANDROID_SUPPORT_V4_AAR_LIB) \
+    $(ANDROID_SUPPORT_V4_AAR_INTERNAL_LIB) \
+    $(ANDROID_APPCOMPAT_V7_AAR_LIB) \
+    $(ANDROID_DESIGN_AAR_LIB) \
+    $(ANDROID_RECYCLERVIEW_V7_AAR_LIB) \
     $(NULL)
 
 ifdef MOZ_NATIVE_DEVICES
     java_bundled_libs += \
-        $(GOOGLE_PLAY_SERVICES_LIB) \
-        $(ANDROID_MEDIAROUTER_LIB) \
-        $(ANDROID_APPCOMPAT_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASE_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASEMENT_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_CAST_AAR_LIB) \
+        $(ANDROID_MEDIAROUTER_V7_AAR_LIB) \
+        $(ANDROID_MEDIAROUTER_V7_AAR_INTERNAL_LIB) \
         $(NULL)
 endif
 
+ifdef MOZ_ANDROID_GCM
+    java_bundled_libs += \
+        $(ANDROID_PLAY_SERVICES_BASE_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_BASEMENT_AAR_LIB) \
+        $(ANDROID_PLAY_SERVICES_GCM_AAR_LIB) \
+        $(NULL)
+endif
+
+# uniq purloined from http://stackoverflow.com/a/16151140.
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
+
+java_bundled_libs := $(call uniq,$(java_bundled_libs))
 java_bundled_libs := $(subst $(NULL) ,:,$(strip $(java_bundled_libs)))
 
 # All the jars we're compiling from source. (not to be confused with
@@ -199,17 +232,9 @@ classycle_jar := $(topsrcdir)/mobile/android/build/classycle/classycle-1.4.1.jar
 CLASSES_WITH_JNI= \
     org.mozilla.gecko.GeckoAppShell \
     org.mozilla.gecko.GeckoJavaSampler \
+    org.mozilla.gecko.GeckoSmsManager \
     org.mozilla.gecko.gfx.NativePanZoomController \
     $(NULL)
-
-ifdef MOZ_WEBSMS_BACKEND
-# Note: if you are building with MOZ_WEBSMS_BACKEND turned on, then
-# you will get a build error because the generated jni-stubs.inc will
-# be different than the one checked in (i.e. it will have the sms-related
-# JNI stubs as well). Just copy the generated file to mozglue/android/
-# like the error message says and rebuild. All should be well after that.
-CLASSES_WITH_JNI += org.mozilla.gecko.GeckoSmsManager
-endif
 
 jni-stubs.inc: gecko-browser.jar constants.jar gecko-mozglue.jar gecko-util.jar sync-thirdparty.jar
 	$(JAVAH) -o javah.out -bootclasspath $(JAVA_BOOTCLASSPATH) -classpath $(subst $(NULL) $(NULL),:,$^) $(CLASSES_WITH_JNI)
@@ -358,10 +383,15 @@ endif
 generated/org/mozilla/gecko/R.java: .aapt.deps ;
 
 # If native devices are enabled, add Google Play Services, build their resources
+generated/android/support/v4/R.java: .aapt.deps ;
 generated/android/support/v7/appcompat/R.java: .aapt.deps ;
+generated/android/support/design/R.java: .aapt.deps ;
 generated/android/support/v7/mediarouter/R.java: .aapt.deps ;
 generated/android/support/v7/recyclerview/R.java: .aapt.deps ;
 generated/com/google/android/gms/R.java: .aapt.deps ;
+generated/com/google/android/gms/base/R.java: .aapt.deps ;
+generated/com/google/android/gms/cast/R.java: .aapt.deps ;
+generated/com/google/android/gms/gcm/R.java: .aapt.deps ;
 
 gecko.ap_: .aapt.deps ;
 R.txt: .aapt.deps ;
@@ -457,7 +487,9 @@ $(abspath $(DIST)/fennec/$(OMNIJAR_NAME)): FORCE
 	$(RM) $(DIST)/fennec/$(notdir $(OMNIJAR_NAME))
 
 # Targets built very early during a Gradle build.
-gradle-targets: .aapt.deps
+gradle-targets: $(foreach f,$(constants_PP_JAVAFILES),$(f))
+gradle-targets: $(abspath AndroidManifest.xml)
+gradle-targets: $(ANDROID_GENERATED_RESFILES)
 
 gradle-omnijar: $(abspath $(DIST)/fennec/$(OMNIJAR_NAME))
 

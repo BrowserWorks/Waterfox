@@ -69,6 +69,27 @@ TiledContentHost::~TiledContentHost()
   MOZ_COUNT_DTOR(TiledContentHost);
 }
 
+already_AddRefed<TexturedEffect>
+TiledContentHost::GenEffect(const gfx::Filter& aFilter)
+{
+  // If we can use hwc for this TiledContentHost, it implies that we have exactly
+  // one high precision tile. Please check TiledContentHost::GetRenderState() for
+  // all condition.
+  MOZ_ASSERT(mTiledBuffer.GetTileCount() == 1 && mLowPrecisionTiledBuffer.GetTileCount() == 0);
+  MOZ_ASSERT(mTiledBuffer.GetTile(0).mTextureHost);
+
+  TileHost& tile = mTiledBuffer.GetTile(0);
+  if (!tile.mTextureHost->BindTextureSource(tile.mTextureSource)) {
+    return nullptr;
+  }
+
+  return CreateTexturedEffect(tile.mTextureSource,
+                              nullptr,
+                              aFilter,
+                              true,
+                              tile.mTextureHost->GetRenderState());
+}
+
 void
 TiledContentHost::Attach(Layer* aLayer,
                          Compositor* aCompositor,
@@ -141,7 +162,7 @@ bool
 GetCopyOnWriteLock(const TileLock& ipcLock, TileHost& aTile, ISurfaceAllocator* aAllocator) {
   MOZ_ASSERT(aAllocator);
 
-  nsRefPtr<gfxSharedReadLock> sharedLock;
+  RefPtr<gfxSharedReadLock> sharedLock;
   if (ipcLock.type() == TileLock::TShmemSection) {
     sharedLock = gfxShmSharedReadLock::Open(aAllocator, ipcLock.get_ShmemSection());
   } else {
@@ -408,7 +429,7 @@ TiledContentHost::Composite(LayerComposite* aLayer,
   // already has some opacity, we want to skip this behaviour. Otherwise
   // we end up changing the expected overall transparency of the content,
   // and it just looks wrong.
-  gfxRGBA backgroundColor(0);
+  Color backgroundColor;
   if (aOpacity == 1.0f && gfxPrefs::LowPrecisionOpacity() < 1.0f) {
     // Background colors are only stored on scrollable layers. Grab
     // the one from the nearest scrollable ancestor layer.
@@ -511,7 +532,7 @@ TiledContentHost::RenderTile(TileHost& aTile,
 
 void
 TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
-                                    const gfxRGBA* aBackgroundColor,
+                                    const Color* aBackgroundColor,
                                     EffectChain& aEffectChain,
                                     float aOpacity,
                                     const gfx::Filter& aFilter,
@@ -569,7 +590,7 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
     nsIntRegion backgroundRegion = compositeRegion;
     backgroundRegion.ScaleRoundOut(resolution, resolution);
     EffectChain effect;
-    effect.mPrimaryEffect = new EffectSolidColor(ToColor(*aBackgroundColor));
+    effect.mPrimaryEffect = new EffectSolidColor(*aBackgroundColor);
     nsIntRegionRectIterator it(backgroundRegion);
     for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
       Rect graphicsRect(rect->x, rect->y, rect->width, rect->height);
@@ -631,7 +652,8 @@ TiledContentHost::Dump(std::stringstream& aStream,
                        const char* aPrefix,
                        bool aDumpHtml)
 {
-  mTiledBuffer.Dump(aStream, aPrefix, aDumpHtml);
+  mTiledBuffer.Dump(aStream, aPrefix, aDumpHtml,
+      TextureDumpMode::DoNotCompress /* compression not supported on host side */);
 }
 
 } // namespace layers

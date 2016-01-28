@@ -42,7 +42,7 @@ class Tokenizer : public Lexer
     void setLineNumber(int line);
     void setMaxTokenSize(size_t maxTokenSize);
 
-    virtual void lex(Token *token);
+    void lex(Token *token) override;
 
   private:
     PP_DISALLOW_COPY_AND_ASSIGN(Tokenizer);
@@ -55,5 +55,5 @@ class Tokenizer : public Lexer
 };
 
 }  // namespace pp
-#endif  // COMPILER_PREPROCESSOR_TOKENIZER_H_
 
+#endif  // COMPILER_PREPROCESSOR_TOKENIZER_H_

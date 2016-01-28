@@ -25,12 +25,16 @@
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
+#include "mozilla/layers/AsyncCanvasRenderer.h"
+#include "mozilla/layers/CompositableClient.h"  // for CompositableClient
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayerManagerComposite.h"  // for LayerComposite
 #include "mozilla/layers/LayerMetricsWrapper.h" // for LayerMetricsWrapper
 #include "mozilla/layers/LayersMessages.h"  // for TransformFunction, etc
+#include "mozilla/layers/LayersTypes.h"  // for TextureDumpMode
 #include "mozilla/layers/PersistentBufferProvider.h"
+#include "mozilla/layers/ShadowLayers.h"  // for ShadowableLayer
 #include "nsAString.h"
 #include "nsCSSValue.h"                 // for nsCSSValue::Array, etc
 #include "nsPrintfCString.h"            // for nsPrintfCString
@@ -191,7 +195,7 @@ LayerManager::Mutated(Layer* aLayer)
 already_AddRefed<ImageContainer>
 LayerManager::CreateImageContainer(ImageContainer::Mode flag)
 {
-  nsRefPtr<ImageContainer> container = new ImageContainer(flag);
+  RefPtr<ImageContainer> container = new ImageContainer(flag);
   return container.forget();
 }
 
@@ -199,6 +203,19 @@ bool
 LayerManager::AreComponentAlphaLayersEnabled()
 {
   return gfxPrefs::ComponentAlphaEnabled();
+}
+
+/*static*/ void
+LayerManager::LayerUserDataDestroy(void* data)
+{
+  delete static_cast<LayerUserData*>(data);
+}
+
+nsAutoPtr<LayerUserData>
+LayerManager::RemoveUserData(void* aKey)
+{
+  nsAutoPtr<LayerUserData> d(static_cast<LayerUserData*>(mUserData.Remove(static_cast<gfx::UserDataKey*>(aKey))));
+  return d;
 }
 
 //--------------------------------------------------
@@ -298,7 +315,7 @@ CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
   nsAutoPtr<nsCSSValueList> result;
   nsCSSValueList** resultTail = getter_Transfers(result);
   for (uint32_t i = 0; i < aFunctions.Length(); i++) {
-    nsRefPtr<nsCSSValue::Array> arr;
+    RefPtr<nsCSSValue::Array> arr;
     switch (aFunctions[i].type()) {
       case TransformFunction::TRotationX:
       {
@@ -463,9 +480,11 @@ Layer::SetAnimations(const AnimationArray& aAnimations)
           NS_ASSERTION(tf.type() == TimingFunction::TStepFunction,
                        "Function must be bezier or step");
           StepFunction sf = tf.get_StepFunction();
-          nsTimingFunction::Type type = sf.type() == 1 ? nsTimingFunction::StepStart
-                                                       : nsTimingFunction::StepEnd;
-          ctf->Init(nsTimingFunction(type, sf.steps()));
+          nsTimingFunction::Type type = sf.type() == 1 ?
+                                          nsTimingFunction::Type::StepStart :
+                                          nsTimingFunction::Type::StepEnd;
+          ctf->Init(nsTimingFunction(type, sf.steps(),
+                                     nsTimingFunction::Keyword::Explicit));
           break;
         }
       }
@@ -869,12 +888,6 @@ Layer::GetEffectiveMixBlendMode()
   return mMixBlendMode;
 }
 
-gfxContext::GraphicsOperator
-Layer::DeprecatedGetEffectiveMixBlendMode()
-{
-  return ThebesOp(GetEffectiveMixBlendMode());
-}
-
 void
 Layer::ComputeEffectiveTransformForMaskLayers(const gfx::Matrix4x4& aTransformToSurface)
 {
@@ -919,6 +932,10 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
 {
   MOZ_ASSERT(aLayerOffset, "invalid offset pointer");
 
+  if (!GetParent()) {
+    return false;
+  }
+
   IntPoint offset;
   aResult = GetEffectiveVisibleRegion();
   for (Layer* layer = this; layer; layer = layer->GetParent()) {
@@ -960,6 +977,12 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
       nsIntRegion siblingVisibleRegion(sibling->GetEffectiveVisibleRegion());
       // Translate the siblings region to |layer|'s origin.
       siblingVisibleRegion.MoveBy(-siblingOffset.x, -siblingOffset.y);
+      // Apply the sibling's clip.
+      // Layer clip rects are not affected by the layer's transform.
+      Maybe<ParentLayerIntRect> clipRect = sibling->GetEffectiveClipRect();
+      if (clipRect) {
+        siblingVisibleRegion.AndWith(ParentLayerIntRect::ToUntyped(*clipRect));
+      }
       // Subtract the sibling visible region from the visible region of |this|.
       aResult.SubOut(siblingVisibleRegion);
     }
@@ -1506,18 +1529,6 @@ static void PrintInfo(std::stringstream& aStream, LayerComposite* aLayerComposit
 
 #ifdef MOZ_DUMP_PAINTING
 template <typename T>
-void WriteSnapshotLinkToDumpFile(T* aObj, std::stringstream& aStream)
-{
-  if (!aObj) {
-    return;
-  }
-  nsCString string(aObj->Name());
-  string.Append('-');
-  string.AppendInt((uint64_t)aObj);
-  aStream << nsPrintfCString("href=\"javascript:ViewImage('%s')\"", string.BeginReading()).get();
-}
-
-template <typename T>
 void WriteSnapshotToDumpFile_internal(T* aObj, DataSourceSurface* aSurf)
 {
   nsCString string(aObj->Name());
@@ -1553,11 +1564,20 @@ void WriteSnapshotToDumpFile(Compositor* aCompositor, DrawTarget* aTarget)
 void
 Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
 {
+#ifdef MOZ_DUMP_PAINTING
+  bool dumpCompositorTexture = gfxUtils::sDumpCompositorTextures && AsLayerComposite() &&
+                               AsLayerComposite()->GetCompositableHost();
+  bool dumpClientTexture = gfxUtils::sDumpPainting && AsShadowableLayer() &&
+                           AsShadowableLayer()->GetCompositableClient();
+  nsCString layerId(Name());
+  layerId.Append('-');
+  layerId.AppendInt((uint64_t)this);
+#endif
   if (aDumpHtml) {
     aStream << nsPrintfCString("<li><a id=\"%p\" ", this).get();
 #ifdef MOZ_DUMP_PAINTING
-    if (GetType() == TYPE_CONTAINER || GetType() == TYPE_PAINTED) {
-      WriteSnapshotLinkToDumpFile(this, aStream);
+    if (dumpCompositorTexture || dumpClientTexture) {
+      aStream << nsPrintfCString("href=\"javascript:ViewImage('%s')\"", layerId.BeginReading()).get();
     }
 #endif
     aStream << ">";
@@ -1565,13 +1585,27 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
   DumpSelf(aStream, aPrefix);
 
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxUtils::sDumpPainting && AsLayerComposite() && AsLayerComposite()->GetCompositableHost()) {
+  if (dumpCompositorTexture) {
     AsLayerComposite()->GetCompositableHost()->Dump(aStream, aPrefix, aDumpHtml);
+  } else if (dumpClientTexture) {
+    if (aDumpHtml) {
+      aStream << nsPrintfCString("<script>array[\"%s\"]=\"", layerId.BeginReading()).get();
+    }
+    AsShadowableLayer()->GetCompositableClient()->Dump(aStream, aPrefix,
+        aDumpHtml, TextureDumpMode::DoNotCompress);
+    if (aDumpHtml) {
+      aStream << "\";</script>";
+    }
   }
 #endif
 
   if (aDumpHtml) {
     aStream << "</a>";
+#ifdef MOZ_DUMP_PAINTING
+    if (dumpClientTexture) {
+      aStream << nsPrintfCString("<br><img id=\"%s\">\n", layerId.BeginReading()).get();
+    }
+#endif
   }
 
   if (Layer* mask = GetMaskLayer()) {
@@ -1744,8 +1778,9 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
   if (GetIsFixedPosition()) {
     LayerPoint anchor = GetFixedPositionAnchor();
-    aStream << nsPrintfCString(" [isFixedPosition scrollId=%lld anchor=%s%s]",
+    aStream << nsPrintfCString(" [isFixedPosition scrollId=%lld sides=0x%x anchor=%s%s]",
                      GetFixedPositionScrollContainerId(),
+                     GetFixedPositionSides(),
                      ToString(anchor).c_str(),
                      IsClipFixed() ? "" : " scrollingClip").get();
   }
@@ -1900,6 +1935,13 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   }
 }
 
+nsAutoPtr<LayerUserData>
+Layer::RemoveUserData(void* aKey)
+{
+  nsAutoPtr<LayerUserData> d(static_cast<LayerUserData*>(mUserData.Remove(static_cast<gfx::UserDataKey*>(aKey))));
+  return d;
+}
+
 void
 PaintedLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
@@ -1972,14 +2014,27 @@ ColorLayer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   using namespace layerscope;
   LayersPacket::Layer* layer = aPacket->mutable_layer(aPacket->layer_size()-1);
   layer->set_type(LayersPacket::Layer::ColorLayer);
-  layer->set_color(mColor.Packed());
+  layer->set_color(mColor.ToABGR());
 }
+
+CanvasLayer::CanvasLayer(LayerManager* aManager, void* aImplData)
+  : Layer(aManager, aImplData)
+  , mPreTransCallback(nullptr)
+  , mPreTransCallbackData(nullptr)
+  , mPostTransCallback(nullptr)
+  , mPostTransCallbackData(nullptr)
+  , mFilter(gfx::Filter::GOOD)
+  , mDirty(false)
+{}
+
+CanvasLayer::~CanvasLayer()
+{}
 
 void
 CanvasLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
   Layer::PrintInfo(aStream, aPrefix);
-  if (mFilter != GraphicsFilter::FILTER_GOOD) {
+  if (mFilter != Filter::GOOD) {
     AppendToString(aStream, mFilter, " [filter=", "]");
   }
 }
@@ -1987,27 +2042,18 @@ CanvasLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 // This help function is used to assign the correct enum value
 // to the packet
 static void
-DumpFilter(layerscope::LayersPacket::Layer* aLayer, const GraphicsFilter& aFilter)
+DumpFilter(layerscope::LayersPacket::Layer* aLayer, const Filter& aFilter)
 {
   using namespace layerscope;
   switch (aFilter) {
-    case GraphicsFilter::FILTER_FAST:
-      aLayer->set_filter(LayersPacket::Layer::FILTER_FAST);
-      break;
-    case GraphicsFilter::FILTER_GOOD:
+    case Filter::GOOD:
       aLayer->set_filter(LayersPacket::Layer::FILTER_GOOD);
       break;
-    case GraphicsFilter::FILTER_BEST:
-      aLayer->set_filter(LayersPacket::Layer::FILTER_BEST);
+    case Filter::LINEAR:
+      aLayer->set_filter(LayersPacket::Layer::FILTER_LINEAR);
       break;
-    case GraphicsFilter::FILTER_NEAREST:
-      aLayer->set_filter(LayersPacket::Layer::FILTER_NEAREST);
-      break;
-    case GraphicsFilter::FILTER_BILINEAR:
-      aLayer->set_filter(LayersPacket::Layer::FILTER_BILINEAR);
-      break;
-    case GraphicsFilter::FILTER_GAUSSIAN:
-      aLayer->set_filter(LayersPacket::Layer::FILTER_GAUSSIAN);
+    case Filter::POINT:
+      aLayer->set_filter(LayersPacket::Layer::FILTER_POINT);
       break;
     default:
       // ignore it
@@ -2030,7 +2076,7 @@ void
 ImageLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
   Layer::PrintInfo(aStream, aPrefix);
-  if (mFilter != GraphicsFilter::FILTER_GOOD) {
+  if (mFilter != Filter::GOOD) {
     AppendToString(aStream, mFilter, " [filter=", "]");
   }
 }
@@ -2074,7 +2120,7 @@ ReadbackLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   if (mBackgroundLayer) {
     AppendToString(aStream, mBackgroundLayer, " [backgroundLayer=", "]");
     AppendToString(aStream, mBackgroundLayerOffset, " [backgroundOffset=", "]");
-  } else if (mBackgroundColor.a == 1.0) {
+  } else if (mBackgroundColor.a == 1.f) {
     AppendToString(aStream, mBackgroundColor, " [backgroundColor=", "]");
   } else {
     aStream << " [nobackground]";
@@ -2102,17 +2148,10 @@ LayerManager::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHt
 {
 #ifdef MOZ_DUMP_PAINTING
   if (aDumpHtml) {
-    aStream << "<ul><li><a ";
-    WriteSnapshotLinkToDumpFile(this, aStream);
-    aStream << ">";
+    aStream << "<ul><li>";
   }
 #endif
   DumpSelf(aStream, aPrefix);
-#ifdef MOZ_DUMP_PAINTING
-  if (aDumpHtml) {
-    aStream << "</a>";
-  }
-#endif
 
   nsAutoCString pfx(aPrefix);
   pfx += "  ";

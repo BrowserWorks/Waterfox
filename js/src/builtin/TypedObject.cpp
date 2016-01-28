@@ -19,7 +19,6 @@
 #include "vm/String.h"
 #include "vm/StringBuffer.h"
 #include "vm/TypedArrayObject.h"
-#include "vm/WeakMapObject.h"
 
 #include "jsatominlines.h"
 #include "jsobjinlines.h"
@@ -225,7 +224,6 @@ const Class js::ScalarTypeDescr::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     TypeDescr::finalize,
     ScalarTypeDescr::call
 };
@@ -323,7 +321,6 @@ const Class js::ReferenceTypeDescr::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     TypeDescr::finalize,
     ReferenceTypeDescr::call
 };
@@ -503,7 +500,6 @@ const Class ArrayTypeDescr::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     TypeDescr::finalize,
     nullptr, /* call */
     nullptr, /* hasInstance */
@@ -645,11 +641,8 @@ ArrayMetaTypeDescr::construct(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (!args.isConstructing()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_NOT_FUNCTION, "ArrayType");
+    if (!ThrowIfNotConstructing(cx, args, "ArrayType"))
         return false;
-    }
 
     RootedObject arrayTypeGlobal(cx, &args.callee());
 
@@ -732,7 +725,6 @@ const Class StructTypeDescr::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     TypeDescr::finalize,
     nullptr, /* call */
     nullptr, /* hasInstance */
@@ -1003,11 +995,8 @@ StructMetaTypeDescr::construct(JSContext* cx, unsigned int argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (!args.isConstructing()) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                             JSMSG_NOT_FUNCTION, "StructType");
+    if (!ThrowIfNotConstructing(cx, args, "StructType"))
         return false;
-    }
 
     if (args.length() >= 1 && args[0].isObject()) {
         RootedObject metaTypeDescr(cx, &args.callee());
@@ -1473,7 +1462,7 @@ OutlineTypedObject::setOwnerAndData(JSObject* owner, uint8_t* data)
     // Trigger a post barrier when attaching an object outside the nursery to
     // one that is inside it.
     if (owner && !IsInsideNursery(this) && IsInsideNursery(owner))
-        runtimeFromMainThread()->gc.storeBuffer.putWholeCellFromMainThread(this);
+        runtimeFromMainThread()->gc.storeBuffer.putWholeCell(this);
 }
 
 /*static*/ OutlineTypedObject*
@@ -1520,8 +1509,11 @@ OutlineTypedObject::attach(JSContext* cx, ArrayBufferObject& buffer, int32_t off
 
     buffer.setHasTypedObjectViews();
 
-    if (!buffer.addView(cx, this))
-        CrashAtUnhandlableOOM("TypedObject::attach");
+    {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!buffer.addView(cx, this))
+            oomUnsafe.crash("TypedObject::attach");
+    }
 
     setOwnerAndData(&buffer, buffer.dataPointer() + offset);
 }
@@ -1922,7 +1914,7 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
         uint32_t index;
         if (IdIsIndex(id, &index)) {
             if (!receiver.isObject() || obj != &receiver.toObject())
-                return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+                return SetPropertyByDefining(cx, id, v, receiver, result);
 
             if (index >= uint32_t(typedObj->length())) {
                 JS_ReportErrorNumber(cx, GetErrorMessage,
@@ -1948,7 +1940,7 @@ TypedObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, Handl
             break;
 
         if (!receiver.isObject() || obj != &receiver.toObject())
-            return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+            return SetPropertyByDefining(cx, id, v, receiver, result);
 
         size_t offset = descr->fieldOffset(fieldIndex);
         Rooted<TypeDescr*> fieldType(cx, &descr->fieldDescr(fieldIndex));
@@ -2226,7 +2218,7 @@ InlineTransparentTypedObject::getOrCreateBuffer(JSContext* cx)
     if (IsInsideNursery(this)) {
         // Make sure the buffer is traced by the next generational collection,
         // so that its data pointer is updated after this typed object moves.
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(buffer);
+        cx->runtime()->gc.storeBuffer.putWholeCell(buffer);
     }
 
     return buffer;
@@ -2255,7 +2247,6 @@ OutlineTransparentTypedObject::getOrCreateBuffer(JSContext* cx)
         nullptr,        /* enumerate   */                \
         nullptr,        /* resolve     */                \
         nullptr,        /* mayResolve  */                \
-        nullptr,        /* convert     */                \
         nullptr,        /* finalize    */                \
         nullptr,        /* call        */                \
         nullptr,        /* hasInstance */                \
@@ -3026,8 +3017,9 @@ TraceListVisitor::visitReference(ReferenceTypeDescr& descr, uint8_t* mem)
       default: MOZ_CRASH("Invalid kind");
     }
 
+    AutoEnterOOMUnsafeRegion oomUnsafe;
     if (!offsets->append((uintptr_t) mem))
-        CrashAtUnhandlableOOM("TraceListVisitor::visitReference");
+        oomUnsafe.crash("TraceListVisitor::visitReference");
 }
 
 bool

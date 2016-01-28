@@ -63,22 +63,13 @@ public:
   // ISurfaceAllocator
   virtual bool AllocShmem(size_t aSize,
                           ipc::SharedMemory::SharedMemoryType aType,
-                          ipc::Shmem* aShmem) override {
-    return PLayerTransactionParent::AllocShmem(aSize, aType, aShmem);
-  }
+                          ipc::Shmem* aShmem) override;
 
   virtual bool AllocUnsafeShmem(size_t aSize,
                                 ipc::SharedMemory::SharedMemoryType aType,
-                                ipc::Shmem* aShmem) override {
-    return PLayerTransactionParent::AllocUnsafeShmem(aSize, aType, aShmem);
-  }
+                                ipc::Shmem* aShmem) override;
 
-  virtual void DeallocShmem(ipc::Shmem& aShmem) override
-  {
-    PLayerTransactionParent::DeallocShmem(aShmem);
-  }
-
-  virtual LayersBackend GetCompositorBackendType() const override;
+  virtual void DeallocShmem(ipc::Shmem& aShmem) override;
 
   virtual bool IsSameProcess() const override;
 
@@ -150,6 +141,7 @@ protected:
   virtual bool DeallocPCompositableParent(PCompositableParent* actor) override;
 
   virtual PTextureParent* AllocPTextureParent(const SurfaceDescriptor& aSharedData,
+                                              const LayersBackend& aLayersBackend,
                                               const TextureFlags& aFlags) override;
   virtual bool DeallocPTextureParent(PTextureParent* actor) override;
 
@@ -177,11 +169,11 @@ protected:
   friend class layout::RenderFrameParent;
 
 private:
-  nsRefPtr<LayerManagerComposite> mLayerManager;
+  RefPtr<LayerManagerComposite> mLayerManager;
   ShadowLayersManager* mShadowLayersManager;
   // Hold the root because it might be grafted under various
   // containers in the "real" layer tree
-  nsRefPtr<Layer> mRoot;
+  RefPtr<Layer> mRoot;
   // When this is nonzero, it refers to a layer tree owned by the
   // compositor thread.  It is always true that
   //   mId != 0 => mRoot == null

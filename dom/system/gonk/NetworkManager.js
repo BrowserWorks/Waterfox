@@ -35,6 +35,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gPACGenerator",
                                    "@mozilla.org/pac-generator;1",
                                    "nsIPACGenerator");
 
+XPCOMUtils.defineLazyServiceGetter(this, "gTetheringService",
+                                   "@mozilla.org/tethering/service;1",
+                                   "nsITetheringService");
+
 const TOPIC_INTERFACE_REGISTERED     = "network-interface-registered";
 const TOPIC_INTERFACE_UNREGISTERED   = "network-interface-unregistered";
 const TOPIC_ACTIVE_CHANGED           = "network-active-changed";
@@ -99,6 +103,7 @@ function ExtraNetworkInfo(aNetwork) {
   this.dnses = aNetwork.info.getDnses();
   this.httpProxyHost = aNetwork.httpProxyHost;
   this.httpProxyPort = aNetwork.httpProxyPort;
+  this.mtu = aNetwork.mtu;
 }
 ExtraNetworkInfo.prototype = {
   getAddresses: function(aIps, aPrefixLengths) {
@@ -231,7 +236,8 @@ NetworkManager.prototype = {
         let excludeFota = aMsg.json.excludeFota;
         let interfaces = [];
 
-        for each (let network in this.networkInterfaces) {
+        for (let key in this.networkInterfaces) {
+          let network = this.networkInterfaces[key];
           let i = network.info;
           if ((i.type == Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_MMS && excludeMms) ||
               (i.type == Ci.nsINetworkInfo.NETWORK_TYPE_MOBILE_SUPL && excludeSupl) ||
@@ -369,6 +375,13 @@ NetworkManager.prototype = {
             return this.setSecondaryDefaultRoute(extNetworkInfo);
           })
           .then(() => this._addSubnetRoutes(extNetworkInfo))
+          .then(() => {
+            if (extNetworkInfo.mtu <= 0) {
+              return;
+            }
+
+            return this._setMtu(extNetworkInfo);
+          })
           .then(() => this.setAndConfigureActive())
           .then(() => {
             // Update data connection when Wifi connected/disconnected
@@ -813,7 +826,8 @@ NetworkManager.prototype = {
     this._activeNetwork = null;
     let anyConnected = false;
 
-    for each (let network in this.networkInterfaces) {
+    for (let key in this.networkInterfaces) {
+      let network = this.networkInterfaces[key];
       if (network.info.state != Ci.nsINetworkInfo.NETWORK_STATE_CONNECTED) {
         continue;
       }
@@ -847,7 +861,9 @@ NetworkManager.prototype = {
         }
 
         if (this._manageOfflineStatus) {
-          Services.io.offline = !anyConnected;
+          Services.io.offline = !anyConnected &&
+                                (gTetheringService.state ===
+                                 Ci.nsITetheringService.TETHERING_STATE_INACTIVE);
         }
       });
   },
@@ -938,6 +954,18 @@ NetworkManager.prototype = {
           aReject("setDNS failed");
           return;
         }
+        aResolve();
+      });
+    });
+  },
+
+  _setMtu: function(aNetworkInfo) {
+    return new Promise((aResolve, aReject) => {
+      gNetworkService.setMtu(aNetworkInfo.name, aNetworkInfo.mtu, (aSuccess) => {
+        if (!aSuccess) {
+          debug("setMtu failed");
+        }
+        // Always resolve.
         aResolve();
       });
     });

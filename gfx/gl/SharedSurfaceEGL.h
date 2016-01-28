@@ -46,7 +46,7 @@ public:
 protected:
     GLContext* mCurConsGL;
     GLuint mConsTex;
-    nsRefPtr<TextureGarbageBin> mGarbageBin;
+    RefPtr<TextureGarbageBin> mGarbageBin;
     EGLSync mSync;
 
     SharedSurface_EGLImage(GLContext* gl,
@@ -81,6 +81,8 @@ public:
     void AcquireConsumerTexture(GLContext* consGL, GLuint* out_texture, GLuint* out_target);
 
     virtual bool ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor) override;
+
+    virtual bool ReadbackBySharedHandle(gfx::DataSourceSurface* out_surface) override;
 };
 
 

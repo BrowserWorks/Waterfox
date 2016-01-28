@@ -507,7 +507,7 @@ nsBlockFrame::GetCaretBaseline() const
       return bp.top + firstLine->mFirstChild->GetCaretBaseline();
     }
   }
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   float inflation = nsLayoutUtils::FontSizeInflationFor(this);
   nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm), inflation);
   nscoord lineHeight =
@@ -2001,6 +2001,8 @@ nsBlockFrame::ReparentFloats(nsIFrame* aFirstFrame, nsBlockFrame* aOldParent,
   aOldParent->CollectFloats(aFirstFrame, list, aReparentSiblings);
   if (list.NotEmpty()) {
     for (nsIFrame* f : list) {
+      MOZ_ASSERT(!(f->GetStateBits() & NS_FRAME_IS_PUSHED_FLOAT),
+                 "CollectFloats should've removed that bit");
       ReparentFrame(f, aOldParent, this);
     }
     mFloats.AppendFrames(nullptr, list);
@@ -2591,7 +2593,7 @@ nsBlockFrame::ReflowDirtyLines(nsBlockReflowState& aState)
         }
       }
 
-      nsRefPtr<nsFontMetrics> fm;
+      RefPtr<nsFontMetrics> fm;
       nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
         nsLayoutUtils::FontSizeInflationFor(this));
 
@@ -4576,6 +4578,12 @@ nsBlockFrame::PushLines(nsBlockReflowState&  aState,
     CollectFloats(overBegin->mFirstChild, floats, true);
 
     if (floats.NotEmpty()) {
+#ifdef DEBUG
+      for (nsIFrame* f : floats) {
+        MOZ_ASSERT(!(f->GetStateBits() & NS_FRAME_IS_PUSHED_FLOAT),
+                   "CollectFloats should've removed that bit");
+      }
+#endif
       // Push the floats onto the front of the overflow out-of-flows list
       nsAutoOOFFrameList oofs(this);
       oofs.mList.InsertFrames(nullptr, nullptr, floats);
@@ -4705,6 +4713,12 @@ nsBlockFrame::DrainSelfOverflowList()
   // already ours. But we should put overflow floats back in mFloats.
   nsAutoOOFFrameList oofs(this);
   if (oofs.mList.NotEmpty()) {
+#ifdef DEBUG
+    for (nsIFrame* f : oofs.mList) {
+      MOZ_ASSERT(!(f->GetStateBits() & NS_FRAME_IS_PUSHED_FLOAT),
+                 "CollectFloats should've removed that bit");
+    }
+#endif
     // The overflow floats go after our regular floats.
     mFloats.AppendFrames(nullptr, oofs.mList);
   }
@@ -6796,7 +6810,7 @@ nsBlockFrame::SetInitialChildList(ChildListID     aListID,
        pseudo == nsCSSAnonBoxes::mozSVGText) &&
       GetType() != nsGkAtoms::comboboxControlFrame &&
       !IsFrameOfType(eMathML) &&
-      nsRefPtr<nsStyleContext>(GetFirstLetterStyle(presContext)) != nullptr;
+      RefPtr<nsStyleContext>(GetFirstLetterStyle(presContext)) != nullptr;
     NS_ASSERTION(haveFirstLetterStyle ==
                  ((mState & NS_BLOCK_HAS_FIRST_LETTER_STYLE) != 0),
                  "NS_BLOCK_HAS_FIRST_LETTER_STYLE state out of sync");
@@ -6838,7 +6852,7 @@ nsBlockFrame::SetInitialChildList(ChildListID     aListID,
       nsStyleContext* parentStyle =
         CorrectStyleParentFrame(this,
           nsCSSPseudoElements::GetPseudoAtom(pseudoType))->StyleContext();
-      nsRefPtr<nsStyleContext> kidSC = shell->StyleSet()->
+      RefPtr<nsStyleContext> kidSC = shell->StyleSet()->
         ResolvePseudoElementStyle(mContent->AsElement(), pseudoType,
                                   parentStyle, nullptr);
 
@@ -7171,6 +7185,9 @@ nsBlockFrame::DoCollectFloats(nsIFrame* aFrame, nsFrameList& aList,
           nsLayoutUtils::GetFloatFromPlaceholder(aFrame) : nullptr;
       while (outOfFlowFrame && outOfFlowFrame->GetParent() == this) {
         RemoveFloat(outOfFlowFrame);
+        // Remove the IS_PUSHED_FLOAT bit, in case |outOfFlowFrame| came from
+        // the PushedFloats list.
+        outOfFlowFrame->RemoveStateBits(NS_FRAME_IS_PUSHED_FLOAT);
         aList.AppendFrame(nullptr, outOfFlowFrame);
         outOfFlowFrame = outOfFlowFrame->GetNextInFlow();
         // FIXME: By not pulling floats whose parent is one of our

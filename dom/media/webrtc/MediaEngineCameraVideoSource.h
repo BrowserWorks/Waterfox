@@ -90,7 +90,7 @@ static void LogCapability(const char* aHeader,
                           uint32_t aDistance);
   virtual size_t NumCapabilities();
   virtual void GetCapability(size_t aIndex, webrtc::CaptureCapability& aOut);
-  bool ChooseCapability(const dom::MediaTrackConstraints &aConstraints,
+  virtual bool ChooseCapability(const dom::MediaTrackConstraints &aConstraints,
                         const MediaEnginePrefs &aPrefs,
                         const nsString& aDeviceId);
   void SetName(nsString aName);
@@ -107,9 +107,9 @@ static void LogCapability(const char* aHeader,
 
   // All the mMonitor accesses are from the child classes.
   Monitor mMonitor; // Monitor for processing Camera frames.
-  nsTArray<nsRefPtr<SourceMediaStream>> mSources; // When this goes empty, we shut down HW
-  nsRefPtr<layers::Image> mImage;
-  nsRefPtr<layers::ImageContainer> mImageContainer;
+  nsTArray<RefPtr<SourceMediaStream>> mSources; // When this goes empty, we shut down HW
+  RefPtr<layers::Image> mImage;
+  RefPtr<layers::ImageContainer> mImageContainer;
   int mWidth, mHeight; // protected with mMonitor on Gonk due to different threading
   // end of data protected by mMonitor
 
@@ -120,7 +120,7 @@ static void LogCapability(const char* aHeader,
   int mCaptureIndex;
   TrackID mTrackID;
 
-  webrtc::CaptureCapability mCapability; // Doesn't work on OS X.
+  webrtc::CaptureCapability mCapability;
 
   nsTArray<webrtc::CaptureCapability> mHardcodedCapabilities; // For OSX & B2G
 private:

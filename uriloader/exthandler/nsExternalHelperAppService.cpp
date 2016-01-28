@@ -337,7 +337,7 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
   nsDOMDeviceStorage::GetDefaultStorageName(NS_LITERAL_STRING("sdcard"),
                                             storageName);
 
-  nsRefPtr<DeviceStorageFile> dsf(
+  RefPtr<DeviceStorageFile> dsf(
     new DeviceStorageFile(NS_LITERAL_STRING("sdcard"),
                           storageName,
                           NS_LITERAL_STRING("downloads")));
@@ -738,7 +738,7 @@ nsExternalHelperAppService::DoContentContentProcessHelper(const nsACString& aMim
 
   uint32_t reason = nsIHelperAppLauncherDialog::REASON_CANTHANDLE;
 
-  nsRefPtr<nsExternalAppHandler> handler =
+  RefPtr<nsExternalAppHandler> handler =
     new nsExternalAppHandler(nullptr, EmptyCString(), aContentContext, aWindowContext, this,
                              fileName, reason, aForceSave);
   if (!handler) {
@@ -1870,7 +1870,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
           break;
         }
 #endif
-        // fall through
+        MOZ_FALLTHROUGH;
 
     default:
         // Generic read/write/launch error message.
@@ -1887,9 +1887,11 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
         }
         break;
     }
+
     MOZ_LOG(nsExternalHelperAppService::mLog, LogLevel::Error,
         ("Error: %s, type=%i, listener=0x%p, transfer=0x%p, rv=0x%08X\n",
          NS_LossyConvertUTF16toASCII(msgId).get(), type, mDialogProgressListener.get(), mTransfer.get(), rv));
+
     MOZ_LOG(nsExternalHelperAppService::mLog, LogLevel::Error,
         ("       path='%s'\n", NS_ConvertUTF16toUTF8(path).get()));
 
@@ -2189,13 +2191,10 @@ nsresult nsExternalAppHandler::CreateTransfer()
   // Now let's add the download to history
   nsCOMPtr<nsIDownloadHistory> dh(do_GetService(NS_DOWNLOADHISTORY_CONTRACTID));
   if (dh) {
-    nsCOMPtr<nsIURI> referrer;
-    nsCOMPtr<nsIChannel> channel = do_QueryInterface(mRequest);
-    if (channel) {
-      NS_GetReferrerFromChannel(channel, getter_AddRefs(referrer));
-    }
-
     if (channel && !NS_UsePrivateBrowsing(channel)) {
+      nsCOMPtr<nsIURI> referrer;
+      NS_GetReferrerFromChannel(channel, getter_AddRefs(referrer));
+
       dh->AddDownload(mSourceUrl, referrer, mTimeDownloadStarted, target);
     }
   }
@@ -2298,7 +2297,7 @@ void nsExternalAppHandler::RequestSaveDestination(const nsAFlatString &aDefaultF
   // picker is up would cause Cancel() to be called, and the dialog would be
   // released, which would release this object too, which would crash.
   // See Bug 249143
-  nsRefPtr<nsExternalAppHandler> kungFuDeathGrip(this);
+  RefPtr<nsExternalAppHandler> kungFuDeathGrip(this);
   nsCOMPtr<nsIHelperAppLauncherDialog> dlg(mDialog);
 
   rv = mDialog->PromptForSaveToFileAsync(this,
@@ -2558,17 +2557,15 @@ bool nsExternalAppHandler::GetNeverAskFlagFromPref(const char * prefName, const 
 
 nsresult nsExternalAppHandler::MaybeCloseWindow()
 {
-  nsCOMPtr<nsIDOMWindow> window = do_GetInterface(mContentContext);
+  nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(mContentContext);
   NS_ENSURE_STATE(window);
 
   if (mShouldCloseWindow) {
     // Reset the window context to the opener window so that the dependent
     // dialogs have a parent
-    nsCOMPtr<nsIDOMWindow> opener;
-    window->GetOpener(getter_AddRefs(opener));
+    nsCOMPtr<nsPIDOMWindow> opener = window->GetOpener();
 
-    bool isClosed;
-    if (opener && NS_SUCCEEDED(opener->GetClosed(&isClosed)) && !isClosed) {
+    if (opener && !opener->Closed()) {
       mContentContext = do_GetInterface(opener);
 
       // Now close the old window.  Do it on a timer so that we don't run
@@ -2592,7 +2589,8 @@ nsExternalAppHandler::Notify(nsITimer* timer)
 {
   NS_ASSERTION(mWindowToClose, "No window to close after timer fired");
 
-  mWindowToClose->Close();
+  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(mWindowToClose);
+  window->Close();
   mWindowToClose = nullptr;
   mTimer = nullptr;
 
@@ -2762,7 +2760,7 @@ NS_IMETHODIMP nsExternalHelperAppService::GetTypeFromExtension(const nsACString&
     return NS_OK;
 
   // Try the plugins
-  nsRefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
+  RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
   if (pluginHost &&
       pluginHost->HavePluginForExtension(aFileExt, aContentType)) {
     return NS_OK;

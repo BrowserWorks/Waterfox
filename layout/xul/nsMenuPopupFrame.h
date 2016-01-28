@@ -21,6 +21,8 @@
 
 #include "nsITimer.h"
 
+#include "Units.h"
+
 class nsIWidget;
 
 // XUL popups can be in several different states. When opening a popup, the
@@ -147,7 +149,7 @@ protected:
 
 private:
   nsCOMPtr<nsIContent> mPopup;
-  nsRefPtr<nsPresContext> mPresContext;
+  RefPtr<nsPresContext> mPresContext;
 };
 
 class nsMenuPopupFrame final : public nsBoxFrame, public nsMenuParent,
@@ -335,11 +337,11 @@ public:
 
   void ChangeByPage(bool aIsUp);
 
-  // Move the popup to the screen coordinate (aLeft, aTop) in CSS pixels.
+  // Move the popup to the screen coordinate |aPos| in CSS pixels.
   // If aUpdateAttrs is true, and the popup already has left or top attributes,
   // then those attributes are updated to the new location.
   // The frame may be destroyed by this method.
-  void MoveTo(int32_t aLeft, int32_t aTop, bool aUpdateAttrs);
+  void MoveTo(const mozilla::CSSIntPoint& aPos, bool aUpdateAttrs);
 
   void MoveToAnchor(nsIContent* aAnchorContent,
                     const nsAString& aPosition,
@@ -501,7 +503,7 @@ protected:
 
   nsMenuFrame* mCurrentMenu; // The current menu that is active.
 
-  nsRefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
+  RefPtr<nsXULPopupShownEvent> mPopupShownDispatcher;
 
   // A popup's preferred size may be different than its actual size stored in
   // mRect in the case where the popup was resized because it was too large

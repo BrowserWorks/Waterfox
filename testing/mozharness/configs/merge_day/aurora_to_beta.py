@@ -1,6 +1,11 @@
 config = {
     "log_name": "aurora_to_beta",
-
+    "version_files": [
+        "browser/config/version.txt",
+        "browser/config/version_display.txt",
+        "config/milestone.txt",
+        "b2g/confvars.sh",
+    ],
     "replacements": [
         # File, from, to
         ("{}/{}".format(d, f),
@@ -20,7 +25,17 @@ config = {
                   "browser/config/mozconfigs/win32",
                   "browser/config/mozconfigs/win64",
                   "browser/config/mozconfigs/macosx64"]
-        for f in ["debug", "nightly", "l10n-mozconfig"]
+        for f in ["debug", "nightly"]
+    ] + [
+        # File, from, to
+        (f, "ac_add_options --with-branding=browser/branding/aurora",
+         "ac_add_options --enable-official-branding")
+        for f in ["browser/config/mozconfigs/linux32/l10n-mozconfig",
+                  "browser/config/mozconfigs/linux64/l10n-mozconfig",
+                  "browser/config/mozconfigs/win32/l10n-mozconfig",
+                  "browser/config/mozconfigs/win64/l10n-mozconfig",
+                  "browser/config/mozconfigs/macosx-universal/l10n-mozconfig",
+                  "browser/config/mozconfigs/macosx64/l10n-mozconfig"]
     ] + [
         ("browser/config/mozconfigs/macosx-universal/nightly",
          "ac_add_options --with-branding=browser/branding/aurora",

@@ -201,7 +201,7 @@ class StartEvent : public ChannelEvent
     mChild->OnStart(mProtocol, mExtensions, mEffectiveURL, mEncrypted);
   }
  private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   nsCString mProtocol;
   nsCString mExtensions;
   nsString mEffectiveURL;
@@ -260,7 +260,7 @@ class StopEvent : public ChannelEvent
     mChild->OnStop(mStatusCode);
   }
  private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   nsresult mStatusCode;
 };
 
@@ -308,7 +308,7 @@ class MessageEvent : public ChannelEvent
     }
   }
  private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   nsCString mMessage;
   bool mBinary;
 };
@@ -376,7 +376,7 @@ class AcknowledgeEvent : public ChannelEvent
     mChild->OnAcknowledge(mSize);
   }
  private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   uint32_t mSize;
 };
 
@@ -420,7 +420,7 @@ class ServerCloseEvent : public ChannelEvent
     mChild->OnServerClose(mCode, mReason);
   }
  private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   uint16_t mCode;
   nsCString mReason;
 };
@@ -456,6 +456,7 @@ WebSocketChannelChild::OnServerClose(const uint16_t& aCode,
 NS_IMETHODIMP
 WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
                                  const nsACString &aOrigin,
+                                 uint64_t aInnerWindowID,
                                  nsIWebSocketListener *aListener,
                                  nsISupports *aContext)
 {
@@ -488,9 +489,10 @@ WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
   NS_ENSURE_SUCCESS(rv, rv);
 
   gNeckoChild->SendPWebSocketConstructor(this, tabChild,
-                                         IPC::SerializedLoadContext(this));
-  if (!SendAsyncOpen(uri, nsCString(aOrigin), mProtocol, mEncrypted,
-                     mPingInterval, mClientSetPingInterval,
+                                         IPC::SerializedLoadContext(this),
+                                         mSerial);
+  if (!SendAsyncOpen(uri, nsCString(aOrigin), aInnerWindowID, mProtocol,
+                     mEncrypted, mPingInterval, mClientSetPingInterval,
                      mPingResponseTimeout, mClientSetPingTimeout, loadInfoArgs)) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -524,7 +526,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   uint16_t                        mCode;
   nsCString                       mReason;
 };
@@ -576,7 +578,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<WebSocketChannelChild> mChild;
+  RefPtr<WebSocketChannelChild> mChild;
   nsCString                       mMsg;
   bool                            mBinaryMsg;
 };
@@ -647,7 +649,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<WebSocketChannelChild>      mChild;
+  RefPtr<WebSocketChannelChild>      mChild;
   nsAutoPtr<OptionalInputStreamParams> mStream;
   uint32_t                             mLength;
 };

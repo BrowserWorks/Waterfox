@@ -270,7 +270,7 @@ TextureImage::TextureImage(const gfx::IntSize& aSize,
     : mSize(aSize)
     , mWrapMode(aWrapMode)
     , mContentType(aContentType)
-    , mFilter(GraphicsFilter::FILTER_GOOD)
+    , mFilter(Filter::GOOD)
     , mFlags(aFlags)
 {}
 
@@ -291,15 +291,15 @@ BasicTextureImage::BasicTextureImage(GLuint aTexture,
 static bool
 WantsSmallTiles(GLContext* gl)
 {
-    // We must use small tiles for good performance if we can't use
-    // glTexSubImage2D() for some reason.
-    if (!CanUploadSubTextures(gl))
-        return true;
-
     // We can't use small tiles on the SGX 540, because of races in texture upload.
     if (gl->WorkAroundDriverBugs() &&
         gl->Renderer() == GLRenderer::SGX540)
         return false;
+
+    // We should use small tiles for good performance if we can't use
+    // glTexSubImage2D() for some reason.
+    if (!CanUploadSubTextures(gl))
+        return true;
 
     // Don't use small tiles otherwise. (If we implement incremental texture upload,
     // then we will want to revisit this.)
@@ -664,7 +664,7 @@ void TiledTextureImage::Resize(const gfx::IntSize& aSize)
             }
 
             // Create a new tile.
-            nsRefPtr<TextureImage> teximg =
+            RefPtr<TextureImage> teximg =
                 TileGenFunc(mGL, size, mContentType, mFlags, mImageFormat);
             if (replace)
                 mImages.ReplaceElementAt(i, teximg);
@@ -723,7 +723,7 @@ CreateBasicTextureImage(GLContext* aGL,
     aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_S, aWrapMode);
     aGL->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_WRAP_T, aWrapMode);
 
-    nsRefPtr<BasicTextureImage> texImage =
+    RefPtr<BasicTextureImage> texImage =
         new BasicTextureImage(texture, aSize, aWrapMode, aContentType,
                               aGL, aFlags, aImageFormat);
     return texImage.forget();

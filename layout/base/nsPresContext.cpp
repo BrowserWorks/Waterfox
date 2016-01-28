@@ -56,6 +56,7 @@
 #include "mozilla/dom/TabParent.h"
 #include "nsRefreshDriver.h"
 #include "Layers.h"
+#include "LayerUserData.h"
 #include "ClientLayerManager.h"
 #include "mozilla/dom/NotifyPaintEvent.h"
 #include "gfxPrefs.h"
@@ -119,7 +120,7 @@ public:
   }
 
 private:
-  nsRefPtr<nsPresContext> mPresContext;
+  RefPtr<nsPresContext> mPresContext;
   nsCString mCharSet;
 };
 
@@ -162,7 +163,7 @@ nsPresContext::IsDOMPaintEventPending()
 void
 nsPresContext::PrefChangedCallback(const char* aPrefName, void* instance_data)
 {
-  nsRefPtr<nsPresContext>  presContext =
+  RefPtr<nsPresContext>  presContext =
     static_cast<nsPresContext*>(instance_data);
 
   NS_ASSERTION(nullptr != presContext, "bad instance data");
@@ -698,7 +699,7 @@ nsPresContext::GetDocumentColorPreferences()
   // 0 = default: always, except in high contrast mode
   // 1 = always
   // 2 = never
-  if (sDocumentColorsSetting == 1) {
+  if (sDocumentColorsSetting == 1 || mDocument->IsBeingUsedAsImage()) {
     mUseDocumentColors = true;
   } else if (sDocumentColorsSetting == 2) {
     mUseDocumentColors = isChromeDocShell || mIsChromeOriginImage;
@@ -873,7 +874,7 @@ nsPresContext::PreferenceChanged(const char* aPrefName)
       // Re-fetch the view manager's window dimensions in case there's a deferred
       // resize which hasn't affected our mVisibleArea yet
       nscoord oldWidthAppUnits, oldHeightAppUnits;
-      nsRefPtr<nsViewManager> vm = shell->GetViewManager();
+      RefPtr<nsViewManager> vm = shell->GetViewManager();
       if (!vm) {
         return;
       }
@@ -1242,7 +1243,7 @@ nsPresContext::Observe(nsISupports* aSubject,
                         const char16_t* aData)
 {
   if (!nsCRT::strcmp(aTopic, "charset")) {
-    nsRefPtr<CharSetChangingRunnable> runnable =
+    RefPtr<CharSetChangingRunnable> runnable =
       new CharSetChangingRunnable(this, NS_LossyConvertUTF16toASCII(aData));
     return NS_DispatchToCurrentThread(runnable);
   }
@@ -1381,11 +1382,11 @@ nsPresContext::CompatibilityModeChanged()
   if (needsQuirkSheet) {
     // quirk.css needs to come after html.css; we just keep it at the end.
     DebugOnly<nsresult> rv =
-      styleSet->AppendStyleSheet(nsStyleSet::eAgentSheet, sheet);
+      styleSet->AppendStyleSheet(SheetType::Agent, sheet);
     NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "failed to insert quirk.css");
   } else {
     DebugOnly<nsresult> rv =
-      styleSet->RemoveStyleSheet(nsStyleSet::eAgentSheet, sheet);
+      styleSet->RemoveStyleSheet(SheetType::Agent, sheet);
     NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "failed to remove quirk.css");
   }
 
@@ -1572,6 +1573,111 @@ nsPresContext::ScreenSizeInchesForFontInflation(bool* aChanged)
   }
 
   return deviceSizeInches;
+}
+
+static bool
+CheckOverflow(const nsStyleDisplay* aDisplay, ScrollbarStyles* aStyles)
+{
+  if (aDisplay->mOverflowX == NS_STYLE_OVERFLOW_VISIBLE &&
+      aDisplay->mScrollBehavior == NS_STYLE_SCROLL_BEHAVIOR_AUTO &&
+      aDisplay->mScrollSnapTypeX == NS_STYLE_SCROLL_SNAP_TYPE_NONE &&
+      aDisplay->mScrollSnapTypeY == NS_STYLE_SCROLL_SNAP_TYPE_NONE &&
+      aDisplay->mScrollSnapPointsX == nsStyleCoord(eStyleUnit_None) &&
+      aDisplay->mScrollSnapPointsY == nsStyleCoord(eStyleUnit_None) &&
+      !aDisplay->mScrollSnapDestination.mXPosition.mHasPercent &&
+      !aDisplay->mScrollSnapDestination.mYPosition.mHasPercent &&
+      aDisplay->mScrollSnapDestination.mXPosition.mLength == 0 &&
+      aDisplay->mScrollSnapDestination.mYPosition.mLength == 0) {
+    return false;
+  }
+
+  if (aDisplay->mOverflowX == NS_STYLE_OVERFLOW_CLIP) {
+    *aStyles = ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN,
+                               NS_STYLE_OVERFLOW_HIDDEN, aDisplay);
+  } else {
+    *aStyles = ScrollbarStyles(aDisplay);
+  }
+  return true;
+}
+
+static nsIContent*
+GetPropagatedScrollbarStylesForViewport(nsPresContext* aPresContext,
+                                        ScrollbarStyles *aStyles)
+{
+  // Set default
+  *aStyles = ScrollbarStyles(NS_STYLE_OVERFLOW_AUTO, NS_STYLE_OVERFLOW_AUTO);
+
+  // We never mess with the viewport scroll state
+  // when printing or in print preview
+  if (aPresContext->IsPaginated()) {
+    return nullptr;
+  }
+
+  nsIDocument* document = aPresContext->Document();
+  Element* docElement = document->GetRootElement();
+
+  // Check the style on the document root element
+  nsStyleSet *styleSet = aPresContext->StyleSet();
+  RefPtr<nsStyleContext> rootStyle;
+  rootStyle = styleSet->ResolveStyleFor(docElement, nullptr);
+  if (CheckOverflow(rootStyle->StyleDisplay(), aStyles)) {
+    // tell caller we stole the overflow style from the root element
+    return docElement;
+  }
+
+  // Don't look in the BODY for non-HTML documents or HTML documents
+  // with non-HTML roots
+  // XXX this should be earlier; we shouldn't even look at the document root
+  // for non-HTML documents. Fix this once we support explicit CSS styling
+  // of the viewport
+  // XXX what about XHTML?
+  nsCOMPtr<nsIDOMHTMLDocument> htmlDoc(do_QueryInterface(document));
+  if (!htmlDoc || !docElement->IsHTMLElement()) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIDOMHTMLElement> body;
+  htmlDoc->GetBody(getter_AddRefs(body));
+  nsCOMPtr<nsIContent> bodyElement = do_QueryInterface(body);
+
+  if (!bodyElement ||
+      !bodyElement->NodeInfo()->Equals(nsGkAtoms::body)) {
+    // The body is not a <body> tag, it's a <frameset>.
+    return nullptr;
+  }
+
+  RefPtr<nsStyleContext> bodyStyle;
+  bodyStyle = styleSet->ResolveStyleFor(bodyElement->AsElement(), rootStyle);
+
+  if (CheckOverflow(bodyStyle->StyleDisplay(), aStyles)) {
+    // tell caller we stole the overflow style from the body element
+    return bodyElement;
+  }
+
+  return nullptr;
+}
+
+nsIContent*
+nsPresContext::UpdateViewportScrollbarStylesOverride()
+{
+  nsIContent* propagatedFrom =
+    GetPropagatedScrollbarStylesForViewport(this, &mViewportStyleScrollbar);
+
+  nsIDocument* document = Document();
+  if (Element* fullscreenElement = document->GetFullScreenElement()) {
+    // If the document is in fullscreen, but the fullscreen element is
+    // not the root element, we should explicitly suppress the scrollbar
+    // here. Note that, we still need to return the original element
+    // the styles are from, so that the state of those elements is not
+    // affected across fullscreen change.
+    if (fullscreenElement != document->GetRootElement() &&
+        fullscreenElement != propagatedFrom) {
+      mViewportStyleScrollbar = ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN,
+                                                NS_STYLE_OVERFLOW_HIDDEN);
+    }
+  }
+
+  return propagatedFrom;
 }
 
 void
@@ -1880,7 +1986,7 @@ NotifyChildrenUIResolutionChanged(nsIDOMWindow* aWindow)
     return;
   }
   nsCOMPtr<nsIDocument> doc = piWin->GetExtantDoc();
-  nsRefPtr<nsPIWindowRoot> topLevelWin = nsContentUtils::GetWindowRoot(doc);
+  RefPtr<nsPIWindowRoot> topLevelWin = nsContentUtils::GetWindowRoot(doc);
   if (!topLevelWin) {
     return;
   }
@@ -2083,7 +2189,7 @@ nsPresContext::EnsureVisible()
     docShell->GetContentViewer(getter_AddRefs(cv));
     // Make sure this is the content viewer we belong with
     if (cv) {
-      nsRefPtr<nsPresContext> currentPresContext;
+      RefPtr<nsPresContext> currentPresContext;
       cv->GetPresContext(getter_AddRefs(currentPresContext));
       if (currentPresContext == this) {
         // OK, this is us.  We want to call Show() on the content viewer.
@@ -2260,7 +2366,7 @@ nsPresContext::FireDOMPaintEvent(nsInvalidateRequestList* aList)
   // This will empty our list in case dispatching the event causes more damage
   // (hopefully it won't, or we're likely to get an infinite loop! At least
   // it won't be blocking app execution though).
-  nsRefPtr<NotifyPaintEvent> event =
+  RefPtr<NotifyPaintEvent> event =
     NS_NewDOMNotifyPaintEvent(eventTarget, this, nullptr, eAfterPaint, aList);
 
   // Even if we're not telling the window about the event (so eventTarget is
@@ -2488,7 +2594,7 @@ public:
     return NS_OK;
   }
 
-  nsRefPtr<nsPresContext> mPresContext;
+  RefPtr<nsPresContext> mPresContext;
   nsInvalidateRequestList mList;
 };
 
@@ -3101,6 +3207,12 @@ nsRootPresContext::CollectPluginGeometryUpdates(LayerManager* aLayerManager)
   mozilla::layers::ClientLayerManager* clm = aLayerManager->AsClientLayerManager();
 
   nsTArray<nsIWidget::Configuration> configurations;
+  // If there aren't any plugins to configure, clear the plugin data cache
+  // in the layer system.
+  if (!mRegisteredPlugins.Count() && clm) {
+    clm->StorePluginWidgetConfigurations(configurations);
+    return;
+  }
   PluginGetGeometryUpdate(mRegisteredPlugins, &configurations);
   if (configurations.IsEmpty()) {
     PluginDidSetGeometry(mRegisteredPlugins);

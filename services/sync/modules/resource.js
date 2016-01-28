@@ -7,10 +7,10 @@ this.EXPORTED_SYMBOLS = [
   "Resource"
 ];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://services-common/async.js");
@@ -134,7 +134,9 @@ AsyncResource.prototype = {
   //
   // Get and set the data encapulated in the resource.
   _data: null,
-  get data() this._data,
+  get data() {
+    return this._data;
+  },
   set data(value) {
     this._data = value;
   },

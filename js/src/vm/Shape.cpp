@@ -627,6 +627,9 @@ js::ReshapeForAllocKind(JSContext* cx, Shape* shape, TaggedProto proto,
     RootedId id(cx);
     RootedShape newShape(cx, EmptyShape::getInitialShape(cx, shape->getObjectClass(),
                                                          proto, nfixed, shape->getObjectFlags()));
+    if (!newShape)
+        return nullptr;
+
     for (unsigned i = 0; i < ids.length(); i++) {
         id = ids[i];
 
@@ -1202,9 +1205,10 @@ StackBaseShape::hash(const Lookup& lookup)
 }
 
 /* static */ inline bool
-StackBaseShape::match(UnownedBaseShape* key, const Lookup& lookup)
+StackBaseShape::match(ReadBarriered<UnownedBaseShape*> key, const Lookup& lookup)
 {
-    return key->flags == lookup.flags && key->clasp_ == lookup.clasp;
+    return key.unbarrieredGet()->flags == lookup.flags &&
+           key.unbarrieredGet()->clasp_ == lookup.clasp;
 }
 
 inline
@@ -1448,7 +1452,7 @@ JSCompartment::checkInitialShapesTableAfterMovingGC()
     for (InitialShapeSet::Enum e(initialShapes); !e.empty(); e.popFront()) {
         InitialShapeEntry entry = e.front();
         TaggedProto proto = entry.proto;
-        Shape* shape = entry.shape.get();
+        Shape* shape = entry.shape.unbarrieredGet();
 
         if (proto.isObject())
             CheckGCThingAfterMovingGC(proto.toObject());
@@ -1540,6 +1544,11 @@ NewObjectCache::invalidateEntriesForShape(JSContext* cx, HandleShape shape, Hand
 
     Rooted<GlobalObject*> global(cx, shape->compartment()->unsafeUnbarrieredMaybeGlobal());
     RootedObjectGroup group(cx, ObjectGroup::defaultNewGroup(cx, clasp, TaggedProto(proto)));
+    if (!group) {
+        purge();
+        cx->recoverFromOutOfMemory();
+        return;
+    }
 
     EntryIndex entry;
     if (lookupGlobal(clasp, global, kind, &entry))
@@ -1623,8 +1632,8 @@ JSCompartment::fixupInitialShapeTable()
     for (InitialShapeSet::Enum e(initialShapes); !e.empty(); e.popFront()) {
         InitialShapeEntry entry = e.front();
         bool needRekey = false;
-        if (IsForwarded(entry.shape.get())) {
-            entry.shape.set(Forwarded(entry.shape.get()));
+        if (IsForwarded(entry.shape.unbarrieredGet())) {
+            entry.shape.set(Forwarded(entry.shape.unbarrieredGet()));
             needRekey = true;
         }
         if (entry.proto.isObject() && IsForwarded(entry.proto.toObject())) {
@@ -1632,10 +1641,10 @@ JSCompartment::fixupInitialShapeTable()
             needRekey = true;
         }
         if (needRekey) {
-            InitialShapeEntry::Lookup relookup(entry.shape->getObjectClass(),
+            InitialShapeEntry::Lookup relookup(entry.shape.unbarrieredGet()->getObjectClass(),
                                                entry.proto,
-                                               entry.shape->numFixedSlots(),
-                                               entry.shape->getObjectFlags());
+                                               entry.shape.unbarrieredGet()->numFixedSlots(),
+                                               entry.shape.unbarrieredGet()->getObjectFlags());
             e.rekeyFront(relookup, entry);
         }
     }
@@ -1648,4 +1657,24 @@ AutoRooterGetterSetter::Inner::trace(JSTracer* trc)
         TraceRoot(trc, (JSObject**) pgetter, "AutoRooterGetterSetter getter");
     if ((attrs & JSPROP_SETTER) && *psetter)
         TraceRoot(trc, (JSObject**) psetter, "AutoRooterGetterSetter setter");
+}
+
+JS::ubi::Node::Size
+JS::ubi::Concrete<js::Shape>::size(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    Size size = js::gc::Arena::thingSize(get().asTenured().getAllocKind());
+
+    if (get().hasTable())
+        size += get().table().sizeOfIncludingThis(mallocSizeOf);
+
+    if (!get().inDictionary() && get().kids.isHash())
+        size += get().kids.toHash()->sizeOfIncludingThis(mallocSizeOf);
+
+    return size;
+}
+
+JS::ubi::Node::Size
+JS::ubi::Concrete<js::BaseShape>::size(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    return js::gc::Arena::thingSize(get().asTenured().getAllocKind());
 }

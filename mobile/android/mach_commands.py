@@ -80,9 +80,6 @@ class MachCommands(MachCommandBase):
         def srcdir(dst, src):
             m.add_symlink(os.path.join(self.topsrcdir, src), dst)
 
-        def objdir(dst, src):
-            m.add_symlink(os.path.join(self.topobjdir, src), dst)
-
         srcdir('build.gradle', 'mobile/android/gradle/build.gradle')
         srcdir('settings.gradle', 'mobile/android/gradle/settings.gradle')
 
@@ -103,23 +100,9 @@ class MachCommands(MachCommandBase):
             defines=defines,
             deps=os.path.join(self.topobjdir, 'mobile/android/gradle/.deps/local.properties.pp'))
 
-        srcdir('branding/build.gradle', 'mobile/android/gradle/branding/build.gradle')
-        srcdir('branding/src/main/AndroidManifest.xml', 'mobile/android/gradle/branding/AndroidManifest.xml')
-        srcdir('branding/src/main/res', os.path.join(self.substs['MOZ_BRANDING_DIRECTORY'], 'res'))
-
-        srcdir('preprocessed_code/build.gradle', 'mobile/android/gradle/preprocessed_code/build.gradle')
-        srcdir('preprocessed_code/src/main/AndroidManifest.xml', 'mobile/android/gradle/preprocessed_code/AndroidManifest.xml')
-        srcdir('preprocessed_code/src/adjust/java/org/mozilla/gecko/adjust', 'mobile/android/base/adjust')
-
-        srcdir('preprocessed_resources/build.gradle', 'mobile/android/gradle/preprocessed_resources/build.gradle')
-        srcdir('preprocessed_resources/src/main/AndroidManifest.xml', 'mobile/android/gradle/preprocessed_resources/AndroidManifest.xml')
-
         srcdir('thirdparty/build.gradle', 'mobile/android/gradle/thirdparty/build.gradle')
         srcdir('thirdparty/src/main/AndroidManifest.xml', 'mobile/android/gradle/thirdparty/AndroidManifest.xml')
         srcdir('thirdparty/src/main/java', 'mobile/android/thirdparty')
-
-        srcdir('thirdparty_adjust_sdk/build.gradle', 'mobile/android/gradle/thirdparty_adjust_sdk/build.gradle')
-        srcdir('thirdparty_adjust_sdk/src/main/AndroidManifest.xml', 'mobile/android/gradle/thirdparty_adjust_sdk/AndroidManifest.xml')
 
         srcdir('omnijar/build.gradle', 'mobile/android/gradle/omnijar/build.gradle')
         srcdir('omnijar/src/main/java/locales', 'mobile/android/locales')
@@ -129,14 +112,11 @@ class MachCommands(MachCommandBase):
         srcdir('omnijar/src/main/java/themes', 'mobile/android/themes')
 
         srcdir('app/build.gradle', 'mobile/android/gradle/app/build.gradle')
-        objdir('app/src/main/AndroidManifest.xml', 'mobile/android/base/AndroidManifest.xml')
-        objdir('app/src/androidTest/AndroidManifest.xml', 'build/mobile/robocop/AndroidManifest.xml')
         srcdir('app/src/androidTest/res', 'build/mobile/robocop/res')
         srcdir('app/src/androidTest/assets', 'mobile/android/tests/browser/robocop/assets')
         # Test code.
-        srcdir('app/src/robocop_harness/org/mozilla/gecko', 'build/mobile/robocop')
-        srcdir('app/src/robocop/org/mozilla/gecko/tests', 'mobile/android/tests/browser/robocop')
-        srcdir('app/src/background/org/mozilla/gecko/background', 'mobile/android/tests/background/junit3/src')
+        srcdir('app/src/robocop', 'mobile/android/tests/browser/robocop/src')
+        srcdir('app/src/background', 'mobile/android/tests/background/junit3/src')
         srcdir('app/src/browser', 'mobile/android/tests/browser/junit3/src')
         srcdir('app/src/javaaddons', 'mobile/android/tests/javaaddons/src')
         # Test libraries.
@@ -155,6 +135,7 @@ class MachCommands(MachCommandBase):
         srcdir('base/src/main/res', 'mobile/android/base/resources')
         srcdir('base/src/main/assets', 'mobile/android/app/assets')
         srcdir('base/src/crashreporter/res', 'mobile/android/base/crashreporter/res')
+        srcdir('base/src/branding/res', os.path.join(self.substs['MOZ_BRANDING_DIRECTORY'], 'res'))
         # JUnit 4 test code.
         srcdir('base/src/background_junit4', 'mobile/android/tests/background/junit4/src')
         srcdir('base/resources/background_junit4', 'mobile/android/tests/background/junit4/resources')
@@ -181,6 +162,23 @@ class MachCommands(MachCommandBase):
                 print(SUCCESS.format(topobjdir=self.topobjdir))
 
         return code
+
+
+class ArtifactSubCommand(SubCommand):
+    def __init__(self, *args, **kwargs):
+        SubCommand.__init__(self, *args, **kwargs)
+
+    def __call__(self, func):
+        after = SubCommand.__call__(self, func)
+        args = [
+            CommandArgument('--tree', metavar='TREE', type=str,
+                help='Firefox tree.'),
+            CommandArgument('--job', metavar='JOB', choices=['android-api-11', 'android-x86'],
+                help='Build job.'),
+        ]
+        for arg in args:
+            after = arg(after)
+        return after
 
 
 @CommandProvider
@@ -215,6 +213,7 @@ class PackageFrontend(MachCommandBase):
         self._activate_virtualenv()
         self.virtualenv_manager.install_pip_package('pylru==1.0.9')
         self.virtualenv_manager.install_pip_package('taskcluster==0.0.16')
+        self.virtualenv_manager.install_pip_package('mozregression==1.0.2')
 
         state_dir = self._mach_context.state_dir
         cache_dir = os.path.join(state_dir, 'package-frontend')
@@ -227,58 +226,47 @@ class PackageFrontend(MachCommandBase):
         artifacts = Artifacts(tree, job, log=self.log, cache_dir=cache_dir, hg=hg)
         return artifacts
 
-    @SubCommand('artifact', 'install',
+    def _compute_defaults(self, tree=None, job=None):
+        # Firefox front-end developers mostly use fx-team.  Post auto-land, make this central.
+        tree = tree or 'fx-team'
+        if job:
+            return (tree, job)
+        if self.substs['ANDROID_CPU_ARCH'] == 'x86':
+            return (tree, 'android-x86')
+        return (tree, 'android-api-11')
+
+    @ArtifactSubCommand('artifact', 'install',
         'Install a good pre-built artifact.')
-    @CommandArgument('--tree', metavar='TREE', type=str,
-        help='Firefox tree.',
-        default='fx-team')  # TODO: switch to central as this stabilizes.
-    @CommandArgument('--job', metavar='JOB', choices=['android-api-11'],
-        help='Build job.',
-        default='android-api-11')  # TODO: fish job from build configuration.
     @CommandArgument('source', metavar='SRC', nargs='?', type=str,
         help='Where to fetch and install artifacts from.  Can be omitted, in '
             'which case the current hg repository is inspected; an hg revision; '
             'a remote URL; or a local file.',
         default=None)
     def artifact_install(self, source=None, tree=None, job=None):
+        tree, job = self._compute_defaults(tree, job)
         artifacts = self._make_artifacts(tree=tree, job=job)
         return artifacts.install_from(source, self.distdir)
 
-    @SubCommand('artifact', 'last',
+    @ArtifactSubCommand('artifact', 'last',
         'Print the last pre-built artifact installed.')
-    @CommandArgument('--tree', metavar='TREE', type=str,
-        help='Firefox tree.',
-        default='fx-team')
-    @CommandArgument('--job', metavar='JOB', type=str,
-        help='Build job.',
-        default='android-api-11')
     def artifact_print_last(self, tree=None, job=None):
+        tree, job = self._compute_defaults(tree, job)
         artifacts = self._make_artifacts(tree=tree, job=job)
         artifacts.print_last()
         return 0
 
-    @SubCommand('artifact', 'print-cache',
+    @ArtifactSubCommand('artifact', 'print-cache',
         'Print local artifact cache for debugging.')
-    @CommandArgument('--tree', metavar='TREE', type=str,
-        help='Firefox tree.',
-        default='fx-team')
-    @CommandArgument('--job', metavar='JOB', type=str,
-        help='Build job.',
-        default='android-api-11')
     def artifact_print_cache(self, tree=None, job=None):
+        tree, job = self._compute_defaults(tree, job)
         artifacts = self._make_artifacts(tree=tree, job=job)
         artifacts.print_cache()
         return 0
 
-    @SubCommand('artifact', 'clear-cache',
+    @ArtifactSubCommand('artifact', 'clear-cache',
         'Delete local artifacts and reset local artifact cache.')
-    @CommandArgument('--tree', metavar='TREE', type=str,
-        help='Firefox tree.',
-        default='fx-team')
-    @CommandArgument('--job', metavar='JOB', type=str,
-        help='Build job.',
-        default='android-api-11')
     def artifact_clear_cache(self, tree=None, job=None):
+        tree, job = self._compute_defaults(tree, job)
         artifacts = self._make_artifacts(tree=tree, job=job)
         artifacts.clear_cache()
         return 0

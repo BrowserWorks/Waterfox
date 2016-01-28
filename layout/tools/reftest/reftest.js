@@ -9,7 +9,7 @@ this.EXPORTED_SYMBOLS = ["OnRefTestLoad"];
 #endif
 
 
-const CC = Components.classes;
+var CC = Components.classes;
 const CI = Components.interfaces;
 const CR = Components.results;
 const CU = Components.utils;
@@ -495,7 +495,7 @@ function StartTests()
         // process includes before reading the included manifest again
         manifestURLs.sort(function(a,b) {return a.length - b.length})
         manifestURLs.forEach(function(manifestURL) {
-            gDumpLog("Readings manifest" + manifestURL + "\n");
+            gDumpLog("Reading manifest " + manifestURL + "\n");
             var filter = manifests[manifestURL] ? new RegExp(manifests[manifestURL]) : null;
             ReadTopManifest(manifestURL, [globalFilter, filter, false]);
         });
@@ -623,6 +623,8 @@ function BuildConditionSandbox(aURL) {
 
     sandbox.layersGPUAccelerated =
       gWindowUtils.layerManagerType != "Basic";
+    sandbox.d3d11 =
+      gWindowUtils.layerManagerType == "Direct3D 11";
     sandbox.layersOpenGL =
       gWindowUtils.layerManagerType == "OpenGL";
     sandbox.layersOMTC =

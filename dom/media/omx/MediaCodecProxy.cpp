@@ -14,7 +14,6 @@
 
 #include <android/log.h>
 #define MCP_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "MediaCodecProxy", __VA_ARGS__)
-#define TIMEOUT_DEQUEUE_INPUTBUFFER_MS 1000000ll
 
 namespace android {
 
@@ -107,43 +106,22 @@ MediaCodecProxy::~MediaCodecProxy()
 }
 
 bool
-MediaCodecProxy::AskMediaCodecAndWait()
+MediaCodecProxy::AllocateAudioMediaCodec()
 {
   if (mResourceClient || mCodec.get()) {
     return false;
   }
 
-  if (strncasecmp(mCodecMime.get(), "video/", 6) == 0) {
-    mozilla::MediaSystemResourceType type =
-      mCodecEncoder ? mozilla::MediaSystemResourceType::VIDEO_ENCODER :
-                      mozilla::MediaSystemResourceType::VIDEO_DECODER;
-    mResourceClient = new mozilla::MediaSystemResourceClient(type);
-    mResourceClient->SetListener(this);
-  } else if (strncasecmp(mCodecMime.get(), "audio/", 6) == 0) {
+  if (strncasecmp(mCodecMime.get(), "audio/", 6) == 0) {
     if (allocateCodec()) {
       return true;
     }
   }
-
-  if (!mResourceClient) {
-    return false;
-  }
-
-  mozilla::MonitorAutoLock mon(mMediaCodecLock);
-  mPendingRequestMediaResource = true;
-  // request video codec
-  mResourceClient->Acquire();
-
-  while (mPendingRequestMediaResource) {
-    mMediaCodecLock.Wait();
-  }
-  MCP_LOG("AskMediaCodecAndWait complete");
-
-  return true;
+  return false;
 }
 
 bool
-MediaCodecProxy::AsyncAskMediaCodec()
+MediaCodecProxy::AsyncAllocateVideoMediaCodec()
 {
   if (mResourceClient || mCodec.get()) {
     return false;
@@ -571,7 +549,8 @@ bool MediaCodecProxy::UpdateOutputBuffers()
 }
 
 status_t MediaCodecProxy::Input(const uint8_t* aData, uint32_t aDataSize,
-                                int64_t aTimestampUsecs, uint64_t aflags)
+                                int64_t aTimestampUsecs, uint64_t aflags,
+                                int64_t aTimeoutUs)
 {
   // Read Lock for mCodec
   {
@@ -583,9 +562,11 @@ status_t MediaCodecProxy::Input(const uint8_t* aData, uint32_t aDataSize,
   }
 
   size_t index;
-  status_t err = dequeueInputBuffer(&index, TIMEOUT_DEQUEUE_INPUTBUFFER_MS);
+  status_t err = dequeueInputBuffer(&index, aTimeoutUs);
   if (err != OK) {
-    MCP_LOG("dequeueInputBuffer returned %d", err);
+    if (err != -EAGAIN) {
+      MCP_LOG("dequeueInputBuffer returned %d", err);
+    }
     return err;
   }
 

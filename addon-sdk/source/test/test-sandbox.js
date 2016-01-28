@@ -43,7 +43,7 @@ exports['test non-privileged'] = function(assert) {
 
 exports['test injection'] = function(assert) {
   let fixture = sandbox();
-  fixture.hi = function(name) 'Hi ' + name
+  fixture.hi = name => 'Hi ' + name;
   assert.equal(evaluate(fixture, 'hi("sandbox");'), 'Hi sandbox',
                 'injected functions are callable');
 };
@@ -84,13 +84,6 @@ exports['test exceptions'] = function(assert) {
   }
 };
 
-exports['test opt version'] = function(assert) {
-  let fixture = sandbox();
-  assert.throws(function() {
-    evaluate(fixture, 'let a = 2;', 'test.js', 1, '1.5');
-  }, 'No let in js 1.5');
-};
-
 exports['test load'] = function(assert) {
   let fixture = sandbox();
   load(fixture, fixturesURI + 'sandbox-normal.js');
@@ -100,7 +93,7 @@ exports['test load'] = function(assert) {
 };
 
 exports['test load with data: URL'] = function(assert) {
-  let code = "var a = 1; this.b = 2; function f() 4";
+  let code = "var a = 1; this.b = 2; function f() { return 4; }";
   let fixture = sandbox();
   load(fixture, "data:," + encodeURIComponent(code));
 

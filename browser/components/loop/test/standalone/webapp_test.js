@@ -102,7 +102,7 @@ describe("loop.webapp", function() {
 
     it("should display the UnsupportedDeviceView for `unsupportedDevice` window type",
       function() {
-        standaloneAppStore.setStoreState({windowType: "unsupportedDevice", unsupportedPlatform: "ios"});
+        standaloneAppStore.setStoreState({ windowType: "unsupportedDevice", unsupportedPlatform: "ios" });
         var webappRootView = mountTestComponent();
 
         TestUtils.findRenderedComponentWithType(webappRootView,
@@ -111,7 +111,7 @@ describe("loop.webapp", function() {
 
     it("should display the UnsupportedBrowserView for `unsupportedBrowser` window type",
       function() {
-        standaloneAppStore.setStoreState({windowType: "unsupportedBrowser", isFirefox: false});
+        standaloneAppStore.setStoreState({ windowType: "unsupportedBrowser", isFirefox: false });
 
         var webappRootView = mountTestComponent();
 
@@ -119,18 +119,18 @@ describe("loop.webapp", function() {
           loop.webapp.UnsupportedBrowserView);
       });
 
-    it("should display the StandaloneRoomView for `room` window type",
+    it("should display the StandaloneRoomControllerView for `room` window type",
       function() {
-        standaloneAppStore.setStoreState({windowType: "room", isFirefox: true});
+        standaloneAppStore.setStoreState({ windowType: "room", isFirefox: true });
 
         var webappRootView = mountTestComponent();
 
         TestUtils.findRenderedComponentWithType(webappRootView,
-          loop.standaloneRoomViews.StandaloneRoomView);
+          loop.standaloneRoomViews.StandaloneRoomControllerView);
       });
 
     it("should display the HomeView for `home` window type", function() {
-        standaloneAppStore.setStoreState({windowType: "home", isFirefox: true});
+        standaloneAppStore.setStoreState({ windowType: "home", isFirefox: true });
 
         var webappRootView = mountTestComponent();
 

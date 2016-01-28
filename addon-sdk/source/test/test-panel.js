@@ -52,7 +52,7 @@ exports["test Panel"] = function(assert, done) {
 
   let panel = Panel({
     contentURL: "about:buildconfig",
-    contentScript: "self.postMessage(1); self.on('message', function() self.postMessage(2));",
+    contentScript: "self.postMessage(1); self.on('message', () => self.postMessage(2));",
     onMessage: function (message) {
       assert.equal(this, panel, "The 'this' object is the panel.");
       switch(message) {
@@ -77,7 +77,7 @@ exports["test Panel Emit"] = function(assert, done) {
     contentURL: "about:buildconfig",
     contentScript: "self.port.emit('loaded');" +
                    "self.port.on('addon-to-content', " +
-                   "             function() self.port.emit('received'));",
+                   "             () => self.port.emit('received'));",
   });
   panel.port.on("loaded", function () {
     assert.pass("The panel was loaded and sent a first event.");
@@ -96,7 +96,7 @@ exports["test Panel Emit Early"] = function(assert, done) {
   let panel = Panel({
     contentURL: "about:buildconfig",
     contentScript: "self.port.on('addon-to-content', " +
-                   "             function() self.port.emit('received'));",
+                   "             () => self.port.emit('received'));",
   });
   panel.port.on("received", function () {
     assert.pass("The panel posted a message early and received a response.");
@@ -148,7 +148,7 @@ exports["test Document Reload"] = function(assert, done) {
     contentURL: URL("data:text/html;charset=utf-8," + encodeURIComponent(content)),
     contentScript: "self.postMessage(window.location.href);" +
                    // initiate change to url2
-                   "self.port.once('move', function() document.defaultView.postMessage('move', '*'));",
+                   "self.port.once('move', () => document.defaultView.postMessage('move', '*'));",
     onMessage: function (message) {
       messageCount++;
       assert.notEqual(message, "about:blank", "about:blank is not a message " + messageCount);
@@ -533,7 +533,7 @@ exports["test Automatic Destroy"] = function(assert) {
   let panel = loader.require("sdk/panel").Panel({
     contentURL: "about:buildconfig",
     contentScript:
-      "self.port.on('event', function() self.port.emit('event-back'));"
+      "self.port.on('event', () => self.port.emit('event-back'));"
   });
 
   loader.unload();
@@ -585,7 +585,7 @@ exports["test Content URL Option"] = function(assert) {
   assert.ok(panel.contentURL == null, "contentURL is undefined.");
   panel.destroy();
 
-  assert.throws(function () Panel({ contentURL: "foo" }),
+  assert.throws(() => Panel({ contentURL: "foo" }),
                     /The `contentURL` option must be a valid URL./,
                     "Panel throws an exception if contentURL is not a URL.");
 };
@@ -1367,6 +1367,43 @@ exports["test Panel links"] = function*(assert) {
 
   loader.unload();
 }
+
+exports["test Panel script allow property"] = function*(assert) {
+  const loader = Loader(module);
+  const { Panel } = loader.require('sdk/panel');
+  const { getActiveView } = loader.require('sdk/view/core');
+
+  const contentURL = 'data:text/html;charset=utf-8,' +
+    encodeURIComponent(`<body onclick='postMessage("got script click", "*")'>
+        <script>
+        document.body.appendChild(document.createElement('unwanted'))
+        </script>
+        </body>`);
+  let panel = Panel({
+    contentURL,
+    allow: {script: false},
+  });
+
+  panel.show();
+
+  yield wait(panel, 'show');
+
+  let { contentWindow } = getActiveView(panel).querySelector('iframe');
+
+  assert.equal(contentWindow.document.body.lastElementChild.localName, "script",
+               "Script should not have executed");
+
+  panel.allow.script = true;
+
+  let p = wait(contentWindow, "message");
+  let event = new contentWindow.MouseEvent('click', {});
+  contentWindow.document.body.dispatchEvent(event);
+
+  let msg = yield p;
+  assert.equal(msg.data, "got script click", "Should have seen script click");
+
+  loader.unload();
+};
 
 after(exports, function*(name, assert) {
   yield cleanUI();

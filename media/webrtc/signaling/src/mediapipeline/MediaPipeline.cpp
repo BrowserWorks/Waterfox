@@ -48,6 +48,9 @@
 
 #include "logging.h"
 
+// Should come from MediaEngineWebRTC.h, but that's a pain to include here
+#define DEFAULT_SAMPLE_RATE 32000
+
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
@@ -76,7 +79,7 @@ nsresult MediaPipeline::Init() {
 
   RUN_ON_THREAD(sts_thread_,
                 WrapRunnable(
-                    nsRefPtr<MediaPipeline>(this),
+                    RefPtr<MediaPipeline>(this),
                     &MediaPipeline::Init_s),
                 NS_DISPATCH_NORMAL);
 
@@ -680,7 +683,7 @@ nsresult MediaPipelineTransmit::ReplaceTrack(DOMMediaStream *domstream,
                                              const std::string& track_id) {
   // MainThread, checked in calls we make
   MOZ_MTLOG(ML_DEBUG, "Reattaching pipeline " << description_ << " to stream "
-            << static_cast<void *>(domstream->GetStream())
+            << static_cast<void *>(domstream->GetOwnedStream())
             << " track " << track_id << " conduit type=" <<
             (conduit_->type() == MediaSessionConduit::AUDIO ?"audio":"video"));
 
@@ -688,7 +691,7 @@ nsresult MediaPipelineTransmit::ReplaceTrack(DOMMediaStream *domstream,
     DetachMediaStream();
   }
   domstream_ = domstream; // Detach clears it
-  stream_ = domstream->GetStream();
+  stream_ = domstream->GetOwnedStream();
   // Unsets the track id after RemoveListener() takes effect.
   listener_->UnsetTrackId(stream_->GraphImpl());
   track_id_ = track_id;
@@ -843,7 +846,7 @@ UnsetTrackId(MediaStreamGraphImpl* graph) {
     {
       listener_->UnsetTrackIdImpl();
     }
-    nsRefPtr<PipelineListener> listener_;
+    RefPtr<PipelineListener> listener_;
   };
   graph->AppendMessage(new Message(this));
 #else
@@ -865,7 +868,9 @@ void MediaPipelineTransmit::PipelineListener::
 NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                          StreamTime offset,
                          uint32_t events,
-                         const MediaSegment& queued_media) {
+                         const MediaSegment& queued_media,
+                         MediaStream* aInputStream,
+                         TrackID aInputTrackID) {
   MOZ_MTLOG(ML_DEBUG, "MediaPipeline::NotifyQueuedTrackChanges()");
 
   // ignore non-direct data if we're also getting direct data
@@ -1200,7 +1205,7 @@ void MediaPipelineTransmit::PipelineListener::ProcessVideoChunk(
                               yuv + cr_offset, half_width,
                               size.width, size.height);
       break;
-    case SurfaceFormat::R5G6B5:
+    case SurfaceFormat::R5G6B5_UINT16:
       rv = libyuv::RGB565ToI420(static_cast<uint8*>(map.GetData()),
                                 map.GetStride(),
                                 yuv, size.width,
@@ -1293,7 +1298,7 @@ static void AddTrackAndListener(MediaStream* source,
     TrackID track_id_;
     TrackRate track_rate_;
     nsAutoPtr<MediaSegment> segment_;
-    nsRefPtr<MediaStreamListener> listener_;
+    RefPtr<MediaStreamListener> listener_;
     const RefPtr<TrackAddedCallback> completed_;
   };
 
@@ -1332,7 +1337,7 @@ void GenericReceiveListener::AddSelf(MediaSegment* segment) {
 MediaPipelineReceiveAudio::PipelineListener::PipelineListener(
     SourceMediaStream * source, TrackID track_id,
     const RefPtr<MediaSessionConduit>& conduit, bool queue_track)
-  : GenericReceiveListener(source, track_id, 16000, queue_track), // XXX rate assumption
+  : GenericReceiveListener(source, track_id, DEFAULT_SAMPLE_RATE, queue_track), // XXX rate assumption
     conduit_(conduit)
 {
   MOZ_ASSERT(track_rate_%100 == 0);
@@ -1380,7 +1385,7 @@ NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) {
     MOZ_MTLOG(ML_DEBUG, "Audio conduit returned buffer of length "
               << samples_length);
 
-    nsRefPtr<SharedBuffer> samples = SharedBuffer::Create(samples_length * sizeof(uint16_t));
+    RefPtr<SharedBuffer> samples = SharedBuffer::Create(samples_length * sizeof(uint16_t));
     int16_t *samples_data = static_cast<int16_t *>(samples->Data());
     AudioSegment segment;
     // We derive the number of channels of the stream from the number of samples
@@ -1479,7 +1484,7 @@ void MediaPipelineReceiveVideo::PipelineListener::RenderVideoFrame(
 #else
     ImageFormat format = ImageFormat::PLANAR_YCBCR;
 #endif
-    nsRefPtr<Image> image = image_container_->CreateImage(format);
+    RefPtr<Image> image = image_container_->CreateImage(format);
     PlanarYCbCrImage* yuvImage = static_cast<PlanarYCbCrImage*>(image.get());
     uint8_t* frame = const_cast<uint8_t*>(static_cast<const uint8_t*> (buffer));
 
@@ -1518,9 +1523,9 @@ NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) {
   ReentrantMonitorAutoEnter enter(monitor_);
 
 #if defined(MOZILLA_XPCOMRT_API)
-  nsRefPtr<SimpleImageBuffer> image = image_;
+  RefPtr<SimpleImageBuffer> image = image_;
 #elif defined(MOZILLA_INTERNAL_API)
-  nsRefPtr<Image> image = image_;
+  RefPtr<Image> image = image_;
   // our constructor sets track_rate_ to the graph rate
   MOZ_ASSERT(track_rate_ == source_->GraphRate());
 #endif

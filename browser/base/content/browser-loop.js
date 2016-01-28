@@ -60,13 +60,13 @@ var LoopUI;
      */
     promiseDocumentVisible(aDocument) {
       if (!aDocument.hidden) {
-        return Promise.resolve();
+        return Promise.resolve(aDocument);
       }
 
       return new Promise((resolve) => {
         aDocument.addEventListener("visibilitychange", function onVisibilityChanged() {
           aDocument.removeEventListener("visibilitychange", onVisibilityChanged);
-          resolve();
+          resolve(aDocument);
         });
       });
     },
@@ -81,6 +81,15 @@ var LoopUI;
      * @return {Promise}
      */
     togglePanel: function(event, tabId = null) {
+      if (!this.panel) {
+        // We're on the hidden window! What fun!
+        let obs = win => {
+          Services.obs.removeObserver(obs, "browser-delayed-startup-finished");
+          win.LoopUI.togglePanel(event, tabId);
+        };
+        Services.obs.addObserver(obs, "browser-delayed-startup-finished", false);
+        return OpenBrowserWindow();
+      }
       if (this.panel.state == "open") {
         return new Promise(resolve => {
           this.panel.hidePopup();
@@ -88,7 +97,12 @@ var LoopUI;
         });
       }
 
-      return this.openCallPanel(event, tabId);
+      return this.openCallPanel(event, tabId).then(doc => {
+        let fm = Services.focus;
+        fm.moveFocus(doc.defaultView, null, fm.MOVEFOCUS_FIRST, fm.FLAG_NOSCROLL);
+      }).catch(err => {
+        Cu.reportError(x);
+      });
     },
 
     /**
@@ -130,14 +144,14 @@ var LoopUI;
 
           let documentDOMLoaded = () => {
             iframe.removeEventListener("DOMContentLoaded", documentDOMLoaded, true);
-  	    this.injectLoopAPI(iframe.contentWindow);
-  	    iframe.contentWindow.addEventListener("loopPanelInitialized", function loopPanelInitialized() {
+            this.injectLoopAPI(iframe.contentWindow);
+            iframe.contentWindow.addEventListener("loopPanelInitialized", function loopPanelInitialized() {
               iframe.contentWindow.removeEventListener("loopPanelInitialized",
-                                                       loopPanelInitialized);
+                loopPanelInitialized);
               showTab();
-	    });
-	  };
-	  iframe.addEventListener("DOMContentLoaded", documentDOMLoaded, true); 
+            });
+          };
+          iframe.addEventListener("DOMContentLoaded", documentDOMLoaded, true);
         };
 
         // Used to clear the temporary "login" state from the button.
@@ -153,7 +167,9 @@ var LoopUI;
             return;
           }
 
-          this.PanelFrame.showPopup(window, event ? event.target : this.toolbarButton.node,
+          let anchor = event ? event.target : this.toolbarButton.anchor;
+
+          this.PanelFrame.showPopup(window, anchor,
             "loop", null, "about:looppanel",
             // Loop wants a fixed size for the panel. This also stops it dynamically resizing.
             { width: 330, height: 410 },
@@ -260,18 +276,48 @@ var LoopUI;
         return;
       }
       let state = "";
+      let mozL10nId = "loop-call-button3";
+      let suffix = ".tooltiptext";
       if (this.MozLoopService.errors.size) {
         state = "error";
+        mozL10nId += "-error";
       } else if (this.MozLoopService.screenShareActive) {
         state = "action";
+        mozL10nId += "-screensharing";
       } else if (aReason == "login" && this.MozLoopService.userProfile) {
         state = "active";
+        mozL10nId += "-active";
       } else if (this.MozLoopService.doNotDisturb) {
         state = "disabled";
+        mozL10nId += "-donotdisturb";
       } else if (this.MozLoopService.roomsParticipantsCount > 0) {
         state = "active";
+        this.roomsWithNonOwners().then(roomsWithNonOwners => {
+          if (roomsWithNonOwners.length > 0) {
+            mozL10nId += "-participantswaiting";
+          } else {
+            mozL10nId += "-active";
+          }
+
+          this.updateTooltiptext(mozL10nId + suffix);
+          this.toolbarButton.node.setAttribute("state", state);
+        });
+        return;
       }
       this.toolbarButton.node.setAttribute("state", state);
+      this.updateTooltiptext(mozL10nId + suffix);
+    },
+
+    /**
+     * Updates the tootltiptext to reflect Loop status.
+     *
+     * @param {string} [mozL10nId] l10n ID that refelct the current
+     *                           Loop status.
+     */
+    updateTooltiptext: function(mozL10nId) {
+      this.toolbarButton.node.setAttribute("tooltiptext", mozL10nId);
+      var tooltiptext = CustomizableUI.getLocalizedProperty(this.toolbarButton, "tooltiptext");
+      this.toolbarButton.node.setAttribute("tooltiptext", tooltiptext);
     },
 
     /**
@@ -533,12 +579,10 @@ var LoopUI;
       }
 
       this.PlacesUtils.promiseFaviconLinkUrl(pageURI).then(uri => {
-        uri = this.PlacesUtils.getImageURLForResolution(window, uri.spec);
-
         // We XHR the favicon to get a File object, which we can pass to the FileReader
         // object. The FileReader turns the File object into a data-uri.
         let xhr = new XMLHttpRequest();
-        xhr.open("get", uri, true);
+        xhr.open("get", uri.spec, true);
         xhr.responseType = "blob";
         xhr.overrideMimeType("image/x-icon");
         xhr.onload = () => {

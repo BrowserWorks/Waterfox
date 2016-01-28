@@ -1,7 +1,11 @@
+/* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set sts=2 sw=2 et tw=80: */
+"use strict";
+
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 
-Cu.import("resource://gre/modules/devtools/event-emitter.js");
+Cu.import("resource://devtools/shared/event-emitter.js");
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
@@ -19,12 +23,6 @@ function browserActionOf(extension)
   return browserActionMap.get(extension);
 }
 
-function makeWidgetId(id)
-{
-  id = id.toLowerCase();
-  return id.replace(/[^a-z0-9_-]/g, "_");
-}
-
 var nextActionId = 0;
 
 // Responsible for the browser_action section of the manifest as well
@@ -35,16 +33,25 @@ function BrowserAction(options, extension)
   this.id = makeWidgetId(extension.id) + "-browser-action";
   this.widget = null;
 
-  this.title = new DefaultWeakMap(extension.localize(options.default_title));
-  this.badgeText = new DefaultWeakMap();
-  this.badgeBackgroundColor = new DefaultWeakMap();
-  this.icon = new DefaultWeakMap(options.default_icon);
-  this.popup = new DefaultWeakMap(options.default_popup);
+  let title = extension.localize(options.default_title || "");
+  let popup = extension.localize(options.default_popup || "");
+  if (popup) {
+    popup = extension.baseURI.resolve(popup);
+  }
 
-  // Make the default something that won't compare equal to anything.
-  this.prevPopups = new DefaultWeakMap({});
+  this.defaults = {
+    title: title,
+    badgeText: "",
+    badgeBackgroundColor: null,
+    icon: IconDetails.normalize({ path: options.default_icon }, extension,
+                                null, true),
+    popup: popup,
+  };
 
-  this.context = null;
+  this.tabContext = new TabContext(tab => Object.create(this.defaults),
+                                   extension);
+
+  EventEmitter.decorate(this);
 }
 
 BrowserAction.prototype = {
@@ -60,15 +67,16 @@ BrowserAction.prototype = {
         node.setAttribute("class", "toolbarbutton-1 chromeclass-toolbar-additional badged-button");
         node.setAttribute("constrain-size", "true");
 
-        this.updateTab(null, node);
+        this.updateButton(node, this.defaults);
 
         let tabbrowser = document.defaultView.gBrowser;
-        tabbrowser.ownerDocument.addEventListener("TabSelect", () => {
-          this.updateTab(tabbrowser.selectedTab, node);
-        });
 
         node.addEventListener("command", event => {
-          if (node.getAttribute("type") != "panel") {
+          let tab = tabbrowser.selectedTab;
+          let popup = this.getProperty(tab, "popup");
+          if (popup) {
+            this.togglePopup(node, popup);
+          } else {
             this.emit("click");
           }
         });
@@ -76,131 +84,58 @@ BrowserAction.prototype = {
         return node;
       },
     });
+
+    this.tabContext.on("tab-select",
+                       (evt, tab) => { this.updateWindow(tab.ownerDocument.defaultView); })
+
     this.widget = widget;
   },
 
-  // Initialize the toolbar icon and popup given that |tab| is the
-  // current tab and |node| is the CustomizableUI node. Note: |tab|
-  // will be null if we don't know the current tab yet (during
-  // initialization).
-  updateTab(tab, node) {
-    let window = node.ownerDocument.defaultView;
+  togglePopup(node, popupResource) {
+    openPanel(node, popupResource, this.extension);
+  },
 
-    let title = this.getProperty(tab, "title");
-    if (title) {
-      node.setAttribute("tooltiptext", title);
-      node.setAttribute("label", title);
+  // Update the toolbar button |node| with the tab context data
+  // in |tabData|.
+  updateButton(node, tabData) {
+    if (tabData.title) {
+      node.setAttribute("tooltiptext", tabData.title);
+      node.setAttribute("label", tabData.title);
+      node.setAttribute("aria-label", tabData.title);
     } else {
       node.removeAttribute("tooltiptext");
       node.removeAttribute("label");
+      node.removeAttribute("aria-label");
     }
 
-    let badgeText = this.badgeText.get(tab);
-    if (badgeText) {
-      node.setAttribute("badge", badgeText);
+    if (tabData.badgeText) {
+      node.setAttribute("badge", tabData.badgeText);
     } else {
       node.removeAttribute("badge");
-    }
-
-    function toHex(n) {
-      return Math.floor(n / 16).toString(16) + (n % 16).toString(16);
     }
 
     let badgeNode = node.ownerDocument.getAnonymousElementByAttribute(node,
                                         'class', 'toolbarbutton-badge');
     if (badgeNode) {
-      let color = this.badgeBackgroundColor.get(tab);
+      let color = tabData.badgeBackgroundColor;
       if (Array.isArray(color)) {
         color = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
       }
-      badgeNode.style.backgroundColor = color;
+      badgeNode.style.backgroundColor = color || "";
     }
 
-    let iconURL = this.getIcon(tab, node);
+    let iconURL = IconDetails.getURL(
+      tabData.icon, node.ownerDocument.defaultView, this.extension);
     node.setAttribute("image", iconURL);
-
-    let popup = this.getProperty(tab, "popup");
-
-    if (popup != this.prevPopups.get(window)) {
-      this.prevPopups.set(window, popup);
-
-      let panel = node.querySelector("panel");
-      if (panel) {
-        panel.remove();
-      }
-
-      if (popup) {
-        let popupURL = this.extension.baseURI.resolve(popup);
-        node.setAttribute("type", "panel");
-
-        let document = node.ownerDocument;
-        let panel = document.createElement("panel");
-        panel.setAttribute("class", "browser-action-panel");
-        panel.setAttribute("type", "arrow");
-        panel.setAttribute("flip", "slide");
-        node.appendChild(panel);
-
-        const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-        let browser = document.createElementNS(XUL_NS, "browser");
-        browser.setAttribute("type", "content");
-        browser.setAttribute("disableglobalhistory", "true");
-        browser.setAttribute("width", "500");
-        browser.setAttribute("height", "500");
-        panel.appendChild(browser);
-
-        let loadListener = () => {
-          panel.removeEventListener("load", loadListener);
-
-          if (this.context) {
-            this.context.unload();
-          }
-
-          this.context = new ExtensionPage(this.extension, {
-            type: "popup",
-            contentWindow: browser.contentWindow,
-            uri: Services.io.newURI(popupURL, null, null),
-            docShell: browser.docShell,
-          });
-          GlobalManager.injectInDocShell(browser.docShell, this.extension, this.context);
-          browser.setAttribute("src", popupURL);
-        };
-        panel.addEventListener("load", loadListener);
-      } else {
-        node.removeAttribute("type");
-      }
-    }
-  },
-
-  // Note: tab is allowed to be null here.
-  getIcon(tab, node) {
-    let icon = this.icon.get(tab);
-
-    let url;
-    if (typeof(icon) != "object") {
-      url = icon;
-    } else {
-      let window = node.ownerDocument.defaultView;
-      let utils = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                        .getInterface(Components.interfaces.nsIDOMWindowUtils);
-      let res = {value: 1}
-      utils.getResolution(res);
-
-      let size = res.value == 1 ? 19 : 38;
-      url = icon[size];
-    }
-
-    if (url) {
-      return this.extension.baseURI.resolve(url);
-    } else {
-      return "chrome://browser/content/extension.svg";
-    }
   },
 
   // Update the toolbar button for a given window.
   updateWindow(window) {
-    let tab = window.gBrowser ? window.gBrowser.selectedTab : null;
-    let node = CustomizableUI.getWidget(this.id).forWindow(window).node;
-    this.updateTab(tab, node);
+    let widget = this.widget.forWindow(window);
+    if (widget) {
+      let tab = window.gBrowser.selectedTab;
+      this.updateButton(widget.node, this.tabContext.get(tab));
+    }
   },
 
   // Update the toolbar button when the extension changes the icon,
@@ -212,12 +147,8 @@ BrowserAction.prototype = {
         this.updateWindow(tab.ownerDocument.defaultView);
       }
     } else {
-      let e = Services.wm.getEnumerator("navigator:browser");
-      while (e.hasMoreElements()) {
-        let window = e.getNext();
-        if (window.gBrowser) {
-          this.updateWindow(window);
-        }
+      for (let window of WindowListManager.browserWindows()) {
+        this.updateWindow(window);
       }
     }
   },
@@ -225,22 +156,30 @@ BrowserAction.prototype = {
   // tab is allowed to be null.
   // prop should be one of "icon", "title", "badgeText", "popup", or "badgeBackgroundColor".
   setProperty(tab, prop, value) {
-    this[prop].set(tab, value);
+    if (tab == null) {
+      this.defaults[prop] = value;
+    } else {
+      this.tabContext.get(tab)[prop] = value;
+    }
+
     this.updateOnChange(tab);
   },
 
   // tab is allowed to be null.
   // prop should be one of "title", "badgeText", "popup", or "badgeBackgroundColor".
   getProperty(tab, prop) {
-    return this[prop].get(tab);
+    if (tab == null) {
+      return this.defaults[prop];
+    } else {
+      return this.tabContext.get(tab)[prop];
+    }
   },
 
   shutdown() {
+    this.tabContext.shutdown();
     CustomizableUI.destroyWidget(this.id);
   },
 };
-
-EventEmitter.decorate(BrowserAction.prototype);
 
 extensions.on("manifest_browser_action", (type, directive, extension, manifest) => {
   let browserAction = new BrowserAction(manifest.browser_action, extension);
@@ -282,11 +221,8 @@ extensions.registerAPI((extension, context) => {
 
       setIcon: function(details, callback) {
         let tab = details.tabId ? TabManager.getTab(details.tabId) : null;
-        if (details.imageData) {
-          // FIXME: Support the imageData attribute.
-          return;
-        }
-        browserActionOf(extension).setProperty(tab, "icon", details.path);
+        let icon = IconDetails.normalize(details, extension, context);
+        browserActionOf(extension).setProperty(tab, "icon", icon);
       },
 
       setBadgeText: function(details) {
@@ -302,7 +238,13 @@ extensions.registerAPI((extension, context) => {
 
       setPopup: function(details) {
         let tab = details.tabId ? TabManager.getTab(details.tabId) : null;
-        browserActionOf(extension).setProperty(tab, "popup", details.popup);
+        // Note: Chrome resolves arguments to setIcon relative to the calling
+        // context, but resolves arguments to setPopup relative to the extension
+        // root.
+        // For internal consistency, we currently resolve both relative to the
+        // calling context.
+        let url = details.popup && context.uri.resolve(details.popup);
+        browserActionOf(extension).setProperty(tab, "popup", url);
       },
 
       getPopup: function(details, callback) {

@@ -69,7 +69,7 @@ public:
           );
         }
 
-        nsRefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
+        RefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
         const nsTArray<nsWindow*>& windows = screen->GetTopWindows();
 
         for (uint32_t i = 0; i < windows.Length(); i++) {
@@ -90,7 +90,7 @@ private:
 static void
 displayEnabledCallback(bool enabled)
 {
-    nsRefPtr<nsScreenManagerGonk> screenManager = nsScreenManagerGonk::GetInstance();
+    RefPtr<nsScreenManagerGonk> screenManager = nsScreenManagerGonk::GetInstance();
     screenManager->DisplayEnabled(enabled);
 }
 
@@ -359,6 +359,39 @@ nsScreenGonk::BringToTop(nsWindow* aWindow)
     mTopWindows.InsertElementAt(0, aWindow);
 }
 
+ANativeWindowBuffer*
+nsScreenGonk::DequeueBuffer()
+{
+    ANativeWindowBuffer* buf = nullptr;
+#if ANDROID_VERSION >= 17
+    int fenceFd = -1;
+    mNativeWindow->dequeueBuffer(mNativeWindow.get(), &buf, &fenceFd);
+    android::sp<android::Fence> fence(new android::Fence(fenceFd));
+#if ANDROID_VERSION == 17
+    fence->waitForever(1000, "nsScreenGonk_DequeueBuffer");
+    // 1000 is what Android uses. It is a warning timeout in ms.
+    // This timeout was removed in ANDROID_VERSION 18.
+#else
+    fence->waitForever("nsScreenGonk_DequeueBuffer");
+#endif
+#else
+    mNativeWindow->dequeueBuffer(mNativeWindow.get(), &buf);
+#endif
+    return buf;
+}
+
+bool
+nsScreenGonk::QueueBuffer(ANativeWindowBuffer* buf)
+{
+#if ANDROID_VERSION >= 17
+  int ret = mNativeWindow->queueBuffer(mNativeWindow.get(), buf, -1);
+  return ret == 0;
+#else
+  int ret = mNativeWindow->queueBuffer(mNativeWindow.get(), buf);
+  return ret == 0;
+#endif
+}
+
 #if ANDROID_VERSION >= 17
 android::DisplaySurface*
 nsScreenGonk::GetDisplaySurface()
@@ -419,7 +452,7 @@ nsScreenGonk::EnableMirroring()
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_ASSERT(!IsPrimaryScreen());
 
-    nsRefPtr<nsScreenGonk> primaryScreen = nsScreenManagerGonk::GetPrimaryScreen();
+    RefPtr<nsScreenGonk> primaryScreen = nsScreenManagerGonk::GetPrimaryScreen();
     NS_ENSURE_TRUE(primaryScreen, false);
 
     bool ret = primaryScreen->SetMirroringScreen(this);
@@ -428,7 +461,7 @@ nsScreenGonk::EnableMirroring()
     // Create a widget for mirroring
     nsWidgetInitData initData;
     initData.mScreenId = mId;
-    nsRefPtr<nsWindow> window = new nsWindow();
+    RefPtr<nsWindow> window = new nsWindow();
     window->Create(nullptr, nullptr, mNaturalBounds, &initData);
     MOZ_ASSERT(static_cast<nsWindow*>(window)->GetScreen() == this);
 
@@ -450,7 +483,7 @@ nsScreenGonk::DisableMirroring()
     MOZ_ASSERT(!IsPrimaryScreen());
 
     mIsMirroring = false;
-    nsRefPtr<nsScreenGonk> primaryScreen = nsScreenManagerGonk::GetPrimaryScreen();
+    RefPtr<nsScreenGonk> primaryScreen = nsScreenManagerGonk::GetPrimaryScreen();
     NS_ENSURE_TRUE(primaryScreen, false);
 
     bool ret = primaryScreen->ClearMirroringScreen(this);
@@ -537,7 +570,7 @@ nsScreenManagerGonk::GetInstance()
 /* static */ already_AddRefed< nsScreenGonk>
 nsScreenManagerGonk::GetPrimaryScreen()
 {
-    nsRefPtr<nsScreenManagerGonk> manager = nsScreenManagerGonk::GetInstance();
+    RefPtr<nsScreenManagerGonk> manager = nsScreenManagerGonk::GetInstance();
     nsCOMPtr<nsIScreen> screen;
     manager->GetPrimaryScreen(getter_AddRefs(screen));
     MOZ_ASSERT(screen);
@@ -724,7 +757,7 @@ public:
         return NS_OK;
     }
 private:
-    nsRefPtr<DisplayInfo> mDisplayInfo;
+    RefPtr<DisplayInfo> mDisplayInfo;
 };
 
 void

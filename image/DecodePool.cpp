@@ -9,7 +9,6 @@
 
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Monitor.h"
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIObserverService.h"
 #include "nsIThreadPool.h"
@@ -74,7 +73,7 @@ private:
     , mSurfaceFlags(aSurfaceFlags)
   { }
 
-  nsRefPtr<RasterImage> mImage;
+  RefPtr<RasterImage> mImage;
   const Progress mProgress;
   const nsIntRect mInvalidRect;
   const SurfaceFlags mSurfaceFlags;
@@ -107,7 +106,7 @@ private:
     : mDecoder(aDecoder)
   { }
 
-  nsRefPtr<Decoder> mDecoder;
+  RefPtr<Decoder> mDecoder;
 };
 
 #ifdef MOZ_NUWA_PROCESS
@@ -141,7 +140,7 @@ struct Work
     SHUTDOWN
   } mType;
 
-  nsRefPtr<Decoder> mDecoder;
+  RefPtr<Decoder> mDecoder;
 };
 
 class DecodePoolImpl
@@ -195,7 +194,7 @@ public:
   void PushWork(Decoder* aDecoder)
   {
     MOZ_ASSERT(aDecoder);
-    nsRefPtr<Decoder> decoder(aDecoder);
+    RefPtr<Decoder> decoder(aDecoder);
 
     MonitorAutoLock lock(mMonitor);
 
@@ -242,11 +241,11 @@ public:
 private:
   ~DecodePoolImpl() { }
 
-  Work PopWorkFromQueue(nsTArray<nsRefPtr<Decoder>>& aQueue)
+  Work PopWorkFromQueue(nsTArray<RefPtr<Decoder>>& aQueue)
   {
     Work work;
     work.mType = Work::Type::DECODE;
-    work.mDecoder = aQueue.LastElement();
+    work.mDecoder = aQueue.LastElement().forget();
     aQueue.RemoveElementAt(aQueue.Length() - 1);
 
     return work;
@@ -256,8 +255,8 @@ private:
 
   // mMonitor guards the queues and mShuttingDown.
   Monitor mMonitor;
-  nsTArray<nsRefPtr<Decoder>> mMetadataDecodeQueue;
-  nsTArray<nsRefPtr<Decoder>> mFullDecodeQueue;
+  nsTArray<RefPtr<Decoder>> mMetadataDecodeQueue;
+  nsTArray<RefPtr<Decoder>> mFullDecodeQueue;
   bool mShuttingDown;
 };
 
@@ -296,7 +295,7 @@ public:
   }
 
 private:
-  nsRefPtr<DecodePoolImpl> mImpl;
+  RefPtr<DecodePoolImpl> mImpl;
 };
 
 /* static */ void

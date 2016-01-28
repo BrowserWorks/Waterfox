@@ -33,7 +33,7 @@ WMFMediaDataDecoder::~WMFMediaDataDecoder()
 {
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+RefPtr<MediaDataDecoder::InitPromise>
 WMFMediaDataDecoder::Init()
 {
   MOZ_ASSERT(!mIsShutDown);
@@ -109,10 +109,10 @@ WMFMediaDataDecoder::Input(MediaRawData* aSample)
   MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
+    NS_NewRunnableMethodWithArg<RefPtr<MediaRawData>>(
       this,
       &WMFMediaDataDecoder::ProcessDecode,
-      nsRefPtr<MediaRawData>(aSample));
+      RefPtr<MediaRawData>(aSample));
   mTaskQueue->Dispatch(runnable.forget());
   return NS_OK;
 }
@@ -147,7 +147,7 @@ WMFMediaDataDecoder::ProcessDecode(MediaRawData* aSample)
 void
 WMFMediaDataDecoder::ProcessOutput()
 {
-  nsRefPtr<MediaData> output;
+  RefPtr<MediaData> output;
   HRESULT hr = S_OK;
   while (SUCCEEDED(hr = mMFTManager->Output(mLastStreamOffset, output)) &&
          output) {
@@ -230,6 +230,29 @@ WMFMediaDataDecoder::IsHardwareAccelerated(nsACString& aFailureReason) const {
   MOZ_ASSERT(!mIsShutDown);
 
   return mMFTManager && mMFTManager->IsHardwareAccelerated(aFailureReason);
+}
+
+nsresult
+WMFMediaDataDecoder::ConfigurationChanged(const TrackInfo& aConfig)
+{
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethodWithArg<UniquePtr<TrackInfo>&&>(
+    this,
+    &WMFMediaDataDecoder::ProcessConfigurationChanged,
+    aConfig.Clone());
+  mTaskQueue->Dispatch(runnable.forget());
+  return NS_OK;
+
+}
+
+void
+WMFMediaDataDecoder::ProcessConfigurationChanged(UniquePtr<TrackInfo>&& aConfig)
+{
+  if (mMFTManager) {
+    mMFTManager->ConfigurationChanged(*aConfig);
+  }
 }
 
 } // namespace mozilla

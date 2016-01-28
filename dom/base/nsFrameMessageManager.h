@@ -73,13 +73,13 @@ public:
     return true;
   }
 
-  virtual bool DoSendAsyncMessage(JSContext* aCx,
-                                  const nsAString& aMessage,
-                                  StructuredCloneData& aData,
-                                  JS::Handle<JSObject*> aCpows,
-                                  nsIPrincipal* aPrincipal)
+  virtual nsresult DoSendAsyncMessage(JSContext* aCx,
+                                      const nsAString& aMessage,
+                                      StructuredCloneData& aData,
+                                      JS::Handle<JSObject*> aCpows,
+                                      nsIPrincipal* aPrincipal)
   {
-    return true;
+    return NS_OK;
   }
 
   virtual bool CheckPermission(const nsAString& aPermission)
@@ -248,6 +248,8 @@ public:
 
   void SetInitialProcessData(JS::HandleValue aInitialData);
 
+  void LoadPendingScripts();
+
 private:
   nsresult SendMessage(const nsAString& aMessageName,
                        JS::Handle<JS::Value> aJSON,
@@ -287,7 +289,7 @@ protected:
   bool mDisconnected;
   mozilla::dom::ipc::MessageManagerCallback* mCallback;
   nsAutoPtr<mozilla::dom::ipc::MessageManagerCallback> mOwnedCallback;
-  nsRefPtr<nsFrameMessageManager> mParentManager;
+  RefPtr<nsFrameMessageManager> mParentManager;
   nsTArray<nsString> mPendingScripts;
   nsTArray<bool> mPendingScriptsGlobalStates;
   JS::Heap<JS::Value> mInitialProcessData;
@@ -315,28 +317,32 @@ private:
 
    class MyAsyncMessage : public nsSameProcessAsyncMessageBase, public nsRunnable
    {
-     // Initialize nsSameProcessAsyncMessageBase...
-
      NS_IMETHOD Run() {
        ReceiveMessage(..., ...);
        return NS_OK;
      }
    };
- */
+
+
+   RefPtr<nsSameProcessAsyncMessageBase> ev = new MyAsyncMessage();
+   nsresult rv = ev->Init(...);
+   if (NS_SUCCEEDED(rv)) {
+     NS_DispatchToMainThread(ev);
+   }
+*/
 class nsSameProcessAsyncMessageBase
 {
 public:
   typedef mozilla::dom::ipc::StructuredCloneData StructuredCloneData;
 
-  nsSameProcessAsyncMessageBase(JSContext* aCx,
-                                const nsAString& aMessage,
-                                StructuredCloneData& aData,
-                                JS::Handle<JSObject*> aCpows,
-                                nsIPrincipal* aPrincipal);
+  nsSameProcessAsyncMessageBase(JSContext* aCx, JS::Handle<JSObject*> aCpows);
+  nsresult Init(JSContext* aCx,
+                const nsAString& aMessage,
+                StructuredCloneData& aData,
+                nsIPrincipal* aPrincipal);
 
   void ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
                       nsFrameMessageManager* aManager);
-
 private:
   nsSameProcessAsyncMessageBase(const nsSameProcessAsyncMessageBase&);
 

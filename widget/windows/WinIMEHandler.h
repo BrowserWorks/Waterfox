@@ -111,6 +111,8 @@ public:
 #endif // #ifdef DEBUG
 
 private:
+  static bool sPluginHasFocus;
+
   static InputContextAction::Cause sLastContextActionCause;
 
 #ifdef NS_ENABLE_TSF
@@ -121,12 +123,10 @@ private:
   // If sIMMEnabled is false, any IME messages are not handled in TSF mode.
   // Additionally, IME context is always disassociated from focused window.
   static bool sIsIMMEnabled;
-  static bool sPluginHasFocus;
   static bool sShowingOnScreenKeyboard;
 
   static bool IsTSFAvailable() { return (sIsInTSFMode && !sPluginHasFocus); }
   static bool IsIMMActive();
-#endif // #ifdef NS_ENABLE_TSF
 
   static void MaybeShowOnScreenKeyboard();
   static void MaybeDismissOnScreenKeyboard();
@@ -147,6 +147,7 @@ private:
    * Windows 8 and higher.
    */
   static void DismissOnScreenKeyboard();
+#endif // #ifdef NS_ENABLE_TSF
 };
 
 } // namespace widget

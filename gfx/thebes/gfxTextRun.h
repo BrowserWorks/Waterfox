@@ -10,6 +10,7 @@
 #include "nsString.h"
 #include "gfxPoint.h"
 #include "gfxFont.h"
+#include "gfxFontConstants.h"
 #include "nsTArray.h"
 #include "gfxSkipChars.h"
 #include "gfxPlatform.h"
@@ -126,10 +127,6 @@ public:
     bool CharIsNewline(uint32_t aPos) const {
         NS_ASSERTION(aPos < GetLength(), "aPos out of range");
         return mCharacterGlyphs[aPos].CharIsNewline();
-    }
-    bool CharIsLowSurrogate(uint32_t aPos) const {
-        NS_ASSERTION(aPos < GetLength(), "aPos out of range");
-        return mCharacterGlyphs[aPos].CharIsLowSurrogate();
     }
 
     // All uint32_t aStart, uint32_t aLength ranges below are restricted to
@@ -412,7 +409,7 @@ public:
 
     // The text is divided into GlyphRuns as necessary
     struct GlyphRun {
-        nsRefPtr<gfxFont> mFont;   // never null
+        RefPtr<gfxFont> mFont;   // never null
         uint32_t          mCharacterOffset; // into original UTF16 string
         uint8_t           mMatchType;
         uint16_t          mOrientation; // gfxTextRunFactory::TEXT_ORIENT_* value
@@ -533,10 +530,6 @@ public:
             SetGlyphs(aIndex, CompressedGlyph().SetComplex(true, true, 1), details);
         }
         g->SetIsNewline();
-    }
-    void SetIsLowSurrogate(uint32_t aIndex) {
-        SetGlyphs(aIndex, CompressedGlyph().SetComplex(false, false, 0), nullptr);
-        mCharacterGlyphs[aIndex].SetIsLowSurrogate();
     }
 
     /**
@@ -872,12 +865,6 @@ public:
     gfxTextRun* GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel, uint32_t aFlags,
                                    LazyReferenceContextGetter& aRefContextGetter);
 
-    // helper method for resolving generic font families
-    static void
-    ResolveGenericFontNames(mozilla::FontFamilyType aGenericType,
-                            nsIAtom *aLanguage,
-                            nsTArray<nsString>& aGenericFamilies);
-
 protected:
     // search through pref fonts for a character, return nullptr if no matching pref font
     already_AddRefed<gfxFont> WhichPrefFontSupportsChar(uint32_t aCh);
@@ -895,12 +882,13 @@ protected:
     public:
         FamilyFace() : mFamily(nullptr), mFontEntry(nullptr),
                        mNeedsBold(false), mFontCreated(false),
-                       mLoading(false), mInvalid(false)
+                       mLoading(false), mInvalid(false),
+                       mCheckForFallbackFaces(false)
         { }
 
         FamilyFace(gfxFontFamily* aFamily, gfxFont* aFont)
             : mFamily(aFamily), mNeedsBold(false), mFontCreated(true),
-              mLoading(false), mInvalid(false)
+              mLoading(false), mInvalid(false), mCheckForFallbackFaces(false)
         {
             NS_ASSERTION(aFont, "font pointer must not be null");
             NS_ASSERTION(!aFamily ||
@@ -913,7 +901,7 @@ protected:
         FamilyFace(gfxFontFamily* aFamily, gfxFontEntry* aFontEntry,
                    bool aNeedsBold)
             : mFamily(aFamily), mNeedsBold(aNeedsBold), mFontCreated(false),
-              mLoading(false), mInvalid(false)
+              mLoading(false), mInvalid(false), mCheckForFallbackFaces(false)
         {
             NS_ASSERTION(aFontEntry, "font entry pointer must not be null");
             NS_ASSERTION(!aFamily ||
@@ -928,7 +916,8 @@ protected:
               mNeedsBold(aOtherFamilyFace.mNeedsBold),
               mFontCreated(aOtherFamilyFace.mFontCreated),
               mLoading(aOtherFamilyFace.mLoading),
-              mInvalid(aOtherFamilyFace.mInvalid)
+              mInvalid(aOtherFamilyFace.mInvalid),
+              mCheckForFallbackFaces(aOtherFamilyFace.mCheckForFallbackFaces)
         {
             if (mFontCreated) {
                 mFont = aOtherFamilyFace.mFont;
@@ -991,6 +980,8 @@ protected:
         void CheckState(bool& aSkipDrawing);
         void SetLoading(bool aIsLoading) { mLoading = aIsLoading; }
         void SetInvalid() { mInvalid = true; }
+        bool CheckForFallbackFaces() const { return mCheckForFallbackFaces; }
+        void SetCheckForFallbackFaces() { mCheckForFallbackFaces = true; }
 
         void SetFont(gfxFont* aFont)
         {
@@ -1009,7 +1000,7 @@ protected:
         bool EqualsUserFont(const gfxUserFontEntry* aUserFont) const;
 
     private:
-        nsRefPtr<gfxFontFamily> mFamily;
+        RefPtr<gfxFontFamily> mFamily;
         // either a font or a font entry exists
         union {
             gfxFont*            mFont;
@@ -1019,6 +1010,7 @@ protected:
         bool                    mFontCreated : 1;
         bool                    mLoading     : 1;
         bool                    mInvalid     : 1;
+        bool                    mCheckForFallbackFaces : 1;
     };
 
     // List of font families, either named or generic.
@@ -1030,13 +1022,13 @@ protected:
     // Code should be careful about addressing this array directly.
     nsTArray<FamilyFace> mFonts;
 
-    nsRefPtr<gfxFont> mDefaultFont;
+    RefPtr<gfxFont> mDefaultFont;
     gfxFontStyle mStyle;
 
     gfxFloat mUnderlineOffset;
     gfxFloat mHyphenWidth;
 
-    nsRefPtr<gfxUserFontSet> mUserFontSet;
+    RefPtr<gfxUserFontSet> mUserFontSet;
     uint64_t mCurrGeneration;  // track the current user font set generation, rebuild font list if needed
 
     gfxTextPerfMetrics *mTextPerf;
@@ -1046,8 +1038,8 @@ protected:
     nsAutoPtr<gfxTextRun>   mCachedEllipsisTextRun;
 
     // cache the most recent pref font to avoid general pref font lookup
-    nsRefPtr<gfxFontFamily> mLastPrefFamily;
-    nsRefPtr<gfxFont>       mLastPrefFont;
+    RefPtr<gfxFontFamily> mLastPrefFamily;
+    RefPtr<gfxFont>       mLastPrefFont;
     eFontPrefLang           mLastPrefLang;       // lang group for last pref font
     eFontPrefLang           mPageLang;
     bool                    mLastPrefFirstFont;  // is this the first font in the list of pref fonts for this lang group?
@@ -1115,20 +1107,20 @@ protected:
     already_AddRefed<gfxFont>
     FindNonItalicFaceForChar(gfxFontFamily* aFamily, uint32_t aCh);
 
-    // helper methods for looking up fonts
+    // search all faces in a family for a fallback in cases where it's unclear
+    // whether the family might have a font for a given character
+    already_AddRefed<gfxFont>
+    FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh,
+                            int32_t aRunScript);
 
-    // iterate over the fontlist, lookup names and expand generics
-    void EnumerateFontList(nsIAtom *aLanguage, void *aClosure = nullptr);
-
-    // expand a generic to a list of specific names based on prefs
-    void FindGenericFonts(mozilla::FontFamilyType aGenericType,
-                          nsIAtom *aLanguage,
-                          void *aClosure);
+   // helper methods for looking up fonts
 
     // lookup and add a font with a given name (i.e. *not* a generic!)
-    virtual void FindPlatformFont(const nsAString& aName,
-                                  bool aUseFontSet,
-                                  void *aClosure);
+    void AddPlatformFont(const nsAString& aName,
+                         nsTArray<gfxFontFamily*>& aFamilyList);
+
+    // do style selection and add entries to list
+    void AddFamilyToFontList(gfxFontFamily* aFamily);
 
     static nsILanguageAtomService* gLangService;
 };

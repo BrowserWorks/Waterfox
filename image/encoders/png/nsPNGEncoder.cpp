@@ -287,22 +287,18 @@ nsPNGEncoder::AddImageFrame(const uint8_t* aData,
   if (aInputFormat == INPUT_FORMAT_HOSTARGB) {
     // PNG requires RGBA with post-multiplied alpha, so we need to
     // convert
-    uint8_t* row = new uint8_t[aWidth * 4];
+    UniquePtr<uint8_t[]> row = MakeUnique<uint8_t[]>(aWidth * 4);
     for (uint32_t y = 0; y < aHeight; y++) {
-      ConvertHostARGBRow(&aData[y * aStride], row, aWidth, useTransparency);
-      png_write_row(mPNG, row);
+      ConvertHostARGBRow(&aData[y * aStride], row.get(), aWidth, useTransparency);
+      png_write_row(mPNG, row.get());
     }
-    delete[] row;
-
   } else if (aInputFormat == INPUT_FORMAT_RGBA && !useTransparency) {
     // RBGA, but we need to strip the alpha
-    uint8_t* row = new uint8_t[aWidth * 4];
+    UniquePtr<uint8_t[]> row = MakeUnique<uint8_t[]>(aWidth * 4);
     for (uint32_t y = 0; y < aHeight; y++) {
-      StripAlpha(&aData[y * aStride], row, aWidth);
-      png_write_row(mPNG, row);
+      StripAlpha(&aData[y * aStride], row.get(), aWidth);
+      png_write_row(mPNG, row.get());
     }
-    delete[] row;
-
   } else if (aInputFormat == INPUT_FORMAT_RGB ||
              aInputFormat == INPUT_FORMAT_RGBA) {
     // simple RBG(A), no conversion needed
@@ -548,17 +544,12 @@ nsPNGEncoder::Available(uint64_t* _retval)
   return NS_OK;
 }
 
-/* [noscript] unsigned long read (in charPtr aBuf,
-                                  in unsigned long aCount); */
 NS_IMETHODIMP
 nsPNGEncoder::Read(char* aBuf, uint32_t aCount, uint32_t* _retval)
 {
   return ReadSegments(NS_CopySegmentToBuffer, aBuf, aCount, _retval);
 }
 
-/* [noscript] unsigned long readSegments (in nsWriteSegmentFun aWriter,
-                                          in voidPtr aClosure,
-                                          in unsigned long aCount); */
 NS_IMETHODIMP
 nsPNGEncoder::ReadSegments(nsWriteSegmentFun aWriter,
                            void* aClosure, uint32_t aCount,

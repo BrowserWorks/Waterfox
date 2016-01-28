@@ -107,7 +107,7 @@ struct NativePtr
         Clear(instance);
         SetNativeHandle(instance.Env(), instance.Get(),
                           reinterpret_cast<uintptr_t>(ptr.release()));
-        HandleUncaughtException(instance.Env());
+        MOZ_CATCH_JNI_EXCEPTION(instance.Env());
     }
 
     template<class LocalRef>
@@ -115,11 +115,11 @@ struct NativePtr
     {
         UniquePtr<Impl> ptr(reinterpret_cast<Impl*>(
                 GetNativeHandle(instance.Env(), instance.Get())));
-        HandleUncaughtException(instance.Env());
+        MOZ_CATCH_JNI_EXCEPTION(instance.Env());
 
         if (ptr) {
             SetNativeHandle(instance.Env(), instance.Get(), 0);
-            HandleUncaughtException(instance.Env());
+            MOZ_CATCH_JNI_EXCEPTION(instance.Env());
         }
     }
 };
@@ -155,7 +155,7 @@ struct NativePtr<Impl, /* UseWeakPtr = */ true>
         Clear(instance);
         SetNativeHandle(instance.Env(), instance.Get(),
                           reinterpret_cast<uintptr_t>(new WeakPtr<Impl>(ptr)));
-        HandleUncaughtException(instance.Env());
+        MOZ_CATCH_JNI_EXCEPTION(instance.Env());
     }
 
     template<class LocalRef>
@@ -163,11 +163,11 @@ struct NativePtr<Impl, /* UseWeakPtr = */ true>
     {
         const auto ptr = reinterpret_cast<WeakPtr<Impl>*>(
                 GetNativeHandle(instance.Env(), instance.Get()));
-        HandleUncaughtException(instance.Env());
+        MOZ_CATCH_JNI_EXCEPTION(instance.Env());
 
         if (ptr) {
             SetNativeHandle(instance.Env(), instance.Get(), 0);
-            HandleUncaughtException(instance.Env());
+            MOZ_CATCH_JNI_EXCEPTION(instance.Env());
             delete ptr;
         }
     }
@@ -256,6 +256,7 @@ struct ProxyArg<Ref<T>>
 
 template<typename T> struct ProxyArg<const T&> : ProxyArg<T> {};
 template<> struct ProxyArg<Param<String>> : ProxyArg<Ref<String>> {};
+template<class T> struct ProxyArg<LocalRef<T>> : ProxyArg<Ref<T>> {};
 
 // ProxyNativeCall implements the functor object that is passed to
 // UsesNativeCallProxy::OnNativeCall
@@ -325,7 +326,7 @@ class ProxyNativeCall
          mozilla::IndexSequence<Indices...>)
     {
         Impl* const impl = NativePtr<Impl>::Get(inst);
-        HandleUncaughtException(inst.Env());
+        MOZ_CATCH_JNI_EXCEPTION(inst.Env());
         (impl->*mNativeCall)(inst, mozilla::Get<Indices>(mArgs)...);
     }
 
@@ -335,7 +336,7 @@ class ProxyNativeCall
          mozilla::IndexSequence<Indices...>)
     {
         Impl* const impl = NativePtr<Impl>::Get(inst);
-        HandleUncaughtException(inst.Env());
+        MOZ_CATCH_JNI_EXCEPTION(inst.Env());
         (impl->*mNativeCall)(mozilla::Get<Indices>(mArgs)...);
     }
 
@@ -355,14 +356,14 @@ public:
     ProxyNativeCall(const ProxyNativeCall&) = default;
 
     // Get class ref for static calls or object ref for instance calls.
-    typename ThisArgClass::Param GetThisArg() { return mThisArg; }
+    typename ThisArgClass::Param GetThisArg() const { return mThisArg; }
 
     // Return if target is the given function pointer / pointer-to-member.
     // Because we can only compare pointers of the same type, we use a
     // templated overload that is chosen only if given a different type of
     // pointer than our target pointer type.
-    bool IsTarget(NativeCallType call) { return call == mNativeCall; }
-    template<typename T> bool IsTarget(T&&) { return false; }
+    bool IsTarget(NativeCallType call) const { return call == mNativeCall; }
+    template<typename T> bool IsTarget(T&&) const { return false; }
 
     void operator()()
     {
@@ -515,20 +516,19 @@ public:
     }
 
     // Overload for DisposeNative
-    template<void (NativeImpl<Owner, Impl>::*Method) (const typename Owner::LocalRef&)>
+    template<void (*DisposeNative) (const typename Owner::LocalRef&)>
     static MOZ_JNICALL void Wrap(JNIEnv* env, jobject instance)
     {
         if (mozilla::IsBaseOf<UsesNativeCallProxy, Impl>::value) {
-            Dispatch(ProxyNativeCall<Impl, Owner, /* IsStatic */ false,
-                    /* HasThisArg */ true>(Method, env, instance));
-            return;
-        }
-        Impl* const impl = NativePtr<Impl>::Get(env, instance);
-        if (!impl) {
+            auto cls = ClassObject::LocalRef::Adopt(
+                    env, env->GetObjectClass(instance));
+            Dispatch(ProxyNativeCall<Impl, Owner, /* IsStatic */ true,
+                    /* HasThisArg */ false, const typename Owner::LocalRef&>(
+                    DisposeNative, env, cls.Get(), instance));
             return;
         }
         auto self = Owner::LocalRef::Adopt(env, instance);
-        (impl->*Method)(self);
+        (Impl::DisposeNative)(self);
         self.Forget();
     }
 };
@@ -678,13 +678,13 @@ protected:
         return NativePtr<Impl>::Get(instance);
     }
 
+    static void DisposeNative(const typename Cls::LocalRef& instance) {
+        NativePtr<Impl>::Clear(instance);
+    }
+
     NativeImpl() {
         // Initialize on creation if not already initialized.
         Init();
-    }
-
-    void DisposeNative(const typename Cls::LocalRef& instance) {
-        NativePtr<Impl>::Clear(instance);
     }
 };
 

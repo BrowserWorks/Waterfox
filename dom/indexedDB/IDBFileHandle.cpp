@@ -44,7 +44,7 @@ IDBFileHandle::Create(IDBMutableFile* aMutableFile,
   aMutableFile->AssertIsOnOwningThread();
   MOZ_ASSERT(aMode == FileMode::Readonly || aMode == FileMode::Readwrite);
 
-  nsRefPtr<IDBFileHandle> fileHandle =
+  RefPtr<IDBFileHandle> fileHandle =
     new IDBFileHandle(aMode, aMutableFile);
 
   fileHandle->BindToOwner(aMutableFile);
@@ -75,7 +75,7 @@ IDBFileHandle::GetMetadata(const IDBFileMetadataParameters& aParameters,
 
   // Argument checking for get metadata.
   if (!aParameters.mSize && !aParameters.mLastModified) {
-    aRv.ThrowTypeError(MSG_METADATA_NOT_CONFIGURED);
+    aRv.ThrowTypeError<MSG_METADATA_NOT_CONFIGURED>();
     return nullptr;
   }
 
@@ -88,7 +88,7 @@ IDBFileHandle::GetMetadata(const IDBFileMetadataParameters& aParameters,
   params.size() = aParameters.mSize;
   params.lastModified() = aParameters.mLastModified;
 
-  nsRefPtr<FileRequestBase> fileRequest = GenerateFileRequest();
+  RefPtr<FileRequestBase> fileRequest = GenerateFileRequest();
 
   StartRequest(fileRequest, params);
 

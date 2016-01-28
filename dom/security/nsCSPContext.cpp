@@ -115,6 +115,14 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
     CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
   }
 
+  bool isStyleOrScriptPreLoad =
+    (aContentType == nsIContentPolicy::TYPE_INTERNAL_SCRIPT_PRELOAD ||
+     aContentType == nsIContentPolicy::TYPE_INTERNAL_STYLESHEET_PRELOAD);
+
+  // Since we know whether we are dealing with a preload, we have to convert
+  // the internal policytype ot the external policy type before moving on.
+  aContentType = nsContentUtils::InternalContentPolicyTypeToExternal(aContentType);
+
   nsresult rv = NS_OK;
 
   // This ShouldLoad function is called from nsCSPService::ShouldLoad,
@@ -145,29 +153,8 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
     return NS_OK;
   }
 
-  // This may be a load or a preload. If it is a preload, the document will
-  // not have been fully parsed yet, and aRequestContext will be an
-  // nsIDOMHTMLDocument rather than the nsIDOMHTMLElement associated with the
-  // resource. As a result, we cannot extract the element's corresponding
-  // nonce attribute, and so we cannot correctly check the nonce on a preload.
-  //
-  // Therefore, the decision returned here for a preload may be *incorrect* as
-  // it cannot take the nonce into account. We will still check the load, but
-  // we will not cache the result or report a violation. When the "real load"
-  // happens subsequently, we will re-check with the additional context to
-  // make a final decision.
-  //
-  // We don't just return false because that would block all preloads and
-  // degrade performance. However, we do want to block preloads that are
-  // clearly blocked (their urls are not whitelisted) by CSP.
-
-  nsCOMPtr<nsIDOMHTMLDocument> doc = do_QueryInterface(aRequestContext);
-  bool isPreload = doc &&
-                   (aContentType == nsIContentPolicy::TYPE_SCRIPT ||
-                    aContentType == nsIContentPolicy::TYPE_STYLESHEET);
-
   nsAutoString nonce;
-  if (!isPreload) {
+  if (!isStyleOrScriptPreLoad) {
     nsCOMPtr<nsIDOMHTMLElement> htmlElement = do_QueryInterface(aRequestContext);
     if (htmlElement) {
       rv = htmlElement->GetAttribute(NS_LITERAL_STRING("nonce"), nonce);
@@ -184,7 +171,7 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
                                    originalURI,
                                    nonce,
                                    wasRedirected,
-                                   isPreload,
+                                   isStyleOrScriptPreLoad,
                                    false,     // allow fallback to default-src
                                    true,      // send violation reports
                                    true);     // send blocked URI in violation reports
@@ -193,7 +180,7 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
                            : nsIContentPolicy::REJECT_SERVER;
 
   // Done looping, cache any relevant result
-  if (cacheKey.Length() > 0 && !isPreload) {
+  if (cacheKey.Length() > 0 && !isStyleOrScriptPreLoad) {
     mShouldLoadCache.Put(cacheKey, *outDecision);
   }
 
@@ -789,7 +776,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
       const char16_t* params[] = { reportURIs[r].get() };
       CSPCONTEXTLOG(("Could not create nsIURI for report URI %s",
                      reportURICstring.get()));
-      CSP_LogLocalizedStr(NS_LITERAL_STRING("triedToSendReport").get(),
+      CSP_LogLocalizedStr(MOZ_UTF16("triedToSendReport"),
                           params, ArrayLength(params),
                           aSourceFile, aScriptSample, aLineNum, 0,
                           nsIScriptError::errorFlag, "CSP", mInnerWindowID);
@@ -833,7 +820,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
     if (!isHttpScheme) {
       const char16_t* params[] = { reportURIs[r].get() };
-      CSP_LogLocalizedStr(NS_LITERAL_STRING("reportURInotHttpsOrHttp2").get(),
+      CSP_LogLocalizedStr(MOZ_UTF16("reportURInotHttpsOrHttp2"),
                           params, ArrayLength(params),
                           aSourceFile, aScriptSample, aLineNum, 0,
                           nsIScriptError::errorFlag, "CSP", mInnerWindowID);
@@ -850,7 +837,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 
     // we need to set an nsIChannelEventSink on the channel object
     // so we can tell it to not follow redirects when posting the reports
-    nsRefPtr<CSPReportRedirectSink> reportSink = new CSPReportRedirectSink();
+    RefPtr<CSPReportRedirectSink> reportSink = new CSPReportRedirectSink();
     if (docShell) {
       nsCOMPtr<nsINetworkInterceptController> interceptController = do_QueryInterface(docShell);
       reportSink->SetInterceptController(interceptController);
@@ -906,7 +893,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
       httpChannel->SetRequestMethod(NS_LITERAL_CSTRING("POST"));
     }
 
-    nsRefPtr<CSPViolationReportListener> listener = new CSPViolationReportListener();
+    RefPtr<CSPViolationReportListener> listener = new CSPViolationReportListener();
     rv = reportChannel->AsyncOpen(listener, nullptr);
 
     // AsyncOpen should not fail, but could if there's no load group (like if
@@ -917,7 +904,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     if (NS_FAILED(rv)) {
       const char16_t* params[] = { reportURIs[r].get() };
       CSPCONTEXTLOG(("AsyncOpen failed for report URI %s", params[0]));
-      CSP_LogLocalizedStr(NS_LITERAL_STRING("triedToSendReport").get(),
+      CSP_LogLocalizedStr(MOZ_UTF16("triedToSendReport"),
                           params, ArrayLength(params),
                           aSourceFile, aScriptSample, aLineNum, 0,
                           nsIScriptError::errorFlag, "CSP", mInnerWindowID);
@@ -1007,8 +994,8 @@ class CSPReportSenderRunnable final : public nsRunnable
         const char16_t* params[] = { mViolatedDirective.get(),
                                      blockedDataChar16.get() };
 
-        CSP_LogLocalizedStr(mReportOnlyFlag ? NS_LITERAL_STRING("CSPROViolationWithURI").get() :
-                                              NS_LITERAL_STRING("CSPViolationWithURI").get(),
+        CSP_LogLocalizedStr(mReportOnlyFlag ? MOZ_UTF16("CSPROViolationWithURI") :
+                                              MOZ_UTF16("CSPViolationWithURI"),
                             params, ArrayLength(params),
                             mSourceFile, mScriptSample, mLineNum, 0,
                             nsIScriptError::errorFlag, "CSP", mInnerWindowID);
@@ -1027,7 +1014,7 @@ class CSPReportSenderRunnable final : public nsRunnable
     nsString                mScriptSample;
     uint32_t                mLineNum;
     uint64_t                mInnerWindowID;
-    nsRefPtr<nsCSPContext>  mCSPContext;
+    RefPtr<nsCSPContext>  mCSPContext;
 };
 
 /**
@@ -1326,7 +1313,7 @@ CSPReportRedirectSink::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
   NS_ASSERTION(observerService, "Observer service required to log CSP violations");
   observerService->NotifyObservers(uri,
                                    CSP_VIOLATION_TOPIC,
-                                   NS_LITERAL_STRING("denied redirect while sending violation report").get());
+                                   MOZ_UTF16("denied redirect while sending violation report"));
 
   return NS_BINDING_REDIRECTED;
 }

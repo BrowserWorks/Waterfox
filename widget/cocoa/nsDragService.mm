@@ -113,9 +113,9 @@ static nsresult SetUpDragClipboard(nsISupportsArray* aTransferableArray)
 
   NSPasteboard* dragPBoard = [NSPasteboard pasteboardWithName:NSDragPboard];
 
-  for (uint32_t i = 0; i < count; i++) {
+  for (uint32_t j = 0; j < count; j++) {
     nsCOMPtr<nsISupports> currentTransferableSupports;
-    aTransferableArray->GetElementAt(i, getter_AddRefs(currentTransferableSupports));
+    aTransferableArray->GetElementAt(j, getter_AddRefs(currentTransferableSupports));
     if (!currentTransferableSupports)
       return NS_ERROR_FAILURE;
 
@@ -136,8 +136,8 @@ static nsresult SetUpDragClipboard(nsISupportsArray* aTransferableArray)
     // it. Add our wildcard type to the pasteboard to accomplish this.
     [types addObject:kWildcardPboardType]; // we don't increase the count for the loop below on purpose
     [dragPBoard declareTypes:types owner:nil];
-    for (unsigned int i = 0; i < typeCount; i++) {
-      NSString* currentKey = [types objectAtIndex:i];
+    for (unsigned int k = 0; k < typeCount; k++) {
+      NSString* currentKey = [types objectAtIndex:k];
       id currentValue = [pasteboardOutputDict valueForKey:currentKey];
       if (currentKey == NSStringPboardType ||
           currentKey == kCorePboardType_url ||
@@ -273,16 +273,12 @@ nsDragService::ConstructDragImage(nsIDOMNode* aDOMNode,
 // We can only invoke NSView's 'dragImage:at:offset:event:pasteboard:source:slideBack:' from
 // within NSView's 'mouseDown:' or 'mouseDragged:'. Luckily 'mouseDragged' is always on the
 // stack when InvokeDragSession gets called.
-NS_IMETHODIMP
-nsDragService::InvokeDragSession(nsIDOMNode* aDOMNode, nsISupportsArray* aTransferableArray,
-                                 nsIScriptableRegion* aDragRgn, uint32_t aActionType)
+nsresult
+nsDragService::InvokeDragSessionImpl(nsISupportsArray* aTransferableArray,
+                                     nsIScriptableRegion* aDragRgn,
+                                     uint32_t aActionType)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
-
-  nsresult rv = nsBaseDragService::InvokeDragSession(aDOMNode,
-                                                     aTransferableArray,
-                                                     aDragRgn, aActionType);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   mDataItems = aTransferableArray;
 
@@ -291,7 +287,7 @@ nsDragService::InvokeDragSession(nsIDOMNode* aDOMNode, nsISupportsArray* aTransf
     return NS_ERROR_FAILURE;
 
   nsIntRect dragRect(0, 0, 20, 20);
-  NSImage* image = ConstructDragImage(aDOMNode, &dragRect, aDragRgn);
+  NSImage* image = ConstructDragImage(mSourceNode, &dragRect, aDragRgn);
   if (!image) {
     // if no image was returned, just draw a rectangle
     NSSize size;
@@ -425,7 +421,7 @@ nsDragService::GetData(nsITransferable* aTransferable, uint32_t aItemIndex)
       clipboardDataPtr[stringLength] = 0; // null terminate
 
       nsCOMPtr<nsIFile> file;
-      nsresult rv = NS_NewLocalFile(nsDependentString(clipboardDataPtr), true, getter_AddRefs(file));
+      rv = NS_NewLocalFile(nsDependentString(clipboardDataPtr), true, getter_AddRefs(file));
       free(clipboardDataPtr);
       if (NS_FAILED(rv))
         continue;

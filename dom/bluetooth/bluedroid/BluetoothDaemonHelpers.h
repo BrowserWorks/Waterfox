@@ -27,15 +27,6 @@ using namespace mozilla::ipc::DaemonSocketPDUHelpers;
 // Helper structures
 //
 
-enum BluetoothAclState {
-  ACL_STATE_CONNECTED,
-  ACL_STATE_DISCONNECTED
-};
-
-struct BluetoothAddress {
-  uint8_t mAddr[6];
-};
-
 struct BluetoothAvrcpAttributeTextPairs {
   BluetoothAvrcpAttributeTextPairs(const uint8_t* aAttr,
                                    const char** aText,
@@ -106,25 +97,6 @@ struct BluetoothAvrcpEventParamPair {
   const BluetoothAvrcpNotificationParam& mParam;
 };
 
-struct BluetoothConfigurationParameter {
-  uint8_t mType;
-  uint16_t mLength;
-  nsAutoArrayPtr<uint8_t> mValue;
-};
-
-struct BluetoothPinCode {
-  uint8_t mPinCode[16];
-  uint8_t mLength;
-};
-
-struct BluetoothRemoteName {
-  uint8_t mName[249];
-};
-
-struct BluetoothServiceName {
-  uint8_t mName[256];
-};
-
 //
 // Conversion
 //
@@ -157,7 +129,7 @@ nsresult
 Convert(uint8_t aIn, BluetoothAvrcpPlayerAttribute& aOut);
 
 nsresult
-Convert(uint8_t aIn, BluetoothAvrcpRemoteFeature& aOut);
+Convert(uint8_t aIn, BluetoothAvrcpRemoteFeatureBits& aOut);
 
 nsresult
 Convert(uint8_t aIn, BluetoothHandsfreeAudioState& aOut);
@@ -199,25 +171,13 @@ nsresult
 Convert(uint8_t aIn, BluetoothStatus& aOut);
 
 nsresult
+Convert(int32_t aIn, BluetoothAttributeHandle& aOut);
+
+nsresult
 Convert(int32_t aIn, BluetoothGattStatus& aOut);
 
 nsresult
-Convert(const nsAString& aIn, BluetoothAddress& aOut);
-
-nsresult
-Convert(const nsAString& aIn, BluetoothPinCode& aOut);
-
-nsresult
-Convert(const nsAString& aIn, BluetoothPropertyType& aOut);
-
-nsresult
-Convert(const nsAString& aIn, BluetoothServiceName& aOut);
-
-nsresult
-Convert(BluetoothAclState aIn, bool& aOut);
-
-nsresult
-Convert(const BluetoothAddress& aIn, nsAString& aOut);
+Convert(const BluetoothAttributeHandle& aIn, int32_t& aOut);
 
 nsresult
 Convert(BluetoothAvrcpEvent aIn, uint8_t& aOut);
@@ -229,7 +189,7 @@ nsresult
 Convert(BluetoothAvrcpPlayerAttribute aIn, uint8_t& aOut);
 
 nsresult
-Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut);
+Convert(BluetoothAvrcpRemoteFeatureBits aIn, unsigned long& aOut);
 
 nsresult
 Convert(BluetoothAvrcpStatus aIn, uint8_t& aOut);
@@ -268,10 +228,10 @@ nsresult
 Convert(BluetoothPropertyType aIn, uint8_t& aOut);
 
 nsresult
-Convert(const BluetoothRemoteName& aIn, nsAString& aOut);
+Convert(BluetoothScanMode aIn, uint8_t& aOut);
 
 nsresult
-Convert(BluetoothScanMode aIn, uint8_t& aOut);
+Convert(BluetoothSetupServiceId aIn, uint8_t& aOut);
 
 nsresult
 Convert(BluetoothSocketType aIn, uint8_t& aOut);
@@ -297,6 +257,9 @@ Convert(nsresult aIn, BluetoothStatus& aOut);
 
 nsresult
 PackPDU(const BluetoothAddress& aIn, DaemonSocketPDU& aPDU);
+
+nsresult
+PackPDU(const BluetoothAttributeHandle& aIn, DaemonSocketPDU& aPDU);
 
 nsresult
 PackPDU(const BluetoothAvrcpAttributeTextPairs& aIn,
@@ -358,7 +321,7 @@ nsresult
 PackPDU(const BluetoothHandsfreeWbsConfig& aIn, DaemonSocketPDU& aPDU);
 
 nsresult
-PackPDU(const BluetoothNamedValue& aIn, DaemonSocketPDU& aPDU);
+PackPDU(const BluetoothProperty& aIn, DaemonSocketPDU& aPDU);
 
 nsresult
 PackPDU(const BluetoothPinCode& aIn, DaemonSocketPDU& aPDU);
@@ -368,6 +331,9 @@ PackPDU(BluetoothPropertyType aIn, DaemonSocketPDU& aPDU);
 
 nsresult
 PackPDU(const BluetoothServiceName& aIn, DaemonSocketPDU& aPDU);
+
+nsresult
+PackPDU(BluetoothSetupServiceId aIn, DaemonSocketPDU& aPDU);
 
 nsresult
 PackPDU(BluetoothSocketType aIn, DaemonSocketPDU& aPDU);
@@ -431,6 +397,9 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAddress& aOut)
 }
 
 nsresult
+UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAttributeHandle& aOut);
+
+nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpEvent& aOut);
 
 nsresult
@@ -443,7 +412,7 @@ nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpPlayerSettings& aOut);
 
 nsresult
-UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpRemoteFeature& aOut);
+UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpRemoteFeatureBits& aOut);
 
 nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothBondState& aOut);
@@ -479,7 +448,17 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothRemoteInfo& aOut);
 inline nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothRemoteName& aOut)
 {
-  return aPDU.Read(aOut.mName, sizeof(aOut.mName));
+  nsresult rv = aPDU.Read(aOut.mName, sizeof(aOut.mName));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  /* The PDU stores one extra byte for the trailing \0 character. We
+   * consume the byte, but don't store the character.
+   */
+  if (!aPDU.Consume(1)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  return NS_OK;
 }
 
 nsresult

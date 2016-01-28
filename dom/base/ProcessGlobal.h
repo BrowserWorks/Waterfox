@@ -17,7 +17,9 @@
 #include "nsIRunnable.h"
 #include "nsIGlobalObject.h"
 #include "nsIScriptObjectPrincipal.h"
+#include "nsServiceManagerUtils.h"
 #include "nsWeakReference.h"
+#include "nsWrapperCache.h"
 
 namespace mozilla {
 namespace dom {
@@ -71,7 +73,7 @@ protected:
 
 private:
   bool mInitialized;
-  nsRefPtr<nsFrameMessageManager> mMessageManager;
+  RefPtr<nsFrameMessageManager> mMessageManager;
 };
 
 } // namespace dom

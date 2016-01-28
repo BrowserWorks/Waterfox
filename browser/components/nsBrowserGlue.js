@@ -14,11 +14,28 @@ const POLARIS_ENABLED = "browser.polaris.enabled";
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "AboutHome",
                                   "resource:///modules/AboutHome.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AboutNewTab",
                                   "resource:///modules/AboutNewTab.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "DirectoryLinksProvider",
+                                  "resource:///modules/DirectoryLinksProvider.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "NewTabUtils",
+                                  "resource://gre/modules/NewTabUtils.jsm");
+
+if(!AppConstants.RELEASE_BUILD) {
+  XPCOMUtils.defineLazyModuleGetter(this, "RemoteAboutNewTab",
+                                    "resource:///modules/RemoteAboutNewTab.jsm");
+
+  XPCOMUtils.defineLazyModuleGetter(this, "RemoteNewTabUtils",
+                                    "resource:///modules/RemoteNewTabUtils.jsm");
+}
 
 XPCOMUtils.defineLazyModuleGetter(this, "UITour",
                                   "resource:///modules/UITour.jsm");
@@ -29,15 +46,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
 XPCOMUtils.defineLazyModuleGetter(this, "ContentClick",
                                   "resource:///modules/ContentClick.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "DirectoryLinksProvider",
-                                  "resource:///modules/DirectoryLinksProvider.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "UserAgentOverrides",
-                                  "resource://gre/modules/UserAgentOverrides.jsm");
-								  
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 
@@ -55,9 +66,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebappManager",
 
 XPCOMUtils.defineLazyModuleGetter(this, "PageThumbs",
                                   "resource://gre/modules/PageThumbs.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "NewTabUtils",
-                                  "resource://gre/modules/NewTabUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizationTabPreloader",
                                   "resource:///modules/CustomizationTabPreloader.jsm");
@@ -127,8 +135,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
                                   "resource:///modules/ContentSearch.jsm");
 
 #ifdef E10S_TESTING_ONLY
-XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
-                                  "resource://gre/modules/UpdateChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                  "resource://gre/modules/UpdateUtils.jsm");
 #endif
 
 #ifdef MOZ_CRASHREPORTER
@@ -175,11 +183,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
                                   "resource://gre/modules/ExtensionManagement.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
-
 XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils",
                                    "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
+
+XPCOMUtils.defineLazyServiceGetter(this, "AlertsService",
+                                   "@mozilla.org/alerts-service;1", "nsIAlertsService");
+
+const ABOUT_NEWTAB = "about:newtab";
 
 const PREF_PLUGINS_NOTIFYUSER = "plugins.update.notifyUser";
 const PREF_PLUGINS_UPDATEURL  = "plugins.update.url";
@@ -279,6 +289,9 @@ BrowserGlue.prototype = {
   // nsIObserver implementation
   observe: function BG_observe(subject, topic, data) {
     switch (topic) {
+      case "notifications-open-settings":
+        this._openPreferences("content");
+        break;
       case "prefservice:after-app-defaults":
         this._onAppDefaults();
         break;
@@ -407,39 +420,16 @@ BrowserGlue.prototype = {
         this._dispose();
         break;
       case "keyword-search":
-        // This is very similar to code in
-        // browser.js:BrowserSearch.recordSearchInHealthReport(). The code could
-        // be consolidated if there is will. We need the observer in
-        // nsBrowserGlue to prevent double counting.
-        let win = RecentWindow.getMostRecentBrowserWindow();
-        BrowserUITelemetry.countSearchEvent("urlbar", win.gURLBar.value);
-
+        // This notification is broadcast by the docshell when it "fixes up" a
+        // URI that it's been asked to load into a keyword search.
         let engine = null;
         try {
           engine = subject.QueryInterface(Ci.nsISearchEngine);
         } catch (ex) {
           Cu.reportError(ex);
         }
-
-        win.BrowserSearch.recordSearchInTelemetry(engine, "urlbar");
-#ifdef MOZ_SERVICES_HEALTHREPORT
-        let reporter = Cc["@mozilla.org/datareporting/service;1"]
-                         .getService()
-                         .wrappedJSObject
-                         .healthReporter;
-
-        if (!reporter) {
-          return;
-        }
-
-        reporter.onInit().then(function record() {
-          try {
-            reporter.getProvider("org.mozilla.searches").recordSearch(engine, "urlbar");
-          } catch (ex) {
-            Cu.reportError(ex);
-          }
-        });
-#endif
+        let win = RecentWindow.getMostRecentBrowserWindow();
+        win.BrowserSearch.recordSearchInHealthReport(engine, "urlbar");
         break;
       case "browser-search-engine-modified":
         // Ensure we cleanup the hiddenOneOffs pref when removing
@@ -513,11 +503,8 @@ BrowserGlue.prototype = {
       case "autocomplete-did-enter-text":
         this._handleURLBarTelemetry(subject.QueryInterface(Ci.nsIAutoCompleteInput));
         break;
-      case "tablet-mode-change":
-        if (data == "tablet-mode") {
-          Services.telemetry.getHistogramById("FX_TABLET_MODE_USED_DURING_SESSION")
-                            .add(1);
-        }
+      case "test-initialize-sanitizer":
+        this._sanitizer.onStartup();
         break;
     }
   },
@@ -588,9 +575,10 @@ BrowserGlue.prototype = {
     }
   },
 
-  // initialization (called on application startup) 
+  // initialization (called on application startup)
   _init: function BG__init() {
     let os = Services.obs;
+    os.addObserver(this, "notifications-open-settings", false);
     os.addObserver(this, "prefservice:after-app-defaults", false);
     os.addObserver(this, "final-ui-startup", false);
     os.addObserver(this, "browser-delayed-startup-finished", false);
@@ -625,20 +613,23 @@ BrowserGlue.prototype = {
     os.addObserver(this, "flash-plugin-hang", false);
     os.addObserver(this, "xpi-signature-changed", false);
     os.addObserver(this, "autocomplete-did-enter-text", false);
-    os.addObserver(this, "tablet-mode-change", false);
 
     ExtensionManagement.registerScript("chrome://browser/content/ext-utils.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-browserAction.js");
+    ExtensionManagement.registerScript("chrome://browser/content/ext-pageAction.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-contextMenus.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-tabs.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-windows.js");
+    ExtensionManagement.registerScript("chrome://browser/content/ext-bookmarks.js");
 
     this._flashHangCount = 0;
+    this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
   },
 
   // cleanup (called on application shutdown)
   _dispose: function BG__dispose() {
     let os = Services.obs;
+    os.removeObserver(this, "notifications-open-settings");
     os.removeObserver(this, "prefservice:after-app-defaults");
     os.removeObserver(this, "final-ui-startup");
     os.removeObserver(this, "sessionstore-windows-restored");
@@ -681,7 +672,6 @@ BrowserGlue.prototype = {
     os.removeObserver(this, "flash-plugin-hang");
     os.removeObserver(this, "xpi-signature-changed");
     os.removeObserver(this, "autocomplete-did-enter-text");
-    os.removeObserver(this, "tablet-mode-change");
   },
 
   _onAppDefaults: function BG__onAppDefaults() {
@@ -806,7 +796,7 @@ BrowserGlue.prototype = {
     this._sanitizer.onStartup();
     // check if we're in safe mode
     if (Services.appinfo.inSafeMode) {
-      Services.ww.openWindow(null, "chrome://browser/content/safeMode.xul", 
+      Services.ww.openWindow(null, "chrome://browser/content/safeMode.xul",
                              "_blank", "chrome,centerscreen,modal,resizable=no", null);
     }
 
@@ -818,13 +808,9 @@ BrowserGlue.prototype = {
     this._migrateUI();
 
     this._syncSearchEngines();
-	
-	UserAgentOverrides.init();
+
     WebappManager.init();
     PageThumbs.init();
-    NewTabUtils.init();
-    DirectoryLinksProvider.init();
-    NewTabUtils.links.addProvider(DirectoryLinksProvider);
 #ifdef NIGHTLY_BUILD
     if (Services.prefs.getBoolPref("dom.identity.enabled")) {
       SignInToWebsiteUX.init();
@@ -832,7 +818,18 @@ BrowserGlue.prototype = {
 #endif
     webrtcUI.init();
     AboutHome.init();
+
+    DirectoryLinksProvider.init();
+    NewTabUtils.init();
+    NewTabUtils.links.addProvider(DirectoryLinksProvider);
     AboutNewTab.init();
+
+    if(!AppConstants.RELEASE_BUILD) {
+      RemoteNewTabUtils.init();
+      RemoteNewTabUtils.links.addProvider(DirectoryLinksProvider);
+      RemoteAboutNewTab.init();
+    }
+
     SessionStore.init();
     BrowserUITelemetry.init();
     ContentSearch.init();
@@ -1056,13 +1053,6 @@ BrowserGlue.prototype = {
       let scaling = aWindow.devicePixelRatio * 100;
       Services.telemetry.getHistogramById(SCALING_PROBE_NAME).add(scaling);
     }
-
-#ifdef XP_WIN
-    if (WindowsUIUtils.inTabletMode) {
-      Services.telemetry.getHistogramById("FX_TABLET_MODE_USED_DURING_SESSION")
-                        .add(1);
-    }
-#endif
   },
 
   // the first browser window has finished initializing
@@ -1133,6 +1123,7 @@ BrowserGlue.prototype = {
     this._checkForOldBuildUpdates();
 
     this._firstWindowTelemetry(aWindow);
+    this._firstWindowLoaded();
   },
 
   /**
@@ -1154,9 +1145,13 @@ BrowserGlue.prototype = {
     }
 
     SelfSupportBackend.uninit();
-	UserAgentOverrides.uninit();
+
     CustomizationTabPreloader.uninit();
     WebappManager.uninit();
+
+    if(!AppConstants.RELEASE_BUILD) {
+      RemoteAboutNewTab.uninit();
+    }
     AboutNewTab.uninit();
 #ifdef NIGHTLY_BUILD
     if (Services.prefs.getBoolPref("dom.identity.enabled")) {
@@ -1312,6 +1307,21 @@ BrowserGlue.prototype = {
       }
     }
 
+    if (this._mayNeedToWarnAboutTabGroups) {
+      let haveTabGroups = false;
+      let wins = Services.wm.getEnumerator("navigator:browser");
+      while (wins.hasMoreElements()) {
+        let win = wins.getNext();
+        if (win.TabView._tabBrowserHasHiddenTabs() && win.TabView.firstUseExperienced) {
+          haveTabGroups = true;
+          break;
+        }
+      }
+      if (haveTabGroups) {
+        this._showTabGroupsDeprecationNotification();
+      }
+    }
+
 #ifdef E10S_TESTING_ONLY
     E10SUINotification.checkStatus();
 #else
@@ -1351,6 +1361,27 @@ BrowserGlue.prototype = {
     }
   },
 #endif
+
+  _showTabGroupsDeprecationNotification() {
+    let brandShortName = gBrandBundle.GetStringFromName("brandShortName");
+    let text = gBrowserBundle.formatStringFromName("tabgroups.deprecationwarning.description",
+                                                   [brandShortName], 1);
+    let learnMore = gBrowserBundle.GetStringFromName("tabgroups.deprecationwarning.learnMore.label");
+    let learnMoreKey = gBrowserBundle.GetStringFromName("tabgroups.deprecationwarning.learnMore.accesskey");
+
+    let win = RecentWindow.getMostRecentBrowserWindow();
+    let notifyBox = win.document.getElementById("high-priority-global-notificationbox");
+    let button = {
+      label: learnMore,
+      accessKey: learnMoreKey,
+      callback: function(aNotificationBar, aButton) {
+        win.openUILinkIn("https://support.mozilla.org/kb/tab-groups-removal", "tab");
+      },
+    };
+
+    notifyBox.appendNotification(text, "tabgroups-removal-notification", null,
+                                 notifyBox.PRIORITY_WARNING_MEDIUM, [button]);
+  },
 
   _onQuitRequest: function BG__onQuitRequest(aCancelQuit, aQuitType) {
     // If user has already dismissed quit request, then do nothing
@@ -1555,16 +1586,6 @@ BrowserGlue.prototype = {
     if (actions.indexOf("showAlert") == -1)
       return;
 
-    let notifier;
-    try {
-      notifier = Cc["@mozilla.org/alerts-service;1"].
-                 getService(Ci.nsIAlertsService);
-    }
-    catch (e) {
-      // nsIAlertsService is not available for this platform
-      return;
-    }
-
     let title = getNotifyString({propName: "alertTitle",
                                  stringName: "puAlertTitle",
                                  stringParams: [appName]});
@@ -1585,10 +1606,11 @@ BrowserGlue.prototype = {
     try {
       // This will throw NS_ERROR_NOT_AVAILABLE if the notification cannot
       // be displayed per the idl.
-      notifier.showAlertNotification(null, title, text,
-                                     true, url, clickCallback);
+      AlertsService.showAlertNotification(null, title, text,
+                                          true, url, clickCallback);
     }
     catch (e) {
+      Cu.reportError(e);
     }
   },
 
@@ -1806,7 +1828,6 @@ BrowserGlue.prototype = {
    * - export bookmarks as HTML, if so configured.
    */
   _onPlacesShutdown: function BG__onPlacesShutdown() {
-    this._sanitizer.onShutdown();
     PageThumbs.uninit();
 
     if (this._bookmarksBackupIdleTime) {
@@ -1869,16 +1890,22 @@ BrowserGlue.prototype = {
   },
 
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 31;
+    const UI_VERSION = 34;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
     let currentUIVersion = 0;
+
+    let xulStore = Cc["@mozilla.org/xul/xulstore;1"].getService(Ci.nsIXULStore);
+
+    // Unconditionally remove this for Fx44 so we don't interfere with the UI version
+    xulStore.removeValue("chrome://passwordmgr/content/passwordManager.xul",
+                         "passwordCol",
+                         "hidden");
+
     try {
       currentUIVersion = Services.prefs.getIntPref("browser.migration.version");
     } catch(ex) {}
     if (currentUIVersion >= UI_VERSION)
       return;
-
-    let xulStore = Cc["@mozilla.org/xul/xulstore;1"].getService(Ci.nsIXULStore);
 
     if (currentUIVersion < 2) {
       // This code adds the customizable bookmarks button.
@@ -2042,7 +2069,7 @@ BrowserGlue.prototype = {
     }
 
     if (currentUIVersion < 19) {
-      let detector = null;    
+      let detector = null;
       try {
         detector = Services.prefs.getComplexValue("intl.charset.detector",
                                                   Ci.nsIPrefLocalizedString).data;
@@ -2204,14 +2231,66 @@ BrowserGlue.prototype = {
 
       Services.prefs.clearUserPref("browser.devedition.showCustomizeButton");
     }
- 
+
     if (currentUIVersion < 31) {
       xulStore.removeValue(BROWSER_DOCURL, "bookmarks-menu-button", "class");
       xulStore.removeValue(BROWSER_DOCURL, "home-button", "class");
     }
 
+    if (currentUIVersion < 32) {
+      this._notifyNotificationsUpgrade().catch(Cu.reportError);
+    }
+
+    if (currentUIVersion < 34) {
+      // We'll do something once windows are open:
+      this._mayNeedToWarnAboutTabGroups = true;
+    }
+
     // Update the migration version.
     Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+  },
+
+  _hasExistingNotificationPermission: function BG__hasExistingNotificationPermission() {
+    let enumerator = Services.perms.enumerator;
+    while (enumerator.hasMoreElements()) {
+      let permission = enumerator.getNext().QueryInterface(Ci.nsIPermission);
+      if (permission.type == "desktop-notification") {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  _notifyNotificationsUpgrade: Task.async(function* () {
+    if (!this._hasExistingNotificationPermission()) {
+      return;
+    }
+    yield this._firstWindowReady;
+    function clickCallback(subject, topic, data) {
+      if (topic != "alertclickcallback")
+        return;
+      let win = RecentWindow.getMostRecentBrowserWindow();
+      win.openUILinkIn(data, "tab");
+    }
+    // Show the application icon for XUL notifications. We assume system-level
+    // notifications will include their own icon.
+    let imageURL = this._hasSystemAlertsService() ? "" :
+                   "chrome://branding/content/about-logo.png";
+    let title = gBrowserBundle.GetStringFromName("webNotifications.upgradeTitle");
+    let text = gBrowserBundle.GetStringFromName("webNotifications.upgradeBody");
+    let url = Services.urlFormatter.formatURLPref("app.support.baseURL") +
+      "push#w_upgraded-notifications";
+
+    AlertsService.showAlertNotification(imageURL, title, text,
+                                        true, url, clickCallback);
+  }),
+
+  _hasSystemAlertsService: function() {
+    try {
+      return !!Cc["@mozilla.org/system-alerts-service;1"].getService(
+        Ci.nsIAlertsService);
+    } catch (e) {}
+    return false;
   },
 
   // ------------------------------
@@ -2365,6 +2444,19 @@ BrowserGlue.prototype = {
     }
   }),
 
+  /**
+   * Open preferences even if there are no open windows.
+   */
+  _openPreferences(...args) {
+    if (Services.appShell.hiddenDOMWindow.openPreferences) {
+      Services.appShell.hiddenDOMWindow.openPreferences(...args);
+      return;
+    }
+
+    let chromeWindow = RecentWindow.getMostRecentBrowserWindow();
+    chromeWindow.openPreferences(...args);
+  },
+
 #ifdef MOZ_SERVICES_SYNC
   /**
    * Called as an observer when Sync's "display URI" notification is fired.
@@ -2440,6 +2532,50 @@ BrowserGlue.prototype = {
   // redefine the default factory for XPCOMUtils
   _xpcom_factory: BrowserGlueServiceFactory,
 }
+
+// ------------------------------------
+// nsIAboutNewTabService implementation
+//-------------------------------------
+
+function AboutNewTabService()
+{
+  this._newTabURL = ABOUT_NEWTAB;
+  this._overridden = false;
+}
+
+AboutNewTabService.prototype = {
+  classID: Components.ID("{97eea4bb-db50-4ae0-9147-1e5ed55b4ed5}"),
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutNewTabService]),
+
+  get newTabURL() {
+
+    if (!AppConstants.RELEASE_BUILD && Services.prefs.getBoolPref("browser.newtabpage.remote")) {
+      return "about:remote-newtab";
+    }
+
+    return this._newTabURL;
+  },
+
+  set newTabURL(aNewTabURL) {
+    if (aNewTabURL === ABOUT_NEWTAB) {
+      this.resetNewTabURL();
+      return;
+    }
+    this._newTabURL = aNewTabURL;
+    this._overridden = true;
+    Services.obs.notifyObservers(null, "newtab-url-changed", this._newTabURL);
+  },
+
+  get overridden() {
+    return this._overridden;
+  },
+
+  resetNewTabURL: function() {
+    this._newTabURL = ABOUT_NEWTAB;
+    this._overridden = false;
+    Services.obs.notifyObservers(null, "newtab-url-changed", this._newTabURL);
+   }
+};
 
 function ContentPermissionPrompt() {}
 
@@ -2538,38 +2674,6 @@ ContentPermissionPrompt.prototype = {
                                              mainAction, secondaryActions, aOptions);
   },
 
-  _promptPush : function(aRequest) {
-    var message = gBrowserBundle.GetStringFromName("push.enablePush2");
-
-    var actions = [
-    {
-      stringId: "push.alwaysAllow",
-      action: Ci.nsIPermissionManager.ALLOW_ACTION,
-      expireType: null,
-      callback: function() {}
-    },
-    {
-      stringId: "push.allowForSession",
-      action: Ci.nsIPermissionManager.ALLOW_ACTION,
-      expireType: Ci.nsIPermissionManager.EXPIRE_SESSION,
-      callback: function() {}
-    },
-    {
-      stringId: "push.alwaysBlock",
-      action: Ci.nsIPermissionManager.DENY_ACTION,
-      expireType: null,
-      callback: function() {}
-    }]
-
-    var options = {
-      learnMoreURL: Services.urlFormatter.formatURLPref("browser.push.warning.infoURL"),
-    };
-
-    this._showPrompt(aRequest, message, "push", actions, "push",
-                     "push-notification-icon", options);
-
-  },
-
   _promptGeo : function(aRequest) {
     var secHistogram = Services.telemetry.getHistogramById("SECURITY_UI");
 
@@ -2621,32 +2725,47 @@ ContentPermissionPrompt.prototype = {
   },
 
   _promptWebNotifications : function(aRequest) {
-    var message = gBrowserBundle.GetStringFromName("webNotifications.showFromSite2");
+    var message = gBrowserBundle.GetStringFromName("webNotifications.receiveFromSite");
 
-    var actions = [
-      {
-        stringId: "webNotifications.showForSession",
-        action: Ci.nsIPermissionManager.ALLOW_ACTION,
-        expireType: Ci.nsIPermissionManager.EXPIRE_SESSION,
-        callback: function() {},
-      },
-      {
-        stringId: "webNotifications.alwaysShow",
-        action: Ci.nsIPermissionManager.ALLOW_ACTION,
-        expireType: null,
-        callback: function() {},
-      },
-      {
-        stringId: "webNotifications.neverShow",
-        action: Ci.nsIPermissionManager.DENY_ACTION,
-        expireType: null,
-        callback: function() {},
-      },
-    ];
+    var actions;
+
+    var browser = this._getBrowserForRequest(aRequest);
+    // Only show "allow for session" in PB mode, we don't
+    // support "allow for session" in non-PB mode.
+    if (PrivateBrowsingUtils.isBrowserPrivate(browser)) {
+      actions = [
+        {
+          stringId: "webNotifications.receiveForSession",
+          action: Ci.nsIPermissionManager.ALLOW_ACTION,
+          expireType: Ci.nsIPermissionManager.EXPIRE_SESSION,
+          callback: function() {},
+        }
+      ];
+    } else {
+      actions = [
+        {
+          stringId: "webNotifications.alwaysReceive",
+          action: Ci.nsIPermissionManager.ALLOW_ACTION,
+          expireType: null,
+          callback: function() {},
+        },
+        {
+          stringId: "webNotifications.neverShow",
+          action: Ci.nsIPermissionManager.DENY_ACTION,
+          expireType: null,
+          callback: function() {},
+        },
+      ];
+    }
+
+    var options = {
+      learnMoreURL:
+        Services.urlFormatter.formatURLPref("app.support.baseURL") + "push",
+    };
 
     this._showPrompt(aRequest, message, "desktop-notification", actions,
                      "web-notifications",
-                     "web-notifications-notification-icon", null);
+                     "web-notifications-notification-icon", options);
   },
 
   _promptPointerLock: function CPP_promtPointerLock(aRequest, autoAllow) {
@@ -2717,7 +2836,6 @@ ContentPermissionPrompt.prototype = {
     const kFeatureKeys = { "geolocation" : "geo",
                            "desktop-notification" : "desktop-notification",
                            "pointerLock" : "pointerLock",
-                           "push" : "push"
                          };
 
     // Make sure that we support the request.
@@ -2767,9 +2885,6 @@ ContentPermissionPrompt.prototype = {
       break;
     case "pointerLock":
       this._promptPointerLock(request, autoAllow);
-      break;
-    case "push":
-      this._promptPush(request);
       break;
     }
   },
@@ -2983,7 +3098,7 @@ var E10SUINotification = {
   checkStatus: function() {
     let skipE10sChecks = false;
     try {
-      let updateChannel = UpdateChannel.get();
+      let updateChannel = UpdateUtils.UpdateChannel;
       let channelAuthorized = updateChannel == "nightly" || updateChannel == "aurora";
 
       skipE10sChecks = !channelAuthorized ||
@@ -3040,6 +3155,7 @@ var E10SUINotification = {
       try {
         e10sPromptShownCount = Services.prefs.getIntPref(this.CURRENT_PROMPT_PREF);
       } catch(e) {}
+      e10sPromptShownCount = 5;
 
       let isHardwareAccelerated = true;
       // Linux and Windows are currently ok, mac not so much.
@@ -3227,7 +3343,7 @@ var E10SUINotification = {
 var E10SAccessibilityCheck = {
   init: function() {
     Services.obs.addObserver(this, "a11y-init-or-shutdown", true);
-    if (Services.appinfo.accessibilityIsBlacklistedForE10S) {
+    if (Services.appinfo.accessibilityEnabled) {
       this._showE10sAccessibilityWarning();
     }
   },
@@ -3236,8 +3352,7 @@ var E10SAccessibilityCheck = {
 
   observe: function(subject, topic, data) {
     if (topic == "a11y-init-or-shutdown"
-        && data == "1" &&
-        Services.appinfo.accessibilityIsBlacklistedForE10S) {
+        && data == "1") {
       this._showE10sAccessibilityWarning();
     }
   },
@@ -3307,7 +3422,7 @@ var E10SAccessibilityCheck = {
 
 #endif // E10S_TESTING_ONLY
 
-var components = [BrowserGlue, ContentPermissionPrompt];
+var components = [BrowserGlue, ContentPermissionPrompt, AboutNewTabService];
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(components);
 
 

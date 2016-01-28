@@ -572,7 +572,7 @@ LinkBackgroundCodeGen(JSContext* cx, IonBuilder* builder,
     // Root the assembler until the builder is finished below. As it was
     // constructed off thread, the assembler has not been rooted previously,
     // though any GC activity would discard the builder.
-    codegen->masm.constructRoot(cx);
+    MacroAssembler::AutoRooter masm(cx, &codegen->masm);
 
     return LinkCodeGen(cx, builder, codegen, scripts, info);
 }
@@ -605,6 +605,9 @@ jit::LazyLink(JSContext* cx, HandleScript calleeScript)
             // doesn't has code to handle it after linking happened. So it's
             // not OK to throw a catchable exception from there.
             cx->clearPendingException();
+
+            // Reset the TypeZone's compiler output for this script, if any.
+            InvalidateCompilerOutputsForScript(cx, calleeScript);
         }
     }
 
@@ -1113,14 +1116,10 @@ IonScript::copyPatchableBackedges(JSContext* cx, JitCode* code,
         PatchableBackedgeInfo& info = backedges[i];
         PatchableBackedge* patchableBackedge = &backedgeList()[i];
 
-        // Convert to actual offsets for the benefit of the ARM backend.
         info.backedge.fixup(&masm);
-        uint32_t loopHeaderOffset = masm.actualOffset(info.loopHeader->offset());
-        uint32_t interruptCheckOffset = masm.actualOffset(info.interruptCheck->offset());
-
         CodeLocationJump backedge(code, info.backedge);
-        CodeLocationLabel loopHeader(code, CodeOffsetLabel(loopHeaderOffset));
-        CodeLocationLabel interruptCheck(code, CodeOffsetLabel(interruptCheckOffset));
+        CodeLocationLabel loopHeader(code, CodeOffsetLabel(info.loopHeader->offset()));
+        CodeLocationLabel interruptCheck(code, CodeOffsetLabel(info.interruptCheck->offset()));
         new(patchableBackedge) PatchableBackedge(backedge, loopHeader, interruptCheck);
 
         // Point the backedge to either of its possible targets, according to
@@ -1144,16 +1143,12 @@ IonScript::copySafepointIndices(const SafepointIndex* si, MacroAssembler& masm)
     // final code address now.
     SafepointIndex* table = safepointIndices();
     memcpy(table, si, safepointIndexEntries_ * sizeof(SafepointIndex));
-    for (size_t i = 0; i < safepointIndexEntries_; i++)
-        table[i].adjustDisplacement(masm.actualOffset(table[i].displacement()));
 }
 
 void
 IonScript::copyOsiIndices(const OsiIndex* oi, MacroAssembler& masm)
 {
     memcpy(osiIndices(), oi, osiIndexEntries_ * sizeof(OsiIndex));
-    for (unsigned i = 0; i < osiIndexEntries_; i++)
-        osiIndices()[i].fixUpOffset(masm);
 }
 
 void
@@ -1510,7 +1505,8 @@ OptimizeMIR(MIRGenerator* mir)
 
     {
         AutoTraceLog log(logger, TraceLogger_FoldTests);
-        FoldTests(graph);
+        if (!FoldTests(graph))
+            return false;
         gs.spewPass("Fold Tests");
         AssertBasicGraphCoherency(graph);
 
@@ -2202,14 +2198,16 @@ IonCompile(JSContext* cx, JSScript* script,
             TrackIonAbort(cx, abortScript, abortPc, abortMessage);
         }
 
+        if (cx->isThrowingOverRecursed()) {
+            // Non-analysis compilations should never fail with stack overflow.
+            MOZ_CRASH("Stack overflow during compilation");
+        }
+
         return reason;
     }
 
     // If possible, compile the script off thread.
     if (options.offThreadCompilationAvailable()) {
-        if (!recompile)
-            builderScript->setIonScript(cx, ION_COMPILING_SCRIPT);
-
         JitSpew(JitSpew_IonSyncLogs, "Can't log script %s:%" PRIuSIZE
                 ". (Compiled on background thread.)",
                 builderScript->filename(), builderScript->lineno());
@@ -2219,6 +2217,9 @@ IonCompile(JSContext* cx, JSScript* script,
             builder->graphSpewer().endFunction();
             return AbortReason_Alloc;
         }
+
+        if (!recompile)
+            builderScript->setIonScript(cx, ION_COMPILING_SCRIPT);
 
         // The allocator and associated data will be destroyed after being
         // processed in the finishedOffThreadCompilations list.
@@ -2231,12 +2232,14 @@ IonCompile(JSContext* cx, JSScript* script,
     Rooted<ScriptVector> debugScripts(cx, ScriptVector(cx));
     OnIonCompilationInfo debugInfo;
 
-    ScopedJSDeletePtr<CodeGenerator> codegen;
     {
+        ScopedJSDeletePtr<CodeGenerator> codegen;
         AutoEnterAnalysis enter(cx);
         codegen = CompileBackEnd(builder);
         if (!codegen) {
             JitSpew(JitSpew_IonAbort, "Failed during back-end compilation.");
+            if (cx->isExceptionPending())
+                return AbortReason_Error;
             return AbortReason_Disable;
         }
 
@@ -2545,8 +2548,11 @@ jit::CanEnter(JSContext* cx, RunState& state)
         }
 
         if (!state.maybeCreateThisForConstructor(cx)) {
-            cx->recoverFromOutOfMemory();
-            return Method_Skipped;
+            if (cx->isThrowingOutOfMemory()) {
+                cx->recoverFromOutOfMemory();
+                return Method_Skipped;
+            }
+            return Method_Error;
         }
     }
 
@@ -2657,7 +2663,8 @@ EnterIon(JSContext* cx, EnterJitData& data)
     EnterJitCode enter = cx->runtime()->jitRuntime()->enterIon();
 
     // Caller must construct |this| before invoking the Ion function.
-    MOZ_ASSERT_IF(data.constructing, data.maxArgv[0].isObject());
+    MOZ_ASSERT_IF(data.constructing,
+                  data.maxArgv[0].isObject() || data.maxArgv[0].isMagic(JS_UNINITIALIZED_LEXICAL));
 
     data.result.setInt32(data.numActualArgs);
     {
@@ -2670,9 +2677,13 @@ EnterIon(JSContext* cx, EnterJitData& data)
 
     MOZ_ASSERT(!cx->runtime()->jitRuntime()->hasIonReturnOverride());
 
-    // Jit callers wrap primitive constructor return.
-    if (!data.result.isMagic() && data.constructing && data.result.isPrimitive())
+    // Jit callers wrap primitive constructor return, except for derived class constructors.
+    if (!data.result.isMagic() && data.constructing &&
+        data.result.isPrimitive())
+    {
+        MOZ_ASSERT(data.maxArgv[0].isObject());
         data.result = data.maxArgv[0];
+    }
 
     // Release temporary buffer used for OSR into Ion.
     cx->runtime()->getJitRuntime(cx)->freeOsrTempData();
@@ -2839,9 +2850,11 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
                 type = "Baseline";
             else if (it.isBailoutJS())
                 type = "Bailing";
-            JitSpew(JitSpew_IonInvalidate, "#%d %s JS frame @ %p, %s:%" PRIuSIZE " (fun: %p, script: %p, pc %p)",
-                    frameno, type, it.fp(), it.script()->filename(), it.script()->lineno(),
-                    it.maybeCallee(), (JSScript*)it.script(), it.returnAddressToFp());
+            JitSpew(JitSpew_IonInvalidate,
+                    "#%d %s JS frame @ %p, %s:%" PRIuSIZE " (fun: %p, script: %p, pc %p)",
+                    frameno, type, it.fp(), it.script()->maybeForwardedFilename(),
+                    it.script()->lineno(), it.maybeCallee(), (JSScript*)it.script(),
+                    it.returnAddressToFp());
             break;
           }
           case JitFrame_IonStub:

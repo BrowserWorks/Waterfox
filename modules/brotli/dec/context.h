@@ -11,8 +11,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+*/
 
-   Lookup table to map the previous two bytes to a context id.
+/* Lookup table to map the previous two bytes to a context id.
 
    There are four different context modeling modes defined here:
      CONTEXT_LSB6: context id is the least significant 6 bits of the last byte,
@@ -21,7 +22,7 @@
      CONTEXT_SIGNED: second-order context model tuned for signed integers.
 
    The context id for the UTF8 context model is calculated as follows. If p1
-   and p2 are the previous two bytes, we calcualte the context as
+   and p2 are the previous two bytes, we calculate the context as
 
      context = kContextLookup[p1] | kContextLookup[p2 + 256].
 

@@ -455,10 +455,11 @@ SpdyStream31::GenerateSynFrame()
     ToLowerCase(name);
 
     // exclusions.. mostly from 3.2.1
+    // we send accept-encoding here because we often include brotli
+    // in that list which is greater than the implied accept-encoding: gzip
     if (name.EqualsLiteral("connection") ||
         name.EqualsLiteral("keep-alive") ||
         name.EqualsLiteral("host") ||
-        name.EqualsLiteral("accept-encoding") ||
         name.EqualsLiteral("te") ||
         name.EqualsLiteral("transfer-encoding"))
       continue;
@@ -1632,7 +1633,7 @@ SpdyStream31::ClearTransactionsBlockedOnTunnel()
 void
 SpdyStream31::MapStreamToPlainText()
 {
-  nsRefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
+  RefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
   MOZ_ASSERT(qiTrans);
   mPlainTextTunnel = true;
   qiTrans->ForcePlainText();
@@ -1641,7 +1642,7 @@ SpdyStream31::MapStreamToPlainText()
 void
 SpdyStream31::MapStreamToHttpConnection()
 {
-  nsRefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
+  RefPtr<SpdyConnectTransaction> qiTrans(mTransaction->QuerySpdyConnectTransaction());
   MOZ_ASSERT(qiTrans);
   qiTrans->MapStreamToHttpConnection(mSocketTransport,
                                      mTransaction->ConnectionInfo());

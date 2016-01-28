@@ -16,8 +16,9 @@ import java.util.concurrent.Semaphore;
 
 import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants.Versions;
-import org.mozilla.gecko.gfx.InputConnectionHandler;
+import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.gfx.LayerView;
+import org.mozilla.gecko.mozglue.JNIObject;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.ThreadUtils.AssertBehavior;
@@ -43,7 +44,7 @@ import android.view.KeyEvent;
    The field mText contains the actual underlying
    SpannableStringBuilder/Editable that contains our text.
 */
-final class GeckoEditable
+final class GeckoEditable extends JNIObject
         implements InvocationHandler, Editable,
                    GeckoEditableClient, GeckoEditableListener, GeckoEventListener {
 
@@ -64,7 +65,8 @@ final class GeckoEditable
     private Handler mIcRunHandler;
     private Handler mIcPostHandler;
 
-    private GeckoEditableListener mListener;
+    /* package */ GeckoEditableListener mListener;
+    /* package */ GeckoView mView;
     private int mSavedSelectionStart;
     private volatile int mGeckoUpdateSeqno;
     private int mIcUpdateSeqno;
@@ -74,6 +76,80 @@ final class GeckoEditable
     private boolean mGeckoFocused; // Used by Gecko thread
     private volatile boolean mSuppressCompositions;
     private volatile boolean mSuppressKeyUp;
+
+    private static final int IME_RANGE_CARETPOSITION = 1;
+    private static final int IME_RANGE_RAWINPUT = 2;
+    private static final int IME_RANGE_SELECTEDRAWTEXT = 3;
+    private static final int IME_RANGE_CONVERTEDTEXT = 4;
+    private static final int IME_RANGE_SELECTEDCONVERTEDTEXT = 5;
+
+    private static final int IME_RANGE_LINE_NONE = 0;
+    private static final int IME_RANGE_LINE_DOTTED = 1;
+    private static final int IME_RANGE_LINE_DASHED = 2;
+    private static final int IME_RANGE_LINE_SOLID = 3;
+    private static final int IME_RANGE_LINE_DOUBLE = 4;
+    private static final int IME_RANGE_LINE_WAVY = 5;
+
+    private static final int IME_RANGE_UNDERLINE = 1;
+    private static final int IME_RANGE_FORECOLOR = 2;
+    private static final int IME_RANGE_BACKCOLOR = 4;
+    private static final int IME_RANGE_LINECOLOR = 8;
+
+    @WrapForJNI
+    private native void onKeyEvent(int action, int keyCode, int scanCode, int metaState,
+                                   long time, int unicodeChar, int baseUnicodeChar,
+                                   int domPrintableKeyValue, int repeatCount, int flags,
+                                   boolean isSynthesizedImeKey);
+
+    private void onKeyEvent(KeyEvent event, int action, int savedMetaState,
+                            boolean isSynthesizedImeKey) {
+        // Use a separate action argument so we can override the key's original action,
+        // e.g. change ACTION_MULTIPLE to ACTION_DOWN. That way we don't have to allocate
+        // a new key event just to change its action field.
+        //
+        // Normally we expect event.getMetaState() to reflect the current meta-state; however,
+        // some software-generated key events may not have event.getMetaState() set, e.g. key
+        // events from Swype. Therefore, it's necessary to combine the key's meta-states
+        // with the meta-states that we keep separately in KeyListener
+        final int metaState = event.getMetaState() | savedMetaState;
+        final int unmodifiedMetaState = metaState &
+                ~(KeyEvent.META_ALT_MASK | KeyEvent.META_CTRL_MASK | KeyEvent.META_META_MASK);
+        final int unicodeChar = event.getUnicodeChar(metaState);
+        final int domPrintableKeyValue =
+                unicodeChar >= ' '               ? unicodeChar :
+                unmodifiedMetaState != metaState ? event.getUnicodeChar(unmodifiedMetaState) :
+                                                   0;
+        onKeyEvent(action, event.getKeyCode(), event.getScanCode(),
+                   metaState, event.getEventTime(), unicodeChar,
+                   // e.g. for Ctrl+A, Android returns 0 for unicodeChar,
+                   // but Gecko expects 'a', so we return that in baseUnicodeChar.
+                   event.getUnicodeChar(0), domPrintableKeyValue, event.getRepeatCount(),
+                   event.getFlags(), isSynthesizedImeKey);
+    }
+
+    @WrapForJNI
+    private native void onImeSynchronize();
+
+    @WrapForJNI
+    private native void onImeAcknowledgeFocus();
+
+    @WrapForJNI
+    private native void onImeReplaceText(int start, int end, String text, boolean composing);
+
+    @WrapForJNI
+    private native void onImeSetSelection(int start, int end);
+
+    @WrapForJNI
+    private native void onImeRemoveComposition();
+
+    @WrapForJNI
+    private native void onImeAddCompositionRange(int start, int end, int rangeType,
+                                                 int rangeStyles, int rangeLineStyle,
+                                                 boolean rangeBoldLine, int rangeForeColor,
+                                                 int rangeBackColor, int rangeLineColor);
+
+    @WrapForJNI
+    private native void onImeUpdateComposition(int start, int end);
 
     /* An action that alters the Editable
 
@@ -199,6 +275,11 @@ final class GeckoEditable
                 Log.d(LOGTAG, "offer: Action(" +
                               getConstantName(Action.class, "TYPE_", action.mType) + ")");
             }
+            if (mListener == null) {
+                // We haven't initialized or we've been destroyed.
+                return;
+            }
+
             /* Events don't need update because they generate text/selection
                notifications which will do the updating for us */
             if (action.mType != Action.TYPE_EVENT &&
@@ -221,26 +302,22 @@ final class GeckoEditable
             case Action.TYPE_SET_SPAN:
             case Action.TYPE_REMOVE_SPAN:
             case Action.TYPE_SET_HANDLER:
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEEvent(
-                        GeckoEvent.ImeAction.IME_SYNCHRONIZE));
+                onImeSynchronize();
                 break;
-
-            case Action.TYPE_COMPOSE_TEXT:
-                // Send different event for composing text.
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEComposeEvent(
-                        action.mStart, action.mEnd, action.mSequence.toString()));
-                return;
 
             case Action.TYPE_REPLACE_TEXT:
                 // try key events first
                 sendCharKeyEvents(action);
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEReplaceEvent(
-                        action.mStart, action.mEnd, action.mSequence.toString()));
+
+                // fall-through
+
+            case Action.TYPE_COMPOSE_TEXT:
+                onImeReplaceText(action.mStart, action.mEnd, action.mSequence.toString(),
+                                  action.mType == Action.TYPE_COMPOSE_TEXT);
                 break;
 
             case Action.TYPE_ACKNOWLEDGE_FOCUS:
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEEvent(
-                        GeckoEvent.ImeAction.IME_ACKNOWLEDGE_FOCUS));
+                onImeAcknowledgeFocus();
                 break;
 
             default:
@@ -293,7 +370,8 @@ final class GeckoEditable
                 if (DEBUG) {
                     Log.d(LOGTAG, "sending: " + event);
                 }
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEKeyEvent(event));
+                onKeyEvent(event, event.getAction(),
+                           /* metaState */ 0, /* isSynthesizedImeKey */ true);
             }
         }
 
@@ -348,7 +426,12 @@ final class GeckoEditable
         }
     }
 
+    @WrapForJNI
     GeckoEditable() {
+        if (DEBUG) {
+            // Called by nsWindow.
+            ThreadUtils.assertOnGeckoThread();
+        }
         mActionQueue = new ActionQueue();
         mSavedSelectionStart = -1;
         mUpdateGecko = true;
@@ -361,10 +444,67 @@ final class GeckoEditable
                 Editable.class.getClassLoader(),
                 PROXY_INTERFACES, this);
 
-        LayerView v = GeckoAppShell.getLayerView();
-        mListener = GeckoInputConnection.create(v, this);
-
         mIcRunHandler = mIcPostHandler = ThreadUtils.getUiHandler();
+    }
+
+    @WrapForJNI @Override
+    protected native void disposeNative();
+
+    @WrapForJNI
+    /* package */ void onViewChange(final GeckoView v) {
+        if (DEBUG) {
+            // Called by nsWindow.
+            ThreadUtils.assertOnGeckoThread();
+            Log.d(LOGTAG, "onViewChange(" + v + ")");
+        }
+
+        final GeckoEditableListener newListener =
+            v != null ? GeckoInputConnection.create(v, this) : null;
+
+        final Runnable setListenerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (DEBUG) {
+                    Log.d(LOGTAG, "onViewChange (set listener)");
+                }
+
+                if (newListener != null) {
+                    // Make sure there are no other things going on.
+                    mActionQueue.syncWithGecko();
+                    mListener = newListener;
+                } else {
+                    // We're being destroyed. By this point, we should have cleared all
+                    // pending Runnables on the IC thread, so it's safe to call
+                    // disposeNative here.
+                    mListener = null;
+                    GeckoEditable.this.disposeNative();
+                }
+            }
+        };
+
+        // Post to UI thread first to make sure any code that is using the old input
+        // connection has finished running, before we switch to a new input connection or
+        // before we clear the input connection on destruction.
+        ThreadUtils.postToUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (DEBUG) {
+                    Log.d(LOGTAG, "onViewChange (set IC)");
+                }
+
+                if (mView != null) {
+                    // Detach the previous view.
+                    mView.setInputConnectionListener(null);
+                }
+                if (v != null) {
+                    // And attach the new view.
+                    v.setInputConnectionListener((InputConnectionListener) newListener);
+                }
+
+                mView = v;
+                mIcPostHandler.post(setListenerRunnable);
+            }
+        });
     }
 
     private boolean onIcThread() {
@@ -440,19 +580,17 @@ final class GeckoEditable
         }
         if (composingStart >= composingEnd) {
             if (selStart >= 0 && selEnd >= 0) {
-                GeckoAppShell.sendEventToGecko(
-                        GeckoEvent.createIMESelectEvent(selStart, selEnd));
+                onImeSetSelection(selStart, selEnd);
             } else {
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createIMEEvent(
-                        GeckoEvent.ImeAction.IME_REMOVE_COMPOSITION));
+                onImeRemoveComposition();
             }
             return;
         }
 
         if (selEnd >= composingStart && selEnd <= composingEnd) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createIMERangeEvent(
+            onImeAddCompositionRange(
                     selEnd - composingStart, selEnd - composingStart,
-                    GeckoEvent.IME_RANGE_CARETPOSITION, 0, 0, false, 0, 0, 0));
+                    IME_RANGE_CARETPOSITION, 0, 0, false, 0, 0, 0);
         }
         int rangeStart = composingStart;
         TextPaint tp = new TextPaint();
@@ -461,7 +599,7 @@ final class GeckoEditable
         // below to decide whether to pass a foreground color to Gecko
         emptyTp.setColor(0);
         do {
-            int rangeType, rangeStyles = 0, rangeLineStyle = GeckoEvent.IME_RANGE_LINE_NONE;
+            int rangeType, rangeStyles = 0, rangeLineStyle = IME_RANGE_LINE_NONE;
             boolean rangeBoldLine = false;
             int rangeForeColor = 0, rangeBackColor = 0, rangeLineColor = 0;
             int rangeEnd = mText.nextSpanTransition(rangeStart, composingEnd, Object.class);
@@ -481,12 +619,12 @@ final class GeckoEditable
 
             if (styleSpans.length == 0) {
                 rangeType = (selStart == rangeStart && selEnd == rangeEnd)
-                            ? GeckoEvent.IME_RANGE_SELECTEDRAWTEXT
-                            : GeckoEvent.IME_RANGE_RAWINPUT;
+                            ? IME_RANGE_SELECTEDRAWTEXT
+                            : IME_RANGE_RAWINPUT;
             } else {
                 rangeType = (selStart == rangeStart && selEnd == rangeEnd)
-                            ? GeckoEvent.IME_RANGE_SELECTEDCONVERTEDTEXT
-                            : GeckoEvent.IME_RANGE_CONVERTEDTEXT;
+                            ? IME_RANGE_SELECTEDCONVERTEDTEXT
+                            : IME_RANGE_CONVERTEDTEXT;
                 tp.set(emptyTp);
                 for (CharacterStyle span : styleSpans) {
                     span.updateDrawState(tp);
@@ -500,34 +638,34 @@ final class GeckoEditable
                     tpUnderlineThickness = (Float)getField(tp, "underlineThickness", 0.0f);
                 }
                 if (tpUnderlineColor != 0) {
-                    rangeStyles |= GeckoEvent.IME_RANGE_UNDERLINE | GeckoEvent.IME_RANGE_LINECOLOR;
+                    rangeStyles |= IME_RANGE_UNDERLINE | IME_RANGE_LINECOLOR;
                     rangeLineColor = tpUnderlineColor;
                     // Approximately translate underline thickness to what Gecko understands
                     if (tpUnderlineThickness <= 0.5f) {
-                        rangeLineStyle = GeckoEvent.IME_RANGE_LINE_DOTTED;
+                        rangeLineStyle = IME_RANGE_LINE_DOTTED;
                     } else {
-                        rangeLineStyle = GeckoEvent.IME_RANGE_LINE_SOLID;
+                        rangeLineStyle = IME_RANGE_LINE_SOLID;
                         if (tpUnderlineThickness >= 2.0f) {
                             rangeBoldLine = true;
                         }
                     }
                 } else if (tp.isUnderlineText()) {
-                    rangeStyles |= GeckoEvent.IME_RANGE_UNDERLINE;
-                    rangeLineStyle = GeckoEvent.IME_RANGE_LINE_SOLID;
+                    rangeStyles |= IME_RANGE_UNDERLINE;
+                    rangeLineStyle = IME_RANGE_LINE_SOLID;
                 }
                 if (tp.getColor() != 0) {
-                    rangeStyles |= GeckoEvent.IME_RANGE_FORECOLOR;
+                    rangeStyles |= IME_RANGE_FORECOLOR;
                     rangeForeColor = tp.getColor();
                 }
                 if (tp.bgColor != 0) {
-                    rangeStyles |= GeckoEvent.IME_RANGE_BACKCOLOR;
+                    rangeStyles |= IME_RANGE_BACKCOLOR;
                     rangeBackColor = tp.bgColor;
                 }
             }
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createIMERangeEvent(
+            onImeAddCompositionRange(
                     rangeStart - composingStart, rangeEnd - composingStart,
                     rangeType, rangeStyles, rangeLineStyle, rangeBoldLine,
-                    rangeForeColor, rangeBackColor, rangeLineColor));
+                    rangeForeColor, rangeBackColor, rangeLineColor);
             rangeStart = rangeEnd;
 
             if (DEBUG) {
@@ -538,27 +676,26 @@ final class GeckoEditable
             }
         } while (rangeStart < composingEnd);
 
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createIMECompositionEvent(
-                composingStart, composingEnd));
+        onImeUpdateComposition(composingStart, composingEnd);
     }
 
     // GeckoEditableClient interface
 
     @Override
-    public void sendEvent(final GeckoEvent event) {
+    public void sendKeyEvent(final KeyEvent event, int action, int metaState) {
         if (DEBUG) {
             assertOnIcThread();
-            Log.d(LOGTAG, "sendEvent(" + event + ")");
+            Log.d(LOGTAG, "sendKeyEvent(" + event + ", " + action + ", " + metaState + ")");
         }
         /*
            We are actually sending two events to Gecko here,
-           1. Event from the event parameter (key event, etc.)
+           1. Event from the event parameter (key event)
            2. Sync event from the mActionQueue.offer call
-           The first event is a normal GeckoEvent that does not reply back to us,
+           The first event is a normal event that does not reply back to us,
            the second sync event will have a reply, during which we see that there is a pending
            event-type action, and update the selection/composition/etc. accordingly.
         */
-        GeckoAppShell.sendEventToGecko(event);
+        onKeyEvent(event, action, metaState, /* isSynthesizedImeKey */ false);
         mActionQueue.offer(new Action(Action.TYPE_EVENT));
     }
 
@@ -569,6 +706,10 @@ final class GeckoEditable
             if (DEBUG) {
                 Log.i(LOGTAG, "getEditable() called on non-IC thread");
             }
+            return null;
+        }
+        if (mListener == null) {
+            // We haven't initialized or we've been destroyed.
             return null;
         }
         return mProxy;
@@ -703,7 +844,7 @@ final class GeckoEditable
                     mActionQueue.syncWithGecko();
                     final int start = Selection.getSelectionStart(mText);
                     final int end = Selection.getSelectionEnd(mText);
-                    if (selStart == start && selEnd == end) {
+                    if (mListener != null && selStart == start && selEnd == end) {
                         // There has not been another new selection in the mean time that
                         // made this notification out-of-date
                         mListener.onSelectionChange(start, end);
@@ -749,7 +890,7 @@ final class GeckoEditable
         }
     }
 
-    @Override
+    @WrapForJNI @Override
     public void notifyIME(final int type) {
         if (DEBUG) {
             // GeckoEditableListener methods should all be called from the Gecko thread
@@ -795,10 +936,12 @@ final class GeckoEditable
                 }
 
                 // Make sure there are no other things going on. If we sent
-                // GeckoEvent.IME_ACKNOWLEDGE_FOCUS, this line also makes us
+                // Action.TYPE_ACKNOWLEDGE_FOCUS, this line also makes us
                 // wait for Gecko to update us on the newly focused content
                 mActionQueue.syncWithGecko();
-                mListener.notifyIME(type);
+                if (mListener != null) {
+                    mListener.notifyIME(type);
+                }
 
                 // Unset mFocused after we call syncWithGecko because
                 // syncWithGecko becomes a no-op when mFocused is false.
@@ -825,12 +968,12 @@ final class GeckoEditable
         }
     }
 
-    @Override
+    @WrapForJNI @Override
     public void notifyIMEContext(final int state, final String typeHint,
-                          final String modeHint, final String actionHint) {
-        // Because we want to be able to bind GeckoEditable to the newest LayerView instance,
-        // this can be called from the Java IC thread in addition to the Gecko thread.
+                                 final String modeHint, final String actionHint) {
         if (DEBUG) {
+            // GeckoEditableListener methods should all be called from the Gecko thread
+            ThreadUtils.assertOnGeckoThread();
             Log.d(LOGTAG, "notifyIMEContext(" +
                           getConstantName(GeckoEditableListener.class, "IME_STATE_", state) +
                           ", \"" + typeHint + "\", \"" + modeHint + "\", \"" + actionHint + "\")");
@@ -838,22 +981,15 @@ final class GeckoEditable
         geckoPostToIc(new Runnable() {
             @Override
             public void run() {
-                // Make sure there are no other things going on
-                mActionQueue.syncWithGecko();
-                // Set InputConnectionHandler in notifyIMEContext because
-                // GeckoInputConnection.notifyIMEContext calls restartInput() which will invoke
-                // InputConnectionHandler.onCreateInputConnection
-                LayerView v = GeckoAppShell.getLayerView();
-                if (v != null) {
-                    mListener = GeckoInputConnection.create(v, GeckoEditable.this);
-                    v.setInputConnectionHandler((InputConnectionHandler)mListener);
-                    mListener.notifyIMEContext(state, typeHint, modeHint, actionHint);
+                if (mListener == null) {
+                    return;
                 }
+                mListener.notifyIMEContext(state, typeHint, modeHint, actionHint);
             }
         });
     }
 
-    @Override
+    @WrapForJNI @Override
     public void onSelectionChange(final int start, final int end) {
         if (DEBUG) {
             // GeckoEditableListener methods should all be called from the Gecko thread
@@ -863,7 +999,8 @@ final class GeckoEditable
         if (start < 0 || start > mText.length() || end < 0 || end > mText.length()) {
             Log.e(LOGTAG, "invalid selection notification range: " +
                   start + " to " + end + ", length: " + mText.length());
-            throw new IllegalArgumentException("invalid selection notification range");
+            // Ignore selection offsets that are invalid because something changed from under us.
+            return;
         }
         final int seqnoWhenPosted = ++mGeckoUpdateSeqno;
 
@@ -909,9 +1046,9 @@ final class GeckoEditable
                TextUtils.regionMatches(mText, start, newText, 0, oldEnd - start);
     }
 
-    @Override
+    @WrapForJNI @Override
     public void onTextChange(final CharSequence text, final int start,
-                      final int unboundedOldEnd, final int unboundedNewEnd) {
+                             final int unboundedOldEnd, final int unboundedNewEnd) {
         if (DEBUG) {
             // GeckoEditableListener methods should all be called from the Gecko thread
             ThreadUtils.assertOnGeckoThread();
@@ -1004,6 +1141,9 @@ final class GeckoEditable
         geckoPostToIc(new Runnable() {
             @Override
             public void run() {
+                if (mListener == null) {
+                    return;
+                }
                 mListener.onTextChange(text, start, oldEnd, newEnd);
             }
         });

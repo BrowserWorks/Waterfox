@@ -16,6 +16,7 @@
 #include "nsPrintfCString.h"
 #include "nsNavHistory.h"
 #include "mozilla/Likely.h"
+#include "nsVariant.h"
 
 using namespace mozilla::storage;
 
@@ -189,7 +190,7 @@ namespace places {
   nsresult
   MatchAutoCompleteFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<MatchAutoCompleteFunction> function =
+    RefPtr<MatchAutoCompleteFunction> function =
       new MatchAutoCompleteFunction();
 
     nsresult rv = aDBConn->CreateFunction(
@@ -436,7 +437,7 @@ namespace places {
   nsresult
   CalculateFrecencyFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<CalculateFrecencyFunction> function =
+    RefPtr<CalculateFrecencyFunction> function =
       new CalculateFrecencyFunction();
 
     nsresult rv = aDBConn->CreateFunction(
@@ -477,13 +478,13 @@ namespace places {
     // This is a const version of the history object for thread-safety.
     const nsNavHistory* history = nsNavHistory::GetConstHistoryService();
     NS_ENSURE_STATE(history);
-    nsRefPtr<Database> DB = Database::GetDatabase();
+    RefPtr<Database> DB = Database::GetDatabase();
     NS_ENSURE_STATE(DB);
 
     if (pageId > 0) {
       // The page is already in the database, and we can fetch current
       // params from the database.
-      nsRefPtr<mozIStorageStatement> getPageInfo = DB->GetStatement(
+      RefPtr<mozIStorageStatement> getPageInfo = DB->GetStatement(
         "SELECT typed, hidden, visit_count, "
           "(SELECT count(*) FROM moz_historyvisits WHERE place_id = :page_id), "
           "EXISTS (SELECT 1 FROM moz_bookmarks WHERE fk = :page_id), "
@@ -633,7 +634,7 @@ namespace places {
   nsresult
   GenerateGUIDFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<GenerateGUIDFunction> function = new GenerateGUIDFunction();
+    RefPtr<GenerateGUIDFunction> function = new GenerateGUIDFunction();
     nsresult rv = aDBConn->CreateFunction(
       NS_LITERAL_CSTRING("generate_guid"), 0, function
     );
@@ -676,7 +677,7 @@ namespace places {
   nsresult
   GetUnreversedHostFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<GetUnreversedHostFunction> function = new GetUnreversedHostFunction();
+    RefPtr<GetUnreversedHostFunction> function = new GetUnreversedHostFunction();
     nsresult rv = aDBConn->CreateFunction(
       NS_LITERAL_CSTRING("get_unreversed_host"), 1, function
     );
@@ -703,9 +704,7 @@ namespace places {
     nsAutoString src;
     aArguments->GetString(0, src);
 
-    nsCOMPtr<nsIWritableVariant> result =
-      do_CreateInstance("@mozilla.org/variant;1");
-    NS_ENSURE_STATE(result);
+    RefPtr<nsVariant> result = new nsVariant();
 
     if (src.Length()>1) {
       src.Truncate(src.Length() - 1);
@@ -734,7 +733,7 @@ namespace places {
   nsresult
   FixupURLFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<FixupURLFunction> function = new FixupURLFunction();
+    RefPtr<FixupURLFunction> function = new FixupURLFunction();
     nsresult rv = aDBConn->CreateFunction(
       NS_LITERAL_CSTRING("fixup_url"), 1, function
     );
@@ -761,9 +760,7 @@ namespace places {
     nsAutoString src;
     aArguments->GetString(0, src);
 
-    nsCOMPtr<nsIWritableVariant> result =
-      do_CreateInstance("@mozilla.org/variant;1");
-    NS_ENSURE_STATE(result);
+    RefPtr<nsVariant> result = new nsVariant();
 
     if (StringBeginsWith(src, NS_LITERAL_STRING("http://")))
       src.Cut(0, 7);
@@ -793,7 +790,7 @@ namespace places {
   nsresult
   FrecencyNotificationFunction::create(mozIStorageConnection *aDBConn)
   {
-    nsRefPtr<FrecencyNotificationFunction> function =
+    RefPtr<FrecencyNotificationFunction> function =
       new FrecencyNotificationFunction();
     nsresult rv = aDBConn->CreateFunction(
       NS_LITERAL_CSTRING("notify_frecency"), 5, function
@@ -835,9 +832,7 @@ namespace places {
     navHistory->DispatchFrecencyChangedNotification(spec, newFrecency, guid,
                                                     hidden, lastVisitDate);
 
-    nsCOMPtr<nsIWritableVariant> result =
-      do_CreateInstance("@mozilla.org/variant;1");
-    NS_ENSURE_STATE(result);
+    RefPtr<nsVariant> result = new nsVariant();
     rv = result->SetAsInt32(newFrecency);
     NS_ENSURE_SUCCESS(rv, rv);
     result.forget(_result);

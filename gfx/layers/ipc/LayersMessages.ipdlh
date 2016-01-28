@@ -17,8 +17,8 @@ include "gfxipc/ShadowLayerUtils.h";
 include "mozilla/GfxMessageUtils.h";
 include "ImageLayers.h";
 
-using mozilla::GraphicsFilterType from "mozilla/GfxMessageUtils.h";
-using struct gfxRGBA from "gfxColor.h";
+using mozilla::gfx::Filter from "mozilla/gfx/2D.h";
+using struct mozilla::gfx::Color from "mozilla/gfx/2D.h";
 using struct mozilla::gfx::Point3D from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
 using class mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
@@ -42,6 +42,7 @@ using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
+using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
 
 namespace mozilla {
 namespace layers {
@@ -101,7 +102,7 @@ struct CSSAngle {
   int unit; // an nsCSSUnit that is valid for angles
 };
 
-struct LayerColor { gfxRGBA value; };
+struct LayerColor { Color value; };
 struct Perspective { float value; };
 struct RotationX { CSSAngle angle; };
 struct RotationY { CSSAngle angle; };
@@ -216,6 +217,7 @@ struct CommonLayerAttributes {
   bool isFixedPosition;
   uint64_t fixedPositionScrollContainerId;
   LayerPoint fixedPositionAnchor;
+  int32_t fixedPositionSides;
   bool isClipFixed;
   bool isStickyPosition;
   uint64_t stickyScrollContainerId;
@@ -252,14 +254,14 @@ struct ContainerLayerAttributes {
   uint64_t hmdInfo;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
-struct CanvasLayerAttributes    { GraphicsFilterType filter; IntRect bounds; };
+struct CanvasLayerAttributes    { Filter filter; IntRect bounds; };
 struct RefLayerAttributes {
   int64_t id;
   // TODO: Once bug 1132895 is fixed we shouldn't need to propagate the override
   // explicitly here.
   EventRegionsOverride eventRegionsOverride;
 };
-struct ImageLayerAttributes     { GraphicsFilterType filter; IntSize scaleToSize; ScaleMode scaleMode; };
+struct ImageLayerAttributes     { Filter filter; IntSize scaleToSize; ScaleMode scaleMode; };
 
 union SpecificLayerAttributes {
   null_t;

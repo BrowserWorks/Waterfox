@@ -54,7 +54,7 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic) override;
+                                          uint8_t aStyle) override;
 
     /**
      * Activate a platform font (needed to support @font-face src url() )
@@ -63,7 +63,7 @@ public:
     virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
                                            uint16_t aWeight,
                                            int16_t aStretch,
-                                           bool aItalic,
+                                           uint8_t aStyle,
                                            const uint8_t* aFontData,
                                            uint32_t aLength) override;
 
@@ -81,8 +81,6 @@ public:
     static Display* GetXDisplay(QWindow* aWindow = 0);
     static Screen* GetXScreen(QWindow* aWindow = 0);
 #endif
-
-    virtual int GetScreenDepth() const override;
 
     bool AccelerateLayersByDefault() override {
       return true;

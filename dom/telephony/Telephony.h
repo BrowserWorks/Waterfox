@@ -50,16 +50,15 @@ class Telephony final : public DOMEventTargetHelper,
   // The audio agent is needed to communicate with the audio channel service.
   nsCOMPtr<nsIAudioChannelAgent> mAudioAgent;
   nsCOMPtr<nsITelephonyService> mService;
-  nsRefPtr<Listener> mListener;
+  RefPtr<Listener> mListener;
 
-  nsTArray<nsRefPtr<TelephonyCall> > mCalls;
-  nsRefPtr<CallsList> mCallsList;
+  nsTArray<RefPtr<TelephonyCall> > mCalls;
+  RefPtr<CallsList> mCallsList;
 
-  nsRefPtr<TelephonyCallGroup> mGroup;
+  RefPtr<TelephonyCallGroup> mGroup;
 
-  nsRefPtr<Promise> mReadyPromise;
+  RefPtr<Promise> mReadyPromise;
 
-  uint32_t mAudioAgentNotify;
   bool mIsAudioStartPlaying;
   bool mHaveDispatchedInterruptBeginEvent;
   bool mMuted;
@@ -168,7 +167,7 @@ public:
     return mService;
   }
 
-  const nsTArray<nsRefPtr<TelephonyCall> >&
+  const nsTArray<RefPtr<TelephonyCall> >&
   CallsArray() const
   {
     return mCalls;
@@ -190,9 +189,6 @@ private:
   static bool
   IsValidServiceId(uint32_t aServiceId);
 
-  static bool
-  IsActiveState(uint16_t aCallState);
-
   uint32_t
   GetServiceId(const Optional<uint32_t>& aServiceId,
                bool aGetIfActiveCall = false);
@@ -212,9 +208,13 @@ private:
 
   already_AddRefed<TelephonyCall>
   CreateCall(TelephonyCallId* aId,
-             uint32_t aServiceId, uint32_t aCallIndex, uint16_t aCallState,
-             bool aEmergency = false, bool aConference = false,
-             bool aSwitchable = true, bool aMergeable = true);
+             uint32_t aServiceId,
+             uint32_t aCallIndex,
+             TelephonyCallState aState,
+             bool aEmergency = false,
+             bool aConference = false,
+             bool aSwitchable = true,
+             bool aMergeable = true);
 
   nsresult
   NotifyEvent(const nsAString& aType);

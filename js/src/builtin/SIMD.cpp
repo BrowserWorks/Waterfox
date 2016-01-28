@@ -175,7 +175,6 @@ const Class SimdTypeDescr::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     TypeDescr::finalize,
     call
 };
@@ -780,9 +779,9 @@ ReplaceLane(JSContext* cx, unsigned argc, Value* vp)
     Elem* vec = TypedObjectMemory<Elem*>(args[0]);
     Elem result[V::lanes];
 
-    if (!args[1].isInt32())
+    int32_t lanearg;
+    if (!args[1].isNumber() || !NumberIsInt32(args[1].toNumber(), &lanearg))
         return ErrorBadArgs(cx);
-    int32_t lanearg = args[1].toInt32();
     if (lanearg < 0 || uint32_t(lanearg) >= V::lanes)
         return ErrorBadArgs(cx);
     uint32_t lane = uint32_t(lanearg);
@@ -808,9 +807,9 @@ Swizzle(JSContext* cx, unsigned argc, Value* vp)
 
     uint32_t lanes[V::lanes];
     for (unsigned i = 0; i < V::lanes; i++) {
-        if (!args[i + 1].isInt32())
+        int32_t lane;
+        if (!args[i + 1].isNumber() || !NumberIsInt32(args[i + 1].toNumber(), &lane))
             return ErrorBadArgs(cx);
-        int32_t lane = args[i + 1].toInt32();
         if (lane < 0 || uint32_t(lane) >= V::lanes)
             return ErrorBadArgs(cx);
         lanes[i] = uint32_t(lane);
@@ -837,9 +836,9 @@ Shuffle(JSContext* cx, unsigned argc, Value* vp)
 
     uint32_t lanes[V::lanes];
     for (unsigned i = 0; i < V::lanes; i++) {
-        if (!args[i + 2].isInt32())
+        int32_t lane;
+        if (!args[i + 2].isNumber() || !NumberIsInt32(args[i + 2].toNumber(), &lane))
             return ErrorBadArgs(cx);
-        int32_t lane = args[i + 2].toInt32();
         if (lane < 0 || uint32_t(lane) >= (2 * V::lanes))
             return ErrorBadArgs(cx);
         lanes[i] = uint32_t(lane);
@@ -1149,9 +1148,9 @@ Load(JSContext* cx, unsigned argc, Value* vp)
     if (!result)
         return false;
 
-    Elem* src = reinterpret_cast<Elem*>(static_cast<char*>(AnyTypedArrayViewData(typedArray)) + byteStart);
+    SharedMem<Elem*> src = AnyTypedArrayViewData(typedArray).addBytes(byteStart).cast<Elem*>();
     Elem* dst = reinterpret_cast<Elem*>(result->typedMem());
-    memcpy(dst, src, sizeof(Elem) * NumElem);
+    jit::AtomicOperations::memcpySafeWhenRacy(dst, src, sizeof(Elem) * NumElem);
 
     args.rval().setObject(*result);
     return true;
@@ -1176,8 +1175,8 @@ Store(JSContext* cx, unsigned argc, Value* vp)
         return ErrorBadArgs(cx);
 
     Elem* src = TypedObjectMemory<Elem*>(args[2]);
-    Elem* dst = reinterpret_cast<Elem*>(static_cast<char*>(AnyTypedArrayViewData(typedArray)) + byteStart);
-    memcpy(dst, src, sizeof(Elem) * NumElem);
+    SharedMem<Elem*> dst = AnyTypedArrayViewData(typedArray).addBytes(byteStart).cast<Elem*>();
+    js::jit::AtomicOperations::memcpySafeWhenRacy(dst, src, sizeof(Elem) * NumElem);
 
     args.rval().setObject(args[2].toObject());
     return true;

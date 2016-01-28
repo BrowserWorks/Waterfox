@@ -593,9 +593,9 @@ class FullParseHandler
         return new_<BreakStatement>(label, pos);
     }
 
-    ParseNode* newReturnStatement(ParseNode* expr, ParseNode* genrval, const TokenPos& pos) {
+    ParseNode* newReturnStatement(ParseNode* expr, const TokenPos& pos) {
         MOZ_ASSERT_IF(expr, pos.encloses(expr->pn_pos));
-        return new_<BinaryNode>(PNK_RETURN, JSOP_RETURN, pos, expr, genrval);
+        return new_<UnaryNode>(PNK_RETURN, JSOP_RETURN, pos, expr);
     }
 
     ParseNode* newWithStatement(uint32_t begin, ParseNode* expr, ParseNode* body,
@@ -720,6 +720,7 @@ class FullParseHandler
     }
 
     inline bool finishInitializerAssignment(ParseNode* pn, ParseNode* init, JSOp op);
+    inline void setLexicalDeclarationOp(ParseNode* pn, JSOp op);
 
     void setBeginPosition(ParseNode* pn, ParseNode* oth) {
         setBeginPosition(pn, oth->pn_pos.begin);
@@ -752,8 +753,7 @@ class FullParseHandler
         return new_<ListNode>(kind, op, TokenPos(begin, begin + 1));
     }
     ParseNode* newDeclarationList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
-        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET ||
-                   kind == PNK_GLOBALCONST);
+        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET);
         return new_<ListNode>(kind, op, pos());
     }
 
@@ -763,8 +763,7 @@ class FullParseHandler
         return new_<ListNode>(kind, op, kid);
     }
     ParseNode* newDeclarationList(ParseNodeKind kind, ParseNode* kid, JSOp op = JSOP_NOP) {
-        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET ||
-                   kind == PNK_GLOBALCONST);
+        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET);
         return new_<ListNode>(kind, op, kid);
     }
 
@@ -993,12 +992,8 @@ FullParseHandler::finishInitializerAssignment(ParseNode* pn, ParseNode* init, JS
         pn->pn_expr = init;
     }
 
-    if (op == JSOP_INITLEXICAL)
-        pn->setOp(op);
-    else if (pn->pn_dflags & PND_BOUND)
+    if (pn->pn_dflags & PND_BOUND)
         pn->setOp(JSOP_SETLOCAL);
-    else if (op == JSOP_DEFCONST)
-        pn->setOp(JSOP_SETCONST);
     else
         pn->setOp(JSOP_SETNAME);
 
@@ -1007,6 +1002,19 @@ FullParseHandler::finishInitializerAssignment(ParseNode* pn, ParseNode* init, JS
     /* The declarator's position must include the initializer. */
     pn->pn_pos.end = init->pn_pos.end;
     return true;
+}
+
+inline void
+FullParseHandler::setLexicalDeclarationOp(ParseNode* pn, JSOp op)
+{
+    if (op == JSOP_DEFLET || op == JSOP_DEFCONST) {
+        // Subtlety here. Lexical definitions that are PND_BOUND but whose
+        // scope coordinates are free are global lexicals. They cannot use
+        // scope coordinate lookup because we rely on being able to clone
+        // scripts to run on multiple globals. However, they always go on the
+        // global lexical scope, so in that sense they are bound.
+        pn->setOp(pn->pn_scopecoord.isFree() ? JSOP_INITGLEXICAL : JSOP_INITLEXICAL);
+    }
 }
 
 inline ParseNode*

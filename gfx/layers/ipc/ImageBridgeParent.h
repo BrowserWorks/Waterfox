@@ -49,8 +49,6 @@ public:
   ImageBridgeParent(MessageLoop* aLoop, Transport* aTransport, ProcessId aChildProcessId);
   ~ImageBridgeParent();
 
-  virtual LayersBackend GetCompositorBackendType() const override;
-
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   static PImageBridgeParent*
@@ -80,6 +78,7 @@ public:
   bool DeallocPCompositableParent(PCompositableParent* aActor) override;
 
   virtual PTextureParent* AllocPTextureParent(const SurfaceDescriptor& aSharedData,
+                                              const LayersBackend& aLayersBackend,
                                               const TextureFlags& aFlags) override;
   virtual bool DeallocPTextureParent(PTextureParent* actor) override;
 
@@ -101,24 +100,15 @@ public:
 
   // ISurfaceAllocator
 
-  bool AllocShmem(size_t aSize,
-                  ipc::SharedMemory::SharedMemoryType aType,
-                  ipc::Shmem* aShmem) override
-  {
-    return PImageBridgeParent::AllocShmem(aSize, aType, aShmem);
-  }
+  virtual bool AllocShmem(size_t aSize,
+                          ipc::SharedMemory::SharedMemoryType aType,
+                          ipc::Shmem* aShmem) override;
 
-  bool AllocUnsafeShmem(size_t aSize,
-                        ipc::SharedMemory::SharedMemoryType aType,
-                        ipc::Shmem* aShmem) override
-  {
-    return PImageBridgeParent::AllocUnsafeShmem(aSize, aType, aShmem);
-  }
+  virtual bool AllocUnsafeShmem(size_t aSize,
+                                ipc::SharedMemory::SharedMemoryType aType,
+                                ipc::Shmem* aShmem) override;
 
-  void DeallocShmem(ipc::Shmem& aShmem) override
-  {
-    PImageBridgeParent::DeallocShmem(aShmem);
-  }
+  virtual void DeallocShmem(ipc::Shmem& aShmem) override;
 
   virtual bool IsSameProcess() const override;
 
@@ -160,9 +150,10 @@ private:
   Transport* mTransport;
   // This keeps us alive until ActorDestroy(), at which point we do a
   // deferred destruction of ourselves.
-  nsRefPtr<ImageBridgeParent> mSelfRef;
+  RefPtr<ImageBridgeParent> mSelfRef;
 
   bool mSetChildThreadPriority;
+  bool mStopped;
 
   /**
    * Map of all living ImageBridgeParent instances
@@ -171,7 +162,7 @@ private:
 
   static MessageLoop* sMainLoop;
 
-  nsRefPtr<CompositorThreadHolder> mCompositorThreadHolder;
+  RefPtr<CompositorThreadHolder> mCompositorThreadHolder;
 };
 
 } // namespace layers

@@ -53,7 +53,7 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
 
-    nsRefPtr<nsDOMCameraControl> camera = do_QueryObject(mDOMCameraControl.get());
+    RefPtr<nsDOMCameraControl> camera = do_QueryObject(mDOMCameraControl.get());
     if (!camera) {
       DOM_CAMERA_LOGE("do_QueryObject failed to get an nsDOMCameraControl\n");
       return NS_ERROR_INVALID_ARG;
@@ -195,7 +195,7 @@ DOMCameraControlListener::OnConfigurationChange(const CameraListenerConfiguratio
     void
     RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
-      nsRefPtr<nsDOMCameraControl::DOMCameraConfiguration> config =
+      RefPtr<nsDOMCameraControl::DOMCameraConfiguration> config =
         new nsDOMCameraControl::DOMCameraConfiguration();
 
       switch (mConfiguration.mMode) {
@@ -311,7 +311,7 @@ DOMCameraControlListener::OnNewPreviewFrame(layers::Image* aImage, uint32_t aWid
 {
   DOM_CAMERA_LOGI("OnNewPreviewFrame: got %d x %d frame\n", aWidth, aHeight);
 
-  mStream->SetCurrentFrame(gfxIntSize(aWidth, aHeight), aImage);
+  mStream->SetCurrentFrame(gfx::IntSize(aWidth, aHeight), aImage);
   return true;
 }
 
@@ -429,7 +429,7 @@ DOMCameraControlListener::OnPoster(BlobImpl* aBlobImpl)
     }
 
   protected:
-    nsRefPtr<BlobImpl> mBlobImpl;
+    RefPtr<BlobImpl> mBlobImpl;
   };
 
   NS_DispatchToMainThread(new Callback(mDOMCameraControl, aBlobImpl));

@@ -370,7 +370,7 @@ NS_IMETHODIMP nsXULPopupShownEvent::HandleEvent(nsIDOMEvent* aEvent)
   if (popup) {
     // ResetPopupShownDispatcher will delete the reference to this, so keep
     // another one until Run is finished.
-    nsRefPtr<nsXULPopupShownEvent> event = this;
+    RefPtr<nsXULPopupShownEvent> event = this;
     // Only call Run if it the dispatcher was assigned. This avoids calling the
     // Run method if the transitionend event fires multiple times.
     if (popup->ClearPopupShownDispatcher()) {
@@ -1845,8 +1845,7 @@ nsMenuPopupFrame::ChangeMenuItem(nsMenuFrame* aMenuItem,
           // Fire a command event as the new item, but we don't want to close
           // the menu, blink it, or update any other state of the menuitem. The
           // command event will cause the item to be selected.
-          nsContentUtils::DispatchXULCommand(aMenuItem->GetContent(),
-                                             nsContentUtils::IsCallerChrome(),
+          nsContentUtils::DispatchXULCommand(aMenuItem->GetContent(), /* aTrusted = */ true,
                                              nullptr, PresContext()->PresShell(),
                                              false, false, false, false);
         }
@@ -2122,11 +2121,10 @@ nsMenuPopupFrame::MoveToAttributePosition()
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::left, left);
   mContent->GetAttr(kNameSpaceID_None, nsGkAtoms::top, top);
   nsresult err1, err2;
-  int32_t xpos = left.ToInteger(&err1);
-  int32_t ypos = top.ToInteger(&err2);
+  mozilla::CSSIntPoint pos(left.ToInteger(&err1), top.ToInteger(&err2));
 
   if (NS_SUCCEEDED(err1) && NS_SUCCEEDED(err2))
-    MoveTo(xpos, ypos, false);
+    MoveTo(pos, false);
 }
 
 void
@@ -2161,10 +2159,10 @@ nsMenuPopupFrame::DestroyFrom(nsIFrame* aDestructRoot)
 
 
 void
-nsMenuPopupFrame::MoveTo(int32_t aLeft, int32_t aTop, bool aUpdateAttrs)
+nsMenuPopupFrame::MoveTo(const CSSIntPoint& aPos, bool aUpdateAttrs)
 {
   nsIWidget* widget = GetWidget();
-  if ((mScreenRect.x == aLeft && mScreenRect.y == aTop) &&
+  if ((mScreenRect.x == aPos.x && mScreenRect.y == aPos.y) &&
       (!widget || widget->GetClientOffset() == mLastClientOffset)) {
     return;
   }
@@ -2185,10 +2183,9 @@ nsMenuPopupFrame::MoveTo(int32_t aLeft, int32_t aTop, bool aUpdateAttrs)
   }
 
   nsPresContext* presContext = PresContext();
-  mAnchorType = aLeft == -1 || aTop == -1 ?
-                MenuPopupAnchorType_Node : MenuPopupAnchorType_Point;
-  mScreenRect.x = aLeft - presContext->AppUnitsToIntCSSPixels(margin.left);
-  mScreenRect.y = aTop - presContext->AppUnitsToIntCSSPixels(margin.top);
+  mAnchorType = MenuPopupAnchorType_Point;
+  mScreenRect.x = aPos.x - presContext->AppUnitsToIntCSSPixels(margin.left);
+  mScreenRect.y = aPos.y - presContext->AppUnitsToIntCSSPixels(margin.top);
 
   SetPopupPosition(nullptr, true, false);
 
@@ -2197,8 +2194,8 @@ nsMenuPopupFrame::MoveTo(int32_t aLeft, int32_t aTop, bool aUpdateAttrs)
                        popup->HasAttr(kNameSpaceID_None, nsGkAtoms::top)))
   {
     nsAutoString left, top;
-    left.AppendInt(aLeft);
-    top.AppendInt(aTop);
+    left.AppendInt(aPos.x);
+    top.AppendInt(aPos.y);
     popup->SetAttr(kNameSpaceID_None, nsGkAtoms::left, left, false);
     popup->SetAttr(kNameSpaceID_None, nsGkAtoms::top, top, false);
   }

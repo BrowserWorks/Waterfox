@@ -12,6 +12,9 @@
 #include "gfxDrawable.h"
 #include "imgIEncoder.h"
 #include "mozilla/Base64.h"
+#include "mozilla/dom/ImageEncoder.h"
+#include "mozilla/dom/WorkerPrivate.h"
+#include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Logging.h"
@@ -21,6 +24,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIClipboardHelper.h"
 #include "nsIFile.h"
+#include "nsIGfxInfo.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "nsRegion.h"
@@ -69,7 +73,7 @@ void mozilla_dump_image(void* bytes, int width, int height, int bytepp,
     // TODO more flexible; parse string?
     switch (bytepp) {
     case 2:
-        format = SurfaceFormat::R5G6B5;
+        format = SurfaceFormat::R5G6B5_UINT16;
         break;
     case 4:
     default:
@@ -397,20 +401,17 @@ IsSafeImageTransformComponent(gfxFloat aValue)
  * alpha channel or their alpha channel is uniformly opaque.
  * This differs per render mode.
  */
-static gfxContext::GraphicsOperator
-OptimalFillOperator()
+static CompositionOp
+OptimalFillOp()
 {
 #ifdef XP_WIN
     if (gfxWindowsPlatform::GetPlatform()->GetRenderMode() ==
         gfxWindowsPlatform::RENDER_DIRECT2D) {
         // D2D -really- hates operator source.
-        return gfxContext::OPERATOR_OVER;
-    } else {
-#endif
-        return gfxContext::OPERATOR_SOURCE;
-#ifdef XP_WIN
+        return CompositionOp::OP_OVER;
     }
 #endif
+    return CompositionOp::OP_SOURCE;
 }
 
 // EXTEND_PAD won't help us here; we have to create a temporary surface to hold
@@ -454,13 +455,13 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
       return nullptr;
     }
 
-    nsRefPtr<gfxContext> tmpCtx = new gfxContext(target);
-    tmpCtx->SetOperator(OptimalFillOperator());
-    aDrawable->Draw(tmpCtx, needed - needed.TopLeft(), true,
-                    GraphicsFilter::FILTER_FAST, 1.0, gfxMatrix::Translation(needed.TopLeft()));
+    RefPtr<gfxContext> tmpCtx = new gfxContext(target);
+    tmpCtx->SetOp(OptimalFillOp());
+    aDrawable->Draw(tmpCtx, needed - needed.TopLeft(), true, Filter::LINEAR,
+                    1.0, gfxMatrix::Translation(needed.TopLeft()));
     RefPtr<SourceSurface> surface = target->Snapshot();
 
-    nsRefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(surface, size, gfxMatrix::Translation(-needed.TopLeft()));
+    RefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(surface, size, gfxMatrix::Translation(-needed.TopLeft()));
     return drawable.forget();
 }
 #endif // !MOZ_GFX_OPTIMIZE_MOBILE
@@ -506,7 +507,7 @@ struct MOZ_STACK_CLASS AutoCairoPixmanBugWorkaround
         mContext->Clip(bounds);
         mContext->SetMatrix(currentMatrix);
         mContext->PushGroup(gfxContentType::COLOR_ALPHA);
-        mContext->SetOperator(gfxContext::OPERATOR_OVER);
+        mContext->SetOp(CompositionOp::OP_OVER);
 
         mPushedGroup = true;
     }
@@ -533,7 +534,7 @@ static gfxMatrix
 DeviceToImageTransform(gfxContext* aContext)
 {
     gfxFloat deviceX, deviceY;
-    nsRefPtr<gfxASurface> currentTarget =
+    RefPtr<gfxASurface> currentTarget =
         aContext->CurrentSurface(&deviceX, &deviceY);
     gfxMatrix deviceToUser = aContext->CurrentMatrix();
     if (!deviceToUser.Invert()) {
@@ -545,9 +546,9 @@ DeviceToImageTransform(gfxContext* aContext)
 
 /* These heuristics are based on Source/WebCore/platform/graphics/skia/ImageSkia.cpp:computeResamplingMode() */
 #ifdef MOZ_GFX_OPTIMIZE_MOBILE
-static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
-                                             int aImgWidth, int aImgHeight,
-                                             float aSourceWidth, float aSourceHeight)
+static Filter ReduceResamplingFilter(Filter aFilter,
+                                     int aImgWidth, int aImgHeight,
+                                     float aSourceWidth, float aSourceHeight)
 {
     // Images smaller than this in either direction are considered "small" and
     // are not resampled ever (see below).
@@ -562,7 +563,7 @@ static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
         || aImgHeight <= kSmallImageSizeThreshold) {
         // Never resample small images. These are often used for borders and
         // rules (think 1x1 images used to make lines).
-        return GraphicsFilter::FILTER_NEAREST;
+        return Filter::POINT;
     }
 
     if (aImgHeight * kLargeStretch <= aSourceHeight || aImgWidth * kLargeStretch <= aSourceWidth) {
@@ -573,7 +574,7 @@ static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
         // (which might be large) and then is stretching it to fill some part
         // of the page.
         if (fabs(aSourceWidth - aImgWidth)/aImgWidth < 0.5 || fabs(aSourceHeight - aImgHeight)/aImgHeight < 0.5)
-            return GraphicsFilter::FILTER_NEAREST;
+            return Filter::POINT;
 
         // The image is growing a lot and in more than one direction. Resampling
         // is slow and doesn't give us very much when growing a lot.
@@ -601,9 +602,9 @@ static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
     return aFilter;
 }
 #else
-static GraphicsFilter ReduceResamplingFilter(GraphicsFilter aFilter,
-                                             int aImgWidth, int aImgHeight,
-                                             int aSourceWidth, int aSourceHeight)
+static Filter ReduceResamplingFilter(Filter aFilter,
+                                     int aImgWidth, int aImgHeight,
+                                     int aSourceWidth, int aSourceHeight)
 {
     // Just pass the filter through unchanged
     return aFilter;
@@ -630,7 +631,7 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
                         gfxContext* aContext,
                         const ImageRegion& aRegion,
                         Rect aImageRect,
-                        const GraphicsFilter& aFilter,
+                        const Filter& aFilter,
                         const SurfaceFormat aFormat,
                         gfxFloat aOpacity)
 {
@@ -663,8 +664,8 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
     return false;
   }
 
-  gfxIntSize scaledImageSize((int32_t)scaledImageRect.width,
-                             (int32_t)scaledImageRect.height);
+  IntSize scaledImageSize((int32_t)scaledImageRect.width,
+                          (int32_t)scaledImageRect.height);
   if (scaledImageSize.width != scaledImageRect.width ||
       scaledImageSize.height != scaledImageRect.height) {
     // If the scaled image isn't pixel aligned, we'll get artifacts
@@ -678,7 +679,7 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
     return false;
   }
 
-  nsRefPtr<gfxContext> tmpCtx = new gfxContext(scaledDT);
+  RefPtr<gfxContext> tmpCtx = new gfxContext(scaledDT);
   scaledDT->SetTransform(ToMatrix(scaleMatrix));
   gfxRect gfxImageRect(aImageRect.x, aImageRect.y, aImageRect.width, aImageRect.height);
   aDrawable->Draw(tmpCtx, gfxImageRect, true, aFilter, 1.0, gfxMatrix());
@@ -694,12 +695,11 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
     withoutScale.PreScale(1.0 / scaleFactor.width, 1.0 / scaleFactor.height);
     aContext->SetMatrix(ThebesMatrix(withoutScale));
 
-    DrawOptions drawOptions(aOpacity,
-        CompositionOpForOp(aContext->CurrentOperator()),
-        aContext->CurrentAntialiasMode());
+    DrawOptions drawOptions(aOpacity, aContext->CurrentOp(),
+                            aContext->CurrentAntialiasMode());
 
     SurfacePattern scaledImagePattern(scaledImage, ExtendMode::REPEAT,
-                                      Matrix(), ToFilter(aFilter));
+                                      Matrix(), aFilter);
     destDrawTarget->FillRect(scaledNeededRect, scaledImagePattern, drawOptions);
   }
   return true;
@@ -712,7 +712,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
                            const gfxSize&      aImageSize,
                            const ImageRegion&  aRegion,
                            const SurfaceFormat aFormat,
-                           GraphicsFilter      aFilter,
+                           Filter              aFilter,
                            uint32_t            aImageFlags,
                            gfxFloat            aOpacity)
 {
@@ -725,7 +725,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
     bool doTile = !imageRect.Contains(region) &&
                   !(aImageFlags & imgIContainer::FLAG_CLAMP);
 
-    nsRefPtr<gfxASurface> currentTarget = aContext->CurrentSurface();
+    RefPtr<gfxASurface> currentTarget = aContext->CurrentSurface();
     gfxMatrix deviceSpaceToImageSpace = DeviceToImageTransform(aContext);
 
     AutoCairoPixmanBugWorkaround workaround(aContext, deviceSpaceToImageSpace,
@@ -733,7 +733,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
     if (!workaround.Succeeded())
         return;
 
-    nsRefPtr<gfxDrawable> drawable = aDrawable;
+    RefPtr<gfxDrawable> drawable = aDrawable;
 
     aFilter = ReduceResamplingFilter(aFilter,
                                      imageRect.Width(), imageRect.Height(),
@@ -763,7 +763,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
             // allocating very large temporary surfaces, especially since we'll
             // do full-page snapshots often (see bug 749426).
 #if !defined(MOZ_GFX_OPTIMIZE_MOBILE)
-            nsRefPtr<gfxDrawable> restrictedDrawable =
+            RefPtr<gfxDrawable> restrictedDrawable =
               CreateSamplingRestrictedDrawable(aDrawable, aContext,
                                                aRegion, aFormat);
             if (restrictedDrawable) {
@@ -1105,9 +1105,7 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
   }
 }
 
-/* static */ void gfxUtils::ClearThebesSurface(gfxASurface* aSurface,
-                                               IntRect* aRect,
-                                               const gfxRGBA& aColor)
+/* static */ void gfxUtils::ClearThebesSurface(gfxASurface* aSurface)
 {
   if (aSurface->CairoStatus()) {
     return;
@@ -1117,14 +1115,9 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
     return;
   }
   cairo_t* ctx = cairo_create(surf);
-  cairo_set_source_rgba(ctx, aColor.r, aColor.g, aColor.b, aColor.a);
+  cairo_set_source_rgba(ctx, 0.0, 0.0, 0.0, 0.0);
   cairo_set_operator(ctx, CAIRO_OPERATOR_SOURCE);
-  IntRect bounds;
-  if (aRect) {
-    bounds = *aRect;
-  } else {
-    bounds = IntRect(nsIntPoint(0, 0), aSurface->GetSize());
-  }
+  IntRect bounds(nsIntPoint(0, 0), aSurface->GetSize());
   cairo_rectangle(ctx, bounds.x, bounds.y, bounds.width, bounds.height);
   cairo_fill(ctx);
   cairo_destroy(ctx);
@@ -1469,7 +1462,7 @@ gfxUtils::WriteAsPNG(nsIPresShell* aShell, const char* aFile)
                                      SurfaceFormat::B8G8R8A8);
   NS_ENSURE_TRUE(dt, /*void*/);
 
-  nsRefPtr<gfxContext> context = new gfxContext(dt);
+  RefPtr<gfxContext> context = new gfxContext(dt);
   aShell->RenderDocument(r, 0, NS_RGB(255, 255, 0), context);
   WriteAsPNG(dt.get(), aFile);
 }
@@ -1554,6 +1547,122 @@ gfxUtils::CopyAsDataURI(DrawTarget* aDT)
   }
 }
 
+/* static */ UniquePtr<uint8_t[]>
+gfxUtils::GetImageBuffer(gfx::DataSourceSurface* aSurface,
+                         bool aIsAlphaPremultiplied,
+                         int32_t* outFormat)
+{
+    *outFormat = 0;
+
+    DataSourceSurface::MappedSurface map;
+    if (!aSurface->Map(DataSourceSurface::MapType::READ, &map))
+        return nullptr;
+
+    uint32_t bufferSize = aSurface->GetSize().width * aSurface->GetSize().height * 4;
+    UniquePtr<uint8_t[]> imageBuffer(new (fallible) uint8_t[bufferSize]);
+    if (!imageBuffer) {
+        aSurface->Unmap();
+        return nullptr;
+    }
+    memcpy(imageBuffer.get(), map.mData, bufferSize);
+
+    aSurface->Unmap();
+
+    int32_t format = imgIEncoder::INPUT_FORMAT_HOSTARGB;
+    if (!aIsAlphaPremultiplied) {
+        // We need to convert to INPUT_FORMAT_RGBA, otherwise
+        // we are automatically considered premult, and unpremult'd.
+        // Yes, it is THAT silly.
+        // Except for different lossy conversions by color,
+        // we could probably just change the label, and not change the data.
+        gfxUtils::ConvertBGRAtoRGBA(imageBuffer.get(), bufferSize);
+        format = imgIEncoder::INPUT_FORMAT_RGBA;
+    }
+
+    *outFormat = format;
+    return imageBuffer;
+}
+
+/* static */ nsresult
+gfxUtils::GetInputStream(gfx::DataSourceSurface* aSurface,
+                         bool aIsAlphaPremultiplied,
+                         const char* aMimeType,
+                         const char16_t* aEncoderOptions,
+                         nsIInputStream** outStream)
+{
+    nsCString enccid("@mozilla.org/image/encoder;2?type=");
+    enccid += aMimeType;
+    nsCOMPtr<imgIEncoder> encoder = do_CreateInstance(enccid.get());
+    if (!encoder)
+        return NS_ERROR_FAILURE;
+
+    int32_t format = 0;
+    UniquePtr<uint8_t[]> imageBuffer = GetImageBuffer(aSurface, aIsAlphaPremultiplied, &format);
+    if (!imageBuffer)
+        return NS_ERROR_FAILURE;
+
+    return dom::ImageEncoder::GetInputStream(aSurface->GetSize().width,
+                                             aSurface->GetSize().height,
+                                             imageBuffer.get(), format,
+                                             encoder, aEncoderOptions, outStream);
+}
+
+class GetFeatureStatusRunnable final : public dom::workers::WorkerMainThreadRunnable
+{
+public:
+    GetFeatureStatusRunnable(dom::workers::WorkerPrivate* workerPrivate,
+                             const nsCOMPtr<nsIGfxInfo>& gfxInfo,
+                             int32_t feature,
+                             int32_t* status)
+      : WorkerMainThreadRunnable(workerPrivate)
+      , mGfxInfo(gfxInfo)
+      , mFeature(feature)
+      , mStatus(status)
+      , mNSResult(NS_OK)
+    {
+    }
+
+    bool MainThreadRun() override
+    {
+      if (mGfxInfo) {
+        mNSResult = mGfxInfo->GetFeatureStatus(mFeature, mStatus);
+      }
+      return true;
+    }
+
+    nsresult GetNSResult() const
+    {
+      return mNSResult;
+    }
+
+protected:
+    ~GetFeatureStatusRunnable() {}
+
+private:
+    nsCOMPtr<nsIGfxInfo> mGfxInfo;
+    int32_t mFeature;
+    int32_t* mStatus;
+    nsresult mNSResult;
+};
+
+/* static */ nsresult
+gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
+                                     int32_t feature, int32_t* status)
+{
+  if (!NS_IsMainThread()) {
+    dom::workers::WorkerPrivate* workerPrivate =
+      dom::workers::GetCurrentThreadWorkerPrivate();
+    RefPtr<GetFeatureStatusRunnable> runnable =
+      new GetFeatureStatusRunnable(workerPrivate, gfxInfo, feature, status);
+
+    runnable->Dispatch(workerPrivate->GetJSContext());
+
+    return runnable->GetNSResult();
+  }
+
+  return gfxInfo->GetFeatureStatus(feature, status);
+}
+
 /* static */ bool
 gfxUtils::DumpDisplayList() {
   return gfxPrefs::LayoutDumpDisplayList();
@@ -1566,11 +1675,13 @@ bool gfxUtils::sDumpPainting = getenv("MOZ_DUMP_PAINT") != 0;
 bool gfxUtils::sDumpPaintingIntermediate = getenv("MOZ_DUMP_PAINT_INTERMEDIATE") != 0;
 bool gfxUtils::sDumpPaintingToFile = getenv("MOZ_DUMP_PAINT_TO_FILE") != 0;
 bool gfxUtils::sDumpPaintItems = getenv("MOZ_DUMP_PAINT_ITEMS") != 0;
+bool gfxUtils::sDumpCompositorTextures = getenv("MOZ_DUMP_COMPOSITOR_TEXTURES") != 0;
 #else
 bool gfxUtils::sDumpPainting = false;
 bool gfxUtils::sDumpPaintingIntermediate = false;
 bool gfxUtils::sDumpPaintingToFile = false;
 bool gfxUtils::sDumpPaintItems = false;
+bool gfxUtils::sDumpCompositorTextures = false;
 #endif
 
 namespace mozilla {
@@ -1596,11 +1707,6 @@ Color ToDeviceColor(Color aColor)
 Color ToDeviceColor(nscolor aColor)
 {
   return ToDeviceColor(Color::FromABGR(aColor));
-}
-
-Color ToDeviceColor(const gfxRGBA& aColor)
-{
-  return ToDeviceColor(ToColor(aColor));
 }
 
 } // namespace gfx

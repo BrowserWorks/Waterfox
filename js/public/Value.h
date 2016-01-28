@@ -237,25 +237,60 @@ typedef uint64_t JSValueShiftedTag;
 
 typedef enum JSWhyMagic
 {
-    JS_ELEMENTS_HOLE,            /* a hole in a native object's elements */
-    JS_NO_ITER_VALUE,            /* there is not a pending iterator value */
-    JS_GENERATOR_CLOSING,        /* exception value thrown when closing a generator */
-    JS_NO_CONSTANT,              /* compiler sentinel value */
-    JS_THIS_POISON,              /* used in debug builds to catch tracing errors */
-    JS_ARG_POISON,               /* used in debug builds to catch tracing errors */
-    JS_SERIALIZE_NO_NODE,        /* an empty subnode in the AST serializer */
-    JS_LAZY_ARGUMENTS,           /* lazy arguments value on the stack */
-    JS_OPTIMIZED_ARGUMENTS,      /* optimized-away 'arguments' value */
-    JS_IS_CONSTRUCTING,          /* magic value passed to natives to indicate construction */
-    JS_OVERWRITTEN_CALLEE,       /* arguments.callee has been overwritten */
-    JS_BLOCK_NEEDS_CLONE,        /* value of static block object slot */
-    JS_HASH_KEY_EMPTY,           /* see class js::HashableValue */
-    JS_ION_ERROR,                /* error while running Ion code */
-    JS_ION_BAILOUT,              /* missing recover instruction result */
-    JS_OPTIMIZED_OUT,            /* optimized out slot */
-    JS_UNINITIALIZED_LEXICAL,    /* uninitialized lexical bindings that produce ReferenceError
-                                  * on touch. */
-    JS_GENERIC_MAGIC,            /* for local use */
+    /** a hole in a native object's elements */
+    JS_ELEMENTS_HOLE,
+
+    /** there is not a pending iterator value */
+    JS_NO_ITER_VALUE,
+
+    /** exception value thrown when closing a generator */
+    JS_GENERATOR_CLOSING,
+
+    /** compiler sentinel value */
+    JS_NO_CONSTANT,
+
+    /** used in debug builds to catch tracing errors */
+    JS_THIS_POISON,
+
+    /** used in debug builds to catch tracing errors */
+    JS_ARG_POISON,
+
+    /** an empty subnode in the AST serializer */
+    JS_SERIALIZE_NO_NODE,
+
+    /** lazy arguments value on the stack */
+    JS_LAZY_ARGUMENTS,
+
+    /** optimized-away 'arguments' value */
+    JS_OPTIMIZED_ARGUMENTS,
+
+    /** magic value passed to natives to indicate construction */
+    JS_IS_CONSTRUCTING,
+
+    /** arguments.callee has been overwritten */
+    JS_OVERWRITTEN_CALLEE,
+
+    /** value of static block object slot */
+    JS_BLOCK_NEEDS_CLONE,
+
+    /** see class js::HashableValue */
+    JS_HASH_KEY_EMPTY,
+
+    /** error while running Ion code */
+    JS_ION_ERROR,
+
+    /** missing recover instruction result */
+    JS_ION_BAILOUT,
+
+    /** optimized out slot */
+    JS_OPTIMIZED_OUT,
+
+    /** uninitialized lexical bindings that produce ReferenceError on touch. */
+    JS_UNINITIALIZED_LEXICAL,
+
+    /** for local use */
+    JS_GENERIC_MAGIC,
+
     JS_WHY_MAGIC_COUNT
 } JSWhyMagic;
 
@@ -967,7 +1002,7 @@ CanonicalizeNaN(double d)
 # pragma optimize("", on)
 #endif
 
-/*
+/**
  * JS::Value is the interface for a single JavaScript Engine value.  A few
  * general notes on JS::Value:
  *
@@ -1009,6 +1044,15 @@ class Value
     Value() = default;
     Value(const Value& v) = default;
 #endif
+
+    /**
+     * Returns false if creating a NumberValue containing the given type would
+     * be lossy, true otherwise.
+     */
+    template <typename T>
+    static bool isNumberRepresentable(const T t) {
+        return T(double(t)) == t;
+    }
 
     /*** Mutators ***/
 
@@ -1611,7 +1655,7 @@ template <typename T>
 static inline Value
 NumberValue(const T t)
 {
-    MOZ_ASSERT(T(double(t)) == t, "value creation would be lossy");
+    MOZ_ASSERT(Value::isNumberRepresentable(t), "value creation would be lossy");
     return detail::MakeNumberValue<std::numeric_limits<T>::is_signed>::create(t);
 }
 
@@ -1673,7 +1717,7 @@ template <> struct GCMethods<JS::Value>
 
 template <class Outer> class MutableValueOperations;
 
-/*
+/**
  * A class designed for CRTP use in implementing the non-mutating parts of the
  * Value interface in Value-like classes.  Outer must be a class inheriting
  * ValueOperations<Outer> with a visible get() method returning a const
@@ -1727,7 +1771,7 @@ class ValueOperations
     uint32_t magicUint32() const { return value().magicUint32(); }
 };
 
-/*
+/**
  * A class designed for CRTP use in implementing all the mutating parts of the
  * Value interface in Value-like classes.  Outer must be a class inheriting
  * MutableValueOperations<Outer> with visible get() methods returning const and
@@ -1832,7 +1876,7 @@ class PersistentRootedBase<JS::Value> : public MutableValueOperations<JS::Persis
  */
 template <typename F, typename... Args>
 auto
-DispatchValueTyped(F f, const JS::Value& val, Args&&... args)
+DispatchTyped(F f, const JS::Value& val, Args&&... args)
   -> decltype(f(static_cast<JSObject*>(nullptr), mozilla::Forward<Args>(args)...))
 {
     if (val.isString())

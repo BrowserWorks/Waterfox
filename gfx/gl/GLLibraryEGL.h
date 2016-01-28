@@ -10,6 +10,7 @@
 #endif
 
 #include "GLLibraryLoader.h"
+#include "mozilla/StaticMutex.h"
 #include "mozilla/ThreadLocal.h"
 #include "nsIFile.h"
 #include "GeckoProfiler.h"
@@ -17,40 +18,32 @@
 #include <bitset>
 #include <vector>
 
-#if defined(XP_WIN)
+#ifdef XP_WIN
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN 1
+    #endif
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
+    #include <windows.h>
 
-#include <windows.h>
-
-typedef HDC EGLNativeDisplayType;
-typedef HBITMAP EGLNativePixmapType;
-typedef HWND EGLNativeWindowType;
-
-#define GET_NATIVE_WINDOW(aWidget) ((EGLNativeWindowType)aWidget->GetNativeData(NS_NATIVE_WINDOW))
-
+    typedef HDC EGLNativeDisplayType;
+    typedef HBITMAP EGLNativePixmapType;
+    typedef HWND EGLNativeWindowType;
 #else
-typedef void *EGLNativeDisplayType;
-typedef void *EGLNativePixmapType;
-typedef void *EGLNativeWindowType;
+    typedef void* EGLNativeDisplayType;
+    typedef void* EGLNativePixmapType;
+    typedef void* EGLNativeWindowType;
 
-#ifdef ANDROID
-// We only need to explicitly dlopen egltrace
-// on android as we can use LD_PRELOAD or other tricks
-// on other platforms. We look for it in /data/local
-// as that's writeable by all users
-//
-// This should really go in GLLibraryEGL.cpp but we currently reference
-// APITRACE_LIB in GLContextProviderEGL.cpp. Further refactoring
-// will come in subsequent patches on Bug 732865
-#define APITRACE_LIB "/data/local/tmp/egltrace.so"
-
-#ifdef MOZ_WIDGET_ANDROID
-
-#endif // MOZ_WIDGET_ANDROID
-#endif // ANDROID
+    #ifdef ANDROID
+        // We only need to explicitly dlopen egltrace
+        // on android as we can use LD_PRELOAD or other tricks
+        // on other platforms. We look for it in /data/local
+        // as that's writeable by all users
+        //
+        // This should really go in GLLibraryEGL.cpp but we currently reference
+        // APITRACE_LIB in GLContextProviderEGL.cpp. Further refactoring
+        // will come in subsequent patches on Bug 732865
+        #define APITRACE_LIB "/data/local/tmp/egltrace.so"
+    #endif
 #endif
 
 #if defined(MOZ_X11)
@@ -60,6 +53,11 @@ typedef void *EGLNativeWindowType;
 #endif
 
 namespace mozilla {
+
+namespace gfx {
+class DataSourceSurface;
+}
+
 namespace gl {
 
 #undef BEFORE_GL_CALL
@@ -101,6 +99,8 @@ namespace gl {
 #endif
 #define AFTER_GL_CALL
 #endif
+
+class GLContext;
 
 class GLLibraryEGL
 {
@@ -486,6 +486,8 @@ public:
         return IsExtensionSupported(EXT_create_context_robustness);
     }
 
+    bool ReadbackEGLImage(EGLImage image, gfx::DataSourceSurface* out_surface);
+
     bool EnsureInitialized(bool forceAccel = false);
 
     void DumpEGLConfig(EGLConfig cfg);
@@ -611,9 +613,11 @@ private:
     bool mInitialized;
     PRLibrary* mEGLLibrary;
     EGLDisplay mEGLDisplay;
+    RefPtr<GLContext> mReadbackGL;
 
     bool mIsANGLE;
     bool mIsWARP;
+    static StaticMutex sMutex;
 };
 
 extern GLLibraryEGL sEGLLibrary;

@@ -9,6 +9,8 @@
     <item type="id" name="guestNotification"/>
     <item type="id" name="original_height"/>
     <item type="id" name="menu_items"/>
+    <item type="id" name="menu_margin"/>
     <item type="id" name="recycler_view_click_support" />
+    <item type="id" name="range_list"/>
 
 </resources>

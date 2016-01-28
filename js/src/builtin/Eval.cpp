@@ -229,7 +229,7 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
 {
     MOZ_ASSERT((evalType == INDIRECT_EVAL) == !caller);
     MOZ_ASSERT((evalType == INDIRECT_EVAL) == !pc);
-    MOZ_ASSERT_IF(evalType == INDIRECT_EVAL, scopeobj->is<GlobalObject>());
+    MOZ_ASSERT_IF(evalType == INDIRECT_EVAL, IsGlobalLexicalScope(scopeobj));
     AssertInnerizedScopeChain(cx, *scopeobj);
 
     Rooted<GlobalObject*> scopeObjGlobal(cx, &scopeobj->global());
@@ -271,13 +271,11 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
             return false;
         thisv = caller.thisValue();
     } else {
-        MOZ_ASSERT(args.callee().global() == *scopeobj);
+        MOZ_ASSERT(args.callee().global() == scopeobj->as<ClonedBlockObject>().global());
 
         // Use the global as 'this', modulo outerization.
-        JSObject* thisobj = GetThisObject(cx, scopeobj);
-        if (!thisobj)
+        if (!GetThisValue(cx, scopeobj, &thisv))
             return false;
-        thisv = ObjectValue(*thisobj);
     }
 
     RootedLinearString linearStr(cx, str->ensureLinear(cx));
@@ -313,6 +311,8 @@ EvalKernel(JSContext* cx, const CallArgs& args, EvalType evalType, AbstractFrame
         RootedObject enclosing(cx);
         if (evalType == DIRECT_EVAL)
             enclosing = callerScript->innermostStaticScope(pc);
+        else
+            enclosing = &cx->global()->lexicalScope().staticBlock();
         Rooted<StaticEvalObject*> staticScope(cx, StaticEvalObject::create(cx, enclosing));
         if (!staticScope)
             return false;
@@ -439,10 +439,8 @@ js::DirectEvalStringFromIon(JSContext* cx,
     // value as necessary while it executes.
     RootedValue nthisValue(cx, thisValue);
     if (!callerScript->strict() && esg.script()->strict() && !thisValue.isObject()) {
-        JSObject* obj = BoxNonStrictThis(cx, thisValue);
-        if (!obj)
+        if (!BoxNonStrictThis(cx, thisValue, &nthisValue))
             return false;
-        nthisValue = ObjectValue(*obj);
     }
 
     return ExecuteKernel(cx, esg.script(), *scopeobj, nthisValue, newTargetValue,
@@ -454,7 +452,8 @@ js::IndirectEval(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     Rooted<GlobalObject*> global(cx, &args.callee().global());
-    return EvalKernel(cx, args, INDIRECT_EVAL, NullFramePtr(), global, nullptr);
+    RootedObject globalLexical(cx, &global->lexicalScope());
+    return EvalKernel(cx, args, INDIRECT_EVAL, NullFramePtr(), globalLexical, nullptr);
 }
 
 bool
@@ -492,8 +491,10 @@ js::ExecuteInGlobalAndReturnScope(JSContext* cx, HandleObject global, HandleScri
     MOZ_RELEASE_ASSERT(scriptArg->hasNonSyntacticScope());
 
     RootedScript script(cx, scriptArg);
+    Rooted<GlobalObject*> globalRoot(cx, &global->as<GlobalObject>());
     if (script->compartment() != cx->compartment()) {
-        Rooted<ScopeObject*> staticScope(cx, StaticNonSyntacticScopeObjects::create(cx, nullptr));
+        Rooted<ScopeObject*> staticScope(cx, &globalRoot->lexicalScope().staticBlock());
+        staticScope = StaticNonSyntacticScopeObjects::create(cx, staticScope);
         if (!staticScope)
             return false;
         script = CloneGlobalScript(cx, staticScope, script);
@@ -503,16 +504,22 @@ js::ExecuteInGlobalAndReturnScope(JSContext* cx, HandleObject global, HandleScri
         Debugger::onNewScript(cx, script);
     }
 
-    Rooted<GlobalObject*> globalRoot(cx, &global->as<GlobalObject>());
-    Rooted<ScopeObject*> scope(cx, NonSyntacticVariablesObject::create(cx, globalRoot));
+    Rooted<ClonedBlockObject*> globalLexical(cx, &globalRoot->lexicalScope());
+    Rooted<ScopeObject*> scope(cx, NonSyntacticVariablesObject::create(cx, globalLexical));
     if (!scope)
         return false;
 
-    JSObject* thisobj = GetThisObject(cx, global);
-    if (!thisobj)
+    // Unlike the non-syntactic scope chain API used by the subscript loader,
+    // this API creates a fresh block scope each time.
+    RootedObject enclosingStaticScope(cx, script->enclosingStaticScope());
+    scope = ClonedBlockObject::createNonSyntactic(cx, enclosingStaticScope, scope);
+    if (!scope)
         return false;
 
-    RootedValue thisv(cx, ObjectValue(*thisobj));
+    RootedValue thisv(cx);
+    if (!GetThisValue(cx, global, &thisv))
+        return false;
+
     RootedValue rval(cx);
     if (!ExecuteKernel(cx, script, *scope, thisv, UndefinedValue(), EXECUTE_GLOBAL,
                        NullFramePtr() /* evalInFrame */, rval.address()))

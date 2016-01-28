@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import android.support.annotation.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -98,6 +99,7 @@ public class Tabs implements GeckoEventListener {
             "Tab:Close",
             "Tab:Select",
             "Content:LocationChange",
+            "Content:LoginInsecure",
             "Content:SecurityChange",
             "Content:StateChange",
             "Content:LoadError",
@@ -314,6 +316,7 @@ public class Tabs implements GeckoEventListener {
      *
      * @return the selected tab, or null if no tabs exist
      */
+    @Nullable
     public Tab getSelectedTab() {
         return mSelectedTab;
     }
@@ -507,6 +510,9 @@ public class Tabs implements GeckoEventListener {
                 tab.handleLocationChange(message);
             } else if (event.equals("Content:SecurityChange")) {
                 tab.updateIdentityData(message.getJSONObject("identity"));
+                notifyListeners(tab, TabEvents.SECURITY_CHANGE);
+            } else if (event.equals("Content:LoginInsecure")) {
+                tab.setLoginInsecure(true);
                 notifyListeners(tab, TabEvents.SECURITY_CHANGE);
             } else if (event.equals("Content:StateChange")) {
                 int state = message.getInt("state");

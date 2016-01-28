@@ -576,6 +576,12 @@ ContentSearchUIController.prototype = {
     }
   },
 
+  _onMsgSuggestionsCancelled: function () {
+    if (!this._table.hidden) {
+      this._hideSuggestions();
+    }
+  },
+
   _onMsgState: function (state) {
     this.engines = state.engines;
     // No point updating the default engine (and the header) if there's no change.
@@ -624,9 +630,7 @@ ContentSearchUIController.prototype = {
     }
     let searchWithHeader = document.getElementById("contentSearchSearchWithHeader");
     if (this.input.value) {
-      let html = "<span class='contentSearchSearchWithHeaderSearchText'></span>";
-      html = this._strings.searchForKeywordsWith.replace("%S", html);
-      searchWithHeader.innerHTML = html;
+      searchWithHeader.innerHTML = this._strings.searchForSomethingWith;
       searchWithHeader.querySelector('.contentSearchSearchWithHeaderSearchText').textContent = this.input.value;
     } else {
       searchWithHeader.textContent = this._strings.searchWithHeader;
@@ -675,12 +679,10 @@ ContentSearchUIController.prototype = {
     return row;
   },
 
-  // Converts favicon array buffer into data URI of the right size and dpi.
+  // Converts favicon array buffer into a data URI.
   _getFaviconURIFromBuffer: function (buffer) {
     let blob = new Blob([buffer]);
-    let dpiSize = Math.round(16 * window.devicePixelRatio);
-    let sizeStr = dpiSize + "," + dpiSize;
-    return URL.createObjectURL(blob) + "#-moz-resolution=" + sizeStr;
+    return URL.createObjectURL(blob);
   },
 
   // Adds "@2x" to the name of the given PNG url for "retina" screens.

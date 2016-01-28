@@ -9,12 +9,14 @@
 
 #include <stdint.h>
 #include "nsCOMPtr.h"
-#include "nsStringFwd.h"
 
 class nsContentList;
 class nsIAtom;
 class nsIContent;
 class nsINode;
+// Can't use nsStringFwd.h because that's internal-API-only.
+class nsString;
+class nsAString;
 
 // Magic namespace id that means "match all namespaces".  This is
 // negative so it won't collide with actual namespace constants.

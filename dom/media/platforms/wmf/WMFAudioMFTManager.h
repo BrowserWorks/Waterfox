@@ -12,6 +12,9 @@
 #include "mozilla/RefPtr.h"
 #include "WMFMediaDataDecoder.h"
 
+extern const GUID CLSID_WebmMfVp8Dec;
+extern const GUID CLSID_WebmMfVp9Dec;
+
 namespace mozilla {
 
 class WMFAudioMFTManager : public MFTManager {
@@ -21,17 +24,17 @@ public:
 
   bool Init();
 
-  virtual HRESULT Input(MediaRawData* aSample) override;
+  HRESULT Input(MediaRawData* aSample) override;
 
   // Note WMF's AAC decoder sometimes output negatively timestamped samples,
   // presumably they're the preroll samples, and we strip them. We may return
   // a null aOutput in this case.
-  virtual HRESULT Output(int64_t aStreamOffset,
-                         nsRefPtr<MediaData>& aOutput) override;
+  HRESULT Output(int64_t aStreamOffset,
+                         RefPtr<MediaData>& aOutput) override;
 
-  virtual void Shutdown() override;
+  void Shutdown() override;
 
-  virtual TrackInfo::TrackType GetType() override {
+  TrackInfo::TrackType GetType() override {
     return TrackInfo::kAudioTrack;
   }
 

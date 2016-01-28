@@ -87,6 +87,8 @@
 #include "ScopedNSSTypes.h"
 #include "nsNullPrincipal.h"
 #include "nsIPackagedAppService.h"
+#include "nsIDeprecationWarner.h"
+#include "nsIDocument.h"
 
 namespace mozilla { namespace net {
 
@@ -341,7 +343,7 @@ nsHttpChannel::Connect()
             nsContentUtils::GetSecurityManager()->
                 GetChannelResultPrincipal(this, getter_AddRefs(resultPrincipal));
             bool crossOriginNavigation =
-                (mLoadInfo->GetContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) &&
+                (mLoadInfo->GetExternalContentPolicyType() == nsIContentPolicy::TYPE_DOCUMENT) &&
                 (!resultPrincipal->Equals(mLoadInfo->LoadingPrincipal()));
 
             if (!crossOriginNavigation) {
@@ -356,7 +358,7 @@ nsHttpChannel::Connect()
 
                 const char16_t* params[] = { reportSpec.get(), reportScheme.get() };
                 uint32_t innerWindowId = mLoadInfo ? mLoadInfo->GetInnerWindowID() : 0;
-                CSP_LogLocalizedStr(NS_LITERAL_STRING("upgradeInsecureRequest").get(),
+                CSP_LogLocalizedStr(MOZ_UTF16("upgradeInsecureRequest"),
                                     params, ArrayLength(params),
                                     EmptyString(), // aSourceFile
                                     EmptyString(), // aScriptSample
@@ -2005,14 +2007,23 @@ nsHttpChannel::StartRedirectChannelToURI(nsIURI *upgradedURI, uint32_t flags)
     // Inform consumers about this fake redirect
     mRedirectChannel = newChannel;
 
-    // Ensure that internally-redirected channels cannot be intercepted, which would look
-    // like two separate requests to the nsINetworkInterceptController.
-    nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
-    rv = mRedirectChannel->GetLoadFlags(&loadFlags);
-    NS_ENSURE_SUCCESS(rv, rv);
-    loadFlags |= nsIChannel::LOAD_BYPASS_SERVICE_WORKER;
-    rv = mRedirectChannel->SetLoadFlags(loadFlags);
-    NS_ENSURE_SUCCESS(rv, rv);
+    if (!(flags & nsIChannelEventSink::REDIRECT_STS_UPGRADE)) {
+        // Ensure that internally-redirected channels cannot be intercepted, which would look
+        // like two separate requests to the nsINetworkInterceptController.
+        if (mInterceptCache == INTERCEPTED) {
+            nsCOMPtr<nsIHttpChannelInternal> httpRedirect = do_QueryInterface(mRedirectChannel);
+            if (httpRedirect) {
+                httpRedirect->ForceIntercepted(mInterceptionID);
+            }
+        } else {
+            nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
+            rv = mRedirectChannel->GetLoadFlags(&loadFlags);
+            NS_ENSURE_SUCCESS(rv, rv);
+            loadFlags |= nsIChannel::LOAD_BYPASS_SERVICE_WORKER;
+            rv = mRedirectChannel->SetLoadFlags(loadFlags);
+            NS_ENSURE_SUCCESS(rv, rv);
+        }
+    }
 
     PushRedirectAsyncFunc(
         &nsHttpChannel::ContinueAsyncRedirectChannelToURI);
@@ -2758,7 +2769,7 @@ nsHttpChannel::ProcessFallback(bool *waitingForRedirectCallback)
     CloseCacheEntry(true);
 
     // Create a new channel to load the fallback entry.
-    nsRefPtr<nsIChannel> newChannel;
+    RefPtr<nsIChannel> newChannel;
     rv = gHttpHandler->NewChannel2(mURI,
                                    mLoadInfo,
                                    getter_AddRefs(newChannel));
@@ -2824,8 +2835,7 @@ nsHttpChannel::ContinueProcessFallback(nsresult rv)
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI) {
-        Telemetry::Accumulate(Telemetry::HTTP_OFFLINE_CACHE_DOCUMENT_LOAD,
-                              true);
+        MaybeWarnAboutAppCache();
     }
 
     // close down this channel
@@ -2913,7 +2923,6 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         do_GetService("@mozilla.org/netwerk/cache-storage-service;1", &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsRefPtr<LoadContextInfo> info = GetLoadContextInfo(this);
     nsCOMPtr<nsICacheStorage> cacheStorage;
     nsCOMPtr<nsIURI> openURI;
     if (!mFallbackKey.IsEmpty() && mFallbackChannel) {
@@ -2933,7 +2942,12 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         }
     }
 
-    uint32_t appId = info->AppId();
+    RefPtr<LoadContextInfo> info = GetLoadContextInfo(this);
+    if (!info) {
+        return NS_ERROR_FAILURE;
+    }
+
+    uint32_t appId = info->OriginAttributesPtr()->mAppId;
     bool appOffline = false;
 
     if (appId != NECKO_NO_APP_ID) {
@@ -2944,7 +2958,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     uint32_t cacheEntryOpenFlags;
     bool offline = gIOService->IsOffline() || appOffline;
     if (offline || (mLoadFlags & INHIBIT_CACHING)) {
-        if (BYPASS_LOCAL_CACHE(mLoadFlags) && !offline) {
+        if (BYPASS_LOCAL_CACHE(mLoadFlags) && !offline && !PossiblyIntercepted()) {
             goto bypassCacheEntryOpen;
         }
         cacheEntryOpenFlags = nsICacheStorage::OPEN_READONLY;
@@ -2986,11 +3000,10 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     if (mLoadFlags & LOAD_BYPASS_LOCAL_CACHE_IF_BUSY)
         cacheEntryOpenFlags |= nsICacheStorage::OPEN_BYPASS_IF_BUSY;
 
-    if (mPostID) {
-        extension.Append(nsPrintfCString("%d", mPostID));
-    }
     if (PossiblyIntercepted()) {
         extension.Append(nsPrintfCString("u%lld", mInterceptionID));
+    } else if (mPostID) {
+        extension.Append(nsPrintfCString("%d", mPostID));
     }
 
     // If this channel should be intercepted, we do not open a cache entry for this channel
@@ -3007,7 +3020,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         nsCOMPtr<nsINetworkInterceptController> controller;
         GetCallback(controller);
 
-        nsRefPtr<InterceptedChannelChrome> intercepted =
+        RefPtr<InterceptedChannelChrome> intercepted =
                 new InterceptedChannelChrome(this, controller, entry);
         intercepted->NotifyController();
     } else {
@@ -3295,14 +3308,11 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
     else if (mCachedResponseHead->MustValidate()) {
         LOG(("Validating based on MustValidate() returning TRUE\n"));
         doValidation = true;
-    }
-    else if (MustValidateBasedOnQueryUrl()) {
-        LOG(("Validating based on RFC 2616 section 13.9 "
-             "(query-url w/o explicit expiration-time)\n"));
-        doValidation = true;
-    }
-    // Check if the cache entry has expired...
-    else {
+    } else {
+        // previously we also checked for a query-url w/out expiration
+        // and didn't do heuristic on it. but defacto that is allowed now.
+        //
+        // Check if the cache entry has expired...
         uint32_t time = 0; // a temporary variable for storing time values...
 
         rv = entry->GetExpirationTime(&time);
@@ -3625,8 +3635,7 @@ nsHttpChannel::OnOfflineCacheEntryAvailable(nsICacheEntry *aEntry,
         mCacheEntryIsWriteOnly = false;
 
         if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI && !mApplicationCacheForWrite) {
-            Telemetry::Accumulate(Telemetry::HTTP_OFFLINE_CACHE_DOCUMENT_LOAD,
-                                  true);
+            MaybeWarnAboutAppCache();
         }
 
         return NS_OK;
@@ -3726,6 +3735,51 @@ nsHttpChannel::AssembleCacheKey(const char *spec, uint32_t postID,
         cacheKey.Append(spec);
 }
 
+nsresult
+DoUpdateExpirationTime(nsHttpChannel* aSelf,
+                       nsICacheEntry* aCacheEntry,
+                       nsHttpResponseHead* aResponseHead,
+                       uint32_t& aExpirationTime)
+{
+    MOZ_ASSERT(aExpirationTime == 0);
+    NS_ENSURE_TRUE(aResponseHead, NS_ERROR_FAILURE);
+
+    nsresult rv;
+
+    if (!aResponseHead->MustValidate()) {
+        uint32_t freshnessLifetime = 0;
+
+        rv = aResponseHead->ComputeFreshnessLifetime(&freshnessLifetime);
+        if (NS_FAILED(rv)) return rv;
+
+        if (freshnessLifetime > 0) {
+            uint32_t now = NowInSeconds(), currentAge = 0;
+
+            rv = aResponseHead->ComputeCurrentAge(now, aSelf->GetRequestTime(), &currentAge);
+            if (NS_FAILED(rv)) return rv;
+
+            LOG(("freshnessLifetime = %u, currentAge = %u\n",
+                freshnessLifetime, currentAge));
+
+            if (freshnessLifetime > currentAge) {
+                uint32_t timeRemaining = freshnessLifetime - currentAge;
+                // be careful... now + timeRemaining may overflow
+                if (now + timeRemaining < now)
+                    aExpirationTime = uint32_t(-1);
+                else
+                    aExpirationTime = now + timeRemaining;
+            }
+            else
+                aExpirationTime = now;
+        }
+    }
+
+    rv = aCacheEntry->SetExpirationTime(aExpirationTime);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    return rv;
+}
+
 // UpdateExpirationTime is called when a new response comes in from the server.
 // It updates the stored response-time and sets the expiration time on the
 // cache entry.
@@ -3738,40 +3792,8 @@ nsHttpChannel::AssembleCacheKey(const char *spec, uint32_t postID,
 nsresult
 nsHttpChannel::UpdateExpirationTime()
 {
-    NS_ENSURE_TRUE(mResponseHead, NS_ERROR_FAILURE);
-
-    nsresult rv;
-
     uint32_t expirationTime = 0;
-    if (!mResponseHead->MustValidate()) {
-        uint32_t freshnessLifetime = 0;
-
-        rv = mResponseHead->ComputeFreshnessLifetime(&freshnessLifetime);
-        if (NS_FAILED(rv)) return rv;
-
-        if (freshnessLifetime > 0) {
-            uint32_t now = NowInSeconds(), currentAge = 0;
-
-            rv = mResponseHead->ComputeCurrentAge(now, mRequestTime, &currentAge);
-            if (NS_FAILED(rv)) return rv;
-
-            LOG(("freshnessLifetime = %u, currentAge = %u\n",
-                freshnessLifetime, currentAge));
-
-            if (freshnessLifetime > currentAge) {
-                uint32_t timeRemaining = freshnessLifetime - currentAge;
-                // be careful... now + timeRemaining may overflow
-                if (now + timeRemaining < now)
-                    expirationTime = uint32_t(-1);
-                else
-                    expirationTime = now + timeRemaining;
-            }
-            else
-                expirationTime = now;
-        }
-    }
-
-    rv = mCacheEntry->SetExpirationTime(expirationTime);
+    nsresult rv = DoUpdateExpirationTime(this, mCacheEntry, mResponseHead, expirationTime);
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (mOfflineCacheEntry) {
@@ -3798,28 +3820,6 @@ nsHttpChannel::HasQueryString(nsHttpRequestHead::ParsedMethodType method, nsIURI
     nsresult rv = url->GetQuery(query);
     return NS_SUCCEEDED(rv) && !query.IsEmpty();
 }
-
-bool
-nsHttpChannel::MustValidateBasedOnQueryUrl() const
-{
-    // RFC 2616, section 13.9 states that GET-requests with a query-url
-    // MUST NOT be treated as fresh unless the server explicitly provides
-    // an expiration-time in the response. See bug #468594
-    // Section 13.2.1 (6th paragraph) defines "explicit expiration time"
-    if (mHasQueryString)
-    {
-        uint32_t tmp; // we don't need the value, just whether it's set
-        nsresult rv = mCachedResponseHead->GetExpiresValue(&tmp);
-        if (NS_FAILED(rv)) {
-            rv = mCachedResponseHead->GetMaxAgeValue(&tmp);
-            if (NS_FAILED(rv)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 
 bool
 nsHttpChannel::ShouldUpdateOfflineCacheEntry()
@@ -4839,6 +4839,7 @@ NS_INTERFACE_MAP_BEGIN(nsHttpChannel)
     NS_INTERFACE_MAP_ENTRY(nsIChannel)
     NS_INTERFACE_MAP_ENTRY(nsIRequestObserver)
     NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
+    NS_INTERFACE_MAP_ENTRY(nsIPackagedAppChannelListener)
     NS_INTERFACE_MAP_ENTRY(nsIHttpChannel)
     NS_INTERFACE_MAP_ENTRY(nsICacheInfoChannel)
     NS_INTERFACE_MAP_ENTRY(nsICachingChannel)
@@ -5002,7 +5003,7 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
         return rv;
     }
 
-    if (ShouldIntercept()) {
+    if (mInterceptCache != INTERCEPTED && ShouldIntercept()) {
         mInterceptCache = MAYBE_INTERCEPT;
         SetCouldBeSynthesized();
     }
@@ -5105,7 +5106,7 @@ nsHttpChannel::BeginConnect()
     mRequestHead.SetHTTPS(isHttps);
     mRequestHead.SetOrigin(scheme, host, port);
 
-    nsRefPtr<AltSvcMapping> mapping;
+    RefPtr<AltSvcMapping> mapping;
     if (mAllowAltSvc && // per channel
         (scheme.Equals(NS_LITERAL_CSTRING("http")) ||
          scheme.Equals(NS_LITERAL_CSTRING("https"))) &&
@@ -5183,7 +5184,7 @@ nsHttpChannel::BeginConnect()
         return AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
     }
     // Check to see if this principal exists on local blocklists.
-    nsRefPtr<nsChannelClassifier> channelClassifier = new nsChannelClassifier();
+    RefPtr<nsChannelClassifier> channelClassifier = new nsChannelClassifier();
     if (mLoadFlags & LOAD_CLASSIFY_URI) {
         nsCOMPtr<nsIURIClassifier> classifier = do_GetService(NS_URICLASSIFIERSERVICE_CONTRACTID);
         bool tpEnabled = false;
@@ -5359,6 +5360,21 @@ nsHttpChannel::SetupFallbackChannel(const char *aFallbackKey)
     mFallbackChannel = true;
     mFallbackKey = aFallbackKey;
 
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsHttpChannel::ForceIntercepted(uint64_t aInterceptionID)
+{
+    ENSURE_CALLED_BEFORE_ASYNC_OPEN();
+
+    if (NS_WARN_IF(mLoadFlags & LOAD_BYPASS_SERVICE_WORKER)) {
+        return NS_ERROR_NOT_AVAILABLE;
+    }
+
+    MarkIntercepted();
+    mResponseCouldBeSynthesized = true;
+    mInterceptionID = aInterceptionID;
     return NS_OK;
 }
 
@@ -5649,6 +5665,25 @@ nsHttpChannel::GetRequestMethod(nsACString& aMethod)
 }
 
 //-----------------------------------------------------------------------------
+// nsHttpChannel::nsIPackagedAppChannelListener
+//-----------------------------------------------------------------------------
+
+NS_IMETHODIMP
+nsHttpChannel::OnStartSignedPackageRequest(const nsACString& aPackageId)
+{
+    nsCOMPtr<nsIPackagedAppChannelListener> listener;
+    NS_QueryNotificationCallbacks(this, listener);
+
+    if (listener) {
+        listener->OnStartSignedPackageRequest(aPackageId);
+    } else {
+        LOG(("nsHttpChannel::OnStartSignedPackageRequest [this=%p], no listener on %p", this, mListener.get()));
+    }
+
+    return NS_OK;
+}
+
+//-----------------------------------------------------------------------------
 // nsHttpChannel::nsIRequestObserver
 //-----------------------------------------------------------------------------
 
@@ -5817,7 +5852,7 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
         // tests for NS_HTTP_STICKY_CONNECTION to determine whether or not to
         // keep the connection around after the transaction is finished.
         //
-        nsRefPtr<nsAHttpConnection> conn;
+        RefPtr<nsAHttpConnection> conn;
         if (authRetry && (mCaps & NS_HTTP_STICKY_CONNECTION)) {
             conn = mTransaction->GetConnectionReference();
             // This is so far a workaround to fix leak when reusing unpersistent
@@ -5827,7 +5862,7 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
                 conn = nullptr;
         }
 
-        nsRefPtr<nsAHttpConnection> stickyConn;
+        RefPtr<nsAHttpConnection> stickyConn;
         if (mCaps & NS_HTTP_STICKY_CONNECTION)
             stickyConn = mTransaction->GetConnectionReference();
 
@@ -6831,7 +6866,7 @@ nsHttpChannel::DoInvalidateCacheEntry(nsIURI* aURI)
 
     nsCOMPtr<nsICacheStorage> cacheStorage;
     if (NS_SUCCEEDED(rv)) {
-        nsRefPtr<LoadContextInfo> info = GetLoadContextInfo(this);
+        RefPtr<LoadContextInfo> info = GetLoadContextInfo(this);
         rv = cacheStorageService->DiskCacheStorage(info, false, getter_AddRefs(cacheStorage));
     }
 
@@ -6963,7 +6998,7 @@ nsHttpChannel::OnPush(const nsACString &url, Http2PushedStream *pushedStream)
         return NS_ERROR_UNEXPECTED;
     }
 
-    nsRefPtr<nsHttpChannel> channel;
+    RefPtr<nsHttpChannel> channel;
     CallQueryInterface(pushHttpChannel, channel.StartAssignment());
     MOZ_ASSERT(channel);
     if (!channel) {
@@ -7011,6 +7046,24 @@ nsHttpChannel::OnPreflightFailed(nsresult aError)
     CloseCacheEntry(true);
     AsyncAbort(aError);
     return NS_OK;
+}
+
+void
+nsHttpChannel::MaybeWarnAboutAppCache()
+{
+    // First, accumulate a telemetry ping about appcache usage.
+    Telemetry::Accumulate(Telemetry::HTTP_OFFLINE_CACHE_DOCUMENT_LOAD,
+                          true);
+
+    // Then, issue a deprecation warning if service worker interception is
+    // enabled.
+    if (nsContentUtils::ServiceWorkerInterceptionEnabled()) {
+        nsCOMPtr<nsIDeprecationWarner> warner;
+        GetCallback(warner);
+        if (warner) {
+            warner->IssueWarning(nsIDocument::eAppCache, false);
+        }
+    }
 }
 
 } // namespace net

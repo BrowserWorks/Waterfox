@@ -40,6 +40,8 @@
 #include "nsIMemoryReporter.h"
 #include "nsISeekableStream.h"
 #include "Telemetry.h"
+#include "TelemetryCommon.h"
+#include "WebrtcTelemetry.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
 #include "nsBaseHashtable.h"
@@ -101,39 +103,6 @@ HistogramGet(const char *name, const char *expiration, uint32_t histogramType,
 
 enum reflectStatus
 ReflectHistogramSnapshot(JSContext *cx, JS::Handle<JSObject*> obj, Histogram *h);
-
-template<class EntryType>
-class AutoHashtable : public nsTHashtable<EntryType>
-{
-public:
-  explicit AutoHashtable(uint32_t initLength =
-                         PLDHashTable::kDefaultInitialLength);
-  typedef bool (*ReflectEntryFunc)(EntryType *entry, JSContext *cx, JS::Handle<JSObject*> obj);
-  bool ReflectIntoJS(ReflectEntryFunc entryFunc, JSContext *cx, JS::Handle<JSObject*> obj);
-};
-
-template<class EntryType>
-AutoHashtable<EntryType>::AutoHashtable(uint32_t initLength)
-  : nsTHashtable<EntryType>(initLength)
-{
-}
-
-/**
- * Reflect the individual entries of table into JS, usually by defining
- * some property and value of obj.  entryFunc is called for each entry.
- */
-template<typename EntryType>
-bool
-AutoHashtable<EntryType>::ReflectIntoJS(ReflectEntryFunc entryFunc,
-                                        JSContext *cx, JS::Handle<JSObject*> obj)
-{
-  for (auto iter = this->Iter(); !iter.Done(); iter.Next()) {
-    if (!entryFunc(iter.Get(), cx, obj)) {
-      return false;
-    }
-  }
-  return true;
-}
 
 // This class is conceptually a list of ProcessedStack objects, but it represents them
 // more efficiently by keeping a single global list of modules.
@@ -702,6 +671,9 @@ public:
 
   static KeyedHistogram* GetKeyedHistogramById(const nsACString &id);
 
+  static void RecordIceCandidates(const uint32_t iceCandidateBitmask,
+                                  const bool success,
+                                  const bool loop);
 private:
   TelemetryImpl();
   ~TelemetryImpl();
@@ -776,6 +748,8 @@ private:
   uint32_t mFailedLockCount;
   nsCOMArray<nsIFetchTelemetryDataCallback> mCallbacks;
   friend class nsFetchTelemetryData;
+
+  WebrtcTelemetry mWebrtcTelemetry;
 
   typedef nsClassHashtable<nsCStringHashKey, KeyedHistogram> KeyedHistogramMapType;
   KeyedHistogramMapType mKeyedHistograms;
@@ -1686,7 +1660,7 @@ public:
 private:
   const char* mShutdownTimeFilename;
   nsCOMPtr<nsIFile> mFailedProfileLockFile;
-  nsRefPtr<TelemetryImpl> mTelemetry;
+  RefPtr<TelemetryImpl> mTelemetry;
   nsCOMPtr<nsIFile> mProfileDir;
 
 public:
@@ -2234,7 +2208,7 @@ TelemetryImpl::UnregisterAddonHistograms(const nsACString &id)
     // will be deleted if and when the addon registers histograms with
     // the same names.
     delete addonEntry->mData;
-    mAddonMap.RemoveEntry(id);
+    mAddonMap.RemoveEntry(addonEntry);
   }
 
   return NS_OK;
@@ -2510,6 +2484,14 @@ TelemetryImpl::GetDebugSlowSQL(JSContext *cx, JS::MutableHandle<JS::Value> ret)
   bool revealPrivateSql =
     Preferences::GetBool("toolkit.telemetry.debugSlowSql", false);
   if (GetSQLStats(cx, ret, revealPrivateSql))
+    return NS_OK;
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+TelemetryImpl::GetWebrtcStats(JSContext *cx, JS::MutableHandle<JS::Value> ret)
+{
+  if (mWebrtcTelemetry.GetWebrtcStats(cx, ret))
     return NS_OK;
   return NS_ERROR_FAILURE;
 }
@@ -3564,6 +3546,16 @@ TelemetryImpl::RecordSlowStatement(const nsACString &sql,
   StoreSlowSQL(fullSQL, delay, Unsanitized);
 }
 
+void
+TelemetryImpl::RecordIceCandidates(const uint32_t iceCandidateBitmask,
+                                   const bool success, const bool loop)
+{
+  if (!sTelemetry)
+    return;
+
+  sTelemetry->mWebrtcTelemetry.RecordIceCandidateMask(iceCandidateBitmask, success, loop);
+}
+
 #if defined(MOZ_ENABLE_PROFILER_SPS)
 void
 TelemetryImpl::RecordChromeHang(uint32_t aDuration,
@@ -3666,6 +3658,7 @@ TelemetryImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   // Ignore the hashtables in mAddonMap; they are not significant.
   n += mAddonMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
   n += mHistogramMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
+  n += mWebrtcTelemetry.SizeOfExcludingThis(aMallocSizeOf);
   { // Scope for mHashMutex lock
     MutexAutoLock lock(mHashMutex);
     n += mPrivateSQL.SizeOfExcludingThis(aMallocSizeOf);
@@ -3810,6 +3803,19 @@ Accumulate(const char* name, uint32_t sample)
 }
 
 void
+Accumulate(const char *name, const nsCString& key, uint32_t sample)
+{
+    if (!TelemetryImpl::CanRecordBase()) {
+      return;
+    }
+    ID id;
+    nsresult rv = TelemetryImpl::GetHistogramEnumId(name, &id);
+    if (NS_SUCCEEDED(rv)) {
+      Accumulate(id, key, sample);
+    }
+}
+
+void
 AccumulateTimeDelta(ID aHistogram, TimeStamp start, TimeStamp end)
 {
   Accumulate(aHistogram,
@@ -3849,6 +3855,13 @@ RecordSlowSQLStatement(const nsACString &statement,
                        uint32_t delay)
 {
   TelemetryImpl::RecordSlowStatement(statement, dbName, delay);
+}
+
+void
+RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
+                          const bool success, const bool loop)
+{
+  TelemetryImpl::RecordIceCandidates(iceCandidateBitmask, success, loop);
 }
 
 void Init()

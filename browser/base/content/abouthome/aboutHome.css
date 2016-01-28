@@ -311,10 +311,6 @@ body[narrow] #restorePreviousSession {
   content: url("chrome://browser/content/abouthome/history.png");
 }
 
-#apps::before {
-  content: url("chrome://browser/content/abouthome/apps.png");
-}
-
 #addons::before {
   content: url("chrome://browser/content/abouthome/addons.png");
 }
@@ -360,7 +356,7 @@ body[narrow] #restorePreviousSession::before {
 }
 
 #aboutMozilla::before {
-  content: url("chrome://browser/content/abouthome/waterfox.png");
+  content: url("chrome://browser/content/abouthome/mozilla.png");
   display: block;
   position: absolute;
   top: 12px;
@@ -415,10 +411,6 @@ body[narrow] #restorePreviousSession::before {
     content: url("chrome://browser/content/abouthome/history@2x.png");
   }
 
-  #apps::before {
-    content: url("chrome://browser/content/abouthome/apps@2x.png");
-  }
-
   #addons::before {
     content: url("chrome://browser/content/abouthome/addons@2x.png");
   }
@@ -445,7 +437,7 @@ body[narrow] #restorePreviousSession::before {
   }
 
   #aboutMozilla::before {
-    content: url("chrome://browser/content/abouthome/waterfox.png");
+    content: url("chrome://browser/content/abouthome/mozilla@2x.png");
   }
 }
 

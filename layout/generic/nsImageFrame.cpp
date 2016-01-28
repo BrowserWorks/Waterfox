@@ -15,6 +15,7 @@
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/unused.h"
 
 #include "nsCOMPtr.h"
 #include "nsFontMetrics.h"
@@ -740,7 +741,7 @@ nsImageFrame::MaybeDecodeForPredictedSize()
   // Determine the optimal image size to use.
   uint32_t flags = imgIContainer::FLAG_HIGH_QUALITY_SCALING
                  | imgIContainer::FLAG_ASYNC_NOTIFY;
-  GraphicsFilter filter = nsLayoutUtils::GetGraphicsFilterForFrame(this);
+  Filter filter = nsLayoutUtils::GetGraphicsFilterForFrame(this);
   gfxSize gfxPredictedScreenSize = gfxSize(predictedScreenIntSize.width,
                                            predictedScreenIntSize.height);
   nsIntSize predictedImageSize =
@@ -1131,8 +1132,9 @@ nsImageFrame::DisplayAltText(nsPresContext*      aPresContext,
                              const nsRect&        aRect)
 {
   // Set font and color
-  aRenderingContext.ThebesContext()->SetColor(StyleColor()->mColor);
-  nsRefPtr<nsFontMetrics> fm;
+  aRenderingContext.ThebesContext()->
+    SetColor(Color::FromABGR(StyleColor()->mColor));
+  RefPtr<nsFontMetrics> fm;
   nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
     nsLayoutUtils::FontSizeInflationFor(this));
 
@@ -1187,7 +1189,7 @@ nsImageFrame::DisplayAltText(nsPresContext*      aPresContext,
       nscoord x, y;
 
       if (isVertical) {
-        x = pt.x + maxDescent; // XXX will need update for sideways-left
+        x = pt.x + maxDescent;
         if (wm.IsBidiLTR()) {
           y = aRect.y;
           dir = NSBIDI_LTR;
@@ -1336,9 +1338,16 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
   // Paint the border
   if (!isLoading || gIconLoad->mPrefShowLoadingPlaceholder) {
     nsRecessedBorder recessedBorder(borderEdgeWidth, PresContext());
-    nsCSSRendering::PaintBorderWithStyleBorder(PresContext(), aRenderingContext,
-                                               this, inner, inner,
-                                               recessedBorder, mStyleContext);
+
+    // Assert that we're not drawing a border-image here; if we were, we
+    // couldn't ignore the DrawResult that PaintBorderWithStyleBorder returns.
+    MOZ_ASSERT(recessedBorder.mBorderImageSource.GetType() == eStyleImageType_Null);
+
+    unused <<
+      nsCSSRendering::PaintBorderWithStyleBorder(PresContext(), aRenderingContext,
+                                                 this, inner, inner,
+                                                 recessedBorder, mStyleContext,
+                                                 PaintBorderFlags::SYNC_DECODE_IMAGES);
   }
 
   // Adjust the inner rect to account for the one pixel recessed border,
@@ -1649,13 +1658,13 @@ nsDisplayImage::BuildLayer(nsDisplayListBuilder* aBuilder,
                  ? imgIContainer::FLAG_SYNC_DECODE
                  : imgIContainer::FLAG_NONE;
 
-  nsRefPtr<ImageContainer> container =
+  RefPtr<ImageContainer> container =
     mImage->GetImageContainer(aManager, flags);
   if (!container) {
     return nullptr;
   }
 
-  nsRefPtr<ImageLayer> layer = static_cast<ImageLayer*>
+  RefPtr<ImageLayer> layer = static_cast<ImageLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));
   if (!layer) {
     layer = aManager->CreateImageLayer();
@@ -2079,7 +2088,7 @@ nsImageFrame::GetCursor(const nsPoint& aPoint,
       // technically correct, but it's probably the right thing to do
       // here, since it means that areas on which the cursor isn't
       // specified will inherit the style from the image.
-      nsRefPtr<nsStyleContext> areaStyle = 
+      RefPtr<nsStyleContext> areaStyle = 
         PresContext()->PresShell()->StyleSet()->
           ResolveStyleFor(area->AsElement(), StyleContext());
       FillCursorInformationFromStyle(areaStyle->StyleUserInterface(),
@@ -2196,7 +2205,7 @@ nsImageFrame::LoadIcon(const nsAString& aSpec,
   nsCOMPtr<nsIURI> realURI;
   SpecToURI(aSpec, sIOService, getter_AddRefs(realURI));
 
-  nsRefPtr<imgLoader> il =
+  RefPtr<imgLoader> il =
     nsContentUtils::GetImgLoaderForDocument(aPresContext->Document());
 
   nsCOMPtr<nsILoadGroup> loadGroup;
@@ -2204,7 +2213,7 @@ nsImageFrame::LoadIcon(const nsAString& aSpec,
 
   // For icon loads, we don't need to merge with the loadgroup flags
   nsLoadFlags loadFlags = nsIRequest::LOAD_NORMAL;
-  nsContentPolicyType contentPolicyType = nsIContentPolicy::TYPE_IMAGE;
+  nsContentPolicyType contentPolicyType = nsIContentPolicy::TYPE_INTERNAL_IMAGE;
 
   return il->LoadImage(realURI,     /* icon URI */
                        nullptr,      /* initial document URI; this is only

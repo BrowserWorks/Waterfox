@@ -8,6 +8,7 @@
 #include "cryptohi.h"
 #include "secerr.h"
 #include "ScopedNSSTypes.h"
+#include "nsNSSComponent.h"
 
 #include "jsapi.h"
 #include "mozilla/Telemetry.h"
@@ -17,6 +18,7 @@
 #include "mozilla/dom/TypedArray.h"
 #include "mozilla/dom/WebCryptoCommon.h"
 #include "mozilla/dom/WebCryptoTask.h"
+#include "mozilla/dom/WebCryptoThreadPool.h"
 
 namespace mozilla {
 namespace dom {
@@ -286,9 +288,72 @@ CloneData(JSContext* aCx, CryptoBuffer& aDst, JS::Handle<JSObject*> aSrc)
 // Implementation of WebCryptoTask methods
 
 void
-WebCryptoTask::FailWithError(nsresult aRv)
+WebCryptoTask::DispatchWithPromise(Promise* aResultPromise)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  mResultPromise = aResultPromise;
+
+  // Fail if an error was set during the constructor
+  MAYBE_EARLY_FAIL(mEarlyRv)
+
+  // Perform pre-NSS operations, and fail if they fail
+  mEarlyRv = BeforeCrypto();
+  MAYBE_EARLY_FAIL(mEarlyRv)
+
+  // Skip NSS if we're already done, or launch a CryptoTask
+  if (mEarlyComplete) {
+    CallCallback(mEarlyRv);
+    Skip();
+    return;
+  }
+
+  // Ensure that NSS is initialized, since presumably CalculateResult
+  // will use NSS functions
+  if (!EnsureNSSInitializedChromeOrContent()) {
+    mEarlyRv = NS_ERROR_DOM_UNKNOWN_ERR;
+    MAYBE_EARLY_FAIL(mEarlyRv)
+  }
+
+  // Store calling thread and dispatch to thread pool.
+  mOriginalThread = NS_GetCurrentThread();
+  mEarlyRv = WebCryptoThreadPool::Dispatch(this);
+  MAYBE_EARLY_FAIL(mEarlyRv)
+}
+
+NS_IMETHODIMP
+WebCryptoTask::Run()
+{
+  // Run heavy crypto operations on the thread pool, off the original thread.
+  if (!IsOnOriginalThread()) {
+    nsNSSShutDownPreventionLock locker;
+
+    if (isAlreadyShutDown()) {
+      mRv = NS_ERROR_NOT_AVAILABLE;
+    } else {
+      mRv = CalculateResult();
+    }
+
+    // Back to the original thread, i.e. continue below.
+    mOriginalThread->Dispatch(this, NS_DISPATCH_NORMAL);
+    return NS_OK;
+  }
+
+  // We're now back on the calling thread.
+
+  // Release NSS resources now, before calling CallCallback, so that
+  // WebCryptoTasks have consistent behavior regardless of whether NSS is shut
+  // down between CalculateResult being called and CallCallback being called.
+  virtualDestroyNSSReference();
+
+  CallCallback(mRv);
+
+  return NS_OK;
+}
+
+void
+WebCryptoTask::FailWithError(nsresult aRv)
+{
+  MOZ_ASSERT(IsOnOriginalThread());
   Telemetry::Accumulate(Telemetry::WEBCRYPTO_RESOLVED, false);
 
   // Blindly convert nsresult to DOMException
@@ -302,7 +367,7 @@ WebCryptoTask::FailWithError(nsresult aRv)
 nsresult
 WebCryptoTask::CalculateResult()
 {
-  MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(!IsOnOriginalThread());
 
   if (isAlreadyShutDown()) {
     return NS_ERROR_DOM_UNKNOWN_ERR;
@@ -314,7 +379,7 @@ WebCryptoTask::CalculateResult()
 void
 WebCryptoTask::CallCallback(nsresult rv)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(IsOnOriginalThread());
   if (NS_FAILED(rv)) {
     FailWithError(rv);
     return;
@@ -1080,8 +1145,7 @@ private:
     nsresult rv;
     if (mSign) {
       ScopedSECItem signature(::SECITEM_AllocItem(nullptr, nullptr, 0));
-      ScopedSGNContext ctx(SGN_NewContext(mOidTag, mPrivKey));
-      if (!signature.get() || !ctx.get()) {
+      if (!signature.get()) {
         return NS_ERROR_DOM_OPERATION_ERR;
       }
 
@@ -1320,7 +1384,7 @@ public:
 
 protected:
   nsString mFormat;
-  nsRefPtr<CryptoKey> mKey;
+  RefPtr<CryptoKey> mKey;
   CryptoBuffer mKeyData;
   bool mDataIsSet;
   bool mDataIsJwk;
@@ -2145,7 +2209,7 @@ public:
   }
 
 private:
-  nsRefPtr<CryptoKey> mKey;
+  RefPtr<CryptoKey> mKey;
   size_t mLength;
   CK_MECHANISM_TYPE mMechanism;
   CryptoBuffer mKeyData;
@@ -2191,6 +2255,7 @@ private:
 GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     JSContext* aCx, const ObjectOrString& aAlgorithm, bool aExtractable,
     const Sequence<nsString>& aKeyUsages)
+  : mKeyPair(new CryptoKeyPair())
 {
   nsIGlobalObject* global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx));
   if (!global) {
@@ -2204,9 +2269,9 @@ GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     return;
   }
 
-  // Create an empty key and set easy attributes
-  mKeyPair.mPrivateKey = new CryptoKey(global);
-  mKeyPair.mPublicKey  = new CryptoKey(global);
+  // Create an empty key pair and set easy attributes
+  mKeyPair->mPrivateKey = new CryptoKey(global);
+  mKeyPair->mPublicKey = new CryptoKey(global);
 
   // Extract algorithm name
   mEarlyRv = GetAlgorithmName(aCx, aAlgorithm, mAlgName);
@@ -2238,17 +2303,17 @@ GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     }
 
     // Create algorithm
-    if (!mKeyPair.mPublicKey.get()->Algorithm().MakeRsa(mAlgName,
-                                                        modulusLength,
-                                                        publicExponent,
-                                                        hashName)) {
-      mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
-      return;
-    }
-    if (!mKeyPair.mPrivateKey.get()->Algorithm().MakeRsa(mAlgName,
+    if (!mKeyPair->mPublicKey.get()->Algorithm().MakeRsa(mAlgName,
                                                          modulusLength,
                                                          publicExponent,
                                                          hashName)) {
+      mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
+      return;
+    }
+    if (!mKeyPair->mPrivateKey.get()->Algorithm().MakeRsa(mAlgName,
+                                                          modulusLength,
+                                                          publicExponent,
+                                                          hashName)) {
       mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
       return;
     }
@@ -2276,8 +2341,8 @@ GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     }
 
     // Create algorithm.
-    mKeyPair.mPublicKey.get()->Algorithm().MakeEc(mAlgName, mNamedCurve);
-    mKeyPair.mPrivateKey.get()->Algorithm().MakeEc(mAlgName, mNamedCurve);
+    mKeyPair->mPublicKey.get()->Algorithm().MakeEc(mAlgName, mNamedCurve);
+    mKeyPair->mPrivateKey.get()->Algorithm().MakeEc(mAlgName, mNamedCurve);
     mMechanism = CKM_EC_KEY_PAIR_GEN;
   } else if (mAlgName.EqualsLiteral(WEBCRYPTO_ALG_DH)) {
     RootedDictionary<DhKeyGenParams> params(aCx);
@@ -2301,15 +2366,15 @@ GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     }
 
     // Create algorithm.
-    if (!mKeyPair.mPublicKey.get()->Algorithm().MakeDh(mAlgName,
-                                                       prime,
-                                                       generator)) {
+    if (!mKeyPair->mPublicKey.get()->Algorithm().MakeDh(mAlgName,
+                                                        prime,
+                                                        generator)) {
       mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
       return;
     }
-    if (!mKeyPair.mPrivateKey.get()->Algorithm().MakeDh(mAlgName,
-                                                        prime,
-                                                        generator)) {
+    if (!mKeyPair->mPrivateKey.get()->Algorithm().MakeDh(mAlgName,
+                                                         prime,
+                                                         generator)) {
       mEarlyRv = NS_ERROR_DOM_OPERATION_ERR;
       return;
     }
@@ -2333,31 +2398,31 @@ GenerateAsymmetricKeyTask::GenerateAsymmetricKeyTask(
     publicAllowedUsages = 0;
   }
 
-  mKeyPair.mPrivateKey.get()->SetExtractable(aExtractable);
-  mKeyPair.mPrivateKey.get()->SetType(CryptoKey::PRIVATE);
+  mKeyPair->mPrivateKey.get()->SetExtractable(aExtractable);
+  mKeyPair->mPrivateKey.get()->SetType(CryptoKey::PRIVATE);
 
-  mKeyPair.mPublicKey.get()->SetExtractable(true);
-  mKeyPair.mPublicKey.get()->SetType(CryptoKey::PUBLIC);
+  mKeyPair->mPublicKey.get()->SetExtractable(true);
+  mKeyPair->mPublicKey.get()->SetType(CryptoKey::PUBLIC);
 
-  mKeyPair.mPrivateKey.get()->ClearUsages();
-  mKeyPair.mPublicKey.get()->ClearUsages();
+  mKeyPair->mPrivateKey.get()->ClearUsages();
+  mKeyPair->mPublicKey.get()->ClearUsages();
   for (uint32_t i=0; i < aKeyUsages.Length(); ++i) {
-    mEarlyRv = mKeyPair.mPrivateKey.get()->AddUsageIntersecting(aKeyUsages[i],
-                                                                privateAllowedUsages);
+    mEarlyRv = mKeyPair->mPrivateKey.get()->AddUsageIntersecting(aKeyUsages[i],
+                                                                 privateAllowedUsages);
     if (NS_FAILED(mEarlyRv)) {
       return;
     }
 
-    mEarlyRv = mKeyPair.mPublicKey.get()->AddUsageIntersecting(aKeyUsages[i],
-                                                               publicAllowedUsages);
+    mEarlyRv = mKeyPair->mPublicKey.get()->AddUsageIntersecting(aKeyUsages[i],
+                                                                publicAllowedUsages);
     if (NS_FAILED(mEarlyRv)) {
       return;
     }
   }
 
   // If no usages ended up being allowed, DataError
-  if (!mKeyPair.mPublicKey.get()->HasAnyUsage() &&
-      !mKeyPair.mPrivateKey.get()->HasAnyUsage()) {
+  if (!mKeyPair->mPublicKey.get()->HasAnyUsage() &&
+      !mKeyPair->mPrivateKey.get()->HasAnyUsage()) {
     mEarlyRv = NS_ERROR_DOM_DATA_ERR;
     return;
   }
@@ -2373,6 +2438,8 @@ GenerateAsymmetricKeyTask::ReleaseNSSResources()
 nsresult
 GenerateAsymmetricKeyTask::DoCrypto()
 {
+  MOZ_ASSERT(mKeyPair);
+
   ScopedPK11SlotInfo slot(PK11_GetInternalSlot());
   MOZ_ASSERT(slot.get());
 
@@ -2403,15 +2470,15 @@ GenerateAsymmetricKeyTask::DoCrypto()
     return NS_ERROR_DOM_UNKNOWN_ERR;
   }
 
-  nsresult rv = mKeyPair.mPrivateKey.get()->SetPrivateKey(mPrivateKey);
+  nsresult rv = mKeyPair->mPrivateKey.get()->SetPrivateKey(mPrivateKey);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
-  rv = mKeyPair.mPublicKey.get()->SetPublicKey(mPublicKey);
+  rv = mKeyPair->mPublicKey.get()->SetPublicKey(mPublicKey);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
 
   // PK11_GenerateKeyPair() does not set a CKA_EC_POINT attribute on the
   // private key, we need this later when exporting to PKCS8 and JWK though.
   if (mMechanism == CKM_EC_KEY_PAIR_GEN) {
-    rv = mKeyPair.mPrivateKey->AddPublicKeyData(mPublicKey);
+    rv = mKeyPair->mPrivateKey->AddPublicKeyData(mPublicKey);
     NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
   }
 
@@ -2421,7 +2488,13 @@ GenerateAsymmetricKeyTask::DoCrypto()
 void
 GenerateAsymmetricKeyTask::Resolve()
 {
-  mResultPromise->MaybeResolve(mKeyPair);
+  mResultPromise->MaybeResolve(*mKeyPair);
+}
+
+void
+GenerateAsymmetricKeyTask::Cleanup()
+{
+  mKeyPair = nullptr;
 }
 
 class DerivePbkdfBitsTask : public ReturnArrayBufferViewTask
@@ -2570,7 +2643,7 @@ public:
   }
 
 protected:
-  nsRefPtr<ImportSymmetricKeyTask> mTask;
+  RefPtr<ImportSymmetricKeyTask> mTask;
   bool mResolved;
 
 private:
@@ -2814,7 +2887,7 @@ public:
   }
 
 private:
-  nsRefPtr<KeyEncryptTask> mTask;
+  RefPtr<KeyEncryptTask> mTask;
   bool mResolved;
 
   virtual nsresult AfterCrypto() override {
@@ -2865,7 +2938,7 @@ public:
   {}
 
 private:
-  nsRefPtr<ImportKeyTask> mTask;
+  RefPtr<ImportKeyTask> mTask;
   bool mResolved;
 
   virtual void Resolve() override
@@ -3281,7 +3354,7 @@ WebCryptoTask::CreateUnwrapKeyTask(JSContext* aCx,
   }
 
   CryptoOperationData dummy;
-  nsRefPtr<ImportKeyTask> importTask;
+  RefPtr<ImportKeyTask> importTask;
   if (keyAlgName.EqualsASCII(WEBCRYPTO_ALG_AES_CBC) ||
       keyAlgName.EqualsASCII(WEBCRYPTO_ALG_AES_CTR) ||
       keyAlgName.EqualsASCII(WEBCRYPTO_ALG_AES_GCM) ||

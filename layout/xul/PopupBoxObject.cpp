@@ -130,7 +130,7 @@ PopupBoxObject::MoveTo(int32_t aLeft, int32_t aTop)
 {
   nsMenuPopupFrame *menuPopupFrame = mContent ? do_QueryFrame(mContent->GetPrimaryFrame()) : nullptr;
   if (menuPopupFrame) {
-    menuPopupFrame->MoveTo(aLeft, aTop, true);
+    menuPopupFrame->MoveTo(CSSIntPoint(aLeft, aTop), true);
   }
 }
 
@@ -271,7 +271,7 @@ PopupBoxObject::GetAnchorNode() const
 already_AddRefed<DOMRect>
 PopupBoxObject::GetOuterScreenRect()
 {
-  nsRefPtr<DOMRect> rect = new DOMRect(mContent);
+  RefPtr<DOMRect> rect = new DOMRect(mContent);
 
   // Return an empty rectangle if the popup is not open.
   nsMenuPopupFrame *menuPopupFrame = do_QueryFrame(GetFrame(false));

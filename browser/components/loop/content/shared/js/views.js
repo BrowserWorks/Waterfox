@@ -13,6 +13,36 @@ loop.shared.views = (function(_, mozL10n) {
   var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
 
   /**
+   * Hang-up control button.
+   *
+   * Required props:
+   * - {Function} action  Function to be executed on click.
+   * - {String}   title   Tooltip functionality.
+   */
+  var HangUpControlButton = React.createClass({displayName: "HangUpControlButton",
+    mixins: [
+      React.addons.PureRenderMixin
+    ],
+
+    propTypes: {
+      action: React.PropTypes.func.isRequired,
+      title: React.PropTypes.string
+    },
+
+    handleClick: function() {
+      this.props.action();
+    },
+
+    render: function() {
+      return (
+          React.createElement("button", {className: "btn btn-hangup", 
+                  onClick: this.handleClick, 
+                  title: this.props.title})
+      );
+    }
+  });
+
+  /**
    * Media control button.
    *
    * Required props:
@@ -32,7 +62,7 @@ loop.shared.views = (function(_, mozL10n) {
     },
 
     getDefaultProps: function() {
-      return {enabled: true, visible: true};
+      return { enabled: true, visible: true };
     },
 
     handleClick: function() {
@@ -271,26 +301,11 @@ loop.shared.views = (function(_, mozL10n) {
     },
 
     /**
-     * Load on the browser the feedback url from prefs
-     */
-    handleSubmitFeedback: function(event) {
-      event.preventDefault();
-      var helloFeedbackUrl = this.props.mozLoop.getLoopPref("feedback.formURL");
-      this.props.mozLoop.openURL(helloFeedbackUrl);
-    },
-
-    /**
      * Recover the needed info for generating an specific menu Item
      */
     getItemInfo: function(menuItem) {
       var cx = React.addons.classSet;
       switch (menuItem.id) {
-        case "feedback":
-          return {
-            cssClasses: "dropdown-menu-item",
-            handler: this.handleSubmitFeedback,
-            label: mozL10n.get("feedback_request_button")
-          };
         case "help":
           return {
             cssClasses: "dropdown-menu-item",
@@ -374,11 +389,10 @@ loop.shared.views = (function(_, mozL10n) {
   var ConversationToolbar = React.createClass({displayName: "ConversationToolbar",
     getDefaultProps: function() {
       return {
-        video: {enabled: true, visible: true},
-        audio: {enabled: true, visible: true},
-        screenShare: {state: SCREEN_SHARE_STATES.INACTIVE, visible: false},
+        video: { enabled: true, visible: true },
+        audio: { enabled: true, visible: true },
+        screenShare: { state: SCREEN_SHARE_STATES.INACTIVE, visible: false },
         settingsMenuItems: null,
-        enableHangup: true,
         showHangup: true
       };
     },
@@ -392,9 +406,7 @@ loop.shared.views = (function(_, mozL10n) {
     propTypes: {
       audio: React.PropTypes.object.isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      enableHangup: React.PropTypes.bool,
       hangup: React.PropTypes.func.isRequired,
-      hangupButtonLabel: React.PropTypes.string,
       mozLoop: React.PropTypes.object,
       publishStream: React.PropTypes.func.isRequired,
       screenShare: React.PropTypes.object,
@@ -434,7 +446,7 @@ loop.shared.views = (function(_, mozL10n) {
      */
     _onBodyMouseMove: function() {
       if (this.state.idle) {
-        this.setState({idle: false});
+        this.setState({ idle: false });
         this.startIdleCountDown();
       } else {
         this.userActivity = true;
@@ -472,13 +484,9 @@ loop.shared.views = (function(_, mozL10n) {
     startIdleCountDown: function() {
       this.checkUserActivity();
       this.inactivityTimeout = setTimeout(function() {
-        this.setState({idle: true});
+        this.setState({ idle: true });
         clearInterval(this.inactivityPollInterval);
       }.bind(this), 6000);
-    },
-
-    _getHangupButtonLabel: function() {
-      return this.props.hangupButtonLabel || mozL10n.get("hangup_button_caption2");
     },
 
     render: function() {
@@ -491,23 +499,21 @@ loop.shared.views = (function(_, mozL10n) {
         "conversation-toolbar": true,
         "idle": this.state.idle
       });
+      var showButtons = this.props.video.visible || this.props.audio.visible;
       var mediaButtonGroupCssClasses = cx({
         "conversation-toolbar-media-btn-group-box": true,
-        "hide": (!this.props.video.visible && !this.props.audio.visible)
+        "hide": !showButtons
       });
       return (
         React.createElement("ul", {className: conversationToolbarCssClasses}, 
-          
-            this.props.showHangup ?
-            React.createElement("li", {className: "conversation-toolbar-btn-box btn-hangup-entry"}, 
-              React.createElement("button", {className: "btn btn-hangup", 
-                      disabled: !this.props.enableHangup, 
-                      onClick: this.handleClickHangup, 
-                      title: mozL10n.get("hangup_button_title")}, 
-                this._getHangupButtonLabel()
-              )
-            ) : null, 
-          
+        
+          this.props.showHangup && showButtons ?
+          React.createElement("li", {className: "conversation-toolbar-btn-box btn-hangup-entry"}, 
+            React.createElement(HangUpControlButton, {action: this.handleClickHangup, 
+                                 title: mozL10n.get("rooms_leave_button_label")})
+          ) : null, 
+        
+
           React.createElement("li", {className: "conversation-toolbar-btn-box"}, 
             React.createElement("div", {className: mediaButtonGroupCssClasses}, 
                 React.createElement(MediaControlButton, {action: this.handleToggleVideo, 
@@ -577,7 +583,7 @@ loop.shared.views = (function(_, mozL10n) {
     },
 
     getDefaultProps: function() {
-      return {clearOnDocumentHidden: false};
+      return { clearOnDocumentHidden: false };
     },
 
     componentDidMount: function() {
@@ -601,7 +607,7 @@ loop.shared.views = (function(_, mozL10n) {
         // Note: The `silent` option prevents the `reset` event to be triggered
         // here, preventing the UI to "jump" a little because of the event
         // callback being processed in another tick (I think).
-        this.props.notifications.reset([], {silent: true});
+        this.props.notifications.reset([], { silent: true });
         this.forceUpdate();
       }
     },
@@ -1115,23 +1121,23 @@ loop.shared.views = (function(_, mozL10n) {
                 mediaType: "remote", 
                 posterUrl: this.props.remotePosterUrl, 
                 srcMediaElement: this.props.remoteSrcMediaElement}), 
-               this.state.localMediaAboslutelyPositioned ?
+              this.state.localMediaAboslutelyPositioned ?
                 this.renderLocalVideo() : null, 
-               this.props.children
-
+              this.props.displayScreenShare ? null : this.props.children
             ), 
             React.createElement("div", {className: screenShareStreamClasses}, 
               React.createElement(MediaView, {displayAvatar: false, 
                 isLoading: this.props.isScreenShareLoading, 
                 mediaType: "screen-share", 
                 posterUrl: this.props.screenSharePosterUrl, 
-                srcMediaElement: this.props.screenShareMediaElement})
+                srcMediaElement: this.props.screenShareMediaElement}), 
+              this.props.displayScreenShare ? this.props.children : null
             ), 
             React.createElement(loop.shared.views.chat.TextChatView, {
               dispatcher: this.props.dispatcher, 
               showRoomName: this.props.showContextRoomName, 
               useDesktopPaths: this.props.useDesktopPaths}), 
-             this.state.localMediaAboslutelyPositioned ?
+            this.state.localMediaAboslutelyPositioned ?
               null : this.renderLocalVideo()
           )
         )

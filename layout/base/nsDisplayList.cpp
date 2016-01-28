@@ -72,6 +72,7 @@
 #include "nsDOMTokenList.h"
 #include "mozilla/RuleNodeCacheConditions.h"
 #include "nsCSSProps.h"
+#include "nsPluginFrame.h"
 
 // GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
 // GetTickCount().
@@ -346,13 +347,13 @@ static void AddTransformFunctions(nsCSSValueList* aList,
 static TimingFunction
 ToTimingFunction(const ComputedTimingFunction& aCTF)
 {
-  if (aCTF.GetType() == nsTimingFunction::Function) {
+  if (aCTF.HasSpline()) {
     const nsSMILKeySpline* spline = aCTF.GetFunction();
     return TimingFunction(CubicBezierFunction(spline->X1(), spline->Y1(),
                                               spline->X2(), spline->Y2()));
   }
 
-  uint32_t type = aCTF.GetType() == nsTimingFunction::StepStart ? 1 : 2;
+  uint32_t type = aCTF.GetType() == nsTimingFunction::Type::StepStart ? 1 : 2;
   return TimingFunction(StepFunction(aCTF.GetSteps(), type));
 }
 
@@ -624,6 +625,8 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
       mCurrentScrollParentId(FrameMetrics::NULL_SCROLL_ID),
       mCurrentScrollbarTarget(FrameMetrics::NULL_SCROLL_ID),
       mCurrentScrollbarFlags(0),
+      mIsBuildingScrollbar(false),
+      mCurrentScrollbarWillHaveLayer(false),
       mBuildCaret(aBuildCaret),
       mIgnoreSuppression(false),
       mHadToIgnoreSuppression(false),
@@ -682,8 +685,7 @@ static void MarkFrameForDisplay(nsIFrame* aFrame, nsIFrame* aStopAtFrame) {
 void nsDisplayListBuilder::SetContainsBlendMode(uint8_t aBlendMode)
 {
   MOZ_ASSERT(aBlendMode != NS_STYLE_BLEND_NORMAL);
-  gfxContext::GraphicsOperator op = nsCSSRendering::GetGFXBlendMode(aBlendMode);
-  mContainedBlendModes += gfx::CompositionOpForOp(op);
+  mContainedBlendModes += nsCSSRendering::GetGFXBlendMode(aBlendMode);
 }
 
 bool nsDisplayListBuilder::NeedToForceTransparentSurfaceForItem(nsDisplayItem* aItem)
@@ -820,7 +822,7 @@ nsDisplayListBuilder::SubtractFromVisibleRegion(nsRegion* aVisibleRegion,
 
 nsCaret *
 nsDisplayListBuilder::GetCaret() {
-  nsRefPtr<nsCaret> caret = CurrentPresShellState()->mPresShell->GetCaret();
+  RefPtr<nsCaret> caret = CurrentPresShellState()->mPresShell->GetCaret();
   return caret;
 }
 
@@ -861,7 +863,7 @@ nsDisplayListBuilder::EnterPresShell(nsIFrame* aReferenceFrame,
   if (!buildCaret)
     return;
 
-  nsRefPtr<nsCaret> caret = state->mPresShell->GetCaret();
+  RefPtr<nsCaret> caret = state->mPresShell->GetCaret();
   state->mCaretFrame = caret->GetPaintGeometry(&state->mCaretRect);
   if (state->mCaretFrame) {
     mFramesMarkedForDisplay.AppendElement(state->mCaretFrame);
@@ -1460,6 +1462,23 @@ TriggerPendingAnimations(nsIDocument* aDocument,
                                          const_cast<TimeStamp*>(&aReadyTime));
 }
 
+LayerManager*
+nsDisplayListBuilder::GetWidgetLayerManager(nsView** aView, bool* aAllowRetaining)
+{
+  nsView* view = RootReferenceFrame()->GetView();
+  if (aView) {
+    *aView = view;
+  }
+  if (RootReferenceFrame() != nsLayoutUtils::GetDisplayRootFrame(RootReferenceFrame())) {
+    return nullptr;
+  }
+  nsIWidget* window = RootReferenceFrame()->GetNearestWidget();
+  if (window) {
+    return window->GetLayerManager(aAllowRetaining);
+  }
+  return nullptr;
+}
+
 /**
  * We paint by executing a layer manager transaction, constructing a
  * single layer representing the display list, and then making it the
@@ -1471,23 +1490,16 @@ already_AddRefed<LayerManager> nsDisplayList::PaintRoot(nsDisplayListBuilder* aB
   PROFILER_LABEL("nsDisplayList", "PaintRoot",
     js::ProfileEntry::Category::GRAPHICS);
 
-  nsRefPtr<LayerManager> layerManager;
+  RefPtr<LayerManager> layerManager;
   bool widgetTransaction = false;
   bool allowRetaining = false;
   bool doBeginTransaction = true;
   nsView *view = nullptr;
   if (aFlags & PAINT_USE_WIDGET_LAYERS) {
-    nsIFrame* rootReferenceFrame = aBuilder->RootReferenceFrame();
-    view = rootReferenceFrame->GetView();
-    NS_ASSERTION(rootReferenceFrame == nsLayoutUtils::GetDisplayRootFrame(rootReferenceFrame),
-                 "Reference frame must be a display root for us to use the layer manager");
-    nsIWidget* window = rootReferenceFrame->GetNearestWidget();
-    if (window) {
-      layerManager = window->GetLayerManager(&allowRetaining);
-      if (layerManager) {
-        doBeginTransaction = !(aFlags & PAINT_EXISTING_TRANSACTION);
-        widgetTransaction = true;
-      }
+    layerManager = aBuilder->GetWidgetLayerManager(&view, &allowRetaining);
+    if (layerManager) {
+      doBeginTransaction = !(aFlags & PAINT_EXISTING_TRANSACTION);
+      widgetTransaction = true;
     }
   }
   if (!layerManager) {
@@ -1544,7 +1556,7 @@ already_AddRefed<LayerManager> nsDisplayList::PaintRoot(nsDisplayListBuilder* aB
 
   ContainerLayerParameters containerParameters
     (presShell->GetResolution(), presShell->GetResolution());
-  nsRefPtr<ContainerLayer> root = layerBuilder->
+  RefPtr<ContainerLayer> root = layerBuilder->
     BuildContainerLayerFor(aBuilder, layerManager, frame, nullptr, this,
                            containerParameters, nullptr);
 
@@ -1664,10 +1676,13 @@ already_AddRefed<LayerManager> nsDisplayList::PaintRoot(nsDisplayListBuilder* aB
 
   // If this is the content process, we ship plugin geometry updates over with layer
   // updates, so calculate that now before we call EndTransaction.
-  if (rootPresContext &&
-      aBuilder->WillComputePluginGeometry() &&
-      XRE_IsContentProcess()) {
-    rootPresContext->ComputePluginGeometryUpdates(aBuilder->RootReferenceFrame(), aBuilder, this);
+  if (rootPresContext && XRE_IsContentProcess()) {
+    if (aBuilder->WillComputePluginGeometry()) {
+      rootPresContext->ComputePluginGeometryUpdates(aBuilder->RootReferenceFrame(), aBuilder, this);
+    }
+    // The layer system caches plugin configuration information for forwarding
+    // with layer updates which needs to get set during reflow. This must be
+    // called even if there are no windowed plugins in the page.
     rootPresContext->CollectPluginGeometryUpdates(layerManager);
   }
 
@@ -2355,11 +2370,12 @@ nsDisplayBackgroundImage::IsNonEmptyFixedImage() const
 }
 
 bool
-nsDisplayBackgroundImage::ShouldFixToViewport(LayerManager* aManager)
+nsDisplayBackgroundImage::ShouldFixToViewport(nsDisplayListBuilder* aBuilder)
 {
   // APZ needs background-attachment:fixed images layerized for correctness.
+  RefPtr<LayerManager> layerManager = aBuilder->GetWidgetLayerManager();
   if (!nsLayoutUtils::UsesAsyncScrolling(mFrame) &&
-      aManager && aManager->ShouldAvoidComponentAlphaLayers()) {
+      layerManager && layerManager->ShouldAvoidComponentAlphaLayers()) {
     return false;
   }
 
@@ -2434,7 +2450,7 @@ nsDisplayBackgroundImage::GetContainer(LayerManager* aManager,
     mImageContainer = mImage->GetImageContainer(aManager, flags);
   }
 
-  nsRefPtr<ImageContainer> container = mImageContainer;
+  RefPtr<ImageContainer> container = mImageContainer;
   return container.forget();
 }
 
@@ -2504,14 +2520,14 @@ nsDisplayBackgroundImage::BuildLayer(nsDisplayListBuilder* aBuilder,
                                      LayerManager* aManager,
                                      const ContainerLayerParameters& aParameters)
 {
-  nsRefPtr<ImageLayer> layer = static_cast<ImageLayer*>
+  RefPtr<ImageLayer> layer = static_cast<ImageLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));
   if (!layer) {
     layer = aManager->CreateImageLayer();
     if (!layer)
       return nullptr;
   }
-  nsRefPtr<ImageContainer> imageContainer = GetContainer(aManager, aBuilder);
+  RefPtr<ImageContainer> imageContainer = GetContainer(aManager, aBuilder);
   layer->SetContainer(imageContainer);
   ConfigureLayer(layer, aParameters);
   return layer.forget();
@@ -2533,7 +2549,8 @@ nsDisplayBackgroundImage::ConfigureLayer(ImageLayer* aLayer,
   if (imageWidth > 0 && imageHeight > 0) {
     // We're actually using the ImageContainer. Let our frame know that it
     // should consider itself to have painted successfully.
-    nsDisplayBackgroundGeometry::UpdateDrawResult(this, mozilla::image::DrawResult::SUCCESS);
+    nsDisplayBackgroundGeometry::UpdateDrawResult(this,
+                                                  image::DrawResult::SUCCESS);
   }
 
   // XXX(seth): Right now we ignore aParameters.Scale() and
@@ -2710,7 +2727,7 @@ nsDisplayBackgroundImage::PaintInternal(nsDisplayListBuilder* aBuilder,
   uint32_t flags = aBuilder->GetBackgroundPaintFlags();
   CheckForBorderItem(this, flags);
 
-  mozilla::image::DrawResult result =
+  image::DrawResult result =
     nsCSSRendering::PaintBackground(mFrame->PresContext(), *aCtx, mFrame,
                                     aBounds,
                                     nsRect(offset, mFrame->GetSize()),
@@ -2986,7 +3003,7 @@ void
 nsDisplayBackgroundColor::Paint(nsDisplayListBuilder* aBuilder,
                                 nsRenderingContext* aCtx)
 {
-  if (mColor == NS_RGBA(0, 0, 0, 0)) {
+  if (mColor == Color()) {
     return;
   }
 
@@ -3040,7 +3057,7 @@ nsDisplayBackgroundColor::GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
 bool
 nsDisplayBackgroundColor::IsUniform(nsDisplayListBuilder* aBuilder, nscolor* aColor)
 {
-  *aColor = NS_RGBA_FROM_GFXRGBA(mColor);
+  *aColor = mColor.ToABGR();
   return true;
 }
 
@@ -3070,14 +3087,14 @@ nsDisplayClearBackground::BuildLayer(nsDisplayListBuilder* aBuilder,
                                      LayerManager* aManager,
                                      const ContainerLayerParameters& aParameters)
 {
-  nsRefPtr<ColorLayer> layer = static_cast<ColorLayer*>
+  RefPtr<ColorLayer> layer = static_cast<ColorLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));
   if (!layer) {
     layer = aManager->CreateColorLayer();
     if (!layer)
       return nullptr;
   }
-  layer->SetColor(NS_RGBA(0, 0, 0, 0));
+  layer->SetColor(Color());
   layer->SetMixBlendMode(gfx::CompositionOp::OP_SOURCE);
 
   bool snap;
@@ -3192,8 +3209,23 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
   } else {
     mHitRegion.Or(mHitRegion, borderBox);
   }
-  if (aBuilder->GetAncestorHasApzAwareEventHandler()) {
+
+  if (aBuilder->IsBuildingNonLayerizedScrollbar() ||
+      aBuilder->GetAncestorHasApzAwareEventHandler())
+  {
+    // Scrollbars may be painted into a layer below the actual layer they will
+    // scroll, and therefore wheel events may be dispatched to the outer frame
+    // instead of the intended scrollframe. To address this, we force a d-t-c
+    // region on scrollbar frames that won't be placed in their own layer. See
+    // bug 1213324 for details.
     mDispatchToContentHitRegion.Or(mDispatchToContentHitRegion, borderBox);
+  } else if (aFrame->GetType() == nsGkAtoms::objectFrame) {
+    // If the frame is a plugin frame and wants to handle wheel events as
+    // default action, we should add the frame to dispatch-to-content region.
+    nsPluginFrame* pluginFrame = do_QueryFrame(aFrame);
+    if (pluginFrame && pluginFrame->WantsToHandleWheelEventAsDefaultAction()) {
+      mDispatchToContentHitRegion.Or(mDispatchToContentHitRegion, borderBox);
+    }
   }
 
   // Touch action region
@@ -3214,6 +3246,7 @@ nsDisplayLayerEventRegions::AddFrame(nsDisplayListBuilder* aBuilder,
 void
 nsDisplayLayerEventRegions::AddInactiveScrollPort(const nsRect& aRect)
 {
+  mHitRegion.Or(mHitRegion, aRect);
   mDispatchToContentHitRegion.Or(mDispatchToContentHitRegion, aRect);
 }
 
@@ -3306,6 +3339,7 @@ nsDisplayBorder::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
 {
   const nsDisplayBorderGeometry* geometry = static_cast<const nsDisplayBorderGeometry*>(aGeometry);
   bool snap;
+
   if (!geometry->mBounds.IsEqualInterior(GetBounds(aBuilder, &snap)) ||
       !geometry->mContentRect.IsEqualInterior(GetContentRect())) {
     // We can probably get away with only invalidating the difference
@@ -3313,17 +3347,31 @@ nsDisplayBorder::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
     // is apparently painting a background with this?
     aInvalidRegion->Or(GetBounds(aBuilder, &snap), geometry->mBounds);
   }
+
+  if (aBuilder->ShouldSyncDecodeImages() &&
+      geometry->ShouldInvalidateToSyncDecodeImages()) {
+    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
+  }
 }
   
 void
 nsDisplayBorder::Paint(nsDisplayListBuilder* aBuilder,
                        nsRenderingContext* aCtx) {
   nsPoint offset = ToReferenceFrame();
-  nsCSSRendering::PaintBorder(mFrame->PresContext(), *aCtx, mFrame,
-                              mVisibleRect,
-                              nsRect(offset, mFrame->GetSize()),
-                              mFrame->StyleContext(),
-                              mFrame->GetSkipSides());
+
+  PaintBorderFlags flags = aBuilder->ShouldSyncDecodeImages()
+                         ? PaintBorderFlags::SYNC_DECODE_IMAGES
+                         : PaintBorderFlags();
+
+  image::DrawResult result =
+    nsCSSRendering::PaintBorder(mFrame->PresContext(), *aCtx, mFrame,
+                                mVisibleRect,
+                                nsRect(offset, mFrame->GetSize()),
+                                mFrame->StyleContext(),
+                                flags,
+                                mFrame->GetSkipSides());
+
+  nsDisplayBorderGeometry::UpdateDrawResult(this, result);
 }
 
 nsRect
@@ -3696,7 +3744,7 @@ RequiredLayerStateForChildren(nsDisplayListBuilder* aBuilder,
   LayerState result = LAYER_INACTIVE;
   for (nsDisplayItem* i = aList.GetBottom(); i; i = i->GetAbove()) {
     if (result == LAYER_INACTIVE &&
-        nsLayoutUtils::GetAnimatedGeometryRootFor(i, aBuilder, aManager) !=
+        nsLayoutUtils::GetAnimatedGeometryRootFor(i, aBuilder) !=
           aExpectedAnimatedGeometryRootForChildren) {
       result = LAYER_ACTIVE;
     }
@@ -3847,7 +3895,7 @@ already_AddRefed<Layer>
 nsDisplayOpacity::BuildLayer(nsDisplayListBuilder* aBuilder,
                              LayerManager* aManager,
                              const ContainerLayerParameters& aContainerParameters) {
-  nsRefPtr<Layer> container = aManager->GetLayerBuilder()->
+  RefPtr<Layer> container = aManager->GetLayerBuilder()->
     BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                            aContainerParameters, nullptr,
                            FrameLayerBuilder::CONTAINER_ALLOW_PULL_BACKGROUND_COLOR);
@@ -3966,7 +4014,7 @@ nsDisplayOpacity::GetLayerState(nsDisplayListBuilder* aBuilder,
     return LAYER_ACTIVE;
 
   return RequiredLayerStateForChildren(aBuilder, aManager, aParameters, mList,
-    nsLayoutUtils::GetAnimatedGeometryRootFor(this, aBuilder, aManager));
+    nsLayoutUtils::GetAnimatedGeometryRootFor(this, aBuilder));
 }
 
 bool
@@ -4029,11 +4077,11 @@ nsDisplayMixBlendMode::GetLayerState(nsDisplayListBuilder* aBuilder,
                                      LayerManager* aManager,
                                      const ContainerLayerParameters& aParameters)
 {
-  gfxContext::GraphicsOperator op = nsCSSRendering::GetGFXBlendMode(mFrame->StyleDisplay()->mMixBlendMode);
-  if (aManager->SupportsMixBlendMode(gfx::CompositionOpForOp(op))) {
-    return LAYER_ACTIVE;
-  }
-  return LAYER_INACTIVE;
+  CompositionOp op =
+    nsCSSRendering::GetGFXBlendMode(mFrame->StyleDisplay()->mMixBlendMode);
+  return aManager->SupportsMixBlendMode(op)
+       ? LAYER_ACTIVE
+       : LAYER_INACTIVE;
 }
 
 // nsDisplayMixBlendMode uses layers for rendering
@@ -4044,14 +4092,14 @@ nsDisplayMixBlendMode::BuildLayer(nsDisplayListBuilder* aBuilder,
   ContainerLayerParameters newContainerParameters = aContainerParameters;
   newContainerParameters.mDisableSubpixelAntialiasingInDescendants = true;
 
-  nsRefPtr<Layer> container = aManager->GetLayerBuilder()->
+  RefPtr<Layer> container = aManager->GetLayerBuilder()->
   BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                          newContainerParameters, nullptr);
   if (!container) {
     return nullptr;
   }
 
-  container->DeprecatedSetMixBlendMode(nsCSSRendering::GetGFXBlendMode(mFrame->StyleDisplay()->mMixBlendMode));
+  container->SetMixBlendMode(nsCSSRendering::GetGFXBlendMode(mFrame->StyleDisplay()->mMixBlendMode));
 
   return container.forget();
 }
@@ -4117,7 +4165,7 @@ nsDisplayBlendContainer::BuildLayer(nsDisplayListBuilder* aBuilder,
   ContainerLayerParameters newContainerParameters = aContainerParameters;
   newContainerParameters.mDisableSubpixelAntialiasingInDescendants = true;
 
-  nsRefPtr<Layer> container = aManager->GetLayerBuilder()->
+  RefPtr<Layer> container = aManager->GetLayerBuilder()->
   BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                          newContainerParameters, nullptr);
   if (!container) {
@@ -4126,6 +4174,17 @@ nsDisplayBlendContainer::BuildLayer(nsDisplayListBuilder* aBuilder,
   
   container->SetForceIsolatedGroup(true);
   return container.forget();
+}
+
+LayerState
+nsDisplayBlendContainer::GetLayerState(nsDisplayListBuilder* aBuilder,
+                                       LayerManager* aManager,
+                                       const ContainerLayerParameters& aParameters)
+{
+  if (mCanBeActive && aManager->SupportsMixBlendModes(mContainedBlendModes)) {
+    return mozilla::LAYER_ACTIVE;
+  }
+  return mozilla::LAYER_INACTIVE;
 }
 
 bool nsDisplayBlendContainer::TryMerge(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem) {
@@ -4166,7 +4225,7 @@ nsDisplayOwnLayer::BuildLayer(nsDisplayListBuilder* aBuilder,
                               LayerManager* aManager,
                               const ContainerLayerParameters& aContainerParameters)
 {
-  nsRefPtr<ContainerLayer> layer = aManager->GetLayerBuilder()->
+  RefPtr<ContainerLayer> layer = aManager->GetLayerBuilder()->
     BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                            aContainerParameters, nullptr,
                            FrameLayerBuilder::CONTAINER_ALLOW_PULL_BACKGROUND_COLOR);
@@ -4217,7 +4276,7 @@ nsDisplaySubDocument::BuildLayer(nsDisplayListBuilder* aBuilder,
     params.mInLowPrecisionDisplayPort = true; 
   }
 
-  nsRefPtr<Layer> layer = nsDisplayOwnLayer::BuildLayer(aBuilder, aManager, params);
+  RefPtr<Layer> layer = nsDisplayOwnLayer::BuildLayer(aBuilder, aManager, params);
   layer->AsContainerLayer()->SetEventRegionsOverride(mForceDispatchToContentRegion
     ? EventRegionsOverride::ForceDispatchToContent
     : EventRegionsOverride::NoOverride);
@@ -4363,7 +4422,7 @@ nsDisplayResolution::BuildLayer(nsDisplayListBuilder* aBuilder,
     presShell->GetResolution(), presShell->GetResolution(), nsIntPoint(),
     aContainerParameters);
 
-  nsRefPtr<Layer> layer = nsDisplaySubDocument::BuildLayer(
+  RefPtr<Layer> layer = nsDisplaySubDocument::BuildLayer(
     aBuilder, aManager, containerParameters);
   layer->SetPostScale(1.0f / presShell->GetResolution(),
                       1.0f / presShell->GetResolution());
@@ -4390,7 +4449,7 @@ already_AddRefed<Layer>
 nsDisplayStickyPosition::BuildLayer(nsDisplayListBuilder* aBuilder,
                                     LayerManager* aManager,
                                     const ContainerLayerParameters& aContainerParameters) {
-  nsRefPtr<Layer> layer =
+  RefPtr<Layer> layer =
     nsDisplayOwnLayer::BuildLayer(aBuilder, aManager, aContainerParameters);
 
   StickyScrollContainer* stickyScrollContainer = StickyScrollContainer::
@@ -4735,7 +4794,7 @@ nsDisplayTransform::nsDisplayTransform(nsDisplayListBuilder* aBuilder,
   Init(aBuilder);
 }
 
-/* Returns the delta specified by the -transform-origin property.
+/* Returns the delta specified by the transform-origin property.
  * This is a positive delta, meaning that it indicates the direction to move
  * to get from (0, 0) of the frame to the transform origin.  This function is
  * called off the main thread.
@@ -4753,7 +4812,7 @@ nsDisplayTransform::GetDeltaToTransformOrigin(const nsIFrame* aFrame,
     return Point3D();
   }
 
-  /* For both of the coordinates, if the value of -transform is a
+  /* For both of the coordinates, if the value of transform is a
    * percentage, it's relative to the size of the frame.  Otherwise, if it's
    * a distance, it's already computed for us!
    */
@@ -4777,7 +4836,7 @@ nsDisplayTransform::GetDeltaToTransformOrigin(const nsIFrame* aFrame,
     { &TransformReferenceBox::X, &TransformReferenceBox::Y };
 
   for (uint8_t index = 0; index < 2; ++index) {
-    /* If the -transform-origin specifies a percentage, take the percentage
+    /* If the transform-origin specifies a percentage, take the percentage
      * of the size of the box.
      */
     const nsStyleCoord &coord = display->mTransformOrigin[index];
@@ -4850,7 +4909,7 @@ nsDisplayTransform::GetDeltaToPerspectiveOrigin(const nsIFrame* aFrame,
     { &TransformReferenceBox::Width, &TransformReferenceBox::Height };
 
   for (uint8_t index = 0; index < 2; ++index) {
-    /* If the -transform-origin specifies a percentage, take the percentage
+    /* If the transform-origin specifies a percentage, take the percentage
      * of the size of the box.
      */
     const nsStyleCoord &coord = display->mPerspectiveOrigin[index];
@@ -4902,7 +4961,7 @@ nsDisplayTransform::FrameTransformProperties::FrameTransformProperties(const nsI
   }
 }
 
-/* Wraps up the -transform matrix in a change-of-basis matrix pair that
+/* Wraps up the transform matrix in a change-of-basis matrix pair that
  * translates from local coordinate space to transform coordinate space, then
  * hands it back.
  */
@@ -4997,7 +5056,7 @@ nsDisplayTransform::GetResultingTransformMatrixInternal(const FrameTransformProp
     result = result * perspective;
   }
 
-  /* Account for the -transform-origin property by translating the
+  /* Account for the transform-origin property by translating the
    * coordinate space to the new origin.
    */
   Point3D newOrigin =
@@ -5250,7 +5309,7 @@ already_AddRefed<Layer> nsDisplayTransform::BuildLayer(nsDisplayListBuilder *aBu
   uint32_t flags = ShouldPrerender(aBuilder) ?
     FrameLayerBuilder::CONTAINER_NOT_CLIPPED_BY_ANCESTORS : 0;
   flags |= FrameLayerBuilder::CONTAINER_ALLOW_PULL_BACKGROUND_COLOR;
-  nsRefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
+  RefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
     BuildContainerLayerFor(aBuilder, aManager, mFrame, this, mStoredList.GetChildren(),
                            aContainerParameters, &newTransformMatrix, flags);
 
@@ -5727,7 +5786,7 @@ nsDisplayVR::BuildLayer(nsDisplayListBuilder* aBuilder,
   ContainerLayerParameters newContainerParameters = aContainerParameters;
   uint32_t flags = FrameLayerBuilder::CONTAINER_NOT_CLIPPED_BY_ANCESTORS |
                    FrameLayerBuilder::CONTAINER_ALLOW_PULL_BACKGROUND_COLOR;
-  nsRefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
+  RefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
     BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                            newContainerParameters, nullptr, flags);
 
@@ -5813,7 +5872,7 @@ nsDisplaySVGEffects::BuildLayer(nsDisplayListBuilder* aBuilder,
     newContainerParameters.mDisableSubpixelAntialiasingInDescendants = true;
   }
 
-  nsRefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
+  RefPtr<ContainerLayer> container = aManager->GetLayerBuilder()->
     BuildContainerLayerFor(aBuilder, aManager, mFrame, this, &mList,
                            newContainerParameters, nullptr);
 

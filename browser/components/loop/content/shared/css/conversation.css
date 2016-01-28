@@ -7,11 +7,6 @@ html {
   font-family: menu;
 }
 
-/* Shared conversation window styles */
-.conversation {
-  position: relative;
-}
-
 button::-moz-focus-inner {
   border: 0;
 }
@@ -20,10 +15,10 @@ button::-moz-focus-inner {
   z-index: 1020; /* required to have it superimposed to the video element */
   border: 0;
   left: 1.2rem;
-  right: .7rem;
-  height: 2.6rem;
+  right: 1.2rem;
+  height: 2.4rem;
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 1.2rem;
 }
 
 html[dir="rtl"] .conversation-toolbar {
@@ -60,6 +55,12 @@ html[dir="rtl"] .conversation-toolbar > li {
   width: 33px;
 }
 
+.btn-hangup-entry > .btn {
+  /* Make the button the width of the background, so that we don't get an
+     extra gap which appears to push the toolbar in further than necessary */
+  width: 28px;
+}
+
 .conversation-toolbar-media-btn-group-box {
   background-position: center;
   background-repeat: no-repeat;
@@ -94,14 +95,6 @@ html[dir="rtl"] .conversation-toolbar-media-btn-group-box > button:first-child:h
   background-size: cover;
 }
 
-.conversation-toolbar-media-btn-group-box > li {
-  float: left;
-}
-
-html[dir="rtl"] .conversation-toolbar-media-btn-group-box > li {
-  float: right;
-}
-
 .conversation-toolbar-btn-box.btn-edit-entry {
   float: right;
 }
@@ -110,56 +103,7 @@ html[dir="rtl"] .conversation-toolbar-btn-box.btn-edit-entry {
   float: left;
 }
 
-.fx-embedded-answer-btn-text {
-  /* always leave space for the icon (width and margin) */
-  max-width: calc(100% - 24px - .2rem);
-  height: 22px;
-  line-height: 22px;
-}
-
-.fx-embedded-btn-icon-video,
-.fx-embedded-btn-icon-audio {
-  width: 24px;
-  height: 24px;
-  display: inline-block;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 14px 14px;
-  border-radius: 50%;
-  -moz-margin-start: .2rem;
-}
-
 /* conversationViews.jsx */
-
-.fx-embedded-btn-icon-video,
-.fx-embedded-btn-video-small,
-.fx-embedded-tiny-video-icon {
-  background-image: url("../img/video-inverse-14x14.png");
-}
-
-.fx-embedded-btn-icon-audio,
-.fx-embedded-btn-audio-small,
-.fx-embedded-tiny-audio-icon {
-  background-image: url("../img/audio-inverse-14x14.png");
-}
-
-.fx-embedded-btn-audio-small,
-.fx-embedded-btn-video-small {
-  width: 26px;
-  height: 26px;
-  border-left: 1px solid rgba(255,255,255,.4);
-  background-color: #56b397;
-  border-top-right-radius: 2px;
-  border-bottom-right-radius: 2px;
-  background-position: center;
-  background-repeat: no-repeat;
-  cursor: pointer;
-}
-
-  .fx-embedded-btn-video-small:hover,
-  .fx-embedded-btn-audio-small:hover {
-    background-color: #50e3c2;
-  }
 
 .conversation-toolbar .btn-hangup {
   background-image: url("../img/svg/exit.svg");
@@ -234,60 +178,7 @@ html[dir="rtl"] .conversation-toolbar-btn-box.btn-edit-entry {
   background-image: url("../img/svg/sharing-pending.svg");
 }
 
-.fx-embedded .remote_wrapper {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-}
-
-.fx-embedded .no-video {
-  background: black none repeat scroll 0% 0%;
-  height: 100%;
-  width: 100%;
-}
-
-.standalone .local-stream {
-  /* required to have it superimposed to the control toolbar */
-  z-index: 1001;
-}
-
-/* Side by side video elements */
-
-.conversation .media.side-by-side .focus-stream {
-  width: 50%;
-  float: left;
-}
-
-.conversation .media.side-by-side .local-stream,
-.conversation .media.side-by-side .remote-inset-stream {
-  width: 50%;
-}
-
-/* Call ended view */
-.call-ended p {
-  text-align: center;
-}
-
 /* General Call (incoming or outgoing). */
-
-/* XXX call-window currently relates to multiple things like the AcceptCallView,
-   DirectCallFailureView, PendingConversationView. It doesn't relate to the direct
-   call media views. We should probably make this more explicit at some stage. */
-
-/*
- * Height matches the height of the docked window
- * but the UI breaks when you pop out
- * Bug 1040985
- */
-.call-window {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 230px;
-}
 
 .call-action-group {
   display: flex;
@@ -353,7 +244,6 @@ html[dir="rtl"] .conversation-toolbar-btn-box.btn-edit-entry {
   display: block;
 }
 
-.direct-call-failure,
 .room-failure {
   /* This flex allows us to not calculate the height of the logo area
      versus the buttons */
@@ -365,25 +255,21 @@ html[dir="rtl"] .conversation-toolbar-btn-box.btn-edit-entry {
   height: 100%;
 }
 
-.direct-call-failure > .call-action-group,
 .room-failure > .call-action-group {
   flex: none;
   margin: 1rem 0 2rem;
 }
 
-.direct-call-failure > .failure-info,
 .room-failure > .failure-info {
   flex: auto;
 }
 
-.direct-call-failure > .settings-control,
 .room-failure > .settings-control {
   position: absolute;
   top: 1rem;
   right: .5rem;
 }
 
-html[dir="rtl"] .direct-call-failure > .settings-control,
 html[dir="rtl"] .room-failure > .settings-control {
   left: .5rem;
   right: auto;
@@ -433,66 +319,6 @@ html[dir="rtl"] .room-failure > .settings-control {
   color: #f00;
 }
 
-.fx-embedded-call-button-spacer {
-  display: flex;
-  flex: 1;
-}
-
-/*
- * Dropdown menu hidden behind a chevron
- *
- * .native-dropdown-menu[-large-parent] Generic class, contains common styles
- * .standalone-dropdown-menu Initiate call dropdown menu
- * .conversation-window-dropdown Dropdown menu for answer/decline/block options
- */
-
-.native-dropdown-menu,
-.native-dropdown-large-parent {
-  /* Should match a native select menu */
-  padding: 0;
-  position: absolute; /* element can be wider than the parent */
-  background: #fff;
-  margin: 0;
-  box-shadow: 0 4px 5px rgba(30,30,30,.3);
-  border-style: solid;
-  border-width: 1px 1px 1px 2px;
-  border-color: #aaa #111 #111 #aaa;
-}
-
-  /*
-   * If the component is smaller than the parent
-   * we need it to display block to occupy full width
-   * Same as above but overrides apropriate styles
-   */
-  .native-dropdown-large-parent {
-    position: relative;
-    display: block;
-  }
-
-  .native-dropdown-menu li,
-  .native-dropdown-large-parent li {
-    list-style: none;
-    cursor: pointer;
-    color: #000;
-  }
-
-  .native-dropdown-menu li:hover,
-  .native-dropdown-large-parent li:hover,
-  .native-dropdown-large-parent li:hover button {
-    color: #fff;
-    background-color: #111;
-  }
-
-.conversation-window-dropdown {
-  bottom: 4rem;
-}
-
-.conversation-window-dropdown > li {
-  padding: .2rem;
-  font-size: 1rem;
-  white-space: nowrap;
-}
-
 .screen-share-menu.dropdown-menu,
 .settings-menu.dropdown-menu {
   bottom: 3.1rem;
@@ -522,24 +348,6 @@ html[dir="rtl"] .settings-menu.dropdown-menu {
 .settings-menu.dropdown-menu.menu-below {
   top: 11.5rem;
   bottom: auto;
-}
-
-/* Expired call url page */
-
-.expired-url-info {
-  width: 400px;
-  margin: 0 auto;
-}
-
-.promote-firefox {
-  text-align: center;
-  font-size: 18px;
-  line-height: 24px;
-  margin: 2em 0;
-}
-
-.promote-firefox h3 {
-  font-weight: 300;
 }
 
 /* Feedback form */
@@ -584,54 +392,6 @@ html[dir="rtl"] .settings-menu.dropdown-menu {
   background: #00A9DC;
   color: #fff;
   cursor: pointer;
-}
-
-.fx-embedded-btn-back {
-  margin-bottom: 1rem;
-  padding: .2rem .8rem;
-  border: 1px solid #aaa;
-  border-radius: 2px;
-  background: transparent;
-  color: #777;
-  cursor: pointer;
-}
-
-.feedback-category-label {
-  display: block;
-  line-height: 1.5em;
-}
-
-.feedback-category-radio {
-  margin-right: .5em;
-}
-
-.feedback > form > .btn-success,
-.feedback-description {
-  width: 100%;
-  margin-top: 14px;
-}
-
-.feedback > form > .btn-success {
-  padding-top: .5em;
-  padding-bottom: .5em;
-  border-radius: 2px;
-}
-
-.feedback .info {
-  display: block;
-  font-size: 10px;
-  color: #CCC;
-  text-align: center;
-}
-
-.conversation .media.nested .focus-stream {
-  display: inline-block;
-  position: absolute; /* workaround for lack of object-fit; see bug 1020445 */
-  width: 100%;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
 }
 
 /*
@@ -686,182 +446,18 @@ html[dir="rtl"] .settings-menu.dropdown-menu {
   }
 }
 
-.conversation .local .avatar {
-  position: absolute;
-  z-index: 1;
-}
-
 .remote > .avatar {
   /* make visually distinct from local avatar */
   opacity: 0.25;
 }
-
-.fx-embedded-call-identifier {
-  display: inline;
-  width: 100%;
-  padding: 1.2em;
-}
-
-.fx-embedded-call-identifier-item {
-  height: 50px;
-}
-
-.fx-embedded-call-identifier-avatar {
-  max-width: 50px;
-  min-width: 50px;
-  background: #ccc;
-  border-radius: 50%;
-  background-image: url("../img/audio-call-avatar.svg");
-  background-repeat: no-repeat;
-  background-color: #4ba6e7;
-  background-size: contain;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);
-  float: left;
-  -moz-margin-end: 1em;
-}
-
-.fx-embedded-call-identifier-text {
-  font-weight: bold;
-}
-
-.fx-embedded-call-identifier-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  -moz-margin-start: 1em;
-}
-
-.fx-embedded-conversation-timestamp {
-  font-size: .6rem;
-  line-height: 17px;
-  display: inline-block;
-  vertical-align: top;
-}
-
-.fx-embedded-call-detail {
-  padding-top: 0.6em;
-}
-
-.fx-embedded-tiny-video-icon {
-  margin: 0 .8em;
-}
-
-.fx-embedded-tiny-audio-icon,
-.fx-embedded-tiny-video-icon {
-  width: 24px;
-  height: 24px;
-  background-color: #00a9dc;
-  display: inline-block;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 50%;
-}
-
-  .fx-embedded-tiny-video-icon.muted {
-    background-color: rgba(0,0,0,.2)
-  }
 
 /* Force full height on all parents up to the video elements
  * this way we can ensure the aspect ratio and use height 100%
  * on the video element
  * */
 html, .fx-embedded, #main,
-.video-layout-wrapper,
-.conversation,
-.desktop-call-wrapper,
 .desktop-room-wrapper {
   height: 100%;
-}
-
-/* We use 641px rather than 640, as min-width and max-width are inclusive */
-@media screen and (min-width: 641px) {
-  .standalone .conversation .conversation-toolbar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-  }
-
-  .standalone .conversation .local-stream {
-    position: absolute;
-    right: 15px;
-    bottom: 15px;
-    width: 20%;
-    height: 20%;
-    max-width: 400px;
-    max-height: 300px;
-  }
-
-  /* Nested video elements */
-  .standalone .conversation .media.nested {
-    position: relative;
-    height: 100%;
-  }
-
-  .standalone .media.nested {
-    margin-left: 10px;
-  }
-
-  .standalone .remote_wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-
-  .standalone {
-    margin: 0 auto;
-  }
-}
-
-@media screen and (max-width:640px) {
-  .standalone .video-layout-wrapper,
-  .standalone .conversation {
-    height: 100%;
-  }
-
-  .standalone .media {
-    height: 90%;
-  }
-
-  .standalone .media.nested {
-    min-height: 500px;
-  }
-
-  .standalone .conversation .local-stream {
-    flex: 1;
-    min-width: 120px;
-    min-height: 150px;
-    width: 100%;
-  }
-
-  /* Nested video elements */
-  .standalone .conversation .media.nested {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1 1 0%;
-  }
-
-  .standalone .video_wrapper.remote_wrapper {
-    /* Because of OT markup we need to set a high flex value
-     * Flex rule assures remote and local streams stack on top of each other
-     * Computed width is not 100% unless the `width` rule */
-    flex: 2;
-    width: 100%;
-    position: relative;
-  }
-}
-
-@media screen and (max-width:420px) {
-  /* Restore video height so that we get
-   * vertical centering for free on a small screen
-   **/
-  .standalone .conversation .media video {
-    height: 100%;
-  }
 }
 
 /**
@@ -871,55 +467,6 @@ html, .fx-embedded, #main,
 .room-conversation-wrapper {
   position: relative;
   height: 100%;
-}
-
-.room-conversation-wrapper header {
-  background: #000;
-  height: 50px;
-  text-align: left;
-  margin: 0 10px;
-}
-
-html[dir="rtl"] .room-conversation-wrapper header {
-  text-align: right;
-}
-
-.room-conversation-wrapper header h1 {
-  font-size: 1.5em;
-  color: #fff;
-  line-height: 50px;
-  text-indent: 40px;
-  background-image: url("../img/firefox-logo.png");
-  background-size: 30px;
-  background-position: 0 center;
-  background-repeat: no-repeat;
-  display: inline-block;
-  margin: 0 10px;
-}
-
-html[dir="rtl"] .room-conversation-wrapper header h1 {
-  background-position: 100% center;
-}
-
-.room-conversation-wrapper header a {
-  float: right;
-}
-
-html[dir="rtl"] .room-conversation-wrapper header a {
-  float: left;
-}
-
-.room-conversation-wrapper header .icon-help {
-  display: inline-block;
-  background-size: contain;
-  margin-top: 15px;
-  width: 20px;
-  height: 20px;
-  background: transparent url("../img/svg/glyph-help-16x16.svg") no-repeat;
-}
-
-.fx-embedded .room-conversation .conversation-toolbar .btn-hangup {
-  background-image: url("../img/icons-14x14.svg#exit-white");
 }
 
 .room-invitation-overlay {
@@ -983,13 +530,13 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
 }
 
 .context-url-view-wrapper {
-  padding: 12px;
-  margin-bottom: 0.5em;
+  padding: 14px 15px;
   background-color: #dbf7ff;
 }
 
 .showing-room-name > .text-chat-entries > .text-chat-scroller > .context-url-view-wrapper {
   padding-top: 0;
+  margin-bottom: 0;
 }
 
 .room-context {
@@ -1084,12 +631,6 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   height: 100%;
 }
 
-.standalone-room-wrapper > .media-layout {
-  /* 50px is the header, 3em is the footer. */
-  height: calc(100% - 50px - 3em);
-  margin: 0 10px;
-}
-
 .media-layout > .media-wrapper {
   display: flex;
   flex-flow: column wrap;
@@ -1104,7 +645,23 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   /* 100% height to fill up media-layout, thus forcing other elements into the
      second column that's 200px wide */
   height: 100%;
-  background-color: #4E4E4E;
+  background-color: #D8D8D8;
+}
+
+.media-wrapper > .local {
+  flex: 0 1 auto;
+  width: 200px;
+  height: 150px;
+}
+
+.media-wrapper > .local > .local-video,
+.media-wrapper > .focus-stream > .local > .local-video {
+  width: 100%;
+  height: 100%;
+  /* Transform is to make the local video act like a mirror, as is the
+     convention in video conferencing systems. */
+  transform: scale(-1, 1);
+  transform-origin: 50% 50% 0;
 }
 
 .media-wrapper > .remote {
@@ -1116,6 +673,13 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
 
 .media-wrapper > .remote > .remote-video {
   object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.media-wrapper > .screen > .screen-share-video {
+  width: 100%;
+  height: 100%;
 }
 
 /* Note: we can't use "display: flex;" for the text-chat-view itself,
@@ -1144,7 +708,6 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   height: calc(100% - 300px);
 }
 
-.desktop-call-wrapper > .media-layout > .media-wrapper > .text-chat-view,
 .desktop-room-wrapper > .media-layout > .media-wrapper > .text-chat-view {
   height: calc(100% - 150px);
 }
@@ -1161,14 +724,10 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   height: 100%;
 }
 
-.media-wrapper > .local {
-  flex: 0 1 auto;
-  width: 200px;
-  height: 150px;
-}
-
 .media-wrapper.receiving-screen-share > .screen {
   order: 1;
+  /* Since there is grey stuff behind us, avoid obvious letterboxing */
+  background-color: black;
 }
 
 .media-wrapper.receiving-screen-share > .text-chat-view {
@@ -1187,15 +746,6 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
 }
 
 @media screen and (max-width:640px) {
-  .media-layout-wrapper {
-    height: 100%;
-  }
-
-  .standalone-room-wrapper > .media-layout {
-    /* 50px is height of header, 38px is height of toolbar, 25px is height of footer. */
-    height: calc(100% - 50px - 38px - 25px);
-  }
-
   .media-layout > .media-wrapper {
     flex-direction: row;
     margin: 0;
@@ -1205,7 +755,7 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   .media-wrapper > .focus-stream {
     width: 100%;
     /* A reasonable height */
-    height: 70%;
+    height: 55%;
   }
 
   .media-wrapper.receiving-screen-share > .focus-stream {
@@ -1226,8 +776,8 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   }
 
   .media-wrapper > .focus-stream > .local ~ .conversation-toolbar {
-    /* 22px are the margins, 120px is for the local video area. */
-    max-width: calc(100% - 22px - 120px);
+    /* 120px is for the local video area. */
+    max-width: calc(100% - 120px);
   }
 
   .media-wrapper > .focus-stream > .local {
@@ -1237,9 +787,7 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
     z-index: 2;
     margin: 3px;
     right: 0;
-    left:auto;
-    /* 29px is (30% of 50px high header) + (height toolbar (38px) +
-       height footer (25px) - height header (50px)) */
+    left: auto;
     bottom: 0;
     width: 120px;
     height: 120px;
@@ -1281,10 +829,9 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   }
 
 
-  .desktop-call-wrapper > .media-layout > .media-wrapper > .text-chat-view,
   .desktop-room-wrapper > .media-layout > .media-wrapper > .text-chat-view {
     /* This is temp, to echo the .media-wrapper > .text-chat-view above */
-    height: 30%;
+    height: 45%;
   }
 
   .media-wrapper.receiving-screen-share > .screen {
@@ -1329,13 +876,13 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
 }
 
 /* e.g. very narrow widths similar to conversation window */
-@media screen and (max-width:300px) {
+@media screen and (max-width:350px) {
   .media-layout > .media-wrapper {
     flex-flow: column nowrap;
   }
 
   .media-wrapper > .focus-stream > .local ~ .conversation-toolbar {
-    max-width: calc(75% - 22px);
+    max-width: 75%;
   }
 
   .media-wrapper > .focus-stream > .local {
@@ -1358,6 +905,10 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
     right: auto;
   }
 
+  .screen > .no-video {
+    display: none;
+  }
+
   .media-wrapper:not(.showing-remote-streams) > .focus-stream > .no-video {
     display: none;
   }
@@ -1374,90 +925,18 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   }
 
   .media-wrapper:not(.showing-remote-streams) > .focus-stream > .local ~ .conversation-toolbar {
-    max-width: calc(100% - 22px);
+    max-width: 100%;
   }
 
   .media-wrapper > .focus-stream {
     flex: 1 1 auto;
-    height: auto;
+    /* To keep the aspect ratio of video. Update accordingly with chatbox[customSize] width */
+    height: 263px;
   }
-}
 
-.standalone > #main > .room-conversation-wrapper > .media-layout > .conversation-toolbar {
-  border: none;
-}
-
-/* Standalone rooms */
-
-.standalone .room-conversation-wrapper {
-  position: relative;
-  height: 100%;
-  background: #000;
-}
-.standalone .room-conversation-wrapper .video-layout-wrapper {
-  /* 50px = height of header, 3em = height of footer */
-  /* XXX This is currently wrong for narrow/mobile display,
-     bug 1168829  will hopefully address it. */
-  height: calc(100% - 50px - 3em);
-}
-
-.standalone .room-conversation-wrapper .room-inner-info-area {
-  color: #fff;
-  margin: auto;
-  /* 290px is the width of the widest info child, i.e., a tile */
-  width: 290px;
-}
-
-.standalone .prompt-media-message {
-  padding-top: 136px; /* Fallback for browsers that don't support calc() */
-  /* 122px is 2x the intrinsic height of the background-image, and
-     1rem puts one line of margin between the background-image and
-     supporting text. */
-  padding-top: calc(122px + 1rem);
-  color: #000;
-  background-color: #fff;
-  background-image: url("../../img/gum-others.svg");
-  background-position: top center;
-  /* The background-image is scaled up at 2x the instrinsic size
-     (witdh & height) to make it easier to see. */
-  background-size: 202px 122px;
-  background-repeat: no-repeat;
-  border: 1rem #fff solid;
-  box-shadow: 0 0 5px #000;
-  margin: auto;
-  /* `width` here is specified by the design spec. */
-  width: 250px;
-}
-
-.standalone .prompt-media-message.chrome {
-  background-image: url("../../img/gum-chrome.svg");
-}
-
-.standalone .prompt-media-message.firefox {
-  background-image: url("../../img/gum-firefox.svg");
-}
-
-.standalone .prompt-media-message.opera {
-  background-image: url("../../img/gum-opera.svg");
-}
-
-.standalone .room-conversation-wrapper .room-inner-info-area button {
-  border-radius: 3px;
-  font-size: 1.2em;
-  padding: .2em 1.2em;
-  cursor: pointer;
-}
-
-.standalone .room-conversation-wrapper .room-inner-info-area a.btn {
-  padding: .5em 3em .3em 3em;
-  border-radius: 3px;
-  font-weight: normal;
-  max-width: 400px;
-}
-
-.standalone .room-conversation-wrapper .ended-conversation {
-  position: relative;
-  height: auto;
+  .desktop-room-wrapper > .media-layout > .media-wrapper > .text-chat-view {
+    height: calc(100% - 263px);
+  }
 }
 
 /* Text chat in styles */
@@ -1477,9 +956,17 @@ body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
   align-items: flex-start;
 }
 
+.text-chat-header > p {
+  margin: 0;
+}
+
 .text-chat-entry {
   /* aligns paragraph to side where reading starts from */
   text-align: start;
+}
+
+.text-chat-scroller div:nth-child(2) {
+  margin-top: .5em;
 }
 
 /* Sent text chat entries should be on the right */
@@ -1506,8 +993,6 @@ html[dir="rtl"] .text-chat-entry.received {
   margin-right: 5px;
 }
 
-/* If you change this entry, check it doesn't affect the "special" text
-   chat entries as well (.speical, .room-name, .context-url-view-wrapper */
 .text-chat-entry > p {
   position: relative;
   z-index: 10;
@@ -1710,10 +1195,6 @@ html[dir="rtl"] .text-chat-entry.received .text-chat-arrow {
 
 @media screen and (max-width:640px) {
   /* Rooms specific responsive styling */
-  .standalone .room-conversation {
-    background: #000;
-  }
-
   .standalone .room-conversation-wrapper .room-inner-info-area {
     right: 0;
     margin: auto;
@@ -1721,8 +1202,7 @@ html[dir="rtl"] .text-chat-entry.received .text-chat-arrow {
     left: 0;
   }
   .standalone .room-conversation-wrapper .video-layout-wrapper {
-    /* 50px: header's height; 25px: footer's height */
-    height: calc(100% - 50px - 25px);
+    height: 100%;
   }
   .standalone .room-conversation .video_wrapper.remote_wrapper {
     width: 100%;
@@ -1730,24 +1210,13 @@ html[dir="rtl"] .text-chat-entry.received .text-chat-arrow {
   .standalone .room-conversation .video_wrapper.remote_wrapper.not-joined {
     width: 100%;
   }
-  .standalone .conversation .focus-stream {
-    /* Set at maximum height, minus height of conversation toolbar */
-    height: 100%;
-  }
-
-  .standalone .media.nested {
-    /* This forces the remote video stream to fit within wrapper's height */
-    min-height: 0px;
-  }
 }
 
 /* e.g. very narrow widths similar to conversation window */
-@media screen and (max-width:300px) {
+@media screen and (max-width:350px) {
   .text-chat-view {
     display: flex;
     flex-flow: column nowrap;
-    /* 120px max-height of .text-chat-entries plus 40px of .text-chat-box */
-    max-height: 160px;
     /* 60px min-height of .text-chat-entries plus 40px of .text-chat-box */
     min-height: 100px;
     height: auto;
@@ -1758,7 +1227,6 @@ html[dir="rtl"] .text-chat-entry.received .text-chat-arrow {
 
   .text-chat-entries {
     flex: 1 1 auto;
-    max-height: 120px;
     min-height: 60px;
   }
 
@@ -1808,37 +1276,6 @@ html[dir="rtl"] .text-chat-entry.received .text-chat-arrow {
     position: relative;
     top: 90px;
   }
-}
-
-.remote-video {
-  /* Since there is grey stuff behind us, avoid obvious letterboxing, only do
-   * this on remote video as local video has transparent background.
-   */
-  background-color: black;
-}
-
-.standalone .screen.focus-stream {
-  /* Since there is grey stuff behind us, avoid obvious letterboxing */
-  background-color: black;
-}
-
-.local-video {
-  width: 100%;
-  height: 100%;
-  /* Transform is to make the local video act like a mirror, as is the
-     convention in video conferencing systems. */
-  transform: scale(-1, 1);
-  transform-origin: 50% 50% 0;
-}
-
-.remote-video {
-  width: 100%;
-  height: 100%;
-}
-
-.screen-share-video {
-  width: 100%;
-  height: 100%;
 }
 
 /* Make sure the loading spinner always gets the same background */

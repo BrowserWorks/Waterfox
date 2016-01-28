@@ -75,7 +75,7 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       // Non-global lexical declarations are block-scoped (ergo not hoistable).
       // (Global lexical declarations, in addition to being irrelevant here as
       // ContainsHoistedDeclaration is only used on the arms of an |if|
-      // statement, are handled by PNK_GLOBALCONST and PNK_VAR.)
+      // statement, are handled by PNK_VAR.)
       case PNK_LET:
       case PNK_CONST:
         MOZ_ASSERT(node->isArity(PN_LIST));
@@ -114,11 +114,11 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       // Statements containing only an expression have no declarations.
       case PNK_SEMI:
       case PNK_THROW:
+      case PNK_RETURN:
         MOZ_ASSERT(node->isArity(PN_UNARY));
         *result = false;
         return true;
 
-      case PNK_RETURN:
       // These two aren't statements in the spec, but we sometimes insert them
       // in statement lists anyway.
       case PNK_YIELD_STAR:
@@ -414,12 +414,9 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       case PNK_CLASSNAMES:
       case PNK_NEWTARGET:
       case PNK_POSHOLDER:
+      case PNK_SUPERCALL:
         MOZ_CRASH("ContainsHoistedDeclaration should have indicated false on "
                   "some parent node without recurring to test this node");
-
-      case PNK_GLOBALCONST:
-        MOZ_CRASH("ContainsHoistedDeclaration is only called on nested nodes where "
-                  "globalconst nodes should never have been generated");
 
       case PNK_LIMIT: // invalid sentinel value
         MOZ_CRASH("unexpected PNK_LIMIT in node");
@@ -1265,20 +1262,12 @@ FoldReturn(ExclusiveContext* cx, ParseNode* node, Parser<FullParseHandler>& pars
            bool inGenexpLambda)
 {
     MOZ_ASSERT(node->isKind(PNK_RETURN));
-    MOZ_ASSERT(node->isArity(PN_BINARY));
+    MOZ_ASSERT(node->isArity(PN_UNARY));
 
-    if (ParseNode*& expr = node->pn_left) {
+    if (ParseNode*& expr = node->pn_kid) {
         if (!Fold(cx, &expr, parser, inGenexpLambda))
             return false;
     }
-
-#ifdef DEBUG
-    if (ParseNode* generatorSpecific = node->pn_right) {
-        MOZ_ASSERT(generatorSpecific->isKind(PNK_NAME));
-        MOZ_ASSERT(generatorSpecific->pn_atom->equals(".genrval"));
-        MOZ_ASSERT(generatorSpecific->isAssigned());
-    }
-#endif
 
     return true;
 }
@@ -1583,7 +1572,8 @@ static bool
 FoldCall(ExclusiveContext* cx, ParseNode* node, Parser<FullParseHandler>& parser,
          bool inGenexpLambda)
 {
-    MOZ_ASSERT(node->isKind(PNK_CALL) || node->isKind(PNK_TAGGED_TEMPLATE));
+    MOZ_ASSERT(node->isKind(PNK_CALL) || node->isKind(PNK_SUPERCALL) ||
+               node->isKind(PNK_TAGGED_TEMPLATE));
     MOZ_ASSERT(node->isArity(PN_LIST));
 
     // Don't fold a parenthesized callable component in an invocation, as this
@@ -1837,7 +1827,6 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
       case PNK_TEMPLATE_STRING_LIST:
       case PNK_VAR:
       case PNK_CONST:
-      case PNK_GLOBALCONST:
       case PNK_LET:
       case PNK_ARGSBODY:
       case PNK_CALLSITEOBJ:
@@ -1881,6 +1870,7 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
         return FoldAdd(cx, pnp, parser, inGenexpLambda);
 
       case PNK_CALL:
+      case PNK_SUPERCALL:
       case PNK_TAGGED_TEMPLATE:
         return FoldCall(cx, pn, parser, inGenexpLambda);
 

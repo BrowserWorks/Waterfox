@@ -694,7 +694,7 @@ public:
   DrawTarget() : mTransformDirty(false), mPermitSubpixelAA(false) {}
   virtual ~DrawTarget() {}
 
-  virtual bool IsValid() const { return true; };
+  virtual bool IsValid() const { return true; }
   virtual DrawTargetType GetType() const = 0;
 
   virtual BackendType GetBackendType() const = 0;
@@ -1269,7 +1269,7 @@ public:
 
   static bool DoesBackendSupportDataDrawtarget(BackendType aType);
 
-#ifdef XP_MACOSX
+#ifdef XP_DARWIN
   static already_AddRefed<DrawTarget> CreateDrawTargetForCairoCGContext(CGContextRef cg, const IntSize& aSize);
   static already_AddRefed<GlyphRenderingOptions>
     CreateCGGlyphRenderingOptions(const Color &aFontSmoothingBackgroundColor);

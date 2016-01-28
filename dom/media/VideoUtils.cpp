@@ -194,6 +194,23 @@ int DownmixAudioToStereo(mozilla::AudioDataValue* buffer,
   return outChannels;
 }
 
+void DownmixStereoToMono(mozilla::AudioDataValue* aBuffer,
+                         uint32_t aFrames)
+{
+  MOZ_ASSERT(aBuffer);
+  const int channels = 2;
+  for (uint32_t fIdx = 0; fIdx < aFrames; ++fIdx) {
+#ifdef MOZ_SAMPLE_TYPE_FLOAT32
+    float sample = 0.0;
+#else
+    int sample = 0;
+#endif
+    // The sample of the buffer would be interleaved.
+    sample = (aBuffer[fIdx*channels] + aBuffer[fIdx*channels + 1]) * 0.5;
+    aBuffer[fIdx*channels] = aBuffer[fIdx*channels + 1] = sample;
+  }
+}
+
 bool
 IsVideoContentType(const nsCString& aContentType)
 {
@@ -345,7 +362,7 @@ GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
 already_AddRefed<TaskQueue>
 CreateMediaDecodeTaskQueue()
 {
-  nsRefPtr<TaskQueue> queue = new TaskQueue(
+  RefPtr<TaskQueue> queue = new TaskQueue(
     GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
   return queue.forget();
 }
@@ -353,7 +370,7 @@ CreateMediaDecodeTaskQueue()
 already_AddRefed<FlushableTaskQueue>
 CreateFlushableMediaDecodeTaskQueue()
 {
-  nsRefPtr<FlushableTaskQueue> queue = new FlushableTaskQueue(
+  RefPtr<FlushableTaskQueue> queue = new FlushableTaskQueue(
     GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
   return queue.forget();
 }
@@ -375,7 +392,7 @@ SimpleTimer::Cancel() {
 
 NS_IMETHODIMP
 SimpleTimer::Notify(nsITimer *timer) {
-  nsRefPtr<SimpleTimer> deathGrip(this);
+  RefPtr<SimpleTimer> deathGrip(this);
   if (mTask) {
     mTask->Run();
     mTask = nullptr;
@@ -425,7 +442,7 @@ NS_IMPL_ISUPPORTS(SimpleTimer, nsITimerCallback)
 already_AddRefed<SimpleTimer>
 SimpleTimer::Create(nsIRunnable* aTask, uint32_t aTimeoutMs, nsIThread* aTarget)
 {
-  nsRefPtr<SimpleTimer> t(new SimpleTimer());
+  RefPtr<SimpleTimer> t(new SimpleTimer());
   if (NS_FAILED(t->Init(aTask, aTimeoutMs, aTarget))) {
     return nullptr;
   }
@@ -450,6 +467,15 @@ LogToBrowserConsole(const nsAString& aMsg)
   }
   nsAutoString msg(aMsg);
   console->LogStringMessage(msg.get());
+}
+
+bool
+IsAACCodecString(const nsAString& aCodec)
+{
+  return
+    aCodec.EqualsLiteral("mp4a.40.2") || // MPEG4 AAC-LC
+    aCodec.EqualsLiteral("mp4a.40.5") || // MPEG4 HE-AAC
+    aCodec.EqualsLiteral("mp4a.67"); // MPEG2 AAC-LC}
 }
 
 bool

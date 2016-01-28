@@ -82,9 +82,9 @@ public:
   WebCore::PeriodicWave* GetBasicWaveForm(OscillatorType aType);
 private:
   ~BasicWaveFormCache();
-  nsRefPtr<WebCore::PeriodicWave> mSawtooth;
-  nsRefPtr<WebCore::PeriodicWave> mSquare;
-  nsRefPtr<WebCore::PeriodicWave> mTriangle;
+  RefPtr<WebCore::PeriodicWave> mSawtooth;
+  RefPtr<WebCore::PeriodicWave> mSquare;
+  RefPtr<WebCore::PeriodicWave> mTriangle;
   uint32_t mSampleRate;
 };
 
@@ -105,13 +105,13 @@ public:
   NS_IMETHOD Run() override;
 
 private:
-  nsRefPtr<AudioContext> mAudioContext;
+  RefPtr<AudioContext> mAudioContext;
   void* mPromise;
-  nsRefPtr<AudioNodeStream> mAudioNodeStream;
+  RefPtr<AudioNodeStream> mAudioNodeStream;
   AudioContextState mNewState;
 };
 
-enum AudioContextOperation { Suspend, Resume, Close };
+enum class AudioContextOperation { Suspend, Resume, Close };
 
 class AudioContext final : public DOMEventTargetHelper,
                            public nsIMemoryReporter
@@ -124,7 +124,7 @@ class AudioContext final : public DOMEventTargetHelper,
                float aSampleRate = 0.0f);
   ~AudioContext();
 
-  void Init();
+  nsresult Init();
 
 public:
   typedef uint64_t AudioContextId;
@@ -304,16 +304,6 @@ public:
   void RegisterNode(AudioNode* aNode);
   void UnregisterNode(AudioNode* aNode);
 
-  double DOMTimeToStreamTime(double aTime) const
-  {
-    return aTime - ExtraCurrentTime();
-  }
-
-  double StreamTimeToDOMTime(double aTime) const
-  {
-    return aTime + ExtraCurrentTime();
-  }
-
   void OnStateChanged(void* aPromise, AudioContextState aNewState);
 
   BasicWaveFormCache* GetBasicWaveFormCache();
@@ -322,15 +312,6 @@ public:
   IMPL_EVENT_HANDLER(mozinterruptend)
 
 private:
-  /**
-   * Returns the amount of extra time added to the current time of the
-   * AudioDestinationNode's MediaStream to get this AudioContext's currentTime.
-   * Must be subtracted from all DOM API parameter times that are on the same
-   * timeline as AudioContext's currentTime to get times we can pass to the
-   * MediaStreamGraph.
-   */
-  double ExtraCurrentTime() const;
-
   void RemoveFromDecodeQueue(WebAudioDecodeJob* aDecodeJob);
   void ShutdownDecoder();
 
@@ -353,12 +334,12 @@ private:
   // mDestination, as mDestination's constructor needs to access it!
   const float mSampleRate;
   AudioContextState mAudioContextState;
-  nsRefPtr<AudioDestinationNode> mDestination;
-  nsRefPtr<AudioListener> mListener;
-  nsTArray<nsRefPtr<WebAudioDecodeJob> > mDecodeJobs;
+  RefPtr<AudioDestinationNode> mDestination;
+  RefPtr<AudioListener> mListener;
+  nsTArray<RefPtr<WebAudioDecodeJob> > mDecodeJobs;
   // This array is used to keep the suspend/resume/close promises alive until
   // they are resolved, so we can safely pass them accross threads.
-  nsTArray<nsRefPtr<Promise>> mPromiseGripArray;
+  nsTArray<RefPtr<Promise>> mPromiseGripArray;
   // See RegisterActiveNode.  These will keep the AudioContext alive while it
   // is rendering and the window remains alive.
   nsTHashtable<nsRefPtrHashKey<AudioNode> > mActiveNodes;
@@ -368,7 +349,7 @@ private:
   // These are weak pointers.
   nsTHashtable<nsPtrHashKey<PannerNode> > mPannerNodes;
   // Cache to avoid recomputing basic waveforms all the time.
-  nsRefPtr<BasicWaveFormCache> mBasicWaveFormCache;
+  RefPtr<BasicWaveFormCache> mBasicWaveFormCache;
   // Number of channels passed in the OfflineAudioContext ctor.
   uint32_t mNumberOfChannels;
   bool mIsOffline;

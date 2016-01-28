@@ -293,7 +293,7 @@ nsDOMCSSDeclaration::GetCSSParsingEnvironmentForRule(css::Rule* aRule,
                                                      CSSParsingEnvironment& aCSSParseEnv)
 {
   nsIStyleSheet* sheet = aRule ? aRule->GetStyleSheet() : nullptr;
-  nsRefPtr<CSSStyleSheet> cssSheet(do_QueryObject(sheet));
+  RefPtr<CSSStyleSheet> cssSheet(do_QueryObject(sheet));
   if (!cssSheet) {
     aCSSParseEnv.mPrincipal = nullptr;
     return;
@@ -431,12 +431,4 @@ nsDOMCSSDeclaration::RemoveCustomProperty(const nsAString& aPropertyName)
   decl->RemoveVariableDeclaration(Substring(aPropertyName,
                                             CSS_CUSTOM_NAME_PREFIX_LENGTH));
   return SetCSSDeclaration(decl);
-}
-
-bool IsCSSPropertyExposedToJS(nsCSSProperty aProperty, JSContext* cx, JSObject* obj)
-{
-  MOZ_ASSERT_UNREACHABLE("This is currently not used anywhere, "
-                         "but should be reused soon in bug 1069192");
-  nsCSSProps::EnabledState enabledState = nsCSSProps::eEnabledForAllContent;
-  return nsCSSProps::IsEnabled(aProperty, enabledState);
 }

@@ -44,9 +44,13 @@ UNIFIED_SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
+    '/docshell/base',
     '/dom/base',
     '/js/xpconnect/src',
 ]
+
+if CONFIG['ENABLE_TESTS']:
+    DIRS += ['tests/gtest']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

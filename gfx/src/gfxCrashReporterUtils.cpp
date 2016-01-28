@@ -78,10 +78,26 @@ public:
     nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
     if (!observerService)
       return NS_OK;
-    nsRefPtr<ObserverToDestroyFeaturesAlreadyReported> observer = new ObserverToDestroyFeaturesAlreadyReported;
+    RefPtr<ObserverToDestroyFeaturesAlreadyReported> observer = new ObserverToDestroyFeaturesAlreadyReported;
     observerService->AddObserver(observer, "xpcom-shutdown", false);
     return NS_OK;
   }
+};
+
+class AppendAppNotesRunnable : public nsCancelableRunnable {
+public:
+  explicit AppendAppNotesRunnable(nsAutoCString aFeatureStr)
+    : mFeatureString(aFeatureStr)
+  {
+  }
+
+  NS_IMETHOD Run() override {
+    CrashReporter::AppendAppNotesToCrashReport(mFeatureString);
+    return NS_OK;
+  }
+
+private:
+  nsCString mFeatureString;
 };
 
 void
@@ -102,7 +118,8 @@ ScopedGfxFeatureReporter::WriteAppNote(char statusChar)
 
   if (!gFeaturesAlreadyReported->Contains(featureString)) {
     gFeaturesAlreadyReported->AppendElement(featureString);
-    CrashReporter::AppendAppNotesToCrashReport(featureString);
+    nsCOMPtr<nsIRunnable> r = new AppendAppNotesRunnable(featureString);
+    NS_DispatchToMainThread(r);
   }
 }
 

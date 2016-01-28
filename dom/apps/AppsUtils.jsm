@@ -130,6 +130,7 @@ function _setAppProperties(aObj, aApp) {
   aObj.kind = aApp.kind;
   aObj.enabled = aApp.enabled !== undefined ? aApp.enabled : true;
   aObj.sideloaded = aApp.sideloaded;
+  aObj.extensionVersion = aApp.extensionVersion;
 #ifdef MOZ_B2GDROID
   aObj.android_packagename = aApp.android_packagename;
   aObj.android_classname = aApp.android_classname;
@@ -151,6 +152,10 @@ this.AppsUtils = {
        topWindow : null,
        appId: aAppId,
        isInBrowserElement: aIsBrowser,
+       originAttributes: {
+         appId: aAppId,
+         inBrowser: aIsBrowser
+       },
        usePrivateBrowsing: false,
        isContent: false,
 
@@ -291,7 +296,7 @@ this.AppsUtils = {
     for (let id in aApps) {
       let app = aApps[id];
       if (app.localId == aLocalId) {
-        // Use the app kind and the app status to choose the right default CSP.
+        // Use the app status to choose the right default CSP.
         try {
           switch (app.appStatus) {
             case Ci.nsIPrincipal.APP_STATUS_CERTIFIED:

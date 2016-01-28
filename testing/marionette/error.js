@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {results: Cr, utils: Cu} = Components;
+var {results: Cr, utils: Cu} = Components;
 
 const errors = [
   "ElementNotAccessibleError",
@@ -207,6 +207,7 @@ this.JavaScriptError = function(err, fnName, file, line, script) {
         "inline javascript, line " + jsLine + "\n" +
         "src: \"" + src + "\"";
     }
+    trace += "\nStack:\n" + String(err.stack);
   }
 
   WebDriverError.call(this, msg);

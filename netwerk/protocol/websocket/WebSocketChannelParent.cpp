@@ -26,10 +26,12 @@ NS_IMPL_ISUPPORTS(WebSocketChannelParent,
 
 WebSocketChannelParent::WebSocketChannelParent(nsIAuthPromptProvider* aAuthProvider,
                                                nsILoadContext* aLoadContext,
-                                               PBOverrideStatus aOverrideStatus)
+                                               PBOverrideStatus aOverrideStatus,
+                                               uint32_t aSerial)
   : mAuthProvider(aAuthProvider)
   , mLoadContext(aLoadContext)
   , mIPCOpen(true)
+  , mSerial(aSerial)
 {
   // Websocket channels can't have a private browsing override
   MOZ_ASSERT_IF(!aLoadContext, aOverrideStatus == kPBOverride_Unset);
@@ -60,6 +62,7 @@ WebSocketChannelParent::RecvDeleteSelf()
 bool
 WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
                                       const nsCString& aOrigin,
+                                      const uint64_t& aInnerWindowID,
                                       const nsCString& aProtocol,
                                       const bool& aSecure,
                                       const uint32_t& aPingInterval,
@@ -93,6 +96,11 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
   }
   if (NS_FAILED(rv))
     goto fail;
+
+  rv = mChannel->SetSerial(mSerial);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    goto fail;
+  }
 
   rv = LoadInfoArgsToLoadInfo(aLoadInfoArgs, getter_AddRefs(loadInfo));
   if (NS_FAILED(rv))
@@ -128,7 +136,7 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
     mChannel->SetPingTimeout(aPingTimeout / 1000);
   }
 
-  rv = mChannel->AsyncOpen(uri, aOrigin, this, nullptr);
+  rv = mChannel->AsyncOpen(uri, aOrigin, aInnerWindowID, this, nullptr);
   if (NS_FAILED(rv))
     goto fail;
 
@@ -205,7 +213,7 @@ WebSocketChannelParent::OnStart(nsISupports *aContext)
     mChannel->GetProtocol(protocol);
     mChannel->GetExtensions(extensions);
 
-    nsRefPtr<WebSocketChannel> channel;
+    RefPtr<WebSocketChannel> channel;
     channel = static_cast<WebSocketChannel*>(mChannel.get());
     MOZ_ASSERT(channel);
 

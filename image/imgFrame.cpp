@@ -237,7 +237,7 @@ nsresult
 imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
                            const nsIntSize& aSize,
                            const SurfaceFormat aFormat,
-                           GraphicsFilter aFilter,
+                           Filter aFilter,
                            uint32_t aImageFlags)
 {
   // Assert for properties that should be verified by decoders,
@@ -302,7 +302,7 @@ imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
 
   // Draw using the drawable the caller provided.
   nsIntRect imageRect(0, 0, mSize.width, mSize.height);
-  nsRefPtr<gfxContext> ctx = new gfxContext(target);
+  RefPtr<gfxContext> ctx = new gfxContext(target);
   gfxUtils::DrawPixelSnapped(ctx, aDrawable, mSize,
                              ImageRegion::Create(imageRect),
                              mFormat, aFilter, aImageFlags);
@@ -396,7 +396,7 @@ imgFrame::Optimize()
     ->Optimal2DFormatForContent(gfxContentType::COLOR);
 
   if (mFormat != SurfaceFormat::B8G8R8A8 &&
-      optFormat == SurfaceFormat::R5G6B5) {
+      optFormat == SurfaceFormat::R5G6B5_UINT16) {
     RefPtr<VolatileBuffer> buf =
       AllocateBufferForImage(mSize, optFormat);
     if (!buf) {
@@ -539,13 +539,13 @@ imgFrame::SurfaceForDrawing(bool               aDoPadding,
   aContext->Multiply(gfxMatrix::Translation(paddingTopLeft));
   aImageRect = gfxRect(0, 0, mSize.width, mSize.height);
 
-  gfxIntSize availableSize(mDecoded.width, mDecoded.height);
+  IntSize availableSize(mDecoded.width, mDecoded.height);
   return SurfaceWithFormat(new gfxSurfaceDrawable(aSurface, availableSize),
                            mFormat);
 }
 
 bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
-                    GraphicsFilter aFilter, uint32_t aImageFlags)
+                    Filter aFilter, uint32_t aImageFlags)
 {
   PROFILER_LABEL("imgFrame", "Draw",
     js::ProfileEntry::Category::GRAPHICS);
@@ -574,8 +574,7 @@ bool imgFrame::Draw(gfxContext* aContext, const ImageRegion& aRegion,
     RefPtr<DrawTarget> dt = aContext->GetDrawTarget();
     dt->FillRect(ToRect(aRegion.Rect()),
                  ColorPattern(mSinglePixelColor),
-                 DrawOptions(1.0f,
-                             CompositionOpForOp(aContext->CurrentOperator())));
+                 DrawOptions(1.0f, aContext->CurrentOp()));
     return true;
   }
 
@@ -821,7 +820,7 @@ public:
   NS_IMETHOD Run() { return mTarget->UnlockImageData(); }
 
 private:
-  nsRefPtr<imgFrame> mTarget;
+  RefPtr<imgFrame> mTarget;
 };
 
 nsresult

@@ -308,9 +308,11 @@ public:
   virtual const SizeConstraints& GetSizeConstraints() const override;
   virtual void SetSizeConstraints(const SizeConstraints& aConstraints) override;
 
-  virtual bool CaptureWidgetOnScreen(mozilla::RefPtr<mozilla::gfx::DrawTarget> aDT) override {
+  virtual bool CaptureWidgetOnScreen(RefPtr<mozilla::gfx::DrawTarget> aDT) override {
     return false;
   }
+
+  virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
   /**
    * Use this when GetLayerManager() returns a BasicLayerManager
@@ -330,7 +332,7 @@ public:
     ~AutoLayerManagerSetup();
   private:
     nsBaseWidget* mWidget;
-    nsRefPtr<BasicLayerManager> mLayerManager;
+    RefPtr<BasicLayerManager> mLayerManager;
   };
   friend class AutoLayerManagerSetup;
 
@@ -471,6 +473,7 @@ protected:
    * Notify the widget that this window is being used with OMTC.
    */
   virtual void WindowUsesOMTC() {}
+  virtual void RegisterTouchWindow() {}
 
   nsIDocument* GetDocument() const;
 
@@ -492,15 +495,15 @@ protected:
   nsIWidgetListener* mWidgetListener;
   nsIWidgetListener* mAttachedWidgetListener;
   nsIWidgetListener* mPreviouslyAttachedWidgetListener;
-  nsRefPtr<LayerManager> mLayerManager;
-  nsRefPtr<CompositorChild> mCompositorChild;
-  nsRefPtr<CompositorParent> mCompositorParent;
-  nsRefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
-  nsRefPtr<APZCTreeManager> mAPZC;
-  nsRefPtr<APZEventState> mAPZEventState;
+  RefPtr<LayerManager> mLayerManager;
+  RefPtr<CompositorChild> mCompositorChild;
+  RefPtr<CompositorParent> mCompositorParent;
+  RefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
+  RefPtr<APZCTreeManager> mAPZC;
+  RefPtr<APZEventState> mAPZEventState;
   SetAllowedTouchBehaviorCallback mSetAllowedTouchBehaviorCallback;
-  nsRefPtr<WidgetShutdownObserver> mShutdownObserver;
-  nsRefPtr<TextEventDispatcher> mTextEventDispatcher;
+  RefPtr<WidgetShutdownObserver> mShutdownObserver;
+  RefPtr<TextEventDispatcher> mTextEventDispatcher;
   nsCursor          mCursor;
   nsBorderStyle     mBorderStyle;
   nsIntRect         mBounds;
@@ -522,6 +525,21 @@ protected:
   // the last rolled up popup. Only set this when an nsAutoRollup is in scope,
   // so it can be cleared automatically.
   static nsIContent* mLastRollup;
+
+  struct InitialZoomConstraints {
+    InitialZoomConstraints(const uint32_t& aPresShellID,
+                           const FrameMetrics::ViewID& aViewID,
+                           const ZoomConstraints& aConstraints)
+      : mPresShellID(aPresShellID), mViewID(aViewID), mConstraints(aConstraints)
+    {
+    }
+
+    uint32_t mPresShellID;
+    FrameMetrics::ViewID mViewID;
+    ZoomConstraints mConstraints;
+  };
+
+  mozilla::Maybe<InitialZoomConstraints> mInitialZoomConstraints;
 
 #ifdef DEBUG
 protected:

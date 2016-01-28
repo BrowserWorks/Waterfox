@@ -520,16 +520,6 @@ js::obj_hasOwnProperty(JSContext* cx, unsigned argc, Value* vp)
     jsid id;
     if (args.thisv().isObject() && ValueToId<NoGC>(cx, idValue, &id)) {
         JSObject* obj = &args.thisv().toObject();
-
-#ifndef RELEASE_BUILD
-        if (obj->is<RegExpObject>() && id == NameToId(cx->names().source)) {
-            if (JSScript* script = cx->currentScript()) {
-                const char* filename = script->filename();
-                cx->compartment()->addTelemetry(filename, JSCompartment::RegExpSourceProperty);
-            }
-        }
-#endif
-
         Shape* prop;
         if (obj->isNative() &&
             NativeLookupOwnProperty<NoGC>(cx, &obj->as<NativeObject>(), id, &prop))
@@ -1056,6 +1046,13 @@ CreateObjectPrototype(JSContext* cx, JSProtoKey key)
     if (!objectProto)
         return nullptr;
 
+    bool succeeded;
+    if (!SetImmutablePrototype(cx, objectProto, &succeeded))
+        return nullptr;
+    MOZ_ASSERT(succeeded,
+               "should have been able to make a fresh Object.prototype's "
+               "[[Prototype]] immutable");
+
     /*
      * The default 'new' type of Object.prototype is required by type inference
      * to have unknown properties, to simplify handling of e.g. heterogenous
@@ -1121,7 +1118,6 @@ const Class PlainObject::class_ = {
     nullptr,  /* enumerate */
     nullptr,  /* resolve */
     nullptr,  /* mayResolve */
-    nullptr,  /* convert */
     nullptr,  /* finalize */
     nullptr,  /* call */
     nullptr,  /* hasInstance */

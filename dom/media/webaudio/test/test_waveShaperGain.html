@@ -10,41 +10,40 @@
 <body>
 <script class="testbody" type="text/javascript">
 SimpleTest.waitForExplicitFinish();
-var ac = new AudioContext();
+var samplerate = 44100;
+var context = new OfflineAudioContext(1, 44100, samplerate);
 
-var osc = ac.createOscillator();
-var gain = ac.createGain();
-var ws = ac.createWaveShaper();
-var sp = ac.createScriptProcessor();
+var dc = context.createBufferSource();
 
-// No-op waveshaper curve.
-var curve = new Float32Array(2);
-curve[0] = -1.0;
-curve[1] = 1.0;
-ws.curve = curve;
+var buffer = context.createBuffer(1, 1, samplerate);
+buffer.getChannelData(0)[0] = 1.0;
+dc.buffer = buffer;
 
-osc.connect(gain);
-gain.connect(ws);
-gain.connect(sp);
+var gain = context.createGain();
+var ws2 = context.createWaveShaper();
+var ws = [];
+
+// No-op waveshaper curves.
+for (var i = 0; i < 2; i++) {
+  ws[i] = context.createWaveShaper();
+  var curve = new Float32Array(2);
+  curve[0] = -1.0;
+  curve[1] = 1.0;
+  ws[i].curve = curve;
+  ws[i].connect(context.destination);
+  gain.connect(ws[i]);
+}
+
+dc.connect(gain);
+dc.start();
 
 gain.gain.value = 0.5;
 
-sp.onaudioprocess = function(e) {
-  var inputBuffer = e.inputBuffer.getChannelData(0);
-  // Check the max amplitude. With a gain of 0.5, it should be peaking at
-  // roughtly 0.5.
-  var max = -Infinity;
-  for (var i = 0; i < inputBuffer.length; i++) {
-    max = Math.max(inputBuffer[i], max);
-  }
-  if (max > 0.49) {
-    ok(true, "Volume was handled properly.");
-    sp.onaudioprocess = null;
-    SimpleTest.finish();
-  }
-}
-
-osc.start();
+context.startRendering().then(buffer => {
+  document.querySelector("pre").innerHTML = buffer.getChannelData(0)[0];
+  ok(buffer.getChannelData(0)[0] == 1.0, "Volume was handled properly");
+  SimpleTest.finish();
+});
 </script>
 <pre>
 </pre>

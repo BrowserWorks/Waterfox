@@ -145,7 +145,7 @@ MacOSFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         return NS_OK;
     }
 
-    nsRefPtr<gfxCharacterMap> charmap;
+    RefPtr<gfxCharacterMap> charmap;
     nsresult rv;
     bool symbolFont = false; // currently ignored
 
@@ -268,7 +268,7 @@ MacOSFontEntry::MacOSFontEntry(const nsAString& aPostscriptName,
 MacOSFontEntry::MacOSFontEntry(const nsAString& aPostscriptName,
                                CGFontRef aFontRef,
                                uint16_t aWeight, uint16_t aStretch,
-                               uint32_t aItalicStyle,
+                               uint8_t aStyle,
                                bool aIsDataUserFont,
                                bool aIsLocalUserFont)
     : gfxFontEntry(aPostscriptName, false),
@@ -285,7 +285,7 @@ MacOSFontEntry::MacOSFontEntry(const nsAString& aPostscriptName,
     mWeight = aWeight;
     mStretch = aStretch;
     mFixedPitch = false; // xxx - do we need this for downloaded fonts?
-    mItalic = (aItalicStyle & (NS_FONT_STYLE_ITALIC | NS_FONT_STYLE_OBLIQUE)) != 0;
+    mStyle = aStyle;
 
     NS_ASSERTION(!(aIsDataUserFont && aIsLocalUserFont),
                  "userfont is either a data font or a local font");
@@ -523,7 +523,7 @@ gfxMacFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
             [facename hasSuffix:@"Italic"] ||
             [facename hasSuffix:@"Oblique"])
         {
-            fontEntry->mItalic = true;
+            fontEntry->mStyle = NS_FONT_STYLE_ITALIC;
         }
         if (macTraits & NSFixedPitchFontMask) {
             fontEntry->mFixedPitch = true;
@@ -1009,7 +1009,7 @@ gfxFontEntry*
 gfxMacPlatformFontList::LookupLocalFont(const nsAString& aFontName,
                                         uint16_t aWeight,
                                         int16_t aStretch,
-                                        bool aItalic)
+                                        uint8_t aStyle)
 {
     nsAutoreleasePool localPool;
 
@@ -1026,10 +1026,7 @@ gfxMacPlatformFontList::LookupLocalFont(const nsAString& aFontName,
                  "bogus font weight value!");
 
     newFontEntry =
-        new MacOSFontEntry(aFontName, fontRef,
-                           aWeight, aStretch,
-                           aItalic ?
-                               NS_FONT_STYLE_ITALIC : NS_FONT_STYLE_NORMAL,
+        new MacOSFontEntry(aFontName, fontRef, aWeight, aStretch, aStyle,
                            false, true);
     ::CFRelease(fontRef);
 
@@ -1045,7 +1042,7 @@ gfxFontEntry*
 gfxMacPlatformFontList::MakePlatformFont(const nsAString& aFontName,
                                          uint16_t aWeight,
                                          int16_t aStretch,
-                                         bool aItalic,
+                                         uint8_t aStyle,
                                          const uint8_t* aFontData,
                                          uint32_t aLength)
 {
@@ -1073,11 +1070,7 @@ gfxMacPlatformFontList::MakePlatformFont(const nsAString& aFontName,
 
     nsAutoPtr<MacOSFontEntry>
         newFontEntry(new MacOSFontEntry(uniqueName, fontRef, aWeight,
-                                        aStretch,
-                                        aItalic ?
-                                            NS_FONT_STYLE_ITALIC :
-                                            NS_FONT_STYLE_NORMAL,
-                                        true, false));
+                                        aStretch, aStyle, true, false));
     ::CFRelease(fontRef);
 
     // if succeeded and font cmap is good, return the new font
@@ -1099,8 +1092,7 @@ gfxMacPlatformFontList::MakePlatformFont(const nsAString& aFontName,
 static const char kSystemFont_system[] = "-apple-system";
 
 gfxFontFamily*
-gfxMacPlatformFontList::FindFamilyWithStyle(const nsAString& aFamily,
-                                            gfxFontStyle* aStyle)
+gfxMacPlatformFontList::FindFamily(const nsAString& aFamily, gfxFontStyle* aStyle)
 {
     // search for special system font name, -apple-system
     if (aFamily.EqualsLiteral(kSystemFont_system)) {
@@ -1111,7 +1103,7 @@ gfxMacPlatformFontList::FindFamilyWithStyle(const nsAString& aFamily,
         return mSystemTextFontFamily;
     }
 
-    return gfxPlatformFontList::FindFamilyWithStyle(aFamily, aStyle);
+    return gfxPlatformFontList::FindFamily(aFamily, aStyle);
 }
 
 void
@@ -1272,7 +1264,7 @@ MacFontInfo::LoadFontFamilyData(const nsAString& aFamilyName)
                 const uint8_t *cmapData =
                     (const uint8_t*)CFDataGetBytePtr(cmapTable);
                 uint32_t cmapLen = CFDataGetLength(cmapTable);
-                nsRefPtr<gfxCharacterMap> charmap = new gfxCharacterMap();
+                RefPtr<gfxCharacterMap> charmap = new gfxCharacterMap();
                 uint32_t offset;
                 bool unicodeFont = false; // ignored
                 bool symbolFont = false;
@@ -1326,7 +1318,7 @@ gfxMacPlatformFontList::CreateFontInfoData()
     bool loadCmaps = !UsesSystemFallback() ||
         gfxPlatform::GetPlatform()->UseCmapsDuringSystemFallback();
 
-    nsRefPtr<MacFontInfo> fi =
+    RefPtr<MacFontInfo> fi =
         new MacFontInfo(true, NeedFullnamePostscriptNames(), loadCmaps);
     return fi.forget();
 }

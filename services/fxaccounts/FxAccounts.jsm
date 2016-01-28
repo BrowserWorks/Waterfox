@@ -88,7 +88,9 @@ AccountState.prototype = {
   whenKeysReadyDeferred: null,
 
   // If the storage manager has been nuked then we are no longer current.
-  get isCurrent() this.storageManager != null,
+  get isCurrent() {
+    return this.storageManager != null;
+  },
 
   abort() {
     if (this.whenVerifiedDeferred) {
@@ -651,7 +653,10 @@ FxAccountsInternal.prototype = {
   },
 
   _signOutServer: function signOutServer(sessionToken) {
-    return this.fxAccountsClient.signOut(sessionToken);
+    // For now we assume the service being logged out from is Sync - we might
+    // need to revisit this when this FxA code is used in a context that
+    // isn't Sync.
+    return this.fxAccountsClient.signOut(sessionToken, {service: "sync"});
   },
 
   /**

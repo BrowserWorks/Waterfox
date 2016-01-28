@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -76,7 +76,7 @@ function initApp() {
 
 function AsyncRunner() {
   do_test_pending();
-  do_register_cleanup((function () this.destroy()).bind(this));
+  do_register_cleanup(() => this.destroy());
 
   this._callbacks = {
     done: do_test_finished,

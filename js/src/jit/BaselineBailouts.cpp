@@ -706,14 +706,14 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
                 }
             } else {
                 // For global scripts without a non-syntactic scope the scope
-                // chain is the script's global (Ion does not compile scripts
-                // with a non-syntactic global scope). Also note that it's
-                // invalid to resume into the prologue in this case because
-                // the prologue expects the scope chain in R1 for eval and
-                // global scripts.
+                // chain is the script's global lexical scope (Ion does not
+                // compile scripts with a non-syntactic global scope). Also
+                // note that it's invalid to resume into the prologue in this
+                // case because the prologue expects the scope chain in R1 for
+                // eval and global scripts.
                 MOZ_ASSERT(!script->isForEval());
                 MOZ_ASSERT(!script->hasNonSyntacticScope());
-                scopeChain = &(script->global());
+                scopeChain = &(script->global().lexicalScope());
             }
         }
 
@@ -980,7 +980,7 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
 #endif
 
     bool pushedNewTarget = op == JSOP_NEW;
-    
+
     // If this was the last inline frame, or we are bailing out to a catch or
     // finally block in this frame, then unpacking is almost done.
     if (!iter.moreFrames() || catchingException) {
@@ -1877,6 +1877,8 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo* bailoutInfo)
       case Bailout_NonSimdFloat32x4Input:
       case Bailout_InitialState:
       case Bailout_Debugger:
+      case Bailout_UninitializedThis:
+      case Bailout_BadDerivedConstructorReturn:
         // Do nothing.
         break;
 

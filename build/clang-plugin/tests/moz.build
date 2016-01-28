@@ -24,8 +24,10 @@ SOURCES += [
     'TestNoExplicitMoveConstructor.cpp',
     'TestNonHeapClass.cpp',
     'TestNonMemMovable.cpp',
+    'TestNonMemMovableStd.cpp',
     'TestNonTemporaryClass.cpp',
     'TestNoRefcountedInsideLambdas.cpp',
+    'TestRefCountedCopyConstructor.cpp',
     'TestStackClass.cpp',
     'TestTrivialCtorDtor.cpp',
 ]

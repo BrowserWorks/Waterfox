@@ -54,15 +54,21 @@ public:
   static const int DEFAULT_169_VIDEO_HEIGHT = 720;
   static const int DEFAULT_AUDIO_TIMER_MS = 10;
 
+#ifndef MOZ_B2G
+  static const int DEFAULT_SAMPLE_RATE = 32000;
+#else
+  static const int DEFAULT_SAMPLE_RATE = 16000;
+#endif
+
   /* Populate an array of video sources in the nsTArray. Also include devices
    * that are currently unavailable. */
   virtual void EnumerateVideoDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineVideoSource> >*) = 0;
+                                     nsTArray<RefPtr<MediaEngineVideoSource> >*) = 0;
 
   /* Populate an array of audio sources in the nsTArray. Also include devices
    * that are currently unavailable. */
   virtual void EnumerateAudioDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineAudioSource> >*) = 0;
+                                     nsTArray<RefPtr<MediaEngineAudioSource> >*) = 0;
 
   virtual void Shutdown() = 0;
 
@@ -182,9 +188,21 @@ protected:
   // Only class' own members can be initialized in constructor initializer list.
   explicit MediaEngineSource(MediaEngineState aState)
     : mState(aState)
+#ifdef DEBUG
+    , mOwningThread(PR_GetCurrentThread())
+#endif
     , mHasFakeTracks(false)
   {}
+
+  void AssertIsOnOwningThread()
+  {
+    MOZ_ASSERT(PR_GetCurrentThread() == mOwningThread);
+  }
+
   MediaEngineState mState;
+#ifdef DEBUG
+  PRThread* mOwningThread;
+#endif
   bool mHasFakeTracks;
 };
 
@@ -197,6 +215,7 @@ public:
   int32_t mHeight;
   int32_t mFPS;
   int32_t mMinFPS;
+  int32_t mFreq; // for test tones (fake:true)
 
   // mWidth and/or mHeight may be zero (=adaptive default), so use functions.
 

@@ -63,7 +63,7 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic) override;
+                                          uint8_t aStyle) override;
 
     /**
      * Activate a platform font (needed to support @font-face src url() )
@@ -72,7 +72,7 @@ public:
     virtual gfxFontEntry* MakePlatformFont(const nsAString& aFontName,
                                            uint16_t aWeight,
                                            int16_t aStretch,
-                                           bool aItalic,
+                                           uint8_t aStyle,
                                            const uint8_t* aFontData,
                                            uint32_t aLength) override;
 
@@ -99,8 +99,8 @@ public:
 
     bool UseXRender() {
 #if defined(MOZ_X11)
-        if (GetContentBackend() != mozilla::gfx::BackendType::NONE &&
-            GetContentBackend() != mozilla::gfx::BackendType::CAIRO)
+        if (GetDefaultContentBackend() != mozilla::gfx::BackendType::NONE &&
+            GetDefaultContentBackend() != mozilla::gfx::BackendType::CAIRO)
             return false;
 
         return sUseXRender;
@@ -122,14 +122,19 @@ public:
 
     virtual gfxImageFormat GetOffscreenFormat() override;
 
-    virtual int GetScreenDepth() const override;
-
     bool SupportsApzWheelInput() const override {
       return true;
     }
 
+    void FontsPrefsChanged(const char *aPref) override;
+
+    // maximum number of fonts to substitute for a generic
+    uint32_t MaxGenericSubstitions();
+
 protected:
     static gfxFontconfigUtils *sFontconfigUtils;
+
+    int8_t mMaxGenericSubstitutions;
 
 private:
     virtual void GetPlatformCMSOutputProfile(void *&mem,

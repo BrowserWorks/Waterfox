@@ -134,7 +134,7 @@ var handleContentContextMenu = function (event) {
         Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools)
                                         .getImgCacheForDocument(doc);
       let props =
-        imageCache.findEntryProperties(event.target.currentURI);
+        imageCache.findEntryProperties(event.target.currentURI, doc);
       try {
         contentType = props.get("type", Ci.nsISupportsCString).data;
       } catch(e) {}
@@ -213,6 +213,7 @@ var AboutNetErrorListener = {
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSendReport', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorUIExpanded', this, false, true);
+    chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
   },
 
   get isAboutNetError() {
@@ -237,6 +238,9 @@ var AboutNetErrorListener = {
     case "AboutNetErrorUIExpanded":
       sendAsyncMessage("Browser:SSLErrorReportTelemetry",
                        {reportStatus: TLS_ERROR_REPORT_TELEMETRY_EXPANDED});
+      break;
+    case "AboutNetErrorOverride":
+      this.onOverride(aEvent);
       break;
     }
   },
@@ -330,6 +334,16 @@ var AboutNetErrorListener = {
         location: {hostname: contentDoc.location.hostname, port: contentDoc.location.port},
         securityInfo: serializedSecurityInfo
       });
+  },
+
+  onOverride: function(evt) {
+    let contentDoc = content.document;
+    let location = contentDoc.location;
+
+    sendAsyncMessage("Browser:OverrideWeakCrypto", {
+      documentURI: contentDoc.documentURI,
+      location: {hostname: location.hostname, port: location.port}
+    });
   }
 }
 
@@ -366,7 +380,7 @@ var ClickEventHandler = {
       return;
     }
 
-    let [href, node] = this._hrefAndLinkNodeForClickEvent(event);
+    let [href, node, principal] = this._hrefAndLinkNodeForClickEvent(event);
 
     // get referrer attribute from clicked link and parse it
     // if per element referrer is enabled, the element referrer overrules
@@ -388,7 +402,7 @@ var ClickEventHandler = {
 
     if (href) {
       try {
-        BrowserUtils.urlSecurityCheck(href, node.ownerDocument.nodePrincipal);
+        BrowserUtils.urlSecurityCheck(href, principal);
       } catch (e) {
         return;
       }
@@ -474,10 +488,11 @@ var ClickEventHandler = {
    *
    * @param event
    *        The click event.
-   * @return [href, linkNode].
+   * @return [href, linkNode, linkPrincipal].
    *
    * @note linkNode will be null if the click wasn't on an anchor
-   *       element (or XLink).
+   *       element. This includes SVG links, because callers expect |node|
+   *       to behave like an <a> element, which SVG links (XLink) don't.
    */
   _hrefAndLinkNodeForClickEvent: function(event) {
     function isHTMLLink(aNode) {
@@ -493,7 +508,7 @@ var ClickEventHandler = {
     }
 
     if (node)
-      return [node.href, node];
+      return [node.href, node, node.ownerDocument.nodePrincipal];
 
     // If there is no linkNode, try simple XLink.
     let href, baseURI;
@@ -501,8 +516,10 @@ var ClickEventHandler = {
     while (node && !href) {
       if (node.nodeType == content.Node.ELEMENT_NODE) {
         href = node.getAttributeNS("http://www.w3.org/1999/xlink", "href");
-        if (href)
+        if (href) {
           baseURI = node.ownerDocument.baseURIObject;
+          break;
+        }
       }
       node = node.parentNode;
     }
@@ -510,7 +527,8 @@ var ClickEventHandler = {
     // In case of XLink, we don't return the node we got href from since
     // callers expect <a>-like elements.
     // Note: makeURI() will throw if aUri is not a valid URI.
-    return [href ? BrowserUtils.makeURI(href, null, baseURI).spec : null, null];
+    return [href ? BrowserUtils.makeURI(href, null, baseURI).spec : null, null,
+            node && node.ownerDocument.nodePrincipal];
   }
 };
 ClickEventHandler.init();
@@ -753,6 +771,14 @@ addMessageListener("ContextMenu:SearchFieldBookmarkData", (message) => {
                    { spec, title, description, postData, charset });
 });
 
+addMessageListener("Bookmarks:GetPageDetails", (message) => {
+  let doc = content.document;
+  let isErrorPage = /^about:(neterror|certerror|blocked)/.test(doc.documentURI);
+  sendAsyncMessage("Bookmarks:GetPageDetails:Result",
+                   { isErrorPage: isErrorPage,
+                     description: PlacesUIUtils.getDescriptionFromDocument(doc) });
+});
+
 var LightWeightThemeWebInstallListener = {
   _previewWindow: null,
 
@@ -948,7 +974,7 @@ var PageInfoListener = {
       let rels = {};
 
       if (rel) {
-        for each (let relVal in rel.split(/\s+/)) {
+        for (let relVal of rel.split(/\s+/)) {
           rels[relVal] = true;
         }
       }
@@ -1096,9 +1122,6 @@ var PageInfoListener = {
 
   serializeElementInfo: function(document, url, type, alt, item, isBG)
   {
-    // Interface for image loading content.
-    const nsIImageLoadingContent = Components.interfaces.nsIImageLoadingContent;
-
     let result = {};
 
     let imageText;
@@ -1122,10 +1145,9 @@ var PageInfoListener = {
       result.mimeType = item.type;
     }
 
-    if (!result.mimeType && !isBG && item instanceof nsIImageLoadingContent) {
+    if (!result.mimeType && !isBG && item instanceof Ci.nsIImageLoadingContent) {
       // Interface for image loading content.
-      const nsIImageLoadingContent = Components.interfaces.nsIImageLoadingContent;
-      let imageRequest = item.getRequest(nsIImageLoadingContent.CURRENT_REQUEST);
+      let imageRequest = item.getRequest(Ci.nsIImageLoadingContent.CURRENT_REQUEST);
       if (imageRequest) {
         result.mimeType = imageRequest.mimeType;
         let image = !(imageRequest.imageStatus & imageRequest.STATUS_ERROR) && imageRequest.image;
@@ -1150,7 +1172,18 @@ var PageInfoListener = {
     result.HTMLVideoElement = item instanceof content.HTMLVideoElement;
     result.HTMLAudioElement = item instanceof content.HTMLAudioElement;
 
-    if (!isBG) {
+    if (isBG) {
+      // Items that are showing this image as a background
+      // image might not necessarily have a width or height,
+      // so we'll dynamically generate an image and send up the
+      // natural dimensions.
+      let img = content.document.createElement("img");
+      img.src = url;
+      result.naturalWidth = img.naturalWidth;
+      result.naturalHeight = img.naturalHeight;
+    } else {
+      // Otherwise, we can use the current width and height
+      // of the image.
       result.width = item.width;
       result.height = item.height;
     }

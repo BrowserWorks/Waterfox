@@ -22,6 +22,11 @@ namespace layers {
 
 class GrallocTextureClientOGL;
 
+already_AddRefed<gfx::DataSourceSurface>
+GetDataSourceSurfaceFrom(android::sp<android::GraphicBuffer>& aGraphicBuffer,
+                         gfx::IntSize aSize,
+                         const layers::PlanarYCbCrData& aYcbcrData);
+
 /**
  * The YUV format supported by Android HAL
  *
@@ -49,7 +54,7 @@ class GrallocImage : public PlanarYCbCrImage
   static int32_t sColorIdMap[];
 public:
   struct GrallocData {
-    nsRefPtr<TextureClient> mGraphicBuffer;
+    RefPtr<TextureClient> mGraphicBuffer;
     gfx::IntSize mPicSize;
   };
 

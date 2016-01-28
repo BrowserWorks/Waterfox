@@ -95,7 +95,6 @@ var AboutHome = {
     "AboutHome:Downloads",
     "AboutHome:Bookmarks",
     "AboutHome:History",
-    "AboutHome:Apps",
     "AboutHome:Addons",
     "AboutHome:Sync",
     "AboutHome:Settings",
@@ -134,30 +133,12 @@ var AboutHome = {
         window.PlacesCommandHook.showPlacesOrganizer("History");
         break;
 
-      case "AboutHome:Apps":
-        window.BrowserOpenApps();
-        break;
-
       case "AboutHome:Addons":
         window.BrowserOpenAddonsMgr();
         break;
 
       case "AboutHome:Sync":
-        let weave = Cc["@mozilla.org/weave/service;1"]
-                      .getService(Ci.nsISupports)
-                      .wrappedJSObject;
-
-        if (weave.fxAccountsEnabled) {
-          fxAccounts.getSignedInUser().then(userData => {
-            if (userData) {
-              window.openPreferences("paneSync");
-            } else {
-              window.loadURI("about:accounts?entrypoint=abouthome");
-            }
-          });
-        } else {
-          window.openPreferences("paneSync");
-        }
+        window.openPreferences("paneSync", { urlParams: { entrypoint: "abouthome" } });
         break;
 
       case "AboutHome:Settings":

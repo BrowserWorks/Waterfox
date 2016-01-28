@@ -14,7 +14,6 @@
 
 #include "gfxContext.h"
 
-#include "gfxColor.h"
 #include "gfxMatrix.h"
 #include "gfxUtils.h"
 #include "gfxASurface.h"
@@ -95,7 +94,7 @@ gfxContext::ContextForDrawTarget(DrawTarget* aTarget)
   }
 
   Matrix transform = aTarget->GetTransform();
-  nsRefPtr<gfxContext> result = new gfxContext(aTarget);
+  RefPtr<gfxContext> result = new gfxContext(aTarget);
   result->SetMatrix(ThebesMatrix(transform));
   return result.forget();
 }
@@ -499,15 +498,15 @@ gfxContext::CurrentLineWidth() const
 }
 
 void
-gfxContext::SetOperator(GraphicsOperator op)
+gfxContext::SetOp(CompositionOp aOp)
 {
-  CurrentState().op = CompositionOpForOp(op);
+  CurrentState().op = aOp;
 }
 
-gfxContext::GraphicsOperator
-gfxContext::CurrentOperator() const
+CompositionOp
+gfxContext::CurrentOp() const
 {
-  return ThebesOp(CurrentState().op);
+  return CurrentState().op;
 }
 
 void
@@ -712,35 +711,34 @@ gfxContext::ClipContainsRect(const gfxRect& aRect)
 // rendering sources
 
 void
-gfxContext::SetColor(const gfxRGBA& c)
+gfxContext::SetColor(const Color& aColor)
 {
   CurrentState().pattern = nullptr;
   CurrentState().sourceSurfCairo = nullptr;
   CurrentState().sourceSurface = nullptr;
-  CurrentState().color = ToDeviceColor(c);
+  CurrentState().color = ToDeviceColor(aColor);
 }
 
 void
-gfxContext::SetDeviceColor(const gfxRGBA& c)
+gfxContext::SetDeviceColor(const Color& aColor)
 {
   CurrentState().pattern = nullptr;
   CurrentState().sourceSurfCairo = nullptr;
   CurrentState().sourceSurface = nullptr;
-  CurrentState().color = ToColor(c);
+  CurrentState().color = aColor;
 }
 
 bool
-gfxContext::GetDeviceColor(gfxRGBA& c)
+gfxContext::GetDeviceColor(Color& aColorOut)
 {
   if (CurrentState().sourceSurface) {
     return false;
   }
   if (CurrentState().pattern) {
-    gfxRGBA color;
-    return CurrentState().pattern->GetSolidColor(c);
+    return CurrentState().pattern->GetSolidColor(aColorOut);
   }
 
-  c = ThebesRGBA(CurrentState().color);
+  aColorOut = CurrentState().color;
   return true;
 }
 
@@ -770,7 +768,7 @@ gfxContext::SetPattern(gfxPattern *pattern)
 already_AddRefed<gfxPattern>
 gfxContext::GetPattern()
 {
-  nsRefPtr<gfxPattern> pat;
+  RefPtr<gfxPattern> pat;
 
   AzureState &state = CurrentState();
   if (state.pattern) {
@@ -778,7 +776,7 @@ gfxContext::GetPattern()
   } else if (state.sourceSurface) {
     NS_ASSERTION(false, "Ugh, this isn't good.");
   } else {
-    pat = new gfxPattern(ThebesRGBA(state.color));
+    pat = new gfxPattern(state.color);
   }
   return pat.forget();
 }
@@ -969,7 +967,7 @@ gfxContext::PopGroup()
   mat.Invert();
   mat.PreTranslate(deviceOffset.x, deviceOffset.y); // device offset translation
 
-  nsRefPtr<gfxPattern> pat = new gfxPattern(src, mat);
+  RefPtr<gfxPattern> pat = new gfxPattern(src, mat);
 
   return pat.forget();
 }

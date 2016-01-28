@@ -11,7 +11,7 @@
 #include "nsCOMPtr.h"
 #include "nsIDNSServiceDiscovery.h"
 #include "nsIThread.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsString.h"
 
 namespace mozilla {
@@ -37,7 +37,7 @@ private:
   class ServiceWatcher;
 
   DNSServiceRef mService;
-  nsRefPtr<ServiceWatcher> mWatcher;
+  RefPtr<ServiceWatcher> mWatcher;
   nsCOMPtr<nsIThread> mThread; // remember caller thread for callback
   Atomic<bool> mIsCancelled;
 };
@@ -125,12 +125,45 @@ public:
 
 private:
   ~ResolveOperator() = default;
+  void GetAddrInfor(nsIDNSServiceInfo* aServiceInfo);
 
   nsCOMPtr<nsIDNSServiceInfo> mServiceInfo;
   nsCOMPtr<nsIDNSServiceResolveListener> mListener;
 
   // hold self until callback is made.
-  nsRefPtr<ResolveOperator> mDeleteProtector;
+  RefPtr<ResolveOperator> mDeleteProtector;
+};
+
+union NetAddr;
+
+class GetAddrInfoOperator final : private MDNSResponderOperator
+{
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GetAddrInfoOperator)
+
+  GetAddrInfoOperator(nsIDNSServiceInfo* aServiceInfo,
+                      nsIDNSServiceResolveListener* aListener);
+
+  nsresult Start() override;
+  nsresult Stop() override;
+  using MDNSResponderOperator::GetThread;
+
+  void Reply(DNSServiceRef aSdRef,
+             DNSServiceFlags aFlags,
+             uint32_t aInterfaceIndex,
+             DNSServiceErrorType aErrorCode,
+             const nsACString& aHostName,
+             const NetAddr& aAddress,
+             uint32_t aTTL);
+
+private:
+  ~GetAddrInfoOperator() = default;
+
+  nsCOMPtr<nsIDNSServiceInfo> mServiceInfo;
+  nsCOMPtr<nsIDNSServiceResolveListener> mListener;
+
+  // hold self until callback is made.
+  RefPtr<GetAddrInfoOperator> mDeleteProtector;
 };
 
 } // namespace net

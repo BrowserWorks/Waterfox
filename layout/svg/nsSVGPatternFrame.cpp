@@ -23,7 +23,6 @@
 #include "nsSVGUtils.h"
 #include "nsSVGAnimatedTransformList.h"
 #include "SVGContentUtils.h"
-#include "gfxColor.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -378,7 +377,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
   }
   dt->ClearRect(Rect(0, 0, surfaceSize.width, surfaceSize.height));
 
-  nsRefPtr<gfxContext> gfx = new gfxContext(dt);
+  RefPtr<gfxContext> gfx = new gfxContext(dt);
 
   if (aGraphicOpacity != 1.0f) {
     gfx->Save();
@@ -705,7 +704,7 @@ nsSVGPatternFrame::GetPaintServerPattern(nsIFrame *aSource,
                                          const gfxRect *aOverrideBounds)
 {
   if (aGraphicOpacity == 0.0f) {
-    nsRefPtr<gfxPattern> pattern = new gfxPattern(gfxRGBA(0, 0, 0, 0));
+    RefPtr<gfxPattern> pattern = new gfxPattern(Color());
     return pattern.forget();
   }
 
@@ -719,12 +718,12 @@ nsSVGPatternFrame::GetPaintServerPattern(nsIFrame *aSource,
     return nullptr;
   }
 
-  nsRefPtr<gfxPattern> pattern = new gfxPattern(surface, pMatrix);
+  RefPtr<gfxPattern> pattern = new gfxPattern(surface, pMatrix);
 
   if (!pattern || pattern->CairoStatus())
     return nullptr;
 
-  pattern->SetExtend(gfxPattern::EXTEND_REPEAT);
+  pattern->SetExtend(ExtendMode::REPEAT);
   return pattern.forget();
 }
 

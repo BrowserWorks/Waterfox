@@ -46,7 +46,7 @@ static nsIWidget*
 GetWidget(nsIPresShell* aShell)
 {
   if (nsIFrame* rootFrame = aShell->GetRootFrame()) {
-#ifdef MOZ_WIDGET_ANDROID
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
     return rootFrame->GetNearestWidget();
 #else
     if (nsView* view = rootFrame->GetView()) {
@@ -197,8 +197,7 @@ ZoomConstraintsClient::RefreshZoomConstraints()
     return;
   }
 
-  nsViewportInfo viewportInfo = nsContentUtils::GetViewportInfo(
-    mDocument,
+  nsViewportInfo viewportInfo = mDocument->GetViewportInfo(
     ViewAs<ScreenPixel>(screenSize, PixelCastJustification::LayoutDeviceIsScreenForBounds));
 
   mozilla::layers::ZoomConstraints zoomConstraints =
@@ -207,9 +206,8 @@ ZoomConstraintsClient::RefreshZoomConstraints()
   if (zoomConstraints.mAllowDoubleTapZoom) {
     // If the CSS viewport is narrower than the screen (i.e. width <= device-width)
     // then we disable double-tap-to-zoom behaviour.
-    int32_t auPerDevPixel = mPresShell->GetPresContext()->AppUnitsPerDevPixel();
-    CSSToLayoutDeviceScale scale(
-      (float)nsPresContext::AppUnitsPerCSSPixel() / auPerDevPixel);
+    CSSToLayoutDeviceScale scale =
+        mPresShell->GetPresContext()->CSSToDevPixelScale();
     if ((viewportInfo.GetSize() * scale).width <= screenSize.width) {
       zoomConstraints.mAllowDoubleTapZoom = false;
     }

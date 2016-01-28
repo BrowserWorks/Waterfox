@@ -127,12 +127,6 @@ body {
   font-weight: bold;
 }
 
-.call-action-group .btn-group-chevron,
-.call-action-group .btn-group {
-  /* Prevent box overflow due to long string */
-  max-width: 120px;
-}
-
 .room-waiting-tile {
   background-color: grey;
 }
@@ -171,7 +165,6 @@ body {
 }
 
 /* Force dropdown menus to display. */
-.force-menu-show .icons,
 .force-menu-show .dropdown-menu {
   display: inline-block !important;
 }

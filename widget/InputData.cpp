@@ -20,7 +20,7 @@ already_AddRefed<Touch> SingleTouchData::ToNewDOMTouch() const
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only create dom::Touch instances on main thread");
-  nsRefPtr<Touch> touch = new Touch(mIdentifier,
+  RefPtr<Touch> touch = new Touch(mIdentifier,
                                     LayoutDeviceIntPoint(mScreenPoint.x, mScreenPoint.y),
                                     nsIntPoint(mRadius.width, mRadius.height),
                                     mRotationAngle,
@@ -28,9 +28,65 @@ already_AddRefed<Touch> SingleTouchData::ToNewDOMTouch() const
   return touch.forget();
 }
 
+MouseInput::MouseInput(const WidgetMouseEventBase& aMouseEvent)
+  : InputData(MOUSE_INPUT, aMouseEvent.time, aMouseEvent.timeStamp,
+              aMouseEvent.modifiers)
+{
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only copy from WidgetTouchEvent on main thread");
+
+  mButtonType = NONE;
+
+  switch (aMouseEvent.button) {
+    case WidgetMouseEventBase::eLeftButton:
+      mButtonType = MouseInput::LEFT_BUTTON;
+      break;
+    case WidgetMouseEventBase::eMiddleButton:
+      mButtonType = MouseInput::MIDDLE_BUTTON;
+      break;
+    case WidgetMouseEventBase::eRightButton:
+      mButtonType = MouseInput::RIGHT_BUTTON;
+      break;
+  }
+
+  switch (aMouseEvent.mMessage) {
+    case eMouseMove:
+      mType = MOUSE_MOVE;
+      break;
+    case eMouseUp:
+      mType = MOUSE_UP;
+      break;
+    case eMouseDown:
+      mType = MOUSE_DOWN;
+      break;
+    case eDragStart:
+      mType = MOUSE_DRAG_START;
+      break;
+    case eDragEnd:
+      mType = MOUSE_DRAG_END;
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Mouse event type not supported");
+      break;
+  }
+}
+
+bool
+MouseInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  Maybe<ParentLayerPoint> point = UntransformTo<ParentLayerPixel>(aTransform, mOrigin);
+  if (!point) {
+    return false;
+  }
+  mLocalOrigin = *point;
+
+  return true;
+}
+
 MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
   : InputData(MULTITOUCH_INPUT, aTouchEvent.time, aTouchEvent.timeStamp,
               aTouchEvent.modifiers)
+  , mHandledByAPZ(aTouchEvent.mFlags.mHandledByAPZ)
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetTouchEvent on main thread");
@@ -108,6 +164,7 @@ MultiTouchInput::ToWidgetTouchEvent(nsIWidget* aWidget) const
   event.modifiers = this->modifiers;
   event.time = this->mTime;
   event.timeStamp = this->mTimeStamp;
+  event.mFlags.mHandledByAPZ = mHandledByAPZ;
 
   for (size_t i = 0; i < mTouches.Length(); i++) {
     *event.touches.AppendElement() = mTouches[i].ToNewDOMTouch();
@@ -150,6 +207,7 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   event.button = WidgetMouseEvent::eLeftButton;
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
   event.modifiers = modifiers;
+  event.mFlags.mHandledByAPZ = mHandledByAPZ;
 
   if (mouseEventMessage != eMouseMove) {
     event.clickCount = 1;
@@ -178,6 +236,7 @@ MultiTouchInput::IndexOfTouch(int32_t aTouchIdentifier)
 MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
   : InputData(MULTITOUCH_INPUT, aMouseEvent.time, aMouseEvent.timeStamp,
               aMouseEvent.modifiers)
+  , mHandledByAPZ(aMouseEvent.mFlags.mHandledByAPZ)
 {
   MOZ_ASSERT(NS_IsMainThread(),
              "Can only copy from WidgetMouseEvent on main thread");

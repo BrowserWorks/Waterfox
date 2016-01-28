@@ -1,10 +1,9 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
 
 function run_test() {
   // skip this test on Windows
-  var isWindows = ("@mozilla.org/windows-registry-key;1" in Components.classes);
-  if (!isWindows) {
+  if (mozinfo.os != "win") {
     var testDir = __LOCATION__.parent;
     // create a test file, then symlink it, then check that we think it's a symlink
     var targetFile = testDir.clone();

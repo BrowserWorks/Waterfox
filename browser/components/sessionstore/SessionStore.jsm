@@ -11,6 +11,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
+// Current version of the format used by Session Restore.
+const FORMAT_VERSION = 1;
+
 const TAB_STATE_NEEDS_RESTORE = 1;
 const TAB_STATE_RESTORING = 2;
 
@@ -128,7 +131,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gScreenManager",
 XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
   "@mozilla.org/base/telemetry;1", "nsITelemetry");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
-  "resource://gre/modules/devtools/Console.jsm");
+  "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
   "resource:///modules/RecentWindow.jsm");
 
@@ -141,7 +144,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivacyFilter",
 XPCOMUtils.defineLazyModuleGetter(this, "RunState",
   "resource:///modules/sessionstore/RunState.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ScratchpadManager",
-  "resource:///modules/devtools/scratchpad-manager.jsm");
+  "resource://devtools/client/scratchpad/scratchpad-manager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionSaver",
   "resource:///modules/sessionstore/SessionSaver.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SessionCookies",
@@ -316,7 +319,33 @@ this.SessionStore = {
 
   getSessionHistory(tab, updatedCallback) {
     return SessionStoreInternal.getSessionHistory(tab, updatedCallback);
-  }
+  },
+
+  /**
+   * Determines whether the passed version number is compatible with
+   * the current version number of the SessionStore.
+   *
+   * @param version The format and version of the file, as an array, e.g.
+   * ["sessionrestore", 1]
+   */
+  isFormatVersionCompatible(version) {
+    if (!version) {
+      return false;
+    }
+    if (!Array.isArray(version)) {
+      // Improper format.
+      return false;
+    }
+    if (version[0] != "sessionrestore") {
+      // Not a Session Restore file.
+      return false;
+    }
+    let number = Number.parseFloat(version[1]);
+    if (Number.isNaN(number)) {
+      return false;
+    }
+    return number <= FORMAT_VERSION;
+  },
 };
 
 // Freeze the SessionStore object. We don't want anyone to modify it.
@@ -2441,7 +2470,7 @@ var SessionStoreInternal = {
 
     // collect the data for all windows yet to be restored
     for (ix in this._statesToRestore) {
-      for each (let winData in this._statesToRestore[ix].windows) {
+      for (let winData of this._statesToRestore[ix].windows) {
         total.push(winData);
         if (!winData.isPopup)
           nonPopupCount++;
@@ -2483,6 +2512,7 @@ var SessionStoreInternal = {
     };
 
     let state = {
+      version: ["sessionrestore", FORMAT_VERSION],
       windows: total,
       selectedWindow: ix + 1,
       _closedWindows: lastClosedWindowsCopy,
@@ -2490,7 +2520,7 @@ var SessionStoreInternal = {
       global: this._globalState.getState()
     };
 
-    if (Cu.isModuleLoaded("resource:///modules/devtools/scratchpad-manager.jsm")) {
+    if (Cu.isModuleLoaded("resource://devtools/client/scratchpad/scratchpad-manager.jsm")) {
       // get open Scratchpad window states too
       let scratchpads = ScratchpadManager.getSessionState();
       if (scratchpads && scratchpads.length) {
@@ -2648,6 +2678,10 @@ var SessionStoreInternal = {
       else {
         tabbrowser.showTab(tabs[t]);
         numVisibleTabs++;
+      }
+
+      if (!!winData.tabs[t].muted != tabs[t].linkedBrowser.audioMuted) {
+        tabs[t].toggleMuteAudio();
       }
     }
 
@@ -2906,6 +2940,10 @@ var SessionStoreInternal = {
       tabbrowser.hideTab(tab);
     } else {
       tabbrowser.showTab(tab);
+    }
+
+    if (!!tabData.muted != browser.audioMuted) {
+      tab.toggleMuteAudio();
     }
 
     if (tabData.lastAccessed) {
@@ -3312,8 +3350,8 @@ var SessionStoreInternal = {
    */
   _isCmdLineEmpty: function ssi_isCmdLineEmpty(aWindow, aState) {
     var pinnedOnly = aState.windows &&
-                     aState.windows.every(function (win)
-                       win.tabs.every(function (tab) tab.pinned));
+                     aState.windows.every(win =>
+                       win.tabs.every(tab => tab.pinned));
 
     let hasFirstArgument = aWindow.arguments && aWindow.arguments[0];
     if (!pinnedOnly) {

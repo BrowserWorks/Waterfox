@@ -1,15 +1,16 @@
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
   ignoreEvent,
+  runSafe,
 } = ExtensionUtils;
 
 // WeakMap[Extension -> Set[Alarm]]
 var alarmsMap = new WeakMap();
 
-// WeakMap[Extension -> callback]
+// WeakMap[Extension -> Set[callback]]
 var alarmCallbacksMap = new WeakMap();
 
 // Manages an alarm created by the extension (alarms API).
@@ -27,6 +28,9 @@ function Alarm(extension, name, alarmInfo)
     scheduledTime = this.when;
     delay = this.when - Date.now();
   } else {
+    if (!this.delayInMinutes) {
+      this.delayInMinutes = this.periodInMinutes;
+    }
     delay = this.delayInMinutes * 60 * 1000;
     scheduledTime = Date.now() + delay;
   }
@@ -46,8 +50,8 @@ Alarm.prototype = {
   },
 
   observe(subject, topic, data) {
-    if (alarmCallbacksMap.has(this.extension)) {
-      alarmCallbacksMap.get(this.extension)(this);
+    for (let callback of alarmCallbacksMap.get(this.extension)) {
+      callback(this);
     }
     if (this.canceled) {
       return;
@@ -74,6 +78,7 @@ Alarm.prototype = {
 
 extensions.on("startup", (type, extension) => {
   alarmsMap.set(extension, new Set());
+  alarmCallbacksMap.set(extension, new Set());
 });
 
 extensions.on("shutdown", (type, extension) => {
@@ -81,6 +86,7 @@ extensions.on("shutdown", (type, extension) => {
     alarm.clear();
   }
   alarmsMap.delete(extension);
+  alarmCallbacksMap.delete(extension);
 });
 
 extensions.registerAPI((extension, context) => {
@@ -160,9 +166,9 @@ extensions.registerAPI((extension, context) => {
           fire(alarm.data);
         };
 
-        alarmCallbacksMap.set(extension, callback);
+        alarmCallbacksMap.get(extension).add(callback);
         return () => {
-          alarmCallbacksMap.delete(extension);
+          alarmCallbacksMap.get(extension).delete(callback);
         };
       }).api(),
     },

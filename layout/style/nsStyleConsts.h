@@ -399,11 +399,24 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_DIRECTION_RTL                  1
 
 // See nsStyleVisibility
-// WritingModes.h depends on the particular values used here
+// NOTE: WritingModes.h depends on the particular values used here.
 #define NS_STYLE_WRITING_MODE_HORIZONTAL_TB     0
 #define NS_STYLE_WRITING_MODE_VERTICAL_RL       1
 // #define NS_STYLE_WRITING_MODE_HORIZONTAL_BT  2  // hypothetical
 #define NS_STYLE_WRITING_MODE_VERTICAL_LR       3
+
+// Single-bit flag, used in combination with VERTICAL_LR and _RL to specify
+// the corresponding SIDEWAYS_* modes.
+// (To avoid ambiguity, this bit must be high enough such that no other
+// values here accidentally use it in their binary representation.)
+#define NS_STYLE_WRITING_MODE_SIDEWAYS_MASK     4
+
+#define NS_STYLE_WRITING_MODE_SIDEWAYS_RL         \
+          (NS_STYLE_WRITING_MODE_VERTICAL_RL |    \
+           NS_STYLE_WRITING_MODE_SIDEWAYS_MASK)
+#define NS_STYLE_WRITING_MODE_SIDEWAYS_LR         \
+          (NS_STYLE_WRITING_MODE_VERTICAL_LR |    \
+           NS_STYLE_WRITING_MODE_SIDEWAYS_MASK)
 
 // See nsStyleDisplay
 #define NS_STYLE_DISPLAY_NONE                   0
@@ -804,6 +817,10 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_TOUCH_ACTION_MANIPULATION    (1 << 4)
 
 // See nsStyleDisplay
+#define NS_STYLE_TOP_LAYER_NONE   0 // not in the top layer
+#define NS_STYLE_TOP_LAYER_TOP    1 // in the top layer
+
+// See nsStyleDisplay
 #define NS_STYLE_TRANSFORM_BOX_BORDER_BOX                0
 #define NS_STYLE_TRANSFORM_BOX_FILL_BOX                  1
 #define NS_STYLE_TRANSFORM_BOX_VIEW_BOX                  2
@@ -879,9 +896,7 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // See nsStyleText
 #define NS_STYLE_TEXT_ORIENTATION_MIXED          0
 #define NS_STYLE_TEXT_ORIENTATION_UPRIGHT        1
-#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_RIGHT 2
-#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS_LEFT  3 /* placeholder, not yet parsed */
-#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS       4 /* placeholder, not yet parsed */
+#define NS_STYLE_TEXT_ORIENTATION_SIDEWAYS       2
 
 // See nsStyleText
 #define NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE        0

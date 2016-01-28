@@ -10,6 +10,8 @@
 
 #include "mozilla/dom/MessageEvent.h"
 #include "mozilla/dom/Navigator.h"
+#include "mozilla/dom/ServiceWorkerMessageEvent.h"
+#include "mozilla/dom/ServiceWorkerMessageEventBinding.h"
 #include "nsGlobalWindow.h"
 #include "nsIDocument.h"
 #include "WorkerPrivate.h"
@@ -37,7 +39,7 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
     NS_WARNING("Failed to get the UUID of the document.");
   }
 
-  nsRefPtr<nsGlobalWindow> innerWindow = static_cast<nsGlobalWindow*>(aDoc->GetInnerWindow());
+  RefPtr<nsGlobalWindow> innerWindow = static_cast<nsGlobalWindow*>(aDoc->GetInnerWindow());
   if (innerWindow) {
     // XXXcatalinb: The inner window can be null if the document is navigating
     // and was detached.
@@ -53,7 +55,7 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
     NS_WARNING("Failed to get focus information.");
   }
 
-  nsRefPtr<nsGlobalWindow> outerWindow = static_cast<nsGlobalWindow*>(aDoc->GetWindow());
+  RefPtr<nsGlobalWindow> outerWindow = static_cast<nsGlobalWindow*>(aDoc->GetWindow());
   MOZ_ASSERT(outerWindow);
   if (!outerWindow->IsTopLevelWindow()) {
     mFrameType = FrameType::Nested;
@@ -74,13 +76,13 @@ namespace {
 
 class ServiceWorkerClientPostMessageRunnable final
   : public nsRunnable
-  , public StructuredCloneHelper
+  , public StructuredCloneHolder
 {
   uint64_t mWindowId;
 
 public:
   explicit ServiceWorkerClientPostMessageRunnable(uint64_t aWindowId)
-    : StructuredCloneHelper(CloningSupported, TransferringSupported,
+    : StructuredCloneHolder(CloningSupported, TransferringSupported,
                             SameProcessDifferentThread)
     , mWindowId(aWindowId)
   {}
@@ -100,7 +102,7 @@ public:
       return result.StealNSResult();
     }
 
-    nsRefPtr<ServiceWorkerContainer> container = navigator->ServiceWorker();
+    RefPtr<ServiceWorkerContainer> container = navigator->ServiceWorker();
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(window))) {
       return NS_ERROR_FAILURE;
@@ -124,23 +126,29 @@ private:
       return NS_ERROR_FAILURE;
     }
 
-    nsRefPtr<MessageEvent> event = new MessageEvent(aTargetContainer,
-                                                    nullptr, nullptr);
-    rv = event->InitMessageEvent(NS_LITERAL_STRING("message"),
-                                 false /* non-bubbling */,
-                                 false /* not cancelable */,
-                                 messageData,
-                                 EmptyString(),
-                                 EmptyString(),
-                                 nullptr);
-    if (NS_WARN_IF(rv.Failed())) {
-      xpc::Throw(aCx, rv.StealNSResult());
-      return NS_ERROR_FAILURE;
+    RootedDictionary<ServiceWorkerMessageEventInit> init(aCx);
+
+    init.mData = messageData;
+    init.mOrigin.Construct(EmptyString());
+    init.mLastEventId.Construct(EmptyString());
+    init.mPorts.Construct();
+    init.mPorts.Value().SetNull();
+
+    RefPtr<ServiceWorker> serviceWorker = aTargetContainer->GetController();
+    init.mSource.Construct();
+    if (serviceWorker) {
+      init.mSource.Value().SetValue().SetAsServiceWorker() = serviceWorker;
+    } else {
+      init.mSource.Value().SetNull();
     }
 
-    nsTArray<nsRefPtr<MessagePort>> ports = TakeTransferredPorts();
+    RefPtr<ServiceWorkerMessageEvent> event =
+      ServiceWorkerMessageEvent::Constructor(aTargetContainer,
+                                             NS_LITERAL_STRING("message"), init, rv);
 
-    nsRefPtr<MessagePortList> portList =
+    nsTArray<RefPtr<MessagePort>> ports = TakeTransferredPorts();
+
+    RefPtr<MessagePortList> portList =
       new MessagePortList(static_cast<dom::Event*>(event.get()),
                           ports);
     event->SetPorts(portList);
@@ -186,7 +194,7 @@ ServiceWorkerClient::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
     transferable.setObject(*array);
   }
 
-  nsRefPtr<ServiceWorkerClientPostMessageRunnable> runnable =
+  RefPtr<ServiceWorkerClientPostMessageRunnable> runnable =
     new ServiceWorkerClientPostMessageRunnable(mWindowId);
 
   runnable->Write(aCx, aMessage, transferable, aRv);

@@ -58,7 +58,7 @@ JSID_TO_STRING(jsid id)
     return (JSString*)JSID_BITS(id);
 }
 
-/*
+/**
  * Only JSStrings that have been interned via the JSAPI can be turned into
  * jsids by API clients.
  *
@@ -178,7 +178,7 @@ template <> struct GCMethods<jsid>
 // the pointer. If the jsid is not a GC type, calls F::defaultValue.
 template <typename F, typename... Args>
 auto
-DispatchIdTyped(F f, jsid& id, Args&&... args)
+DispatchTyped(F f, jsid& id, Args&&... args)
   -> decltype(f(static_cast<JSString*>(nullptr), mozilla::Forward<Args>(args)...))
 {
     if (JSID_IS_STRING(id))

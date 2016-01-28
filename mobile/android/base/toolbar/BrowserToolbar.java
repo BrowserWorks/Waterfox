@@ -140,7 +140,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     private final int shadowSize;
 
     private final ToolbarPrefs prefs;
-    private boolean contextMenuEnabled = true;
 
     public abstract boolean isAnimating();
 
@@ -214,34 +213,17 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         prefs = new ToolbarPrefs();
         urlDisplayLayout.setToolbarPrefs(prefs);
         urlEditLayout.setToolbarPrefs(prefs);
-    }
-
-    @Override
-    public void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        prefs.open();
-
-        setOnClickListener(new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (activateListener != null) {
-                    activateListener.onActivate();
-                }
-            }
-        });
 
         setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
             public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                // We don't the context menu while editing or while dragging
-                if (isEditing() || !contextMenuEnabled) {
+                // Do not show the context menu while editing
+                if (isEditing()) {
                     return;
                 }
 
                 // NOTE: Use MenuUtils.safeSetVisible because some actions might
                 // be on the Page menu
-
                 MenuInflater inflater = activity.getMenuInflater();
                 inflater.inflate(R.menu.titlebar_contextmenu, menu);
 
@@ -270,6 +252,22 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
                 }
             }
         });
+
+        setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (activateListener != null) {
+                    activateListener.onActivate();
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        prefs.open();
 
         urlDisplayLayout.setOnStopListener(new OnStopListener() {
             @Override
@@ -378,17 +376,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         }
 
         return urlDisplayLayout.dismissSiteIdentityPopup();
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // If the motion event has occurred below the toolbar (due to the scroll
-        // offset), let it pass through to the page.
-        if (event != null && event.getY() > getHeight() + ViewHelper.getTranslationY(this)) {
-            return false;
-        }
-
-        return super.onTouchEvent(event);
     }
 
     @Override
@@ -690,7 +677,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         urlDisplayLayout.setTitle(title);
     }
 
-    public void setOnActivateListener(OnActivateListener listener) {
+    public void setOnActivateListener(final OnActivateListener listener) {
         activateListener = listener;
     }
 
@@ -935,10 +922,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         }
 
         return drawable;
-    }
-
-    public void setContextMenuEnabled(boolean enabled) {
-        contextMenuEnabled = enabled;
     }
 
     public static class TabEditingState {

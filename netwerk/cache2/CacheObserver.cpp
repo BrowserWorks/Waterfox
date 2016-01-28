@@ -9,7 +9,6 @@
 #include "LoadContextInfo.h"
 #include "nsICacheStorage.h"
 #include "nsIObserverService.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "mozilla/Services.h"
 #include "mozilla/Preferences.h"
 #include "nsServiceManagerUtils.h"
@@ -118,7 +117,7 @@ CacheObserver::Init()
   obs->AddObserver(sSelf, "profile-before-change", true);
   obs->AddObserver(sSelf, "xpcom-shutdown", true);
   obs->AddObserver(sSelf, "last-pb-context-exited", true);
-  obs->AddObserver(sSelf, "webapps-clear-data", true);
+  obs->AddObserver(sSelf, "clear-origin-data", true);
   obs->AddObserver(sSelf, "memory-pressure", true);
 
   return NS_OK;
@@ -392,58 +391,18 @@ void CacheObserver::ParentDirOverride(nsIFile** aDir)
 }
 
 namespace {
+namespace CacheStorageEvictHelper {
 
-class CacheStorageEvictHelper
-{
-public:
-  nsresult Run(mozIApplicationClearPrivateDataParams* aParams);
-
-private:
-  uint32_t mAppId;
-  nsresult ClearStorage(bool const aPrivate,
-                        bool const aInBrowser,
-                        bool const aAnonymous);
-};
-
-nsresult
-CacheStorageEvictHelper::Run(mozIApplicationClearPrivateDataParams* aParams)
+nsresult ClearStorage(bool const aPrivate,
+                      bool const aAnonymous,
+                      OriginAttributes const &aOa)
 {
   nsresult rv;
 
-  rv = aParams->GetAppId(&mAppId);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  bool aBrowserOnly;
-  rv = aParams->GetBrowserOnly(&aBrowserOnly);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  MOZ_ASSERT(mAppId != nsILoadContextInfo::UNKNOWN_APP_ID);
-
-  // Clear all [private X anonymous] combinations
-  rv = ClearStorage(false, aBrowserOnly, false);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = ClearStorage(false, aBrowserOnly, true);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = ClearStorage(true, aBrowserOnly, false);
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = ClearStorage(true, aBrowserOnly, true);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
-}
-
-nsresult
-CacheStorageEvictHelper::ClearStorage(bool const aPrivate,
-                                      bool const aInBrowser,
-                                      bool const aAnonymous)
-{
-  nsresult rv;
-
-  nsRefPtr<LoadContextInfo> info = GetLoadContextInfo(
-    aPrivate, mAppId, aInBrowser, aAnonymous);
+  RefPtr<LoadContextInfo> info = GetLoadContextInfo(aPrivate, aAnonymous, aOa);
 
   nsCOMPtr<nsICacheStorage> storage;
-  nsRefPtr<CacheStorageService> service = CacheStorageService::Self();
+  RefPtr<CacheStorageService> service = CacheStorageService::Self();
   NS_ENSURE_TRUE(service, NS_ERROR_FAILURE);
 
   // Clear disk storage
@@ -458,15 +417,28 @@ CacheStorageEvictHelper::ClearStorage(bool const aPrivate,
   rv = storage->AsyncEvictStorage(nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!aInBrowser) {
-    rv = ClearStorage(aPrivate, true, aAnonymous);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
+  return NS_OK;
+}
+
+nsresult Run(OriginAttributes const &aOa)
+{
+  nsresult rv;
+
+  // Clear all [private X anonymous] combinations
+  rv = ClearStorage(false, false, aOa);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = ClearStorage(false, true, aOa);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = ClearStorage(true, false, aOa);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = ClearStorage(true, true, aOa);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
 
-} // namespace
+} // CacheStorageEvictHelper
+} // anon
 
 // static
 bool const CacheObserver::EntryIsTooBig(int64_t aSize, bool aUsingDisk)
@@ -518,7 +490,7 @@ CacheObserver::Observe(nsISupports* aSubject,
   }
 
   if (!strcmp(aTopic, "profile-before-change")) {
-    nsRefPtr<CacheStorageService> service = CacheStorageService::Self();
+    RefPtr<CacheStorageService> service = CacheStorageService::Self();
     if (service)
       service->Shutdown();
 
@@ -526,7 +498,7 @@ CacheObserver::Observe(nsISupports* aSubject,
   }
 
   if (!strcmp(aTopic, "xpcom-shutdown")) {
-    nsRefPtr<CacheStorageService> service = CacheStorageService::Self();
+    RefPtr<CacheStorageService> service = CacheStorageService::Self();
     if (service)
       service->Shutdown();
 
@@ -535,30 +507,28 @@ CacheObserver::Observe(nsISupports* aSubject,
   }
 
   if (!strcmp(aTopic, "last-pb-context-exited")) {
-    nsRefPtr<CacheStorageService> service = CacheStorageService::Self();
+    RefPtr<CacheStorageService> service = CacheStorageService::Self();
     if (service)
       service->DropPrivateBrowsingEntries();
 
     return NS_OK;
   }
 
-  if (!strcmp(aTopic, "webapps-clear-data")) {
-    nsCOMPtr<mozIApplicationClearPrivateDataParams> params =
-            do_QueryInterface(aSubject);
-    if (!params) {
-      NS_ERROR("'webapps-clear-data' notification's subject should be a mozIApplicationClearPrivateDataParams");
-      return NS_ERROR_UNEXPECTED;
+  if (!strcmp(aTopic, "clear-origin-data")) {
+    OriginAttributes oa;
+    if (!oa.Init(nsDependentString(aData))) {
+      NS_ERROR("Could not parse OriginAttributes JSON in clear-origin-data notification");
+      return NS_OK;
     }
 
-    CacheStorageEvictHelper helper;
-    nsresult rv = helper.Run(params);
+    nsresult rv = CacheStorageEvictHelper::Run(oa);
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
   }
 
   if (!strcmp(aTopic, "memory-pressure")) {
-    nsRefPtr<CacheStorageService> service = CacheStorageService::Self();
+    RefPtr<CacheStorageService> service = CacheStorageService::Self();
     if (service)
       service->PurgeFromMemory(nsICacheStorageService::PURGE_EVERYTHING);
 

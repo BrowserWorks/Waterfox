@@ -52,6 +52,8 @@ class CodeGenerator : public CodeGeneratorSpecific
     void generateArgumentsChecks(bool bailout = true);
     bool generateBody();
 
+    ConstantOrRegister toConstantOrRegister(LInstruction* lir, size_t n, MIRType type);
+
   public:
     CodeGenerator(MIRGenerator* gen, LIRGraph* graph, MacroAssembler* masm = nullptr);
     ~CodeGenerator();
@@ -73,6 +75,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitStart(LStart* lir);
     void visitReturn(LReturn* ret);
     void visitDefVar(LDefVar* lir);
+    void visitDefLexical(LDefLexical* lir);
     void visitDefFun(LDefFun* lir);
     void visitOsrEntry(LOsrEntry* lir);
     void visitOsrScopeChain(LOsrScopeChain* lir);
@@ -329,10 +332,12 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitAsmJSReturn(LAsmJSReturn* ret);
     void visitAsmJSVoidReturn(LAsmJSVoidReturn* ret);
     void visitLexicalCheck(LLexicalCheck* ins);
-    void visitThrowUninitializedLexical(LThrowUninitializedLexical* ins);
+    void visitThrowRuntimeLexicalError(LThrowRuntimeLexicalError* ins);
+    void visitGlobalNameConflictsCheck(LGlobalNameConflictsCheck* ins);
     void visitDebugger(LDebugger* ins);
     void visitNewTarget(LNewTarget* ins);
     void visitArrowNewTarget(LArrowNewTarget* ins);
+    void visitCheckReturn(LCheckReturn* ins);
 
     void visitCheckOverRecursed(LCheckOverRecursed* lir);
     void visitCheckOverRecursedFailure(CheckOverRecursedFailure* ool);
@@ -352,20 +357,13 @@ class CodeGenerator : public CodeGeneratorSpecific
 
     void visitGetPropertyCacheV(LGetPropertyCacheV* ins);
     void visitGetPropertyCacheT(LGetPropertyCacheT* ins);
-    void visitGetElementCacheV(LGetElementCacheV* ins);
-    void visitGetElementCacheT(LGetElementCacheT* ins);
-    void visitSetElementCacheV(LSetElementCacheV* ins);
-    void visitSetElementCacheT(LSetElementCacheT* ins);
     void visitBindNameCache(LBindNameCache* ins);
     void visitCallSetProperty(LInstruction* ins);
-    void visitSetPropertyCacheV(LSetPropertyCacheV* ins);
-    void visitSetPropertyCacheT(LSetPropertyCacheT* ins);
+    void visitSetPropertyCache(LSetPropertyCache* ins);
     void visitGetNameCache(LGetNameCache* ins);
 
     void visitGetPropertyIC(OutOfLineUpdateCache* ool, DataPtr<GetPropertyIC>& ic);
     void visitSetPropertyIC(OutOfLineUpdateCache* ool, DataPtr<SetPropertyIC>& ic);
-    void visitGetElementIC(OutOfLineUpdateCache* ool, DataPtr<GetElementIC>& ic);
-    void visitSetElementIC(OutOfLineUpdateCache* ool, DataPtr<SetElementIC>& ic);
     void visitBindNameIC(OutOfLineUpdateCache* ool, DataPtr<BindNameIC>& ic);
     void visitNameIC(OutOfLineUpdateCache* ool, DataPtr<NameIC>& ic);
 
@@ -394,18 +392,14 @@ class CodeGenerator : public CodeGeneratorSpecific
 
   private:
     void addGetPropertyCache(LInstruction* ins, LiveRegisterSet liveRegs, Register objReg,
-                             PropertyName* name, TypedOrValueRegister output,
-                             bool monitoredResult, jsbytecode* profilerLeavePc);
-    void addGetElementCache(LInstruction* ins, Register obj, TypedOrValueRegister index,
-                            TypedOrValueRegister output, bool monitoredResult,
-                            bool allowDoubleResult, jsbytecode* profilerLeavePc);
+                             ConstantOrRegister id, TypedOrValueRegister output,
+                             bool monitoredResult, bool allowDoubleResult,
+                             jsbytecode* profilerLeavePc);
     void addSetPropertyCache(LInstruction* ins, LiveRegisterSet liveRegs, Register objReg,
-                             PropertyName* name, ConstantOrRegister value, bool strict,
-                             bool needsTypeBarrier, jsbytecode* profilerLeavePc);
-    void addSetElementCache(LInstruction* ins, Register obj, Register unboxIndex, Register temp,
-                            FloatRegister tempDouble, FloatRegister tempFloat32,
-                            ValueOperand index, ConstantOrRegister value,
-                            bool strict, bool guardHoles, jsbytecode* profilerLeavePc);
+                             Register temp, Register tempUnbox, FloatRegister tempDouble,
+                             FloatRegister tempF32, ConstantOrRegister id, ConstantOrRegister value,
+                             bool strict, bool needsTypeBarrier, bool guardHoles,
+                             jsbytecode* profilerLeavePc);
 
     bool generateBranchV(const ValueOperand& value, Label* ifTrue, Label* ifFalse, FloatRegister fr);
 

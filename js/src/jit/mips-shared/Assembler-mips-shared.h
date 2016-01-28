@@ -30,14 +30,18 @@ static MOZ_CONSTEXPR_VAR Register a0 = { Registers::a0 };
 static MOZ_CONSTEXPR_VAR Register a1 = { Registers::a1 };
 static MOZ_CONSTEXPR_VAR Register a2 = { Registers::a2 };
 static MOZ_CONSTEXPR_VAR Register a3 = { Registers::a3 };
+static MOZ_CONSTEXPR_VAR Register a4 = { Registers::ta0 };
+static MOZ_CONSTEXPR_VAR Register a5 = { Registers::ta1 };
+static MOZ_CONSTEXPR_VAR Register a6 = { Registers::ta2 };
+static MOZ_CONSTEXPR_VAR Register a7 = { Registers::ta3 };
 static MOZ_CONSTEXPR_VAR Register t0 = { Registers::t0 };
 static MOZ_CONSTEXPR_VAR Register t1 = { Registers::t1 };
 static MOZ_CONSTEXPR_VAR Register t2 = { Registers::t2 };
 static MOZ_CONSTEXPR_VAR Register t3 = { Registers::t3 };
-static MOZ_CONSTEXPR_VAR Register t4 = { Registers::t4 };
-static MOZ_CONSTEXPR_VAR Register t5 = { Registers::t5 };
-static MOZ_CONSTEXPR_VAR Register t6 = { Registers::t6 };
-static MOZ_CONSTEXPR_VAR Register t7 = { Registers::t7 };
+static MOZ_CONSTEXPR_VAR Register t4 = { Registers::ta0 };
+static MOZ_CONSTEXPR_VAR Register t5 = { Registers::ta1 };
+static MOZ_CONSTEXPR_VAR Register t6 = { Registers::ta2 };
+static MOZ_CONSTEXPR_VAR Register t7 = { Registers::ta3 };
 static MOZ_CONSTEXPR_VAR Register s0 = { Registers::s0 };
 static MOZ_CONSTEXPR_VAR Register s1 = { Registers::s1 };
 static MOZ_CONSTEXPR_VAR Register s2 = { Registers::s2 };
@@ -85,6 +89,10 @@ static MOZ_CONSTEXPR_VAR Register IntArgReg0 = a0;
 static MOZ_CONSTEXPR_VAR Register IntArgReg1 = a1;
 static MOZ_CONSTEXPR_VAR Register IntArgReg2 = a2;
 static MOZ_CONSTEXPR_VAR Register IntArgReg3 = a3;
+static MOZ_CONSTEXPR_VAR Register IntArgReg4 = a4;
+static MOZ_CONSTEXPR_VAR Register IntArgReg5 = a5;
+static MOZ_CONSTEXPR_VAR Register IntArgReg6 = a6;
+static MOZ_CONSTEXPR_VAR Register IntArgReg7 = a7;
 static MOZ_CONSTEXPR_VAR Register GlobalReg = s6; // used by Odin
 static MOZ_CONSTEXPR_VAR Register HeapReg = s7; // used by Odin
 static MOZ_CONSTEXPR_VAR Register CallTempNonArgRegs[] = CALL_TEMP_NON_ARG_REGS;
@@ -246,6 +254,12 @@ enum Opcode {
     op_blezl    = 22 << OpcodeShift,
     op_bgtzl    = 23 << OpcodeShift,
 
+    op_daddi    = 24 << OpcodeShift,
+    op_daddiu   = 25 << OpcodeShift,
+
+    op_ldl      = 26 << OpcodeShift,
+    op_ldr      = 27 << OpcodeShift,
+
     op_special2 = 28 << OpcodeShift,
     op_special3 = 31 << OpcodeShift,
 
@@ -256,17 +270,24 @@ enum Opcode {
     op_lbu      = 36 << OpcodeShift,
     op_lhu      = 37 << OpcodeShift,
     op_lwr      = 38 << OpcodeShift,
+    op_lwu      = 39 << OpcodeShift,
     op_sb       = 40 << OpcodeShift,
     op_sh       = 41 << OpcodeShift,
     op_swl      = 42 << OpcodeShift,
     op_sw       = 43 << OpcodeShift,
+    op_sdl      = 44 << OpcodeShift,
+    op_sdr      = 45 << OpcodeShift,
     op_swr      = 46 << OpcodeShift,
 
+    op_ll       = 48 << OpcodeShift,
     op_lwc1     = 49 << OpcodeShift,
     op_ldc1     = 53 << OpcodeShift,
+    op_ld       = 55 << OpcodeShift,
 
+    op_sc       = 56 << OpcodeShift,
     op_swc1     = 57 << OpcodeShift,
-    op_sdc1     = 61 << OpcodeShift
+    op_sdc1     = 61 << OpcodeShift,
+    op_sd       = 63 << OpcodeShift,
 };
 
 enum RSField {
@@ -274,9 +295,11 @@ enum RSField {
     // cop1 encoding of RS field.
     rs_mfc1  = 0 << RSShift,
     rs_one   = 1 << RSShift,
+    rs_dmfc1 = 1 << RSShift,
     rs_cfc1  = 2 << RSShift,
     rs_mfhc1 = 3 << RSShift,
     rs_mtc1  = 4 << RSShift,
+    rs_dmtc1 = 5 << RSShift,
     rs_ctc1  = 6 << RSShift,
     rs_mthc1 = 7 << RSShift,
     rs_bc1   = 8 << RSShift,
@@ -311,14 +334,23 @@ enum FunctionField {
     ff_movz        = 10,
     ff_movn        = 11,
     ff_break       = 13,
+    ff_sync        = 15,
 
     ff_mfhi        = 16,
     ff_mflo        = 18,
+
+    ff_dsllv       = 20,
+    ff_dsrlv       = 22,
+    ff_dsrav       = 23,
 
     ff_mult        = 24,
     ff_multu       = 25,
     ff_div         = 26,
     ff_divu        = 27,
+    ff_dmult       = 28,
+    ff_dmultu      = 29,
+    ff_ddiv        = 30,
+    ff_ddivu       = 31,
 
     ff_add         = 32,
     ff_addu        = 33,
@@ -331,6 +363,10 @@ enum FunctionField {
 
     ff_slt         = 42,
     ff_sltu        = 43,
+    ff_dadd        = 44,
+    ff_daddu       = 45,
+    ff_dsub        = 46,
+    ff_dsubu       = 47,
 
     ff_tge         = 48,
     ff_tgeu        = 49,
@@ -338,15 +374,29 @@ enum FunctionField {
     ff_tltu        = 51,
     ff_teq         = 52,
     ff_tne         = 54,
+    ff_dsll        = 56,
+    ff_dsrl        = 58,
+    ff_dsra        = 59,
+    ff_dsll32      = 60,
+    ff_dsrl32      = 62,
+    ff_dsra32      = 63,
 
     // special2 encoding of function field.
     ff_mul         = 2,
     ff_clz         = 32,
     ff_clo         = 33,
+    ff_dclz        = 36,
 
     // special3 encoding of function field.
     ff_ext         = 0,
+    ff_dextm       = 1,
+    ff_dextu       = 2,
+    ff_dext        = 3,
     ff_ins         = 4,
+    ff_dinsm       = 5,
+    ff_dinsu       = 6,
+    ff_dins        = 7,
+    ff_bshfl       = 32,
 
     // cop1 encoding of function field.
     ff_add_fmt     = 0,
@@ -682,7 +732,6 @@ class AssemblerMIPSShared : public AssemblerShared
         return m_buffer.getInst(bo);
     }
   public:
-    uint32_t actualOffset(uint32_t) const;
     uint32_t actualIndex(uint32_t) const;
     static uint8_t* PatchableJumpAddress(JitCode* code, uint32_t index);
   protected:
@@ -705,7 +754,6 @@ class AssemblerMIPSShared : public AssemblerShared
         { }
     };
 
-    js::Vector<CodeLabel, 0, SystemAllocPolicy> codeLabels_;
     js::Vector<RelativePatch, 8, SystemAllocPolicy> jumps_;
     js::Vector<uint32_t, 8, SystemAllocPolicy> longJumps_;
 
@@ -760,14 +808,6 @@ class AssemblerMIPSShared : public AssemblerShared
     void copyDataRelocationTable(uint8_t* dest);
     void copyPreBarrierTable(uint8_t* dest);
 
-    void addCodeLabel(CodeLabel label);
-    size_t numCodeLabels() const {
-        return codeLabels_.length();
-    }
-    CodeLabel codeLabel(size_t i) {
-        return codeLabels_[i];
-    }
-
     // Size of the instruction stream, in bytes.
     size_t size() const;
     // Size of the jump relocation table, in bytes.
@@ -811,12 +851,19 @@ class AssemblerMIPSShared : public AssemblerShared
     // Arithmetic instructions
     BufferOffset as_addu(Register rd, Register rs, Register rt);
     BufferOffset as_addiu(Register rd, Register rs, int32_t j);
+    BufferOffset as_daddu(Register rd, Register rs, Register rt);
+    BufferOffset as_daddiu(Register rd, Register rs, int32_t j);
     BufferOffset as_subu(Register rd, Register rs, Register rt);
+    BufferOffset as_dsubu(Register rd, Register rs, Register rt);
     BufferOffset as_mult(Register rs, Register rt);
     BufferOffset as_multu(Register rs, Register rt);
+    BufferOffset as_dmult(Register rs, Register rt);
+    BufferOffset as_dmultu(Register rs, Register rt);
     BufferOffset as_div(Register rs, Register rt);
     BufferOffset as_divu(Register rs, Register rt);
     BufferOffset as_mul(Register rd, Register rs, Register rt);
+    BufferOffset as_ddiv(Register rs, Register rt);
+    BufferOffset as_ddivu(Register rs, Register rt);
 
     // Logical instructions
     BufferOffset as_and(Register rd, Register rs, Register rt);
@@ -832,13 +879,25 @@ class AssemblerMIPSShared : public AssemblerShared
     // Shift instructions
     // as_sll(zero, zero, x) instructions are reserved as nop
     BufferOffset as_sll(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsll(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsll32(Register rd, Register rt, uint16_t sa);
     BufferOffset as_sllv(Register rd, Register rt, Register rs);
+    BufferOffset as_dsllv(Register rd, Register rt, Register rs);
     BufferOffset as_srl(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsrl(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsrl32(Register rd, Register rt, uint16_t sa);
     BufferOffset as_srlv(Register rd, Register rt, Register rs);
+    BufferOffset as_dsrlv(Register rd, Register rt, Register rs);
     BufferOffset as_sra(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsra(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_dsra32(Register rd, Register rt, uint16_t sa);
     BufferOffset as_srav(Register rd, Register rt, Register rs);
     BufferOffset as_rotr(Register rd, Register rt, uint16_t sa);
     BufferOffset as_rotrv(Register rd, Register rt, Register rs);
+    BufferOffset as_dsrav(Register rd, Register rt, Register rs);
+    BufferOffset as_drotr(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_drotr32(Register rd, Register rt, uint16_t sa);
+    BufferOffset as_drotrv(Register rd, Register rt, Register rs);
 
     // Load and store instructions
     BufferOffset as_lb(Register rd, Register rs, int16_t off);
@@ -846,13 +905,22 @@ class AssemblerMIPSShared : public AssemblerShared
     BufferOffset as_lh(Register rd, Register rs, int16_t off);
     BufferOffset as_lhu(Register rd, Register rs, int16_t off);
     BufferOffset as_lw(Register rd, Register rs, int16_t off);
+    BufferOffset as_lwu(Register rd, Register rs, int16_t off);
     BufferOffset as_lwl(Register rd, Register rs, int16_t off);
     BufferOffset as_lwr(Register rd, Register rs, int16_t off);
+    BufferOffset as_ll(Register rd, Register rs, int16_t off);
+    BufferOffset as_ld(Register rd, Register rs, int16_t off);
+    BufferOffset as_ldl(Register rd, Register rs, int16_t off);
+    BufferOffset as_ldr(Register rd, Register rs, int16_t off);
     BufferOffset as_sb(Register rd, Register rs, int16_t off);
     BufferOffset as_sh(Register rd, Register rs, int16_t off);
     BufferOffset as_sw(Register rd, Register rs, int16_t off);
     BufferOffset as_swl(Register rd, Register rs, int16_t off);
     BufferOffset as_swr(Register rd, Register rs, int16_t off);
+    BufferOffset as_sc(Register rd, Register rs, int16_t off);
+    BufferOffset as_sd(Register rd, Register rs, int16_t off);
+    BufferOffset as_sdl(Register rd, Register rs, int16_t off);
+    BufferOffset as_sdr(Register rd, Register rs, int16_t off);
 
     // Move from HI/LO register.
     BufferOffset as_mfhi(Register rd);
@@ -872,8 +940,19 @@ class AssemblerMIPSShared : public AssemblerShared
 
     // Bit twiddling.
     BufferOffset as_clz(Register rd, Register rs);
+    BufferOffset as_dclz(Register rd, Register rs);
     BufferOffset as_ins(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dins(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dinsm(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dinsu(Register rt, Register rs, uint16_t pos, uint16_t size);
     BufferOffset as_ext(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dext(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dextm(Register rt, Register rs, uint16_t pos, uint16_t size);
+    BufferOffset as_dextu(Register rt, Register rs, uint16_t pos, uint16_t size);
+
+    // Sign extend
+    BufferOffset as_seb(Register rd, Register rt);
+    BufferOffset as_seh(Register rd, Register rt);
 
     // FP instructions
 
@@ -891,6 +970,10 @@ class AssemblerMIPSShared : public AssemblerShared
     BufferOffset as_mtc1(Register rt, FloatRegister fs);
     BufferOffset as_mfc1(Register rt, FloatRegister fs);
 
+    BufferOffset as_mthc1(Register rt, FloatRegister fs);
+    BufferOffset as_mfhc1(Register rt, FloatRegister fs);
+    BufferOffset as_dmtc1(Register rt, FloatRegister fs);
+    BufferOffset as_dmfc1(Register rt, FloatRegister fs);
 
   public:
     // FP convert instructions
@@ -959,18 +1042,18 @@ class AssemblerMIPSShared : public AssemblerShared
     void retarget(Label* label, Label* target);
 
     // See Bind
-    size_t labelOffsetToPatchOffset(size_t offset) {
-        return actualOffset(offset);
-    }
+    size_t labelOffsetToPatchOffset(size_t offset) { return offset; }
 
     void call(Label* label);
     void call(void* target);
 
     void as_break(uint32_t code);
+    void as_sync(uint32_t stype = 0);
 
   public:
     static bool SupportsFloatingPoint() {
-#if (defined(__mips_hard_float) && !defined(__mips_single_float)) || defined(JS_SIMULATOR_MIPS32)
+#if (defined(__mips_hard_float) && !defined(__mips_single_float)) || \
+    defined(JS_SIMULATOR_MIPS32) || defined(JS_SIMULATOR_MIPS64)
         return true;
 #else
         return false;

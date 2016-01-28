@@ -10,18 +10,32 @@
 #include "GLContext.h"
 #include "GLBlitHelper.h"
 #include "GLReadTexImageHelper.h"
+#include "SharedSurfaceEGL.h"
 #include "SharedSurfaceGL.h"
+#include "ScopedGLHelpers.h"
+#include "gfx2DGlue.h"
+#include "../layers/ipc/ShadowLayers.h"
+#include "mozilla/layers/CompositableForwarder.h"
+#include "mozilla/layers/TextureClientSharedSurface.h"
+
+#ifdef XP_WIN
+#include "SharedSurfaceANGLE.h"       // for SurfaceFactory_ANGLEShareHandle
+#include "gfxWindowsPlatform.h"
+#endif
+
 #ifdef MOZ_WIDGET_GONK
 #include "SharedSurfaceGralloc.h"
 #include "nsXULAppAPI.h"
 #endif
+
 #ifdef XP_MACOSX
 #include "SharedSurfaceIO.h"
 #endif
-#include "ScopedGLHelpers.h"
-#include "gfx2DGlue.h"
-#include "../layers/ipc/ShadowLayers.h"
-#include "mozilla/layers/TextureClientSharedSurface.h"
+
+#ifdef GL_PROVIDER_GLX
+#include "GLXLibrary.h"
+#include "SharedSurfaceGLX.h"
+#endif
 
 namespace mozilla {
 namespace gl {
@@ -49,6 +63,55 @@ GLScreenBuffer::Create(GLContext* gl,
 
     ret.reset( new GLScreenBuffer(gl, caps, Move(factory)) );
     return Move(ret);
+}
+
+/* static */ UniquePtr<SurfaceFactory>
+GLScreenBuffer::CreateFactory(GLContext* gl,
+                              const SurfaceCaps& caps,
+                              const RefPtr<layers::CompositableForwarder>& forwarder,
+                              const layers::TextureFlags& flags)
+{
+    UniquePtr<SurfaceFactory> factory = nullptr;
+    if (!gfxPrefs::WebGLForceLayersReadback()) {
+        switch (forwarder->GetCompositorBackendType()) {
+            case mozilla::layers::LayersBackend::LAYERS_OPENGL: {
+#if defined(XP_MACOSX)
+                factory = SurfaceFactory_IOSurface::Create(gl, caps, forwarder, flags);
+#elif defined(MOZ_WIDGET_GONK)
+                factory = MakeUnique<SurfaceFactory_Gralloc>(gl, caps, forwarder, flags);
+#elif defined(GL_PROVIDER_GLX)
+                if (sGLXLibrary.UseSurfaceSharing())
+                  factory = SurfaceFactory_GLXDrawable::Create(gl, caps, forwarder, flags);
+#elif defined(MOZ_WIDGET_UIKIT)
+                factory = MakeUnique<SurfaceFactory_GLTexture>(mGLContext, caps, forwarder, mFlags);
+#else
+                if (gl->GetContextType() == GLContextType::EGL) {
+                    if (XRE_IsParentProcess()) {
+                        factory = SurfaceFactory_EGLImage::Create(gl, caps, forwarder, flags);
+                    }
+                }
+#endif
+                break;
+            }
+            case mozilla::layers::LayersBackend::LAYERS_D3D11: {
+#ifdef XP_WIN
+                // Enable surface sharing only if ANGLE and compositing devices
+                // are both WARP or both not WARP
+                if (gl->IsANGLE() &&
+                    (gl->IsWARP() == gfxWindowsPlatform::GetPlatform()->IsWARP()) &&
+                    gfxWindowsPlatform::GetPlatform()->CompositorD3D11TextureSharingWorks())
+                {
+                    factory = SurfaceFactory_ANGLEShareHandle::Create(gl, caps, forwarder, flags);
+                }
+#endif
+              break;
+            }
+            default:
+              break;
+        }
+    }
+
+    return factory;
 }
 
 GLScreenBuffer::GLScreenBuffer(GLContext* gl,
@@ -83,7 +146,7 @@ GLScreenBuffer::BindAsFramebuffer(GLContext* const gl, GLenum target) const
     GLuint drawFB = DrawFB();
     GLuint readFB = ReadFB();
 
-    if (!gl->IsSupported(GLFeature::framebuffer_blit)) {
+    if (!gl->IsSupported(GLFeature::split_framebuffer)) {
         MOZ_ASSERT(drawFB == readFB);
         gl->raw_fBindFramebuffer(target, readFB);
         return;
@@ -96,16 +159,10 @@ GLScreenBuffer::BindAsFramebuffer(GLContext* const gl, GLenum target) const
         break;
 
     case LOCAL_GL_DRAW_FRAMEBUFFER_EXT:
-        if (!gl->IsSupported(GLFeature::framebuffer_blit))
-            NS_WARNING("DRAW_FRAMEBUFFER requested but unavailable.");
-
         gl->raw_fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER_EXT, drawFB);
         break;
 
     case LOCAL_GL_READ_FRAMEBUFFER_EXT:
-        if (!gl->IsSupported(GLFeature::framebuffer_blit))
-            NS_WARNING("READ_FRAMEBUFFER requested but unavailable.");
-
         gl->raw_fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER_EXT, readFB);
         break;
 
@@ -128,7 +185,7 @@ GLScreenBuffer::BindFB(GLuint fb)
     if (mInternalDrawFB == mInternalReadFB) {
         mGL->raw_fBindFramebuffer(LOCAL_GL_FRAMEBUFFER, mInternalDrawFB);
     } else {
-        MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+        MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
         mGL->raw_fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER_EXT, mInternalDrawFB);
         mGL->raw_fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER_EXT, mInternalReadFB);
     }
@@ -142,7 +199,7 @@ GLScreenBuffer::BindFB(GLuint fb)
 void
 GLScreenBuffer::BindDrawFB(GLuint fb)
 {
-    MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+    MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
 
     GLuint drawFB = DrawFB();
     mUserDrawFB = fb;
@@ -158,7 +215,7 @@ GLScreenBuffer::BindDrawFB(GLuint fb)
 void
 GLScreenBuffer::BindReadFB(GLuint fb)
 {
-    MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+    MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
 
     GLuint readFB = ReadFB();
     mUserReadFB = fb;
@@ -187,7 +244,7 @@ GLScreenBuffer::BindFB_Internal(GLuint fb)
 void
 GLScreenBuffer::BindDrawFB_Internal(GLuint fb)
 {
-    MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+    MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
 
     mInternalDrawFB = mUserDrawFB = fb;
     mGL->raw_fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER_EXT, mInternalDrawFB);
@@ -200,7 +257,7 @@ GLScreenBuffer::BindDrawFB_Internal(GLuint fb)
 void
 GLScreenBuffer::BindReadFB_Internal(GLuint fb)
 {
-    MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+    MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
 
     mInternalReadFB = mUserReadFB = fb;
     mGL->raw_fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER_EXT, mInternalReadFB);
@@ -246,7 +303,7 @@ GLScreenBuffer::GetReadFB() const
     // We use raw_ here because this is debug code and we need to see what
     // the driver thinks.
     GLuint actual = 0;
-    if (mGL->IsSupported(GLFeature::framebuffer_blit))
+    if (mGL->IsSupported(GLFeature::split_framebuffer))
         mGL->raw_fGetIntegerv(LOCAL_GL_READ_FRAMEBUFFER_BINDING_EXT, (GLint*)&actual);
     else
         mGL->raw_fGetIntegerv(LOCAL_GL_FRAMEBUFFER_BINDING, (GLint*)&actual);
@@ -361,7 +418,7 @@ GLScreenBuffer::AssureBlitted()
 
         MOZ_ASSERT(drawFB != 0);
         MOZ_ASSERT(drawFB != readFB);
-        MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
+        MOZ_ASSERT(mGL->IsSupported(GLFeature::split_framebuffer));
         MOZ_ASSERT(mDraw->mSize == mRead->Size());
 
         ScopedBindFramebuffer boundFB(mGL);
@@ -370,13 +427,19 @@ GLScreenBuffer::AssureBlitted()
         BindReadFB_Internal(drawFB);
         BindDrawFB_Internal(readFB);
 
-        const gfx::IntSize&  srcSize = mDraw->mSize;
-        const gfx::IntSize& destSize = mRead->Size();
+        if (mGL->IsSupported(GLFeature::framebuffer_blit)) {
+            const gfx::IntSize&  srcSize = mDraw->mSize;
+            const gfx::IntSize& destSize = mRead->Size();
 
-        mGL->raw_fBlitFramebuffer(0, 0,  srcSize.width,  srcSize.height,
-                                  0, 0, destSize.width, destSize.height,
-                                  LOCAL_GL_COLOR_BUFFER_BIT,
-                                  LOCAL_GL_NEAREST);
+            mGL->raw_fBlitFramebuffer(0, 0,  srcSize.width,  srcSize.height,
+                                      0, 0, destSize.width, destSize.height,
+                                      LOCAL_GL_COLOR_BUFFER_BIT,
+                                      LOCAL_GL_NEAREST);
+        } else if (mGL->IsExtensionSupported(GLContext::APPLE_framebuffer_multisample)) {
+            mGL->fResolveMultisampleFramebufferAPPLE();
+        } else {
+            MOZ_CRASH("No available blit methods.");
+        }
         // Done!
     }
 
@@ -486,8 +549,15 @@ GLScreenBuffer::Swap(const gfx::IntSize& size)
         //uint32_t srcPixel = ReadPixel(src);
         //uint32_t destPixel = ReadPixel(dest);
         //printf_stderr("Before: src: 0x%08x, dest: 0x%08x\n", srcPixel, destPixel);
+#ifdef DEBUG
+        GLContext::LocalErrorScope errorScope(*mGL);
+#endif
 
         SharedSurface::ProdCopy(src, dest, mFactory.get());
+
+#ifdef DEBUG
+        MOZ_ASSERT(!errorScope.GetError());
+#endif
 
         //srcPixel = ReadPixel(src);
         //destPixel = ReadPixel(dest);
@@ -609,6 +679,79 @@ bool
 GLScreenBuffer::IsReadFramebufferDefault() const
 {
     return SharedSurf()->mAttachType == AttachmentType::Screen;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Utils
+
+static void
+RenderbufferStorageBySamples(GLContext* aGL, GLsizei aSamples,
+                             GLenum aInternalFormat, const gfx::IntSize& aSize)
+{
+    if (aSamples) {
+        aGL->fRenderbufferStorageMultisample(LOCAL_GL_RENDERBUFFER,
+                                             aSamples,
+                                             aInternalFormat,
+                                             aSize.width, aSize.height);
+    } else {
+        aGL->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER,
+                                  aInternalFormat,
+                                  aSize.width, aSize.height);
+    }
+}
+
+static GLuint
+CreateRenderbuffer(GLContext* aGL, GLenum aFormat, GLsizei aSamples,
+                   const gfx::IntSize& aSize)
+{
+    GLuint rb = 0;
+    aGL->fGenRenderbuffers(1, &rb);
+    ScopedBindRenderbuffer autoRB(aGL, rb);
+
+    RenderbufferStorageBySamples(aGL, aSamples, aFormat, aSize);
+
+    return rb;
+}
+
+static void
+CreateRenderbuffersForOffscreen(GLContext* aGL, const GLFormats& aFormats,
+                                const gfx::IntSize& aSize, bool aMultisample,
+                                GLuint* aColorMSRB, GLuint* aDepthRB,
+                                GLuint* aStencilRB)
+{
+    GLsizei samples = aMultisample ? aFormats.samples : 0;
+    if (aColorMSRB) {
+        MOZ_ASSERT(aFormats.samples > 0);
+        MOZ_ASSERT(aFormats.color_rbFormat);
+
+        GLenum colorFormat = aFormats.color_rbFormat;
+        if (aGL->IsANGLE()) {
+            MOZ_ASSERT(colorFormat == LOCAL_GL_RGBA8);
+            colorFormat = LOCAL_GL_BGRA8_EXT;
+        }
+
+        *aColorMSRB = CreateRenderbuffer(aGL, colorFormat, samples, aSize);
+    }
+
+    if (aDepthRB &&
+        aStencilRB &&
+        aFormats.depthStencil)
+    {
+        *aDepthRB = CreateRenderbuffer(aGL, aFormats.depthStencil, samples, aSize);
+        *aStencilRB = *aDepthRB;
+    } else {
+        if (aDepthRB) {
+            MOZ_ASSERT(aFormats.depth);
+
+            *aDepthRB = CreateRenderbuffer(aGL, aFormats.depth, samples, aSize);
+        }
+
+        if (aStencilRB) {
+            MOZ_ASSERT(aFormats.stencil);
+
+            *aStencilRB = CreateRenderbuffer(aGL, aFormats.stencil, samples, aSize);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////

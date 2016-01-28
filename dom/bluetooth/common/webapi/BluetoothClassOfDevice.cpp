@@ -54,7 +54,7 @@ BluetoothClassOfDevice::~BluetoothClassOfDevice()
 void
 BluetoothClassOfDevice::Reset()
 {
-  mMajorServiceClass = 0x1; // LIMITED_DISCOVERABILITY
+  mMajorServiceClass = 0;
   mMajorDeviceClass = 0x1F; // UNCATEGORIZED
   mMinorDeviceClass = 0;
 }
@@ -90,7 +90,7 @@ BluetoothClassOfDevice::Create(nsPIDOMWindow* aOwner)
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aOwner);
 
-  nsRefPtr<BluetoothClassOfDevice> cod = new BluetoothClassOfDevice(aOwner);
+  RefPtr<BluetoothClassOfDevice> cod = new BluetoothClassOfDevice(aOwner);
   return cod.forget();
 }
 

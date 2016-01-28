@@ -68,6 +68,12 @@ CalleeTokenToScript(CalleeToken token)
     MOZ_ASSERT(GetCalleeTokenTag(token) == CalleeToken_Script);
     return (JSScript*)(uintptr_t(token) & CalleeTokenMask);
 }
+static inline bool
+CalleeTokenIsModuleScript(CalleeToken token)
+{
+    CalleeTokenTag tag = GetCalleeTokenTag(token);
+    return tag == CalleeToken_Script && CalleeTokenToScript(token)->module();
+}
 
 static inline JSScript*
 ScriptFromCalleeToken(CalleeToken token)
@@ -167,7 +173,6 @@ class OsiIndex
     uint32_t snapshotOffset() const {
         return snapshotOffset_;
     }
-    void fixUpOffset(MacroAssembler& masm);
 };
 
 // The layout of an Ion frame on the C stack is roughly:
@@ -1017,6 +1022,12 @@ GetPcScript(JSContext* cx, JSScript** scriptRes, jsbytecode** pcRes);
 
 CalleeToken
 MarkCalleeToken(JSTracer* trc, CalleeToken token);
+
+// The minimum stack size is two. Two slots are needed because INITGLEXICAL
+// (stack depth 1) is compiled as a SETPROP (stack depth 2) on the global
+// lexical scope. Baseline also requires one slot for this/argument type
+// checks.
+static const uint32_t MinJITStackSize = 2;
 
 } /* namespace jit */
 } /* namespace js */

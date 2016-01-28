@@ -77,6 +77,7 @@ struct EventRadiusPrefs
   bool mTouchOnly;
   bool mRepositionEventCoords;
   bool mTouchClusterDetectionEnabled;
+  bool mSimplifiedClusterDetection;
   uint32_t mLimitReadableSize;
   uint32_t mKeepLimitSizeForCluster;
 };
@@ -128,6 +129,9 @@ GetPrefsFor(EventClassID aEventClassID)
 
     nsPrintfCString touchClusterPref("ui.zoomedview.enabled", prefBranch);
     Preferences::AddBoolVarCache(&prefs->mTouchClusterDetectionEnabled, touchClusterPref.get(), false);
+
+    nsPrintfCString simplifiedClusterDetectionPref("ui.zoomedview.simplified", prefBranch);
+    Preferences::AddBoolVarCache(&prefs->mSimplifiedClusterDetection, simplifiedClusterDetectionPref.get(), false);
 
     nsPrintfCString limitReadableSizePref("ui.zoomedview.limitReadableSize", prefBranch);
     Preferences::AddUintVarCache(&prefs->mLimitReadableSize, limitReadableSizePref.get(), 8);
@@ -475,6 +479,10 @@ IsElementClickableAndReadable(nsIFrame* aFrame, WidgetGUIEvent* aEvent, const Ev
     return true;
   }
 
+  if (aPrefs->mSimplifiedClusterDetection) {
+    return true;
+  }
+
   if (aEvent->mClass != eMouseEventClass) {
     return true;
   }
@@ -515,7 +523,7 @@ IsElementClickableAndReadable(nsIFrame* aFrame, WidgetGUIEvent* aEvent, const Ev
   }
 
   if (testFontSize) {
-    nsRefPtr<nsFontMetrics> fm;
+    RefPtr<nsFontMetrics> fm;
     nsLayoutUtils::GetFontMetricsForFrame(aFrame, getter_AddRefs(fm),
       nsLayoutUtils::FontSizeInflationFor(aFrame));
     if (fm && fm->EmHeight() > 0 && // See bug 1171731

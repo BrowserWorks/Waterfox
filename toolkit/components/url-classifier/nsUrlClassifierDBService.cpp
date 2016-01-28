@@ -735,6 +735,18 @@ nsUrlClassifierDBServiceWorker::OpenDb()
   return NS_OK;
 }
 
+nsresult
+nsUrlClassifierDBServiceWorker::SetLastUpdateTime(const nsACString &table,
+                                                  uint64_t updateTime)
+{
+  MOZ_ASSERT(!NS_IsMainThread(), "Must be on the background thread");
+  MOZ_ASSERT(mClassifier, "Classifier connection must be opened");
+
+  mClassifier->SetLastUpdateTime(table, updateTime);
+
+  return NS_OK;
+}
+
 // -------------------------------------------------------------------------
 // nsUrlClassifierLookupCallback
 //
@@ -763,7 +775,7 @@ private:
 
   nsresult HandleResults();
 
-  nsRefPtr<nsUrlClassifierDBService> mDBService;
+  RefPtr<nsUrlClassifierDBService> mDBService;
   nsAutoPtr<LookupResultArray> mResults;
 
   // Completed results to send back to the worker for caching.
@@ -1246,7 +1258,7 @@ nsUrlClassifierDBService::Classify(nsIPrincipal* aPrincipal,
     return NS_OK;
   }
 
-  nsRefPtr<nsUrlClassifierClassifyCallback> callback =
+  RefPtr<nsUrlClassifierClassifyCallback> callback =
     new nsUrlClassifierClassifyCallback(c, mCheckMalware, mCheckPhishing,
                                         mCheckTracking);
   if (!callback) return NS_ERROR_OUT_OF_MEMORY;
@@ -1406,6 +1418,15 @@ nsUrlClassifierDBService::SetHashCompleter(const nsACString &tableName,
   }
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsUrlClassifierDBService::SetLastUpdateTime(const nsACString &tableName,
+                                            uint64_t lastUpdateTime)
+{
+  NS_ENSURE_TRUE(gDbBackgroundThread, NS_ERROR_NOT_INITIALIZED);
+
+  return mWorkerProxy->SetLastUpdateTime(tableName, lastUpdateTime);
 }
 
 NS_IMETHODIMP

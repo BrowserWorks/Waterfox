@@ -81,7 +81,7 @@ struct gfxFontStyle {
     // the language (may be an internal langGroup code rather than an actual
     // language code) specified in the document or element's lang property,
     // or inferred from the charset
-    nsRefPtr<nsIAtom> language;
+    RefPtr<nsIAtom> language;
 
     // Features are composed of (1) features from style rules (2) features
     // from feature setttings rules and (3) family-specific features.  (1) and
@@ -98,7 +98,7 @@ struct gfxFontStyle {
     nsTArray<gfxAlternateValue> alternateValues;
 
     // -- object used to look these up once the font is matched
-    nsRefPtr<gfxFontFeatureValueSet> featureValueLookup;
+    RefPtr<gfxFontFeatureValueSet> featureValueLookup;
 
     // The logical size of the font, in pixels
     gfxFloat size;
@@ -232,7 +232,7 @@ struct gfxTextRange {
     { }
     uint32_t Length() const { return end - start; }
     uint32_t start, end;
-    nsRefPtr<gfxFont> font;
+    RefPtr<gfxFont> font;
     uint8_t matchType;
     uint16_t orientation;
 };
@@ -409,6 +409,7 @@ public:
         uint32_t    fallbackSystem;
         uint32_t    textrunConst;
         uint32_t    textrunDestr;
+        uint32_t    genericLookups;
     };
 
     uint32_t reflowCount;
@@ -442,6 +443,7 @@ public:
         cumulative.fallbackSystem += current.fallbackSystem;
         cumulative.textrunConst += current.textrunConst;
         cumulative.textrunDestr += current.textrunDestr;
+        cumulative.genericLookups += current.genericLookups;
         memset(&current, 0, sizeof(current));
     }
 };
@@ -636,8 +638,8 @@ public:
                       bool aDisableLigatures,
                       const nsAString& aFamilyName,
                       bool aAddSmallCaps,
-                      PLDHashOperator (*aHandleFeature)(const uint32_t&,
-                                                        uint32_t&, void*),
+                      void (*aHandleFeature)(const uint32_t&,
+                                             uint32_t&, void*),
                       void* aHandleFeatureData);
 
 protected:
@@ -739,8 +741,7 @@ public:
 
             FLAG_CHAR_IS_TAB              = 0x08,
             FLAG_CHAR_IS_NEWLINE          = 0x10,
-            FLAG_CHAR_IS_LOW_SURROGATE    = 0x20,
-            CHAR_IDENTITY_FLAGS_MASK      = 0x38,
+            CHAR_IDENTITY_FLAGS_MASK      = 0x18,
 
             GLYPH_COUNT_MASK = 0x00FFFF00U,
             GLYPH_COUNT_SHIFT = 8
@@ -790,9 +791,6 @@ public:
         }
         bool CharIsNewline() const {
             return !IsSimpleGlyph() && (mValue & FLAG_CHAR_IS_NEWLINE) != 0;
-        }
-        bool CharIsLowSurrogate() const {
-            return !IsSimpleGlyph() && (mValue & FLAG_CHAR_IS_LOW_SURROGATE) != 0;
         }
 
         uint32_t CharIdentityFlags() const {
@@ -868,10 +866,6 @@ public:
             NS_ASSERTION(!IsSimpleGlyph(), "Expected non-simple-glyph");
             mValue |= FLAG_CHAR_IS_NEWLINE;
         }
-        void SetIsLowSurrogate() {
-            NS_ASSERTION(!IsSimpleGlyph(), "Expected non-simple-glyph");
-            mValue |= FLAG_CHAR_IS_LOW_SURROGATE;
-        }
 
     private:
         uint32_t mValue;
@@ -904,11 +898,6 @@ public:
 
     void SetIsSpace(uint32_t aIndex) {
         GetCharacterGlyphs()[aIndex].SetIsSpace();
-    }
-
-    void SetIsLowSurrogate(uint32_t aIndex) {
-        SetGlyphs(aIndex, CompressedGlyph().SetComplex(false, false, 0), nullptr);
-        GetCharacterGlyphs()[aIndex].SetIsLowSurrogate();
     }
 
     bool HasDetailedGlyphs() const {
@@ -965,8 +954,19 @@ public:
         return (GetFlags() & gfxTextRunFactory::TEXT_IS_RTL) != 0;
     }
 
+    bool IsSidewaysLeft() const {
+        return (GetFlags() & gfxTextRunFactory::TEXT_ORIENT_MASK) ==
+               gfxTextRunFactory::TEXT_ORIENT_VERTICAL_SIDEWAYS_LEFT;
+    }
+
+    // Return true if the logical inline direction is reversed compared to
+    // normal physical coordinates (i.e. if it is leftwards or upwards)
+    bool IsInlineReversed() const {
+        return IsSidewaysLeft() != IsRightToLeft();
+    }
+
     gfxFloat GetDirection() const {
-        return IsRightToLeft() ? -1.0f : 1.0f;
+        return IsInlineReversed() ? -1.0f : 1.0f;
     }
 
     bool DisableLigatures() const {
@@ -1932,7 +1932,7 @@ protected:
     static nsDataHashtable<nsUint32HashKey, int32_t> *sScriptTagToCode;
     static nsTHashtable<nsUint32HashKey>             *sDefaultFeatures;
 
-    nsRefPtr<gfxFontEntry> mFontEntry;
+    RefPtr<gfxFontEntry> mFontEntry;
 
     struct CacheHashKey {
         union {
@@ -2049,9 +2049,9 @@ protected:
 
     // if a userfont with unicode-range specified, contains map of *possible*
     // ranges supported by font
-    nsRefPtr<gfxCharacterMap> mUnicodeRangeMap;
+    RefPtr<gfxCharacterMap> mUnicodeRangeMap;
 
-    mozilla::RefPtr<mozilla::gfx::ScaledFont> mAzureScaledFont;
+    RefPtr<mozilla::gfx::ScaledFont> mAzureScaledFont;
 
     // For vertical metrics, created on demand.
     nsAutoPtr<const Metrics> mVerticalMetrics;
@@ -2106,7 +2106,7 @@ protected:
 // are dependent on the specific font, so they are set per GlyphRun.
 
 struct TextRunDrawParams {
-    mozilla::RefPtr<mozilla::gfx::DrawTarget> dt;
+    RefPtr<mozilla::gfx::DrawTarget> dt;
     gfxContext              *context;
     gfxFont::Spacing        *spacing;
     gfxTextRunDrawCallbacks *callbacks;
@@ -2121,8 +2121,8 @@ struct TextRunDrawParams {
 };
 
 struct FontDrawParams {
-    mozilla::RefPtr<mozilla::gfx::ScaledFont>            scaledFont;
-    mozilla::RefPtr<mozilla::gfx::GlyphRenderingOptions> renderingOptions;
+    RefPtr<mozilla::gfx::ScaledFont>            scaledFont;
+    RefPtr<mozilla::gfx::GlyphRenderingOptions> renderingOptions;
     gfxTextContextPaint      *contextPaint;
     mozilla::gfx::Matrix     *passedInvMatrix;
     mozilla::gfx::Matrix      matInv;

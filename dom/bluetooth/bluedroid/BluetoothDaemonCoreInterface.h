@@ -79,49 +79,50 @@ public:
 
   nsresult GetAdapterPropertiesCmd(BluetoothResultHandler* aRes);
 
-  nsresult GetAdapterPropertyCmd(const nsAString& aName,
+  nsresult GetAdapterPropertyCmd(BluetoothPropertyType aType,
                                  BluetoothResultHandler* aRes);
 
-  nsresult SetAdapterPropertyCmd(const BluetoothNamedValue& aProperty,
+  nsresult SetAdapterPropertyCmd(const BluetoothProperty& aProperty,
                                  BluetoothResultHandler* aRes);
 
-  nsresult GetRemoteDevicePropertiesCmd(const nsAString& aRemoteAddr,
+  nsresult GetRemoteDevicePropertiesCmd(const BluetoothAddress& aRemoteAddr,
                                         BluetoothResultHandler* aRes);
 
-  nsresult GetRemoteDevicePropertyCmd(const nsAString& aRemoteAddr,
-                                      const nsAString& aName,
+  nsresult GetRemoteDevicePropertyCmd(const BluetoothAddress& aRemoteAddr,
+                                      BluetoothPropertyType aType,
                                       BluetoothResultHandler* aRes);
 
-  nsresult SetRemoteDevicePropertyCmd(const nsAString& aRemoteAddr,
-                                      const BluetoothNamedValue& aProperty,
+  nsresult SetRemoteDevicePropertyCmd(const BluetoothAddress& aRemoteAddr,
+                                      const BluetoothProperty& aProperty,
                                       BluetoothResultHandler* aRes);
 
-  nsresult GetRemoteServiceRecordCmd(const nsAString& aRemoteAddr,
-                                     const uint8_t aUuid[16],
+  nsresult GetRemoteServiceRecordCmd(const BluetoothAddress& aRemoteAddr,
+                                     const BluetoothUuid& aUuid,
                                      BluetoothResultHandler* aRes);
 
-  nsresult GetRemoteServicesCmd(const nsAString& aRemoteAddr,
+  nsresult GetRemoteServicesCmd(const BluetoothAddress& aRemoteAddr,
                                 BluetoothResultHandler* aRes);
 
   nsresult StartDiscoveryCmd(BluetoothResultHandler* aRes);
 
   nsresult CancelDiscoveryCmd(BluetoothResultHandler* aRes);
 
-  nsresult CreateBondCmd(const nsAString& aBdAddr,
+  nsresult CreateBondCmd(const BluetoothAddress& aBdAddr,
                          BluetoothTransport aTransport,
                          BluetoothResultHandler* aRes);
 
-  nsresult RemoveBondCmd(const nsAString& aBdAddr,
+  nsresult RemoveBondCmd(const BluetoothAddress& aBdAddr,
                          BluetoothResultHandler* aRes);
 
-  nsresult CancelBondCmd(const nsAString& aBdAddr,
+  nsresult CancelBondCmd(const BluetoothAddress& aBdAddr,
                          BluetoothResultHandler* aRes);
 
-  nsresult PinReplyCmd(const nsAString& aBdAddr, bool aAccept,
-                       const nsAString& aPinCode,
+  nsresult PinReplyCmd(const BluetoothAddress& aBdAddr, bool aAccept,
+                       const BluetoothPinCode& aPinCode,
                        BluetoothResultHandler* aRes);
 
-  nsresult SspReplyCmd(const nsAString& aBdAddr, BluetoothSspVariant aVariant,
+  nsresult SspReplyCmd(const BluetoothAddress& aBdAddr,
+                       BluetoothSspVariant aVariant,
                        bool aAccept, uint32_t aPasskey,
                        BluetoothResultHandler* aRes);
 
@@ -250,9 +251,9 @@ private:
     AdapterPropertiesNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
-    NotificationHandlerWrapper, void, BluetoothStatus, nsString, int,
-    nsAutoArrayPtr<BluetoothProperty>, BluetoothStatus, const nsAString&,
-    int, const BluetoothProperty*>
+    NotificationHandlerWrapper, void, BluetoothStatus, BluetoothAddress, int,
+    nsAutoArrayPtr<BluetoothProperty>, BluetoothStatus,
+    const BluetoothAddress&, int, const BluetoothProperty*>
     RemoteDevicePropertiesNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
@@ -265,23 +266,27 @@ private:
     DiscoveryStateChangedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
-    NotificationHandlerWrapper, void, nsString, nsString, uint32_t,
-    const nsAString&, const nsAString&>
+    NotificationHandlerWrapper, void,
+    BluetoothAddress, BluetoothRemoteName, uint32_t,
+    const BluetoothAddress&, const BluetoothRemoteName&>
     PinRequestNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable5<
-    NotificationHandlerWrapper, void, nsString, nsString, uint32_t,
-    BluetoothSspVariant, uint32_t, const nsAString&, const nsAString&>
+    NotificationHandlerWrapper, void,
+    BluetoothAddress, BluetoothRemoteName, uint32_t, BluetoothSspVariant,
+    uint32_t,
+    const BluetoothAddress&, const BluetoothRemoteName&>
     SspRequestNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
-    NotificationHandlerWrapper, void, BluetoothStatus, nsString,
-    BluetoothBondState, BluetoothStatus, const nsAString&>
+    NotificationHandlerWrapper, void, BluetoothStatus, BluetoothAddress,
+    BluetoothBondState, BluetoothStatus, const BluetoothAddress&>
     BondStateChangedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
-    NotificationHandlerWrapper, void, BluetoothStatus, nsString, bool,
-    BluetoothStatus, const nsAString&>
+    NotificationHandlerWrapper, void,
+    BluetoothStatus, BluetoothAddress, BluetoothAclState,
+    BluetoothStatus, const BluetoothAddress&>
     AclStateChangedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
@@ -293,14 +298,10 @@ private:
     NotificationHandlerWrapper, void, BluetoothStatus, uint16_t>
     LeTestModeNotification;
 
-  class AclStateChangedInitOp;
   class AdapterPropertiesInitOp;
-  class BondStateChangedInitOp;
   class DeviceFoundInitOp;
   class DutModeRecvInitOp;
-  class PinRequestInitOp;
   class RemoteDevicePropertiesInitOp;
-  class SspRequestInitOp;
 
   void AdapterStateChangedNtf(const DaemonSocketPDUHeader& aHeader,
                               DaemonSocketPDU& aPDU);

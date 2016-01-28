@@ -19,7 +19,6 @@ import time
 import uuid
 import copy
 import glob
-import logging
 import shlex
 from itertools import chain
 
@@ -31,9 +30,17 @@ from mozharness.base.config import BaseConfig, parse_config_file
 from mozharness.base.log import ERROR, OutputParser, FATAL
 from mozharness.base.script import PostScriptRun
 from mozharness.base.vcs.vcsbase import MercurialScript
-from mozharness.mozilla.buildbot import BuildbotMixin, TBPL_STATUS_DICT, \
-    TBPL_EXCEPTION, TBPL_RETRY, EXIT_STATUS_DICT, TBPL_WARNING, TBPL_SUCCESS, \
-    TBPL_WORST_LEVEL_TUPLE, TBPL_FAILURE
+from mozharness.mozilla.buildbot import (
+    BuildbotMixin,
+    EXIT_STATUS_DICT,
+    TBPL_STATUS_DICT,
+    TBPL_EXCEPTION,
+    TBPL_FAILURE,
+    TBPL_RETRY,
+    TBPL_WARNING,
+    TBPL_SUCCESS,
+    TBPL_WORST_LEVEL_TUPLE,
+)
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
 from mozharness.mozilla.signing import SigningMixin
@@ -57,8 +64,6 @@ Please make sure that either "repo" is in your config or, if \
 you are running this in buildbot, "repo_path" is in your buildbot_config.',
     'comments_undetermined': '"comments" could not be determined. This may be \
 because it was a forced build.',
-    'src_mozconfig_path_not_found': '"abs_src_mozconfig" path could not be \
-determined. Please make sure it is a valid path off of "abs_src_dir"',
     'tooltool_manifest_undetermined': '"tooltool_manifest_src" not set, \
 Skipping run_tooltool...',
 }
@@ -81,6 +86,7 @@ TBPL_UPLOAD_ERRORS = [
         'level': TBPL_RETRY,
     }
 ]
+
 
 class MakeUploadOutputParser(OutputParser):
     tbpl_error_list = TBPL_UPLOAD_ERRORS
@@ -164,6 +170,7 @@ class MakeUploadOutputParser(OutputParser):
         else:
             self.info(line)
 
+
 class CheckTestCompleteParser(OutputParser):
     tbpl_error_list = TBPL_UPLOAD_ERRORS
 
@@ -174,6 +181,7 @@ class CheckTestCompleteParser(OutputParser):
         self.fail_count = 0
         self.leaked = False
         self.harness_err_re = TinderBoxPrintRe['harness_error']['full_regex']
+        self.tbpl_status = TBPL_SUCCESS
 
     def parse_single_line(self, line):
         # Counts and flags.
@@ -191,17 +199,38 @@ class CheckTestCompleteParser(OutputParser):
                     self.leaked = None
                 else:
                     self.leaked = True
-            else:
-                self.fail_count += 1
+            self.fail_count += 1
             return self.warning(line)
         self.info(line)  # else
 
-    def evaluate_parser(self):
-        # Return the summary.
+    def evaluate_parser(self, return_code,  success_codes=None):
+        success_codes = success_codes or [0]
+
+        if self.num_errors:  # ran into a script error
+            self.tbpl_status = self.worst_level(TBPL_FAILURE, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
+        if self.fail_count > 0:
+            self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
+        # Account for the possibility that no test summary was output.
+        if self.pass_count == 0 and self.fail_count == 0:
+            self.error('No tests run or test summary not found')
+            self.tbpl_status = self.worst_level(TBPL_WARNING, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
+        if return_code not in success_codes:
+            self.tbpl_status = self.worst_level(TBPL_FAILURE, self.tbpl_status,
+                                                levels=TBPL_WORST_LEVEL_TUPLE)
+
+        # Print the summary.
         summary = tbox_print_summary(self.pass_count,
                                      self.fail_count,
                                      self.leaked)
         self.info("TinderboxPrint: check<br/>%s\n" % summary)
+
+        return self.tbpl_status
 
 
 class BuildingConfig(BaseConfig):
@@ -317,6 +346,7 @@ class BuildOptionParser(object):
         'tsan': 'builds/releng_sub_%s_configs/%s_tsan.py',
         'b2g-debug': 'b2g/releng_sub_%s_configs/%s_debug.py',
         'cross-debug': 'builds/releng_sub_%s_configs/%s_cross_debug.py',
+        'cross-opt': 'builds/releng_sub_%s_configs/%s_cross_opt.py',
         'debug': 'builds/releng_sub_%s_configs/%s_debug.py',
         'asan-and-debug': 'builds/releng_sub_%s_configs/%s_asan_and_debug.py',
         'stat-and-debug': 'builds/releng_sub_%s_configs/%s_stat_and_debug.py',
@@ -330,6 +360,8 @@ class BuildOptionParser(object):
         'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
         'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
+        'api-11-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_11_partner_sample1.py',
+        'api-11-b2gdroid': 'builds/releng_sub_%s_configs/%s_api_11_b2gdroid.py',
     }
     build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
@@ -685,11 +717,18 @@ or run without that action (ie: --no-{action})"
             app_ini_path = dirs['abs_app_ini_path']
         if (os.path.exists(print_conf_setting_path) and
                 os.path.exists(app_ini_path)):
+            python = self.query_exe('python2.7')
             cmd = [
-                'python', print_conf_setting_path, app_ini_path,
+                python, os.path.join(dirs['abs_src_dir'], 'mach'), 'python',
+                print_conf_setting_path, app_ini_path,
                 'App', prop
             ]
-            return self.get_output_from_command(cmd, cwd=dirs['base_work_dir'])
+            env = self.query_build_env()
+            # dirs['abs_obj_dir'] can be different from env['MOZ_OBJDIR'] on
+            # mac, and that confuses mach.
+            del env['MOZ_OBJDIR']
+            return self.get_output_from_command_m(cmd,
+                cwd=dirs['abs_obj_dir'], env=env)
         else:
             return None
 
@@ -819,6 +858,10 @@ or run without that action (ie: --no-{action})"
         # to activate the right behaviour in mozonfigs while we transition
         if c.get('enable_release_promotion'):
             env['ENABLE_RELEASE_PROMOTION'] = "1"
+            update_channel = c.get('update_channel', self.branch)
+            self.info("Release promotion update channel: %s"
+                      % (update_channel,))
+            env["MOZ_UPDATE_CHANNEL"] = update_channel
 
         # we can't make env an attribute of self because env can change on
         # every call for reasons like MOZ_SIGN_CMD
@@ -1021,23 +1064,32 @@ or run without that action (ie: --no-{action})"
         """assign mozconfig."""
         c = self.config
         dirs = self.query_abs_dirs()
-        if c.get('src_mozconfig'):
+        abs_mozconfig_path = ''
+
+        # first determine the mozconfig path
+        if c.get('src_mozconfig') and not c.get('src_mozconfig_manifest'):
             self.info('Using in-tree mozconfig')
-            abs_src_mozconfig = os.path.join(dirs['abs_src_dir'],
-                                             c.get('src_mozconfig'))
-            if not os.path.exists(abs_src_mozconfig):
-                self.info('abs_src_mozconfig: %s' % (abs_src_mozconfig,))
-                self.fatal(ERROR_MSGS['src_mozconfig_path_not_found'])
-            self.copyfile(abs_src_mozconfig,
-                          os.path.join(dirs['abs_src_dir'], '.mozconfig'))
-            self.info("mozconfig content:")
-            with open(abs_src_mozconfig) as mozconfig:
-                for line in mozconfig:
-                    self.info(line)
+            abs_mozconfig_path = os.path.join(dirs['abs_src_dir'], c.get('src_mozconfig'))
+        elif c.get('src_mozconfig_manifest') and not c.get('src_mozconfig'):
+            self.info('Using mozconfig based on manifest contents')
+            manifest = os.path.join(dirs['abs_work_dir'], c['src_mozconfig_manifest'])
+            if not os.path.exists(manifest):
+                self.fatal('src_mozconfig_manifest: "%s" not found. Does it exist?' % (manifest,))
+            with self.opened(manifest, error_level=ERROR) as (fh, err):
+                if err:
+                    self.fatal("%s exists but coud not read properties" % manifest)
+                abs_mozconfig_path = os.path.join(dirs['abs_src_dir'], json.load(fh)['gecko_path'])
         else:
-            self.fatal("To build, you must supply a mozconfig from inside the "
-                       "tree to use use. Please provide the path in your "
-                       "config via 'src_mozconfig'")
+            self.fatal("'src_mozconfig' or 'src_mozconfig_manifest' must be "
+                       "in the config but not both in order to determine the mozconfig.")
+
+        # print its contents
+        content = self.read_from_file(abs_mozconfig_path, error_level=FATAL)
+        self.info("mozconfig content:")
+        self.info(content)
+
+        # finally, copy the mozconfig to a path that 'mach build' expects it to be
+        self.copyfile(abs_mozconfig_path, os.path.join(dirs['abs_src_dir'], '.mozconfig'))
 
     # TODO: replace with ToolToolMixin
     def _get_tooltool_auth_file(self):
@@ -1302,18 +1354,24 @@ or run without that action (ie: --no-{action})"
                                             dirs['abs_app_ini_path']),
                      level=error_level)
         self.info("Setting properties found in: %s" % dirs['abs_app_ini_path'])
+        python = self.query_exe('python2.7')
         base_cmd = [
-            'python', print_conf_setting_path, dirs['abs_app_ini_path'], 'App'
+            python, os.path.join(dirs['abs_src_dir'], 'mach'), 'python',
+            print_conf_setting_path, dirs['abs_app_ini_path'], 'App'
         ]
         properties_needed = [
             {'ini_name': 'SourceStamp', 'prop_name': 'sourcestamp'},
             {'ini_name': 'Version', 'prop_name': 'appVersion'},
             {'ini_name': 'Name', 'prop_name': 'appName'}
         ]
+        env = self.query_build_env()
+        # dirs['abs_obj_dir'] can be different from env['MOZ_OBJDIR'] on
+        # mac, and that confuses mach.
+        del env['MOZ_OBJDIR']
         for prop in properties_needed:
-            prop_val = self.get_output_from_command(
-                base_cmd + [prop['ini_name']], cwd=dirs['base_work_dir'],
-                halt_on_failure=halt_on_failure
+            prop_val = self.get_output_from_command_m(
+                base_cmd + [prop['ini_name']], cwd=dirs['abs_obj_dir'],
+                halt_on_failure=halt_on_failure, env=env
             )
             self.set_buildbot_property(prop['prop_name'],
                                        prop_val,
@@ -1364,10 +1422,6 @@ or run without that action (ie: --no-{action})"
         self.create_virtualenv()
         self.activate_virtualenv()
 
-        # Enable Taskcluster debug logging, so at least we get some debug
-        # messages while we are testing uploads.
-        logging.getLogger('taskcluster').setLevel(logging.DEBUG)
-
         routes_file = os.path.join(dirs['abs_src_dir'],
                                    'testing/taskcluster/routes.json')
         with open(routes_file) as f:
@@ -1382,12 +1436,17 @@ or run without that action (ie: --no-{action})"
         repo = self._query_repo()
         revision = self.query_revision()
         pushinfo = self.vcs_query_pushinfo(repo, revision)
+        pushdate = time.strftime('%Y%m%d%H%M%S', time.gmtime(pushinfo.pushdate))
 
         index = self.config.get('taskcluster_index', 'index.garbage.staging')
         fmt = {
             'index': index,
             'project': self.buildbot_config['properties']['branch'],
             'head_rev': revision,
+            'pushdate': pushdate,
+            'year': pushdate[0:4],
+            'month': pushdate[4:6],
+            'day': pushdate[6:8],
             'build_product': self.config['stage_product'],
             'build_name': self.query_build_name(),
             'build_type': self.query_build_type(),
@@ -1523,8 +1582,8 @@ or run without that action (ie: --no-{action})"
         # Find a stripped version of libxul if possible
         def find_file(rootPath, fileName):
             for root, dirs, files in os.walk(rootPath):
-               for file in files:
-                   if file == fileName:
+                for file in files:
+                    if file == fileName:
                         return (fileName, os.path.join(root, file))
             return None
 
@@ -1581,35 +1640,6 @@ or run without that action (ie: --no-{action})"
         self.set_buildbot_property(prop_type + 'Hash',
                                    hash_prop.strip().split(' ', 2)[1],
                                    write_to_file=True)
-
-    def _query_previous_buildid(self):
-        dirs = self.query_abs_dirs()
-        previous_buildid = self.query_buildbot_property('previous_buildid')
-        if previous_buildid:
-            return previous_buildid
-        cmd = [
-            "bash", "-c", "find previous -maxdepth 4 -type f -name application.ini"
-        ]
-        self.info("finding previous mar's inipath...")
-        prev_ini_path = self.get_output_from_command(cmd,
-                                                     cwd=dirs['abs_obj_dir'],
-                                                     halt_on_failure=True,
-                                                     fatal_exit_code=3)
-        print_conf_path = os.path.join(dirs['abs_src_dir'],
-                                       'config',
-                                       'printconfigsetting.py')
-        abs_prev_ini_path = os.path.join(dirs['abs_obj_dir'], prev_ini_path)
-        previous_buildid = self.get_output_from_command(['python',
-                                                         print_conf_path,
-                                                         abs_prev_ini_path,
-                                                         'App', 'BuildID'])
-        if not previous_buildid:
-            self.fatal("Could not determine previous_buildid. This property"
-                       "requires the upload action creating a partial mar.")
-        self.set_buildbot_property("previous_buildid",
-                                   previous_buildid,
-                                   write_to_file=True)
-        return previous_buildid
 
     def clone_tools(self):
         """clones the tools repo."""
@@ -1781,10 +1811,8 @@ or run without that action (ie: --no-{action})"
             self._ccache_s()
 
     def preflight_package_source(self):
-        # Make sure to have an empty .mozconfig. Removing it is not enough,
-        # because MOZ_OBJDIR is not used in this case
-        self._touch_file(os.path.join(self.query_abs_dirs()['abs_src_dir'],
-                                      '.mozconfig'))
+        self._get_mozconfig()
+        self._run_tooltool()
 
     def package_source(self):
         """generates source archives and uploads them"""
@@ -1827,10 +1855,12 @@ or run without that action (ie: --no-{action})"
                                          cwd=dirs['abs_obj_dir'],
                                          env=env,
                                          output_parser=parser)
-        parser.evaluate_parser()
+        tbpl_status = parser.evaluate_parser(return_code)
+        return_code = EXIT_STATUS_DICT[tbpl_status]
+
         if return_code:
             self.return_code = self.worst_level(
-                EXIT_STATUS_DICT[TBPL_WARNING], self.return_code,
+                return_code,  self.return_code,
                 AUTOMATION_EXIT_CODES[::-1]
             )
             self.error("'make -k check' did not run successfully. Please check "

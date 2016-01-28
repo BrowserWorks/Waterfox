@@ -20,7 +20,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/Promise.h"
 
 class nsINode;
 class nsITransferable;
@@ -36,6 +35,7 @@ namespace dom {
 class DOMStringList;
 class Element;
 class FileList;
+class Promise;
 template<typename T> class Optional;
 
 /**
@@ -67,6 +67,8 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DataTransfer)
 
   friend class mozilla::EventStateManager;
+
+  static DataTransfer* Cast(nsIDOMDataTransfer* aArg) { return static_cast<DataTransfer*>(aArg); }
 
 protected:
 
@@ -183,6 +185,9 @@ public:
     return mDragTarget;
   }
 
+  nsresult GetDataAtNoSecurityCheck(const nsAString& aFormat, uint32_t aIndex,
+                                    nsIVariant** aData);
+
   // a readonly dataTransfer cannot have new data added or existing data removed.
   // Only the dropEffect and effectAllowed may be modified.
   void SetReadOnly() { mReadOnly = true; }
@@ -246,6 +251,13 @@ protected:
   // clipboard for a given index.
   void FillInExternalData(TransferItem& aItem, uint32_t aIndex);
 
+
+  FileList* GetFilesInternal(ErrorResult& aRv, nsIPrincipal* aSubjectPrincipal);
+  nsresult GetDataAtInternal(const nsAString& aFormat, uint32_t aIndex,
+                             nsIPrincipal* aSubjectPrincipal, nsIVariant** aData);
+  nsresult SetDataAtInternal(const nsAString& aFormat, nsIVariant* aData, uint32_t aIndex,
+                             nsIPrincipal* aSubjectPrincipal);
+
   friend class ContentParent;
   void FillAllExternalData();
 
@@ -289,7 +301,7 @@ protected:
   nsTArray<nsTArray<TransferItem> > mItems;
 
   // array of files, containing only the files present in the dataTransfer
-  nsRefPtr<FileList> mFiles;
+  RefPtr<FileList> mFiles;
 
   // the target of the drag. The drag and dragend events will fire at this.
   nsCOMPtr<mozilla::dom::Element> mDragTarget;

@@ -92,13 +92,13 @@
     <command id="cmd_gestureRotateEnd" oncommand="gGestureSupport.rotateEnd()"/>
     <command id="Browser:OpenLocation" oncommand="openLocation();"/>
     <command id="Browser:RestoreLastSession" oncommand="restoreLastSession();" disabled="true"/>
+    <command id="Browser:NewUserContextTab" oncommand="openNewUserContextTab(event.sourceEvent);" reserved="true"/>
 
     <command id="Tools:Search" oncommand="BrowserSearch.webSearch();"/>
     <command id="Tools:Downloads" oncommand="BrowserDownloadsUI();"/>
     <command id="Tools:DevToolbox" oncommand="gDevToolsBrowser.toggleToolboxCommand(gBrowser);"/>
     <command id="Tools:DevToolbar" oncommand="DeveloperToolbar.toggle();" disabled="true" hidden="true"/>
     <command id="Tools:DevToolbarFocus" oncommand="DeveloperToolbar.focusToggle();" disabled="true"/>
-    <command id="Tools:DevAppMgr" oncommand="gDevToolsBrowser.openAppManager(gBrowser);" disabled="true" hidden="true"/>
     <command id="Tools:WebIDE" oncommand="gDevToolsBrowser.openWebIDE();" disabled="true" hidden="true"/>
     <command id="Tools:BrowserToolbox" oncommand="BrowserToolboxProcess.init();" disabled="true" hidden="true"/>
     <command id="Tools:BrowserContentToolbox" oncommand="gDevToolsBrowser.openContentProcessToolbox();" disabled="true" hidden="true"/>
@@ -198,9 +198,6 @@
                  type="checkbox" autocheck="false"
                  command="Tools:DevToolbar"
                  key="key_devToolbar"/>
-    <broadcaster id="devtoolsMenuBroadcaster_DevAppMgr"
-                 label="&devAppMgrMenu.label;"
-                 command="Tools:DevAppMgr"/>
     <broadcaster id="devtoolsMenuBroadcaster_webide"
                  label="&webide.label;"
                  command="Tools:WebIDE"

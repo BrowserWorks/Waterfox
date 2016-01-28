@@ -21,7 +21,6 @@ namespace dom {
 NS_IMPL_ISUPPORTS(PresentationDeviceManager,
                   nsIPresentationDeviceManager,
                   nsIPresentationDeviceListener,
-                  nsIPresentationDeviceEventListener,
                   nsIObserver,
                   nsISupportsWeakReference)
 
@@ -180,7 +179,6 @@ PresentationDeviceManager::AddDevice(nsIPresentationDevice* aDevice)
   }
 
   mDevices.AppendElement(aDevice);
-  aDevice->SetListener(this);
 
   NotifyDeviceChange(aDevice, MOZ_UTF16("add"));
 
@@ -198,7 +196,6 @@ PresentationDeviceManager::RemoveDevice(nsIPresentationDevice* aDevice)
     return NS_ERROR_FAILURE;
   }
 
-  mDevices[index]->SetListener(nullptr);
   mDevices.RemoveElementAt(index);
 
   NotifyDeviceChange(aDevice, MOZ_UTF16("remove"));
@@ -221,7 +218,6 @@ PresentationDeviceManager::UpdateDevice(nsIPresentationDevice* aDevice)
   return NS_OK;
 }
 
-// nsIPresentationDeviceListener
 NS_IMETHODIMP
 PresentationDeviceManager::OnSessionRequest(nsIPresentationDevice* aDevice,
                                             const nsAString& aUrl,
@@ -234,7 +230,7 @@ PresentationDeviceManager::OnSessionRequest(nsIPresentationDevice* aDevice,
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE(obs, NS_ERROR_FAILURE);
 
-  nsRefPtr<PresentationSessionRequest> request =
+  RefPtr<PresentationSessionRequest> request =
     new PresentationSessionRequest(aDevice, aUrl, aPresentationId, aControlChannel);
   obs->NotifyObservers(request,
                        PRESENTATION_SESSION_REQUEST_TOPIC,

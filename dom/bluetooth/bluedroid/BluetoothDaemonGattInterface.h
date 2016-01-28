@@ -64,17 +64,8 @@ public:
     // TODO: Add L support
   };
 
-  static const int MAX_NUM_CLIENTS;
-
   virtual nsresult Send(DaemonSocketPDU* aPDU,
                         DaemonSocketResultHandler* aRes) = 0;
-
-  virtual nsresult RegisterModule(uint8_t aId, uint8_t aMode,
-                                  uint32_t aMaxNumClients,
-                                  BluetoothSetupResultHandler* aRes) = 0;
-
-  virtual nsresult UnregisterModule(uint8_t aId,
-                                    BluetoothSetupResultHandler* aRes) = 0;
 
   void SetNotificationHandler(
     BluetoothGattNotificationHandler* aNotificationHandler);
@@ -96,13 +87,13 @@ public:
 
   /* Connect / Disconnect */
   nsresult ClientConnectCmd(int aClientIf,
-                            const nsAString& aBdAddr,
+                            const BluetoothAddress& aBdAddr,
                             bool aIsDirect, /* auto connect */
                             BluetoothTransport aTransport,
                             BluetoothGattResultHandler* aRes);
 
   nsresult ClientDisconnectCmd(int aClientIf,
-                               const nsAString& aBdAddr,
+                               const BluetoothAddress& aBdAddr,
                                int aConnId,
                                BluetoothGattResultHandler* aRes);
 
@@ -113,7 +104,7 @@ public:
 
   /* Clear the attribute cache for a given device*/
   nsresult ClientRefreshCmd(int aClientIf,
-                            const nsAString& aBdAddr,
+                            const BluetoothAddress& aBdAddr,
                             BluetoothGattResultHandler* aRes);
 
   /* Enumerate Attributes */
@@ -185,23 +176,23 @@ public:
   /* Register / Deregister Characteristic Notifications or Indications */
   nsresult ClientRegisterNotificationCmd(
     int aClientIf,
-    const nsAString& aBdAddr,
+    const BluetoothAddress& aBdAddr,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharId,
     BluetoothGattResultHandler* aRes);
 
   nsresult ClientDeregisterNotificationCmd(
     int aClientIf,
-    const nsAString& aBdAddr,
+    const BluetoothAddress& aBdAddr,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharId,
     BluetoothGattResultHandler* aRes);
 
   nsresult ClientReadRemoteRssiCmd(int aClientIf,
-                                   const nsAString& aBdAddr,
+                                   const BluetoothAddress& aBdAddr,
                                    BluetoothGattResultHandler* aRes);
 
-  nsresult ClientGetDeviceTypeCmd(const nsAString& aBdAddr,
+  nsresult ClientGetDeviceTypeCmd(const BluetoothAddress& aBdAddr,
                                   BluetoothGattResultHandler* aRes);
 
   /* Set advertising data or scan response data */
@@ -233,68 +224,73 @@ public:
 
   /* Connect / Disconnect */
   nsresult ServerConnectPeripheralCmd(int aServerIf,
-                                      const nsAString& aBdAddr,
+                                      const BluetoothAddress& aBdAddr,
                                       bool aIsDirect,
                                       BluetoothTransport aTransport,
                                       BluetoothGattResultHandler* aRes);
 
   nsresult ServerDisconnectPeripheralCmd(
     int aServerIf,
-    const nsAString& aBdAddr,
+    const BluetoothAddress& aBdAddr,
     int aConnId,
     BluetoothGattResultHandler* aRes);
 
   /* Add a services / a characteristic / a descriptor */
   nsresult ServerAddServiceCmd(int aServerIf,
                                const BluetoothGattServiceId& aServiceId,
-                               int aNumHandles,
+                               uint16_t aNumHandles,
                                BluetoothGattResultHandler* aRes);
 
-  nsresult ServerAddIncludedServiceCmd(int aServerIf,
-                                       int aServiceHandle,
-                                       int aIncludedServiceHandle,
-                                       BluetoothGattResultHandler* aRes);
+  nsresult ServerAddIncludedServiceCmd(
+    int aServerIf,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothAttributeHandle& aIncludedServiceHandle,
+    BluetoothGattResultHandler* aRes);
 
-  nsresult ServerAddCharacteristicCmd(int aServerIf,
-                                      int aServiceHandle,
-                                      const BluetoothUuid& aUuid,
-                                      BluetoothGattCharProp aProperties,
-                                      BluetoothGattAttrPerm aPermissions,
-                                      BluetoothGattResultHandler* aRes);
+  nsresult ServerAddCharacteristicCmd(
+    int aServerIf,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothUuid& aUuid,
+    BluetoothGattCharProp aProperties,
+    BluetoothGattAttrPerm aPermissions,
+    BluetoothGattResultHandler* aRes);
 
-  nsresult ServerAddDescriptorCmd(int aServerIf,
-                                  int aServiceHandle,
-                                  const BluetoothUuid& aUuid,
-                                  BluetoothGattAttrPerm aPermissions,
-                                  BluetoothGattResultHandler* aRes);
+  nsresult ServerAddDescriptorCmd(
+    int aServerIf,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothUuid& aUuid,
+    BluetoothGattAttrPerm aPermissions,
+    BluetoothGattResultHandler* aRes);
 
   /* Start / Stop / Delete a service */
   nsresult ServerStartServiceCmd(int aServerIf,
-                                 int aServiceHandle,
+                                 const BluetoothAttributeHandle& aServiceHandle,
                                  BluetoothTransport aTransport,
                                  BluetoothGattResultHandler* aRes);
 
   nsresult ServerStopServiceCmd(int aServerIf,
-                                int aServiceHandle,
+                                const BluetoothAttributeHandle& aServiceHandle,
                                 BluetoothGattResultHandler* aRes);
 
-  nsresult ServerDeleteServiceCmd(int aServerIf,
-                                  int aServiceHandle,
-                                  BluetoothGattResultHandler* aRes);
+  nsresult ServerDeleteServiceCmd(
+    int aServerIf,
+    const BluetoothAttributeHandle& aServiceHandle,
+    BluetoothGattResultHandler* aRes);
 
   /* Send an indication or a notification */
-  nsresult ServerSendIndicationCmd(int aServerIf,
-                                   int aAttributeHandle,
-                                   int aConnId,
-                                   int aLength,
-                                   bool aConfirm,
-                                   uint8_t* aValue,
-                                   BluetoothGattResultHandler* aRes);
+  nsresult ServerSendIndicationCmd(
+    int aServerIf,
+    const BluetoothAttributeHandle& aCharacteristicHandle,
+    int aConnId,
+    int aLength,
+    bool aConfirm,
+    uint8_t* aValue,
+    BluetoothGattResultHandler* aRes);
 
   /* Send a response for an incoming indication */
   nsresult ServerSendResponseCmd(int aConnId,
                                  int aTransId,
-                                 BluetoothGattStatus aStatus,
+                                 uint16_t aStatus,
                                  const BluetoothGattResponse& aResponse,
                                  BluetoothGattResultHandler* aRes);
   // TODO: Add L support
@@ -484,20 +480,20 @@ protected:
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
     NotificationHandlerWrapper, void,
-    nsString, int, BluetoothGattAdvData,
-    const nsAString&, int, const BluetoothGattAdvData&>
+    BluetoothAddress, int, BluetoothGattAdvData,
+    const BluetoothAddress&, int, const BluetoothGattAdvData&>
     ClientScanResultNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    int, BluetoothGattStatus, int, nsString,
-    int, BluetoothGattStatus, int, const nsAString&>
+    int, BluetoothGattStatus, int, BluetoothAddress,
+    int, BluetoothGattStatus, int, const BluetoothAddress&>
     ClientConnectNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    int, BluetoothGattStatus, int, nsString,
-    int, BluetoothGattStatus, int, const nsAString&>
+    int, BluetoothGattStatus, int, BluetoothAddress,
+    int, BluetoothGattStatus, int, const BluetoothAddress&>
     ClientDisconnectNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
@@ -579,8 +575,8 @@ protected:
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    int, nsString, int, BluetoothGattStatus,
-    int, const nsAString&, int, BluetoothGattStatus>
+    int, BluetoothAddress, int, BluetoothGattStatus,
+    int, const BluetoothAddress&, int, BluetoothGattStatus>
     ClientReadRemoteRssiNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
@@ -596,64 +592,79 @@ protected:
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    int, int, bool, nsString,
-    int, int, bool, const nsAString&>
+    int, int, bool, BluetoothAddress,
+    int, int, bool, const BluetoothAddress&>
     ServerConnectionNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, BluetoothGattServiceId, int,
-    BluetoothGattStatus, int, const BluetoothGattServiceId&, int>
+    BluetoothGattStatus, int, BluetoothGattServiceId, BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothGattServiceId&,
+    const BluetoothAttributeHandle&>
     ServerServiceAddedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, int, int>
+    BluetoothGattStatus, int, BluetoothAttributeHandle,
+    BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothAttributeHandle&,
+    const BluetoothAttributeHandle&>
     ServerIncludedServiceAddedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable5<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, BluetoothUuid, int, int,
-    BluetoothGattStatus, int, const BluetoothUuid&, int, int>
+    BluetoothGattStatus, int, BluetoothUuid, BluetoothAttributeHandle,
+    BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothUuid&,
+    const BluetoothAttributeHandle&, const BluetoothAttributeHandle&>
     ServerCharacteristicAddedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable5<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, BluetoothUuid, int, int,
-    BluetoothGattStatus, int, const BluetoothUuid&, int, int>
+    BluetoothGattStatus, int, BluetoothUuid, BluetoothAttributeHandle,
+    BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothUuid&,
+    const BluetoothAttributeHandle&, const BluetoothAttributeHandle&>
     ServerDescriptorAddedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, int>
+    BluetoothGattStatus, int, BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothAttributeHandle&>
     ServerServiceStartedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, int>
+    BluetoothGattStatus, int, BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothAttributeHandle&>
     ServerServiceStoppedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
     NotificationHandlerWrapper, void,
-    BluetoothGattStatus, int, int>
+    BluetoothGattStatus, int, BluetoothAttributeHandle,
+    BluetoothGattStatus, int, const BluetoothAttributeHandle&>
     ServerServiceDeletedNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable6<
     NotificationHandlerWrapper, void,
-    int, int, nsString, int, int, bool,
-    int, int, const nsAString&, int, int, bool>
+    int, int, BluetoothAddress, BluetoothAttributeHandle,
+    int, bool,
+    int, int, const BluetoothAddress&, const BluetoothAttributeHandle&,
+    int, bool>
     ServerRequestReadNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable9<
     NotificationHandlerWrapper, void,
-    int, int, nsString, int, int, int, nsAutoArrayPtr<uint8_t>, bool, bool,
-    int, int, const nsAString&, int, int, int, const uint8_t*, bool, bool>
+    int, int, BluetoothAddress, BluetoothAttributeHandle,
+    int, int, nsAutoArrayPtr<uint8_t>, bool, bool,
+    int, int, const BluetoothAddress&, const BluetoothAttributeHandle&,
+    int, int, const uint8_t*, bool, bool>
     ServerRequestWriteNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable4<
     NotificationHandlerWrapper, void,
-    int, int, nsString, bool,
-    int, int, const nsAString&, bool>
+    int, int, BluetoothAddress, bool,
+    int, int, const BluetoothAddress&, bool>
     ServerRequestExecuteWriteNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
@@ -661,14 +672,10 @@ protected:
     BluetoothGattStatus, int>
     ServerResponseConfirmationNotification;
 
-  class ClientScanResultInitOp;
-  class ClientConnectDisconnectInitOp;
-  class ClientReadRemoteRssiInitOp;
   class ClientGetDeviceTypeInitOp;
+  class ClientScanResultInitOp;
   class ServerConnectionInitOp;
-  class ServerRequestReadInitOp;
   class ServerRequestWriteInitOp;
-  class ServerRequestExecuteWriteInitOp;
 
   void ClientRegisterNtf(const DaemonSocketPDUHeader& aHeader,
                                DaemonSocketPDU& aPDU);
@@ -782,9 +789,8 @@ public:
   BluetoothDaemonGattInterface(BluetoothDaemonGattModule* aModule);
   ~BluetoothDaemonGattInterface();
 
-  void Init(BluetoothGattNotificationHandler* aNotificationHandler,
-            BluetoothGattResultHandler* aRes) override;
-  void Cleanup(BluetoothGattResultHandler* aRes) override;
+  void SetNotificationHandler(
+    BluetoothGattNotificationHandler* aNotificationHandler) override;
 
   /* Register / Unregister */
   void RegisterClient(const BluetoothUuid& aUuid,
@@ -798,12 +804,12 @@ public:
 
   /* Connect / Disconnect */
   void Connect(int aClientIf,
-               const nsAString& aBdAddr,
+               const BluetoothAddress& aBdAddr,
                bool aIsDirect, /* auto connect */
                BluetoothTransport aTransport,
                BluetoothGattResultHandler* aRes) override;
   void Disconnect(int aClientIf,
-                  const nsAString& aBdAddr,
+                  const BluetoothAddress& aBdAddr,
                   int aConnId,
                   BluetoothGattResultHandler* aRes) override;
 
@@ -814,7 +820,7 @@ public:
 
   /* Clear the attribute cache for a given device*/
   void Refresh(int aClientIf,
-               const nsAString& aBdAddr,
+               const BluetoothAddress& aBdAddr,
                BluetoothGattResultHandler* aRes) override;
 
   /* Enumerate Attributes */
@@ -875,21 +881,21 @@ public:
 
   /* Register / Deregister Characteristic Notifications or Indications */
   void RegisterNotification(int aClientIf,
-                            const nsAString& aBdAddr,
+                            const BluetoothAddress& aBdAddr,
                             const BluetoothGattServiceId& aServiceId,
                             const BluetoothGattId& aCharId,
                             BluetoothGattResultHandler* aRes) override;
   void DeregisterNotification(int aClientIf,
-                              const nsAString& aBdAddr,
+                              const BluetoothAddress& aBdAddr,
                               const BluetoothGattServiceId& aServiceId,
                               const BluetoothGattId& aCharId,
                               BluetoothGattResultHandler* aRes) override;
 
   void ReadRemoteRssi(int aClientIf,
-                      const nsAString& aBdAddr,
+                      const BluetoothAddress& aBdAddr,
                       BluetoothGattResultHandler* aRes) override;
 
-  void GetDeviceType(const nsAString& aBdAddr,
+  void GetDeviceType(const BluetoothAddress& aBdAddr,
                      BluetoothGattResultHandler* aRes) override;
 
   /* Set advertising data or scan response data */
@@ -917,52 +923,52 @@ public:
 
   /* Connect / Disconnect */
   void ConnectPeripheral(int aServerIf,
-                         const nsAString& aBdAddr,
+                         const BluetoothAddress& aBdAddr,
                          bool aIsDirect, /* auto connect */
                          BluetoothTransport aTransport,
                          BluetoothGattResultHandler* aRes) override;
   void DisconnectPeripheral(int aServerIf,
-                            const nsAString& aBdAddr,
+                            const BluetoothAddress& aBdAddr,
                             int aConnId,
                             BluetoothGattResultHandler* aRes) override;
 
   /* Add a services / a characteristic / a descriptor */
   void AddService(int aServerIf,
                   const BluetoothGattServiceId& aServiceId,
-                  int aNumHandles,
+                  uint16_t aNumHandles,
                   BluetoothGattResultHandler* aRes) override;
   void AddIncludedService(int aServerIf,
-                          int aServiceHandle,
-                          int aIncludedServiceHandle,
+                          const BluetoothAttributeHandle& aServiceHandle,
+                          const BluetoothAttributeHandle& aIncludedServiceHandle,
                           BluetoothGattResultHandler* aRes) override;
   void AddCharacteristic(int aServerIf,
-                         int aServiceHandle,
+                         const BluetoothAttributeHandle& aServiceHandle,
                          const BluetoothUuid& aUuid,
                          BluetoothGattCharProp aProperties,
                          BluetoothGattAttrPerm aPermissions,
                          BluetoothGattResultHandler* aRes) override;
   void AddDescriptor(int aServerIf,
-                     int aServiceHandle,
+                     const BluetoothAttributeHandle& aServiceHandle,
                      const BluetoothUuid& aUuid,
                      BluetoothGattAttrPerm aPermissions,
                      BluetoothGattResultHandler* aRes) override;
 
   /* Start / Stop / Delete a service */
   void StartService(int aServerIf,
-                    int aServiceHandle,
+                    const BluetoothAttributeHandle& aServiceHandle,
                     BluetoothTransport aTransport,
                     BluetoothGattResultHandler* aRes) override;
   void StopService(int aServerIf,
-                   int aServiceHandle,
+                   const BluetoothAttributeHandle& aServiceHandle,
                    BluetoothGattResultHandler* aRes) override;
   void DeleteService(int aServerIf,
-                     int aServiceHandle,
+                     const BluetoothAttributeHandle& aServiceHandle,
                      BluetoothGattResultHandler* aRes) override;
 
   /* Send an indication or a notification */
   void SendIndication(
     int aServerIf,
-    int aAttributeHandle,
+    const BluetoothAttributeHandle& aCharacteristicHandle,
     int aConnId,
     const nsTArray<uint8_t>& aValue,
     bool aConfirm, /* true: indication, false: notification */
@@ -971,7 +977,7 @@ public:
   /* Send a response for an incoming indication */
   void SendResponse(int aConnId,
                     int aTransId,
-                    BluetoothGattStatus aStatus,
+                    uint16_t aStatus,
                     const BluetoothGattResponse& aResponse,
                     BluetoothGattResultHandler* aRes) override;
 

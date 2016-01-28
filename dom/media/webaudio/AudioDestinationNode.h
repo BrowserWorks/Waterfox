@@ -61,19 +61,18 @@ public:
   void OfflineShutdown();
 
   AudioChannel MozAudioChannelType() const;
-  void SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv);
 
   virtual void NotifyMainThreadStreamFinished() override;
   void FireOfflineCompletionEvent();
 
   // An amount that should be added to the MediaStream's current time to
   // get the AudioContext.currentTime.
-  double ExtraCurrentTime();
+  StreamTime ExtraCurrentTime();
 
   // When aIsOnlyNode is true, this is the only node for the AudioContext.
   void SetIsOnlyNodeForContext(bool aIsOnlyNode);
 
-  void CreateAudioChannelAgent();
+  nsresult CreateAudioChannelAgent();
   void DestroyAudioChannelAgent();
 
   virtual const char* NodeType() const override
@@ -91,6 +90,7 @@ protected:
   virtual ~AudioDestinationNode();
 
 private:
+  void SetMozAudioChannelType(AudioChannel aValue, ErrorResult& aRv);
   bool CheckAudioChannelPermissions(AudioChannel aValue);
 
   void SetCanPlay(float aVolume, bool aMuted);
@@ -102,9 +102,9 @@ private:
   uint32_t mFramesToProduce;
 
   nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
-  nsRefPtr<MediaInputPort> mCaptureStreamPort;
+  RefPtr<MediaInputPort> mCaptureStreamPort;
 
-  nsRefPtr<Promise> mOfflineRenderingPromise;
+  RefPtr<Promise> mOfflineRenderingPromise;
 
   // Audio Channel Type.
   AudioChannel mAudioChannel;
@@ -112,8 +112,7 @@ private:
   bool mAudioChannelAgentPlaying;
 
   TimeStamp mStartedBlockingDueToBeingOnlyNode;
-  double mExtraCurrentTime;
-  double mExtraCurrentTimeSinceLastStartedBlocking;
+  StreamTime mExtraCurrentTimeSinceLastStartedBlocking;
   bool mExtraCurrentTimeUpdatedSinceLastStableState;
   bool mCaptured;
 };

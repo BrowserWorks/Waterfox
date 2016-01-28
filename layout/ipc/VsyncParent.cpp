@@ -23,8 +23,8 @@ namespace layout {
 VsyncParent::Create()
 {
   AssertIsOnBackgroundThread();
-  nsRefPtr<gfx::VsyncSource> vsyncSource = gfxPlatform::GetPlatform()->GetHardwareVsync();
-  nsRefPtr<VsyncParent> vsyncParent = new VsyncParent();
+  RefPtr<gfx::VsyncSource> vsyncSource = gfxPlatform::GetPlatform()->GetHardwareVsync();
+  RefPtr<VsyncParent> vsyncParent = new VsyncParent();
   vsyncParent->mVsyncDispatcher = vsyncSource->GetRefreshTimerVsyncDispatcher();
   return vsyncParent.forget();
 }
@@ -70,6 +70,15 @@ VsyncParent::DispatchVsyncEvent(TimeStamp aTimeStamp)
   if (mObservingVsync && !mDestroyed) {
     unused << SendNotify(aTimeStamp);
   }
+}
+
+bool
+VsyncParent::RecvRequestVsyncRate()
+{
+  AssertIsOnBackgroundThread();
+  TimeDuration vsyncRate = gfxPlatform::GetPlatform()->GetHardwareVsync()->GetGlobalDisplay().GetVsyncRate();
+  unused << SendVsyncRate(vsyncRate.ToMilliseconds());
+  return true;
 }
 
 bool

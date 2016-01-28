@@ -132,10 +132,8 @@ public:
     }
 
     // Trying to found the top window (equivalent to window.top).
-    nsCOMPtr<nsIDOMWindow> top;
-    window->GetTop(getter_AddRefs(top));
-    if (top) {
-      window = static_cast<nsPIDOMWindow*>(top.get());
+    if (nsCOMPtr<nsPIDOMWindow> top = window->GetTop()) {
+      window = top;
     }
 
     if (window->GetFocusedNode()) {
@@ -161,7 +159,7 @@ private:
   // NOTE: nsGenericHTMLFormElement is saved as a nsGenericHTMLElement
   // because AddRef/Release are ambiguous with nsGenericHTMLFormElement
   // and Focus() is declared (and defined) in nsGenericHTMLElement class.
-  nsRefPtr<nsGenericHTMLElement> mElement;
+  RefPtr<nsGenericHTMLElement> mElement;
 };
 
 class nsGenericHTMLElementTearoff : public nsIDOMElementCSSInlineStyle
@@ -187,7 +185,7 @@ class nsGenericHTMLElementTearoff : public nsIDOMElementCSSInlineStyle
                                            nsIDOMElementCSSInlineStyle)
 
 private:
-  nsRefPtr<nsGenericHTMLElement> mElement;
+  RefPtr<nsGenericHTMLElement> mElement;
 };
 
 NS_IMPL_CYCLE_COLLECTION(nsGenericHTMLElementTearoff, mElement)
@@ -229,8 +227,8 @@ nsGenericHTMLElement::CopyInnerTo(Element* aDst)
       // We can't just set this as a string, because that will fail
       // to reparse the string into style data until the node is
       // inserted into the document.  Clone the Rule instead.
-      nsRefPtr<mozilla::css::Rule> ruleClone = value->GetCSSStyleRuleValue()->Clone();
-      nsRefPtr<mozilla::css::StyleRule> styleRule = do_QueryObject(ruleClone);
+      RefPtr<mozilla::css::Rule> ruleClone = value->GetCSSStyleRuleValue()->Clone();
+      RefPtr<mozilla::css::StyleRule> styleRule = do_QueryObject(ruleClone);
       NS_ENSURE_TRUE(styleRule, NS_ERROR_UNEXPECTED);
 
       rv = aDst->SetInlineStyleRule(styleRule, &valStr, false);
@@ -258,7 +256,7 @@ nsGenericHTMLElement::Dataset()
     slots->mDataset = new nsDOMStringMap(this);
   }
 
-  nsRefPtr<nsDOMStringMap> ret = slots->mDataset;
+  RefPtr<nsDOMStringMap> ret = slots->mDataset;
   return ret.forget();
 }
 
@@ -852,7 +850,7 @@ nsGenericHTMLElement::GetOn##name_()                                          \
       nsGlobalWindow* globalWin = nsGlobalWindow::FromSupports(supports);     \
       OnErrorEventHandlerNonNull* errorHandler = globalWin->GetOn##name_();   \
       if (errorHandler) {                                                     \
-        nsRefPtr<EventHandlerNonNull> handler =                               \
+        RefPtr<EventHandlerNonNull> handler =                               \
           new EventHandlerNonNull(errorHandler);                              \
         return handler.forget();                                              \
       }                                                                       \
@@ -860,7 +858,7 @@ nsGenericHTMLElement::GetOn##name_()                                          \
     return nullptr;                                                           \
   }                                                                           \
                                                                               \
-  nsRefPtr<EventHandlerNonNull> handler = nsINode::GetOn##name_();            \
+  RefPtr<EventHandlerNonNull> handler = nsINode::GetOn##name_();            \
   return handler.forget();                                                    \
 }                                                                             \
 void                                                                          \
@@ -874,7 +872,7 @@ nsGenericHTMLElement::SetOn##name_(EventHandlerNonNull* handler)              \
                                                                               \
     nsCOMPtr<nsISupports> supports = do_QueryInterface(win);                  \
     nsGlobalWindow* globalWin = nsGlobalWindow::FromSupports(supports);       \
-    nsRefPtr<OnErrorEventHandlerNonNull> errorHandler;                        \
+    RefPtr<OnErrorEventHandlerNonNull> errorHandler;                        \
     if (handler) {                                                            \
       errorHandler = new OnErrorEventHandlerNonNull(handler);                 \
     }                                                                         \
@@ -1064,7 +1062,7 @@ nsGenericHTMLElement::ParseBackgroundAttribute(int32_t aNamespaceID,
     }
 
     nsString value(aValue);
-    nsRefPtr<nsStringBuffer> buffer = nsCSSValue::BufferFromString(value);
+    RefPtr<nsStringBuffer> buffer = nsCSSValue::BufferFromString(value);
     if (MOZ_UNLIKELY(!buffer)) {
       return false;
     }
@@ -1848,7 +1846,7 @@ nsGenericHTMLElement::GetUndoManager()
 {
   nsDOMSlots* slots = GetExistingDOMSlots();
   if (slots && slots->mUndoManager) {
-    nsRefPtr<UndoManager> undoManager = slots->mUndoManager;
+    RefPtr<UndoManager> undoManager = slots->mUndoManager;
     return undoManager.forget();
   } else {
     return nullptr;
@@ -2457,6 +2455,22 @@ bool
 nsGenericHTMLFormElement::IsElementDisabledForEvents(EventMessage aMessage,
                                                      nsIFrame* aFrame)
 {
+  switch (aMessage) {
+    case eMouseMove:
+    case eMouseOver:
+    case eMouseOut:
+    case eMouseEnter:
+    case eMouseLeave:
+    case ePointerMove:
+    case ePointerOver:
+    case ePointerOut:
+    case ePointerEnter:
+    case ePointerLeave:
+      return false;
+    default:
+      break;
+  }
+
   bool disabled = IsDisabled();
   if (!disabled && aFrame) {
     const nsStyleUserInterface* uiStyle = aFrame->StyleUserInterface();
@@ -2464,7 +2478,7 @@ nsGenericHTMLFormElement::IsElementDisabledForEvents(EventMessage aMessage,
       uiStyle->mUserInput == NS_STYLE_USER_INPUT_DISABLED;
 
   }
-  return disabled && aMessage != eMouseMove;
+  return disabled;
 }
 
 void
@@ -2639,7 +2653,7 @@ nsGenericHTMLElement::Click()
   nsCOMPtr<nsIDocument> doc = GetComposedDoc();
 
   nsCOMPtr<nsIPresShell> shell;
-  nsRefPtr<nsPresContext> context;
+  RefPtr<nsPresContext> context;
   if (doc) {
     shell = doc->GetShell();
     if (shell) {
@@ -2792,7 +2806,8 @@ nsGenericHTMLElement::GetEditor(nsIEditor** aEditor)
 {
   *aEditor = nullptr;
 
-  if (!nsContentUtils::IsCallerChrome()) {
+  // See also HTMLTextFieldAccessible::GetEditor.
+  if (!nsContentUtils::LegacyIsCallerChromeOrNativeCode()) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
@@ -3200,7 +3215,7 @@ nsGenericHTMLElement::GetProperties(nsISupports** aProperties)
 }
 
 nsSize
-nsGenericHTMLElement::GetWidthHeightForImage(nsRefPtr<imgRequestProxy>& aImageRequest)
+nsGenericHTMLElement::GetWidthHeightForImage(RefPtr<imgRequestProxy>& aImageRequest)
 {
   nsSize size(0,0);
 

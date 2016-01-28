@@ -1,4 +1,4 @@
-const { interfaces: Ci, utils: Cu } = Components;
+var { interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -21,13 +21,26 @@ BackgroundPage.prototype = {
     let webNav = Services.appShell.createWindowlessBrowser(false);
     this.webNav = webNav;
 
-    let principal = Services.scriptSecurityManager.createCodebasePrincipal(this.extension.baseURI,
-                                                                           {addonId: this.extension.id});
+    let url;
+    if (this.page) {
+      url = this.extension.baseURI.resolve(this.page);
+    } else {
+      // TODO: Chrome uses "_generated_background_page.html" for this.
+      url = this.extension.baseURI.resolve("_blank.html");
+    }
+
+    if (!this.extension.isExtensionURL(url)) {
+      this.extension.manifestError("Background page must be a file within the extension");
+      url = this.extension.baseURI.resolve("_blank.html");
+    }
+
+    let uri = Services.io.newURI(url, null, null);
+    let principal = this.extension.createPrincipal(uri);
 
     let interfaceRequestor = webNav.QueryInterface(Ci.nsIInterfaceRequestor);
     let docShell = interfaceRequestor.getInterface(Ci.nsIDocShell);
 
-    this.context = new ExtensionPage(this.extension, {type: "background", docShell});
+    this.context = new ExtensionPage(this.extension, {type: "background", docShell, uri});
     GlobalManager.injectInDocShell(docShell, this.extension, this.context);
 
     docShell.createAboutBlankContentViewer(principal);
@@ -36,21 +49,25 @@ BackgroundPage.prototype = {
     this.contentWindow = window;
     this.context.contentWindow = window;
 
-    let url;
-    if (this.page) {
-      url = this.extension.baseURI.resolve(this.page);
-    } else {
-      url = this.extension.baseURI.resolve("_blank.html");
-    }
     webNav.loadURI(url, 0, null, null, null);
 
     // TODO: Right now we run onStartup after the background page
     // finishes. See if this is what Chrome does.
-    window.windowRoot.addEventListener("load", () => {
+    let loadListener = event => {
+      if (event.target != window.document) {
+        return;
+      }
+      event.currentTarget.removeEventListener("load", loadListener, true);
       if (this.scripts) {
         let doc = window.document;
         for (let script of this.scripts) {
           let url = this.extension.baseURI.resolve(script);
+
+          if (!this.extension.isExtensionURL(url)) {
+            this.extension.manifestError("Background scripts must be files within the extension");
+            continue;
+          }
+
           let tag = doc.createElement("script");
           tag.setAttribute("src", url);
           tag.async = false;
@@ -61,7 +78,8 @@ BackgroundPage.prototype = {
       if (this.extension.onStartup) {
         this.extension.onStartup();
       }
-    }, true);
+    };
+    window.windowRoot.addEventListener("load", loadListener, true);
   },
 
   shutdown() {

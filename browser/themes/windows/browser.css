@@ -148,6 +148,23 @@
   border-style: none;
 }
 
+#navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar) {
+  background-clip: padding-box;
+  background-image: linear-gradient(@toolbarHighlight@, @toolbarHighlight@);
+}
+
+@media (-moz-os-version: windows-xp),
+       (-moz-os-version: windows-vista),
+       (-moz-os-version: windows-win7) {
+  #nav-bar {
+    background-image: linear-gradient(@toolbarHighlight@, transparent) !important;
+  }
+
+  #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar) {
+    background-image: none;
+  }
+}
+
 #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(:-moz-lwtheme) {
   background-color: -moz-Dialog;
 }
@@ -352,11 +369,6 @@
   /* Position the toolbar above the bottom of background tabs */
   position: relative;
   z-index: 1;
-}
-
-#nav-bar {
-  background-clip: padding-box;
-  background-image: linear-gradient(@toolbarHighlight@, transparent);
 }
 
 #nav-bar {
@@ -683,6 +695,17 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
   -moz-margin-end: 0;
 }
 
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1 > .toolbarbutton-icon,
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1 > :-moz-any(.toolbarbutton-menubutton-button, .toolbarbutton-badge-stack) > .toolbarbutton-icon {
+  max-width: 16px;
+}
+
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1:-moz-any(@primaryToolbarButtons@) > .toolbarbutton-icon,
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1:-moz-any(@primaryToolbarButtons@) > :-moz-any(.toolbarbutton-menubutton-button, .toolbarbutton-badge-stack) > .toolbarbutton-icon,
+#bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
+  max-width: 18px;
+}
+
 .findbar-button,
 #nav-bar .toolbarbutton-1,
 #nav-bar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
@@ -743,20 +766,11 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
   transition-duration: 150ms;
 }
 
-toolbaritem[cui-areatype="toolbar"] > :-moz-any(@nestedButtons@) > .toolbarbutton-icon,
-:-moz-any(@primaryToolbarButtons@):-moz-any([cui-areatype="toolbar"],:not([cui-areatype])):not(:-moz-any(@nestedButtons@)) > .toolbarbutton-icon,
-:-moz-any(@primaryToolbarButtons@):-moz-any([cui-areatype="toolbar"],:not([cui-areatype])) > .toolbarbutton-badge-stack > .toolbarbutton-icon,
-:-moz-any(@primaryToolbarButtons@):-moz-any([cui-areatype="toolbar"],:not([cui-areatype])) > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
-#bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
-  width: 18px;
-}
-
-#nav-bar toolbaritem[cui-areatype="toolbar"] > :-moz-any(@nestedButtons@) > .toolbarbutton-icon,
-#nav-bar :-moz-any(@primaryToolbarButtons@):-moz-any([cui-areatype="toolbar"],:not([cui-areatype])):not(:-moz-any(@nestedButtons@)) > .toolbarbutton-icon,
-#nav-bar :-moz-any(@primaryToolbarButtons@):-moz-any([cui-areatype="toolbar"],:not([cui-areatype])) > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
+#nav-bar .toolbarbutton-1 > .toolbarbutton-icon,
+#nav-bar .toolbarbutton-1 > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
 #nav-bar #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
   /* horizontal padding + border + actual icon width */
-  width: 32px;
+  max-width: 32px;
 }
 
 @media (-moz-os-version: windows-xp),
@@ -804,17 +818,6 @@ toolbaritem[cui-areatype="toolbar"] > :-moz-any(@nestedButtons@) > .toolbarbutto
   padding: calc(var(--toolbarbutton-vertical-inner-padding) + 1px) 7px;
 }
 
-/* Help SDK icons fit: */
-toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-icon,
-toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-badge-stack > .toolbarbutton-icon {
-  width: 16px;
-}
-
-#nav-bar toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
-  /* XXXgijs box models strike again: this is 16px + 2 * 7px padding + 2 * 1px border (from the rules above) */
-  width: 32px;
-}
-
 #nav-bar .toolbarbutton-1[type=panel] > .toolbarbutton-icon,
 #nav-bar .toolbarbutton-1[type=panel] > .toolbarbutton-badge-stack,
 #nav-bar .toolbarbutton-1[type=menu]:not(#PanelUI-menu-button):not(#back-button):not(#forward-button) > .toolbarbutton-icon,
@@ -823,13 +826,19 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
   -moz-padding-end: 17px;
 }
 
+#nav-bar .toolbarbutton-1[type=panel] > .toolbarbutton-icon,
+#nav-bar .toolbarbutton-1[type=menu]:not(#PanelUI-menu-button):not(#back-button):not(#forward-button) > .toolbarbutton-icon {
+  /* horizontal padding + border + icon width */
+  max-width: 43px;
+}
+
 #nav-bar .toolbarbutton-1 > .toolbarbutton-menu-dropmarker {
   -moz-margin-start: -15px;
 }
 
 #nav-bar #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
   /* horizontal padding + border + actual icon width */
-  width: 31px;
+  max-width: 31px;
 }
 
 #nav-bar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
@@ -950,7 +959,7 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
   padding-right: 3px !important;
 % icon width + border + horizontal padding without --backbutton-urlbar-overlap
 %define forwardButtonWidth 25
-  width: calc(@forwardButtonWidth@px + var(--backbutton-urlbar-overlap)) !important;
+  max-width: calc(@forwardButtonWidth@px + var(--backbutton-urlbar-overlap)) !important;
 }
 
 @conditionalForwardWithUrlbar@:not([switchingtabs]) > #forward-button {
@@ -992,7 +1001,7 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 #back-button > .toolbarbutton-icon {
   border-radius: 10000px !important;
   padding: 6px !important;
-  width: 32px !important; /* icon width + horizontal padding + border */
+  max-width: 32px !important; /* icon width + horizontal padding + border */
 }
 
 #back-button:-moz-locale-dir(rtl) > .toolbarbutton-icon {
@@ -1316,6 +1325,9 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
 
 .urlbar-icon {
   padding: 0 3px;
+  /* 16x16 icon with border-box sizing */
+  width: 22px;
+  height: 16px;
 }
 
 .search-go-container {
@@ -1398,7 +1410,7 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
   transition: opacity 0.15s ease;
 }
 
-#urlbar:not(:hover) > .urlbar-textbox-container > .urlbar-history-dropmarker {
+#navigator-toolbox:not(:hover) .urlbar-history-dropmarker {
   opacity: 0;
 }
 
@@ -2005,12 +2017,14 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 
 /* Invert the unhovered close tab icons on bright-text tabs */
 @media not all and (min-resolution: 1.1dppx) {
+  .tab-close-button:-moz-lwtheme-brighttext,
   #TabsToolbar[brighttext] .tab-close-button:not([visuallyselected="true"]) {
     list-style-image: url("chrome://global/skin/icons/close-inverted.png");
   }
 }
 
 @media (min-resolution: 1.1dppx) {
+  .tab-close-button:-moz-lwtheme-brighttext,
   #TabsToolbar[brighttext] .tab-close-button:not([visuallyselected="true"]) {
     list-style-image: url("chrome://global/skin/icons/close-inverted@2x.png");
   }
@@ -2172,11 +2186,19 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 }
 
 .alltabs-endimage[muted] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-muted);
 }
 
 .alltabs-endimage[soundplaying] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu);
+}
+
+menuitem:hover > hbox > .alltabs-endimage[muted] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-muted-hover);
+}
+
+menuitem:hover > hbox > .alltabs-endimage[soundplaying] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-hover);
 }
 
 toolbarbutton.chevron {
@@ -2461,7 +2483,7 @@ notification[value="loop-sharing-notification"] .messageImage {
 }
 
 #sync-start-panel-subtitle {
-  margin: 0;
+  margin-bottom: 0;
 }
 
 /* Status panel */
@@ -2495,8 +2517,8 @@ notification[value="loop-sharing-notification"] .messageImage {
 }
 
 %include ../shared/fullscreen/warning.inc.css
-%include ../shared/devtools/responsivedesign.inc.css
-%include ../shared/devtools/commandline.inc.css
+%include ../../../devtools/client/themes/responsivedesign.inc.css
+%include ../../../devtools/client/themes/commandline.inc.css
 %include ../shared/plugin-doorhanger.inc.css
 %include ../shared/login-doorhanger.inc.css
 
@@ -2783,6 +2805,9 @@ notification[value="loop-sharing-notification"] .messageImage {
 %include browser-aero.css
 }
 
-.browser-action-panel > .panel-arrowcontainer > .panel-arrowcontent {
+.browser-extension-panel > .panel-arrowcontainer > .panel-arrowcontent {
   padding: 0;
+  overflow: hidden;
 }
+
+%include ../shared/usercontext/usercontext.inc.css

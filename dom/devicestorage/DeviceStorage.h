@@ -87,6 +87,13 @@ public:
                uint32_t aFileType,
                uint32_t aFileAttributes);
 
+  static already_AddRefed<DeviceStorageFile>
+  CreateUnique(const nsAString& aStorageType,
+               const nsAString& aStorageName,
+               nsAString& aFileName,
+               uint32_t aFileType,
+               uint32_t aFileAttributes);
+
   NS_DECL_THREADSAFE_ISUPPORTS
 
   bool IsAvailable();
@@ -105,9 +112,9 @@ public:
   nsresult Append(nsIInputStream* aInputStream);
   nsresult Append(nsIInputStream* aInputStream,
                   nsIOutputStream* aOutputStream);
-  void CollectFiles(nsTArray<nsRefPtr<DeviceStorageFile> >& aFiles,
+  void CollectFiles(nsTArray<RefPtr<DeviceStorageFile> >& aFiles,
                     PRTime aSince = 0);
-  void collectFilesInternal(nsTArray<nsRefPtr<DeviceStorageFile> >& aFiles,
+  void collectFilesInternal(nsTArray<RefPtr<DeviceStorageFile> >& aFiles,
                             PRTime aSince, nsAString& aRootPath);
 
   void AccumDiskUsage(uint64_t* aPicturesSoFar, uint64_t* aVideosSoFar,
@@ -363,8 +370,8 @@ private:
 #endif
 
   uint64_t mInnerWindowID;
-  nsRefPtr<DeviceStorageFileSystem> mFileSystem;
-  nsRefPtr<DeviceStorageRequestManager> mManager;
+  RefPtr<DeviceStorageFileSystem> mFileSystem;
+  RefPtr<DeviceStorageRequestManager> mManager;
   nsAutoPtr<mozilla::ipc::PrincipalInfo> mPrincipalInfo;
   nsCOMPtr<nsIThread> mOwningThread;
 };

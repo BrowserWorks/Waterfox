@@ -136,7 +136,7 @@ nsFaviconService::ExpireAllFavicons()
   , removeIconsStmt.get()
   };
   nsCOMPtr<mozIStoragePendingStatement> ps;
-  nsRefPtr<ExpireFaviconsStatementCallbackNotifier> callback =
+  RefPtr<ExpireFaviconsStatementCallbackNotifier> callback =
     new ExpireFaviconsStatementCallbackNotifier();
   nsresult rv = mDB->MainConn()->ExecuteAsync(
     stmts, ArrayLength(stmts), callback, getter_AddRefs(ps)
@@ -330,7 +330,7 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
                           nullptr, // aTriggeringPrincipal
                           nullptr, // aLoadingNode
                           nsILoadInfo::SEC_NORMAL,
-                          nsIContentPolicy::TYPE_IMAGE);
+                          nsIContentPolicy::TYPE_INTERNAL_IMAGE);
 
   nsCOMPtr<nsIChannel> channel;
   rv = protocolHandler->NewChannel2(dataURI, loadInfo, getter_AddRefs(channel));
@@ -584,7 +584,7 @@ nsFaviconService::GetFaviconDataAsync(nsIURI* aFaviconURI,
   NS_ENSURE_STATE(stmt);
 
   // Ignore the ref part of the URI before querying the database because
-  // we may have added the #-moz-resolution ref for rendering purposes.
+  // we may have added a media fragment for rendering purposes.
 
   nsAutoCString faviconURI;
   aFaviconURI->GetSpecIgnoringRef(faviconURI);

@@ -27,7 +27,7 @@ class MP4Demuxer : public MediaDataDemuxer
 public:
   explicit MP4Demuxer(MediaResource* aResource);
 
-  virtual nsRefPtr<InitPromise> Init() override;
+  virtual RefPtr<InitPromise> Init() override;
 
   virtual bool HasTrackType(TrackInfo::TrackType aType) const override;
 
@@ -40,17 +40,17 @@ public:
 
   virtual UniquePtr<EncryptionInfo> GetCrypto() override;
 
-  virtual void NotifyDataArrived(uint32_t aLength, int64_t aOffset) override;
+  virtual void NotifyDataArrived() override;
 
   virtual void NotifyDataRemoved() override;
 
 private:
   friend class MP4TrackDemuxer;
-  nsRefPtr<MediaResource> mResource;
-  nsRefPtr<mp4_demuxer::ResourceStream> mStream;
-  nsRefPtr<MediaByteBuffer> mInitData;
+  RefPtr<MediaResource> mResource;
+  RefPtr<mp4_demuxer::ResourceStream> mStream;
+  RefPtr<MediaByteBuffer> mInitData;
   UniquePtr<mp4_demuxer::MP4Metadata> mMetadata;
-  nsTArray<nsRefPtr<MP4TrackDemuxer>> mDemuxers;
+  nsTArray<RefPtr<MP4TrackDemuxer>> mDemuxers;
 };
 
 } // namespace mozilla

@@ -9,22 +9,16 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import sys
 import json
-import which
 import socket
 
-from mozbuild.base import (
-    MozbuildObject,
-    MachCommandBase
-)
+from mozbuild.base import MozbuildObject, MachCommandBase
+from mach.decorators import CommandProvider, Command
 
-from mach.decorators import (
-    CommandArgument,
-    CommandProvider,
-    Command,
-)
+HERE = os.path.dirname(os.path.realpath(__file__))
+
 
 class TalosRunner(MozbuildObject):
-    def run_test(self, suite, sps_profile):
+    def run_test(self, talos_args):
         """
         We want to do couple of things before running Talos
         1. Clone mozharness
@@ -32,19 +26,14 @@ class TalosRunner(MozbuildObject):
         3. Run mozharness
         """
 
-        print("Running Talos test suite %s" % suite)
-        self.init_variables(suite, sps_profile)
+        self.init_variables(talos_args)
         self.make_config()
         self.write_config()
         self.make_args()
         return self.run_mozharness()
 
-    def init_variables(self, suite, sps_profile):
-        self.suite = suite
-        self.sps_profile = sps_profile
-
+    def init_variables(self, talos_args):
         self.talos_dir = os.path.join(self.topsrcdir, 'testing', 'talos')
-        self.talos_webroot = os.path.join(self.topobjdir, 'testing', 'talos')
         self.mozharness_dir = os.path.join(self.topsrcdir, 'testing',
                                            'mozharness')
         self.config_dir = os.path.join(self.mozharness_dir, 'configs', 'talos')
@@ -57,6 +46,7 @@ class TalosRunner(MozbuildObject):
                                               'virtualenv', 'virtualenv.py')
         self.virtualenv_path = os.path.join(self.mozharness_dir, 'venv')
         self.python_interp = sys.executable
+        self.talos_args = talos_args
 
     def make_config(self):
         self.config = {
@@ -66,7 +56,6 @@ class TalosRunner(MozbuildObject):
             'log_name': 'talos',
             'virtualenv_path': self.virtualenv_path,
             'pypi_url': 'http://pypi.python.org/simple',
-            'use_talos_json': True,
             'base_work_dir': self.mozharness_dir,
             'exes': {
                 'python': self.python_interp,
@@ -78,20 +67,14 @@ class TalosRunner(MozbuildObject):
                 'create-virtualenv',
                 'run-tests',
             ],
-            'python_webserver': False,
-            'talos_extra_options': ['--develop'],
+            'talos_extra_options': ['--develop'] + self.talos_args,
         }
 
     def make_args(self):
         self.args = {
-            'config': {
-                'suite': self.suite,
-                'sps_profile': self.sps_profile,
-                'use_talos_json': True,
-                'webroot': self.talos_webroot,
-            },
-           'initial_config_file': self.config_file_path,
-       }
+            'config': {},
+            'initial_config_file': self.config_file_path,
+        }
 
     def write_config(self):
         try:
@@ -109,22 +92,23 @@ class TalosRunner(MozbuildObject):
                          initial_config_file=self.args['initial_config_file'])
         return talos_mh.run()
 
+
+def create_parser():
+    sys.path.insert(0, HERE)  # allow to import the talos package
+    from talos.cmdline import create_parser
+    return create_parser(mach_interface=True)
+
+
 @CommandProvider
 class MachCommands(MachCommandBase):
     @Command('talos-test', category='testing',
-             description='Run talos tests (performance testing).')
-    @CommandArgument('suite', help='Talos test suite to run. Valid suites are '
-                                   'chromez, dirtypaint, dromaeojs, other,'
-                                   'svgr, rafx, tpn, tp5o, xperf.')
-    @CommandArgument('--spsProfile', default=False,
-                     help='Use the Gecko Profiler to capture profiles that can '
-                          'then be displayed by Cleopatra.', action='store_true')
-
-    def run_talos_test(self, suite, spsProfile=False):
+             description='Run talos tests (performance testing).',
+             parser=create_parser)
+    def run_talos_test(self, **kwargs):
         talos = self._spawn(TalosRunner)
 
         try:
-            return talos.run_test(suite, spsProfile)
+            return talos.run_test(sys.argv[2:])
         except Exception as e:
             print(str(e))
             return 1

@@ -6,8 +6,7 @@
 
 #include "MmsMessage.h"
 #include "nsIDOMClassInfo.h"
-#include "jsapi.h" // For OBJECT_TO_JSVAL and JS_NewDateObjectMsec
-#include "jsfriendapi.h" // For js_DateGetMsecSinceEpoch
+#include "jsapi.h" // For JS_IsArrayObject, JS_GetElement, etc.
 #include "nsJSUtils.h"
 #include "nsContentUtils.h"
 #include "nsTArrayHelpers.h"
@@ -93,10 +92,10 @@ MmsMessage::MmsMessage(const mobilemessage::MmsMessageData& aData)
     // mContent is not going to be exposed to JS directly so we can use
     // nullptr as parent.
     if (element.contentParent()) {
-      nsRefPtr<BlobImpl> impl = static_cast<BlobParent*>(element.contentParent())->GetBlobImpl();
+      RefPtr<BlobImpl> impl = static_cast<BlobParent*>(element.contentParent())->GetBlobImpl();
       att.mContent = Blob::Create(nullptr, impl);
     } else if (element.contentChild()) {
-      nsRefPtr<BlobImpl> impl = static_cast<BlobChild*>(element.contentChild())->GetBlobImpl();
+      RefPtr<BlobImpl> impl = static_cast<BlobChild*>(element.contentChild())->GetBlobImpl();
       att.mContent = Blob::Create(nullptr, impl);
     } else {
       NS_WARNING("MmsMessage: Unable to get attachment content.");
@@ -213,7 +212,11 @@ MmsMessage::Create(int32_t aId,
     return NS_ERROR_INVALID_ARG;
   }
   JS::Rooted<JSObject*> deliveryInfoObj(aCx, &aDeliveryInfo.toObject());
-  if (!JS_IsArrayObject(aCx, deliveryInfoObj)) {
+  bool isArray;
+  if (!JS_IsArrayObject(aCx, deliveryInfoObj, &isArray)) {
+    return NS_ERROR_FAILURE;
+  }
+  if (!isArray) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -241,7 +244,10 @@ MmsMessage::Create(int32_t aId,
     return NS_ERROR_INVALID_ARG;
   }
   JS::Rooted<JSObject*> receiversObj(aCx, &aReceivers.toObject());
-  if (!JS_IsArrayObject(aCx, receiversObj)) {
+  if (!JS_IsArrayObject(aCx, receiversObj, &isArray)) {
+    return NS_ERROR_FAILURE;
+  }
+  if (!isArray) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -268,7 +274,10 @@ MmsMessage::Create(int32_t aId,
     return NS_ERROR_INVALID_ARG;
   }
   JS::Rooted<JSObject*> attachmentsObj(aCx, &aAttachments.toObject());
-  if (!JS_IsArrayObject(aCx, attachmentsObj)) {
+  if (!JS_IsArrayObject(aCx, attachmentsObj, &isArray)) {
+    return NS_ERROR_FAILURE;
+  }
+  if (!isArray) {
     return NS_ERROR_INVALID_ARG;
   }
 
@@ -390,7 +399,7 @@ MmsMessage::GetData(ContentParent* aParent,
     // doesn't have a valid last modified date, making the ContentParent
     // send a "Mystery Blob" to the ContentChild. Attempting to get the
     // last modified date of blob can force that value to be initialized.
-    nsRefPtr<BlobImpl> impl = element.content->Impl();
+    RefPtr<BlobImpl> impl = element.content->Impl();
     if (impl && impl->IsDateUnknown()) {
       ErrorResult rv;
       impl->GetLastModified(rv);
@@ -580,7 +589,7 @@ MmsMessage::GetAttachments(JSContext* aCx, JS::MutableHandle<JS::Value> aAttachm
     // Duplicating the File with the correct parent object.
     nsIGlobalObject *global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx));
     MOZ_ASSERT(global);
-    nsRefPtr<Blob> newBlob = Blob::Create(global, attachment.content->Impl());
+    RefPtr<Blob> newBlob = Blob::Create(global, attachment.content->Impl());
 
     JS::Rooted<JS::Value> val(aCx);
     if (!ToJSValue(aCx, newBlob, &val)) {

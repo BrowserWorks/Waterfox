@@ -57,7 +57,7 @@ nsBaseDragService::nsBaseDragService()
     mDragEventDispatchedToChildProcess(false),
     mDragAction(DRAGDROP_ACTION_NONE),
     mDragActionFromChildProcess(DRAGDROP_ACTION_UNINITIALIZED), mTargetSize(0,0),
-    mImageX(0), mImageY(0), mScreenX(-1), mScreenY(-1), mSuppressLevel(0),
+    mScreenX(-1), mScreenY(-1), mSuppressLevel(0),
     mInputSource(nsIDOMMouseEvent::MOZ_SOURCE_MOUSE)
 {
 }
@@ -225,7 +225,15 @@ nsBaseDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
   // are in the wrong coord system, so turn off mouse capture.
   nsIPresShell::ClearMouseCapture(nullptr);
 
-  return NS_OK;
+  nsresult rv = InvokeDragSessionImpl(aTransferableArray,
+                                      aDragRgn, aActionType);
+
+  if (NS_FAILED(rv)) {
+    mSourceNode = nullptr;
+    mSourceDocument = nullptr;
+  }
+
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -247,14 +255,22 @@ nsBaseDragService::InvokeDragSessionWithImage(nsIDOMNode* aDOMNode,
   mHasImage = true;
   mDragPopup = nullptr;
   mImage = aImage;
-  mImageX = aImageX;
-  mImageY = aImageY;
+  mImageOffset = CSSIntPoint(aImageX, aImageY);
 
   aDragEvent->GetScreenX(&mScreenX);
   aDragEvent->GetScreenY(&mScreenY);
   aDragEvent->GetMozInputSource(&mInputSource);
 
-  return InvokeDragSession(aDOMNode, aTransferableArray, aRegion, aActionType);
+  nsresult rv = InvokeDragSession(aDOMNode, aTransferableArray,
+                                  aRegion, aActionType);
+
+  if (NS_FAILED(rv)) {
+    mImage = nullptr;
+    mHasImage = false;
+    mDataTransfer = nullptr;
+  }
+
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -273,8 +289,7 @@ nsBaseDragService::InvokeDragSessionWithSelection(nsISelection* aSelection,
   mHasImage = true;
   mDragPopup = nullptr;
   mImage = nullptr;
-  mImageX = 0;
-  mImageY = 0;
+  mImageOffset = CSSIntPoint();
 
   aDragEvent->GetScreenX(&mScreenX);
   aDragEvent->GetScreenY(&mScreenY);
@@ -286,7 +301,16 @@ nsBaseDragService::InvokeDragSessionWithSelection(nsISelection* aSelection,
   nsCOMPtr<nsIDOMNode> node;
   aSelection->GetFocusNode(getter_AddRefs(node));
 
-  return InvokeDragSession(node, aTransferableArray, nullptr, aActionType);
+  nsresult rv = InvokeDragSession(node, aTransferableArray,
+                                  nullptr, aActionType);
+
+  if (NS_FAILED(rv)) {
+    mHasImage = false;
+    mSelection = nullptr;
+    mDataTransfer = nullptr;
+  }
+
+  return rv;
 }
 
 //-------------------------------------------------------------------------
@@ -328,7 +352,8 @@ nsBaseDragService::OpenDragPopup()
   if (mDragPopup) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
-      pm->ShowPopupAtScreen(mDragPopup, mScreenX - mImageX, mScreenY - mImageY, false, nullptr);
+      pm->ShowPopupAtScreen(mDragPopup, mScreenX - mImageOffset.x,
+                            mScreenY - mImageOffset.y, false, nullptr);
     }
   }
 }
@@ -385,8 +410,7 @@ nsBaseDragService::EndDragSession(bool aDoneDrag)
   mUserCancelled = false;
   mDragPopup = nullptr;
   mImage = nullptr;
-  mImageX = 0;
-  mImageY = 0;
+  mImageOffset = CSSIntPoint();
   mScreenX = -1;
   mScreenY = -1;
   mEndDragPoint = LayoutDeviceIntPoint(0, 0);
@@ -431,10 +455,9 @@ nsBaseDragService::DragMoved(int32_t aX, int32_t aY)
   if (mDragPopup) {
     nsIFrame* frame = mDragPopup->GetPrimaryFrame();
     if (frame && frame->GetType() == nsGkAtoms::menuPopupFrame) {
-      nsPresContext* presContext = frame->PresContext();
-      int32_t x = presContext->DevPixelsToIntCSSPixels(aX - mImageX);
-      int32_t y = presContext->DevPixelsToIntCSSPixels(aY - mImageY);
-      (static_cast<nsMenuPopupFrame *>(frame))->MoveTo(x, y, true);
+      CSSIntPoint cssPos = RoundedToInt(LayoutDeviceIntPoint(aX, aY) /
+          frame->PresContext()->CSSToDevPixelScale()) - mImageOffset;
+      (static_cast<nsMenuPopupFrame *>(frame))->MoveTo(cssPos, true);
     }
   }
 
@@ -470,8 +493,8 @@ nsBaseDragService::DrawDrag(nsIDOMNode* aDOMNode,
   *aPresContext = nullptr;
 
   // use a default size, in case of an error.
-  aScreenDragRect->x = aScreenX - mImageX;
-  aScreenDragRect->y = aScreenY - mImageY;
+  aScreenDragRect->x = aScreenX - mImageOffset.x;
+  aScreenDragRect->y = aScreenY - mImageOffset.y;
   aScreenDragRect->width = 1;
   aScreenDragRect->height = 1;
 
@@ -490,7 +513,7 @@ nsBaseDragService::DrawDrag(nsIDOMNode* aDOMNode,
 
   nsCOMPtr<nsIFrameLoaderOwner> flo = do_QueryInterface(dragNode);
   if (flo) {
-    nsRefPtr<nsFrameLoader> fl = flo->GetFrameLoader();
+    RefPtr<nsFrameLoader> fl = flo->GetFrameLoader();
     if (fl) {
       mozilla::dom::TabParent* tp =
         static_cast<mozilla::dom::TabParent*>(fl->GetRemoteBrowser());
@@ -520,8 +543,8 @@ nsBaseDragService::DrawDrag(nsIDOMNode* aDOMNode,
   int32_t sx = aScreenX, sy = aScreenY;
   ConvertToUnscaledDevPixels(*aPresContext, &sx, &sy);
 
-  aScreenDragRect->x = sx - mImageX;
-  aScreenDragRect->y = sy - mImageY;
+  aScreenDragRect->x = sx - mImageOffset.x;
+  aScreenDragRect->y = sy - mImageOffset.y;
 
   // check if drag images are disabled
   bool enableDragImages = Preferences::GetBool(DRAGIMAGES_PREF, true);
@@ -612,8 +635,8 @@ nsBaseDragService::DrawDrag(nsIDOMNode* aDOMNode,
   // if an image was specified, reposition the drag rectangle to
   // the supplied offset in mImageX and mImageY.
   if (mImage) {
-    aScreenDragRect->x = sx - mImageX;
-    aScreenDragRect->y = sy - mImageY;
+    aScreenDragRect->x = sx - mImageOffset.x;
+    aScreenDragRect->y = sy - mImageOffset.y;
   }
 
   return NS_OK;
@@ -667,13 +690,13 @@ nsBaseDragService::DrawDragForImage(nsPresContext* aPresContext,
     if (!dt)
       return NS_ERROR_FAILURE;
 
-    nsRefPtr<gfxContext> ctx = new gfxContext(dt);
+    RefPtr<gfxContext> ctx = new gfxContext(dt);
     if (!ctx)
       return NS_ERROR_FAILURE;
 
     imgContainer->Draw(ctx, destSize, ImageRegion::Create(destSize),
                        imgIContainer::FRAME_CURRENT,
-                       GraphicsFilter::FILTER_GOOD, Nothing(),
+                       Filter::GOOD, Nothing(),
                        imgIContainer::FLAG_SYNC_DECODE);
     *aSurface = dt->Snapshot();
   } else {

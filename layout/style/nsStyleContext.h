@@ -282,11 +282,14 @@ public:
   #undef STYLE_STRUCT_INHERITED
 
   /**
-   * Returns whether this style context has cached, inherited style data for a
-   * given style struct.
+   * Returns whether this style context has cached style data for a
+   * given style struct and it does NOT own that struct.  This can
+   * happen because it was inherited from the parent style context, or
+   * because it was stored conditionally on the rule node.
    */
-  bool HasCachedInheritedStyleData(nsStyleStructID aSID)
-    { return mBits & nsCachedStyleData::GetBitForSID(aSID); }
+  bool HasCachedDependentStyleData(nsStyleStructID aSID) {
+    return mBits & nsCachedStyleData::GetBitForSID(aSID);
+  }
 
   nsRuleNode* RuleNode() { return mRuleNode; }
   void AddStyleBit(const uint64_t& aBit) { mBits |= aBit; }
@@ -299,7 +302,7 @@ public:
 
   /*
    * Get the style data for a style struct.  This is the most important
-   * member function of nsIStyleContext.  It fills in a const pointer
+   * member function of nsStyleContext.  It fills in a const pointer
    * to a style data struct that is appropriate for the style context's
    * frame.  This struct may be shared with other contexts (either in
    * the rule tree or the style context tree), so it should not be
@@ -330,7 +333,7 @@ public:
   #undef STYLE_STRUCT
 
   /**
-   * PeekStyle* is like GetStyle* but doesn't trigger style
+   * PeekStyle* is like Style* but doesn't trigger style
    * computation if the data is not cached on either the style context
    * or the rule node.
    *
@@ -453,6 +456,28 @@ public:
   int32_t& LoggingDepth();
 #endif
 
+  /**
+   * Return style data that is currently cached on the style context.
+   * Only returns the structs we cache ourselves; never consults the
+   * rule tree.
+   *
+   * For "internal" use only in nsStyleContext and nsRuleNode.
+   */
+  const void* GetCachedStyleData(nsStyleStructID aSID)
+  {
+    const void* cachedData;
+    if (nsCachedStyleData::IsReset(aSID)) {
+      if (mCachedResetData) {
+        cachedData = mCachedResetData->mStyleStructs[aSID];
+      } else {
+        cachedData = nullptr;
+      }
+    } else {
+      cachedData = mCachedInheritedData.mStyleStructs[aSID];
+    }
+    return cachedData;
+  }
+
 private:
   // Private destructor, to discourage deletion outside of Release():
   ~nsStyleContext();
@@ -468,10 +493,6 @@ private:
   // Helper function for HasChildThatUsesGrandancestorStyle.
   static bool ListContainsStyleContextThatUsesGrandancestorStyle(
                                                    const nsStyleContext* aHead);
-
-  // Helper function that GetStyleData and GetUniqueStyleData use.  Only
-  // returns the structs we cache ourselves; never consults the ruletree.
-  inline const void* GetCachedStyleData(nsStyleStructID aSID);
 
 #ifdef DEBUG
   struct AutoCheckDependency {
@@ -511,9 +532,20 @@ private:
           mCachedInheritedData.mStyleStructs[eStyleStruct_##name_]);    \
       if (cachedData) /* Have it cached already, yay */                 \
         return cachedData;                                              \
+      if (!aComputeData) {                                              \
+        /* We always cache inherited structs on the context when we */  \
+        /* compute them. */                                             \
+        return nullptr;                                                 \
+      }                                                                 \
       /* Have the rulenode deal */                                      \
       AUTO_CHECK_DEPENDENCY(eStyleStruct_##name_);                      \
-      return mRuleNode->GetStyle##name_<aComputeData>(this);            \
+      const nsStyle##name_ * newData =                                  \
+        mRuleNode->GetStyle##name_<aComputeData>(this, mBits);          \
+      /* always cache inherited data on the style context; the rule */  \
+      /* node set the bit in mBits for us if needed. */                 \
+      mCachedInheritedData.mStyleStructs[eStyleStruct_##name_] =        \
+        const_cast<nsStyle##name_ *>(newData);                          \
+      return newData;                                                   \
     }
   #define STYLE_STRUCT_RESET(name_, checkdata_cb_)                      \
     template<bool aComputeData>                                         \
@@ -566,7 +598,7 @@ private:
   // Style to be used instead for the R, G, and B components of color,
   // background-color, and border-*-color if the nearest ancestor link
   // element is visited (see RelevantLinkVisited()).
-  nsRefPtr<nsStyleContext> mStyleIfVisited;
+  RefPtr<nsStyleContext> mStyleIfVisited;
 
   // If this style context is for a pseudo-element or anonymous box,
   // the relevant atom.
@@ -591,8 +623,15 @@ private:
   // sometimes allocate the mCachedResetData.
   nsResetStyleData*       mCachedResetData; // Cached reset style data.
   nsInheritedStyleData    mCachedInheritedData; // Cached inherited style data
-  uint64_t                mBits; // Which structs are inherited from the
-                                 // parent context or owned by mRuleNode.
+
+  // mBits stores a number of things:
+  //  - It records (using the style struct bits) which structs are
+  //    inherited from the parent context or owned by mRuleNode (i.e.,
+  //    not owned by the style context).
+  //  - It also stores the additional bits listed at the top of
+  //    nsStyleStruct.h.
+  uint64_t                mBits;
+
   uint32_t                mRefCnt;
 
 #ifdef DEBUG

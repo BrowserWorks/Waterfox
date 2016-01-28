@@ -98,22 +98,33 @@ const DownloadsPanel = {
   _state: 0,
 
   /** The panel is not linked to downloads data yet. */
-  get kStateUninitialized() 0,
+  get kStateUninitialized() {
+    return 0;
+  },
   /** This object is linked to data, but the panel is invisible. */
-  get kStateHidden() 1,
+  get kStateHidden() {
+    return 1;
+  },
   /** The panel will be shown as soon as possible. */
-  get kStateWaitingData() 2,
+  get kStateWaitingData() {
+    return 2;
+  },
   /** The panel is almost shown - we're just waiting to get a handle on the
       anchor. */
-  get kStateWaitingAnchor() 3,
+  get kStateWaitingAnchor() {
+    return 3;
+  },
   /** The panel is open. */
-  get kStateShown() 4,
+  get kStateShown() {
+    return 4;
+  },
 
   /**
    * Location of the panel overlay.
    */
-  get kDownloadsOverlay()
-      "chrome://browser/content/downloads/downloadsOverlay.xul",
+  get kDownloadsOverlay() {
+    return "chrome://browser/content/downloads/downloadsOverlay.xul";
+  },
 
   /**
    * Starts loading the download data in background, without opening the panel.
@@ -569,6 +580,8 @@ const DownloadsPanel = {
   },
 };
 
+XPCOMUtils.defineConstant(this, "DownloadsPanel", DownloadsPanel);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsOverlayLoader
 
@@ -646,6 +659,8 @@ const DownloadsOverlayLoader = {
     }
   },
 };
+
+XPCOMUtils.defineConstant(this, "DownloadsOverlayLoader", DownloadsOverlayLoader);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsView
@@ -993,6 +1008,8 @@ const DownloadsView = {
   },
 }
 
+XPCOMUtils.defineConstant(this, "DownloadsView", DownloadsView);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsViewItem
 
@@ -1130,6 +1147,8 @@ const DownloadsViewController = {
     }
   }
 };
+
+XPCOMUtils.defineConstant(this, "DownloadsViewController", DownloadsViewController);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsViewItemController
@@ -1329,7 +1348,9 @@ const DownloadsSummary = {
   /**
    * Returns the active state of the downloads summary.
    */
-  get active() this._active,
+  get active() {
+    return this._active;
+  },
 
   _active: false,
 
@@ -1475,7 +1496,9 @@ const DownloadsSummary = {
     delete this._detailsNode;
     return this._detailsNode = node;
   }
-}
+};
+
+XPCOMUtils.defineConstant(this, "DownloadsSummary", DownloadsSummary);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsFooter
@@ -1529,3 +1552,5 @@ const DownloadsFooter = {
     return this._footerNode = node;
   }
 };
+
+XPCOMUtils.defineConstant(this, "DownloadsFooter", DownloadsFooter);

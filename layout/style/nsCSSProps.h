@@ -56,6 +56,17 @@
 // Keyword used iff gfx.font_rendering.opentype_svg.enabled is true:
 #define VARIANT_OPENTYPE_SVG_KEYWORD 0x40000000
 
+// Variants that can consume more than one token
+#define VARIANT_MULTIPLE_TOKENS \
+  (VARIANT_COLOR |            /* rgb(...), hsl(...), etc. */                  \
+   VARIANT_COUNTER |          /* counter(...), counters(...) */               \
+   VARIANT_ATTR |             /* attr(...) */                                 \
+   VARIANT_GRADIENT |         /* linear-gradient(...), etc. */                \
+   VARIANT_TIMING_FUNCTION |  /* cubic-bezier(...), steps(...) */             \
+   VARIANT_IMAGE_RECT |       /* -moz-image-rect(...) */                      \
+   VARIANT_CALC |             /* calc(...) */                                 \
+   VARIANT_ELEMENT)           /* -moz-element(...) */
+
 // Common combinations of variants
 #define VARIANT_AL   (VARIANT_AUTO | VARIANT_LENGTH)
 #define VARIANT_LP   (VARIANT_LENGTH | VARIANT_PERCENT)
@@ -200,14 +211,23 @@ static_assert((CSS_PROPERTY_PARSE_PROPERTY_MASK &
 // This property requires a stacking context.
 #define CSS_PROPERTY_CREATES_STACKING_CONTEXT     (1<<21)
 
-// This property is always enabled in UA sheets.  This is meant to be used
-// together with a pref that enables the property for non-UA sheets.
-// Note that if such a property has an alias, then any use of that alias
-// in an UA sheet will still be ignored unless the pref is enabled.
-// In other words, this bit has no effect on the use of aliases.
-#define CSS_PROPERTY_ALWAYS_ENABLED_IN_UA_SHEETS  (1<<22)
-
-// XXX (1<<23) will shortly be reused in bug 1069192.
+// The following two flags along with the pref defines where the this
+// property can be used:
+// * If none of the two flags is presented, the pref completely controls
+//   the availability of this property. And in that case, if it has no
+//   pref, this property is usable everywhere.
+// * If any of the flags is set, this property is always enabled in the
+//   specific contexts regardless of the value of the pref. If there is
+//   no pref for this property at all in this case, it is an internal-
+//   only property, which cannot be used anywhere else, and should be
+//   wrapped in "#ifndef CSS_PROP_LIST_EXCLUDE_INTERNAL".
+// Note that, these flags have no effect on the use of aliases of this
+// property.
+#define CSS_PROPERTY_ENABLED_MASK                 (3<<22)
+#define CSS_PROPERTY_ENABLED_IN_UA_SHEETS         (1<<22)
+#define CSS_PROPERTY_ENABLED_IN_CHROME            (1<<23)
+#define CSS_PROPERTY_ENABLED_IN_UA_SHEETS_AND_CHROME \
+  (CSS_PROPERTY_ENABLED_IN_UA_SHEETS | CSS_PROPERTY_ENABLED_IN_CHROME)
 
 // This property's unitless values are pixels.
 #define CSS_PROPERTY_NUMBERS_ARE_PIXELS           (1<<24)
@@ -229,6 +249,11 @@ static_assert((CSS_PROPERTY_PARSE_PROPERTY_MASK &
 
 // This property can be animated on the compositor.
 #define CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR    (1<<27)
+
+// This property is an internal property that is not represented
+// in the DOM.  Properties with this flag must be defined in an #ifndef
+// CSS_PROP_LIST_EXCLUDE_INTERNAL section of nsCSSPropList.h.
+#define CSS_PROPERTY_INTERNAL                     (1<<28)
 
 /**
  * Types of animatable values.
@@ -273,7 +298,7 @@ enum nsStyleAnimType {
   // nsStyleSVGPaint values
   eStyleAnimType_PaintServer,
 
-  // nsRefPtr<nsCSSShadowArray> values
+  // RefPtr<nsCSSShadowArray> values
   eStyleAnimType_Shadow,
 
   // property not animatable
@@ -293,6 +318,8 @@ public:
     eEnabledForAllContent = 0,
     // Enable a property in UA sheets.
     eEnabledInUASheets    = 0x01,
+    // Enable a property in chrome code.
+    eEnabledInChrome      = 0x02,
     // Special value to unconditionally enable a property. This implies all the
     // bits above, but is strictly more than just their OR-ed union.
     // This just skips any test so a property will be enabled even if it would
@@ -307,6 +334,15 @@ public:
                                       EnabledState aEnabled);
   static nsCSSProperty LookupProperty(const nsACString& aProperty,
                                       EnabledState aEnabled);
+  // As above, but looked up using a property's IDL name.
+  // eCSSPropertyExtra_variable won't be returned from these methods.
+  static nsCSSProperty LookupPropertyByIDLName(
+      const nsAString& aPropertyIDLName,
+      EnabledState aEnabled);
+  static nsCSSProperty LookupPropertyByIDLName(
+      const nsACString& aPropertyIDLName,
+      EnabledState aEnabled);
+
   // Returns whether aProperty is a custom property name, i.e. begins with
   // "--".  This assumes that the CSS Variables pref has been enabled.
   static bool IsCustomPropertyName(const nsAString& aProperty);
@@ -501,7 +537,42 @@ public:
 private:
   static bool gPropertyEnabled[eCSSProperty_COUNT_with_aliases];
 
+private:
+  // Defined in the generated nsCSSPropsGenerated.inc.
+  static const char* const kIDLNameTable[eCSSProperty_COUNT];
+
 public:
+  /**
+   * Returns the IDL name of the specified property, which must be a
+   * longhand, logical or shorthand property.  The IDL name is the property
+   * name with any hyphen-lowercase character pairs replaced by an
+   * uppercase character:
+   * https://drafts.csswg.org/cssom/#css-property-to-idl-attribute
+   *
+   * As a special case, the string "cssFloat" is returned for the float
+   * property.  nullptr is returned for internal properties.
+   */
+  static const char* PropertyIDLName(nsCSSProperty aProperty)
+  {
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
+    return kIDLNameTable[aProperty];
+  }
+
+private:
+  static const int32_t kIDLNameSortPositionTable[eCSSProperty_COUNT];
+
+public:
+  /**
+   * Returns the position of the specified property in a list of all
+   * properties sorted by their IDL name.
+   */
+  static int32_t PropertyIDLNameSortPosition(nsCSSProperty aProperty)
+  {
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
+    return kIDLNameSortPositionTable[aProperty];
+  }
 
   static bool IsEnabled(nsCSSProperty aProperty) {
     MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_with_aliases,
@@ -509,7 +580,6 @@ public:
     return gPropertyEnabled[aProperty];
   }
 
-private:
   // A table for the use counter associated with each CSS property.  If a
   // property does not have a use counter defined in UseCounters.conf, then
   // its associated entry is |eUseCounter_UNKNOWN|.
@@ -532,7 +602,12 @@ public:
       return true;
     }
     if ((aEnabled & eEnabledInUASheets) &&
-        PropHasFlags(aProperty, CSS_PROPERTY_ALWAYS_ENABLED_IN_UA_SHEETS))
+        PropHasFlags(aProperty, CSS_PROPERTY_ENABLED_IN_UA_SHEETS))
+    {
+      return true;
+    }
+    if ((aEnabled & eEnabledInChrome) &&
+        PropHasFlags(aProperty, CSS_PROPERTY_ENABLED_IN_CHROME))
     {
       return true;
     }
@@ -695,6 +770,7 @@ public:
   static const KTableValue kTextOverflowKTable[];
   static const KTableValue kTextTransformKTable[];
   static const KTableValue kTouchActionKTable[];
+  static const KTableValue kTopLayerKTable[];
   static const KTableValue kTransformBoxKTable[];
   static const KTableValue kTransitionTimingFunctionKTable[];
   static const KTableValue kUnicodeBidiKTable[];

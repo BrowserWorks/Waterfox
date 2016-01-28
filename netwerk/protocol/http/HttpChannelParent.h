@@ -21,6 +21,8 @@
 #include "nsIAuthPromptProvider.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "nsINetworkInterceptController.h"
+#include "nsIDeprecationWarner.h"
+#include "nsIPackagedAppChannelListener.h"
 
 class nsICacheEntry;
 class nsIAssociatedContentSecurity;
@@ -43,7 +45,9 @@ class HttpChannelParent final : public PHttpChannelParent
                               , public ADivertableParentChannel
                               , public nsIAuthPromptProvider
                               , public nsINetworkInterceptController
+                              , public nsIDeprecationWarner
                               , public DisconnectableParent
+                              , public nsIPackagedAppChannelListener
                               , public HttpChannelSecurityWarningReporter
 {
   virtual ~HttpChannelParent();
@@ -52,12 +56,14 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSIPACKAGEDAPPCHANNELLISTENER
   NS_DECL_NSIPARENTCHANNEL
   NS_DECL_NSIPARENTREDIRECTINGCHANNEL
   NS_DECL_NSIPROGRESSEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSIAUTHPROMPTPROVIDER
   NS_DECL_NSINETWORKINTERCEPTCONTROLLER
+  NS_DECL_NSIDEPRECATIONWARNER
 
   HttpChannelParent(const dom::PBrowserOrId& iframeEmbedding,
                     nsILoadContext* aLoadContext,
@@ -121,7 +127,8 @@ protected:
                    const nsCString&           aSecurityInfoSerialization,
                    const uint32_t&            aCacheKey,
                    const nsCString&           aSchedulingContextID,
-                   const OptionalCorsPreflightArgs& aCorsPreflightArgs);
+                   const OptionalCorsPreflightArgs& aCorsPreflightArgs,
+                   const uint32_t&            aInitialRwin);
 
   virtual bool RecvSetPriority(const uint16_t& priority) override;
   virtual bool RecvSetClassOfService(const uint32_t& cos) override;
@@ -153,7 +160,7 @@ protected:
   void FailDiversion(nsresult aErrorCode, bool aSkipResume = true);
 
   friend class HttpChannelParentListener;
-  nsRefPtr<mozilla::dom::TabParent> mTabParent;
+  RefPtr<mozilla::dom::TabParent> mTabParent;
 
   void OfflineDisconnect() override;
   uint32_t GetAppId() override;
@@ -170,11 +177,14 @@ private:
   void DivertOnStopRequest(const nsresult& statusCode);
   void DivertComplete();
 
+  void SynthesizeResponse(nsIInterceptedChannel* aChannel);
+
   friend class DivertDataAvailableEvent;
   friend class DivertStopRequestEvent;
   friend class DivertCompleteEvent;
+  friend class ResponseSynthesizer;
 
-  nsRefPtr<nsHttpChannel>       mChannel;
+  RefPtr<nsHttpChannel>       mChannel;
   nsCOMPtr<nsICacheEntry>       mCacheEntry;
   nsCOMPtr<nsIAssociatedContentSecurity>  mAssociatedContentSecurity;
   bool mIPCClosed;                // PHttpChannel actor has been Closed()
@@ -194,16 +204,16 @@ private:
   bool mSentRedirect1BeginFailed    : 1;
   bool mReceivedRedirect2Verify     : 1;
 
-  nsRefPtr<OfflineObserver> mObserver;
+  RefPtr<OfflineObserver> mObserver;
 
   PBOverrideStatus mPBOverride;
 
   nsCOMPtr<nsILoadContext> mLoadContext;
-  nsRefPtr<nsHttpHandler>  mHttpHandler;
+  RefPtr<nsHttpHandler>  mHttpHandler;
 
   nsAutoPtr<nsHttpResponseHead> mSynthesizedResponseHead;
 
-  nsRefPtr<HttpChannelParentListener> mParentListener;
+  RefPtr<HttpChannelParentListener> mParentListener;
   // This is listener we are diverting to.
   nsCOMPtr<nsIStreamListener> mDivertListener;
   // Set to the canceled status value if the main channel was canceled.
@@ -228,7 +238,7 @@ private:
   // Handle to the channel wrapper if this channel has been intercepted.
   nsCOMPtr<nsIInterceptedChannel> mInterceptedChannel;
 
-  nsRefPtr<ChannelEventQueue> mEventQ;
+  RefPtr<ChannelEventQueue> mEventQ;
 };
 
 } // namespace net

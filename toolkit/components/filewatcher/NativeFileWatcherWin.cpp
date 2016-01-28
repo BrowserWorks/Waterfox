@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -249,21 +251,6 @@ public:
 private:
   nsCOMPtr<nsIThread> mWorkerThread;
 };
-
-/**
- * An helper callback function used to print information about any
- * pending watch when shutting down the nsINativeFileWatcher service.
- */
-static PLDHashOperator
-WatchedPathsInfoHashtableTraverser(nsVoidPtrHashKey::KeyType key,
-                                   WatchedResourceDescriptor* watchedResource,
-                                   void* userArg)
-{
-  FILEWATCHERLOG("NativeFileWatcherIOTask::DeactivateRunnableMethod - "
-                 "%S is still being watched.", watchedResource->mPath.get());
-
-  return PL_DHASH_NEXT;
-}
 
 /**
  * This runnable is dispatched from the main thread to get the notifications of the
@@ -855,8 +842,11 @@ NativeFileWatcherIOTask::DeactivateRunnableMethod()
              "watches manually before quitting.");
 
   // Log any pending watch.
-  (void)mWatchedResourcesByHandle.EnumerateRead(
-    &WatchedPathsInfoHashtableTraverser, nullptr);
+  for (auto it = mWatchedResourcesByHandle.Iter(); !it.Done(); it.Next()) {
+    FILEWATCHERLOG("NativeFileWatcherIOTask::DeactivateRunnableMethod - "
+                   "%S is still being watched.", it.UserData()->mPath.get());
+
+  }
 
   // We return immediately if |mShuttingDown| is true (see below for
   // details about the shutdown protocol being followed).
@@ -894,7 +884,7 @@ NativeFileWatcherIOTask::DeactivateRunnableMethod()
   }
 
   // Now we just need to reschedule a final call to Shutdown() back to the main thread.
-  nsRefPtr<NativeWatcherIOShutdownTask> shutdownRunnable =
+  RefPtr<NativeWatcherIOShutdownTask> shutdownRunnable =
     new NativeWatcherIOShutdownTask();
 
   return NS_DispatchToMainThread(shutdownRunnable);
@@ -949,7 +939,7 @@ NativeFileWatcherIOTask::ReportChange(
   const nsMainThreadPtrHandle<nsINativeFileWatcherCallback>& aOnChange,
   const nsAString& aChangedResource)
 {
-  nsRefPtr<WatchedChangeEvent> changeRunnable =
+  RefPtr<WatchedChangeEvent> changeRunnable =
     new WatchedChangeEvent(aOnChange, aChangedResource);
   return NS_DispatchToMainThread(changeRunnable);
 }
@@ -1007,7 +997,7 @@ NativeFileWatcherIOTask::ReportError(
   const nsMainThreadPtrHandle<nsINativeFileWatcherErrorCallback>& aOnError,
   nsresult anError, DWORD anOSError)
 {
-  nsRefPtr<WatchedErrorEvent> errorRunnable =
+  RefPtr<WatchedErrorEvent> errorRunnable =
     new WatchedErrorEvent(aOnError, anError, anOSError);
   return NS_DispatchToMainThread(errorRunnable);
 }
@@ -1027,7 +1017,7 @@ NativeFileWatcherIOTask::ReportSuccess(
   const nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback>& aOnSuccess,
   const nsAString& aResource)
 {
-  nsRefPtr<WatchedSuccessEvent> successRunnable =
+  RefPtr<WatchedSuccessEvent> successRunnable =
     new WatchedSuccessEvent(aOnSuccess, aResource);
   return NS_DispatchToMainThread(successRunnable);
 }

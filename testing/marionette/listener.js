@@ -13,6 +13,7 @@ var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
 loader.loadSubScript("chrome://marionette/content/simpletest.js");
 loader.loadSubScript("chrome://marionette/content/common.js");
 loader.loadSubScript("chrome://marionette/content/actions.js");
+Cu.import("chrome://marionette/content/capture.js");
 Cu.import("chrome://marionette/content/elements.js");
 Cu.import("chrome://marionette/content/error.js");
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -216,6 +217,7 @@ var getElementValueOfCssPropertyFn = dispatch(getElementValueOfCssProperty);
 var switchToShadowRootFn = dispatch(switchToShadowRoot);
 var getCookiesFn = dispatch(getCookies);
 var singleTapFn = dispatch(singleTap);
+var takeScreenshotFn = dispatch(takeScreenshot);
 
 /**
  * Start all message listeners
@@ -253,6 +255,7 @@ function startListeners() {
   addMessageListenerId("Marionette:sendKeysToElement", sendKeysToElement);
   addMessageListenerId("Marionette:clearElement", clearElementFn);
   addMessageListenerId("Marionette:switchToFrame", switchToFrame);
+  addMessageListenerId("Marionette:switchToParentFrame", switchToParentFrame);
   addMessageListenerId("Marionette:switchToShadowRoot", switchToShadowRootFn);
   addMessageListenerId("Marionette:deleteSession", deleteSession);
   addMessageListenerId("Marionette:sleepSession", sleepSession);
@@ -260,7 +263,7 @@ function startListeners() {
   addMessageListenerId("Marionette:importScript", importScript);
   addMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   addMessageListenerId("Marionette:setTestName", setTestName);
-  addMessageListenerId("Marionette:takeScreenshot", takeScreenshot);
+  addMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
   addMessageListenerId("Marionette:addCookie", addCookie);
   addMessageListenerId("Marionette:getCookies", getCookiesFn);
   addMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
@@ -357,6 +360,7 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:sendKeysToElement", sendKeysToElement);
   removeMessageListenerId("Marionette:clearElement", clearElementFn);
   removeMessageListenerId("Marionette:switchToFrame", switchToFrame);
+  removeMessageListenerId("Marionette:switchToParentFrame", switchToParentFrame);
   removeMessageListenerId("Marionette:switchToShadowRoot", switchToShadowRootFn);
   removeMessageListenerId("Marionette:deleteSession", deleteSession);
   removeMessageListenerId("Marionette:sleepSession", sleepSession);
@@ -364,7 +368,7 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:importScript", importScript);
   removeMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   removeMessageListenerId("Marionette:setTestName", setTestName);
-  removeMessageListenerId("Marionette:takeScreenshot", takeScreenshot);
+  removeMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
   removeMessageListenerId("Marionette:addCookie", addCookie);
   removeMessageListenerId("Marionette:getCookies", getCookiesFn);
   removeMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
@@ -576,6 +580,7 @@ function executeScript(msg, directInject) {
 
   asyncTestCommandId = msg.json.command_id;
   let script = msg.json.script;
+  let filename = msg.json.filename;
   sandboxName = msg.json.sandboxName;
 
   if (msg.json.newSandbox ||
@@ -602,7 +607,7 @@ function executeScript(msg, directInject) {
         stream.close();
         script = data + script;
       }
-      let res = Cu.evalInSandbox(script, sandbox, "1.8", "dummy file" ,0);
+      let res = Cu.evalInSandbox(script, sandbox, "1.8", filename ? filename : "dummy file" ,0);
       sendSyncMessage("Marionette:shareData",
                       {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
       marionetteLogObj.clearLogs();
@@ -623,7 +628,7 @@ function executeScript(msg, directInject) {
         return;
       }
 
-      script = "let __marionetteFunc = function(){" + script + "};" +
+      script = "var __marionetteFunc = function(){" + script + "};" +
                    "__marionetteFunc.apply(null, __marionetteParams);";
       if (importedScripts.exists()) {
         let stream = Components.classes["@mozilla.org/network/file-input-stream;1"].
@@ -633,7 +638,7 @@ function executeScript(msg, directInject) {
         stream.close();
         script = data + script;
       }
-      let res = Cu.evalInSandbox(script, sandbox, "1.8", "dummy file", 0);
+      let res = Cu.evalInSandbox(script, sandbox, "1.8", filename ? filename : "dummy file", 0);
       sendSyncMessage("Marionette:shareData",
                       {log: elementManager.wrapValue(marionetteLogObj.getLogs())});
       marionetteLogObj.clearLogs();
@@ -724,6 +729,7 @@ function executeWithCallback(msg, useFinish) {
   }
 
   let script = msg.json.script;
+  let filename = msg.json.filename;
   asyncTestCommandId = msg.json.command_id;
   sandboxName = msg.json.sandboxName;
 
@@ -774,7 +780,7 @@ function executeWithCallback(msg, useFinish) {
     }
 
     scriptSrc = "__marionetteParams.push(marionetteScriptFinished);" +
-                "let __marionetteFunc = function() { " + script + "};" +
+                "var __marionetteFunc = function() { " + script + "};" +
                 "__marionetteFunc.apply(null, __marionetteParams); ";
   }
 
@@ -788,7 +794,7 @@ function executeWithCallback(msg, useFinish) {
       stream.close();
       scriptSrc = data + scriptSrc;
     }
-    Cu.evalInSandbox(scriptSrc, sandbox, "1.8", "dummy file", 0);
+    Cu.evalInSandbox(scriptSrc, sandbox, "1.8", filename ? filename : "dummy file", 0);
   } catch (e) {
     let err = new JavaScriptError(
         e,
@@ -1676,6 +1682,20 @@ function switchToShadowRoot(id) {
 }
 
 /**
+ * Switch to the parent frame of the current Frame. If the frame is the top most
+ * is the current frame then no action will happen.
+ */
+ function switchToParentFrame(msg) {
+   let command_id = msg.json.command_id;
+   curContainer.frame = curContainer.frame.parent;
+   let parentElement = elementManager.addToKnownElements(curContainer.frame);
+
+   sendSyncMessage("Marionette:switchedToFrame", { frameValue: parentElement });
+
+   sendOk(msg.json.command_id);
+ }
+
+/**
  * Switch to frame given either the server-assigned element id,
  * its index in window.frames, or the iframe's name or id.
  */
@@ -1994,96 +2014,47 @@ function importScript(msg) {
 }
 
 /**
- * Takes a screen capture of the given web element if <code>id</code>
- * property exists in the message's JSON object, or if null captures
- * the bounding box of the current frame.
+ * Perform a screen capture in content context.
  *
- * If given an array of web element references in
- * <code>msg.json.highlights</code>, a red box will be painted around
- * them to highlight their position.
+ * @param {UUID=} id
+ *     Optional web element reference of an element to take a screenshot
+ *     of.
+ * @param {boolean=} full
+ *     True to take a screenshot of the entire document element.  Is not
+ *     considered if {@code id} is not defined.  Defaults to true.
+ * @param {Array.<UUID>=} highlights
+ *     Draw a border around the elements found by their web element
+ *     references.
+ *
+ * @return {string}
+ *     Base64 encoded string of an image/png type.
  */
-function takeScreenshot(msg) {
-  let node = null;
-  if (msg.json.id) {
-    try {
-      node = elementManager.getKnownElement(msg.json.id, curContainer)
-    }
-    catch (e) {
-      sendResponse(e.message, e.code, e.stack, msg.json.command_id);
-      return;
-    }
-  }
-  else {
-    node = curContainer.frame;
-  }
-  let highlights = msg.json.highlights;
+function takeScreenshot(id, full=true, highlights=[]) {
+  let canvas;
 
-  var document = curContainer.frame.document;
-  var rect, win, width, height, left, top;
-  // node can be either a window or an arbitrary DOM node
-  if (node == curContainer.frame) {
-    // node is a window
-    win = node;
-    if (msg.json.full) {
-      // the full window
-      width = document.body.scrollWidth;
-      height = document.body.scrollHeight;
-      top = 0;
-      left = 0;
-    }
-    else {
-      // only the viewport
-      width = document.documentElement.clientWidth;
-      height = document.documentElement.clientHeight;
-      left = curContainer.frame.pageXOffset;
-      top = curContainer.frame.pageYOffset;
-    }
-  }
-  else {
-    // node is an arbitrary DOM node
-    win = node.ownerDocument.defaultView;
-    rect = node.getBoundingClientRect();
-    width = rect.width;
-    height = rect.height;
-    top = rect.top;
-    left = rect.left;
+  let highlightEls = [];
+  for (let h of highlights) {
+    let el = elementManager.getKnownElement(h, curContainer);
+    highlightEls.push(el);
   }
 
-  var canvas = document.createElementNS("http://www.w3.org/1999/xhtml",
-                                        "canvas");
-  canvas.width = width;
-  canvas.height = height;
-  var ctx = canvas.getContext("2d");
-  // Draws the DOM contents of the window to the canvas
-  ctx.drawWindow(win, left, top, width, height, "rgb(255,255,255)");
+  // viewport
+  if (!id && !full) {
+    canvas = capture.viewport(curContainer.frame.document, highlightEls);
 
-  // This section is for drawing a red rectangle around each element
-  // passed in via the highlights array
-  if (highlights) {
-    ctx.lineWidth = "2";
-    ctx.strokeStyle = "red";
-    ctx.save();
-
-    for (var i = 0; i < highlights.length; ++i) {
-      var elem = elementManager.getKnownElement(highlights[i], curContainer);
-      rect = elem.getBoundingClientRect();
-
-      var offsetY = -top;
-      var offsetX = -left;
-
-      // Draw the rectangle
-      ctx.strokeRect(rect.left + offsetX,
-                     rect.top + offsetY,
-                     rect.width,
-                     rect.height);
+  // element or full document element
+  } else {
+    let node;
+    if (id) {
+      node = elementManager.getKnownElement(id, curContainer);
+    } else {
+      node = curContainer.frame.document.documentElement;
     }
+
+    canvas = capture.element(node, highlightEls);
   }
 
-  // Return the Base64 encoded string back to the client so that it
-  // can save the file to disk if it is required
-  var dataUrl = canvas.toDataURL("image/png", "");
-  var data = dataUrl.substring(dataUrl.indexOf(",") + 1);
-  sendResponse({value: data}, msg.json.command_id);
+  return capture.toBase64(canvas);
 }
 
 // Call register self when we get loaded

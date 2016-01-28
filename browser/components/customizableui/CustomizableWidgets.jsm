@@ -214,7 +214,7 @@ const CustomizableWidgets = [
                 onHistoryVisit(uri, aEvent, item);
               });
               if (icon) {
-                let iconURL = PlacesUtils.getImageURLForResolution(win, "moz-anno:favicon:" + icon);
+                let iconURL = "moz-anno:favicon:" + icon;
                 item.setAttribute("image", iconURL);
               }
               fragment.appendChild(item);
@@ -987,18 +987,6 @@ const CustomizableWidgets = [
       });
 
       return node;
-    }
-  }, {
-    id: "web-apps-button",
-    label: "web-apps-button.label",
-    tooltiptext: "web-apps-button.tooltiptext",
-    onCommand: function(aEvent) {
-      let win = aEvent.target &&
-                aEvent.target.ownerDocument &&
-                aEvent.target.ownerDocument.defaultView;
-      if (win && typeof win.BrowserOpenApps == "function") {
-        win.BrowserOpenApps();
-      }
     }
   }];
 

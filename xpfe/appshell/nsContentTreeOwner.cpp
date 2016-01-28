@@ -245,7 +245,7 @@ NS_IMETHODIMP nsContentTreeOwner::FindItemWithName(const char16_t* aName,
        xulWindow->GetPrimaryContentShell(aFoundItem);
      } else {
        // Get all the targetable windows from xulWindow and search them
-       nsRefPtr<nsXULWindow> win;
+       RefPtr<nsXULWindow> win;
        xulWindow->QueryInterface(NS_GET_IID(nsXULWindow), getter_AddRefs(win));
        if (win) {
          int32_t count = win->mTargetableShells.Count();
@@ -310,6 +310,27 @@ nsContentTreeOwner::GetPrimaryContentShell(nsIDocShellTreeItem** aShell)
 {
    NS_ENSURE_STATE(mXULWindow);
    return mXULWindow->GetPrimaryContentShell(aShell);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::TabParentAdded(nsITabParent* aTab, bool aPrimary)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->TabParentAdded(aTab, aPrimary);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::TabParentRemoved(nsITabParent* aTab)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->TabParentRemoved(aTab);
+}
+
+NS_IMETHODIMP
+nsContentTreeOwner::GetPrimaryTabParent(nsITabParent** aTab)
+{
+  NS_ENSURE_STATE(mXULWindow);
+  return mXULWindow->GetPrimaryTabParent(aTab);
 }
 
 NS_IMETHODIMP nsContentTreeOwner::SizeShellTo(nsIDocShellTreeItem* aShellItem,
@@ -1115,7 +1136,7 @@ nsSiteWindow::Blur(void)
       return NS_OK;
     }
 
-    nsCOMPtr<nsIDOMWindow> domWindow(docshell->GetWindow());
+    nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(docshell->GetWindow());
     if (domWindow)
       domWindow->Focus();
   }

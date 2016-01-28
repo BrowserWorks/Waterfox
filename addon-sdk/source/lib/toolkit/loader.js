@@ -363,7 +363,7 @@ const load = iced(function load(loader, module) {
       fileName: { value: fileName, writable: true, configurable: true },
       lineNumber: { value: lineNumber, writable: true, configurable: true },
       stack: { value: serializeStack(frames), writable: true, configurable: true },
-      toString: { value: function() toString, writable: true, configurable: true },
+      toString: { value: () => toString, writable: true, configurable: true },
     });
   }
 
@@ -798,7 +798,7 @@ function Loader(options) {
     globals: {
       get console() {
         // Import Console.jsm from here to prevent loading it until someone uses it
-        let { ConsoleAPI } = Cu.import("resource://gre/modules/devtools/Console.jsm");
+        let { ConsoleAPI } = Cu.import("resource://gre/modules/Console.jsm");
         let console = new ConsoleAPI({
           consoleID: options.id ? "addon/" + options.id : ""
         });

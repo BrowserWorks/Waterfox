@@ -53,6 +53,7 @@
 #include "gfxGraphiteShaper.h"
 #include "gfx2DGlue.h"
 #include "gfxGradientCache.h"
+#include "gfxUtils.h" // for NextPowerOfTwo
 
 #include "nsUnicodeRange.h"
 #include "nsServiceManagerUtils.h"
@@ -418,33 +419,13 @@ MemoryPressureObserver::Observe(nsISupports *aSubject,
     return NS_OK;
 }
 
-// xxx - this can probably be eliminated by reworking pref font handling code
-static const char *gPrefLangNames[] = {
-    #define FONT_PREF_LANG(enum_id_, str_, atom_id_) str_
-    #include "gfxFontPrefLangList.h"
-    #undef FONT_PREF_LANG
-};
-
-static nsIAtom* PrefLangToLangGroups(uint32_t aIndex)
-{
-    // static array here avoids static constructor
-    static nsIAtom* gPrefLangToLangGroups[] = {
-        #define FONT_PREF_LANG(enum_id_, str_, atom_id_) nsGkAtoms::atom_id_
-        #include "gfxFontPrefLangList.h"
-        #undef FONT_PREF_LANG
-    };
-
-    return aIndex < ArrayLength(gPrefLangToLangGroups)
-         ? gPrefLangToLangGroups[aIndex]
-         : nsGkAtoms::Unicode;
-}
-
 gfxPlatform::gfxPlatform()
   : mTileWidth(-1)
   , mTileHeight(-1)
   , mAzureCanvasBackendCollector(this, &gfxPlatform::GetAzureBackendInfo)
   , mApzSupportCollector(this, &gfxPlatform::GetApzSupportInfo)
   , mCompositorBackend(layers::LayersBackend::LAYERS_NONE)
+  , mScreenDepth(0)
 {
     mAllowDownloadableFonts = UNINITIALIZED_VALUE;
     mFallbackUsesCmaps = UNINITIALIZED_VALUE;
@@ -570,6 +551,7 @@ gfxPlatform::Init()
     InitLayersAccelerationPrefs();
     InitLayersIPC();
 
+    gPlatform->PopulateScreenInfo();
     gPlatform->ComputeTileSize();
 
     nsresult rv;
@@ -860,7 +842,7 @@ UserDataKey kThebesSurface;
 
 struct DependentSourceSurfaceUserData
 {
-  nsRefPtr<gfxASurface> mSurface;
+  RefPtr<gfxASurface> mSurface;
 };
 
 void SourceSurfaceDestroyed(void *aData)
@@ -1011,7 +993,7 @@ gfxPlatform::GetSourceSurfaceForSurface(DrawTarget *aTarget, gfxASurface *aSurfa
 already_AddRefed<DataSourceSurface>
 gfxPlatform::GetWrappedDataSourceSurface(gfxASurface* aSurface)
 {
-  nsRefPtr<gfxImageSurface> image = aSurface->GetAsImageSurface();
+  RefPtr<gfxImageSurface> image = aSurface->GetAsImageSurface();
   if (!image) {
     return nullptr;
   }
@@ -1082,43 +1064,49 @@ gfxPlatform::ComputeTileSize()
   int32_t w = gfxPrefs::LayersTileWidth();
   int32_t h = gfxPrefs::LayersTileHeight();
 
-  // TODO We may want to take the screen size into consideration here.
   if (gfxPrefs::LayersTilesAdjust()) {
+    gfx::IntSize screenSize = GetScreenSize();
+    if (screenSize.width > 0) {
+      // For the time being tiles larger than 512 probably do not make much
+      // sense. This is due to e.g. increased rasterisation time outweighing
+      // the decreased composition time, or large increases in memory usage
+      // for screens slightly wider than a higher power of two.
+      w = h = screenSize.width >= 512 ? 512 : 256;
+    }
+
 #ifdef MOZ_WIDGET_GONK
-    int32_t format = android::PIXEL_FORMAT_RGBA_8888;
     android::sp<android::GraphicBuffer> alloc =
-      new android::GraphicBuffer(gfxPrefs::LayersTileWidth(), gfxPrefs::LayersTileHeight(),
-                                 format,
-                                 android::GraphicBuffer::USAGE_SW_READ_OFTEN |
-                                 android::GraphicBuffer::USAGE_SW_WRITE_OFTEN |
-                                 android::GraphicBuffer::USAGE_HW_TEXTURE);
+          new android::GraphicBuffer(w, h, android::PIXEL_FORMAT_RGBA_8888,
+                                     android::GraphicBuffer::USAGE_SW_READ_OFTEN |
+                                     android::GraphicBuffer::USAGE_SW_WRITE_OFTEN |
+                                     android::GraphicBuffer::USAGE_HW_TEXTURE);
 
     if (alloc.get()) {
       w = alloc->getStride(); // We want the tiles to be gralloc stride aligned.
-      // No need to adjust the height here.
     }
 #endif
   }
-
-#ifdef XP_MACOSX
-  // Use double sized tiles for HiDPI screens.
-  nsCOMPtr<nsIScreenManager> screenManager =
-    do_GetService("@mozilla.org/gfx/screenmanager;1");
-  if (screenManager) {
-    nsCOMPtr<nsIScreen> primaryScreen;
-    screenManager->GetPrimaryScreen(getter_AddRefs(primaryScreen));
-    double scaleFactor = 1.0;
-    if (primaryScreen) {
-      primaryScreen->GetContentsScaleFactor(&scaleFactor);
-    }
-    if (scaleFactor > 1.0) {
-      w *= 2;
-      h *= 2;
-    }
-  }
-#endif
 
   SetTileSize(w, h);
+}
+
+void
+gfxPlatform::PopulateScreenInfo()
+{
+  nsCOMPtr<nsIScreenManager> manager = do_GetService("@mozilla.org/gfx/screenmanager;1");
+  MOZ_ASSERT(manager, "failed to get nsIScreenManager");
+
+  nsCOMPtr<nsIScreen> screen;
+  manager->GetPrimaryScreen(getter_AddRefs(screen));
+  if (!screen) {
+    // This can happen in xpcshell, for instance
+    return;
+  }
+
+  screen->GetColorDepth(&mScreenDepth);
+
+  int left, top;
+  screen->GetRect(&left, &top, &mScreenSize.width, &mScreenSize.height);
 }
 
 bool
@@ -1178,13 +1166,18 @@ SkiaGLGlue*
 gfxPlatform::GetSkiaGLGlue()
 {
 #ifdef USE_SKIA_GPU
+  if (!gfxPlatform::GetPlatform()->UseAcceleratedSkiaCanvas()) {
+    gfxCriticalNote << "Accelerated Skia canvas is disabled";
+    return nullptr;
+  }
+
   if (!mSkiaGlue) {
     /* Dummy context. We always draw into a FBO.
      *
      * FIXME: This should be stored in TLS or something, since there needs to be one for each thread using it. As it
      * stands, this only works on the main thread.
      */
-    nsRefPtr<GLContext> glContext;
+    RefPtr<GLContext> glContext;
     glContext = GLContextProvider::CreateHeadless(CreateContextFlags::REQUIRE_COMPAT_PROFILE |
                                                   CreateContextFlags::ALLOW_OFFLINE_RENDERER);
     if (!glContext) {
@@ -1237,7 +1230,7 @@ gfxPlatform::CreateDrawTargetForBackend(BackendType aBackend, const IntSize& aSi
   // CreateOffscreenSurface() and CreateDrawTargetForSurface() for all
   // backends).
   if (aBackend == BackendType::CAIRO) {
-    nsRefPtr<gfxASurface> surf = CreateOffscreenSurface(aSize, SurfaceFormatToImageFormat(aFormat));
+    RefPtr<gfxASurface> surf = CreateOffscreenSurface(aSize, SurfaceFormatToImageFormat(aFormat));
     if (!surf || surf->CairoStatus()) {
       return nullptr;
     }
@@ -1397,7 +1390,7 @@ gfxFontEntry*
 gfxPlatform::MakePlatformFont(const nsAString& aFontName,
                               uint16_t aWeight,
                               int16_t aStretch,
-                              bool aItalic,
+                              uint8_t aStyle,
                               const uint8_t* aFontData,
                               uint32_t aLength)
 {
@@ -1410,160 +1403,6 @@ gfxPlatform::MakePlatformFont(const nsAString& aFontName,
         free((void*)aFontData);
     }
     return nullptr;
-}
-
-bool gfxPlatform::ForEachPrefFont(eFontPrefLang aLangArray[], uint32_t aLangArrayLen, PrefFontCallback aCallback,
-                                    void *aClosure)
-{
-    NS_ENSURE_TRUE(Preferences::GetRootBranch(), false);
-
-    uint32_t    i;
-    for (i = 0; i < aLangArrayLen; i++) {
-        eFontPrefLang prefLang = aLangArray[i];
-        const char *langGroup = GetPrefLangName(prefLang);
-
-        nsAutoCString prefName;
-
-        prefName.AssignLiteral("font.default.");
-        prefName.Append(langGroup);
-        nsAdoptingCString genericDotLang = Preferences::GetCString(prefName.get());
-
-        genericDotLang.Append('.');
-        genericDotLang.Append(langGroup);
-
-        // fetch font.name.xxx value
-        prefName.AssignLiteral("font.name.");
-        prefName.Append(genericDotLang);
-        nsAdoptingCString nameValue = Preferences::GetCString(prefName.get());
-        if (nameValue) {
-            if (!aCallback(prefLang, NS_ConvertUTF8toUTF16(nameValue), aClosure))
-                return false;
-        }
-
-        // fetch font.name-list.xxx value
-        prefName.AssignLiteral("font.name-list.");
-        prefName.Append(genericDotLang);
-        nsAdoptingCString nameListValue = Preferences::GetCString(prefName.get());
-        if (nameListValue && !nameListValue.Equals(nameValue)) {
-            const char kComma = ',';
-            const char *p, *p_end;
-            nsAutoCString list(nameListValue);
-            list.BeginReading(p);
-            list.EndReading(p_end);
-            while (p < p_end) {
-                while (nsCRT::IsAsciiSpace(*p)) {
-                    if (++p == p_end)
-                        break;
-                }
-                if (p == p_end)
-                    break;
-                const char *start = p;
-                while (++p != p_end && *p != kComma)
-                    /* nothing */ ;
-                nsAutoCString fontName(Substring(start, p));
-                fontName.CompressWhitespace(false, true);
-                if (!aCallback(prefLang, NS_ConvertUTF8toUTF16(fontName), aClosure))
-                    return false;
-                p++;
-            }
-        }
-    }
-
-    return true;
-}
-
-eFontPrefLang
-gfxPlatform::GetFontPrefLangFor(const char* aLang)
-{
-    if (!aLang || !aLang[0]) {
-        return eFontPrefLang_Others;
-    }
-    for (uint32_t i = 0; i < ArrayLength(gPrefLangNames); ++i) {
-        if (!PL_strcasecmp(gPrefLangNames[i], aLang)) {
-            return eFontPrefLang(i);
-        }
-    }
-    return eFontPrefLang_Others;
-}
-
-eFontPrefLang
-gfxPlatform::GetFontPrefLangFor(nsIAtom *aLang)
-{
-    if (!aLang)
-        return eFontPrefLang_Others;
-    nsAutoCString lang;
-    aLang->ToUTF8String(lang);
-    return GetFontPrefLangFor(lang.get());
-}
-
-nsIAtom*
-gfxPlatform::GetLangGroupForPrefLang(eFontPrefLang aLang)
-{
-    // the special CJK set pref lang should be resolved into separate
-    // calls to individual CJK pref langs before getting here
-    NS_ASSERTION(aLang != eFontPrefLang_CJKSet, "unresolved CJK set pref lang");
-
-    return PrefLangToLangGroups(uint32_t(aLang));
-}
-
-const char*
-gfxPlatform::GetPrefLangName(eFontPrefLang aLang)
-{
-    if (uint32_t(aLang) < ArrayLength(gPrefLangNames)) {
-        return gPrefLangNames[uint32_t(aLang)];
-    }
-    return nullptr;
-}
-
-eFontPrefLang
-gfxPlatform::GetFontPrefLangFor(uint8_t aUnicodeRange)
-{
-    switch (aUnicodeRange) {
-        case kRangeSetLatin:   return eFontPrefLang_Western;
-        case kRangeCyrillic:   return eFontPrefLang_Cyrillic;
-        case kRangeGreek:      return eFontPrefLang_Greek;
-        case kRangeHebrew:     return eFontPrefLang_Hebrew;
-        case kRangeArabic:     return eFontPrefLang_Arabic;
-        case kRangeThai:       return eFontPrefLang_Thai;
-        case kRangeKorean:     return eFontPrefLang_Korean;
-        case kRangeJapanese:   return eFontPrefLang_Japanese;
-        case kRangeSChinese:   return eFontPrefLang_ChineseCN;
-        case kRangeTChinese:   return eFontPrefLang_ChineseTW;
-        case kRangeDevanagari: return eFontPrefLang_Devanagari;
-        case kRangeTamil:      return eFontPrefLang_Tamil;
-        case kRangeArmenian:   return eFontPrefLang_Armenian;
-        case kRangeBengali:    return eFontPrefLang_Bengali;
-        case kRangeCanadian:   return eFontPrefLang_Canadian;
-        case kRangeEthiopic:   return eFontPrefLang_Ethiopic;
-        case kRangeGeorgian:   return eFontPrefLang_Georgian;
-        case kRangeGujarati:   return eFontPrefLang_Gujarati;
-        case kRangeGurmukhi:   return eFontPrefLang_Gurmukhi;
-        case kRangeKhmer:      return eFontPrefLang_Khmer;
-        case kRangeMalayalam:  return eFontPrefLang_Malayalam;
-        case kRangeOriya:      return eFontPrefLang_Oriya;
-        case kRangeTelugu:     return eFontPrefLang_Telugu;
-        case kRangeKannada:    return eFontPrefLang_Kannada;
-        case kRangeSinhala:    return eFontPrefLang_Sinhala;
-        case kRangeTibetan:    return eFontPrefLang_Tibetan;
-        case kRangeSetCJK:     return eFontPrefLang_CJKSet;
-        default:               return eFontPrefLang_Others;
-    }
-}
-
-bool
-gfxPlatform::IsLangCJK(eFontPrefLang aLang)
-{
-    switch (aLang) {
-        case eFontPrefLang_Japanese:
-        case eFontPrefLang_ChineseTW:
-        case eFontPrefLang_ChineseCN:
-        case eFontPrefLang_ChineseHK:
-        case eFontPrefLang_Korean:
-        case eFontPrefLang_CJKSet:
-            return true;
-        default:
-            return false;
-    }
 }
 
 mozilla::layers::DiagnosticTypes
@@ -1583,143 +1422,6 @@ gfxPlatform::GetLayerDiagnosticTypes()
     type |= mozilla::layers::DiagnosticTypes::FLASH_BORDERS;
   }
   return type;
-}
-
-void
-gfxPlatform::GetLangPrefs(eFontPrefLang aPrefLangs[], uint32_t &aLen, eFontPrefLang aCharLang, eFontPrefLang aPageLang)
-{
-    if (IsLangCJK(aCharLang)) {
-        AppendCJKPrefLangs(aPrefLangs, aLen, aCharLang, aPageLang);
-    } else {
-        AppendPrefLang(aPrefLangs, aLen, aCharLang);
-    }
-
-    AppendPrefLang(aPrefLangs, aLen, eFontPrefLang_Others);
-}
-
-void
-gfxPlatform::AppendCJKPrefLangs(eFontPrefLang aPrefLangs[], uint32_t &aLen, eFontPrefLang aCharLang, eFontPrefLang aPageLang)
-{
-    // prefer the lang specified by the page *if* CJK
-    if (IsLangCJK(aPageLang)) {
-        AppendPrefLang(aPrefLangs, aLen, aPageLang);
-    }
-
-    // if not set up, set up the default CJK order, based on accept lang settings and locale
-    if (mCJKPrefLangs.Length() == 0) {
-
-        // temp array
-        eFontPrefLang tempPrefLangs[kMaxLenPrefLangList];
-        uint32_t tempLen = 0;
-
-        // Add the CJK pref fonts from accept languages, the order should be same order
-        nsAdoptingCString list = Preferences::GetLocalizedCString("intl.accept_languages");
-        if (!list.IsEmpty()) {
-            const char kComma = ',';
-            const char *p, *p_end;
-            list.BeginReading(p);
-            list.EndReading(p_end);
-            while (p < p_end) {
-                while (nsCRT::IsAsciiSpace(*p)) {
-                    if (++p == p_end)
-                        break;
-                }
-                if (p == p_end)
-                    break;
-                const char *start = p;
-                while (++p != p_end && *p != kComma)
-                    /* nothing */ ;
-                nsAutoCString lang(Substring(start, p));
-                lang.CompressWhitespace(false, true);
-                eFontPrefLang fpl = gfxPlatform::GetFontPrefLangFor(lang.get());
-                switch (fpl) {
-                    case eFontPrefLang_Japanese:
-                    case eFontPrefLang_Korean:
-                    case eFontPrefLang_ChineseCN:
-                    case eFontPrefLang_ChineseHK:
-                    case eFontPrefLang_ChineseTW:
-                        AppendPrefLang(tempPrefLangs, tempLen, fpl);
-                        break;
-                    default:
-                        break;
-                }
-                p++;
-            }
-        }
-
-        do { // to allow 'break' to abort this block if a call fails
-            nsresult rv;
-            nsCOMPtr<nsILocaleService> ls =
-                do_GetService(NS_LOCALESERVICE_CONTRACTID, &rv);
-            if (NS_FAILED(rv))
-                break;
-
-            nsCOMPtr<nsILocale> appLocale;
-            rv = ls->GetApplicationLocale(getter_AddRefs(appLocale));
-            if (NS_FAILED(rv))
-                break;
-
-            nsString localeStr;
-            rv = appLocale->
-                GetCategory(NS_LITERAL_STRING(NSILOCALE_MESSAGE), localeStr);
-            if (NS_FAILED(rv))
-                break;
-
-            const nsAString& lang = Substring(localeStr, 0, 2);
-            if (lang.EqualsLiteral("ja")) {
-                AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
-            } else if (lang.EqualsLiteral("zh")) {
-                const nsAString& region = Substring(localeStr, 3, 2);
-                if (region.EqualsLiteral("CN")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseCN);
-                } else if (region.EqualsLiteral("TW")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseTW);
-                } else if (region.EqualsLiteral("HK")) {
-                    AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseHK);
-                }
-            } else if (lang.EqualsLiteral("ko")) {
-                AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Korean);
-            }
-        } while (0);
-
-        // last resort... (the order is same as old gfx.)
-        AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Japanese);
-        AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_Korean);
-        AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseCN);
-        AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseHK);
-        AppendPrefLang(tempPrefLangs, tempLen, eFontPrefLang_ChineseTW);
-
-        // copy into the cached array
-        uint32_t j;
-        for (j = 0; j < tempLen; j++) {
-            mCJKPrefLangs.AppendElement(tempPrefLangs[j]);
-        }
-    }
-
-    // append in cached CJK langs
-    uint32_t  i, numCJKlangs = mCJKPrefLangs.Length();
-
-    for (i = 0; i < numCJKlangs; i++) {
-        AppendPrefLang(aPrefLangs, aLen, (eFontPrefLang) (mCJKPrefLangs[i]));
-    }
-
-}
-
-void
-gfxPlatform::AppendPrefLang(eFontPrefLang aPrefLangs[], uint32_t& aLen, eFontPrefLang aAddLang)
-{
-    if (aLen >= kMaxLenPrefLangList) return;
-
-    // make sure
-    uint32_t  i = 0;
-    while (i < aLen && aPrefLangs[i] != aAddLang) {
-        i++;
-    }
-
-    if (i == aLen) {
-        aPrefLangs[aLen] = aAddLang;
-        aLen++;
-    }
 }
 
 void
@@ -1864,12 +1566,12 @@ gfxPlatform::TransformPixel(const Color& in, Color& out, qcms_transform *transfo
         out = Color::FromABGR(packed);
 #else
         /* ARGB puts the bytes in |ARGB| order on big endian */
-        uint32_t packed = in.ToARGB();
+        uint32_t packed = in.UnusualToARGB();
         /* add one to move past the alpha byte */
         qcms_transform_data(transform,
                        (uint8_t *)&packed + 1, (uint8_t *)&packed + 1,
                        1);
-        out = Color::FromARGB(packed);
+        out = Color::UnusualFromARGB(packed);
 #endif
     }
 
@@ -2075,8 +1777,8 @@ gfxPlatform::GetBidiNumeralOption()
     return mBidiNumeralOption;
 }
 
-static void
-FlushFontAndWordCaches()
+/* static */ void
+gfxPlatform::FlushFontAndWordCaches()
 {
     gfxFontCache *fontCache = gfxFontCache::GetCache();
     if (fontCache) {
@@ -2151,13 +1853,6 @@ gfxPlatform::GetLog(eGfxLog aWhichLog)
     return nullptr;
 }
 
-int
-gfxPlatform::GetScreenDepth() const
-{
-    NS_WARNING("GetScreenDepth not implemented on this platform -- returning 0!");
-    return 0;
-}
-
 mozilla::gfx::SurfaceFormat
 gfxPlatform::Optimal2DFormatForContent(gfxContentType aContent)
 {
@@ -2169,7 +1864,7 @@ gfxPlatform::Optimal2DFormatForContent(gfxContentType aContent)
     case gfxImageFormat::RGB24:
       return mozilla::gfx::SurfaceFormat::B8G8R8X8;
     case gfxImageFormat::RGB16_565:
-      return mozilla::gfx::SurfaceFormat::R5G6B5;
+      return mozilla::gfx::SurfaceFormat::R5G6B5_UINT16;
     default:
       NS_NOTREACHED("unknown gfxImageFormat for gfxContentType::COLOR");
       return mozilla::gfx::SurfaceFormat::B8G8R8A8;
@@ -2409,7 +2104,7 @@ already_AddRefed<mozilla::gfx::VsyncSource>
 gfxPlatform::CreateHardwareVsyncSource()
 {
   NS_WARNING("Hardware Vsync support not yet implemented. Falling back to software timers");
-  nsRefPtr<mozilla::gfx::VsyncSource> softwareVsync = new SoftwareVsyncSource();
+  RefPtr<mozilla::gfx::VsyncSource> softwareVsync = new SoftwareVsyncSource();
   return softwareVsync.forget();
 }
 
@@ -2494,6 +2189,10 @@ gfxPlatform::GetApzSupportInfo(mozilla::widget::InfoObject& aObj)
   if (SupportsApzTouchInput()) {
     aObj.DefineProperty("ApzTouchInput", 1);
   }
+
+  if (SupportsApzDragInput()) {
+    aObj.DefineProperty("ApzDragInput", 1);
+  }
 }
 
 /*static*/ bool
@@ -2523,13 +2222,9 @@ gfxPlatform::PerfWarnings()
   return gfxPrefs::PerfWarnings();
 }
 
-void
-gfxPlatform::GetAcceleratedCompositorBackends(nsTArray<LayersBackend>& aBackends)
+static inline bool
+AllowOpenGL(bool* aWhitelisted)
 {
-  // Being whitelisted is not enough to accelerate, but not being whitelisted is
-  // enough not to:
-  bool whitelisted = false;
-
   nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
   if (gfxInfo) {
     // bug 655578: on X11 at least, we must always call GetData (even if we don't need that information)
@@ -2541,10 +2236,24 @@ gfxPlatform::GetAcceleratedCompositorBackends(nsTArray<LayersBackend>& aBackends
     int32_t status;
     if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_OPENGL_LAYERS, &status))) {
       if (status == nsIGfxInfo::FEATURE_STATUS_OK) {
-        aBackends.AppendElement(LayersBackend::LAYERS_OPENGL);
-        whitelisted = true;
+        *aWhitelisted = true;
+        return true;
       }
     }
+  }
+
+  return gfxPrefs::LayersAccelerationForceEnabled();
+}
+
+void
+gfxPlatform::GetAcceleratedCompositorBackends(nsTArray<LayersBackend>& aBackends)
+{
+  // Being whitelisted is not enough to accelerate, but not being whitelisted is
+  // enough not to:
+  bool whitelisted = false;
+
+  if (AllowOpenGL(&whitelisted)) {
+    aBackends.AppendElement(LayersBackend::LAYERS_OPENGL);
   }
 
   if (!whitelisted) {
@@ -2578,7 +2287,10 @@ gfxPlatform::NotifyCompositorCreated(LayersBackend aBackend)
     return;
   }
 
-  NS_ASSERTION(mCompositorBackend == LayersBackend::LAYERS_NONE, "Compositor backend changed.");
+  if (mCompositorBackend != LayersBackend::LAYERS_NONE) {
+    gfxCriticalNote << "Compositors might be mixed ("
+      << int(mCompositorBackend) << "," << int(aBackend) << ")";
+  }
 
   // Set the backend before we notify so it's available immediately.
   mCompositorBackend = aBackend;
@@ -2610,4 +2322,10 @@ gfxPlatform::UpdateDeviceInitData()
   mozilla::dom::ContentChild::GetSingleton()->SendGetGraphicsDeviceInitData(&data);
 
   SetDeviceInitData(data);
+}
+
+bool
+gfxPlatform::SupportsApzDragInput() const
+{
+  return gfxPrefs::APZDragEnabled();
 }

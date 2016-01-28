@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const { classes: Cc, utils: Cu, interfaces: Ci, results: Cr } = Components;
+var { classes: Cc, utils: Cu, interfaces: Ci, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/TelemetryController.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
@@ -134,7 +134,7 @@ function decodeRequestPayload(request) {
     unicodeConverter.charset = "UTF-8";
     let utf8string = unicodeConverter.ConvertToUnicode(observer.buffer);
     utf8string += unicodeConverter.Finish();
-    payload = decoder.decode(utf8string);
+    payload = JSON.parse(utf8string);
   } else {
     payload = decoder.decodeFromStream(s, s.available());
   }

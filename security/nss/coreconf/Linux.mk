@@ -4,6 +4,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 include $(CORE_DEPTH)/coreconf/UNIX.mk
+include $(CORE_DEPTH)/coreconf/Werror.mk
 
 #
 # The default implementation strategy for Linux is now pthreads
@@ -26,16 +27,22 @@ ifeq ($(OS_TARGET),Android)
 ifndef ANDROID_NDK
 	$(error Must set ANDROID_NDK to the path to the android NDK first)
 endif
+ifndef ANDROID_TOOLCHAIN_VERSION
+	$(error Must set ANDROID_TOOLCHAIN_VERSION to the requested version number)
+endif
 	ANDROID_PREFIX=$(OS_TEST)-linux-androideabi
-	ANDROID_TARGET=$(ANDROID_PREFIX)-4.4.3
+	ANDROID_TARGET=$(ANDROID_PREFIX)-$(ANDROID_TOOLCHAIN_VERSION)
 	# should autodetect which linux we are on, currently android only
 	# supports linux-x86 prebuilts
 	ANDROID_TOOLCHAIN=$(ANDROID_NDK)/toolchains/$(ANDROID_TARGET)/prebuilt/linux-x86
 	ANDROID_SYSROOT=$(ANDROID_NDK)/platforms/android-$(OS_TARGET_RELEASE)/arch-$(OS_TEST)
 	ANDROID_CC=$(ANDROID_TOOLCHAIN)/bin/$(ANDROID_PREFIX)-gcc
+	ANDROID_CCC=$(ANDROID_TOOLCHAIN)/bin/$(ANDROID_PREFIX)-g++
+        NSS_DISABLE_GTESTS=1
 # internal tools need to be built with the native compiler
 ifndef INTERNAL_TOOLS
 	CC = $(ANDROID_CC) --sysroot=$(ANDROID_SYSROOT)
+	CCC = $(ANDROID_CCC) --sysroot=$(ANDROID_SYSROOT)
 	DEFAULT_COMPILER=$(ANDROID_PREFIX)-gcc
 	ARCHFLAG = --sysroot=$(ANDROID_SYSROOT)
 	DEFINES += -DNO_SYSINFO -DNO_FORK_CHECK -DANDROID
@@ -125,12 +132,15 @@ ifdef MOZ_DEBUG_SYMBOLS
 endif
 endif
 
+ifndef COMPILER_TAG
+COMPILER_TAG := _$(CC_NAME)
+endif
 
 ifeq ($(USE_PTHREADS),1)
 OS_PTHREAD = -lpthread 
 endif
 
-OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) -Wall -Werror-implicit-function-declaration -Wno-switch -pipe -ffunction-sections -fdata-sections -DLINUX -Dlinux -DHAVE_STRERROR
+OS_CFLAGS		= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(ARCHFLAG) $(WARNING_CFLAGS) -pipe -ffunction-sections -fdata-sections -DLINUX -Dlinux -DHAVE_STRERROR
 OS_LIBS			= $(OS_PTHREAD) -ldl -lc
 
 ifdef USE_PTHREADS

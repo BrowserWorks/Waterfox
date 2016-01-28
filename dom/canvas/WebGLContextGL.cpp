@@ -51,7 +51,7 @@
 #include "mozilla/dom/ImageData.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/Endian.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 namespace mozilla {
 
@@ -317,7 +317,7 @@ WebGLContext::CreateProgram()
 {
     if (IsContextLost())
         return nullptr;
-    nsRefPtr<WebGLProgram> globj = new WebGLProgram(this);
+    RefPtr<WebGLProgram> globj = new WebGLProgram(this);
     return globj.forget();
 }
 
@@ -334,7 +334,7 @@ WebGLContext::CreateShader(GLenum type)
         return nullptr;
     }
 
-    nsRefPtr<WebGLShader> shader = new WebGLShader(this, type);
+    RefPtr<WebGLShader> shader = new WebGLShader(this, type);
     return shader.forget();
 }
 
@@ -650,7 +650,7 @@ WebGLContext::GetActiveUniform(WebGLProgram* prog, GLuint index)
 
 void
 WebGLContext::GetAttachedShaders(WebGLProgram* prog,
-                                 dom::Nullable<nsTArray<nsRefPtr<WebGLShader>>>& retval)
+                                 dom::Nullable<nsTArray<RefPtr<WebGLShader>>>& retval)
 {
     retval.SetNull();
     if (IsContextLost())
@@ -985,7 +985,7 @@ WebGLContext::CreateTexture()
     MakeContextCurrent();
     gl->fGenTextures(1, &tex);
 
-    nsRefPtr<WebGLTexture> globj = new WebGLTexture(this, tex);
+    RefPtr<WebGLTexture> globj = new WebGLTexture(this, tex);
     return globj.forget();
 }
 
@@ -1381,16 +1381,41 @@ IsFormatAndTypeUnpackable(GLenum format, GLenum type)
     }
 }
 
+// This function is temporary, and will be removed once https://bugzilla.mozilla.org/show_bug.cgi?id=1176214 lands, which will
+// collapse the SharedArrayBufferView and ArrayBufferView into one.
+void
+ComputeLengthAndData(const dom::ArrayBufferViewOrSharedArrayBufferView& view,
+                     void** const out_data, size_t* const out_length,
+                     js::Scalar::Type* const out_type)
+{
+    if (view.IsArrayBufferView()) {
+        const dom::ArrayBufferView& pixbuf = view.GetAsArrayBufferView();
+        pixbuf.ComputeLengthAndData();
+        *out_length = pixbuf.Length();
+        *out_data = pixbuf.Data();
+        *out_type = JS_GetArrayBufferViewType(pixbuf.Obj());
+    } else {
+        const dom::SharedArrayBufferView& pixbuf = view.GetAsSharedArrayBufferView();
+        pixbuf.ComputeLengthAndData();
+        *out_length = pixbuf.Length();
+        *out_data = pixbuf.Data();
+        *out_type = JS_GetSharedArrayBufferViewType(pixbuf.Obj());
+    }
+}
+
 void
 WebGLContext::ReadPixels(GLint x, GLint y, GLsizei width,
                          GLsizei height, GLenum format,
-                         GLenum type, const dom::Nullable<dom::ArrayBufferView>& pixels,
+                         GLenum type, const dom::Nullable<dom::ArrayBufferViewOrSharedArrayBufferView>& pixels,
                          ErrorResult& rv)
 {
     if (IsContextLost())
         return;
 
-    if (mCanvasElement->IsWriteOnly() && !nsContentUtils::IsCallerChrome()) {
+    if (mCanvasElement &&
+        mCanvasElement->IsWriteOnly() &&
+        !nsContentUtils::IsCallerChrome())
+    {
         GenerateWarning("readPixels: Not allowed");
         return rv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     }
@@ -1457,8 +1482,13 @@ WebGLContext::ReadPixels(GLint x, GLint y, GLsizei width,
         MOZ_CRASH("bad `type`");
     }
 
-    const dom::ArrayBufferView& pixbuf = pixels.Value();
-    int dataType = pixbuf.Type();
+    const dom::ArrayBufferViewOrSharedArrayBufferView &view = pixels.Value();
+    // Compute length and data.  Don't reenter after this point, lest the
+    // precomputed go out of sync with the instant length/data.
+    size_t dataByteLen;
+    void* data;
+    js::Scalar::Type dataType;
+    ComputeLengthAndData(view, &data, &dataByteLen, &dataType);
 
     // Check the pixels param type
     if (dataType != requiredDataType)
@@ -1476,15 +1506,9 @@ WebGLContext::ReadPixels(GLint x, GLint y, GLsizei width,
     if (!checked_neededByteLength.isValid())
         return ErrorInvalidOperation("readPixels: integer overflow computing the needed buffer size");
 
-    // Compute length and data.  Don't reenter after this point, lest the
-    // precomputed go out of sync with the instant length/data.
-    pixbuf.ComputeLengthAndData();
-
-    uint32_t dataByteLen = pixbuf.Length();
     if (checked_neededByteLength.value() > dataByteLen)
         return ErrorInvalidOperation("readPixels: buffer too small");
 
-    void* data = pixbuf.Data();
     if (!data) {
         ErrorOutOfMemory("readPixels: buffer storage is null. Did we run out of memory?");
         return rv.Throw(NS_ERROR_OUT_OF_MEMORY);
@@ -1919,7 +1943,7 @@ WebGLContext::SurfaceFromElementResultToImageSurface(nsLayoutUtils::SurfaceFromE
         case SurfaceFormat::A8:
             *format = WebGLTexelFormat::A8;
             break;
-        case SurfaceFormat::R5G6B5:
+        case SurfaceFormat::R5G6B5_UINT16:
             *format = WebGLTexelFormat::RGB565;
             break;
         default:
@@ -2292,7 +2316,7 @@ WebGLContext::CreateFramebuffer()
     MakeContextCurrent();
     gl->fGenFramebuffers(1, &fbo);
 
-    nsRefPtr<WebGLFramebuffer> globj = new WebGLFramebuffer(this, fbo);
+    RefPtr<WebGLFramebuffer> globj = new WebGLFramebuffer(this, fbo);
     return globj.forget();
 }
 
@@ -2301,7 +2325,7 @@ WebGLContext::CreateRenderbuffer()
 {
     if (IsContextLost())
         return nullptr;
-    nsRefPtr<WebGLRenderbuffer> globj = new WebGLRenderbuffer(this);
+    RefPtr<WebGLRenderbuffer> globj = new WebGLRenderbuffer(this);
     return globj.forget();
 }
 
@@ -2406,7 +2430,7 @@ WebGLContext::GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype)
       gl->fGetShaderPrecisionFormat(shadertype, precisiontype, range, &precision);
     }
 
-    nsRefPtr<WebGLShaderPrecisionFormat> retShaderPrecisionFormat
+    RefPtr<WebGLShaderPrecisionFormat> retShaderPrecisionFormat
         = new WebGLShaderPrecisionFormat(this, range[0], range[1], precision);
     return retShaderPrecisionFormat.forget();
 }

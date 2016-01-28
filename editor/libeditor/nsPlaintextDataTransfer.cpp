@@ -77,7 +77,7 @@ nsresult nsPlaintextEditor::InsertTextAt(const nsAString &aStringToInsert,
   if (aDestinationNode)
   {
     nsresult res;
-    nsRefPtr<Selection> selection = GetSelection();
+    RefPtr<Selection> selection = GetSelection();
     NS_ENSURE_STATE(selection);
 
     nsCOMPtr<nsIDOMNode> targetNode = aDestinationNode;
@@ -145,8 +145,8 @@ nsresult nsPlaintextEditor::InsertFromDataTransfer(DataTransfer *aDataTransfer,
                                                    bool aDoDeleteSelection)
 {
   nsCOMPtr<nsIVariant> data;
-  aDataTransfer->MozGetDataAt(NS_LITERAL_STRING("text/plain"), aIndex,
-                              getter_AddRefs(data));
+  DataTransfer::Cast(aDataTransfer)->GetDataAtNoSecurityCheck(NS_LITERAL_STRING("text/plain"), aIndex,
+                                                              getter_AddRefs(data));
   if (data) {
     nsAutoString insertText;
     data->GetAsAString(insertText);
@@ -219,7 +219,7 @@ nsresult nsPlaintextEditor::InsertFromDrop(nsIDOMEvent* aDropEvent)
   rv = uiEvent->GetRangeOffset(&newSelectionOffset);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<Selection> selection = GetSelection();
+  RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
 
   bool isCollapsed = selection->Collapsed();
@@ -256,7 +256,7 @@ nsresult nsPlaintextEditor::InsertFromDrop(nsIDOMEvent* aDropEvent)
 
     for (int32_t j = 0; j < rangeCount; j++)
     {
-      nsRefPtr<nsRange> range = selection->GetRangeAt(j);
+      RefPtr<nsRange> range = selection->GetRangeAt(j);
       if (!range) {
         // don't bail yet, iterate through them all
         continue;

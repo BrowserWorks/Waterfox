@@ -25,25 +25,14 @@ def json = slurper.parseText(standardOutput.toString())
 
 include ':app'
 include ':base'
-include ':branding'
 include ':omnijar'
-include ':preprocessed_code'
-include ':preprocessed_resources'
 include ':thirdparty'
 
 def gradleRoot = new File("${json.topobjdir}/mobile/android/gradle")
 project(':app').projectDir = new File(gradleRoot, 'app')
 project(':base').projectDir = new File(gradleRoot, 'base')
-project(':branding').projectDir = new File(gradleRoot, 'branding')
 project(':omnijar').projectDir = new File(gradleRoot, 'omnijar')
-project(':preprocessed_code').projectDir = new File(gradleRoot, 'preprocessed_code')
-project(':preprocessed_resources').projectDir = new File(gradleRoot, 'preprocessed_resources')
 project(':thirdparty').projectDir = new File(gradleRoot, 'thirdparty')
-
-if (json.substs.MOZ_INSTALL_TRACKING) {
-    include ':thirdparty_adjust_sdk'
-    project(':thirdparty_adjust_sdk').projectDir = new File(gradleRoot, 'thirdparty_adjust_sdk')
-}
 
 // The Gradle instance is shared between settings.gradle and all the
 // other build.gradle files (see

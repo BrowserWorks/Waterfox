@@ -349,12 +349,19 @@ public:
 
   /**
    * This will return null if mSrcStream is null, or if mSrcStream is not
-   * null but its GetStream() returns null --- which can happen during
+   * null but its GetPlaybackStream() returns null --- which can happen during
    * cycle collection unlinking!
    */
   MediaStream* GetSrcMediaStream() const
   {
-    return mSrcStream ? mSrcStream->GetStream() : nullptr;
+    if (!mSrcStream) {
+      return nullptr;
+    }
+    if (mSrcStream->GetCameraStream()) {
+      // XXX Remove this check with CameraPreviewMediaStream per bug 1124630.
+      return mSrcStream->GetCameraStream();
+    }
+    return mSrcStream->GetPlaybackStream();
   }
 
   // WebIDL
@@ -644,7 +651,7 @@ public:
    * A public wrapper for FinishDecoderSetup()
    */
   nsresult FinishDecoderSetup(MediaDecoder* aDecoder, MediaResource* aStream) {
-    return FinishDecoderSetup(aDecoder, aStream, nullptr, nullptr);
+    return FinishDecoderSetup(aDecoder, aStream, nullptr);
   }
 
   // Returns true if the media element is being destroyed. Used in
@@ -664,6 +671,7 @@ protected:
 
   class MediaLoadListener;
   class MediaStreamTracksAvailableCallback;
+  class MediaStreamTrackListener;
   class StreamListener;
   class StreamSizeListener;
 
@@ -703,6 +711,8 @@ protected:
     nsCOMPtr<nsITimer> mTimer;
   };
 
+  nsresult PlayInternal(bool aCallerIsChrome);
+
   /** Use this method to change the mReadyState member, so required
    * events can be fired.
    */
@@ -720,7 +730,7 @@ protected:
    */
   virtual void WakeLockCreate();
   virtual void WakeLockRelease();
-  nsRefPtr<WakeLock> mWakeLock;
+  RefPtr<WakeLock> mWakeLock;
 
   /**
    * Logs a warning message to the web console to report various failures.
@@ -754,6 +764,25 @@ protected:
   void UpdateSrcMediaStreamPlaying(uint32_t aFlags = 0);
 
   /**
+   * If loading and playing a MediaStream, for each MediaStreamTrack in the
+   * MediaStream, create a corresponding AudioTrack or VideoTrack during the
+   * phase of resource fetching.
+   */
+  void ConstructMediaTracks();
+
+  /**
+   * Called by our DOMMediaStream::TrackListener when a new MediaStreamTrack has
+   * been added to the playback stream of |mSrcStream|.
+   */
+  void NotifyMediaStreamTrackAdded(const RefPtr<MediaStreamTrack>& aTrack);
+
+  /**
+   * Called by our DOMMediaStream::TrackListener when a MediaStreamTrack in
+   * |mSrcStream|'s playback stream has ended.
+   */
+  void NotifyMediaStreamTrackRemoved(const RefPtr<MediaStreamTrack>& aTrack);
+
+  /**
    * Returns an nsDOMMediaStream containing the played contents of this
    * element. When aFinishWhenEnded is true, when this element ends playback
    * we will finish the stream and not play any more into it.
@@ -784,8 +813,7 @@ protected:
    */
   nsresult FinishDecoderSetup(MediaDecoder* aDecoder,
                               MediaResource* aStream,
-                              nsIStreamListener **aListener,
-                              MediaDecoder* aCloneDonor);
+                              nsIStreamListener **aListener);
 
   /**
    * Call this after setting up mLoadingSrc and mDecoder.
@@ -1039,6 +1067,9 @@ protected:
   // next block of audio samples) preceeding seek target.
   void Seek(double aTime, SeekTarget::Type aSeekType, ErrorResult& aRv);
 
+  // A method to check if we are playing through the AudioChannel.
+  bool IsPlayingThroughTheAudioChannel() const;
+
   // Update the audio channel playing state
   void UpdateAudioChannelPlayingState();
 
@@ -1068,60 +1099,55 @@ protected:
 
   // The current decoder. Load() has been called on this decoder.
   // At most one of mDecoder and mSrcStream can be non-null.
-  nsRefPtr<MediaDecoder> mDecoder;
+  RefPtr<MediaDecoder> mDecoder;
 
   // State-watching manager.
   WatchManager<HTMLMediaElement> mWatchManager;
 
   // A reference to the VideoFrameContainer which contains the current frame
   // of video to display.
-  nsRefPtr<VideoFrameContainer> mVideoFrameContainer;
+  RefPtr<VideoFrameContainer> mVideoFrameContainer;
 
   // Holds a reference to the DOM wrapper for the MediaStream that has been
   // set in the src attribute.
-  nsRefPtr<DOMMediaStream> mSrcAttrStream;
+  RefPtr<DOMMediaStream> mSrcAttrStream;
 
   // Holds a reference to the DOM wrapper for the MediaStream that we're
   // actually playing.
   // At most one of mDecoder and mSrcStream can be non-null.
-  nsRefPtr<DOMMediaStream> mSrcStream;
+  RefPtr<DOMMediaStream> mSrcStream;
 
   // If non-negative, the time we should return for currentTime while playing
   // mSrcStream.
   double mSrcStreamPausedCurrentTime;
 
   // Holds a reference to the stream connecting this stream to the capture sink.
-  nsRefPtr<MediaInputPort> mCaptureStreamPort;
-
-  // Holds a reference to a stream with mSrcStream as input but intended for
-  // playback. Used so we don't block playback of other video elements
-  // playing the same mSrcStream.
-  nsRefPtr<DOMMediaStream> mPlaybackStream;
+  RefPtr<MediaInputPort> mCaptureStreamPort;
 
   // Holds references to the DOM wrappers for the MediaStreams that we're
   // writing to.
   struct OutputMediaStream {
-    nsRefPtr<DOMMediaStream> mStream;
+    RefPtr<DOMMediaStream> mStream;
     bool mFinishWhenEnded;
   };
   nsTArray<OutputMediaStream> mOutputStreams;
 
-  // Holds a reference to the MediaStreamListener attached to mPlaybackStream
-  // (or mSrcStream if mPlaybackStream is null).
-  nsRefPtr<StreamListener> mMediaStreamListener;
+  // Holds a reference to the MediaStreamListener attached to mSrcStream's
+  // playback stream.
+  RefPtr<StreamListener> mMediaStreamListener;
   // Holds a reference to the size-getting MediaStreamListener attached to
   // mSrcStream.
-  nsRefPtr<StreamSizeListener> mMediaStreamSizeListener;
+  RefPtr<StreamSizeListener> mMediaStreamSizeListener;
 
   // Holds a reference to the MediaSource, if any, referenced by the src
   // attribute on the media element.
-  nsRefPtr<MediaSource> mSrcMediaSource;
+  RefPtr<MediaSource> mSrcMediaSource;
 
   // Holds a reference to the MediaSource supplying data for playback.  This
   // may either match mSrcMediaSource or come from Source element children.
   // This is set when and only when mLoadingSrc corresponds to an object url
   // that resolved to a MediaSource.
-  nsRefPtr<MediaSource> mMediaSource;
+  RefPtr<MediaSource> mMediaSource;
 
   // Holds a reference to the first channel we open to the media resource.
   // Once the decoder is created, control over the channel passes to the
@@ -1130,7 +1156,7 @@ protected:
   nsCOMPtr<nsIChannel> mChannel;
 
   // Error attribute
-  nsRefPtr<MediaError> mError;
+  RefPtr<MediaError> mError;
 
   // The current media load ID. This is incremented every time we start a
   // new load. Async events note the ID when they're first sent, and only fire
@@ -1139,7 +1165,7 @@ protected:
 
   // Points to the child source elements, used to iterate through the children
   // when selecting a resource to load.
-  nsRefPtr<nsRange> mSourcePointer;
+  RefPtr<nsRange> mSourcePointer;
 
   // Points to the document whose load we're blocking. This is the document
   // we're bound to when loading starts.
@@ -1239,14 +1265,14 @@ protected:
   nsCOMPtr<nsIContent> mSourceLoadCandidate;
 
   // Range of time played.
-  nsRefPtr<TimeRanges> mPlayed;
+  RefPtr<TimeRanges> mPlayed;
 
   // Timer used for updating progress events
   nsCOMPtr<nsITimer> mProgressTimer;
 
 #ifdef MOZ_EME
   // Encrypted Media Extension media keys.
-  nsRefPtr<MediaKeys> mMediaKeys;
+  RefPtr<MediaKeys> mMediaKeys;
 #endif
 
   // Stores the time at the start of the current 'played' range.
@@ -1421,11 +1447,13 @@ protected:
   // An agent used to join audio channel service.
   nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
 
-  nsRefPtr<TextTrackManager> mTextTrackManager;
+  RefPtr<TextTrackManager> mTextTrackManager;
 
-  nsRefPtr<AudioTrackList> mAudioTrackList;
+  RefPtr<AudioTrackList> mAudioTrackList;
 
-  nsRefPtr<VideoTrackList> mVideoTrackList;
+  RefPtr<VideoTrackList> mVideoTrackList;
+
+  RefPtr<MediaStreamTrackListener> mMediaStreamTrackListener;
 
   enum ElementInTreeState {
     // The MediaElement is not in the DOM tree now.
@@ -1485,6 +1513,14 @@ private:
   // Indicates if user has interacted with the element.
   // Used to block autoplay when disabled.
   bool mHasUserInteraction;
+
+  // True if the first frame has been successfully loaded.
+  bool mFirstFrameLoaded;
+
+  // Media elements also have a default playback start position, which must
+  // initially be set to zero seconds. This time is used to allow the element to
+  // be seeked even before the media is loaded.
+  double mDefaultPlaybackStartPosition;
 };
 
 } // namespace dom

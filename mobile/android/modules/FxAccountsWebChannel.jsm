@@ -30,6 +30,7 @@ const COMMAND_LOGIN                = "fxaccounts:login";
 const COMMAND_CHANGE_PASSWORD      = "fxaccounts:change_password";
 const COMMAND_DELETE_ACCOUNT       = "fxaccounts:delete_account";
 const COMMAND_PROFILE_CHANGE       = "profile:change";
+const COMMAND_SYNC_PREFERENCES     = "fxaccounts:sync_preferences";
 
 const PREF_LAST_FXA_USER           = "identity.fxaccounts.lastSignedInUserHash";
 
@@ -350,6 +351,13 @@ this.FxAccountsWebChannel.prototype = {
             });
             break;
 
+          case COMMAND_SYNC_PREFERENCES:
+            Accounts.showSyncPreferences()
+            .catch(e => {
+              log.e(e.toString());
+            });
+            break;
+
           default:
             log.w("Ignoring unrecognized FxAccountsWebChannel command: " + JSON.stringify(command));
             break;
@@ -365,7 +373,7 @@ this.FxAccountsWebChannel.prototype = {
   }
 };
 
-let singleton;
+var singleton;
 // The entry-point for this module, which ensures only one of our channels is
 // ever created - we require this because the WebChannel is global in scope and
 // allowing multiple channels would cause such notifications to be sent multiple

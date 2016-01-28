@@ -68,17 +68,11 @@ protected:
   virtual ~BiquadFilterNode();
 
 private:
-  static void SendFrequencyToStream(AudioNode* aNode);
-  static void SendDetuneToStream(AudioNode* aNode);
-  static void SendQToStream(AudioNode* aNode);
-  static void SendGainToStream(AudioNode* aNode);
-
-private:
   BiquadFilterType mType;
-  nsRefPtr<AudioParam> mFrequency;
-  nsRefPtr<AudioParam> mDetune;
-  nsRefPtr<AudioParam> mQ;
-  nsRefPtr<AudioParam> mGain;
+  RefPtr<AudioParam> mFrequency;
+  RefPtr<AudioParam> mDetune;
+  RefPtr<AudioParam> mQ;
+  RefPtr<AudioParam> mGain;
 };
 
 } // namespace dom

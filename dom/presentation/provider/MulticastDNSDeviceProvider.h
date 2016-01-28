@@ -6,11 +6,12 @@
 #ifndef mozilla_dom_presentation_provider_MulticastDNSDeviceProvider_h
 #define mozilla_dom_presentation_provider_MulticastDNSDeviceProvider_h
 
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsCOMPtr.h"
 #include "nsICancelable.h"
 #include "nsIDNSServiceDiscovery.h"
 #include "nsIObserver.h"
+#include "nsIPresentationDevice.h"
 #include "nsIPresentationDeviceProvider.h"
 #include "nsITCPPresentationServer.h"
 #include "nsITimer.h"
@@ -52,19 +53,86 @@ private:
     eActive
   };
 
-  struct Device final {
-    explicit Device(const nsACString& aId, DeviceState aState)
-      : id(aId), state(aState)
+  class Device final : public nsIPresentationDevice
+  {
+  public:
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIPRESENTATIONDEVICE
+
+    explicit Device(const nsACString& aId,
+                    const nsACString& aName,
+                    const nsACString& aType,
+                    const nsACString& aAddress,
+                    const uint16_t aPort,
+                    DeviceState aState,
+                    MulticastDNSDeviceProvider* aProvider)
+      : mId(aId)
+      , mName(aName)
+      , mType(aType)
+      , mAddress(aAddress)
+      , mPort(aPort)
+      , mState(aState)
+      , mProvider(aProvider)
     {
     }
 
-    nsCString id;
-    DeviceState state;
+    const nsCString& Id() const
+    {
+      return mId;
+    }
+
+    const nsCString& Address() const
+    {
+      return mAddress;
+    }
+
+    const uint16_t Port() const
+    {
+      return mPort;
+    }
+
+    const DeviceState State() const
+    {
+      return mState;
+    }
+
+    void ChangeState(DeviceState aState)
+    {
+      mState = aState;
+    }
+
+    void Update(const nsACString& aName,
+                const nsACString& aType,
+                const nsACString& aAddress,
+                const uint16_t aPort)
+    {
+      mName = aName;
+      mType = aType;
+      mAddress = aAddress;
+      mPort = aPort;
+    }
+
+  private:
+    virtual ~Device() = default;
+
+    nsCString mId;
+    nsCString mName;
+    nsCString mType;
+    nsCString mAddress;
+    uint16_t mPort;
+    DeviceState mState;
+    MulticastDNSDeviceProvider* mProvider;
   };
 
   struct DeviceIdComparator {
-    bool Equals(const Device& aA, const Device& aB) const {
-      return aA.id == aB.id;
+    bool Equals(const RefPtr<Device>& aA, const RefPtr<Device>& aB) const {
+      return aA->Id() == aB->Id();
+    }
+  };
+
+  struct DeviceAddressComparator {
+    bool Equals(const RefPtr<Device>& aA, const RefPtr<Device>& aB) const {
+      return aA->Address() == aB->Address();
     }
   };
 
@@ -72,20 +140,28 @@ private:
   nsresult RegisterService();
   nsresult UnregisterService(nsresult aReason);
   nsresult StopDiscovery(nsresult aReason);
+  nsresult RequestSession(Device* aDevice,
+                          const nsAString& aUrl,
+                          const nsAString& aPresentationId,
+                          nsIPresentationControlChannel** aRetVal);
 
   // device manipulation
-  nsresult AddDevice(const nsACString& aServiceName,
+  nsresult AddDevice(const nsACString& aId,
+                     const nsACString& aServiceName,
                      const nsACString& aServiceType,
-                     const nsACString& aHost,
+                     const nsACString& aAddress,
                      const uint16_t aPort);
   nsresult UpdateDevice(const uint32_t aIndex,
                         const nsACString& aServiceName,
                         const nsACString& aServiceType,
-                        const nsACString& aHost,
+                        const nsACString& aAddress,
                         const uint16_t aPort);
   nsresult RemoveDevice(const uint32_t aIndex);
-  bool FindDevice(const nsACString& aId,
+  bool FindDeviceById(const nsACString& aId,
                       uint32_t& aIndex);
+
+  bool FindDeviceByAddress(const nsACString& aAddress,
+                           uint32_t& aIndex);
 
   void MarkAllDevicesUnknown();
   void ClearUnknownDevices();
@@ -101,12 +177,12 @@ private:
   nsWeakPtr mDeviceListener;
   nsCOMPtr<nsITCPPresentationServer> mPresentationServer;
   nsCOMPtr<nsIDNSServiceDiscovery> mMulticastDNS;
-  nsRefPtr<DNSServiceWrappedListener> mWrappedListener;
+  RefPtr<DNSServiceWrappedListener> mWrappedListener;
 
   nsCOMPtr<nsICancelable> mDiscoveryRequest;
   nsCOMPtr<nsICancelable> mRegisterRequest;
 
-  nsTArray<Device> mDevices;
+  nsTArray<RefPtr<Device>> mDevices;
 
   bool mDiscoveryEnabled = false;
   bool mIsDiscovering = false;

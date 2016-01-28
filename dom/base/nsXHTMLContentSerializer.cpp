@@ -31,6 +31,7 @@
 #include "nsContentUtils.h"
 #include "nsLWBrkCIID.h"
 #include "nsIScriptElement.h"
+#include "nsStubMutationObserver.h"
 #include "nsAttrName.h"
 #include "nsParserConstants.h"
 #include "nsComputedDOMStyle.h"
@@ -43,7 +44,7 @@ static const int32_t kLongLineLen = 128;
 nsresult
 NS_NewXHTMLContentSerializer(nsIContentSerializer** aSerializer)
 {
-  nsRefPtr<nsXHTMLContentSerializer> it = new nsXHTMLContentSerializer();
+  RefPtr<nsXHTMLContentSerializer> it = new nsXHTMLContentSerializer();
   it.forget(aSerializer);
   return NS_OK;
 }
@@ -881,7 +882,7 @@ nsXHTMLContentSerializer::IsElementPreformatted(nsIContent* aNode)
   if (!aNode->IsElement()) {
     return false;
   }
-  nsRefPtr<nsStyleContext> styleContext =
+  RefPtr<nsStyleContext> styleContext =
     nsComputedDOMStyle::GetStyleContextForElementNoFlush(aNode->AsElement(),
                                                          nullptr, nullptr);
   if (styleContext) {

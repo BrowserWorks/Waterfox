@@ -15,8 +15,6 @@ using namespace mozilla::ipc;
 // A2DP module
 //
 
-const int BluetoothDaemonA2dpModule::MAX_NUM_CLIENTS = 1;
-
 BluetoothA2dpNotificationHandler*
   BluetoothDaemonA2dpModule::sNotificationHandler;
 
@@ -52,15 +50,14 @@ BluetoothDaemonA2dpModule::HandleSvc(const DaemonSocketPDUHeader& aHeader,
 
 nsresult
 BluetoothDaemonA2dpModule::ConnectCmd(
-  const nsAString& aRemoteAddr, BluetoothA2dpResultHandler* aRes)
+  const BluetoothAddress& aRemoteAddr, BluetoothA2dpResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
   nsAutoPtr<DaemonSocketPDU> pdu(new DaemonSocketPDU(SERVICE_ID,
-                                                           OPCODE_CONNECT,
-                                                           6)); // Address
-  nsresult rv = PackPDU(
-    PackConversion<nsAString, BluetoothAddress>(aRemoteAddr), *pdu);
+                                                     OPCODE_CONNECT,
+                                                     6)); // Address
+  nsresult rv = PackPDU(aRemoteAddr, *pdu);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -74,15 +71,14 @@ BluetoothDaemonA2dpModule::ConnectCmd(
 
 nsresult
 BluetoothDaemonA2dpModule::DisconnectCmd(
-  const nsAString& aRemoteAddr, BluetoothA2dpResultHandler* aRes)
+  const BluetoothAddress& aRemoteAddr, BluetoothA2dpResultHandler* aRes)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
   nsAutoPtr<DaemonSocketPDU> pdu(new DaemonSocketPDU(SERVICE_ID,
-                                                           OPCODE_DISCONNECT,
-                                                           6)); // Address
-  nsresult rv = PackPDU(
-    PackConversion<nsAString, BluetoothAddress>(aRemoteAddr), *pdu);
+                                                     OPCODE_DISCONNECT,
+                                                     6)); // Address
+  nsresult rv = PackPDU(aRemoteAddr, *pdu);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -145,7 +141,7 @@ BluetoothDaemonA2dpModule::HandleRsp(
     return;
   }
 
-  nsRefPtr<BluetoothA2dpResultHandler> res =
+  RefPtr<BluetoothA2dpResultHandler> res =
     static_cast<BluetoothA2dpResultHandler*>(aRes);
 
   if (!res) {
@@ -172,77 +168,14 @@ public:
   }
 };
 
-// Init operator class for ConnectionStateNotification
-class BluetoothDaemonA2dpModule::ConnectionStateInitOp final
-  : private PDUInitOp
-{
-public:
-  ConnectionStateInitOp(DaemonSocketPDU& aPDU)
-    : PDUInitOp(aPDU)
-  { }
-
-  nsresult
-  operator () (BluetoothA2dpConnectionState& aArg1, nsString& aArg2) const
-  {
-    DaemonSocketPDU& pdu = GetPDU();
-
-    /* Read state */
-    nsresult rv = UnpackPDU(pdu, aArg1);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-
-    /* Read address */
-    rv = UnpackPDU(
-      pdu, UnpackConversion<BluetoothAddress, nsAString>(aArg2));
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-    WarnAboutTrailingData();
-    return NS_OK;
-  }
-};
-
 void
 BluetoothDaemonA2dpModule::ConnectionStateNtf(
   const DaemonSocketPDUHeader& aHeader, DaemonSocketPDU& aPDU)
 {
   ConnectionStateNotification::Dispatch(
     &BluetoothA2dpNotificationHandler::ConnectionStateNotification,
-    ConnectionStateInitOp(aPDU));
+    UnpackPDUInitOp(aPDU));
 }
-
-// Init operator class for AudioStateNotification
-class BluetoothDaemonA2dpModule::AudioStateInitOp final
-  : private PDUInitOp
-{
-public:
-  AudioStateInitOp(DaemonSocketPDU& aPDU)
-    : PDUInitOp(aPDU)
-  { }
-
-  nsresult
-  operator () (BluetoothA2dpAudioState& aArg1,
-               nsString& aArg2) const
-  {
-    DaemonSocketPDU& pdu = GetPDU();
-
-    /* Read state */
-    nsresult rv = UnpackPDU(pdu, aArg1);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-
-    /* Read address */
-    rv = UnpackPDU(
-      pdu, UnpackConversion<BluetoothAddress, nsAString>(aArg2));
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-    WarnAboutTrailingData();
-    return NS_OK;
-  }
-};
 
 void
 BluetoothDaemonA2dpModule::AudioStateNtf(
@@ -250,45 +183,8 @@ BluetoothDaemonA2dpModule::AudioStateNtf(
 {
   AudioStateNotification::Dispatch(
     &BluetoothA2dpNotificationHandler::AudioStateNotification,
-    AudioStateInitOp(aPDU));
+    UnpackPDUInitOp(aPDU));
 }
-
-// Init operator class for AudioConfigNotification
-class BluetoothDaemonA2dpModule::AudioConfigInitOp final
-  : private PDUInitOp
-{
-public:
-  AudioConfigInitOp(DaemonSocketPDU& aPDU)
-    : PDUInitOp(aPDU)
-  { }
-
-  nsresult
-  operator () (nsString& aArg1, uint32_t aArg2, uint8_t aArg3) const
-  {
-    DaemonSocketPDU& pdu = GetPDU();
-
-    /* Read address */
-    nsresult rv = UnpackPDU(
-      pdu, UnpackConversion<BluetoothAddress, nsAString>(aArg1));
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-
-    /* Read sample rate */
-    rv = UnpackPDU(pdu, aArg2);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-
-    /* Read channel count */
-    rv = UnpackPDU(pdu, aArg3);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-    WarnAboutTrailingData();
-    return NS_OK;
-  }
-};
 
 void
 BluetoothDaemonA2dpModule::AudioConfigNtf(
@@ -296,7 +192,7 @@ BluetoothDaemonA2dpModule::AudioConfigNtf(
 {
   AudioConfigNotification::Dispatch(
     &BluetoothA2dpNotificationHandler::AudioConfigNotification,
-    AudioConfigInitOp(aPDU));
+    UnpackPDUInitOp(aPDU));
 }
 
 void
@@ -337,116 +233,20 @@ BluetoothDaemonA2dpInterface::BluetoothDaemonA2dpInterface(
 BluetoothDaemonA2dpInterface::~BluetoothDaemonA2dpInterface()
 { }
 
-class BluetoothDaemonA2dpInterface::InitResultHandler final
-  : public BluetoothSetupResultHandler
-{
-public:
-  InitResultHandler(BluetoothA2dpResultHandler* aRes)
-    : mRes(aRes)
-  {
-    MOZ_ASSERT(mRes);
-  }
-
-  void OnError(BluetoothStatus aStatus) override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    mRes->OnError(aStatus);
-  }
-
-  void RegisterModule() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    mRes->Init();
-  }
-
-private:
-  nsRefPtr<BluetoothA2dpResultHandler> mRes;
-};
-
 void
-BluetoothDaemonA2dpInterface::Init(
-  BluetoothA2dpNotificationHandler* aNotificationHandler,
-  BluetoothA2dpResultHandler* aRes)
+BluetoothDaemonA2dpInterface::SetNotificationHandler(
+  BluetoothA2dpNotificationHandler* aNotificationHandler)
 {
-  // Set notification handler _before_ registering the module. It could
-  // happen that we receive notifications, before the result handler runs.
+  MOZ_ASSERT(mModule);
+
   mModule->SetNotificationHandler(aNotificationHandler);
-
-  InitResultHandler* res;
-
-  if (aRes) {
-    res = new InitResultHandler(aRes);
-  } else {
-    // We don't need a result handler if the caller is not interested.
-    res = nullptr;
-  }
-
-  nsresult rv = mModule->RegisterModule(BluetoothDaemonA2dpModule::SERVICE_ID,
-    0x00, BluetoothDaemonA2dpModule::MAX_NUM_CLIENTS, res);
-  if (NS_FAILED(rv) && aRes) {
-    DispatchError(aRes, rv);
-  }
-}
-
-class BluetoothDaemonA2dpInterface::CleanupResultHandler final
-  : public BluetoothSetupResultHandler
-{
-public:
-  CleanupResultHandler(BluetoothDaemonA2dpModule* aModule,
-                       BluetoothA2dpResultHandler* aRes)
-    : mModule(aModule)
-    , mRes(aRes)
-  {
-    MOZ_ASSERT(mModule);
-  }
-
-  void OnError(BluetoothStatus aStatus) override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    if (mRes) {
-      mRes->OnError(aStatus);
-    }
-  }
-
-  void UnregisterModule() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    // Clear notification handler _after_ module has been
-    // unregistered. While unregistering the module, we might
-    // still receive notifications.
-    mModule->SetNotificationHandler(nullptr);
-
-    if (mRes) {
-      mRes->Cleanup();
-    }
-  }
-
-private:
-  BluetoothDaemonA2dpModule* mModule;
-  nsRefPtr<BluetoothA2dpResultHandler> mRes;
-};
-
-void
-BluetoothDaemonA2dpInterface::Cleanup(
-  BluetoothA2dpResultHandler* aRes)
-{
-  nsresult rv = mModule->UnregisterModule(
-    BluetoothDaemonA2dpModule::SERVICE_ID,
-    new CleanupResultHandler(mModule, aRes));
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
 }
 
 /* Connect / Disconnect */
 
 void
 BluetoothDaemonA2dpInterface::Connect(
-  const nsAString& aBdAddr, BluetoothA2dpResultHandler* aRes)
+  const BluetoothAddress& aBdAddr, BluetoothA2dpResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
@@ -458,7 +258,7 @@ BluetoothDaemonA2dpInterface::Connect(
 
 void
 BluetoothDaemonA2dpInterface::Disconnect(
-  const nsAString& aBdAddr, BluetoothA2dpResultHandler* aRes)
+  const BluetoothAddress& aBdAddr, BluetoothA2dpResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 

@@ -354,7 +354,7 @@ UnboxedPlainObject::ensureExpando(JSContext* cx, Handle<UnboxedPlainObject*> obj
     // the object to its native representation, we will end up with a corrupted
     // store buffer entry.
     if (IsInsideNursery(expando) && !IsInsideNursery(obj))
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
+        cx->runtime()->gc.storeBuffer.putWholeCell(obj);
 
     obj->expando_ = expando;
     return expando;
@@ -575,7 +575,7 @@ UnboxedPlainObject::convertToNative(JSContext* cx, JSObject* obj)
     // writes to the expando (see WholeCellEdges::trace), so after conversion
     // we need to make sure the expando itself will still be traced.
     if (expando && !IsInsideNursery(expando))
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(expando);
+        cx->runtime()->gc.storeBuffer.putWholeCell(expando);
 
     obj->setGroup(layout.nativeGroup());
     obj->as<PlainObject>().setLastPropertyMakeNative(cx, layout.nativeShape());
@@ -825,7 +825,7 @@ UnboxedPlainObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id
             return SetProperty(cx, obj, id, v, receiver, result);
         }
 
-        return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+        return SetPropertyByDefining(cx, id, v, receiver, result);
     }
 
     if (UnboxedExpandoObject* expando = obj->as<UnboxedPlainObject>().maybeExpando()) {
@@ -921,7 +921,6 @@ const Class UnboxedPlainObject::class_ = {
     nullptr,        /* enumerate   */
     nullptr,        /* resolve     */
     nullptr,        /* mayResolve  */
-    nullptr,        /* convert     */
     nullptr,        /* finalize    */
     nullptr,        /* call        */
     nullptr,        /* hasInstance */
@@ -1202,9 +1201,10 @@ UnboxedArrayObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObj
     } else {
         MOZ_ASSERT(allocKind == gc::AllocKind::OBJECT0);
 
+        AutoEnterOOMUnsafeRegion oomUnsafe;
         uint8_t* data = nsrc->zone()->pod_malloc<uint8_t>(nbytes);
         if (!data)
-            CrashAtUnhandlableOOM("Failed to allocate unboxed array elements while tenuring.");
+            oomUnsafe.crash("Failed to allocate unboxed array elements while tenuring.");
         ndst->elements_ = data;
     }
 
@@ -1222,11 +1222,29 @@ UnboxedArrayObject::objectMovedDuringMinorGC(JSTracer* trc, JSObject* dst, JSObj
 // a little weird, but were chosen to allow the inline data of objects of each
 // size to be fully utilized for arrays of the various types on both 32 bit and
 // 64 bit platforms.
+//
+// To find the possible inline capacities, the following script was used:
+//
+// var fixedSlotCapacities = [0, 2, 4, 8, 12, 16];
+// var dataSizes = [1, 4, 8];
+// var header32 = 4 * 2 + 4 * 2;
+// var header64 = 8 * 2 + 4 * 2;
+//
+// for (var i = 0; i < fixedSlotCapacities.length; i++) {
+//    var nfixed = fixedSlotCapacities[i];
+//    var size32 = 4 * 4 + 8 * nfixed - header32;
+//    var size64 = 8 * 4 + 8 * nfixed - header64;
+//    for (var j = 0; j < dataSizes.length; j++) {
+//        print(size32 / dataSizes[j]);
+//        print(size64 / dataSizes[j]);
+//    }
+// }
+//
 /* static */ const uint32_t
 UnboxedArrayObject::CapacityArray[] = {
     UINT32_MAX, // For CapacityMatchesLengthIndex.
-    0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 16, 17, 18, 20, 24, 26, 32, 34, 36, 40, 48, 52, 64, 68,
-    72, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288,
+    0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 16, 17, 18, 24, 26, 32, 34, 40, 64, 72, 96, 104, 128, 136,
+    256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288,
     1048576, 2097152, 3145728, 4194304, 5242880, 6291456, 7340032, 8388608, 9437184, 11534336,
     13631488, 15728640, 17825792, 20971520, 24117248, 27262976, 31457280, 35651584, 40894464,
     46137344, 52428800, 59768832, MaximumCapacity
@@ -1234,30 +1252,30 @@ UnboxedArrayObject::CapacityArray[] = {
 
 static const uint32_t
 Pow2CapacityIndexes[] = {
-    1,  // 1
-    2,  // 2
-    4,  // 4
+    2,  // 1
+    3,  // 2
+    5,  // 4
     8,  // 8
     13, // 16
-    19, // 32
-    25, // 64
-    28, // 128
-    29, // 256
-    30, // 512
-    31, // 1024
-    32, // 2048
-    33, // 4096
-    34, // 8192
-    35, // 16384
-    36, // 32768
-    37, // 65536
-    38, // 131072
-    39, // 262144
-    40, // 524288
-    41  // 1048576
+    18, // 32
+    21, // 64
+    25, // 128
+    27, // 256
+    28, // 512
+    29, // 1024
+    30, // 2048
+    31, // 4096
+    32, // 8192
+    33, // 16384
+    34, // 32768
+    35, // 65536
+    36, // 131072
+    37, // 262144
+    38, // 524288
+    39  // 1048576
 };
 
-static const uint32_t MebiCapacityIndex = 41;
+static const uint32_t MebiCapacityIndex = 39;
 
 /* static */ uint32_t
 UnboxedArrayObject::chooseCapacityIndex(uint32_t capacity, uint32_t length)
@@ -1434,7 +1452,7 @@ UnboxedArrayObject::obj_defineProperty(JSContext* cx, HandleObject obj, HandleId
                     nobj->setLengthInt32(index + 1);
                 return result.succeed();
             }
-            nobj->setInitializedLength(index);
+            nobj->setInitializedLengthNoBarrier(index);
         }
     }
 
@@ -1509,7 +1527,7 @@ UnboxedArrayObject::obj_setProperty(JSContext* cx, HandleObject obj, HandleId id
             return SetProperty(cx, obj, id, v, receiver, result);
         }
 
-        return SetPropertyByDefining(cx, obj, id, v, receiver, result);
+        return SetPropertyByDefining(cx, id, v, receiver, result);
     }
 
     return SetPropertyOnProto(cx, obj, id, v, receiver, result);
@@ -1588,7 +1606,6 @@ const Class UnboxedArrayObject::class_ = {
     nullptr,        /* enumerate   */
     nullptr,        /* resolve     */
     nullptr,        /* mayResolve  */
-    nullptr,        /* convert     */
     UnboxedArrayObject::finalize,
     nullptr,        /* call        */
     nullptr,        /* hasInstance */
@@ -1741,10 +1758,7 @@ ComputePlainObjectLayout(ExclusiveContext* cx, Shape* templateShape,
     // properties, which will allow us to generate better code if the objects
     // have a subtype/supertype relation and are accessed at common sites.
     UnboxedLayout* bestExisting = nullptr;
-    for (UnboxedLayout* existing = cx->compartment()->unboxedLayouts.getFirst();
-         existing;
-         existing = existing->getNext())
-    {
+    for (UnboxedLayout* existing : cx->compartment()->unboxedLayouts) {
         if (PropertiesAreSuperset(properties, existing)) {
             if (!bestExisting ||
                 existing->properties().length() > bestExisting->properties().length())
@@ -1852,7 +1866,7 @@ UnboxedArrayObject::fillAfterConvert(ExclusiveContext* cx,
 {
     MOZ_ASSERT(CapacityArray[1] == 0);
     setCapacityIndex(1);
-    setInitializedLength(0);
+    setInitializedLengthNoBarrier(0);
     setInlineElements();
 
     setLength(cx, NextValue(values, valueCursor).toInt32());
@@ -1861,8 +1875,10 @@ UnboxedArrayObject::fillAfterConvert(ExclusiveContext* cx,
     if (!initlen)
         return;
 
+    AutoEnterOOMUnsafeRegion oomUnsafe;
     if (!growElements(cx, initlen))
-        CrashAtUnhandlableOOM("UnboxedArrayObject::fillAfterConvert");
+        oomUnsafe.crash("UnboxedArrayObject::fillAfterConvert");
+
     setInitializedLength(initlen);
 
     for (size_t i = 0; i < size_t(initlen); i++)

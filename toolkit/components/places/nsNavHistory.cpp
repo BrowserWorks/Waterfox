@@ -1,4 +1,5 @@
-//* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -1038,7 +1039,7 @@ nsNavHistory::invalidateFrecencies(const nsCString& aPlaceIdsQueryString)
     invalidFrecenciesSQLFragment.Append(aPlaceIdsQueryString);
     invalidFrecenciesSQLFragment.Append(')');
   }
-  nsRefPtr<InvalidateAllFrecenciesCallback> cb =
+  RefPtr<InvalidateAllFrecenciesCallback> cb =
     aPlaceIdsQueryString.IsEmpty() ? new InvalidateAllFrecenciesCallback()
                                    : nullptr;
 
@@ -1151,7 +1152,7 @@ nsNavHistory::GetNewQuery(nsINavHistoryQuery **_retval)
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG_POINTER(_retval);
 
-  nsRefPtr<nsNavHistoryQuery> query = new nsNavHistoryQuery();
+  RefPtr<nsNavHistoryQuery> query = new nsNavHistoryQuery();
   query.forget(_retval);
   return NS_OK;
 }
@@ -1164,7 +1165,7 @@ nsNavHistory::GetNewQueryOptions(nsINavHistoryQueryOptions **_retval)
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG_POINTER(_retval);
 
-  nsRefPtr<nsNavHistoryQueryOptions> queryOptions = new nsNavHistoryQueryOptions();
+  RefPtr<nsNavHistoryQueryOptions> queryOptions = new nsNavHistoryQueryOptions();
   queryOptions.forget(_retval);
   return NS_OK;
 }
@@ -1222,14 +1223,14 @@ nsNavHistory::ExecuteQueries(nsINavHistoryQuery** aQueries, uint32_t aQueryCount
   }
 
   // Create the root node.
-  nsRefPtr<nsNavHistoryContainerResultNode> rootNode;
+  RefPtr<nsNavHistoryContainerResultNode> rootNode;
   int64_t folderId = GetSimpleBookmarksQueryFolder(queries, options);
   if (folderId) {
     // In the simple case where we're just querying children of a single
     // bookmark folder, we can more efficiently generate results.
     nsNavBookmarks* bookmarks = nsNavBookmarks::GetBookmarksService();
     NS_ENSURE_TRUE(bookmarks, NS_ERROR_OUT_OF_MEMORY);
-    nsRefPtr<nsNavHistoryResultNode> tempRootNode;
+    RefPtr<nsNavHistoryResultNode> tempRootNode;
     rv = bookmarks->ResultNodeForContainer(folderId, options,
                                            getter_AddRefs(tempRootNode));
     if (NS_SUCCEEDED(rv)) {
@@ -1250,7 +1251,7 @@ nsNavHistory::ExecuteQueries(nsINavHistoryQuery** aQueries, uint32_t aQueryCount
   }
 
   // Create the result that will hold nodes.  Inject batching status into it.
-  nsRefPtr<nsNavHistoryResult> result;
+  RefPtr<nsNavHistoryResult> result;
   rv = nsNavHistoryResult::NewHistoryResult(aQueries, aQueryCount, options,
                                             rootNode, isBatching(),
                                             getter_AddRefs(result));
@@ -2152,19 +2153,6 @@ nsNavHistory::ConstructQueryString(
   return NS_OK;
 }
 
-PLDHashOperator BindAdditionalParameter(nsNavHistory::StringHash::KeyType aParamName,
-                                        nsCString aParamValue,
-                                        void* aStatement)
-{
-  mozIStorageStatement* stmt = static_cast<mozIStorageStatement*>(aStatement);
-
-  nsresult rv = stmt->BindUTF8StringByName(aParamName, aParamValue);
-  if (NS_FAILED(rv))
-    return PL_DHASH_STOP;
-
-  return PL_DHASH_NEXT;
-}
-
 // nsNavHistory::GetQueryResults
 //
 //    Call this to get the results from a complex query. This is used by
@@ -2221,7 +2209,12 @@ nsNavHistory::GetQueryResults(nsNavHistoryQueryResultNode *aResultNode,
     }
   }
 
-  addParams.EnumerateRead(BindAdditionalParameter, statement.get());
+  for (auto iter = addParams.Iter(); !iter.Done(); iter.Next()) {
+    nsresult rv = statement->BindUTF8StringByName(iter.Key(), iter.Data());
+    if (NS_FAILED(rv)) {
+      break;
+    }
+  }
 
   // Optimize the case where there is no need for any post-query filtering.
   if (NeedToFilterResultSet(aQueries, aOptions)) {
@@ -2975,7 +2968,7 @@ NS_IMETHODIMP
 nsNavHistory::GetDBConnection(mozIStorageConnection **_DBConnection)
 {
   NS_ENSURE_ARG_POINTER(_DBConnection);
-  nsRefPtr<mozIStorageConnection> connection = mDB->MainConn();
+  RefPtr<mozIStorageConnection> connection = mDB->MainConn();
   connection.forget(_DBConnection);
 
   return NS_OK;
@@ -2985,7 +2978,7 @@ NS_IMETHODIMP
 nsNavHistory::GetShutdownClient(nsIAsyncShutdownClient **_shutdownClient)
 {
   NS_ENSURE_ARG_POINTER(_shutdownClient);
-  nsRefPtr<nsIAsyncShutdownClient> client = mDB->GetConnectionShutdown();
+  RefPtr<nsIAsyncShutdownClient> client = mDB->GetConnectionShutdown();
   MOZ_ASSERT(client);
   client.forget(_shutdownClient);
 
@@ -3047,7 +3040,13 @@ nsNavHistory::AsyncExecuteLegacyQueries(nsINavHistoryQuery** aQueries,
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
-  addParams.EnumerateRead(BindAdditionalParameter, statement.get());
+
+  for (auto iter = addParams.Iter(); !iter.Done(); iter.Next()) {
+    nsresult rv = statement->BindUTF8StringByName(iter.Key(), iter.Data());
+    if (NS_FAILED(rv)) {
+      break;
+    }
+  }
 
   rv = statement->ExecuteAsync(aCallback, _stmt);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -3219,7 +3218,7 @@ nsNavHistory::DecayFrecency()
     deleteAdaptive.get()
   };
   nsCOMPtr<mozIStoragePendingStatement> ps;
-  nsRefPtr<DecayFrecencyCallback> cb = new DecayFrecencyCallback();
+  RefPtr<DecayFrecencyCallback> cb = new DecayFrecencyCallback();
   rv = mDB->MainConn()->ExecuteAsync(stmts, ArrayLength(stmts), cb,
                                      getter_AddRefs(ps));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -3628,7 +3627,7 @@ nsNavHistory::ResultsAsList(mozIStorageStatement* statement,
 
   bool hasMore = false;
   while (NS_SUCCEEDED(statement->ExecuteStep(&hasMore)) && hasMore) {
-    nsRefPtr<nsNavHistoryResultNode> result;
+    RefPtr<nsNavHistoryResultNode> result;
     rv = RowToResult(row, aOptions, getter_AddRefs(result));
     NS_ENSURE_SUCCESS(rv, rv);
     aResults->AppendObject(result);
@@ -3928,7 +3927,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
       NS_ENSURE_SUCCESS(rv, rv);
     }
 
-    nsRefPtr<nsNavHistoryResultNode> resultNode;
+    RefPtr<nsNavHistoryResultNode> resultNode;
     rv = QueryRowToResult(itemId, guid, url, title, accessCount, time, favicon,
                           getter_AddRefs(resultNode));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -3950,7 +3949,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
     return rv;
   } else if (aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_URI ||
              aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_TAG_CONTENTS) {
-    nsRefPtr<nsNavHistoryResultNode> resultNode =
+    RefPtr<nsNavHistoryResultNode> resultNode =
       new nsNavHistoryResultNode(url, title, accessCount, time, favicon);
 
     if (itemId != -1) {
@@ -3982,7 +3981,7 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
   }
 
   if (aOptions->ResultType() == nsNavHistoryQueryOptions::RESULTS_AS_VISIT) {
-    nsRefPtr<nsNavHistoryResultNode> resultNode =
+    RefPtr<nsNavHistoryResultNode> resultNode =
       new nsNavHistoryResultNode(url, title, accessCount, time, favicon);
 
     nsAutoString tags;
@@ -4023,7 +4022,7 @@ nsNavHistory::QueryRowToResult(int64_t itemId,
   nsresult rv = QueryStringToQueryArray(aURI, &queries,
                                         getter_AddRefs(options));
 
-  nsRefPtr<nsNavHistoryResultNode> resultNode;
+  RefPtr<nsNavHistoryResultNode> resultNode;
   // If this failed the query does not parse correctly, let the error pass and
   // handle it later.
   if (NS_SUCCEEDED(rv)) {
@@ -4475,7 +4474,7 @@ nsNavHistory::UpdateFrecency(int64_t aPlaceId)
   , updateHiddenStmt.get()
   };
 
-  nsRefPtr<AsyncStatementCallbackNotifier> cb =
+  RefPtr<AsyncStatementCallbackNotifier> cb =
     new AsyncStatementCallbackNotifier(TOPIC_FRECENCY_UPDATED);
   nsCOMPtr<mozIStoragePendingStatement> ps;
   rv = mDB->MainConn()->ExecuteAsync(stmts, ArrayLength(stmts), cb,
@@ -4521,7 +4520,7 @@ nsNavHistory::FixInvalidFrecencies()
   );
   NS_ENSURE_STATE(stmt);
 
-  nsRefPtr<FixInvalidFrecenciesCallback> callback =
+  RefPtr<FixInvalidFrecenciesCallback> callback =
     new FixInvalidFrecenciesCallback();
   nsCOMPtr<mozIStoragePendingStatement> ps;
   (void)stmt->ExecuteAsync(callback, getter_AddRefs(ps));
@@ -4560,7 +4559,7 @@ nsNavHistory::AutoCompleteFeedback(int32_t aIndex,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // We do the update asynchronously and we do not care about failures.
-  nsRefPtr<AsyncStatementCallbackNotifier> callback =
+  RefPtr<AsyncStatementCallbackNotifier> callback =
     new AsyncStatementCallbackNotifier(TOPIC_AUTOCOMPLETE_FEEDBACK_UPDATED);
   nsCOMPtr<mozIStoragePendingStatement> canceler;
   rv = stmt->ExecuteAsync(callback, getter_AddRefs(canceler));

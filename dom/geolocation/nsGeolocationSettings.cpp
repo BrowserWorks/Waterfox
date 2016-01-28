@@ -53,7 +53,7 @@ nsGeolocationSettings::GetGeolocationSettings()
     return nullptr;
   }
 
-  nsRefPtr<nsGeolocationSettings> result;
+  RefPtr<nsGeolocationSettings> result;
   if (nsGeolocationSettings::sSettings) {
     result = nsGeolocationSettings::sSettings;
     return result.forget();
@@ -322,7 +322,8 @@ nsGeolocationSettings::HandleGeolocationAlwaysPreciseChange(const JS::Value& aVa
   aes.TakeOwnershipOfErrorReporting();
   JSContext *cx = aes.cx();
 
-  if (!JS_IsArrayObject(cx, obj)) {
+  bool isArray;
+  if (!JS_IsArrayObject(cx, obj, &isArray) || !isArray) {
     return;
   }
 

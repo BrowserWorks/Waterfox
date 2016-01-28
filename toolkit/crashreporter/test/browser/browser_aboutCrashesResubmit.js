@@ -105,7 +105,7 @@ function check_submit_pending(tab, crashes) {
   }
 
   // try submitting the pending report
-  for each(let crash in crashes) {
+  for (let crash of crashes) {
     if (crash.pending) {
       SubmittedCrash = crash;
       break;
@@ -130,7 +130,7 @@ function test() {
                                       // at = (bug 512853)
                                       'Foo': 'ABC=XYZ'
                                      }));
-  crashes.sort(function(a,b) b.date - a.date);
+  crashes.sort((a,b) => b.date - a.date);
 
   // set this pref so we can link to our test server
   Services.prefs.setCharPref("breakpad.reportURL",

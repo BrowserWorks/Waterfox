@@ -56,13 +56,6 @@ DirectShowReader::~DirectShowReader()
 #endif
 }
 
-nsresult
-DirectShowReader::Init(MediaDecoderReader* aCloneDonor)
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
-  return NS_OK;
-}
-
 // Try to parse the MP3 stream to make sure this is indeed an MP3, get the
 // estimated duration of the stream, and find the offset of the actual MP3
 // frames in the stream, as DirectShow doesn't like large ID3 sections.
@@ -110,7 +103,7 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
                         nullptr,
                         CLSCTX_INPROC_SERVER,
                         IID_IGraphBuilder,
-                        reinterpret_cast<void**>(static_cast<IGraphBuilder**>(byRef(mGraph))));
+                        reinterpret_cast<void**>(static_cast<IGraphBuilder**>(getter_AddRefs(mGraph))));
   NS_ENSURE_TRUE(SUCCEEDED(hr) && mGraph, NS_ERROR_FAILURE);
 
   rv = ParseMP3Headers(&mMP3FrameParser, mDecoder->GetResource());
@@ -126,10 +119,10 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
   #endif
 
   // Extract the interface pointers we'll need from the filter graph.
-  hr = mGraph->QueryInterface(static_cast<IMediaControl**>(byRef(mControl)));
+  hr = mGraph->QueryInterface(static_cast<IMediaControl**>(getter_AddRefs(mControl)));
   NS_ENSURE_TRUE(SUCCEEDED(hr) && mControl, NS_ERROR_FAILURE);
 
-  hr = mGraph->QueryInterface(static_cast<IMediaSeeking**>(byRef(mMediaSeeking)));
+  hr = mGraph->QueryInterface(static_cast<IMediaSeeking**>(getter_AddRefs(mMediaSeeking)));
   NS_ENSURE_TRUE(SUCCEEDED(hr) && mMediaSeeking, NS_ERROR_FAILURE);
 
   // Build the graph. Create the filters we need, and connect them. We
@@ -151,7 +144,7 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
   hr = CreateAndAddFilter(mGraph,
                           CLSID_MPEG1Splitter,
                           L"MPEG1Splitter",
-                          byRef(demuxer));
+                          getter_AddRefs(demuxer));
   NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
 
   // Platform MP3 decoder.
@@ -162,11 +155,11 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
   hr = CreateAndAddFilter(mGraph,
                           CLSID_MPEG_LAYER_3_DECODER_FILTER,
                           L"MPEG Layer 3 Decoder",
-                          byRef(decoder));
+                          getter_AddRefs(decoder));
   if (FAILED(hr)) {
     // Failed to create MP3 decoder filter. Try to instantiate
     // the MP3 decoder DMO.
-    hr = AddMP3DMOWrapperFilter(mGraph, byRef(decoder));
+    hr = AddMP3DMOWrapperFilter(mGraph, getter_AddRefs(decoder));
     NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
   }
 
@@ -245,7 +238,7 @@ DirectShowReader::Finish(HRESULT aStatus)
   LOG("DirectShowReader::Finish(0x%x)", aStatus);
   // Notify the filter graph of end of stream.
   RefPtr<IMediaEventSink> eventSink;
-  HRESULT hr = mGraph->QueryInterface(static_cast<IMediaEventSink**>(byRef(eventSink)));
+  HRESULT hr = mGraph->QueryInterface(static_cast<IMediaEventSink**>(getter_AddRefs(eventSink)));
   if (SUCCEEDED(hr) && eventSink) {
     eventSink->Notify(EC_COMPLETE, aStatus, 0);
   }
@@ -348,21 +341,7 @@ DirectShowReader::DecodeVideoFrame(bool &aKeyframeSkip,
   return false;
 }
 
-bool
-DirectShowReader::HasAudio()
-{
-  MOZ_ASSERT(OnTaskQueue());
-  return true;
-}
-
-bool
-DirectShowReader::HasVideo()
-{
-  MOZ_ASSERT(OnTaskQueue());
-  return false;
-}
-
-nsRefPtr<MediaDecoderReader::SeekPromise>
+RefPtr<MediaDecoderReader::SeekPromise>
 DirectShowReader::Seek(int64_t aTargetUs, int64_t aEndTime)
 {
   nsresult res = SeekInternal(aTargetUs);
@@ -421,7 +400,7 @@ DirectShowReader::NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset)
     intervals += mFilter.NotifyDataArrived(range.Length(), range.mStart);
   }
   for (const auto& interval : intervals) {
-    nsRefPtr<MediaByteBuffer> bytes =
+    RefPtr<MediaByteBuffer> bytes =
       resource->MediaReadAt(interval.mStart, interval.Length());
     NS_ENSURE_TRUE_VOID(bytes);
     mMP3FrameParser.Parse(bytes->Elements(), interval.Length(), interval.mStart);

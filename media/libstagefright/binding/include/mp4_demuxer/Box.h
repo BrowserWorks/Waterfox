@@ -28,7 +28,7 @@ public:
   {
   }
 
-  nsRefPtr<Stream> mSource;
+  RefPtr<Stream> mSource;
   const nsTArray<MediaByteRange>& mByteRanges;
 };
 
@@ -50,6 +50,8 @@ public:
   Box FirstChild() const;
   bool Read(nsTArray<uint8_t>* aDest);
   bool Read(nsTArray<uint8_t>* aDest, const MediaByteRange& aRange);
+
+  static const uint64_t kMAX_BOX_READ;
 
 private:
   bool Contains(MediaByteRange aRange) const;

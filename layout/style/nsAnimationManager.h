@@ -26,8 +26,8 @@ class Promise;
 } /* namespace dom */
 
 struct AnimationEventInfo {
-  nsRefPtr<dom::Element> mElement;
-  nsRefPtr<dom::Animation> mAnimation;
+  RefPtr<dom::Element> mElement;
+  RefPtr<dom::Animation> mAnimation;
   InternalAnimationEvent mEvent;
   TimeStamp mTimeStamp;
 
@@ -126,7 +126,6 @@ public:
 
   void Tick() override;
   void QueueEvents();
-  bool HasEndEventToQueue() const override;
 
   bool IsStylePaused() const { return mIsStylePaused; }
 
@@ -339,6 +338,10 @@ public:
   void StopAnimationsForElement(mozilla::dom::Element* aElement,
                                 nsCSSPseudoElements::Type aPseudoType);
 
+  bool IsAnimationManager() override {
+    return true;
+  }
+
 protected:
   virtual ~nsAnimationManager() {}
 
@@ -350,9 +353,6 @@ protected:
   }
   virtual nsIAtom* GetAnimationsAfterAtom() override {
     return nsGkAtoms::animationsOfAfterProperty;
-  }
-  virtual bool IsAnimationManager() override {
-    return true;
   }
 
   mozilla::DelayedEventDispatcher<mozilla::AnimationEventInfo> mEventDispatcher;

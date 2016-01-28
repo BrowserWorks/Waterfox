@@ -38,7 +38,7 @@ NS_IMPL_CI_INTERFACE_GETTER(nsNullPrincipal,
 /* static */ already_AddRefed<nsNullPrincipal>
 nsNullPrincipal::CreateWithInheritedAttributes(nsIPrincipal* aInheritFrom)
 {
-  nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
+  RefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
   nsresult rv = nullPrin->Init(Cast(aInheritFrom)->OriginAttributesRef());
   return NS_SUCCEEDED(rv) ? nullPrin.forget() : nullptr;
 }
@@ -46,7 +46,7 @@ nsNullPrincipal::CreateWithInheritedAttributes(nsIPrincipal* aInheritFrom)
 /* static */ already_AddRefed<nsNullPrincipal>
 nsNullPrincipal::Create(const OriginAttributes& aOriginAttributes)
 {
-  nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
+  RefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
   nsresult rv = nullPrin->Init(aOriginAttributes);
   NS_ENSURE_SUCCESS(rv, nullptr);
 
@@ -107,15 +107,9 @@ nsNullPrincipal::GetOriginInternal(nsACString& aOrigin)
   return mURI->GetSpec(aOrigin);
 }
 
-NS_IMETHODIMP
-nsNullPrincipal::CheckMayLoad(nsIURI* aURI, bool aReport, bool aAllowIfInheritsPrincipal)
- {
-  if (aAllowIfInheritsPrincipal) {
-    if (nsPrincipal::IsPrincipalInherited(aURI)) {
-      return NS_OK;
-    }
-  }
-
+bool
+nsNullPrincipal::MayLoadInternal(nsIURI* aURI)
+{
   // Also allow the load if we are the principal of the URI being checked.
   nsCOMPtr<nsIURIWithPrincipal> uriPrinc = do_QueryInterface(aURI);
   if (uriPrinc) {
@@ -123,23 +117,11 @@ nsNullPrincipal::CheckMayLoad(nsIURI* aURI, bool aReport, bool aAllowIfInheritsP
     uriPrinc->GetPrincipal(getter_AddRefs(principal));
 
     if (principal == this) {
-      return NS_OK;
+      return true;
     }
   }
 
-  if (aReport) {
-    nsScriptSecurityManager::ReportError(
-      nullptr, NS_LITERAL_STRING("CheckSameOriginError"), mURI, aURI);
-  }
-
-  return NS_ERROR_DOM_BAD_URI;
-}
-
-NS_IMETHODIMP
-nsNullPrincipal::GetIsNullPrincipal(bool* aIsNullPrincipal)
-{
-  *aIsNullPrincipal = true;
-  return NS_OK;
+  return false;
 }
 
 NS_IMETHODIMP

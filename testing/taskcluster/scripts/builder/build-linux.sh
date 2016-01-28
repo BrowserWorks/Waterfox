@@ -15,8 +15,6 @@ echo "running as" $(id)
 
 : TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/home/worker/tooltool-cache}
 
-: RELENGAPI_TOKEN               ${RELENGAPI_TOKEN+HIDDEN}
-
 : NEED_XVFB                     ${NEED_XVFB:=false}
 
 : MH_CUSTOM_BUILD_VARIANT_CFG   ${MH_CUSTOM_BUILD_VARIANT_CFG}
@@ -24,6 +22,9 @@ echo "running as" $(id)
 : MH_BUILD_POOL                 ${MH_BUILD_POOL:=staging}
 
 : WORKSPACE                     ${WORKSPACE:=/home/worker/workspace}
+
+# some linux variants, e.g. b2gdroid, require gaia
+: CHECKOUT_GAIA                      ${CHECKOUT_GAIA:=false}
 
 set -v
 
@@ -87,16 +88,15 @@ if [ -n "${MH_CUSTOM_BUILD_VARIANT_CFG}" ]; then
     custom_build_variant_cfg_flag="--custom-build-variant-cfg=${MH_CUSTOM_BUILD_VARIANT_CFG}"
 fi
 
-set +x
-# mozharness scripts look for the relengapi token at this location, so put it there,
-# if specified
-if [ -n "${RELENGAPI_TOKEN}" ]; then
-    echo 'Storing $RELENGAPI_TOKEN in /builds/relengapi.tok'
-    echo ${RELENGAPI_TOKEN} > /builds/relengapi.tok
-    # unset it so that mozharness doesn't "helpfully" log it
-    unset RELENGAPI_TOKEN
+if [ "$CHECKOUT_GAIA" = true ]; then
+    pull_gaia=$GECKO_DIR/testing/taskcluster/scripts/builder/pull-gaia.sh
+    gaia_props=$GECKO_DIR/testing/taskcluster/scripts/builder/gaia_props.py
+    gaia_dir=$WORKSPACE/build/gaia
+
+    $pull_gaia $GECKO_DIR $gaia_dir $gaia_props
+    rm -f $GECKO_DIR/gaia
+    ln -s $gaia_dir $GECKO_DIR/gaia
 fi
-set -x
 
 # $TOOLTOOL_CACHE bypasses mozharness completely and is read by tooltool_wrapper.sh to set the
 # cache.  However, only some mozharness scripts use tooltool_wrapper.sh, so this may not be

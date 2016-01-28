@@ -35,7 +35,7 @@
 #include "nsITextServicesDocument.h"    // for nsITextServicesDocument
 #include "nsITextServicesFilter.h"      // for nsITextServicesFilter
 #include "nsIURI.h"                     // for nsIURI
-#include "nsIVariant.h"                 // for nsIWritableVariant, etc
+#include "nsVariant.h"                  // for nsIWritableVariant, etc
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING, etc
 #include "nsMemory.h"                   // for nsMemory
 #include "nsRange.h"
@@ -151,7 +151,7 @@ public:
 private:
   ~DictionaryFetcher() {}
 
-  nsRefPtr<nsEditorSpellCheck> mSpellCheck;
+  RefPtr<nsEditorSpellCheck> mSpellCheck;
 };
 NS_IMPL_ISUPPORTS(DictionaryFetcher, nsIContentPrefCallback2)
 
@@ -201,8 +201,7 @@ StoreCurrentDictionary(nsIEditor* aEditor, const nsAString& aDictionary)
   rv = docUri->GetSpec(docUriSpec);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIWritableVariant> prefValue = do_CreateInstance(NS_VARIANT_CONTRACTID);
-  NS_ENSURE_TRUE(prefValue, NS_ERROR_OUT_OF_MEMORY);
+  RefPtr<nsVariant> prefValue = new nsVariant();
   prefValue->SetAsAString(aDictionary);
 
   nsCOMPtr<nsIContentPrefService2> contentPrefService =
@@ -348,7 +347,7 @@ nsEditorSpellCheck::InitSpellChecker(nsIEditor* aEditor, bool aEnableSelectionCh
 
     nsCOMPtr<nsISelection> domSelection;
     aEditor->GetSelection(getter_AddRefs(domSelection));
-    nsRefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
+    RefPtr<Selection> selection = static_cast<Selection*>(domSelection.get());
     NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
 
     int32_t count = 0;
@@ -357,7 +356,7 @@ nsEditorSpellCheck::InitSpellChecker(nsIEditor* aEditor, bool aEnableSelectionCh
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (count > 0) {
-      nsRefPtr<nsRange> range = selection->GetRangeAt(0);
+      RefPtr<nsRange> range = selection->GetRangeAt(0);
       NS_ENSURE_STATE(range);
 
       bool collapsed = false;
@@ -368,7 +367,7 @@ nsEditorSpellCheck::InitSpellChecker(nsIEditor* aEditor, bool aEnableSelectionCh
         // We don't want to touch the range in the selection,
         // so create a new copy of it.
 
-        nsRefPtr<nsRange> rangeBounds = range->CloneRange();
+        RefPtr<nsRange> rangeBounds = range->CloneRange();
 
         // Make sure the new range spans complete words.
 
@@ -399,7 +398,7 @@ nsEditorSpellCheck::InitSpellChecker(nsIEditor* aEditor, bool aEnableSelectionCh
     // However, if it does fail, we still need to call the callback since we
     // discard the failure.  Do it asynchronously so that the caller is always
     // guaranteed async behavior.
-    nsRefPtr<CallbackCaller> caller = new CallbackCaller(aCallback);
+    RefPtr<CallbackCaller> caller = new CallbackCaller(aCallback);
     NS_ENSURE_STATE(caller);
     rv = NS_DispatchToMainThread(caller);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -586,7 +585,7 @@ nsEditorSpellCheck::SetCurrentDictionary(const nsAString& aDictionary)
 {
   NS_ENSURE_TRUE(mSpellChecker, NS_ERROR_NOT_INITIALIZED);
 
-  nsRefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
+  RefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
 
   // The purpose of mUpdateDictionaryRunning is to avoid doing all of this if
   // UpdateCurrentDictionary's helper method DictionaryFetched, which calls us,
@@ -600,8 +599,9 @@ nsEditorSpellCheck::SetCurrentDictionary(const nsAString& aDictionary)
     uint32_t flags = 0;
     mEditor->GetFlags(&flags);
     if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
-      if (mPreferredLang.IsEmpty() ||
-          !mPreferredLang.Equals(aDictionary, nsCaseInsensitiveStringComparator())) {
+      if (!aDictionary.IsEmpty() && (mPreferredLang.IsEmpty() ||
+          !mPreferredLang.Equals(aDictionary,
+                                 nsCaseInsensitiveStringComparator()))) {
         // When user sets dictionary manually, we store this value associated
         // with editor url, if it doesn't match the document language exactly.
         // For example on "en" sites, we need to store "en-GB", otherwise
@@ -633,34 +633,6 @@ nsEditorSpellCheck::SetCurrentDictionary(const nsAString& aDictionary)
     }
   }
   return mSpellChecker->SetCurrentDictionary(aDictionary);
-}
-
-NS_IMETHODIMP
-nsEditorSpellCheck::CheckCurrentDictionary()
-{
-  mSpellChecker->CheckCurrentDictionary();
-
-  // Check if our current dictionary is still available.
-  nsAutoString currentDictionary;
-  nsresult rv = GetCurrentDictionary(currentDictionary);
-  if (NS_SUCCEEDED(rv) && !currentDictionary.IsEmpty()) {
-    return NS_OK;
-  }
-
-  // If our preferred current dictionary has gone, pick another one.
-  nsTArray<nsString> dictList;
-  rv = mSpellChecker->GetDictionaryList(&dictList);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (dictList.Length() > 0) {
-    // Use RAII object to prevent content preferences being written during
-    // this call.
-    UpdateDictionaryHolder holder(this);
-    rv = SetCurrentDictionary(dictList[0]);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -697,7 +669,7 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
 {
   nsresult rv;
 
-  nsRefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
+  RefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
 
   // Get language with html5 algorithm
   nsCOMPtr<nsIContent> rootContent;
@@ -727,7 +699,7 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<DictionaryFetcher> fetcher =
+  RefPtr<DictionaryFetcher> fetcher =
     new DictionaryFetcher(this, aCallback, mDictionaryFetcherGroup);
   rootContent->GetLang(fetcher->mRootContentLang);
   nsCOMPtr<nsIDocument> doc = rootContent->GetCurrentDoc();
@@ -743,7 +715,7 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
 // Helper function that iterates over the list of dictionaries and sets the one
 // that matches based on a given comparison type.
 nsresult
-nsEditorSpellCheck::TryDictionary(nsAutoString aDictName,
+nsEditorSpellCheck::TryDictionary(const nsAString& aDictName,
                                   nsTArray<nsString>& aDictList,
                                   enum dictCompare aCompareType)
 {
@@ -764,7 +736,7 @@ nsEditorSpellCheck::TryDictionary(nsAutoString aDictName,
         break;
     }
     if (equals) {
-      rv = SetCurrentDictionary(dictStr);
+      rv = mSpellChecker->SetCurrentDictionary(dictStr);
 #ifdef DEBUG_DICT
       if (NS_SUCCEEDED(rv))
         printf("***** Set |%s|.\n", NS_ConvertUTF16toUTF8(dictStr).get());
@@ -782,7 +754,7 @@ nsresult
 nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
 {
   MOZ_ASSERT(aFetcher);
-  nsRefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
+  RefPtr<nsEditorSpellCheck> kungFuDeathGrip = this;
 
   // Important: declare the holder after the callback caller so that the former
   // is destructed first so that it's not active when the callback is called.
@@ -835,6 +807,14 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
 #endif
   }
 
+  // Auxiliary status.
+  nsresult rv2;
+
+  // We obtain a list of available dictionaries.
+  nsTArray<nsString> dictList;
+  rv2 = mSpellChecker->GetDictionaryList(&dictList);
+  NS_ENSURE_SUCCESS(rv2, rv2);
+
   // Priority 1:
   // If we successfully fetched a dictionary from content prefs, do not go
   // further. Use this exact dictionary.
@@ -845,7 +825,7 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
   if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
     dictName.Assign(aFetcher->mDictionary);
     if (!dictName.IsEmpty()) {
-      if (NS_SUCCEEDED(SetCurrentDictionary(dictName))) {
+      if (NS_SUCCEEDED(TryDictionary(dictName, dictList, DICT_NORMAL_COMPARE))) {
 #ifdef DEBUG_DICT
         printf("***** Assigned from content preferences |%s|\n",
                NS_ConvertUTF16toUTF8(dictName).get());
@@ -870,14 +850,6 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
   printf("***** Assigned from element/doc |%s|\n",
          NS_ConvertUTF16toUTF8(dictName).get());
 #endif
-
-  // Auxiliary status.
-  nsresult rv2;
-
-  // We obtain a list of available dictionaries.
-  nsTArray<nsString> dictList;
-  rv2 = mSpellChecker->GetDictionaryList(&dictList);
-  NS_ENSURE_SUCCESS(rv2, rv2);
 
   // Get the preference value.
   nsAutoString preferredDict;
@@ -1006,7 +978,9 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
       // If it does not work, pick the first one.
       if (NS_FAILED(rv)) {
         if (dictList.Length() > 0) {
-          rv = SetCurrentDictionary(dictList[0]);
+          nsAutoString firstInList;
+          firstInList.Assign(dictList[0]);
+          rv = TryDictionary(firstInList, dictList, DICT_NORMAL_COMPARE);
 #ifdef DEBUG_DICT
           printf("***** Trying first of list |%s|\n",
                  NS_ConvertUTF16toUTF8(dictList[0]).get());

@@ -17,6 +17,9 @@
 #include "nsIPersistentProperties2.h"
 #include "nsISimpleEnumerator.h"
 #include "nsAccUtils.h"
+#ifdef MOZ_ACCESSIBILITY_ATK
+#include "AccessibleWrap.h"
+#endif
 
 namespace mozilla {
 namespace a11y {
@@ -42,6 +45,14 @@ InterfacesFor(Accessible* aAcc)
 
   if (aAcc->IsDoc())
     interfaces |= Interfaces::DOCUMENT;
+
+  if (aAcc->IsSelect()) {
+    interfaces |= Interfaces::SELECTION;
+  }
+
+  if (aAcc->ActionCount()) {
+    interfaces |= Interfaces::ACTION;
+  }
 
   return interfaces;
 }
@@ -379,13 +390,10 @@ DocAccessibleChild::RecvCaretOffset(const uint64_t& aID, int32_t* aOffset)
 
 bool
 DocAccessibleChild::RecvSetCaretOffset(const uint64_t& aID,
-                                       const int32_t& aOffset,
-                                       bool* aRetVal)
+                                       const int32_t& aOffset)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
-  *aRetVal = false;
   if (acc && acc->IsTextRole() && acc->IsValidOffset(aOffset)) {
-    *aRetVal = true;
     acc->SetCaretOffset(aOffset);
   }
   return true;
@@ -1446,6 +1454,52 @@ DocAccessibleChild::RecvTableIsProbablyForLayout(const uint64_t& aID,
 }
 
 bool
+DocAccessibleChild::RecvAtkTableColumnHeader(const uint64_t& aID,
+                                             const int32_t& aCol,
+                                             uint64_t* aHeader,
+                                             bool* aOk)
+{
+  *aHeader = 0;
+  *aOk = false;
+
+#ifdef MOZ_ACCESSIBILITY_ATK
+  TableAccessible* acc = IdToTableAccessible(aID);
+  if (acc) {
+    Accessible* header = AccessibleWrap::GetColumnHeader(acc, aCol);
+    if (header) {
+      *aHeader = reinterpret_cast<uint64_t>(header->UniqueID());
+      *aOk = true;
+    }
+  }
+#endif
+
+  return true;
+}
+
+bool
+DocAccessibleChild::RecvAtkTableRowHeader(const uint64_t& aID,
+                                          const int32_t& aRow,
+                                          uint64_t* aHeader,
+                                          bool* aOk)
+{
+  *aHeader = 0;
+  *aOk = false;
+
+#ifdef MOZ_ACCESSIBILITY_ATK
+  TableAccessible* acc = IdToTableAccessible(aID);
+  if (acc) {
+    Accessible* header = AccessibleWrap::GetRowHeader(acc, aRow);
+    if (header) {
+      *aHeader = reinterpret_cast<uint64_t>(header->UniqueID());
+      *aOk = true;
+    }
+  }
+#endif
+
+  return true;
+}
+
+bool
 DocAccessibleChild::RecvSelectedItems(const uint64_t& aID,
                                       nsTArray<uint64_t>* aSelectedItemIDs)
 {
@@ -1565,6 +1619,28 @@ DocAccessibleChild::RecvUnselectAll(const uint64_t& aID,
 }
 
 bool
+DocAccessibleChild::RecvTakeSelection(const uint64_t& aID)
+{
+  Accessible* acc = IdToAccessible(aID);
+  if (acc) {
+    acc->TakeSelection();
+  }
+
+  return true;
+}
+
+bool
+DocAccessibleChild::RecvSetSelected(const uint64_t& aID, const bool& aSelect)
+{
+  Accessible* acc = IdToAccessible(aID);
+  if (acc) {
+    acc->SetSelected(aSelect);
+  }
+
+  return true;
+}
+
+bool
 DocAccessibleChild::RecvDoAction(const uint64_t& aID,
                                  const uint8_t& aIndex,
                                  bool* aSuccess)
@@ -1648,6 +1724,19 @@ DocAccessibleChild::RecvKeyboardShortcut(const uint64_t& aID,
     *aModifierMask = kb.ModifierMask();
   }
 
+  return true;
+}
+
+bool
+DocAccessibleChild::RecvAtkKeyBinding(const uint64_t& aID,
+                                      nsString* aResult)
+{
+#ifdef MOZ_ACCESSIBILITY_ATK
+  Accessible* acc = IdToAccessible(aID);
+  if (acc) {
+    AccessibleWrap::GetKeyBinding(acc, *aResult);
+  }
+#endif
   return true;
 }
 
@@ -1918,7 +2007,7 @@ DocAccessibleChild::RecvExtents(const uint64_t& aID,
   *aWidth = 0;
   *aHeight = 0;
   Accessible* acc = IdToAccessible(aID);
-  if (acc && !acc->IsDefunct() && !nsAccUtils::MustPrune(acc)) {
+  if (acc && !acc->IsDefunct()) {
     nsIntRect screenRect = acc->Bounds();
     if (!screenRect.IsEmpty()) {
       if (aNeedsScreenCoords) {

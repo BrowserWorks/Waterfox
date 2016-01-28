@@ -8,6 +8,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
   "resource://testing-common/PlacesTestUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TabCrashReporter",
+  "resource:///modules/ContentCrashReporters.jsm");
 
 /**
  * Wait for a <notification> to be closed then call the specified callback.
@@ -57,16 +59,6 @@ function whenDelayedStartupFinished(aWindow, aCallback) {
       executeSoon(aCallback);
     }
   }, "browser-delayed-startup-finished", false);
-}
-
-function findChromeWindowByURI(aURI) {
-  let windows = Services.wm.getEnumerator(null);
-  while (windows.hasMoreElements()) {
-    let win = windows.getNext();
-    if (win.location.href == aURI)
-      return win;
-  }
-  return null;
 }
 
 function updateTabContextMenu(tab) {
@@ -898,6 +890,13 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
     }
   }
 
+  if (activeLoaded || activeBlocked || passiveLoaded) {
+    doc.getElementById("identity-popup-security-expander").click();
+    is(Array.filter(doc.querySelectorAll("[observes=identity-popup-mcb-learn-more]"),
+                    element => !is_hidden(element)).length, 1,
+       "The 'Learn more' link should be visible once.");
+  }
+
   gIdentityHandler._identityPopup.hidden = true;
 }
 
@@ -1030,8 +1029,7 @@ function promiseNewSearchEngine(basename) {
   return new Promise((resolve, reject) => {
     info("Waiting for engine to be added: " + basename);
     let url = getRootDirectory(gTestPath) + basename;
-    Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "",
-                              false, {
+    Services.search.addEngine(url, null, "", false, {
       onSuccess: function (engine) {
         info("Search engine added: " + basename);
         registerCleanupFunction(() => Services.search.removeEngine(engine));
@@ -1072,4 +1070,178 @@ function isSecurityState(expectedState) {
   }
 
   is(expectedState, actualState, "Expected state " + expectedState + " and the actual state is " + actualState + ".");
+}
+
+/**
+ * Resolves when a bookmark with the given uri is added.
+ */
+function promiseOnBookmarkItemAdded(aExpectedURI) {
+  return new Promise((resolve, reject) => {
+    let bookmarksObserver = {
+      onItemAdded: function (aItemId, aFolderId, aIndex, aItemType, aURI) {
+        info("Added a bookmark to " + aURI.spec);
+        PlacesUtils.bookmarks.removeObserver(bookmarksObserver);
+        if (aURI.equals(aExpectedURI)) {
+          resolve();
+        }
+        else {
+          reject(new Error("Added an unexpected bookmark"));
+        }
+      },
+      onBeginUpdateBatch: function () {},
+      onEndUpdateBatch: function () {},
+      onItemRemoved: function () {},
+      onItemChanged: function () {},
+      onItemVisited: function () {},
+      onItemMoved: function () {},
+      QueryInterface: XPCOMUtils.generateQI([
+        Ci.nsINavBookmarkObserver,
+      ])
+    };
+    info("Waiting for a bookmark to be added");
+    PlacesUtils.bookmarks.addObserver(bookmarksObserver, false);
+  });
+}
+
+/**
+ * For an nsIPropertyBag, returns the value for a given
+ * key.
+ *
+ * @param bag
+ *        The nsIPropertyBag to retrieve the value from
+ * @param key
+ *        The key that we want to get the value for from the
+ *        bag
+ * @returns The value corresponding to the key from the bag,
+ *          or null if the value could not be retrieved (for
+ *          example, if no value is set at that key).
+*/
+function getPropertyBagValue(bag, key) {
+  try {
+    let val = bag.getProperty(key);
+    return val;
+  } catch(e if e.result == Cr.NS_ERROR_FAILURE) {}
+
+  return null;
+}
+
+/**
+ * Returns a Promise that resolves once a crash report has
+ * been submitted. This function will also test the crash
+ * reports extra data to see if it matches expectedExtra.
+ *
+ * @param expectedExtra
+ *        An Object whose key-value pairs will be compared
+ *        against the key-value pairs in the extra data of the
+ *        crash report. A test failure will occur if there is
+ *        a mismatch.
+ *
+ *        Note that this will only check the values that exist
+ *        in expectedExtra. It's possible that the crash report
+ *        will contain other extra information that is not
+ *        compared against.
+ * @returns Promise
+ */
+function promiseCrashReport(expectedExtra) {
+  return Task.spawn(function*() {
+    info("Starting wait on crash-report-status");
+    let [subject, data] =
+      yield TestUtils.topicObserved("crash-report-status", (subject, data) => {
+        return data == "success";
+      });
+    info("Topic observed!");
+
+    if (!(subject instanceof Ci.nsIPropertyBag2)) {
+      throw new Error("Subject was not a Ci.nsIPropertyBag2");
+    }
+
+    let remoteID = getPropertyBagValue(subject, "serverCrashID");
+    if (!remoteID) {
+      throw new Error("Report should have a server ID");
+    }
+
+    let file = Cc["@mozilla.org/file/local;1"]
+                 .createInstance(Ci.nsILocalFile);
+    file.initWithPath(Services.crashmanager._submittedDumpsDir);
+    file.append(remoteID + ".txt");
+    if (!file.exists()) {
+      throw new Error("Report should have been received by the server");
+    }
+
+    file.remove(false);
+
+    let extra = getPropertyBagValue(subject, "extra");
+    if (!(extra instanceof Ci.nsIPropertyBag2)) {
+      throw new Error("extra was not a Ci.nsIPropertyBag2");
+    }
+
+    info("Iterating crash report extra keys");
+    let enumerator = extra.enumerator;
+    while (enumerator.hasMoreElements()) {
+      let key = enumerator.getNext().QueryInterface(Ci.nsIProperty).name;
+      let value = extra.getPropertyAsAString(key);
+      if (key in expectedExtra) {
+        is(value, expectedExtra[key],
+           `Crash report had the right extra value for ${key}`);
+      }
+    }
+  });
+}
+
+/**
+ * Retrieves the number of searches recorded in FHR for the current day.
+ *
+ * @param aEngineName
+ *        name of the setup search engine.
+ * @param aSource
+ *        The FHR "source" name for the search, like "abouthome" or "urlbar".
+ *
+ * @return {Promise} Returns a promise resolving to the number of searches.
+ */
+function getNumberOfSearchesInFHR(aEngineName, aSource) {
+  let reporter = Components.classes["@mozilla.org/datareporting/service;1"]
+                                   .getService()
+                                   .wrappedJSObject
+                                   .healthReporter;
+  ok(reporter, "Health Reporter instance available.");
+
+  return reporter.onInit().then(function onInit() {
+    let provider = reporter.getProvider("org.mozilla.searches");
+    ok(provider, "Searches provider is available.");
+
+    let m = provider.getMeasurement("counts", 3);
+    return m.getValues().then(data => {
+      let now = new Date();
+      let yday = new Date(now);
+      yday.setDate(yday.getDate() - 1);
+
+      // Add the number of searches recorded yesterday to the number of searches
+      // recorded today. This makes the test not fail intermittently when it is
+      // run at midnight and we accidentally compare the number of searches from
+      // different days. Tests are always run with an empty profile so there
+      // are no searches from yesterday, normally. Should the test happen to run
+      // past midnight we make sure to count them in as well.
+      return getNumberOfSearchesInFHRByDate(aEngineName, aSource, data, now) +
+             getNumberOfSearchesInFHRByDate(aEngineName, aSource, data, yday);
+    });
+  });
+}
+
+/**
+ * Helper for getNumberOfSearchesInFHR.  You probably don't want to call this
+ * directly.
+ */
+function getNumberOfSearchesInFHRByDate(aEngineName, aSource, aData, aDate) {
+  if (aData.days.hasDay(aDate)) {
+    let id = Services.search.getEngineByName(aEngineName).identifier;
+
+    let day = aData.days.getDay(aDate);
+    let field = id + "." + aSource;
+
+    if (day.has(field)) {
+      return day.get(field) || 0;
+    }
+  }
+
+  return 0; // No records found.
 }

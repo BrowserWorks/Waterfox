@@ -14,7 +14,7 @@
 #include <queue>
 
 #include "nsITimer.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 
 namespace mozilla {
 
@@ -42,7 +42,7 @@ public:
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void);
   NS_IMETHOD_(MozExternalRefCountType) Release(void);
 
-  nsRefPtr<MediaTimerPromise> WaitUntil(const TimeStamp& aTimeStamp, const char* aCallSite);
+  RefPtr<MediaTimerPromise> WaitUntil(const TimeStamp& aTimeStamp, const char* aCallSite);
 
 private:
   virtual ~MediaTimer() { MOZ_ASSERT(OnMediaTimerThread()); }
@@ -78,7 +78,7 @@ private:
   struct Entry
   {
     TimeStamp mTimeStamp;
-    nsRefPtr<MediaTimerPromise::Private> mPromise;
+    RefPtr<MediaTimerPromise::Private> mPromise;
 
     explicit Entry(const TimeStamp& aTimeStamp, const char* aCallSite)
       : mTimeStamp(aTimeStamp)
@@ -111,6 +111,58 @@ private:
   }
 
   bool mUpdateScheduled;
+};
+
+// Class for managing delayed dispatches on target thread.
+class DelayedScheduler {
+public:
+  explicit DelayedScheduler(AbstractThread* aTargetThread)
+    : mTargetThread(aTargetThread), mMediaTimer(new MediaTimer())
+  {
+    MOZ_ASSERT(mTargetThread);
+  }
+
+  bool IsScheduled() const { return !mTarget.IsNull(); }
+
+  void Reset()
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn(),
+      "Must be on target thread to disconnect");
+    if (IsScheduled()) {
+      mRequest.Disconnect();
+      mTarget = TimeStamp();
+    }
+  }
+
+  template <typename ResolveFunc, typename RejectFunc>
+  void Ensure(mozilla::TimeStamp& aTarget,
+              ResolveFunc&& aResolver,
+              RejectFunc&& aRejector)
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn());
+    if (IsScheduled() && mTarget <= aTarget) {
+      return;
+    }
+    Reset();
+    mTarget = aTarget;
+    mRequest.Begin(mMediaTimer->WaitUntil(mTarget, __func__)->Then(
+      mTargetThread, __func__,
+      Forward<ResolveFunc>(aResolver),
+      Forward<RejectFunc>(aRejector)));
+  }
+
+  void CompleteRequest()
+  {
+    MOZ_ASSERT(mTargetThread->IsCurrentThreadIn());
+    mRequest.Complete();
+    mTarget = TimeStamp();
+  }
+
+private:
+  RefPtr<AbstractThread> mTargetThread;
+  RefPtr<MediaTimer> mMediaTimer;
+  MozPromiseRequestHolder<mozilla::MediaTimerPromise> mRequest;
+  TimeStamp mTarget;
 };
 
 } // namespace mozilla

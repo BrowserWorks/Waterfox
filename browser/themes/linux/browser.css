@@ -16,20 +16,20 @@
 
 %define forwardTransitionLength 150ms
 %define conditionalForwardWithUrlbar window:not([chromehidden~="toolbar"]) #urlbar-wrapper
-%define conditionalForwardWithUrlbarWidth 30
+%define conditionalForwardWithUrlbarWidth 31
 
 :root {
-  --backbutton-urlbar-overlap: 5px;
+  --backbutton-urlbar-overlap: 6px;
 
-  --toolbarbutton-hover-background: hsla(0,0%,100%,.3) linear-gradient(hsla(0,0%,100%,.7), hsla(0,0%,100%,.2));
-  --toolbarbutton-hover-boxshadow: 0 1px 0 hsla(0,0%,100%,.3) inset, 0 0 0 1px hsla(0,0%,100%,.2) inset, 0 1px 0 hsla(0,0%,0%,.03);
-  --toolbarbutton-hover-bordercolor: rgb(154,154,154);
+  --toolbarbutton-hover-background: rgba(255,255,255,.5) linear-gradient(rgba(255,255,255,.5), transparent);
+  --toolbarbutton-hover-bordercolor: rgba(0,0,0,.25);
+  --toolbarbutton-hover-boxshadow: none;
 
-  --toolbarbutton-active-boxshadow: 0 1px 1px hsla(0,0%,0%,.1) inset, 0 0 1px hsla(0,0%,0%,.3) inset;
-  --toolbarbutton-active-bordercolor: rgb(154,154,154);
-  --toolbarbutton-active-background: rgba(154,154,154,.5) linear-gradient(hsla(0,0%,100%,.7), hsla(0,0%,100%,.4));
+  --toolbarbutton-active-background: rgba(154,154,154,.5) linear-gradient(rgba(255,255,255,.7), rgba(255,255,255,.4));
+  --toolbarbutton-active-bordercolor: rgba(0,0,0,.3);
+  --toolbarbutton-active-boxshadow: 0 1px 1px rgba(0,0,0,.1) inset, 0 0 1px rgba(0,0,0,.3) inset;
 
-  --toolbarbutton-checkedhover-backgroundcolor: rgba(154,154,154,.15);
+  --toolbarbutton-checkedhover-backgroundcolor: rgba(200,200,200,.5);
 
   --identity-box-verified-background-color: #fff;
 
@@ -62,6 +62,10 @@
 
 #navigator-toolbox:-moz-lwtheme::after {
   background-color: rgba(0,0,0,.3);
+}
+
+#navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar) {
+  background-image: linear-gradient(@toolbarHighlight@, @toolbarHighlight@);
 }
 
 #navigator-toolbox > toolbar:not(:-moz-lwtheme):not(#toolbar-menubar):not(#TabsToolbar) {
@@ -98,7 +102,6 @@
 }
 
 #nav-bar {
-  background-image: linear-gradient(@toolbarHighlight@, transparent);
   box-shadow: 0 1px 0 @toolbarHighlight@ inset;
   padding-top: 2px;
   padding-bottom: 2px;
@@ -119,11 +122,6 @@
 #browser-bottombox {
   /* opaque for layers optimization */
   background-color: -moz-Dialog;
-}
-
-#urlbar:-moz-lwtheme:not([focused="true"]),
-.searchbar-textbox:-moz-lwtheme:not([focused="true"]) {
-  opacity: .85;
 }
 
 /* Places toolbar */
@@ -573,6 +571,18 @@ menuitem:not([type]):not(.menuitem-tooltip):not(.menuitem-iconic-tooltip) {
 }
 
 /* Primary toolbar buttons */
+
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1 > .toolbarbutton-icon,
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1 > :-moz-any(.toolbarbutton-menubutton-button, .toolbarbutton-badge-stack) > .toolbarbutton-icon {
+  max-width: 16px;
+}
+
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1:-moz-any(@primaryToolbarButtons@) > .toolbarbutton-icon,
+:-moz-any(toolbar, .widget-overflow-list) .toolbarbutton-1:-moz-any(@primaryToolbarButtons@) > :-moz-any(.toolbarbutton-menubutton-button, .toolbarbutton-badge-stack) > .toolbarbutton-icon,
+#bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
+  max-width: 18px;
+}
+
 .findbar-button,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1 > .toolbarbutton-menubutton-button,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1 {
@@ -603,15 +613,11 @@ menuitem:not([type]):not(.menuitem-tooltip):not(.menuitem-iconic-tooltip) {
   padding: 3px 7px;
 }
 
-/* Help SDK icons fit: */
-toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-icon,
-toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-badge-stack > .toolbarbutton-icon {
-  width: 16px;
-}
-
-:-moz-any(#TabsToolbar, #nav-bar) toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
-  /* XXXgijs box models strike again: this is 16px + 2 * 7px padding + 2 * 1px border (from the rules above) */
-  width: 32px;
+:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1 > .toolbarbutton-icon,
+:-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1 > .toolbarbutton-menubutton-button > .toolbarbutton-icon,
+:-moz-any(#TabsToolbar, #nav-bar) #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
+  /* horizontal padding + border + actual icon width */
+  max-width: 32px !important /* bug 561154 */;
 }
 
 #nav-bar #PanelUI-menu-button {
@@ -626,8 +632,7 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-badge-stack,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):hover > .toolbarbutton-icon {
   background: var(--toolbarbutton-hover-background);
-  border-width: 1px;
-  border-style: solid;
+  background-clip: padding-box;
   border-color: var(--toolbarbutton-hover-bordercolor);
   box-shadow: var(--toolbarbutton-hover-boxshadow);
 }
@@ -644,9 +649,8 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):-moz-any([open],[checked],:hover:active) > .toolbarbutton-badge-stack,
 :-moz-any(#TabsToolbar, #nav-bar) .toolbarbutton-1:not([disabled=true]):-moz-any([open],[checked],:hover:active) > .toolbarbutton-icon {
   background: var(--toolbarbutton-active-background);
+  background-clip: padding-box;
   box-shadow: var(--toolbarbutton-active-boxshadow);
-  border-width: 1px;
-  border-style: solid;
   border-color: var(--toolbarbutton-active-bordercolor);
   transition-duration: 10ms;
 }
@@ -697,10 +701,20 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
   margin-bottom: 3px;
 }
 
+:-moz-any(#back-button, #forward-button) > .toolbarbutton-icon {
+  border-color: var(--urlbar-border-color) !important /* bug 561154 */;
+}
+
+:-moz-any(#back-button, #forward-button):not(:hover):not(:active):not([open=true]) > .toolbarbutton-icon,
+:-moz-any(#back-button, #forward-button)[disabled=true] > .toolbarbutton-icon {
+  background-color: rgba(255,255,255,.25) !important /* bug 561154 */;
+  background-clip: padding-box;
+}
+
 #back-button {
-  padding-top: 3px;
-  padding-bottom: 3px;
-  -moz-padding-start: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  -moz-padding-start: 4px;
   -moz-padding-end: 0;
   position: relative;
   z-index: 1;
@@ -717,41 +731,8 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 
 #back-button > .toolbarbutton-icon {
   border-radius: 10000px;
-  background-clip: padding-box;
   padding: 6px;
-  border: none;
-  box-shadow: 0 1px 0 hsla(0,0%,100%,.3) inset,
-              0 0 0 1px hsla(0,0%,100%,.3) inset,
-              0 0 0 1px hsla(210,54%,20%,.25),
-              0 1px 0 hsla(210,54%,20%,.35);
-  background-image: linear-gradient(hsla(0,0%,100%,.6), hsla(0,0%,100%,.1));
-  transition-property: background-color, box-shadow;
-  transition-duration: 250ms;
-}
-
-#back-button:not([disabled="true"]):not([open="true"]):not(:active):hover > .toolbarbutton-icon {
-  background-color: hsla(210,48%,96%,.75);
-  box-shadow: 0 1px 0 hsla(0,0%,100%,.3) inset,
-              0 0 0 1px hsla(0,0%,100%,.3) inset,
-              0 0 0 1px hsla(210,54%,20%,.3),
-              0 1px 0 hsla(210,54%,20%,.4),
-              0 0 4px hsla(210,54%,20%,.2);
-}
-
-#back-button:not([disabled="true"]):hover:active > .toolbarbutton-icon,
-#back-button[open="true"] > .toolbarbutton-icon {
-  background-color: hsla(210,54%,20%,.15);
-  box-shadow: 0 1px 1px hsla(210,54%,20%,.1) inset,
-              0 0 1px hsla(210,54%,20%,.2) inset,
-              0 0 0 1px hsla(210,54%,20%,.4),
-              0 1px 0 hsla(210,54%,20%,.2);
-  transition: none;
-}
-
-#main-window:not([customizing]) #back-button[disabled] > .toolbarbutton-icon {
-  box-shadow: 0 0 0 1px hsla(210,54%,20%,.55),
-              0 1px 0 hsla(210,54%,20%,.65) !important;
-  transition: none;
+  max-width: 32px; /* horizontal padding + border + icon width */
 }
 
 #back-button:-moz-locale-dir(rtl) > .toolbarbutton-icon {
@@ -764,12 +745,11 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 }
 
 #forward-button > .toolbarbutton-icon {
-  background-clip: padding-box;
-  padding-left: calc(var(--backbutton-urlbar-overlap) + 4px);
+  padding-left: calc(var(--backbutton-urlbar-overlap) + 3px);
   padding-right: 3px;
-  border: 1px solid #9a9a9a;
   border-left-style: none;
   border-radius: 0;
+  max-width: @conditionalForwardWithUrlbarWidth@px;
 }
 
 @conditionalForwardWithUrlbar@:not([switchingtabs]) > #forward-button {
@@ -861,12 +841,21 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 }
 
 /* Location bar */
+#nav-bar {
+  --urlbar-border-color: ThreeDShadow;
+}
+
+#nav-bar:-moz-lwtheme {
+  --urlbar-border-color: rgba(0,0,0,.3);
+}
+
 #urlbar,
 .searchbar-textbox {
   -moz-appearance: none;
   padding: 0;
-  border: 1px solid ThreeDShadow;
+  border: 1px solid var(--urlbar-border-color);
   border-radius: 2px;
+  background-clip: padding-box;
   margin: 0 3px;
 }
 
@@ -877,6 +866,17 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 
 #urlbar {
   background-color: -moz-field;
+}
+
+#urlbar:-moz-lwtheme,
+.searchbar-textbox:-moz-lwtheme {
+  background-color: rgba(255,255,255,.8);
+  color: black;
+}
+
+#urlbar:-moz-lwtheme[focused=true],
+.searchbar-textbox:-moz-lwtheme[focused=true] {
+  background-color: white;
 }
 
 .urlbar-textbox-container {
@@ -893,7 +893,7 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
   transition: opacity 0.15s ease;
 }
 
-#urlbar:not(:hover) > .urlbar-textbox-container > .urlbar-history-dropmarker {
+#navigator-toolbox:not(:hover) .urlbar-history-dropmarker {
   opacity: 0;
 }
 
@@ -937,6 +937,9 @@ toolbarbutton[constrain-size="true"][cui-areatype="toolbar"] > .toolbarbutton-ba
 
 .urlbar-icon {
   padding: 0 3px;
+  /* 16x16 icon with border-box sizing */
+  width: 22px;
+  height: 16px;
 }
 
 #urlbar-search-footer {
@@ -1544,11 +1547,12 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
   background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 64, 16, 48);
 }
 
+.tab-close-button:not(:hover):-moz-lwtheme-brighttext,
 #TabsToolbar[brighttext] .tab-close-button:not([visuallyselected]):not(:hover) {
   background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 80, 16, 64);
 }
 
-.tab-close-button:not([visuallyselected]):not(:hover):-moz-lwtheme-darktext {
+.tab-close-button:not(:hover):-moz-lwtheme-darktext {
   background-image: -moz-image-rect(url("chrome://global/skin/icons/close.svg"), 0, 96, 16, 80);
 }
 
@@ -1637,11 +1641,19 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 }
 
 .alltabs-endimage[muted] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-muted);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-muted);
 }
 
 .alltabs-endimage[soundplaying] {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio);
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu);
+}
+
+menuitem:hover > hbox > .alltabs-endimage[muted] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-muted-hover);
+}
+
+menuitem:hover > hbox > .alltabs-endimage[soundplaying] {
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-audio.svg#tab-audio-menu-hover);
 }
 
 /* Sidebar */
@@ -1732,7 +1744,7 @@ toolbarbutton.chevron > .toolbarbutton-icon {
 }
 
 #sync-start-panel-subtitle {
-  margin: 0;
+  margin-bottom: 0;
 }
 
 /* Status panel */
@@ -1762,8 +1774,8 @@ toolbarbutton.chevron > .toolbarbutton-icon {
 }
 
 %include ../shared/fullscreen/warning.inc.css
-%include ../shared/devtools/responsivedesign.inc.css
-%include ../shared/devtools/commandline.inc.css
+%include ../../../devtools/client/themes/responsivedesign.inc.css
+%include ../../../devtools/client/themes/commandline.inc.css
 %include ../shared/plugin-doorhanger.inc.css
 %include ../shared/login-doorhanger.inc.css
 
@@ -1933,6 +1945,9 @@ toolbarbutton.chevron > .toolbarbutton-icon {
   -moz-margin-end: 0 !important;
 }
 
-.browser-action-panel > .panel-arrowcontainer > .panel-arrowcontent {
+.browser-extension-panel > .panel-arrowcontainer > .panel-arrowcontent {
   padding: 0;
+  overflow: hidden;
 }
+
+%include ../shared/usercontext/usercontext.inc.css

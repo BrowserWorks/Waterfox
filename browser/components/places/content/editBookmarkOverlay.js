@@ -289,7 +289,7 @@ var gEditItemOverlay = {
     for (let uri of uris) {
       let curentURITags = PlacesUtils.tagging.getTagsForURI(uri);
       for (let tag of commonTags) {
-        if (curentURITags.indexOf(tag) == -1) {
+        if (!curentURITags.includes(tag)) {
           commonTags.delete(tag)
           if (commonTags.size == 0)
             return this._paneInfo.cachedCommonTags = [];
@@ -453,8 +453,8 @@ var gEditItemOverlay = {
     if (aCurrentTags.length == 0)
       return { newTags: inputTags, removedTags: [] };
 
-    let removedTags = aCurrentTags.filter(t => inputTags.indexOf(t) == -1);
-    let newTags = inputTags.filter(t => aCurrentTags.indexOf(t) == -1);
+    let removedTags = aCurrentTags.filter(t => !inputTags.includes(t));
+    let newTags = inputTags.filter(t => !aCurrentTags.includes(t));
     return { removedTags, newTags };
   },
 
@@ -731,7 +731,7 @@ var gEditItemOverlay = {
       this._folderMenuList.selectedItem = item;
       // XXXmano HACK: setTimeout 100, otherwise focus goes back to the
       // menulist right away
-      setTimeout(function(self) self.toggleFolderTreeVisibility(), 100, this);
+      setTimeout(() => this.toggleFolderTreeVisibility(), 100);
       return;
     }
 
@@ -873,7 +873,7 @@ var gEditItemOverlay = {
       let elt = document.createElement("listitem");
       elt.setAttribute("type", "checkbox");
       elt.setAttribute("label", tag);
-      if (tagsInField.indexOf(tag) != -1)
+      if (tagsInField.includes(tag))
         elt.setAttribute("checked", "true");
       tagsSelector.appendChild(elt);
       if (selectedTag === tag)
@@ -925,7 +925,7 @@ var gEditItemOverlay = {
     let tags = this._element("tagsField").value;
     return tags.trim()
                .split(/\s*,\s*/) // Split on commas and remove spaces.
-               .filter(function (tag) tag.length > 0); // Kill empty tags.
+               .filter(tag => tag.length > 0); // Kill empty tags.
   },
 
   newFolder: Task.async(function* () {

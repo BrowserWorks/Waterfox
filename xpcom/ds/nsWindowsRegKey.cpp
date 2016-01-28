@@ -310,7 +310,7 @@ nsWindowsRegKey::ReadStringValue(const nsAString& aName, nsAString& aResult)
 
   // This must be a string type in order to fetch the value as a string.
   // We're being a bit forgiving here by allowing types other than REG_SZ.
-  if (type != REG_SZ && type == REG_EXPAND_SZ && type == REG_MULTI_SZ) {
+  if (type != REG_SZ && type != REG_EXPAND_SZ && type != REG_MULTI_SZ) {
     return NS_ERROR_FAILURE;
   }
 
@@ -559,7 +559,7 @@ nsWindowsRegKey::IsWatching(bool* aResult)
 nsresult
 NS_NewWindowsRegKey(nsIWindowsRegKey** aResult)
 {
-  nsRefPtr<nsWindowsRegKey> key = new nsWindowsRegKey();
+  RefPtr<nsWindowsRegKey> key = new nsWindowsRegKey();
   key.forget(aResult);
   return NS_OK;
 }

@@ -66,15 +66,37 @@ public class CodeGenerator {
         return (includeScope ? clsName + "::" : "") + uniqueName + "_t";
     }
 
+    /**
+     * Return the C++ type name for this class or any class within the chain
+     * of declaring classes, if the target class matches the given type.
+     *
+     * Return null if the given type does not match any class searched.
+     */
+    private String getMatchingClassType(final Class<?> type) {
+        Class<?> cls = this.cls;
+        String clsName = this.clsName;
+
+        while (cls != null) {
+            if (type.equals(cls)) {
+                return clsName;
+            }
+            cls = cls.getDeclaringClass();
+            clsName = clsName.substring(0, Math.max(0, clsName.lastIndexOf("::")));
+        }
+        return null;
+    }
+
     private String getNativeParameterType(Class<?> type, AnnotationInfo info) {
-        if (type == cls) {
+        final String clsName = getMatchingClassType(type);
+        if (clsName != null) {
             return Utils.getUnqualifiedName(clsName) + "::Param";
         }
         return Utils.getNativeParameterType(type, info);
     }
 
     private String getNativeReturnType(Class<?> type, AnnotationInfo info) {
-        if (type == cls) {
+        final String clsName = getMatchingClassType(type);
+        if (clsName != null) {
             return Utils.getUnqualifiedName(clsName) + "::LocalRef";
         }
         return Utils.getNativeReturnType(type, info);
@@ -159,7 +181,7 @@ public class CodeGenerator {
             proto.append(", ");
         }
 
-        if (info.catchException && returnType != void.class) {
+        if (info.catchException && !returnType.equals(void.class)) {
             proto.append(getNativeReturnType(returnType, info)).append('*');
             if (includeArgName) {
                 proto.append(" a").append(argIndex++);
@@ -217,7 +239,7 @@ public class CodeGenerator {
         // We initialize rv to NS_OK instead of NS_ERROR_* because loading NS_OK (0) uses
         // fewer instructions. We are guaranteed to set rv to the correct value later.
 
-        if (info.catchException && returnType == void.class) {
+        if (info.catchException && returnType.equals(void.class)) {
             def.append(
                     "    nsresult rv = NS_OK;\n" +
                     "    ");
@@ -328,14 +350,14 @@ public class CodeGenerator {
     private String getLiteral(Object val, AnnotationInfo info) {
         final Class<?> type = val.getClass();
 
-        if (type == char.class || type == Character.class) {
+        if (type.equals(char.class) || type.equals(Character.class)) {
             final char c = (char) val;
             if (c >= 0x20 && c < 0x7F) {
                 return "'" + c + '\'';
             }
             return "u'\\u" + Integer.toHexString(0x10000 | (int) c).substring(1) + '\'';
 
-        } else if (type == CharSequence.class || type == String.class) {
+        } else if (type.equals(CharSequence.class) || type.equals(String.class)) {
             final CharSequence str = (CharSequence) val;
             final StringBuilder out = new StringBuilder(info.narrowChars ? "u8\"" : "u\"");
             for (int i = 0; i < str.length(); i++) {
@@ -367,9 +389,10 @@ public class CodeGenerator {
         final boolean isStatic = Utils.isStatic(field);
         final boolean isFinal = Utils.isFinal(field);
 
-        if (isStatic && isFinal && (type.isPrimitive() || type == String.class)) {
+        if (isStatic && isFinal && (type.isPrimitive() || type.equals(String.class))) {
             Object val = null;
             try {
+                field.setAccessible(true);
                 val = field.get(null);
             } catch (final IllegalAccessException e) {
             }
@@ -383,7 +406,7 @@ public class CodeGenerator {
                     "\n");
                 return;
 
-            } else if (val != null && type == String.class) {
+            } else if (val != null && type.equals(String.class)) {
                 final String nativeType = info.narrowChars ? "char" : "char16_t";
 
                 header.append(

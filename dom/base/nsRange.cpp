@@ -243,7 +243,7 @@ nsRange::CreateRange(nsIDOMNode* aStartParent, int32_t aStartOffset,
   nsCOMPtr<nsINode> startParent = do_QueryInterface(aStartParent);
   NS_ENSURE_ARG_POINTER(startParent);
 
-  nsRefPtr<nsRange> range = new nsRange(startParent);
+  RefPtr<nsRange> range = new nsRange(startParent);
 
   nsresult rv = range->SetStart(startParent, aStartOffset);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -261,7 +261,7 @@ nsRange::CreateRange(nsIDOMNode* aStartParent, int32_t aStartOffset,
                      nsIDOMNode* aEndParent, int32_t aEndOffset,
                      nsIDOMRange** aRange)
 {
-  nsRefPtr<nsRange> range;
+  RefPtr<nsRange> range;
   nsresult rv = nsRange::CreateRange(aStartParent, aStartOffset, aEndParent,
                                      aEndOffset, getter_AddRefs(range));
   range.forget(aRange);
@@ -1138,7 +1138,8 @@ nsRange::IsValidBoundary(nsINode* aNode)
 void
 nsRange::SetStart(nsINode& aNode, uint32_t aOffset, ErrorResult& aRv)
 {
- if (!nsContentUtils::CanCallerAccess(&aNode)) {
+ if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+     !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1190,7 +1191,8 @@ nsRange::SetStart(nsINode* aParent, int32_t aOffset)
 void
 nsRange::SetStartBefore(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1215,7 +1217,8 @@ nsRange::SetStartBefore(nsIDOMNode* aSibling)
 void
 nsRange::SetStartAfter(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1240,7 +1243,8 @@ nsRange::SetStartAfter(nsIDOMNode* aSibling)
 void
 nsRange::SetEnd(nsINode& aNode, uint32_t aOffset, ErrorResult& aRv)
 {
- if (!nsContentUtils::CanCallerAccess(&aNode)) {
+ if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+     !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1291,7 +1295,8 @@ nsRange::SetEnd(nsINode* aParent, int32_t aOffset)
 void
 nsRange::SetEndBefore(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1316,7 +1321,8 @@ nsRange::SetEndBefore(nsIDOMNode* aSibling)
 void
 nsRange::SetEndAfter(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1367,7 +1373,8 @@ nsRange::SelectNode(nsIDOMNode* aN)
 void
 nsRange::SelectNode(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1403,7 +1410,8 @@ nsRange::SelectNodeContents(nsIDOMNode* aN)
 void
 nsRange::SelectNodeContents(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -1800,7 +1808,7 @@ nsRange::CutContents(DocumentFragment** aFragment)
   NS_ENSURE_TRUE(!res.Failed(), res.StealNSResult());
 
   // If aFragment isn't null, create a temporary fragment to hold our return.
-  nsRefPtr<DocumentFragment> retval;
+  RefPtr<DocumentFragment> retval;
   if (aFragment) {
     retval = new DocumentFragment(doc->NodeInfoManager());
   }
@@ -1823,7 +1831,7 @@ nsRange::CutContents(DocumentFragment** aFragment)
     // we just need to find its doctype child and check if that's in the range.
     nsCOMPtr<nsIDocument> commonAncestorDocument = do_QueryInterface(commonAncestor);
     if (commonAncestorDocument) {
-      nsRefPtr<DocumentType> doctype = commonAncestorDocument->GetDoctype();
+      RefPtr<DocumentType> doctype = commonAncestorDocument->GetDoctype();
 
       if (doctype &&
           nsContentUtils::ComparePoints(startContainer, startOffset,
@@ -2076,7 +2084,7 @@ NS_IMETHODIMP
 nsRange::ExtractContents(nsIDOMDocumentFragment** aReturn)
 {
   NS_ENSURE_ARG_POINTER(aReturn);
-  nsRefPtr<DocumentFragment> fragment;
+  RefPtr<DocumentFragment> fragment;
   nsresult rv = CutContents(getter_AddRefs(fragment));
   fragment.forget(aReturn);
   return rv;
@@ -2085,7 +2093,7 @@ nsRange::ExtractContents(nsIDOMDocumentFragment** aReturn)
 already_AddRefed<DocumentFragment>
 nsRange::ExtractContents(ErrorResult& rv)
 {
-  nsRefPtr<DocumentFragment> fragment;
+  RefPtr<DocumentFragment> fragment;
   rv = CutContents(getter_AddRefs(fragment));
   return fragment.forget();
 }
@@ -2229,7 +2237,7 @@ nsRange::CloneContents(ErrorResult& aRv)
   // which might be null
 
 
-  nsRefPtr<DocumentFragment> clonedFrag =
+  RefPtr<DocumentFragment> clonedFrag =
     new DocumentFragment(doc->NodeInfoManager());
 
   nsCOMPtr<nsINode> commonCloneAncestor = clonedFrag.get();
@@ -2419,7 +2427,7 @@ nsRange::CloneContents(ErrorResult& aRv)
 already_AddRefed<nsRange>
 nsRange::CloneRange() const
 {
-  nsRefPtr<nsRange> range = new nsRange(mOwner);
+  RefPtr<nsRange> range = new nsRange(mOwner);
 
   range->SetMaySpanAnonymousSubtrees(mMaySpanAnonymousSubtrees);
 
@@ -2451,7 +2459,8 @@ nsRange::InsertNode(nsIDOMNode* aNode)
 void
 nsRange::InsertNode(nsINode& aNode, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNode)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNode)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -2476,6 +2485,12 @@ nsRange::InsertNode(nsINode& aNode, ErrorResult& aRv)
       return;
     }
 
+    referenceParentNode->EnsurePreInsertionValidity(aNode, tStartContainer,
+                                                    aRv);
+    if (aRv.Failed()) {
+      return;
+    }
+
     nsCOMPtr<nsIDOMText> secondPart;
     aRv = startTextNode->SplitText(tStartOffset, getter_AddRefs(secondPart));
     if (aRv.Failed()) {
@@ -2493,6 +2508,11 @@ nsRange::InsertNode(nsINode& aNode, ErrorResult& aRv)
     nsCOMPtr<nsIDOMNode> q;
     aRv = tChildList->Item(tStartOffset, getter_AddRefs(q));
     referenceNode = do_QueryInterface(q);
+    if (aRv.Failed()) {
+      return;
+    }
+
+    tStartContainer->EnsurePreInsertionValidity(aNode, referenceNode, aRv);
     if (aRv.Failed()) {
       return;
     }
@@ -2548,7 +2568,8 @@ nsRange::SurroundContents(nsIDOMNode* aNewParent)
 void
 nsRange::SurroundContents(nsINode& aNewParent, ErrorResult& aRv)
 {
-  if (!nsContentUtils::CanCallerAccess(&aNewParent)) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() &&
+      !nsContentUtils::CanCallerAccess(&aNewParent)) {
     aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return;
   }
@@ -2590,7 +2611,7 @@ nsRange::SurroundContents(nsINode& aNewParent, ErrorResult& aRv)
 
   // Extract the contents within the range.
 
-  nsRefPtr<DocumentFragment> docFrag = ExtractContents(aRv);
+  RefPtr<DocumentFragment> docFrag = ExtractContents(aRv);
 
   if (aRv.Failed()) {
     return;
@@ -2934,7 +2955,7 @@ nsRange::GetBoundingClientRect(nsIDOMClientRect** aResult)
 already_AddRefed<DOMRect>
 nsRange::GetBoundingClientRect(bool aClampToEdge, bool aFlushLayout)
 {
-  nsRefPtr<DOMRect> rect = new DOMRect(ToSupports(this));
+  RefPtr<DOMRect> rect = new DOMRect(ToSupports(this));
   if (!mStartParent) {
     return rect.forget();
   }
@@ -2963,7 +2984,7 @@ nsRange::GetClientRects(bool aClampToEdge, bool aFlushLayout)
     return nullptr;
   }
 
-  nsRefPtr<DOMRectList> rectList =
+  RefPtr<DOMRectList> rectList =
     new DOMRectList(static_cast<nsIDOMRange*>(this));
 
   nsLayoutUtils::RectListBuilder builder(rectList);
@@ -2991,7 +3012,7 @@ nsRange::GetUsedFontFaces(nsIDOMFontFaceList** aResult)
   // Recheck whether we're still in the document
   NS_ENSURE_TRUE(mStartParent->IsInDoc(), NS_ERROR_UNEXPECTED);
 
-  nsRefPtr<nsFontFaceList> fontFaceList = new nsFontFaceList();
+  RefPtr<nsFontFaceList> fontFaceList = new nsFontFaceList();
 
   RangeSubtreeIterator iter;
   nsresult rv = iter.Init(this);
@@ -3082,14 +3103,14 @@ nsRange::Constructor(const GlobalObject& aGlobal,
 }
 
 void
-nsRange::ExcludeNonSelectableNodes(nsTArray<nsRefPtr<nsRange>>* aOutRanges)
+nsRange::ExcludeNonSelectableNodes(nsTArray<RefPtr<nsRange>>* aOutRanges)
 {
   MOZ_ASSERT(mIsPositioned);
   MOZ_ASSERT(mEndParent);
   MOZ_ASSERT(mStartParent);
 
   nsRange* range = this;
-  nsRefPtr<nsRange> newRange;
+  RefPtr<nsRange> newRange;
   while (range) {
     nsCOMPtr<nsIContentIterator> iter = NS_NewPreContentIterator();
     nsresult rv = iter->Init(range);

@@ -386,7 +386,7 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
     return BAD_VALUE;
   }
 
-  uint32_t pixelStride = aMappedSurface->mStride/gfx::BytesPerPixel(gfx::SurfaceFormat::R5G6B5);
+  uint32_t pixelStride = aMappedSurface->mStride/gfx::BytesPerPixel(gfx::SurfaceFormat::R5G6B5_UINT16);
   rv = colorConverter.convert(buffer, width, height,
                               0, 0, width - 1, height - 1 /* source crop */,
                               aMappedSurface->mData, pixelStride, height,
@@ -397,6 +397,42 @@ ConvertOmxYUVFormatToRGB565(android::sp<GraphicBuffer>& aBuffer,
   }
 
   return OK;
+}
+
+already_AddRefed<gfx::DataSourceSurface>
+GetDataSourceSurfaceFrom(android::sp<android::GraphicBuffer>& aGraphicBuffer,
+                         gfx::IntSize aSize,
+                         const layers::PlanarYCbCrData& aYcbcrData)
+{
+  MOZ_ASSERT(aGraphicBuffer.get());
+
+  RefPtr<gfx::DataSourceSurface> surface =
+    gfx::Factory::CreateDataSourceSurface(aSize, gfx::SurfaceFormat::R5G6B5_UINT16);
+  if (NS_WARN_IF(!surface)) {
+    return nullptr;
+  }
+
+  gfx::DataSourceSurface::MappedSurface mappedSurface;
+  if (!surface->Map(gfx::DataSourceSurface::WRITE, &mappedSurface)) {
+    NS_WARNING("Could not map DataSourceSurface");
+    return nullptr;
+  }
+
+  int32_t rv;
+  rv = ConvertOmxYUVFormatToRGB565(aGraphicBuffer, surface, &mappedSurface, aYcbcrData);
+  if (rv == OK) {
+    surface->Unmap();
+    return surface.forget();
+  }
+
+  rv = ConvertVendorYUVFormatToRGB565(aGraphicBuffer, surface, &mappedSurface);
+  surface->Unmap();
+  if (rv != OK) {
+    NS_WARNING("Unknown color format");
+    return nullptr;
+  }
+
+  return surface.forget();
 }
 
 already_AddRefed<gfx::SourceSurface>
@@ -410,30 +446,7 @@ GrallocImage::GetAsSourceSurface()
     mTextureClient->GetGraphicBuffer();
 
   RefPtr<gfx::DataSourceSurface> surface =
-    gfx::Factory::CreateDataSourceSurface(GetSize(), gfx::SurfaceFormat::R5G6B5);
-  if (NS_WARN_IF(!surface)) {
-    return nullptr;
-  }
-
-  gfx::DataSourceSurface::MappedSurface mappedSurface;
-  if (!surface->Map(gfx::DataSourceSurface::WRITE, &mappedSurface)) {
-    NS_WARNING("Could not map DataSourceSurface");
-    return nullptr;
-  }
-
-  int32_t rv;
-  rv = ConvertOmxYUVFormatToRGB565(graphicBuffer, surface, &mappedSurface, mData);
-  if (rv == OK) {
-    surface->Unmap();
-    return surface.forget();
-  }
-
-  rv = ConvertVendorYUVFormatToRGB565(graphicBuffer, surface, &mappedSurface);
-  surface->Unmap();
-  if (rv != OK) {
-    NS_WARNING("Unknown color format");
-    return nullptr;
-  }
+    GetDataSourceSurfaceFrom(graphicBuffer, mSize, mData);
 
   return surface.forget();
 }

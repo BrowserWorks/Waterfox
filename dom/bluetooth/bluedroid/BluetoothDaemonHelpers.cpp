@@ -202,24 +202,26 @@ Convert(uint8_t aIn, BluetoothAvrcpPlayerAttribute& aOut)
 }
 
 nsresult
-Convert(uint8_t aIn, BluetoothAvrcpRemoteFeature& aOut)
+Convert(uint8_t aIn, BluetoothAvrcpRemoteFeatureBits& aOut)
 {
-  static const BluetoothAvrcpRemoteFeature sAvrcpRemoteFeature[] = {
-    [0x00] = AVRCP_REMOTE_FEATURE_NONE,
-    [0x01] = AVRCP_REMOTE_FEATURE_METADATA,
-    [0x02] = AVRCP_REMOTE_FEATURE_ABSOLUTE_VOLUME,
-    [0x03] = AVRCP_REMOTE_FEATURE_BROWSE
+  static const uint8_t sAvrcpRemoteFeatureBits[] = {
+    [0] = AVRCP_REMOTE_FEATURE_METADATA,
+    [1] = AVRCP_REMOTE_FEATURE_ABSOLUTE_VOLUME,
+    [2] = AVRCP_REMOTE_FEATURE_BROWSE
   };
+  uint8_t bits = 0;
+  size_t i;
+  for (i = 0; i < MOZ_ARRAY_LENGTH(sAvrcpRemoteFeatureBits); ++i, aIn >>= 1) {
+    if (aIn & 0x01) {
+      bits |= sAvrcpRemoteFeatureBits[i];
+    }
+  }
   if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        !aIn, uint8_t, BluetoothAvrcpRemoteFeature) ||
-      MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn >= MOZ_ARRAY_LENGTH(sAvrcpRemoteFeature), uint8_t,
-        BluetoothAvrcpRemoteFeature)) {
-    // silences compiler warning
-    aOut = static_cast<BluetoothAvrcpRemoteFeature>(0);
+        aIn << i, 'uint8_t', BluetoothAvrcpRemoteFeatureBits)) {
+    aOut = AVRCP_REMOTE_FEATURE_NONE; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  aOut = sAvrcpRemoteFeature[aIn];
+  aOut = static_cast<BluetoothAvrcpRemoteFeatureBits>(bits);
   return NS_OK;
 }
 
@@ -465,6 +467,17 @@ Convert(uint8_t aIn, BluetoothStatus& aOut)
 }
 
 nsresult
+Convert(int32_t aIn, BluetoothAttributeHandle& aOut)
+{
+  if (NS_WARN_IF(aIn < 0x0000) || NS_WARN_IF(aIn > 0xFFFF)) {
+    aOut.mHandle = 0x0000; // silences compiler warning
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut.mHandle = static_cast<uint16_t>(aIn);
+  return NS_OK;
+}
+
+nsresult
 Convert(int32_t aIn, BluetoothGattStatus& aOut)
 {
   /* Reference: $B2G/external/bluetooth/bluedroid/stack/include/gatt_api.h */
@@ -501,85 +514,6 @@ Convert(int32_t aIn, BluetoothGattStatus& aOut)
 }
 
 nsresult
-Convert(const nsAString& aIn, BluetoothAddress& aOut)
-{
-  NS_ConvertUTF16toUTF8 bdAddressUTF8(aIn);
-  const char* str = bdAddressUTF8.get();
-
-  for (size_t i = 0; i < MOZ_ARRAY_LENGTH(aOut.mAddr); ++i, ++str) {
-    aOut.mAddr[i] =
-      static_cast<uint8_t>(strtoul(str, const_cast<char**>(&str), 16));
-  }
-
-  return NS_OK;
-}
-
-nsresult
-Convert(const nsAString& aIn, BluetoothPinCode& aOut)
-{
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn.Length() > MOZ_ARRAY_LENGTH(aOut.mPinCode), nsAString,
-        BluetoothPinCode)) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-
-  NS_ConvertUTF16toUTF8 pinCodeUTF8(aIn);
-  const char* str = pinCodeUTF8.get();
-
-  nsAString::size_type i;
-
-  // Fill pin into aOut
-  for (i = 0; i < aIn.Length(); ++i, ++str) {
-    aOut.mPinCode[i] = static_cast<uint8_t>(*str);
-  }
-
-  // Clear remaining bytes in aOut
-  size_t ntrailing = (MOZ_ARRAY_LENGTH(aOut.mPinCode) - aIn.Length()) *
-                     sizeof(aOut.mPinCode[0]);
-  memset(aOut.mPinCode + aIn.Length(), 0, ntrailing);
-
-  aOut.mLength = aIn.Length();
-
-  return NS_OK;
-}
-
-nsresult
-Convert(const nsAString& aIn, BluetoothPropertyType& aOut)
-{
-  if (aIn.EqualsLiteral("Name")) {
-    aOut = PROPERTY_BDNAME;
-  } else if (aIn.EqualsLiteral("Discoverable")) {
-    aOut = PROPERTY_ADAPTER_SCAN_MODE;
-  } else if (aIn.EqualsLiteral("DiscoverableTimeout")) {
-    aOut = PROPERTY_ADAPTER_DISCOVERY_TIMEOUT;
-  } else if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        false, nsAString, BluetoothPropertyType)) {
-    BT_LOGR("Invalid property name: %s", NS_ConvertUTF16toUTF8(aIn).get());
-    aOut = static_cast<BluetoothPropertyType>(0); // silences compiler warning
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-  return NS_OK;
-}
-
-nsresult
-Convert(const nsAString& aIn, BluetoothServiceName& aOut)
-{
-  NS_ConvertUTF16toUTF8 serviceNameUTF8(aIn);
-  const char* str = serviceNameUTF8.get();
-  size_t len = strlen(str);
-
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        len > sizeof(aOut.mName), nsAString, BluetoothServiceName)) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-
-  memcpy(aOut.mName, str, len);
-  memset(aOut.mName + len, 0, sizeof(aOut.mName) - len);
-
-  return NS_OK;
-}
-
-nsresult
 Convert(nsresult aIn, BluetoothStatus& aOut)
 {
   if (NS_SUCCEEDED(aIn)) {
@@ -593,42 +527,9 @@ Convert(nsresult aIn, BluetoothStatus& aOut)
 }
 
 nsresult
-Convert(BluetoothAclState aIn, bool& aOut)
+Convert(const BluetoothAttributeHandle& aIn, int32_t& aOut)
 {
-  static const bool sBool[] = {
-    [ACL_STATE_CONNECTED] = true,
-    [ACL_STATE_DISCONNECTED] = false
-  };
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        aIn >= MOZ_ARRAY_LENGTH(sBool), BluetoothAclState, bool)) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-  aOut = sBool[aIn];
-  return NS_OK;
-}
-
-nsresult
-Convert(const BluetoothAddress& aIn, nsAString& aOut)
-{
-  char str[BLUETOOTH_ADDRESS_LENGTH + 1];
-
-  int res = snprintf(str, sizeof(str), "%02x:%02x:%02x:%02x:%02x:%02x",
-                     static_cast<int>(aIn.mAddr[0]),
-                     static_cast<int>(aIn.mAddr[1]),
-                     static_cast<int>(aIn.mAddr[2]),
-                     static_cast<int>(aIn.mAddr[3]),
-                     static_cast<int>(aIn.mAddr[4]),
-                     static_cast<int>(aIn.mAddr[5]));
-  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        res < 0, BluetoothAddress, nsAString)) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  } else if (MOZ_HAL_IPC_CONVERT_WARN_IF(
-        (size_t)res >= sizeof(str), BluetoothAddress, nsAString)) {
-    return NS_ERROR_OUT_OF_MEMORY; /* string buffer too small */
-  }
-
-  aOut = NS_ConvertUTF8toUTF16(str);
-
+  aOut = static_cast<int32_t>(aIn.mHandle);
   return NS_OK;
 }
 
@@ -685,7 +586,7 @@ Convert(BluetoothAvrcpPlayerAttribute aIn, uint8_t& aOut)
 }
 
 nsresult
-Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut)
+Convert(BluetoothAvrcpRemoteFeatureBits aIn, unsigned long& aOut)
 {
   if (MOZ_HAL_IPC_CONVERT_WARN_IF(
         aIn < std::numeric_limits<unsigned long>::min(),
@@ -924,18 +825,6 @@ Convert(BluetoothPropertyType aIn, uint8_t& aOut)
 }
 
 nsresult
-Convert(const BluetoothRemoteName& aIn, nsAString& aOut)
-{
-  const char* name = reinterpret_cast<const char*>(aIn.mName);
-
-  // We construct an nsCString here because the string
-  // returned from the PDU is not 0-terminated.
-  aOut = NS_ConvertUTF8toUTF16(
-    nsCString(name, strnlen(name, sizeof(aIn.mName))));
-  return NS_OK;
-}
-
-nsresult
 Convert(BluetoothScanMode aIn, int32_t& aOut)
 {
   static const int32_t sScanMode[] = {
@@ -949,6 +838,35 @@ Convert(BluetoothScanMode aIn, int32_t& aOut)
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = sScanMode[aIn];
+  return NS_OK;
+}
+
+nsresult
+Convert(BluetoothSetupServiceId aIn, uint8_t& aOut)
+{
+  static const uint8_t sServiceId[] = {
+    [SETUP_SERVICE_ID_SETUP] = 0x00,
+    [SETUP_SERVICE_ID_CORE] = 0x01,
+    [SETUP_SERVICE_ID_SOCKET] = 0x02,
+    [SETUP_SERVICE_ID_HID] = 0x03,
+    [SETUP_SERVICE_ID_PAN] = 0x04,
+    [SETUP_SERVICE_ID_HANDSFREE] = 0x05,
+    [SETUP_SERVICE_ID_A2DP] = 0x06,
+    [SETUP_SERVICE_ID_HEALTH] = 0x07,
+    [SETUP_SERVICE_ID_AVRCP] = 0x08,
+    [SETUP_SERVICE_ID_GATT] = 0x09,
+    [SETUP_SERVICE_ID_HANDSFREE_CLIENT] = 0x0a,
+    [SETUP_SERVICE_ID_MAP_CLIENT] = 0x0b,
+    [SETUP_SERVICE_ID_AVRCP_CONTROLLER] = 0x0c,
+    [SETUP_SERVICE_ID_A2DP_SINK] = 0x0d
+  };
+  if (MOZ_HAL_IPC_CONVERT_WARN_IF(
+        aIn >= MOZ_ARRAY_LENGTH(sServiceId),
+        BluetoothServiceSetupId, uint8_t)) {
+    aOut = 0; // silences compiler warning
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sServiceId[aIn];
   return NS_OK;
 }
 
@@ -1076,6 +994,12 @@ nsresult
 PackPDU(const BluetoothAddress& aIn, DaemonSocketPDU& aPDU)
 {
   return PackPDU(PackArray<uint8_t>(aIn.mAddr, sizeof(aIn.mAddr)), aPDU);
+}
+
+nsresult
+PackPDU(const BluetoothAttributeHandle& aIn, DaemonSocketPDU& aPDU)
+{
+  return PackPDU(PackConversion<BluetoothAttributeHandle, int32_t>(aIn), aPDU);
 }
 
 nsresult
@@ -1306,37 +1230,42 @@ PackPDU(const BluetoothHandsfreeWbsConfig& aIn, DaemonSocketPDU& aPDU)
 }
 
 nsresult
-PackPDU(const BluetoothNamedValue& aIn, DaemonSocketPDU& aPDU)
+PackPDU(const BluetoothProperty& aIn, DaemonSocketPDU& aPDU)
 {
-  nsresult rv = PackPDU(
-    PackConversion<nsString, BluetoothPropertyType>(aIn.name()), aPDU);
+  nsresult rv = PackPDU(aIn.mType, aPDU);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  if (aIn.value().type() == BluetoothValue::Tuint32_t) {
-    // Set discoverable timeout
-    rv = PackPDU(static_cast<uint16_t>(sizeof(uint32_t)),
-                 aIn.value().get_uint32_t(), aPDU);
-  } else if (aIn.value().type() == BluetoothValue::TnsString) {
-    // Set name
-    const nsCString value =
-      NS_ConvertUTF16toUTF8(aIn.value().get_nsString());
+  switch (aIn.mType) {
+    case PROPERTY_BDNAME:
+      /* fall through */
+    case PROPERTY_REMOTE_FRIENDLY_NAME: {
+        NS_ConvertUTF16toUTF8 stringUTF8(aIn.mString);
 
-    rv = PackPDU(PackConversion<size_t, uint16_t>(value.Length()),
-                 PackArray<uint8_t>(
-                   reinterpret_cast<const uint8_t*>(value.get()),
-                   value.Length()),
-                 aPDU);
-  } else if (aIn.value().type() == BluetoothValue::Tbool) {
-    // Set scan mode
-    bool value = aIn.value().get_bool();
-
-    rv = PackPDU(static_cast<uint16_t>(sizeof(int32_t)),
-                 PackConversion<bool, BluetoothScanMode>(value), aPDU);
-  } else if (MOZ_HAL_IPC_PACK_WARN_IF(true, BluetoothNamedValue)) {
-    BT_LOGR("Invalid property value type");
-    rv = NS_ERROR_ILLEGAL_VALUE;
+        rv = PackPDU(PackConversion<size_t, uint16_t>(stringUTF8.Length()),
+                     PackArray<uint8_t>(
+                       reinterpret_cast<const uint8_t*>(stringUTF8.get()),
+                       stringUTF8.Length()),
+                     aPDU);
+      }
+      break;
+    case PROPERTY_CLASS_OF_DEVICE:
+      /* fall through */
+    case PROPERTY_ADAPTER_DISCOVERY_TIMEOUT:
+      rv = PackPDU(PackConversion<size_t, uint16_t>(sizeof(aIn.mUint32)),
+                   aIn.mUint32,
+                   aPDU);
+      break;
+    case PROPERTY_ADAPTER_SCAN_MODE:
+      /* |mScanMode| is sent as signed int of 4 bytes */
+      rv = PackPDU(PackConversion<size_t, uint16_t>(sizeof(int32_t)),
+                   aIn.mScanMode,
+                   aPDU);
+      break;
+    default:
+      NS_NOTREACHED("Invalid property for packing");
+      return NS_ERROR_ILLEGAL_VALUE;
   }
   return rv;
 }
@@ -1368,9 +1297,23 @@ PackPDU(BluetoothScanMode aIn, DaemonSocketPDU& aPDU)
 }
 
 nsresult
+PackPDU(BluetoothSetupServiceId aIn, DaemonSocketPDU& aPDU)
+{
+  return PackPDU(PackConversion<BluetoothSetupServiceId, uint8_t>(aIn), aPDU);
+}
+
+nsresult
 PackPDU(const BluetoothServiceName& aIn, DaemonSocketPDU& aPDU)
 {
-  return PackPDU(PackArray<uint8_t>(aIn.mName, sizeof(aIn.mName)), aPDU);
+  static const uint8_t sTerminator = '\0';
+
+  nsresult rv =
+    PackPDU(PackArray<uint8_t>(aIn.mName, sizeof(aIn.mName)), aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  /* The PDU requries one additional byte for \0 termination */
+  return aPDU.Write(sTerminator);
 }
 
 nsresult
@@ -1455,6 +1398,13 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAclState& aOut)
 }
 
 nsresult
+UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAttributeHandle& aOut)
+{
+  return UnpackPDU(
+    aPDU, UnpackConversion<int32_t, BluetoothAttributeHandle>(aOut));
+}
+
+nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpEvent& aOut)
 {
   return UnpackPDU(
@@ -1498,10 +1448,10 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpPlayerSettings& aOut)
 }
 
 nsresult
-UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpRemoteFeature& aOut)
+UnpackPDU(DaemonSocketPDU& aPDU, BluetoothAvrcpRemoteFeatureBits& aOut)
 {
   return UnpackPDU(
-    aPDU, UnpackConversion<uint8_t, BluetoothAvrcpRemoteFeature>(aOut));
+    aPDU, UnpackConversion<uint8_t, BluetoothAvrcpRemoteFeatureBits>(aOut));
 }
 
 nsresult
@@ -1596,8 +1546,7 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothProperty& aOut)
       }
       break;
     case PROPERTY_BDADDR:
-      rv = UnpackPDU<BluetoothAddress>(
-        aPDU, UnpackConversion<BluetoothAddress, nsAString>(aOut.mString));
+      rv = UnpackPDU(aPDU, aOut.mBdAddress);
       break;
     case PROPERTY_UUIDS: {
         size_t numUuids = len / MAX_UUID_SIZE;
@@ -1622,17 +1571,8 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothProperty& aOut)
     case PROPERTY_ADAPTER_BONDED_DEVICES: {
         /* unpack addresses */
         size_t numAddresses = len / BLUETOOTH_ADDRESS_BYTES;
-        nsAutoArrayPtr<BluetoothAddress> addresses;
-        UnpackArray<BluetoothAddress> addressArray(addresses, numAddresses);
-        rv = UnpackPDU(aPDU, addressArray);
-        if (NS_FAILED(rv)) {
-          return rv;
-        }
-        /* convert addresses to strings */
-        aOut.mStringArray.SetLength(numAddresses);
-        ConvertArray<BluetoothAddress> convertArray(addressArray.mData,
-                                                    addressArray.mLength);
-        rv = Convert(convertArray, aOut.mStringArray);
+        aOut.mBdAddressArray.SetLength(numAddresses);
+        rv = UnpackPDU(aPDU, aOut.mBdAddressArray);
       }
       break;
     case PROPERTY_REMOTE_RSSI: {
@@ -1803,14 +1743,8 @@ UnpackPDU(DaemonSocketPDU& aPDU, BluetoothGattWriteParam& aOut)
 nsresult
 UnpackPDU(DaemonSocketPDU& aPDU, BluetoothGattNotifyParam& aOut)
 {
-
-  /* unpack address and convert to nsString */
-  BluetoothAddress address;
-  nsresult rv = UnpackPDU(aPDU, address);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  rv = Convert(address, aOut.mBdAddr);
+  /* unpack address */
+  nsresult rv = UnpackPDU(aPDU, aOut.mBdAddr);
   if (NS_FAILED(rv)) {
     return rv;
   }

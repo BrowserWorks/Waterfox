@@ -99,7 +99,7 @@ ImageListener::OnStartRequest(nsIRequest* request, nsISupports *ctxt)
   }
 
   int16_t decision = nsIContentPolicy::ACCEPT;
-  nsresult rv = NS_CheckContentProcessPolicy(nsIContentPolicy::TYPE_IMAGE,
+  nsresult rv = NS_CheckContentProcessPolicy(nsIContentPolicy::TYPE_INTERNAL_IMAGE,
                                              channelURI,
                                              channelPrincipal,
                                              domWindow->GetFrameElementInternal(),
@@ -634,7 +634,7 @@ ImageDocument::CreateSyntheticDocument()
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<mozilla::dom::NodeInfo> nodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo;
   nodeInfo = mNodeInfoManager->GetNodeInfo(nsGkAtoms::img, nullptr,
                                            kNameSpaceID_XHTML,
                                            nsIDOMNode::ELEMENT_NODE);

@@ -4,6 +4,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 include $(CORE_DEPTH)/coreconf/UNIX.mk
+include $(CORE_DEPTH)/coreconf/Werror.mk
 
 DEFAULT_COMPILER = gcc
 
@@ -81,7 +82,7 @@ endif
 # definitions so that the linker can catch multiply-defined symbols.
 # Also, common symbols are not allowed with Darwin dynamic libraries.
 
-OS_CFLAGS	= $(DSO_CFLAGS) $(OS_REL_CFLAGS) -Wall -fno-common -pipe -DDARWIN -DHAVE_STRERROR -DHAVE_BSD_FLOCK $(DARWIN_SDK_CFLAGS)
+OS_CFLAGS	= $(DSO_CFLAGS) $(OS_REL_CFLAGS) $(WARNING_CFLAGS) -fno-common -pipe -DDARWIN -DHAVE_STRERROR -DHAVE_BSD_FLOCK $(DARWIN_SDK_CFLAGS)
 
 ifdef BUILD_OPT
 ifeq (11,$(ALLOW_OPT_CODE_SIZE)$(OPT_CODE_SIZE))

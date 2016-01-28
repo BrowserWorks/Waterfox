@@ -1,7 +1,7 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
 
-const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
@@ -391,8 +391,6 @@ function useHttpServer() {
  *        {
  *          name: Engine name, used to wait for it to be loaded.
  *          xmlFileName: Name of the XML file in the "data" folder.
- *          srcFileName: Name of the SRC file in the "data" folder.
- *          iconFileName: Name of the icon associated to the SRC file.
  *          details: Array containing the parameters of addEngineWithDetails,
  *                   except for the engine name.  Alternative to xmlFileName.
  *        }
@@ -425,11 +423,7 @@ var addTestEngines = Task.async(function* (aItems) {
 
       if (item.xmlFileName) {
         Services.search.addEngine(gDataUrl + item.xmlFileName,
-                                  Ci.nsISearchEngine.DATA_XML, null, false);
-      } else if (item.srcFileName) {
-        Services.search.addEngine(gDataUrl + item.srcFileName,
-                                  Ci.nsISearchEngine.DATA_TEXT,
-                                  gDataUrl + item.iconFileName, false);
+                                  null, null, false);
       } else {
         Services.search.addEngineWithDetails(item.name, ...item.details);
       }

@@ -7,6 +7,9 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/HTMLIFrameElementBinding.h"
 #include "mozilla/dom/TabParent.h"
+#include "mozilla/Function.h"
+#include "mozilla/Logging.h"
+#include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "nsIDocShell.h"
@@ -21,6 +24,10 @@
 #include "PresentationService.h"
 #include "PresentationSessionInfo.h"
 
+#ifdef MOZ_WIDGET_ANDROID
+#include "nsIPresentationNetworkHelper.h"
+#endif // MOZ_WIDGET_ANDROID
+
 #ifdef MOZ_WIDGET_GONK
 #include "nsINetworkInterface.h"
 #include "nsINetworkManager.h"
@@ -30,6 +37,16 @@ using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::services;
 
+inline static PRLogModuleInfo*
+GetPresentationSessionInfoLog()
+{
+  static PRLogModuleInfo* log = PR_NewLogModule("PresentationSessionInfo");
+  return log;
+}
+#undef LOG
+#define LOG(...) MOZ_LOG(GetPresentationSessionInfoLog(), mozilla::LogLevel::Error, (__VA_ARGS__))
+
+
 /*
  * Implementation of PresentationChannelDescription
  */
@@ -37,13 +54,88 @@ using namespace mozilla::services;
 namespace mozilla {
 namespace dom {
 
+#ifdef MOZ_WIDGET_ANDROID
+
+namespace {
+
+class PresentationNetworkHelper final : public nsIPresentationNetworkHelperListener
+{
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIPRESENTATIONNETWORKHELPERLISTENER
+
+  using Function = nsresult(PresentationControllingInfo::*)(const nsACString&);
+
+  explicit PresentationNetworkHelper(PresentationControllingInfo* aInfo,
+                                     const Function& aFunc);
+
+  nsresult GetWifiIPAddress();
+
+private:
+  ~PresentationNetworkHelper() = default;
+
+  RefPtr<PresentationControllingInfo> mInfo;
+  Function mFunc;
+};
+
+NS_IMPL_ISUPPORTS(PresentationNetworkHelper,
+                  nsIPresentationNetworkHelperListener)
+
+PresentationNetworkHelper::PresentationNetworkHelper(PresentationControllingInfo* aInfo,
+                                                     const Function& aFunc)
+  : mInfo(aInfo)
+  , mFunc(aFunc)
+{
+  MOZ_ASSERT(aInfo);
+  MOZ_ASSERT(aFunc);
+}
+
+nsresult
+PresentationNetworkHelper::GetWifiIPAddress()
+{
+  nsresult rv;
+
+  nsCOMPtr<nsIPresentationNetworkHelper> networkHelper =
+    do_GetService(PRESENTATION_NETWORK_HELPER_CONTRACTID, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return networkHelper->GetWifiIPAddress(this);
+}
+
+NS_IMETHODIMP
+PresentationNetworkHelper::OnError(const nsACString & aReason)
+{
+  LOG("PresentationNetworkHelper::OnError: %s",
+    nsPromiseFlatCString(aReason).get());
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationNetworkHelper::OnGetWifiIPAddress(const nsACString& aIPAddress)
+{
+  MOZ_ASSERT(mInfo);
+  MOZ_ASSERT(mFunc);
+
+  NS_DispatchToMainThread(
+    NS_NewRunnableMethodWithArg<nsCString>(mInfo,
+                                           mFunc,
+                                           aIPAddress));
+  return NS_OK;
+}
+
+} // anonymous namespace
+
+#endif // MOZ_WIDGET_ANDROID
+
 class PresentationChannelDescription final : public nsIPresentationChannelDescription
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPRESENTATIONCHANNELDESCRIPTION
 
-  PresentationChannelDescription(nsACString& aAddress,
+  PresentationChannelDescription(const nsACString& aAddress,
                                  uint16_t aPort)
     : mAddress(aAddress)
     , mPort(aPort)
@@ -174,10 +266,7 @@ PresentationSessionInfo::SetListener(nsIPresentationSessionListener* aListener)
 
     // The transport might become ready, or might become un-ready again, before
     // the listener has registered. So notify the listener of the state change.
-    uint16_t state = IsSessionReady() ?
-                     nsIPresentationSessionListener::STATE_CONNECTED :
-                     nsIPresentationSessionListener::STATE_DISCONNECTED;
-    return mListener->NotifyStateChange(mSessionId, state);
+    return mListener->NotifyStateChange(mSessionId, mState);
   }
 
   return NS_OK;
@@ -198,22 +287,14 @@ PresentationSessionInfo::Send(nsIInputStream* aData)
 }
 
 nsresult
-PresentationSessionInfo::Close(nsresult aReason)
+PresentationSessionInfo::Close(nsresult aReason,
+                               uint32_t aState)
 {
-  // The session is disconnected and it's a normal close. Simply change the
-  // state to TERMINATED.
-  if (!IsSessionReady() && NS_SUCCEEDED(aReason)) {
-    if (mListener) {
-      // Notify the listener and the service will untrack the session info after
-      // the listener calls |UnregisterSessionListener|.
-      nsresult rv = mListener->NotifyStateChange(mSessionId,
-                                                 nsIPresentationSessionListener::STATE_TERMINATED);
-      NS_WARN_IF(NS_FAILED(rv));
-    } else {
-      // Directly untrack the session info from the service.
-      NS_WARN_IF(NS_FAILED(UntrackFromService()));
-    }
+  if (NS_WARN_IF(!IsSessionReady())) {
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
   }
+
+  SetState(aState);
 
   Shutdown(aReason);
   return NS_OK;
@@ -222,12 +303,7 @@ PresentationSessionInfo::Close(nsresult aReason)
 nsresult
 PresentationSessionInfo::ReplySuccess()
 {
-  if (mListener) {
-    // Notify session state change.
-    nsresult rv = mListener->NotifyStateChange(mSessionId,
-                                               nsIPresentationSessionListener::STATE_CONNECTED);
-    NS_WARN_IF(NS_FAILED(rv));
-  }
+  SetState(nsIPresentationSessionListener::STATE_CONNECTED);
 
   if (mCallback) {
     NS_WARN_IF(NS_FAILED(mCallback->NotifySuccess()));
@@ -308,17 +384,14 @@ PresentationSessionInfo::NotifyTransportClosed(nsresult aReason)
   // Unset |mIsTransportReady| here so it won't affect |IsSessionReady()| above.
   mIsTransportReady = false;
 
+  if (mState == nsIPresentationSessionListener::STATE_CONNECTED) {
+    // The transport channel is closed unexpectedly (not caused by a |Close| call).
+    SetState(nsIPresentationSessionListener::STATE_CLOSED);
+  }
+
   Shutdown(aReason);
 
-  uint16_t state = (NS_WARN_IF(NS_FAILED(aReason))) ?
-                   nsIPresentationSessionListener::STATE_DISCONNECTED :
-                   nsIPresentationSessionListener::STATE_TERMINATED;
-  if (mListener) {
-    // It happens after the session is ready. Notify session state change.
-    // If the new state is TERMINATED. the service will untrack the session info
-    // after the listener calls |UnregisterSessionListener|.
-    return mListener->NotifyStateChange(mSessionId, state);
-  } else if (state == nsIPresentationSessionListener::STATE_TERMINATED) {
+  if (mState == nsIPresentationSessionListener::STATE_TERMINATED) {
     // Directly untrack the session info from the service.
     return UntrackFromService();
   }
@@ -406,9 +479,9 @@ PresentationControllingInfo::Shutdown(nsresult aReason)
 }
 
 nsresult
-PresentationControllingInfo::GetAddress(nsACString& aAddress)
+PresentationControllingInfo::GetAddress()
 {
-#ifdef MOZ_WIDGET_GONK
+#if defined(MOZ_WIDGET_GONK)
   nsCOMPtr<nsINetworkManager> networkManager =
     do_GetService("@mozilla.org/network/manager;1");
   if (NS_WARN_IF(!networkManager)) {
@@ -438,16 +511,63 @@ PresentationControllingInfo::GetAddress(nsACString& aAddress)
   // scenarios.
   nsAutoString ip;
   ip.Assign(ips[0]);
-  aAddress = NS_ConvertUTF16toUTF8(ip);
+
+  // On Android platform, the IP address is retrieved from a callback function.
+  // To make consistent code sequence, following function call is dispatched
+  // into main thread instead of calling it directly.
+  NS_DispatchToMainThread(
+    NS_NewRunnableMethodWithArg<nsCString>(
+      this,
+      &PresentationControllingInfo::OnGetAddress,
+      NS_ConvertUTF16toUTF8(ip)));
 
   NS_Free(prefixes);
   NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(count, ips);
+
+#elif defined(MOZ_WIDGET_ANDROID)
+  RefPtr<PresentationNetworkHelper> networkHelper =
+    new PresentationNetworkHelper(this,
+                                  &PresentationControllingInfo::OnGetAddress);
+  nsresult rv = networkHelper->GetWifiIPAddress();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
 #else
   // TODO Get host IP via other platforms.
-  aAddress.Truncate();
+
+  NS_DispatchToMainThread(
+    NS_NewRunnableMethodWithArg<nsCString>(
+      this,
+      &PresentationControllingInfo::OnGetAddress,
+      EmptyCString()));
 #endif
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+PresentationControllingInfo::OnIceCandidate(const nsAString& aCandidate)
+{
+  MOZ_ASSERT(false, "Should not receive ICE candidates.");
+  return NS_ERROR_FAILURE;
+}
+
+nsresult
+PresentationControllingInfo::OnGetAddress(const nsACString& aAddress)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Prepare and send the offer.
+  int32_t port;
+  nsresult rv = mServerSocket->GetPort(&port);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  RefPtr<PresentationChannelDescription> description =
+    new PresentationChannelDescription(aAddress, static_cast<uint16_t>(port));
+  return mControlChannel->SendOffer(description);
 }
 
 // nsIPresentationControlChannelListener
@@ -481,22 +601,8 @@ PresentationControllingInfo::OnAnswer(nsIPresentationChannelDescription* aDescri
 NS_IMETHODIMP
 PresentationControllingInfo::NotifyOpened()
 {
-  // Prepare and send the offer.
-  int32_t port;
-  nsresult rv = mServerSocket->GetPort(&port);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  nsCString address;
-  rv = GetAddress(address);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  nsRefPtr<PresentationChannelDescription> description =
-    new PresentationChannelDescription(address, static_cast<uint16_t>(port));
-  return mControlChannel->SendOffer(description);
+  MOZ_ASSERT(NS_IsMainThread());
+  return GetAddress();
 }
 
 NS_IMETHODIMP
@@ -508,13 +614,10 @@ PresentationControllingInfo::NotifyClosed(nsresult aReason)
   // subsequent |Shutdown| calls.
   SetControlChannel(nullptr);
 
-  if (NS_WARN_IF(NS_FAILED(aReason))) {
-    if (mListener) {
-      // The presentation session instance at receiver side may already exist.
-      // Change the state to TERMINATED since it never succeeds.
-      return mListener->NotifyStateChange(mSessionId,
-                                          nsIPresentationSessionListener::STATE_TERMINATED);
-    }
+  if (NS_WARN_IF(NS_FAILED(aReason) || !mIsResponderReady)) {
+    // The presentation session instance may already exist.
+    // Change the state to TERMINATED since it never succeeds.
+    SetState(nsIPresentationSessionListener::STATE_TERMINATED);
 
     // Reply error for an abnormal close.
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
@@ -566,11 +669,8 @@ PresentationControllingInfo::OnStopListening(nsIServerSocket* aServerSocket,
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
   }
 
-  // It happens after the session is ready. Notify session state change.
-  if (mListener) {
-    return mListener->NotifyStateChange(mSessionId,
-                                        nsIPresentationSessionListener::STATE_DISCONNECTED);
-  }
+  // It happens after the session is ready. Change the state to CLOSED.
+  SetState(nsIPresentationSessionListener::STATE_CLOSED);
 
   return NS_OK;
 }
@@ -759,6 +859,13 @@ PresentationPresentingInfo::OnAnswer(nsIPresentationChannelDescription* aDescrip
 }
 
 NS_IMETHODIMP
+PresentationPresentingInfo::OnIceCandidate(const nsAString& aCandidate)
+{
+  MOZ_ASSERT(false, "Should not receive ICE candidates.");
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
 PresentationPresentingInfo::NotifyOpened()
 {
   // Do nothing.
@@ -775,12 +882,9 @@ PresentationPresentingInfo::NotifyClosed(nsresult aReason)
   SetControlChannel(nullptr);
 
   if (NS_WARN_IF(NS_FAILED(aReason))) {
-    if (mListener) {
-      // The presentation session instance at receiver side may already exist.
-      // Change the state to TERMINATED since it never succeeds.
-      return mListener->NotifyStateChange(mSessionId,
-                                          nsIPresentationSessionListener::STATE_TERMINATED);
-    }
+    // The presentation session instance may already exist.
+    // Change the state to TERMINATED since it never succeeds.
+    SetState(nsIPresentationSessionListener::STATE_TERMINATED);
 
     // Reply error for an abnormal close.
     return ReplyError(NS_ERROR_DOM_OPERATION_ERR);
@@ -839,7 +943,7 @@ PresentationPresentingInfo::ResolvedCallback(JSContext* aCx,
     return;
   }
 
-  nsRefPtr<TabParent> tabParent = TabParent::GetFrom(frameLoader);
+  RefPtr<TabParent> tabParent = TabParent::GetFrom(frameLoader);
   if (tabParent) {
     // OOP frame
     // Notify the content process that a receiver page has launched, so it can

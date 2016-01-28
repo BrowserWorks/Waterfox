@@ -348,7 +348,7 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
                "We should not be in the middle of reflow");
   nscoord baseline = frame->GetCaretBaseline();
   nscoord ascent = 0, descent = 0;
-  nsRefPtr<nsFontMetrics> fm;
+  RefPtr<nsFontMetrics> fm;
   nsLayoutUtils::GetFontMetricsForFrame(aFrame, getter_AddRefs(fm),
     nsLayoutUtils::FontSizeInflationFor(aFrame));
   NS_ASSERTION(fm, "We should be able to get the font metrics");
@@ -907,7 +907,8 @@ nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
 {
   NS_ASSERTION(aFrame, "Should have a frame here");
 
-  bool isVertical = aFrame->GetWritingMode().IsVertical();
+  WritingMode wm = aFrame->GetWritingMode();
+  bool isVertical = wm.IsVertical();
 
   nscoord bidiIndicatorSize;
   *aCaretRect = GetGeometryForFrame(aFrame, aFrameOffset, &bidiIndicatorSize);
@@ -924,7 +925,6 @@ nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
 
   // Simon -- make a hook to draw to the left or right of the caret to show keyboard language direction
   aHookRect->SetEmpty();
-
   if (!IsBidiUI()) {
     return;
   }
@@ -939,11 +939,20 @@ nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
     // The height of the hook rectangle is the same as the width of the caret
     // rectangle.
     if (isVertical) {
-      aHookRect->SetRect(aCaretRect->XMost() - bidiIndicatorSize,
-                         aCaretRect->y + (isCaretRTL ? bidiIndicatorSize * -1 :
-                                                       aCaretRect->height),
-                         aCaretRect->height,
-                         bidiIndicatorSize);
+      bool isSidewaysLR = wm.IsVerticalLR() && !wm.IsLineInverted();
+      if (isSidewaysLR) {
+        aHookRect->SetRect(aCaretRect->x + bidiIndicatorSize,
+                           aCaretRect->y + (!isCaretRTL ? bidiIndicatorSize * -1 :
+                                                          aCaretRect->height),
+                           aCaretRect->height,
+                           bidiIndicatorSize);
+      } else {
+        aHookRect->SetRect(aCaretRect->XMost() - bidiIndicatorSize,
+                           aCaretRect->y + (isCaretRTL ? bidiIndicatorSize * -1 :
+                                                         aCaretRect->height),
+                           aCaretRect->height,
+                           bidiIndicatorSize);
+      }
     } else {
       aHookRect->SetRect(aCaretRect->x + (isCaretRTL ? bidiIndicatorSize * -1 :
                                                        aCaretRect->width),

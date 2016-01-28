@@ -739,7 +739,7 @@ bool nsCSSValue::IsNonTransparentColor() const
 nsCSSValue::Array*
 nsCSSValue::InitFunction(nsCSSKeyword aFunctionId, uint32_t aNumArgs)
 {
-  nsRefPtr<nsCSSValue::Array> func = Array::Create(aNumArgs + 1);
+  RefPtr<nsCSSValue::Array> func = Array::Create(aNumArgs + 1);
   func->Item(0).SetIntValue(aFunctionId, eCSSUnit_Enumerated);
   SetArrayValue(func, eCSSUnit_Function);
   return func;
@@ -765,7 +765,7 @@ nsCSSValue::EqualsFunction(nsCSSKeyword aFunctionId) const
 already_AddRefed<nsStringBuffer>
 nsCSSValue::BufferFromString(const nsString& aValue)
 {
-  nsRefPtr<nsStringBuffer> buffer = nsStringBuffer::FromString(aValue);
+  RefPtr<nsStringBuffer> buffer = nsStringBuffer::FromString(aValue);
   if (buffer) {
     return buffer.forget();
   }
@@ -1054,21 +1054,21 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
              eCSSProperty_transition_timing_function != aProperty) ||
             unit == eCSSUnit_Symbols)
           aResult.Append(' ');
-        else
+        else if (unit != eCSSUnit_Steps)
           aResult.AppendLiteral(", ");
       }
       if (unit == eCSSUnit_Steps && i == 1) {
-        MOZ_ASSERT(array->Item(i).GetUnit() == eCSSUnit_Enumerated &&
-                   (array->Item(i).GetIntValue() ==
-                     NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START ||
-                    array->Item(i).GetIntValue() ==
-                     NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END),
+        MOZ_ASSERT(array->Item(i).GetUnit() == eCSSUnit_Enumerated,
                    "unexpected value");
-        if (array->Item(i).GetIntValue() ==
-              NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START) {
-          aResult.AppendLiteral("start");
-        } else {
-          aResult.AppendLiteral("end");
+        int32_t side = array->Item(i).GetIntValue();
+        MOZ_ASSERT(side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START ||
+                   side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END ||
+                   side == -1,
+                   "unexpected value");
+        if (side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_START) {
+          aResult.AppendLiteral(", start");
+        } else if (side == NS_STYLE_TRANSITION_TIMING_FUNCTION_STEP_END) {
+          aResult.AppendLiteral(", end");
         }
         continue;
       }
@@ -1214,18 +1214,6 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
           NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE,
           NS_STYLE_TEXT_DECORATION_LINE_PREF_ANCHORS,
           aResult);
-      }
-      break;
-
-    case eCSSProperty_marks:
-      if (intValue == NS_STYLE_PAGE_MARKS_NONE) {
-        AppendASCIItoUTF16(nsCSSProps::LookupPropertyValue(aProperty, intValue),
-                           aResult);
-      } else {
-        nsStyleUtil::AppendBitmaskCSSValue(aProperty, intValue,
-                                           NS_STYLE_PAGE_MARKS_CROP,
-                                           NS_STYLE_PAGE_MARKS_REGISTER,
-                                           aResult);
       }
       break;
 
@@ -2442,7 +2430,7 @@ css::ImageValue::ImageValue(nsIURI* aURI, nsStringBuffer* aString,
 }
 
 static PLDHashOperator
-ClearRequestHashtable(nsISupports* aKey, nsRefPtr<imgRequestProxy>& aValue,
+ClearRequestHashtable(nsISupports* aKey, RefPtr<imgRequestProxy>& aValue,
                       void* aClosure)
 {
   mozilla::css::ImageValue* image =
@@ -2538,7 +2526,7 @@ nsCSSValueGradient::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) con
 nsCSSValueTokenStream::nsCSSValueTokenStream()
   : mPropertyID(eCSSProperty_UNKNOWN)
   , mShorthandPropertyID(eCSSProperty_UNKNOWN)
-  , mLevel(nsStyleSet::eSheetTypeCount)
+  , mLevel(SheetType::Count)
 {
   MOZ_COUNT_CTOR(nsCSSValueTokenStream);
 }

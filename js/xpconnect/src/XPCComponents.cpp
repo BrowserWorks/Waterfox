@@ -115,8 +115,6 @@ private:
     nsCOMArray<nsIInterfaceInfo> mInterfaces;
 };
 
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_Interfaces::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -342,8 +340,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_InterfacesByID::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -571,8 +567,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_Classes::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -780,8 +774,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_ClassesByID::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -1012,8 +1004,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_Results::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -1204,8 +1194,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_ID::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -1403,8 +1391,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_Exception::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -1764,14 +1750,12 @@ private:
                              JSContext* cx, HandleObject obj,
                              const CallArgs& args, bool* _retval);
 private:
-    nsRefPtr<nsIJSCID> mClassID;
-    nsRefPtr<nsIJSIID> mInterfaceID;
+    RefPtr<nsIJSCID> mClassID;
+    RefPtr<nsIJSIID> mInterfaceID;
     char*              mInitializer;
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCConstructor::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -1866,7 +1850,7 @@ nsXPCConstructor::~nsXPCConstructor()
 NS_IMETHODIMP
 nsXPCConstructor::GetClassID(nsIJSCID * *aClassID)
 {
-    nsRefPtr<nsIJSCID> rval = mClassID;
+    RefPtr<nsIJSCID> rval = mClassID;
     rval.forget(aClassID);
     return NS_OK;
 }
@@ -1874,7 +1858,7 @@ nsXPCConstructor::GetClassID(nsIJSCID * *aClassID)
 NS_IMETHODIMP
 nsXPCConstructor::GetInterfaceID(nsIJSIID * *aInterfaceID)
 {
-    nsRefPtr<nsIJSIID> rval = mInterfaceID;
+    RefPtr<nsIJSIID> rval = mInterfaceID;
     rval.forget(aInterfaceID);
     return NS_OK;
 }
@@ -1997,8 +1981,6 @@ private:
 };
 
 /***************************************************************************/
-/* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
-                       out nsIIDPtr array); */
 NS_IMETHODIMP
 nsXPCComponents_Constructor::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
@@ -2486,9 +2468,6 @@ nsXPCComponents_Utils::SetSandboxMetadata(HandleValue sandboxVal,
     return NS_OK;
 }
 
-/* JSObject import (in AUTF8String registryLocation,
- *                  [optional] in JSObject targetObj);
- */
 NS_IMETHODIMP
 nsXPCComponents_Utils::Import(const nsACString& registryLocation,
                               HandleValue targetObj,
@@ -2503,8 +2482,6 @@ nsXPCComponents_Utils::Import(const nsACString& registryLocation,
     return moduleloader->Import(registryLocation, targetObj, cx, optionalArgc, retval);
 }
 
-/* boolean isModuleLoaded (in AUTF8String registryLocation);
- */
 NS_IMETHODIMP
 nsXPCComponents_Utils::IsModuleLoaded(const nsACString& registryLocation, bool* retval)
 {
@@ -2515,8 +2492,6 @@ nsXPCComponents_Utils::IsModuleLoaded(const nsACString& registryLocation, bool* 
     return moduleloader->IsModuleLoaded(registryLocation, retval);
 }
 
-/* unload (in AUTF8String registryLocation);
- */
 NS_IMETHODIMP
 nsXPCComponents_Utils::Unload(const nsACString & registryLocation)
 {
@@ -2527,9 +2502,6 @@ nsXPCComponents_Utils::Unload(const nsACString & registryLocation)
     return moduleloader->Unload(registryLocation);
 }
 
-/*
- * JSObject importGlobalProperties (in jsval aPropertyList);
- */
 NS_IMETHODIMP
 nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
                                               JSContext* cx)
@@ -2545,8 +2517,16 @@ nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
 
     GlobalProperties options;
     NS_ENSURE_TRUE(aPropertyList.isObject(), NS_ERROR_INVALID_ARG);
+
     RootedObject propertyList(cx, &aPropertyList.toObject());
-    NS_ENSURE_TRUE(JS_IsArrayObject(cx, propertyList), NS_ERROR_INVALID_ARG);
+    bool isArray;
+    if (NS_WARN_IF(!JS_IsArrayObject(cx, propertyList, &isArray))) {
+        return NS_ERROR_FAILURE;
+    }
+    if (NS_WARN_IF(!isArray)) {
+        return NS_ERROR_INVALID_ARG;
+    }
+
     if (!options.Parse(cx, propertyList) ||
         !options.Define(cx, global))
     {
@@ -2560,7 +2540,7 @@ NS_IMETHODIMP
 nsXPCComponents_Utils::GetWeakReference(HandleValue object, JSContext* cx,
                                         xpcIJSWeakReference** _retval)
 {
-    nsRefPtr<xpcJSWeakReference> ref = new xpcJSWeakReference();
+    RefPtr<xpcJSWeakReference> ref = new xpcJSWeakReference();
     nsresult rv = ref->Init(cx, object);
     NS_ENSURE_SUCCESS(rv, rv);
     ref.forget(_retval);
@@ -2649,21 +2629,21 @@ class PreciseGCRunnable : public nsRunnable
     }
 
   private:
-    nsRefPtr<ScheduledGCCallback> mCallback;
+    RefPtr<ScheduledGCCallback> mCallback;
     bool mShrinking;
 };
 
 NS_IMETHODIMP
 nsXPCComponents_Utils::SchedulePreciseGC(ScheduledGCCallback* aCallback)
 {
-    nsRefPtr<PreciseGCRunnable> event = new PreciseGCRunnable(aCallback, false);
+    RefPtr<PreciseGCRunnable> event = new PreciseGCRunnable(aCallback, false);
     return NS_DispatchToMainThread(event);
 }
 
 NS_IMETHODIMP
 nsXPCComponents_Utils::SchedulePreciseShrinkingGC(ScheduledGCCallback* aCallback)
 {
-    nsRefPtr<PreciseGCRunnable> event = new PreciseGCRunnable(aCallback, true);
+    RefPtr<PreciseGCRunnable> event = new PreciseGCRunnable(aCallback, true);
     return NS_DispatchToMainThread(event);
 }
 
@@ -2706,8 +2686,6 @@ nsXPCComponents_Utils::GetJSTestingFunctions(JSContext* cx,
     return NS_OK;
 }
 
-/* jsval callFunctionWithStack(in jsval function, in nsIStackFrame stack,
-                               in AString asyncCause); */
 NS_IMETHODIMP
 nsXPCComponents_Utils::CallFunctionWithAsyncStack(HandleValue function,
                                                   nsIStackFrame* stack,
@@ -2938,13 +2916,6 @@ nsXPCComponents_Utils::ForcePermissiveCOWs(JSContext* cx)
 {
     CrashIfNotInAutomation();
     CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->forcePermissiveCOWs = true;
-    return NS_OK;
-}
-
-NS_IMETHODIMP
-nsXPCComponents_Utils::SkipCOWCallableChecks(JSContext* cx)
-{
-    CompartmentPrivate::Get(CurrentGlobalOrNull(cx))->skipCOWCallableChecks = true;
     return NS_OK;
 }
 
@@ -3196,7 +3167,7 @@ class WrappedJSHolder : public nsISupports
     NS_DECL_ISUPPORTS
     WrappedJSHolder() {}
 
-    nsRefPtr<nsXPCWrappedJS> mWrappedJS;
+    RefPtr<nsXPCWrappedJS> mWrappedJS;
 
 private:
     virtual ~WrappedJSHolder() {}
@@ -3216,7 +3187,7 @@ nsXPCComponents_Utils::GenerateXPCWrappedJS(HandleValue aObj, HandleValue aScope
     if (!JS_WrapObject(aCx, &obj))
         return NS_ERROR_FAILURE;
 
-    nsRefPtr<WrappedJSHolder> holder = new WrappedJSHolder();
+    RefPtr<WrappedJSHolder> holder = new WrappedJSHolder();
     nsresult rv = nsXPCWrappedJS::GetNewOrUsed(obj, NS_GET_IID(nsISupports),
                                                getter_AddRefs(holder->mWrappedJS));
     holder.forget(aOut);
@@ -3440,7 +3411,7 @@ NS_IMETHODIMP _class::Get##_n(nsIXPCComponents_##_n * *a##_n) {               \
     NS_ENSURE_ARG_POINTER(a##_n);                                             \
     if (!m##_n)                                                               \
         m##_n = new nsXPCComponents_##_n();                                   \
-    nsRefPtr<nsXPCComponents_##_n> ret = m##_n;                               \
+    RefPtr<nsXPCComponents_##_n> ret = m##_n;                               \
     ret.forget(a##_n);                                                        \
     return NS_OK;                                                             \
 }

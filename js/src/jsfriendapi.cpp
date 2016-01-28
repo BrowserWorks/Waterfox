@@ -24,7 +24,6 @@
 #include "proxy/DeadObjectProxy.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/Time.h"
-#include "vm/WeakMapObject.h"
 #include "vm/WrapperObject.h"
 
 #include "jsobjinlines.h"
@@ -262,9 +261,37 @@ JS_DefineFunctionsWithHelp(JSContext* cx, HandleObject obj, const JSFunctionSpec
 }
 
 JS_FRIEND_API(bool)
-js::ObjectClassIs(JSContext* cx, HandleObject obj, ESClassValue classValue)
+js::GetBuiltinClass(JSContext* cx, HandleObject obj, ESClassValue* classValue)
 {
-    return ObjectClassIs(obj, classValue, cx);
+    if (MOZ_UNLIKELY(obj->is<ProxyObject>()))
+        return Proxy::getBuiltinClass(cx, obj, classValue);
+
+    if (obj->is<PlainObject>() || obj->is<UnboxedPlainObject>())
+        *classValue = ESClass_Object;
+    else if (obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>())
+        *classValue = ESClass_Array;
+    else if (obj->is<NumberObject>())
+        *classValue = ESClass_Number;
+    else if (obj->is<StringObject>())
+        *classValue = ESClass_String;
+    else if (obj->is<BooleanObject>())
+        *classValue = ESClass_Boolean;
+    else if (obj->is<RegExpObject>())
+        *classValue = ESClass_RegExp;
+    else if (obj->is<ArrayBufferObject>())
+        *classValue = ESClass_ArrayBuffer;
+    else if (obj->is<SharedArrayBufferObject>())
+        *classValue = ESClass_SharedArrayBuffer;
+    else if (obj->is<DateObject>())
+        *classValue = ESClass_Date;
+    else if (obj->is<SetObject>())
+        *classValue = ESClass_Set;
+    else if (obj->is<MapObject>())
+        *classValue = ESClass_Map;
+    else
+        *classValue = ESClass_Other;
+
+    return true;
 }
 
 JS_FRIEND_API(const char*)
@@ -998,12 +1025,6 @@ js::DumpHeap(JSRuntime* rt, FILE* fp, js::DumpHeapNurseryBehaviour nurseryBehavi
     fflush(dtrc.output);
 }
 
-JS_FRIEND_API(const JSStructuredCloneCallbacks*)
-js::GetContextStructuredCloneCallbacks(JSContext* cx)
-{
-    return cx->runtime()->structuredCloneCallbacks;
-}
-
 JS_FRIEND_API(bool)
 js::ContextHasOutstandingRequests(const JSContext* cx)
 {
@@ -1015,12 +1036,6 @@ js::SetActivityCallback(JSRuntime* rt, ActivityCallback cb, void* arg)
 {
     rt->activityCallback = cb;
     rt->activityCallbackArg = arg;
-}
-
-JS_FRIEND_API(bool)
-js::IsContextRunningJS(JSContext* cx)
-{
-    return cx->currentlyRunning();
 }
 
 JS_FRIEND_API(void)
@@ -1063,7 +1078,7 @@ js::GetTestingFunctions(JSContext* cx)
     if (!obj)
         return nullptr;
 
-    if (!DefineTestingFunctions(cx, obj, false))
+    if (!DefineTestingFunctions(cx, obj, false, false))
         return nullptr;
 
     return obj;

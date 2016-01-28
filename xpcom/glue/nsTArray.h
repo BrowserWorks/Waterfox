@@ -300,10 +300,8 @@ struct nsTArray_SafeElementAtHelper<nsCOMPtr<E>, Derived>
 {
 };
 
-template<class T> class nsRefPtr;
-
 template<class E, class Derived>
-struct nsTArray_SafeElementAtHelper<nsRefPtr<E>, Derived>
+struct nsTArray_SafeElementAtHelper<RefPtr<E>, Derived>
   : public nsTArray_SafeElementAtSmartPtrHelper<E, Derived>
 {
 };

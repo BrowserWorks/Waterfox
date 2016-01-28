@@ -38,19 +38,10 @@ var gLoadContextInfoFactory =
 const kUriIdx                 = 0;
 const kStatusCodeIdx          = 1;
 const kVerificationSuccessIdx = 2;
-
-function enable_developer_mode()
-{
-  gPrefs.setBoolPref("network.http.packaged-apps-developer-mode", true);
-}
-
-function reset_developer_mode()
-{
-  gPrefs.clearUserPref("network.http.packaged-apps-developer-mode");
-}
+const kContentIdx             = 3;
 
 function createVerifierListener(aExpecetedCallbacks,
-                                aExpectedOrigin,
+                                aExpectedPackageId,
                                 aExpectedIsSigned,
                                 aPackageCacheEntry) {
   let cnt = 0;
@@ -77,33 +68,47 @@ function createVerifierListener(aExpecetedCallbacks,
 
       if (isManifest) {
         // Check if the verifier got the right package info.
-        equal(gVerifier.packageOrigin, aExpectedOrigin, 'package origin');
+        equal(gVerifier.packageIdentifier, aExpectedPackageId, 'package identifier');
         equal(gVerifier.isPackageSigned, aExpectedIsSigned, 'is package signed');
 
         // Check if the verifier wrote the signed package origin to the cache.
         ok(!!aPackageCacheEntry, aPackageCacheEntry.key);
-        let signePakOriginInCache = aPackageCacheEntry.getMetaDataElement('signed-pak-origin');
-        equal(signePakOriginInCache,
-              (aExpectedIsSigned ? aExpectedOrigin : ''),
-              'signed-pak-origin in cache');
+        let signePakIdInCache = aPackageCacheEntry.getMetaDataElement('package-id');
+        equal(signePakIdInCache,
+              (aExpectedIsSigned ? aExpectedPackageId : ''),
+              'package-id in cache');
       }
 
       if (isLastPart) {
-        reset_developer_mode();
         run_next_test();
       }
     },
   };
 };
 
-function feedResources(aExpectedCallbacks) {
+function feedData(aString) {
+  let stringStream = Cc["@mozilla.org/io/string-input-stream;1"].
+                           createInstance(Ci.nsIStringInputStream);
+  stringStream.setData(aString, aString.length);
+  gVerifier.onDataAvailable(null, null, stringStream, 0, aString.length);
+}
+
+function feedResources(aExpectedCallbacks, aSignature) {
   for (let i = 0; i < aExpectedCallbacks.length; i++) {
     let expectedCallback = aExpectedCallbacks[i];
     let isLastPart = (i === aExpectedCallbacks.length - 1);
 
+    // Start request.
     let uri = gIoService.newURI(expectedCallback[kUriIdx], null, null);
     gVerifier.onStartRequest(null, uri);
 
+    // Feed data at once.
+    let contentString = expectedCallback[kContentIdx];
+    if (contentString !== undefined) {
+      feedData(contentString);
+    }
+
+    // Stop request.
     let info = gVerifier.createResourceCacheInfo(uri,
                                                  null,
                                                  expectedCallback[kStatusCodeIdx],
@@ -121,12 +126,12 @@ function createPackageCache(aPackageUriAsAscii, aLoadContextInfo) {
   return cacheStorage.openTruncate(uri, '');
 }
 
-function test_no_signature(aDeveloperMode) {
+function test_no_signature(aBypassVerification) {
   const kOrigin = 'http://foo.com';
 
-  aDeveloperMode = !!aDeveloperMode;
+  aBypassVerification = !!aBypassVerification;
 
-  // If the package has no signature and not in developer mode, the package is unsigned
+  // If the package has no signature, the package is unsigned
   // but the verification result is always true.
 
   const expectedCallbacks = [
@@ -142,79 +147,80 @@ function test_no_signature(aDeveloperMode) {
   let isPackageSigned = false;
 
   // We only require the package URL to be different in each test case.
-  let packageUriString = kOrigin + '/pak' + (aDeveloperMode ? '-dev' : '');
+  let packageUriString = kOrigin + '/pak' + (aBypassVerification ? '-dev' : '');
 
   let packageCacheEntry =
     createPackageCache(packageUriString, gLoadContextInfoFactory.default);
 
   let verifierListener = createVerifierListener(expectedCallbacks,
-                                                kOrigin,
+                                                '',
                                                 isPackageSigned,
                                                 packageCacheEntry);
 
   gVerifier.init(verifierListener, kOrigin, '', packageCacheEntry);
 
-  feedResources(expectedCallbacks);
+  feedResources(expectedCallbacks, '');
 }
 
-function test_invalid_signature(aDeveloperMode) {
+function test_invalid_signature(aBypassVerification) {
   const kOrigin = 'http://bar.com';
 
-  aDeveloperMode = !!aDeveloperMode;
+  aBypassVerification = !!aBypassVerification;
 
   // Since we haven't implemented signature verification, the verification always
   // fails if the signature exists.
 
-  let verificationResult = aDeveloperMode; // Verification always success in developer mode.
-  let isPackageSigned = aDeveloperMode;   // Package is always considered as signed in developer mode.
+  let verificationResult = aBypassVerification; // Verification always success in developer mode.
+  let isPackageSigned = aBypassVerification;   // Package is always considered as signed in developer mode.
+
+  const kPackagedId = '611FC2FE-491D-4A47-B3B3-43FBDF6F404F';
+  const kManifestContent = 'Content-Location: manifest.webapp\r\n' +
+                           'Content-Type: application/x-web-app-manifest+json\r\n' +
+                           '\r\n' +
+                           '{ "package-identifier": "' + kPackagedId + '" }';
 
   const expectedCallbacks = [
-  // URL                      statusCode   verificationResult
-    [kOrigin + '/manifest',   Cr.NS_OK,    verificationResult],
-    [kOrigin + '/1.html',     Cr.NS_OK,    verificationResult],
-    [kOrigin + '/2.js',       Cr.NS_OK,    verificationResult],
-    [kOrigin + '/3.jpg',      Cr.NS_OK,    verificationResult],
-    [kOrigin + '/4.html',     Cr.NS_OK,    verificationResult],
-    [kOrigin + '/5.css',      Cr.NS_OK,    verificationResult],
+  // URL                      statusCode   verificationResult     content
+    [kOrigin + '/manifest',   Cr.NS_OK,    verificationResult,    kManifestContent],
+    [kOrigin + '/1.html',     Cr.NS_OK,    verificationResult, 'abc'],
+    [kOrigin + '/2.js',       Cr.NS_OK,    verificationResult, 'abc'],
+    [kOrigin + '/3.jpg',      Cr.NS_OK,    verificationResult, 'abc'],
+    [kOrigin + '/4.html',     Cr.NS_OK,    verificationResult, 'abc'],
+    [kOrigin + '/5.css',      Cr.NS_OK,    verificationResult, 'abc'],
   ];
 
-  let packageUriString = kOrigin + '/pak' + (aDeveloperMode ? '-dev' : '');
+  let packageUriString = kOrigin + '/pak' + (aBypassVerification ? '-dev' : '');
   let packageCacheEntry =
     createPackageCache(packageUriString, gLoadContextInfoFactory.private);
 
   let verifierListener = createVerifierListener(expectedCallbacks,
-                                                kOrigin,
+                                                aBypassVerification ? kPackagedId : '',
                                                 isPackageSigned,
                                                 packageCacheEntry);
 
-  gVerifier.init(verifierListener, kOrigin, 'invalid signature', packageCacheEntry);
+  let signature = 'manifest-signature: 11111111111111111111111';
+  gVerifier.init(verifierListener, kOrigin, signature, packageCacheEntry);
 
-  feedResources(expectedCallbacks);
+  feedResources(expectedCallbacks, signature);
 }
 
-function test_no_signature_developer_mode()
-{
-  enable_developer_mode()
-  test_no_signature(true);
-}
-
-function test_invalid_signature_developer_mode()
-{
-  enable_developer_mode()
+function test_invalid_signature_bypass_verification() {
+  let pref = "network.http.signed-packages.trusted-origin";
+  ok(!!Ci.nsISupportsString, "Ci.nsISupportsString");
+  let origin = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
+  origin.data = "http://bar.com";
+  gPrefs.setComplexValue(pref, Ci.nsISupportsString, origin);
   test_invalid_signature(true);
+  gPrefs.clearUserPref(pref);
 }
 
 function run_test()
 {
   ok(!!gVerifier);
 
-  // Test cases in non-developer mode.
   add_test(test_no_signature);
   add_test(test_invalid_signature);
-
-  // Test cases in developer mode.
-  add_test(test_no_signature_developer_mode);
-  add_test(test_invalid_signature_developer_mode);
+  add_test(test_invalid_signature_bypass_verification);
 
   // run tests
   run_next_test();

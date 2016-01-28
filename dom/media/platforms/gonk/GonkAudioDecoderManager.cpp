@@ -21,12 +21,14 @@
 #include "MediaData.h"
 #include "MediaInfo.h"
 
+#define CODECCONFIG_TIMEOUT_US 10000LL
+#define READ_OUTPUT_BUFFER_TIMEOUT_US  0LL
+
 #include <android/log.h>
 #define GADM_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GonkAudioDecoderManager", __VA_ARGS__)
 
 extern PRLogModuleInfo* GetPDMLog();
 #define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
-#define READ_OUTPUT_BUFFER_TIMEOUT_US  3000
 
 using namespace android;
 typedef android::MediaCodecProxy MediaCodecProxy;
@@ -34,18 +36,15 @@ typedef android::MediaCodecProxy MediaCodecProxy;
 namespace mozilla {
 
 GonkAudioDecoderManager::GonkAudioDecoderManager(const AudioInfo& aConfig)
-  : mLastDecodedTime(0)
-  , mAudioChannels(aConfig.mChannels)
+  : mAudioChannels(aConfig.mChannels)
   , mAudioRate(aConfig.mRate)
   , mAudioProfile(aConfig.mProfile)
-  , mAudioBuffer(nullptr)
-  , mMonitor("GonkAudioDecoderManager")
+  , mAudioCompactor(mAudioQueue)
 {
   MOZ_COUNT_CTOR(GonkAudioDecoderManager);
   MOZ_ASSERT(mAudioChannels);
   mCodecSpecificData = aConfig.mCodecSpecificConfig;
   mMimeType = aConfig.mMimeType;
-
 }
 
 GonkAudioDecoderManager::~GonkAudioDecoderManager()
@@ -53,10 +52,10 @@ GonkAudioDecoderManager::~GonkAudioDecoderManager()
   MOZ_COUNT_DTOR(GonkAudioDecoderManager);
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
-GonkAudioDecoderManager::Init(MediaDataDecoderCallback* aCallback)
+RefPtr<MediaDataDecoder::InitPromise>
+GonkAudioDecoderManager::Init()
 {
-  if (InitMediaCodecProxy(aCallback)) {
+  if (InitMediaCodecProxy()) {
     return InitPromise::CreateAndResolve(TrackType::kAudioTrack, __func__);
   } else {
     return InitPromise::CreateAndReject(DecoderFailureReason::INIT_ERROR, __func__);
@@ -64,22 +63,18 @@ GonkAudioDecoderManager::Init(MediaDataDecoderCallback* aCallback)
 }
 
 bool
-GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback)
+GonkAudioDecoderManager::InitMediaCodecProxy()
 {
   status_t rv = OK;
-  if (mLooper != nullptr) {
+  if (!InitLoopers(MediaData::AUDIO_DATA)) {
     return false;
   }
-  // Create ALooper
-  mLooper = new ALooper;
-  mLooper->setName("GonkAudioDecoderManager");
-  mLooper->start();
 
-  mDecoder = MediaCodecProxy::CreateByType(mLooper, mMimeType.get(), false, nullptr);
+  mDecoder = MediaCodecProxy::CreateByType(mDecodeLooper, mMimeType.get(), false, nullptr);
   if (!mDecoder.get()) {
     return false;
   }
-  if (!mDecoder->AskMediaCodecAndWait())
+  if (!mDecoder->AllocateAudioMediaCodec())
   {
     mDecoder = nullptr;
     return false;
@@ -99,7 +94,8 @@ GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback
 
   if (mMimeType.EqualsLiteral("audio/mp4a-latm")) {
     rv = mDecoder->Input(mCodecSpecificData->Elements(), mCodecSpecificData->Length(), 0,
-                         android::MediaCodec::BUFFER_FLAG_CODECCONFIG);
+                         android::MediaCodec::BUFFER_FLAG_CODECCONFIG,
+                         CODECCONFIG_TIMEOUT_US);
   }
 
   if (rv == OK) {
@@ -110,141 +106,95 @@ GonkAudioDecoderManager::InitMediaCodecProxy(MediaDataDecoderCallback* aCallback
   }
 }
 
-bool
-GonkAudioDecoderManager::HasQueuedSample()
-{
-    MonitorAutoLock mon(mMonitor);
-    return mQueueSample.Length();
-}
-
 nsresult
-GonkAudioDecoderManager::Input(MediaRawData* aSample)
+GonkAudioDecoderManager::CreateAudioData(MediaBuffer* aBuffer, int64_t aStreamOffset)
 {
-  MonitorAutoLock mon(mMonitor);
-  nsRefPtr<MediaRawData> sample;
-
-  if (aSample) {
-    sample = aSample;
-  } else {
-    // It means EOS with empty sample.
-    sample = new MediaRawData();
-  }
-
-  mQueueSample.AppendElement(sample);
-
-  status_t rv;
-  while (mQueueSample.Length()) {
-    nsRefPtr<MediaRawData> data = mQueueSample.ElementAt(0);
-    {
-      MonitorAutoUnlock mon_exit(mMonitor);
-      rv = mDecoder->Input(reinterpret_cast<const uint8_t*>(data->Data()),
-                           data->Size(),
-                           data->mTime,
-                           0);
-    }
-    if (rv == OK) {
-      mQueueSample.RemoveElementAt(0);
-    } else if (rv == -EAGAIN || rv == -ETIMEDOUT) {
-      // In most cases, EAGAIN or ETIMEOUT are safe because OMX can't fill
-      // buffer on time.
-      return NS_OK;
-    } else {
-      return NS_ERROR_UNEXPECTED;
-    }
-  }
-
-  return NS_OK;
-}
-
-nsresult
-GonkAudioDecoderManager::CreateAudioData(int64_t aStreamOffset, AudioData **v) {
-  if (!(mAudioBuffer != nullptr && mAudioBuffer->data() != nullptr)) {
+  if (!(aBuffer != nullptr && aBuffer->data() != nullptr)) {
     GADM_LOG("Audio Buffer is not valid!");
     return NS_ERROR_UNEXPECTED;
   }
 
   int64_t timeUs;
-  if (!mAudioBuffer->meta_data()->findInt64(kKeyTime, &timeUs)) {
+  if (!aBuffer->meta_data()->findInt64(kKeyTime, &timeUs)) {
     return NS_ERROR_UNEXPECTED;
   }
 
-  if (mAudioBuffer->range_length() == 0) {
+  if (aBuffer->range_length() == 0) {
     // Some decoders may return spurious empty buffers that we just want to ignore
     // quoted from Android's AwesomePlayer.cpp
-    ReleaseAudioBuffer();
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  if (mLastDecodedTime > timeUs) {
-    ReleaseAudioBuffer();
+  if (mLastTime > timeUs) {
     GADM_LOG("Output decoded sample time is revert. time=%lld", timeUs);
     MOZ_ASSERT(false);
     return NS_ERROR_NOT_AVAILABLE;
   }
-  mLastDecodedTime = timeUs;
+  mLastTime = timeUs;
 
-  const uint8_t *data = static_cast<const uint8_t*>(mAudioBuffer->data());
-  size_t dataOffset = mAudioBuffer->range_offset();
-  size_t size = mAudioBuffer->range_length();
+  const uint8_t *data = static_cast<const uint8_t*>(aBuffer->data());
+  size_t dataOffset = aBuffer->range_offset();
+  size_t size = aBuffer->range_length();
 
-  nsAutoArrayPtr<AudioDataValue> buffer(new AudioDataValue[size/2]);
-  memcpy(buffer.get(), data+dataOffset, size);
   uint32_t frames = size / (2 * mAudioChannels);
 
   CheckedInt64 duration = FramesToUsecs(frames, mAudioRate);
   if (!duration.isValid()) {
     return NS_ERROR_UNEXPECTED;
   }
-  nsRefPtr<AudioData> audioData = new AudioData(aStreamOffset,
-                                                timeUs,
-                                                duration.value(),
-                                                frames,
-                                                buffer.forget(),
-                                                mAudioChannels,
-                                                mAudioRate);
-  ReleaseAudioBuffer();
-  audioData.forget(v);
+
+  typedef AudioCompactor::NativeCopy OmxCopy;
+  mAudioCompactor.Push(aStreamOffset,
+                       timeUs,
+                       mAudioRate,
+                       frames,
+                       mAudioChannels,
+                       OmxCopy(data+dataOffset,
+                               size,
+                               mAudioChannels));
   return NS_OK;
 }
 
-nsresult
-GonkAudioDecoderManager::Flush()
+class AutoReleaseAudioBuffer
 {
+public:
+  AutoReleaseAudioBuffer(MediaBuffer* aBuffer, MediaCodecProxy* aCodecProxy)
+    : mAudioBuffer(aBuffer)
+    , mCodecProxy(aCodecProxy)
+  {}
+
+  ~AutoReleaseAudioBuffer()
   {
-    MonitorAutoLock mon(mMonitor);
-    mQueueSample.Clear();
+    if (mAudioBuffer) {
+      mCodecProxy->ReleaseMediaBuffer(mAudioBuffer);
+    }
   }
-
-  mLastDecodedTime = 0;
-
-  if (mDecoder->flush() != OK) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
-}
+private:
+  MediaBuffer* mAudioBuffer;
+  sp<MediaCodecProxy> mCodecProxy;
+};
 
 nsresult
 GonkAudioDecoderManager::Output(int64_t aStreamOffset,
-                                nsRefPtr<MediaData>& aOutData)
+                                RefPtr<MediaData>& aOutData)
 {
   aOutData = nullptr;
+  if (mAudioQueue.GetSize() > 0) {
+    aOutData = mAudioQueue.PopFront();
+    return mAudioQueue.AtEndOfStream() ? NS_ERROR_ABORT : NS_OK;
+  }
+
   status_t err;
-  err = mDecoder->Output(&mAudioBuffer, READ_OUTPUT_BUFFER_TIMEOUT_US);
+  MediaBuffer* audioBuffer = nullptr;
+  err = mDecoder->Output(&audioBuffer, READ_OUTPUT_BUFFER_TIMEOUT_US);
+  AutoReleaseAudioBuffer a(audioBuffer, mDecoder.get());
 
   switch (err) {
     case OK:
     {
-      nsRefPtr<AudioData> data;
-      nsresult rv = CreateAudioData(aStreamOffset, getter_AddRefs(data));
-      if (rv == NS_ERROR_NOT_AVAILABLE) {
-        // Decoder outputs an empty video buffer, try again
-        return NS_ERROR_NOT_AVAILABLE;
-      } else if (rv != NS_OK || data == nullptr) {
-        return NS_ERROR_UNEXPECTED;
-      }
-      aOutData = data;
-      return NS_OK;
+      nsresult rv = CreateAudioData(audioBuffer, aStreamOffset);
+      NS_ENSURE_SUCCESS(rv, rv);
+      break;
     }
     case android::INFO_FORMAT_CHANGED:
     {
@@ -286,17 +236,11 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
     case android::ERROR_END_OF_STREAM:
     {
       GADM_LOG("Got EOS frame!");
-      nsRefPtr<AudioData> data;
-      nsresult rv = CreateAudioData(aStreamOffset, getter_AddRefs(data));
-      if (rv == NS_ERROR_NOT_AVAILABLE) {
-        // For EOS, no need to do any thing.
-        return NS_ERROR_ABORT;
-      } else if (rv != NS_OK || data == nullptr) {
-        GADM_LOG("Failed to create audio data!");
-        return NS_ERROR_UNEXPECTED;
-      }
-      aOutData = data;
-      return NS_ERROR_ABORT;
+      nsresult rv = CreateAudioData(audioBuffer, aStreamOffset);
+      NS_ENSURE_SUCCESS(rv, NS_ERROR_ABORT);
+      MOZ_ASSERT(mAudioQueue.GetSize() > 0);
+      mAudioQueue.Finish();
+      break;
     }
     case -ETIMEDOUT:
     {
@@ -310,14 +254,22 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
     }
   }
 
-  return NS_OK;
+  if (mAudioQueue.GetSize() > 0) {
+    aOutData = mAudioQueue.PopFront();
+    // Return NS_ERROR_ABORT at the last sample.
+    return mAudioQueue.AtEndOfStream() ? NS_ERROR_ABORT : NS_OK;
+  }
+
+  return NS_ERROR_NOT_AVAILABLE;
 }
 
-void GonkAudioDecoderManager::ReleaseAudioBuffer() {
-  if (mAudioBuffer) {
-    mDecoder->ReleaseMediaBuffer(mAudioBuffer);
-    mAudioBuffer = nullptr;
-  }
+nsresult
+GonkAudioDecoderManager::Flush()
+{
+  GADM_LOG("FLUSH<<<");
+  mAudioQueue.Reset();
+  GADM_LOG(">>>FLUSH");
+  return GonkDecoderManager::Flush();
 }
 
 } // namespace mozilla

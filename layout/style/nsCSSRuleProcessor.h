@@ -15,14 +15,15 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MemoryReporting.h"
-#include "nsIStyleRuleProcessor.h"
-#include "nsIMediaList.h"
-#include "nsTArray.h"
+#include "mozilla/RefCountType.h"
+#include "mozilla/SheetType.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAutoPtr.h"
 #include "nsExpirationTracker.h"
+#include "nsIMediaList.h"
+#include "nsIStyleRuleProcessor.h"
 #include "nsRuleWalker.h"
-#include "mozilla/RefCountType.h"
-#include "mozilla/UniquePtr.h"
+#include "nsTArray.h"
 
 struct CascadeEnumData;
 struct ElementDependentRuleProcessorData;
@@ -56,14 +57,14 @@ class DocumentRule;
 
 class nsCSSRuleProcessor: public nsIStyleRuleProcessor {
 public:
-  typedef nsTArray<nsRefPtr<mozilla::CSSStyleSheet>> sheet_array_type;
+  typedef nsTArray<RefPtr<mozilla::CSSStyleSheet>> sheet_array_type;
 
   // aScopeElement must be non-null iff aSheetType is
-  // nsStyleSet::eScopedDocSheet.
+  // SheetType::ScopedDoc.
   // aPreviousCSSRuleProcessor is the rule processor (if any) that this
   // one is replacing.
   nsCSSRuleProcessor(const sheet_array_type& aSheets,
-                     uint8_t aSheetType,
+                     mozilla::SheetType aSheetType,
                      mozilla::dom::Element* aScopeElement,
                      nsCSSRuleProcessor* aPreviousCSSRuleProcessor,
                      bool aIsShared = false);
@@ -253,7 +254,7 @@ private:
 
   // The scope element for this rule processor's scoped style sheets.
   // Only used if mSheetType == nsStyleSet::eScopedDocSheet.
-  nsRefPtr<mozilla::dom::Element> mScopeElement;
+  RefPtr<mozilla::dom::Element> mScopeElement;
 
   nsTArray<mozilla::css::DocumentRule*> mDocumentRules;
   nsDocumentRuleResultCacheKey mDocumentCacheKey;
@@ -262,7 +263,7 @@ private:
   MozRefCountType mStyleSetRefCnt;
 
   // type of stylesheet using this processor
-  uint8_t mSheetType;  // == nsStyleSet::sheetType
+  mozilla::SheetType mSheetType;
 
   const bool mIsShared;
 

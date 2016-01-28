@@ -4,7 +4,7 @@
  */
 "use strict";
 
-const { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
+var { 'classes': Cc, 'interfaces': Ci, 'utils': Cu, 'results': Cr } = Components;
 
 var { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm", {});
 var { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm", {});
@@ -12,8 +12,6 @@ var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 var { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 var { HttpServer } = Cu.import("resource://testing-common/httpd.js", {});
 var { ctypes } = Cu.import("resource://gre/modules/ctypes.jsm");
-
-var gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
 
 const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"]
                        .getService(Ci.nsIDebug2).isDebugBuild;
@@ -65,6 +63,7 @@ const SEC_ERROR_POLICY_VALIDATION_FAILED                = SEC_ERROR_BASE + 160; 
 const SEC_ERROR_OCSP_BAD_SIGNATURE                      = SEC_ERROR_BASE + 157;
 const SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED       = SEC_ERROR_BASE + 176;
 
+const SSL_ERROR_NO_CYPHER_OVERLAP                       = SSL_ERROR_BASE +   2;
 const SSL_ERROR_BAD_CERT_DOMAIN                         = SSL_ERROR_BASE +  12;
 const SSL_ERROR_BAD_CERT_ALERT                          = SSL_ERROR_BASE +  17;
 const SSL_ERROR_WEAK_SERVER_CERT_KEY                    = SSL_ERROR_BASE + 132;
@@ -267,7 +266,7 @@ function clearSessionCache() {
 
 function run_test() {
   do_get_profile();
-  add_tls_server_setup("<test-server-name>");
+  add_tls_server_setup("<test-server-name>", "<path-to-certificate-directory>");
 
   add_connection_test("<test-name-1>.example.com",
                       SEC_ERROR_xxx,
@@ -279,11 +278,11 @@ function run_test() {
 
   run_next_test();
 }
-
 */
-function add_tls_server_setup(serverBinName) {
+
+function add_tls_server_setup(serverBinName, certsPath) {
   add_test(function() {
-    _setupTLSServerTest(serverBinName);
+    _setupTLSServerTest(serverBinName, certsPath);
   });
 }
 
@@ -409,7 +408,7 @@ function _getBinaryUtil(binaryUtilName) {
                            .getService(Ci.nsIProperties);
 
   let utilBin = directoryService.get("CurProcD", Ci.nsILocalFile);
-  utilBin.append(binaryUtilName + (gIsWindows ? ".exe" : ""));
+  utilBin.append(binaryUtilName + mozinfo.bin_suffix);
   // If we're testing locally, the above works. If not, the server executable
   // is in another location.
   if (!utilBin.exists()) {
@@ -418,7 +417,7 @@ function _getBinaryUtil(binaryUtilName) {
       utilBin = utilBin.parent;
     }
     utilBin.append("bin");
-    utilBin.append(binaryUtilName + (gIsWindows ? ".exe" : ""));
+    utilBin.append(binaryUtilName + mozinfo.bin_suffix);
   }
   // But maybe we're on Android or B2G, where binaries are in /data/local/xpcb.
   if (!utilBin.exists()) {
@@ -430,12 +429,12 @@ function _getBinaryUtil(binaryUtilName) {
 }
 
 // Do not call this directly; use add_tls_server_setup
-function _setupTLSServerTest(serverBinName)
+function _setupTLSServerTest(serverBinName, certsPath)
 {
   let certdb = Cc["@mozilla.org/security/x509certdb;1"]
                   .getService(Ci.nsIX509CertDB);
   // The trusted CA that is typically used for "good" certificates.
-  addCertFromFile(certdb, "tlsserver/test-ca.der", "CTu,u,u");
+  addCertFromFile(certdb, `${certsPath}/test-ca.pem`, "CTu,u,u");
 
   const CALLBACK_PORT = 8444;
 
@@ -468,8 +467,8 @@ function _setupTLSServerTest(serverBinName)
   let process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
   process.init(serverBin);
   let certDir = directoryService.get("CurWorkD", Ci.nsILocalFile);
-  certDir.append("tlsserver");
-  Assert.ok(certDir.exists(), "tlsserver folder should exist");
+  certDir.append(`${certsPath}`);
+  Assert.ok(certDir.exists(), `certificate folder (${certsPath}) should exist`);
   // Using "sql:" causes the SQL DB to be used so we can run tests on Android.
   process.run(false, [ "sql:" + certDir.path ], 1);
 
@@ -639,9 +638,8 @@ FakeSSLStatus.prototype = {
 
 // Utility functions for adding tests relating to certificate error overrides
 
-// Helper function for add_cert_override_test and
-// add_prevented_cert_override_test. Probably doesn't need to be called
-// directly.
+// Helper function for add_cert_override_test. Probably doesn't need to be
+// called directly.
 function add_cert_override(aHost, aExpectedBits, aSecurityInfo) {
   let sslstatus = aSecurityInfo.QueryInterface(Ci.nsISSLStatusProvider)
                                .SSLStatus;
@@ -668,6 +666,28 @@ function add_cert_override_test(aHost, aExpectedBits, aExpectedError) {
   add_connection_test(aHost, PRErrorCodeSuccess);
 }
 
+// Helper function for add_prevented_cert_override_test. This is much like
+// add_cert_override except it may not be the case that the connection has an
+// SSLStatus set on it. In this case, the error was not overridable anyway, so
+// we consider it a success.
+function attempt_adding_cert_override(aHost, aExpectedBits, aSecurityInfo) {
+  let sslstatus = aSecurityInfo.QueryInterface(Ci.nsISSLStatusProvider)
+                               .SSLStatus;
+  if (sslstatus) {
+    let bits =
+      (sslstatus.isUntrusted ? Ci.nsICertOverrideService.ERROR_UNTRUSTED : 0) |
+      (sslstatus.isDomainMismatch ? Ci.nsICertOverrideService.ERROR_MISMATCH : 0) |
+      (sslstatus.isNotValidAtThisTime ? Ci.nsICertOverrideService.ERROR_TIME : 0);
+    Assert.equal(bits, aExpectedBits,
+                 "Actual and expected override bits should match");
+    let cert = sslstatus.serverCert;
+    let certOverrideService = Cc["@mozilla.org/security/certoverride;1"]
+                                .getService(Ci.nsICertOverrideService);
+    certOverrideService.rememberValidityOverride(aHost, 8443, cert, aExpectedBits,
+                                                 true);
+  }
+}
+
 // Given a host, expected error bits (see nsICertOverrideService.idl), and
 // an expected error code, tests that an initial connection to the host fails
 // with the expected errors and that adding an override does not result in a
@@ -676,6 +696,6 @@ function add_cert_override_test(aHost, aExpectedBits, aExpectedError) {
 // overridable, even if an entry is added to the override service.
 function add_prevented_cert_override_test(aHost, aExpectedBits, aExpectedError) {
   add_connection_test(aHost, aExpectedError, null,
-                      add_cert_override.bind(this, aHost, aExpectedBits));
+                      attempt_adding_cert_override.bind(this, aHost, aExpectedBits));
   add_connection_test(aHost, aExpectedError);
 }

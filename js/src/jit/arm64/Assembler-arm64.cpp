@@ -14,6 +14,7 @@
 
 #include "gc/Marking.h"
 
+#include "jit/arm64/Architecture-arm64.h"
 #include "jit/arm64/MacroAssembler-arm64.h"
 #include "jit/ExecutableAllocator.h"
 #include "jit/JitCompartment.h"
@@ -82,22 +83,13 @@ Assembler::finish()
 
     // The jump relocation table starts with a fixed-width integer pointing
     // to the start of the extended jump table.
-    if (tmpJumpRelocations_.length())
-        jumpRelocations_.writeFixedUint32_t(toFinalOffset(ExtendedJumpTable_));
-
-    for (unsigned int i = 0; i < tmpJumpRelocations_.length(); i++) {
-        JumpRelocation& reloc = tmpJumpRelocations_[i];
-
-        // Each entry in the relocations table is an (offset, extendedTableIndex) pair.
-        jumpRelocations_.writeUnsigned(toFinalOffset(reloc.jump));
-        jumpRelocations_.writeUnsigned(reloc.extendedTableIndex);
+    // Space for this integer is allocated by Assembler::addJumpRelocation()
+    // before writing the first entry.
+    // Don't touch memory if we saw an OOM error.
+    if (jumpRelocations_.length() && !oom()) {
+        MOZ_ASSERT(jumpRelocations_.length() >= sizeof(uint32_t));
+        *(uint32_t*)jumpRelocations_.buffer() = ExtendedJumpTable_.getOffset();
     }
-
-    for (unsigned int i = 0; i < tmpDataRelocations_.length(); i++)
-        dataRelocations_.writeUnsigned(toFinalOffset(tmpDataRelocations_[i]));
-
-    for (unsigned int i = 0; i < tmpPreBarriers_.length(); i++)
-        preBarriers_.writeUnsigned(toFinalOffset(tmpPreBarriers_[i]));
 }
 
 BufferOffset
@@ -123,15 +115,18 @@ Assembler::emitExtendedJumpTable()
         br(vixl::ip0);
 
         DebugOnly<size_t> prePointer = size_t(armbuffer_.nextOffset().getOffset());
-        MOZ_ASSERT(prePointer - preOffset == OffsetOfJumpTableEntryPointer);
+        MOZ_ASSERT_IF(!oom(), prePointer - preOffset == OffsetOfJumpTableEntryPointer);
 
         brk(0x0);
         brk(0x0);
 
         DebugOnly<size_t> postOffset = size_t(armbuffer_.nextOffset().getOffset());
 
-        MOZ_ASSERT(postOffset - preOffset == SizeOfJumpTableEntry);
+        MOZ_ASSERT_IF(!oom(), postOffset - preOffset == SizeOfJumpTableEntry);
     }
+
+    if (oom())
+        return BufferOffset();
 
     return tableOffset;
 }
@@ -155,9 +150,9 @@ Assembler::executableCopy(uint8_t* buffer)
         }
 
         Instruction* target = (Instruction*)rp.target;
-        Instruction* branch = (Instruction*)(buffer + toFinalOffset(rp.offset));
+        Instruction* branch = (Instruction*)(buffer + rp.offset.getOffset());
         JumpTableEntry* extendedJumpTable =
-            reinterpret_cast<JumpTableEntry*>(buffer + toFinalOffset(ExtendedJumpTable_));
+            reinterpret_cast<JumpTableEntry*>(buffer + ExtendedJumpTable_.getOffset());
         if (branch->BranchType() != vixl::UnknownBranchType) {
             if (branch->IsTargetReachable(target)) {
                 branch->SetImmPCOffsetTarget(target);
@@ -180,7 +175,7 @@ Assembler::immPool(ARMRegister dest, uint8_t* value, vixl::LoadLiteralOp op, ARM
     const size_t numInst = 1;
     const unsigned sizeOfPoolEntryInBytes = 4;
     const unsigned numPoolEntries = sizeof(value) / sizeOfPoolEntryInBytes;
-    return armbuffer_.allocEntry(numInst, numPoolEntries, (uint8_t*)&inst, value, pe);
+    return allocEntry(numInst, numPoolEntries, (uint8_t*)&inst, value, pe);
 }
 
 BufferOffset
@@ -202,7 +197,7 @@ Assembler::fImmPool(ARMFPRegister dest, uint8_t* value, vixl::LoadLiteralOp op)
     const size_t numInst = 1;
     const unsigned sizeOfPoolEntryInBits = 32;
     const unsigned numPoolEntries = dest.size() / sizeOfPoolEntryInBits;
-    return armbuffer_.allocEntry(numInst, numPoolEntries, (uint8_t*)&inst, value);
+    return allocEntry(numInst, numPoolEntries, (uint8_t*)&inst, value);
 }
 
 BufferOffset
@@ -220,7 +215,10 @@ void
 Assembler::bind(Label* label, BufferOffset targetOffset)
 {
     // Nothing has seen the label yet: just mark the location.
-    if (!label->used()) {
+    // If we've run out of memory, don't attempt to modify the buffer which may
+    // not be there. Just mark the label as bound to the (possibly bogus)
+    // targetOffset.
+    if (!label->used() || oom()) {
         label->bind(targetOffset.getOffset());
         return;
     }
@@ -258,7 +256,9 @@ void
 Assembler::bind(RepatchLabel* label)
 {
     // Nothing has seen the label yet: just mark the location.
-    if (!label->used()) {
+    // If we've run out of memory, don't attempt to modify the buffer which may
+    // not be there. Just mark the label as bound to nextOffset().
+    if (!label->used() || oom()) {
         label->bind(nextOffset().getOffset());
         return;
     }
@@ -292,8 +292,16 @@ Assembler::addJumpRelocation(BufferOffset src, Relocation::Kind reloc)
     // Only JITCODE relocations are patchable at runtime.
     MOZ_ASSERT(reloc == Relocation::JITCODE);
 
-    // Each relocation requires an entry in the extended jump table.
-    tmpJumpRelocations_.append(JumpRelocation(src, pendingJumps_.length()));
+    // The jump relocation table starts with a fixed-width integer pointing
+    // to the start of the extended jump table. But, we don't know the
+    // actual extended jump table offset yet, so write a 0 which we'll
+    // patch later in Assembler::finish().
+    if (!jumpRelocations_.length())
+        jumpRelocations_.writeFixedUint32_t(0);
+
+    // Each entry in the table is an (offset, extendedTableIndex) pair.
+    jumpRelocations_.writeUnsigned(src.getOffset());
+    jumpRelocations_.writeUnsigned(pendingJumps_.length());
 }
 
 void
@@ -384,38 +392,46 @@ Assembler::ToggleToCmp(CodeLocationLabel inst_)
 void
 Assembler::ToggleCall(CodeLocationLabel inst_, bool enabled)
 {
-    Instruction* first = (Instruction*)inst_.raw();
+    const Instruction* first = reinterpret_cast<Instruction*>(inst_.raw());
     Instruction* load;
     Instruction* call;
 
-    if (first->InstructionBits() == 0x9100039f) {
-        load = (Instruction*)NextInstruction(first);
-        call = NextInstruction(load);
-    } else {
-        load = first;
-        call = NextInstruction(first);
-    }
+    // There might be a constant pool at the very first instruction.
+    first = first->skipPool();
+
+    // Skip the stack pointer restore instruction.
+    if (first->IsStackPtrSync())
+        first = first->InstructionAtOffset(vixl::kInstructionSize)->skipPool();
+
+    load = const_cast<Instruction*>(first);
+
+    // The call instruction follows the load, but there may be an injected
+    // constant pool.
+    call = const_cast<Instruction*>(load->InstructionAtOffset(vixl::kInstructionSize)->skipPool());
 
     if (call->IsBLR() == enabled)
         return;
 
     if (call->IsBLR()) {
-        // if the second instruction is blr(), then wehave:
-        // ldr x17, [pc, offset]
-        // blr x17
-        // we want to transform this to:
-        // adr xzr, [pc, offset]
-        // nop
+        // If the second instruction is blr(), then wehave:
+        //   ldr x17, [pc, offset]
+        //   blr x17
+        MOZ_ASSERT(load->IsLDR());
+        // We want to transform this to:
+        //   adr xzr, [pc, offset]
+        //   nop
         int32_t offset = load->ImmLLiteral();
         adr(load, xzr, int32_t(offset));
         nop(call);
     } else {
-        // we have adr xzr, [pc, offset]
-        // nop
-        // transform this to
-        // ldr x17, [pc, offset]
-        // blr x17
-
+        // We have:
+        //   adr xzr, [pc, offset] (or ldr x17, [pc, offset])
+        //   nop
+        MOZ_ASSERT(load->IsADR() || load->IsLDR());
+        MOZ_ASSERT(call->IsNOP());
+        // Transform this to:
+        //   ldr x17, [pc, offset]
+        //   blr x17
         int32_t offset = (int)load->ImmPCRawOffset();
         MOZ_ASSERT(vixl::is_int19(offset));
         ldr(load, ScratchReg2_64, int32_t(offset));
@@ -563,7 +579,7 @@ Assembler::FixupNurseryObjects(JSContext* cx, JitCode* code, CompactBufferReader
     }
 
     if (hasNurseryPointers)
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(code);
+        cx->runtime()->gc.storeBuffer.putWholeCell(code);
 }
 
 int32_t

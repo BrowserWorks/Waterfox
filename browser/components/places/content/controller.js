@@ -59,7 +59,9 @@ InsertionPoint.prototype = {
     return this._index = val;
   },
 
-  promiseGuid: function () PlacesUtils.promiseItemGuid(this.itemId),
+  promiseGuid: function () {
+    return PlacesUtils.promiseItemGuid(this.itemId);
+  },
 
   get index() {
     if (this.dropNearItemId > 0) {
@@ -71,7 +73,9 @@ InsertionPoint.prototype = {
     return this._index;
   },
 
-  get isTag() typeof(this.tagName) == "string"
+  get isTag() {
+    return typeof(this.tagName) == "string";
+  }
 };
 
 /**
@@ -270,7 +274,7 @@ PlacesController.prototype = {
       this.newItem("bookmark");
       break;
     case "placesCmd_new:separator":
-      this.newSeparator().catch(Cu.reportError);
+      this.newSeparator().catch(Components.utils.reportError);
       break;
     case "placesCmd_show:info":
       this.showBookmarkPropertiesForSelection();
@@ -497,19 +501,19 @@ PlacesController.prototype = {
       selectiontype = "single|multiple";
     }
     var selectionTypes = selectiontype.split("|");
-    if (selectionTypes.indexOf("any") != -1) {
+    if (selectionTypes.includes("any")) {
       return true;
     }
     var count = aMetaData.length;
-    if (count > 1 && selectionTypes.indexOf("multiple") == -1)
+    if (count > 1 && !selectionTypes.includes("multiple"))
       return false;
-    if (count == 1 && selectionTypes.indexOf("single") == -1)
+    if (count == 1 && !selectionTypes.includes("single"))
       return false;
     // NB: if there is no selection, we show the item if and only if
     // the selectiontype includes 'none' - the metadata list will be
     // empty so none of the other criteria will apply anyway.
     if (count == 0)
-      return selectionTypes.indexOf("none") != -1;
+      return selectionTypes.includes("none");
 
     var forceHideAttr = aMenuItem.getAttribute("forcehideselection");
     if (forceHideAttr) {
@@ -1199,7 +1203,9 @@ PlacesController.prototype = {
   },
 
   _cutNodes: [],
-  get cutNodes() this._cutNodes,
+  get cutNodes() {
+    return this._cutNodes;
+  },
   set cutNodes(aNodes) {
     let self = this;
     function updateCutNodes(aValue) {
@@ -1268,7 +1274,7 @@ PlacesController.prototype = {
     [ PlacesUtils.TYPE_X_MOZ_PLACE,
       PlacesUtils.TYPE_X_MOZ_URL,
       PlacesUtils.TYPE_UNICODE,
-    ].forEach(function (type) xferable.addDataFlavor(type));
+    ].forEach(type => xferable.addDataFlavor(type));
 
     this.clipboard.getData(xferable, Ci.nsIClipboard.kGlobalClipboard);
 
@@ -1303,8 +1309,8 @@ PlacesController.prototype = {
             // source, otherwise report an error and fallback to a copy.
             if (!doCopy &&
                 !PlacesControllerDragHelper.canMoveUnwrappedNode(item)) {
-              Cu.reportError("Tried to move an unmovable Places node, " +
-                             "reverting to a copy operation.");
+              Components.utils.reportError("Tried to move an unmovable " +
+                             "Places node, reverting to a copy operation.");
               doCopy = true;
             }
             let guid = yield PlacesUIUtils.getTransactionForData(
@@ -1340,8 +1346,8 @@ PlacesController.prototype = {
         // If this is not a copy, check for safety that we can move the source,
         // otherwise report an error and fallback to a copy.
         if (action != "copy" && !PlacesControllerDragHelper.canMoveUnwrappedNode(items[i])) {
-          Components.utils.reportError("Tried to move an unmovable Places node, " +
-                                       "reverting to a copy operation.");
+          Components.utils.reportError("Tried to move an unmovable Places " +
+                                       "node, reverting to a copy operation.");
           action = "copy";
         }
         transactions.push(
@@ -1388,8 +1394,9 @@ PlacesController.prototype = {
    * @return true if there's a cached mozILivemarkInfo object for
    *         aNode, false otherwise.
    */
-  hasCachedLivemarkInfo: function PC_hasCachedLivemarkInfo(aNode)
-    this._cachedLivemarkInfoObjects.has(aNode),
+  hasCachedLivemarkInfo: function PC_hasCachedLivemarkInfo(aNode) {
+    return this._cachedLivemarkInfoObjects.has(aNode);
+  },
 
   /**
    * Returns the cached livemark info for a node, if set by cacheLivemarkInfo,
@@ -1398,8 +1405,9 @@ PlacesController.prototype = {
    *        a places result node.
    * @return the mozILivemarkInfo object for aNode, if set, null otherwise.
    */
-  getCachedLivemarkInfo: function PC_getCachedLivemarkInfo(aNode)
-    this._cachedLivemarkInfoObjects.get(aNode, null)
+  getCachedLivemarkInfo: function PC_getCachedLivemarkInfo(aNode) {
+    return this._cachedLivemarkInfoObjects.get(aNode, null);
+  }
 };
 
 /**
@@ -1447,7 +1455,7 @@ var PlacesControllerDragHelper = {
    */
   getFirstValidFlavor: function PCDH_getFirstValidFlavor(aFlavors) {
     for (let i = 0; i < aFlavors.length; i++) {
-      if (PlacesUIUtils.SUPPORTED_FLAVORS.indexOf(aFlavors[i]) != -1)
+      if (PlacesUIUtils.SUPPORTED_FLAVORS.includes(aFlavors[i]))
         return aFlavors[i];
     }
 
@@ -1563,7 +1571,7 @@ var PlacesControllerDragHelper = {
    *          The insertion point where the items should be dropped
    */
   onDrop: Task.async(function* (insertionPoint, dt) {
-    let doCopy = ["copy", "link"].indexOf(dt.dropEffect) != -1;
+    let doCopy = ["copy", "link"].includes(dt.dropEffect);
 
     let transactions = [];
     let dropCount = dt.mozItemCount;
@@ -1617,8 +1625,8 @@ var PlacesControllerDragHelper = {
         // If this is not a copy, check for safety that we can move the source,
         // otherwise report an error and fallback to a copy.
         if (!doCopy && !PlacesControllerDragHelper.canMoveUnwrappedNode(unwrapped)) {
-          Components.utils.reportError("Tried to move an unmovable Places node, " +
-                                       "reverting to a copy operation.");
+          Components.utils.reportError("Tried to move an unmovable Places " +
+                                       "node, reverting to a copy operation.");
           doCopy = true;
         }
         if (PlacesUIUtils.useAsyncTransactions) {

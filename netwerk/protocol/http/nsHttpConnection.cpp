@@ -83,6 +83,7 @@ nsHttpConnection::nsHttpConnection()
     , mTransactionCaps(0)
     , mResponseTimeoutEnabled(false)
     , mTCPKeepaliveConfig(kTCPKeepaliveDisabled)
+    , mForceSendPending(false)
 {
     LOG(("Creating nsHttpConnection @%p\n", this));
 
@@ -112,6 +113,10 @@ nsHttpConnection::~nsHttpConnection()
                               Telemetry::SPDY_KBREAD_PER_CONN :
                               Telemetry::HTTP_KBREAD_PER_CONN,
                               totalKBRead);
+    }
+    if (mForceSendTimer) {
+        mForceSendTimer->Cancel();
+        mForceSendTimer = nullptr;
     }
 }
 
@@ -175,7 +180,7 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
     // several requests. If so, we need to unpack that and
     // pack them all into a new spdy session.
 
-    nsTArray<nsRefPtr<nsAHttpTransaction> > list;
+    nsTArray<RefPtr<nsAHttpTransaction> > list;
     nsresult rv = mTransaction->TakeSubTransactions(list);
 
     if (rv == NS_ERROR_ALREADY_OPENED) {
@@ -212,7 +217,7 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
     mSpdySession = ASpdySession::NewSpdySession(spdyVersion, mSocketTransport);
     bool spdyProxy = mConnInfo->UsingHttpsProxy() && !mTLSFilter;
     if (spdyProxy) {
-        nsRefPtr<nsHttpConnectionInfo> wildCardProxyCi;
+        RefPtr<nsHttpConnectionInfo> wildCardProxyCi;
         mConnInfo->CreateWildCard(getter_AddRefs(wildCardProxyCi));
         gHttpHandler->ConnMgr()->MoveToWildCardConnEntry(mConnInfo,
                                                          wildCardProxyCi, this);
@@ -568,6 +573,10 @@ nsHttpConnection::Close(nsresult reason)
     if (mTCPKeepaliveTransitionTimer) {
         mTCPKeepaliveTransitionTimer->Cancel();
         mTCPKeepaliveTransitionTimer = nullptr;
+    }
+    if (mForceSendTimer) {
+        mForceSendTimer->Cancel();
+        mForceSendTimer = nullptr;
     }
 
     if (NS_FAILED(reason)) {
@@ -1340,10 +1349,10 @@ nsHttpConnection::ResumeRecv()
 }
 
 
-class nsHttpConnectionForceIO : public nsRunnable
+class HttpConnectionForceIO : public nsRunnable
 {
 public:
-  nsHttpConnectionForceIO(nsHttpConnection *aConn, bool doRecv)
+  HttpConnectionForceIO(nsHttpConnection *aConn, bool doRecv)
      : mConn(aConn)
      , mDoRecv(doRecv)
     {}
@@ -1357,14 +1366,49 @@ public:
                 return NS_OK;
             return mConn->OnInputStreamReady(mConn->mSocketIn);
         }
-        if (!mConn->mSocketOut)
+
+        MOZ_ASSERT(mConn->mForceSendPending);
+        mConn->mForceSendPending = false;
+        if (!mConn->mSocketOut) {
             return NS_OK;
+        }
         return mConn->OnOutputStreamReady(mConn->mSocketOut);
     }
 private:
-    nsRefPtr<nsHttpConnection> mConn;
+    RefPtr<nsHttpConnection> mConn;
     bool mDoRecv;
 };
+
+void
+nsHttpConnection::ForceSendIO(nsITimer *aTimer, void *aClosure)
+{
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+    nsHttpConnection *self = static_cast<nsHttpConnection *>(aClosure);
+    MOZ_ASSERT(aTimer == self->mForceSendTimer);
+    self->mForceSendTimer = nullptr;
+    NS_DispatchToCurrentThread(new HttpConnectionForceIO(self, false));
+}
+
+nsresult
+nsHttpConnection::MaybeForceSendIO()
+{
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
+    // due to bug 1213084 sometimes real I/O events do not get serviced when
+    // NSPR derived I/O events are ready and this can cause a deadlock with
+    // https over https proxying. Normally we would expect the write callback to
+    // be invoked before this timer goes off, but set it at the old windows
+    // tick interval (kForceDelay) as a backup for those circumstances.
+    static const uint32_t kForceDelay = 17; //ms
+
+    if (mForceSendPending) {
+        return NS_OK;
+    }
+    MOZ_ASSERT(!mForceSendTimer);
+    mForceSendPending = true;
+    mForceSendTimer = do_CreateInstance("@mozilla.org/timer;1");
+    return mForceSendTimer->InitWithFuncCallback(
+        nsHttpConnection::ForceSendIO, this, kForceDelay, nsITimer::TYPE_ONE_SHOT);
+}
 
 // trigger an asynchronous read
 nsresult
@@ -1373,7 +1417,7 @@ nsHttpConnection::ForceRecv()
     LOG(("nsHttpConnection::ForceRecv [this=%p]\n", this));
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
 
-    return NS_DispatchToCurrentThread(new nsHttpConnectionForceIO(this, true));
+    return NS_DispatchToCurrentThread(new HttpConnectionForceIO(this, true));
 }
 
 // trigger an asynchronous write
@@ -1386,8 +1430,7 @@ nsHttpConnection::ForceSend()
     if (mTLSFilter) {
         return mTLSFilter->NudgeTunnel(this);
     }
-
-    return NS_DispatchToCurrentThread(new nsHttpConnectionForceIO(this, false));
+    return MaybeForceSendIO();
 }
 
 void
@@ -2052,7 +2095,6 @@ nsHttpConnection::OnOutputStreamReady(nsIAsyncOutputStream *out)
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
     MOZ_ASSERT(out == mSocketOut, "unexpected socket");
-
     // if the transaction was dropped...
     if (!mTransaction) {
         LOG(("  no transaction; ignoring event\n"));
@@ -2114,9 +2156,17 @@ void
 nsHttpConnection::CheckForTraffic(bool check)
 {
     if (check) {
+        LOG((" CheckForTraffic conn %p\n", this));
         if (mSpdySession) {
-            // Send a ping to verify it is still alive
-            mSpdySession->SendPing();
+            if (PR_IntervalToMilliseconds(IdleTime()) >= 500) {
+                // Send a ping to verify it is still alive if it has been idle
+                // more than half a second, the network changed events are
+                // rate-limited to one per 1000 ms.
+                LOG((" SendPing\n"));
+                mSpdySession->SendPing();
+            } else {
+                LOG((" SendPing skipped due to network activity\n"));
+            }
         } else {
             // If not SPDY, Store snapshot amount of data right now
             mTrafficCount = mTotalBytesWritten + mTotalBytesRead;

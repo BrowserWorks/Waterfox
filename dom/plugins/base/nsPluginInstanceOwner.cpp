@@ -69,6 +69,12 @@ static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 #ifdef XP_WIN
 #include <wtypes.h>
 #include <winuser.h>
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL (0x020E)
+#endif
+#ifndef SPI_GETWHEELSCROLLCHARS
+#define SPI_GETWHEELSCROLLCHARS (0x006C)
+#endif
 #endif
 
 #ifdef XP_MACOSX
@@ -163,7 +169,7 @@ static void
 AttachToContainerAsEGLImage(ImageContainer* container,
                             nsNPAPIPluginInstance* instance,
                             const LayoutDeviceRect& rect,
-                            nsRefPtr<Image>* out_image)
+                            RefPtr<Image>* out_image)
 {
   MOZ_ASSERT(out_image);
   MOZ_ASSERT(!*out_image);
@@ -173,7 +179,7 @@ AttachToContainerAsEGLImage(ImageContainer* container,
     return;
   }
 
-  nsRefPtr<Image> img = container->CreateImage(ImageFormat::EGLIMAGE);
+  RefPtr<Image> img = container->CreateImage(ImageFormat::EGLIMAGE);
 
   EGLImageImage::Data data;
   data.mImage = image;
@@ -190,7 +196,7 @@ static void
 AttachToContainerAsSurfaceTexture(ImageContainer* container,
                                   nsNPAPIPluginInstance* instance,
                                   const LayoutDeviceRect& rect,
-                                  nsRefPtr<Image>* out_image)
+                                  RefPtr<Image>* out_image)
 {
   MOZ_ASSERT(out_image);
   MOZ_ASSERT(!*out_image);
@@ -200,7 +206,7 @@ AttachToContainerAsSurfaceTexture(ImageContainer* container,
     return;
   }
 
-  nsRefPtr<Image> img = container->CreateImage(ImageFormat::SURFACE_TEXTURE);
+  RefPtr<Image> img = container->CreateImage(ImageFormat::SURFACE_TEXTURE);
 
   SurfaceTextureImage::Data data;
   data.mSurfTex = surfTex;
@@ -220,7 +226,7 @@ nsPluginInstanceOwner::GetImageContainer()
   if (!mInstance)
     return nullptr;
 
-  nsRefPtr<ImageContainer> container;
+  RefPtr<ImageContainer> container;
 
 #if MOZ_WIDGET_ANDROID
   // Right now we only draw with Gecko layers on Honeycomb and higher. See Paint()
@@ -239,7 +245,7 @@ nsPluginInstanceOwner::GetImageContainer()
   container = LayerManager::CreateImageContainer();
 
   // Try to get it as an EGLImage first.
-  nsRefPtr<Image> img;
+  RefPtr<Image> img;
   AttachToContainerAsEGLImage(container, mInstance, r, &img);
   if (!img) {
     AttachToContainerAsSurfaceTexture(container, mInstance, r, &img);
@@ -267,7 +273,7 @@ already_AddRefed<gfxContext>
 nsPluginInstanceOwner::BeginUpdateBackground(const nsIntRect& aRect)
 {
   nsIntRect rect = aRect;
-  nsRefPtr<gfxContext> ctx;
+  RefPtr<gfxContext> ctx;
   if (mInstance &&
       NS_SUCCEEDED(mInstance->BeginUpdateBackground(&rect, getter_AddRefs(ctx)))) {
     return ctx.forget();
@@ -336,13 +342,10 @@ nsPluginInstanceOwner::nsPluginInstanceOwner()
   mPluginFrame = nullptr;
   mWidgetCreationComplete = false;
 #ifdef XP_MACOSX
-  memset(&mCGPluginPortCopy, 0, sizeof(NP_CGContext));
-  mInCGPaintLevel = 0;
   mSentInitialTopLevelWindowEvent = false;
   mLastWindowIsActive = false;
   mLastContentFocused = false;
   mLastScaleFactor = 1.0;
-  mColorProfile = nullptr;
   mShouldBlurOnActivate = false;
 #endif
   mContentFocused = false;
@@ -601,7 +604,7 @@ NS_IMETHODIMP nsPluginInstanceOwner::InvalidateRect(NPRect *invalidRect)
   // Each time an asynchronously-drawing plugin sends a new surface to display,
   // the image in the ImageContainer is updated and InvalidateRect is called.
   // There are different side effects for (sync) Android plugins.
-  nsRefPtr<ImageContainer> container;
+  RefPtr<ImageContainer> container;
   mInstance->GetImageContainer(getter_AddRefs(container));
 #endif
 
@@ -1203,91 +1206,6 @@ void nsPluginInstanceOwner::RemoveFromCARefreshTimer() {
   }
 }
 
-void nsPluginInstanceOwner::RenderCoreAnimation(CGContextRef aCGContext,
-                                                int aWidth, int aHeight)
-{
-  if (aWidth == 0 || aHeight == 0)
-    return;
-
-  if (!mCARenderer) {
-    mCARenderer = new nsCARenderer();
-  }
-
-  // aWidth and aHeight are in "display pixels".  In non-HiDPI modes
-  // "display pixels" are device pixels.  But in HiDPI modes each
-  // display pixel corresponds to more than one device pixel.
-  double scaleFactor = 1.0;
-  GetContentsScaleFactor(&scaleFactor);
-
-  if (!mIOSurface ||
-      (mIOSurface->GetWidth() != (size_t)aWidth ||
-       mIOSurface->GetHeight() != (size_t)aHeight ||
-       mIOSurface->GetContentsScaleFactor() != scaleFactor)) {
-    mIOSurface = nullptr;
-
-    // If the renderer is backed by an IOSurface, resize it as required.
-    mIOSurface = MacIOSurface::CreateIOSurface(aWidth, aHeight, scaleFactor);
-    if (mIOSurface) {
-      RefPtr<MacIOSurface> attachSurface = MacIOSurface::LookupSurface(
-                                              mIOSurface->GetIOSurfaceID(),
-                                              scaleFactor);
-      if (attachSurface) {
-        mCARenderer->AttachIOSurface(attachSurface);
-      } else {
-        NS_ERROR("IOSurface attachment failed");
-        mIOSurface = nullptr;
-      }
-    }
-  }
-
-  if (!mColorProfile) {
-    mColorProfile = CreateSystemColorSpace();
-  }
-
-  if (mCARenderer->isInit() == false) {
-    void *caLayer = nullptr;
-    nsresult rv = mInstance->GetValueFromPlugin(NPPVpluginCoreAnimationLayer, &caLayer);
-    if (NS_FAILED(rv) || !caLayer) {
-      return;
-    }
-
-    // We don't run Flash in-process so we can unconditionally disallow
-    // the offliner renderer.
-    mCARenderer->SetupRenderer(caLayer, aWidth, aHeight, scaleFactor,
-                               DISALLOW_OFFLINE_RENDERER);
-
-    // Setting up the CALayer requires resetting the painting otherwise we
-    // get garbage for the first few frames.
-    FixUpPluginWindow(ePluginPaintDisable);
-    FixUpPluginWindow(ePluginPaintEnable);
-  }
-
-  CGImageRef caImage = nullptr;
-  nsresult rt = mCARenderer->Render(aWidth, aHeight, scaleFactor, &caImage);
-  if (rt == NS_OK && mIOSurface && mColorProfile) {
-    nsCARenderer::DrawSurfaceToCGContext(aCGContext, mIOSurface, mColorProfile,
-                                         0, 0, aWidth, aHeight);
-  } else if (rt == NS_OK && caImage != nullptr) {
-    // Significant speed up by resetting the scaling
-    ::CGContextSetInterpolationQuality(aCGContext, kCGInterpolationNone );
-    ::CGContextTranslateCTM(aCGContext, 0, (double) aHeight * scaleFactor);
-    ::CGContextScaleCTM(aCGContext, scaleFactor, -scaleFactor);
-
-    ::CGContextDrawImage(aCGContext, CGRectMake(0,0,aWidth,aHeight), caImage);
-  } else {
-    NS_NOTREACHED("nsCARenderer::Render failure");
-  }
-}
-
-void* nsPluginInstanceOwner::GetPluginPortCopy()
-{
-  if (GetDrawingModel() == NPDrawingModelCoreGraphics ||
-      GetDrawingModel() == NPDrawingModelCoreAnimation ||
-      GetDrawingModel() == NPDrawingModelInvalidatingCoreAnimation)
-    return &mCGPluginPortCopy;
-  return nullptr;
-}
-
 void nsPluginInstanceOwner::SetPluginPort()
 {
   void* pluginPort = GetPluginPort();
@@ -1295,18 +1213,6 @@ void nsPluginInstanceOwner::SetPluginPort()
     return;
   mPluginWindow->window = pluginPort;
 }
-
-void nsPluginInstanceOwner::BeginCGPaint()
-{
-  ++mInCGPaintLevel;
-}
-
-void nsPluginInstanceOwner::EndCGPaint()
-{
-  --mInCGPaintLevel;
-  NS_ASSERTION(mInCGPaintLevel >= 0, "Mismatched call to nsPluginInstanceOwner::EndCGPaint()!");
-}
-
 #endif
 
 // static
@@ -1432,9 +1338,9 @@ nsPluginInstanceOwner::GetVideos(nsTArray<nsNPAPIPluginInstance::VideoInfo*>& aV
 already_AddRefed<ImageContainer>
 nsPluginInstanceOwner::GetImageContainerForVideo(nsNPAPIPluginInstance::VideoInfo* aVideoInfo)
 {
-  nsRefPtr<ImageContainer> container = LayerManager::CreateImageContainer();
+  RefPtr<ImageContainer> container = LayerManager::CreateImageContainer();
 
-  nsRefPtr<Image> img = container->CreateImage(ImageFormat::SURFACE_TEXTURE);
+  RefPtr<Image> img = container->CreateImage(ImageFormat::SURFACE_TEXTURE);
 
   SurfaceTextureImage::Data data;
   data.mSurfTex = aVideoInfo->mSurfaceTexture;
@@ -2050,21 +1956,24 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
   // we can get synthetic events from the EventStateManager... these
   // have no pluginEvent
   NPEvent pluginEvent;
-  if (anEvent.mClass == eMouseEventClass) {
+  if (anEvent.mClass == eMouseEventClass ||
+      anEvent.mClass == eWheelEventClass) {
     if (!pPluginEvent) {
       // XXX Should extend this list to synthesize events for more event
       // types
       pluginEvent.event = 0;
-      const WidgetMouseEvent* mouseEvent = anEvent.AsMouseEvent();
+      bool initWParamWithCurrentState = true;
       switch (anEvent.mMessage) {
-      case eMouseMove:
+      case eMouseMove: {
         pluginEvent.event = WM_MOUSEMOVE;
         break;
+      }
       case eMouseDown: {
         static const int downMsgs[] =
           { WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN };
         static const int dblClickMsgs[] =
           { WM_LBUTTONDBLCLK, WM_MBUTTONDBLCLK, WM_RBUTTONDBLCLK };
+        const WidgetMouseEvent* mouseEvent = anEvent.AsMouseEvent();
         if (mouseEvent->clickCount == 2) {
           pluginEvent.event = dblClickMsgs[mouseEvent->button];
         } else {
@@ -2075,7 +1984,90 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       case eMouseUp: {
         static const int upMsgs[] =
           { WM_LBUTTONUP, WM_MBUTTONUP, WM_RBUTTONUP };
+        const WidgetMouseEvent* mouseEvent = anEvent.AsMouseEvent();
         pluginEvent.event = upMsgs[mouseEvent->button];
+        break;
+      }
+      // For plugins which don't support high-resolution scroll, we should
+      // generate legacy resolution wheel messages.  I.e., the delta value
+      // should be WHEEL_DELTA * n.
+      case eWheel: {
+        const WidgetWheelEvent* wheelEvent = anEvent.AsWheelEvent();
+        int32_t delta = 0;
+        if (wheelEvent->lineOrPageDeltaY) {
+          switch (wheelEvent->deltaMode) {
+            case nsIDOMWheelEvent::DOM_DELTA_PAGE:
+              pluginEvent.event = WM_MOUSEWHEEL;
+              delta = -WHEEL_DELTA * wheelEvent->lineOrPageDeltaY;
+              break;
+            case nsIDOMWheelEvent::DOM_DELTA_LINE: {
+              UINT linesPerWheelDelta = 0;
+              if (NS_WARN_IF(!::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                                                     &linesPerWheelDelta, 0))) {
+                // Use system default scroll amount, 3, when
+                // SPI_GETWHEELSCROLLLINES isn't available.
+                linesPerWheelDelta = 3;
+              }
+              if (!linesPerWheelDelta) {
+                break;
+              }
+              pluginEvent.event = WM_MOUSEWHEEL;
+              delta = -WHEEL_DELTA / linesPerWheelDelta *
+                        wheelEvent->lineOrPageDeltaY;
+              break;
+            }
+            case nsIDOMWheelEvent::DOM_DELTA_PIXEL:
+            default:
+              // We don't support WM_GESTURE with this path.
+              MOZ_ASSERT(!pluginEvent.event);
+              break;
+          }
+        } else if (wheelEvent->lineOrPageDeltaX) {
+          switch (wheelEvent->deltaMode) {
+            case nsIDOMWheelEvent::DOM_DELTA_PAGE:
+              pluginEvent.event = WM_MOUSEHWHEEL;
+              delta = -WHEEL_DELTA * wheelEvent->lineOrPageDeltaX;
+              break;
+            case nsIDOMWheelEvent::DOM_DELTA_LINE: {
+              pluginEvent.event = WM_MOUSEHWHEEL;
+              UINT charsPerWheelDelta = 0;
+              // FYI: SPI_GETWHEELSCROLLCHARS is available on Vista or later.
+              if (::SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0,
+                                         &charsPerWheelDelta, 0)) {
+                // Use system default scroll amount, 3, when
+                // SPI_GETWHEELSCROLLCHARS isn't available.
+                charsPerWheelDelta = 3;
+              }
+              if (!charsPerWheelDelta) {
+                break;
+              }
+              delta =
+                WHEEL_DELTA / charsPerWheelDelta * wheelEvent->lineOrPageDeltaX;
+              break;
+            }
+            case nsIDOMWheelEvent::DOM_DELTA_PIXEL:
+            default:
+              // We don't support WM_GESTURE with this path.
+              MOZ_ASSERT(!pluginEvent.event);
+              break;
+          }
+        }
+
+        if (!pluginEvent.event) {
+          break;
+        }
+
+        initWParamWithCurrentState = false;
+        int32_t modifiers =
+          (wheelEvent->IsControl() ?             MK_CONTROL  : 0) |
+          (wheelEvent->IsShift() ?               MK_SHIFT    : 0) |
+          (wheelEvent->IsLeftButtonPressed() ?   MK_LBUTTON  : 0) |
+          (wheelEvent->IsMiddleButtonPressed() ? MK_MBUTTON  : 0) |
+          (wheelEvent->IsRightButtonPressed() ?  MK_RBUTTON  : 0) |
+          (wheelEvent->Is4thButtonPressed() ?    MK_XBUTTON1 : 0) |
+          (wheelEvent->Is5thButtonPressed() ?    MK_XBUTTON2 : 0);
+        pluginEvent.wParam = MAKEWPARAM(modifiers, delta);
+        pPluginEvent = &pluginEvent;
         break;
       }
       // don't synthesize anything for eMouseDoubleClick, since that
@@ -2084,7 +2076,7 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
       default:
         break;
       }
-      if (pluginEvent.event) {
+      if (pluginEvent.event && initWParamWithCurrentState) {
         pPluginEvent = &pluginEvent;
         pluginEvent.wParam =
           (::GetKeyState(VK_CONTROL) ? MK_CONTROL : 0) |
@@ -2106,7 +2098,8 @@ nsEventStatus nsPluginInstanceOwner::ProcessEvent(const WidgetGUIEvent& anEvent)
                    anEvent.mMessage == eMouseDoubleClick ||
                    anEvent.mMessage == eMouseOver ||
                    anEvent.mMessage == eMouseOut ||
-                   anEvent.mMessage == eMouseMove,
+                   anEvent.mMessage == eMouseMove ||
+                   anEvent.mMessage == eWheel,
                    "Incorrect event type for coordinate translation");
       nsPoint pt =
         nsLayoutUtils::GetEventCoordinatesRelativeTo(&anEvent, mPluginFrame) -
@@ -2452,8 +2445,6 @@ nsPluginInstanceOwner::Destroy()
 
 #ifdef XP_MACOSX
   RemoveFromCARefreshTimer();
-  if (mColorProfile)
-    ::CGColorSpaceRelease(mColorProfile);
 #endif
 
   nsCOMPtr<nsIContent> content = do_QueryReferent(mContent);
@@ -2582,13 +2573,13 @@ void nsPluginInstanceOwner::Paint(gfxContext* aContext,
     return;
 
 #ifdef ANP_BITMAP_DRAWING_MODEL
-  static nsRefPtr<gfxImageSurface> pluginSurface;
+  static RefPtr<gfxImageSurface> pluginSurface;
 
   if (pluginSurface == nullptr ||
       aFrameRect.width  != pluginSurface->Width() ||
       aFrameRect.height != pluginSurface->Height()) {
 
-    pluginSurface = new gfxImageSurface(gfxIntSize(aFrameRect.width, aFrameRect.height),
+    pluginSurface = new gfxImageSurface(gfx::IntSize(aFrameRect.width, aFrameRect.height),
                                         gfxImageFormat::ARGB32);
     if (!pluginSurface)
       return;
@@ -2618,7 +2609,7 @@ void nsPluginInstanceOwner::Paint(gfxContext* aContext,
 
   mInstance->HandleEvent(&event, nullptr);
 
-  aContext->SetOperator(gfxContext::OPERATOR_SOURCE);
+  aContext->SetOp(gfx::CompositionOp::OP_SOURCE);
   aContext->SetSource(pluginSurface, gfxPoint(aFrameRect.x, aFrameRect.y));
   aContext->Clip(aFrameRect);
   aContext->Paint();
@@ -2938,11 +2929,8 @@ NS_IMETHODIMP nsPluginInstanceOwner::CreateWidget(void)
 #ifndef XP_MACOSX
       // If we're running in the content process, we need a remote widget created in chrome.
       if (XRE_IsContentProcess()) {
-        nsCOMPtr<nsIDOMWindow> window = doc->GetWindow();
-        if (window) {
-          nsCOMPtr<nsIDOMWindow> topWindow;
-          window->GetTop(getter_AddRefs(topWindow));
-          if (topWindow) {
+        if (nsCOMPtr<nsPIDOMWindow> window = doc->GetWindow()) {
+          if (nsCOMPtr<nsPIDOMWindow> topWindow = window->GetTop()) {
             dom::TabChild* tc = dom::TabChild::GetFrom(topWindow);
             if (tc) {
               // This returns a PluginWidgetProxy which remotes a number of calls.
@@ -3047,11 +3035,7 @@ void nsPluginInstanceOwner::FixUpPluginWindow(int32_t inPaintState)
     return;
   }
 
-  // If we've already set up a CGContext in nsPluginFrame::PaintPlugin(), we
-  // don't want calls to SetPluginPort() to step on our work.
-  if (mInCGPaintLevel < 1) {
-    SetPluginPort();
-  }
+  SetPluginPort();
 
   nsIntSize widgetClip = mPluginFrame->GetWidgetlessClipRect().Size();
 

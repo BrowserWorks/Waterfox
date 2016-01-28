@@ -73,7 +73,7 @@ namespace oom {
  * without causing an OOM in the main thread first.
  */
 enum ThreadType {
-    THREAD_TYPE_NONE,           // 0
+    THREAD_TYPE_NONE = 0,       // 0
     THREAD_TYPE_MAIN,           // 1
     THREAD_TYPE_ASMJS,          // 2
     THREAD_TYPE_ION,            // 3
@@ -83,7 +83,6 @@ enum ThreadType {
     THREAD_TYPE_GCPARALLEL,     // 7
     THREAD_TYPE_MAX             // Used to check shell function arguments
 };
-
 
 /*
  * Getter/Setter functions to encapsulate mozilla::ThreadLocal,
@@ -126,23 +125,22 @@ namespace oom {
 extern JS_PUBLIC_DATA(uint32_t) targetThread;
 
 static inline bool
-OOMThreadCheck()
+IsThreadSimulatingOOM()
 {
-    return (!js::oom::targetThread 
-            || js::oom::targetThread == js::oom::GetThreadType());
+    return js::oom::targetThread && js::oom::targetThread == js::oom::GetThreadType();
 }
 
 static inline bool
 IsSimulatedOOMAllocation()
 {
-    return OOMThreadCheck() && (OOM_counter == OOM_maxAllocations ||
+    return IsThreadSimulatingOOM() && (OOM_counter == OOM_maxAllocations ||
            (OOM_counter > OOM_maxAllocations && OOM_failAlways));
 }
 
 static inline bool
 ShouldFailWithOOM()
 {
-    if (!OOMThreadCheck())
+    if (!IsThreadSimulatingOOM())
         return false;
 
     OOM_counter++;
@@ -180,6 +178,42 @@ static inline bool ShouldFailWithOOM() { return false; }
 } /* namespace js */
 
 # endif /* DEBUG || JS_OOM_BREAKPOINT */
+
+namespace js {
+
+/* Disable OOM testing in sections which are not OOM safe. */
+struct MOZ_RAII AutoEnterOOMUnsafeRegion
+{
+    MOZ_NORETURN MOZ_COLD void crash(const char* reason);
+
+#if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
+    AutoEnterOOMUnsafeRegion()
+      : oomEnabled_(oom::IsThreadSimulatingOOM() && OOM_maxAllocations != UINT32_MAX),
+        oomAfter_(0)
+    {
+        if (oomEnabled_) {
+            oomAfter_ = int64_t(OOM_maxAllocations) - OOM_counter;
+            OOM_maxAllocations = UINT32_MAX;
+        }
+    }
+
+    ~AutoEnterOOMUnsafeRegion() {
+        if (oomEnabled_) {
+            MOZ_ASSERT(OOM_maxAllocations == UINT32_MAX);
+            int64_t maxAllocations = OOM_counter + oomAfter_;
+            MOZ_ASSERT(maxAllocations >= 0 && maxAllocations < UINT32_MAX,
+                       "alloc count + oom limit exceeds range, your oom limit is probably too large");
+            OOM_maxAllocations = uint32_t(maxAllocations);
+        }
+    }
+
+  private:
+    bool oomEnabled_;
+    int64_t oomAfter_;
+#endif
+};
+
+} /* namespace js */
 
 static inline void* js_malloc(size_t bytes)
 {
@@ -426,15 +460,15 @@ namespace JS {
 template<typename T>
 struct DeletePolicy
 {
-    void operator()(T* ptr) {
-        js_delete(ptr);
+    void operator()(const T* ptr) {
+        js_delete(const_cast<T*>(ptr));
     }
 };
 
 struct FreePolicy
 {
-    void operator()(void* ptr) {
-        js_free(ptr);
+    void operator()(const void* ptr) {
+        js_free(const_cast<void*>(ptr));
     }
 };
 

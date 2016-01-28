@@ -6,8 +6,11 @@
 
 notification {
   color: -moz-gtk-info-bar-text;
-  background-color: InfoBackground;
   -moz-appearance: -moz-gtk-info-bar;
+%if MOZ_WIDGET_GTK == 2
+  /* We need the background-color set explicitly for gtk2 */
+  background-color: InfoBackground;
+%endif
   text-shadow: none;
 }
 

@@ -7,6 +7,7 @@
 #include "GLReadTexImageHelper.h"
 
 #include "gfx2DGlue.h"
+#include "gfxColor.h"
 #include "gfxTypes.h"
 #include "GLContext.h"
 #include "OGLShaderProgram.h"
@@ -213,7 +214,7 @@ GetActualReadFormats(GLContext* gl,
     }
 }
 
-static void
+void
 SwapRAndBComponents(DataSourceSurface* surf)
 {
     DataSourceSurface::MappedSurface map;
@@ -273,7 +274,7 @@ CopyDataSourceSurface(DataSourceSurface* aSource,
                aDest->GetFormat() == SurfaceFormat::R8G8B8X8 ||
                aDest->GetFormat() == SurfaceFormat::B8G8R8A8 ||
                aDest->GetFormat() == SurfaceFormat::B8G8R8X8 ||
-               aDest->GetFormat() == SurfaceFormat::R5G6B5);
+               aDest->GetFormat() == SurfaceFormat::R5G6B5_UINT16);
 
     const bool isSrcBGR = aSource->GetFormat() == SurfaceFormat::B8G8R8A8 ||
                           aSource->GetFormat() == SurfaceFormat::B8G8R8X8;
@@ -287,7 +288,7 @@ CopyDataSourceSurface(DataSourceSurface* aSource,
                               aDest->GetFormat() == SurfaceFormat::B8G8R8A8;
     const bool needsAlphaMask = !srcHasAlpha && destHasAlpha;
 
-    const bool needsConvertTo16Bits = aDest->GetFormat() == SurfaceFormat::R5G6B5;
+    const bool needsConvertTo16Bits = aDest->GetFormat() == SurfaceFormat::R5G6B5_UINT16;
 
     DataSourceSurface::MappedSurface srcMap;
     DataSourceSurface::MappedSurface destMap;
@@ -393,7 +394,7 @@ ReadPixelsIntoDataSurface(GLContext* gl, DataSourceSurface* dest)
         destFormat = LOCAL_GL_RGBA;
         destType = LOCAL_GL_UNSIGNED_BYTE;
         break;
-    case SurfaceFormat::R5G6B5:
+    case SurfaceFormat::R5G6B5_UINT16:
         destFormat = LOCAL_GL_RGB;
         destType = LOCAL_GL_UNSIGNED_SHORT_5_6_5_REV;
         break;
@@ -437,7 +438,7 @@ ReadPixelsIntoDataSurface(GLContext* gl, DataSourceSurface* dest)
             case LOCAL_GL_RGB: {
                 MOZ_ASSERT(destPixelSize == 2);
                 MOZ_ASSERT(readType == LOCAL_GL_UNSIGNED_SHORT_5_6_5_REV);
-                readFormatGFX = SurfaceFormat::R5G6B5;
+                readFormatGFX = SurfaceFormat::R5G6B5_UINT16;
                 break;
             }
             default: {
@@ -532,8 +533,8 @@ ReadPixelsIntoDataSurface(GLContext* gl, DataSourceSurface* dest)
 #endif
 }
 
-static already_AddRefed<DataSourceSurface>
-YInvertImageSurface(DataSourceSurface* aSurf)
+already_AddRefed<gfx::DataSourceSurface>
+YInvertImageSurface(gfx::DataSourceSurface* aSurf)
 {
     RefPtr<DataSourceSurface> temp =
       Factory::CreateDataSourceSurfaceWithStride(aSurf->GetSize(),
@@ -559,8 +560,8 @@ YInvertImageSurface(DataSourceSurface* aSurf)
         return nullptr;
     }
 
-    dt->SetTransform(Matrix::Translation(0.0, aSurf->GetSize().height) *
-                     Matrix::Scaling(1.0, -1.0));
+    dt->SetTransform(Matrix::Scaling(1.0, -1.0) *
+                     Matrix::Translation(0.0, aSurf->GetSize().height));
     Rect rect(0, 0, aSurf->GetSize().width, aSurf->GetSize().height);
     dt->DrawSurface(aSurf, rect, rect, DrawSurfaceOptions(),
                     DrawOptions(1.0, CompositionOp::OP_SOURCE, AntialiasMode::NONE));
@@ -613,12 +614,36 @@ ReadBackSurface(GLContext* gl, GLuint aTexture, bool aYInvert, SurfaceFormat aFo
 
 #define CLEANUP_IF_GLERROR_OCCURRED(x)                                      \
     if (DidGLErrorOccur(x)) {                                               \
-        isurf = nullptr;                                                    \
-        break;                                                              \
+        return false;                                                       \
     }
 
 already_AddRefed<DataSourceSurface>
 GLReadTexImageHelper::ReadTexImage(GLuint aTextureId,
+                                   GLenum aTextureTarget,
+                                   const gfx::IntSize& aSize,
+    /* ShaderConfigOGL.mFeature */ int aConfig,
+                                   bool aYInvert)
+{
+    /* Allocate resulting image surface */
+    int32_t stride = aSize.width * BytesPerPixel(SurfaceFormat::R8G8B8A8);
+    RefPtr<DataSourceSurface> isurf =
+        Factory::CreateDataSourceSurfaceWithStride(aSize,
+                                                   SurfaceFormat::R8G8B8A8,
+                                                   stride);
+    if (NS_WARN_IF(!isurf)) {
+        return nullptr;
+    }
+
+    if (!ReadTexImage(isurf, aTextureId, aTextureTarget, aSize, aConfig, aYInvert)) {
+        return nullptr;
+    }
+
+    return isurf.forget();
+}
+
+bool
+GLReadTexImageHelper::ReadTexImage(DataSourceSurface* aDest,
+                                   GLuint aTextureId,
                                    GLenum aTextureTarget,
                                    const gfx::IntSize& aSize,
     /* ShaderConfigOGL.mFeature */ int aConfig,
@@ -629,16 +654,6 @@ GLReadTexImageHelper::ReadTexImage(GLuint aTextureId,
                aTextureTarget == LOCAL_GL_TEXTURE_RECTANGLE_ARB);
 
     mGL->MakeCurrent();
-
-    /* Allocate resulting image surface */
-    int32_t stride = aSize.width * BytesPerPixel(SurfaceFormat::R8G8B8A8);
-    RefPtr<DataSourceSurface> isurf =
-        Factory::CreateDataSourceSurfaceWithStride(aSize,
-                                                   SurfaceFormat::R8G8B8A8,
-                                                   stride);
-    if (NS_WARN_IF(!isurf)) {
-        return nullptr;
-    }
 
     GLint oldrb, oldfb, oldprog, oldTexUnit, oldTex;
     GLuint rb, fb;
@@ -736,7 +751,7 @@ GLReadTexImageHelper::ReadTexImage(GLuint aTextureId,
         CLEANUP_IF_GLERROR_OCCURRED("when drawing texture");
 
         /* Read-back draw results */
-        ReadPixelsIntoDataSurface(mGL, isurf);
+        ReadPixelsIntoDataSurface(mGL, aDest);
         CLEANUP_IF_GLERROR_OCCURRED("when reading pixels into surface");
     } while (false);
 
@@ -755,7 +770,7 @@ GLReadTexImageHelper::ReadTexImage(GLuint aTextureId,
     if (oldTexUnit != LOCAL_GL_TEXTURE0)
         mGL->fActiveTexture(oldTexUnit);
 
-    return isurf.forget();
+    return true;
 }
 
 #undef CLEANUP_IF_GLERROR_OCCURRED

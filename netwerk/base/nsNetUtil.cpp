@@ -6,6 +6,7 @@
 
 #include "mozilla/LoadContext.h"
 #include "mozilla/LoadInfo.h"
+#include "mozilla/BasePrincipal.h"
 #include "nsNetUtil.h"
 #include "nsNetUtil.inl"
 #include "mozIApplicationClearPrivateDataParams.h"
@@ -507,7 +508,7 @@ NS_NewLoadGroup(nsILoadGroup **aResult, nsIPrincipal *aPrincipal)
         do_CreateInstance(NS_LOADGROUP_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsRefPtr<LoadContext> loadContext = new LoadContext(aPrincipal);
+    RefPtr<LoadContext> loadContext = new LoadContext(aPrincipal);
     rv = group->SetNotificationCallbacks(loadContext);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1229,6 +1230,20 @@ NS_UsePrivateBrowsing(nsIChannel *channel)
 }
 
 bool
+NS_GetOriginAttributes(nsIChannel *aChannel,
+                       mozilla::OriginAttributes &aAttributes)
+{
+    nsCOMPtr<nsILoadContext> loadContext;
+    NS_QueryNotificationCallbacks(aChannel, loadContext);
+    if (!loadContext) {
+        return false;
+    }
+
+    loadContext->GetOriginAttributes(aAttributes);
+    return true;
+}
+
+bool
 NS_GetAppInfo(nsIChannel *aChannel,
               uint32_t *aAppID,
               bool *aIsInBrowserElement)
@@ -1516,18 +1531,6 @@ NS_TryToMakeImmutable(nsIURI *uri,
     }
 
     return result.forget();
-}
-
-nsresult
-NS_URIChainHasFlags(nsIURI   *uri,
-                    uint32_t  flags,
-                    bool     *result)
-{
-    nsresult rv;
-    nsCOMPtr<nsINetUtil> util = do_GetNetUtil(&rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    return util->URIChainHasFlags(uri, flags, result);
 }
 
 already_AddRefed<nsIURI>

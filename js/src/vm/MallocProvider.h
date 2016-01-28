@@ -23,8 +23,6 @@
  *       - TempAllocPolicy: Adds automatic error reporting to the provided
  *         Context when allocations fail.
  *
- *       - ContextAllocPolicy: forwards to the JSContext MallocProvider.
- *
  *       - RuntimeAllocPolicy: forwards to the JSRuntime MallocProvider.
  *
  *   - MallocProvider. A mixin base class that handles automatically updating
@@ -53,17 +51,43 @@ template<class Client>
 struct MallocProvider
 {
     template <class T>
+    T* maybe_pod_malloc(size_t numElems) {
+        T* p = js_pod_malloc<T>(numElems);
+        if (MOZ_LIKELY(p))
+            client()->updateMallocCounter(numElems * sizeof(T));
+        return p;
+    }
+
+    template <class T>
+    T* maybe_pod_calloc(size_t numElems) {
+        T* p = js_pod_calloc<T>(numElems);
+        if (MOZ_LIKELY(p))
+            client()->updateMallocCounter(numElems * sizeof(T));
+        return p;
+    }
+
+    template <class T>
+    T* maybe_pod_realloc(T* prior, size_t oldSize, size_t newSize) {
+        T* p = js_pod_realloc(prior, oldSize, newSize);
+        if (MOZ_LIKELY(p)) {
+            // For compatibility we do not account for realloc that decreases
+            // previously allocated memory.
+            if (newSize > oldSize)
+                client()->updateMallocCounter((newSize - oldSize) * sizeof(T));
+        }
+        return p;
+    }
+
+    template <class T>
     T* pod_malloc() {
         return pod_malloc<T>(1);
     }
 
     template <class T>
     T* pod_malloc(size_t numElems) {
-        T* p = js_pod_malloc<T>(numElems);
-        if (MOZ_LIKELY(p)) {
-            client()->updateMallocCounter(numElems * sizeof(T));
+        T* p = maybe_pod_malloc<T>(numElems);
+        if (MOZ_LIKELY(p))
             return p;
-        }
         size_t bytes;
         if (MOZ_UNLIKELY(!CalculateAllocSize<T>(numElems, &bytes))) {
             client()->reportAllocationOverflow();
@@ -106,11 +130,9 @@ struct MallocProvider
 
     template <class T>
     T* pod_calloc(size_t numElems) {
-        T* p = js_pod_calloc<T>(numElems);
-        if (MOZ_LIKELY(p)) {
-            client()->updateMallocCounter(numElems * sizeof(T));
+        T* p = maybe_pod_calloc<T>(numElems);
+        if (MOZ_LIKELY(p))
             return p;
-        }
         size_t bytes;
         if (MOZ_UNLIKELY(!CalculateAllocSize<T>(numElems, &bytes))) {
             client()->reportAllocationOverflow();
@@ -149,14 +171,9 @@ struct MallocProvider
 
     template <class T>
     T* pod_realloc(T* prior, size_t oldSize, size_t newSize) {
-        T* p = js_pod_realloc(prior, oldSize, newSize);
-        if (MOZ_LIKELY(p)) {
-            // For compatibility we do not account for realloc that decreases
-            // previously allocated memory.
-            if (newSize > oldSize)
-                client()->updateMallocCounter((newSize - oldSize) * sizeof(T));
+        T* p = maybe_pod_realloc(prior, oldSize, newSize);
+        if (MOZ_LIKELY(p))
             return p;
-        }
         size_t bytes;
         if (MOZ_UNLIKELY(!CalculateAllocSize<T>(newSize, &bytes))) {
             client()->reportAllocationOverflow();

@@ -11,6 +11,8 @@ component_intl   = ('Core', 'JavaScript: Internationalization API')
 component_jit    = ('Core', 'JavaScript Engine: JIT')
 component_stl    = ('Core', 'JavaScript: Standard Library')
 
+FILES_PER_UNIFIED_FILE = 6
+
 with Files('../public/**'):
     BUG_COMPONENT = component_engine
 with Files('*'):
@@ -129,8 +131,9 @@ EXPORTS.js += [
     '../public/TrackedOptimizationInfo.h',
     '../public/TypeDecls.h',
     '../public/UbiNode.h',
+    '../public/UbiNodeBreadthFirst.h',
     '../public/UbiNodeCensus.h',
-    '../public/UbiNodeTraverse.h',
+    '../public/UbiNodePostOrder.h',
     '../public/Utility.h',
     '../public/Value.h',
     '../public/Vector.h',
@@ -157,6 +160,7 @@ UNIFIED_SOURCES += [
     'builtin/SymbolObject.cpp',
     'builtin/TestingFunctions.cpp',
     'builtin/TypedObject.cpp',
+    'builtin/WeakMapObject.cpp',
     'builtin/WeakSetObject.cpp',
     'devtools/sharkctl.cpp',
     'ds/LifoAlloc.cpp',
@@ -286,6 +290,7 @@ UNIFIED_SOURCES += [
     'vm/ArrayBufferObject.cpp',
     'vm/CallNonGenericMethod.cpp',
     'vm/CharacterEncoding.cpp',
+    'vm/CodeCoverage.cpp',
     'vm/Compression.cpp',
     'vm/DateTime.cpp',
     'vm/Debugger.cpp',
@@ -318,6 +323,7 @@ UNIFIED_SOURCES += [
     'vm/SharedTypedArrayObject.cpp',
     'vm/SPSProfiler.cpp',
     'vm/Stack.cpp',
+    'vm/Stopwatch.cpp',
     'vm/String.cpp',
     'vm/StringBuffer.cpp',
     'vm/StructuredClone.cpp',
@@ -438,6 +444,11 @@ elif CONFIG['JS_CODEGEN_ARM']:
         UNIFIED_SOURCES += [
             'jit/arm/Simulator-arm.cpp'
         ]
+    elif CONFIG['OS_ARCH'] == 'Darwin':
+        SOURCES += [
+            'jit/arm/llvm-compiler-rt/arm/aeabi_idivmod.S',
+            'jit/arm/llvm-compiler-rt/arm/aeabi_uidivmod.S',
+        ]
 elif CONFIG['JS_CODEGEN_ARM64']:
     UNIFIED_SOURCES += [
         'jit/arm64/Architecture-arm64.cpp',
@@ -467,14 +478,16 @@ elif CONFIG['JS_CODEGEN_ARM64']:
             'jit/arm64/vixl/MozSimulator-vixl.cpp',
             'jit/arm64/vixl/Simulator-vixl.cpp'
         ]
-elif CONFIG['JS_CODEGEN_MIPS32']:
+elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
     UNIFIED_SOURCES += [
         'jit/mips-shared/Architecture-mips-shared.cpp',
         'jit/mips-shared/Assembler-mips-shared.cpp',
         'jit/mips-shared/Bailouts-mips-shared.cpp',
         'jit/mips-shared/BaselineCompiler-mips-shared.cpp',
         'jit/mips-shared/BaselineIC-mips-shared.cpp',
+        'jit/mips-shared/CodeGenerator-mips-shared.cpp',
         'jit/mips-shared/Lowering-mips-shared.cpp',
+        'jit/mips-shared/MacroAssembler-mips-shared.cpp',
         'jit/mips-shared/MoveEmitter-mips-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_MIPS32']:
@@ -495,6 +508,17 @@ elif CONFIG['JS_CODEGEN_MIPS32']:
             UNIFIED_SOURCES += [
                 'jit/mips32/Simulator-mips32.cpp'
             ]
+    elif CONFIG['JS_CODEGEN_MIPS64']:
+        UNIFIED_SOURCES += [
+            'jit/mips64/Architecture-mips64.cpp',
+            'jit/mips64/Assembler-mips64.cpp',
+            'jit/mips64/Bailouts-mips64.cpp',
+            'jit/mips64/BaselineCompiler-mips64.cpp',
+            'jit/mips64/BaselineIC-mips64.cpp',
+            'jit/mips64/Lowering-mips64.cpp',
+            'jit/mips64/SharedIC-mips64.cpp',
+            'jit/mips64/Trampoline-mips64.cpp',
+        ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [

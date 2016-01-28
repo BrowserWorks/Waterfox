@@ -8,6 +8,7 @@
 #include "mozilla/dom/CanvasRenderingContext2D.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
+#include "mozilla/layers/AsyncCanvasRenderer.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/unused.h"
@@ -64,7 +65,7 @@ private:
 already_AddRefed<DataSourceSurface>
 GetBRGADataSourceSurfaceSync(already_AddRefed<layers::Image> aImage)
 {
-  nsRefPtr<SurfaceHelper> helper = new SurfaceHelper(Move(aImage));
+  RefPtr<SurfaceHelper> helper = new SurfaceHelper(Move(aImage));
   return helper->GetDataSurfaceSafe();
 }
 
@@ -92,7 +93,7 @@ public:
 
     if (!mFailed) {
       // The correct parentObject has to be set by the mEncodeCompleteCallback.
-      nsRefPtr<Blob> blob =
+      RefPtr<Blob> blob =
         Blob::CreateMemoryBlob(nullptr, mImgData, mImgSize, mType);
       MOZ_ASSERT(blob);
 
@@ -122,7 +123,7 @@ private:
   nsAutoString mType;
   void* mImgData;
   nsCOMPtr<nsIThread> mEncoderThread;
-  nsRefPtr<EncodeCompleteCallback> mEncodeCompleteCallback;
+  RefPtr<EncodeCompleteCallback> mEncodeCompleteCallback;
   bool mFailed;
 };
 
@@ -137,7 +138,7 @@ public:
 
   EncodingRunnable(const nsAString& aType,
                    const nsAString& aOptions,
-                   uint8_t* aImageBuffer,
+                   UniquePtr<uint8_t[]> aImageBuffer,
                    layers::Image* aImage,
                    imgIEncoder* aEncoder,
                    EncodingCompleteEvent* aEncodingCompleteEvent,
@@ -146,7 +147,7 @@ public:
                    bool aUsingCustomOptions)
     : mType(aType)
     , mOptions(aOptions)
-    , mImageBuffer(aImageBuffer)
+    , mImageBuffer(Move(aImageBuffer))
     , mImage(aImage)
     , mEncoder(aEncoder)
     , mEncodingCompleteEvent(aEncodingCompleteEvent)
@@ -160,10 +161,11 @@ public:
     nsCOMPtr<nsIInputStream> stream;
     nsresult rv = ImageEncoder::ExtractDataInternal(mType,
                                                     mOptions,
-                                                    mImageBuffer,
+                                                    mImageBuffer.get(),
                                                     mFormat,
                                                     mSize,
                                                     mImage,
+                                                    nullptr,
                                                     nullptr,
                                                     getter_AddRefs(stream),
                                                     mEncoder);
@@ -173,10 +175,11 @@ public:
     if (rv == NS_ERROR_INVALID_ARG && mUsingCustomOptions) {
       rv = ImageEncoder::ExtractDataInternal(mType,
                                              EmptyString(),
-                                             mImageBuffer,
+                                             mImageBuffer.get(),
                                              mFormat,
                                              mSize,
                                              mImage,
+                                             nullptr,
                                              nullptr,
                                              getter_AddRefs(stream),
                                              mEncoder);
@@ -217,10 +220,10 @@ public:
 private:
   nsAutoString mType;
   nsAutoString mOptions;
-  nsAutoArrayPtr<uint8_t> mImageBuffer;
-  nsRefPtr<layers::Image> mImage;
+  UniquePtr<uint8_t[]> mImageBuffer;
+  RefPtr<layers::Image> mImage;
   nsCOMPtr<imgIEncoder> mEncoder;
-  nsRefPtr<EncodingCompleteEvent> mEncodingCompleteEvent;
+  RefPtr<EncodingCompleteEvent> mEncodingCompleteEvent;
   int32_t mFormat;
   const nsIntSize mSize;
   bool mUsingCustomOptions;
@@ -234,6 +237,7 @@ ImageEncoder::ExtractData(nsAString& aType,
                           const nsAString& aOptions,
                           const nsIntSize aSize,
                           nsICanvasRenderingContextInternal* aContext,
+                          layers::AsyncCanvasRenderer* aRenderer,
                           nsIInputStream** aStream)
 {
   nsCOMPtr<imgIEncoder> encoder = ImageEncoder::GetImageEncoder(aType);
@@ -242,9 +246,8 @@ ImageEncoder::ExtractData(nsAString& aType,
   }
 
   return ExtractDataInternal(aType, aOptions, nullptr, 0, aSize, nullptr,
-                             aContext, aStream, encoder);
+                             aContext, aRenderer, aStream, encoder);
 }
-
 
 /* static */
 nsresult
@@ -263,7 +266,7 @@ ImageEncoder::ExtractDataFromLayersImageAsync(nsAString& aType,
   nsresult rv = NS_NewThread(getter_AddRefs(encoderThread), nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<EncodingCompleteEvent> completeEvent =
+  RefPtr<EncodingCompleteEvent> completeEvent =
     new EncodingCompleteEvent(encoderThread, aEncodeCallback);
 
   nsIntSize size(aImage->GetSize().width, aImage->GetSize().height);
@@ -284,7 +287,7 @@ nsresult
 ImageEncoder::ExtractDataAsync(nsAString& aType,
                                const nsAString& aOptions,
                                bool aUsingCustomOptions,
-                               uint8_t* aImageBuffer,
+                               UniquePtr<uint8_t[]> aImageBuffer,
                                int32_t aFormat,
                                const nsIntSize aSize,
                                EncodeCompleteCallback* aEncodeCallback)
@@ -298,12 +301,12 @@ ImageEncoder::ExtractDataAsync(nsAString& aType,
   nsresult rv = NS_NewThread(getter_AddRefs(encoderThread), nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<EncodingCompleteEvent> completeEvent =
+  RefPtr<EncodingCompleteEvent> completeEvent =
     new EncodingCompleteEvent(encoderThread, aEncodeCallback);
 
   nsCOMPtr<nsIRunnable> event = new EncodingRunnable(aType,
                                                      aOptions,
-                                                     aImageBuffer,
+                                                     Move(aImageBuffer),
                                                      nullptr,
                                                      encoder,
                                                      completeEvent,
@@ -341,6 +344,7 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
                                   const nsIntSize aSize,
                                   layers::Image* aImage,
                                   nsICanvasRenderingContextInternal* aContext,
+                                  layers::AsyncCanvasRenderer* aRenderer,
                                   nsIInputStream** aStream,
                                   imgIEncoder* aEncoder)
 {
@@ -366,6 +370,11 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
     rv = aContext->GetInputStream(encoderType.get(),
                                   nsPromiseFlatString(aOptions).get(),
                                   getter_AddRefs(imgStream));
+  } else if (aRenderer) {
+    NS_ConvertUTF16toUTF8 encoderType(aType);
+    rv = aRenderer->GetInputStream(encoderType.get(),
+                                   nsPromiseFlatString(aOptions).get(),
+                                   getter_AddRefs(imgStream));
   } else if (aImage) {
     // It is safe to convert PlanarYCbCr format from YUV to RGB off-main-thread.
     // Other image formats could have problem to convert format off-main-thread.

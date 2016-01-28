@@ -13,7 +13,6 @@
 #include "mozilla/gfx/Rect.h"           // for RoundedIn
 #include "mozilla/gfx/ScaleFactor.h"    // for ScaleFactor
 #include "mozilla/gfx/Logging.h"        // for Log
-#include "gfxColor.h"
 #include "nsString.h"
 
 namespace IPC {
@@ -63,7 +62,7 @@ public:
     , mPresShellId(-1)
     , mViewport(0, 0, 0, 0)
     , mExtraResolution()
-    , mBackgroundColor(0, 0, 0, 0)
+    , mBackgroundColor()
     , mLineScrollAmount(0, 0)
     , mPageScrollAmount(0, 0)
     , mAllowVerticalScrollWithWheel(false)
@@ -450,12 +449,12 @@ public:
     return mExtraResolution;
   }
 
-  const gfxRGBA& GetBackgroundColor() const
+  const gfx::Color& GetBackgroundColor() const
   {
     return mBackgroundColor;
   }
 
-  void SetBackgroundColor(const gfxRGBA& aBackgroundColor)
+  void SetBackgroundColor(const gfx::Color& aBackgroundColor)
   {
     mBackgroundColor = aBackgroundColor;
   }
@@ -701,7 +700,7 @@ private:
   ScreenToLayerScale2D mExtraResolution;
 
   // The background color to use when overscrolling.
-  gfxRGBA mBackgroundColor;
+  gfx::Color mBackgroundColor;
 
   // A description of the content element corresponding to this frame.
   // This is empty unless this is a scrollable layer and the

@@ -25,12 +25,12 @@ public:
   {}
 
   // GMPAudioDecoderCallbackProxy
-  virtual void Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp, uint32_t aChannels, uint32_t aRate) override;
-  virtual void InputDataExhausted() override;
-  virtual void DrainComplete() override;
-  virtual void ResetComplete() override;
-  virtual void Error(GMPErr aErr) override;
-  virtual void Terminated() override;
+  void Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp, uint32_t aChannels, uint32_t aRate) override;
+  void InputDataExhausted() override;
+  void DrainComplete() override;
+  void ResetComplete() override;
+  void Error(GMPErr aErr) override;
+  void Terminated() override;
 
   void SetLastStreamOffset(int64_t aStreamOffset) {
     mLastStreamOffset = aStreamOffset;
@@ -69,71 +69,33 @@ public:
   {
   }
 
-  virtual nsRefPtr<InitPromise> Init() override;
-  virtual nsresult Input(MediaRawData* aSample) override;
-  virtual nsresult Flush() override;
-  virtual nsresult Drain() override;
-  virtual nsresult Shutdown() override;
+  RefPtr<InitPromise> Init() override;
+  nsresult Input(MediaRawData* aSample) override;
+  nsresult Flush() override;
+  nsresult Drain() override;
+  nsresult Shutdown() override;
 
 protected:
   virtual void InitTags(nsTArray<nsCString>& aTags);
   virtual nsCString GetNodeId();
 
 private:
-  class GMPInitDoneRunnable : public nsRunnable
-  {
-  public:
-    GMPInitDoneRunnable()
-      : mInitDone(false),
-        mThread(do_GetCurrentThread())
-    {
-    }
-
-    NS_IMETHOD Run()
-    {
-      mInitDone = true;
-      return NS_OK;
-    }
-
-    void Dispatch()
-    {
-      mThread->Dispatch(this, NS_DISPATCH_NORMAL);
-    }
-
-    bool IsDone()
-    {
-      MOZ_ASSERT(nsCOMPtr<nsIThread>(do_GetCurrentThread()) == mThread);
-      return mInitDone;
-    }
-
-  private:
-    bool mInitDone;
-    nsCOMPtr<nsIThread> mThread;
-  };
-
-  void GetGMPAPI(GMPInitDoneRunnable* aInitDone);
 
   class GMPInitDoneCallback : public GetGMPAudioDecoderCallback
   {
   public:
-    GMPInitDoneCallback(GMPAudioDecoder* aDecoder,
-                        GMPInitDoneRunnable* aGMPInitDone)
+    explicit GMPInitDoneCallback(GMPAudioDecoder* aDecoder)
       : mDecoder(aDecoder)
-      , mGMPInitDone(aGMPInitDone)
     {
     }
 
-    virtual void Done(GMPAudioDecoderProxy* aGMP)
+    void Done(GMPAudioDecoderProxy* aGMP) override
     {
-      if (aGMP) {
-        mDecoder->GMPInitDone(aGMP);
-      }
-      mGMPInitDone->Dispatch();
+      mDecoder->GMPInitDone(aGMP);
     }
 
   private:
-    nsRefPtr<GMPAudioDecoder> mDecoder;
-    nsRefPtr<GMPInitDoneRunnable> mGMPInitDone;
+    RefPtr<GMPAudioDecoder> mDecoder;
   };
   void GMPInitDone(GMPAudioDecoderProxy* aGMP);
 
@@ -142,6 +104,7 @@ private:
   nsCOMPtr<mozIGeckoMediaPluginService> mMPS;
   GMPAudioDecoderProxy* mGMP;
   nsAutoPtr<AudioCallbackAdapter> mAdapter;
+  MozPromiseHolder<InitPromise> mInitPromise;
 };
 
 } // namespace mozilla

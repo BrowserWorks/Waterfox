@@ -217,15 +217,12 @@ nsDeviceSensors::Notify(const mozilla::hal::SensorData& aSensorData)
         continue;
     }
 
-    nsCOMPtr<nsIDOMDocument> domdoc;
-    windowListeners[i]->GetDocument(getter_AddRefs(domdoc));
-
-    if (domdoc) {
+    if (nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(pwindow->GetDoc())) {
       nsCOMPtr<mozilla::dom::EventTarget> target = do_QueryInterface(windowListeners[i]);
       if (type == nsIDeviceSensorData::TYPE_ACCELERATION ||
         type == nsIDeviceSensorData::TYPE_LINEAR_ACCELERATION ||
         type == nsIDeviceSensorData::TYPE_GYROSCOPE)
-        FireDOMMotionEvent(domdoc, target, type, x, y, z);
+        FireDOMMotionEvent(domDoc, target, type, x, y, z);
       else if (type == nsIDeviceSensorData::TYPE_ORIENTATION)
         FireDOMOrientationEvent(target, x, y, z);
       else if (type == nsIDeviceSensorData::TYPE_PROXIMITY)
@@ -245,7 +242,7 @@ nsDeviceSensors::FireDOMLightEvent(mozilla::dom::EventTarget* aTarget,
   init.mBubbles = true;
   init.mCancelable = false;
   init.mValue = aValue;
-  nsRefPtr<DeviceLightEvent> event =
+  RefPtr<DeviceLightEvent> event =
     DeviceLightEvent::Constructor(aTarget, NS_LITERAL_STRING("devicelight"), init);
 
   event->SetTrusted(true);
@@ -266,7 +263,7 @@ nsDeviceSensors::FireDOMProximityEvent(mozilla::dom::EventTarget* aTarget,
   init.mValue = aValue;
   init.mMin = aMin;
   init.mMax = aMax;
-  nsRefPtr<DeviceProximityEvent> event =
+  RefPtr<DeviceProximityEvent> event =
     DeviceProximityEvent::Constructor(aTarget,
                                       NS_LITERAL_STRING("deviceproximity"),
                                       init);
@@ -295,7 +292,7 @@ nsDeviceSensors::FireDOMUserProximityEvent(mozilla::dom::EventTarget* aTarget,
   init.mBubbles = true;
   init.mCancelable = false;
   init.mNear = aNear;
-  nsRefPtr<UserProximityEvent> event =
+  RefPtr<UserProximityEvent> event =
     UserProximityEvent::Constructor(aTarget,
                                     NS_LITERAL_STRING("userproximity"),
                                     init);
@@ -320,7 +317,7 @@ nsDeviceSensors::FireDOMOrientationEvent(EventTarget* aTarget,
   init.mGamma.SetValue(aGamma);
   init.mAbsolute = true;
 
-  nsRefPtr<DeviceOrientationEvent> event =
+  RefPtr<DeviceOrientationEvent> event =
     DeviceOrientationEvent::Constructor(aTarget,
                                         NS_LITERAL_STRING("deviceorientation"),
                                         init);

@@ -180,7 +180,7 @@ private:
     sAllocatorUsers--;
   }
 
-  nsRefPtr<nsTimerImpl> mTimer;
+  RefPtr<nsTimerImpl> mTimer;
   int32_t      mGeneration;
 
   static TimerEventAllocator* sAllocator;
@@ -296,7 +296,7 @@ TimerThread::Init()
     if (NS_FAILED(rv)) {
       mThread = nullptr;
     } else {
-      nsRefPtr<TimerObserverRunnable> r = new TimerObserverRunnable(this);
+      RefPtr<TimerObserverRunnable> r = new TimerObserverRunnable(this);
       if (NS_IsMainThread()) {
         r->Run();
       } else {
@@ -430,7 +430,11 @@ TimerThread::Run()
     bool forceRunThisTimer = forceRunNextTimer;
     forceRunNextTimer = false;
 
-    if (mSleeping) {
+    if (mSleeping
+#ifdef MOZ_NUWA_PROCESS
+        || IsNuwaProcess() // Don't fire timers or deadlock will result.
+#endif
+        ) {
       // Sleep for 0.1 seconds while not firing timers.
       uint32_t milliseconds = 100;
       if (ChaosMode::isActive(ChaosFeature::TimerScheduling)) {
@@ -453,7 +457,7 @@ TimerThread::Run()
           // must be racing with us, blocked in gThread->RemoveTimer waiting
           // for TimerThread::mMonitor, under nsTimerImpl::Release.
 
-          nsRefPtr<nsTimerImpl> timerRef(timer);
+          RefPtr<nsTimerImpl> timerRef(timer);
           RemoveTimerInternal(timer);
           timer = nullptr;
 
@@ -683,7 +687,7 @@ TimerThread::PostTimerEvent(already_AddRefed<nsTimerImpl> aTimerRef)
 {
   mMonitor.AssertCurrentThreadOwns();
 
-  nsRefPtr<nsTimerImpl> timer(aTimerRef);
+  RefPtr<nsTimerImpl> timer(aTimerRef);
   if (!timer->mEventTarget) {
     NS_ERROR("Attempt to post timer event to NULL event target");
     return timer.forget();
@@ -697,7 +701,7 @@ TimerThread::PostTimerEvent(already_AddRefed<nsTimerImpl> aTimerRef)
   // event, so we can avoid firing a timer that was re-initialized after being
   // canceled.
 
-  nsRefPtr<nsTimerEvent> event = new nsTimerEvent;
+  RefPtr<nsTimerEvent> event = new nsTimerEvent;
   if (!event) {
     return timer.forget();
   }

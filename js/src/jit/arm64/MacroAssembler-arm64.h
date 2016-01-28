@@ -2532,19 +2532,19 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     // load: offset to the load instruction obtained by movePatchablePtr().
     void writeDataRelocation(ImmGCPtr ptr, BufferOffset load) {
         if (ptr.value)
-            tmpDataRelocations_.append(load);
+            dataRelocations_.writeUnsigned(load.getOffset());
     }
     void writeDataRelocation(const Value& val, BufferOffset load) {
         if (val.isMarkable()) {
             gc::Cell* cell = reinterpret_cast<gc::Cell*>(val.toGCThing());
             if (cell && gc::IsInsideNursery(cell))
                 embedsNurseryPointers_ = true;
-            tmpDataRelocations_.append(load);
+            dataRelocations_.writeUnsigned(load.getOffset());
         }
     }
 
     void writePrebarrierOffset(CodeOffsetLabel label) {
-        tmpPreBarriers_.append(BufferOffset(label.offset()));
+        preBarriers_.writeUnsigned(label.offset());
     }
 
     void computeEffectiveAddress(const Address& address, Register dest) {
@@ -2869,13 +2869,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
         // The returned offset must be to the first instruction generated,
         // for the debugger to match offset with Baseline's pcMappingEntries_.
         BufferOffset offset = nextOffset();
-
-        // TODO: Random pool insertion between instructions below is terrible.
-        // Unfortunately, we can't forbid pool prevention, because we're trying
-        // to add an entry to a pool. So as a temporary fix, just flush the pool
-        // now, so that it won't add later. If you're changing this, also
-        // check ToggleCall(), which will probably break.
-        armbuffer_.flushPool();
 
         syncStackPtr();
 

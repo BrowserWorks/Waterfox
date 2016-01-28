@@ -285,7 +285,7 @@ nsresult _OldGetDiskConsumption::Get(nsICacheStorageConsumptionObserver* aCallba
       do_GetService(NS_CACHESERVICE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<_OldGetDiskConsumption> cb = new _OldGetDiskConsumption(aCallback);
+  RefPtr<_OldGetDiskConsumption> cb = new _OldGetDiskConsumption(aCallback);
 
   // _OldGetDiskConsumption stores the found size value, but until dispatched
   // to the main thread it doesn't call on the consupmtion observer. See bellow.
@@ -382,7 +382,7 @@ NS_IMPL_ISUPPORTS(_OldCacheEntryWrapper, nsICacheEntry)
 
 NS_IMETHODIMP _OldCacheEntryWrapper::AsyncDoom(nsICacheEntryDoomCallback* listener)
 {
-  nsRefPtr<DoomCallbackWrapper> cb = listener
+  RefPtr<DoomCallbackWrapper> cb = listener
     ? new DoomCallbackWrapper(listener)
     : nullptr;
   return AsyncDoom(cb);
@@ -517,7 +517,7 @@ MetaDataVisitorWrapper::VisitMetaDataElement(char const * key,
 
 NS_IMETHODIMP _OldCacheEntryWrapper::VisitMetaData(nsICacheEntryMetaDataVisitor* cb)
 {
-  nsRefPtr<MetaDataVisitorWrapper> w = new MetaDataVisitorWrapper(cb);
+  RefPtr<MetaDataVisitorWrapper> w = new MetaDataVisitorWrapper(cb);
   return mOldDesc->VisitMetaData(w);
 }
 
@@ -528,8 +528,7 @@ GetCacheSessionNameForStoragePolicy(
         nsCSubstring const &scheme,
         nsCacheStoragePolicy storagePolicy,
         bool isPrivate,
-        uint32_t appId,
-        bool inBrowser,
+        OriginAttributes const *originAttribs,
         nsACString& sessionName)
 {
   MOZ_ASSERT(!isPrivate || storagePolicy == nsICache::STORE_IN_MEMORY);
@@ -582,12 +581,9 @@ GetCacheSessionNameForStoragePolicy(
       sessionName.AppendLiteral("-private");
   }
 
-  if (appId != nsILoadContextInfo::NO_APP_ID || inBrowser) {
-    sessionName.Append('~');
-    sessionName.AppendInt(appId);
-    sessionName.Append('~');
-    sessionName.AppendInt(inBrowser);
-  }
+  nsAutoCString suffix;
+  originAttribs->CreateSuffix(suffix);
+  sessionName.Append(suffix);
 
   return NS_OK;
 }
@@ -618,8 +614,7 @@ GetCacheSession(nsCSubstring const &aScheme,
       aScheme,
       storagePolicy,
       aLoadInfo->IsPrivate(),
-      aLoadInfo->AppId(),
-      aLoadInfo->IsInBrowserElement(),
+      aLoadInfo->OriginAttributesPtr(),
       clientId);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -946,7 +941,7 @@ NS_IMETHODIMP _OldStorage::AsyncOpenURI(nsIURI *aURI,
     }
   }
 
-  nsRefPtr<_OldCacheLoad> cacheLoad =
+  RefPtr<_OldCacheLoad> cacheLoad =
     new _OldCacheLoad(scheme, cacheKey, aCallback, mAppCache,
                       mLoadInfo, mWriteToDisk, aFlags);
 
@@ -984,7 +979,7 @@ NS_IMETHODIMP _OldStorage::AsyncDoomURI(nsIURI *aURI, const nsACString & aIdExte
                        getter_AddRefs(session));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<DoomCallbackWrapper> cb = aCallback
+  RefPtr<DoomCallbackWrapper> cb = aCallback
     ? new DoomCallbackWrapper(aCallback)
     : nullptr;
   rv = session->DoomEntry(cacheKey, cb);
@@ -1000,9 +995,12 @@ NS_IMETHODIMP _OldStorage::AsyncEvictStorage(nsICacheEntryDoomCallback* aCallbac
   nsresult rv;
 
   if (!mAppCache && mOfflineStorage) {
+    // TODO - bug 1165256, have an API on nsIApplicationCacheService that takes
+    // optional OAs and decides internally what to do.
+
     // Special casing for pure offline storage
-    if (mLoadInfo->AppId() == nsILoadContextInfo::NO_APP_ID &&
-        !mLoadInfo->IsInBrowserElement()) {
+    if (mLoadInfo->OriginAttributesPtr()->mAppId == nsILoadContextInfo::NO_APP_ID &&
+        !mLoadInfo->OriginAttributesPtr()->mInBrowser) {
 
       // Clear everything.
       nsCOMPtr<nsICacheService> serv =
@@ -1018,8 +1016,8 @@ NS_IMETHODIMP _OldStorage::AsyncEvictStorage(nsICacheEntryDoomCallback* aCallbac
         do_GetService(NS_APPLICATIONCACHESERVICE_CONTRACTID, &rv);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      rv = appCacheService->DiscardByAppId(mLoadInfo->AppId(),
-                                           mLoadInfo->IsInBrowserElement());
+      rv = appCacheService->DiscardByAppId(mLoadInfo->OriginAttributesPtr()->mAppId,
+                                           mLoadInfo->OriginAttributesPtr()->mInBrowser);
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
@@ -1065,7 +1063,7 @@ NS_IMETHODIMP _OldStorage::AsyncEvictStorage(nsICacheEntryDoomCallback* aCallbac
   }
 
   if (aCallback) {
-    nsRefPtr<DoomCallbackSynchronizer> sync =
+    RefPtr<DoomCallbackSynchronizer> sync =
       new DoomCallbackSynchronizer(aCallback);
     rv = sync->Dispatch();
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1096,7 +1094,7 @@ NS_IMETHODIMP _OldStorage::AsyncVisitStorage(nsICacheStorageVisitor* aVisitor,
     deviceID = const_cast<char*>("disk");
   }
 
-  nsRefPtr<_OldVisitCallbackWrapper> cb = new _OldVisitCallbackWrapper(
+  RefPtr<_OldVisitCallbackWrapper> cb = new _OldVisitCallbackWrapper(
     deviceID, aVisitor, aVisitEntries, mLoadInfo);
   rv = nsCacheService::GlobalInstance()->VisitEntriesInternal(cb);
   NS_ENSURE_SUCCESS(rv, rv);

@@ -30,16 +30,8 @@
 //
 // this enables LogLevel::Debug level information and places all output in
 // the file nspr.log
-static PRLogModuleInfo*
-GetObserverServiceLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("ObserverService");
-  }
-  return sLog;
-}
-#define LOG(x)  MOZ_LOG(GetObserverServiceLog(), mozilla::LogLevel::Debug, x)
+static mozilla::LazyLogModule sObserverServiceLog("ObserverService");
+#define LOG(x) MOZ_LOG(sObserverServiceLog, mozilla::LogLevel::Debug, x)
 
 using namespace mozilla;
 
@@ -203,7 +195,7 @@ nsObserverService::Create(nsISupports* aOuter, const nsIID& aIID,
 {
   LOG(("nsObserverService::Create()"));
 
-  nsRefPtr<nsObserverService> os = new nsObserverService();
+  RefPtr<nsObserverService> os = new nsObserverService();
 
   if (!os) {
     return NS_ERROR_OUT_OF_MEMORY;
@@ -212,7 +204,7 @@ nsObserverService::Create(nsISupports* aOuter, const nsIID& aIID,
   // The memory reporter can not be immediately registered here because
   // the nsMemoryReporterManager may attempt to get the nsObserverService
   // during initialization, causing a recursive GetService.
-  nsRefPtr<nsRunnableMethod<nsObserverService>> registerRunnable =
+  RefPtr<nsRunnableMethod<nsObserverService>> registerRunnable =
     NS_NewRunnableMethod(os, &nsObserverService::RegisterReporter);
   NS_DispatchToCurrentThread(registerRunnable);
 

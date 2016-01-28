@@ -396,7 +396,7 @@ nsDeviceContext::CreateRenderingContext()
 {
     MOZ_ASSERT(mWidth > 0 && mHeight > 0);
 
-    nsRefPtr<gfxASurface> printingSurface = mPrintingSurface;
+    RefPtr<gfxASurface> printingSurface = mPrintingSurface;
 #ifdef XP_MACOSX
     // CreateRenderingContext() can be called (on reflow) after EndPage()
     // but before BeginPage().  On OS X (and only there) mPrintingSurface
@@ -425,8 +425,21 @@ nsDeviceContext::CreateRenderingContext()
 #endif
     dt->AddUserData(&sDisablePixelSnapping, (void*)0x1, nullptr);
 
-    nsRefPtr<gfxContext> pContext = new gfxContext(dt);
-    pContext->SetMatrix(gfxMatrix::Scaling(mPrintingScale, mPrintingScale));
+    RefPtr<gfxContext> pContext = new gfxContext(dt);
+
+    gfxMatrix transform;
+    if (printingSurface->GetRotateForLandscape()) {
+      // Rotate page 90 degrees to draw landscape page on portrait paper
+      IntSize size = printingSurface->GetSize();
+      transform.Translate(gfxPoint(0, size.width));
+      gfxMatrix rotate(0, -1,
+                       1,  0,
+                       0,  0);
+      transform = rotate * transform;
+    }
+    transform.Scale(mPrintingScale, mPrintingScale);
+
+    pContext->SetMatrix(transform);
     return pContext.forget();
 }
 

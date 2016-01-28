@@ -126,6 +126,15 @@ function URL(url, base) {
     }
   }
 
+  let fileName = "/";
+  try {
+    fileName = uri.QueryInterface(Ci.nsIURL).fileName;
+  } catch (e) {
+    if (e.result != Cr.NS_NOINTERFACE) {
+      throw e;
+    }
+  }
+
   let uriData = [uri.path, uri.path.length, {}, {}, {}, {}, {}, {}];
   URLParser.parsePath.apply(URLParser, uriData);
   let [{ value: filepathPos }, { value: filepathLen },
@@ -137,18 +146,19 @@ function URL(url, base) {
   let search = uri.path.substr(queryPos, queryLen);
   search = search ? "?" + search : "";
 
-  this.__defineGetter__("scheme", function() uri.scheme);
-  this.__defineGetter__("userPass", function() userPass);
-  this.__defineGetter__("host", function() host);
-  this.__defineGetter__("hostname", function() host);
-  this.__defineGetter__("port", function() port);
-  this.__defineGetter__("path", function() uri.path);
-  this.__defineGetter__("pathname", function() pathname);
-  this.__defineGetter__("hash", function() hash);
-  this.__defineGetter__("href", function() uri.spec);
-  this.__defineGetter__("origin", function() uri.prePath);
-  this.__defineGetter__("protocol", function() uri.scheme + ":");
-  this.__defineGetter__("search", function() search);
+  this.__defineGetter__("fileName", () => fileName);
+  this.__defineGetter__("scheme", () => uri.scheme);
+  this.__defineGetter__("userPass", () => userPass);
+  this.__defineGetter__("host", () => host);
+  this.__defineGetter__("hostname", () => host);
+  this.__defineGetter__("port", () => port);
+  this.__defineGetter__("path", () => uri.path);
+  this.__defineGetter__("pathname", () => pathname);
+  this.__defineGetter__("hash", () => hash);
+  this.__defineGetter__("href", () => uri.spec);
+  this.__defineGetter__("origin", () => uri.prePath);
+  this.__defineGetter__("protocol", () => uri.scheme + ":");
+  this.__defineGetter__("search", () => search);
 
   Object.defineProperties(this, {
     toString: {

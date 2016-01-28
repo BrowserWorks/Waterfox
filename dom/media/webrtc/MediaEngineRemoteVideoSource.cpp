@@ -96,6 +96,7 @@ MediaEngineRemoteVideoSource::Allocate(const dom::MediaTrackConstraints& aConstr
                                        const nsString& aDeviceId)
 {
   LOG((__PRETTY_FUNCTION__));
+  AssertIsOnOwningThread();
 
   if (!mInitDone) {
     LOG(("Init not done"));
@@ -135,6 +136,7 @@ nsresult
 MediaEngineRemoteVideoSource::Deallocate()
 {
   LOG((__PRETTY_FUNCTION__));
+  AssertIsOnOwningThread();
 
   --mNrAllocations;
   MOZ_ASSERT(mNrAllocations >= 0, "Double-deallocations are prohibited");
@@ -156,6 +158,7 @@ nsresult
 MediaEngineRemoteVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
 {
   LOG((__PRETTY_FUNCTION__));
+  AssertIsOnOwningThread();
   if (!mInitDone || !aStream) {
     LOG(("No stream or init not done"));
     return NS_ERROR_FAILURE;
@@ -190,6 +193,7 @@ MediaEngineRemoteVideoSource::Stop(mozilla::SourceMediaStream* aSource,
                                    mozilla::TrackID aID)
 {
   LOG((__PRETTY_FUNCTION__));
+  AssertIsOnOwningThread();
   {
     MonitorAutoLock lock(mMonitor);
 
@@ -223,6 +227,7 @@ MediaEngineRemoteVideoSource::Restart(const dom::MediaTrackConstraints& aConstra
                                       const MediaEnginePrefs& aPrefs,
                                       const nsString& aDeviceId)
 {
+  AssertIsOnOwningThread();
   if (!mInitDone) {
     LOG(("Init not done"));
     return NS_ERROR_FAILURE;
@@ -289,7 +294,7 @@ MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
   }
 
   // Create a video frame and append it to the track.
-  nsRefPtr<layers::Image> image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
+  RefPtr<layers::Image> image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
   layers::PlanarYCbCrImage* videoImage = static_cast<layers::PlanarYCbCrImage*>(image.get());
 
   uint8_t* frame = static_cast<uint8_t*> (buffer);
@@ -317,8 +322,8 @@ MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
 
 #ifdef DEBUG
   static uint32_t frame_num = 0;
-  LOGFRAME(("frame %d (%dx%d); timestamp %u, ntp_time %lu, render_time %lu", frame_num++,
-            mWidth, mHeight, time_stamp, ntp_time, render_time));
+  LOGFRAME(("frame %d (%dx%d); timestamp %u, ntp_time %" PRIu64 ", render_time %" PRIu64,
+            frame_num++, mWidth, mHeight, time_stamp, ntp_time, render_time));
 #endif
 
   // we don't touch anything in 'this' until here (except for snapshot,
@@ -394,6 +399,32 @@ MediaEngineRemoteVideoSource::NumCapabilities()
   }
 
   return mHardcodedCapabilities.Length();
+}
+
+bool
+MediaEngineRemoteVideoSource::ChooseCapability(const MediaTrackConstraints &aConstraints,
+    const MediaEnginePrefs &aPrefs,
+    const nsString& aDeviceId)
+{
+  AssertIsOnOwningThread();
+
+  switch(mMediaSource) {
+    case dom::MediaSourceEnum::Screen:
+    case dom::MediaSourceEnum::Window:
+    case dom::MediaSourceEnum::Application: {
+      FlattenedConstraints c(aConstraints);
+      mCapability.width = c.mWidth.Clamp(c.mWidth.mIdeal.WasPassed() ?
+        c.mWidth.mIdeal.Value() : aPrefs.mWidth);
+      mCapability.height = c.mHeight.Clamp(c.mHeight.mIdeal.WasPassed() ?
+        c.mHeight.mIdeal.Value() : aPrefs.mHeight);
+      mCapability.maxFPS = c.mFrameRate.Clamp(c.mFrameRate.mIdeal.WasPassed() ?
+        c.mFrameRate.mIdeal.Value() : aPrefs.mFPS);
+      return true;
+    }
+    default:
+      return MediaEngineCameraVideoSource::ChooseCapability(aConstraints, aPrefs, aDeviceId);
+  }
+
 }
 
 void

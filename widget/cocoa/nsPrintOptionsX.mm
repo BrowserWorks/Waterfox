@@ -36,7 +36,7 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
     // the first one, so we just send the first to save IPC traffic.
     char16_t** docTitles;
     uint32_t titleCount;
-    nsresult rv = aWBP->EnumerateDocumentNames(&titleCount, &docTitles);
+    rv = aWBP->EnumerateDocumentNames(&titleCount, &docTitles);
     if (NS_SUCCEEDED(rv) && titleCount > 0) {
       data->printJobName().Assign(docTitles[0]);
     }
@@ -48,7 +48,7 @@ nsPrintOptionsX::SerializeToPrintData(nsIPrintSettings* aSettings,
     docTitles = nullptr;
   }
 
-  nsRefPtr<nsPrintSettingsX> settingsX(do_QueryObject(aSettings));
+  RefPtr<nsPrintSettingsX> settingsX(do_QueryObject(aSettings));
   if (NS_WARN_IF(!settingsX)) {
     return NS_ERROR_FAILURE;
   }
@@ -120,7 +120,7 @@ nsPrintOptionsX::DeserializeToPrintSettings(const PrintData& data,
     return rv;
   }
 
-  nsRefPtr<nsPrintSettingsX> settingsX(do_QueryObject(settings));
+  RefPtr<nsPrintSettingsX> settingsX(do_QueryObject(settings));
   if (NS_WARN_IF(!settingsX)) {
     return NS_ERROR_FAILURE;
   }
@@ -229,7 +229,7 @@ nsPrintOptionsX::ReadPrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName,
   rv = nsPrintOptions::ReadPrefs(aPS, aPrinterName, aFlags);
   NS_ASSERTION(NS_SUCCEEDED(rv), "nsPrintOptions::ReadPrefs() failed");
   
-  nsRefPtr<nsPrintSettingsX> printSettingsX(do_QueryObject(aPS));
+  RefPtr<nsPrintSettingsX> printSettingsX(do_QueryObject(aPS));
   if (!printSettingsX)
     return NS_ERROR_NO_INTERFACE;
   rv = printSettingsX->ReadPageFormatFromPrefs();
@@ -264,7 +264,7 @@ nsPrintOptionsX::WritePrefs(nsIPrintSettings* aPS, const nsAString& aPrinterName
   rv = nsPrintOptions::WritePrefs(aPS, aPrinterName, aFlags);
   NS_ASSERTION(NS_SUCCEEDED(rv), "nsPrintOptions::WritePrefs() failed");
 
-  nsRefPtr<nsPrintSettingsX> printSettingsX(do_QueryObject(aPS));
+  RefPtr<nsPrintSettingsX> printSettingsX(do_QueryObject(aPS));
   if (!printSettingsX)
     return NS_ERROR_NO_INTERFACE;
   rv = printSettingsX->WritePageFormatToPrefs();

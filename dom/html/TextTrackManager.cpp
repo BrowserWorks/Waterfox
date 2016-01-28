@@ -13,6 +13,7 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "nsComponentManagerUtils.h"
+#include "nsVariant.h"
 #include "nsVideoFrame.h"
 #include "nsIFrame.h"
 #include "nsTArrayHelpers.h"
@@ -128,7 +129,7 @@ TextTrackManager::AddTextTrack(TextTrackKind aKind, const nsAString& aLabel,
   if (!mMediaElement || !mTextTracks) {
     return nullptr;
   }
-  nsRefPtr<TextTrack> ttrack =
+  RefPtr<TextTrack> ttrack =
     mTextTracks->AddTextTrack(aKind, aLabel, aLanguage, aMode, aReadyState,
                               aTextTrackSource, CompareTextTracks(mMediaElement));
   AddCues(ttrack);
@@ -210,12 +211,11 @@ TextTrackManager::UpdateCueDisplay()
     return;
   }
 
-  nsTArray<nsRefPtr<TextTrackCue> > activeCues;
+  nsTArray<RefPtr<TextTrackCue> > activeCues;
   mTextTracks->UpdateAndGetShowingCues(activeCues);
 
   if (activeCues.Length() > 0) {
-    nsCOMPtr<nsIWritableVariant> jsCues =
-      do_CreateInstance("@mozilla.org/variant;1");
+    RefPtr<nsVariantCC> jsCues = new nsVariantCC();
 
     jsCues->SetAsArray(nsIDataType::VTYPE_INTERFACE,
                        &NS_GET_IID(nsIDOMEventTarget),

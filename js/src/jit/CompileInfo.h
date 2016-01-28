@@ -10,6 +10,7 @@
 #include "jsfun.h"
 
 #include "jit/JitAllocPolicy.h"
+#include "jit/JitFrames.h"
 #include "jit/Registers.h"
 #include "vm/ScopeObject.h"
 
@@ -199,6 +200,7 @@ class CompileInfo
                 InlineScriptTree* inlineScriptTree)
       : script_(script), fun_(fun), osrPc_(osrPc), constructing_(constructing),
         analysisMode_(analysisMode), scriptNeedsArgsObj_(scriptNeedsArgsObj),
+        mayReadFrameArgsDirectly_(script->mayReadFrameArgsDirectly()),
         inlineScriptTree_(inlineScriptTree)
     {
         MOZ_ASSERT_IF(osrPc, JSOp(*osrPc) == JSOP_LOOPENTRY);
@@ -220,14 +222,14 @@ class CompileInfo
         nbodyfixed_ = script->nbodyfixed();
         nlocals_ = script->nfixed();
         fixedLexicalBegin_ = script->fixedLexicalBegin();
-        nstack_ = script->nslots() - script->nfixed();
+        nstack_ = Max<unsigned>(script->nslots() - script->nfixed(), MinJITStackSize);
         nslots_ = nimplicit_ + nargs_ + nlocals_ + nstack_;
     }
 
     explicit CompileInfo(unsigned nlocals)
       : script_(nullptr), fun_(nullptr), osrPc_(nullptr), osrStaticScope_(nullptr),
         constructing_(false), analysisMode_(Analysis_None), scriptNeedsArgsObj_(false),
-        inlineScriptTree_(nullptr)
+        mayReadFrameArgsDirectly_(false), inlineScriptTree_(nullptr)
     {
         nimplicit_ = 0;
         nargs_ = 0;
@@ -246,6 +248,9 @@ class CompileInfo
     }
     JSFunction* funMaybeLazy() const {
         return fun_;
+    }
+    ModuleObject* module() const {
+        return script_->module();
     }
     bool constructing() const {
         return constructing_;
@@ -544,6 +549,10 @@ class CompileInfo
         return true;
     }
 
+    bool mayReadFrameArgsDirectly() const {
+        return mayReadFrameArgsDirectly_;
+    }
+
   private:
     unsigned nimplicit_;
     unsigned nargs_;
@@ -563,6 +572,8 @@ class CompileInfo
     // since the arguments optimization could be marked as failed on the main
     // thread, so cache a value here and use it throughout for consistency.
     bool scriptNeedsArgsObj_;
+
+    bool mayReadFrameArgsDirectly_;
 
     InlineScriptTree* inlineScriptTree_;
 };

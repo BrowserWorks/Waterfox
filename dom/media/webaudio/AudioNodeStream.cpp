@@ -34,6 +34,7 @@ AudioNodeStream::AudioNodeStream(AudioNodeEngine* aEngine,
     mSampleRate(aSampleRate),
     mFlags(aFlags),
     mNumberOfInputChannels(2),
+    mIsActive(aEngine->IsActive()),
     mMarkAsFinishedAfterThisBlock(false),
     mAudioParamStream(false),
     mPassThrough(false)
@@ -49,6 +50,7 @@ AudioNodeStream::AudioNodeStream(AudioNodeEngine* aEngine,
 
 AudioNodeStream::~AudioNodeStream()
 {
+  MOZ_ASSERT(mActiveInputCount == 0);
   MOZ_COUNT_DTOR(AudioNodeStream);
 }
 
@@ -73,7 +75,7 @@ AudioNodeStream::Create(AudioContext* aCtx, AudioNodeEngine* aEngine,
   MediaStreamGraph* graph = aGraph ? aGraph : aCtx->Graph();
   MOZ_ASSERT(graph->GraphRate() == aCtx->SampleRate());
 
-  nsRefPtr<AudioNodeStream> stream =
+  RefPtr<AudioNodeStream> stream =
     new AudioNodeStream(aEngine, aFlags, graph->GraphRate());
   if (node) {
     stream->SetChannelMixingParametersImpl(node->ChannelCount(),
@@ -146,15 +148,15 @@ AudioNodeStream::SetStreamTimeParameter(uint32_t aIndex, AudioContext* aContext,
   };
 
   GraphImpl()->AppendMessage(new Message(this, aIndex,
-      aContext->DestinationStream(),
-      aContext->DOMTimeToStreamTime(aStreamTime)));
+                                         aContext->DestinationStream(),
+                                         aStreamTime));
 }
 
 void
 AudioNodeStream::SetStreamTimeParameterImpl(uint32_t aIndex, MediaStream* aRelativeToStream,
                                             double aStreamTime)
 {
-  StreamTime ticks = TicksFromDestinationTime(aRelativeToStream, aStreamTime);
+  StreamTime ticks = aRelativeToStream->SecondsToNearestStreamTime(aStreamTime);
   mEngine->SetStreamTimeParameter(aIndex, ticks);
 }
 
@@ -201,29 +203,29 @@ AudioNodeStream::SetInt32Parameter(uint32_t aIndex, int32_t aValue)
 }
 
 void
-AudioNodeStream::SetTimelineParameter(uint32_t aIndex,
-                                      const AudioParamTimeline& aValue)
+AudioNodeStream::SendTimelineEvent(uint32_t aIndex,
+                                   const AudioTimelineEvent& aEvent)
 {
   class Message final : public ControlMessage
   {
   public:
     Message(AudioNodeStream* aStream, uint32_t aIndex,
-            const AudioParamTimeline& aValue)
+            const AudioTimelineEvent& aEvent)
       : ControlMessage(aStream),
-        mValue(aValue),
+        mEvent(aEvent),
         mSampleRate(aStream->SampleRate()),
         mIndex(aIndex)
     {}
     virtual void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
-          SetTimelineParameter(mIndex, mValue, mSampleRate);
+          RecvTimelineEvent(mIndex, mEvent);
     }
-    AudioParamTimeline mValue;
+    AudioTimelineEvent mEvent;
     TrackRate mSampleRate;
     uint32_t mIndex;
   };
-  GraphImpl()->AppendMessage(new Message(this, aIndex, aValue));
+  GraphImpl()->AppendMessage(new Message(this, aIndex, aEvent));
 }
 
 void
@@ -262,7 +264,7 @@ AudioNodeStream::SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList>&& 
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           SetBuffer(mBuffer.forget());
     }
-    nsRefPtr<ThreadSharedFloatArrayBufferList> mBuffer;
+    RefPtr<ThreadSharedFloatArrayBufferList> mBuffer;
   };
 
   GraphImpl()->AppendMessage(new Message(this, aBuffer));
@@ -375,6 +377,31 @@ AudioNodeStream::ComputedNumberOfChannels(uint32_t aInputChannelCount)
   }
 }
 
+class AudioNodeStream::AdvanceAndResumeMessage final : public ControlMessage {
+public:
+  AdvanceAndResumeMessage(AudioNodeStream* aStream, StreamTime aAdvance) :
+    ControlMessage(aStream), mAdvance(aAdvance) {}
+  virtual void Run() override
+  {
+    auto ns = static_cast<AudioNodeStream*>(mStream);
+    ns->mBufferStartTime -= mAdvance;
+
+    StreamBuffer::Track* track = ns->EnsureTrack(AUDIO_TRACK);
+    track->Get<AudioSegment>()->AppendNullData(mAdvance);
+
+    ns->GraphImpl()->DecrementSuspendCount(mStream);
+  }
+private:
+  StreamTime mAdvance;
+};
+
+void
+AudioNodeStream::AdvanceAndResume(StreamTime aAdvance)
+{
+  mMainThreadCurrentTime += aAdvance;
+  GraphImpl()->AppendMessage(new AdvanceAndResumeMessage(this, aAdvance));
+}
+
 void
 AudioNodeStream::ObtainInputBlock(AudioBlock& aTmpChunk,
                                   uint32_t aPortIndex)
@@ -466,20 +493,18 @@ AudioNodeStream::UpMixDownMixChunk(const AudioBlock* aChunk,
                                    nsTArray<const float*>& aOutputChannels,
                                    nsTArray<float>& aDownmixBuffer)
 {
-  static const float silenceChannel[WEBAUDIO_BLOCK_SIZE] = {0.f};
-
   for (uint32_t i = 0; i < aChunk->ChannelCount(); i++) {
     aOutputChannels.AppendElement(static_cast<const float*>(aChunk->mChannelData[i]));
   }
   if (aOutputChannels.Length() < aOutputChannelCount) {
     if (mChannelInterpretation == ChannelInterpretation::Speakers) {
-      AudioChannelsUpMix(&aOutputChannels, aOutputChannelCount, SilentChannel::ZeroChannel<float>());
+      AudioChannelsUpMix<float>(&aOutputChannels, aOutputChannelCount, nullptr);
       NS_ASSERTION(aOutputChannelCount == aOutputChannels.Length(),
                    "We called GetAudioChannelsSuperset to avoid this");
     } else {
       // Fill up the remaining aOutputChannels by zeros
       for (uint32_t j = aOutputChannels.Length(); j < aOutputChannelCount; ++j) {
-        aOutputChannels.AppendElement(silenceChannel);
+        aOutputChannels.AppendElement(nullptr);
       }
     }
   } else if (aOutputChannels.Length() > aOutputChannelCount) {
@@ -511,16 +536,17 @@ AudioNodeStream::UpMixDownMixChunk(const AudioBlock* aChunk,
 void
 AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
 {
-  if (!mFinished) {
-    EnsureTrack(AUDIO_TRACK);
-  }
-  // No more tracks will be coming
-  mBuffer.AdvanceKnownTracksTime(STREAM_TIME_MAX);
-
   uint16_t outputCount = mLastChunks.Length();
   MOZ_ASSERT(outputCount == std::max(uint16_t(1), mEngine->OutputCount()));
 
-  if (mFinished || InMutedCycle()) {
+  if (!mIsActive) {
+    // mLastChunks are already null.
+#ifdef DEBUG
+    for (const auto& chunk : mLastChunks) {
+      MOZ_ASSERT(chunk.IsNull());
+    }
+#endif
+  } else if (InMutedCycle()) {
     mInputChunks.Clear();
     for (uint16_t i = 0; i < outputCount; ++i) {
       mLastChunks[i].SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -538,7 +564,8 @@ AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
       mLastChunks[0] = mInputChunks[0];
     } else {
       if (maxInputs <= 1 && outputCount <= 1) {
-        mEngine->ProcessBlock(this, mInputChunks[0], &mLastChunks[0], &finished);
+        mEngine->ProcessBlock(this, aFrom,
+                              mInputChunks[0], &mLastChunks[0], &finished);
       } else {
         mEngine->ProcessBlocksOnPorts(this, mInputChunks, mLastChunks, &finished);
       }
@@ -549,6 +576,7 @@ AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
     }
     if (finished) {
       mMarkAsFinishedAfterThisBlock = true;
+      CheckForInactive();
     }
 
     if (mDisabledTrackIDs.Contains(static_cast<TrackID>(AUDIO_TRACK))) {
@@ -560,12 +588,17 @@ AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
 
   if (!mFinished) {
     // Don't output anything while finished
-    AdvanceOutputSegment();
+    if (mFlags & EXTERNAL_OUTPUT) {
+      AdvanceOutputSegment();
+    }
     if (mMarkAsFinishedAfterThisBlock && (aFlags & ALLOW_FINISH)) {
       // This stream was finished the last time that we looked at it, and all
       // of the depending streams have finished their output as well, so now
       // it's time to mark this stream as finished.
-      FinishOutput();
+      if (mFlags & EXTERNAL_OUTPUT) {
+        FinishOutput();
+      }
+      FinishOnGraphThread();
     }
   }
 }
@@ -579,10 +612,10 @@ AudioNodeStream::ProduceOutputBeforeInput(GraphTime aFrom)
   MOZ_ASSERT(!InMutedCycle(), "DelayNodes should break cycles");
   MOZ_ASSERT(mLastChunks.Length() == 1);
 
-  if (mFinished) {
+  if (!mIsActive) {
     mLastChunks[0].SetNull(WEBAUDIO_BLOCK_SIZE);
   } else {
-    mEngine->ProduceBlockBeforeInput(&mLastChunks[0]);
+    mEngine->ProduceBlockBeforeInput(this, aFrom, &mLastChunks[0]);
     NS_ASSERTION(mLastChunks[0].GetDuration() == WEBAUDIO_BLOCK_SIZE,
                  "Invalid WebAudio chunk size");
     if (mDisabledTrackIDs.Contains(static_cast<TrackID>(AUDIO_TRACK))) {
@@ -595,9 +628,12 @@ void
 AudioNodeStream::AdvanceOutputSegment()
 {
   StreamBuffer::Track* track = EnsureTrack(AUDIO_TRACK);
+  // No more tracks will be coming
+  mBuffer.AdvanceKnownTracksTime(STREAM_TIME_MAX);
+
   AudioSegment* segment = track->Get<AudioSegment>();
 
-  if (mFlags & EXTERNAL_OUTPUT) {
+  if (!mLastChunks[0].IsNull()) {
     segment->AppendAndConsumeChunk(mLastChunks[0].AsMutableChunk());
   } else {
     segment->AppendNullData(mLastChunks[0].GetDuration());
@@ -613,23 +649,11 @@ AudioNodeStream::AdvanceOutputSegment()
   }
 }
 
-StreamTime
-AudioNodeStream::GetCurrentPosition()
-{
-  NS_ASSERTION(!mFinished, "Don't create another track after finishing");
-  return EnsureTrack(AUDIO_TRACK)->Get<AudioSegment>()->GetDuration();
-}
-
 void
 AudioNodeStream::FinishOutput()
 {
-  if (IsFinishedOnGraphThread()) {
-    return;
-  }
-
   StreamBuffer::Track* track = EnsureTrack(AUDIO_TRACK);
   track->SetEnded();
-  FinishOnGraphThread();
 
   for (uint32_t j = 0; j < mListeners.Length(); ++j) {
     MediaStreamListener* l = mListeners[j];
@@ -640,48 +664,88 @@ AudioNodeStream::FinishOutput()
   }
 }
 
-double
-AudioNodeStream::FractionalTicksFromDestinationTime(AudioNodeStream* aDestination,
-                                                    double aSeconds)
+void
+AudioNodeStream::AddInput(MediaInputPort* aPort)
 {
-  MOZ_ASSERT(aDestination->SampleRate() == SampleRate());
-  MOZ_ASSERT(SampleRate() == GraphRate());
-
-  double destinationSeconds = std::max(0.0, aSeconds);
-  double destinationFractionalTicks = destinationSeconds * SampleRate();
-  MOZ_ASSERT(destinationFractionalTicks < STREAM_TIME_MAX);
-  StreamTime destinationStreamTime = destinationFractionalTicks; // round down
-  // MediaTime does not have the resolution of double
-  double offset = destinationFractionalTicks - destinationStreamTime;
-
-  GraphTime graphTime =
-    aDestination->StreamTimeToGraphTime(destinationStreamTime);
-  StreamTime thisStreamTime = GraphTimeToStreamTime(graphTime);
-  double thisFractionalTicks = thisStreamTime + offset;
-  return thisFractionalTicks;
+  ProcessedMediaStream::AddInput(aPort);
+  AudioNodeStream* ns = aPort->GetSource()->AsAudioNodeStream();
+  // Streams that are not AudioNodeStreams are considered active.
+  if (!ns || (ns->mIsActive && !ns->IsAudioParamStream())) {
+    IncrementActiveInputCount();
+  }
+}
+void
+AudioNodeStream::RemoveInput(MediaInputPort* aPort)
+{
+  ProcessedMediaStream::RemoveInput(aPort);
+  AudioNodeStream* ns = aPort->GetSource()->AsAudioNodeStream();
+  // Streams that are not AudioNodeStreams are considered active.
+  if (!ns || (ns->mIsActive && !ns->IsAudioParamStream())) {
+    DecrementActiveInputCount();
+  }
 }
 
-StreamTime
-AudioNodeStream::TicksFromDestinationTime(MediaStream* aDestination,
-                                          double aSeconds)
+void
+AudioNodeStream::SetActive()
 {
-  AudioNodeStream* destination = aDestination->AsAudioNodeStream();
-  MOZ_ASSERT(destination);
+  if (mIsActive || mMarkAsFinishedAfterThisBlock) {
+    return;
+  }
 
-  double thisSeconds =
-    FractionalTicksFromDestinationTime(destination, aSeconds);
-  return NS_round(thisSeconds);
+  mIsActive = true;
+  if (IsAudioParamStream()) {
+    // Consumers merely influence stream order.
+    // They do not read from the stream.
+    return;
+  }
+
+  for (const auto& consumer : mConsumers) {
+    AudioNodeStream* ns = consumer->GetDestination()->AsAudioNodeStream();
+    if (ns) {
+      ns->IncrementActiveInputCount();
+    }
+  }
 }
 
-double
-AudioNodeStream::DestinationTimeFromTicks(AudioNodeStream* aDestination,
-                                          StreamTime aPosition)
+void
+AudioNodeStream::CheckForInactive()
 {
-  MOZ_ASSERT(SampleRate() == aDestination->SampleRate());
+  if (((mActiveInputCount > 0 || mEngine->IsActive()) &&
+       !mMarkAsFinishedAfterThisBlock) ||
+      !mIsActive) {
+    return;
+  }
 
-  GraphTime graphTime = StreamTimeToGraphTime(aPosition);
-  StreamTime destinationTime = aDestination->GraphTimeToStreamTime(graphTime);
-  return StreamTimeToSeconds(destinationTime);
+  mIsActive = false;
+  mInputChunks.Clear(); // not required for foreseeable future
+  for (auto& chunk : mLastChunks) {
+    chunk.SetNull(WEBAUDIO_BLOCK_SIZE);
+  }
+  if (IsAudioParamStream()) {
+    return;
+  }
+
+  for (const auto& consumer : mConsumers) {
+    AudioNodeStream* ns = consumer->GetDestination()->AsAudioNodeStream();
+    if (ns) {
+      ns->DecrementActiveInputCount();
+    }
+  }
+}
+
+void
+AudioNodeStream::IncrementActiveInputCount()
+{
+  ++mActiveInputCount;
+  SetActive();
+}
+
+void
+AudioNodeStream::DecrementActiveInputCount()
+{
+  MOZ_ASSERT(mActiveInputCount > 0);
+  --mActiveInputCount;
+  CheckForInactive();
 }
 
 } // namespace mozilla

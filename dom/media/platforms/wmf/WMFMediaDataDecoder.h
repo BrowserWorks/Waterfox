@@ -34,7 +34,7 @@ public:
   // than MF_E_TRANSFORM_NEED_MORE_INPUT, an error will be reported to the
   // MP4Reader.
   virtual HRESULT Output(int64_t aStreamOffset,
-                         nsRefPtr<MediaData>& aOutput) = 0;
+                         RefPtr<MediaData>& aOutput) = 0;
 
   void Flush() { mDecoder->Flush(); }
 
@@ -51,6 +51,8 @@ public:
   virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const { return false; }
 
   virtual TrackInfo::TrackType GetType() = 0;
+
+  virtual void ConfigurationChanged(const TrackInfo& aConfig) {}
 
 protected:
   // IMFTransform wrapper that performs the decoding.
@@ -69,17 +71,19 @@ public:
                       MediaDataDecoderCallback* aCallback);
   ~WMFMediaDataDecoder();
 
-  virtual nsRefPtr<MediaDataDecoder::InitPromise> Init() override;
+  RefPtr<MediaDataDecoder::InitPromise> Init() override;
 
-  virtual nsresult Input(MediaRawData* aSample);
+  nsresult Input(MediaRawData* aSample);
 
-  virtual nsresult Flush() override;
+  nsresult Flush() override;
 
-  virtual nsresult Drain() override;
+  nsresult Drain() override;
 
-  virtual nsresult Shutdown() override;
+  nsresult Shutdown() override;
 
-  virtual bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
+  bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
+
+  nsresult ConfigurationChanged(const TrackInfo& aConfig) override;
 
 private:
 
@@ -100,6 +104,10 @@ private:
   void ProcessDrain();
 
   void ProcessShutdown();
+
+  // Called on the task queue. Tell the MFT that the next Input will have a
+  // different configuration (typically resolution change).
+  void ProcessConfigurationChanged(UniquePtr<TrackInfo>&& aConfig);
 
   RefPtr<FlushableTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;

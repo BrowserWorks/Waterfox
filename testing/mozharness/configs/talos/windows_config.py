@@ -16,7 +16,6 @@ config = {
         "http://pypi.pvt.build.mozilla.org/pub",
         "http://pypi.pub.build.mozilla.org/pub",
     ],
-    "use_talos_json": True,
     "virtualenv_modules": ['pywin32', 'talos', 'mozinstall'],
     "exes": {
         'python': PYTHON,
@@ -38,10 +37,6 @@ config = {
         "install",
         "run-tests",
     ],
-    "python_webserver": False,
-    "webroot": 'c:/slave/talos-data',
-    # Srsly gly? Ys
-    "webroot_extract_cmd": r'''c:/mozilla-build/msys/bin/bash -c "PATH=/c/mozilla-build/msys/bin:$PATH tar zx --strip-components=1 -f '%(tarball)s' --wildcards '**/talos/'"''',
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],

@@ -75,7 +75,7 @@ protected:
   void Close();
 
 private:
-  nsRefPtr<RilSocket> mSocket;
+  RefPtr<RilSocket> mSocket;
   nsCString mAddress;
   bool mShutdown;
 };
@@ -89,7 +89,6 @@ RilConsumer::ConnectWorkerToRIL(JSContext* aCx)
 {
   // Set up the postRILMessage on the function for worker -> RIL thread
   // communication.
-  NS_ASSERTION(!JS_IsRunning(aCx), "Are we being called somehow?");
   Rooted<JSObject*> workerGlobal(aCx, CurrentGlobalOrNull(aCx));
 
   // Check whether |postRILMessage| has been defined.  No one but this class
@@ -385,13 +384,13 @@ public:
 
 private:
   unsigned int mClientId;
-  nsRefPtr<WorkerCrossThreadDispatcher> mDispatcher;
+  RefPtr<WorkerCrossThreadDispatcher> mDispatcher;
 };
 
 nsresult
 RilWorker::RegisterConsumer(unsigned int aClientId)
 {
-  nsRefPtr<RegisterConsumerTask> task = new RegisterConsumerTask(aClientId,
+  RefPtr<RegisterConsumerTask> task = new RegisterConsumerTask(aClientId,
                                                                  mDispatcher);
   if (!mDispatcher->PostTask(task)) {
     NS_WARNING("Failed to post register-consumer task.");
@@ -426,7 +425,7 @@ private:
 void
 RilWorker::UnregisterConsumer(unsigned int aClientId)
 {
-  nsRefPtr<UnregisterConsumerTask> task =
+  RefPtr<UnregisterConsumerTask> task =
     new UnregisterConsumerTask(aClientId);
 
   if (!mDispatcher->PostTask(task)) {

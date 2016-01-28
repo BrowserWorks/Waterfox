@@ -7,7 +7,6 @@
 #ifndef mozilla_image_decoders_nsICODecoder_h
 #define mozilla_image_decoders_nsICODecoder_h
 
-#include "nsAutoPtr.h"
 #include "StreamingLexer.h"
 #include "Decoder.h"
 #include "imgFrame.h"
@@ -88,8 +87,6 @@ private:
   // Gets decoder state from the contained decoder so it's visible externally.
   void GetFinalStateFromContainedDecoder();
 
-  // Creates a bitmap file header buffer, returns true if successful
-  bool FillBitmapFileHeaderBuffer(int8_t* bfh);
   // Fixes the ICO height to match that of the BIH.
   // and also fixes the BIH height to be /2 of what it was.
   // See definition for explanation.
@@ -98,10 +95,6 @@ private:
   // Fixes the ICO width to match that of the BIH.
   // Returns false if invalid information is contained within.
   bool FixBitmapWidth(int8_t* bih);
-  // Extract bitmap info header size count from BMP information header
-  int32_t ReadBIHSize(const char* aBIH);
-  // Extract bit count from BMP information header
-  int32_t ReadBPP(const char* aBIH);
   // Calculates the row size in bytes for the AND mask table
   uint32_t CalcAlphaRowSize();
   // Obtains the number of colors from the BPP, mBPP must be filled in
@@ -119,9 +112,9 @@ private:
   LexerTransition<ICOState> FinishResource();
 
   StreamingLexer<ICOState, 32> mLexer; // The lexer.
-  nsRefPtr<Decoder> mContainedDecoder; // Either a BMP or PNG decoder.
+  RefPtr<Decoder> mContainedDecoder; // Either a BMP or PNG decoder.
   UniquePtr<uint8_t[]> mMaskBuffer;    // A temporary buffer for the alpha mask.
-  char mBIHraw[40];                    // The bitmap information header.
+  char mBIHraw[bmp::InfoHeaderLength::WIN_ICO]; // The bitmap information header.
   IconDirEntry mDirEntry;              // The dir entry for the selected resource.
   IntSize mBiggestResourceSize;        // Used to select the intrinsic size.
   IntSize mBiggestResourceHotSpot;     // Used to select the intrinsic size.

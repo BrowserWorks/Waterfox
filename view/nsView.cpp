@@ -19,6 +19,7 @@
 #include "nsIWidgetListener.h"
 #include "nsContentUtils.h" // for nsAutoScriptBlocker
 #include "mozilla/TimelineConsumers.h"
+#include "mozilla/CompositeTimelineMarker.h"
 
 using namespace mozilla;
 
@@ -62,9 +63,9 @@ nsView::~nsView()
   if (mViewManager)
   {
     DropMouseGrabbing();
-  
+
     nsView *rootView = mViewManager->GetRootView();
-    
+
     if (rootView)
     {
       // Root views can have parents!
@@ -83,7 +84,7 @@ nsView::~nsView()
     {
       mParent->RemoveChild(this);
     }
-    
+
     mViewManager = nullptr;
   }
   else if (mParent)
@@ -126,7 +127,7 @@ void nsView::DestroyWidget()
     // If we are not attached to a base window, we're going to tear down our
     // widget here. However, if we're attached to somebody elses widget, we
     // want to leave the widget alone: don't reset the client data or call
-    // Destroy. Just clear our event view ptr and free our reference to it. 
+    // Destroy. Just clear our event view ptr and free our reference to it.
     if (mWidgetIsTopLevel) {
       mWindow->SetAttachedWidgetListener(nullptr);
     }
@@ -136,7 +137,12 @@ void nsView::DestroyWidget()
       nsCOMPtr<nsIRunnable> widgetDestroyer =
         new DestroyWidgetRunnable(mWindow);
 
-      NS_DispatchToMainThread(widgetDestroyer);
+      // Don't leak if we happen to arrive here after the main thread
+      // has disappeared.
+      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+      if (mainThread) {
+        mainThread->Dispatch(widgetDestroyer.forget(), NS_DISPATCH_NORMAL);
+      }
     }
 
     mWindow = nullptr;
@@ -293,7 +299,7 @@ void nsView::DoResetWidgetBounds(bool aMoveOnly,
   // Stash a copy of these and use them so we can handle this being deleted (say
   // from sync painting/flushing from Show/Move/Resize on the widget).
   nsIntRect newBounds;
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
+  RefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
 
   nsWindowType type = widget->WindowType();
 
@@ -584,7 +590,7 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
   if (!mWindow) {
     return NS_ERROR_FAILURE;
   }
- 
+
   InitializeWindow(aEnableDragDrop, aResetVisibility);
 
   return NS_OK;
@@ -667,7 +673,7 @@ nsView::InitializeWindow(bool aEnableDragDrop, bool aResetVisibility)
   if (aEnableDragDrop) {
     mWindow->EnableDragDrop(true);
   }
-      
+
   // propagate the z-index to the widget.
   UpdateNativeWidgetZIndexes(this, FindNonAutoZIndex(this));
 
@@ -720,7 +726,7 @@ nsresult nsView::AttachToTopLevelWidget(nsIWidget* aWidget)
   return NS_OK;
 }
 
-// Detach this view from an attached widget. 
+// Detach this view from an attached widget.
 nsresult nsView::DetachFromTopLevelWidget()
 {
   NS_PRECONDITION(mWidgetIsTopLevel, "Not attached currently!");
@@ -742,7 +748,7 @@ nsresult nsView::DetachFromTopLevelWidget()
   mWindow = nullptr;
 
   mWidgetIsTopLevel = false;
-  
+
   return NS_OK;
 }
 
@@ -751,7 +757,7 @@ void nsView::SetZIndex(bool aAuto, int32_t aZIndex)
   bool oldIsAuto = GetZIndexIsAuto();
   mVFlags = (mVFlags & ~NS_VIEW_FLAG_AUTO_ZINDEX) | (aAuto ? NS_VIEW_FLAG_AUTO_ZINDEX : 0);
   mZIndex = aZIndex;
-  
+
   if (HasWidget() || !oldIsAuto || !aAuto) {
     UpdateNativeWidgetZIndexes(this, FindNonAutoZIndex(this));
   }
@@ -1003,7 +1009,7 @@ nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight)
   // window creation
   SetForcedRepaint(true);
   if (this == mViewManager->GetRootView()) {
-    nsRefPtr<nsDeviceContext> devContext = mViewManager->GetDeviceContext();
+    RefPtr<nsDeviceContext> devContext = mViewManager->GetDeviceContext();
     // ensure DPI is up-to-date, in case of window being opened and sized
     // on a non-default-dpi display (bug 829963)
     devContext->CheckDPIChange();
@@ -1050,7 +1056,7 @@ nsView::RequestWindowClose(nsIWidget* aWidget)
 void
 nsView::WillPaintWindow(nsIWidget* aWidget)
 {
-  nsRefPtr<nsViewManager> vm = mViewManager;
+  RefPtr<nsViewManager> vm = mViewManager;
   vm->WillPaintWindow(aWidget);
 }
 
@@ -1059,7 +1065,7 @@ nsView::PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion)
 {
   NS_ASSERTION(this == nsView::GetViewFor(aWidget), "wrong view for widget?");
 
-  nsRefPtr<nsViewManager> vm = mViewManager;
+  RefPtr<nsViewManager> vm = mViewManager;
   bool result = vm->PaintWindow(aWidget, aRegion);
   return result;
 }
@@ -1067,7 +1073,7 @@ nsView::PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion)
 void
 nsView::DidPaintWindow()
 {
-  nsRefPtr<nsViewManager> vm = mViewManager;
+  RefPtr<nsViewManager> vm = mViewManager;
   vm->DidPaintWindow();
 }
 
@@ -1089,11 +1095,14 @@ nsView::DidCompositeWindow(const TimeStamp& aCompositeStart,
     }
 
     nsIDocShell* docShell = context->GetDocShell();
+    RefPtr<TimelineConsumers> timelines = TimelineConsumers::Get();
 
-    TimelineConsumers::AddMarkerForDocShell(docShell,
-      "Composite", aCompositeStart, MarkerTracingType::START);
-    TimelineConsumers::AddMarkerForDocShell(docShell,
-      "Composite", aCompositeEnd, MarkerTracingType::END);
+    if (timelines && timelines->HasConsumer(docShell)) {
+      timelines->AddMarkerForDocShell(docShell,
+        MakeUnique<CompositeTimelineMarker>(aCompositeStart, MarkerTracingType::START));
+      timelines->AddMarkerForDocShell(docShell,
+        MakeUnique<CompositeTimelineMarker>(aCompositeEnd, MarkerTracingType::END));
+    }
   }
 }
 
@@ -1123,7 +1132,7 @@ nsView::HandleEvent(WidgetGUIEvent* aEvent,
   }
 
   if (view) {
-    nsRefPtr<nsViewManager> vm = view->GetViewManager();
+    RefPtr<nsViewManager> vm = view->GetViewManager();
     vm->DispatchEvent(aEvent, view, &result);
   }
 

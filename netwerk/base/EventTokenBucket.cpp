@@ -90,7 +90,6 @@ EventTokenBucket::EventTokenBucket(uint32_t eventsPerSecond,
   , mFineGrainResetTimerArmed(false)
 #endif
 {
-  MOZ_COUNT_CTOR(EventTokenBucket);
   mLastUpdate = TimeStamp::Now();
 
   MOZ_ASSERT(NS_IsMainThread());
@@ -112,7 +111,6 @@ EventTokenBucket::~EventTokenBucket()
   SOCKET_LOG(("EventTokenBucket::dtor %p events=%d\n",
               this, mEvents.GetSize()));
 
-  MOZ_COUNT_DTOR(EventTokenBucket);
   if (mTimer && mTimerArmed)
     mTimer->Cancel();
 
@@ -126,7 +124,7 @@ EventTokenBucket::~EventTokenBucket()
 
   // Complete any queued events to prevent hangs
   while (mEvents.GetSize()) {
-    nsRefPtr<TokenBucketCancelable> cancelable = 
+    RefPtr<TokenBucketCancelable> cancelable = 
       dont_AddRef(static_cast<TokenBucketCancelable *>(mEvents.PopFront()));
     cancelable->Fire();
   }
@@ -220,7 +218,7 @@ EventTokenBucket::SubmitEvent(ATokenBucketEvent *event, nsICancelable **cancelab
 
   UpdateCredits();
 
-  nsRefPtr<TokenBucketCancelable> cancelEvent = new TokenBucketCancelable(event);
+  RefPtr<TokenBucketCancelable> cancelEvent = new TokenBucketCancelable(event);
   // When this function exits the cancelEvent needs 2 references, one for the
   // mEvents queue and one for the caller of SubmitEvent()
 
@@ -259,7 +257,7 @@ EventTokenBucket::DispatchEvents()
     return;
 
   while (mEvents.GetSize() && mUnitCost <= mCredit) {
-    nsRefPtr<TokenBucketCancelable> cancelable = 
+    RefPtr<TokenBucketCancelable> cancelable = 
       dont_AddRef(static_cast<TokenBucketCancelable *>(mEvents.PopFront()));
     if (cancelable->mEvent) {
       SOCKET_LOG(("EventTokenBucket::DispachEvents [%p] "

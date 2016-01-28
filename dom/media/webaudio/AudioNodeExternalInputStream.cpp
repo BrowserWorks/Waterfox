@@ -31,7 +31,7 @@ AudioNodeExternalInputStream::Create(MediaStreamGraph* aGraph,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aGraph->GraphRate() == ctx->SampleRate());
 
-  nsRefPtr<AudioNodeExternalInputStream> stream =
+  RefPtr<AudioNodeExternalInputStream> stream =
     new AudioNodeExternalInputStream(aEngine, aGraph->GraphRate());
   aGraph->AddStream(stream,
     ctx->ShouldSuspendNewStream() ? MediaStreamGraph::ADD_STREAM_SUSPENDED : 0);
@@ -131,7 +131,6 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   // Handle that.
   if (!IsEnabled() || mInputs.IsEmpty() || mPassThrough) {
     mLastChunks[0].SetNull(WEBAUDIO_BLOCK_SIZE);
-    AdvanceOutputSegment();
     return;
   }
 
@@ -143,6 +142,10 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   for (StreamBuffer::TrackIter tracks(source->mBuffer, MediaSegment::AUDIO);
        !tracks.IsEnded(); tracks.Next()) {
     const StreamBuffer::Track& inputTrack = *tracks;
+    if (!mInputs[0]->PassTrackThrough(tracks->GetID())) {
+      continue;
+    }
+
     const AudioSegment& inputSegment =
         *static_cast<AudioSegment*>(inputTrack.GetSegment());
     if (inputSegment.IsNull()) {
@@ -205,9 +208,6 @@ AudioNodeExternalInputStream::ProcessInput(GraphTime aFrom, GraphTime aTo,
   if (accumulateIndex == 0) {
     mLastChunks[0].SetNull(WEBAUDIO_BLOCK_SIZE);
   }
-
-  // Using AudioNodeStream's AdvanceOutputSegment to push the media stream graph along with null data.
-  AdvanceOutputSegment();
 }
 
 bool

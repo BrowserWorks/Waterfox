@@ -65,7 +65,6 @@
     macro(displayURL, displayURL, "displayURL") \
     macro(done, done, "done") \
     macro(dotGenerator, dotGenerator, ".generator") \
-    macro(dotGenRVal, dotGenRVal, ".genrval") \
     macro(each, each, "each") \
     macro(elementType, elementType, "elementType") \
     macro(empty, empty, "") \
@@ -93,6 +92,7 @@
     macro(frame, frame, "frame") \
     macro(from, from, "from") \
     macro(gcCycleNumber, gcCycleNumber, "gcCycleNumber") \
+    macro(GeneratorFunction, GeneratorFunction, "GeneratorFunction") \
     macro(get, get, "get") \
     macro(getInternals, getInternals, "getInternals") \
     macro(getOwnPropertyDescriptor, getOwnPropertyDescriptor, "getOwnPropertyDescriptor") \
@@ -124,6 +124,7 @@
     macro(int8, int8, "int8") \
     macro(int16, int16, "int16") \
     macro(int32, int32, "int32") \
+    macro(isEntryPoint, isEntryPoint, "isEntryPoint") \
     macro(isExtensible, isExtensible, "isExtensible") \
     macro(iteratorIntrinsic, iteratorIntrinsic, "__iterator__") \
     macro(join, join, "join") \
@@ -267,8 +268,8 @@
     macro(iterator, iterator, "iterator") \
     macro(match, match, "match") \
     macro(species, species, "species") \
+    macro(toPrimitive, toPrimitive, "toPrimitive") \
     /* Same goes for the descriptions of the well-known symbols. */ \
-    macro(Symbol_create, Symbol_create, "Symbol.create") \
     macro(Symbol_hasInstance, Symbol_hasInstance, "Symbol.hasInstance") \
     macro(Symbol_isConcatSpreadable, Symbol_isConcatSpreadable, "Symbol.isConcatSpreadable") \
     macro(Symbol_iterator, Symbol_iterator, "Symbol.iterator") \
@@ -277,5 +278,7 @@
     macro(Symbol_toPrimitive, Symbol_toPrimitive, "Symbol.toPrimitive") \
     macro(Symbol_toStringTag, Symbol_toStringTag, "Symbol.toStringTag") \
     macro(Symbol_unscopables, Symbol_unscopables, "Symbol.unscopables") \
+    /* Function names for properties named by symbols. */ \
+    macro(Symbol_iterator_fun, Symbol_iterator_fun, "[Symbol.iterator]") \
 
 #endif /* vm_CommonPropertyNames_h */

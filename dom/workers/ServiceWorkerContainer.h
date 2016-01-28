@@ -29,7 +29,6 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ServiceWorkerContainer, DOMEventTargetHelper)
 
   IMPL_EVENT_HANDLER(controllerchange)
-  IMPL_EVENT_HANDLER(reloadpage)
   IMPL_EVENT_HANDLER(error)
   IMPL_EVENT_HANDLER(message)
 
@@ -77,9 +76,9 @@ private:
 
   // This only changes when a worker hijacks everything in its scope by calling
   // claim.
-  nsRefPtr<workers::ServiceWorker> mControllerWorker;
+  RefPtr<workers::ServiceWorker> mControllerWorker;
 
-  nsRefPtr<Promise> mReadyPromise;
+  RefPtr<Promise> mReadyPromise;
 };
 
 } // namespace dom

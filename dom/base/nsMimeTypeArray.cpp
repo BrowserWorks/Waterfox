@@ -90,7 +90,7 @@ nsMimeTypeArray::IndexedGetter(uint32_t aIndex, bool &aFound)
 }
 
 static nsMimeType*
-FindMimeType(const nsTArray<nsRefPtr<nsMimeType> >& aMimeTypes,
+FindMimeType(const nsTArray<RefPtr<nsMimeType> >& aMimeTypes,
              const nsAString& aType)
 {
   for (uint32_t i = 0; i < aMimeTypes.Length(); ++i) {
@@ -196,8 +196,7 @@ nsMimeTypeArray::EnsurePluginMimeTypes()
     return;
   }
 
-  nsCOMPtr<nsIDOMNavigator> navigator;
-  mWindow->GetNavigator(getter_AddRefs(navigator));
+  nsCOMPtr<nsIDOMNavigator> navigator = mWindow->GetNavigator();
 
   if (!navigator) {
     return;

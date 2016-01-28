@@ -242,7 +242,7 @@ FormAutoComplete.prototype = {
                 let entry = entries[i];
                 // Remove results that do not contain the token
                 // XXX bug 394604 -- .toLowerCase can be wrong for some intl chars
-                if(searchTokens.some(function (tok) entry.textLowerCase.indexOf(tok) < 0))
+                if(searchTokens.some(tok => entry.textLowerCase.indexOf(tok) < 0))
                     continue;
                 this._calculateScore(entry, searchString, searchTokens);
                 this.log("Reusing autocomplete entry '" + entry.text +
@@ -285,7 +285,7 @@ FormAutoComplete.prototype = {
                     result.entries = aEntries;
                 }
 
-                if (aDatalistResult) {
+                if (aDatalistResult && aDatalistResult.matchCount > 0) {
                     result = this.mergeResults(result, aDatalistResult);
                 }
 
@@ -401,7 +401,7 @@ FormAutoComplete.prototype = {
     _calculateScore : function (entry, aSearchString, searchTokens) {
         let boundaryCalc = 0;
         // for each word, calculate word boundary weights
-        for each (let token in searchTokens) {
+        for (let token of searchTokens) {
             boundaryCalc += (entry.textLowerCase.indexOf(token) == 0);
             boundaryCalc += (entry.textLowerCase.indexOf(" " + token) >= 0);
         }

@@ -54,8 +54,8 @@ TextureClientDIB::BorrowDrawTarget()
   }
 
   if (!mDrawTarget || !mDrawTarget->IsValid()) {
-    gfxWarning() << "DIB failed draw target surface " << mSize << ", " << (int)mIsLocked << ", " << IsAllocated();
-    mDrawTarget = nullptr;
+    gfxCriticalNote << "DIB failed draw target surface " << mSize << ", " << (int)mIsLocked << ", " << IsAllocated();
+    mDrawTarget == nullptr;
   }
 
   return mDrawTarget;
@@ -66,7 +66,7 @@ TextureClientDIB::UpdateFromSurface(gfx::SourceSurface* aSurface)
 {
   MOZ_ASSERT(mIsLocked && IsAllocated());
 
-  nsRefPtr<gfxImageSurface> imgSurf = mSurface->GetAsImageSurface();
+  RefPtr<gfxImageSurface> imgSurf = mSurface->GetAsImageSurface();
 
   RefPtr<DataSourceSurface> srcSurf = aSurface->GetDataSurface();
 
@@ -339,11 +339,12 @@ DIBTextureHost::UpdatedInternal(const nsIntRegion* aRegion)
   }
 
   if (mSurface->CairoStatus()) {
-    gfxWarning() << "Bad Cairo surface internal update " << mSurface->CairoStatus();
-    mTextureSource = nullptr;
-    return;
+      gfxWarning() << "Bad Cairo surface internal update " << mSurface->CairoStatus();
+      mTextureSource = nullptr;
+      return;
   }
-  nsRefPtr<gfxImageSurface> imgSurf = mSurface->GetAsImageSurface();
+
+  RefPtr<gfxImageSurface> imgSurf = mSurface->GetAsImageSurface();
 
   RefPtr<DataSourceSurface> surf = Factory::CreateWrappingDataSourceSurface(imgSurf->Data(), imgSurf->Stride(), mSize, mFormat);
 

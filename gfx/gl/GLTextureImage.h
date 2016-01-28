@@ -11,7 +11,6 @@
 #include "nsTArray.h"
 #include "gfxTypes.h"
 #include "GLContextTypes.h"
-#include "GraphicsFilter.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/RefPtr.h"
 
@@ -199,7 +198,7 @@ public:
     virtual bool InUpdate() const = 0;
     GLenum GetWrapMode() const { return mWrapMode; }
 
-    void SetFilter(GraphicsFilter aFilter) { mFilter = aFilter; }
+    void SetFilter(gfx::Filter aFilter) { mFilter = aFilter; }
 
 protected:
     friend class GLContext;
@@ -224,7 +223,7 @@ protected:
     GLenum mWrapMode;
     ContentType mContentType;
     gfx::SurfaceFormat mTextureFormat;
-    GraphicsFilter mFilter;
+    gfx::Filter mFilter;
     Flags mFlags;
 };
 
@@ -278,7 +277,7 @@ public:
 protected:
     GLuint mTexture;
     TextureState mTextureState;
-    nsRefPtr<GLContext> mGLContext;
+    RefPtr<GLContext> mGLContext;
     RefPtr<gfx::DrawTarget> mUpdateDrawTarget;
     nsIntRegion mUpdateRegion;
 
@@ -325,7 +324,7 @@ protected:
     unsigned int mCurrentImage;
     BigImageIterationCallback mIterationCallback;
     void* mIterationCallbackData;
-    nsTArray< nsRefPtr<TextureImage> > mImages;
+    nsTArray< RefPtr<TextureImage> > mImages;
     bool mInUpdate;
     unsigned int mTileSize;
     unsigned int mRows, mColumns;

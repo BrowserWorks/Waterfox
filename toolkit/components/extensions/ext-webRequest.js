@@ -1,4 +1,4 @@
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -10,7 +10,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebRequest",
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   SingletonEventManager,
-  runSafe,
+  runSafeSync,
 } = ExtensionUtils;
 
 // EventManager-like class specifically for WebRequest. Inherits from
@@ -53,7 +53,7 @@ function WebRequestEventManager(context, eventName)
         }
       }
 
-      return runSafe(context, callback, data2);
+      return runSafeSync(context, callback, data2);
     };
 
     let filter2 = {};
@@ -94,6 +94,29 @@ WebRequestEventManager.prototype = Object.create(SingletonEventManager.prototype
 extensions.registerPrivilegedAPI("webRequest", (extension, context) => {
   return {
     webRequest: {
+      ResourceType: {
+        MAIN_FRAME: "main_frame",
+        SUB_FRAME: "sub_frame",
+        STYLESHEET: "stylesheet",
+        SCRIPT: "script",
+        IMAGE: "image",
+        OBJECT: "object",
+        OBJECT_SUBREQUEST: "object_subrequest",
+        XMLHTTPREQUEST: "xmlhttprequest",
+        XBL: "xbl",
+        XSLT: "xslt",
+        PING: "ping",
+        BEACON: "beacon",
+        XML_DTD: "xml_dtd",
+        FONT: "font",
+        MEDIA: "media",
+        WEBSOCKET: "websocket",
+        CSP_REPORT: "csp_report",
+        IMAGESET: "imageset",
+        WEB_MANIFEST: "web_manifest",
+        OTHER: "other",
+      },
+
       onBeforeRequest: new WebRequestEventManager(context, "onBeforeRequest").api(),
       onBeforeSendHeaders: new WebRequestEventManager(context, "onBeforeSendHeaders").api(),
       onSendHeaders: new WebRequestEventManager(context, "onSendHeaders").api(),

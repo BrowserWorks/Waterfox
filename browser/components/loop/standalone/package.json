@@ -8,13 +8,19 @@
   },
   "engines": {
     "node": "0.10.x",
-    "npm": "1.3.x"
+    "npm": "2.14.x"
   },
   "dependencies": {},
   "devDependencies": {
-    "eslint": "1.2.x",
-    "eslint-plugin-react": "3.2.x",
-    "express": "4.x"
+    "compression": "1.5.x",
+    "eslint": "1.6.x",
+    "eslint-plugin-mozilla": "../../../../testing/eslint-plugin-mozilla",
+    "eslint-plugin-react": "3.5.x",
+    "exports-loader": "0.6.x",
+    "express": "4.x",
+    "imports-loader": "0.6.x",
+    "script-loader": "0.6.x",
+    "webpack": "1.12.x"
   },
   "scripts": {
     "test": "make test",

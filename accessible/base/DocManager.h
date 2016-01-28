@@ -87,6 +87,9 @@ public:
    */
   static void RemoteDocAdded(DocAccessibleParent* aDoc);
 
+  static const nsTArray<DocAccessibleParent*>* TopLevelRemoteDocs()
+    { return sRemoteDocuments; }
+
 #ifdef DEBUG
   bool IsProcessingRefreshDriverNotification() const;
 #endif
@@ -133,34 +136,9 @@ private:
   DocAccessible* CreateDocOrRootAccessible(nsIDocument* aDocument);
 
   /**
-   * Get first entry of the document accessible from cache.
-   */
-  static PLDHashOperator
-    GetFirstEntryInDocCache(const nsIDocument* aKey,
-                            DocAccessible* aDocAccessible,
-                            void* aUserArg);
-
-  /**
    * Clear the cache and shutdown the document accessibles.
    */
   void ClearDocCache();
-
-  struct nsSearchAccessibleInCacheArg
-  {
-    Accessible* mAccessible;
-    nsINode* mNode;
-  };
-
-  static PLDHashOperator
-    SearchAccessibleInDocCache(const nsIDocument* aKey,
-                               DocAccessible* aDocAccessible,
-                               void* aUserArg);
-
-#ifdef DEBUG
-  static PLDHashOperator
-    SearchIfDocIsRefreshing(const nsIDocument* aKey,
-                            DocAccessible* aDocAccessible, void* aUserArg);
-#endif
 
   typedef nsRefPtrHashtable<nsPtrHashKey<const nsIDocument>, DocAccessible>
     DocAccessibleHashtable;

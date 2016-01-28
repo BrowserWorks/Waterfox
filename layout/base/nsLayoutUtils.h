@@ -16,7 +16,6 @@
 #include "mozilla/layout/FrameChildList.h"
 #include "nsThreadUtils.h"
 #include "nsIPrincipal.h"
-#include "GraphicsFilter.h"
 #include "nsCSSPseudoElements.h"
 #include "FrameMetrics.h"
 #include "nsIWidget.h"
@@ -73,6 +72,7 @@ class Element;
 class HTMLImageElement;
 class HTMLCanvasElement;
 class HTMLVideoElement;
+class Selection;
 } // namespace dom
 namespace gfx {
 struct RectCornerRadii;
@@ -112,7 +112,6 @@ struct DisplayPortMarginsPropertyData {
  */
 class nsLayoutUtils
 {
-  typedef ::GraphicsFilter GraphicsFilter;
   typedef mozilla::dom::DOMRectList DOMRectList;
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::ContainerLayerParameters ContainerLayerParameters;
@@ -120,9 +119,11 @@ class nsLayoutUtils
   typedef mozilla::gfx::SourceSurface SourceSurface;
   typedef mozilla::gfx::Color Color;
   typedef mozilla::gfx::DrawTarget DrawTarget;
+  typedef mozilla::gfx::Filter Filter;
   typedef mozilla::gfx::Float Float;
   typedef mozilla::gfx::Point Point;
   typedef mozilla::gfx::Rect Rect;
+  typedef mozilla::gfx::RectDouble RectDouble;
   typedef mozilla::gfx::Matrix4x4 Matrix4x4;
   typedef mozilla::gfx::RectCornerRadii RectCornerRadii;
   typedef mozilla::gfx::StrokeOptions StrokeOptions;
@@ -552,8 +553,7 @@ public:
    * geometry root.
    */
   static nsIFrame* GetAnimatedGeometryRootFor(nsDisplayItem* aItem,
-                                              nsDisplayListBuilder* aBuilder,
-                                              mozilla::layers::LayerManager* aManager);
+                                              nsDisplayListBuilder* aBuilder);
 
   /**
    * Finds the nearest ancestor frame to aFrame that is considered to have (or
@@ -1006,11 +1006,10 @@ public:
     PAINT_IGNORE_SUPPRESSION = 0x08,
     PAINT_DOCUMENT_RELATIVE = 0x10,
     PAINT_HIDE_CARET = 0x20,
-    PAINT_ALL_CONTINUATIONS = 0x40,
-    PAINT_TO_WINDOW = 0x80,
-    PAINT_EXISTING_TRANSACTION = 0x100,
-    PAINT_NO_COMPOSITE = 0x200,
-    PAINT_COMPRESSED = 0x400
+    PAINT_TO_WINDOW = 0x40,
+    PAINT_EXISTING_TRANSACTION = 0x80,
+    PAINT_NO_COMPOSITE = 0x100,
+    PAINT_COMPRESSED = 0x200
   };
 
   /**
@@ -1709,7 +1708,7 @@ public:
   /**
    * Gets the graphics filter for the frame
    */
-  static GraphicsFilter GetGraphicsFilterForFrame(nsIFrame* aFrame);
+  static Filter GetGraphicsFilterForFrame(nsIFrame* aFrame);
 
   /* N.B. The only difference between variants of the Draw*Image
    * functions below is the type of the aImage argument.
@@ -1740,7 +1739,7 @@ public:
                                         nsPresContext*      aPresContext,
                                         imgIContainer*      aImage,
                                         const CSSIntSize&   aImageSize,
-                                        GraphicsFilter      aGraphicsFilter,
+                                        Filter              aGraphicsFilter,
                                         const nsRect&       aDest,
                                         const nsRect&       aFill,
                                         const nsPoint&      aAnchor,
@@ -1765,7 +1764,7 @@ public:
   static DrawResult DrawImage(gfxContext&         aContext,
                               nsPresContext*      aPresContext,
                               imgIContainer*      aImage,
-                              GraphicsFilter      aGraphicsFilter,
+                              Filter              aGraphicsFilter,
                               const nsRect&       aDest,
                               const nsRect&       aFill,
                               const nsPoint&      aAnchor,
@@ -1819,7 +1818,7 @@ public:
   static DrawResult DrawSingleUnscaledImage(gfxContext&          aContext,
                                             nsPresContext*       aPresContext,
                                             imgIContainer*       aImage,
-                                            GraphicsFilter       aGraphicsFilter,
+                                            Filter               aGraphicsFilter,
                                             const nsPoint&       aDest,
                                             const nsRect*        aDirty,
                                             uint32_t             aImageFlags,
@@ -1850,7 +1849,7 @@ public:
   static DrawResult DrawSingleImage(gfxContext&         aContext,
                                     nsPresContext*      aPresContext,
                                     imgIContainer*      aImage,
-                                    GraphicsFilter      aGraphicsFilter,
+                                    Filter              aGraphicsFilter,
                                     const nsRect&       aDest,
                                     const nsRect&       aDirty,
                                     const mozilla::SVGImageContext* aSVGContext,
@@ -2075,12 +2074,12 @@ public:
     SurfaceFromElementResult();
 
     /* mSourceSurface will contain the resulting surface, or will be nullptr on error */
-    mozilla::RefPtr<SourceSurface> mSourceSurface;
+    RefPtr<SourceSurface> mSourceSurface;
     /* Contains info for drawing when there is no mSourceSurface. */
     DirectDrawInfo mDrawInfo;
 
     /* The size of the surface */
-    gfxIntSize mSize;
+    mozilla::gfx::IntSize mSize;
     /* The principal associated with the element whose surface was returned.
        If there is a surface, this will never be null. */
     nsCOMPtr<nsIPrincipal> mPrincipal;
@@ -2100,23 +2099,29 @@ public:
   };
 
   static SurfaceFromElementResult SurfaceFromElement(mozilla::dom::Element *aElement,
-                                                     uint32_t aSurfaceFlags = 0,
-                                                     DrawTarget *aTarget = nullptr);
+                                                     uint32_t aSurfaceFlags,
+                                                     RefPtr<DrawTarget>& aTarget);
+  static SurfaceFromElementResult SurfaceFromElement(mozilla::dom::Element *aElement,
+                                                     uint32_t aSurfaceFlags = 0) {
+    RefPtr<DrawTarget> target = nullptr;
+    return SurfaceFromElement(aElement, aSurfaceFlags, target);
+  }
+
   static SurfaceFromElementResult SurfaceFromElement(nsIImageLoadingContent *aElement,
-                                                     uint32_t aSurfaceFlags = 0,
-                                                     DrawTarget *aTarget = nullptr);
+                                                     uint32_t aSurfaceFlags,
+                                                     RefPtr<DrawTarget>& aTarget);
   // Need an HTMLImageElement overload, because otherwise the
   // nsIImageLoadingContent and mozilla::dom::Element overloads are ambiguous
   // for HTMLImageElement.
   static SurfaceFromElementResult SurfaceFromElement(mozilla::dom::HTMLImageElement *aElement,
-                                                     uint32_t aSurfaceFlags = 0,
-                                                     DrawTarget *aTarget = nullptr);
+                                                     uint32_t aSurfaceFlags,
+                                                     RefPtr<DrawTarget>& aTarget);
   static SurfaceFromElementResult SurfaceFromElement(mozilla::dom::HTMLCanvasElement *aElement,
-                                                     uint32_t aSurfaceFlags = 0,
-                                                     DrawTarget *aTarget = nullptr);
+                                                     uint32_t aSurfaceFlags,
+                                                     RefPtr<DrawTarget>& aTarget);
   static SurfaceFromElementResult SurfaceFromElement(mozilla::dom::HTMLVideoElement *aElement,
-                                                     uint32_t aSurfaceFlags = 0,
-                                                     DrawTarget *aTarget = nullptr);
+                                                     uint32_t aSurfaceFlags,
+                                                     RefPtr<DrawTarget>& aTarget);
 
   /**
    * When the document is editable by contenteditable attribute of its root
@@ -2772,6 +2777,13 @@ public:
    */
   static void AppendFrameTextContent(nsIFrame* aFrame, nsAString& aResult);
 
+  /**
+   * Takes a selection, and returns selection's bounding rect which is relative
+   * to its root frame.
+   *
+   * @param aSel      Selection to check
+   */
+  static nsRect GetSelectionBoundingRect(mozilla::dom::Selection* aSel);
 private:
   static uint32_t sFontSizeInflationEmPerLine;
   static uint32_t sFontSizeInflationMinTwips;
@@ -2869,6 +2881,17 @@ gfx::Rect NSRectToRect(const nsRect& aRect, double aAppUnitsPerPixel);
  */
 gfx::Rect NSRectToSnappedRect(const nsRect& aRect, double aAppUnitsPerPixel,
                               const gfx::DrawTarget& aSnapDT);
+
+/**
+* Converts, where possible, an nsRect in app units to a Moz2D Rect in pixels
+* (whether those are device pixels or CSS px depends on what the caller
+*  chooses to pass as aAppUnitsPerPixel).
+*
+* If snapping results in a rectangle with zero width or height, the affected
+* coordinates are left unsnapped
+*/
+gfx::Rect NSRectToNonEmptySnappedRect(const nsRect& aRect, double aAppUnitsPerPixel,
+                                      const gfx::DrawTarget& aSnapDT);
 
 void StrokeLineWithSnapping(const nsPoint& aP1, const nsPoint& aP2,
                             int32_t aAppUnitsPerDevPixel,

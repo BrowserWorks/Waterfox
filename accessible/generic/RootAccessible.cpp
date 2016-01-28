@@ -39,6 +39,7 @@
 #include "nsIWebBrowserChrome.h"
 #include "nsReadableUtils.h"
 #include "nsFocusManager.h"
+#include "nsGlobalWindow.h"
 
 #ifdef MOZ_XUL
 #include "nsIXULDocument.h"
@@ -310,7 +311,7 @@ RootAccessible::ProcessDOMEvent(nsIDOMEvent* aDOMEvent)
     bool isEnabled = (state & (states::CHECKED | states::SELECTED)) != 0;
 
     if (accessible->NeedsDOMUIEvent()) {
-      nsRefPtr<AccEvent> accEvent =
+      RefPtr<AccEvent> accEvent =
         new AccStateChangeEvent(accessible, states::CHECKED, isEnabled);
       nsEventShell::FireEvent(accEvent);
     }
@@ -331,7 +332,7 @@ RootAccessible::ProcessDOMEvent(nsIDOMEvent* aDOMEvent)
       uint64_t state = accessible->State();
       bool isEnabled = !!(state & states::CHECKED);
 
-      nsRefPtr<AccEvent> accEvent =
+      RefPtr<AccEvent> accEvent =
         new AccStateChangeEvent(accessible, states::CHECKED, isEnabled);
       nsEventShell::FireEvent(accEvent);
     }
@@ -351,7 +352,7 @@ RootAccessible::ProcessDOMEvent(nsIDOMEvent* aDOMEvent)
     uint64_t state = accessible->State();
     bool isEnabled = (state & states::EXPANDED) != 0;
 
-    nsRefPtr<AccEvent> accEvent =
+    RefPtr<AccEvent> accEvent =
       new AccStateChangeEvent(accessible, states::EXPANDED, isEnabled);
     nsEventShell::FireEvent(accEvent);
     return;
@@ -377,7 +378,7 @@ RootAccessible::ProcessDOMEvent(nsIDOMEvent* aDOMEvent)
         return;
       }
 
-      nsRefPtr<AccSelChangeEvent> selChangeEvent =
+      RefPtr<AccSelChangeEvent> selChangeEvent =
         new AccSelChangeEvent(treeAcc, treeItemAcc,
                               AccSelChangeEvent::eSelectionAdd);
       nsEventShell::FireEvent(selChangeEvent);
@@ -482,15 +483,12 @@ RootAccessible::RelationByType(RelationType aType)
   if (!mDocumentNode || aType != RelationType::EMBEDS)
     return DocAccessibleWrap::RelationByType(aType);
 
-  nsIDOMWindow* rootWindow = mDocumentNode->GetWindow();
+  nsPIDOMWindow* rootWindow = mDocumentNode->GetWindow();
   if (rootWindow) {
-    nsCOMPtr<nsIDOMWindow> contentWindow;
-    rootWindow->GetContent(getter_AddRefs(contentWindow));
-    if (contentWindow) {
-      nsCOMPtr<nsIDOMDocument> contentDOMDocument;
-      contentWindow->GetDocument(getter_AddRefs(contentDOMDocument));
-      nsCOMPtr<nsIDocument> contentDocumentNode =
-        do_QueryInterface(contentDOMDocument);
+    nsCOMPtr<nsIDOMWindow> contentWindow = nsGlobalWindow::Cast(rootWindow)->GetContent();
+    nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(contentWindow);
+    if (piWindow) {
+      nsCOMPtr<nsIDocument> contentDocumentNode = piWindow->GetDoc();
       if (contentDocumentNode) {
         DocAccessible* contentDocument =
           GetAccService()->GetDocAccessible(contentDocumentNode);
@@ -536,7 +534,7 @@ RootAccessible::HandlePopupShownEvent(Accessible* aAccessible)
     roles::Role comboboxRole = combobox->Role();
     if (comboboxRole == roles::COMBOBOX || 
 	comboboxRole == roles::AUTOCOMPLETE) {
-      nsRefPtr<AccEvent> event =
+      RefPtr<AccEvent> event =
         new AccStateChangeEvent(combobox, states::EXPANDED, true);
       if (event)
         nsEventShell::FireEvent(event);
@@ -645,7 +643,7 @@ RootAccessible::HandlePopupHidingEvent(nsINode* aPopupNode)
 
   // Fire expanded state change event.
   if (notifyOf & kNotifyOfState) {
-    nsRefPtr<AccEvent> event =
+    RefPtr<AccEvent> event =
       new AccStateChangeEvent(widget, states::EXPANDED, false);
     document->FireDelayedEvent(event);
   }
@@ -716,3 +714,20 @@ RootAccessible::HandleTreeInvalidatedEvent(nsIDOMEvent* aEvent,
   aAccessible->TreeViewInvalidated(startRow, endRow, startCol, endCol);
 }
 #endif
+
+ProxyAccessible*
+RootAccessible::GetPrimaryRemoteTopLevelContentDoc() const
+{
+  nsCOMPtr<nsIDocShellTreeOwner> owner;
+  mDocumentNode->GetDocShell()->GetTreeOwner(getter_AddRefs(owner));
+  NS_ENSURE_TRUE(owner, nullptr);
+
+  nsCOMPtr<nsITabParent> tabParent;
+  owner->GetPrimaryTabParent(getter_AddRefs(tabParent));
+  if (!tabParent) {
+    return nullptr;
+  }
+
+  auto tab = static_cast<dom::TabParent*>(tabParent.get());
+  return tab->GetTopLevelDocAccessible();
+}

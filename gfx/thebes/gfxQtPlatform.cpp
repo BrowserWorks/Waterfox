@@ -53,8 +53,8 @@ gfxQtPlatform::gfxQtPlatform()
     if (!sFontconfigUtils)
         sFontconfigUtils = gfxFontconfigUtils::GetFontconfigUtils();
 
-    mScreenDepth = qApp->primaryScreen()->depth();
-    if (mScreenDepth == 16) {
+    int32_t depth = GetScreenDepth();
+    if (depth == 16) {
         sOffscreenFormat = gfxImageFormat::RGB16_565;
     }
     uint32_t canvasMask = BackendTypeBit(BackendType::CAIRO) | BackendTypeBit(BackendType::SKIA);
@@ -92,7 +92,7 @@ already_AddRefed<gfxASurface>
 gfxQtPlatform::CreateOffscreenSurface(const IntSize& aSize,
                                       gfxImageFormat aFormat)
 {
-    nsRefPtr<gfxASurface> newSurface =
+    RefPtr<gfxASurface> newSurface =
         new gfxImageSurface(aSize, aFormat);
 
     return newSurface.forget();
@@ -132,23 +132,23 @@ gfxFontEntry*
 gfxQtPlatform::LookupLocalFont(const nsAString& aFontName,
                                uint16_t aWeight,
                                int16_t aStretch,
-                               bool aItalic)
+                               uint8_t aStyle)
 {
     return gfxPangoFontGroup::NewFontEntry(aFontName, aWeight,
-                                           aStretch, aItalic);
+                                           aStretch, aStyle);
 }
 
 gfxFontEntry*
 gfxQtPlatform::MakePlatformFont(const nsAString& aFontName,
                                 uint16_t aWeight,
                                 int16_t aStretch,
-                                bool aItalic,
+                                uint8_t aStyle,
                                 const uint8_t* aFontData,
                                 uint32_t aLength)
 {
     // passing ownership of the font data to the new font entry
     return gfxPangoFontGroup::NewFontEntry(aFontName, aWeight,
-                                           aStretch, aItalic,
+                                           aStretch, aStyle,
                                            aFontData, aLength);
 }
 
@@ -193,12 +193,6 @@ gfxImageFormat
 gfxQtPlatform::GetOffscreenFormat()
 {
     return sOffscreenFormat;
-}
-
-int
-gfxQtPlatform::GetScreenDepth() const
-{
-    return mScreenDepth;
 }
 
 already_AddRefed<ScaledFont>

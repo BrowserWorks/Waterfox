@@ -11,7 +11,7 @@
 #include "nsIPipe.h"
 #include "nsIEventTarget.h"
 #include "nsISeekableStream.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsSegmentedBuffer.h"
 #include "nsStreamUtils.h"
 #include "nsCOMPtr.h"
@@ -31,16 +31,8 @@ using namespace mozilla;
 //
 // set NSPR_LOG_MODULES=nsPipe:5
 //
-static PRLogModuleInfo*
-GetPipeLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsPipe");
-  }
-  return sLog;
-}
-#define LOG(args) MOZ_LOG(GetPipeLog(), mozilla::LogLevel::Debug, args)
+static LazyLogModule sPipeLog("nsPipe");
+#define LOG(args) MOZ_LOG(sPipeLog, mozilla::LogLevel::Debug, args)
 
 #define DEFAULT_SEGMENT_SIZE  4096
 #define DEFAULT_SEGMENT_COUNT 16
@@ -210,7 +202,7 @@ public:
 private:
   virtual ~nsPipeInputStream();
 
-  nsRefPtr<nsPipe>               mPipe;
+  RefPtr<nsPipe>               mPipe;
 
   int64_t                        mLogicalOffset;
   // Individual input streams can be closed without effecting the rest of the
@@ -356,7 +348,7 @@ private:
   // compatibility we need to be able to consistently return this same
   // object from GetInputStream().  Note, mOriginalInput is also stored
   // in mInputList as a weak ref.
-  nsRefPtr<nsPipeInputStream> mOriginalInput;
+  RefPtr<nsPipeInputStream> mOriginalInput;
 
   ReentrantMonitor    mReentrantMonitor;
   nsSegmentedBuffer   mBuffer;
@@ -572,7 +564,7 @@ nsPipe::Init(bool aNonBlockingIn,
 NS_IMETHODIMP
 nsPipe::GetInputStream(nsIAsyncInputStream** aInputStream)
 {
-  nsRefPtr<nsPipeInputStream> ref = mOriginalInput;
+  RefPtr<nsPipeInputStream> ref = mOriginalInput;
   ref.forget(aInputStream);
   return NS_OK;
 }
@@ -978,7 +970,7 @@ nsPipe::CloneInputStream(nsPipeInputStream* aOriginal,
                          nsIInputStream** aCloneOut)
 {
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-  nsRefPtr<nsPipeInputStream> ref = new nsPipeInputStream(*aOriginal);
+  RefPtr<nsPipeInputStream> ref = new nsPipeInputStream(*aOriginal);
   mInputList.AppendElement(ref);
   ref.forget(aCloneOut);
   return NS_OK;

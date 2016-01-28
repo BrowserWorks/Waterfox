@@ -74,19 +74,12 @@ protected:
   virtual ~DynamicsCompressorNode();
 
 private:
-  static void SendThresholdToStream(AudioNode* aNode);
-  static void SendKneeToStream(AudioNode* aNode);
-  static void SendRatioToStream(AudioNode* aNode);
-  static void SendAttackToStream(AudioNode* aNode);
-  static void SendReleaseToStream(AudioNode* aNode);
-
-private:
-  nsRefPtr<AudioParam> mThreshold;
-  nsRefPtr<AudioParam> mKnee;
-  nsRefPtr<AudioParam> mRatio;
+  RefPtr<AudioParam> mThreshold;
+  RefPtr<AudioParam> mKnee;
+  RefPtr<AudioParam> mRatio;
   float mReduction;
-  nsRefPtr<AudioParam> mAttack;
-  nsRefPtr<AudioParam> mRelease;
+  RefPtr<AudioParam> mAttack;
+  RefPtr<AudioParam> mRelease;
 };
 
 } // namespace dom

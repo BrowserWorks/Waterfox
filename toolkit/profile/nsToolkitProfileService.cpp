@@ -40,6 +40,7 @@
 #include "nsReadableUtils.h"
 #include "nsNativeCharsetUtils.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Snprintf.h"
 
 using namespace mozilla;
 
@@ -50,7 +51,7 @@ public:
     NS_DECL_NSITOOLKITPROFILE
 
     friend class nsToolkitProfileService;
-    nsRefPtr<nsToolkitProfile> mNext;
+    RefPtr<nsToolkitProfile> mNext;
     nsToolkitProfile          *mPrev;
 
 private:
@@ -86,7 +87,7 @@ public:
 private:
     ~nsToolkitProfileLock();
 
-    nsRefPtr<nsToolkitProfile> mProfile;
+    RefPtr<nsToolkitProfile> mProfile;
     nsCOMPtr<nsIFile> mDirectory;
     nsCOMPtr<nsIFile> mLocalDirectory;
 
@@ -137,7 +138,7 @@ private:
                                    bool aForExternalApp,
                                    nsIToolkitProfile** aResult);
 
-    nsRefPtr<nsToolkitProfile>  mFirst;
+    RefPtr<nsToolkitProfile>  mFirst;
     nsCOMPtr<nsIToolkitProfile> mChosen;
     nsCOMPtr<nsIToolkitProfile> mDefault;
     nsCOMPtr<nsIFile>           mAppData;
@@ -159,7 +160,7 @@ private:
           { mCurrent = first; }
     private:
         ~ProfileEnumerator() { }
-        nsRefPtr<nsToolkitProfile> mCurrent;
+        RefPtr<nsToolkitProfile> mCurrent;
     };
 };
 
@@ -277,7 +278,7 @@ nsToolkitProfile::Lock(nsIProfileUnlocker* *aUnlocker, nsIProfileLock* *aResult)
         return NS_OK;
     }
 
-    nsRefPtr<nsToolkitProfileLock> lock = new nsToolkitProfileLock();
+    RefPtr<nsToolkitProfileLock> lock = new nsToolkitProfileLock();
     if (!lock) return NS_ERROR_OUT_OF_MEMORY;
 
     nsresult rv = lock->Init(this, aUnlocker);
@@ -670,7 +671,7 @@ nsresult
 NS_LockProfilePath(nsIFile* aPath, nsIFile* aTempPath,
                    nsIProfileUnlocker* *aUnlocker, nsIProfileLock* *aResult)
 {
-    nsRefPtr<nsToolkitProfileLock> lock = new nsToolkitProfileLock();
+    RefPtr<nsToolkitProfileLock> lock = new nsToolkitProfileLock();
     if (!lock) return NS_ERROR_OUT_OF_MEMORY;
 
     nsresult rv = lock->Init(aPath, aTempPath, aUnlocker);
@@ -969,13 +970,15 @@ nsToolkitProfileService::Flush()
         ++pCount;
 
     uint32_t length;
-    nsAutoArrayPtr<char> buffer (new char[100+MAXPATHLEN*pCount]);
+    const int bufsize = 100+MAXPATHLEN*pCount;
+    nsAutoArrayPtr<char> buffer (new char[bufsize]);
 
     NS_ENSURE_TRUE(buffer, NS_ERROR_OUT_OF_MEMORY);
 
-    char *end = buffer;
+    char *pos = buffer;
+    char *end = buffer + bufsize;
 
-    end += sprintf(end,
+    pos += snprintf(pos, end - pos,
                     "[General]\n"
                     "StartWithLastProfile=%s\n\n",
                     mStartWithLast ? "1" : "0");
@@ -997,7 +1000,7 @@ nsToolkitProfileService::Flush()
             NS_ENSURE_SUCCESS(rv, rv);
         }
 
-         end += sprintf(end,
+        pos += snprintf(pos, end - pos,
                         "[Profile%u]\n"
                         "Name=%s\n"
                         "IsRelative=%s\n"
@@ -1008,10 +1011,10 @@ nsToolkitProfileService::Flush()
         nsCOMPtr<nsIToolkitProfile> profile;
         rv = this->GetDefaultProfile(getter_AddRefs(profile));
         if (NS_SUCCEEDED(rv) && profile == cur) {
-            end += sprintf(end, "Default=1\n");
+            pos += snprintf(pos, end - pos, "Default=1\n");
         }
 
-        end += sprintf(end, "\n"); 
+        pos += snprintf(pos, end - pos, "\n");
 
         cur = cur->mNext;
         ++pCount;
@@ -1022,7 +1025,7 @@ nsToolkitProfileService::Flush()
     NS_ENSURE_SUCCESS(rv, rv);
 
     if (buffer) {
-        length = end - buffer;
+        length = pos - buffer;
 
         if (fwrite(buffer, sizeof(char), length, writeFile) != length) {
             fclose(writeFile);

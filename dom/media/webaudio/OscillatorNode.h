@@ -87,16 +87,14 @@ protected:
   virtual ~OscillatorNode();
 
 private:
-  static void SendFrequencyToStream(AudioNode* aNode);
-  static void SendDetuneToStream(AudioNode* aNode);
   void SendTypeToStream();
   void SendPeriodicWaveToStream();
 
 private:
   OscillatorType mType;
-  nsRefPtr<PeriodicWave> mPeriodicWave;
-  nsRefPtr<AudioParam> mFrequency;
-  nsRefPtr<AudioParam> mDetune;
+  RefPtr<PeriodicWave> mPeriodicWave;
+  RefPtr<AudioParam> mFrequency;
+  RefPtr<AudioParam> mDetune;
   bool mStartCalled;
 };
 

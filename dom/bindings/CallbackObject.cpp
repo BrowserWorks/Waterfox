@@ -67,7 +67,7 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
   // do anything that might perturb the relevant state.
   nsIPrincipal* webIDLCallerPrincipal = nullptr;
   if (aIsJSImplementedWebIDL) {
-    webIDLCallerPrincipal = nsContentUtils::SubjectPrincipal();
+    webIDLCallerPrincipal = nsContentUtils::SubjectPrincipalOrSystemIfNativeCaller();
   }
 
   // We need to produce a useful JSContext here.  Ideally one that the callback
@@ -326,7 +326,7 @@ CallbackObjectHolderBase::ToXPCOMCallback(CallbackObject* aCallback,
   JS::Rooted<JSObject*> callback(cx, aCallback->Callback());
 
   JSAutoCompartment ac(cx, callback);
-  nsRefPtr<nsXPCWrappedJS> wrappedJS;
+  RefPtr<nsXPCWrappedJS> wrappedJS;
   nsresult rv =
     nsXPCWrappedJS::GetNewOrUsed(callback, aIID, getter_AddRefs(wrappedJS));
   if (NS_FAILED(rv) || !wrappedJS) {

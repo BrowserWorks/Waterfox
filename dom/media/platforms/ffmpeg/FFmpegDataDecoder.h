@@ -30,11 +30,11 @@ public:
 
   static bool Link();
 
-  virtual nsRefPtr<InitPromise> Init() override = 0;
-  virtual nsresult Input(MediaRawData* aSample) override = 0;
-  virtual nsresult Flush() override;
-  virtual nsresult Drain() override;
-  virtual nsresult Shutdown() override;
+  RefPtr<InitPromise> Init() override = 0;
+  nsresult Input(MediaRawData* aSample) override = 0;
+  nsresult Flush() override;
+  nsresult Drain() override;
+  nsresult Shutdown() override;
 
   static AVCodec* FindAVCodec(AVCodecID aCodec);
 
@@ -46,12 +46,12 @@ protected:
   AVFrame*        PrepareFrame();
   nsresult        InitDecoder();
 
-  nsRefPtr<FlushableTaskQueue> mTaskQueue;
+  RefPtr<FlushableTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
 
   AVCodecContext* mCodecContext;
   AVFrame*        mFrame;
-  nsRefPtr<MediaByteBuffer> mExtraData;
+  RefPtr<MediaByteBuffer> mExtraData;
   AVCodecID mCodecID;
 
   // For wait on mIsFlushing during Shutdown() process.

@@ -7,6 +7,7 @@
 #include "jit/MIR.h"
 
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/SizePrintfMacros.h"
 
@@ -26,8 +27,6 @@
 #include "jsatominlines.h"
 #include "jsobjinlines.h"
 #include "jsscriptinlines.h"
-
-#include "jit/AtomicOperations-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -1088,7 +1087,7 @@ void
 MConstantElements::printOpcode(GenericPrinter& out) const
 {
     PrintOpcodeName(out, op());
-    out.printf(" %p", value());
+    out.printf(" 0x%" PRIxPTR, value().asValue());
 }
 
 void
@@ -1861,8 +1860,11 @@ jit::MergeTypes(MIRType* ptype, TemporaryTypeSet** ptypeSet,
                 return false;
         }
         if (newTypeSet) {
-            if (!newTypeSet->isSubset(*ptypeSet))
+            if (!newTypeSet->isSubset(*ptypeSet)) {
                 *ptypeSet = TypeSet::unionSets(*ptypeSet, newTypeSet, alloc);
+                if (!*ptypeSet)
+                    return false;
+            }
         } else {
             *ptypeSet = nullptr;
         }
@@ -2392,10 +2394,25 @@ MFilterTypeSet::trySpecializeFloat32(TempAllocator& alloc)
 }
 
 bool
+MFilterTypeSet::canProduceFloat32() const
+{
+    // A FilterTypeSet should be a producer if the input is a producer too.
+    // Also, be overly conservative by marking as not float32 producer when the
+    // input is a phi, as phis can be cyclic (phiA -> FilterTypeSet -> phiB ->
+    // phiA) and FilterTypeSet doesn't belong in the Float32 phi analysis.
+    return !input()->isPhi() && input()->canProduceFloat32();
+}
+
+bool
 MFilterTypeSet::canConsumeFloat32(MUse* operand) const
 {
     MOZ_ASSERT(getUseFor(0) == operand);
-    return CheckUsesAreFloat32Consumers(this);
+    // A FilterTypeSet should be a consumer if all uses are consumer. See also
+    // comment below MFilterTypeSet::canProduceFloat32.
+    bool allConsumerUses = true;
+    for (MUseDefIterator use(this); allConsumerUses && use; use++)
+        allConsumerUses &= !use.def()->isPhi() && use.def()->canConsumeFloat32(use.use());
+    return allConsumerUses;
 }
 
 void
@@ -4047,7 +4064,7 @@ MArrayState::MArrayState(MDefinition* arr)
     // This instruction is only used as a summary for bailout paths.
     setResultType(MIRType_Object);
     setRecoveredOnBailout();
-    numElements_ = arr->toNewArray()->count();
+    numElements_ = arr->toNewArray()->length();
 }
 
 bool
@@ -4087,10 +4104,10 @@ MArrayState::Copy(TempAllocator& alloc, MArrayState* state)
     return res;
 }
 
-MNewArray::MNewArray(CompilerConstraintList* constraints, uint32_t count, MConstant* templateConst,
+MNewArray::MNewArray(CompilerConstraintList* constraints, uint32_t length, MConstant* templateConst,
                      gc::InitialHeap initialHeap, jsbytecode* pc)
   : MUnaryInstruction(templateConst),
-    count_(count),
+    length_(length),
     initialHeap_(initialHeap),
     convertDoubleElements_(false),
     pc_(pc)
@@ -4112,16 +4129,16 @@ MNewArray::shouldUseVM() const
         return true;
 
     if (templateObject()->is<UnboxedArrayObject>()) {
-        MOZ_ASSERT(templateObject()->as<UnboxedArrayObject>().capacity() >= count());
+        MOZ_ASSERT(templateObject()->as<UnboxedArrayObject>().capacity() >= length());
         return !templateObject()->as<UnboxedArrayObject>().hasInlineElements();
     }
 
-    MOZ_ASSERT(count() < NativeObject::NELEMENTS_LIMIT);
+    MOZ_ASSERT(length() <= NativeObject::MAX_DENSE_ELEMENTS_COUNT);
 
     size_t arraySlots =
         gc::GetGCKindSlots(templateObject()->asTenured().getAllocKind()) - ObjectElements::VALUES_PER_HEADER;
 
-    return count() > arraySlots;
+    return length() > arraySlots;
 }
 
 bool
@@ -4554,7 +4571,7 @@ InlinePropertyTable::buildTypeSetForFunction(JSFunction* func) const
     return types;
 }
 
-void*
+SharedMem<void*>
 MLoadTypedArrayElementStatic::base() const
 {
     return AnyTypedArrayViewData(someTypedArray_);
@@ -4583,14 +4600,14 @@ MLoadTypedArrayElementStatic::congruentTo(const MDefinition* ins) const
     return congruentIfOperandsEqual(other);
 }
 
-void*
+SharedMem<void*>
 MStoreTypedArrayElementStatic::base() const
 {
     return AnyTypedArrayViewData(someTypedArray_);
 }
 
 bool
-MGetElementCache::allowDoubleResult() const
+MGetPropertyCache::allowDoubleResult() const
 {
     if (!resultTypeSet())
         return true;
@@ -4651,7 +4668,8 @@ MGetPropertyCache::setBlock(MBasicBlock* block)
 }
 
 bool
-MGetPropertyCache::updateForReplacement(MDefinition* ins) {
+MGetPropertyCache::updateForReplacement(MDefinition* ins)
+{
     MGetPropertyCache* other = ins->toGetPropertyCache();
     location_.append(&other->location_);
     return true;

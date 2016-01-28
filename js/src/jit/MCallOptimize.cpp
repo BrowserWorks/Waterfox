@@ -250,6 +250,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineHasClass(callInfo, &MapIteratorObject::class_);
       case InlinableNative::IntrinsicIsStringIterator:
         return inlineHasClass(callInfo, &StringIteratorObject::class_);
+      case InlinableNative::IntrinsicIsListIterator:
+        return inlineHasClass(callInfo, &ListIteratorObject::class_);
       case InlinableNative::IntrinsicDefineDataProperty:
         return inlineDefineDataProperty(callInfo);
 
@@ -442,8 +444,9 @@ IonBuilder::inlineArray(CallInfo& callInfo)
 
         // Negative lengths generate a RangeError, unhandled by the inline path.
         initLength = arg->constantValue().toInt32();
-        if (initLength >= NativeObject::NELEMENTS_LIMIT)
+        if (initLength > NativeObject::MAX_DENSE_ELEMENTS_COUNT)
             return InliningStatus_NotInlined;
+        MOZ_ASSERT(initLength <= INT32_MAX);
 
         // Make sure initLength matches the template object's length. This is
         // not guaranteed to be the case, for instance if we're inlining the

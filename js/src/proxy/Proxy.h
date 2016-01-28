@@ -56,12 +56,12 @@ class Proxy
     static bool nativeCall(JSContext* cx, IsAcceptableThis test, NativeImpl impl,
                            const CallArgs& args);
     static bool hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp);
-    static bool objectClassIs(HandleObject obj, ESClassValue classValue, JSContext* cx);
+    static bool getBuiltinClass(JSContext* cx, HandleObject proxy, ESClassValue* classValue);
+    static bool isArray(JSContext* cx, HandleObject proxy, JS::IsArrayAnswer* answer);
     static const char* className(JSContext* cx, HandleObject proxy);
     static JSString* fun_toString(JSContext* cx, HandleObject proxy, unsigned indent);
     static bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g);
     static bool boxedValue_unbox(JSContext* cx, HandleObject proxy, MutableHandleValue vp);
-    static bool defaultValue(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp);
 
     static bool watch(JSContext* cx, HandleObject proxy, HandleId id, HandleObject callable);
     static bool unwatch(JSContext* cx, HandleObject proxy, HandleId id);

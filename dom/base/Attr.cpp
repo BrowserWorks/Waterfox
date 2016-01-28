@@ -144,7 +144,7 @@ Attr::SetOwnerDocument(nsIDocument* aDocument)
   NS_ASSERTION(doc != aDocument, "bad call to Attr::SetOwnerDocument");
   doc->DeleteAllPropertiesFor(this);
 
-  nsRefPtr<mozilla::dom::NodeInfo> newNodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> newNodeInfo;
   newNodeInfo = aDocument->NodeInfoManager()->
     GetNodeInfo(mNodeInfo->NameAtom(), mNodeInfo->GetPrefixAtom(),
                 mNodeInfo->NamespaceID(),
@@ -162,29 +162,12 @@ Attr::GetName(nsAString& aName)
   return NS_OK;
 }
 
-already_AddRefed<nsIAtom>
-Attr::GetNameAtom(nsIContent* aContent)
-{
-  if (!mNsAware &&
-      mNodeInfo->NamespaceID() == kNameSpaceID_None &&
-      aContent->IsInHTMLDocument() &&
-      aContent->IsHTMLElement()) {
-    nsString name;
-    mNodeInfo->GetName(name);
-    nsAutoString lowercaseName;
-    nsContentUtils::ASCIIToLower(name, lowercaseName);
-    return do_GetAtom(lowercaseName);
-  }
-  nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
-  return nameAtom.forget();
-}
-
 NS_IMETHODIMP
 Attr::GetValue(nsAString& aValue)
 {
   Element* element = GetElement();
   if (element) {
-    nsCOMPtr<nsIAtom> nameAtom = GetNameAtom(element);
+    nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
     element->GetAttr(mNodeInfo->NamespaceID(), nameAtom, aValue);
   }
   else {
@@ -203,7 +186,7 @@ Attr::SetValue(const nsAString& aValue, ErrorResult& aRv)
     return;
   }
 
-  nsCOMPtr<nsIAtom> nameAtom = GetNameAtom(element);
+  nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
   aRv = element->SetAttr(mNodeInfo->NamespaceID(),
                          nameAtom,
                          mNodeInfo->GetPrefixAtom(),
@@ -278,7 +261,7 @@ Attr::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const
   nsAutoString value;
   const_cast<Attr*>(this)->GetValue(value);
 
-  nsRefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
+  RefPtr<mozilla::dom::NodeInfo> ni = aNodeInfo;
   *aResult = new Attr(nullptr, ni.forget(), value, mNsAware);
   if (!*aResult) {
     return NS_ERROR_OUT_OF_MEMORY;

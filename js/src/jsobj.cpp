@@ -35,6 +35,7 @@
 #include "jstypes.h"
 #include "jsutil.h"
 #include "jswatchpoint.h"
+#include "jswin.h"
 #include "jswrapper.h"
 
 #include "asmjs/AsmJSModule.h"
@@ -966,14 +967,14 @@ CreateThisForFunctionWithGroup(JSContext* cx, HandleObjectGroup group,
 }
 
 JSObject*
-js::CreateThisForFunctionWithProto(JSContext* cx, HandleObject callee, HandleObject proto,
-                                   NewObjectKind newKind /* = GenericObject */)
+js::CreateThisForFunctionWithProto(JSContext* cx, HandleObject callee, HandleObject newTarget,
+                                   HandleObject proto, NewObjectKind newKind /* = GenericObject */)
 {
     RootedObject res(cx);
 
     if (proto) {
         RootedObjectGroup group(cx, ObjectGroup::defaultNewGroup(cx, nullptr, TaggedProto(proto),
-                                                                 &callee->as<JSFunction>()));
+                                                                 newTarget));
         if (!group)
             return nullptr;
 
@@ -985,7 +986,7 @@ js::CreateThisForFunctionWithProto(JSContext* cx, HandleObject callee, HandleObj
                 // The script was analyzed successfully and may have changed
                 // the new type table, so refetch the group.
                 group = ObjectGroup::defaultNewGroup(cx, nullptr, TaggedProto(proto),
-                                                     &callee->as<JSFunction>());
+                                                     newTarget);
                 MOZ_ASSERT(group && group->newScript());
             }
         }
@@ -1006,15 +1007,16 @@ js::CreateThisForFunctionWithProto(JSContext* cx, HandleObject callee, HandleObj
 }
 
 JSObject*
-js::CreateThisForFunction(JSContext* cx, HandleObject callee, NewObjectKind newKind)
+js::CreateThisForFunction(JSContext* cx, HandleObject callee, HandleObject newTarget,
+                          NewObjectKind newKind)
 {
     RootedValue protov(cx);
-    if (!GetProperty(cx, callee, callee, cx->names().prototype, &protov))
+    if (!GetProperty(cx, newTarget, newTarget, cx->names().prototype, &protov))
         return nullptr;
     RootedObject proto(cx);
     if (protov.isObject())
         proto = &protov.toObject();
-    JSObject* obj = CreateThisForFunctionWithProto(cx, callee, proto, newKind);
+    JSObject* obj = CreateThisForFunctionWithProto(cx, callee, newTarget, proto, newKind);
 
     if (obj && newKind == SingletonObject) {
         RootedPlainObject nobj(cx, &obj->as<PlainObject>());
@@ -1498,7 +1500,7 @@ js::XDRObjectLiteral(XDRState<XDR_ENCODE>* xdr, MutableHandleObject obj);
 template bool
 js::XDRObjectLiteral(XDRState<XDR_DECODE>* xdr, MutableHandleObject obj);
 
-void
+bool
 NativeObject::fillInAfterSwap(JSContext* cx, const Vector<Value>& values, void* priv)
 {
     // This object has just been swapped with some other object, and its shape
@@ -1510,7 +1512,7 @@ NativeObject::fillInAfterSwap(JSContext* cx, const Vector<Value>& values, void* 
     size_t nfixed = gc::GetGCKindSlots(asTenured().getAllocKind(), getClass());
     if (nfixed != shape_->numFixedSlots()) {
         if (!generateOwnShape(cx))
-            CrashAtUnhandlableOOM("fillInAfterSwap");
+            return false;
         shape_->setNumFixedSlots(nfixed);
     }
 
@@ -1527,11 +1529,12 @@ NativeObject::fillInAfterSwap(JSContext* cx, const Vector<Value>& values, void* 
     if (size_t ndynamic = dynamicSlotsCount(nfixed, values.length(), getClass())) {
         slots_ = cx->zone()->pod_malloc<HeapSlot>(ndynamic);
         if (!slots_)
-            CrashAtUnhandlableOOM("fillInAfterSwap");
+            return false;
         Debug_SetSlotRangeToCrashOnTouch(slots_, ndynamic);
     }
 
     initSlotRange(0, values.begin(), values.length());
+    return true;
 }
 
 void
@@ -1552,20 +1555,22 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
                IsBackgroundFinalized(b->asTenured().getAllocKind()));
     MOZ_ASSERT(a->compartment() == b->compartment());
 
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+
     AutoCompartment ac(cx, a);
 
     if (!a->getGroup(cx))
-        CrashAtUnhandlableOOM("JSObject::swap");
+        oomUnsafe.crash("JSObject::swap");
     if (!b->getGroup(cx))
-        CrashAtUnhandlableOOM("JSObject::swap");
+        oomUnsafe.crash("JSObject::swap");
 
     /*
      * Neither object may be in the nursery, but ensure we update any embedded
      * nursery pointers in either object.
      */
     MOZ_ASSERT(!IsInsideNursery(a) && !IsInsideNursery(b));
-    cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(a);
-    cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(b);
+    cx->runtime()->gc.storeBuffer.putWholeCell(a);
+    cx->runtime()->gc.storeBuffer.putWholeCell(b);
 
     unsigned r = NotifyGCPreSwap(a, b);
 
@@ -1616,7 +1621,7 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
             apriv = na->hasPrivate() ? na->getPrivate() : nullptr;
             for (size_t i = 0; i < na->slotSpan(); i++) {
                 if (!avals.append(na->getSlot(i)))
-                    CrashAtUnhandlableOOM("JSObject::swap");
+                    oomUnsafe.crash("JSObject::swap");
             }
         }
         Vector<Value> bvals(cx);
@@ -1625,7 +1630,7 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
             bpriv = nb->hasPrivate() ? nb->getPrivate() : nullptr;
             for (size_t i = 0; i < nb->slotSpan(); i++) {
                 if (!bvals.append(nb->getSlot(i)))
-                    CrashAtUnhandlableOOM("JSObject::swap");
+                    oomUnsafe.crash("JSObject::swap");
             }
         }
 
@@ -1638,10 +1643,10 @@ JSObject::swap(JSContext* cx, HandleObject a, HandleObject b)
         a->fixDictionaryShapeAfterSwap();
         b->fixDictionaryShapeAfterSwap();
 
-        if (na)
-            b->as<NativeObject>().fillInAfterSwap(cx, avals, apriv);
-        if (nb)
-            a->as<NativeObject>().fillInAfterSwap(cx, bvals, bpriv);
+        if (na && !b->as<NativeObject>().fillInAfterSwap(cx, avals, apriv))
+            oomUnsafe.crash("fillInAfterSwap");
+        if (nb && !a->as<NativeObject>().fillInAfterSwap(cx, bvals, bpriv))
+            oomUnsafe.crash("fillInAfterSwap");
     }
 
     // Swapping the contents of two objects invalidates type sets which contain
@@ -2224,11 +2229,17 @@ js::LookupNameUnqualified(JSContext* cx, HandlePropertyName name, HandleObject s
             break;
     }
 
-    // See note above UninitializedLexicalObject.
-    if (pobj == scope && IsUninitializedLexicalSlot(scope, shape)) {
-        scope = UninitializedLexicalObject::create(cx, scope);
-        if (!scope)
-            return false;
+    // See note above RuntimeLexicalErrorObject.
+    if (pobj == scope) {
+        if (IsUninitializedLexicalSlot(scope, shape)) {
+            scope = RuntimeLexicalErrorObject::create(cx, scope, JSMSG_UNINITIALIZED_LEXICAL);
+            if (!scope)
+                return false;
+        } else if (scope->is<ScopeObject>() && !scope->is<DeclEnvObject>() && !shape->writable()) {
+            scope = RuntimeLexicalErrorObject::create(cx, scope, JSMSG_BAD_CONST_ASSIGN);
+            if (!scope)
+                return false;
+        }
     }
 
     objp.set(scope);
@@ -2384,6 +2395,19 @@ JSObject::reportNotExtensible(JSContext* cx, unsigned report)
                                  nullptr, nullptr);
 }
 
+// Our immutable-prototype behavior is non-standard, and it's unclear whether
+// it's shippable.  (Or at least it's unclear whether it's shippable with any
+// provided-by-default uses exposed to script.)  If this bool is true,
+// immutable-prototype behavior is enforced; if it's false, behavior is not
+// enforced, and immutable-prototype bits stored on objects are completely
+// ignored.
+static const bool ImmutablePrototypesEnabled = true;
+
+JS_FRIEND_API(bool)
+JS_ImmutablePrototypesEnabled()
+{
+    return ImmutablePrototypesEnabled;
+}
 
 /*** ES6 standard internal methods ***************************************************************/
 
@@ -2402,9 +2426,8 @@ js::SetPrototype(JSContext* cx, HandleObject obj, HandleObject proto, JS::Object
     }
 
     /* Disallow mutation of immutable [[Prototype]]s. */
-    if (obj->nonLazyPrototypeIsImmutable()) {
+    if (obj->nonLazyPrototypeIsImmutable() && ImmutablePrototypesEnabled)
         return result.fail(JSMSG_CANT_SET_PROTO);
-    }
 
     /*
      * Disallow mutating the [[Prototype]] on ArrayBuffer objects, which
@@ -2449,6 +2472,15 @@ js::SetPrototype(JSContext* cx, HandleObject obj, HandleObject proto, JS::Object
         return false;
     if (!extensible)
         return result.fail(JSMSG_CANT_SET_PROTO);
+
+    // If this is a global object, resolve the Object class so that its
+    // [[Prototype]] chain is always properly immutable, even in the presence
+    // of lazy standard classes.
+    if (obj->is<GlobalObject>()) {
+        Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
+        if (!GlobalObject::ensureConstructor(cx, global, JSProto_Object))
+            return false;
+    }
 
     /*
      * ES6 9.1.2 step 6 forbids generating cyclical prototype chains. But we
@@ -2533,15 +2565,6 @@ js::GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
             desc.assertCompleteIfFound();
         return ok;
     }
-
-#ifndef RELEASE_BUILD
-    if (obj->is<RegExpObject>() && id == NameToId(cx->names().source)) {
-        if (JSScript* script = cx->currentScript()) {
-            const char* filename = script->filename();
-            cx->compartment()->addTelemetry(filename, JSCompartment::RegExpSourceProperty);
-        }
-    }
-#endif
 
     RootedNativeObject nobj(cx, obj.as<NativeObject>());
     RootedShape shape(cx);
@@ -2742,18 +2765,6 @@ js::GetPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
 }
 
 bool
-js::ToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp)
-{
-    bool ok;
-    if (JSConvertOp op = obj->getClass()->convert)
-        ok = op(cx, obj, hint, vp);
-    else
-        ok = JS::OrdinaryToPrimitive(cx, obj, hint, vp);
-    MOZ_ASSERT_IF(ok, vp.isPrimitive());
-    return ok;
-}
-
-bool
 js::WatchGuts(JSContext* cx, JS::HandleObject origObj, JS::HandleId id, JS::HandleObject callable)
 {
     RootedObject obj(cx, GetInnerObject(origObj));
@@ -2857,13 +2868,16 @@ js::HasDataProperty(JSContext* cx, NativeObject* obj, jsid id, Value* vp)
     return false;
 }
 
+
+/*** ToPrimitive *************************************************************/
+
 /*
- * Gets |obj[id]|.  If that value's not callable, returns true and stores a
- * non-primitive value in *vp.  If it's callable, calls it with no arguments
- * and |obj| as |this|, returning the result in *vp.
+ * Gets |obj[id]|.  If that value's not callable, returns true and stores an
+ * object value in *vp.  If it's callable, calls it with no arguments and |obj|
+ * as |this|, returning the result in *vp.
  *
- * This is a mini-abstraction for ES5 8.12.8 [[DefaultValue]], either steps 1-2
- * or steps 3-4.
+ * This is a mini-abstraction for ES6 draft rev 36 (2015 Mar 17),
+ * 7.1.1, second algorithm (OrdinaryToPrimitive), steps 5.a-c.
  */
 static bool
 MaybeCallMethod(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
@@ -2875,6 +2889,29 @@ MaybeCallMethod(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue
         return true;
     }
     return Invoke(cx, ObjectValue(*obj), vp, 0, nullptr, vp);
+}
+
+static bool
+ReportCantConvert(JSContext* cx, unsigned errorNumber, HandleObject obj, JSType hint)
+{
+    const Class* clasp = obj->getClass();
+
+    // Avoid recursive death when decompiling in ReportValueError.
+    RootedString str(cx);
+    if (hint == JSTYPE_STRING) {
+        str = JS_AtomizeAndPinString(cx, clasp->name);
+        if (!str)
+            return false;
+    } else {
+        str = nullptr;
+    }
+
+    RootedValue val(cx, ObjectValue(*obj));
+    ReportValueError2(cx, errorNumber, JSDVG_SEARCH_STACK, val, str,
+                      hint == JSTYPE_VOID
+                      ? "primitive type"
+                      : hint == JSTYPE_STRING ? "string" : "number");
+    return false;
 }
 
 bool
@@ -2908,10 +2945,10 @@ JS::OrdinaryToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHan
         if (vp.isPrimitive())
             return true;
     } else {
+        id = NameToId(cx->names().valueOf);
 
         /* Optimize new String(...).valueOf(). */
         if (clasp == &StringObject::class_) {
-            id = NameToId(cx->names().valueOf);
             StringObject* nobj = &obj->as<StringObject>();
             if (ClassMethodIsNative(cx, nobj, &StringObject::class_, id, str_toString)) {
                 vp.setString(nobj->unbox());
@@ -2921,7 +2958,6 @@ JS::OrdinaryToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHan
 
         /* Optimize new Number(...).valueOf(). */
         if (clasp == &NumberObject::class_) {
-            id = NameToId(cx->names().valueOf);
             NumberObject* nobj = &obj->as<NumberObject>();
             if (ClassMethodIsNative(cx, nobj, &NumberObject::class_, id, num_valueOf)) {
                 vp.setNumber(nobj->unbox());
@@ -2929,7 +2965,6 @@ JS::OrdinaryToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHan
             }
         }
 
-        id = NameToId(cx->names().valueOf);
         if (!MaybeCallMethod(cx, obj, id, vp))
             return false;
         if (vp.isPrimitive())
@@ -2942,23 +2977,52 @@ JS::OrdinaryToPrimitive(JSContext* cx, HandleObject obj, JSType hint, MutableHan
             return true;
     }
 
-    /* Avoid recursive death when decompiling in ReportValueError. */
-    RootedString str(cx);
-    if (hint == JSTYPE_STRING) {
-        str = JS_AtomizeAndPinString(cx, clasp->name);
-        if (!str)
+    return ReportCantConvert(cx, JSMSG_CANT_CONVERT_TO, obj, hint);
+}
+
+bool
+js::ToPrimitiveSlow(JSContext* cx, JSType preferredType, MutableHandleValue vp)
+{
+    // Step numbers refer to the first algorithm listed in ES6 draft rev 36
+    // (2015 Mar 17) 7.1.1 ToPrimitive.
+    MOZ_ASSERT(preferredType == JSTYPE_VOID ||
+               preferredType == JSTYPE_STRING ||
+               preferredType == JSTYPE_NUMBER);
+    RootedObject obj(cx, &vp.toObject());
+
+    // Steps 4-5.
+    RootedId id(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().toPrimitive));
+    RootedValue method(cx);
+    if (!GetProperty(cx, obj, obj, id, &method))
+        return false;
+
+    // Step 6.
+    if (!method.isUndefined()) {
+        // Step 6 of GetMethod. Invoke() below would do this check and throw a
+        // TypeError anyway, but this produces a better error message.
+        if (!IsCallable(method))
+            return ReportCantConvert(cx, JSMSG_TOPRIMITIVE_NOT_CALLABLE, obj, preferredType);
+
+        // Steps 1-3.
+        RootedValue hint(cx, StringValue(preferredType == JSTYPE_STRING ? cx->names().string :
+                                         preferredType == JSTYPE_NUMBER ? cx->names().number :
+                                         cx->names().default_));
+
+        // Steps 6.a-b.
+        if (!Invoke(cx, vp, method, 1, hint.address(), vp))
             return false;
-    } else {
-        str = nullptr;
+
+        // Steps 6.c-d.
+        if (vp.isObject())
+            return ReportCantConvert(cx, JSMSG_TOPRIMITIVE_RETURNED_OBJECT, obj, preferredType);
+        return true;
     }
 
-    RootedValue val(cx, ObjectValue(*obj));
-    ReportValueError2(cx, JSMSG_CANT_CONVERT_TO, JSDVG_SEARCH_STACK, val, str,
-                      hint == JSTYPE_VOID
-                      ? "primitive type"
-                      : hint == JSTYPE_STRING ? "string" : "number");
-    return false;
+    return OrdinaryToPrimitive(cx, obj, preferredType, vp);
 }
+
+
+/* * */
 
 bool
 js::IsDelegate(JSContext* cx, HandleObject obj, const js::Value& v, bool* result)
@@ -3283,6 +3347,7 @@ JSObject::dump()
     if (obj->hasUncacheableProto()) fprintf(stderr, " has_uncacheable_proto");
     if (obj->hadElementsAccess()) fprintf(stderr, " had_elements_access");
     if (obj->wasNewScriptCleared()) fprintf(stderr, " new_script_cleared");
+    if (!obj->hasLazyPrototype() && obj->nonLazyPrototypeIsImmutable()) fprintf(stderr, " immutable_prototype");
 
     if (obj->isNative()) {
         NativeObject* nobj = &obj->as<NativeObject>();
@@ -3446,16 +3511,23 @@ js::DumpBacktrace(JSContext* cx)
         const char* filename = JS_GetScriptFilename(i.script());
         unsigned line = PCToLineNumber(i.script(), i.pc());
         JSScript* script = i.script();
-        sprinter.printf("#%d %14p   %s:%d (%p @ %d)\n",
-                        depth, (i.isJit() ? 0 : i.interpFrame()), filename, line,
+        char frameType =
+            i.isInterp() ? 'i' :
+            i.isBaseline() ? 'b' :
+            i.isIon() ? 'I' :
+            i.isAsmJS() ? 'A' :
+            '?';
+
+        sprinter.printf("#%d %14p %c   %s:%d (%p @ %d)\n",
+                        depth, i.rawFramePtr(), frameType, filename, line,
                         script, script->pcToOffset(i.pc()));
     }
     fprintf(stdout, "%s", sprinter.string());
-/* #ifdef XP_WIN32
+#ifdef XP_WIN32
     if (IsDebuggerPresent()) {
         OutputDebugStringA(sprinter.string());
     }
-#endif */
+#endif
 }
 
 
@@ -3654,10 +3726,15 @@ JSObject::traceChildren(JSTracer* trc)
             GetObjectSlotNameFunctor func(nobj);
             JS::AutoTracingDetails ctx(trc, func);
             JS::AutoTracingIndex index(trc);
-            for (uint32_t i = 0; i < nobj->slotSpan(); ++i) {
-                TraceManuallyBarrieredEdge(trc, nobj->getSlotRef(i).unsafeGet(), "object slot");
+            // Tracing can mutate the target but cannot change the slot count,
+            // but the compiler has no way of knowing this.
+            const uint32_t nslots = nobj->slotSpan();
+            for (uint32_t i = 0; i < nslots; ++i) {
+                TraceManuallyBarrieredEdge(trc, nobj->getSlotRef(i).unsafeUnbarrieredForTracing(),
+                                           "object slot");
                 ++index;
             }
+            MOZ_ASSERT(nslots == nobj->slotSpan());
         }
 
         do {

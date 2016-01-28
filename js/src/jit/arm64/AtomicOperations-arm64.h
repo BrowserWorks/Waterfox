@@ -9,8 +9,10 @@
 #ifndef jit_arm64_AtomicOperations_arm64_h
 #define jit_arm64_AtomicOperations_arm64_h
 
+#include "mozilla/Assertions.h"
+#include "mozilla/Types.h"
+
 #include "jit/arm64/Architecture-arm64.h"
-#include "jit/AtomicOperations.h"
 
 inline bool
 js::jit::AtomicOperations::isLockfree8()
@@ -102,6 +104,34 @@ js::jit::AtomicOperations::fetchXorSeqCst(T* addr, T val)
 {
     static_assert(sizeof(T) <= 4, "not available for 8-byte values yet");
     return __atomic_fetch_xor(addr, val, __ATOMIC_SEQ_CST);
+}
+
+template <typename T>
+inline T
+js::jit::AtomicOperations::loadSafeWhenRacy(T* addr)
+{
+    return *addr; // FIXME (1208663): not yet safe
+}
+
+template <typename T>
+inline void
+js::jit::AtomicOperations::storeSafeWhenRacy(T* addr, T val)
+{
+    *addr = val; // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memcpySafeWhenRacy(void* dest, const void* src,
+                                              size_t nbytes)
+{
+    memcpy(dest, src, nbytes); // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memmoveSafeWhenRacy(void* dest, const void* src,
+                                               size_t nbytes)
+{
+    memmove(dest, src, nbytes); // FIXME (1208663): not yet safe
 }
 
 template<size_t nbytes>

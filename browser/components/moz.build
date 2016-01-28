@@ -13,6 +13,7 @@ DIRS += [
     'feeds',
     'loop',
     'migration',
+    'newtab',
     'places',
     'pocket',
     'preferences',
@@ -29,6 +30,7 @@ DIRS += [
 DIRS += ['build']
 
 XPIDL_SOURCES += [
+    'nsIAboutNewTabService.idl',
     'nsIBrowserGlue.idl',
     'nsIBrowserHandler.idl',
 ]

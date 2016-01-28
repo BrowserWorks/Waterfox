@@ -7,6 +7,7 @@
 #define nsOfflineCacheUpdateParent_h
 
 #include "mozilla/docshell/POfflineCacheUpdateParent.h"
+#include "mozilla/BasePrincipal.h"
 #include "nsIOfflineCacheUpdate.h"
 
 #include "nsString.h"
@@ -25,6 +26,7 @@ class OfflineCacheUpdateParent : public POfflineCacheUpdateParent
                                , public nsILoadContext
 {
     typedef mozilla::ipc::URIParams URIParams;
+    typedef mozilla::ipc::PrincipalInfo PrincipalInfo;
 
 public:
     NS_DECL_ISUPPORTS
@@ -34,6 +36,7 @@ public:
     nsresult
     Schedule(const URIParams& manifestURI,
              const URIParams& documentURI,
+             const PrincipalInfo& loadingPrincipalInfo,
              const bool& stickDocument);
 
     void
@@ -45,14 +48,12 @@ public:
     OfflineCacheUpdateParent(uint32_t aAppId, bool aIsInBrowser);
 
     virtual void ActorDestroy(ActorDestroyReason aWhy) override;
-
 private:
     ~OfflineCacheUpdateParent();
 
     bool mIPCClosed;
 
-    bool     mIsInBrowserElement;
-    uint32_t mAppId;
+    mozilla::OriginAttributes mOriginAttributes;
 };
 
 } // namespace docshell

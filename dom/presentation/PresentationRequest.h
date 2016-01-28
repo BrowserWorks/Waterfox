@@ -14,7 +14,7 @@ namespace dom {
 
 class Promise;
 class PresentationAvailability;
-class PresentationSession;
+class PresentationConnection;
 
 class PresentationRequest final : public DOMEventTargetHelper
 {
@@ -35,9 +35,9 @@ public:
 
   already_AddRefed<Promise> GetAvailability(ErrorResult& aRv);
 
-  IMPL_EVENT_HANDLER(sessionconnect);
+  IMPL_EVENT_HANDLER(connectionavailable);
 
-  nsresult DispatchSessionConnectEvent(PresentationSession* aSession);
+  nsresult DispatchConnectionAvailableEvent(PresentationConnection* aConnection);
 
 private:
   PresentationRequest(nsPIDOMWindow* aWindow,
@@ -48,7 +48,7 @@ private:
   bool Init();
 
   nsString mUrl;
-  nsRefPtr<PresentationAvailability> mAvailability;
+  RefPtr<PresentationAvailability> mAvailability;
 };
 
 } // namespace dom

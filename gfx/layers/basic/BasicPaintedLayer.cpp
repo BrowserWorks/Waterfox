@@ -79,7 +79,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
       bool needsGroup = opacity != 1.0 ||
                         effectiveOperator != CompositionOp::OP_OVER ||
                         aMaskLayer;
-      nsRefPtr<gfxContext> groupContext;
+      RefPtr<gfxContext> groupContext;
       if (needsGroup) {
         groupContext =
           BasicManager()->PushGroupForLayer(aContext, this, toDraw,
@@ -98,7 +98,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
         if (needsClipToVisibleRegion) {
           gfxUtils::ClipToRegion(aContext, toDraw);
         }
-        AutoSetOperator setOptimizedOperator(aContext, ThebesOp(effectiveOperator));
+        AutoSetOperator setOptimizedOperator(aContext, effectiveOperator);
         PaintWithMask(aContext, opacity, aMaskLayer);
       }
 
@@ -182,7 +182,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
 
     RenderTraceInvalidateStart(this, "FFFF00", state.mRegionToDraw.GetBounds());
 
-    nsRefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
+    RefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
     PaintBuffer(ctx,
                 state.mRegionToDraw, state.mRegionToDraw, state.mRegionToInvalidate,
                 state.mDidSelfCopy,
@@ -200,18 +200,17 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
       mContentClient->ReturnDrawTargetToBuffer(target);
       target = nullptr;
     }
-
     // It's possible that state.mRegionToInvalidate is nonempty here,
     // if we are shrinking the valid region to nothing. So use mRegionToDraw
     // instead.
     NS_WARN_IF_FALSE(state.mRegionToDraw.IsEmpty(),
                      "No context when we have something to draw, resource exhaustion?");
   }
-  
+
   for (uint32_t i = 0; i < readbackUpdates.Length(); ++i) {
     ReadbackProcessor::Update& update = readbackUpdates[i];
     nsIntPoint offset = update.mLayer->GetBackgroundLayerOffset();
-    nsRefPtr<gfxContext> ctx =
+    RefPtr<gfxContext> ctx =
       update.mLayer->GetSink()->BeginUpdate(update.mUpdateRect + offset,
                                             update.mSequenceCounter);
     if (ctx) {
@@ -219,8 +218,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
       NS_ASSERTION(!GetMaskLayer(), "Should only read back layers without masks");
       ctx->SetMatrix(ctx->CurrentMatrix().Translate(offset.x, offset.y));
       mContentClient->DrawTo(this, ctx->GetDrawTarget(), 1.0,
-                             CompositionOpForOp(ctx->CurrentOperator()),
-                             nullptr, nullptr);
+                             ctx->CurrentOp(), nullptr, nullptr);
       update.mLayer->GetSink()->EndUpdate(ctx, update.mUpdateRect + offset);
     }
   }
@@ -230,7 +228,7 @@ already_AddRefed<PaintedLayer>
 BasicLayerManager::CreatePaintedLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<PaintedLayer> layer = new BasicPaintedLayer(this);
+  RefPtr<PaintedLayer> layer = new BasicPaintedLayer(this);
   return layer.forget();
 }
 

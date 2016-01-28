@@ -386,7 +386,7 @@ public:
     MOZ_ASSERT(mImpl);
   }
 
-  void Accept(int aFd, const nsAString& aBdAddress,
+  void Accept(int aFd, const BluetoothAddress& aBdAddress,
               int aConnectionStatus) override
   {
     MOZ_ASSERT(mImpl->IsConsumerThread());
@@ -403,7 +403,10 @@ public:
       return;
     }
 
-    mImpl->mConsumer->SetAddress(aBdAddress);
+    nsAutoString addressStr;
+    AddressToString(aBdAddress, addressStr);
+
+    mImpl->mConsumer->SetAddress(addressStr);
     mImpl->GetIOLoop()->PostTask(FROM_HERE,
                                  new AcceptTask(mImpl, fd.forget()));
   }
@@ -607,7 +610,7 @@ public:
     MOZ_ASSERT(mImpl);
   }
 
-  void Connect(int aFd, const nsAString& aBdAddress,
+  void Connect(int aFd, const BluetoothAddress& aBdAddress,
                int aConnectionStatus) override
   {
     MOZ_ASSERT(mImpl->IsConsumerThread());
@@ -622,7 +625,10 @@ public:
       return;
     }
 
-    mImpl->mConsumer->SetAddress(aBdAddress);
+    nsAutoString addressStr;
+    AddressToString(aBdAddress, addressStr);
+
+    mImpl->mConsumer->SetAddress(addressStr);
     mImpl->GetIOLoop()->PostTask(FROM_HERE,
                                  new SocketConnectTask(mImpl, aFd));
   }
@@ -663,9 +669,15 @@ BluetoothSocket::Connect(const nsAString& aDeviceAddress,
   BluetoothSocketResultHandler* res = new ConnectSocketResultHandler(mImpl);
   SetCurrentResultHandler(res);
 
+  BluetoothAddress deviceAddress;
+  nsresult rv = StringToAddress(aDeviceAddress, deviceAddress);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
   sBluetoothSocketInterface->Connect(
-    aDeviceAddress, aType,
-    aServiceUuid.mUuid, aChannel,
+    deviceAddress, aType,
+    aServiceUuid, aChannel,
     aEncrypt, aAuth, res);
 
   return NS_OK;
@@ -720,6 +732,12 @@ BluetoothSocket::Listen(const nsAString& aServiceName,
 {
   MOZ_ASSERT(!mImpl);
 
+  BluetoothServiceName serviceName;
+  nsresult rv = StringToServiceName(aServiceName, serviceName);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
   SetConnectionStatus(SOCKET_LISTENING);
 
   mImpl = new DroidSocketImpl(aConsumerLoop, aIOLoop, this);
@@ -729,7 +747,7 @@ BluetoothSocket::Listen(const nsAString& aServiceName,
 
   sBluetoothSocketInterface->Listen(
     aType,
-    aServiceName, aServiceUuid.mUuid, aChannel,
+    serviceName, aServiceUuid, aChannel,
     aEncrypt, aAuth, res);
 
   return NS_OK;

@@ -11,6 +11,14 @@
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
+// Match type constants.
+// These indicate what type of search function we should be using.
+const MATCH_ANYWHERE = Ci.mozIPlacesAutoComplete.MATCH_ANYWHERE;
+const MATCH_BOUNDARY_ANYWHERE = Ci.mozIPlacesAutoComplete.MATCH_BOUNDARY_ANYWHERE;
+const MATCH_BOUNDARY = Ci.mozIPlacesAutoComplete.MATCH_BOUNDARY;
+const MATCH_BEGINNING = Ci.mozIPlacesAutoComplete.MATCH_BEGINNING;
+const MATCH_BEGINNING_CASE_SENSITIVE = Ci.mozIPlacesAutoComplete.MATCH_BEGINNING_CASE_SENSITIVE;
+
 const PREF_BRANCH = "browser.urlbar.";
 
 // Prefs are defined as [pref name, default value].
@@ -39,14 +47,6 @@ const PREF_SUGGEST_HISTORY_ONLYTYPED = [ "suggest.history.onlyTyped", false ];
 const PREF_SUGGEST_SEARCHES =       [ "suggest.searches",       false ];
 
 const PREF_MAX_CHARS_FOR_SUGGEST =  [ "maxCharsForSearchSuggestions", 20];
-
-// Match type constants.
-// These indicate what type of search function we should be using.
-const MATCH_ANYWHERE = Ci.mozIPlacesAutoComplete.MATCH_ANYWHERE;
-const MATCH_BOUNDARY_ANYWHERE = Ci.mozIPlacesAutoComplete.MATCH_BOUNDARY_ANYWHERE;
-const MATCH_BOUNDARY = Ci.mozIPlacesAutoComplete.MATCH_BOUNDARY;
-const MATCH_BEGINNING = Ci.mozIPlacesAutoComplete.MATCH_BEGINNING;
-const MATCH_BEGINNING_CASE_SENSITIVE = Ci.mozIPlacesAutoComplete.MATCH_BEGINNING_CASE_SENSITIVE;
 
 // AutoComplete query type constants.
 // Describes the various types of queries that we can process rows for.
@@ -506,8 +506,9 @@ XPCOMUtils.defineLazyGetter(this, "Prefs", () => {
  *        The text to unescape and modify.
  * @return the modified spec.
  */
-function fixupSearchText(spec)
-  textURIService.unEscapeURIForUI("UTF-8", stripPrefix(spec));
+function fixupSearchText(spec) {
+  return textURIService.unEscapeURIForUI("UTF-8", stripPrefix(spec));
+}
 
 /**
  * Generates the tokens used in searching from a given string.
@@ -519,8 +520,9 @@ function fixupSearchText(spec)
  *       empty string.  We don't want that, as it'll break our logic, so return
  *       an empty array then.
  */
-function getUnfilteredSearchTokens(searchString)
-  searchString.length ? searchString.split(REGEXP_SPACES) : [];
+function getUnfilteredSearchTokens(searchString) {
+  return searchString.length ? searchString.split(REGEXP_SPACES) : [];
+}
 
 /**
  * Strip prefixes from the URI that we don't care about for searching.
@@ -1288,7 +1290,7 @@ Search.prototype = {
     // when searching for "Firefox".
     let terms = parseResult.terms.toLowerCase();
     if (this._searchTokens.length > 0 &&
-        this._searchTokens.every(token => terms.indexOf(token) == -1)) {
+        this._searchTokens.every(token => !terms.includes(token))) {
       return;
     }
 
@@ -1388,7 +1390,10 @@ Search.prototype = {
     // Remove the trailing slash.
     match.comment = stripHttpAndTrim(trimmedHost);
     match.finalCompleteValue = untrimmedHost;
-    match.icon = faviconUrl;
+    if (faviconUrl) {
+      match.icon = PlacesUtils.favicons
+                              .getFaviconLinkForIcon(NetUtil.newURI(faviconUrl)).spec;
+    }
     // Although this has a frecency, this query is executed before any other
     // queries that would result in frecency matches.
     match.frecency = frecency;
@@ -1427,7 +1432,10 @@ Search.prototype = {
     match.value = this._strippedPrefix + url;
     match.comment = url;
     match.finalCompleteValue = untrimmedURL;
-    match.icon = faviconUrl;
+    if (faviconUrl) {
+      match.icon = PlacesUtils.favicons
+                              .getFaviconLinkForIcon(NetUtil.newURI(faviconUrl)).spec;
+    }
     // Although this has a frecency, this query is executed before any other
     // queries that would result in frecency matches.
     match.frecency = frecency;
@@ -1572,18 +1580,20 @@ Search.prototype = {
    * @return an array consisting of the correctly optimized query to search the
    *         database with and an object containing the params to bound.
    */
-  get _switchToTabQuery() [
-    SQL_SWITCHTAB_QUERY,
-    {
-      query_type: QUERYTYPE_FILTERED,
-      matchBehavior: this._matchBehavior,
-      searchBehavior: this._behavior,
-      // We only want to search the tokens that we are left with - not the
-      // original search string.
-      searchString: this._searchTokens.join(" "),
-      maxResults: Prefs.maxRichResults
-    }
-  ],
+  get _switchToTabQuery() {
+    return [
+      SQL_SWITCHTAB_QUERY,
+      {
+        query_type: QUERYTYPE_FILTERED,
+        matchBehavior: this._matchBehavior,
+        searchBehavior: this._behavior,
+        // We only want to search the tokens that we are left with - not the
+        // original search string.
+        searchString: this._searchTokens.join(" "),
+        maxResults: Prefs.maxRichResults
+      }
+    ];
+  },
 
   /**
    * Obtains the query to search for adaptive results.
@@ -1591,16 +1601,18 @@ Search.prototype = {
    * @return an array consisting of the correctly optimized query to search the
    *         database with and an object containing the params to bound.
    */
-  get _adaptiveQuery() [
-    SQL_ADAPTIVE_QUERY,
-    {
-      parent: PlacesUtils.tagsFolderId,
-      search_string: this._searchString,
-      query_type: QUERYTYPE_FILTERED,
-      matchBehavior: this._matchBehavior,
-      searchBehavior: this._behavior
-    }
-  ],
+  get _adaptiveQuery() {
+    return [
+      SQL_ADAPTIVE_QUERY,
+      {
+        parent: PlacesUtils.tagsFolderId,
+        search_string: this._searchString,
+        query_type: QUERYTYPE_FILTERED,
+        matchBehavior: this._matchBehavior,
+        searchBehavior: this._behavior
+      }
+    ];
+  },
 
   /**
    * Whether we should try to autoFill.

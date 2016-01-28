@@ -33,7 +33,7 @@
 
 for (var idx in gLonghandProperties) {
   var prop = gLonghandProperties[idx];
-  if (prop.pref && !SpecialPowers.getBoolPref(prop.pref)) {
+  if (prop.pref && !IsCSSPropertyPrefEnabled(prop.pref)) {
     continue;
   }
   var present = prop.name in gCSSProperties;
@@ -48,7 +48,7 @@ for (var idx in gLonghandProperties) {
 }
 for (var idx in gShorthandProperties) {
   var prop = gShorthandProperties[idx];
-  if (prop.pref && !SpecialPowers.getBoolPref(prop.pref)) {
+  if (prop.pref && !IsCSSPropertyPrefEnabled(prop.pref)) {
     continue;
   }
   if (prop.name == "all") {
@@ -68,7 +68,7 @@ for (var idx in gShorthandProperties) {
 }
 for (var idx in gShorthandPropertiesLikeLonghand) {
   var prop = gShorthandPropertiesLikeLonghand[idx];
-  if (prop.pref && !SpecialPowers.getBoolPref(prop.pref)) {
+  if (prop.pref && !IsCSSPropertyPrefEnabled(prop.pref)) {
     continue;
   }
   var present = prop.name in gCSSProperties;
@@ -88,17 +88,17 @@ for (var idx in gShorthandPropertiesLikeLonghand) {
  */
 for (var prop in gCSSProperties) {
   var entry = gCSSProperties[prop];
-  if (entry.pref && !SpecialPowers.getBoolPref(entry.pref)) {
+  if (entry.pref && !IsCSSPropertyPrefEnabled(entry.pref)) {
     continue;
   }
   if (entry.type == CSS_TYPE_LONGHAND) {
     ok(!("subproperties" in entry),
        "longhand property '" + prop + "' must not have subproperty list");
-  } else if (entry.type == CSS_TYPE_TRUE_SHORTHAND) {
+  } else if (entry.type == CSS_TYPE_TRUE_SHORTHAND ||
+             entry.type == CSS_TYPE_SHORTHAND_AND_LONGHAND) {
     ok("subproperties" in entry,
        "shorthand property '" + prop + "' must have subproperty list");
   }
-  /* optional for CSS_TYPE_SHORTHAND_AND_LONGHAND */
 
   if ("subproperties" in entry) {
     var good = true;
@@ -157,6 +157,10 @@ for (var prop in gCSSProperties) {
                                      });
   if (expectedDOMProp == "float") {
     expectedDOMProp = "cssFloat";
+  } else if (prop.startsWith("-webkit")) {
+    // Our DOM accessors for webkit-prefixed properties start with lowercase w,
+    // not uppercase like standard DOM accessors.
+    expectedDOMProp = expectedDOMProp.replace(/^W/, "w");
   }
   is(entry.domProp, expectedDOMProp, "DOM property for " + prop);
 }

@@ -22,16 +22,9 @@ using namespace mozilla;
 #ifdef LOG
 #undef LOG
 #endif
-static PRLogModuleInfo*
-GetTeeLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsInputStreamTee");
-  }
-  return sLog;
-}
-#define LOG(args) MOZ_LOG(GetTeeLog(), mozilla::LogLevel::Debug, args)
+
+static LazyLogModule sTeeLog("nsInputStreamTee");
+#define LOG(args) MOZ_LOG(sTeeLog, mozilla::LogLevel::Debug, args)
 
 class nsInputStreamTee final : public nsIInputStreamTee
 {
@@ -135,7 +128,7 @@ private:
   uint32_t mCount;
   nsCOMPtr<nsIOutputStream> mSink;
   // back pointer to the tee that created this runnable
-  nsRefPtr<nsInputStreamTee> mTee;
+  RefPtr<nsInputStreamTee> mTee;
 };
 
 nsInputStreamTee::nsInputStreamTee(): mLock(nullptr)

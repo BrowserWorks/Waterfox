@@ -291,14 +291,13 @@ public:
   bool IsPopup();
   virtual bool ShouldUseOffMainThreadCompositing();
 
-  bool CaptureWidgetOnScreen(mozilla::RefPtr<mozilla::gfx::DrawTarget> aDT);
+  bool CaptureWidgetOnScreen(RefPtr<mozilla::gfx::DrawTarget> aDT);
 
 protected:
   virtual ~nsWindow();
 
   virtual void WindowUsesOMTC() override;
-  virtual void ConfigureAPZCTreeManager() override;
-  void RegisterTouchWindow();
+  virtual void RegisterTouchWindow() override;
 
   virtual nsresult NotifyIMEInternal(
                      const IMENotification& aIMENotification) override;
@@ -573,7 +572,7 @@ protected:
   // Transparency
 #ifdef MOZ_XUL
   // Use layered windows to support full 256 level alpha translucency
-  nsRefPtr<gfxASurface> mTransparentSurface;
+  RefPtr<gfxASurface> mTransparentSurface;
   HDC                   mMemoryDC;
   nsTransparencyMode    mTransparencyMode;
   nsIntRegion           mPossiblyTransparentRegion;

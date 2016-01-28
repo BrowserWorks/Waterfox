@@ -38,13 +38,9 @@ loop.OTSdkDriver = (function() {
 
     this.connections = {};
 
-    // Metrics object to keep track of the number of connections we have
+    // Setup the metrics object to keep track of the number of connections we have
     // and the amount of streams.
-    this._metrics = {
-      connections: 0,
-      sendStreams: 0,
-      recvStreams: 0
-    };
+    this._resetMetrics();
 
     this.dispatcher.register(this, [
       "setupStreamElements",
@@ -73,10 +69,10 @@ loop.OTSdkDriver = (function() {
           var result = [];
           devices.forEach(function(device) {
             if (device.kind === "audioinput") {
-              result.push({kind: "audio"});
+              result.push({ kind: "audio" });
             }
             if (device.kind === "videoinput") {
-              result.push({kind: "video"});
+              result.push({ kind: "video" });
             }
           });
           callback(result);
@@ -105,6 +101,17 @@ loop.OTSdkDriver = (function() {
           // channel.
           text: {}
         }
+      };
+    },
+
+    /**
+     * Resets the metrics for the driver.
+     */
+    _resetMetrics: function() {
+      this._metrics = {
+        connections: 0,
+        sendStreams: 0,
+        recvStreams: 0
       };
     },
 
@@ -292,6 +299,9 @@ loop.OTSdkDriver = (function() {
         this.publisher.destroy();
         delete this.publisher;
       }
+
+      // Now reset the metrics as well.
+      this._resetMetrics();
 
       this._noteConnectionLengthIfNeeded(this._getTwoWayMediaStartTime(), performance.now());
 
@@ -918,21 +928,45 @@ loop.OTSdkDriver = (function() {
     },
 
     _onOTException: function(event) {
-      if (event.code === OT.ExceptionCodes.UNABLE_TO_PUBLISH &&
-          event.message === "GetUserMedia") {
-        // We free up the publisher here in case the store wants to try
-        // grabbing the media again.
-        if (this.publisher) {
-          this.publisher.off("accessAllowed accessDenied accessDialogOpened streamCreated");
-          this.publisher.destroy();
-          delete this.publisher;
-          delete this._mockPublisherEl;
-        }
-        this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
-          reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
-        }));
-      } else {
-        this._notifyMetricsEvent("sdk.exception." + event.code);
+      switch (event.code) {
+        case OT.ExceptionCodes.PUBLISHER_ICE_WORKFLOW_FAILED:
+        case OT.ExceptionCodes.SUBSCRIBER_ICE_WORKFLOW_FAILED:
+          this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+            reason: FAILURE_DETAILS.ICE_FAILED
+          }));
+          this._notifyMetricsEvent("sdk.exception." + event.code);
+          break;
+        case OT.ExceptionCodes.UNABLE_TO_PUBLISH:
+          if (event.message === "GetUserMedia") {
+            // We free up the publisher here in case the store wants to try
+            // grabbing the media again.
+            if (this.publisher) {
+              this.publisher.off("accessAllowed accessDenied accessDialogOpened streamCreated");
+              this.publisher.destroy();
+              delete this.publisher;
+              delete this._mockPublisherEl;
+            }
+            this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+              reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
+            }));
+            // No exception logging as this is a handled event.
+          } else {
+            // We need to log the message so that we can understand where the exception
+            // is coming from. Potentially a temporary addition.
+            this._notifyMetricsEvent("sdk.exception." + event.code + "." + event.message);
+          }
+          break;
+        case OT.ExceptionCodes.TERMS_OF_SERVICE_FAILURE:
+          this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+            reason: FAILURE_DETAILS.TOS_FAILURE
+          }));
+          // We still need to log the exception so that the server knows why this
+          // attempt failed.
+          this._notifyMetricsEvent("sdk.exception." + event.code);
+          break;
+        default:
+          this._notifyMetricsEvent("sdk.exception." + event.code);
+          break;
       }
     },
 

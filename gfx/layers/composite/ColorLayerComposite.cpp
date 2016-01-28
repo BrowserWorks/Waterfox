@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ColorLayerComposite.h"
-#include "gfxColor.h"                   // for gfxRGBA
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for Point
@@ -41,9 +40,7 @@ void
 ColorLayerComposite::GenEffectChain(EffectChain& aEffect)
 {
   aEffect.mLayerRef = this;
-  gfxRGBA color(GetColor());
-  aEffect.mPrimaryEffect = new EffectSolidColor(
-      Color(color.r, color.g, color.b, color.a));
+  aEffect.mPrimaryEffect = new EffectSolidColor(GetColor());
 }
 
 } // namespace layers

@@ -296,7 +296,7 @@ IMEStateManager::OnRemoveContent(nsPresContext* aPresContext,
 
   // First, if there is a composition in the aContent, clean up it.
   if (sTextCompositions) {
-    nsRefPtr<TextComposition> compositionInContent =
+    RefPtr<TextComposition> compositionInContent =
       sTextCompositions->GetCompositionInContent(aPresContext, aContent);
 
     if (compositionInContent) {
@@ -367,7 +367,7 @@ IMEStateManager::OnChangeFocusInternal(nsPresContext* aPresContext,
                                        nsIContent* aContent,
                                        InputContextAction aAction)
 {
-  nsRefPtr<TabParent> newTabParent = TabParent::GetFrom(aContent);
+  RefPtr<TabParent> newTabParent = TabParent::GetFrom(aContent);
 
   MOZ_LOG(sISMLog, LogLevel::Info,
     ("ISM: IMEStateManager::OnChangeFocusInternal(aPresContext=0x%p, "
@@ -510,8 +510,12 @@ IMEStateManager::OnChangeFocusInternal(nsPresContext* aPresContext,
   sPresContext = aPresContext;
   sContent = aContent;
 
-  // Don't call CreateIMEContentObserver() here, it should be called from
-  // focus event handler of editor.
+  // Don't call CreateIMEContentObserver() here except when a plugin gets
+  // focus because it will be called from the focus event handler of focused
+  // editor.
+  if (newState.mEnabled == IMEState::PLUGIN) {
+    CreateIMEContentObserver(nullptr);
+  }
 
   return NS_OK;
 }
@@ -1104,7 +1108,7 @@ IMEStateManager::DispatchCompositionEvent(
                    EventDispatchingCallback* aCallBack,
                    bool aIsSynthesized)
 {
-  nsRefPtr<TabParent> tabParent =
+  RefPtr<TabParent> tabParent =
     aEventTargetNode->IsContent() ?
       TabParent::GetFrom(aEventTargetNode->AsContent()) : nullptr;
 
@@ -1129,7 +1133,7 @@ IMEStateManager::DispatchCompositionEvent(
 
   EnsureTextCompositionArray();
 
-  nsRefPtr<TextComposition> composition =
+  RefPtr<TextComposition> composition =
     sTextCompositions->GetCompositionFor(aCompositionEvent->widget);
   if (!composition) {
     // If synthesized event comes after delayed native composition events
@@ -1204,7 +1208,7 @@ IMEStateManager::HandleSelectionEvent(nsPresContext* aPresContext,
   nsIContent* eventTargetContent =
     aEventTargetContent ? aEventTargetContent :
                           GetRootContent(aPresContext);
-  nsRefPtr<TabParent> tabParent =
+  RefPtr<TabParent> tabParent =
     eventTargetContent ? TabParent::GetFrom(eventTargetContent) : nullptr;
 
   MOZ_LOG(sISMLog, LogLevel::Info,
@@ -1220,7 +1224,7 @@ IMEStateManager::HandleSelectionEvent(nsPresContext* aPresContext,
     return;
   }
 
-  nsRefPtr<TextComposition> composition = sTextCompositions ?
+  RefPtr<TextComposition> composition = sTextCompositions ?
     sTextCompositions->GetCompositionFor(aSelectionEvent->widget) : nullptr;
   if (composition) {
     // When there is a composition, TextComposition should guarantee that the
@@ -1258,7 +1262,7 @@ IMEStateManager::OnCompositionEventDiscarded(
     return;
   }
 
-  nsRefPtr<TextComposition> composition =
+  RefPtr<TextComposition> composition =
     sTextCompositions->GetCompositionFor(aCompositionEvent->widget);
   if (!composition) {
     // If the PresShell has been being destroyed during composition,
@@ -1397,7 +1401,7 @@ IMEStateManager::NotifyIME(const IMENotification& aNotification,
       break;
   }
 
-  nsRefPtr<TextComposition> composition;
+  RefPtr<TextComposition> composition;
   if (sTextCompositions) {
     composition = sTextCompositions->GetCompositionFor(aWidget);
   }
@@ -1515,7 +1519,7 @@ IMEStateManager::GetRootEditableNode(nsPresContext* aPresContext,
 bool
 IMEStateManager::IsIMEObserverNeeded(const IMEState& aState)
 {
-  return aState.IsEditable();
+  return aState.MaybeEditable();
 }
 
 // static
@@ -1536,7 +1540,7 @@ IMEStateManager::DestroyIMEContentObserver()
   MOZ_LOG(sISMLog, LogLevel::Debug,
     ("ISM:   IMEStateManager::DestroyIMEContentObserver(), destroying "
      "the active IMEContentObserver..."));
-  nsRefPtr<IMEContentObserver> tsm = sActiveIMEContentObserver.get();
+  RefPtr<IMEContentObserver> tsm = sActiveIMEContentObserver.get();
   sActiveIMEContentObserver = nullptr;
   tsm->Destroy();
 }
@@ -1585,7 +1589,7 @@ IMEStateManager::CreateIMEContentObserver(nsIEditor* aEditor)
   // IMEContentObserver::Init() might create another IMEContentObserver
   // instance.  So, sActiveIMEContentObserver would be replaced with new one.
   // We should hold the current instance here.
-  nsRefPtr<IMEContentObserver> kungFuDeathGrip(sActiveIMEContentObserver);
+  RefPtr<IMEContentObserver> kungFuDeathGrip(sActiveIMEContentObserver);
   sActiveIMEContentObserver->Init(widget, sPresContext, sContent, aEditor);
 }
 
@@ -1608,7 +1612,7 @@ IMEStateManager::GetTextCompositionFor(nsIWidget* aWidget)
   if (!sTextCompositions) {
     return nullptr;
   }
-  nsRefPtr<TextComposition> textComposition =
+  RefPtr<TextComposition> textComposition =
     sTextCompositions->GetCompositionFor(aWidget);
   return textComposition.forget();
 }

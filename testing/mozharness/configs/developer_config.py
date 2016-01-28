@@ -37,8 +37,11 @@ config = {
     # Talos related
     "python_webserver": True,
     "virtualenv_path": '%s/build/venv' % os.getcwd(),
+    "preflight_run_cmd_suites": [],
+    "postflight_run_cmd_suites": [],
 
     # Tooltool related
+    "download_tooltool": True,
     "tooltool_cache": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
     "tooltool_cache_path": os.path.join(LOCAL_WORKDIR, "builds/tooltool_cache"),
 

@@ -81,7 +81,7 @@
 
 using namespace mozilla;
 
-PRLogModuleInfo* nsComponentManagerLog = nullptr;
+static LazyLogModule nsComponentManagerLog("nsComponentManager");
 
 #if 0 || defined (DEBUG_timeless)
  #define SHOW_DENIED_ON_SHUTDOWN
@@ -369,10 +369,6 @@ nsComponentManagerImpl::Init()
 {
   PR_ASSERT(NOT_INITIALIZED == mStatus);
 
-  if (!nsComponentManagerLog) {
-    nsComponentManagerLog = PR_NewLogModule("nsComponentManager");
-  }
-
   // Initialize our arena
   PL_INIT_ARENA_POOL(&mArena, "ComponentManagerArena", NS_CM_BLOCK_SIZE);
 
@@ -421,7 +417,7 @@ nsComponentManagerImpl::Init()
   cl->type = NS_APP_LOCATION;
   cl->location.Init(lf);
 
-  nsRefPtr<nsZipArchive> greOmnijar =
+  RefPtr<nsZipArchive> greOmnijar =
     mozilla::Omnijar::GetReader(mozilla::Omnijar::GRE);
   if (greOmnijar) {
     cl = sModuleLocations->AppendElement();
@@ -438,7 +434,7 @@ nsComponentManagerImpl::Init()
     cl->location.Init(lf);
   }
 
-  nsRefPtr<nsZipArchive> appOmnijar =
+  RefPtr<nsZipArchive> appOmnijar =
     mozilla::Omnijar::GetReader(mozilla::Omnijar::APP);
   if (appOmnijar) {
     cl = sModuleLocations->AppendElement();

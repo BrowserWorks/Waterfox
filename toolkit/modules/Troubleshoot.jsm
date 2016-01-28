@@ -47,7 +47,6 @@ const PREFS_WHITELIST = [
   "browser.fixup.",
   "browser.history_expire_",
   "browser.link.open_newwindow",
-  "browser.newtab.url",
   "browser.places.",
   "browser.privatebrowsing.",
   "browser.search.context.loadInBackground",
@@ -185,7 +184,7 @@ var dataProviders = {
     };
 
     if (AppConstants.MOZ_UPDATER)
-      data.updateChannel = Cu.import("resource://gre/modules/UpdateChannel.jsm", {}).UpdateChannel.get();
+      data.updateChannel = Cu.import("resource://gre/modules/UpdateUtils.jsm", {}).UpdateUtils.UpdateChannel;
 
     try {
       data.vendor = Services.prefs.getCharPref("app.support.vendor");

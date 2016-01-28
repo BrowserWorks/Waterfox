@@ -133,6 +133,14 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         pushedNonVolatileRegisters++;
     }
 
+#if defined(XP_IOS) && defined(JS_CODEGEN_ARM)
+    // The stack is 4-byte aligned on iOS, force 8-byte alignment.
+    masm.movePtr(StackPointer, temp0);
+    masm.andPtr(Imm32(~7), StackPointer);
+    masm.push(temp0);
+    masm.push(temp0);
+#endif
+
 #ifndef JS_CODEGEN_X86
     // The InputOutputData* is stored as an argument, save it on the stack
     // above the frame.
@@ -146,9 +154,11 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     masm.reserveStack(frameSize);
     masm.checkStackAlignment();
 
-    // Check if we have space on the stack.
+    // Check if we have space on the stack. Use the *NoInterrupt stack limit to
+    // avoid failing repeatedly when the regex code is called from Ion JIT code,
+    // see bug 1208819.
     Label stack_ok;
-    void* stack_limit = runtime->addressOfJitStackLimit();
+    void* stack_limit = runtime->addressOfJitStackLimitNoInterrupt();
     masm.branchStackPtrRhs(Assembler::Below, AbsoluteAddress(stack_limit), &stack_ok);
 
     // Exit with an exception. There is not enough space on the stack
@@ -369,6 +379,11 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     masm.freeStack(frameSize);
 #endif
 
+#if defined(XP_IOS) && defined(JS_CODEGEN_ARM)
+    masm.pop(temp0);
+    masm.movePtr(temp0, StackPointer);
+#endif
+
     // Restore non-volatile registers which were saved on entry.
     for (GeneralRegisterBackwardIterator iter(savedNonVolatileRegisters); iter.more(); ++iter)
         masm.Pop(*iter);
@@ -395,7 +410,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
         volatileRegs.add(Register::FromCode(Registers::lr));
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
         volatileRegs.add(Register::FromCode(Registers::ra));
 #endif
         volatileRegs.takeUnchecked(temp0);
@@ -441,8 +456,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     Linker linker(masm);
     AutoFlushICache afc("RegExp");
     JitCode* code = linker.newCode<NoGC>(cx, REGEXP_CODE);
-    if (!code)
+    if (!code) {
+        ReportOutOfMemory(cx);
         return RegExpCode();
+    }
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "RegExp");
@@ -453,10 +470,8 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     for (size_t i = 0; i < labelPatches.length(); i++) {
         LabelPatch& v = labelPatches[i];
         MOZ_ASSERT(!v.label);
-        v.patchOffset.fixup(&masm);
-        uintptr_t offset = masm.actualOffset(v.labelOffset);
         Assembler::PatchDataWithValueCheck(CodeLocationLabel(code, v.patchOffset),
-                                           ImmPtr(code->raw() + offset),
+                                           ImmPtr(code->raw() + v.labelOffset),
                                            ImmPtr(0));
     }
 
@@ -987,8 +1002,12 @@ NativeRegExpMacroAssembler::PushBacktrack(Label* label)
     CodeOffsetLabel patchOffset = masm.movWithPatch(ImmPtr(nullptr), temp0);
 
     MOZ_ASSERT(!label->bound());
-    if (!labelPatches.append(LabelPatch(label, patchOffset)))
-        CrashAtUnhandlableOOM("NativeRegExpMacroAssembler::PushBacktrack");
+
+    {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!labelPatches.append(LabelPatch(label, patchOffset)))
+            oomUnsafe.crash("NativeRegExpMacroAssembler::PushBacktrack");
+    }
 
     PushBacktrack(temp0);
     CheckBacktrackStackLimit();
@@ -1324,7 +1343,7 @@ NativeRegExpMacroAssembler::CanReadUnaligned()
 {
 #if defined(JS_CODEGEN_ARM)
     return !jit::HasAlignmentFault();
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     return false;
 #else
     return true;

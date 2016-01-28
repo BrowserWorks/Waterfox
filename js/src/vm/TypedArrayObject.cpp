@@ -361,7 +361,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
             // may be in the nursery, so include a barrier to make sure this
             // object is updated if that typed object moves.
             if (!IsInsideNursery(obj) && cx->runtime()->gc.nursery.isInside(buffer->dataPointer()))
-                cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
+                cx->runtime()->gc.storeBuffer.putWholeCell(obj);
         } else {
             void* data = obj->fixedData(FIXED_DATA_START);
             obj->initPrivate(data);
@@ -412,7 +412,7 @@ class TypedArrayObjectTemplate : public TypedArrayObject
     {
         CallArgs args = CallArgsFromVp(argc, vp);
 
-        if (!WarnIfNotConstructing(cx, args, "typed array"))
+        if (!ThrowIfNotConstructing(cx, args, "typed array"))
             return false;
 
         JSObject* obj = create(cx, args);
@@ -488,9 +488,12 @@ class TypedArrayObjectTemplate : public TypedArrayObject
     fromBufferWithProto(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, int32_t lengthInt,
                         HandleObject proto)
     {
-        if (!ObjectClassIs(bufobj, ESClass_ArrayBuffer, cx)) {
+        ESClassValue cls;
+        if (!GetBuiltinClass(cx, bufobj, &cls))
+            return nullptr;
+        if (cls != ESClass_ArrayBuffer) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
-            return nullptr; // must be arrayBuffer
+            return nullptr;
         }
 
         MOZ_ASSERT(IsArrayBuffer(bufobj) || bufobj->is<ProxyObject>());
@@ -829,7 +832,6 @@ TypedArrayObject::sharedTypedArrayPrototypeClass = {
     nullptr,                /* enumerate */
     nullptr,                /* resolve */
     nullptr,                /* mayResolve */
-    nullptr,                /* convert */
     nullptr,                /* finalize */
     nullptr,                /* call */
     nullptr,                /* hasInstance */
@@ -1008,7 +1010,7 @@ DataViewObject::create(JSContext* cx, uint32_t byteOffset, uint32_t byteLength,
     // Include a barrier if the data view's data pointer is in the nursery, as
     // is done for typed arrays.
     if (!IsInsideNursery(obj) && cx->runtime()->gc.nursery.isInside(arrayBuffer->dataPointer()))
-        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
+        cx->runtime()->gc.storeBuffer.putWholeCell(obj);
 
     // Verify that the private slot is at the expected place
     MOZ_ASSERT(dvobj.numFixedSlots() == TypedArrayLayout::DATA_SLOT);
@@ -1796,7 +1798,6 @@ IMPL_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
     nullptr,                 /* enumerate   */                                 \
     nullptr,                 /* resolve     */                                 \
     nullptr,                 /* mayResolve  */                                 \
-    nullptr,                 /* convert     */                                 \
     nullptr,                 /* finalize    */                                 \
     nullptr,                 /* call        */                                 \
     nullptr,                 /* hasInstance */                                 \
@@ -1842,7 +1843,6 @@ const Class TypedArrayObject::classes[Scalar::MaxTypedArrayViewType] = {
     nullptr, /* enumerate */ \
     nullptr, /* resolve */ \
     nullptr, /* mayResolve */ \
-    nullptr, /* convert */ \
     nullptr, /* finalize */ \
     nullptr, /* call */ \
     nullptr, /* hasInstance */ \
@@ -1897,7 +1897,6 @@ const Class DataViewObject::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
     nullptr, /* hasInstance */

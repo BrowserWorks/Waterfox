@@ -151,7 +151,7 @@ static bool ConvertToMidasInternalCommand(const nsAString & inCommandID,
 nsresult
 NS_NewHTMLDocument(nsIDocument** aInstancePtrResult, bool aLoadedAsData)
 {
-  nsRefPtr<nsHTMLDocument> doc = new nsHTMLDocument();
+  RefPtr<nsHTMLDocument> doc = new nsHTMLDocument();
 
   nsresult rv = doc->Init();
 
@@ -1385,7 +1385,7 @@ nsHTMLDocument::Open(JSContext* /* unused */,
     rv.Throw(NS_ERROR_NOT_INITIALIZED);
     return nullptr;
   }
-  nsRefPtr<nsGlobalWindow> win = static_cast<nsGlobalWindow*>(window.get());
+  RefPtr<nsGlobalWindow> win = static_cast<nsGlobalWindow*>(window.get());
   nsCOMPtr<nsIDOMWindow> newWindow;
   // XXXbz We ignore aReplace for now.
   rv = win->OpenJS(aURL, aName, aFeatures, getter_AddRefs(newWindow));
@@ -2534,7 +2534,7 @@ public:
   }
 
 private:
-  nsRefPtr<nsHTMLDocument> mDoc;
+  RefPtr<nsHTMLDocument> mDoc;
   nsCOMPtr<nsIContent> mElement;
 };
 
@@ -2582,7 +2582,7 @@ nsHTMLDocument::DeferredContentEditableCountChange(nsIContent *aElement)
       nsCOMPtr<nsIEditor> editor;
       docshell->GetEditor(getter_AddRefs(editor));
       if (editor) {
-        nsRefPtr<nsRange> range = new nsRange(aElement);
+        RefPtr<nsRange> range = new nsRange(aElement);
         rv = range->SelectNode(node);
         if (NS_FAILED(rv)) {
           // The node might be detached from the document at this point,
@@ -2929,7 +2929,7 @@ nsHTMLDocument::SetDesignMode(const nsAString & aDesignMode)
 void
 nsHTMLDocument::SetDesignMode(const nsAString& aDesignMode, ErrorResult& rv)
 {
-  if (!nsContentUtils::SubjectPrincipal()->Subsumes(NodePrincipal())) {
+  if (!nsContentUtils::LegacyIsCallerNativeCode() && !nsContentUtils::SubjectPrincipal()->Subsumes(NodePrincipal())) {
     rv.Throw(NS_ERROR_DOM_PROP_ACCESS_DENIED);
     return;
   }
@@ -3194,8 +3194,6 @@ ConvertToMidasInternalCommand(const nsAString & inCommandID,
 }
 
 /* TODO: don't let this call do anything if the page is not done loading */
-/* boolean execCommand(in DOMString commandID, in boolean doShowUI,
-                                               in DOMString value); */
 NS_IMETHODIMP
 nsHTMLDocument::ExecCommand(const nsAString& commandID,
                             bool doShowUI,
@@ -3650,7 +3648,7 @@ nsHTMLDocument::Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) cons
   NS_ASSERTION(aNodeInfo->NodeInfoManager() == mNodeInfoManager,
                "Can't import this document into another document!");
 
-  nsRefPtr<nsHTMLDocument> clone = new nsHTMLDocument();
+  RefPtr<nsHTMLDocument> clone = new nsHTMLDocument();
   nsresult rv = CloneDocHelper(clone.get());
   NS_ENSURE_SUCCESS(rv, rv);
 

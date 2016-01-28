@@ -32,11 +32,13 @@
 #include "asmjs/AsmJSValidate.h"
 #include "gc/Barrier.h"
 #include "gc/Marking.h"
+#include "jit/AtomicOperations.h"
 #include "js/Conversions.h"
 #include "vm/ArrayBufferObject.h"
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
 #include "vm/SharedArrayObject.h"
+#include "vm/SharedMem.h"
 #include "vm/TypedArrayCommon.h"
 #include "vm/WrapperObject.h"
 
@@ -70,8 +72,8 @@ InitSharedArrayBufferViewDataPointer(SharedTypedArrayObject* obj, SharedArrayBuf
      * private data rather than a slot to avoid the restriction that
      * private Values that are pointers must have the low bits clear.
      */
-    MOZ_ASSERT(buffer->dataPointer() != nullptr);
-    obj->initPrivate(buffer->dataPointer() + byteOffset);
+    MOZ_ASSERT(buffer->dataPointerShared() != nullptr);
+    obj->initPrivate(buffer->dataPointerShared().unwrap(/*safe - read only by viewDataShared*/) + byteOffset);
 }
 
 // See note in TypedArrayObject.cpp about how we can probably merge
@@ -365,7 +367,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     {
         SharedTypedArrayObject& tarray = obj->as<SharedTypedArrayObject>();
         MOZ_ASSERT(index < tarray.length());
-        return static_cast<const NativeType*>(tarray.viewData())[index];
+        return jit::AtomicOperations::loadSafeWhenRacy(tarray.viewDataShared().template cast<NativeType*>() + index);
     }
 
     static void
@@ -397,7 +399,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     setIndex(SharedTypedArrayObject& tarray, uint32_t index, NativeType val)
     {
         MOZ_ASSERT(index < tarray.length());
-        static_cast<NativeType*>(tarray.viewData())[index] = val;
+        jit::AtomicOperations::storeSafeWhenRacy(tarray.viewDataShared().template cast<NativeType*>() + index, val);
     }
 
     static Value getIndexValue(JSObject* tarray, uint32_t index);
@@ -411,7 +413,10 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     fromBufferWithProto(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, uint32_t length,
                         HandleObject proto)
     {
-        if (!ObjectClassIs(bufobj, ESClass_SharedArrayBuffer, cx)) {
+        ESClassValue cls;
+        if (!GetBuiltinClass(cx, bufobj, &cls))
+            return nullptr;
+        if (cls != ESClass_SharedArrayBuffer) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_OBJECT);
             return nullptr; // must be SharedArrayBuffer
         }
@@ -673,7 +678,7 @@ IMPL_SHARED_TYPED_ARRAY_JSAPI_CONSTRUCTORS(Float64, double)
                                                                                             \
       SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();                    \
       *length = tarr->length();                                                             \
-      *data = static_cast<ExternalType*>(tarr->viewData());                                \
+      *data = static_cast<ExternalType*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/)); \
                                                                                             \
       return obj;                                                                           \
   }
@@ -713,7 +718,6 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
     nullptr,                 /* enumerate   */                                 \
     nullptr,                 /* resolve     */                                 \
     nullptr,                 /* mayResolve  */                                 \
-    nullptr,                 /* convert     */                                 \
     nullptr,                 /* finalize    */                                 \
     nullptr,                 /* call        */                                 \
     nullptr,                 /* hasInstance */                                 \
@@ -735,7 +739,6 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
     nullptr,                 /* enumerate   */                                 \
     nullptr,                 /* resolve     */                                 \
     nullptr,                 /* mayResolve  */                                 \
-    nullptr,                 /* convert     */                                 \
     nullptr,                 /* finalize    */                                 \
     nullptr,                 /* call        */                                 \
     nullptr,                 /* hasInstance */                                 \
@@ -1008,7 +1011,7 @@ JS_GetSharedInt8ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int8);
-    return static_cast<int8_t*>(tarr->viewData());
+    return static_cast<int8_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(uint8_t*)
@@ -1019,7 +1022,7 @@ JS_GetSharedUint8ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint8);
-    return static_cast<uint8_t*>(tarr->viewData());
+    return static_cast<uint8_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(uint8_t*)
@@ -1030,7 +1033,7 @@ JS_GetSharedUint8ClampedArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint8Clamped);
-    return static_cast<uint8_t*>(tarr->viewData());
+    return static_cast<uint8_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(int16_t*)
@@ -1041,7 +1044,7 @@ JS_GetSharedInt16ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int16);
-    return static_cast<int16_t*>(tarr->viewData());
+    return static_cast<int16_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(uint16_t*)
@@ -1052,7 +1055,7 @@ JS_GetSharedUint16ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint16);
-    return static_cast<uint16_t*>(tarr->viewData());
+    return static_cast<uint16_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(int32_t*)
@@ -1063,7 +1066,7 @@ JS_GetSharedInt32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Int32);
-    return static_cast<int32_t*>(tarr->viewData());
+    return static_cast<int32_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(uint32_t*)
@@ -1074,7 +1077,7 @@ JS_GetSharedUint32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Uint32);
-    return static_cast<uint32_t*>(tarr->viewData());
+    return static_cast<uint32_t*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(float*)
@@ -1085,7 +1088,7 @@ JS_GetSharedFloat32ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Float32);
-    return static_cast<float*>(tarr->viewData());
+    return static_cast<float*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 JS_FRIEND_API(double*)
@@ -1096,7 +1099,7 @@ JS_GetSharedFloat64ArrayData(JSObject* obj, const JS::AutoCheckCannotGC&)
         return nullptr;
     SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();
     MOZ_ASSERT((int32_t) tarr->type() == Scalar::Float64);
-    return static_cast<double*>(tarr->viewData());
+    return static_cast<double*>(tarr->viewDataShared().unwrap(/*safe - caller knows*/));
 }
 
 #undef IMPL_SHARED_TYPED_ARRAY_STATICS

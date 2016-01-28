@@ -6,6 +6,9 @@
 function test() {
   // initialization
   waitForExplicitFinish();
+  let aboutNewTabService = Components.classes["@mozilla.org/browser/aboutnewtab-service;1"]
+                                     .getService(Components.interfaces.nsIAboutNewTabService);
+
   let windowsToClose = [];
   let newTab;
   let newTabURL;
@@ -18,7 +21,7 @@ function test() {
         newTabURL = "about:privatebrowsing";
       } else {
         mode = "normal";
-        newTabURL = NewTabURL.get();
+        newTabURL = aboutNewTabService.newTabURL;
       }
 
       is(aWindow.gBrowser.currentURI.spec, newTabURL,
@@ -35,7 +38,7 @@ function test() {
       // execute should only be called when need, like when you are opening
       // web pages on the test. If calling executeSoon() is not necesary, then
       // call whenNewWindowLoaded() instead of testOnWindow() on your test.
-      executeSoon(function() aCallback(aWin));
+      executeSoon(() => aCallback(aWin));
     });
   };
 

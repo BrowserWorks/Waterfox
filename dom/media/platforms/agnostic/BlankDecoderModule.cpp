@@ -34,11 +34,11 @@ public:
   {
   }
 
-  virtual nsRefPtr<InitPromise> Init() override {
+  RefPtr<InitPromise> Init() override {
     return InitPromise::CreateAndResolve(mType, __func__);
   }
 
-  virtual nsresult Shutdown() override {
+  nsresult Shutdown() override {
     return NS_OK;
   }
 
@@ -54,7 +54,7 @@ public:
     }
     NS_IMETHOD Run() override
     {
-      nsRefPtr<MediaData> data =
+      RefPtr<MediaData> data =
         mCreator->Create(media::TimeUnit::FromMicroseconds(mSample->mTime),
                          media::TimeUnit::FromMicroseconds(mSample->mDuration),
                          mSample->mOffset);
@@ -62,12 +62,12 @@ public:
       return NS_OK;
     }
   private:
-    nsRefPtr<MediaRawData> mSample;
+    RefPtr<MediaRawData> mSample;
     BlankMediaDataCreator* mCreator;
     MediaDataDecoderCallback* mCallback;
   };
 
-  virtual nsresult Input(MediaRawData* aSample) override
+  nsresult Input(MediaRawData* aSample) override
   {
     // The MediaDataDecoder must delete the sample when we're finished
     // with it, so the OutputEvent stores it in an nsAutoPtr and deletes
@@ -77,12 +77,12 @@ public:
     return NS_OK;
   }
 
-  virtual nsresult Flush() override {
+  nsresult Flush() override {
     mTaskQueue->Flush();
     return NS_OK;
   }
 
-  virtual nsresult Drain() override {
+  nsresult Drain() override {
     mCallback->DrainComplete();
     return NS_OK;
   }
@@ -213,7 +213,7 @@ class BlankDecoderModule : public PlatformDecoderModule {
 public:
 
   // Decode thread.
-  virtual already_AddRefed<MediaDataDecoder>
+  already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
@@ -221,7 +221,7 @@ public:
                      MediaDataDecoderCallback* aCallback) override {
     BlankVideoDataCreator* creator = new BlankVideoDataCreator(
       aConfig.mDisplay.width, aConfig.mDisplay.height, aImageContainer);
-    nsRefPtr<MediaDataDecoder> decoder =
+    RefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankVideoDataCreator>(creator,
                                                        aVideoTaskQueue,
                                                        aCallback,
@@ -230,14 +230,14 @@ public:
   }
 
   // Decode thread.
-  virtual already_AddRefed<MediaDataDecoder>
+  already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) override {
     BlankAudioDataCreator* creator = new BlankAudioDataCreator(
       aConfig.mChannels, aConfig.mRate);
 
-    nsRefPtr<MediaDataDecoder> decoder =
+    RefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankAudioDataCreator>(creator,
                                                        aAudioTaskQueue,
                                                        aCallback,
@@ -245,18 +245,13 @@ public:
     return decoder.forget();
   }
 
-  virtual bool
+  bool
   SupportsMimeType(const nsACString& aMimeType) override
   {
     return true;
   }
 
-  virtual bool
-  SupportsSharedDecoders(const VideoInfo& aConfig) const override {
-    return false;
-  }
-
-  virtual ConversionRequired
+  ConversionRequired
   DecoderNeedsConversion(const TrackInfo& aConfig) const override
   {
     return kNeedNone;
@@ -264,27 +259,10 @@ public:
 
 };
 
-class AgnosticDecoderModule : public BlankDecoderModule {
-public:
-
-  bool SupportsMimeType(const nsACString& aMimeType) override
-  {
-    // This module does not support any decoders itself,
-    // agnostic decoders are created in PlatformDecoderModule::CreateDecoder
-    return false;
-  }
-};
-
 already_AddRefed<PlatformDecoderModule> CreateBlankDecoderModule()
 {
-  nsRefPtr<PlatformDecoderModule> pdm = new BlankDecoderModule();
+  RefPtr<PlatformDecoderModule> pdm = new BlankDecoderModule();
   return pdm.forget();
-}
-
-already_AddRefed<PlatformDecoderModule> CreateAgnosticDecoderModule()
-{
-  nsRefPtr<PlatformDecoderModule> adm = new AgnosticDecoderModule();
-  return adm.forget();
 }
 
 } // namespace mozilla

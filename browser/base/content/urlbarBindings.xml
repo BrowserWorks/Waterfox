@@ -41,6 +41,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         </xul:hbox>
         <xul:dropmarker anonid="historydropmarker"
                         class="autocomplete-history-dropmarker urlbar-history-dropmarker"
+                        tooltiptext="&urlbar.openHistoryPopup.tooltip;"
                         allowevents="true"
                         xbl:inherits="open,enablehistory,parentfocused=focused"/>
         <children includes="hbox"/>
@@ -234,10 +235,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
           // Get the URL from the fixup service:
           let flags = Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS |
                       Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP;
-          let uriInfo = Services.uriFixup.getFixupURIInfo(value, flags);
+          let uriInfo;
+          try {
+            uriInfo = Services.uriFixup.getFixupURIInfo(value, flags);
+          } catch (ex) {}
           // Ignore if we couldn't make a URI out of this, the URI resulted in a search,
           // or the URI has a non-http(s)/ftp protocol.
-          if (!uriInfo.fixedURI ||
+          if (!uriInfo ||
+              !uriInfo.fixedURI ||
               uriInfo.keywordProviderName ||
               ["http", "https", "ftp"].indexOf(uriInfo.fixedURI.scheme) == -1) {
             return;
@@ -353,13 +358,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             } else if (action.type == "keyword") {
               url = action.params.url;
             } else if (action.type == "searchengine") {
-              let engine = Services.search.getEngineByName(action.params.engineName);
-              let query = action.params.searchSuggestion ||
-                          action.params.searchQuery;
-              let submission = engine.getSubmission(query, null, "keyword");
-
-              url = submission.uri.spec;
-              postData = submission.postData;
+              [url, postData] = this._parseAndRecordSearchEngineAction(action);
             } else if (action.type == "visiturl") {
               url = action.params.url;
             }
@@ -389,13 +388,23 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             }
 
             let loadCurrent = () => {
-              openUILinkIn(url, "current", {
-                allowThirdPartyFixup: true,
-                disallowInheritPrincipal: !mayInheritPrincipal,
-                allowPinnedTabHostChange: true,
-                postData: postData,
-                allowPopups: url.startsWith("javascript:"),
-              });
+              try {
+                openUILinkIn(url, "current", {
+                  allowThirdPartyFixup: true,
+                  indicateErrorPageLoad: true,
+                  disallowInheritPrincipal: !mayInheritPrincipal,
+                  allowPinnedTabHostChange: true,
+                  postData: postData,
+                  allowPopups: url.startsWith("javascript:"),
+                });
+              } catch (ex) {
+                // This load can throw an exception in certain cases, which means
+                // we'll want to replace the URL with the loaded URL:
+                if (ex.result != Cr.NS_ERROR_LOAD_SHOWED_ERRORPAGE) {
+                  this.handleRevert();
+                }
+              }
+
               // Ensure the start of the URL is visible for UX reasons:
               this.selectionStart = this.selectionEnd = 0;
             };
@@ -434,6 +443,19 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
               }
             }
           }
+        ]]></body>
+      </method>
+
+      <method name="_parseAndRecordSearchEngineAction">
+        <parameter name="action"/>
+        <body><![CDATA[
+          let engine =
+            Services.search.getEngineByName(action.params.engineName);
+          BrowserSearch.recordSearchInHealthReport(engine, "urlbar");
+          let query = action.params.searchSuggestion ||
+                      action.params.searchQuery;
+          let submission = engine.getSubmission(query, null, "keyword");
+          return [submission.uri.spec, submission.postData];
         ]]></body>
       </method>
 
@@ -592,7 +614,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             // are hard to read when encoded
             if (!uri.schemeIs("javascript") && !uri.schemeIs("data")) {
               // Parentheses are known to confuse third-party applications (bug 458565).
-              selectedVal = uri.spec.replace(/[()]/g, function (c) escape(c));
+              selectedVal = uri.spec.replace(/[()]/g, c => escape(c));
             }
 
             return selectedVal;
@@ -1134,7 +1156,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
   <binding id="urlbar-rich-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-rich-result-popup">
 
     <content ignorekeys="true" level="top" consumeoutsideclicks="never"
-             aria-owns="search-suggestions-notification richlistbox">
+             aria-owns="richlistbox">
       <xul:hbox anonid="search-suggestions-notification"
                 align="center"
                 role="alert"
@@ -1437,12 +1459,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                   break;
                 }
                 case "searchengine": {
-                  let engine = Services.search.getEngineByName(action.params.engineName);
-                  let query = action.params.searchSuggestion ||
-                              action.params.searchQuery;
-                  let submission = engine.getSubmission(query, null, "keyword");
-                  url = submission.uri.spec;
-                  options.postData = submission.postData;
+                  [url, options.postData] =
+                    this.input._parseAndRecordSearchEngineAction(action);
                   break;
                 }
                 default: {
@@ -1574,9 +1592,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
         document.getElementById("addon-progress-notification-progresstext");
       </field>
       <field name="DownloadUtils" readonly="true">
-        let utils = {};
-        Components.utils.import("resource://gre/modules/DownloadUtils.jsm", utils);
-        utils.DownloadUtils;
+        {
+          let utils = {};
+          Components.utils.import("resource://gre/modules/DownloadUtils.jsm", utils);
+          utils.DownloadUtils;
+        }
       </field>
 
       <method name="destroy">
@@ -2656,11 +2676,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
       ]]></destructor>
 
       <field name="_panel" readonly="true"><![CDATA[
-        let node = this.parentNode;
-        while(node && node.localName != "panel") {
-          node = node.parentNode;
+        {
+          let node = this.parentNode;
+          while(node && node.localName != "panel") {
+            node = node.parentNode;
+          }
+          node;
         }
-        node;
       ]]></field>
       <field name="_promomessage" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "promo-message");

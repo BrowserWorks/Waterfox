@@ -721,7 +721,9 @@ nsPlacesExpiration.prototype = {
     }
     return aNewStatus;
   },
-  get status() this._status,
+  get status() {
+    return this._status;
+  },
 
   _isIdleObserver: false,
   _expireOnIdle: false,
@@ -746,7 +748,9 @@ nsPlacesExpiration.prototype = {
       this._expireOnIdle = aExpireOnIdle;
     return this._expireOnIdle;
   },
-  get expireOnIdle() this._expireOnIdle,
+  get expireOnIdle() {
+    return this._expireOnIdle;
+  },
 
   _loadPrefs: function PEX__loadPrefs() {
     // Get the user's limit, if it was set.
@@ -878,7 +882,8 @@ nsPlacesExpiration.prototype = {
    */
   _finalizeInternalStatements: function PEX__finalizeInternalStatements()
   {
-    for each (let stmt in this._cachedStatements) {
+    for (let queryType in this._cachedStatements) {
+      let stmt = this._cachedStatements[queryType];
       stmt.finalize();
     }
   },

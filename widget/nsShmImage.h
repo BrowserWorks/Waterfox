@@ -38,12 +38,12 @@ class nsShmImage {
 public:
     static bool UseShm();
     static already_AddRefed<nsShmImage>
-        Create(const gfxIntSize& aSize,
+        Create(const mozilla::gfx::IntSize& aSize,
                Display* aDisplay, Visual* aVisual, unsigned int aDepth);
     static already_AddRefed<mozilla::gfx::DrawTarget>
-        EnsureShmImage(const gfxIntSize& aSize,
+        EnsureShmImage(const mozilla::gfx::IntSize& aSize,
                        Display* aDisplay, Visual* aVisual, unsigned int aDepth,
-                       nsRefPtr<nsShmImage>& aImage);
+                       RefPtr<nsShmImage>& aImage);
 
 private:
     ~nsShmImage() {
@@ -65,7 +65,7 @@ public:
     void Put(QWindow* aWindow, QRect& aRect);
 #endif
 
-    gfxIntSize Size() const { return mSize; }
+    mozilla::gfx::IntSize Size() const { return mSize; }
 
 private:
     nsShmImage()
@@ -75,11 +75,11 @@ private:
         , mXAttached(false)
     { mInfo.shmid = SharedMemorySysV::NULLHandle(); }
 
-    nsRefPtr<SharedMemorySysV>   mSegment;
+    RefPtr<SharedMemorySysV>   mSegment;
     XImage*                      mImage;
     Display*                     mDisplay;
     XShmSegmentInfo              mInfo;
-    gfxIntSize                   mSize;
+    mozilla::gfx::IntSize        mSize;
     mozilla::gfx::SurfaceFormat  mFormat;
     bool                         mXAttached;
 };

@@ -158,17 +158,11 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
     }
   }
 
-
-  if (!baseURI) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return nullptr;
-  }
-
   nsresult rv;
   nsCOMPtr<nsIURI> scriptURI;
   rv = NS_NewURI(getter_AddRefs(scriptURI), aScriptURL, nullptr, baseURI);
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    aRv.ThrowTypeError(MSG_INVALID_URL, &aScriptURL);
+    aRv.ThrowTypeError<MSG_INVALID_URL>(&aScriptURL);
     return nullptr;
   }
 
@@ -190,7 +184,7 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
       nsAutoCString spec;
       scriptURI->GetSpec(spec);
       NS_ConvertUTF8toUTF16 wSpec(spec);
-      aRv.ThrowTypeError(MSG_INVALID_SCOPE, &defaultScope, &wSpec);
+      aRv.ThrowTypeError<MSG_INVALID_SCOPE>(&defaultScope, &wSpec);
       return nullptr;
     }
   } else {
@@ -201,7 +195,7 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
       nsAutoCString spec;
       baseURI->GetSpec(spec);
       NS_ConvertUTF8toUTF16 wSpec(spec);
-      aRv.ThrowTypeError(MSG_INVALID_SCOPE, &aOptions.mScope.Value(), &wSpec);
+      aRv.ThrowTypeError<MSG_INVALID_SCOPE>(&aOptions.mScope.Value(), &wSpec);
       return nullptr;
     }
 
@@ -213,14 +207,12 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
 
   // The spec says that the "client" passed to Register() must be the global
   // where the ServiceWorkerContainer was retrieved from.
-  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
-  MOZ_ASSERT(window);
-  aRv = swm->Register(window, scopeURI, scriptURI, getter_AddRefs(promise));
-  if (aRv.Failed()) {
+  aRv = swm->Register(GetOwner(), scopeURI, scriptURI, getter_AddRefs(promise));
+  if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
 
-  nsRefPtr<Promise> ret = static_cast<Promise*>(promise.get());
+  RefPtr<Promise> ret = static_cast<Promise*>(promise.get());
   MOZ_ASSERT(ret);
   return ret.forget();
 }
@@ -240,7 +232,6 @@ ServiceWorkerContainer::GetController()
     //       thread running, but it seems our design does not expect that.
     nsCOMPtr<nsISupports> serviceWorker;
     rv = swm->GetDocumentController(GetOwner(),
-                                    nullptr, // aLoadFailedRunnable
                                     getter_AddRefs(serviceWorker));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return nullptr;
@@ -250,7 +241,7 @@ ServiceWorkerContainer::GetController()
       static_cast<workers::ServiceWorker*>(serviceWorker.get());
   }
 
-  nsRefPtr<workers::ServiceWorker> ref = mControllerWorker;
+  RefPtr<workers::ServiceWorker> ref = mControllerWorker;
   return ref.forget();
 }
 
@@ -270,7 +261,7 @@ ServiceWorkerContainer::GetRegistrations(ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<Promise> ret = static_cast<Promise*>(promise.get());
+  RefPtr<Promise> ret = static_cast<Promise*>(promise.get());
   MOZ_ASSERT(ret);
   return ret.forget();
 }
@@ -292,7 +283,7 @@ ServiceWorkerContainer::GetRegistration(const nsAString& aDocumentURL,
     return nullptr;
   }
 
-  nsRefPtr<Promise> ret = static_cast<Promise*>(promise.get());
+  RefPtr<Promise> ret = static_cast<Promise*>(promise.get());
   MOZ_ASSERT(ret);
   return ret.forget();
 }
@@ -329,7 +320,19 @@ ServiceWorkerContainer::GetScopeForUrl(const nsAString& aUrl,
     return;
   }
 
-  aRv = swm->GetScopeForUrl(GetOwner()->GetExtantDoc()->NodePrincipal(),
+  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  if (NS_WARN_IF(!window)) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
+  if (NS_WARN_IF(!doc)) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  aRv = swm->GetScopeForUrl(doc->NodePrincipal(),
                             aUrl, aScope);
 }
 

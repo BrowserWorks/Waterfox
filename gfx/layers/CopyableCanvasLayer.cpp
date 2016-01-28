@@ -61,9 +61,13 @@ CopyableCanvasLayer::Initialize(const Data& aData)
       gfx::IntSize size(aData.mSize.width, aData.mSize.height);
       mGLFrontbuffer = SharedSurface_Basic::Wrap(aData.mGLContext, size, aData.mHasAlpha,
                                                  aData.mFrontbufferGLTex);
+      mBufferProvider = aData.mBufferProvider;
     }
   } else if (aData.mBufferProvider) {
     mBufferProvider = aData.mBufferProvider;
+  } else if (aData.mRenderer) {
+    mAsyncRenderer = aData.mRenderer;
+    mOriginPos = gl::OriginPos::BottomLeft;
   } else {
     MOZ_CRASH("CanvasLayer created without mSurface, mDrawTarget or mGLContext?");
   }
@@ -80,7 +84,9 @@ CopyableCanvasLayer::IsDataValid(const Data& aData)
 void
 CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
 {
-  if (mBufferProvider) {
+  if (mAsyncRenderer) {
+    mSurface = mAsyncRenderer->GetSurface();
+  } else if (!mGLFrontbuffer && mBufferProvider) {
     mSurface = mBufferProvider->GetSnapshot();
   }
 
@@ -95,7 +101,7 @@ CopyableCanvasLayer::UpdateTarget(DrawTarget* aDestTarget)
     return;
   }
 
-  if (mBufferProvider) {
+  if ((!mGLFrontbuffer && mBufferProvider) || mAsyncRenderer) {
     return;
   }
 

@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-describe("loop.store.TextChatStore", function () {
+describe("loop.store.TextChatStore", function() {
   "use strict";
 
   var expect = chai.expect;
@@ -96,6 +96,7 @@ describe("loop.store.TextChatStore", function () {
     });
 
     it("should dispatch a LoopChatMessageAppended event", function() {
+      store.setStoreState({ textChatEnabled: true });
       store.receivedTextChatMessage({
         contentType: CHAT_CONTENT_TYPES.TEXT,
         message: "Hello!"
@@ -141,6 +142,7 @@ describe("loop.store.TextChatStore", function () {
     });
 
     it("should dipatch a LoopChatMessageAppended event", function() {
+      store.setStoreState({ textChatEnabled: true });
       store.sendTextChatMessage({
         contentType: CHAT_CONTENT_TYPES.TEXT,
         message: "Hello!"
@@ -173,7 +175,7 @@ describe("loop.store.TextChatStore", function () {
       store.updateRoomInfo(new sharedActions.UpdateRoomInfo({
         roomName: "Let's share!",
         roomUrl: "fake",
-        urls: [{
+        roomContextUrls: [{
           description: "A wonderful event",
           location: "http://wonderful.invalid",
           thumbnail: "fake"
@@ -205,7 +207,7 @@ describe("loop.store.TextChatStore", function () {
     it("should not add more than one context message", function() {
       store.updateRoomInfo(new sharedActions.UpdateRoomInfo({
         roomUrl: "fake",
-        urls: [{
+        roomContextUrls: [{
           description: "A wonderful event",
           location: "http://wonderful.invalid",
           thumbnail: "fake"
@@ -226,7 +228,7 @@ describe("loop.store.TextChatStore", function () {
 
       store.updateRoomInfo(new sharedActions.UpdateRoomInfo({
         roomUrl: "fake",
-        urls: [{
+        roomContextUrls: [{
           description: "A wonderful event2",
           location: "http://wonderful.invalid2",
           thumbnail: "fake2"
@@ -244,6 +246,23 @@ describe("loop.store.TextChatStore", function () {
           thumbnail: "fake2"
         }
       }]);
+    });
+
+    it("should dispatch a LoopChatDisabledMessageAppended event", function() {
+      store.setStoreState({ textChatEnabled: false });
+      store.updateRoomInfo(new sharedActions.UpdateRoomInfo({
+        roomName: "Let's share!",
+        roomUrl: "fake",
+        roomContextUrls: [{
+          description: "A wonderful event2",
+          location: "http://wonderful.invalid2",
+          thumbnail: "fake2"
+        }]
+      }));
+
+      sinon.assert.calledOnce(window.dispatchEvent);
+      sinon.assert.calledWithExactly(window.dispatchEvent,
+        new CustomEvent("LoopChatDisabledMessageAppended"));
     });
 
     it("should not dispatch a LoopChatMessageAppended event", function() {

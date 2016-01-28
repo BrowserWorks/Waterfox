@@ -82,22 +82,16 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
                     RuntimeAllocPolicy> CountMap;
 
     CountMap zoneCounts;
+    JSCompartment* compartment;
 
   public:
     typedef WeakMap<Key, Value, DefaultHasher<Key> > Base;
 
     explicit DebuggerWeakMap(JSContext* cx)
-        : Base(cx), zoneCounts(cx->runtime()) { }
-
-    ~DebuggerWeakMap() {
-        // If our owning Debugger fails construction after already initializing
-        // this DebuggerWeakMap, we need to make sure that we aren't in the
-        // compartment's weak map list anymore. Normally, when we are destroyed
-        // because the GC finds us unreachable, the GC takes care of removing us
-        // from this list.
-        if (WeakMapBase::isInList())
-            WeakMapBase::removeWeakMapFromList(this);
-    }
+        : Base(cx),
+          zoneCounts(cx->runtime()),
+          compartment(cx->compartment())
+    { }
 
   public:
     /* Expose those parts of HashMap public interface that are used by Debugger methods. */
@@ -121,7 +115,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
 
     template<typename KeyInput, typename ValueInput>
     bool relookupOrAdd(AddPtr& p, const KeyInput& k, const ValueInput& v) {
-        MOZ_ASSERT(v->compartment() == Base::compartment);
+        MOZ_ASSERT(v->compartment() == this->compartment);
         MOZ_ASSERT(!k->compartment()->options_.mergeable());
         MOZ_ASSERT_IF(!InvisibleKeysOk, !k->compartment()->options_.invisibleToDebugger());
         MOZ_ASSERT(!Base::has(k));
@@ -140,7 +134,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     }
 
   public:
-/*     template <void (traceValueEdges)(JSTracer*, JSObject*)>
+    template <void (traceValueEdges)(JSTracer*, JSObject*)>
     void markCrossCompartmentEdges(JSTracer* tracer) {
         for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
             traceValueEdges(tracer, e.front().value());
@@ -150,7 +144,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
                 e.rekeyFront(key);
             key.unsafeSet(nullptr);
         }
-    } */
+    }
 
     bool hasKeyInZone(JS::Zone* zone) {
         CountMap::Ptr p = zoneCounts.lookup(zone);
@@ -206,6 +200,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     friend class DebuggerMemory;
     friend class SavedStacks;
     friend class mozilla::LinkedListElement<Debugger>;
+    friend class mozilla::LinkedList<Debugger>;
     friend bool (::JS_DefineDebuggerObject)(JSContext* cx, JS::HandleObject obj);
     friend bool (::JS::dbg::IsDebugger)(JSObject&);
     friend bool (::JS::dbg::GetDebuggeeGlobals)(JSContext*, JSObject&, AutoObjectVector&);
@@ -264,7 +259,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     // Return true if the given compartment is a debuggee of this debugger,
     // false otherwise.
-    bool isDebuggee(const JSCompartment* compartment) const;
+    bool isDebuggeeUnbarriered(const JSCompartment* compartment) const;
 
     // Return true if this Debugger observed a debuggee that participated in the
     // GC identified by the given GC number. Return false otherwise.
@@ -372,7 +367,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     /*
      * Recompute the set of debuggee zones based on the set of debuggee globals.
      */
-    bool recomputeDebuggeeZoneSet();
+    void recomputeDebuggeeZoneSet();
 
     /*
      * Return true if there is an existing object metadata callback for the
@@ -392,7 +387,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * debuggee's compartment. The given debuggee global must be observed by at
      * least one Debugger that is enabled and tracking allocations.
      */
-    static bool addAllocationsTracking(JSContext* cx, GlobalObject& debuggee);
+    static bool addAllocationsTracking(JSContext* cx, Handle<GlobalObject*> debuggee);
 
     /*
      * Remove allocations tracking for objects allocated within the given
@@ -521,7 +516,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void traceObject(JSTracer* trc, JSObject* obj);
     void trace(JSTracer* trc);
     static void finalize(FreeOp* fop, JSObject* obj);
-    //void markCrossCompartmentEdges(JSTracer* tracer);
+    void markCrossCompartmentEdges(JSTracer* tracer);
 
     static const Class jsclass;
 

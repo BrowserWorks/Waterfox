@@ -13,10 +13,9 @@
 #ifdef MOZ_ANDROID_MAX_SDK_VERSION
               android:maxSdkVersion="@MOZ_ANDROID_MAX_SDK_VERSION@"
 #endif
-              android:targetSdkVersion="@ANDROID_TARGET_SDK@"/>
+              android:targetSdkVersion="22"/>
 
 #include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
 #include ../services/manifests/SyncAndroidManifest_permissions.xml.in
 
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
@@ -47,6 +46,8 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
     <uses-permission android:name="android.permission.WRITE_SMS"/>
     <uses-permission android:name="android.permission.READ_SMS"/>
+
+    <uses-feature android:name="android.hardware.telephony"/>
 #endif
 
     <uses-feature android:name="android.hardware.location" android:required="false"/>
@@ -89,6 +90,7 @@
                  android:logo="@drawable/logo"
                  android:name="@MOZ_ANDROID_APPLICATION_CLASS@"
                  android:hardwareAccelerated="true"
+                 android:allowBackup="false"
 # The preprocessor does not yet support arbitrary parentheses, so this cannot
 # be parenthesized thus to clarify that the logical AND operator has precedence:
 #   !defined(MOZILLA_OFFICIAL) || (defined(NIGHTLY_BUILD) && defined(MOZ_DEBUG))
@@ -381,12 +383,14 @@
         </receiver>
 
         <service android:name="org.mozilla.gecko.Restarter"
-                  android:exported="false"
-                  android:process="@MANGLED_ANDROID_PACKAGE_NAME@.Restarter">
+                 android:exported="false"
+                 android:process="@MANGLED_ANDROID_PACKAGE_NAME@.Restarter">
         </service>
 
+        <receiver android:name="org.mozilla.gecko.AlarmReceiver" >
+        </receiver>
+
 #include ../services/manifests/FxAccountAndroidManifest_activities.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_activities.xml.in
 #include ../services/manifests/SyncAndroidManifest_activities.xml.in
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_activities.xml.in
@@ -491,8 +495,11 @@
 
 
 #include ../services/manifests/FxAccountAndroidManifest_services.xml.in
-#include ../services/manifests/HealthReportAndroidManifest_services.xml.in
 #include ../services/manifests/SyncAndroidManifest_services.xml.in
+
+        <service android:name="org.mozilla.gecko.sync.TabReceivedService"
+                  android:exported="false"/>
+
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_services.xml.in
 #endif

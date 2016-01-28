@@ -47,6 +47,12 @@ protected:
   // Weak reference to the MediaStreamSource that will be created by either
   // MediaOmxReader or MediaCodecReader.
   android::MediaStreamSource* mStreamSource;
+  // Get value from the preferece, if true, we stop the audio offload.
+  bool IsMonoAudioEnabled();
+
+private:
+  virtual bool HasAudio() = 0;
+  virtual bool HasVideo() = 0;
 };
 
 } // namespace mozilla

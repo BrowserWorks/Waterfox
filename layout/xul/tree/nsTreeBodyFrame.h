@@ -53,9 +53,10 @@ class nsTreeBodyFrame final
   , public nsIScrollbarMediator
   , public nsIReflowCallback
 {
-public:
   typedef mozilla::layout::ScrollbarActivity ScrollbarActivity;
+  typedef mozilla::image::DrawResult DrawResult;
 
+public:
   explicit nsTreeBodyFrame(nsStyleContext* aContext);
   ~nsTreeBodyFrame();
 
@@ -71,7 +72,7 @@ public:
   // non-virtual signatures like nsITreeBodyFrame
   already_AddRefed<nsTreeColumns> Columns() const
   {
-    nsRefPtr<nsTreeColumns> cols = mColumns;
+    RefPtr<nsTreeColumns> cols = mColumns;
     return cols.forget();
   }
   already_AddRefed<nsITreeView> GetExistingView() const
@@ -118,6 +119,8 @@ public:
   nsresult BeginUpdateBatch();
   nsresult EndUpdateBatch();
   nsresult ClearStyleAndImageCaches();
+
+  void CancelImageRequests();
 
   void ManageReflowCallback(const nsRect& aRect, nscoord aHorzWidth);
 
@@ -189,8 +192,8 @@ public:
     nsIScrollableFrame*  mColumnsScrollFrame;
   };
 
-  void PaintTreeBody(nsRenderingContext& aRenderingContext,
-                     const nsRect& aDirtyRect, nsPoint aPt);
+  DrawResult PaintTreeBody(nsRenderingContext& aRenderingContext,
+                           const nsRect& aDirtyRect, nsPoint aPt);
 
   nsITreeBoxObject* GetTreeBoxObject() const { return mTreeBoxObject; }
 
@@ -204,56 +207,56 @@ protected:
   friend class nsOverflowChecker;
 
   // This method paints a specific column background of the tree.
-  void PaintColumn(nsTreeColumn*        aColumn,
-                   const nsRect&        aColumnRect,
-                   nsPresContext*      aPresContext,
-                   nsRenderingContext& aRenderingContext,
-                   const nsRect&        aDirtyRect);
+  DrawResult PaintColumn(nsTreeColumn*        aColumn,
+                         const nsRect&        aColumnRect,
+                         nsPresContext*       aPresContext,
+                         nsRenderingContext&  aRenderingContext,
+                         const nsRect&        aDirtyRect);
 
   // This method paints a single row in the tree.
-  void PaintRow(int32_t              aRowIndex,
-                const nsRect&        aRowRect,
-                nsPresContext*       aPresContext,
-                nsRenderingContext& aRenderingContext,
-                const nsRect&        aDirtyRect,
-                nsPoint              aPt);
+  DrawResult PaintRow(int32_t              aRowIndex,
+                      const nsRect&        aRowRect,
+                      nsPresContext*       aPresContext,
+                      nsRenderingContext&  aRenderingContext,
+                      const nsRect&        aDirtyRect,
+                      nsPoint              aPt);
 
   // This method paints a single separator in the tree.
-  void PaintSeparator(int32_t              aRowIndex,
-                      const nsRect&        aSeparatorRect,
-                      nsPresContext*      aPresContext,
-                      nsRenderingContext& aRenderingContext,
-                      const nsRect&        aDirtyRect);
+  DrawResult PaintSeparator(int32_t              aRowIndex,
+                            const nsRect&        aSeparatorRect,
+                            nsPresContext*       aPresContext,
+                            nsRenderingContext&  aRenderingContext,
+                            const nsRect&        aDirtyRect);
 
   // This method paints a specific cell in a given row of the tree.
-  void PaintCell(int32_t              aRowIndex, 
-                 nsTreeColumn*        aColumn,
-                 const nsRect&        aCellRect,
-                 nsPresContext*       aPresContext,
-                 nsRenderingContext& aRenderingContext,
-                 const nsRect&        aDirtyRect,
-                 nscoord&             aCurrX,
-                 nsPoint              aPt);
+  DrawResult PaintCell(int32_t              aRowIndex, 
+                       nsTreeColumn*        aColumn,
+                       const nsRect&        aCellRect,
+                       nsPresContext*       aPresContext,
+                       nsRenderingContext&  aRenderingContext,
+                       const nsRect&        aDirtyRect,
+                       nscoord&             aCurrX,
+                       nsPoint              aPt);
 
   // This method paints the twisty inside a cell in the primary column of an tree.
-  void PaintTwisty(int32_t              aRowIndex,
-                   nsTreeColumn*        aColumn,
-                   const nsRect&        aTwistyRect,
-                   nsPresContext*      aPresContext,
-                   nsRenderingContext& aRenderingContext,
-                   const nsRect&        aDirtyRect,
-                   nscoord&             aRemainingWidth,
-                   nscoord&             aCurrX);
+  DrawResult PaintTwisty(int32_t              aRowIndex,
+                         nsTreeColumn*        aColumn,
+                         const nsRect&        aTwistyRect,
+                         nsPresContext*       aPresContext,
+                         nsRenderingContext&  aRenderingContext,
+                         const nsRect&        aDirtyRect,
+                         nscoord&             aRemainingWidth,
+                         nscoord&             aCurrX);
 
   // This method paints the image inside the cell of an tree.
-  void PaintImage(int32_t              aRowIndex,
-                  nsTreeColumn*        aColumn,
-                  const nsRect&        aImageRect,
-                  nsPresContext*      aPresContext,
-                  nsRenderingContext& aRenderingContext,
-                  const nsRect&        aDirtyRect,
-                  nscoord&             aRemainingWidth,
-                  nscoord&             aCurrX);
+  DrawResult PaintImage(int32_t              aRowIndex,
+                        nsTreeColumn*        aColumn,
+                        const nsRect&        aImageRect,
+                        nsPresContext*       aPresContext,
+                        nsRenderingContext&  aRenderingContext,
+                        const nsRect&        aDirtyRect,
+                        nscoord&             aRemainingWidth,
+                        nscoord&             aCurrX);
 
   // This method paints the text string inside a particular cell of the tree.
   void PaintText(int32_t              aRowIndex, 
@@ -265,35 +268,35 @@ protected:
                  nscoord&             aCurrX);
 
   // This method paints the checkbox inside a particular cell of the tree.
-  void PaintCheckbox(int32_t              aRowIndex, 
-                     nsTreeColumn*        aColumn,
-                     const nsRect&        aCheckboxRect,
-                     nsPresContext*      aPresContext,
-                     nsRenderingContext& aRenderingContext,
-                     const nsRect&        aDirtyRect);
+  DrawResult PaintCheckbox(int32_t              aRowIndex, 
+                           nsTreeColumn*        aColumn,
+                           const nsRect&        aCheckboxRect,
+                           nsPresContext*       aPresContext,
+                           nsRenderingContext&  aRenderingContext,
+                           const nsRect&        aDirtyRect);
 
   // This method paints the progress meter inside a particular cell of the tree.
-  void PaintProgressMeter(int32_t              aRowIndex, 
-                          nsTreeColumn*        aColumn,
-                          const nsRect&        aProgressMeterRect,
-                          nsPresContext*      aPresContext,
-                          nsRenderingContext& aRenderingContext,
-                          const nsRect&        aDirtyRect);
+  DrawResult PaintProgressMeter(int32_t              aRowIndex, 
+                                nsTreeColumn*        aColumn,
+                                const nsRect&        aProgressMeterRect,
+                                nsPresContext*       aPresContext,
+                                nsRenderingContext&  aRenderingContext,
+                                const nsRect&        aDirtyRect);
 
   // This method paints a drop feedback of the tree.
-  void PaintDropFeedback(const nsRect&        aDropFeedbackRect, 
-                         nsPresContext*      aPresContext,
-                         nsRenderingContext& aRenderingContext,
-                         const nsRect&        aDirtyRect,
-                         nsPoint              aPt);
+  DrawResult PaintDropFeedback(const nsRect&        aDropFeedbackRect, 
+                               nsPresContext*       aPresContext,
+                               nsRenderingContext&  aRenderingContext,
+                               const nsRect&        aDirtyRect,
+                               nsPoint              aPt);
 
   // This method is called with a specific style context and rect to
   // paint the background rect as if it were a full-blown frame.
-  void PaintBackgroundLayer(nsStyleContext*      aStyleContext,
-                            nsPresContext*      aPresContext, 
-                            nsRenderingContext& aRenderingContext, 
-                            const nsRect&        aRect,
-                            const nsRect&        aDirtyRect);
+  DrawResult PaintBackgroundLayer(nsStyleContext*      aStyleContext,
+                                  nsPresContext*       aPresContext, 
+                                  nsRenderingContext&  aRenderingContext, 
+                                  const nsRect&        aRect,
+                                  const nsRect&        aDirtyRect);
 
 
   // An internal hit test.  aX and aY are expected to be in twips in the
@@ -558,13 +561,13 @@ protected: // Data Members
 
   nsRevocableEventPtr<ScrollEvent> mScrollEvent;
 
-  nsRefPtr<ScrollbarActivity> mScrollbarActivity;
+  RefPtr<ScrollbarActivity> mScrollbarActivity;
 
   // The cached box object parent.
   nsCOMPtr<nsITreeBoxObject> mTreeBoxObject;
 
   // Cached column information.
-  nsRefPtr<nsTreeColumns> mColumns;
+  RefPtr<nsTreeColumns> mColumns;
 
   // The current view for this tree widget.  We get all of our row and cell data
   // from the view.

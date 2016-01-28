@@ -83,13 +83,13 @@ public:
                                    const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
                                    uint32_t aWeight,
                                    int32_t aStretch,
-                                   uint32_t aItalicStyle,
+                                   uint8_t aStyle,
                                    const nsTArray<gfxFontFeature>& aFeatureSettings,
                                    uint32_t aLanguageOverride,
                                    gfxSparseBitSet* aUnicodeRanges) override;
 
   private:
-    nsRefPtr<FontFaceSet> mFontFaceSet;
+    RefPtr<FontFaceSet> mFontFaceSet;
   };
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -148,6 +148,12 @@ public:
   FontFace* GetFontFaceAt(uint32_t aIndex);
 
   void FlushUserFontSet();
+
+  static nsPresContext* GetPresContextFor(gfxUserFontSet* aUserFontSet)
+  {
+    FontFaceSet* set = static_cast<UserFontSet*>(aUserFontSet)->mFontFaceSet;
+    return set ? set->GetPresContext() : nullptr;
+  }
 
   // -- Web IDL --------------------------------------------------------------
 
@@ -225,8 +231,8 @@ private:
   // make sure to update FontFaceSet's cycle collection macros
   // accordingly.
   struct FontFaceRecord {
-    nsRefPtr<FontFace> mFontFace;
-    uint8_t mSheetType;  // only relevant for mRuleFaces entries
+    RefPtr<FontFace> mFontFace;
+    SheetType mSheetType;  // only relevant for mRuleFaces entries
 
     // When true, indicates that when finished loading, the FontFace should be
     // included in the subsequent loadingdone/loadingerror event fired at the
@@ -237,7 +243,7 @@ private:
   already_AddRefed<gfxUserFontEntry> FindOrCreateUserFontEntryFromFontFace(
                                                    const nsAString& aFamilyName,
                                                    FontFace* aFontFace,
-                                                   uint8_t aSheetType);
+                                                   SheetType aSheetType);
 
   // search for @font-face rule that matches a userfont font entry
   nsCSSFontFaceRule* FindRuleForUserFontEntry(gfxUserFontEntry* aUserFontEntry);
@@ -258,7 +264,7 @@ private:
                       nsresult aStatus);
   void RebuildUserFontSet();
 
-  void InsertRuleFontFace(FontFace* aFontFace, uint8_t aSheetType,
+  void InsertRuleFontFace(FontFace* aFontFace, SheetType aSheetType,
                           nsTArray<FontFaceRecord>& aOldRecords,
                           bool& aFontSetModified);
   void InsertNonRuleFontFace(FontFace* aFontFace, bool& aFontSetModified);
@@ -277,17 +283,17 @@ private:
 
   void ParseFontShorthandForMatching(
               const nsAString& aFont,
-              nsRefPtr<mozilla::css::FontFamilyListRefCnt>& aFamilyList,
+              RefPtr<mozilla::css::FontFamilyListRefCnt>& aFamilyList,
               uint32_t& aWeight,
               int32_t& aStretch,
-              uint32_t& aItalicStyle,
+              uint8_t& aStyle,
               ErrorResult& aRv);
   void FindMatchingFontFaces(const nsAString& aFont,
                              const nsAString& aText,
                              nsTArray<FontFace*>& aFontFaces,
                              mozilla::ErrorResult& aRv);
 
-  nsRefPtr<UserFontSet> mUserFontSet;
+  RefPtr<UserFontSet> mUserFontSet;
 
   // The document this is a FontFaceSet for.
   nsCOMPtr<nsIDocument> mDocument;
@@ -298,7 +304,7 @@ private:
   // any of those fonts failed to load.  mReady is replaced with
   // a new Promise object whenever mReady is settled and another
   // FontFace in mRuleFaces or mNonRuleFaces starts to load.
-  nsRefPtr<mozilla::dom::Promise> mReady;
+  RefPtr<mozilla::dom::Promise> mReady;
 
   // Set of all loaders pointing to us. These are not strong pointers,
   // but that's OK because nsFontFaceLoader always calls RemoveLoader on

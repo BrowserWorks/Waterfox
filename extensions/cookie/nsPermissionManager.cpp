@@ -31,7 +31,6 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsIAppsService.h"
 #include "mozIApplication.h"
-#include "mozIApplicationClearPrivateDataParams.h"
 #include "nsIEffectiveTLDService.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
@@ -167,39 +166,24 @@ GetNextSubDomainForHost(const nsACString& aHost)
   return subDomain;
 }
 
-class AppClearDataObserver final : public nsIObserver {
-  ~AppClearDataObserver() {}
+class ClearOriginDataObserver final : public nsIObserver {
+  ~ClearOriginDataObserver() {}
 
 public:
   NS_DECL_ISUPPORTS
 
   // nsIObserver implementation.
   NS_IMETHODIMP
-  Observe(nsISupports *aSubject, const char *aTopic, const char16_t *data) override
+  Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData) override
   {
-    MOZ_ASSERT(!nsCRT::strcmp(aTopic, "webapps-clear-data"));
-
-    nsCOMPtr<mozIApplicationClearPrivateDataParams> params =
-      do_QueryInterface(aSubject);
-    if (!params) {
-      NS_ERROR("'webapps-clear-data' notification's subject should be a mozIApplicationClearPrivateDataParams");
-      return NS_ERROR_UNEXPECTED;
-    }
-
-    uint32_t appId;
-    nsresult rv = params->GetAppId(&appId);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    bool browserOnly;
-    rv = params->GetBrowserOnly(&browserOnly);
-    NS_ENSURE_SUCCESS(rv, rv);
+    MOZ_ASSERT(!nsCRT::strcmp(aTopic, "clear-origin-data"));
 
     nsCOMPtr<nsIPermissionManager> permManager = do_GetService("@mozilla.org/permissionmanager;1");
-    return permManager->RemovePermissionsForApp(appId, browserOnly);
+    return permManager->RemovePermissionsWithAttributes(nsDependentString(aData));
   }
 };
 
-NS_IMPL_ISUPPORTS(AppClearDataObserver, nsIObserver)
+NS_IMPL_ISUPPORTS(ClearOriginDataObserver, nsIObserver)
 
 class MOZ_STACK_CLASS UpgradeHostToOriginHelper {
 public:
@@ -284,7 +268,7 @@ public:
   }
 
 private:
-  nsRefPtr<nsPermissionManager> mPm;
+  RefPtr<nsPermissionManager> mPm;
   nsPermissionManager::DBOperationType mOperation;
   int64_t mID;
 };
@@ -625,7 +609,7 @@ public:
                         bool aRebuildOnSuccess);
 
 protected:
-  nsRefPtr<nsPermissionManager> mManager;
+  RefPtr<nsPermissionManager> mManager;
   bool mRebuildOnSuccess;
 };
 
@@ -642,7 +626,7 @@ NS_IMETHODIMP
 CloseDatabaseListener::Complete(nsresult, nsISupports*)
 {
   // Help breaking cycles
-  nsRefPtr<nsPermissionManager> manager = mManager.forget();
+  RefPtr<nsPermissionManager> manager = mManager.forget();
   if (mRebuildOnSuccess && !manager->mIsShuttingDown) {
     return manager->InitDB(true);
   }
@@ -674,7 +658,7 @@ public:
   explicit DeleteFromMozHostListener(nsPermissionManager* aManager);
 
 protected:
-  nsRefPtr<nsPermissionManager> mManager;
+  RefPtr<nsPermissionManager> mManager;
 };
 
 NS_IMPL_ISUPPORTS(DeleteFromMozHostListener, mozIStorageStatementCallback)
@@ -699,7 +683,7 @@ NS_IMETHODIMP DeleteFromMozHostListener::HandleError(mozIStorageError *)
 NS_IMETHODIMP DeleteFromMozHostListener::HandleCompletion(uint16_t aReason)
 {
   // Help breaking cycles
-  nsRefPtr<nsPermissionManager> manager = mManager.forget();
+  RefPtr<nsPermissionManager> manager = mManager.forget();
 
   if (aReason == REASON_ERROR) {
     manager->CloseDB(true);
@@ -709,18 +693,18 @@ NS_IMETHODIMP DeleteFromMozHostListener::HandleCompletion(uint16_t aReason)
 }
 
 /* static */ void
-nsPermissionManager::AppClearDataObserverInit()
+nsPermissionManager::ClearOriginDataObserverInit()
 {
   nsCOMPtr<nsIObserverService> observerService =
     mozilla::services::GetObserverService();
-  observerService->AddObserver(new AppClearDataObserver(), "webapps-clear-data", /* holdsWeak= */ false);
+  observerService->AddObserver(new ClearOriginDataObserver(), "clear-origin-data", /* holdsWeak= */ false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsPermissionManager Implementation
 
 #define PERMISSIONS_FILE_NAME "permissions.sqlite"
-#define HOSTS_SCHEMA_VERSION 8
+#define HOSTS_SCHEMA_VERSION 9
 
 #define HOSTPERM_FILE_NAME "hostperm.1"
 
@@ -891,7 +875,6 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       return NS_ERROR_UNEXPECTED;
   }
 
-  LogToConsole(NS_LITERAL_STRING("Get a connection to permissions.sqlite."));
 
   bool tableExists = false;
   mDBConn->TableExists(NS_LITERAL_CSTRING("moz_perms"), &tableExists);
@@ -901,7 +884,6 @@ nsPermissionManager::InitDB(bool aRemoveFile)
   if (!tableExists) {
     rv = CreateTable();
     NS_ENSURE_SUCCESS(rv, rv);
-    LogToConsole(NS_LITERAL_STRING("DB table(moz_perms) is created!"));
   } else {
     // table already exists; check the schema version before reading
     int32_t dbSchemaVersion;
@@ -928,6 +910,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       }
 
       // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // TODO: we want to make default version as version 2 in order to fix bug 784875.
     case 0:
@@ -947,6 +930,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       }
 
       // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // Version 3->4 is the creation of the modificationTime field.
     case 3:
@@ -964,6 +948,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       }
 
       // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // In version 5, host appId, and isInBrowserElement were merged into a
     // single origin entry
@@ -1049,6 +1034,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       }
 
       // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // At this point, the version 5 table has been migrated to a version 6 table
     // We are guaranteed to have at least one of moz_hosts and moz_perms. If
@@ -1246,6 +1232,7 @@ nsPermissionManager::InitDB(bool aRemoveFile)
       }
 
       // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // The version 7-8 migration is the re-migration of localhost and ip-address
     // entries due to errors in the previous version 7 migration which caused
@@ -1345,6 +1332,37 @@ nsPermissionManager::InitDB(bool aRemoveFile)
         rv = mDBConn->SetSchemaVersion(8);
         NS_ENSURE_SUCCESS(rv, rv);
       }
+
+      // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
+
+    // The version 8-9 migration removes the unnecessary backup moz-hosts database contents.
+    // as the data no longer needs to be migrated
+    case 8:
+      {
+        // We only want to clear out the old table if it is a backup. If it isn't a backup,
+        // we don't need to touch it.
+        bool hostsIsBackupExists = false;
+        mDBConn->TableExists(NS_LITERAL_CSTRING("moz_hosts_is_backup"),
+                             &hostsIsBackupExists);
+        if (hostsIsBackupExists) {
+          // Delete everything from the backup, we want to keep around the table so that
+          // you can still downgrade and not break things, but we don't need to keep the
+          // rows around.
+          rv = mDBConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING("DELETE FROM moz_hosts"));
+          NS_ENSURE_SUCCESS(rv, rv);
+
+          // The table is no longer a backup, so get rid of it.
+          rv = mDBConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING("DROP TABLE moz_hosts_is_backup"));
+          NS_ENSURE_SUCCESS(rv, rv);
+        }
+
+        rv = mDBConn->SetSchemaVersion(9);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
+
+      // fall through to the next upgrade
+      MOZ_FALLTHROUGH;
 
     // current version.
     case HOSTS_SCHEMA_VERSION:
@@ -1549,7 +1567,7 @@ nsPermissionManager::AddInternal(nsIPrincipal* aPrincipal,
 
   // When an entry already exists, PutEntry will return that, instead
   // of adding a new one
-  nsRefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
+  RefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
   PermissionHashKey* entry = mPermissionTable.PutEntry(key);
   if (!entry) return NS_ERROR_FAILURE;
   if (!entry->GetKey()) {
@@ -2104,7 +2122,7 @@ nsPermissionManager::GetPermissionHashKey(nsIPrincipal* aPrincipal,
 {
   PermissionHashKey* entry = nullptr;
 
-  nsRefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
+  RefPtr<PermissionKey> key = new PermissionKey(aPrincipal);
   entry = mPermissionTable.GetEntry(key);
 
   if (entry) {
@@ -2283,35 +2301,20 @@ nsPermissionManager::RemoveAllModifiedSince(int64_t aModificationTime)
 }
 
 NS_IMETHODIMP
-nsPermissionManager::RemovePermissionsForApp(uint32_t aAppId, bool aBrowserOnly)
+nsPermissionManager::RemovePermissionsWithAttributes(const nsAString& aPattern)
 {
   ENSURE_NOT_CHILD_PROCESS;
-  NS_ENSURE_ARG(aAppId != nsIScriptSecurityManager::NO_APP_ID);
-
-  // We begin by removing all the permissions from the DB.
-  // After clearing the DB, we call AddInternal() to make sure that all
-  // processes are aware of this change and the representation of the DB in
-  // memory is updated.
-  // We have to get all permissions associated with an application first
-  // because removing entries from the permissions table while iterating over
-  // it is dangerous.
-
-  nsAutoCString sql;
-  sql.AppendLiteral("DELETE FROM moz_perms WHERE appId=");
-  sql.AppendInt(aAppId);
-
-  if (aBrowserOnly) {
-    sql.AppendLiteral(" AND isInBrowserElement=1");
+  mozilla::OriginAttributesPattern pattern;
+  if (!pattern.Init(aPattern)) {
+    return NS_ERROR_INVALID_ARG;
   }
 
-  nsCOMPtr<mozIStorageAsyncStatement> removeStmt;
-  nsresult rv = mDBConn->CreateAsyncStatement(sql, getter_AddRefs(removeStmt));
-  NS_ENSURE_SUCCESS(rv, rv);
+  return RemovePermissionsWithAttributes(pattern);
+}
 
-  nsCOMPtr<mozIStoragePendingStatement> pending;
-  rv = removeStmt->ExecuteAsync(nullptr, getter_AddRefs(pending));
-  NS_ENSURE_SUCCESS(rv, rv);
-
+nsresult
+nsPermissionManager::RemovePermissionsWithAttributes(mozilla::OriginAttributesPattern& aPattern)
+{
   nsCOMArray<nsIPermission> permissions;
   for (auto iter = mPermissionTable.Iter(); !iter.Done(); iter.Next()) {
     PermissionHashKey* entry = iter.Get();
@@ -2323,12 +2326,7 @@ nsPermissionManager::RemovePermissionsForApp(uint32_t aAppId, bool aBrowserOnly)
       continue;
     }
 
-    uint32_t appId;
-    bool isInBrowserElement;
-    principal->GetAppId(&appId);
-    principal->GetIsInBrowserElement(&isInBrowserElement);
-
-    if (appId != aAppId || (aBrowserOnly && !isInBrowserElement)) {
+    if (!aPattern.Matches(mozilla::BasePrincipal::Cast(principal)->OriginAttributesRef())) {
       continue;
     }
 
@@ -2954,3 +2952,4 @@ nsPermissionManager::FetchPermissions() {
   }
   return NS_OK;
 }
+

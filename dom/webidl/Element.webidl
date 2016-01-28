@@ -59,6 +59,8 @@ interface Element : Node {
 
   [Throws, Pure]
   boolean matches(DOMString selector);
+  [Throws, Pure, BinaryName="matches"]
+  boolean webkitMatchesSelector(DOMString selector);
 
   [Pure]
   HTMLCollection getElementsByTagName(DOMString localName);
@@ -92,7 +94,7 @@ interface Element : Node {
    *
    * See <http://dev.w3.org/2006/webapi/selectors-api2/#matchesselector>
    */
-  [Throws, Pure]
+  [Throws, Pure, BinaryName="matches"]
   boolean mozMatchesSelector(DOMString selector);
 
   // Pointer events methods.
@@ -197,11 +199,13 @@ partial interface Element {
   readonly attribute long clientHeight;
 
   // Mozilla specific stuff
-  /* The maximum offset that the element can be scrolled to
+  /* The minimum/maximum offset that the element can be scrolled to
      (i.e., the value that scrollLeft/scrollTop would be clamped to if they were
      set to arbitrarily large values. */
-  readonly attribute long scrollTopMax;
-  readonly attribute long scrollLeftMax;
+  [ChromeOnly] readonly attribute long scrollTopMin;
+               readonly attribute long scrollTopMax;
+  [ChromeOnly] readonly attribute long scrollLeftMin;
+               readonly attribute long scrollLeftMax;
 };
 
 // http://dvcs.w3.org/hg/undomanager/raw-file/tip/undomanager.html

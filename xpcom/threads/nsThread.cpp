@@ -36,6 +36,8 @@
 #include "nsXPCOMPrivate.h"
 #include "mozilla/ChaosMode.h"
 #include "mozilla/TimeStamp.h"
+#include "nsThreadSyncDispatch.h"
+#include "LeakRefPtr.h"
 
 #ifdef MOZ_CRASHREPORTER
 #include "nsServiceManagerUtils.h"
@@ -84,19 +86,11 @@ using namespace mozilla::tasktracer;
 
 using namespace mozilla;
 
-static PRLogModuleInfo*
-GetThreadLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsThread");
-  }
-  return sLog;
-}
+static LazyLogModule sThreadLog("nsThread");
 #ifdef LOG
 #undef LOG
 #endif
-#define LOG(args) MOZ_LOG(GetThreadLog(), mozilla::LogLevel::Debug, args)
+#define LOG(args) MOZ_LOG(sThreadLog, mozilla::LogLevel::Debug, args)
 
 NS_DECL_CI_INTERFACE_GETTER(nsThread)
 
@@ -240,7 +234,7 @@ private:
 struct nsThreadShutdownContext
 {
   // NB: This will be the last reference.
-  nsRefPtr<nsThread> terminatingThread;
+  RefPtr<nsThread> terminatingThread;
   nsThread* joiningThread;
   bool      awaitingShutdownAck;
 };
@@ -294,7 +288,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<nsThread>       mThread;
+  RefPtr<nsThread>       mThread;
   nsThreadShutdownContext* mShutdownContext;
 };
 
@@ -358,9 +352,12 @@ nsThread::ThreadFunc(void* aArg)
 
   // Wait for and process startup event
   nsCOMPtr<nsIRunnable> event;
-  if (!self->GetEvent(true, getter_AddRefs(event))) {
-    NS_WARNING("failed waiting for thread startup event");
-    return;
+  {
+    MutexAutoLock lock(self->mLock);
+    if (!self->mEvents->GetEvent(true, getter_AddRefs(event), lock)) {
+      NS_WARNING("failed waiting for thread startup event");
+      return;
+    }
   }
   event->Run();  // unblocks nsThread::Init
   event = nullptr;
@@ -396,7 +393,7 @@ nsThread::ThreadFunc(void* aArg)
 
       {
         MutexAutoLock lock(self->mLock);
-        if (!self->mEvents->HasPendingEvent()) {
+        if (!self->mEvents->HasPendingEvent(lock)) {
           // No events in the queue, so we will stop now. Don't let any more
           // events be added, since they won't be processed. It is critical
           // that no PutEvent can occur between testing that the event queue is
@@ -469,6 +466,7 @@ nsThread::nsThread(MainThreadFlag aMainThread, uint32_t aStackSize)
   : mLock("nsThread.mLock")
   , mScriptObserver(nullptr)
   , mEvents(&mEventsRoot)
+  , mEventsRoot(mLock)
   , mPriority(PRIORITY_NORMAL)
   , mThread(nullptr)
   , mNestedEventLoopDepth(0)
@@ -488,7 +486,7 @@ nsresult
 nsThread::Init()
 {
   // spawn thread and wait until it is fully setup
-  nsRefPtr<nsThreadStartupEvent> startup = new nsThreadStartupEvent();
+  RefPtr<nsThreadStartupEvent> startup = new nsThreadStartupEvent();
 
   NS_ADDREF_THIS();
 
@@ -508,7 +506,7 @@ nsThread::Init()
   // that mThread is set properly.
   {
     MutexAutoLock lock(mLock);
-    mEventsRoot.PutEvent(startup); // retain a reference
+    mEventsRoot.PutEvent(startup, lock); // retain a reference
   }
 
   // Wait for thread to call ThreadManager::SetupCurrentThread, which completes
@@ -537,6 +535,9 @@ nsThread::PutEvent(nsIRunnable* aEvent, nsNestedEventTarget* aTarget)
 nsresult
 nsThread::PutEvent(already_AddRefed<nsIRunnable>&& aEvent, nsNestedEventTarget* aTarget)
 {
+  // We want to leak the reference when we fail to dispatch it, so that
+  // we won't release the event in a wrong thread.
+  LeakRefPtr<nsIRunnable> event(Move(aEvent));
   nsCOMPtr<nsIThreadObserver> obs;
 
 #ifdef MOZ_NUWA_PROCESS
@@ -550,11 +551,9 @@ nsThread::PutEvent(already_AddRefed<nsIRunnable>&& aEvent, nsNestedEventTarget* 
     nsChainedEventQueue* queue = aTarget ? aTarget->mQueue : &mEventsRoot;
     if (!queue || (queue == &mEventsRoot && mEventsAreDoomed)) {
       NS_WARNING("An event was posted to a thread that will never run it (rejected)");
-      nsCOMPtr<nsIRunnable> temp(aEvent);
-      nsIRunnable* temp2 = temp.forget().take(); // can't use unused << aEvent here due to Windows (boo)
-      return temp2 ? NS_ERROR_UNEXPECTED : NS_ERROR_UNEXPECTED; // to make compiler not bletch on us
+      return NS_ERROR_UNEXPECTED;
     }
-    queue->PutEvent(Move(aEvent));
+    queue->PutEvent(event.take(), lock);
 
     // Make sure to grab the observer before dropping the lock, otherwise the
     // event that we just placed into the queue could run and eventually delete
@@ -574,7 +573,9 @@ nsresult
 nsThread::DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags,
                            nsNestedEventTarget* aTarget)
 {
-  nsCOMPtr<nsIRunnable> event(aEvent);
+  // We want to leak the reference when we fail to dispatch it, so that
+  // we won't release the event in a wrong thread.
+  LeakRefPtr<nsIRunnable> event(Move(aEvent));
   if (NS_WARN_IF(!event)) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -585,8 +586,9 @@ nsThread::DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFla
   }
 
 #ifdef MOZ_TASK_TRACER
-  nsCOMPtr<nsIRunnable> tracedRunnable = CreateTracedRunnable(event); // adds a ref
+  nsCOMPtr<nsIRunnable> tracedRunnable = CreateTracedRunnable(event.take());
   (static_cast<TracedRunnable*>(tracedRunnable.get()))->DispatchTask();
+  // XXX tracedRunnable will always leaked when we fail to disptch.
   event = tracedRunnable.forget();
 #endif
 
@@ -600,11 +602,15 @@ nsThread::DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFla
     //     be able to monitor the slot occupied by this event and use
     //     that to tell us when the event has been processed.
 
-    nsRefPtr<nsThreadSyncDispatch> wrapper =
-      new nsThreadSyncDispatch(thread, event.forget());
+    RefPtr<nsThreadSyncDispatch> wrapper =
+      new nsThreadSyncDispatch(thread, event.take());
     nsresult rv = PutEvent(wrapper, aTarget); // hold a ref
     // Don't wait for the event to finish if we didn't dispatch it...
     if (NS_FAILED(rv)) {
+      // PutEvent leaked the wrapper runnable object on failure, so we
+      // explicitly release this object once for that. Note that this
+      // object will be released again soon because it exits the scope.
+      wrapper.get()->Release();
       return rv;
     }
 
@@ -612,11 +618,13 @@ nsThread::DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFla
     while (wrapper->IsPending()) {
       NS_ProcessNextEvent(thread, true);
     }
+    // NOTE that, unlike the behavior above, the event is not leaked by
+    // this place, while it is possible that the result is an error.
     return wrapper->Result();
   }
 
   NS_ASSERTION(aFlags == NS_DISPATCH_NORMAL, "unexpected dispatch flags");
-  return PutEvent(event.forget(), aTarget);
+  return PutEvent(event.take(), aTarget);
 }
 
 //-----------------------------------------------------------------------------
@@ -778,7 +786,10 @@ nsThread::HasPendingEvents(bool* aResult)
     return NS_ERROR_NOT_SAME_THREAD;
   }
 
-  *aResult = mEvents->HasPendingEvent();
+  {
+    MutexAutoLock lock(mLock);
+    *aResult = mEvents->HasPendingEvent(lock);
+  }
   return NS_OK;
 }
 
@@ -936,7 +947,10 @@ nsThread::ProcessNextEvent(bool aMayWait, bool* aResult)
 
     // If we are shutting down, then do not wait for new events.
     nsCOMPtr<nsIRunnable> event;
-    mEvents->GetEvent(reallyWait, getter_AddRefs(event));
+    {
+      MutexAutoLock lock(mLock);
+      mEvents->GetEvent(reallyWait, getter_AddRefs(event), lock);
+    }
 
     *aResult = (event.get() != nullptr);
 
@@ -1092,7 +1106,7 @@ nsThread::PushEventQueue(nsIEventTarget** aResult)
     return NS_ERROR_NOT_SAME_THREAD;
   }
 
-  nsChainedEventQueue* queue = new nsChainedEventQueue();
+  nsChainedEventQueue* queue = new nsChainedEventQueue(mLock);
   queue->mEventTarget = new nsNestedEventTarget(this, queue);
 
   {
@@ -1118,7 +1132,7 @@ nsThread::PopEventQueue(nsIEventTarget* aInnermostTarget)
 
   // Don't delete or release anything while holding the lock.
   nsAutoPtr<nsChainedEventQueue> queue;
-  nsRefPtr<nsNestedEventTarget> target;
+  RefPtr<nsNestedEventTarget> target;
 
   {
     MutexAutoLock lock(mLock);
@@ -1134,8 +1148,8 @@ nsThread::PopEventQueue(nsIEventTarget* aInnermostTarget)
     mEvents = mEvents->mNext;
 
     nsCOMPtr<nsIRunnable> event;
-    while (queue->GetEvent(false, getter_AddRefs(event))) {
-      mEvents->PutEvent(event.forget());
+    while (queue->GetEvent(false, getter_AddRefs(event), lock)) {
+      mEvents->PutEvent(event.forget(), lock);
     }
 
     // Don't let the event target post any more events.
@@ -1156,20 +1170,6 @@ nsThread::SetScriptObserver(mozilla::CycleCollectedJSRuntime* aScriptObserver)
 
   MOZ_ASSERT(!mScriptObserver);
   mScriptObserver = aScriptObserver;
-}
-
-//-----------------------------------------------------------------------------
-
-NS_IMETHODIMP
-nsThreadSyncDispatch::Run()
-{
-  if (mSyncTask) {
-    mResult = mSyncTask->Run();
-    mSyncTask = nullptr;
-    // unblock the origin thread
-    mOrigin->Dispatch(this, NS_DISPATCH_NORMAL);
-  }
-  return NS_OK;
 }
 
 //-----------------------------------------------------------------------------

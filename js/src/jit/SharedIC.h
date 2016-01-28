@@ -286,13 +286,6 @@ class ICEntry
         returnOffset_ = (uint32_t) offset.offset();
     }
 
-    void fixupReturnOffset(MacroAssembler& masm) {
-        CodeOffsetLabel offset = returnOffset();
-        offset.fixup(&masm);
-        MOZ_ASSERT(offset.offset() <= UINT32_MAX);
-        returnOffset_ = (uint32_t) offset.offset();
-    }
-
     uint32_t pcOffset() const {
         return pcOffset_;
     }
@@ -720,6 +713,7 @@ class ICStub
           case GetElem_UnboxedPropertyName:
           case GetProp_CallScripted:
           case GetProp_CallNative:
+          case GetProp_CallNativeGlobal:
           case GetProp_CallDOMProxyNative:
           case GetProp_CallDOMProxyWithGenerationNative:
           case GetProp_DOMProxyShadowed:
@@ -737,6 +731,7 @@ class ICStub
           case GetElem_Arguments:
           case GetProp_NativePrototype:
           case GetProp_Native:
+          case GetName_Global:
 #endif
             return true;
           default:
@@ -997,9 +992,8 @@ class ICStubCompiler
     }
 
     virtual bool generateStubCode(MacroAssembler& masm) = 0;
-    virtual bool postGenerateStubCode(MacroAssembler& masm, Handle<JitCode*> genCode) {
-        return true;
-    }
+    virtual void postGenerateStubCode(MacroAssembler& masm, Handle<JitCode*> genCode) {}
+
     JitCode* getStubCode();
 
     ICStubCompiler(JSContext* cx, ICStub::Kind kind, Engine engine)

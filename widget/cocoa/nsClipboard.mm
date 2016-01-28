@@ -27,7 +27,6 @@
 using mozilla::gfx::DataSourceSurface;
 using mozilla::gfx::SourceSurface;
 using mozilla::LogLevel;
-using mozilla::RefPtr;
 
 // Screenshots use the (undocumented) png pasteboard type.
 #define IMAGE_PASTEBOARD_TYPES NSTIFFPboardType, @"Apple PNG pasteboard type", nil
@@ -469,11 +468,11 @@ nsClipboard::PasteboardDictFromTransferable(nsITransferable* aTransferable)
         continue;
       }
       CGImageRef imageRef = NULL;
-      nsresult rv = nsCocoaUtils::CreateCGImageFromSurface(surface, &imageRef);
+      rv = nsCocoaUtils::CreateCGImageFromSurface(surface, &imageRef);
       if (NS_FAILED(rv) || !imageRef) {
         continue;
       }
-      
+
       // Convert the CGImageRef to TIFF data.
       CFMutableDataRef tiffData = CFDataCreateMutable(kCFAllocatorDefault, 0);
       CGImageDestinationRef destRef = CGImageDestinationCreateWithData(tiffData,

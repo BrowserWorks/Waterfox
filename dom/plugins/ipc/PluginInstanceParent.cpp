@@ -31,7 +31,6 @@
 #include "gfxXlibSurface.h"
 #endif
 #include "gfxContext.h"
-#include "gfxColor.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "Layers.h"
@@ -162,7 +161,7 @@ PluginInstanceParent::InitMetadata(const nsACString& aMimeType,
         return false;
     }
     // Ensure that the src attribute is absolute
-    nsRefPtr<nsPluginInstanceOwner> owner = GetOwner();
+    RefPtr<nsPluginInstanceOwner> owner = GetOwner();
     if (!owner) {
         return false;
     }
@@ -177,7 +176,6 @@ PluginInstanceParent::ActorDestroy(ActorDestroyReason why)
     if (why == AbnormalShutdown) {
         // If the plugin process crashes, this is the only
         // chance we get to destroy resources.
-        SharedSurfaceRelease();
         UnsubclassPluginWindow();
     }
 #endif
@@ -205,7 +203,6 @@ PluginInstanceParent::Destroy()
     }
 
 #if defined(OS_WIN)
-    SharedSurfaceRelease();
     UnsubclassPluginWindow();
 #endif
 
@@ -536,7 +533,7 @@ PluginInstanceParent::RecvShow(const NPRect& updatedRect,
          updatedRect.bottom - updatedRect.top));
 
     // XXXjwatt rewrite to use Moz2D
-    nsRefPtr<gfxASurface> surface;
+    RefPtr<gfxASurface> surface;
     if (newSurface.type() == SurfaceDescriptor::TShmem) {
         if (!newSurface.get_Shmem().IsReadable()) {
             NS_WARNING("back surface not readable");
@@ -618,7 +615,7 @@ PluginInstanceParent::RecvShow(const NPRect& updatedRect,
         surface->MarkDirty(ur);
 
         ImageContainer *container = GetImageContainer();
-        nsRefPtr<Image> image = container->CreateImage(ImageFormat::CAIRO_SURFACE);
+        RefPtr<Image> image = container->CreateImage(ImageFormat::CAIRO_SURFACE);
         NS_ASSERTION(image->GetFormat() == ImageFormat::CAIRO_SURFACE, "Wrong format?");
         CairoImage* cairoImage = static_cast<CairoImage*>(image.get());
         CairoImage::Data cairoData;
@@ -699,7 +696,7 @@ PluginInstanceParent::GetImageContainer(ImageContainer** aContainer)
 
 #ifdef XP_MACOSX
     if (ioSurface) {
-        nsRefPtr<Image> image = container->CreateImage(ImageFormat::MAC_IOSURFACE);
+        RefPtr<Image> image = container->CreateImage(ImageFormat::MAC_IOSURFACE);
         if (!image) {
             return NS_ERROR_FAILURE;
         }
@@ -726,7 +723,7 @@ nsresult
 PluginInstanceParent::GetImageSize(nsIntSize* aSize)
 {
     if (mFrontSurface) {
-        gfxIntSize size = mFrontSurface->GetSize();
+        mozilla::gfx::IntSize size = mFrontSurface->GetSize();
         *aSize = nsIntSize(size.width, size.height);
         return NS_OK;
     }
@@ -795,7 +792,7 @@ PluginInstanceParent::BeginUpdateBackground(const nsIntRect& aRect,
         }
     }
 
-    gfxIntSize sz = mBackground->GetSize();
+    mozilla::gfx::IntSize sz = mBackground->GetSize();
 #ifdef DEBUG
     MOZ_ASSERT(nsIntRect(0, 0, sz.width, sz.height).Contains(aRect),
                "Update outside of background area");
@@ -803,7 +800,7 @@ PluginInstanceParent::BeginUpdateBackground(const nsIntRect& aRect,
 
     RefPtr<gfx::DrawTarget> dt = gfxPlatform::GetPlatform()->
       CreateDrawTargetForSurface(mBackground, gfx::IntSize(sz.width, sz.height));
-    nsRefPtr<gfxContext> ctx = new gfxContext(dt);
+    RefPtr<gfxContext> ctx = new gfxContext(dt);
     ctx.forget(aCtx);
 
     return NS_OK;
@@ -852,7 +849,7 @@ PluginInstanceParent::CreateBackground(const nsIntSize& aSize)
     Screen* screen = DefaultScreenOfDisplay(DefaultXDisplay());
     Visual* visual = DefaultVisualOfScreen(screen);
     mBackground = gfxXlibSurface::Create(screen, visual,
-                                         gfxIntSize(aSize.width, aSize.height));
+                                         mozilla::gfx::IntSize(aSize.width, aSize.height));
     return !!mBackground;
 
 #elif defined(XP_WIN)
@@ -861,7 +858,7 @@ PluginInstanceParent::CreateBackground(const nsIntSize& aSize)
     mBackground =
         gfxSharedImageSurface::CreateUnsafe(
             this,
-            gfxIntSize(aSize.width, aSize.height),
+            mozilla::gfx::IntSize(aSize.width, aSize.height),
             gfxImageFormat::RGB24);
     return !!mBackground;
 #else
@@ -950,11 +947,6 @@ PluginInstanceParent::NPP_SetWindow(const NPWindow* aWindow)
 #if defined(OS_WIN)
     // On windowless controls, reset the shared memory surface as needed.
     if (mWindowType == NPWindowTypeDrawable) {
-        // SharedSurfaceSetWindow will take care of NPRemoteWindow.
-        if (!SharedSurfaceSetWindow(aWindow, window)) {
-          return NPERR_OUT_OF_MEMORY_ERROR;
-        }
-
         MaybeCreateChildPopupSurrogate();
     } else {
         SubclassPluginWindow(reinterpret_cast<HWND>(aWindow->window));
@@ -1189,23 +1181,7 @@ PluginInstanceParent::NPP_HandleEvent(void* event)
 
 #if defined(OS_WIN)
     if (mWindowType == NPWindowTypeDrawable) {
-        if (DoublePassRenderingEvent() == npevent->event) {
-            return CallPaint(npremoteevent, &handled) && handled;
-        }
-
         switch (npevent->event) {
-            case WM_PAINT:
-            {
-                RECT rect;
-                SharedSurfaceBeforePaint(rect, npremoteevent);
-                if (!CallPaint(npremoteevent, &handled)) {
-                    handled = false;
-                }
-                SharedSurfaceAfterPaint(npevent);
-                return handled;
-            }
-            break;
-
             case WM_KILLFOCUS:
             {
               // When the user selects fullscreen mode in Flash video players,
@@ -1600,7 +1576,7 @@ PluginInstanceParent::GetActorForNPObject(NPObject* aObject)
 
 PPluginSurfaceParent*
 PluginInstanceParent::AllocPPluginSurfaceParent(const WindowsSharedMemoryHandle& handle,
-                                                const gfxIntSize& size,
+                                                const mozilla::gfx::IntSize& size,
                                                 const bool& transparent)
 {
 #ifdef XP_WIN
@@ -1936,108 +1912,6 @@ PluginInstanceParent::UnsubclassPluginWindow()
  *
  * painting: mPluginPort (nsIntRect, saved in SetWindow)
  */
-
-void
-PluginInstanceParent::SharedSurfaceRelease()
-{
-    mSharedSurfaceDib.Close();
-}
-
-bool
-PluginInstanceParent::SharedSurfaceSetWindow(const NPWindow* aWindow,
-                                             NPRemoteWindow& aRemoteWindow)
-{
-    aRemoteWindow.window = 0;
-    aRemoteWindow.x      = aWindow->x;
-    aRemoteWindow.y      = aWindow->y;
-    aRemoteWindow.width  = aWindow->width;
-    aRemoteWindow.height = aWindow->height;
-    aRemoteWindow.type   = aWindow->type;
-
-    nsIntRect newPort(aWindow->x, aWindow->y, aWindow->width, aWindow->height);
-
-    // save the the rect location within the browser window.
-    mPluginPort = newPort;
-
-    // move the port to our shared surface origin
-    newPort.MoveTo(0,0);
-
-    // check to see if we have the room in shared surface
-    if (mSharedSurfaceDib.IsValid() && mSharedSize.Contains(newPort)) {
-      // ok to paint
-      aRemoteWindow.surfaceHandle = 0;
-      return true;
-    }
-
-    // allocate a new shared surface
-    SharedSurfaceRelease();
-    if (NS_FAILED(mSharedSurfaceDib.Create(reinterpret_cast<HDC>(aWindow->window),
-                                           newPort.width, newPort.height, false)))
-      return false;
-
-    // save the new shared surface size we just allocated
-    mSharedSize = newPort;
-
-    base::SharedMemoryHandle handle;
-    if (NS_FAILED(mSharedSurfaceDib.ShareToProcess(OtherPid(), &handle))) {
-      return false;
-    }
-
-    aRemoteWindow.surfaceHandle = handle;
-
-    return true;
-}
-
-void
-PluginInstanceParent::SharedSurfaceBeforePaint(RECT& rect,
-                                               NPRemoteEvent& npremoteevent)
-{
-    RECT* dr = (RECT*)npremoteevent.event.lParam;
-    HDC parentHdc = (HDC)npremoteevent.event.wParam;
-
-    nsIntRect dirtyRect(dr->left, dr->top, dr->right-dr->left, dr->bottom-dr->top);
-    dirtyRect.MoveBy(-mPluginPort.x, -mPluginPort.y); // should always be smaller than dirtyRect
-
-    ::BitBlt(mSharedSurfaceDib.GetHDC(),
-             dirtyRect.x,
-             dirtyRect.y,
-             dirtyRect.width,
-             dirtyRect.height,
-             parentHdc,
-             dr->left,
-             dr->top,
-             SRCCOPY);
-
-    // setup the translated dirty rect we'll send to the child
-    rect.left   = dirtyRect.x;
-    rect.top    = dirtyRect.y;
-    rect.right  = dirtyRect.x + dirtyRect.width;
-    rect.bottom = dirtyRect.y + dirtyRect.height;
-
-    npremoteevent.event.wParam = WPARAM(0);
-    npremoteevent.event.lParam = LPARAM(&rect);
-}
-
-void
-PluginInstanceParent::SharedSurfaceAfterPaint(NPEvent* npevent)
-{
-    RECT* dr = (RECT*)npevent->lParam;
-    HDC parentHdc = (HDC)npevent->wParam;
-
-    nsIntRect dirtyRect(dr->left, dr->top, dr->right-dr->left, dr->bottom-dr->top);
-    dirtyRect.MoveBy(-mPluginPort.x, -mPluginPort.y);
-
-    // src copy the shared dib into the parent surface we are handed.
-    ::BitBlt(parentHdc,
-             dr->left,
-             dr->top,
-             dirtyRect.width,
-             dirtyRect.height,
-             mSharedSurfaceDib.GetHDC(),
-             dirtyRect.x,
-             dirtyRect.y,
-             SRCCOPY);
-}
 
 bool
 PluginInstanceParent::MaybeCreateAndParentChildPluginWindow()

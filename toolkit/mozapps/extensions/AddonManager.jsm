@@ -859,6 +859,13 @@ var AddonManagerInternal = {
     logger.debug(`Provider finished startup: ${providerName(aProvider)}`);
   },
 
+  _getProviderByName(aName) {
+    for (let provider of this.providers) {
+      if (providerName(provider) == aName)
+        return provider;
+    }
+  },
+
   /**
    * Initializes the AddonManager, loading any known providers and initializing
    * them.
@@ -1098,7 +1105,7 @@ var AddonManagerInternal = {
     this.pendingProviders.delete(aProvider);
 
     for (let type in this.types) {
-      this.types[type].providers = this.types[type].providers.filter(function filterProvider(p) p != aProvider);
+      this.types[type].providers = this.types[type].providers.filter(p => p != aProvider);
       if (this.types[type].providers.length == 0) {
         let oldType = this.types[type].type;
         delete this.types[type];
@@ -1464,9 +1471,9 @@ var AddonManagerInternal = {
     let buPromise = Task.spawn(function* backgroundUpdateTask() {
       let hotfixID = this.hotfixID;
 
-      let checkHotfix = hotfixID &&
-                        Services.prefs.getBoolPref(PREF_APP_UPDATE_ENABLED) &&
-                        Services.prefs.getBoolPref(PREF_APP_UPDATE_AUTO);
+      let appUpdateEnabled = Services.prefs.getBoolPref(PREF_APP_UPDATE_ENABLED) &&
+                             Services.prefs.getBoolPref(PREF_APP_UPDATE_AUTO);
+      let checkHotfix = hotfixID && appUpdateEnabled;
 
       logger.debug("Background update check beginning");
 
@@ -1613,6 +1620,15 @@ var AddonManagerInternal = {
         }
       }
 
+      if (appUpdateEnabled) {
+        try {
+          yield AddonManagerInternal._getProviderByName("XPIProvider").updateSystemAddons();
+        }
+        catch (e) {
+          logger.warn("Failed to update system addons", e);
+        }
+      }
+
       logger.debug("Background update check complete");
       Services.obs.notifyObservers(null,
                                    "addons-background-update-complete",
@@ -1680,8 +1696,7 @@ var AddonManagerInternal = {
     if (!(aType in this.startupChanges))
       return;
 
-    this.startupChanges[aType] = this.startupChanges[aType].filter(
-                                 function filterItem(aItem) aItem != aID);
+    this.startupChanges[aType] = this.startupChanges[aType].filter(aItem => aItem != aID);
   },
 
   /**
@@ -2286,6 +2301,76 @@ var AddonManagerInternal = {
       else
         pos++;
     }
+  },
+
+  /**
+   * Gets an icon from the icon set provided by the add-on
+   * that is closest to the specified size.
+   *
+   * The optional window parameter will be used to determine
+   * the screen resolution and select a more appropriate icon.
+   * Calling this method with 48px on retina screens will try to
+   * match an icon of size 96px.
+   *
+   * @param  aAddon
+   *         The addon to find an icon for
+   * @param  aSize
+   *         Ideal icon size in pixels
+   * @param  aWindow
+   *         Optional window object for determining the correct scale.
+   * @return {String} The absolute URL of the icon or null if the addon doesn't have icons
+   */
+  getPreferredIconURL: function AMI_getPreferredIconURL(aAddon, aSize, aWindow = undefined) {
+    if (aWindow && aWindow.devicePixelRatio) {
+      aSize *= aWindow.devicePixelRatio;
+    }
+
+    let icons = aAddon.icons;
+
+    // certain addon-types only have iconURLs
+    if (!icons) {
+      icons = {};
+      if (aAddon.iconURL) {
+        icons[32] = aAddon.iconURL;
+        icons[48] = aAddon.iconURL;
+      }
+      if (aAddon.icon64URL) {
+        icons[64] = aAddon.icon64URL;
+      }
+    }
+
+    // quick return if the exact size was found
+    if (icons[aSize]) {
+      return icons[aSize];
+    }
+
+    let bestSize = null;
+
+    for (let size of Object.keys(icons)) {
+      size = parseInt(size, 10);
+      if (isNaN(size)) {
+        throw Components.Exception("Invalid icon size, must be an integer",
+                                   Cr.NS_ERROR_ILLEGAL_VALUE);
+      }
+
+      if (!bestSize) {
+        bestSize = size;
+        continue;
+      }
+
+      if (size > aSize && bestSize > aSize) {
+        // If both best size and current size are larger than the wanted size then choose
+        // the one closest to the wanted size
+        bestSize = Math.min(bestSize, size);
+      }
+      else {
+        // Otherwise choose the largest of the two so we'll prefer sizes as close to below aSize
+        // or above aSize
+        bestSize = Math.max(bestSize, size);
+      }
+    }
+
+    return icons[bestSize] || null;
   },
 
   /**
@@ -3213,6 +3298,10 @@ this.AddonManager = {
 
   escapeAddonURI: function AM_escapeAddonURI(aAddon, aUri, aAppVersion) {
     return AddonManagerInternal.escapeAddonURI(aAddon, aUri, aAppVersion);
+  },
+
+  getPreferredIconURL: function AM_getPreferredIconURL(aAddon, aSize, aWindow = undefined) {
+    return AddonManagerInternal.getPreferredIconURL(aAddon, aSize, aWindow);
   },
 
   get shutdown() {

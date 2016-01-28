@@ -21,9 +21,9 @@ gfxQPainterSurface::gfxQPainterSurface(QPainter *painter)
 
 gfxQPainterSurface::gfxQPainterSurface(const mozilla::gfx::IntSize& size, gfxImageFormat format)
 {
-    cairo_surface_t *csurf = cairo_qt_surface_create_with_qimage ((cairo_format_t) format,
-                                                                        size.width,
-                                                                        size.height);
+    cairo_format_t cformat = gfxImageFormatToCairoFormat(format);
+    cairo_surface_t *csurf =
+        cairo_qt_surface_create_with_qimage(cformat, size.width, size.height);
     mPainter = cairo_qt_surface_get_qpainter (csurf);
 
     Init (csurf);
@@ -71,7 +71,7 @@ gfxQPainterSurface::GetAsImageSurface()
 
     assert(cairo_surface_get_type(isurf) == CAIRO_SURFACE_TYPE_IMAGE);
 
-    nsRefPtr<gfxImageSurface> asurf = new gfxImageSurface(isurf);
+    RefPtr<gfxImageSurface> asurf = new gfxImageSurface(isurf);
     asurf->SetOpaqueRect(GetOpaqueRect());
     return asurf.forget();
 }

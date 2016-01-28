@@ -100,7 +100,6 @@ $(_DEST_DIR):
 
 # On Android only, include a release signed Robocop APK in the test package.
 ifeq ($(MOZ_BUILD_APP),mobile/android)
-JAVA_CLASSPATH = $(ANDROID_SDK)/android.jar
 include $(topsrcdir)/config/android-common.mk
 
 stage-package-android:
@@ -115,7 +114,6 @@ endif
 stage-package:
 	$(NSINSTALL) -D $(PKG_STAGE)/mochitest && $(NSINSTALL) -D $(PKG_STAGE)/bin/plugins && $(NSINSTALL) -D $(DIST)/plugins
 	cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/mochitest
-	(cd $(DEPTH)/_tests/testing && tar $(TAR_CREATE_FLAGS) - mochitest) | (cd $(PKG_STAGE) && tar -xf -)
 	@cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/mochitest
 	@(cd $(DIST_BIN) && tar $(TAR_CREATE_FLAGS) - $(TEST_HARNESS_BINS)) | (cd $(PKG_STAGE)/bin && tar -xf -)
 	@(cd $(DIST_BIN)/components && tar $(TAR_CREATE_FLAGS) - $(TEST_HARNESS_COMPONENTS)) | (cd $(PKG_STAGE)/bin/components && tar -xf -)

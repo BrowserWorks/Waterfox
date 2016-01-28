@@ -30,44 +30,6 @@ add_test(function test_set_do_not_disturb() {
   run_next_test();
 });
 
-add_test(function test_do_not_disturb_disabled_should_open_chat_window() {
-  MozLoopService.doNotDisturb = false;
-
-  mockPushHandler.registrationPushURL = kEndPointUrl;
-
-  MozLoopService.promiseRegisteredWithServers(LOOP_SESSION_TYPE.FXA).then(() => {
-    let opened = false;
-    Chat.open = function() {
-      opened = true;
-    };
-
-    mockPushHandler.notify(1, MozLoopService.channelIDs.callsFxA);
-
-    waitForCondition(() => opened).then(() => {
-      run_next_test();
-    }, () => {
-      do_throw("should have opened a chat window");
-    });
-  });
-});
-
-add_test(function test_do_not_disturb_enabled_shouldnt_open_chat_window() {
-  MozLoopService.doNotDisturb = true;
-
-  // We registered in the previous test, so no need to do that on this one.
-  let opened = false;
-  Chat.open = function() {
-    opened = true;
-  };
-
-  mockPushHandler.notify(1, MozLoopService.channelIDs.callsFxA);
-
-  do_timeout(500, function() {
-    do_check_false(opened, "should not open a chat window");
-    run_next_test();
-  });
-});
-
 function run_test() {
   setupFakeLoopServer();
 
@@ -80,7 +42,7 @@ function run_test() {
   });
   loopServer.registerPathHandler("/calls", (request, response) => {
     response.setStatusLine(null, 200, "OK");
-    response.write(JSON.stringify({calls: [{callId: 4444333221, websocketToken: "0deadbeef0"}]}));
+    response.write(JSON.stringify({ calls: [{ callId: 4444333221, websocketToken: "0deadbeef0" }] }));
     response.processAsync();
     response.finish();
   });

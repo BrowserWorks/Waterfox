@@ -1,9 +1,8 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/BrowserUtils.jsm");
 var ssm = Services.scriptSecurityManager;
 function makeURI(uri) { return Services.io.newURI(uri, null, null); }
 
@@ -27,10 +26,12 @@ function checkOriginAttributes(prin, attrs, suffix) {
   do_check_eq(prin.originAttributes.appId, attrs.appId || 0);
   do_check_eq(prin.originAttributes.inBrowser, attrs.inBrowser || false);
   do_check_eq(prin.originSuffix, suffix || '');
+  do_check_eq(ChromeUtils.originAttributesToSuffix(attrs), suffix || '');
+  do_check_true(ChromeUtils.originAttributesMatchPattern(prin.originAttributes, attrs));
   if (!prin.isNullPrincipal && !prin.origin.startsWith('[')) {
-    do_check_true(BrowserUtils.principalFromOrigin(prin.origin).equals(prin));
+    do_check_true(ssm.createCodebasePrincipalFromOrigin(prin.origin).equals(prin));
   } else {
-    checkThrows(() => BrowserUtils.principalFromOrigin(prin.origin));
+    checkThrows(() => ssm.createCodebasePrincipalFromOrigin(prin.origin));
   }
 }
 
@@ -132,6 +133,19 @@ function run_test() {
   checkOriginAttributes(nullPrin_userContextApp, {appId: 24, userContextId: 42}, '^appId=24&userContextId=42');
   do_check_eq(exampleOrg_userContextApp.origin, 'http://example.org^appId=24&userContextId=42');
 
+  // Just signedPkg
+  var exampleOrg_signedPkg = ssm.createCodebasePrincipal(makeURI('http://example.org'), {signedPkg: 'whatever'});
+  checkOriginAttributes(exampleOrg_signedPkg, { signedPkg: 'whatever' }, '^signedPkg=whatever');
+  do_check_eq(exampleOrg_signedPkg.origin, 'http://example.org^signedPkg=whatever');
+
+  // signedPkg and browser
+  var exampleOrg_signedPkg_browser = ssm.createCodebasePrincipal(makeURI('http://example.org'), {signedPkg: 'whatever', inBrowser: true});
+  checkOriginAttributes(exampleOrg_signedPkg_browser, { signedPkg: 'whatever', inBrowser: true }, '^inBrowser=1&signedPkg=whatever');
+  do_check_eq(exampleOrg_signedPkg_browser.origin, 'http://example.org^inBrowser=1&signedPkg=whatever');
+
+  // Just signedPkg (but different value from 'exampleOrg_signedPkg_app')
+  var exampleOrg_signedPkg_another = ssm.createCodebasePrincipal(makeURI('http://example.org'), {signedPkg: 'whatup'});
+
   // Check that all of the above are cross-origin.
   checkCrossOrigin(exampleOrg_app, exampleOrg);
   checkCrossOrigin(exampleOrg_app, nullPrin_app);
@@ -145,4 +159,19 @@ function run_test() {
   checkCrossOrigin(exampleOrg_userContextAddon, exampleOrg);
   checkCrossOrigin(exampleOrg_userContext, exampleOrg_userContextAddon);
   checkCrossOrigin(exampleOrg_userContext, exampleOrg_userContextApp);
+  checkCrossOrigin(exampleOrg_signedPkg, exampleOrg);
+  checkCrossOrigin(exampleOrg_signedPkg, exampleOrg_signedPkg_browser);
+  checkCrossOrigin(exampleOrg_signedPkg, exampleOrg_signedPkg_another);
+
+  // Check Principal kinds.
+  function checkKind(prin, kind) {
+    do_check_eq(prin.isNullPrincipal, kind == 'nullPrincipal');
+    do_check_eq(prin.isCodebasePrincipal, kind == 'codebasePrincipal');
+    do_check_eq(prin.isExpandedPrincipal, kind == 'expandedPrincipal');
+    do_check_eq(prin.isSystemPrincipal, kind == 'systemPrincipal');
+  }
+  checkKind(ssm.createNullPrincipal({}), 'nullPrincipal');
+  checkKind(ssm.createCodebasePrincipal(makeURI('http://www.example.com'), {}), 'codebasePrincipal');
+  checkKind(ssm.createExpandedPrincipal([ssm.createCodebasePrincipal(makeURI('http://www.example.com'), {})]), 'expandedPrincipal');
+  checkKind(ssm.getSystemPrincipal(), 'systemPrincipal');
 }

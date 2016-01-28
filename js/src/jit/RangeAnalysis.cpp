@@ -1734,7 +1734,7 @@ MArrayLength::computeRange(TempAllocator& alloc)
 void
 MInitializedLength::computeRange(TempAllocator& alloc)
 {
-    setRange(Range::NewUInt32Range(alloc, 0, NativeObject::NELEMENTS_LIMIT));
+    setRange(Range::NewUInt32Range(alloc, 0, NativeObject::MAX_DENSE_ELEMENTS_COUNT));
 }
 
 void
@@ -2289,6 +2289,10 @@ RangeAnalysis::addRangeAssertions()
 
             // Don't insert assertions if there's nothing interesting to assert.
             if (r.isUnknown() || (ins->type() == MIRType_Int32 && r.isUnknownInt32()))
+                continue;
+
+            // Don't add a use to an instruction that is recovered on bailout.
+            if (ins->isRecoveredOnBailout())
                 continue;
 
             MAssertRange* guard = MAssertRange::New(alloc(), ins, new(alloc()) Range(r));

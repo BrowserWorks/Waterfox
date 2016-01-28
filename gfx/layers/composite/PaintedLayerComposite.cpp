@@ -18,7 +18,7 @@
 #include "mozilla/layers/Effects.h"     // for EffectChain
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
-#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/RefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsMathUtils.h"                // for NS_lround
 #include "nsString.h"                   // for nsAutoCString
@@ -115,7 +115,7 @@ PaintedLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
   const nsIntRegion& visibleRegion = GetEffectiveVisibleRegion();
 
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxUtils::sDumpPainting) {
+  if (gfxUtils::sDumpCompositorTextures) {
     RefPtr<gfx::DataSourceSurface> surf = mBuffer->GetAsSurface();
     if (surf) {
       WriteSnapshotToDumpFile(this, surf);

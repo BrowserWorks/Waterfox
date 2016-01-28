@@ -228,9 +228,8 @@ public class LocalBrowserDB implements BrowserDB {
                 if (RestrictedProfiles.isRestrictedProfile(context)) {
                     // matching on variable name from strings.xml.in
                     final String addons = "bookmarkdefaults_title_addons";
-                    final String marketplace = "bookmarkdefaults_title_marketplace";
                     final String regularSumo = "bookmarkdefaults_title_support";
-                    if (name.equals(addons) || name.equals(marketplace) || name.equals(regularSumo)) {
+                    if (name.equals(addons) || name.equals(regularSumo)) {
                         continue;
                     }
                 }
@@ -732,6 +731,29 @@ public class LocalBrowserDB implements BrowserDB {
                 History.DATE_LAST_VISITED + " >= " + start + " AND " + History.DATE_LAST_VISITED + " < " + end,
                 null,
                 History.DATE_LAST_VISITED + " DESC");
+    }
+
+    @Override
+    public long getPrePathLastVisitedTimeMilliseconds(ContentResolver cr, String prePath) {
+        if (prePath == null) {
+            return 0;
+        }
+        // If we don't end with a trailing slash, then both https://foo.com and https://foo.company.biz will match.
+        if (!prePath.endsWith("/")) {
+            prePath = prePath + "/";
+        }
+        final Cursor cursor = cr.query(BrowserContract.History.CONTENT_URI,
+                new String[] { "MAX(" + BrowserContract.HistoryColumns.DATE_LAST_VISITED + ") AS date" },
+                BrowserContract.URLColumns.URL + " BETWEEN ? AND ?", new String[] { prePath, prePath + "\u007f" }, null);
+        try {
+            cursor.moveToFirst();
+            if (cursor.isAfterLast()) {
+                return 0;
+            }
+            return cursor.getLong(0);
+        } finally {
+            cursor.close();
+        }
     }
 
     @Override

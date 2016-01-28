@@ -27,13 +27,14 @@
 #include "builtin/SIMD.h"
 #include "builtin/SymbolObject.h"
 #include "builtin/TypedObject.h"
+#include "builtin/WeakMapObject.h"
 #include "builtin/WeakSetObject.h"
 #include "vm/HelperThreads.h"
 #include "vm/PIC.h"
 #include "vm/RegExpStatics.h"
 #include "vm/RegExpStaticsObject.h"
+#include "vm/ScopeObject.h"
 #include "vm/StopIterationObject.h"
-#include "vm/WeakMapObject.h"
 
 #include "jscompartmentinlines.h"
 #include "jsobjinlines.h"
@@ -88,9 +89,6 @@ js::GlobalObject::getTypedObjectModule() const {
     MOZ_ASSERT(v.isObject());
     return v.toObject().as<TypedObjectModuleObject>();
 }
-
-
-
 
 /* static */ bool
 GlobalObject::ensureConstructor(JSContext* cx, Handle<GlobalObject*> global, JSProtoKey key)
@@ -257,6 +255,11 @@ GlobalObject::createInternal(JSContext* cx, const Class* clasp)
     if (clasp->flags & JSCLASS_HAS_PRIVATE)
         global->setPrivate(nullptr);
 
+    Rooted<ClonedBlockObject*> lexical(cx, ClonedBlockObject::createGlobal(cx, global));
+    if (!lexical)
+        return nullptr;
+    global->setReservedSlot(LEXICAL_SCOPE, ObjectValue(*lexical));
+
     cx->compartment()->initGlobal(*global);
 
     if (!global->setQualifiedVarObj(cx))
@@ -307,6 +310,12 @@ GlobalObject::new_(JSContext* cx, const Class* clasp, JSPrincipals* principals,
         JS_FireOnNewGlobalObject(cx, global);
 
     return global;
+}
+
+ClonedBlockObject&
+GlobalObject::lexicalScope() const
+{
+    return getReservedSlot(LEXICAL_SCOPE).toObject().as<ClonedBlockObject>();
 }
 
 /* static */ bool
@@ -406,7 +415,7 @@ GlobalObject::initSelfHostingBuiltins(JSContext* cx, Handle<GlobalObject*> globa
            InitBareBuiltinCtor(cx, global, JSProto_Uint8Array) &&
            InitBareBuiltinCtor(cx, global, JSProto_Uint32Array) &&
            InitBareWeakMapCtor(cx, global) &&
-           initStopIterationClass(cx, global) &&
+           InitStopIterationClass(cx, global) &&
            InitSelfHostingCollectionIteratorFunctions(cx, global) &&
            JS_DefineFunctions(cx, global, builtins);
 }
@@ -529,7 +538,7 @@ GlobalDebuggees_finalize(FreeOp* fop, JSObject* obj)
 static const Class
 GlobalDebuggees_class = {
     "GlobalDebuggee", JSCLASS_HAS_PRIVATE,
-    nullptr, nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, GlobalDebuggees_finalize
 };
 

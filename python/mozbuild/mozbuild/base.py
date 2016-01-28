@@ -278,9 +278,6 @@ class MozbuildObject(ProcessExecutionMixin):
 
     @property
     def bindir(self):
-        from . import mozinfo
-        if mozinfo.os == "mac":
-            return os.path.join(self.topobjdir, 'dist', self.substs['MOZ_MACBUNDLE_NAME'], 'Contents', 'Resources')
         return os.path.join(self.topobjdir, 'dist', 'bin')
 
     @property
@@ -595,36 +592,45 @@ class MozbuildObject(ProcessExecutionMixin):
     def _make_path(self):
         baseconfig = os.path.join(self.topsrcdir, 'config', 'baseconfig.mk')
 
+        def is_xcode_lisense_error(output):
+            return self._is_osx() and 'Agreeing to the Xcode' in output
+
         def validate_make(make):
             if os.path.exists(baseconfig) and os.path.exists(make):
                 cmd = [make, '-f', baseconfig]
                 if self._is_windows():
                     cmd.append('HOST_OS_ARCH=WINNT')
                 try:
-                    subprocess.check_call(cmd, stdout=open(os.devnull, 'wb'),
-                        stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError:
-                    return False
-                return True
-            return False
+                    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as e:
+                    return False, is_xcode_lisense_error(e.output)
+                return True, False
+            return False, False
 
+        xcode_lisense_error = False
         possible_makes = ['gmake', 'make', 'mozmake', 'gnumake']
 
         if 'MAKE' in os.environ:
             make = os.environ['MAKE']
-            if os.path.isabs(make):
-                if validate_make(make):
-                    return [make]
-            else:
-                possible_makes.insert(0, make)
+            possible_makes.insert(0, make)
 
         for test in possible_makes:
-            try:
-                make = which.which(test)
-            except which.WhichError:
-                continue
-            if validate_make(make):
+            if os.path.isabs(test):
+                make = test
+            else:
+                try:
+                    make = which.which(test)
+                except which.WhichError:
+                    continue
+            result, xcode_lisense_error_tmp = validate_make(make)
+            if result:
                 return [make]
+            if xcode_lisense_error_tmp:
+                xcode_lisense_error = True
+
+        if xcode_lisense_error:
+            raise Exception('Xcode requires accepting to the license agreement.\n'
+                'Please run Xcode and accept the license agreement.')
 
         if self._is_windows():
             raise Exception('Could not find a suitable make implementation.\n'
@@ -640,6 +646,9 @@ class MozbuildObject(ProcessExecutionMixin):
 
     def _is_windows(self):
         return os.name in ('nt', 'ce')
+
+    def _is_osx(self):
+        return 'darwin' in str(sys.platform).lower()
 
     def _spawn(self, cls):
         """Create a new MozbuildObject-derived class instance from ourselves.
@@ -843,3 +852,22 @@ class PathArgument(object):
 
     def objdir_path(self):
         return mozpath.join(self.topobjdir, self.relpath())
+
+
+class ExecutionSummary(dict):
+    """Helper for execution summaries."""
+
+    def __init__(self, summary_format, **data):
+        self._summary_format = ''
+        assert 'execution_time' in data
+        self.extend(summary_format, **data)
+
+    def extend(self, summary_format, **data):
+        self._summary_format += summary_format
+        self.update(data)
+
+    def __str__(self):
+        return self._summary_format.format(**self)
+
+    def __getattr__(self, key):
+        return self[key]

@@ -107,7 +107,7 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
   // Allocate the buffer, which contains scanlines of the original image.
   // pad by 15 to handle overreads by the simd code
   size_t bufferLen = mOriginalSize.width * sizeof(uint32_t) + 15;
-  mRowBuffer = MakeUnique<uint8_t[]>(bufferLen);
+  mRowBuffer.reset(new (fallible) uint8_t[bufferLen]);
   if (MOZ_UNLIKELY(!mRowBuffer)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -115,12 +115,11 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
   // Zero buffer to keep valgrind happy.
   memset(mRowBuffer.get(), 0, bufferLen);
 
-
   // Allocate the window, which contains horizontally downscaled scanlines. (We
   // can store scanlines which are already downscale because our downscaling
   // filter is separable.)
   mWindowCapacity = mYFilter->max_filter();
-  mWindow = MakeUnique<uint8_t*[]>(mWindowCapacity);
+  mWindow.reset(new (fallible) uint8_t*[mWindowCapacity]);
   if (MOZ_UNLIKELY(!mWindow)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -129,7 +128,7 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
   // pad by 15 to handle overreads by the simd code
   const int rowSize = mTargetSize.width * sizeof(uint32_t) + 15;
   for (int32_t i = 0; i < mWindowCapacity; ++i) {
-    mWindow[i] = new uint8_t[rowSize];
+    mWindow[i] = new (fallible) uint8_t[rowSize];
     anyAllocationFailed = anyAllocationFailed || mWindow[i] == nullptr;
   }
 
@@ -200,33 +199,34 @@ Downscaler::CommitRow()
 {
   MOZ_ASSERT(mOutputBuffer, "Should have a current frame");
   MOZ_ASSERT(mCurrentInLine < mOriginalSize.height, "Past end of input");
-  MOZ_ASSERT(mCurrentOutLine < mTargetSize.height, "Past end of output");
 
-  int32_t filterOffset = 0;
-  int32_t filterLength = 0;
-  GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
-                           &filterOffset, &filterLength);
-
-  int32_t inLineToRead = filterOffset + mLinesInBuffer;
-  MOZ_ASSERT(mCurrentInLine <= inLineToRead, "Reading past end of input");
-  if (mCurrentInLine == inLineToRead) {
-    skia::ConvolveHorizontally(mRowBuffer.get(), *mXFilter,
-                               mWindow[mLinesInBuffer++], mHasAlpha,
-                               supports_sse2());
-  }
-
-  MOZ_ASSERT(mCurrentOutLine < mTargetSize.height,
-             "Writing past end of output");
-
-  while (mLinesInBuffer == filterLength) {
-    DownscaleInputLine();
-
-    if (mCurrentOutLine == mTargetSize.height) {
-      break;  // We're done.
-    }
-
+  if (mCurrentOutLine < mTargetSize.height) {
+    int32_t filterOffset = 0;
+    int32_t filterLength = 0;
     GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
                              &filterOffset, &filterLength);
+
+    int32_t inLineToRead = filterOffset + mLinesInBuffer;
+    MOZ_ASSERT(mCurrentInLine <= inLineToRead, "Reading past end of input");
+    if (mCurrentInLine == inLineToRead) {
+      skia::ConvolveHorizontally(mRowBuffer.get(), *mXFilter,
+                                 mWindow[mLinesInBuffer++], mHasAlpha,
+                                 supports_sse2());
+    }
+
+    MOZ_ASSERT(mCurrentOutLine < mTargetSize.height,
+               "Writing past end of output");
+
+    while (mLinesInBuffer == filterLength) {
+      DownscaleInputLine();
+
+      if (mCurrentOutLine == mTargetSize.height) {
+        break;  // We're done.
+      }
+
+      GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
+                               &filterOffset, &filterLength);
+    }
   }
 
   mCurrentInLine += 1;

@@ -14,7 +14,7 @@
 #include "nsIInputStream.h"
 #include "nsIProperties.h"
 #include "nsNetUtil.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsStreamUtils.h"
 #include "nsString.h"
 
@@ -87,7 +87,7 @@ LoadFile(const char* aRelativePath)
 bool
 IsSolidColor(SourceSurface* aSurface, BGRAColor aColor, bool aFuzzy)
 {
-  nsRefPtr<DataSourceSurface> dataSurface = aSurface->GetDataSurface();
+  RefPtr<DataSourceSurface> dataSurface = aSurface->GetDataSurface();
   ASSERT_TRUE_OR_RETURN(dataSurface != nullptr, false);
 
   ASSERT_EQ_OR_RETURN(dataSurface->Stride(), aSurface->GetSize().width * 4,
@@ -152,6 +152,12 @@ ImageTestCase GreenICOTestCase()
                        TEST_CASE_IS_TRANSPARENT);
 }
 
+ImageTestCase GreenIconTestCase()
+{
+  return ImageTestCase("green.icon", "image/icon", IntSize(100, 100),
+                       TEST_CASE_IS_TRANSPARENT);
+}
+
 ImageTestCase GreenFirstFrameAnimatedGIFTestCase()
 {
   return ImageTestCase("first-frame-green.gif", "image/gif", IntSize(100, 100),
@@ -188,13 +194,13 @@ ImageTestCase FirstFramePaddingGIFTestCase()
                        TEST_CASE_IS_TRANSPARENT);
 }
 
-ImageTestCase TransparentBMPWhenBMPAlphaEnabledTestCase()
+ImageTestCase TransparentIfWithinICOBMPTestCase(TestCaseFlags aFlags)
 {
-  // Note that we only decode this test case as transparent when the BMP decoder
-  // is set to use alpha data. (That's not the default, which is why it's not marked
-  // TEST_CASE_IS_TRANSPARENT; tests that want to treat this testcase as
-  // transparent need to handle this case manually.)
-  return ImageTestCase("transparent.bmp", "image/bmp", IntSize(32, 32));
+  // This is a BMP that is only transparent when decoded as if it is within an
+  // ICO file. (Note: aFlags needs to be set to TEST_CASE_DEFAULT_FLAGS or
+  // TEST_CASE_IS_TRANSPARENT accordingly.)
+  return ImageTestCase("transparent-if-within-ico.bmp", "image/bmp",
+                       IntSize(32, 32), aFlags);
 }
 
 ImageTestCase RLE4BMPTestCase()

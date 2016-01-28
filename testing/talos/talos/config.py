@@ -2,127 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import argparse
+import sys
 import os
 import copy
 
 from talos import utils, test
-
-
-class _ListTests(argparse.Action):
-    def __init__(self, option_strings, dest=argparse.SUPPRESS,
-                 default=argparse.SUPPRESS, help=None):
-        super(_ListTests, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            default=default,
-            nargs=0,
-            help=help)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        print 'Available tests:'
-        print '================\n'
-        test_class_names = [
-            (test_class.name(), test_class.description())
-            for test_class in test.test_dict().itervalues()
-        ]
-        test_class_names.sort()
-        for name, description in test_class_names:
-            print name
-            print '-'*len(name)
-            print description
-            print  # Appends a single blank line to the end
-        parser.exit()
-
-
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser()
-    add_arg = parser.add_argument
-
-    add_arg('-e', '--executablePath', required=True, dest="browser_path",
-            help="path to executable we are testing")
-    add_arg('-t', '--title', default='qm-pxp01',
-            help="Title of the test run")
-    add_arg('--branchName', dest="branch_name", default='',
-            help="Name of the branch we are testing on")
-    add_arg('--browserWait', dest='browser_wait', default=5, type=int,
-            help="Amount of time allowed for the browser to cleanly close")
-    add_arg('-a', '--activeTests', required=True,
-            help="List of tests to run, separated by ':' (ex. damp:cart)")
-    add_arg('--e10s', action='store_true',
-            help="enable e10s")
-    add_arg('--noChrome', action='store_true',
-            help="do not run tests as chrome")
-    add_arg('--rss', action='store_true',
-            help="Collect RSS counters from pageloader instead of the"
-                 " operating system")
-    add_arg('--mainthread', action='store_true',
-            help="Collect mainthread IO data from the browser by setting"
-                 " an environment variable")
-    add_arg("--mozAfterPaint", action='store_true', dest="tpmozafterpaint",
-            help="wait for MozAfterPaint event before recording the time")
-    add_arg('--spsProfile', action="store_true", dest="sps_profile",
-            help="Profile the run and output the results in $MOZ_UPLOAD_DIR")
-    add_arg('--spsProfileInterval', dest='sps_profile_interval', type=int,
-            help="How frequently to take samples (ms)")
-    add_arg('--spsProfileEntries', dest="sps_profile_entries", type=int,
-            help="How many samples to take with the profiler")
-    add_arg('--extension', dest='extensions', action='append',
-            default=['${talos}/talos-powers', '${talos}/pageloader'],
-            help="Extension to install while running")
-    add_arg('--fast', action='store_true',
-            help="Run tp tests as tp_fast")
-    add_arg('--symbolsPath', dest='symbols_path',
-            help="Path to the symbols for the build we are testing")
-    add_arg('--xperf_path',
-            help="Path to windows performance tool xperf.exe")
-    add_arg('--test_timeout', type=int, default=1200,
-            help="Time to wait for the browser to output to the log file")
-    add_arg('--errorFile', dest='error_filename',
-            default=os.path.abspath('browser_failures.txt'),
-            help="Filename to store the errors found during the test."
-                 " Currently used for xperf only.")
-    add_arg('--noShutdown', dest='shutdown', action='store_true',
-            help="Record time browser takes to shutdown after testing")
-    add_arg('--setPref', action='append', default=[], dest="extraPrefs",
-            metavar="PREF=VALUE",
-            help="defines an extra user preference")
-    add_arg('--webServer', dest='webserver',
-            help="address of the webserver hosting the talos files")
-    add_arg('--develop', action='store_true', default=False,
-            help="useful for running tests on a developer machine."
-                 " Creates a local webserver and doesn't upload to the"
-                 " graph servers.")
-    add_arg('--responsiveness', action='store_true',
-            help="turn on responsiveness collection")
-    add_arg("--cycles", type=int,
-            help="number of browser cycles to run")
-    add_arg("--tpmanifest",
-            help="manifest file to test")
-    add_arg('--tpcycles', type=int,
-            help="number of pageloader cycles to run")
-    add_arg('--tptimeout', type=int,
-            help='number of milliseconds to wait for a load event after'
-                 ' calling loadURI before timing out')
-    add_arg('--tppagecycles', type=int,
-            help='number of pageloader cycles to run for each page in'
-                 ' the manifest')
-    add_arg('--tpdelay', type=int,
-            help="length of the pageloader delay")
-    add_arg('--sourcestamp',
-            help='Specify the hg revision or sourcestamp for the changeset'
-                 ' we are testing.  This will use the value found in'
-                 ' application.ini if it is not specified.')
-    add_arg('--repository',
-            help='Specify the url for the repository we are testing. '
-                 'This will use the value found in application.ini if'
-                 ' it is not specified.')
-    add_arg('--print-tests', action=_ListTests,
-            help="print available tests")
-    add_arg('--debug', action='store_true',
-            help='show debug information')
-
-    return parser.parse_args(argv)
+from talos.cmdline import parse_args
 
 
 class ConfigurationError(Exception):
@@ -255,6 +140,8 @@ DEFAULTS = dict(
             'http://127.0.0.1/plugins-dummy/updateCheckURL',
         'media.gmp-manager.url':
             'http://127.0.0.1/gmpmanager-dummy/update.xml',
+        'extensions.systemAddon.update.url':
+            'http://127.0.0.1/dummy-system-addons.xml',
         'media.navigator.enabled': True,
         'media.peerconnection.enabled': True,
         'media.navigator.permission.disabled': True,
@@ -365,9 +252,15 @@ def fix_xperf(config):
 
 
 @validator
-def check_webserver(config):
-    if config['develop'] and not config['webserver']:
-        config['webserver'] = 'localhost:15707'
+def set_webserver(config):
+    # pick a free port
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('', 0))
+    port = sock.getsockname()[1]
+    sock.close()
+
+    config['webserver'] = 'localhost:%d' % port
 
 
 @validator
@@ -404,14 +297,6 @@ def get_counters(config):
 def get_active_tests(config):
     activeTests = config.pop('activeTests').strip().split(':')
 
-    # temporary hack for now until we have e10s running on all tests
-    if config['e10s'] and not config['develop']:
-        for testname in ('sessionrestore',
-                         'sessionrestore_no_auto_restore'):
-            if testname in activeTests:
-                print "%s is unsupported on e10s, removing from list of " \
-                    "tests to run" % testname
-                activeTests.remove(testname)
     # ensure tests are available
     availableTests = test.test_dict()
     if not set(activeTests).issubset(availableTests):
@@ -419,6 +304,10 @@ def get_active_tests(config):
                    if i not in availableTests]
         raise ConfigurationError("No definition found for test(s): %s"
                                  % missing)
+
+    # disabled DAMP on winXP: frequent hangs, <3% of devtools users on winXP
+    if utils.PLATFORM_TYPE == 'win_':
+        activeTests = [i for i in activeTests if i != 'damp']
     return activeTests
 
 
@@ -451,8 +340,9 @@ def build_manifest(config, manifestName):
     # write modified manifest lines
     with open(manifestName + '.develop', 'w') as newHandle:
         for line in manifestLines:
-            newHandle.write(line.replace('localhost',
-                                         config['webserver']))
+            newline = line.replace('localhost', config['webserver'])
+            newline = newline.replace('page_load_test', 'tests')
+            newHandle.write(newline)
 
     newManifestName = manifestName + '.develop'
 
@@ -481,7 +371,7 @@ def get_test(config, global_overrides, counters, test_instance):
 
     # fix up tpmanifest
     tpmanifest = getattr(test_instance, 'tpmanifest', None)
-    if tpmanifest and config.get('develop'):
+    if tpmanifest:
         test_instance.tpmanifest = \
             build_manifest(config, utils.interpolate(tpmanifest))
 
@@ -518,7 +408,7 @@ def tests(config):
 
 def get_browser_config(config):
     required = ('preferences', 'extensions', 'browser_path', 'browser_wait',
-                'extra_args', 'buildid', 'env', 'init_url')
+                'extra_args', 'buildid', 'env', 'init_url', 'webserver')
     optional = {'bcontroller_config': '${talos}/bcontroller.json',
                 'branch_name': '',
                 'child_process': 'plugin-container',
@@ -530,7 +420,6 @@ def get_browser_config(config):
                 'symbols_path': None,
                 'test_name_extension': '',
                 'test_timeout': 1200,
-                'webserver': '',
                 'xperf_path': None,
                 'error_filename': None,
                 }
@@ -541,7 +430,29 @@ def get_browser_config(config):
     return browser_config
 
 
+def suites_conf():
+    import json
+    with open(os.path.join(os.path.dirname(utils.here),
+                           'talos.json')) as f:
+        return json.load(f)['suites']
+
+
 def get_config(argv=None):
+    argv = argv or sys.argv[1:]
+    cli_opts = parse_args(argv=argv)
+    if cli_opts.suite:
+        # read the suite config, update the args
+        try:
+            suite_conf = suites_conf()[cli_opts.suite]
+        except KeyError:
+            raise ConfigurationError('No such suite: %r' % cli_opts.suite)
+        argv += ['-a', ':'.join(suite_conf['tests'])]
+        argv += suite_conf.get('talos_options', [])
+        # and reparse the args
+        cli_opts = parse_args(argv=argv)
+    elif not cli_opts.activeTests:
+        raise ConfigurationError('--activeTests or --suite required!')
+
     cli_opts = parse_args(argv=argv)
     config = copy.deepcopy(DEFAULTS)
     config.update(cli_opts.__dict__)

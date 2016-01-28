@@ -93,7 +93,6 @@ XPCOMUtils.defineLazyGetter(this, "PALETTE_ITEMS", function() {
     "email-link-button",
     "sync-button",
     "tabview-button",
-    "web-apps-button",
   ];
 
   let panelPlacements = DEFAULT_AREA_PLACEMENTS["PanelUI-contents"];
@@ -713,18 +712,24 @@ this.BrowserUITelemetry = {
   /**
    * Default bucket name, when no other bucket is active.
    */
-  get BUCKET_DEFAULT() BUCKET_DEFAULT,
+  get BUCKET_DEFAULT() {
+    return BUCKET_DEFAULT;
+  },
 
   /**
    * Bucket prefix, for named buckets.
    */
-  get BUCKET_PREFIX() BUCKET_PREFIX,
+  get BUCKET_PREFIX() {
+    return BUCKET_PREFIX;
+  },
 
   /**
    * Standard separator to use between different parts of a bucket name, such
    * as primary name and the time step string.
    */
-  get BUCKET_SEPARATOR() BUCKET_SEPARATOR,
+  get BUCKET_SEPARATOR() {
+    return BUCKET_SEPARATOR;
+  },
 
   get currentBucket() {
     return this._bucket;

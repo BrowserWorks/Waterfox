@@ -35,7 +35,9 @@ class DOMHwMediaStream;
 class DOMLocalMediaStream;
 class MediaStream;
 class MediaEngineSource;
+class MediaInputPort;
 class MediaStreamGraph;
+class ProcessedMediaStream;
 
 namespace dom {
 class AudioNode;
@@ -64,6 +66,110 @@ class MediaStreamDirectListener;
 
 /**
  * DOM wrapper for MediaStreams.
+ *
+ * To account for track operations such as clone(), addTrack() and
+ * removeTrack(), a DOMMediaStream wraps three internal (and chained)
+ * MediaStreams:
+ *   1. mInputStream
+ *      - Controlled by the owner/source of the DOMMediaStream.
+ *        It's a stream of the type indicated by
+ *      - DOMMediaStream::CreateSourceStream/CreateTrackUnionStream. A source
+ *        typically creates its DOMMediaStream, creates the MediaStreamTracks
+ *        owned by said stream, then gets the internal input stream to which it
+ *        feeds data for the previously created tracks.
+ *      - When necessary it can create tracks on the internal stream only and
+ *        their corresponding MediaStreamTracks will be asynchronously created.
+ *   2. mOwnedStream
+ *      - A TrackUnionStream containing tracks owned by this stream.
+ *      - The internal model of a MediaStreamTrack consists of its owning
+ *        DOMMediaStream and the TrackID of the corresponding internal track in
+ *        the owning DOMMediaStream's mOwnedStream.
+ *      - The owned stream is different from the input stream since a cloned
+ *        DOMMediaStream is also the owner of its (cloned) MediaStreamTracks.
+ *      - Stopping an original track shall not stop its clone. This is
+ *        solved by stopping it at the owned stream, while the clone's owned
+ *        stream gets data directly from the original input stream.
+ *      - A DOMMediaStream (original or clone) gets all tracks dynamically
+ *        added by the source automatically forwarded by having a TRACK_ANY
+ *        MediaInputPort set up from the owning DOMMediaStream's input stream
+ *        to this DOMMediaStream's owned stream.
+ *   3. mPlaybackStream
+ *      - A TrackUnionStream containing the tracks corresponding to the
+ *        MediaStreamTracks currently in this DOMMediaStream (per getTracks()).
+ *      - Similarly as for mOwnedStream, there's a TRACK_ANY MediaInputPort set
+ *        up from the owned stream to the playback stream to allow tracks
+ *        dynamically added by the source to be automatically forwarded to any
+ *        audio or video sinks.
+ *      - MediaStreamTracks added by addTrack() are set up with a MediaInputPort
+ *        locked to their internal TrackID, from their owning DOMMediaStream's
+ *        owned stream to this playback stream.
+ *
+ *
+ * A graphical representation of how tracks are connected in various cases as
+ * follows:
+ *
+ *                     addTrack()ed case:
+ * DOMStream A
+ *           Input        Owned          Playback
+ *            t1 ---------> t1 ------------> t1     <- MediaStreamTrack X
+ *                                                     (pointing to t1 in A)
+ *                                 --------> t2     <- MediaStreamTrack Y
+ *                                /                    (pointing to t1 in B)
+ * DOMStream B                   /
+ *           Input        Owned /        Playback
+ *            t1 ---------> t1 ------------> t1     <- MediaStreamTrack Y
+ *                                                     (pointing to t1 in B)
+ *
+ *                     removeTrack()ed case:
+ * DOMStream A
+ *           Input        Owned          Playback
+ *            t1 ---------> t1                      <- No tracks
+ *
+ *
+ *                     clone()d case:
+ * DOMStream A
+ *           Input        Owned          Playback
+ *            t1 ---------> t1 ------------> t1     <- MediaStreamTrack X
+ *               \                                     (pointing to t1 in A)
+ *                -----
+ * DOMStream B         \
+ *           Input      \ Owned          Playback
+ *                       -> t1 ------------> t1     <- MediaStreamTrack Y
+ *                                                     (pointing to t1 in B)
+ *
+ *
+ *            addTrack()ed, removeTrack()ed and clone()d case:
+ *
+ *  Here we have done the following:
+ *    var A = someStreamWithTwoTracks;
+ *    var B = someStreamWithOneTrack;
+ *    var X = A.getTracks()[0];
+ *    var Y = A.getTracks()[1];
+ *    var Z = B.getTracks()[0];
+ *    A.addTrack(Z);
+ *    A.removeTrack(X);
+ *    B.removeTrack(Z);
+ *    var A' = A.clone();
+ *
+ * DOMStream A
+ *           Input        Owned          Playback
+ *            t1 ---------> t1                      <- MediaStreamTrack X (removed)
+ *                                                     (pointing to t1 in A)
+ *            t2 ---------> t2 ------------> t2     <- MediaStreamTrack Y
+ *             \                                       (pointing to t2 in A)
+ *              \                    ------> t3     <- MediaStreamTrack Z
+ *               \                  /                  (pointing to t1 in B)
+ * DOMStream B    \                /
+ *           Input \      Owned   /      Playback
+ *            t1 ---^-----> t1 ---                  <- MediaStreamTrack Z (removed)
+ *              \    \                                 (pointing to t1 in B)
+ *               \    \
+ * DOMStream A'   \    \
+ *           Input \    \ Owned          Playback
+ *                  \    -> t1 ------------> t1     <- MediaStreamTrack Y'
+ *                   \                                 (pointing to t1 in A')
+ *                    ----> t2 ------------> t2     <- MediaStreamTrack Z'
+ *                                                     (pointing to t2 in A')
  */
 class DOMMediaStream : public DOMEventTargetHelper
 {
@@ -75,13 +181,109 @@ class DOMMediaStream : public DOMEventTargetHelper
   typedef dom::VideoTrack VideoTrack;
   typedef dom::AudioTrackList AudioTrackList;
   typedef dom::VideoTrackList VideoTrackList;
-  typedef dom::MediaTrackListListener MediaTrackListListener;
 
 public:
   typedef dom::MediaTrackConstraints MediaTrackConstraints;
-  typedef uint8_t TrackTypeHints;
 
-  DOMMediaStream();
+  class TrackListener {
+    NS_INLINE_DECL_REFCOUNTING(TrackListener)
+
+  public:
+    /**
+     * Called when the DOMMediaStream has a new track added, either by
+     * JS (addTrack()) or the source creating one.
+     */
+    virtual void
+    NotifyTrackAdded(const RefPtr<MediaStreamTrack>& aTrack) {};
+
+    /**
+     * Called when the DOMMediaStream removes a track, either by
+     * JS (removeTrack()) or the source ending it.
+     */
+    virtual void
+    NotifyTrackRemoved(const RefPtr<MediaStreamTrack>& aTrack) {};
+
+  protected:
+    virtual ~TrackListener() {}
+  };
+
+  /**
+   * TrackPort is a representation of a MediaStreamTrack-MediaInputPort pair
+   * that make up a link between the Owned stream and the Playback stream.
+   *
+   * Semantically, the track is the identifier/key and the port the value of this
+   * connection.
+   *
+   * The input port can be shared between several TrackPorts. This is the case
+   * for DOMMediaStream's mPlaybackPort which forwards all tracks in its
+   * mOwnedStream automatically.
+   *
+   * If the MediaStreamTrack is owned by another DOMMediaStream (called A) than
+   * the one owning the TrackPort (called B), the input port (locked to the
+   * MediaStreamTrack's TrackID) connects A's mOwnedStream to B's mPlaybackStream.
+   *
+   * A TrackPort may never leave the DOMMediaStream it was created in. Internal
+   * use only.
+   */
+  class TrackPort
+  {
+  public:
+    NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(TrackPort)
+    NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(TrackPort)
+
+    /**
+     * Indicates MediaInputPort ownership to the TrackPort.
+     *
+     * OWNED    - Owned by the TrackPort itself. TrackPort must destroy the
+     *            input port when it's destructed.
+     * EXTERNAL - Owned by another entity. It's the caller's responsibility to
+     *            ensure the the MediaInputPort outlives the TrackPort.
+     */
+    enum class InputPortOwnership {
+      OWNED = 1,
+      EXTERNAL
+    };
+
+    TrackPort(MediaInputPort* aInputPort,
+              MediaStreamTrack* aTrack,
+              const InputPortOwnership aOwnership);
+
+  protected:
+    virtual ~TrackPort();
+
+  public:
+    void DestroyInputPort();
+
+    /**
+     * Returns the source stream of the input port.
+     */
+    MediaStream* GetSource() const;
+
+    /**
+     * Returns the track ID this track is locked to in the source stream of the
+     * input port.
+     */
+    TrackID GetSourceTrackId() const;
+
+    MediaInputPort* GetInputPort() const { return mInputPort; }
+    MediaStreamTrack* GetTrack() const { return mTrack; }
+
+    /**
+     * Blocks aTrackId from going into mInputPort unless the port has been
+     * destroyed.
+     */
+    void BlockTrackId(TrackID aTrackId);
+
+  private:
+    RefPtr<MediaInputPort> mInputPort;
+    RefPtr<MediaStreamTrack> mTrack;
+
+    // Defines if we've been given ownership of the input port or if it's owned
+    // externally. The owner is responsible for destroying the port.
+    const InputPortOwnership mOwnership;
+  };
+
+ DOMMediaStream();
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(DOMEventTargetHelper)
@@ -96,16 +298,67 @@ public:
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
+
+  static already_AddRefed<DOMMediaStream>
+  Constructor(const dom::GlobalObject& aGlobal,
+              ErrorResult& aRv);
+
+  static already_AddRefed<DOMMediaStream>
+  Constructor(const dom::GlobalObject& aGlobal,
+              const DOMMediaStream& aStream,
+              ErrorResult& aRv);
+
+  static already_AddRefed<DOMMediaStream>
+  Constructor(const dom::GlobalObject& aGlobal,
+              const dom::Sequence<OwningNonNull<MediaStreamTrack>>& aTracks,
+              ErrorResult& aRv);
+
   double CurrentTime();
 
   void GetId(nsAString& aID) const;
 
-  void GetAudioTracks(nsTArray<nsRefPtr<AudioStreamTrack> >& aTracks);
-  void GetVideoTracks(nsTArray<nsRefPtr<VideoStreamTrack> >& aTracks);
-  void GetTracks(nsTArray<nsRefPtr<MediaStreamTrack> >& aTracks);
+  void GetAudioTracks(nsTArray<RefPtr<AudioStreamTrack> >& aTracks) const;
+  void GetVideoTracks(nsTArray<RefPtr<VideoStreamTrack> >& aTracks) const;
+  void GetTracks(nsTArray<RefPtr<MediaStreamTrack> >& aTracks) const;
+  void AddTrack(MediaStreamTrack& aTrack);
+  void RemoveTrack(MediaStreamTrack& aTrack);
+
+  // NON-WebIDL
+
+  /**
+   * Returns true if this DOMMediaStream has aTrack in its mPlaybackStream.
+   */
   bool HasTrack(const MediaStreamTrack& aTrack) const;
 
-  MediaStream* GetStream() const { return mStream; }
+  /**
+   * Returns true if this DOMMediaStream owns aTrack.
+   */
+  bool OwnsTrack(const MediaStreamTrack& aTrack) const;
+
+  /**
+   * Returns the corresponding MediaStreamTrack if it's in our mOwnedStream.
+   */
+  MediaStreamTrack* FindOwnedDOMTrack(MediaStream* aOwningStream, TrackID aTrackID) const;
+
+  /**
+   * Returns the corresponding MediaStreamTrack if it's in our mPlaybackStream.
+   */
+  MediaStreamTrack* FindPlaybackDOMTrack(MediaStream* aOwningStream, TrackID aTrackID) const;
+
+  /**
+   * Returns the TrackPort connecting mOwnedStream to mPlaybackStream for aTrack.
+   */
+  TrackPort* FindPlaybackTrackPort(const MediaStreamTrack& aTrack) const;
+
+  MediaStream* GetInputStream() const { return mInputStream; }
+  ProcessedMediaStream* GetOwnedStream() const { return mOwnedStream; }
+  ProcessedMediaStream* GetPlaybackStream() const { return mPlaybackStream; }
+
+  /**
+   * Allows a video element to identify this stream as a camera stream, which
+   * needs special treatment.
+   */
+  virtual MediaStream* GetCameraStream() const { return nullptr; }
 
   /**
    * Overridden in DOMLocalMediaStreams to allow getUserMedia to pass
@@ -194,20 +447,20 @@ public:
   void AssignId(const nsAString& aID) { mID = aID; }
 
   /**
-   * Create an nsDOMMediaStream whose underlying stream is a SourceMediaStream.
+   * Create a DOMMediaStream whose underlying input stream is a SourceMediaStream.
    */
   static already_AddRefed<DOMMediaStream> CreateSourceStream(nsIDOMWindow* aWindow,
                                                              MediaStreamGraph* aGraph);
 
   /**
-   * Create an nsDOMMediaStream whose underlying stream is a TrackUnionStream.
+   * Create a DOMMediaStream whose underlying input stream is a TrackUnionStream.
    */
   static already_AddRefed<DOMMediaStream> CreateTrackUnionStream(nsIDOMWindow* aWindow,
                                                                  MediaStreamGraph* aGraph);
 
   /**
-   * Create an nsDOMMediaStream whose underlying stream is an
-   * AudioCaptureStream
+   * Create an DOMMediaStream whose underlying input stream is an
+   * AudioCaptureStream.
    */
   static already_AddRefed<DOMMediaStream> CreateAudioCaptureStream(
     nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
@@ -217,11 +470,13 @@ public:
     mLogicalStreamStartTime = aTime;
   }
 
-  // Notifications from StreamListener.
-  // BindDOMTrack should only be called when it's safe to run script.
-  MediaStreamTrack* BindDOMTrack(TrackID aTrackID, MediaSegment::Type aType);
-  MediaStreamTrack* CreateDOMTrack(TrackID aTrackID, MediaSegment::Type aType);
-  MediaStreamTrack* GetDOMTrackFor(TrackID aTrackID);
+  /**
+   * Called for each track in our owned stream to indicate to JS that we
+   * are carrying that track.
+   *
+   * Creates a MediaStreamTrack, adds it to mTracks and returns it.
+   */
+  MediaStreamTrack* CreateOwnDOMTrack(TrackID aTrackID, MediaSegment::Type aType);
 
   class OnTracksAvailableCallback {
   public:
@@ -249,46 +504,54 @@ public:
     }
   }
 
-  /**
-   * If loading and playing a MediaStream in a media element, for each
-   * MediaStreamTrack in the MediaStream, create a corresponding AudioTrack or
-   * VideoTrack during the phase of resource fetching.
-   */
-  void ConstructMediaTracks(AudioTrackList* aAudioTrackList,
-                            VideoTrackList* aVideoTrackList);
-
-  /**
-   * MUST call this before the AudioTrackList or VideoTrackList go away
-   */
-  void DisconnectTrackListListeners(const AudioTrackList* aAudioTrackList,
-                                    const VideoTrackList* aVideoTrackList);
-
-  virtual void NotifyMediaStreamTrackCreated(MediaStreamTrack* aTrack);
-
-  virtual void NotifyMediaStreamTrackEnded(MediaStreamTrack* aTrack);
+  void RegisterTrackListener(TrackListener* aListener);
+  void UnregisterTrackListener(TrackListener* aListener);
 
 protected:
   virtual ~DOMMediaStream();
 
   void Destroy();
-  void InitSourceStream(nsIDOMWindow* aWindow,
-                        MediaStreamGraph* aGraph);
-  void InitTrackUnionStream(nsIDOMWindow* aWindow,
-                            MediaStreamGraph* aGraph);
-  void InitAudioCaptureStream(nsIDOMWindow* aWindow,
-                              MediaStreamGraph* aGraph);
-  void InitStreamCommon(MediaStream* aStream);
-  already_AddRefed<AudioTrack> CreateAudioTrack(AudioStreamTrack* aStreamTrack);
-  already_AddRefed<VideoTrack> CreateVideoTrack(VideoStreamTrack* aStreamTrack);
+  void InitSourceStream(nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
+  void InitTrackUnionStream(nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
+  void InitAudioCaptureStream(nsIDOMWindow* aWindow, MediaStreamGraph* aGraph);
 
-  // Called when MediaStreamGraph has finished an iteration where tracks were
-  // created.
-  void TracksCreated();
+  // Sets up aStream as mInputStream. A producer may append data to a
+  // SourceMediaStream input stream, or connect another stream to a
+  // TrackUnionStream input stream.
+  void InitInputStreamCommon(MediaStream* aStream, MediaStreamGraph* aGraph);
+
+  // Sets up a new TrackUnionStream as mOwnedStream and connects it to
+  // mInputStream with a TRACK_ANY MediaInputPort if available.
+  // If this DOMMediaStream should have an input stream (producing data),
+  // it has to be initiated before the owned stream.
+  void InitOwnedStreamCommon(MediaStreamGraph* aGraph);
+
+  // Sets up a new TrackUnionStream as mPlaybackStream and connects it to
+  // mOwnedStream with a TRACK_ANY MediaInputPort if available.
+  // If this DOMMediaStream should have an owned stream (producer or clone),
+  // it has to be initiated before the playback stream.
+  void InitPlaybackStreamCommon(MediaStreamGraph* aGraph);
 
   void CheckTracksAvailable();
 
-  class StreamListener;
-  friend class StreamListener;
+  // Called when MediaStreamGraph has finished an iteration where tracks were
+  // created.
+  void NotifyTracksCreated();
+
+  // Dispatches NotifyTrackAdded() to all registered track listeners.
+  void NotifyTrackAdded(const RefPtr<MediaStreamTrack>& aTrack);
+
+  // Dispatches NotifyTrackRemoved() to all registered track listeners.
+  void NotifyTrackRemoved(const RefPtr<MediaStreamTrack>& aTrack);
+
+  class OwnedStreamListener;
+  friend class OwnedStreamListener;
+
+  class PlaybackStreamListener;
+  friend class PlaybackStreamListener;
+
+  // XXX Bug 1124630. Remove with CameraPreviewMediaStream.
+  void CreateAndAddPlaybackStreamListener(MediaStream*);
 
   // StreamTime at which the currentTime attribute would return 0.
   StreamTime mLogicalStreamStartTime;
@@ -296,16 +559,41 @@ protected:
   // We need this to track our parent object.
   nsCOMPtr<nsIDOMWindow> mWindow;
 
-  // MediaStream is owned by the graph, but we tell it when to die, and it won't
-  // die until we let it.
-  MediaStream* mStream;
+  // MediaStreams are owned by the graph, but we tell them when to die,
+  // and they won't die until we let them.
 
-  nsAutoTArray<nsRefPtr<MediaStreamTrack>,2> mTracks;
-  nsRefPtr<StreamListener> mListener;
+  // This stream contains tracks used as input by us. Cloning happens from this
+  // stream. Tracks may exist in these stream but not in |mOwnedStream| if they
+  // have been stopped.
+  MediaStream* mInputStream;
+
+  // This stream contains tracks owned by us (if we were created directly from
+  // source, or cloned from some other stream). Tracks map to |mOwnedTracks|.
+  ProcessedMediaStream* mOwnedStream;
+
+  // This stream contains tracks currently played by us, despite of owner.
+  // Tracks map to |mTracks|.
+  ProcessedMediaStream* mPlaybackStream;
+
+  // This port connects mInputStream to mOwnedStream. All tracks forwarded.
+  RefPtr<MediaInputPort> mOwnedPort;
+
+  // This port connects mOwnedStream to mPlaybackStream. All tracks not
+  // explicitly blocked due to removal are forwarded.
+  RefPtr<MediaInputPort> mPlaybackPort;
+
+  // MediaStreamTracks corresponding to tracks in our mOwnedStream.
+  nsAutoTArray<RefPtr<TrackPort>, 2> mOwnedTracks;
+
+  // MediaStreamTracks corresponding to tracks in our mPlaybackStream.
+  nsAutoTArray<RefPtr<TrackPort>, 2> mTracks;
+
+  RefPtr<OwnedStreamListener> mOwnedListener;
+  RefPtr<PlaybackStreamListener> mPlaybackListener;
 
   nsTArray<nsAutoPtr<OnTracksAvailableCallback> > mRunOnTracksAvailable;
 
-  // Set to true after MediaStreamGraph has created tracks for mStream.
+  // Set to true after MediaStreamGraph has created tracks for mPlaybackStream.
   bool mTracksCreated;
 
   nsString mID;
@@ -315,9 +603,8 @@ protected:
 
   bool mNotifiedOfMediaStreamGraphShutdown;
 
-  // Send notifications to AudioTrackList or VideoTrackList, if this MediaStream
-  // is consumed by a HTMLMediaElement.
-  nsTArray<MediaTrackListListener> mMediaTrackListListeners;
+  // The track listeners subscribe to changes in this stream's track set.
+  nsTArray<RefPtr<TrackListener>> mTrackListeners;
 
 private:
   void NotifyPrincipalChanged();
@@ -349,7 +636,7 @@ public:
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual void Stop();
+  void Stop();
 
   virtual MediaEngineSource* GetMediaEngine(TrackID aTrackID) { return nullptr; }
 
@@ -375,6 +662,8 @@ public:
 
 protected:
   virtual ~DOMLocalMediaStream();
+
+  void StopImpl();
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(DOMLocalMediaStream,
@@ -403,7 +692,7 @@ protected:
 private:
   // If this object wraps a stream owned by an AudioNode, we need to ensure that
   // the node isn't cycle-collected too early.
-  nsRefPtr<AudioNode> mStreamNode;
+  RefPtr<AudioNode> mStreamNode;
 };
 
 class DOMHwMediaStream : public DOMLocalMediaStream
@@ -431,11 +720,11 @@ private:
   void Init(MediaStream* aStream);
 
 #ifdef MOZ_WIDGET_GONK
-  nsRefPtr<ImageContainer> mImageContainer;
+  RefPtr<ImageContainer> mImageContainer;
   const int DEFAULT_IMAGE_ID = 0x01;
   const int DEFAULT_IMAGE_WIDTH = 400;
   const int DEFAULT_IMAGE_HEIGHT = 300;
-  nsRefPtr<OverlayImage> mOverlayImage;
+  RefPtr<OverlayImage> mOverlayImage;
   Data mImageData;
 #endif
 };

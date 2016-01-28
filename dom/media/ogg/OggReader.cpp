@@ -106,8 +106,7 @@ static const nsString GetKind(const nsCString& aRole)
   return EmptyString();
 }
 
-static void InitTrack(TrackInfo::TrackType aTrackType,
-                      MessageField* aMsgInfo,
+static void InitTrack(MessageField* aMsgInfo,
                       TrackInfo* aInfo,
                       bool aEnable)
 {
@@ -118,8 +117,7 @@ static void InitTrack(TrackInfo::TrackType aTrackType,
   nsCString* sRole = aMsgInfo->mValuesStore.Get(eRole);
   nsCString* sTitle = aMsgInfo->mValuesStore.Get(eTitle);
   nsCString* sLanguage = aMsgInfo->mValuesStore.Get(eLanguage);
-  aInfo->Init(aTrackType,
-              sName? NS_ConvertUTF8toUTF16(*sName):EmptyString(),
+  aInfo->Init(sName? NS_ConvertUTF8toUTF16(*sName):EmptyString(),
               sRole? GetKind(*sRole):EmptyString(),
               sTitle? NS_ConvertUTF8toUTF16(*sTitle):EmptyString(),
               sLanguage? NS_ConvertUTF8toUTF16(*sLanguage):EmptyString(),
@@ -152,7 +150,7 @@ OggReader::~OggReader()
   MOZ_COUNT_DTOR(OggReader);
 }
 
-nsresult OggReader::Init(MediaDecoderReader* aCloneDonor) {
+nsresult OggReader::Init() {
   int ret = ogg_sync_init(&mOggState);
   NS_ENSURE_TRUE(ret == 0, NS_ERROR_FAILURE);
   return NS_OK;
@@ -240,7 +238,7 @@ void OggReader::SetupTargetTheora(TheoraState* aTheoraState)
 
     VideoFrameContainer* container = mDecoder->GetVideoFrameContainer();
     if (container) {
-      container->ClearCurrentFrame(gfxIntSize(displaySize.width, displaySize.height));
+      container->ClearCurrentFrame(IntSize(displaySize.width, displaySize.height));
     }
 
     // Copy Theora info data for time computations on other threads.
@@ -319,8 +317,7 @@ void OggReader::SetupMediaTracksInfo(const nsTArray<uint32_t>& aSerials)
       }
 
       if (msgInfo) {
-        InitTrack(TrackInfo::kVideoTrack,
-                  msgInfo,
+        InitTrack(msgInfo,
                   &mInfo.mVideo,
                   mTheoraState == theoraState);
       }
@@ -344,8 +341,7 @@ void OggReader::SetupMediaTracksInfo(const nsTArray<uint32_t>& aSerials)
       }
 
       if (msgInfo) {
-        InitTrack(TrackInfo::kAudioTrack,
-                  msgInfo,
+        InitTrack(msgInfo,
                   &mInfo.mAudio,
                   mVorbisState == vorbisState);
       }
@@ -359,8 +355,7 @@ void OggReader::SetupMediaTracksInfo(const nsTArray<uint32_t>& aSerials)
       }
 
       if (msgInfo) {
-        InitTrack(TrackInfo::kAudioTrack,
-                  msgInfo,
+        InitTrack(msgInfo,
                   &mInfo.mAudio,
                   mOpusState == opusState);
       }
@@ -470,8 +465,6 @@ nsresult OggReader::ReadMetadata(MediaInfo* aInfo,
   SetupMediaTracksInfo(serials);
 
   if (HasAudio() || HasVideo()) {
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-
     if (mInfo.mMetadataDuration.isNothing() &&
         !mDecoder->IsOggDecoderShutdown() &&
         mResource.GetLength() >= 0) {
@@ -481,11 +474,7 @@ nsresult OggReader::ReadMetadata(MediaInfo* aInfo,
 
       NS_ASSERTION(length > 0, "Must have a content length to get end time");
 
-      int64_t endTime = 0;
-      {
-        ReentrantMonitorAutoExit exitMon(mDecoder->GetReentrantMonitor());
-        endTime = RangeEndTime(length);
-      }
+      int64_t endTime = RangeEndTime(length);
       if (endTime != -1) {
         mInfo.mUnadjustedMetadataEndTime.emplace(TimeUnit::FromMicroseconds(endTime));
         LOG(LogLevel::Debug, ("Got Ogg duration from seeking to end %lld", endTime));
@@ -720,10 +709,7 @@ void OggReader::SetChained(bool aIsChained) {
     ReentrantMonitorAutoEnter mon(mMonitor);
     mIsChained = aIsChained;
   }
-  {
-    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-    mDecoder->SetMediaSeekable(false);
-  }
+  mDecoder->DispatchSetMediaSeekable(false);
 }
 
 bool OggReader::ReadOggChain()
@@ -786,7 +772,7 @@ bool OggReader::ReadOggChain()
     LOG(LogLevel::Debug, ("New vorbis ogg link, serial=%d\n", mVorbisSerial));
 
     if (msgInfo) {
-      InitTrack(TrackInfo::kAudioTrack, msgInfo, &mInfo.mAudio, true);
+      InitTrack(msgInfo, &mInfo.mAudio, true);
     }
     mInfo.mAudio.mRate = newVorbisState->mInfo.rate;
     mInfo.mAudio.mChannels = newVorbisState->mInfo.channels;
@@ -802,7 +788,7 @@ bool OggReader::ReadOggChain()
     SetupTargetOpus(newOpusState);
 
     if (msgInfo) {
-      InitTrack(TrackInfo::kAudioTrack, msgInfo, &mInfo.mAudio, true);
+      InitTrack(msgInfo, &mInfo.mAudio, true);
     }
     mInfo.mAudio.mRate = newOpusState->mRate;
     mInfo.mAudio.mChannels = newOpusState->mChannels;
@@ -865,7 +851,7 @@ nsresult OggReader::DecodeTheora(ogg_packet* aPacket, int64_t aTimeThreshold)
     b.mPlanes[i].mOffset = b.mPlanes[i].mSkip = 0;
   }
 
-  nsRefPtr<VideoData> v = VideoData::Create(mInfo.mVideo,
+  RefPtr<VideoData> v = VideoData::Create(mInfo.mVideo,
                                             mDecoder->GetImageContainer(),
                                             mResource.Tell(),
                                             time,
@@ -1403,7 +1389,7 @@ nsresult OggReader::SeekInUnbuffered(int64_t aTarget,
   return SeekBisection(seekTarget, k, SEEK_FUZZ_USECS);
 }
 
-nsRefPtr<MediaDecoderReader::SeekPromise>
+RefPtr<MediaDecoderReader::SeekPromise>
 OggReader::Seek(int64_t aTarget, int64_t aEndTime)
 {
   nsresult res = SeekInternal(aTarget, aEndTime);
@@ -1479,7 +1465,7 @@ nsresult OggReader::SeekInternal(int64_t aTarget, int64_t aEndTime)
     // keyframe.
     VideoData* v;
     while ((v = mVideoQueue.PeekFront()) && !v->mKeyframe) {
-      nsRefPtr<VideoData> releaseMe = mVideoQueue.PopFront();
+      RefPtr<VideoData> releaseMe = mVideoQueue.PopFront();
     }
     if (mVideoQueue.GetSize() == 0) {
       // We didn't find a keyframe in the frames already here, so decode

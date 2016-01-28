@@ -14,30 +14,23 @@ namespace mozilla {
 class MP4Decoder : public MediaDecoder
 {
 public:
-  MP4Decoder();
+  explicit MP4Decoder(MediaDecoderOwner* aOwner);
 
-  virtual MediaDecoder* Clone() override {
+  virtual MediaDecoder* Clone(MediaDecoderOwner* aOwner) override {
     if (!IsEnabled()) {
       return nullptr;
     }
-    return new MP4Decoder();
+    return new MP4Decoder(aOwner);
   }
 
   virtual MediaDecoderStateMachine* CreateStateMachine() override;
-
-#ifdef MOZ_EME
-  virtual nsresult SetCDMProxy(CDMProxy* aProxy) override;
-#endif
 
   // Returns true if aMIMEType is a type that we think we can render with the
   // a MP4 platform decoder backend. If aCodecs is non emtpy, it is filled
   // with a comma-delimited list of codecs to check support for. Notes in
   // out params wether the codecs string contains AAC or H.264.
-  static bool CanHandleMediaType(const nsACString& aMIMEType,
-                                 const nsAString& aCodecs,
-                                 bool& aOutContainsAAC,
-                                 bool& aOutContainsH264,
-                                 bool& aOutContainsMP3);
+  static bool CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
+                                 const nsAString& aCodecs);
 
   static bool CanHandleMediaType(const nsAString& aMIMEType);
 
@@ -45,8 +38,6 @@ public:
   static bool IsEnabled();
 
   static bool IsVideoAccelerated(layers::LayersBackend aBackend, nsACString& aReason);
-  static bool CanCreateAACDecoder();
-  static bool CanCreateH264Decoder();
 };
 
 } // namespace mozilla

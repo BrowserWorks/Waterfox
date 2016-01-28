@@ -83,6 +83,9 @@
 
   <string name="url_bar_default_text">&url_bar_default_text2;</string>
 
+  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq -->
+  <string name="faq_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/faq</string>
+
   <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/ -->
   <string name="help_link">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/</string>
   <string name="help_menu">&help_menu;</string>
@@ -133,7 +136,7 @@
   <string name="overlay_share_no_url">&overlay_share_no_url;</string>
   <string name="overlay_share_select_device">&overlay_share_select_device;</string>
   <string name="overlay_no_synced_devices">&overlay_no_synced_devices;</string>
-  <string name="overlay_share_tab_not_sent">&overlay_share_tab_not_sent;</string>
+  <string name="menu_no_synced_devices">&menu_no_synced_devices;</string>
 
   <string name="settings">&settings;</string>
   <string name="settings_title">&settings_title;</string>
@@ -208,10 +211,17 @@
   <string name="pref_cookies_not_accept_foreign">&pref_cookies_not_accept_foreign;</string>
   <string name="pref_cookies_disabled">&pref_cookies_disabled;</string>
 
+  <string name="pref_tap_to_load_images_title">&pref_tap_to_load_images_title;</string>
+  <string name="pref_tap_to_load_images_summary2">&pref_tap_to_load_images_summary2;</string>
+
   <string name="pref_tracking_protection_title">&pref_tracking_protection_title;</string>
   <string name="pref_tracking_protection_summary">&pref_tracking_protection_summary3;</string>
   <string name="pref_donottrack_title">&pref_donottrack_title;</string>
   <string name="pref_donottrack_summary">&pref_donottrack_summary;</string>
+
+  <string name="pref_tracking_protection_enabled">&pref_tracking_protection_enabled;</string>
+  <string name="pref_tracking_protection_enabled_pb">&pref_tracking_protection_enabled_pb;</string>
+  <string name="pref_tracking_protection_disabled">&pref_tracking_protection_disabled;</string>
 
   <string name="pref_char_encoding">&pref_char_encoding;</string>
   <string name="pref_char_encoding_on">&pref_char_encoding_on;</string>
@@ -248,6 +258,7 @@
   <string name="pref_sync">&pref_sync;</string>
   <string name="pref_sync_summary">&pref_sync_summary2;</string>
   <string name="pref_search_suggestions">&pref_search_suggestions;</string>
+  <string name="pref_history_search_suggestions">&pref_history_search_suggestions;</string>
   <string name="pref_private_data_history2">&pref_private_data_history2;</string>
   <string name="pref_private_data_searchHistory">&pref_private_data_searchHistory;</string>
   <string name="pref_private_data_formdata2">&pref_private_data_formdata2;</string>
@@ -474,10 +485,6 @@
   <string name="bookmarkdefaults_title_support">&bookmarks_support;</string>
   <string name="bookmarkdefaults_url_support">https://support.mozilla.org/products/mobile</string>
 
-  <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_marketplace -->
-  <string name="bookmarkdefaults_title_marketplace">&bookmarks_marketplace;</string>
-  <string name="bookmarkdefaults_url_marketplace">https://marketplace.firefox.com/</string>
-
   <string name="bookmarkdefaults_title_restricted_webmaker">&bookmarks_restricted_webmaker;</string>
   <string name="bookmarkdefaults_url_restricted_webmaker">https://webmaker.org/</string>
 
@@ -487,6 +494,7 @@
   <!-- Site identity popup -->
   <string name="identity_connection_secure">&identity_connection_secure;</string>
   <string name="identity_connection_insecure">&identity_connection_insecure;</string>
+  <string name="identity_login_insecure">&identity_login_insecure;</string>
 
   <string name="mixed_content_blocked_all">&mixed_content_blocked_all1;</string>
   <string name="mixed_content_blocked_some">&mixed_content_blocked_some1;</string>
@@ -587,6 +595,13 @@
   <string name="remote_tabs_last_synced">&remote_tabs_last_synced;</string>
 
   <string name="intent_uri_cannot_open">&intent_uri_cannot_open;</string>
+  <string name="intent_uri_private_browsing_prompt">&intent_uri_private_browsing_prompt;</string>
+  <string name="intent_uri_private_browsing_multiple_match_title">&intent_uri_private_browsing_multiple_match_title;</string>
 
   <string name="devtools_auth_scan_header">&devtools_auth_scan_header;</string>
+
+<!-- (Hard-coded string for beta uplift): The user installed a build of this app that does not support
+     the Android version of this device. the formatS1 is replaced by the CPU ABI (e.g., ARMv7); the formatS2 is
+     replaced by the Android OS version (e.g., 14)-->
+  <string name="unsupported_sdk_version">Sorry! This &brandShortName; won\'t work on this device (&formatS1;, &formatS2;). Please download the correct version.</string>
 </resources>

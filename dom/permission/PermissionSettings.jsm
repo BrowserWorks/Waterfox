@@ -35,7 +35,7 @@ this.PermissionSettingsModule = {
   },
 
 
-  _isChangeAllowed: function(aPrincipal, aPermName, aAction, aAppKind) {
+  _isChangeAllowed: function(aPrincipal, aPermName, aAction) {
     // Bug 812289:
     // Change is allowed from a child process when all of the following
     // conditions stand true:
@@ -50,7 +50,7 @@ this.PermissionSettingsModule = {
     // on permissionManager also but we currently don't.
     let perm =
       Services.perms.testExactPermissionFromPrincipal(aPrincipal,aPermName);
-    let isExplicit = isExplicitInPermissionsTable(aPermName, aPrincipal.appStatus, aAppKind);
+    let isExplicit = isExplicitInPermissionsTable(aPermName, aPrincipal.appStatus);
 
     return (aAction === "unknown" &&
             aPrincipal.appStatus === Ci.nsIPrincipal.APP_STATUS_NOT_INSTALLED) ||
@@ -67,13 +67,23 @@ this.PermissionSettingsModule = {
 
 
   _internalAddPermission: function _internalAddPermission(aData, aAllowAllChanges, aCallbacks) {
-    // TODO: Bug 1196644 - Add signPKg parameter into PermissionSettings.jsm
-    let uri = Services.io.newURI(aData.origin, null, null);
-    let app = appsService.getAppByManifestURL(aData.manifestURL);
-    let principal =
-      Services.scriptSecurityManager.createCodebasePrincipal(uri,
-                                                             {appId: app.localId,
-                                                              inBrowser: aData.browserFlag});
+    // TODO: Bug 1196644 - Add signPKg parameter into PermissionSettings.jsm.
+    let app;
+    let principal;
+    // Test if app is cached (signed streamable package) or installed via DOMApplicationRegistry
+    if (aData.isCachedPackage) {
+      // If the app is from packaged web app, the origin includes origin attributes already.
+      principal =
+        Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(aData.origin);
+      app = {localId: principal.appId};
+    } else {
+      app = appsService.getAppByManifestURL(aData.manifestURL);
+      let uri = Services.io.newURI(aData.origin, null, null);
+      principal =
+        Services.scriptSecurityManager.createCodebasePrincipal(uri,
+                                                               {appId: app.localId,
+                                                                inBrowser: aData.browserFlag});
+    }
 
     let action;
     switch (aData.value)
@@ -96,7 +106,7 @@ this.PermissionSettingsModule = {
     }
 
     if (aAllowAllChanges ||
-        this._isChangeAllowed(principal, aData.type, aData.value, app.kind)) {
+        this._isChangeAllowed(principal, aData.type, aData.value)) {
       debug("add: " + aData.origin + " " + app.localId + " " + action);
       Services.perms.addFromPrincipal(principal, aData.type, action);
       return true;
@@ -106,17 +116,24 @@ this.PermissionSettingsModule = {
     }
   },
 
-  getPermission: function getPermission(aPermName, aManifestURL, aOrigin, aBrowserFlag) {
+  getPermission: function getPermission(aPermName, aManifestURL, aOrigin, aBrowserFlag, aIsCachedPackage) {
     // TODO: Bug 1196644 - Add signPKg parameter into PermissionSettings.jsm
     debug("getPermission: " + aPermName + ", " + aManifestURL + ", " + aOrigin);
-    let uri = Services.io.newURI(aOrigin, null, null);
-    let appID = appsService.getAppLocalIdByManifestURL(aManifestURL);
-    let principal =
-      Services.scriptSecurityManager.createCodebasePrincipal(uri,
-                                                             {appId: appID,
-                                                              inBrowser: aBrowserFlag});
+    let principal;
+    // Test if app is cached (signed streamable package) or installed via DOMApplicationRegistry
+    if (aIsCachedPackage) {
+      // If the app is from packaged web app, the origin includes origin attributes already.
+      principal =
+        Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(aOrigin);
+    } else {
+      let uri = Services.io.newURI(aOrigin, null, null);
+      let appID = appsService.getAppLocalIdByManifestURL(aManifestURL);
+      principal =
+        Services.scriptSecurityManager.createCodebasePrincipal(uri,
+                                                               {appId: appID,
+                                                                inBrowser: aBrowserFlag});
+    }
     let result = Services.perms.testExactPermissionFromPrincipal(principal, aPermName);
-
     switch (result)
     {
       case Ci.nsIPermissionManager.UNKNOWN_ACTION:
@@ -133,13 +150,14 @@ this.PermissionSettingsModule = {
     }
   },
 
-  removePermission: function removePermission(aPermName, aManifestURL, aOrigin, aBrowserFlag) {
+  removePermission: function removePermission(aPermName, aManifestURL, aOrigin, aBrowserFlag, aIsCachedPackage) {
     let data = {
       type: aPermName,
       origin: aOrigin,
       manifestURL: aManifestURL,
       value: "unknown",
-      browserFlag: aBrowserFlag
+      browserFlag: aBrowserFlag,
+      isCachedPackage: aIsCachedPackage
     };
     this._internalAddPermission(data, true);
   },

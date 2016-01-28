@@ -8,7 +8,7 @@ MOZ_APP_VENDOR=Mozilla
 MOZ_B2GDROID=1
 MOZ_B2G=1
 
-MOZ_APP_VERSION=43.0a1
+MOZ_APP_VERSION=$FIREFOX_VERSION
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_UA_OS_AGNOSTIC=1
@@ -20,9 +20,9 @@ MOZ_BRANDING_DIRECTORY=mobile/android/b2gdroid/branding/unofficial
 MOZ_OFFICIAL_BRANDING_DIRECTORY=mobile/android/b2gdroid/branding/official
 # MOZ_APP_DISPLAYNAME is set by branding/configure.sh
 
-# We support Android SDK version 9 and up by default.
+# We support Android SDK version 14 and up by default.
 # See the --enable-android-min-sdk and --enable-android-max-sdk arguments in configure.in.
-MOZ_ANDROID_MIN_SDK_VERSION=9
+MOZ_ANDROID_MIN_SDK_VERSION=14
 
 # There are several entry points into the Firefox application.  These are the names of some of the classes that are
 # listed in the Android manifest.  They are specified in here to avoid hard-coding them in source code files.
@@ -40,11 +40,7 @@ MOZ_MEDIA_NAVIGATOR=1
 # Enable NFC permission
 MOZ_ANDROID_BEAM=1
 
-if test "$LIBXUL_SDK"; then
-MOZ_XULRUNNER=1
-else
 MOZ_XULRUNNER=
-fi
 
 MOZ_CAPTURE=1
 MOZ_RAW=1
@@ -122,3 +118,4 @@ fi
 
 MOZ_JSDOWNLOADS=1
 MOZ_TIME_MANAGER=1
+MOZ_WEBSMS_BACKEND=1

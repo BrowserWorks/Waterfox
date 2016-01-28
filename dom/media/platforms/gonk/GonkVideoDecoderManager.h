@@ -7,13 +7,11 @@
 #if !defined(GonkVideoDecoderManager_h_)
 #define GonkVideoDecoderManager_h_
 
-#include <set>
 #include "nsRect.h"
 #include "GonkMediaDataDecoder.h"
 #include "mozilla/RefPtr.h"
 #include "I420ColorConverterHelper.h"
 #include "MediaCodecProxy.h"
-#include <stagefright/foundation/AHandler.h>
 #include "GonkNativeWindow.h"
 #include "GonkNativeWindowClient.h"
 #include "mozilla/layers/FenceUtils.h"
@@ -22,7 +20,6 @@
 using namespace android;
 
 namespace android {
-struct ALooper;
 class MediaBuffer;
 struct MOZ_EXPORT AString;
 class GonkNativeWindow;
@@ -39,21 +36,19 @@ typedef android::MediaCodecProxy MediaCodecProxy;
 typedef mozilla::layers::TextureClient TextureClient;
 
 public:
+  typedef MozPromise<bool /* aIgnored */, bool /* aIgnored */, /* IsExclusive = */ true> MediaResourcePromise;
+
   GonkVideoDecoderManager(mozilla::layers::ImageContainer* aImageContainer,
                           const VideoInfo& aConfig);
 
-  virtual ~GonkVideoDecoderManager() override;
+  virtual ~GonkVideoDecoderManager();
 
-  virtual nsRefPtr<InitPromise> Init(MediaDataDecoderCallback* aCallback) override;
+  RefPtr<InitPromise> Init() override;
 
-  virtual nsresult Input(MediaRawData* aSample) override;
+  nsresult Output(int64_t aStreamOffset,
+                          RefPtr<MediaData>& aOutput) override;
 
-  virtual nsresult Output(int64_t aStreamOffset,
-                          nsRefPtr<MediaData>& aOutput) override;
-
-  virtual nsresult Flush() override;
-
-  virtual bool HasQueuedSample() override;
+  nsresult Shutdown() override;
 
   static void RecycleCallback(TextureClient* aClient, void* aClosure);
 
@@ -70,42 +65,31 @@ private:
     int32_t mCropRight = 0;
     int32_t mCropBottom = 0;
   };
-  class MessageHandler : public android::AHandler
-  {
-  public:
-    MessageHandler(GonkVideoDecoderManager *aManager);
-    ~MessageHandler();
 
-    virtual void onMessageReceived(const android::sp<android::AMessage> &aMessage);
-
-  private:
-    // Forbidden
-    MessageHandler() = delete;
-    MessageHandler(const MessageHandler &rhs) = delete;
-    const MessageHandler &operator=(const MessageHandler &rhs) = delete;
-
-    GonkVideoDecoderManager *mManager;
-  };
-  friend class MessageHandler;
+  void onMessageReceived(const android::sp<android::AMessage> &aMessage) override;
 
   class VideoResourceListener : public android::MediaCodecProxy::CodecResourceListener
   {
   public:
-    VideoResourceListener(GonkVideoDecoderManager *aManager);
+    VideoResourceListener();
     ~VideoResourceListener();
 
-    virtual void codecReserved() override;
-    virtual void codecCanceled() override;
+    RefPtr<MediaResourcePromise> Init()
+    {
+      RefPtr<MediaResourcePromise> p = mVideoCodecPromise.Ensure(__func__);
+      return p.forget();
+    }
+
+    void codecReserved() override;
+    void codecCanceled() override;
 
   private:
     // Forbidden
-    VideoResourceListener() = delete;
     VideoResourceListener(const VideoResourceListener &rhs) = delete;
     const VideoResourceListener &operator=(const VideoResourceListener &rhs) = delete;
 
-    GonkVideoDecoderManager *mManager;
+    MozPromiseHolder<MediaResourcePromise> mVideoCodecPromise;
   };
-  friend class VideoResourceListener;
 
   bool SetVideoFormat();
 
@@ -116,7 +100,6 @@ private:
   // For codec resource management
   void codecReserved();
   void codecCanceled();
-  void onMessageReceived(const sp<AMessage> &aMessage);
 
   void ReleaseAllPendingVideoBuffers();
   void PostReleaseVideoBuffer(android::MediaBuffer *aBuffer,
@@ -129,19 +112,14 @@ private:
   nsIntRect mPicture;
   nsIntSize mInitialFrame;
 
-  nsRefPtr<layers::ImageContainer> mImageContainer;
+  RefPtr<layers::ImageContainer> mImageContainer;
 
   android::MediaBuffer* mVideoBuffer;
 
-  MediaDataDecoderCallback*  mReaderCallback;
   MediaInfo mInfo;
   android::sp<VideoResourceListener> mVideoListener;
-  android::sp<MessageHandler> mHandler;
-  android::sp<ALooper> mLooper;
-  android::sp<ALooper> mManagerLooper;
+  MozPromiseRequestHolder<MediaResourcePromise> mVideoCodecRequest;
   FrameInfo mFrameInfo;
-
-  int64_t mLastDecodedTime;  // The last decoded frame presentation time.
 
   // color converter
   android::I420ColorConverterHelper mColorConverter;
@@ -165,17 +143,9 @@ private:
   // The lock protects mPendingReleaseItems.
   Mutex mPendingReleaseItemsLock;
 
-  // This monitor protects mQueueSample.
-  Monitor mMonitor;
-
-  // This TaskQueue should be the same one in mReaderCallback->OnReaderTaskQueue().
+  // This TaskQueue should be the same one in mDecodeCallback->OnReaderTaskQueue().
   // It is for codec resource mangement, decoding task should not dispatch to it.
-  nsRefPtr<TaskQueue> mReaderTaskQueue;
-
-  // An queue with the MP4 samples which are waiting to be sent into OMX.
-  // If an element is an empty MP4Sample, that menas EOS. There should not
-  // any sample be queued after EOS.
-  nsTArray<nsRefPtr<MediaRawData>> mQueueSample;
+  RefPtr<TaskQueue> mReaderTaskQueue;
 };
 
 } // namespace mozilla

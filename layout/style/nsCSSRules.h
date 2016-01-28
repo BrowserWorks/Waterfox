@@ -9,12 +9,19 @@
 #ifndef nsCSSRules_h_
 #define nsCSSRules_h_
 
+#include "Declaration.h"
+#include "StyleRule.h"
+#include "gfxFontFeatures.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/Move.h"
-
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Move.h"
+#include "mozilla/SheetType.h"
 #include "mozilla/css/GroupRule.h"
 #include "mozilla/dom/FontFace.h"
+#include "nsAutoPtr.h"
+#include "nsCSSProperty.h"
+#include "nsCSSValue.h"
+#include "nsDOMCSSDeclaration.h"
 #include "nsIDOMCSSConditionRule.h"
 #include "nsIDOMCSSCounterStyleRule.h"
 #include "nsIDOMCSSFontFaceRule.h"
@@ -22,18 +29,11 @@
 #include "nsIDOMCSSGroupingRule.h"
 #include "nsIDOMCSSMediaRule.h"
 #include "nsIDOMCSSMozDocumentRule.h"
+#include "nsIDOMCSSPageRule.h"
 #include "nsIDOMCSSSupportsRule.h"
 #include "nsIDOMMozCSSKeyframeRule.h"
 #include "nsIDOMMozCSSKeyframesRule.h"
-#include "nsAutoPtr.h"
-#include "nsCSSProperty.h"
-#include "nsCSSValue.h"
 #include "nsTArray.h"
-#include "nsDOMCSSDeclaration.h"
-#include "Declaration.h"
-#include "nsIDOMCSSPageRule.h"
-#include "StyleRule.h"
-#include "gfxFontFeatures.h"
 
 class nsMediaList;
 
@@ -98,7 +98,7 @@ public:
 protected:
   void AppendConditionText(nsAString& aOutput);
 
-  nsRefPtr<nsMediaList> mMedia;
+  RefPtr<nsMediaList> mMedia;
 };
 
 class DocumentRule final : public GroupRule,
@@ -286,8 +286,8 @@ protected:
 // nsFontFaceRuleContainer - used for associating sheet type with
 // specific @font-face rules
 struct nsFontFaceRuleContainer {
-  nsRefPtr<nsCSSFontFaceRule> mRule;
-  uint8_t mSheetType;
+  RefPtr<nsCSSFontFaceRule> mRule;
+  mozilla::SheetType mSheetType;
 };
 
 inline nsCSSFontFaceRule*
@@ -433,7 +433,7 @@ private:
   nsTArray<float>                            mKeys;
   nsAutoPtr<mozilla::css::Declaration>       mDeclaration;
   // lazily created when needed:
-  nsRefPtr<nsCSSKeyframeStyleDeclaration>    mDOMDeclaration;
+  RefPtr<nsCSSKeyframeStyleDeclaration>    mDOMDeclaration;
 };
 
 class nsCSSKeyframesRule final : public mozilla::css::GroupRule,
@@ -562,8 +562,8 @@ public:
 private:
   nsAutoPtr<mozilla::css::Declaration>    mDeclaration;
   // lazily created when needed:
-  nsRefPtr<nsCSSPageStyleDeclaration>     mDOMDeclaration;
-  nsRefPtr<mozilla::css::ImportantRule>   mImportantRule;
+  RefPtr<nsCSSPageStyleDeclaration>     mDOMDeclaration;
+  RefPtr<mozilla::css::ImportantRule>   mImportantRule;
 };
 
 namespace mozilla {

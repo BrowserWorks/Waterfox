@@ -448,9 +448,6 @@ Exception::ToString(nsACString& _retval)
   return NS_OK;
 }
 
-/* void initialize (in AUTF8String aMessage, in nsresult aResult,
- *                  in AUTF8String aName, in nsIStackFrame aLocation,
- *                  in nsISupports aData, in nsIException aInner); */
 NS_IMETHODIMP
 Exception::Initialize(const nsACString& aMessage, nsresult aResult,
                       const nsACString& aName, nsIStackFrame *aLocation,
@@ -688,7 +685,7 @@ DOMException::Constructor(GlobalObject& /* unused */,
     }
   }
 
-  nsRefPtr<DOMException> retval =
+  RefPtr<DOMException> retval =
     new DOMException(exceptionResult,
                      NS_ConvertUTF16toUTF8(aMessage),
                      name,
@@ -709,7 +706,7 @@ DOMException::Create(nsresult aRv)
   nsCString message;
   uint16_t code;
   NSResultToNameAndMessage(aRv, name, message, &code);
-  nsRefPtr<DOMException> inst =
+  RefPtr<DOMException> inst =
     new DOMException(aRv, message, name, code);
   return inst.forget();
 }
@@ -721,7 +718,7 @@ DOMException::Create(nsresult aRv, const nsACString& aMessage)
   nsCString message;
   uint16_t code;
   NSResultToNameAndMessage(aRv, name, message, &code);
-  nsRefPtr<DOMException> inst =
+  RefPtr<DOMException> inst =
     new DOMException(aRv, aMessage, name, code);
   return inst.forget();
 }

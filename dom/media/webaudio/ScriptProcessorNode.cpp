@@ -245,18 +245,12 @@ public:
                             uint32_t aBufferSize,
                             uint32_t aNumberOfInputChannels)
     : AudioNodeEngine(aNode)
-    , mSource(nullptr)
     , mDestination(aDestination->Stream())
+    , mSharedBuffers(new SharedBuffers(mDestination->SampleRate()))
     , mBufferSize(aBufferSize)
     , mInputChannelCount(aNumberOfInputChannels)
     , mInputWriteIndex(0)
   {
-  }
-
-  void SetSourceStream(AudioNodeStream* aSource)
-  {
-    mSource = aSource;
-    mSharedBuffers = new SharedBuffers(mSource->SampleRate());
   }
 
   SharedBuffers* GetSharedBuffers() const
@@ -280,6 +274,7 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
+                            GraphTime aFrom,
                             const AudioBlock& aInput,
                             AudioBlock* aOutput,
                             bool* aFinished) override
@@ -328,15 +323,22 @@ public:
     *aOutput = mSharedBuffers->GetOutputBuffer();
 
     if (mInputWriteIndex >= mBufferSize) {
-      SendBuffersToMainThread(aStream);
+      SendBuffersToMainThread(aStream, aFrom);
       mInputWriteIndex -= mBufferSize;
     }
+  }
+
+  virtual bool IsActive() const override
+  {
+    // Could return false when !mIsConnected after all output chunks produced
+    // by main thread events calling
+    // SharedBuffers::FinishProducingOutputBuffer() have been processed.
+    return true;
   }
 
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
-    // - mSource (probably)
     // - mDestination (probably)
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
     amount += mSharedBuffers->SizeOfIncludingThis(aMallocSizeOf);
@@ -353,19 +355,18 @@ public:
   }
 
 private:
-  void SendBuffersToMainThread(AudioNodeStream* aStream)
+  void SendBuffersToMainThread(AudioNodeStream* aStream, GraphTime aFrom)
   {
     MOZ_ASSERT(!NS_IsMainThread());
 
     // we now have a full input buffer ready to be sent to the main thread.
-    StreamTime playbackTick = mSource->GetCurrentPosition();
+    StreamTime playbackTick = mDestination->GraphTimeToStreamTime(aFrom);
     // Add the duration of the current sample
     playbackTick += WEBAUDIO_BLOCK_SIZE;
     // Add the delay caused by the main thread
     playbackTick += mSharedBuffers->DelaySoFar();
     // Compute the playback time in the coordinate system of the destination
-    double playbackTime =
-      mSource->DestinationTimeFromTicks(mDestination, playbackTick);
+    double playbackTime = mDestination->StreamTimeToSeconds(playbackTick);
 
     class Command final : public nsRunnable
     {
@@ -381,7 +382,7 @@ private:
 
       NS_IMETHOD Run() override
       {
-        nsRefPtr<ThreadSharedFloatArrayBufferList> output;
+        RefPtr<ThreadSharedFloatArrayBufferList> output;
 
         auto engine =
           static_cast<ScriptProcessorNodeEngine*>(mStream->Engine());
@@ -422,7 +423,7 @@ private:
         uint32_t inputChannelCount = aNode->ChannelCount();
 
         // Create the input buffer
-        nsRefPtr<AudioBuffer> inputBuffer;
+        RefPtr<AudioBuffer> inputBuffer;
         if (mInputBuffer) {
           ErrorResult rv;
           inputBuffer =
@@ -439,11 +440,9 @@ private:
         // avoid creating the input buffer as well.  The AudioProcessingEvent class
         // knows how to lazily create them if needed once the script tries to access
         // them.  Otherwise, we may be able to get away without creating them!
-        nsRefPtr<AudioProcessingEvent> event =
+        RefPtr<AudioProcessingEvent> event =
           new AudioProcessingEvent(aNode, nullptr, nullptr);
-        event->InitEvent(inputBuffer,
-                         inputChannelCount,
-                         context->StreamTimeToDOMTime(mPlaybackTime));
+        event->InitEvent(inputBuffer, inputChannelCount, mPlaybackTime);
         aNode->DispatchTrustedEvent(event);
 
         // Steal the output buffers if they have been set.
@@ -462,8 +461,8 @@ private:
         return nullptr;
       }
     private:
-      nsRefPtr<AudioNodeStream> mStream;
-      nsRefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
+      RefPtr<AudioNodeStream> mStream;
+      RefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
       double mPlaybackTime;
     };
 
@@ -473,10 +472,9 @@ private:
 
   friend class ScriptProcessorNode;
 
-  nsAutoPtr<SharedBuffers> mSharedBuffers;
-  AudioNodeStream* mSource;
   AudioNodeStream* mDestination;
-  nsRefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
+  nsAutoPtr<SharedBuffers> mSharedBuffers;
+  RefPtr<ThreadSharedFloatArrayBufferList> mInputBuffer;
   const uint32_t mBufferSize;
   const uint32_t mInputChannelCount;
   // The write index into the current input buffer
@@ -505,7 +503,6 @@ ScriptProcessorNode::ScriptProcessorNode(AudioContext* aContext,
                                   aNumberOfInputChannels);
   mStream = AudioNodeStream::Create(aContext, engine,
                                     AudioNodeStream::NO_STREAM_FLAGS);
-  engine->SetSourceStream(mStream);
 }
 
 ScriptProcessorNode::~ScriptProcessorNode()

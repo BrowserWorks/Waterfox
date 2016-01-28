@@ -71,7 +71,7 @@ public:
     return NS_OK;
   }
 private:
-  nsRefPtr<StumblerInfo> mRequestCallback;
+  RefPtr<StumblerInfo> mRequestCallback;
 };
 
 void
@@ -115,8 +115,8 @@ MozStumble(nsGeoPosition* position)
     lastTime_ms = (PR_Now() / PR_USEC_PER_MSEC);
     sLastLat = latitude;
     sLastLon = longitude;
-    nsRefPtr<StumblerInfo> requestCallback = new StumblerInfo(position);
-    nsRefPtr<RequestCellInfoEvent> runnable = new RequestCellInfoEvent(requestCallback);
+    RefPtr<StumblerInfo> requestCallback = new StumblerInfo(position);
+    RefPtr<RequestCellInfoEvent> runnable = new RequestCellInfoEvent(requestCallback);
     NS_DispatchToMainThread(runnable);
   } else {
     STUMBLER_DBG("Stumbler-GPS locations less than 30 meters and 3 seconds. Ignore!\n");
@@ -338,7 +338,6 @@ StumblerInfo::DumpStumblerInfo()
   target->Dispatch(event, NS_DISPATCH_NORMAL);
 }
 
-/* void notifyGetCellInfoList (in uint32_t count, [array, size_is (count)] in nsICellInfo result); */
 NS_IMETHODIMP
 StumblerInfo::NotifyGetCellInfoList(uint32_t count, nsICellInfo** aCellInfos)
 {
@@ -353,7 +352,6 @@ StumblerInfo::NotifyGetCellInfoList(uint32_t count, nsICellInfo** aCellInfos)
   return NS_OK;
 }
 
-/* void notifyGetCellInfoListFailed (in DOMString error); */
 NS_IMETHODIMP StumblerInfo::NotifyGetCellInfoListFailed(const nsAString& error)
 {
   MOZ_ASSERT(NS_IsMainThread());

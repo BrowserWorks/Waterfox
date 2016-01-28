@@ -30,17 +30,8 @@ public:
     OPCODE_DISCONNECT = 0x02
   };
 
-  static const int MAX_NUM_CLIENTS;
-
   virtual nsresult Send(DaemonSocketPDU* aPDU,
                         DaemonSocketResultHandler* aRes) = 0;
-
-  virtual nsresult RegisterModule(uint8_t aId, uint8_t aMode,
-                                  uint32_t aMaxNumClients,
-                                  BluetoothSetupResultHandler* aRes) = 0;
-
-  virtual nsresult UnregisterModule(uint8_t aId,
-                                    BluetoothSetupResultHandler* aRes) = 0;
 
   void SetNotificationHandler(
     BluetoothA2dpNotificationHandler* aNotificationHandler);
@@ -49,9 +40,9 @@ public:
   // Commands
   //
 
-  nsresult ConnectCmd(const nsAString& aBdAddr,
+  nsresult ConnectCmd(const BluetoothAddress& aBdAddr,
                       BluetoothA2dpResultHandler* aRes);
-  nsresult DisconnectCmd(const nsAString& aBdAddr,
+  nsresult DisconnectCmd(const BluetoothAddress& aBdAddr,
                          BluetoothA2dpResultHandler* aRes);
 
 protected:
@@ -93,23 +84,22 @@ protected:
   class NotificationHandlerWrapper;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
-    NotificationHandlerWrapper, void, BluetoothA2dpConnectionState, nsString,
-    BluetoothA2dpConnectionState, const nsAString&>
+    NotificationHandlerWrapper, void,
+    BluetoothA2dpConnectionState, BluetoothAddress,
+    BluetoothA2dpConnectionState, const BluetoothAddress&>
     ConnectionStateNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable2<
-    NotificationHandlerWrapper, void, BluetoothA2dpAudioState, nsString,
-    BluetoothA2dpAudioState, const nsAString&>
+    NotificationHandlerWrapper, void,
+    BluetoothA2dpAudioState, BluetoothAddress,
+    BluetoothA2dpAudioState, const BluetoothAddress&>
     AudioStateNotification;
 
   typedef mozilla::ipc::DaemonNotificationRunnable3<
-    NotificationHandlerWrapper, void, nsString, uint32_t, uint8_t,
-    const nsAString&, uint32_t, uint8_t>
+    NotificationHandlerWrapper, void,
+    BluetoothAddress, uint32_t, uint8_t,
+    const BluetoothAddress&, uint32_t, uint8_t>
     AudioConfigNotification;
-
-  class ConnectionStateInitOp;
-  class AudioStateInitOp;
-  class AudioConfigInitOp;
 
   void ConnectionStateNtf(const DaemonSocketPDUHeader& aHeader,
                           DaemonSocketPDU& aPDU);
@@ -130,23 +120,18 @@ protected:
 class BluetoothDaemonA2dpInterface final
   : public BluetoothA2dpInterface
 {
-  class CleanupResultHandler;
-  class InitResultHandler;
-
 public:
   BluetoothDaemonA2dpInterface(BluetoothDaemonA2dpModule* aModule);
   ~BluetoothDaemonA2dpInterface();
 
-  void Init(
-    BluetoothA2dpNotificationHandler* aNotificationHandler,
-    BluetoothA2dpResultHandler* aRes) override;
-  void Cleanup(BluetoothA2dpResultHandler* aRes) override;
+  void SetNotificationHandler(
+    BluetoothA2dpNotificationHandler* aNotificationHandler) override;
 
   /* Connect / Disconnect */
 
-  void Connect(const nsAString& aBdAddr,
+  void Connect(const BluetoothAddress& aBdAddr,
                BluetoothA2dpResultHandler* aRes) override;
-  void Disconnect(const nsAString& aBdAddr,
+  void Disconnect(const BluetoothAddress& aBdAddr,
                   BluetoothA2dpResultHandler* aRes) override;
 
 private:

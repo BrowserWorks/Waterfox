@@ -5,6 +5,7 @@
 
 #include "mozilla/dom/FontFace.h"
 
+#include <algorithm>
 #include "mozilla/dom/FontFaceBinding.h"
 #include "mozilla/dom/FontFaceSet.h"
 #include "mozilla/dom/Promise.h"
@@ -33,7 +34,7 @@ public:
   virtual void TakeBuffer(uint8_t*& aBuffer, uint32_t& aLength);
 
 private:
-  nsRefPtr<FontFace> mFontFace;
+  RefPtr<FontFace> mFontFace;
 };
 
 void
@@ -73,6 +74,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(FontFace)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mLoaded)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRule)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFontFaceSet)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOtherFontFaceSets)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -81,6 +83,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FontFace)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mLoaded)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mRule)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mFontFaceSet)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mOtherFontFaceSets)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -159,7 +162,7 @@ FontFace::CreateForRule(nsISupports* aGlobal,
 {
   nsCOMPtr<nsIGlobalObject> globalObject = do_QueryInterface(aGlobal);
 
-  nsRefPtr<FontFace> obj = new FontFace(aGlobal, aFontFaceSet);
+  RefPtr<FontFace> obj = new FontFace(aGlobal, aFontFaceSet);
   obj->mRule = aRule;
   obj->mSourceType = eSourceType_FontFaceRule;
   obj->mInFontFaceSet = true;
@@ -181,7 +184,7 @@ FontFace::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<FontFace> obj = new FontFace(global, doc->Fonts());
+  RefPtr<FontFace> obj = new FontFace(global, doc->Fonts());
   if (!obj->SetDescriptors(aFamily, aDescriptors)) {
     return obj.forget();
   }
@@ -394,7 +397,7 @@ FontFace::CreateUserFontEntry()
                "Rule backed FontFace objects should already have a user font "
                "entry by the time Load() can be called on them");
 
-    nsRefPtr<gfxUserFontEntry> newEntry =
+    RefPtr<gfxUserFontEntry> newEntry =
       mFontFaceSet->FindOrCreateUserFontEntryFromFontFace(this);
     if (newEntry) {
       SetUserFontEntry(newEntry);
@@ -446,6 +449,10 @@ FontFace::SetStatus(FontFaceLoadStatus aStatus)
 
   if (mInFontFaceSet) {
     mFontFaceSet->OnFontFaceStatusChanged(this);
+  }
+
+  for (FontFaceSet* otherSet : mOtherFontFaceSets) {
+    otherSet->OnFontFaceStatusChanged(this);
   }
 
   if (!mLoaded) {
@@ -682,8 +689,41 @@ FontFace::TakeBuffer(uint8_t*& aBuffer, uint32_t& aLength)
 already_AddRefed<gfxFontFaceBufferSource>
 FontFace::CreateBufferSource()
 {
-  nsRefPtr<FontFaceBufferSource> bufferSource = new FontFaceBufferSource(this);
+  RefPtr<FontFaceBufferSource> bufferSource = new FontFaceBufferSource(this);
   return bufferSource.forget();
+}
+
+bool
+FontFace::IsInFontFaceSet(FontFaceSet* aFontFaceSet) const
+{
+  if (mFontFaceSet == aFontFaceSet) {
+    return mInFontFaceSet;
+  }
+  return mOtherFontFaceSets.Contains(aFontFaceSet);
+}
+
+void
+FontFace::AddFontFaceSet(FontFaceSet* aFontFaceSet)
+{
+  MOZ_ASSERT(!IsInFontFaceSet(aFontFaceSet));
+
+  if (mFontFaceSet == aFontFaceSet) {
+    mInFontFaceSet = true;
+  } else {
+    mOtherFontFaceSets.AppendElement(aFontFaceSet);
+  }
+}
+
+void
+FontFace::RemoveFontFaceSet(FontFaceSet* aFontFaceSet)
+{
+  MOZ_ASSERT(IsInFontFaceSet(aFontFaceSet));
+
+  if (mFontFaceSet == aFontFaceSet) {
+    mInFontFaceSet = false;
+  } else {
+    mOtherFontFaceSets.RemoveElement(aFontFaceSet);
+  }
 }
 
 // -- FontFace::Entry --------------------------------------------------------
@@ -696,6 +736,26 @@ FontFace::Entry::SetLoadState(UserFontLoadState aLoadState)
   for (size_t i = 0; i < mFontFaces.Length(); i++) {
     mFontFaces[i]->SetStatus(LoadStateToStatus(aLoadState));
   }
+}
+
+/* virtual */ void
+FontFace::Entry::GetUserFontSets(nsTArray<gfxUserFontSet*>& aResult)
+{
+  aResult.Clear();
+
+  for (FontFace* f : mFontFaces) {
+    if (f->mInFontFaceSet) {
+      aResult.AppendElement(f->mFontFaceSet->GetUserFontSet());
+    }
+    for (FontFaceSet* s : f->mOtherFontFaceSets) {
+      aResult.AppendElement(s->GetUserFontSet());
+    }
+  }
+
+  // Remove duplicates.
+  aResult.Sort();
+  auto it = std::unique(aResult.begin(), aResult.end());
+  aResult.TruncateLength(it - aResult.begin());
 }
 
 } // namespace dom

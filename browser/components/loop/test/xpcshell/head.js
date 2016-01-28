@@ -3,7 +3,7 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 // Initialize this before the imports, as some of them need it.
 do_get_profile();
@@ -14,7 +14,6 @@ Cu.import("resource://gre/modules/Http.jsm");
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource:///modules/loop/MozLoopService.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
-Cu.import("resource:///modules/loop/LoopCalls.jsm");
 Cu.import("resource:///modules/loop/LoopRooms.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 const { MozLoopServiceInternal } = Cu.import("resource:///modules/loop/MozLoopService.jsm", {});
@@ -158,11 +157,12 @@ MockWebSocketChannel.prototype = {
    * nsIWebSocketChannel implementations.
    * See nsIWebSocketChannel.idl for API details.
    */
-  asyncOpen: function(aURI, aOrigin, aListener, aContext) {
+  asyncOpen: function(aURI, aOrigin, aWindowId, aListener, aContext) {
     this.uri = aURI;
     this.origin = aOrigin;
     this.listener = aListener;
     this.context = aContext;
+    this.windowId = aWindowId;
 
     this.listener.onStart(this.context);
   },
@@ -170,11 +170,11 @@ MockWebSocketChannel.prototype = {
   sendMsg: function(aMsg) {
     var message = JSON.parse(aMsg);
 
-    switch(message.messageType) {
+    switch (message.messageType) {
       case "hello":
         this.listener.onMessageAvailable(this.context,
-          JSON.stringify({messageType: "hello",
-                          uaid: kUAID}));
+          JSON.stringify({ messageType: "hello",
+                          uaid: kUAID }));
         break;
       case "register":
         this.channelID = message.channelID;
@@ -184,10 +184,10 @@ MockWebSocketChannel.prototype = {
           this.initRegStatus = 0;
         }
         this.listener.onMessageAvailable(this.context,
-          JSON.stringify({messageType: "register",
+          JSON.stringify({ messageType: "register",
                           status: statusCode,
                           channelID: this.channelID,
-                          pushEndpoint: kEndPointUrl}));
+                          pushEndpoint: kEndPointUrl }));
         break;
       default:
         this.defaultMsgHandler && this.defaultMsgHandler(message);
@@ -208,11 +208,11 @@ MockWebSocketChannel.prototype = {
     }));
   },
 
-  stop: function (err) {
+  stop: function(err) {
     this.listener.onStop(this.context, err || -1);
   },
 
-  serverClose: function (err) {
+  serverClose: function(err) {
     this.listener.onServerClose(this.context, err || -1);
   }
 };

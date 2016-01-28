@@ -77,7 +77,7 @@ protected:
   nsString mName;
   nsString mID;
   dom::MediaSourceEnum mMediaSource;
-  nsRefPtr<MediaEngineSource> mSource;
+  RefPtr<MediaEngineSource> mSource;
 public:
   dom::MediaSourceEnum GetMediaSource() {
     return mMediaSource;
@@ -143,7 +143,7 @@ public:
                 AudioDevice* aAudioDevice,
                 VideoDevice* aVideoDevice)
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     mStream = aStream;
     mAudioDevice = aAudioDevice;
     mVideoDevice = aVideoDevice;
@@ -179,43 +179,45 @@ public:
   // if set and represent a real capture device.
   bool CapturingVideo()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mVideoDevice && !mStopped &&
+           !mVideoDevice->GetSource()->IsAvailable() &&
            mVideoDevice->GetMediaSource() == dom::MediaSourceEnum::Camera &&
            (!mVideoDevice->GetSource()->IsFake() ||
             Preferences::GetBool("media.navigator.permission.fake"));
   }
   bool CapturingAudio()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mAudioDevice && !mStopped &&
+           !mAudioDevice->GetSource()->IsAvailable() &&
            (!mAudioDevice->GetSource()->IsFake() ||
             Preferences::GetBool("media.navigator.permission.fake"));
   }
   bool CapturingScreen()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mVideoDevice && !mStopped &&
            !mVideoDevice->GetSource()->IsAvailable() &&
            mVideoDevice->GetMediaSource() == dom::MediaSourceEnum::Screen;
   }
   bool CapturingWindow()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mVideoDevice && !mStopped &&
            !mVideoDevice->GetSource()->IsAvailable() &&
            mVideoDevice->GetMediaSource() == dom::MediaSourceEnum::Window;
   }
   bool CapturingApplication()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mVideoDevice && !mStopped &&
            !mVideoDevice->GetSource()->IsAvailable() &&
            mVideoDevice->GetMediaSource() == dom::MediaSourceEnum::Application;
   }
   bool CapturingBrowser()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return mVideoDevice && !mStopped &&
            mVideoDevice->GetSource()->IsAvailable() &&
            mVideoDevice->GetMediaSource() == dom::MediaSourceEnum::Browser;
@@ -234,7 +236,7 @@ public:
   void
   Remove()
   {
-    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     // allow calling even if inactive (!mStream) for easier cleanup
     // Caller holds strong reference to us, so no death grip required
     if (mStream && !mRemoved) {
@@ -324,9 +326,9 @@ private:
 
   // Accessed from MediaStreamGraph thread, MediaManager thread, and MainThread
   // No locking needed as they're only addrefed except on the MediaManager thread
-  nsRefPtr<AudioDevice> mAudioDevice; // threadsafe refcnt
-  nsRefPtr<VideoDevice> mVideoDevice; // threadsafe refcnt
-  nsRefPtr<SourceMediaStream> mStream; // threadsafe refcnt
+  RefPtr<AudioDevice> mAudioDevice; // threadsafe refcnt
+  RefPtr<VideoDevice> mVideoDevice; // threadsafe refcnt
+  RefPtr<SourceMediaStream> mStream; // threadsafe refcnt
 };
 
 class GetUserMediaNotificationEvent: public nsRunnable
@@ -359,14 +361,14 @@ class GetUserMediaNotificationEvent: public nsRunnable
     NS_IMETHOD Run() override;
 
   protected:
-    nsRefPtr<GetUserMediaCallbackMediaStreamListener> mListener; // threadsafe
-    nsRefPtr<DOMMediaStream> mStream;
+    RefPtr<GetUserMediaCallbackMediaStreamListener> mListener; // threadsafe
+    RefPtr<DOMMediaStream> mStream;
     nsAutoPtr<DOMMediaStream::OnTracksAvailableCallback> mOnTracksAvailableCallback;
     GetUserMediaStatus mStatus;
     bool mIsAudio;
     bool mIsVideo;
     uint64_t mWindowID;
-    nsRefPtr<nsIDOMGetUserMediaErrorCallback> mOnFailure;
+    RefPtr<nsIDOMGetUserMediaErrorCallback> mOnFailure;
 };
 
 typedef enum {
@@ -388,11 +390,11 @@ public:
     mOnTracksAvailableCallback(aOnTracksAvailableCallback) {}
   NS_IMETHOD Run() override {return NS_OK;}
 private:
-  nsRefPtr<DOMMediaStream> mStream;
+  RefPtr<DOMMediaStream> mStream;
   nsAutoPtr<DOMMediaStream::OnTracksAvailableCallback> mOnTracksAvailableCallback;
 };
 
-typedef nsTArray<nsRefPtr<GetUserMediaCallbackMediaStreamListener> > StreamListeners;
+typedef nsTArray<RefPtr<GetUserMediaCallbackMediaStreamListener> > StreamListeners;
 typedef nsClassHashtable<nsUint64HashKey, StreamListeners> WindowTable;
 
 // we could add MediaManager if needed
@@ -435,8 +437,7 @@ public:
   media::Parent<media::NonE10s>* GetNonE10sParent();
   MediaEngine* GetBackend(uint64_t aWindowId = 0);
   StreamListeners *GetWindowListeners(uint64_t aWindowId) {
-    NS_ASSERTION(NS_IsMainThread(), "Only access windowlist on main thread");
-
+    MOZ_ASSERT(NS_IsMainThread());
     return mActiveWindows.Get(aWindowId);
   }
   void RemoveWindowID(uint64_t aWindowId);
@@ -457,7 +458,8 @@ public:
                                const dom::MediaStreamConstraints& aConstraints,
                                nsIGetUserMediaDevicesSuccessCallback* onSuccess,
                                nsIDOMGetUserMediaErrorCallback* onError,
-                               uint64_t aInnerWindowID = 0);
+                               uint64_t aInnerWindowID = 0,
+                               const nsAString& aCallID = nsString());
 
   nsresult EnumerateDevices(nsPIDOMWindow* aWindow,
                             nsIGetUserMediaDevicesSuccessCallback* aOnSuccess,
@@ -469,7 +471,7 @@ public:
 
   MediaEnginePrefs mPrefs;
 
-  typedef nsTArray<nsRefPtr<MediaDevice>> SourceSet;
+  typedef nsTArray<RefPtr<MediaDevice>> SourceSet;
   static bool IsPrivateBrowsing(nsPIDOMWindow *window);
 private:
   typedef media::Pledge<SourceSet*, dom::MediaStreamError*> PledgeSourceSet;
@@ -496,11 +498,11 @@ private:
   already_AddRefed<PledgeChar>
   SelectSettings(
       dom::MediaStreamConstraints& aConstraints,
-      nsRefPtr<media::Refcountable<ScopedDeletePtr<SourceSet>>>& aSources);
+      RefPtr<media::Refcountable<ScopedDeletePtr<SourceSet>>>& aSources);
 
   StreamListeners* AddWindowID(uint64_t aWindowId);
   WindowTable *GetActiveWindows() {
-    NS_ASSERTION(NS_IsMainThread(), "Only access windowlist on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
     return &mActiveWindows;
   }
 
@@ -514,6 +516,7 @@ private:
   MediaManager();
 
   ~MediaManager() {}
+  void Shutdown();
 
   void StopScreensharing(uint64_t aWindowID);
   void IterateWindowListeners(nsPIDOMWindow *aWindow,
@@ -529,9 +532,9 @@ private:
 
   // Always exists
   nsAutoPtr<base::Thread> mMediaThread;
+  nsCOMPtr<nsIAsyncShutdownBlocker> mShutdownBlocker;
 
-  Mutex mMutex;
-  // protected with mMutex:
+  // ONLY accessed from MediaManagerThread
   RefPtr<MediaEngine> mBackend;
 
   static StaticRefPtr<MediaManager> sSingleton;
@@ -540,7 +543,7 @@ private:
   media::CoatCheck<PledgeChar> mOutstandingCharPledges;
   media::CoatCheck<GetUserMediaCallbackMediaStreamListener::PledgeVoid> mOutstandingVoidPledges;
 #if defined(MOZ_B2G_CAMERA) && defined(MOZ_WIDGET_GONK)
-  nsRefPtr<nsDOMCameraManager> mCameraManager;
+  RefPtr<nsDOMCameraManager> mCameraManager;
 #endif
 public:
   media::CoatCheck<media::Pledge<nsCString>> mGetOriginKeyPledges;

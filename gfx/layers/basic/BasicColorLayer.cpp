@@ -59,7 +59,7 @@ public:
 
     // Clip drawing in case we're using (unbounded) operator source.
     aDT->PushClipRect(snapped);
-    FillRectWithMask(aDT, aDeviceOffset, snapped, ToColor(mColor),
+    FillRectWithMask(aDT, aDeviceOffset, snapped, mColor,
                      DrawOptions(GetEffectiveOpacity(), GetEffectiveOperator(this)),
                      aMaskLayer);
     aDT->PopClip();
@@ -76,7 +76,7 @@ already_AddRefed<ColorLayer>
 BasicLayerManager::CreateColorLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ColorLayer> layer = new BasicColorLayer(this);
+  RefPtr<ColorLayer> layer = new BasicColorLayer(this);
   return layer.forget();
 }
 

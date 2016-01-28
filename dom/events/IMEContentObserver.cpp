@@ -24,6 +24,7 @@
 #include "nsIDocument.h"
 #include "nsIDOMDocument.h"
 #include "nsIDOMRange.h"
+#include "nsIEditorIMESupport.h"
 #include "nsIFrame.h"
 #include "nsINode.h"
 #include "nsIPresShell.h"
@@ -218,8 +219,6 @@ IMEContentObserver::Init(nsIWidget* aWidget,
                          nsIContent* aContent,
                          nsIEditor* aEditor)
 {
-  MOZ_ASSERT(aEditor, "aEditor must not be null");
-
   State state = GetState();
   if (NS_WARN_IF(state == eState_Observing)) {
     return; // Nothing to do.
@@ -231,10 +230,7 @@ IMEContentObserver::Init(nsIWidget* aWidget,
     // should be registered again for simpler implementation.
     UnregisterObservers();
     // Clear members which may not be initialized again.
-    mRootContent = nullptr;
-    mEditor = nullptr;
-    mSelection = nullptr;
-    mDocShell = nullptr;
+    Clear();
   }
 
   mESM = aPresContext->EventStateManager();
@@ -242,51 +238,17 @@ IMEContentObserver::Init(nsIWidget* aWidget,
 
   mWidget = aWidget;
 
-  mEditableNode =
-    IMEStateManager::GetRootEditableNode(aPresContext, aContent);
-  if (!mEditableNode) {
-    return;
-  }
-
-  mEditor = aEditor;
-
-  nsIPresShell* presShell = aPresContext->PresShell();
-
-  // get selection and root content
-  nsCOMPtr<nsISelectionController> selCon;
-  if (mEditableNode->IsNodeOfType(nsINode::eCONTENT)) {
-    nsIFrame* frame =
-      static_cast<nsIContent*>(mEditableNode.get())->GetPrimaryFrame();
-    NS_ENSURE_TRUE_VOID(frame);
-
-    frame->GetSelectionController(aPresContext,
-                                  getter_AddRefs(selCon));
+  if (aWidget->GetInputContext().mIMEState.mEnabled == IMEState::PLUGIN) {
+    if (!InitWithPlugin(aPresContext, aContent)) {
+      Clear();
+      return;
+    }
   } else {
-    // mEditableNode is a document
-    selCon = do_QueryInterface(presShell);
+    if (!InitWithEditor(aPresContext, aContent, aEditor)) {
+      Clear();
+      return;
+    }
   }
-  NS_ENSURE_TRUE_VOID(selCon);
-
-  selCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
-                       getter_AddRefs(mSelection));
-  NS_ENSURE_TRUE_VOID(mSelection);
-
-  nsCOMPtr<nsIDOMRange> selDomRange;
-  if (NS_SUCCEEDED(mSelection->GetRangeAt(0, getter_AddRefs(selDomRange)))) {
-    nsRange* selRange = static_cast<nsRange*>(selDomRange.get());
-    NS_ENSURE_TRUE_VOID(selRange && selRange->GetStartParent());
-
-    mRootContent = selRange->GetStartParent()->
-                     GetSelectionRootContent(presShell);
-  } else {
-    mRootContent = mEditableNode->GetSelectionRootContent(presShell);
-  }
-  if (!mRootContent && mEditableNode->IsNodeOfType(nsINode::eDOCUMENT)) {
-    // The document node is editable, but there are no contents, this document
-    // is not editable.
-    return;
-  }
-  NS_ENSURE_TRUE_VOID(mRootContent);
 
   if (firstInitialization) {
     MaybeNotifyIMEOfFocusSet();
@@ -307,8 +269,6 @@ IMEContentObserver::Init(nsIWidget* aWidget,
     }
   }
 
-  mDocShell = aPresContext->GetDocShell();
-
   ObserveEditableNode();
 
   // Some change events may wait to notify IME because this was being
@@ -316,16 +276,138 @@ IMEContentObserver::Init(nsIWidget* aWidget,
   FlushMergeableNotifications();
 }
 
+bool
+IMEContentObserver::InitWithEditor(nsPresContext* aPresContext,
+                                   nsIContent* aContent,
+                                   nsIEditor* aEditor)
+{
+  MOZ_ASSERT(aEditor);
+
+  mEditableNode =
+    IMEStateManager::GetRootEditableNode(aPresContext, aContent);
+  if (NS_WARN_IF(!mEditableNode)) {
+    return false;
+  }
+
+  mEditor = aEditor;
+  if (NS_WARN_IF(!mEditor)) {
+    return false;
+  }
+
+  nsIPresShell* presShell = aPresContext->PresShell();
+
+  // get selection and root content
+  nsCOMPtr<nsISelectionController> selCon;
+  if (mEditableNode->IsNodeOfType(nsINode::eCONTENT)) {
+    nsIFrame* frame =
+      static_cast<nsIContent*>(mEditableNode.get())->GetPrimaryFrame();
+    if (NS_WARN_IF(!frame)) {
+      return false;
+    }
+
+    frame->GetSelectionController(aPresContext,
+                                  getter_AddRefs(selCon));
+  } else {
+    // mEditableNode is a document
+    selCon = do_QueryInterface(presShell);
+  }
+
+  if (NS_WARN_IF(!selCon)) {
+    return false;
+  }
+
+  selCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+                       getter_AddRefs(mSelection));
+  if (NS_WARN_IF(!mSelection)) {
+    return false;
+  }
+
+  nsCOMPtr<nsIDOMRange> selDomRange;
+  if (NS_SUCCEEDED(mSelection->GetRangeAt(0, getter_AddRefs(selDomRange)))) {
+    nsRange* selRange = static_cast<nsRange*>(selDomRange.get());
+    if (NS_WARN_IF(!selRange) || NS_WARN_IF(!selRange->GetStartParent())) {
+      return false;
+    }
+
+    mRootContent = selRange->GetStartParent()->
+                     GetSelectionRootContent(presShell);
+  } else {
+    mRootContent = mEditableNode->GetSelectionRootContent(presShell);
+  }
+  if (!mRootContent && mEditableNode->IsNodeOfType(nsINode::eDOCUMENT)) {
+    // The document node is editable, but there are no contents, this document
+    // is not editable.
+    return false;
+  }
+
+  if (NS_WARN_IF(!mRootContent)) {
+    return false;
+  }
+
+  mDocShell = aPresContext->GetDocShell();
+  if (NS_WARN_IF(!mDocShell)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool
+IMEContentObserver::InitWithPlugin(nsPresContext* aPresContext,
+                                   nsIContent* aContent)
+{
+  if (NS_WARN_IF(!aContent) ||
+      NS_WARN_IF(aContent->GetDesiredIMEState().mEnabled != IMEState::PLUGIN)) {
+    return false;
+  }
+  nsIFrame* frame = aContent->GetPrimaryFrame();
+  if (NS_WARN_IF(!frame)) {
+    return false;
+  }
+  nsCOMPtr<nsISelectionController> selCon;
+  frame->GetSelectionController(aPresContext, getter_AddRefs(selCon));
+  if (NS_WARN_IF(!selCon)) {
+    return false;
+  }
+  selCon->GetSelection(nsISelectionController::SELECTION_NORMAL,
+                       getter_AddRefs(mSelection));
+  if (NS_WARN_IF(!mSelection)) {
+    return false;
+  }
+
+  mEditor = nullptr;
+  mEditableNode = aContent;
+  mRootContent = aContent;
+
+  mDocShell = aPresContext->GetDocShell();
+  if (NS_WARN_IF(!mDocShell)) {
+    return false;
+  }
+
+  return true;
+}
+
+void
+IMEContentObserver::Clear()
+{
+  mEditor = nullptr;
+  mSelection = nullptr;
+  mEditableNode = nullptr;
+  mRootContent = nullptr;
+  mDocShell = nullptr;
+}
+
 void
 IMEContentObserver::ObserveEditableNode()
 {
-  MOZ_RELEASE_ASSERT(mEditor);
   MOZ_RELEASE_ASSERT(mSelection);
   MOZ_RELEASE_ASSERT(mRootContent);
   MOZ_RELEASE_ASSERT(GetState() != eState_Observing);
 
   mIsObserving = true;
-  mEditor->AddEditorObserver(this);
+  if (mEditor) {
+    mEditor->AddEditorObserver(this);
+  }
 
   mUpdatePreference = mWidget->GetIMEUpdatePreference();
   if (mUpdatePreference.WantSelectionChange()) {
@@ -364,7 +446,7 @@ IMEContentObserver::NotifyIMEOfBlur()
   // mWidget must have been non-nullptr if IME has focus.
   MOZ_RELEASE_ASSERT(widget);
 
-  nsRefPtr<IMEContentObserver> kungFuDeathGrip(this);
+  RefPtr<IMEContentObserver> kungFuDeathGrip(this);
 
   MOZ_LOG(sIMECOLog, LogLevel::Info,
     ("IMECO: 0x%p IMEContentObserver::NotifyIMEOfBlur(), "
@@ -430,13 +512,9 @@ IMEContentObserver::Destroy()
 
   NotifyIMEOfBlur();
   UnregisterObservers();
+  Clear();
 
-  mEditor = nullptr;
   mWidget = nullptr;
-  mSelection = nullptr;
-  mRootContent = nullptr;
-  mEditableNode = nullptr;
-  mDocShell = nullptr;
   mUpdatePreference.mWantUpdates = nsIMEUpdatePreference::NOTIFY_NOTHING;
 
   if (mESM) {
@@ -492,8 +570,10 @@ bool
 IMEContentObserver::IsObservingContent(nsPresContext* aPresContext,
                                        nsIContent* aContent) const
 {
-  return mEditableNode == IMEStateManager::GetRootEditableNode(aPresContext,
-                                                               aContent);
+  return IsInitializedWithPlugin() ?
+    mRootContent == aContent && mRootContent != nullptr :
+    mEditableNode == IMEStateManager::GetRootEditableNode(aPresContext,
+                                                          aContent);
 }
 
 bool
@@ -502,12 +582,31 @@ IMEContentObserver::IsEditorHandlingEventForComposition() const
   if (!mWidget) {
     return false;
   }
-  nsRefPtr<TextComposition> composition =
+  RefPtr<TextComposition> composition =
     IMEStateManager::GetTextCompositionFor(mWidget);
   if (!composition) {
     return false;
   }
   return composition->IsEditorHandlingEvent();
+}
+
+bool
+IMEContentObserver::IsEditorComposing() const
+{
+  // Note that don't use TextComposition here. The important thing is,
+  // whether the editor already started to handle composition because
+  // web contents can change selection, text content and/or something from
+  // compositionstart event listener which is run before nsEditor handles it.
+  nsCOMPtr<nsIEditorIMESupport> editorIMESupport = do_QueryInterface(mEditor);
+  if (NS_WARN_IF(!editorIMESupport)) {
+    return false;
+  }
+  bool isComposing = false;
+  nsresult rv = editorIMESupport->GetComposing(&isComposing);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+  return isComposing;
 }
 
 nsresult
@@ -535,8 +634,10 @@ IMEContentObserver::NotifySelectionChanged(nsIDOMDocument* aDOMDocument,
   if (count > 0 && mWidget) {
     bool causedByComposition = IsEditorHandlingEventForComposition();
     bool causedBySelectionEvent = TextComposition::IsHandlingSelectionEvent();
+    bool duringComposition = IsEditorComposing();
     MaybeNotifyIMEOfSelectionChange(causedByComposition,
-                                    causedBySelectionEvent);
+                                    causedBySelectionEvent,
+                                    duringComposition);
   }
   return NS_OK;
 }
@@ -623,7 +724,7 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
     return false;
   }
 
-  nsRefPtr<IMEContentObserver> kungFuDeathGrip(this);
+  RefPtr<IMEContentObserver> kungFuDeathGrip(this);
 
   WidgetQueryContentEvent charAtPt(true, eQueryCharacterAtPoint,
                                    aMouseEvent->widget);
@@ -746,7 +847,8 @@ IMEContentObserver::CharacterDataChanged(nsIDocument* aDocument,
   uint32_t oldEnd = offset + static_cast<uint32_t>(removedLength);
   uint32_t newEnd = offset + newLength;
 
-  TextChangeData data(offset, oldEnd, newEnd, causedByComposition);
+  TextChangeData data(offset, oldEnd, newEnd, causedByComposition,
+                      IsEditorComposing());
   MaybeNotifyIMEOfTextChange(data);
 }
 
@@ -799,7 +901,7 @@ IMEContentObserver::NotifyContentAdded(nsINode* aContainer,
   }
 
   TextChangeData data(offset, offset, offset + addingLength,
-                      causedByComposition);
+                      causedByComposition, IsEditorComposing());
   MaybeNotifyIMEOfTextChange(data);
 }
 
@@ -876,7 +978,8 @@ IMEContentObserver::ContentRemoved(nsIDocument* aDocument,
     return;
   }
 
-  TextChangeData data(offset, offset + textLength, offset, causedByComposition);
+  TextChangeData data(offset, offset + textLength, offset,
+                      causedByComposition, IsEditorComposing());
   MaybeNotifyIMEOfTextChange(data);
 }
 
@@ -938,7 +1041,8 @@ IMEContentObserver::AttributeChanged(nsIDocument* aDocument,
   NS_ENSURE_SUCCESS_VOID(rv);
 
   TextChangeData data(start, start + mPreAttrChangeLength,
-                      start + postAttrChangeLength, causedByComposition);
+                      start + postAttrChangeLength, causedByComposition,
+                      IsEditorComposing());
   MaybeNotifyIMEOfTextChange(data);
 }
 
@@ -1061,15 +1165,18 @@ IMEContentObserver::MaybeNotifyIMEOfTextChange(
 void
 IMEContentObserver::MaybeNotifyIMEOfSelectionChange(
                       bool aCausedByComposition,
-                      bool aCausedBySelectionEvent)
+                      bool aCausedBySelectionEvent,
+                      bool aOccurredDuringComposition)
 {
   MOZ_LOG(sIMECOLog, LogLevel::Debug,
     ("IMECO: 0x%p IMEContentObserver::MaybeNotifyIMEOfSelectionChange("
-     "aCausedByComposition=%s, aCausedBySelectionEvent=%s)",
+     "aCausedByComposition=%s, aCausedBySelectionEvent=%s, "
+     "aOccurredDuringComposition)",
      this, ToChar(aCausedByComposition), ToChar(aCausedBySelectionEvent)));
 
   mSelectionData.AssignReason(aCausedByComposition,
-                              aCausedBySelectionEvent);
+                              aCausedBySelectionEvent,
+                              aOccurredDuringComposition);
   PostSelectionChangeNotification();
   FlushMergeableNotifications();
 }
@@ -1354,7 +1461,7 @@ IMEContentObserver::IMENotificationSender::Run()
     MOZ_LOG(sIMECOLog, LogLevel::Debug,
       ("IMECO: 0x%p IMEContentObserver::IMENotificationSender::Run(), "
        "posting AsyncMergeableNotificationsFlusher to current thread", this));
-    nsRefPtr<AsyncMergeableNotificationsFlusher> asyncFlusher =
+    RefPtr<AsyncMergeableNotificationsFlusher> asyncFlusher =
       new AsyncMergeableNotificationsFlusher(mIMEContentObserver);
     NS_DispatchToCurrentThread(asyncFlusher);
   }

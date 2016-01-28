@@ -581,10 +581,8 @@ pref("media.cache_readahead_limit", 30);
 pref("media.video-queue.default-size", 3);
 
 // Enable the MediaCodec PlatformDecoderModule by default.
-pref("media.fragmented-mp4.exposed", true);
-pref("media.fragmented-mp4.enabled", true);
-pref("media.fragmented-mp4.android-media-codec.enabled", true);
-pref("media.fragmented-mp4.android-media-codec.preferred", true);
+pref("media.android-media-codec.enabled", true);
+pref("media.android-media-codec.preferred", true);
 
 // Enable MSE
 pref("media.mediasource.enabled", true);
@@ -1021,5 +1019,8 @@ pref("dom.ipc.systemMessageCPULockTimeoutSec", 30);
 pref("dom.wakelock.enabled", true);
 
 pref("dom.webcomponents.enabled", true);
+
+// Enable the Alarms API
+pref("dom.mozAlarms.enabled", true);
 
 pref("layout.css.scroll-snap.enabled", true);

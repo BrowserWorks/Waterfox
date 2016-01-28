@@ -78,6 +78,7 @@ class JSFunction : public js::NativeObject
         /* Derived Flags values for convenience: */
         NATIVE_FUN = 0,
         NATIVE_CTOR = NATIVE_FUN | CONSTRUCTOR,
+        NATIVE_CLASS_CTOR = NATIVE_FUN | CONSTRUCTOR | CLASSCONSTRUCTOR_KIND,
         ASMJS_CTOR = ASMJS_KIND | NATIVE_CTOR,
         ASMJS_LAMBDA_CTOR = ASMJS_KIND | NATIVE_CTOR | LAMBDA,
         INTERPRETED_METHOD = INTERPRETED | METHOD_KIND,
@@ -156,6 +157,7 @@ class JSFunction : public js::NativeObject
                nonLazyScript()->funHasExtensibleScope() ||
                nonLazyScript()->funNeedsDeclEnvObject() ||
                nonLazyScript()->needsHomeObject()       ||
+               nonLazyScript()->isDerivedClassConstructor() ||
                isGenerator();
     }
 
@@ -319,17 +321,22 @@ class JSFunction : public js::NativeObject
 
     void setEnvironment(JSObject* obj) {
         MOZ_ASSERT(isInterpreted() && !isBeingParsed());
-        *(js::HeapPtrObject*)&u.i.env_ = obj;
+        *reinterpret_cast<js::HeapPtrObject*>(&u.i.env_) = obj;
     }
 
     void initEnvironment(JSObject* obj) {
         MOZ_ASSERT(isInterpreted() && !isBeingParsed());
-        ((js::HeapPtrObject*)&u.i.env_)->init(obj);
+        reinterpret_cast<js::HeapPtrObject*>(&u.i.env_)->init(obj);
+    }
+
+    void unsetEnvironment() {
+        setEnvironment(nullptr);
     }
 
   private:
     void setFunctionBox(js::frontend::FunctionBox* funbox) {
         MOZ_ASSERT(isInterpreted());
+        MOZ_ASSERT_IF(!isBeingParsed(), !environment());
         flags_ |= BEING_PARSED;
         u.i.funbox_ = funbox;
     }
@@ -472,7 +479,7 @@ class JSFunction : public js::NativeObject
         // Note: createScriptForLazilyInterpretedFunction triggers a barrier on
         // lazy script before it is overwritten here.
         MOZ_ASSERT(isInterpretedLazy());
-        if (!lazyScript()->maybeScript())
+        if (lazyScriptOrNull() && !lazyScript()->maybeScript())
             lazyScript()->initScript(script);
         flags_ &= ~INTERPRETED_LAZY;
         flags_ |= INTERPRETED;
@@ -509,6 +516,16 @@ class JSFunction : public js::NativeObject
     void setJitInfo(const JSJitInfo* data) {
         MOZ_ASSERT(isNative());
         u.n.jitinfo = data;
+    }
+
+    bool isDerivedClassConstructor() {
+        bool derived;
+        if (isInterpretedLazy())
+            derived = lazyScript()->isDerivedClassConstructor();
+        else
+            derived = nonLazyScript()->isDerivedClassConstructor();
+        MOZ_ASSERT_IF(derived, isClassConstructor());
+        return derived;
     }
 
     static unsigned offsetOfNativeOrScript() {
@@ -631,8 +648,7 @@ IdToFunctionName(JSContext* cx, HandleId id);
 extern JSFunction*
 DefineFunction(JSContext* cx, HandleObject obj, HandleId id, JSNative native,
                unsigned nargs, unsigned flags,
-               gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
-               NewObjectKind newKind = GenericObject);
+               gc::AllocKind allocKind = gc::AllocKind::FUNCTION);
 
 bool
 FunctionHasResolveHook(const JSAtomState& atomState, jsid id);
@@ -746,7 +762,7 @@ JSFunction::getExtendedSlot(size_t which) const
 
 namespace js {
 
-JSString* FunctionToString(JSContext* cx, HandleFunction fun, bool bodyOnly, bool lambdaParen);
+JSString* FunctionToString(JSContext* cx, HandleFunction fun, bool lambdaParen);
 
 template<XDRMode mode>
 bool

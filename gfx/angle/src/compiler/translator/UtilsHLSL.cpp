@@ -8,6 +8,7 @@
 //
 
 #include "compiler/translator/UtilsHLSL.h"
+#include "compiler/translator/IntermNode.h"
 #include "compiler/translator/StructureHLSL.h"
 #include "compiler/translator/SymbolTable.h"
 
@@ -85,6 +86,30 @@ TString Decorate(const TString &string)
     }
 
     return string;
+}
+
+TString DecorateIfNeeded(const TName &name)
+{
+    if (name.isInternal())
+    {
+        return name.getString();
+    }
+    else
+    {
+        return Decorate(name.getString());
+    }
+}
+
+TString DecorateFunctionIfNeeded(const TName &name)
+{
+    if (name.isInternal())
+    {
+        return TFunction::unmangleName(name.getString());
+    }
+    else
+    {
+        return Decorate(TFunction::unmangleName(name.getString()));
+    }
 }
 
 TString TypeString(const TType &type)
@@ -175,6 +200,13 @@ TString StructNameString(const TStructure &structure)
         return "";
     }
 
+    // For structures at global scope we use a consistent
+    // translation so that we can link between shader stages.
+    if (structure.atGlobalScope())
+    {
+        return Decorate(structure.name());
+    }
+
     return "ss" + str(structure.uniqueId()) + "_" + structure.name();
 }
 
@@ -210,13 +242,11 @@ TString InterpolationString(TQualifier qualifier)
     {
       case EvqVaryingIn:           return "";
       case EvqFragmentIn:          return "";
-      case EvqInvariantVaryingIn:  return "";
       case EvqSmoothIn:            return "linear";
       case EvqFlatIn:              return "nointerpolation";
       case EvqCentroidIn:          return "centroid";
       case EvqVaryingOut:          return "";
       case EvqVertexOut:           return "";
-      case EvqInvariantVaryingOut: return "";
       case EvqSmoothOut:           return "linear";
       case EvqFlatOut:             return "nointerpolation";
       case EvqCentroidOut:         return "centroid";

@@ -107,11 +107,11 @@ struct FullscreenRequest : public LinkedListElement<FullscreenRequest>
   nsDocument* GetDocument() const { return mDocument; }
 
 private:
-  nsRefPtr<Element> mElement;
-  nsRefPtr<nsDocument> mDocument;
+  RefPtr<Element> mElement;
+  RefPtr<nsDocument> mDocument;
 
 public:
-  nsRefPtr<gfx::VRHMDInfo> mVRHMDDevice;
+  RefPtr<gfx::VRHMDInfo> mVRHMDDevice;
   // This value should be true if the fullscreen request is
   // originated from chrome code.
   bool mIsCallerChrome = false;
@@ -256,9 +256,9 @@ private:
   // empty if there are no elements with this ID.
   // The elements are stored as weak pointers.
   nsTArray<Element*> mIdContentList;
-  nsRefPtr<nsBaseContentList> mNameContentList;
+  RefPtr<nsBaseContentList> mNameContentList;
   nsAutoPtr<nsTHashtable<ChangeCallbackEntry> > mChangeCallbacks;
-  nsRefPtr<Element> mImageElement;
+  RefPtr<Element> mImageElement;
 };
 
 namespace mozilla {
@@ -332,8 +332,8 @@ public:
 
 private:
   // The this value to use for invocation of the callback.
-  nsRefPtr<mozilla::dom::Element> mThisObject;
-  nsRefPtr<mozilla::dom::CallbackFunction> mCallback;
+  RefPtr<mozilla::dom::Element> mThisObject;
+  RefPtr<mozilla::dom::CallbackFunction> mCallback;
   // The type of callback (eCreated, eAttached, etc.)
   nsIDocument::ElementCallbackType mType;
   // Arguments to be passed to the callback,
@@ -427,7 +427,7 @@ protected:
                            mozilla::dom::CustomElementDefinition>
     DefinitionMap;
   typedef nsClassHashtable<mozilla::dom::CustomElementHashKey,
-                           nsTArray<nsRefPtr<mozilla::dom::Element>>>
+                           nsTArray<nsWeakPtr>>
     CandidateMap;
 
   // Hashtable for custom element definitions in web components.
@@ -591,7 +591,7 @@ protected:
                          nsILoadGroup** aLoadGroup);
 
   private:
-    nsRefPtr<nsDocument> mDisplayDocument;
+    RefPtr<nsDocument> mDisplayDocument;
     nsCOMPtr<nsIStreamListener> mTargetListener;
     nsCOMPtr<nsIURI> mURI;
   };
@@ -1207,6 +1207,7 @@ public:
   virtual Element* FindImageMap(const nsAString& aNormalizedMapName) override;
 
   virtual Element* GetFullScreenElement() override;
+  virtual nsTArray<Element*> GetFullscreenStack() const override;
   virtual void AsyncRequestFullScreen(
     mozilla::UniquePtr<FullscreenRequest>&& aRequest) override;
   virtual void RestorePreviousFullScreenState() override;
@@ -1473,13 +1474,15 @@ protected:
   nsIContent* GetFirstBaseNodeWithHref();
   nsresult SetFirstBaseNodeWithHref(nsIContent *node);
 
-  // Get the first <title> element with the given IsNodeOfType type, or
-  // return null if there isn't one
-  nsIContent* GetTitleContent(uint32_t aNodeType);
-  // Find the first "title" element in the given IsNodeOfType type and
-  // append the concatenation of its text node children to aTitle. Do
-  // nothing if there is no such element.
-  void GetTitleFromElement(uint32_t aNodeType, nsAString& aTitle);
+  /**
+   * Returns the title element of the document as defined by the HTML
+   * specification, or null if there isn't one.  For documents whose root
+   * element is an <svg:svg>, this is the first <svg:title> element that's a
+   * child of the root.  For other documents, it's the first HTML title element
+   * in the document.
+   */
+  Element* GetTitleElement();
+
 public:
   // Get our title
   virtual void GetTitle(nsString& aTitle) override;
@@ -1513,7 +1516,7 @@ protected:
 
   void RemoveDocStyleSheetsFromStyleSets();
   void RemoveStyleSheetsFromStyleSets(nsCOMArray<nsIStyleSheet>& aSheets, 
-                                      nsStyleSet::sheetType aType);
+                                      mozilla::SheetType aType);
   void ResetStylesheetsToURI(nsIURI* aURI);
   void FillStyleSet(nsStyleSet* aStyleSet);
 
@@ -1568,14 +1571,14 @@ protected:
 
   nsCOMArray<nsIStyleSheet> mStyleSheets;
   nsCOMArray<nsIStyleSheet> mOnDemandBuiltInUASheets;
-  nsCOMArray<nsIStyleSheet> mAdditionalSheets[SheetTypeCount];
+  nsCOMArray<nsIStyleSheet> mAdditionalSheets[AdditionalSheetTypeCount];
 
   // Array of observers
   nsTObserverArray<nsIDocumentObserver*> mObservers;
 
   // Tracker for animations that are waiting to start.
   // nullptr until GetOrCreatePendingAnimationTracker is called.
-  nsRefPtr<mozilla::PendingAnimationTracker> mPendingAnimationTracker;
+  RefPtr<mozilla::PendingAnimationTracker> mPendingAnimationTracker;
 
   // Weak reference to the scope object (aka the script global object)
   // that, unlike mScriptGlobalObject, is never unset once set. This
@@ -1598,7 +1601,7 @@ private:
   // CustomElementData in this array, separated by nullptr that
   // represent the boundaries of the items in the stack. The first
   // queue in the stack is the base element queue.
-  static mozilla::Maybe<nsTArray<nsRefPtr<mozilla::dom::CustomElementData>>> sProcessingStack;
+  static mozilla::Maybe<nsTArray<RefPtr<mozilla::dom::CustomElementData>>> sProcessingStack;
 
   static bool CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* aVp);
 
@@ -1613,12 +1616,12 @@ public:
   static bool IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject);
 
   // The "registry" from the web components spec.
-  nsRefPtr<mozilla::dom::Registry> mRegistry;
+  RefPtr<mozilla::dom::Registry> mRegistry;
 
-  nsRefPtr<mozilla::EventListenerManager> mListenerManager;
-  nsRefPtr<mozilla::dom::StyleSheetList> mDOMStyleSheets;
-  nsRefPtr<nsDOMStyleSheetSetList> mStyleSheetSetList;
-  nsRefPtr<nsScriptLoader> mScriptLoader;
+  RefPtr<mozilla::EventListenerManager> mListenerManager;
+  RefPtr<mozilla::dom::StyleSheetList> mDOMStyleSheets;
+  RefPtr<nsDOMStyleSheetSetList> mStyleSheetSetList;
+  RefPtr<nsScriptLoader> mScriptLoader;
   nsDocHeaderData* mHeaderData;
   /* mIdentifierMap works as follows for IDs:
    * 1) Attribute changes affect the table immediately (removing and adding
@@ -1673,7 +1676,7 @@ public:
 
   // ScreenOrientation "pending promise" as described by
   // http://www.w3.org/TR/screen-orientation/
-  nsRefPtr<mozilla::dom::Promise> mOrientationPendingPromise;
+  RefPtr<mozilla::dom::Promise> mOrientationPendingPromise;
 
   uint16_t mCurrentOrientationAngle;
   mozilla::dom::OrientationType mCurrentOrientationType;
@@ -1722,7 +1725,7 @@ public:
   mozilla::EventStates mDocumentState;
   mozilla::EventStates mGotDocumentState;
 
-  nsRefPtr<nsDOMNavigationTiming> mTiming;
+  RefPtr<nsDOMNavigationTiming> mTiming;
 private:
   friend class nsUnblockOnloadEvent;
   // Recomputes the visibility state but doesn't set the new value.
@@ -1798,9 +1801,9 @@ private:
   // Member to store out last-selected stylesheet set.
   nsString mLastStyleSheetSet;
 
-  nsTArray<nsRefPtr<nsFrameLoader> > mInitializableFrameLoaders;
+  nsTArray<RefPtr<nsFrameLoader> > mInitializableFrameLoaders;
   nsTArray<nsCOMPtr<nsIRunnable> > mFrameLoaderFinalizers;
-  nsRefPtr<nsRunnableMethod<nsDocument> > mFrameLoaderRunner;
+  RefPtr<nsRunnableMethod<nsDocument> > mFrameLoaderRunner;
 
   nsRevocableEventPtr<nsRunnableMethod<nsDocument, void, false> >
     mPendingTitleChangeEvent;
@@ -1824,9 +1827,9 @@ private:
   // Set if we've found a URL for the current picture
   nsString mPreloadPictureFoundSource;
 
-  nsRefPtr<mozilla::dom::DOMImplementation> mDOMImplementation;
+  RefPtr<mozilla::dom::DOMImplementation> mDOMImplementation;
 
-  nsRefPtr<nsContentList> mImageMaps;
+  RefPtr<nsContentList> mImageMaps;
 
   nsCString mScrollToRef;
   uint8_t mScrolledToRefAlready : 1;
@@ -1838,9 +1841,9 @@ private:
   // Tracking for plugins in the document.
   nsTHashtable< nsPtrHashKey<nsIObjectLoadingContent> > mPlugins;
 
-  nsRefPtr<mozilla::dom::UndoManager> mUndoManager;
+  RefPtr<mozilla::dom::UndoManager> mUndoManager;
 
-  nsRefPtr<mozilla::dom::DocumentTimeline> mDocumentTimeline;
+  RefPtr<mozilla::dom::DocumentTimeline> mDocumentTimeline;
 
   enum ViewportType {
     DisplayWidthHeight,
@@ -1866,7 +1869,7 @@ private:
   CSPErrorQueue mCSPWebConsoleErrorQueue;
 
   nsCOMPtr<nsIDocument> mMasterDocument;
-  nsRefPtr<mozilla::dom::ImportManager> mImportManager;
+  RefPtr<mozilla::dom::ImportManager> mImportManager;
   nsTArray<nsCOMPtr<nsINode> > mSubImportLinks;
 
   // Set to true when the document is possibly controlled by the ServiceWorker.

@@ -42,6 +42,7 @@ namespace dom {
 class ContentParent;
 class PBrowserParent;
 class TabParent;
+class MutableTabContext;
 } // namespace dom
 
 namespace ipc {
@@ -91,11 +92,11 @@ public:
    */
   virtual bool DoLoadMessageManagerScript(const nsAString& aURL,
                                           bool aRunInGlobalScope) override;
-  virtual bool DoSendAsyncMessage(JSContext* aCx,
-                                  const nsAString& aMessage,
-                                  mozilla::dom::ipc::StructuredCloneData& aData,
-                                  JS::Handle<JSObject *> aCpows,
-                                  nsIPrincipal* aPrincipal) override;
+  virtual nsresult DoSendAsyncMessage(JSContext* aCx,
+                                      const nsAString& aMessage,
+                                      mozilla::dom::ipc::StructuredCloneData& aData,
+                                      JS::Handle<JSObject *> aCpows,
+                                      nsIPrincipal* aPrincipal) override;
   virtual bool CheckPermission(const nsAString& aPermission) override;
   virtual bool CheckManifestURL(const nsAString& aManifestURL) override;
   virtual bool CheckAppHasPermission(const nsAString& aPermission) override;
@@ -126,12 +127,12 @@ public:
   // frame loader owner needs to call this, and pass in the two references to
   // nsRefPtrs for frame loaders that need to be swapped.
   nsresult SwapWithOtherLoader(nsFrameLoader* aOther,
-                               nsRefPtr<nsFrameLoader>& aFirstToSwap,
-                               nsRefPtr<nsFrameLoader>& aSecondToSwap);
+                               RefPtr<nsFrameLoader>& aFirstToSwap,
+                               RefPtr<nsFrameLoader>& aSecondToSwap);
 
   nsresult SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
-                                     nsRefPtr<nsFrameLoader>& aFirstToSwap,
-                                     nsRefPtr<nsFrameLoader>& aSecondToSwap);
+                                     RefPtr<nsFrameLoader>& aFirstToSwap,
+                                     RefPtr<nsFrameLoader>& aSecondToSwap);
 
   /**
    * Return the primary frame for our owning content, or null if it
@@ -221,7 +222,7 @@ public:
   nsresult GetWindowDimensions(nsIntRect& aRect);
 
   // public because a callback needs these.
-  nsRefPtr<nsFrameMessageManager> mMessageManager;
+  RefPtr<nsFrameMessageManager> mMessageManager;
   nsCOMPtr<nsIInProcessContentFrameMessageManager> mChildMessageManager;
 
 private:
@@ -317,6 +318,16 @@ private:
 
   void InitializeBrowserAPI();
 
+  nsresult GetNewTabContext(mozilla::dom::MutableTabContext* aTabContext,
+                            const nsACString& aSignedPkgNoSuffix = EmptyCString(),
+                            const nsACString& aPackageId = EmptyCString());
+
+  enum TabParentChange {
+    eTabParentRemoved,
+    eTabParentChanged
+  };
+  void MaybeUpdatePrimaryTabParent(TabParentChange aChange);
+
   nsCOMPtr<nsIDocShell> mDocShell;
   nsCOMPtr<nsIURI> mURIToLoad;
   mozilla::dom::Element* mOwnerContent; // WEAK
@@ -324,7 +335,7 @@ private:
   // After the frameloader has been removed from the DOM but before all of the
   // messages from the frame have been received, we keep a strong reference to
   // our <browser> element.
-  nsRefPtr<mozilla::dom::Element> mOwnerContentStrong;
+  RefPtr<mozilla::dom::Element> mOwnerContentStrong;
 
   // Note: this variable must be modified only by ResetPermissionManagerStatus()
   uint32_t mAppIdSentToPermissionManager;

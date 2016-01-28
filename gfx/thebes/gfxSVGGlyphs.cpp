@@ -28,7 +28,6 @@
 #include "gfxFont.h"
 #include "nsSMILAnimationController.h"
 #include "gfxContext.h"
-#include "gfxColor.h"
 #include "harfbuzz/hb.h"
 
 #define SVG_CONTENT_TYPE NS_LITERAL_CSTRING("image/svg+xml")
@@ -40,7 +39,7 @@ typedef mozilla::dom::Element Element;
 
 mozilla::gfx::UserDataKey gfxTextContextPaint::sUserDataKey;
 
-const gfxRGBA SimpleTextContextPaint::sZero = gfxRGBA(0.0f, 0.0f, 0.0f, 0.0f);
+/* static */ const Color SimpleTextContextPaint::sZero = Color();
 
 gfxSVGGlyphs::gfxSVGGlyphs(hb_blob_t *aSVGTable, gfxFontEntry *aFontEntry)
     : mSVGData(aSVGTable)

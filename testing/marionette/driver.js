@@ -4,9 +4,9 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
-const loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+var loader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
     .getService(Ci.mozIJSSubScriptLoader);
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -16,8 +16,8 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-var {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-this.DevToolsUtils = devtools.require("devtools/toolkit/DevToolsUtils.js");
+var {devtools} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+this.DevToolsUtils = devtools.require("devtools/shared/DevToolsUtils");
 
 XPCOMUtils.defineLazyServiceGetter(
     this, "cookieManager", "@mozilla.org/cookiemanager;1", "nsICookieManager2");
@@ -42,7 +42,7 @@ loader.loadSubScript("chrome://marionette/content/frame-manager.js");
 
 this.EXPORTED_SYMBOLS = ["GeckoDriver", "Context"];
 
-const FRAME_SCRIPT = "chrome://marionette/content/listener.js";
+var FRAME_SCRIPT = "chrome://marionette/content/listener.js";
 const BROWSER_STARTUP_FINISHED = "browser-delayed-startup-finished";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const CLICK_TO_START_PREF = "marionette.debugging.clicktostart";
@@ -221,7 +221,12 @@ GeckoDriver.prototype.sendAsync = function(name, msg, cmdId) {
 
   if (curRemoteFrame === null) {
     this.curBrowser.executeWhenReady(() => {
-      this.mm.broadcastAsyncMessage(name + this.curBrowser.curFrameId, msg);
+      if (this.curBrowser.curFrameId) {
+          this.mm.broadcastAsyncMessage(name + this.curBrowser.curFrameId, msg);
+      }
+      else {
+          throw new WebDriverError("Can not send call to listener as it doesnt exist");
+      }
     });
   } else {
     let remoteFrameId = curRemoteFrame.targetFrameId;
@@ -811,6 +816,9 @@ GeckoDriver.prototype.applyArgumentsToSandbox = function(win, sb, args) {
  *     True if the script is asynchronous.
  * @param {number} timeout
  *     When to interrupt script in milliseconds.
+ * @param {string} filename
+ *     Optional. URI or name of the file we are executing.
+ *     (Used to improve stack trace readability)
  */
 GeckoDriver.prototype.executeScriptInSandbox = function(
     resp,
@@ -818,7 +826,8 @@ GeckoDriver.prototype.executeScriptInSandbox = function(
     script,
     directInject,
     async,
-    timeout) {
+    timeout,
+    filename) {
   if (directInject && async && (timeout === null || timeout === 0)) {
     throw new TimeoutError("Please set a timeout");
   }
@@ -832,7 +841,7 @@ GeckoDriver.prototype.executeScriptInSandbox = function(
     script = data + script;
   }
 
-  let res = Cu.evalInSandbox(script, sandbox, "1.8", "dummy file", 0);
+  let res = Cu.evalInSandbox(script, sandbox, "1.8", filename ? filename : "dummy file", 0);
 
   if (directInject && !async &&
       (typeof res == "undefined" || typeof res.passed == "undefined")) {
@@ -932,7 +941,7 @@ GeckoDriver.prototype.execute = function(cmd, resp, directInject) {
     };
 
     if (!directInject) {
-      script = "let func = function() { " + script + " }; func.apply(null, __marionetteParams);";
+      script = "var func = function() { " + script + " }; func.apply(null, __marionetteParams);";
     }
     this.executeScriptInSandbox(
         resp,
@@ -940,7 +949,8 @@ GeckoDriver.prototype.execute = function(cmd, resp, directInject) {
         script,
         directInject,
         false /* async */,
-        scriptTimeout);
+        scriptTimeout,
+        filename);
   } catch (e) {
     throw new JavaScriptError(e, "execute_script", filename, line, script);
   }
@@ -1164,8 +1174,8 @@ GeckoDriver.prototype.executeWithCallback = function(cmd, resp, directInject) {
 
       if (!directInject) {
         script =  "__marionetteParams.push(returnFunc);" +
-            "let marionetteScriptFinished = returnFunc;" +
-            "let __marionetteFunc = function() {" + script + "};" +
+            "var marionetteScriptFinished = returnFunc;" +
+            "var __marionetteFunc = function() {" + script + "};" +
             "__marionetteFunc.apply(null, __marionetteParams);";
       }
 
@@ -1175,7 +1185,8 @@ GeckoDriver.prototype.executeWithCallback = function(cmd, resp, directInject) {
           script,
           directInject,
           true /* async */,
-          scriptTimeout);
+          scriptTimeout,
+          filename);
     } catch (e) {
       chromeAsyncError(e, "execute_async_script", filename, line, script);
     }
@@ -1609,6 +1620,13 @@ GeckoDriver.prototype.getActiveFrame = function(cmd, resp) {
       resp.body.value = this.currentFrameElement;
       break;
   }
+};
+
+/**
+ *
+ */
+GeckoDriver.prototype.switchToParentFrame = function (cmd, resp) {
+  let res = yield this.listener.switchToParentFrame();
 };
 
 /**
@@ -2524,6 +2542,9 @@ GeckoDriver.prototype.clearImportedScripts = function(cmd, resp) {
  *     PNG image encoded as base64 encoded string.
  */
 GeckoDriver.prototype.takeScreenshot = function(cmd, resp) {
+  let {id, highlights, full} = cmd.parameters;
+  highlights = highlights || [];
+
   switch (this.context) {
     case Context.CHROME:
       let win = this.getCurrentWindow();
@@ -2566,10 +2587,7 @@ GeckoDriver.prototype.takeScreenshot = function(cmd, resp) {
       break;
 
     case Context.CONTENT:
-      resp.body.value = yield this.listener.takeScreenshot({
-        id: cmd.parameters.id,
-        highlights: cmd.parameters.highlights,
-        full: cmd.parameters.full});
+      return this.listener.takeScreenshot(id, full, highlights);
       break;
   }
 };
@@ -2955,6 +2973,7 @@ GeckoDriver.prototype.commands = {
   "setWindowPosition": GeckoDriver.prototype.setWindowPosition,
   "getActiveFrame": GeckoDriver.prototype.getActiveFrame,
   "switchToFrame": GeckoDriver.prototype.switchToFrame,
+  "switchToParentFrame": GeckoDriver.prototype.switchToParentFrame,
   "switchToWindow": GeckoDriver.prototype.switchToWindow,
   "switchToShadowRoot": GeckoDriver.prototype.switchToShadowRoot,
   "deleteSession": GeckoDriver.prototype.deleteSession,

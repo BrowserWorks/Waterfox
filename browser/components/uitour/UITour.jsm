@@ -73,7 +73,7 @@ const TARGET_SEARCHENGINE_PREFIX = "searchEngine-";
 
 // Create a new instance of the ConsoleAPI so we can control the maxLogLevel with a pref.
 XPCOMUtils.defineLazyGetter(this, "log", () => {
-  let ConsoleAPI = Cu.import("resource://gre/modules/devtools/Console.jsm", {}).ConsoleAPI;
+  let ConsoleAPI = Cu.import("resource://gre/modules/Console.jsm", {}).ConsoleAPI;
   let consoleOptions = {
     maxLogLevelPref: PREF_LOG_LEVEL,
     prefix: "UITour",
@@ -161,9 +161,6 @@ this.UITour = {
       infoPanelPosition: "leftcenter topright",
       query: (aDocument) => {
         let loopUI = aDocument.defaultView.LoopUI;
-        if (loopUI.selectedTab != "rooms") {
-          return null;
-        }
         // Use the parentElement full-width container of the button so our arrow
         // doesn't overlap the panel contents much.
         return loopUI.browser.contentDocument.querySelector(".new-room-button").parentElement;
@@ -173,9 +170,6 @@ this.UITour = {
       infoPanelPosition: "leftcenter topright",
       query: (aDocument) => {
         let loopUI = aDocument.defaultView.LoopUI;
-        if (loopUI.selectedTab != "rooms") {
-          return null;
-        }
         return loopUI.browser.contentDocument.querySelector(".room-list");
       },
     }],
@@ -1799,12 +1793,8 @@ this.UITour = {
         appinfo["defaultBrowser"] = isDefaultBrowser;
 
         let canSetDefaultBrowserInBackground = true;
-        if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2")) {
-          let prefBranch =
-            Services.prefs.getBranch("browser.shell.associationHash");
-          let prefChildren = prefBranch.getChildList("");
-          canSetDefaultBrowserInBackground = prefChildren.length > 0;
-        } else if (AppConstants.isPlatformAndVersionAtLeast("macosx", "10.10")) {
+        if (AppConstants.isPlatformAndVersionAtLeast("win", "6.2") ||
+            AppConstants.isPlatformAndVersionAtLeast("macosx", "10.10")) {
           canSetDefaultBrowserInBackground = false;
         } else if (AppConstants.platform == "linux") {
           // The ShellService may not exist on some versions of Linux.

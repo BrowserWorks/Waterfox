@@ -5,7 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AbstractTimelineMarker.h"
+
 #include "mozilla/TimeStamp.h"
+#include "MainThreadUtils.h"
+#include "nsAppRunner.h"
 
 namespace mozilla {
 
@@ -13,6 +16,8 @@ AbstractTimelineMarker::AbstractTimelineMarker(const char* aName,
                                                MarkerTracingType aTracingType)
   : mName(aName)
   , mTracingType(aTracingType)
+  , mProcessType(XRE_GetProcessType())
+  , mIsOffMainThread(!NS_IsMainThread())
 {
   MOZ_COUNT_CTOR(AbstractTimelineMarker);
   SetCurrentTime();
@@ -23,6 +28,8 @@ AbstractTimelineMarker::AbstractTimelineMarker(const char* aName,
                                                MarkerTracingType aTracingType)
   : mName(aName)
   , mTracingType(aTracingType)
+  , mProcessType(XRE_GetProcessType())
+  , mIsOffMainThread(!NS_IsMainThread())
 {
   MOZ_COUNT_CTOR(AbstractTimelineMarker);
   SetCustomTime(aTime);
@@ -33,6 +40,14 @@ AbstractTimelineMarker::Clone()
 {
   MOZ_ASSERT(false, "Clone method not yet implemented on this marker type.");
   return nullptr;
+}
+
+bool
+AbstractTimelineMarker::Equals(const AbstractTimelineMarker& aOther)
+{
+  // Check whether two markers should be considered the same, for the purpose
+  // of pairing start and end markers. Normally this definition suffices.
+  return strcmp(mName, aOther.mName) == 0;
 }
 
 AbstractTimelineMarker::~AbstractTimelineMarker()
@@ -52,6 +67,24 @@ AbstractTimelineMarker::SetCustomTime(const TimeStamp& aTime)
 {
   bool isInconsistent = false;
   mTime = (aTime - TimeStamp::ProcessCreation(isInconsistent)).ToMilliseconds();
+}
+
+void
+AbstractTimelineMarker::SetCustomTime(DOMHighResTimeStamp aTime)
+{
+  mTime = aTime;
+}
+
+void
+AbstractTimelineMarker::SetProcessType(GeckoProcessType aProcessType)
+{
+  mProcessType = aProcessType;
+}
+
+void
+AbstractTimelineMarker::SetOffMainThread(bool aIsOffMainThread)
+{
+  mIsOffMainThread = aIsOffMainThread;
 }
 
 } // namespace mozilla

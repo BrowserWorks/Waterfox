@@ -541,18 +541,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             cmd.append(target)
         return cmd
 
-    def symlink_gtk3(self):
-        dirs = self.query_abs_dirs()
-        gtk3_path = os.path.join(dirs['abs_work_dir'], 'gtk3')
-        gtk3_symlink_path = os.path.join(dirs['abs_work_dir'], 'gecko', 'gtk3')
-
-        if os.path.isdir(gtk3_path):
-            cmd = ["ln", "-s", gtk3_path, gtk3_symlink_path]
-            retval = self.run_command(cmd)
-            if retval != 0:
-                self.error("failed to create symlink")
-                self.return_code = 2
-
     def build(self):
         dirs = self.query_abs_dirs()
         gecko_config = self.load_gecko_config()
@@ -563,13 +551,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         else:
             cmds = [self.generate_build_command(t) for t in build_targets]
 
-        self.symlink_gtk3()
         env = self.query_build_env()
-        env['LD_LIBRARY_PATH'] = os.environ.get('LD_LIBRARY_PATH')
-        if env['LD_LIBRARY_PATH'] is None:
-            env['LD_LIBRARY_PATH'] = os.path.join(dirs['abs_work_dir'], 'gecko', 'gtk3', 'usr', 'local', 'lib')
-        else:
-            env['LD_LIBRARY_PATH'] += ':%s' % os.path.join(dirs['abs_work_dir'], 'gecko', 'gtk3', 'usr', 'local', 'lib')
         if self.config.get('gaia_languages_file'):
             env['LOCALE_BASEDIR'] = dirs['gaia_l10n_base_dir']
             env['LOCALES_FILE'] = os.path.join(dirs['abs_work_dir'], 'gaia', self.config['gaia_languages_file'])
@@ -740,14 +722,9 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                 if base_pattern in public_upload_patterns:
                     public_files.append(f)
 
-        device_name = self.config['target'].split('-')[0]
-        blobfree_zip = os.path.join(
-                        dirs['work_dir'],
-                        'out',
-                        'target',
-                        'product',
-                        device_name,
-                        device_name + '.blobfree-dist.zip')
+        device_name   = os.path.basename(output_dir)
+        blobfree_dist = device_name + '.blobfree-dist.zip'
+        blobfree_zip  = os.path.join(output_dir, blobfree_dist)
 
         if os.path.exists(blobfree_zip):
             public_files.append(blobfree_zip)

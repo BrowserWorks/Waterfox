@@ -12,7 +12,6 @@
 #include "cryptohi.h"
 #include "base64.h"
 #include "secasn1.h"
-#include "pk11pqg.h"
 #include "nsKeygenHandler.h"
 #include "nsKeygenHandlerContent.h"
 #include "nsIServiceManager.h"
@@ -27,10 +26,11 @@
 #include "nsNSSShutDown.h"
 #include "nsXULAppAPI.h"
 
+#include "mozilla/Telemetry.h"
+
 //These defines are taken from the PKCS#11 spec
 #define CKM_RSA_PKCS_KEY_PAIR_GEN     0x00000000
 #define CKM_DH_PKCS_KEY_PAIR_GEN      0x00000020
-#define CKM_DSA_KEY_PAIR_GEN          0x00000010
 
 DERTemplate SECAlgorithmIDTemplate[] = {
     { DER_SEQUENCE,
@@ -60,72 +60,6 @@ DERTemplate CERTPublicKeyAndChallengeTemplate[] =
     { DER_IA5_STRING, offsetof(CERTPublicKeyAndChallenge,challenge), },
     { 0, }
 };
-
-const SEC_ASN1Template SECKEY_PQGParamsTemplate[] = {
-    { SEC_ASN1_SEQUENCE, 0, nullptr, sizeof(PQGParams) },
-    { SEC_ASN1_INTEGER, offsetof(PQGParams,prime) },
-    { SEC_ASN1_INTEGER, offsetof(PQGParams,subPrime) },
-    { SEC_ASN1_INTEGER, offsetof(PQGParams,base) },
-    { 0, }
-};
-
-static PQGParams *
-decode_pqg_params(char *aStr)
-{
-    unsigned char *buf = nullptr;
-    unsigned int len;
-    PLArenaPool *arena = nullptr;
-    PQGParams *params = nullptr;
-    SECStatus status;
-
-    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-    if (!arena)
-        return nullptr;
-
-    params = static_cast<PQGParams*>(PORT_ArenaZAlloc(arena, sizeof(PQGParams)));
-    if (!params)
-        goto loser;
-    params->arena = arena;
-
-    buf = ATOB_AsciiToData(aStr, &len);
-    if ((!buf) || (len == 0))
-        goto loser;
-
-    status = SEC_ASN1Decode(arena, params, SECKEY_PQGParamsTemplate, (const char*)buf, len);
-    if (status != SECSuccess)
-        goto loser;
-
-    return params;
-
-loser:
-    if (arena) {
-      PORT_FreeArena(arena, false);
-    }
-    if (buf) {
-      PR_Free(buf);
-    }
-    return nullptr;
-}
-
-static int
-pqg_prime_bits(char *str)
-{
-    PQGParams *params = nullptr;
-    int primeBits = 0, i;
-
-    params = decode_pqg_params(str);
-    if (!params)
-        goto done; /* lose */
-
-    for (i = 0; params->prime.data[i] == 0; i++)
-        /* empty */;
-    primeBits = (params->prime.len - i) * 8;
-
-done:
-    if (params)
-        PK11_PQG_DestroyParams(params);
-    return primeBits;
-}
 
 typedef struct curveNameTagPairStr {
     const char *curveName;
@@ -260,11 +194,16 @@ NS_IMPL_ISUPPORTS(nsKeygenFormProcessor, nsIFormProcessor)
 nsKeygenFormProcessor::nsKeygenFormProcessor()
 { 
    m_ctx = new PipUIContext();
-
 } 
 
 nsKeygenFormProcessor::~nsKeygenFormProcessor()
 {
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return;
+  }
+
+  shutdown(calledFromObject);
 }
 
 nsresult
@@ -312,9 +251,13 @@ nsKeygenFormProcessor::Init()
 nsresult
 nsKeygenFormProcessor::GetSlot(uint32_t aMechanism, PK11SlotInfo** aSlot)
 {
-  return GetSlotWithMechanism(aMechanism,m_ctx,aSlot);
-}
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
+  return GetSlotWithMechanism(aMechanism, m_ctx, aSlot, locker);
+}
 
 uint32_t MapGenMechToAlgoMech(uint32_t mechanism)
 {
@@ -323,14 +266,11 @@ uint32_t MapGenMechToAlgoMech(uint32_t mechanism)
     /* We are interested in slots based on the ability to perform
        a given algorithm, not on their ability to generate keys usable
        by that algorithm. Therefore, map keygen-specific mechanism tags
-       to tags for the corresponding crypto algorthm. */
+       to tags for the corresponding crypto algorithm. */
     switch(mechanism)
     {
     case CKM_RSA_PKCS_KEY_PAIR_GEN:
         searchMech = CKM_RSA_PKCS;
-        break;
-    case CKM_DSA_KEY_PAIR_GEN:
-        searchMech = CKM_DSA;
         break;
     case CKM_RC4_KEY_GEN:
         searchMech = CKM_RC4;
@@ -353,11 +293,9 @@ uint32_t MapGenMechToAlgoMech(uint32_t mechanism)
 
 
 nsresult
-GetSlotWithMechanism(uint32_t aMechanism, 
-                     nsIInterfaceRequestor *m_ctx,
-                     PK11SlotInfo** aSlot)
+GetSlotWithMechanism(uint32_t aMechanism, nsIInterfaceRequestor* m_ctx,
+                     PK11SlotInfo** aSlot, nsNSSShutDownPreventionLock& /*proofOfLock*/)
 {
-    nsNSSShutDownPreventionLock locker;
     PK11SlotList * slotList = nullptr;
     char16_t** tokenNameList = nullptr;
     nsITokenDialogs * dialogs;
@@ -418,17 +356,11 @@ GetSlotWithMechanism(uint32_t aMechanism,
 
 		if (NS_FAILED(rv)) goto loser;
 
-    {
-      nsPSMUITracker tracker;
-      if (!tokenNameList || !*tokenNameList) {
-          rv = NS_ERROR_OUT_OF_MEMORY;
-      }
-      else if (tracker.isUIForbidden()) {
-        rv = NS_ERROR_NOT_AVAILABLE;
-      }
-      else {
-        rv = dialogs->ChooseToken(m_ctx, (const char16_t**)tokenNameList, numSlots, &unicodeTokenChosen, &canceled);
-      }
+    if (!tokenNameList || !*tokenNameList) {
+        rv = NS_ERROR_OUT_OF_MEMORY;
+    } else {
+        rv = dialogs->ChooseToken(m_ctx, (const char16_t**)tokenNameList,
+                                  numSlots, &unicodeTokenChosen, &canceled);
     }
 		NS_RELEASE(dialogs);
 		if (NS_FAILED(rv)) goto loser;
@@ -464,6 +396,55 @@ loser:
       return rv;
 }
 
+
+void
+GatherKeygenTelemetry(uint32_t keyGenMechanism, int keysize, char* curve)
+{
+  if (keyGenMechanism == CKM_RSA_PKCS_KEY_PAIR_GEN) {
+    if (keysize > 8196 || keysize < 0) {
+      return;
+    }
+
+    nsCString telemetryValue("rsa");
+    telemetryValue.AppendPrintf("%d", keysize);
+    mozilla::Telemetry::Accumulate(
+        mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, telemetryValue);
+  } else if (keyGenMechanism == CKM_EC_KEY_PAIR_GEN) {
+    nsCString secp384r1 = NS_LITERAL_CSTRING("secp384r1");
+    nsCString secp256r1 = NS_LITERAL_CSTRING("secp256r1");
+
+    SECKEYECParams* decoded = decode_ec_params(curve);
+    if (!decoded) {
+      switch (keysize) {
+        case 2048:
+          mozilla::Telemetry::Accumulate(
+              mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, secp384r1);
+          break;
+        case 1024:
+        case 512:
+          mozilla::Telemetry::Accumulate(
+              mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, secp256r1);
+          break;
+      }
+    } else {
+      SECITEM_FreeItem(decoded, true);
+      if (secp384r1.EqualsIgnoreCase(curve, secp384r1.Length())) {
+          mozilla::Telemetry::Accumulate(
+              mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, secp384r1);
+      } else if (secp256r1.EqualsIgnoreCase(curve, secp256r1.Length())) {
+          mozilla::Telemetry::Accumulate(
+              mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, secp256r1);
+      } else {
+        mozilla::Telemetry::Accumulate(
+            mozilla::Telemetry::KEYGEN_GENERATED_KEY_TYPE, NS_LITERAL_CSTRING("other_ec"));
+      }
+    }
+  } else {
+    MOZ_CRASH("Unknown keygen algorithm");
+    return;
+  }
+}
+
 nsresult
 nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
                                     const nsAString& aChallenge,
@@ -472,16 +453,19 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
                                     const nsAString& aKeyParams)
 {
     nsNSSShutDownPreventionLock locker;
+    if (isAlreadyShutDown()) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+
     nsresult rv = NS_ERROR_FAILURE;
     char *keystring = nullptr;
-    char *keyparamsString = nullptr, *str = nullptr;
+    char *keyparamsString = nullptr;
     uint32_t keyGenMechanism;
-    int32_t primeBits;
     PK11SlotInfo *slot = nullptr;
     PK11RSAGenParams rsaParams;
     SECOidTag algTag;
     int keysize = 0;
-    void *params;
+    void *params = nullptr;
     SECKEYPrivateKey *privateKey = nullptr;
     SECKEYPublicKey *publicKey = nullptr;
     CERTSubjectPublicKeyInfo *spkInfo = nullptr;
@@ -495,7 +479,7 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     nsIGeneratingKeypairInfoDialogs * dialogs;
     nsKeygenThread *KeygenRunnable = 0;
     nsCOMPtr<nsIKeygenThread> runnable;
-    
+
     // permanent and sensitive flags for keygen
     PK11AttrFlags attrFlags = PK11_ATTR_TOKEN | PK11_ATTR_SENSITIVE | PK11_ATTR_PRIVATE;
 
@@ -518,33 +502,6 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     // Set the keygen mechanism
     if (aKeyType.IsEmpty() || aKeyType.LowerCaseEqualsLiteral("rsa")) {
         keyGenMechanism = CKM_RSA_PKCS_KEY_PAIR_GEN;
-    } else if (aKeyType.LowerCaseEqualsLiteral("dsa")) {
-        char * end;
-        keyparamsString = ToNewCString(aKeyParams);
-        if (!keyparamsString) {
-            rv = NS_ERROR_OUT_OF_MEMORY;
-            goto loser;
-        }
-
-        keyGenMechanism = CKM_DSA_KEY_PAIR_GEN;
-        if (strcmp(keyparamsString, "null") == 0)
-            goto loser;
-        str = keyparamsString;
-        bool found_match = false;
-        do {
-            end = strchr(str, ',');
-            if (end)
-                *end = '\0';
-            primeBits = pqg_prime_bits(str);
-            if (keysize == primeBits) {
-                found_match = true;
-                break;
-            }
-            str = end + 1;
-        } while (end);
-        if (!found_match) {
-            goto loser;
-        }
     } else if (aKeyType.LowerCaseEqualsLiteral("ec")) {
         keyparamsString = ToNewCString(aKeyParams);
         if (!keyparamsString) {
@@ -570,9 +527,6 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
             algTag = DEFAULT_RSA_KEYGEN_ALG;
             params = &rsaParams;
             break;
-        case CKM_DSA_KEY_PAIR_GEN:
-            // XXX Fix this! XXX //
-            goto loser;
         case CKM_EC_KEY_PAIR_GEN:
             /* XXX We ought to rethink how the KEYGEN tag is 
              * displayed. The pulldown selections presented
@@ -620,7 +574,7 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
       }
 
     /* Make sure token is initialized. */
-    rv = setPassword(slot, m_ctx);
+    rv = setPassword(slot, m_ctx, locker);
     if (NS_FAILED(rv))
         goto loser;
 
@@ -649,18 +603,10 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
         runnable = do_QueryInterface(KeygenRunnable);
         
         if (runnable) {
-            {
-              nsPSMUITracker tracker;
-              if (tracker.isUIForbidden()) {
-                rv = NS_ERROR_NOT_AVAILABLE;
-              }
-              else {
-                rv = dialogs->DisplayGeneratingKeypairInfo(m_ctx, runnable);
-                // We call join on the thread, 
-                // so we can be sure that no simultaneous access to the passed parameters will happen.
-                KeygenRunnable->Join();
-              }
-            }
+            rv = dialogs->DisplayGeneratingKeypairInfo(m_ctx, runnable);
+            // We call join on the thread so we can be sure that no
+            // simultaneous access to the passed parameters will happen.
+            KeygenRunnable->Join();
 
             NS_RELEASE(dialogs);
             if (NS_SUCCEEDED(rv)) {
@@ -733,6 +679,8 @@ nsKeygenFormProcessor::GetPublicKey(const nsAString& aValue,
     free(keystring);
 
     rv = NS_OK;
+
+    GatherKeygenTelemetry(keyGenMechanism, keysize, keyparamsString);
 loser:
     if ( sec_rv != SECSuccess ) {
         if ( privateKey ) {
@@ -765,6 +713,12 @@ loser:
     }
     if (pkac.challenge.data) {
         free(pkac.challenge.data);
+    }
+    // If params is non-null and doesn't point to rsaParams, it was allocated
+    // in decode_ec_params. We have to free this memory.
+    if (params && params != &rsaParams) {
+        SECITEM_FreeItem(static_cast<SECItem*>(params), true);
+        params = nullptr;
     }
     return rv;
 }

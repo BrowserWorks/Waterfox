@@ -99,7 +99,7 @@ uint32_t gRestartMode = 0;
 
 class nsAppExitEvent : public nsRunnable {
 private:
-  nsRefPtr<nsAppStartup> mService;
+  RefPtr<nsAppStartup> mService;
 
 public:
   explicit nsAppExitEvent(nsAppStartup *service) : mService(service) {}
@@ -433,11 +433,9 @@ nsAppStartup::Quit(uint32_t aMode)
             ferocity = eAttemptQuit;
             nsCOMPtr<nsISupports> window;
             windowEnumerator->GetNext(getter_AddRefs(window));
-            nsCOMPtr<nsIDOMWindow> domWindow = do_QueryInterface(window);
+            nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(window);
             if (domWindow) {
-              bool closed = false;
-              domWindow->GetClosed(&closed);
-              if (!closed) {
+              if (!domWindow->Closed()) {
                 rv = NS_ERROR_FAILURE;
                 break;
               }

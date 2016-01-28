@@ -19,9 +19,8 @@
 #define ENCODING "L16"
 #define DEFAULT_PORT 5555
 
-#define SAMPLE_RATE 256000
-#define SAMPLE_FREQUENCY 16000
-#define SAMPLE_LENGTH ((SAMPLE_FREQUENCY*10)/1000)
+#define SAMPLE_RATE(freq) ((freq)*2*8) // bps, 16-bit samples
+#define SAMPLE_LENGTH(freq) (((freq)*10)/1000)
 
 // These are restrictions from the webrtc.org code
 #define MAX_CHANNELS 2
@@ -286,6 +285,7 @@ MediaEngineWebRTCMicrophoneSource::Allocate(const dom::MediaTrackConstraints &aC
                                             const MediaEnginePrefs &aPrefs,
                                             const nsString& aDeviceId)
 {
+  AssertIsOnOwningThread();
   if (mState == kReleased) {
     if (mInitDone) {
       ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw(webrtc::VoEHardware::GetInterface(mVoiceEngine));
@@ -313,6 +313,7 @@ MediaEngineWebRTCMicrophoneSource::Allocate(const dom::MediaTrackConstraints &aC
 nsresult
 MediaEngineWebRTCMicrophoneSource::Deallocate()
 {
+  AssertIsOnOwningThread();
   --mNrAllocations;
   MOZ_ASSERT(mNrAllocations >= 0, "Double-deallocations are prohibited");
   if (mNrAllocations == 0) {
@@ -333,6 +334,7 @@ nsresult
 MediaEngineWebRTCMicrophoneSource::Start(SourceMediaStream *aStream,
                                          TrackID aID)
 {
+  AssertIsOnOwningThread();
   if (!mInitDone || !aStream) {
     return NS_ERROR_FAILURE;
   }
@@ -343,7 +345,7 @@ MediaEngineWebRTCMicrophoneSource::Start(SourceMediaStream *aStream,
   }
 
   AudioSegment* segment = new AudioSegment();
-  aStream->AddAudioTrack(aID, SAMPLE_FREQUENCY, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
+  aStream->AddAudioTrack(aID, mSampleFrequency, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
 
   // XXX Make this based on the pref.
   aStream->RegisterForAudioMixing();
@@ -386,6 +388,7 @@ MediaEngineWebRTCMicrophoneSource::Start(SourceMediaStream *aStream,
 nsresult
 MediaEngineWebRTCMicrophoneSource::Stop(SourceMediaStream *aSource, TrackID aID)
 {
+  AssertIsOnOwningThread();
   {
     MonitorAutoLock lock(mMonitor);
 
@@ -468,6 +471,9 @@ MediaEngineWebRTCMicrophoneSource::Init()
     return;
   }
 
+  mSampleFrequency = MediaEngine::DEFAULT_SAMPLE_RATE;
+  LOG(("%s: sampling rate %u", __FUNCTION__, mSampleFrequency));
+
   // Check for availability.
   ScopedCustomReleasePtr<webrtc::VoEHardware> ptrVoEHw(webrtc::VoEHardware::GetInterface(mVoiceEngine));
   if (!ptrVoEHw || ptrVoEHw->SetRecordingDevice(mCapIndex)) {
@@ -493,9 +499,10 @@ MediaEngineWebRTCMicrophoneSource::Init()
   webrtc::CodecInst codec;
   strcpy(codec.plname, ENCODING);
   codec.channels = CHANNELS;
-  codec.rate = SAMPLE_RATE;
-  codec.plfreq = SAMPLE_FREQUENCY;
-  codec.pacsize = SAMPLE_LENGTH;
+  MOZ_ASSERT(mSampleFrequency == 16000 || mSampleFrequency == 32000);
+  codec.rate = SAMPLE_RATE(mSampleFrequency);
+  codec.plfreq = mSampleFrequency;
+  codec.pacsize = SAMPLE_LENGTH(mSampleFrequency);
   codec.pltype = 0; // Default payload type
 
   if (!ptrVoECodec->SetSendCodec(mChannel, codec)) {
@@ -596,7 +603,7 @@ MediaEngineWebRTCMicrophoneSource::Process(int channel,
 
   uint32_t len = mSources.Length();
   for (uint32_t i = 0; i < len; i++) {
-    nsRefPtr<SharedBuffer> buffer = SharedBuffer::Create(length * sizeof(sample));
+    RefPtr<SharedBuffer> buffer = SharedBuffer::Create(length * sizeof(sample));
 
     sample* dest = static_cast<sample*>(buffer->Data());
     memcpy(dest, audio10ms, length * sizeof(sample));
@@ -658,6 +665,7 @@ nsresult
 MediaEngineWebRTCAudioCaptureSource::Start(SourceMediaStream *aMediaStream,
                                            TrackID aId)
 {
+  AssertIsOnOwningThread();
   aMediaStream->AddTrack(aId, 0, new AudioSegment());
   return NS_OK;
 }
@@ -666,6 +674,7 @@ nsresult
 MediaEngineWebRTCAudioCaptureSource::Stop(SourceMediaStream *aMediaStream,
                                           TrackID aId)
 {
+  AssertIsOnOwningThread();
   aMediaStream->EndAllTrackAndFinish();
   return NS_OK;
 }

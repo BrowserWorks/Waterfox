@@ -32,6 +32,7 @@ this.EXPORTED_SYMBOLS = ['Utils', 'Logger', 'PivotContext', 'PrefCache',  // jsh
 this.Utils = { // jshint ignore:line
   _buildAppMap: {
     '{3c2e2abc-06d4-11e1-ac3b-374f68613e61}': 'b2g',
+    '{d1bfe7d9-c01e-4237-998b-7b5f960a4314}': 'graphene',
     '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}': 'browser',
     '{aa3c5121-dab2-40e2-81ca-7ea25febc110}': 'mobile/android',
     '{a23983c0-fd0e-11dc-95ff-0800200c9a66}': 'mobile/xul'
@@ -210,11 +211,10 @@ this.Utils = { // jshint ignore:line
   localize: function localize(aOutput) {
     let outputArray = Array.isArray(aOutput) ? aOutput : [aOutput];
     let localized =
-      [this.stringBundle.get(details) for (details of outputArray)]; // jshint ignore:line
+      outputArray.map(details => this.stringBundle.get(details));
     // Clean up the white space.
-    let trimmed;
-    return [trimmed for (word of localized) if (word && // jshint ignore:line
-      (trimmed = word.trim()))]; // jshint ignore:line
+    return localized.filter(word => word).map(word => word.trim()).
+      filter(trimmed => trimmed);
   },
 
   get stringBundle() {
@@ -344,6 +344,21 @@ this.Utils = { // jshint ignore:line
 
   isInSubtree: function isInSubtree(aAccessible, aSubTreeRoot) {
     let acc = aAccessible;
+
+    // If aSubTreeRoot is an accessible document, we will only walk up the
+    // ancestry of documents and skip everything else.
+    if (aSubTreeRoot instanceof Ci.nsIAccessibleDocument) {
+      while (acc) {
+        let parentDoc = acc instanceof Ci.nsIAccessibleDocument ?
+          acc.parentDocument : acc.document;
+        if (parentDoc === aSubTreeRoot) {
+          return true;
+        }
+        acc = parentDoc;
+      }
+      return false;
+    }
+
     while (acc) {
       if (acc == aSubTreeRoot) {
         return true;
@@ -818,9 +833,9 @@ PivotContext.prototype = {
    */
   get newAncestry() {
     if (!this._newAncestry) {
-      this._newAncestry = this._ignoreAncestry ? [] : [currentAncestor for ( // jshint ignore:line
-        [index, currentAncestor] of Iterator(this.currentAncestry)) if ( // jshint ignore:line
-          currentAncestor !== this.oldAncestry[index])]; // jshint ignore:line
+      this._newAncestry = this._ignoreAncestry ? [] :
+        this.currentAncestry.filter(
+          (currentAncestor, i) => currentAncestor !== this.oldAncestry[i]);
     }
     return this._newAncestry;
   },
@@ -846,9 +861,13 @@ PivotContext.prototype = {
       if (include) {
         if (aPreorder) {
           yield child;
-          [yield node for (node of this._traverse(child, aPreorder, aStop))]; // jshint ignore:line
+          for (let node of this._traverse(child, aPreorder, aStop)) {
+            yield node;
+          }
         } else {
-          [yield node for (node of this._traverse(child, aPreorder, aStop))]; // jshint ignore:line
+          for (let node of this._traverse(child, aPreorder, aStop)) {
+            yield node;
+          }
           yield child;
         }
       }
@@ -970,15 +989,13 @@ PivotContext.prototype = {
     cellInfo.columnHeaders = [];
     if (cellInfo.columnChanged && cellInfo.current.role !==
       Roles.COLUMNHEADER) {
-      cellInfo.columnHeaders = [headers for (headers of getHeaders( // jshint ignore:line
-        cellInfo.current.columnHeaderCells))];
+      cellInfo.columnHeaders = [...getHeaders(cellInfo.current.columnHeaderCells)];
     }
     cellInfo.rowHeaders = [];
     if (cellInfo.rowChanged &&
         (cellInfo.current.role === Roles.CELL ||
          cellInfo.current.role === Roles.MATHML_CELL)) {
-      cellInfo.rowHeaders = [headers for (headers of getHeaders( // jshint ignore:line
-        cellInfo.current.rowHeaderCells))];
+      cellInfo.rowHeaders = [...getHeaders(cellInfo.current.rowHeaderCells)];
     }
 
     this._cells.set(domNode, cellInfo);

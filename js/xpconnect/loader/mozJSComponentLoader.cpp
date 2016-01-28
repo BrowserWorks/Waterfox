@@ -300,7 +300,7 @@ mozJSComponentLoader::ReallyInit()
     // results in getting the wrong value.
     // But we don't want that on Firefox Mulet as it break most Firefox JSMs...
     // Also disable on debug builds to break js components that rely on this.
-#if defined(MOZ_B2G) && !defined(MOZ_MULET) && !defined(DEBUG)
+#if defined(MOZ_B2G) && !defined(MOZ_MULET) && !defined(MOZ_B2GDROID) && !defined(DEBUG)
     mReuseLoaderGlobal = true;
 #endif
 
@@ -323,6 +323,25 @@ mozJSComponentLoader::ReallyInit()
     mInitialized = true;
 
     return NS_OK;
+}
+
+// For terrible compatibility reasons, we need to consider both the global
+// lexical scope and the global of modules when searching for exported
+// symbols.
+static JSObject*
+ResolveModuleObjectProperty(JSContext* aCx, HandleObject aModObj, const char* name)
+{
+    if (JS_HasExtensibleLexicalScope(aModObj)) {
+        RootedObject lexical(aCx, JS_ExtensibleLexicalScope(aModObj));
+        bool found;
+        if (!JS_HasOwnProperty(aCx, lexical, name, &found)) {
+            return nullptr;
+        }
+        if (found) {
+            return lexical;
+        }
+    }
+    return aModObj;
 }
 
 const mozilla::Module*
@@ -348,6 +367,7 @@ mozJSComponentLoader::LoadModule(FileLocation& aFile)
 
     dom::AutoJSAPI jsapi;
     jsapi.Init();
+    jsapi.TakeOwnershipOfErrorReporting();
     JSContext* cx = jsapi.cx();
 
     nsAutoPtr<ModuleEntry> entry(new ModuleEntry(cx));
@@ -371,9 +391,12 @@ mozJSComponentLoader::LoadModule(FileLocation& aFile)
     JSAutoCompartment ac(cx, entry->obj);
     RootedObject entryObj(cx, entry->obj);
 
+    RootedObject NSGetFactoryHolder(cx, ResolveModuleObjectProperty(cx, entryObj, "NSGetFactory"));
     RootedValue NSGetFactory_val(cx);
-    if (!JS_GetProperty(cx, entryObj, "NSGetFactory", &NSGetFactory_val) ||
-        NSGetFactory_val.isUndefined()) {
+    if (!NSGetFactoryHolder ||
+        !JS_GetProperty(cx, NSGetFactoryHolder, "NSGetFactory", &NSGetFactory_val) ||
+        NSGetFactory_val.isUndefined())
+    {
         return nullptr;
     }
 
@@ -423,7 +446,7 @@ mozJSComponentLoader::FindTargetObject(JSContext* aCx,
     if (mReuseLoaderGlobal) {
         JSFunction* fun = js::GetOutermostEnclosingFunctionOfScriptedCaller(aCx);
         if (fun) {
-            JSObject* funParent = js::GetObjectEnvironmentObjectForFunction(fun);
+            JSObject* funParent = js::GetNearestEnclosingWithScopeObjectForFunction(fun);
             if (JS_GetClass(funParent) == &kFakeBackstagePassJSClass)
                 targetObject = funParent;
         }
@@ -514,7 +537,7 @@ mozJSComponentLoader::PrepareObjectForLocation(JSContext* aCx,
     bool createdNewGlobal = false;
 
     if (!mLoaderGlobal) {
-        nsRefPtr<BackstagePass> backstagePass;
+        RefPtr<BackstagePass> backstagePass;
         rv = NS_NewBackstagePass(getter_AddRefs(backstagePass));
         NS_ENSURE_SUCCESS(rv, nullptr);
 
@@ -628,6 +651,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
 
     dom::AutoJSAPI jsapi;
     jsapi.Init();
+    jsapi.TakeOwnershipOfErrorReporting();
     JSContext* cx = jsapi.cx();
 
     bool realFile = false;
@@ -957,10 +981,14 @@ mozJSComponentLoader::UnloadModules()
 
         dom::AutoJSAPI jsapi;
         jsapi.Init();
+        jsapi.TakeOwnershipOfErrorReporting();
         JSContext* cx = jsapi.cx();
         RootedObject global(cx, mLoaderGlobal->GetJSObject());
         if (global) {
             JSAutoCompartment ac(cx, global);
+            if (JS_HasExtensibleLexicalScope(global)) {
+                JS_SetAllNonReservedSlotsToUndefined(cx, JS_ExtensibleLexicalScope(global));
+            }
             JS_SetAllNonReservedSlotsToUndefined(cx, global);
         } else {
             NS_WARNING("Going to leak!");
@@ -1031,8 +1059,6 @@ mozJSComponentLoader::Import(const nsACString& registryLocation,
     return rv;
 }
 
-/* [noscript] JSObjectPtr importInto(in AUTF8String registryLocation,
-                                     in JSObjectPtr targetObj); */
 NS_IMETHODIMP
 mozJSComponentLoader::ImportInto(const nsACString& aLocation,
                                  JSObject* aTargetObj,
@@ -1069,6 +1095,22 @@ mozJSComponentLoader::IsModuleLoaded(const nsACString& aLocation,
 
     *retval = !!mImports.Get(info.Key());
     return NS_OK;
+}
+
+static JSObject*
+ResolveModuleObjectPropertyById(JSContext* aCx, HandleObject aModObj, HandleId id)
+{
+    if (JS_HasExtensibleLexicalScope(aModObj)) {
+        RootedObject lexical(aCx, JS_ExtensibleLexicalScope(aModObj));
+        bool found;
+        if (!JS_HasOwnPropertyById(aCx, lexical, id, &found)) {
+            return nullptr;
+        }
+        if (found) {
+            return lexical;
+        }
+    }
+    return aModObj;
 }
 
 nsresult
@@ -1170,18 +1212,25 @@ mozJSComponentLoader::ImportInto(const nsACString& aLocation,
         // not an AutoEntryScript.
         dom::AutoJSAPI jsapi;
         jsapi.Init();
+        jsapi.TakeOwnershipOfErrorReporting();
         JSContext* cx = jsapi.cx();
         JSAutoCompartment ac(cx, mod->obj);
 
         RootedValue symbols(cx);
-        RootedObject modObj(cx, mod->obj);
-        if (!JS_GetProperty(cx, modObj,
+        RootedObject exportedSymbolsHolder(cx, ResolveModuleObjectProperty(cx, mod->obj,
+                                                                           "EXPORTED_SYMBOLS"));
+        if (!exportedSymbolsHolder ||
+            !JS_GetProperty(cx, exportedSymbolsHolder,
                             "EXPORTED_SYMBOLS", &symbols)) {
             return ReportOnCaller(cxhelper, ERROR_NOT_PRESENT,
                                   PromiseFlatCString(aLocation).get());
         }
 
-        if (!JS_IsArrayObject(cx, symbols)) {
+        bool isArray;
+        if (!JS_IsArrayObject(cx, symbols, &isArray)) {
+            return NS_ERROR_FAILURE;
+        }
+        if (!isArray) {
             return ReportOnCaller(cxhelper, ERROR_NOT_AN_ARRAY,
                                   PromiseFlatCString(aLocation).get());
         }
@@ -1202,6 +1251,7 @@ mozJSComponentLoader::ImportInto(const nsACString& aLocation,
 
         RootedValue value(cx);
         RootedId symbolId(cx);
+        RootedObject symbolHolder(cx);
         for (uint32_t i = 0; i < symbolCount; ++i) {
             if (!JS_GetElement(cx, symbolsObj, i, &value) ||
                 !value.isString() ||
@@ -1210,8 +1260,9 @@ mozJSComponentLoader::ImportInto(const nsACString& aLocation,
                                       PromiseFlatCString(aLocation).get(), i);
             }
 
-            RootedObject modObj(cx, mod->obj);
-            if (!JS_GetPropertyById(cx, modObj, symbolId, &value)) {
+            symbolHolder = ResolveModuleObjectPropertyById(cx, mod->obj, symbolId);
+            if (!symbolHolder ||
+                !JS_GetPropertyById(cx, symbolHolder, symbolId, &value)) {
                 JSAutoByteString bytes(cx, JSID_TO_STRING(symbolId));
                 if (!bytes)
                     return NS_ERROR_FAILURE;

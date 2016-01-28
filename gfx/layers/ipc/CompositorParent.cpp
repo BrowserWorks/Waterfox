@@ -56,6 +56,7 @@
 #include "nsTArray.h"                   // for nsTArray
 #include "nsThreadUtils.h"              // for NS_IsMainThread
 #include "nsXULAppAPI.h"                // for XRE_GetIOMessageLoop
+#include "nsIXULRuntime.h"              // for BrowserTabsRemoteAutostart
 #ifdef XP_WIN
 #include "mozilla/layers/CompositorD3D11.h"
 #include "mozilla/layers/CompositorD3D9.h"
@@ -547,10 +548,17 @@ CompositorParent::CompositorParent(nsIWidget* aWidget,
   , mEGLSurfaceSize(aSurfaceWidth, aSurfaceHeight)
   , mPauseCompositionMonitor("PauseCompositionMonitor")
   , mResumeCompositionMonitor("ResumeCompositionMonitor")
+  , mRootLayerTreeID(AllocateLayerTreeId())
   , mOverrideComposeReadiness(false)
   , mForceCompositionTask(nullptr)
   , mCompositorThreadHolder(sCompositorThreadHolder)
   , mCompositorScheduler(nullptr)
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  , mLastPluginUpdateLayerTreeId(0)
+#endif
+#if defined(XP_WIN)
+  , mPluginUpdateResponsePending(false)
+#endif
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(CompositorThread(),
@@ -566,7 +574,6 @@ CompositorParent::CompositorParent(nsIWidget* aWidget,
 
   CompositorLoop()->PostTask(FROM_HERE, NewRunnableFunction(SetThreadPriority));
 
-  mRootLayerTreeID = AllocateLayerTreeId();
 
   { // scope lock
     MonitorAutoLock lock(*sIndirectLayerTreesLock);
@@ -605,7 +612,7 @@ CompositorParent::~CompositorParent()
 void
 CompositorParent::Destroy()
 {
-  MOZ_ASSERT(ManagedPLayerTransactionParent().Length() == 0,
+  MOZ_ASSERT(ManagedPLayerTransactionParent().Count() == 0,
              "CompositorParent destroyed before managed PLayerTransactionParent");
 
   MOZ_ASSERT(mPaused); // Ensure RecvWillStop was called
@@ -665,6 +672,7 @@ CompositorParent::RecvWillStop()
 void CompositorParent::DeferredDestroy()
 {
   MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(mCompositorThreadHolder);
   mCompositorThreadHolder = nullptr;
   Release();
 }
@@ -1039,7 +1047,59 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRe
     return;
   }
 
-  AutoResolveRefLayers resolve(mCompositionManager);
+#if defined(XP_WIN)
+  // Still waiting on plugin update confirmation
+  if (mPluginUpdateResponsePending) {
+    return;
+  }
+#endif
+
+  bool hasRemoteContent = false;
+  bool pluginsUpdatedFlag = true;
+  AutoResolveRefLayers resolve(mCompositionManager, this,
+                               &hasRemoteContent,
+                               &pluginsUpdatedFlag);
+
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  /*
+   * AutoResolveRefLayers handles two tasks related to Windows and Linux
+   * plugin window management:
+   * 1) calculating if we have remote content in the view. If we do not have
+   * remote content, all plugin windows for this CompositorParent (window)
+   * can be hidden since we do not support plugins in chrome when running
+   * under e10s.
+   * 2) Updating plugin position, size, and clip. We do this here while the
+   * remote layer tree is hooked up to to chrome layer tree. This is needed
+   * since plugin clipping can depend on chrome (for example, due to tab modal
+   * prompts). Updates in step 2 are applied via an async ipc message sent
+   * to the main thread.
+   * Windows specific: The compositor will wait for confirmation that plugin
+   * updates have been applied before painting. Deferment of painting is
+   * indicated by the mPluginUpdateResponsePending flag. The main thread
+   * messages back using the RemotePluginsReady async ipc message.
+   * This is neccessary since plugin windows can leave remnants of window
+   * content if moved after the underlying window paints.
+   */
+#if defined(XP_WIN)
+  if (pluginsUpdatedFlag) {
+    mPluginUpdateResponsePending = true;
+    return;
+  }
+#endif
+
+  // We do not support plugins in local content. When switching tabs
+  // to local pages, hide every plugin associated with the window.
+  if (!hasRemoteContent && BrowserTabsRemoteAutostart() &&
+      mCachedPluginData.Length()) {
+    unused << SendHideAllPlugins((uintptr_t)GetWidget());
+    mCachedPluginData.Clear();
+#if defined(XP_WIN)
+    // Wait for confirmation the hide operation is complete.
+    mPluginUpdateResponsePending = true;
+    return;
+#endif
+  }
+#endif
 
   if (aTarget) {
     mLayerManager->BeginTransactionWithDrawTarget(aTarget, *aRect);
@@ -1115,6 +1175,20 @@ CompositorParent::CompositeToTarget(DrawTarget* aTarget, const gfx::IntRect* aRe
 
   mozilla::Telemetry::AccumulateTimeDelta(mozilla::Telemetry::COMPOSITE_TIME, start);
   profiler_tracing("Paint", "Composite", TRACING_INTERVAL_END);
+}
+
+bool
+CompositorParent::RecvRemotePluginsReady()
+{
+#if defined(XP_WIN)
+  mPluginUpdateResponsePending = false;
+  ScheduleComposition();
+  return true;
+#else
+  NS_NOTREACHED("CompositorParent::RecvRemotePluginsReady calls "
+                "unexpected on this platform.");
+  return false;
+#endif
 }
 
 void
@@ -1307,7 +1381,7 @@ CompositorParent::GetAPZTestData(const LayerTransactionParent* aLayerTree,
 class NotifyAPZConfirmedTargetTask : public Task
 {
 public:
-  explicit NotifyAPZConfirmedTargetTask(const nsRefPtr<APZCTreeManager>& aAPZCTM,
+  explicit NotifyAPZConfirmedTargetTask(const RefPtr<APZCTreeManager>& aAPZCTM,
                                         const uint64_t& aInputBlockId,
                                         const nsTArray<ScrollableLayerGuid>& aTargets)
    : mAPZCTM(aAPZCTM),
@@ -1321,7 +1395,7 @@ public:
   }
 
 private:
-  nsRefPtr<APZCTreeManager> mAPZCTM;
+  RefPtr<APZCTreeManager> mAPZCTM;
   uint64_t mInputBlockId;
   nsTArray<ScrollableLayerGuid> mTargets;
 };
@@ -1396,8 +1470,6 @@ CompositorParent::AllocPLayerTransactionParent(const nsTArray<LayersBackend>& aB
 {
   MOZ_ASSERT(aId == 0);
 
-  gfx::IntRect rect;
-  mWidget->GetClientBounds(rect);
   InitializeLayerManager(aBackendHints);
 
   if (!mLayerManager) {
@@ -1461,6 +1533,10 @@ CompositorParent::RecvNotifyChildCreated(const uint64_t& child)
 void
 CompositorParent::NotifyChildCreated(const uint64_t& aChild)
 {
+  if (mApzcTreeManager) {
+    NS_DispatchToMainThread(NS_NewRunnableMethodWithArg<uint64_t>(
+        mApzcTreeManager, &APZCTreeManager::InitializeForLayersId, aChild));
+  }
   sIndirectLayerTreesLock->AssertCurrentThreadOwns();
   sIndirectLayerTrees[aChild].mParent = this;
   sIndirectLayerTrees[aChild].mLayerManager = mLayerManager;
@@ -1470,6 +1546,9 @@ bool
 CompositorParent::RecvAdoptChild(const uint64_t& child)
 {
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
+  if (mApzcTreeManager) {
+    mApzcTreeManager->AdoptLayersId(child, sIndirectLayerTrees[child].mParent->mApzcTreeManager.get());
+  }
   NotifyChildCreated(child);
   if (sIndirectLayerTrees[child].mLayerTree) {
     sIndirectLayerTrees[child].mLayerTree->mLayerManager = mLayerManager;
@@ -1534,12 +1613,14 @@ UpdateControllerForLayersId(uint64_t aLayersId,
     already_AddRefed<GeckoContentController>(aController);
 }
 
-ScopedLayerTreeRegistration::ScopedLayerTreeRegistration(uint64_t aLayersId,
+ScopedLayerTreeRegistration::ScopedLayerTreeRegistration(APZCTreeManager* aApzctm,
+                                                         uint64_t aLayersId,
                                                          Layer* aRoot,
                                                          GeckoContentController* aController)
     : mLayersId(aLayersId)
 {
   EnsureLayerTreeMapReady();
+  aApzctm->InitializeForLayersId(aLayersId);
   MonitorAutoLock lock(*sIndirectLayerTreesLock);
   sIndirectLayerTrees[aLayersId].mRoot = aRoot;
   sIndirectLayerTrees[aLayersId].mController = aController;
@@ -1555,6 +1636,9 @@ ScopedLayerTreeRegistration::~ScopedLayerTreeRegistration()
 CompositorParent::SetControllerForLayerTree(uint64_t aLayersId,
                                             GeckoContentController* aController)
 {
+  if (APZCTreeManager* apzctm = GetAPZCTreeManager(aLayersId)) {
+    apzctm->InitializeForLayersId(aLayersId);
+  }
   // This ref is adopted by UpdateControllerForLayersId().
   aController->AddRef();
   CompositorLoop()->PostTask(FROM_HERE,
@@ -1720,6 +1804,7 @@ public:
                                       const nsTArray<ScrollableLayerGuid>& aTargets) override;
 
   virtual AsyncCompositionManager* GetCompositionManager(LayerTransactionParent* aParent) override;
+  virtual bool RecvRemotePluginsReady()  override { return false; }
 
   void DidComposite(uint64_t aId,
                     TimeStamp& aCompositeStart,
@@ -1736,10 +1821,10 @@ private:
   // There can be many CPCPs, and IPDL-generated code doesn't hold a
   // reference to top-level actors.  So we hold a reference to
   // ourself.  This is released (deferred) in ActorDestroy().
-  nsRefPtr<CrossProcessCompositorParent> mSelfRef;
+  RefPtr<CrossProcessCompositorParent> mSelfRef;
   Transport* mTransport;
 
-  nsRefPtr<CompositorThreadHolder> mCompositorThreadHolder;
+  RefPtr<CompositorThreadHolder> mCompositorThreadHolder;
   // If true, we should send a RemotePaintIsReady message when the layer transaction
   // is received
   bool mNotifyAfterRemotePaint;
@@ -1786,7 +1871,7 @@ CompositorParent::Create(Transport* aTransport, ProcessId aOtherPid)
 {
   gfxPlatform::InitLayersIPC();
 
-  nsRefPtr<CrossProcessCompositorParent> cpcp =
+  RefPtr<CrossProcessCompositorParent> cpcp =
     new CrossProcessCompositorParent(aTransport);
 
   cpcp->mSelfRef = cpcp;
@@ -1797,24 +1882,6 @@ CompositorParent::Create(Transport* aTransport, ProcessId aOtherPid)
   // The return value is just compared to null for success checking,
   // we're not sharing a ref.
   return cpcp.get();
-}
-
-IToplevelProtocol*
-CompositorParent::CloneToplevel(const InfallibleTArray<mozilla::ipc::ProtocolFdMapping>& aFds,
-                                base::ProcessHandle aPeerProcess,
-                                mozilla::ipc::ProtocolCloneContext* aCtx)
-{
-  for (unsigned int i = 0; i < aFds.Length(); i++) {
-    if (aFds[i].protocolId() == (unsigned)GetProtocolId()) {
-      Transport* transport = OpenDescriptor(aFds[i].fd(),
-                                            Transport::MODE_SERVER);
-      PCompositorParent* compositor = Create(transport, base::GetProcId(aPeerProcess));
-      compositor->CloneManagees(this, aCtx);
-      compositor->IToplevelProtocol::SetTransport(transport);
-      return compositor;
-    }
-  }
-  return nullptr;
 }
 
 static void
@@ -1839,7 +1906,7 @@ CompositorParent::GetIndirectShadowTree(uint64_t aId)
 bool
 CrossProcessCompositorParent::RecvNotifyHidden(const uint64_t& id)
 {
-  nsRefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
   lru->Add(this, id);
   return true;
 }
@@ -1847,7 +1914,7 @@ CrossProcessCompositorParent::RecvNotifyHidden(const uint64_t& id)
 bool
 CrossProcessCompositorParent::RecvNotifyVisible(const uint64_t& id)
 {
-  nsRefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
   lru->Remove(this, id);
   return true;
 }
@@ -1862,7 +1929,7 @@ CrossProcessCompositorParent::RecvRequestNotifyAfterRemotePaint()
 void
 CrossProcessCompositorParent::ActorDestroy(ActorDestroyReason aWhy)
 {
-  nsRefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
+  RefPtr<CompositorLRU> lru = CompositorLRU::GetSingleton();
   lru->Remove(this);
 
   MessageLoop::current()->PostTask(
@@ -1973,7 +2040,7 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
   }
 
   if (state->mLayerTreeReadyObserver) {
-    nsRefPtr<CompositorUpdateObserver> observer = state->mLayerTreeReadyObserver;
+    RefPtr<CompositorUpdateObserver> observer = state->mLayerTreeReadyObserver;
     state->mLayerTreeReadyObserver = nullptr;
     observer->ObserveUpdate(id, true);
   }
@@ -1982,33 +2049,69 @@ CrossProcessCompositorParent::ShadowLayersUpdated(
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-// Sends plugin window state changes to the main thread
-static void
-UpdatePluginWindowState(uint64_t aId)
+//#define PLUGINS_LOG(...) printf_stderr("CP [%s]: ", __FUNCTION__);
+//                         printf_stderr(__VA_ARGS__);
+//                         printf_stderr("\n");
+#define PLUGINS_LOG(...)
+
+bool
+CompositorParent::UpdatePluginWindowState(uint64_t aId)
 {
+  MonitorAutoLock lock(*sIndirectLayerTreesLock);
   CompositorParent::LayerTreeState& lts = sIndirectLayerTrees[aId];
-  if (!lts.mPluginData.Length() && !lts.mUpdatedPluginDataAvailable) {
-    return;
+  if (!lts.mParent) {
+    PLUGINS_LOG("[%" PRIu64 "] layer tree compositor parent pointer is null", aId);
+    return false;
   }
 
-  bool shouldComposePlugin = !!lts.mRoot &&
-                             !!lts.mRoot->GetParent();
+  // Check if this layer tree has received any shadow layer updates
+  if (!lts.mUpdatedPluginDataAvailable) {
+    PLUGINS_LOG("[%" PRIu64 "] no plugin data", aId);
+    return false;
+  }
 
-  bool shouldHidePlugin = !lts.mRoot ||
-                          !lts.mRoot->GetParent();
+  // pluginMetricsChanged tracks whether we need to send plugin update
+  // data to the main thread. If we do we'll have to block composition,
+  // which we want to avoid if at all possible.
+  bool pluginMetricsChanged = false;
 
-  if (shouldComposePlugin) {
-    if (!lts.mPluginData.Length()) {
-      // We will pass through here in cases where the previous shadow layer
-      // tree contained visible plugins and the new tree does not. All we need
-      // to do here is hide the plugins for the old tree, so don't waste time
-      // calculating clipping.
-      uintptr_t parentWidget = (uintptr_t)lts.mParent->GetWidget();
-      unused << lts.mParent->SendHideAllPlugins(parentWidget);
-      lts.mUpdatedPluginDataAvailable = false;
-      return;
+  // Same layer tree checks
+  if (mLastPluginUpdateLayerTreeId == aId) {
+    // no plugin data and nothing has changed, bail.
+    if (!mCachedPluginData.Length() && !lts.mPluginData.Length()) {
+      PLUGINS_LOG("[%" PRIu64 "] no data, no changes", aId);
+      return false;
     }
 
+    if (mCachedPluginData.Length() == lts.mPluginData.Length()) {
+      // check for plugin data changes
+      for (uint32_t idx = 0; idx < lts.mPluginData.Length(); idx++) {
+        if (!(mCachedPluginData[idx] == lts.mPluginData[idx])) {
+          pluginMetricsChanged = true;
+          break;
+        }
+      }
+    } else {
+      // array lengths don't match, need to update
+      pluginMetricsChanged = true;
+    }
+  } else {
+    // exchanging layer trees, we need to update
+    pluginMetricsChanged = true;
+  }
+
+  if (!lts.mPluginData.Length()) {
+    // We will pass through here in cases where the previous shadow layer
+    // tree contained visible plugins and the new tree does not. All we need
+    // to do here is hide the plugins for the old tree, so don't waste time
+    // calculating clipping.
+    mPluginsLayerOffset = nsIntPoint(0,0);
+    mPluginsLayerVisibleRegion.SetEmpty();
+    uintptr_t parentWidget = (uintptr_t)lts.mParent->GetWidget();
+    unused << lts.mParent->SendHideAllPlugins(parentWidget);
+    lts.mUpdatedPluginDataAvailable = false;
+    PLUGINS_LOG("[%" PRIu64 "] hide all", aId);
+  } else {
     // Retrieve the offset and visible region of the layer that hosts
     // the plugins, CompositorChild needs these in calculating proper
     // plugin clipping.
@@ -2018,32 +2121,35 @@ UpdatePluginWindowState(uint64_t aId)
       nsIntPoint offset;
       nsIntRegion visibleRegion;
       if (contentRoot->GetVisibleRegionRelativeToRootLayer(visibleRegion,
-                                                           &offset)) {
+                                                            &offset)) {
+        // Check to see if these values have changed, if so we need to
+        // update plugin window position within the window.
+        if (!pluginMetricsChanged &&
+            mPluginsLayerVisibleRegion == visibleRegion &&
+            mPluginsLayerOffset == offset) {
+          PLUGINS_LOG("[%" PRIu64 "] no change", aId);
+          return false;
+        }
+        mPluginsLayerOffset = offset;
+        mPluginsLayerVisibleRegion = visibleRegion;
         unused <<
           lts.mParent->SendUpdatePluginConfigurations(offset, visibleRegion,
                                                       lts.mPluginData);
         lts.mUpdatedPluginDataAvailable = false;
+        PLUGINS_LOG("[%" PRIu64 "] updated", aId);
       } else {
-        shouldHidePlugin = true;
+        PLUGINS_LOG("[%" PRIu64 "] no visibility data", aId);
+        return false;
       }
+    } else {
+      PLUGINS_LOG("[%" PRIu64 "] no content root", aId);
+      return false;
     }
   }
 
-  // Hide all of our plugins, this remote layer tree is no longer active.
-  if (shouldHidePlugin) {
-    for (uint32_t pluginsIdx = 0; pluginsIdx < lts.mPluginData.Length();
-         pluginsIdx++) {
-      lts.mPluginData[pluginsIdx].visible() = false;
-    }
-    nsIntPoint offset;
-    nsIntRegion region;
-    unused << lts.mParent->SendUpdatePluginConfigurations(offset,
-                                                          region,
-                                                          lts.mPluginData);
-    // Clear because there's no recovering from this until we receive
-    // new shadow layer plugin data in ShadowLayersUpdated.
-    lts.mPluginData.Clear();
-  }
+  mLastPluginUpdateLayerTreeId = aId;
+  mCachedPluginData = lts.mPluginData;
+  return true;
 }
 #endif // #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 
@@ -2058,9 +2164,6 @@ CrossProcessCompositorParent::DidComposite(uint64_t aId,
     unused << SendDidComposite(aId, layerTree->GetPendingTransactionId(), aCompositeStart, aCompositeEnd);
     layerTree->SetPendingTransactionId(0);
   }
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-      UpdatePluginWindowState(aId);
-#endif
 }
 
 void
@@ -2084,7 +2187,7 @@ CrossProcessCompositorParent::NotifyClearCachedResources(LayerTransactionParent*
   uint64_t id = aLayerTree->GetId();
   MOZ_ASSERT(id != 0);
 
-  nsRefPtr<CompositorUpdateObserver> observer;
+  RefPtr<CompositorUpdateObserver> observer;
   { // scope lock
     MonitorAutoLock lock(*sIndirectLayerTreesLock);
     observer = sIndirectLayerTrees[id].mLayerTreeClearedObserver;
@@ -2197,6 +2300,7 @@ CrossProcessCompositorParent::GetCompositionManager(LayerTransactionParent* aLay
 void
 CrossProcessCompositorParent::DeferredDestroy()
 {
+  MOZ_ASSERT(mCompositorThreadHolder);
   mCompositorThreadHolder = nullptr;
   mSelfRef = nullptr;
 }
@@ -2222,6 +2326,9 @@ CrossProcessCompositorParent::CloneToplevel(const InfallibleTArray<mozilla::ipc:
         CompositorParent::Create(transport, base::GetProcId(aPeerProcess));
       compositor->CloneManagees(this, aCtx);
       compositor->IToplevelProtocol::SetTransport(transport);
+      // The reference to the compositor thread is held in OnChannelConnected().
+      // We need to do this for cloned actors, too.
+      compositor->OnChannelConnected(base::GetProcId(aPeerProcess));
       return compositor;
     }
   }

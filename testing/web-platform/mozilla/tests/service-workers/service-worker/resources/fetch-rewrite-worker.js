@@ -28,6 +28,9 @@ self.addEventListener('fetch', function(event) {
     if (params['ignore']) {
       return;
     }
+    if (params['throw']) {
+      throw new Error('boom');
+    }
     if (params['reject']) {
       event.respondWith(new Promise(function(resolve, reject) {
           reject();
@@ -63,6 +66,14 @@ self.addEventListener('fetch', function(event) {
       }
       return;
     }
+    if (params['check-accept-header']) {
+      var accept = event.request.headers.get('Accept');
+      if (accept) {
+        event.respondWith(new Response(accept));
+      } else {
+        event.respondWith(new Response('NO_ACCEPT'));
+      }
+    }
     event.respondWith(new Promise(function(resolve, reject) {
         var request = event.request;
         if (url) {
@@ -80,7 +91,25 @@ self.addEventListener('fetch', function(event) {
                       expectedType
             })));
           }
-          resolve(response);
+
+          if (params['cache']) {
+            var cacheName = "cached-fetches-" + Date.now();
+            var cache;
+            var cachedResponse;
+            return self.caches.open(cacheName).then(function(opened) {
+              cache = opened;
+              return cache.put(request, response);
+            }).then(function() {
+              return cache.match(request);
+            }).then(function(cached) {
+              cachedResponse = cached;
+              return self.caches.delete(cacheName);
+            }).then(function() {
+               resolve(cachedResponse);
+            });
+          } else {
+            resolve(response);
+          }
         }, reject)
       }));
   });

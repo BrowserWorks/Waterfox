@@ -13,23 +13,32 @@
 #include "nsHashKeys.h"
 #include "nsICryptoHash.h"
 #include "nsIPackagedAppVerifier.h"
+#include "mozilla/LinkedList.h"
+#include "nsIPackagedAppUtils.h"
 
 namespace mozilla {
 namespace net {
 
 class PackagedAppVerifier final
   : public nsIPackagedAppVerifier
+  , public nsIVerificationCallback
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIPACKAGEDAPPVERIFIER
+  NS_DECL_NSIVERIFICATIONCALLBACK
 
 public:
   enum EState {
     // The initial state.
     STATE_UNKNOWN,
+
+    // When we are notified to process the first resource, we will start to
+    // verify the manifest and go to this state no matter the package has
+    // signature or not.
+    STATE_MANIFEST_VERIFYING,
 
     // Either the package has no signature or the manifest is verified
     // successfully will we be in this state.
@@ -45,6 +54,7 @@ public:
   // The only reason to inherit from nsISupports is it needs to be
   // passed as the context to PackagedAppVerifier::OnStopRequest.
   class ResourceCacheInfo : public nsISupports
+                          , public mozilla::LinkedListElement<ResourceCacheInfo>
   {
   public:
     NS_DECL_ISUPPORTS
@@ -60,6 +70,16 @@ public:
     {
     }
 
+    ResourceCacheInfo(const ResourceCacheInfo& aCopyFrom)
+      : mURI(aCopyFrom.mURI)
+      , mCacheEntry(aCopyFrom.mCacheEntry)
+      , mStatusCode(aCopyFrom.mStatusCode)
+      , mIsLastPart(aCopyFrom.mIsLastPart)
+    {
+    }
+
+    // A ResourceCacheInfo must have a URI. If mURI is null, this
+    // resource is broken.
     nsCOMPtr<nsIURI> mURI;
     nsCOMPtr<nsICacheEntry> mCacheEntry;
     nsresult mStatusCode;
@@ -77,10 +97,29 @@ public:
                       const nsACString& aSignature,
                       nsICacheEntry* aPackageCacheEntry);
 
-  static const char* kSignedPakOriginMetadataKey;
+  // A internal used function to let the verifier know there's a broken
+  // last part.
+  void SetHasBrokenLastPart(nsresult aStatusCode);
+
+  // Used to explicitly clear the listener to avoid circula reference.
+  void ClearListener() { mListener = nullptr; }
+
+  bool GetIsPackageSigned() const
+  {
+    return mIsPackageSigned;
+  }
+
+  const nsACString& GetPackageIdentifier() const
+  {
+    return mPackageIdentifer;
+  }
+
+  bool WouldVerify() const;
+
+  static const char* kSignedPakIdMetadataKey;
 
 private:
-  virtual ~PackagedAppVerifier() { }
+  virtual ~PackagedAppVerifier();
 
   // Called when a resource is already fully written in the cache. This resource
   // will be processed and is guaranteed to be called back in either:
@@ -96,12 +135,20 @@ private:
   //
   void ProcessResourceCache(const ResourceCacheInfo* aInfo);
 
+  // Callback for nsIInputStream::ReadSegment() to read manifest
+  static NS_METHOD WriteManifest(nsIInputStream* aStream,
+                                void* aManifest,
+                                const char* aFromRawSegment,
+                                uint32_t aToOffset,
+                                uint32_t aCount,
+                                uint32_t* aWriteCount);
+
   // This two functions would call the actual verifier.
   void VerifyManifest(const ResourceCacheInfo* aInfo);
   void VerifyResource(const ResourceCacheInfo* aInfo);
 
-  void OnManifestVerified(const ResourceCacheInfo* aInfo, bool aSuccess);
-  void OnResourceVerified(const ResourceCacheInfo* aInfo, bool aSuccess);
+  void OnManifestVerified(bool aSuccess);
+  void OnResourceVerified(bool aSuccess);
 
   // To notify that either manifest or resource check is done.
   nsCOMPtr<nsIPackagedAppVerifierListener> mListener;
@@ -115,8 +162,17 @@ private:
   // The signature of the package.
   nsCString mSignature;
 
+  // The app manfiest of the package
+  nsCString mManifest;
+
+  // Whether we're processing the first resource, which is the manfiest
+  bool mIsFirstResource;
+
   // Whether this package app is signed.
   bool mIsPackageSigned;
+
+  // Whether we should bypass verification.
+  bool mBypassVerification;
 
   // The package cache entry (e.g. http://foo.com/app.pak) used to store
   // any necessarry signed package information.
@@ -131,6 +187,17 @@ private:
   // The last computed hash value for a resource. It will be set on every
   // |EndResourceHash| call.
   nsCString mLastComputedResourceHash;
+
+  // This will help to verify manifests and resource integrity
+  nsCOMPtr<nsIPackagedAppUtils> mPackagedAppUtils;
+
+  // A list of pending resource that is downloaded but not verified yet.
+  mozilla::LinkedList<ResourceCacheInfo> mPendingResourceCacheInfoList;
+
+  // A place to store the computed hashes of each resource.
+  nsClassHashtable<nsCStringHashKey, nsCString> mResourceHashStore;
+
+  nsCString mPackageIdentifer;
 }; // class PackagedAppVerifier
 
 } // namespace net

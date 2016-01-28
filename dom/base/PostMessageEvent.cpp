@@ -8,6 +8,7 @@
 
 #include "MessageEvent.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/FileList.h"
 #include "mozilla/dom/FileListBinding.h"
 #include "mozilla/dom/MessagePort.h"
@@ -28,7 +29,7 @@ PostMessageEvent::PostMessageEvent(nsGlobalWindow* aSource,
                                    nsGlobalWindow* aTargetWindow,
                                    nsIPrincipal* aProvidedPrincipal,
                                    bool aTrustedCaller)
-: StructuredCloneHelper(CloningSupported, TransferringSupported,
+: StructuredCloneHolder(CloningSupported, TransferringSupported,
                         SameProcessSameThread),
   mSource(aSource),
   mCallerOrigin(aCallerOrigin),
@@ -59,7 +60,7 @@ PostMessageEvent::Run()
   // If we bailed before this point we're going to leak mMessage, but
   // that's probably better than crashing.
 
-  nsRefPtr<nsGlobalWindow> targetWindow;
+  RefPtr<nsGlobalWindow> targetWindow;
   if (mTargetWindow->IsClosedOrClosing() ||
       !(targetWindow = mTargetWindow->GetCurrentInnerWindowInternal()) ||
       targetWindow->IsClosedOrClosing())
@@ -107,14 +108,14 @@ PostMessageEvent::Run()
   // Create the event
   nsCOMPtr<mozilla::dom::EventTarget> eventTarget =
     do_QueryInterface(static_cast<nsPIDOMWindow*>(targetWindow.get()));
-  nsRefPtr<MessageEvent> event =
+  RefPtr<MessageEvent> event =
     new MessageEvent(eventTarget, nullptr, nullptr);
 
   event->InitMessageEvent(NS_LITERAL_STRING("message"), false /*non-bubbling */,
                           false /*cancelable */, messageData, mCallerOrigin,
                           EmptyString(), mSource);
 
-  nsTArray<nsRefPtr<MessagePort>> ports = TakeTransferredPorts();
+  nsTArray<RefPtr<MessagePort>> ports = TakeTransferredPorts();
 
   event->SetPorts(new MessagePortList(static_cast<dom::Event*>(event.get()),
                                       ports));
@@ -125,7 +126,7 @@ PostMessageEvent::Run()
   // window if it can get a reference to it.
 
   nsIPresShell *shell = targetWindow->GetExtantDoc()->GetShell();
-  nsRefPtr<nsPresContext> presContext;
+  RefPtr<nsPresContext> presContext;
   if (shell)
     presContext = shell->GetPresContext();
 

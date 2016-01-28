@@ -119,7 +119,11 @@ loop.store.TextChatStore = (function() {
       // Notify MozLoopService if appropriate that a message has been appended
       // and it should therefore check if we need a different sized window or not.
       if (message.contentType !== CHAT_CONTENT_TYPES.ROOM_NAME) {
-        window.dispatchEvent(new CustomEvent("LoopChatMessageAppended"));
+        if (this._storeState.textChatEnabled) {
+          window.dispatchEvent(new CustomEvent("LoopChatMessageAppended"));
+        } else {
+          window.dispatchEvent(new CustomEvent("LoopChatDisabledMessageAppended"));
+        }
       }
     },
 
@@ -158,16 +162,22 @@ loop.store.TextChatStore = (function() {
       // XXX When we add special messages to desktop, we'll need to not post
       // multiple changes of room name, only the first. Bug 1171940 should fix this.
       if (actionData.roomName) {
+        var roomName = actionData.roomName;
+        if (!roomName && actionData.roomContextUrls && actionData.roomContextUrls.length) {
+          roomName = actionData.roomContextUrls[0].description ||
+                     actionData.roomContextUrls[0].url;
+        }
         this._appendTextChatMessage(CHAT_MESSAGE_TYPES.SPECIAL, {
           contentType: CHAT_CONTENT_TYPES.ROOM_NAME,
-          message: actionData.roomName
+          message: roomName
         });
       }
 
       // Append the context if we have any.
-      if (("urls" in actionData) && actionData.urls && actionData.urls.length) {
+      if (("roomContextUrls" in actionData) && actionData.roomContextUrls &&
+          actionData.roomContextUrls.length) {
         // We only support the first url at the moment.
-        var urlData = actionData.urls[0];
+        var urlData = actionData.roomContextUrls[0];
 
         this._appendTextChatMessage(CHAT_MESSAGE_TYPES.SPECIAL, {
           contentType: CHAT_CONTENT_TYPES.CONTEXT,

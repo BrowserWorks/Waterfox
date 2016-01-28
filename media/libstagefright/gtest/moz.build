@@ -11,10 +11,23 @@ SOURCES += [
     'TestParser.cpp',
 ]
 
+TEST_HARNESS_FILES.gtest += [
+    'test_case_1156505.mp4',
+    'test_case_1187067.mp4',
+    'test_case_1200326.mp4',
+    'test_case_1204580.mp4',
+]
+
 if CONFIG['MOZ_RUST']:
     UNIFIED_SOURCES += ['TestMP4Rust.cpp',]
     TEST_HARNESS_FILES.gtest += [
         '../../../dom/media/test/street.mp4',
     ]
+    LOCAL_INCLUDES += [
+        '../binding/include',
+    ]
 
 FINAL_LIBRARY = 'xul-gtest'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wshadow']

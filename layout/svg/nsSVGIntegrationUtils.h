@@ -7,7 +7,6 @@
 #define NSSVGINTEGRATIONUTILS_H_
 
 #include "gfxMatrix.h"
-#include "GraphicsFilter.h"
 #include "gfxRect.h"
 #include "nsAutoPtr.h"
 
@@ -166,13 +165,13 @@ public:
   };
 
   static already_AddRefed<gfxDrawable>
-  DrawableFromPaintServer(nsIFrame*         aFrame,
-                          nsIFrame*         aTarget,
-                          const nsSize&     aPaintServerSize,
-                          const gfxIntSize& aRenderSize,
+  DrawableFromPaintServer(nsIFrame* aFrame,
+                          nsIFrame* aTarget,
+                          const nsSize& aPaintServerSize,
+                          const mozilla::gfx::IntSize& aRenderSize,
                           const DrawTarget* aDrawTarget,
-                          const gfxMatrix&  aContextMatrix,
-                          uint32_t          aFlags);
+                          const gfxMatrix& aContextMatrix,
+                          uint32_t aFlags);
 };
 
 #endif /*NSSVGINTEGRATIONUTILS_H_*/

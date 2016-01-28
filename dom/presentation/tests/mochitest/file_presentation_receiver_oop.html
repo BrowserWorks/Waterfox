@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Test for B2G Presentation Session API at receiver side (OOP)</title>
+  <title>Test for B2G PresentationReceiver at receiver side (OOP)</title>
 </head>
 <body>
 <div id="content"></div>
@@ -30,34 +30,45 @@ function finish() {
   alert('DONE');
 }
 
-var session;
+var connection;
 
-function testSessionAvailable() {
+function testConnectionAvailable() {
   return new Promise(function(aResolve, aReject) {
-    ok(navigator.presentation, "navigator.presentation should be available.");
+    ok(navigator.presentation, "navigator.presentation should be available in OOP receiving pages.");
+    ok(navigator.presentation.receiver, "navigator.presentation.receiver should be available in OOP receiving pages.");
 
-    navigator.presentation.getSession().then(
-      function(aSession) {
-        session = aSession;
+    navigator.presentation.receiver.getConnection().then(
+      function(aConnection) {
+        connection = aConnection;
 
-        ok(session.id, "Session ID should be set: " + session.id);
-        is(session.state, "disconnected", "Session state at receiver side should be disconnected by default.");
+        ok(connection.id, "Connection ID should be set: " + connection.id);
+        is(connection.state, "closed", "Connection state at receiver side should be closed by default.");
         aResolve();
       },
       function(aError) {
-        ok(false, "Error occurred when getting the session: " + aError);
-        teardown();
+        ok(false, "Error occurred when getting the connection: " + aError);
+        finish();
         aReject();
       }
     );
   });
 }
 
-function testSessionReady() {
+function testConnectionAvailableInnerIframe() {
   return new Promise(function(aResolve, aReject) {
-    session.onstatechange = function() {
-      session.onstatechange = null;
-      is(session.state, "connected", "Session state should become connected.");
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', './file_presentation_receiver_inner_iframe_oop.html');
+    document.body.appendChild(iframe);
+
+    aResolve();
+  });
+}
+
+function testConnectionReady() {
+  return new Promise(function(aResolve, aReject) {
+    connection.onstatechange = function() {
+      connection.onstatechange = null;
+      is(connection.state, "connected", "Connection state should become connected.");
       aResolve();
     };
 
@@ -69,8 +80,8 @@ function testIncomingMessage() {
   return new Promise(function(aResolve, aReject) {
     const incomingMessage = "test incoming message";
 
-    session.addEventListener('message', function messageHandler(aEvent) {
-      session.removeEventListener('message', messageHandler);
+    connection.addEventListener('message', function messageHandler(aEvent) {
+      connection.removeEventListener('message', messageHandler);
       is(aEvent.data, incomingMessage, "An incoming message should be received.");
       aResolve();
     });
@@ -80,22 +91,23 @@ function testIncomingMessage() {
   });
 }
 
-function testCloseSession() {
+function testTerminateConnection() {
   return new Promise(function(aResolve, aReject) {
-    session.onstatechange = function() {
-      session.onstatechange = null;
-      is(session.state, "terminated", "Session should be terminated.");
+    connection.onstatechange = function() {
+      connection.onstatechange = null;
+      is(connection.state, "terminated", "Connection should be terminated.");
       aResolve();
     };
 
-    session.close();
+    connection.terminate();
   });
 }
 
-testSessionAvailable().
-then(testSessionReady).
+testConnectionAvailable().
+then(testConnectionAvailableInnerIframe).
+then(testConnectionReady).
 then(testIncomingMessage).
-then(testCloseSession).
+then(testTerminateConnection).
 then(finish);
 
 </script>

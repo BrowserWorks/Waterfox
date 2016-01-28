@@ -5,11 +5,10 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/BrowserUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "gLangBundle", () =>
   Services.strings.createBundle("chrome://global/locale/languageNames.properties"));
@@ -25,9 +24,15 @@ function Tree(aId, aData)
 }
 
 Tree.prototype = {
-  get boxObject() this._tree.treeBoxObject,
-  get isEmpty() !this._data.length,
-  get hasSelection() this.selection.count > 0,
+  get boxObject() {
+    return this._tree.treeBoxObject;
+  },
+  get isEmpty() {
+    return !this._data.length;
+  },
+  get hasSelection() {
+    return this.selection.count > 0;
+  },
   getSelectedItems: function() {
     let result = [];
 
@@ -43,19 +48,35 @@ Tree.prototype = {
   },
 
   // nsITreeView implementation
-  get rowCount() this._data.length,
-  getCellText: function (aRow, aColumn) this._data[aRow],
-  isSeparator: function(aIndex) false,
-  isSorted: function() false,
-  isContainer: function(aIndex) false,
+  get rowCount() {
+    return this._data.length;
+  },
+  getCellText: function (aRow, aColumn) {
+    return this._data[aRow];
+  },
+  isSeparator: function(aIndex) {
+    return false;
+  },
+  isSorted: function() {
+    return false;
+  },
+  isContainer: function(aIndex) {
+    return false;
+  },
   setTree: function(aTree) {},
   getImageSrc: function(aRow, aColumn) {},
   getProgressMode: function(aRow, aColumn) {},
   getCellValue: function(aRow, aColumn) {},
   cycleHeader: function(column) {},
-  getRowProperties: function(row) "",
-  getColumnProperties: function(column) "",
-  getCellProperties: function(row, column) "",
+  getRowProperties: function(row) {
+    return "";
+  },
+  getColumnProperties: function(column) {
+    return "";
+  },
+  getCellProperties: function(row, column) {
+    return "";
+  },
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITreeView])
 };
 
@@ -66,7 +87,9 @@ function Lang(aCode)
 }
 
 Lang.prototype = {
-  toString: function() this._label
+  toString: function() {
+    return this._label;
+  }
 }
 
 var gTranslationExceptions = {
@@ -190,7 +213,7 @@ var gTranslationExceptions = {
   onSiteDeleted: function() {
     let removedSites = this._siteTree.getSelectedItems();
     for (let origin of removedSites) {
-      let principal = BrowserUtils.principalFromOrigin(origin);
+      let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(origin);
       Services.perms.removeFromPrincipal(principal, kPermissionType);
     }
   },
@@ -203,7 +226,7 @@ var gTranslationExceptions = {
     this._siteTree.boxObject.rowCountChanged(0, -removedSites.length);
 
     for (let origin of removedSites) {
-      let principal = BrowserUtils.principalFromOrigin(origin);
+      let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(origin);
       Services.perms.removeFromPrincipal(principal, kPermissionType);
     }
 

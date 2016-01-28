@@ -136,7 +136,7 @@ already_AddRefed<ContainerLayer>
 BasicLayerManager::CreateContainerLayer()
 {
   NS_ASSERTION(InConstruction(), "Only allowed in construction phase");
-  nsRefPtr<ContainerLayer> layer = new BasicContainerLayer(this);
+  RefPtr<ContainerLayer> layer = new BasicContainerLayer(this);
   return layer.forget();
 }
 

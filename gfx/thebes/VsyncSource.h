@@ -7,7 +7,7 @@
 #define GFX_VSYNCSOURCE_H
 
 #include "nsTArray.h"
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TimeStamp.h"
 #include "nsISupportsImpl.h"
@@ -39,17 +39,18 @@ public:
       // However, different platforms give different vsync notification times.
       // b2g - The vsync timestamp of the previous frame that was just displayed
       // OSX - The vsync timestamp of the upcoming frame, in the future
-      // TODO: Windows / Linux. DOCUMENT THIS WHEN IMPLEMENTING ON THOSE PLATFORMS
+      // Windows: It's messy, see gfxWindowsPlatform.
       // Android: TODO
       // All platforms should normalize to the vsync that just occured.
       // Large parts of Gecko assume TimeStamps should not be in the future such as animations
       virtual void NotifyVsync(TimeStamp aVsyncTimestamp);
 
-      nsRefPtr<RefreshTimerVsyncDispatcher> GetRefreshTimerVsyncDispatcher();
+      RefPtr<RefreshTimerVsyncDispatcher> GetRefreshTimerVsyncDispatcher();
 
       void AddCompositorVsyncDispatcher(CompositorVsyncDispatcher* aCompositorVsyncDispatcher);
       void RemoveCompositorVsyncDispatcher(CompositorVsyncDispatcher* aCompositorVsyncDispatcher);
       void NotifyRefreshTimerVsyncStatus(bool aEnable);
+      virtual TimeDuration GetVsyncRate();
 
       // These should all only be called on the main thread
       virtual void EnableVsync() = 0;
@@ -61,14 +62,14 @@ public:
 
       Mutex mDispatcherLock;
       bool mRefreshTimerNeedsVsync;
-      nsTArray<nsRefPtr<CompositorVsyncDispatcher>> mCompositorVsyncDispatchers;
-      nsRefPtr<RefreshTimerVsyncDispatcher> mRefreshTimerVsyncDispatcher;
+      nsTArray<RefPtr<CompositorVsyncDispatcher>> mCompositorVsyncDispatchers;
+      RefPtr<RefreshTimerVsyncDispatcher> mRefreshTimerVsyncDispatcher;
   };
 
   void AddCompositorVsyncDispatcher(CompositorVsyncDispatcher* aCompositorVsyncDispatcher);
   void RemoveCompositorVsyncDispatcher(CompositorVsyncDispatcher* aCompositorVsyncDispatcher);
 
-  nsRefPtr<RefreshTimerVsyncDispatcher> GetRefreshTimerVsyncDispatcher();
+  RefPtr<RefreshTimerVsyncDispatcher> GetRefreshTimerVsyncDispatcher();
   virtual Display& GetGlobalDisplay() = 0; // Works across all displays
 
 protected:

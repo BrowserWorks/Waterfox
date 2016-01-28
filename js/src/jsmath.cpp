@@ -14,7 +14,6 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/unused.h"
 
 #include <algorithm>  // for std::max
 #include <fcntl.h>
@@ -40,7 +39,16 @@
 
 #include "jsobjinlines.h"
 
-#if defined(ANDROID) || defined(XP_MACOSX) || defined(__DragonFly__) || \
+#if defined(XP_WIN)
+// #define needed to link in RtlGenRandom(), a.k.a. SystemFunction036.  See the
+// "Community Additions" comment on MSDN here:
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa387694.aspx
+# define SystemFunction036 NTAPI SystemFunction036
+# include <NTSecAPI.h>
+# undef SystemFunction036
+#endif
+
+#if defined(ANDROID) || defined(XP_DARWIN) || defined(__DragonFly__) || \
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 # include <stdlib.h>
 # define HAVE_ARC4RANDOM
@@ -734,61 +742,50 @@ js::math_pow(JSContext* cx, unsigned argc, Value* vp)
     return math_pow_handle(cx, args.get(0), args.get(1), args.rval());
 }
 
-static uint64_t
-random_generateSeed()
+void
+js::random_generateSeed(uint64_t* seedBuffer, size_t length)
 {
+    if (length == 0)
+        return;
+
+#if defined(XP_WIN)
+    size_t size = length * sizeof(seedBuffer[0]);
+    if (RtlGenRandom(seedBuffer, size))
+        return;
+
+    // Use PRMJ_Now() if we couldn't read from RtlGetRandom().
+    for (size_t i = 0; i < length; i++)
+        seedBuffer[i] = PRMJ_Now();
+
+#elif defined(HAVE_ARC4RANDOM)
     union {
-        uint8_t     u8[8];
         uint32_t    u32[2];
         uint64_t    u64;
     } seed;
     seed.u64 = 0;
 
-#if defined(XP_WIN)
-    /*
-     * Temporary diagnostic for bug 1167248: Test whether the injected hooks
-     * react differently to LoadLibraryW / LoadLibraryExW.
-     */
-    HMODULE oldWay = LoadLibraryW(L"ADVAPI32.DLL");
-    HMODULE newWay = LoadLibraryExW(L"ADVAPI32.DLL",
-                                    nullptr,
-                                    LOAD_LIBRARY_SEARCH_SYSTEM32);
-    /* Fallback for older versions of Windows */
-    if (!newWay && GetLastError() == ERROR_INVALID_PARAMETER)
-        newWay = LoadLibraryExW(L"ADVAPI32.DLL", nullptr, 0);
+    for (size_t i = 0; i < length; i++) {
+        seed.u32[0] = arc4random();
+        seed.u32[1] = arc4random();
+        seedBuffer[i] = seed.u64 ^ PRMJ_Now();
+    }
 
-    if (oldWay && !newWay)
-        MOZ_CRASH();
-
-    errno_t error = rand_s(&seed.u32[0]);
-
-    if (oldWay)
-        FreeLibrary(oldWay);
-    if (newWay)
-        FreeLibrary(newWay);
-
-    MOZ_ASSERT(error == 0, "rand_s() error?!");
-
-    error = rand_s(&seed.u32[1]);
-    MOZ_ASSERT(error == 0, "rand_s() error?!");
-#elif defined(HAVE_ARC4RANDOM)
-    seed.u32[0] = arc4random();
-    seed.u32[1] = arc4random();
 #elif defined(XP_UNIX)
     int fd = open("/dev/urandom", O_RDONLY);
-    MOZ_ASSERT(fd >= 0, "Can't open /dev/urandom?!");
     if (fd >= 0) {
-        ssize_t nread = read(fd, seed.u8, mozilla::ArrayLength(seed.u8));
-        MOZ_ASSERT(nread == 8, "Can't read /dev/urandom?!");
-        mozilla::unused << nread;
+        ssize_t size = length * sizeof(seedBuffer[0]);
+        ssize_t nread = read(fd, (char *) seedBuffer, size);
         close(fd);
+        if (nread == size)
+            return;
     }
+
+    // Use PRMJ_Now() if we couldn't read from /dev/urandom.
+    for (size_t i = 0; i < length; i++)
+        seedBuffer[i] = PRMJ_Now();
 #else
 # error "Platform needs to implement random_generateSeed()"
 #endif
-
-    seed.u64 ^= PRMJ_Now();
-    return seed.u64;
 }
 
 /*
@@ -798,7 +795,8 @@ void
 js::random_initState(uint64_t* rngState)
 {
     /* Our PRNG only uses 48 bits, so squeeze our entropy into those bits. */
-    uint64_t seed = random_generateSeed();
+    uint64_t seed;
+    random_generateSeed(&seed, 1);
     seed ^= (seed >> 16);
     *rngState = (seed ^ RNG_MULTIPLIER) & RNG_MASK;
 }

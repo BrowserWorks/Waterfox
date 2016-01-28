@@ -4,12 +4,12 @@
    - http://creativecommons.org/publicdomain/zero/1.0/ -->
 <head>
   <meta charset="utf-8">
-  <title>Test for B2G Presentation Session API at receiver side (OOP)</title>
+  <title>Test for B2G PresentationConnection API at receiver side (OOP)</title>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
-<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test B2G Presentation Session API at receiver side (OOP)</a>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test B2G PresentationConnection API at receiver side (OOP)</a>
 <p id="display"></p>
 <div id="content" style="display: none"></div>
 <pre id="test"></pre>
@@ -32,9 +32,6 @@ function setup() {
     gScript.sendAsyncMessage('trigger-device-add');
 
     // Create a receiver OOP iframe.
-    SpecialPowers.addPermission('presentation', true, { url: receiverUrl,
-                                                        appId: SpecialPowers.Ci.nsIScriptSecurityManager.NO_APP_ID,
-                                                        isInBrowserElement: true });
     var receiverIframe = document.createElement('iframe');
     receiverIframe.setAttribute('remote', 'true');
     receiverIframe.setAttribute('mozbrowser', 'true');
@@ -72,9 +69,6 @@ function setup() {
     obs.notifyObservers(promise, 'setup-request-promise', null);
 
     // Create a non-receiver OOP iframe.
-    SpecialPowers.addPermission('presentation', true, { url: nonReceiverUrl,
-                                                        appId: SpecialPowers.Ci.nsIScriptSecurityManager.NO_APP_ID,
-                                                        isInBrowserElement: true });
     var nonReceiverIframe = document.createElement('iframe');
     nonReceiverIframe.setAttribute('remote', 'true');
     nonReceiverIframe.setAttribute('mozbrowser', 'true');
@@ -171,7 +165,6 @@ SpecialPowers.pushPermissions([
   {type: 'browser', allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
-                                      ["dom.ignore_webidl_scope_checks", true],
                                       ["dom.presentation.test.enabled", true],
                                       ["dom.presentation.test.stage", 0],
                                       ["dom.mozBrowserFramesEnabled", true],

@@ -56,6 +56,7 @@
 #include "nsIPercentBSizeObserver.h"
 #include "nsStyleStructInlines.h"
 #include "FrameLayerBuilder.h"
+#include "ImageLayers.h"
 
 #include "nsBidiPresUtils.h"
 #include "RubyUtils.h"
@@ -2145,6 +2146,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     if (aBuilder->IsBuildingLayerEventRegions()) {
       nsDisplayLayerEventRegions* eventRegions =
         new (aBuilder) nsDisplayLayerEventRegions(aBuilder, this);
+      eventRegions->AddFrame(aBuilder, this);
       aBuilder->SetLayerEventRegions(eventRegions);
       set.BorderBackground()->AppendNewToTop(eventRegions);
     }
@@ -2373,9 +2375,12 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
   // dirty rect in child-relative coordinates
   nsRect dirty = aDirtyRect - child->GetOffsetTo(this);
 
+  const nsStyleDisplay* disp;
   nsIAtom* childType = child->GetType();
   nsDisplayListBuilder::OutOfFlowDisplayData* savedOutOfFlowData = nullptr;
-  if (childType == nsGkAtoms::placeholderFrame) {
+  if (childType != nsGkAtoms::placeholderFrame) {
+    disp = child->StyleDisplay();
+  } else {
     nsPlaceholderFrame* placeholder = static_cast<nsPlaceholderFrame*>(child);
     child = placeholder->GetOutOfFlowFrame();
     NS_ASSERTION(child, "No out of flow frame?");
@@ -2385,6 +2390,16 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
     if (!child || nsLayoutUtils::IsPopup(child) ||
         (child->GetStateBits() & NS_FRAME_IS_PUSHED_FLOAT))
       return;
+    MOZ_ASSERT(child->GetStateBits() & NS_FRAME_OUT_OF_FLOW);
+    disp = child->StyleDisplay();
+    // If the out-of-flow frame is in the top layer, the viewport frame
+    // will paint it. Skip it here. Note that, only out-of-flow frames
+    // with this property should be skipped, because non-HTML elements
+    // may stop their children from being out-of-flow. Those frames
+    // should still be handled in the normal in-flow path.
+    if (disp->mTopLayer != NS_STYLE_TOP_LAYER_NONE) {
+      return;
+    }
     // Make sure that any attempt to use childType below is disappointed. We
     // could call GetType again but since we don't currently need it, let's
     // avoid the virtual call.
@@ -2392,8 +2407,7 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
     // Recheck NS_FRAME_TOO_DEEP_IN_FRAME_TREE
     if (child->GetStateBits() & NS_FRAME_TOO_DEEP_IN_FRAME_TREE)
       return;
-    savedOutOfFlowData = static_cast<nsDisplayListBuilder::OutOfFlowDisplayData*>
-      (child->Properties().Get(nsDisplayListBuilder::OutOfFlowDisplayDataProperty()));
+    savedOutOfFlowData = nsDisplayListBuilder::GetOutOfFlowData(child);
     if (savedOutOfFlowData) {
       dirty = savedOutOfFlowData->mDirtyRect;
     } else {
@@ -2463,7 +2477,6 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
 
   // Child is composited if it's transformed, partially transparent, or has
   // SVG effects or a blend mode..
-  const nsStyleDisplay* disp = child->StyleDisplay();
   const nsStylePosition* pos = child->StylePosition();
   bool isVisuallyAtomic = child->HasOpacity()
     || child->IsTransformed()
@@ -2476,7 +2489,7 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
 
   bool isPositioned = disp->IsAbsPosContainingBlock(child);
   bool isStackingContext =
-    (isPositioned && (disp->mPosition == NS_STYLE_POSITION_STICKY ||
+    (isPositioned && (disp->IsPositionForcingStackingContext() ||
                       pos->mZIndex.GetUnit() == eStyleUnit_Integer)) ||
      (disp->mWillChangeBitField & NS_STYLE_WILL_CHANGE_STACKING_CONTEXT) ||
      disp->mIsolation != NS_STYLE_ISOLATION_AUTO ||
@@ -2556,6 +2569,7 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
         if (animatedGeometryRoot != buildingForChild.GetPrevAnimatedGeometryRoot()) {
           nsDisplayLayerEventRegions* eventRegions =
             new (aBuilder) nsDisplayLayerEventRegions(aBuilder, child);
+          eventRegions->AddFrame(aBuilder, child);
           aBuilder->SetLayerEventRegions(eventRegions);
           aLists.BorderBackground()->AppendNewToTop(eventRegions);
         }
@@ -2582,6 +2596,7 @@ nsIFrame::BuildDisplayListForChild(nsDisplayListBuilder*   aBuilder,
     if (aBuilder->IsBuildingLayerEventRegions()) {
       nsDisplayLayerEventRegions* eventRegions =
         new (aBuilder) nsDisplayLayerEventRegions(aBuilder, child);
+      eventRegions->AddFrame(aBuilder, child);
       aBuilder->SetLayerEventRegions(eventRegions);
       pseudoStack.BorderBackground()->AppendNewToTop(eventRegions);
     }
@@ -2656,7 +2671,7 @@ nsFrame::FireDOMEvent(const nsAString& aDOMEventName, nsIContent *aContent)
   nsIContent* target = aContent ? aContent : mContent;
 
   if (target) {
-    nsRefPtr<AsyncEventDispatcher> asyncDispatcher =
+    RefPtr<AsyncEventDispatcher> asyncDispatcher =
       new AsyncEventDispatcher(target, aDOMEventName, true, false);
     DebugOnly<nsresult> rv = asyncDispatcher->PostDOMEvent();
     NS_ASSERTION(NS_SUCCEEDED(rv), "AsyncEventDispatcher failed to dispatch");
@@ -3000,7 +3015,7 @@ nsFrame::HandlePress(nsPresContext* aPresContext,
   bool control = mouseEvent->IsControl();
 #endif
 
-  nsRefPtr<nsFrameSelection> fc = const_cast<nsFrameSelection*>(frameselection);
+  RefPtr<nsFrameSelection> fc = const_cast<nsFrameSelection*>(frameselection);
   if (mouseEvent->clickCount > 1) {
     // These methods aren't const but can't actually delete anything,
     // so no need for nsWeakFrame.
@@ -3282,7 +3297,7 @@ nsFrame::PeekBackwardAndForward(nsSelectionAmount aAmountBack,
     return rv;
 
   // Keep frameSelection alive.
-  nsRefPtr<nsFrameSelection> frameSelection = GetFrameSelection();
+  RefPtr<nsFrameSelection> frameSelection = GetFrameSelection();
 
   rv = frameSelection->HandleClick(startpos.mResultContent,
                                    startpos.mContentOffset, startpos.mContentOffset,
@@ -3322,7 +3337,7 @@ NS_IMETHODIMP nsFrame::HandleDrag(nsPresContext* aPresContext,
   }
   nsIPresShell *presShell = aPresContext->PresShell();
 
-  nsRefPtr<nsFrameSelection> frameselection = GetFrameSelection();
+  RefPtr<nsFrameSelection> frameselection = GetFrameSelection();
   bool mouseDown = frameselection->GetDragState();
   if (!mouseDown)
     return NS_OK;
@@ -3457,7 +3472,7 @@ NS_IMETHODIMP nsFrame::HandleRelease(nsPresContext* aPresContext,
   bool selectionOff =
     (DisplaySelection(aPresContext) == nsISelectionController::SELECTION_OFF);
 
-  nsRefPtr<nsFrameSelection> frameselection;
+  RefPtr<nsFrameSelection> frameselection;
   ContentOffsets offsets;
   nsCOMPtr<nsIContent> parentContent;
   int32_t contentOffsetForTableSel = 0;
@@ -3488,7 +3503,7 @@ NS_IMETHODIMP nsFrame::HandleRelease(nsPresContext* aPresContext,
   // We might be capturing in some other document and the event just happened to
   // trickle down here. Make sure that document's frame selection is notified.
   // Note, this may cause the current nsFrame object to be deleted, bug 336592.
-  nsRefPtr<nsFrameSelection> frameSelection;
+  RefPtr<nsFrameSelection> frameSelection;
   if (activeFrame != this &&
       static_cast<nsFrame*>(activeFrame)->DisplaySelection(activeFrame->PresContext())
         != nsISelectionController::SELECTION_OFF) {
@@ -5617,18 +5632,10 @@ nsIFrame::GetPreEffectsVisualOverflowRect() const
   return r ? *r : GetVisualOverflowRectRelativeToSelf();
 }
 
-inline static bool
-FrameMaintainsOverflow(nsIFrame* aFrame)
-{
-  return (aFrame->GetStateBits() &
-          (NS_FRAME_SVG_LAYOUT | NS_FRAME_IS_NONDISPLAY)) !=
-         (NS_FRAME_SVG_LAYOUT | NS_FRAME_IS_NONDISPLAY);
-}
-
 /* virtual */ bool
 nsFrame::UpdateOverflow()
 {
-  MOZ_ASSERT(FrameMaintainsOverflow(this),
+  MOZ_ASSERT(FrameMaintainsOverflow(),
              "Non-display SVG do not maintain visual overflow rects");
 
   nsRect rect(nsPoint(0, 0), GetSize());
@@ -5820,10 +5827,7 @@ nsIFrame::ListGeneric(nsACString& aTo, const char* aPrefix, uint32_t aFlags) con
 
   mozilla::WritingMode wm = GetWritingMode();
   if (wm.IsVertical() || !wm.IsBidiLTR()) {
-    aTo += nsPrintfCString(" wm=%s-%s: logical size={%d,%d}",
-                           wm.IsVertical() ? wm.IsVerticalLR() ? "vlr" : "vrl"
-                                           : "htb",
-                           wm.IsBidiLTR() ? "ltr" : "rtl",
+    aTo += nsPrintfCString(" wm=%s: logical size={%d,%d}", wm.DebugString(),
                            ISize(), BSize());
   }
 
@@ -5833,12 +5837,9 @@ nsIFrame::ListGeneric(nsACString& aTo, const char* aPrefix, uint32_t aFlags) con
     if (pWM.IsVertical() || !pWM.IsBidiLTR()) {
       nsSize containerSize = parent->mRect.Size();
       LogicalRect lr(pWM, mRect, containerSize);
-      aTo += nsPrintfCString(" parent wm=%s-%s, cs={%d,%d}, "
+      aTo += nsPrintfCString(" parent wm=%s, cs={%d,%d}, "
                              " logicalRect={%d,%d,%d,%d}",
-                             pWM.IsVertical() ? pWM.IsVerticalLR()
-                                                ? "vlr" : "vrl"
-                                              : "htb",
-                             wm.IsBidiLTR() ? "ltr" : "rtl",
+                             pWM.DebugString(),
                              containerSize.width, containerSize.height,
                              lr.IStart(pWM), lr.BStart(pWM),
                              lr.ISize(pWM), lr.BSize(pWM));
@@ -6105,7 +6106,7 @@ nsFrame::GetSelectionController(nsPresContext *aPresContext, nsISelectionControl
 already_AddRefed<nsFrameSelection>
 nsIFrame::GetFrameSelection()
 {
-  nsRefPtr<nsFrameSelection> fs =
+  RefPtr<nsFrameSelection> fs =
     const_cast<nsFrameSelection*>(GetConstFrameSelection());
   return fs.forget();
 }
@@ -7654,7 +7655,7 @@ bool
 nsIFrame::FinishAndStoreOverflow(nsOverflowAreas& aOverflowAreas,
                                  nsSize aNewSize, nsSize* aOldSize)
 {
-  NS_ASSERTION(FrameMaintainsOverflow(this),
+  NS_ASSERTION(FrameMaintainsOverflow(),
                "Don't call - overflow rects not maintained on these SVG frames");
 
   nsRect bounds(nsPoint(0, 0), aNewSize);
@@ -7812,7 +7813,7 @@ nsIFrame::RecomputePerspectiveChildrenOverflow(const nsIFrame* aStartFrame, cons
     nsFrameList::Enumerator childFrames(lists.CurrentList());
     for (; !childFrames.AtEnd(); childFrames.Next()) {
       nsIFrame* child = childFrames.get();
-      if (!FrameMaintainsOverflow(child)) {
+      if (!child->FrameMaintainsOverflow()) {
         continue; // frame does not maintain overflow rects
       }
       if (child->HasPerspective()) {
@@ -7860,7 +7861,7 @@ RecomputePreserve3DChildrenOverflow(nsIFrame* aFrame, const nsRect* aBounds)
     nsFrameList::Enumerator childFrames(lists.CurrentList());
     for (; !childFrames.AtEnd(); childFrames.Next()) {
       nsIFrame* child = childFrames.get();
-      if (!FrameMaintainsOverflow(child)) {
+      if (!child->FrameMaintainsOverflow()) {
         continue; // frame does not maintain overflow rects
       }
       if (child->Preserves3DChildren()) {

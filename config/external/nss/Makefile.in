@@ -213,7 +213,7 @@ DEFAULT_GMAKE_FLAGS += \
 	OS_PTHREAD= \
 	$(NULL)
 
-DEFAULT_GMAKE_FLAGS += ARCHFLAG='$(CFLAGS) -DCHECK_FORK_GETPID $(addprefix -DANDROID_VERSION=,$(ANDROID_VERSION)) -include $(topsrcdir)/security/manager/android_stub.h'
+DEFAULT_GMAKE_FLAGS += ARCHFLAG='$(filter-out -W%,$(CFLAGS)) -DCHECK_FORK_GETPID $(addprefix -DANDROID_VERSION=,$(ANDROID_VERSION)) -include $(topsrcdir)/security/manager/android_stub.h'
 endif
 endif
 
@@ -241,7 +241,7 @@ ifdef MOZ_NO_WLZDEFS
 DEFAULT_GMAKE_FLAGS += ZDEFS_FLAG=
 endif
 ifdef MOZ_CFLAGS_NSS
-DEFAULT_GMAKE_FLAGS += XCFLAGS='$(CFLAGS)'
+DEFAULT_GMAKE_FLAGS += XCFLAGS='$(filter-out -W%,$(CFLAGS))'
 DEFAULT_GMAKE_FLAGS += DARWIN_DYLIB_VERSIONS='-compatibility_version 1 -current_version 1 $(LDFLAGS)'
 endif
 ifeq (1_1,$(CLANG_CL)_$(MOZ_ASAN))
@@ -265,6 +265,13 @@ DEFAULT_GMAKE_FLAGS += TARGETS='$$(LIBRARY) $$(SHARED_LIBRARY) $$(PROGRAM)'
 
 ifdef MOZ_FOLD_LIBS_FLAGS
 DEFAULT_GMAKE_FLAGS += XCFLAGS='$(MOZ_FOLD_LIBS_FLAGS)'
+endif
+
+ifndef WARNINGS_AS_ERRORS
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
+endif
+ifeq ($(OS_TARGET),Android)
+DEFAULT_GMAKE_FLAGS += NSS_ENABLE_WERROR=0
 endif
 
 NSS_SRCDIR = $(topsrcdir)
@@ -354,7 +361,7 @@ nspr_def_file := $(srcdir)/nspr-dummy.def
 
 nss3.def: $(nss_def_file) $(sqlite_def_file) $(nspr_def_file) $(NSS_EXTRA_SYMBOLS_FILE)
 	@$(call py_action,convert_def_file, \
-	  $(DEFINES) $(ACDEFINES) $(XULPPFLAGS) -o $@ $^)
+	  $(DEFINES) $(ACDEFINES) $(MOZ_DEBUG_DEFINES) -o $@ $^)
 
 GARBAGE += \
   nss3.def \

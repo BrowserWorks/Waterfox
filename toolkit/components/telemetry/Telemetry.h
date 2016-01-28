@@ -63,6 +63,18 @@ void Accumulate(ID id, const nsCString& key, uint32_t sample = 1);
 void Accumulate(const char* name, uint32_t sample);
 
 /**
+ * Adds a sample to a histogram defined in TelemetryHistograms.h.
+ * This function is here to support telemetry measurements from Java,
+ * where we have only names and not numeric IDs.  You should almost
+ * certainly be using the by-enum-id version instead of this one.
+ *
+ * @param name - histogram name
+ * @param key - the string key
+ * @param sample - sample - (optional) value to record, defaults to 1.
+ */
+void Accumulate(const char *name, const nsCString& key, uint32_t sample = 1);
+
+/**
  * Adds time delta in milliseconds to a histogram defined in TelemetryHistograms.h
  *
  * @param id - histogram id
@@ -197,6 +209,18 @@ void RecordSlowSQLStatement(const nsACString &statement,
                             const nsACString &dbName,
                             uint32_t delay);
 
+/**
+ * Record Webrtc ICE candidate type combinations in a 17bit bitmask
+ *
+ * @param iceCandidateBitmask - the bitmask representing local and remote ICE
+ *                              candidate types present for the connection
+ * @param success - did the peer connection connected
+ * @param loop - was this a Firefox Hello AKA Loop call
+ */
+void
+RecordWebrtcIceCandidates(const uint32_t iceCandidateBitmask,
+                          const bool success,
+                          const bool loop);
 /**
  * Initialize I/O Reporting
  * Initially this only records I/O for files in the binary directory.

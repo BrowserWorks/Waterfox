@@ -130,7 +130,7 @@ DynamicImage::GetHeight(int32_t* aHeight)
 NS_IMETHODIMP
 DynamicImage::GetIntrinsicSize(nsSize* aSize)
 {
-  gfxIntSize intSize(mDrawable->Size());
+  IntSize intSize(mDrawable->Size());
   *aSize = nsSize(intSize.width, intSize.height);
   return NS_OK;
 }
@@ -138,7 +138,7 @@ DynamicImage::GetIntrinsicSize(nsSize* aSize)
 NS_IMETHODIMP
 DynamicImage::GetIntrinsicRatio(nsSize* aSize)
 {
-  gfxIntSize intSize(mDrawable->Size());
+  IntSize intSize(mDrawable->Size());
   *aSize = nsSize(intSize.width, intSize.height);
   return NS_OK;
 }
@@ -167,7 +167,7 @@ NS_IMETHODIMP_(already_AddRefed<SourceSurface>)
 DynamicImage::GetFrame(uint32_t aWhichFrame,
                        uint32_t aFlags)
 {
-  gfxIntSize size(mDrawable->Size());
+  IntSize size(mDrawable->Size());
   return GetFrameAtSize(IntSize(size.width, size.height),
                         aWhichFrame,
                         aFlags);
@@ -185,11 +185,10 @@ DynamicImage::GetFrameAtSize(const IntSize& aSize,
       "DynamicImage::GetFrame failed in CreateOffscreenContentDrawTarget";
     return nullptr;
   }
-  nsRefPtr<gfxContext> context = new gfxContext(dt);
+  RefPtr<gfxContext> context = new gfxContext(dt);
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
-                     aWhichFrame, GraphicsFilter::FILTER_NEAREST,
-                     Nothing(), aFlags);
+                     aWhichFrame, Filter::POINT, Nothing(), aFlags);
 
   return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
@@ -219,13 +218,13 @@ DynamicImage::Draw(gfxContext* aContext,
                    const nsIntSize& aSize,
                    const ImageRegion& aRegion,
                    uint32_t aWhichFrame,
-                   GraphicsFilter aFilter,
+                   Filter aFilter,
                    const Maybe<SVGImageContext>& aSVGContext,
                    uint32_t aFlags)
 {
   MOZ_ASSERT(!aSize.IsEmpty(), "Unexpected empty size");
 
-  gfxIntSize drawableSize(mDrawable->Size());
+  IntSize drawableSize(mDrawable->Size());
 
   if (aSize == drawableSize) {
     gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, aRegion,
@@ -325,9 +324,9 @@ DynamicImage::SetAnimationStartTime(const mozilla::TimeStamp& aTime)
 nsIntSize
 DynamicImage::OptimalImageSizeForDest(const gfxSize& aDest,
                                       uint32_t aWhichFrame,
-                                      GraphicsFilter aFilter, uint32_t aFlags)
+                                      Filter aFilter, uint32_t aFlags)
 {
-  gfxIntSize size(mDrawable->Size());
+  IntSize size(mDrawable->Size());
   return nsIntSize(size.width, size.height);
 }
 

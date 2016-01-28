@@ -102,14 +102,14 @@ enum AsmJSSimdOperation
 struct MOZ_STACK_CLASS AsmJSFunctionLabels
 {
     AsmJSFunctionLabels(jit::Label& entry, jit::Label& overflowExit)
-      : entry(entry), overflowExit(overflowExit) {}
+      : nonProfilingEntry(entry), overflowExit(overflowExit) {}
 
-    jit::Label begin;
-    jit::Label& entry;
-    jit::Label profilingJump;
-    jit::Label profilingEpilogue;
-    jit::Label profilingReturn;
-    jit::Label end;
+    jit::Label  profilingEntry;
+    jit::Label& nonProfilingEntry;
+    jit::Label  profilingJump;
+    jit::Label  profilingEpilogue;
+    jit::Label  profilingReturn;
+    jit::Label  endAfterOOL;
     mozilla::Maybe<jit::Label> overflowThunk;
     jit::Label& overflowExit;
 };
@@ -314,6 +314,10 @@ class AsmJSModule
             MOZ_ASSERT(pod.which_ == ArrayView || pod.which_ == SharedArrayView || pod.which_ == ArrayViewCtor);
             return pod.u.viewType_;
         }
+        void makeViewShared() {
+            MOZ_ASSERT(pod.which_ == ArrayView);
+            pod.which_ = SharedArrayView;
+        }
         PropertyName* mathName() const {
             MOZ_ASSERT(pod.which_ == MathBuiltinFunction);
             return name_;
@@ -397,10 +401,6 @@ class AsmJSModule
         void initJitOffset(unsigned off) {
             MOZ_ASSERT(!jitCodeOffset_);
             jitCodeOffset_ = off;
-        }
-        void updateOffsets(jit::MacroAssembler& masm) {
-            interpCodeOffset_ = masm.actualOffset(interpCodeOffset_);
-            jitCodeOffset_ = masm.actualOffset(jitCodeOffset_);
         }
 
         size_t serializedSize() const;
@@ -516,10 +516,6 @@ class AsmJSModule
             MOZ_ASSERT(pod.codeOffset_ == UINT32_MAX);
             pod.codeOffset_ = off;
         }
-        void updateCodeOffset(jit::MacroAssembler& masm) {
-            MOZ_ASSERT(!isChangeHeap());
-            pod.codeOffset_ = masm.actualOffset(pod.codeOffset_);
-        }
 
         unsigned numArgs() const {
             MOZ_ASSERT(!isChangeHeap());
@@ -574,7 +570,6 @@ class AsmJSModule
         CodeRange(Kind kind, uint32_t begin, uint32_t end);
         CodeRange(Kind kind, uint32_t begin, uint32_t profilingReturn, uint32_t end);
         CodeRange(AsmJSExit::BuiltinKind builtin, uint32_t begin, uint32_t pret, uint32_t end);
-        void updateOffsets(jit::MacroAssembler& masm);
 
         Kind kind() const { return Kind(u.kind_); }
         bool isFunction() const { return kind() == Function; }
@@ -751,7 +746,7 @@ class AsmJSModule
 
         explicit RelativeLink(Kind kind)
         {
-#if defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
             kind_ = kind;
 #elif defined(JS_CODEGEN_ARM)
             // On ARM, CodeLabels are only used to label raw pointers, so in
@@ -762,14 +757,14 @@ class AsmJSModule
         }
 
         bool isRawPointerPatch() {
-#if defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
             return kind_ == RawPointer;
 #else
             return true;
 #endif
         }
 
-#ifdef JS_CODEGEN_MIPS32
+#if defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
         Kind kind_;
 #endif
         uint32_t patchAtOffset;
@@ -1106,6 +1101,15 @@ class AsmJSModule
             return pod.isSharedView_ == shared;
         return !pod.isSharedView_ || shared;
     }
+    void setViewsAreShared() {
+        if (pod.hasArrayView_)
+            pod.isSharedView_ = true;
+        for (size_t i=0 ; i < globals_.length() ; i++) {
+            Global& g = globals_[i];
+            if (g.which() == Global::ArrayView)
+                g.makeViewShared();
+        }
+    }
 
     /*************************************************************************/
 
@@ -1401,10 +1405,14 @@ class AsmJSModule
         JS_STATIC_ASSERT(jit::AsmJSHeapGlobalDataOffset == sizeof(void*));
         return sizeof(void*);
     }
+  private:
+    // The pointer may reference shared memory, use with care.
+    // Generally you want to use maybeHeap(), not heapDatum().
     uint8_t*& heapDatum() const {
         MOZ_ASSERT(isFinished());
         return *(uint8_t**)(globalData() + heapGlobalDataOffset());
     }
+  public:
     static unsigned nan64GlobalDataOffset() {
         static_assert(jit::AsmJSNaN64GlobalDataOffset % sizeof(double) == 0,
                       "Global data NaN should be aligned");
@@ -1561,9 +1569,10 @@ class AsmJSModule
         MOZ_ASSERT(isDynamicallyLinked());
         return outOfBoundsExit_;
     }
-    uint8_t* maybeHeap() const {
+    SharedMem<uint8_t*> maybeHeap() const {
         MOZ_ASSERT(isDynamicallyLinked());
-        return heapDatum();
+        return hasArrayView() && isSharedView() ? SharedMem<uint8_t*>::shared(heapDatum())
+            : SharedMem<uint8_t*>::unshared(heapDatum());
     }
     ArrayBufferObjectMaybeShared* maybeHeapBufferObject() const {
         MOZ_ASSERT(isDynamicallyLinked());

@@ -2,8 +2,8 @@
  * Tests for imgITools
  */
 
-const Ci = Components.interfaces;
-const Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cc = Components.classes;
 
 
 /*
@@ -130,7 +130,7 @@ if (!imgTools)
 // different set of reference images. nsIXULRuntime.OS doesn't seem to be
 // available in xpcshell, so we'll use this as a kludgy way to figure out if
 // we're running on Windows.
-var isWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+var isWindows = mozinfo.os == "win";
 
 
 /* ========== 1 ========== */

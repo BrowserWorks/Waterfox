@@ -4,12 +4,12 @@
    - http://creativecommons.org/publicdomain/zero/1.0/ -->
 <head>
   <meta charset="utf-8">
-  <title>Test for B2G Presentation Session API at receiver side</title>
+  <title>Test for B2G PresentationConnection API at receiver side</title>
   <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
 </head>
 <body>
-<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test for B2G Presentation Session API at receiver side</a>
+<a target="_blank" href="https://bugzilla.mozilla.org/show_bug.cgi?id=1069230">Test for B2G PresentationConnection API at receiver side</a>
 <p id="display"></p>
 <div id="content" style="display: none"></div>
 <pre id="test"></pre>
@@ -93,18 +93,8 @@ function testIncomingSessionRequest() {
       info("Trying to launch receiver page.");
 
       ok(navigator.presentation, "navigator.presentation should be available in in-process pages.");
-
-      navigator.presentation.getSessions().then(
-        function(aSessions) {
-          is(aSessions.length, 0, "Non-receiving in-process pages shouldn't get a predefined presentation session instance.");
-          aResolve();
-        },
-        function(aError) {
-          ok(false, "Error occurred when getting sessions: " + aError);
-          teardown();
-          aReject();
-        }
-      );
+      ok(!navigator.presentation.receiver, "Non-receiving in-process pages shouldn't get a presentation receiver instance.");
+      aResolve();
     });
 
     gScript.sendAsyncMessage('trigger-incoming-session-request', receiverUrl);
@@ -133,7 +123,6 @@ SpecialPowers.pushPermissions([
   {type: 'presentation', allow: true, context: document},
 ], function() {
   SpecialPowers.pushPrefEnv({ 'set': [["dom.presentation.enabled", true],
-                                      ["dom.ignore_webidl_scope_checks", true],
                                       ["dom.presentation.test.enabled", true],
                                       ["dom.presentation.test.stage", 0]]},
                             runTests);

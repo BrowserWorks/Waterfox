@@ -160,15 +160,18 @@ private:
   bool Failed(HRESULT hr, Severity aSeverity = DebugAssert);
   bool Succeeded(HRESULT hr, Severity aSeverity = DebugAssert);
 
+  // Same as Failed(), except the severity is critical (with no abort) and
+  // a string prefix must be provided.
+  bool Failed(HRESULT hr, const char* aContext);
+
   // ensure mSize is up to date with respect to mWidget
   void EnsureSize();
   bool VerifyBufferSize();
-  void UpdateRenderTarget();
+  bool UpdateRenderTarget();
   bool UpdateConstantBuffers();
   void SetSamplerForFilter(gfx::Filter aFilter);
   void SetPSForEffect(Effect *aEffect, MaskType aMaskType, gfx::SurfaceFormat aFormat);
   void PaintToTarget();
-  bool SetBlendMode(gfx::CompositionOp aOp, bool aPremultipled = true);
 
   virtual gfx::IntSize GetWidgetSize() const override { return mSize; }
 
@@ -196,6 +199,8 @@ private:
   // This is the clip rect applied to the default DrawTarget (i.e. the window)
   gfx::IntRect mCurrentClip;
   nsIntRegion mInvalidRegion;
+
+  bool mVerifyBuffersFailed;
 };
 
 }

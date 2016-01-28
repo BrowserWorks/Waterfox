@@ -213,7 +213,7 @@ NS_GENERIC_FACTORY_CONSTRUCTOR(nsStorageStream)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsVersionComparatorImpl)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsScriptableBase64Encoder)
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsVariant)
+NS_GENERIC_FACTORY_CONSTRUCTOR(nsVariantCC)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsHashPropertyBagCC)
 
@@ -497,6 +497,8 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
   mozPoisonValueInit();
 
   NS_LogInit();
+
+  mozilla::LogModule::Init();
 
   JS_SetCurrentEmbedderTimeFunction(TimeSinceProcessCreation);
 
@@ -835,7 +837,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
       return NS_ERROR_UNEXPECTED;
     }
 
-    nsRefPtr<nsObserverService> observerService;
+    RefPtr<nsObserverService> observerService;
     CallGetService("@mozilla.org/observer-service;1",
                    (nsObserverService**)getter_AddRefs(observerService));
 

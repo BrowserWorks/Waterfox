@@ -2,6 +2,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+XPCOMUtils.defineLazyGetter(this, "AlertsServiceDND", function () {
+  try {
+    let alertsService = Cc["@mozilla.org/alerts-service;1"]
+                          .getService(Ci.nsIAlertsService)
+                          .QueryInterface(Ci.nsIAlertsDoNotDisturb);
+    // This will throw if manualDoNotDisturb isn't implemented.
+    alertsService.manualDoNotDisturb;
+    return alertsService;
+  } catch (ex) {
+    return undefined;
+  }
+});
+
 var gContentPane = {
   init: function ()
   {
@@ -30,8 +43,22 @@ var gContentPane = {
       }
     }
 
+    let doNotDisturbAlertsEnabled = false;
+    if (AlertsServiceDND) {
+      let notificationsDoNotDisturbRow =
+        document.getElementById("notificationsDoNotDisturbRow");
+      notificationsDoNotDisturbRow.removeAttribute("hidden");
+      if (AlertsServiceDND.manualDoNotDisturb) {
+        let notificationsDoNotDisturb =
+          document.getElementById("notificationsDoNotDisturb");
+        notificationsDoNotDisturb.setAttribute("checked", true);
+      }
+    }
+
     setEventListener("font.language.group", "change",
       gContentPane._rebuildFonts);
+    setEventListener("notificationsPolicyButton", "command",
+      gContentPane.showNotificationExceptions);
     setEventListener("popupPolicyButton", "command",
       gContentPane.showPopupExceptions);
     setEventListener("advancedFonts", "command",
@@ -44,6 +71,13 @@ var gContentPane = {
       gContentPane.openTranslationProviderAttribution);
     setEventListener("translateButton", "command",
       gContentPane.showTranslationExceptions);
+    setEventListener("notificationsDoNotDisturb", "command",
+      gContentPane.toggleDoNotDisturbNotifications);
+
+    let notificationInfoURL =
+      Services.urlFormatter.formatURLPref("app.support.baseURL") + "push";
+    document.getElementById("notificationsPolicyLearnMore").setAttribute("href",
+                                                                         notificationInfoURL);
 
     let drmInfoURL =
       Services.urlFormatter.formatURLPref("app.support.baseURL") + "drm-content";
@@ -82,6 +116,24 @@ var gContentPane = {
    * dom.disable_open_during_load
    * - true if popups are blocked by default, false otherwise
    */
+
+  // NOTIFICATIONS
+
+  /**
+   * Displays the notifications exceptions dialog where specific site notification
+   * preferences can be set.
+   */
+  showNotificationExceptions()
+  {
+    let bundlePreferences = document.getElementById("bundlePreferences");
+    let params = { permissionType: "desktop-notification" };
+    params.windowTitle = bundlePreferences.getString("notificationspermissionstitle");
+    params.introText = bundlePreferences.getString("notificationspermissionstext4");
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    "resizable=yes", params);
+  },
+
 
   // POP-UPS
 
@@ -229,5 +281,10 @@ var gContentPane = {
   {
     Components.utils.import("resource:///modules/translation/Translation.jsm");
     Translation.openProviderAttribution();
-  }
+  },
+
+  toggleDoNotDisturbNotifications: function (event)
+  {
+    AlertsServiceDND.manualDoNotDisturb = event.target.checked;
+  },
 };

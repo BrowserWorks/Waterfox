@@ -475,7 +475,7 @@ class TypeSet
     }
 
     /* Whether any values in this set might have the specified type. */
-    bool mightBeMIRType(jit::MIRType type);
+    bool mightBeMIRType(jit::MIRType type) const;
 
     /*
      * Get whether this type set is known to be a subset of other.
@@ -1064,11 +1064,15 @@ FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap);
 class RecompileInfo;
 
 // Allocate a CompilerOutput for a finished compilation and generate the type
-// constraints for the compilation. Returns whether the type constraints
-// still hold.
+// constraints for the compilation. Sets |isValidOut| based on whether the type
+// constraints still hold.
 bool
 FinishCompilation(JSContext* cx, HandleScript script, CompilerConstraintList* constraints,
-                  RecompileInfo* precompileInfo);
+                  RecompileInfo* precompileInfo, bool* isValidOut);
+
+// Reset any CompilerOutput present for a script.
+void
+InvalidateCompilerOutputsForScript(JSContext* cx, HandleScript script);
 
 // Update the actual types in any scripts queried by constraints with any
 // speculative types added during the definite properties analysis.
@@ -1295,7 +1299,18 @@ PrintTypes(JSContext* cx, JSCompartment* comp, bool force);
 // with no associated compartment.
 namespace JS {
 namespace ubi {
-template<> struct Concrete<js::ObjectGroup> : TracerConcrete<js::ObjectGroup> { };
+
+template<>
+struct Concrete<js::ObjectGroup> : TracerConcrete<js::ObjectGroup> {
+    Size size(mozilla::MallocSizeOf mallocSizeOf) const override;
+
+  protected:
+    explicit Concrete(js::ObjectGroup *ptr) : TracerConcrete<js::ObjectGroup>(ptr) { }
+
+  public:
+    static void construct(void *storage, js::ObjectGroup *ptr) { new (storage) Concrete(ptr); }
+};
+
 } // namespace ubi
 } // namespace JS
 

@@ -111,7 +111,6 @@ const Class ArrayBufferObject::class_ = {
     nullptr,                 /* enumerate */
     nullptr,                 /* resolve */
     nullptr,                 /* mayResolve */
-    nullptr,                 /* convert */
     ArrayBufferObject::finalize,
     nullptr,        /* call        */
     nullptr,        /* hasInstance */
@@ -354,7 +353,10 @@ ArrayBufferObject::fun_transfer(JSContext* cx, unsigned argc, Value* vp)
     }
 
     RootedObject oldBufferObj(cx, &oldBufferArg.toObject());
-    if (!ObjectClassIs(oldBufferObj, ESClass_ArrayBuffer, cx)) {
+    ESClassValue cls;
+    if (!GetBuiltinClass(cx, oldBufferObj, &cls))
+        return false;
+    if (cls != ESClass_ArrayBuffer) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TYPED_ARRAY_BAD_ARGS);
         return false;
     }
@@ -459,7 +461,7 @@ ArrayBufferObject::class_constructor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (!WarnIfNotConstructing(cx, args, "ArrayBuffer"))
+    if (!ThrowIfNotConstructing(cx, args, "ArrayBuffer"))
         return false;
 
     int32_t nbytes = 0;
@@ -523,8 +525,9 @@ ArrayBufferObject::neuter(JSContext* cx, Handle<ArrayBufferObject*> buffer,
     if (buffer->hasTypedObjectViews()) {
         // Make sure the global object's group has been instantiated, so the
         // flag change will be observed.
+        AutoEnterOOMUnsafeRegion oomUnsafe;
         if (!cx->global()->getGroup(cx))
-            CrashAtUnhandlableOOM("ArrayBufferObject::neuter");
+            oomUnsafe.crash("ArrayBufferObject::neuter");
         MarkObjectGroupFlags(cx, cx->global(), OBJECT_FLAG_TYPED_OBJECT_NEUTERED);
         cx->compartment()->neuteredTypedObjects = 1;
     }
@@ -721,6 +724,12 @@ uint8_t*
 ArrayBufferObject::dataPointer() const
 {
     return static_cast<uint8_t*>(getSlot(DATA_SLOT).toPrivate());
+}
+
+SharedMem<uint8_t*>
+ArrayBufferObject::dataPointerShared() const
+{
+    return SharedMem<uint8_t*>::unshared(getSlot(DATA_SLOT).toPrivate());
 }
 
 void

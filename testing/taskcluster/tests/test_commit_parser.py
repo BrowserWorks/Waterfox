@@ -26,27 +26,60 @@ class TestCommitParser(unittest.TestCase):
         )
 
     def test_normalize_test_list_specific_tests(self):
-        self.assertEqual(
-            normalize_test_list({}, ['woot'], 'a,b,c'),
-            [{ 'test': 'a' }, { 'test': 'b' }, { 'test': 'c' }]
+        self.assertEqual(sorted(
+            normalize_test_list({}, ['woot'], 'a,b,c')),
+            sorted([{ 'test': 'a' }, { 'test': 'b' }, { 'test': 'c' }])
         )
 
     def test_normalize_test_list_specific_tests_with_whitespace(self):
-        self.assertEqual(
-            normalize_test_list({}, ['woot'], 'a, b, c'),
-            [{ 'test': 'a' }, { 'test': 'b' }, { 'test': 'c' }]
+        self.assertEqual(sorted(
+            normalize_test_list({}, ['woot'], 'a, b, c')),
+            sorted([{ 'test': 'a' }, { 'test': 'b' }, { 'test': 'c' }])
         )
 
     def test_normalize_test_list_with_alias(self):
-        self.assertEqual(
-            normalize_test_list({ "a": "alpha" }, ['woot'], 'a, b, c'),
-            [{ 'test': 'alpha' }, { 'test': 'b' }, { 'test': 'c' }]
+        self.assertEqual(sorted(
+            normalize_test_list({ "a": "alpha" }, ['woot'], 'a, b, c')),
+            sorted([{ 'test': 'alpha' }, { 'test': 'b' }, { 'test': 'c' }])
         )
 
     def test_normalize_test_list_with_alias_and_chunk(self):
         self.assertEqual(
             normalize_test_list({ "a": "alpha" }, ['woot'], 'a-1, a-3'),
             [{ 'test': 'alpha', "only_chunks": set([1, 3])  }]
+        )
+
+    def test_normalize_test_list_with_alias_pattern(self):
+        self.assertEqual(sorted(
+            normalize_test_list({ "a": '/.*oo.*/' },
+                                ['woot', 'foo', 'bar'],
+                                'a, b, c')),
+            sorted([{ 'test': t } for t in ['woot', 'foo', 'b', 'c']])
+        )
+
+    def test_normalize_test_list_with_alias_pattern_anchored(self):
+        self.assertEqual(sorted(
+            normalize_test_list({ "a": '/.*oo/' },
+                                ['woot', 'foo', 'bar'],
+                                'a, b, c')),
+            sorted([{ 'test': t } for t in ['foo', 'b', 'c']])
+        )
+
+    def test_normalize_test_list_with_alias_pattern_list(self):
+        self.assertEqual(sorted(
+            normalize_test_list({ "a": ['/.*oo/', 'bar', '/bi.*/'] },
+                                ['woot', 'foo', 'bar', 'bing', 'baz'],
+                                'a, b')),
+            sorted([{ 'test': t } for t in ['foo', 'bar', 'bing', 'b']])
+        )
+
+    def test_normalize_test_list_with_alias_pattern_list_chunks(self):
+        self.assertEqual(sorted(
+            normalize_test_list({ "a": ['/.*oo/', 'bar', '/bi.*/'] },
+                                ['woot', 'foo', 'bar', 'bing', 'baz'],
+                                'a-1, a-4, b')),
+            sorted([{'test': 'b'}] + [
+                { 'test': t, 'only_chunks': set([1, 4])} for t in ['foo', 'bar', 'bing']])
         )
 
     def test_invalid_commit(self):
@@ -85,7 +118,11 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'post-build': [],
+                'interactive': False
             }
         ]
 
@@ -121,7 +158,11 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
+                'post-build': []
             }
         ]
 
@@ -158,7 +199,11 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
+                'post-build': []
             }
         ]
 
@@ -195,6 +240,10 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux',
                 'dependents': [],
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
                 'additional-parameters': {}
             }
         ]
@@ -239,7 +288,11 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux-debug',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'debug',
+                'interactive': False,
             },
             {
                 'task': 'task/linux',
@@ -250,7 +303,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 }],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
             }
         ]
 
@@ -316,12 +373,20 @@ class TestCommitParser(unittest.TestCase):
             {
                 'task': 'task/linux',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
             },
             {
                 'task': 'task/linux-debug',
                 'dependents': [],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'debug',
+                'interactive': False,
             },
             {
                 'task': 'task/win32',
@@ -347,7 +412,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'win32',
+                'build_type': 'opt',
+                'interactive': False,
             }
         ]
 
@@ -423,7 +492,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'win32',
+                'build_type': 'opt',
+                'interactive': False,
             }
         ]
 
@@ -478,7 +551,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'post-build': [],
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'interactive': False,
             }
         ]
         result = parse_commit(commit, jobs)
@@ -682,7 +759,6 @@ class TestCommitParser(unittest.TestCase):
                 }
             }
         }
-
         expected = [
             {
                 'task': 'task/linux',
@@ -704,7 +780,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux',
+                'build_type': 'opt',
+                'post-build': [],
+                'interactive': False
             },
             {
                 'task': 'task/linux-debug',
@@ -726,7 +806,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux',
+                'build_type': 'debug',
+                'post-build': [],
+                'interactive': False
             },
             {
                 'task': 'task/linux64',
@@ -748,7 +832,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux64',
+                'build_type': 'opt',
+                'post-build': [],
+                'interactive': False
             },
             {
                 'task': 'task/linux64-debug',
@@ -770,7 +858,11 @@ class TestCommitParser(unittest.TestCase):
                         }
                     }
                 ],
-                'additional-parameters': {}
+                'additional-parameters': {},
+                'build_name': 'linux64',
+                'build_type': 'debug',
+                'post-build': [],
+                'interactive': False
             }
         ]
 

@@ -6,6 +6,7 @@
 #include "TextureHost.h"
 
 #include "CompositableHost.h"           // for CompositableHost
+#include "LayerScope.h"
 #include "LayersLogging.h"              // for AppendToString
 #include "mozilla/gfx/2D.h"             // for DataSourceSurface, Factory
 #include "mozilla/ipc/Shmem.h"          // for Shmem
@@ -17,12 +18,13 @@
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #include "mozilla/layers/YCbCrImageDataSerializer.h"
 #include "nsAString.h"
-#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/RefPtr.h"                   // for nsRefPtr
 #include "nsPrintfCString.h"            // for nsPrintfCString
 #include "mozilla/layers/PTextureParent.h"
 #include "mozilla/unused.h"
 #include <limits>
 #include "../opengl/CompositorOGL.h"
+#include "gfxPrefs.h"
 #include "gfxUtils.h"
 
 #ifdef MOZ_ENABLE_D3D10_LAYER
@@ -67,6 +69,7 @@ public:
   ~TextureParent();
 
   bool Init(const SurfaceDescriptor& aSharedData,
+            const LayersBackend& aLayersBackend,
             const TextureFlags& aFlags);
 
   void CompositorRecycle();
@@ -91,11 +94,10 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
-// static
 PTextureParent*
 TextureHost::CreateIPDLActor(CompositableParentManager* aManager,
                              const SurfaceDescriptor& aSharedData,
+                             LayersBackend aLayersBackend,
                              TextureFlags aFlags)
 {
   if (aSharedData.type() == SurfaceDescriptor::TSurfaceDescriptorMemory &&
@@ -105,7 +107,7 @@ TextureHost::CreateIPDLActor(CompositableParentManager* aManager,
     return nullptr;
   }
   TextureParent* actor = new TextureParent(aManager);
-  if (!actor->Init(aSharedData, aFlags)) {
+  if (!actor->Init(aSharedData, aLayersBackend, aFlags)) {
     delete actor;
     return nullptr;
   }
@@ -174,7 +176,7 @@ TextureHost::SetAcquireFenceHandle(const FenceHandle& aAcquireFenceHandle)
 FenceHandle
 TextureHost::GetAndResetAcquireFenceHandle()
 {
-  nsRefPtr<FenceHandle::FdObj> fdObj = mAcquireFenceHandle.GetAndResetFdObj();
+  RefPtr<FenceHandle::FdObj> fdObj = mAcquireFenceHandle.GetAndResetFdObj();
   return FenceHandle(fdObj);
 }
 
@@ -198,10 +200,10 @@ already_AddRefed<TextureHost> CreateTextureHostD3D9(const SurfaceDescriptor& aDe
                                                 ISurfaceAllocator* aDeallocator,
                                                 TextureFlags aFlags);
 
-// static
 already_AddRefed<TextureHost>
 TextureHost::Create(const SurfaceDescriptor& aDesc,
                     ISurfaceAllocator* aDeallocator,
+                    LayersBackend aBackend,
                     TextureFlags aFlags)
 {
   switch (aDesc.type()) {
@@ -212,12 +214,13 @@ TextureHost::Create(const SurfaceDescriptor& aDesc,
       return CreateBackendIndependentTextureHost(aDesc, aDeallocator, aFlags);
 
     case SurfaceDescriptor::TEGLImageDescriptor:
-    case SurfaceDescriptor::TNewSurfaceDescriptorGralloc:
     case SurfaceDescriptor::TSurfaceTextureDescriptor:
+    case SurfaceDescriptor::TSurfaceDescriptorSharedGLTexture:
       return CreateTextureHostOGL(aDesc, aDeallocator, aFlags);
 
+    case SurfaceDescriptor::TNewSurfaceDescriptorGralloc:
     case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface:
-      if (Compositor::GetBackend() == LayersBackend::LAYERS_OPENGL) {
+      if (aBackend == LayersBackend::LAYERS_OPENGL) {
         return CreateTextureHostOGL(aDesc, aDeallocator, aFlags);
       } else {
         return CreateTextureHostBasic(aDesc, aDeallocator, aFlags);
@@ -236,7 +239,7 @@ TextureHost::Create(const SurfaceDescriptor& aDesc,
 
     case SurfaceDescriptor::TSurfaceDescriptorD3D10:
     case SurfaceDescriptor::TSurfaceDescriptorDXGIYCbCr:
-      if (Compositor::GetBackend() == LayersBackend::LAYERS_D3D9) {
+      if (aBackend == LayersBackend::LAYERS_D3D9) {
         return CreateTextureHostD3D9(aDesc, aDeallocator, aFlags);
       } else {
         return CreateTextureHostD3D11(aDesc, aDeallocator, aFlags);
@@ -598,7 +601,7 @@ BufferTextureHost::Upload(nsIntRegion *aRegion)
     // non-YCbCr case
     nsIntRegion* regionToUpdate = aRegion;
     if (!mFirstSource) {
-      mFirstSource = mCompositor->CreateDataTextureSource();
+      mFirstSource = mCompositor->CreateDataTextureSource(mFlags);
       if (mFlags & TextureFlags::COMPONENT_ALPHA) {
         // Update the full region the first time for component alpha textures.
         regionToUpdate = nullptr;
@@ -801,10 +804,12 @@ TextureParent::RecvClientRecycle()
 
 bool
 TextureParent::Init(const SurfaceDescriptor& aSharedData,
+                    const LayersBackend& aBackend,
                     const TextureFlags& aFlags)
 {
   mTextureHost = TextureHost::Create(aSharedData,
                                      mCompositableManager,
+                                     aBackend,
                                      aFlags);
   if (mTextureHost) {
     mTextureHost->mActor = this;

@@ -45,7 +45,6 @@ const Class RegExpStaticsObject::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    nullptr, /* convert */
     resc_finalize,
     nullptr, /* call */
     nullptr, /* hasInstance */
@@ -117,5 +116,17 @@ RegExpStatics::executeLazy(JSContext* cx)
     lazySource = nullptr;
     lazyIndex = size_t(-1);
 
+    return true;
+}
+
+bool
+RegExpStatics::checkRestoredFromModifiedMatch(JSContext* cx)
+{
+    if (isRestoredFromModifiedMatch) {
+        if (JSScript* script = cx->currentScript()) {
+            const char* filename = script->filename();
+            cx->compartment()->addTelemetry(filename, JSCompartment::DeprecatedRestoredRegExpStatics);
+        }
+    }
     return true;
 }

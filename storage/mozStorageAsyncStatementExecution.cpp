@@ -82,7 +82,7 @@ public:
 private:
   mozIStorageStatementCallback *mCallback;
   nsCOMPtr<mozIStorageResultSet> mResults;
-  nsRefPtr<AsyncExecuteStatements> mEventStatus;
+  RefPtr<AsyncExecuteStatements> mEventStatus;
 };
 
 /**
@@ -118,7 +118,7 @@ public:
 private:
   mozIStorageStatementCallback *mCallback;
   nsCOMPtr<mozIStorageError> mErrorObj;
-  nsRefPtr<AsyncExecuteStatements> mEventStatus;
+  RefPtr<AsyncExecuteStatements> mEventStatus;
 };
 
 /**
@@ -169,7 +169,7 @@ AsyncExecuteStatements::execute(StatementDataArray &aStatements,
                                 mozIStoragePendingStatement **_stmt)
 {
   // Create our event to run in the background
-  nsRefPtr<AsyncExecuteStatements> event =
+  RefPtr<AsyncExecuteStatements> event =
     new AsyncExecuteStatements(aStatements, aConnection, aNativeConnection,
                                aCallback);
   NS_ENSURE_TRUE(event, NS_ERROR_OUT_OF_MEMORY);
@@ -320,10 +320,13 @@ AsyncExecuteStatements::executeAndProcessStatement(sqlite3_stmt *aStatement,
     }
   } while (hasResults);
 
-#ifdef DEBUG
-  // Check to make sure that this statement was smart about what it did.
-  checkAndLogStatementPerformance(aStatement);
+#ifndef MOZ_STORAGE_SORTWARNING_SQL_DUMP
+  if (MOZ_LOG_TEST(gStorageLog, LogLevel::Warning))
 #endif
+  {
+    // Check to make sure that this statement was smart about what it did.
+    checkAndLogStatementPerformance(aStatement);
+  }
 
   // If we are done, we need to set our state accordingly while we still hold
   // our mutex.  We would have already returned if we were canceled or had
@@ -397,7 +400,7 @@ AsyncExecuteStatements::buildAndNotifyResults(sqlite3_stmt *aStatement)
     mResultSet = new ResultSet();
   NS_ENSURE_TRUE(mResultSet, NS_ERROR_OUT_OF_MEMORY);
 
-  nsRefPtr<Row> row(new Row());
+  RefPtr<Row> row(new Row());
   NS_ENSURE_TRUE(row, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv = row->initialize(aStatement);
@@ -463,7 +466,7 @@ AsyncExecuteStatements::notifyComplete()
 
   // Always generate a completion notification; it is what guarantees that our
   // destruction does not happen here on the async thread.
-  nsRefPtr<CompletionNotifier> completionEvent =
+  RefPtr<CompletionNotifier> completionEvent =
     new CompletionNotifier(mCallback, mState);
 
   // We no longer own mCallback (the CompletionNotifier takes ownership).
@@ -499,7 +502,7 @@ AsyncExecuteStatements::notifyError(mozIStorageError *aError)
   if (!mCallback)
     return NS_OK;
 
-  nsRefPtr<ErrorNotifier> notifier =
+  RefPtr<ErrorNotifier> notifier =
     new ErrorNotifier(mCallback, aError, this);
   NS_ENSURE_TRUE(notifier, NS_ERROR_OUT_OF_MEMORY);
 
@@ -512,7 +515,7 @@ AsyncExecuteStatements::notifyResults()
   mMutex.AssertNotCurrentThreadOwns();
   NS_ASSERTION(mCallback, "notifyResults called without a callback!");
 
-  nsRefPtr<CallbackResultNotifier> notifier =
+  RefPtr<CallbackResultNotifier> notifier =
     new CallbackResultNotifier(mCallback, mResultSet, this);
   NS_ENSURE_TRUE(notifier, NS_ERROR_OUT_OF_MEMORY);
 

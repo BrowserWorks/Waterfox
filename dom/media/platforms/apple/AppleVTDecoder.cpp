@@ -7,6 +7,7 @@
 #include <CoreFoundation/CFString.h>
 
 #include "AppleCMLinker.h"
+#include "AppleDecoderModule.h"
 #include "AppleUtils.h"
 #include "AppleVTDecoder.h"
 #include "AppleVTLinker.h"
@@ -51,7 +52,7 @@ AppleVTDecoder::~AppleVTDecoder()
   MOZ_COUNT_DTOR(AppleVTDecoder);
 }
 
-nsRefPtr<MediaDataDecoder::InitPromise>
+RefPtr<MediaDataDecoder::InitPromise>
 AppleVTDecoder::Init()
 {
   nsresult rv = InitializeSession();
@@ -106,7 +107,7 @@ AppleVTDecoder::Input(MediaRawData* aSample)
   mInputIncoming++;
 
   nsCOMPtr<nsIRunnable> runnable =
-      NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
+      NS_NewRunnableMethodWithArg<RefPtr<MediaRawData>>(
           this, &AppleVTDecoder::SubmitFrame, aSample);
   mTaskQueue->Dispatch(runnable.forget());
   return NS_OK;
@@ -382,7 +383,7 @@ AppleVTDecoder::CreateDecoderSpecification()
 
   const void* specKeys[] = { AppleVTLinker::skPropEnableHWAccel };
   const void* specValues[1];
-  if (gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding()) {
+  if (AppleDecoderModule::sCanUseHardwareVideoDecoder) {
     specValues[0] = kCFBooleanTrue;
   } else {
     // This GPU is blacklisted for hardware decoding.

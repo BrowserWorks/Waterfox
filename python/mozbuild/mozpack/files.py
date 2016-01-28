@@ -411,12 +411,15 @@ class PreprocessedFile(BaseFile):
     File class for a file that is preprocessed. PreprocessedFile.copy() runs
     the preprocessor on the file to create the output.
     '''
-    def __init__(self, path, depfile_path, marker, defines, extra_depends=None):
+    def __init__(self, path, depfile_path, marker, defines, extra_depends=None,
+                 silence_missing_directive_warnings=False):
         self.path = path
         self.depfile = depfile_path
         self.marker = marker
         self.defines = defines
         self.extra_depends = list(extra_depends or [])
+        self.silence_missing_directive_warnings = \
+            silence_missing_directive_warnings
 
     def copy(self, dest, skip_if_older=True):
         '''
@@ -465,6 +468,7 @@ class PreprocessedFile(BaseFile):
         if self.depfile:
             deps_out = FileAvoidWrite(self.depfile)
         pp = Preprocessor(defines=self.defines, marker=self.marker)
+        pp.setSilenceDirectiveWarnings(self.silence_missing_directive_warnings)
 
         with open(self.path, 'rU') as input:
             pp.processFile(input=input, output=dest, depfile=deps_out)
@@ -813,7 +817,8 @@ class FileFinder(BaseFinder):
     '''
     Helper to get appropriate BaseFile instances from the file system.
     '''
-    def __init__(self, base, find_executables=True, ignore=(), **kargs):
+    def __init__(self, base, find_executables=True, ignore=(),
+                 find_dotfiles=False, **kargs):
         '''
         Create a FileFinder for files under the given base directory.
 
@@ -828,6 +833,7 @@ class FileFinder(BaseFinder):
         an entry corresponds to a file, that particular file will be ignored.
         '''
         BaseFinder.__init__(self, base, **kargs)
+        self.find_dotfiles = find_dotfiles
         self.find_executables = find_executables
         self.ignore = ignore
 
@@ -862,7 +868,10 @@ class FileFinder(BaseFinder):
         # inode ordering.
         for p in sorted(os.listdir(os.path.join(self.base, path))):
             if p.startswith('.'):
-                continue
+                if p in ('.', '..'):
+                    continue
+                if not self.find_dotfiles:
+                    continue
             for p_, f in self._find(mozpath.join(path, p)):
                 yield p_, f
 

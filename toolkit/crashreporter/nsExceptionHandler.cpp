@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -185,6 +186,7 @@ static char const * const kCrashEventAnnotations[] = {
   // "TotalPageFile"
   // "TotalPhysicalMemory"
   // "TotalVirtualMemory"
+  // "MozCrashReason"
 };
 
 static const char kCrashMainID[] = "crash.main.2\n";
@@ -451,6 +453,13 @@ Concat(XP_CHAR* str, const XP_CHAR* toAppend, int* size)
   *size -= appendLen;
 
   return str;
+}
+
+static const char* gMozCrashReason = nullptr;
+
+void AnnotateMozCrashReason(const char* aReason)
+{
+  gMozCrashReason = aReason;
 }
 
 static size_t gOOMAllocationSize = 0;
@@ -841,6 +850,12 @@ bool MinidumpCallback(
 #undef WRITE_STATEX_FIELD
     }
 #endif // XP_WIN
+
+    if (gMozCrashReason) {
+      WriteAnnotation(apiData, "MozCrashReason", gMozCrashReason);
+      WriteAnnotation(eventFile, "MozCrashReason", gMozCrashReason);
+    }
+
     if (oomAllocationSizeBuffer[0]) {
       WriteAnnotation(apiData, "OOMAllocationSize", oomAllocationSizeBuffer);
       WriteAnnotation(eventFile, "OOMAllocationSize", oomAllocationSizeBuffer);
@@ -1694,23 +1709,6 @@ IsInWhitelist(const nsACString& key)
   return false;
 }
 
-static PLDHashOperator EnumerateEntries(const nsACString& key,
-                                        nsCString entry,
-                                        void* userData)
-{
-  if (!entry.IsEmpty()) {
-    NS_NAMED_LITERAL_CSTRING(kEquals, "=");
-    NS_NAMED_LITERAL_CSTRING(kNewline, "\n");
-    nsAutoCString line = key + kEquals + entry + kNewline;
-
-    crashReporterAPIData->Append(line);
-    if (IsInWhitelist(key)) {
-      crashEventAPIData->Append(line);
-    }
-  }
-  return PL_DHASH_NEXT;
-}
-
 // This function is miscompiled with MSVC 2005/2008 when PGO is on.
 #ifdef _MSC_VER
 #pragma optimize("", off)
@@ -1804,7 +1802,20 @@ nsresult AnnotateCrashReport(const nsACString& key, const nsACString& data)
   // now rebuild the file contents
   crashReporterAPIData->Truncate(0);
   crashEventAPIData->Truncate(0);
-  crashReporterAPIData_Hash->EnumerateRead(EnumerateEntries, nullptr);
+  for (auto it = crashReporterAPIData_Hash->Iter(); !it.Done(); it.Next()) {
+    const nsACString& key = it.Key();
+    nsCString entry = it.Data();
+    if (!entry.IsEmpty()) {
+      NS_NAMED_LITERAL_CSTRING(kEquals, "=");
+      NS_NAMED_LITERAL_CSTRING(kNewline, "\n");
+      nsAutoCString line = key + kEquals + entry + kNewline;
+
+      crashReporterAPIData->Append(line);
+      if (IsInWhitelist(key)) {
+        crashEventAPIData->Append(line);
+      }
+    }
+  }
 
   return NS_OK;
 }
@@ -2517,11 +2528,6 @@ struct Blacklist {
   const int mLen;
 };
 
-struct EnumerateAnnotationsContext {
-  const Blacklist& blacklist;
-  PRFileDesc* fd;
-};
-
 static void
 WriteAnnotation(PRFileDesc* fd, const nsACString& key, const nsACString& value)
 {
@@ -2529,24 +2535,6 @@ WriteAnnotation(PRFileDesc* fd, const nsACString& key, const nsACString& value)
   PR_Write(fd, "=", 1);
   PR_Write(fd, value.BeginReading(), value.Length());
   PR_Write(fd, "\n", 1);
-}
-
-static PLDHashOperator
-EnumerateAnnotations(const nsACString& key,
-                     nsCString entry,
-                     void* userData)
-{
-  EnumerateAnnotationsContext* ctx =
-    static_cast<EnumerateAnnotationsContext*>(userData);
-  const Blacklist& blacklist = ctx->blacklist;
-
-  // skip entries in the blacklist
-  if (blacklist.Contains(key))
-      return PL_DHASH_NEXT;
-
-  WriteAnnotation(ctx->fd, key, entry);
-
-  return PL_DHASH_NEXT;
 }
 
 static bool
@@ -2558,14 +2546,20 @@ WriteExtraData(nsIFile* extraFile,
 {
   PRFileDesc* fd;
   int truncOrAppend = truncate ? PR_TRUNCATE : PR_APPEND;
-  nsresult rv = 
+  nsresult rv =
     extraFile->OpenNSPRFileDesc(PR_WRONLY | PR_CREATE_FILE | truncOrAppend,
                                 0600, &fd);
   if (NS_FAILED(rv))
     return false;
 
-  EnumerateAnnotationsContext ctx = { blacklist, fd };
-  data.EnumerateRead(EnumerateAnnotations, &ctx);
+  for (auto iter = data.ConstIter(); !iter.Done(); iter.Next()) {
+    // Skip entries in the blacklist.
+    const nsACString& key = iter.Key();
+    if (blacklist.Contains(key)) {
+        continue;
+    }
+    WriteAnnotation(fd, key, iter.Data());
+  }
 
   if (writeCrashTime) {
     time_t crashTime = time(nullptr);
@@ -3089,8 +3083,8 @@ TakeMinidumpForChild(uint32_t childPid, nsIFile** dump, uint32_t* aSequence)
   if (aSequence) {
     *aSequence = pd->sequence;
   }
-  
-  pidToMinidump->RemoveEntry(childPid);
+
+  pidToMinidump->RemoveEntry(pd);
 
   return !!*dump;
 }

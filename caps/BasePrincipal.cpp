@@ -6,6 +6,7 @@
 
 #include "mozilla/BasePrincipal.h"
 
+#include "nsDocShell.h"
 #include "nsIAddonPolicyService.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIObjectInputStream.h"
@@ -26,6 +27,28 @@
 namespace mozilla {
 
 using dom::URLParams;
+
+void OriginAttributes::InheritFromDocShellParent(const OriginAttributes& aParent)
+{
+  mAppId = aParent.mAppId;
+  mInBrowser = aParent.mInBrowser;
+  mUserContextId = aParent.mUserContextId;
+  mSignedPkg = aParent.mSignedPkg;
+}
+
+bool OriginAttributes::CopyFromLoadContext(nsILoadContext* aLoadContext)
+{
+  OriginAttributes attrs;
+  bool result = aLoadContext->GetOriginAttributes(attrs);
+  NS_ENSURE_TRUE(result, false);
+
+  mAppId = attrs.mAppId;
+  mInBrowser = attrs.mInBrowser;
+  mAddonId = attrs.mAddonId;
+  mUserContextId = attrs.mUserContextId;
+  mSignedPkg = attrs.mSignedPkg;
+  return true;
+}
 
 void
 OriginAttributes::CreateSuffix(nsACString& aStr) const
@@ -58,6 +81,10 @@ OriginAttributes::CreateSuffix(nsACString& aStr) const
     value.Truncate();
     value.AppendInt(mUserContextId);
     params->Set(NS_LITERAL_STRING("userContextId"), value);
+  }
+
+  if (!mSignedPkg.IsEmpty()) {
+    params->Set(NS_LITERAL_STRING("signedPkg"), mSignedPkg);
   }
 
   aStr.Truncate();
@@ -93,10 +120,10 @@ public:
   {
     if (aName.EqualsLiteral("appId")) {
       nsresult rv;
-      mOriginAttributes->mAppId = aValue.ToInteger(&rv);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
+      int64_t val  = aValue.ToInteger64(&rv);
+      NS_ENSURE_SUCCESS(rv, false);
+      NS_ENSURE_TRUE(val <= UINT32_MAX, false);
+      mOriginAttributes->mAppId = static_cast<uint32_t>(val);
 
       return true;
     }
@@ -118,11 +145,17 @@ public:
 
     if (aName.EqualsLiteral("userContextId")) {
       nsresult rv;
-      mOriginAttributes->mUserContextId = aValue.ToInteger(&rv);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
-      }
+      int64_t val  = aValue.ToInteger64(&rv);
+      NS_ENSURE_SUCCESS(rv, false);
+      NS_ENSURE_TRUE(val <= UINT32_MAX, false);
+      mOriginAttributes->mUserContextId  = static_cast<uint32_t>(val);
 
+      return true;
+    }
+
+    if (aName.EqualsLiteral("signedPkg")) {
+      MOZ_RELEASE_ASSERT(mOriginAttributes->mSignedPkg.IsEmpty());
+      mOriginAttributes->mSignedPkg.Assign(aValue);
       return true;
     }
 
@@ -237,6 +270,44 @@ BasePrincipal::SubsumesConsideringDomain(nsIPrincipal *aOther, bool *aResult)
 }
 
 NS_IMETHODIMP
+BasePrincipal::CheckMayLoad(nsIURI* aURI, bool aReport, bool aAllowIfInheritsPrincipal)
+{
+  // Check the internal method first, which allows us to quickly approve loads
+  // for the System Principal.
+  if (MayLoadInternal(aURI)) {
+    return NS_OK;
+  }
+
+  nsresult rv;
+  if (aAllowIfInheritsPrincipal) {
+    // If the caller specified to allow loads of URIs that inherit
+    // our principal, allow the load if this URI inherits its principal.
+    bool doesInheritSecurityContext;
+    rv = NS_URIChainHasFlags(aURI, nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT,
+                             &doesInheritSecurityContext);
+    if (NS_SUCCEEDED(rv) && doesInheritSecurityContext) {
+      return NS_OK;
+    }
+  }
+
+  bool fetchableByAnyone;
+  rv = NS_URIChainHasFlags(aURI, nsIProtocolHandler::URI_FETCHABLE_BY_ANYONE, &fetchableByAnyone);
+  if (NS_SUCCEEDED(rv) && fetchableByAnyone) {
+    return NS_OK;
+  }
+
+  if (aReport) {
+    nsCOMPtr<nsIURI> prinURI;
+    rv = GetURI(getter_AddRefs(prinURI));
+    if (NS_SUCCEEDED(rv) && prinURI) {
+      nsScriptSecurityManager::ReportError(nullptr, NS_LITERAL_STRING("CheckSameOriginError"), prinURI, aURI);
+    }
+  }
+
+  return NS_ERROR_DOM_BAD_URI;
+}
+
+NS_IMETHODIMP
 BasePrincipal::GetCsp(nsIContentSecurityPolicy** aCsp)
 {
   NS_IF_ADDREF(*aCsp = mCSP);
@@ -269,9 +340,30 @@ BasePrincipal::GetCspJSON(nsAString& outCSPinJSON)
 }
 
 NS_IMETHODIMP
-BasePrincipal::GetIsNullPrincipal(bool* aIsNullPrincipal)
+BasePrincipal::GetIsNullPrincipal(bool* aResult)
 {
-  *aIsNullPrincipal = false;
+  *aResult = Kind() == eNullPrincipal;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::GetIsCodebasePrincipal(bool* aResult)
+{
+  *aResult = Kind() == eCodebasePrincipal;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::GetIsExpandedPrincipal(bool* aResult)
+{
+  *aResult = Kind() == eExpandedPrincipal;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::GetIsSystemPrincipal(bool* aResult)
+{
+  *aResult = Kind() == eSystemPrincipal;
   return NS_OK;
 }
 
@@ -346,7 +438,7 @@ BasePrincipal::GetUnknownAppId(bool* aUnknownAppId)
 }
 
 already_AddRefed<BasePrincipal>
-BasePrincipal::CreateCodebasePrincipal(nsIURI* aURI, OriginAttributes& aAttrs)
+BasePrincipal::CreateCodebasePrincipal(nsIURI* aURI, const OriginAttributes& aAttrs)
 {
   // If the URI is supposed to inherit the security context of whoever loads it,
   // we shouldn't make a codebase principal for it.
@@ -366,15 +458,37 @@ BasePrincipal::CreateCodebasePrincipal(nsIURI* aURI, OriginAttributes& aAttrs)
     if (!principal) {
       return nsNullPrincipal::Create();
     }
-    nsRefPtr<BasePrincipal> concrete = Cast(principal);
+    RefPtr<BasePrincipal> concrete = Cast(principal);
     return concrete.forget();
   }
 
   // Mint a codebase principal.
-  nsRefPtr<nsPrincipal> codebase = new nsPrincipal();
+  RefPtr<nsPrincipal> codebase = new nsPrincipal();
   rv = codebase->Init(aURI, aAttrs);
   NS_ENSURE_SUCCESS(rv, nullptr);
   return codebase.forget();
+}
+
+already_AddRefed<BasePrincipal>
+BasePrincipal::CreateCodebasePrincipal(const nsACString& aOrigin)
+{
+  MOZ_ASSERT(!StringBeginsWith(aOrigin, NS_LITERAL_CSTRING("[")),
+             "CreateCodebasePrincipal does not support System and Expanded principals");
+
+  MOZ_ASSERT(!StringBeginsWith(aOrigin, NS_LITERAL_CSTRING(NS_NULLPRINCIPAL_SCHEME ":")),
+             "CreateCodebasePrincipal does not support nsNullPrincipal");
+
+  nsAutoCString originNoSuffix;
+  mozilla::OriginAttributes attrs;
+  if (!attrs.PopulateFromOrigin(aOrigin, originNoSuffix)) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), originNoSuffix);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+
+  return BasePrincipal::CreateCodebasePrincipal(uri, attrs);
 }
 
 bool

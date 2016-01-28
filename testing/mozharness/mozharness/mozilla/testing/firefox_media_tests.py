@@ -157,15 +157,14 @@ class FirefoxMediaTestsBase(TestingMixin, VCSToolsScript):
     @PreScriptAction('create-virtualenv')
     def _pre_create_virtualenv(self, action):
         dirs = self.query_abs_dirs()
-        # cwd is $workspace/build
+        requirements_file = os.path.join(dirs['firefox_media_dir'],
+                                         'requirements.txt')
+        if os.path.isfile(requirements_file):
+            self.register_virtualenv_module(requirements=[requirements_file])
         self.register_virtualenv_module(name='firefox-ui-tests',
-                                        url=dirs['firefox_ui_dir'],
-                                        method='pip',
-                                        editable='true')
+                                        url=dirs['firefox_ui_dir'])
         self.register_virtualenv_module(name='firefox-media-tests',
-                                        url=dirs['firefox_media_dir'],
-                                        method='pip',
-                                        editable='true')
+                                        url=dirs['firefox_media_dir'])
 
     def query_abs_dirs(self):
         if self.abs_dirs:
@@ -209,7 +208,12 @@ class FirefoxMediaTestsBase(TestingMixin, VCSToolsScript):
         if not self.binary_path:
             self.fatal("Binary path could not be determined. "
                        "Should be set by default during 'install' action.")
-        cmd = ['firefox-media-tests']
+        dirs = self.query_abs_dirs()
+        venv_python_path = self.query_python_path()
+        runner_script = os.path.join(dirs['firefox_media_dir'],
+                                     'media_test_harness',
+                                     'runtests.py')
+        cmd = [venv_python_path, runner_script]
         cmd += ['--binary', self.binary_path]
         if self.symbols_path:
             cmd += ['--symbols-path', self.symbols_path]
@@ -221,6 +225,7 @@ class FirefoxMediaTestsBase(TestingMixin, VCSToolsScript):
             cmd.append(self.tests)
         if self.e10s:
             cmd.append('--e10s')
+
         return cmd
 
     def run_media_tests(self):
@@ -230,10 +235,17 @@ class FirefoxMediaTestsBase(TestingMixin, VCSToolsScript):
             log_obj=self.log_obj,
             error_list=self.error_list
         )
+
+        env = self.query_env()
+        if (not os.environ.get('MINIDUMP_STACKWALK') and
+                self.query_minidump_stackwalk()):
+            env['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+
         return_code = self.run_command(
             cmd,
             output_timeout=self.test_timeout,
-            output_parser=self.job_result_parser
+            output_parser=self.job_result_parser,
+            env=env
         )
         self.job_result_parser.return_code = return_code
         return self.job_result_parser.status

@@ -13,7 +13,8 @@ function classesEnabled() {
 function testClasses() {
     function methodFun(id, kind, generator, args, body = []) {
         assertEq(generator && kind === "method", generator);
-        let idN = ident(id);
+        assertEq(typeof id === 'string' || id === null, true);
+        let idN = typeof id === 'string' ? ident(id): null;
         let methodMaker = generator ? genFunExpr : funExpr;
         let methodName = kind !== "method" ? null : idN;
         return methodMaker(methodName, args.map(ident), blockStmt(body));
@@ -24,9 +25,9 @@ function testClasses() {
                            methodFun(id, kind, generator, args),
                            kind, isStatic);
     }
-    function ctorWithName(id) {
+    function ctorWithName(id, body = []) {
         return classMethod(ident("constructor"),
-                           methodFun(id, "method", false, []),
+                           methodFun(id, "method", false, [], body),
                            "method", false);
     }
     function emptyCPNMethod(id, isStatic) {
@@ -39,20 +40,21 @@ function testClasses() {
         let template = classExpr(name, heritage, methods);
         assertExpr("(" + str + ")", template);
     }
+
     // FunctionExpression of constructor has class name as its id.
     // FIXME: Implement ES6 function "name" property semantics (bug 883377).
     let ctorPlaceholder = {};
-    function assertClass(str, methods, heritage=null) {
+    function assertClass(str, methods, heritage=null, constructorBody=[]) {
         let namelessStr = str.replace("NAME", "");
         let namedStr = str.replace("NAME", "Foo");
-        let namedCtor = ctorWithName("NAME");
-        let namelessCtor = ctorWithName(null);
-        let namelessMethods = methods.map(x => x == ctorPlaceholder ? namedCtor : x);
+        let namedCtor = ctorWithName("Foo", constructorBody);
+        let namelessCtor = ctorWithName(null, constructorBody);
+        let namelessMethods = methods.map(x => x == ctorPlaceholder ? namelessCtor : x);
         let namedMethods = methods.map(x => x == ctorPlaceholder ? namedCtor : x);
-        assertClassExpr(namelessStr, methods, heritage);
-        assertClassExpr(namedStr, methods, heritage, ident("Foo"));
+        assertClassExpr(namelessStr, namelessMethods, heritage);
+        assertClassExpr(namedStr, namedMethods, heritage, ident("Foo"));
 
-        let template = classStmt(ident("Foo"), heritage, methods);
+        let template = classStmt(ident("Foo"), heritage, namedMethods);
         assertStmt(namedStr, template);
     }
     function assertNamedClassError(str, error) {
@@ -125,8 +127,9 @@ function testClasses() {
                 [ctorPlaceholder, emptyCPNMethod("prototype", true)]);
 
     /* Constructor */
-    // Currently, we do not allow default constructors
-    assertClassError("class NAME { }", TypeError);
+    // Allow default constructors
+    assertClass("class NAME { }", []);
+    assertClass("class NAME extends null { }", [], lit(null));
 
     // For now, disallow arrow functions in derived class constructors
     assertClassError("class NAME extends null { constructor() { (() => 0); }", InternalError);
@@ -435,6 +438,42 @@ function testClasses() {
     // Even where super is otherwise allowed
     assertError("{ foo() { super } }", SyntaxError);
     assertClassError("class NAME { constructor() { super; } }", SyntaxError);
+
+    /* SuperCall */
+
+    // SuperCall is invalid outside derived class constructors.
+    assertError("super()", SyntaxError);
+    assertError("(function() { super(); })", SyntaxError);
+
+    // SuperCall is invalid in generator comprehensions, even inside derived
+    // class constructors
+    assertError("(super() for (x in y))", SyntaxError);
+    assertClassError("class NAME { constructor() { (super() for (x in y))", SyntaxError);
+
+
+    // Even in class constructors
+    assertClassError("class NAME { constructor() { super(); } }", SyntaxError);
+
+    function superConstructor(args) {
+        return classMethod(ident("constructor"),
+                           methodFun("NAME", "method", false,
+                                     [], [exprStmt(superCallExpr(args))]),
+                           "method", false);
+    }
+
+    function superCallBody(args) {
+        return [exprStmt(superCallExpr(args))];
+    }
+
+    // SuperCall works with various argument configurations.
+    assertClass("class NAME extends null { constructor() { super() } }",
+                [ctorPlaceholder], lit(null), superCallBody([]));
+    assertClass("class NAME extends null { constructor() { super(1) } }",
+                [ctorPlaceholder], lit(null), superCallBody([lit(1)]));
+    assertClass("class NAME extends null { constructor() { super(1, a) } }",
+                [ctorPlaceholder], lit(null), superCallBody([lit(1), ident("a")]));
+    assertClass("class NAME extends null { constructor() { super(...[]) } }",
+                [ctorPlaceholder], lit(null), superCallBody([spread(arrExpr([]))]));
 
     /* EOF */
     // Clipped classes should throw a syntax error

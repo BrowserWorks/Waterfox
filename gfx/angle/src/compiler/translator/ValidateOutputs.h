@@ -4,6 +4,10 @@
 // found in the LICENSE file.
 //
 
+#ifndef COMPILER_TRANSLATOR_VALIDATEOUTPUTS_H_
+#define COMPILER_TRANSLATOR_VALIDATEOUTPUTS_H_
+
+#include "compiler/translator/ExtensionBehavior.h"
 #include "compiler/translator/IntermNode.h"
 
 #include <set>
@@ -13,21 +17,20 @@ class TInfoSinkBase;
 class ValidateOutputs : public TIntermTraverser
 {
   public:
-    ValidateOutputs(TInfoSinkBase& sink, int maxDrawBuffers);
+    ValidateOutputs(const TExtensionBehavior &extBehavior, int maxDrawBuffers);
 
-    int numErrors() const { return mNumErrors; }
+    int validateAndCountErrors(TInfoSinkBase &sink) const;
 
-    virtual void visitSymbol(TIntermSymbol*);
+    void visitSymbol(TIntermSymbol *) override;
 
   private:
-    TInfoSinkBase& mSink;
     int mMaxDrawBuffers;
-    int mNumErrors;
-    bool mHasUnspecifiedOutputLocation;
+    bool mAllowUnspecifiedOutputLocationResolution;
 
-    typedef std::map<int, TIntermSymbol*> OutputMap;
-    OutputMap mOutputMap;
+    typedef std::vector<TIntermSymbol *> OutputVector;
+    OutputVector mOutputs;
+    OutputVector mUnspecifiedLocationOutputs;
     std::set<TString> mVisitedSymbols;
-
-    void error(TSourceLoc loc, const char *reason, const char* token);
 };
+
+#endif // COMPILER_TRANSLATOR_VALIDATEOUTPUTS_H_

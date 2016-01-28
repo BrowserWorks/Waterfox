@@ -51,6 +51,47 @@ enum State {
     COMPACT
 };
 
+// Expand the given macro D for each valid GC reference type.
+#define FOR_EACH_GC_POINTER_TYPE(D) \
+    D(AccessorShape*) \
+    D(BaseShape*) \
+    D(UnownedBaseShape*) \
+    D(jit::JitCode*) \
+    D(NativeObject*) \
+    D(ArrayObject*) \
+    D(ArgumentsObject*) \
+    D(ArrayBufferObject*) \
+    D(ArrayBufferObjectMaybeShared*) \
+    D(ArrayBufferViewObject*) \
+    D(DebugScopeObject*) \
+    D(GlobalObject*) \
+    D(JSObject*) \
+    D(JSFunction*) \
+    D(ModuleObject*) \
+    D(ModuleEnvironmentObject*) \
+    D(NestedScopeObject*) \
+    D(PlainObject*) \
+    D(SavedFrame*) \
+    D(ScopeObject*) \
+    D(ScriptSourceObject*) \
+    D(SharedArrayBufferObject*) \
+    D(SharedTypedArrayObject*) \
+    D(ImportEntryObject*) \
+    D(ExportEntryObject*) \
+    D(JSScript*) \
+    D(LazyScript*) \
+    D(Shape*) \
+    D(JSAtom*) \
+    D(JSString*) \
+    D(JSFlatString*) \
+    D(JSLinearString*) \
+    D(PropertyName*) \
+    D(JS::Symbol*) \
+    D(js::ObjectGroup*) \
+    D(Value) \
+    D(jsid) \
+    D(TaggedProto)
+
 /* Map from C++ type to alloc kind. JSObject does not have a 1:1 mapping, so must use Arena::thingSize. */
 template <typename T> struct MapTypeToFinalizeKind {};
 template <> struct MapTypeToFinalizeKind<JSScript>          { static const AllocKind kind = AllocKind::SCRIPT; };
@@ -172,7 +213,7 @@ GetGCObjectKind(size_t numSlots)
 
 /* As for GetGCObjectKind, but for dense array allocation. */
 static inline AllocKind
-GetGCArrayKind(size_t numSlots)
+GetGCArrayKind(size_t numElements)
 {
     /*
      * Dense arrays can use their fixed slots to hold their elements array
@@ -181,9 +222,12 @@ GetGCArrayKind(size_t numSlots)
      * unused.
      */
     JS_STATIC_ASSERT(ObjectElements::VALUES_PER_HEADER == 2);
-    if (numSlots > NativeObject::NELEMENTS_LIMIT || numSlots + 2 >= SLOTS_TO_THING_KIND_LIMIT)
+    if (numElements > NativeObject::MAX_DENSE_ELEMENTS_COUNT ||
+        numElements + ObjectElements::VALUES_PER_HEADER >= SLOTS_TO_THING_KIND_LIMIT)
+    {
         return AllocKind::OBJECT2;
-    return slotsToThingKind[numSlots + 2];
+    }
+    return slotsToThingKind[numElements + ObjectElements::VALUES_PER_HEADER];
 }
 
 static inline AllocKind
@@ -1186,7 +1230,7 @@ struct IsForwardedFunctor : public BoolDefaultAdaptor<Value, false> {
 inline bool
 IsForwarded(const JS::Value& value)
 {
-    return DispatchValueTyped(IsForwardedFunctor(), value);
+    return DispatchTyped(IsForwardedFunctor(), value);
 }
 
 template <typename T>
@@ -1207,7 +1251,7 @@ struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
 inline Value
 Forwarded(const JS::Value& value)
 {
-    return DispatchValueTyped(ForwardedFunctor(), value);
+    return DispatchTyped(ForwardedFunctor(), value);
 }
 
 template <typename T>
@@ -1233,7 +1277,7 @@ template <typename T>
 inline void
 CheckGCThingAfterMovingGC(const ReadBarriered<T*>& t)
 {
-    CheckGCThingAfterMovingGC(t.get());
+    CheckGCThingAfterMovingGC(t.unbarrieredGet());
 }
 
 struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
@@ -1243,7 +1287,7 @@ struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
 inline void
 CheckValueAfterMovingGC(const JS::Value& value)
 {
-    DispatchValueTyped(CheckValueAfterMovingGCFunctor(), value);
+    DispatchTyped(CheckValueAfterMovingGCFunctor(), value);
 }
 
 #endif // JSGC_HASH_TABLE_CHECKS
@@ -1311,33 +1355,6 @@ class MOZ_RAII AutoSuppressGC
         suppressGC_--;
     }
 };
-
-#ifdef DEBUG
-/* Disable OOM testing in sections which are not OOM safe. */
-class MOZ_RAII AutoEnterOOMUnsafeRegion
-{
-    bool oomEnabled_;
-    int64_t oomAfter_;
-
-  public:
-    AutoEnterOOMUnsafeRegion()
-      : oomEnabled_(OOM_maxAllocations != UINT32_MAX), oomAfter_(0)
-    {
-        if (oomEnabled_) {
-            oomAfter_ = OOM_maxAllocations - OOM_counter;
-            OOM_maxAllocations = UINT32_MAX;
-        }
-    }
-
-    ~AutoEnterOOMUnsafeRegion() {
-        MOZ_ASSERT(OOM_maxAllocations == UINT32_MAX);
-        if (oomEnabled_)
-            OOM_maxAllocations = OOM_counter + oomAfter_;
-    }
-};
-#else
-class MOZ_RAII AutoEnterOOMUnsafeRegion {};
-#endif /* DEBUG */
 
 // A singly linked list of zones.
 class ZoneList

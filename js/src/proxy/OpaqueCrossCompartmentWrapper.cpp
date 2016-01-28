@@ -151,10 +151,19 @@ OpaqueCrossCompartmentWrapper::getOwnEnumerablePropertyKeys(JSContext* cx, Handl
 }
 
 bool
-OpaqueCrossCompartmentWrapper::objectClassIs(HandleObject obj, ESClassValue classValue,
-                                             JSContext* cx) const
+OpaqueCrossCompartmentWrapper::getBuiltinClass(JSContext* cx, HandleObject wrapper,
+                                               ESClassValue* classValue) const
 {
-  return false;
+    *classValue = ESClass_Other;
+    return true;
+}
+
+bool
+OpaqueCrossCompartmentWrapper::isArray(JSContext* cx, HandleObject obj,
+                                       JS::IsArrayAnswer* answer) const
+{
+    *answer = JS::IsArrayAnswer::NotArray;
+    return true;
 }
 
 const char*
@@ -171,13 +180,6 @@ OpaqueCrossCompartmentWrapper::fun_toString(JSContext* cx, HandleObject proxy,
     JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO, js_Function_str,
                          js_toString_str, "object");
     return nullptr;
-}
-
-bool
-OpaqueCrossCompartmentWrapper::defaultValue(JSContext* cx, HandleObject wrapper, JSType hint,
-                                            MutableHandleValue vp) const
-{
-    return OrdinaryToPrimitive(cx, wrapper, hint, vp);
 }
 
 const OpaqueCrossCompartmentWrapper OpaqueCrossCompartmentWrapper::singleton;

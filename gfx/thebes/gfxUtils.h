@@ -6,18 +6,19 @@
 #ifndef GFX_UTILS_H
 #define GFX_UTILS_H
 
-#include "gfxColor.h"
 #include "gfxTypes.h"
-#include "GraphicsFilter.h"
 #include "imgIContainer.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsColor.h"
 #include "nsPrintfCString.h"
 #include "mozilla/gfx/Rect.h"
 
 class gfxASurface;
 class gfxDrawable;
+class nsIInputStream;
+class nsIGfxInfo;
 class nsIntRegion;
 class nsIPresShell;
 
@@ -80,7 +81,7 @@ public:
                                  const gfxSize&     aImageSize,
                                  const ImageRegion& aRegion,
                                  const mozilla::gfx::SurfaceFormat aFormat,
-                                 GraphicsFilter     aFilter,
+                                 mozilla::gfx::Filter aFilter,
                                  uint32_t           aImageFlags = imgIContainer::FLAG_NONE,
                                  gfxFloat           aOpacity = 1.0);
 
@@ -161,9 +162,7 @@ public:
     /**
      * Clears surface to aColor (which defaults to transparent black).
      */
-    static void ClearThebesSurface(gfxASurface* aSurface,
-                                   mozilla::gfx::IntRect* aRect = nullptr,
-                                   const gfxRGBA& aColor = gfxRGBA(0.0, 0.0, 0.0, 0.0));
+    static void ClearThebesSurface(gfxASurface* aSurface);
 
     /**
      * Creates a copy of aSurface, but having the SurfaceFormat aFormat.
@@ -284,6 +283,20 @@ public:
     static nsCString GetAsDataURI(DrawTarget* aDT);
     static nsCString GetAsLZ4Base64Str(DataSourceSurface* aSourceSurface);
 
+    static mozilla::UniquePtr<uint8_t[]> GetImageBuffer(DataSourceSurface* aSurface,
+                                                        bool aIsAlphaPremultiplied,
+                                                        int32_t* outFormat);
+
+    static nsresult GetInputStream(DataSourceSurface* aSurface,
+                                   bool aIsAlphaPremultiplied,
+                                   const char* aMimeType,
+                                   const char16_t* aEncoderOptions,
+                                   nsIInputStream** outStream);
+
+    static nsresult ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
+                                               int32_t feature,
+                                               int32_t* status);
+
     /**
      * Copy to the clipboard as a PNG encoded Data URL.
      */
@@ -296,6 +309,12 @@ public:
     static bool sDumpPaintingIntermediate;
     static bool sDumpPaintingToFile;
     static bool sDumpPaintItems;
+    // TODO: Dumping compositor textures is broken pretty badly. For example,
+    //       on Linux it crashes because TextureHost::GetAsSurface() returns
+    //       null. Expect to have to fix things like this if you turn it on.
+    //       Meanwhile, content-side texture dumping (conditioned on
+    //       sDumpPainting) is a good replacement.
+    static bool sDumpCompositorTextures;
     static FILE* sDumpPaintFile;
 };
 
@@ -311,7 +330,6 @@ namespace gfx {
  */
 Color ToDeviceColor(Color aColor);
 Color ToDeviceColor(nscolor aColor);
-Color ToDeviceColor(const gfxRGBA& aColor);
 
 /* These techniques are suggested by "Bit Twiddling Hacks"
  */

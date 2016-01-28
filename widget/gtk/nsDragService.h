@@ -58,6 +58,10 @@ public:
 
     NS_DECL_NSIOBSERVER
 
+    // nsBaseDragService
+    virtual nsresult InvokeDragSessionImpl(nsISupportsArray* anArrayTransferables,
+                                           nsIScriptableRegion* aRegion,
+                                           uint32_t aActionType) override;
     // nsIDragService
     NS_IMETHOD InvokeDragSession (nsIDOMNode *aDOMNode,
                                   nsISupportsArray * anArrayTransferables,
@@ -149,7 +153,7 @@ private:
     // mPendingTime, carry information from the GTK signal that will be used
     // when the scheduled task is run.  mPendingWindow and mPendingDragContext
     // will be nullptr if the scheduled task is eDragTaskLeave.
-    nsRefPtr<nsWindow> mPendingWindow;
+    RefPtr<nsWindow> mPendingWindow;
     mozilla::LayoutDeviceIntPoint mPendingWindowPoint;
     nsCountedRef<GdkDragContext> mPendingDragContext;
     guint mPendingTime;
@@ -157,7 +161,7 @@ private:
     // mTargetWindow and mTargetWindowPoint record the position of the last
     // eDragTaskMotion or eDragTaskDrop task that was run or is still running.
     // mTargetWindow is cleared once the drag has completed or left.
-    nsRefPtr<nsWindow> mTargetWindow;
+    RefPtr<nsWindow> mTargetWindow;
     mozilla::LayoutDeviceIntPoint mTargetWindowPoint;
     // mTargetWidget and mTargetDragContext are set only while dispatching
     // motion or drop events.  mTime records the corresponding timestamp.

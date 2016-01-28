@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.importGlobalProperties(['Blob']);
 
@@ -99,7 +99,7 @@ const backgroundPageThumbsContent = {
   onStateChange: function (webProgress, req, flags, status) {
     if (webProgress.isTopLevel &&
         (flags & Ci.nsIWebProgressListener.STATE_STOP) &&
-        this._currentCapture) {
+        this._currentCapture && Components.isSuccessCode(status)) {
       if (req.name == "about:blank") {
         if (this._state == STATE_CAPTURING) {
           // about:blank has loaded, ending the current capture.
@@ -129,20 +129,10 @@ const backgroundPageThumbsContent = {
 
     let canvasDrawDate = new Date();
 
-    let canvas = PageThumbUtils.createCanvas(content);
-    let [sw, sh, scale] = PageThumbUtils.determineCropSize(content, canvas);
-
-    let ctx = canvas.getContext("2d");
-    ctx.save();
-    ctx.scale(scale, scale);
-    ctx.drawWindow(content, 0, 0, sw, sh,
-                   PageThumbUtils.THUMBNAIL_BG_COLOR,
-                   ctx.DRAWWINDOW_DO_NOT_FLUSH);
-    ctx.restore();
-
+    let finalCanvas = PageThumbUtils.createSnapshotThumbnail(content);
     capture.canvasDrawTime = new Date() - canvasDrawDate;
 
-    canvas.toBlob(blob => {
+    finalCanvas.toBlob(blob => {
       capture.imageBlob = new Blob([blob]);
       // Load about:blank to finish the capture and wait for onStateChange.
       this._loadAboutBlank();

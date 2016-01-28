@@ -50,7 +50,7 @@ config = {
         "cppunittest": {
             "options": [
                 "--symbols-path=%(symbols_path)s",
-                "--xre-path=%(abs_app_dir)s"
+                "--xre-path=%(abs_res_dir)s"
             ],
             "run_filename": "runcppunittests.py",
             "testsdir": "cppunittest"
@@ -150,6 +150,7 @@ config = {
         "plain-chunked": ["--chunk-by-dir=4"],
         "mochitest-push": ["--subsuite=push"],
         "chrome": ["--chrome"],
+        "chrome-chunked": ["--chrome", "--chunk-by-dir=4"],
         "browser-chrome": ["--browser-chrome"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
         "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],

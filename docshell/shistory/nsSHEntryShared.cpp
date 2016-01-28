@@ -111,7 +111,7 @@ NS_IMPL_ISUPPORTS(nsSHEntryShared, nsIBFCacheEntry, nsIMutationObserver)
 already_AddRefed<nsSHEntryShared>
 nsSHEntryShared::Duplicate(nsSHEntryShared* aEntry)
 {
-  nsRefPtr<nsSHEntryShared> newEntry = new nsSHEntryShared();
+  RefPtr<nsSHEntryShared> newEntry = new nsSHEntryShared();
 
   newEntry->mDocShellID = aEntry->mDocShellID;
   newEntry->mChildShells.AppendObjects(aEntry->mChildShells);
@@ -151,7 +151,7 @@ nsSHEntryShared::SyncPresentationState()
 void
 nsSHEntryShared::DropPresentationState()
 {
-  nsRefPtr<nsSHEntryShared> kungFuDeathGrip = this;
+  RefPtr<nsSHEntryShared> kungFuDeathGrip = this;
 
   if (mDocument) {
     mDocument->SetBFCacheEntry(nullptr);
@@ -329,6 +329,13 @@ nsSHEntryShared::AttributeWillChange(nsIDocument* aDocument,
                                      nsIAtom* aAttribute,
                                      int32_t aModType,
                                      const nsAttrValue* aNewValue)
+{
+}
+
+void
+nsSHEntryShared::NativeAnonymousChildListChange(nsIDocument* aDocument,
+                                                nsIContent* aContent,
+                                                bool aIsRemove)
 {
 }
 

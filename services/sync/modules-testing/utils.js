@@ -7,6 +7,7 @@
 this.EXPORTED_SYMBOLS = [
   "btoa", // It comes from a module import.
   "encryptPayload",
+  "isConfiguredWithLegacyIdentity",
   "ensureLegacyIdentityManager",
   "setBasicCredentials",
   "makeIdentityConfig",
@@ -21,7 +22,7 @@ this.EXPORTED_SYMBOLS = [
   "sumHistogram",
 ];
 
-const {utils: Cu} = Components;
+var {utils: Cu} = Components;
 
 Cu.import("resource://services-sync/status.js");
 Cu.import("resource://services-sync/identity.js");
@@ -92,6 +93,18 @@ this.waitForZeroTimer = function waitForZeroTimer(callback) {
     callback();
   }
   CommonUtils.namedTimer(wait, 150, {}, "timer");
+}
+
+/**
+ * Return true if Sync is configured with the "legacy" identity provider.
+ */
+this.isConfiguredWithLegacyIdentity = function() {
+  let ns = {};
+  Cu.import("resource://services-sync/service.js", ns);
+
+  // We can't use instanceof as BrowserIDManager (the "other" identity) inherits
+  // from IdentityManager so that would return true - so check the prototype.
+  return Object.getPrototypeOf(ns.Service.identity) === IdentityManager.prototype;
 }
 
 /**

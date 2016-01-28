@@ -10,11 +10,65 @@
 #include "BluetoothCommon.h"
 #include "js/TypeDecls.h"
 
+namespace mozilla {
+namespace dom {
+class GattPermissions;
+class GattCharacteristicProperties;
+}
+}
+
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothNamedValue;
 class BluetoothReplyRunnable;
 class BluetoothValue;
+
+//
+// Address/String conversion
+//
+
+void
+AddressToString(const BluetoothAddress& aAddress, nsAString& aString);
+
+nsresult
+StringToAddress(const nsAString& aString, BluetoothAddress& aAddress);
+
+//
+// Pin code/string conversion
+//
+
+nsresult
+StringToPinCode(const nsAString& aString, BluetoothPinCode& aPinCode);
+
+//
+// Property type/string conversion
+//
+
+nsresult
+StringToPropertyType(const nsAString& aString, BluetoothPropertyType& aType);
+
+//
+// Property conversion
+//
+
+nsresult
+NamedValueToProperty(const BluetoothNamedValue& aIn,
+                     BluetoothProperty& aProperty);
+
+//
+// Remote name/string conversion
+//
+
+void
+RemoteNameToString(const BluetoothRemoteName& aRemoteName, nsAString& aString);
+
+//
+// Service name/string conversion
+//
+
+nsresult
+StringToServiceName(const nsAString& aString,
+                    BluetoothServiceName& aServiceName);
 
 //
 // BluetoothUuid <-> uuid string conversion
@@ -36,15 +90,6 @@ UuidToString(const BluetoothUuid& aUuid, nsAString& aString);
  * string created by gecko back to BluetoothUuid representation.
  */
 void
-StringToUuid(const char* aString, BluetoothUuid& aUuid);
-
-/**
- * Convert xxxxxxxx-xxxx-xxxx-xxxxxxxxxxxx uuid string to BluetoothUuid object.
- *
- * This utility function is used by gecko internal only to convert uuid string
- * created by gecko back to BluetoothUuid representation.
- */
-void
 StringToUuid(const nsAString& aString, BluetoothUuid& aUuid);
 
 /**
@@ -52,8 +97,50 @@ StringToUuid(const nsAString& aString, BluetoothUuid& aUuid);
  *
  * @param aUuidString [out] String to store the generated uuid.
  */
-void
+nsresult
 GenerateUuid(nsAString &aUuidString);
+
+/**
+ * Convert BluetoothGattAttrPerm bit masks to GattPermissions object.
+ *
+ * @param aBits [in] BluetoothGattAttrPerm bit masks.
+ * @param aPermissions [out] GattPermissions object.
+ */
+void
+GattPermissionsToDictionary(BluetoothGattAttrPerm aBits,
+                            GattPermissions& aPermissions);
+
+/**
+ * Convert GattPermissions object to BluetoothGattAttrPerm bit masks.
+ *
+ * @param aPermissions [in] GattPermissions object.
+ * @param aBits [out] BluetoothGattAttrPerm bit masks.
+ */
+void
+GattPermissionsToBits(const GattPermissions& aPermissions,
+                      BluetoothGattAttrPerm& aBits);
+
+/**
+ * Convert BluetoothGattCharProp bit masks to GattCharacteristicProperties
+ * object.
+ *
+ * @param aBits [in] BluetoothGattCharProp bit masks.
+ * @param aProperties [out] GattCharacteristicProperties object.
+ */
+void
+GattPropertiesToDictionary(BluetoothGattCharProp aBits,
+                           GattCharacteristicProperties& aProperties);
+
+/**
+ * Convert GattCharacteristicProperties object to BluetoothGattCharProp bit
+ * masks.
+ *
+ * @param aProperties [in] GattCharacteristicProperties object.
+ * @param aBits [out] BluetoothGattCharProp bit masks.
+ */
+void
+GattPropertiesToBits(const GattCharacteristicProperties& aProperties,
+                     BluetoothGattCharProp& aBits);
 
 //
 // Generate bluetooth signal path from GattId

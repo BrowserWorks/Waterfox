@@ -67,6 +67,7 @@
 #include "nsContentUtils.h"
 #include "nsJSUtils.h"
 #include "nsILoadInfo.h"
+#include "nsXPCOMStrings.h"
 
 // This should be probably defined on some other place... but I couldn't find it
 #define WEBAPPS_PERM_NAME "webapps-manage"
@@ -325,7 +326,7 @@ nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
     aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
     if (loadInfo) {
         if (loadInfo->GetLoadingSandboxed()) {
-            nsRefPtr<nsNullPrincipal> prin =
+            RefPtr<nsNullPrincipal> prin =
               nsNullPrincipal::CreateWithInheritedAttributes(loadInfo->LoadingPrincipal());
             NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
             prin.forget(aPrincipal);
@@ -1044,6 +1045,23 @@ nsScriptSecurityManager::CreateCodebasePrincipal(nsIURI* aURI, JS::Handle<JS::Va
 }
 
 NS_IMETHODIMP
+nsScriptSecurityManager::CreateCodebasePrincipalFromOrigin(const nsACString& aOrigin,
+                                                           nsIPrincipal** aPrincipal)
+{
+  if (StringBeginsWith(aOrigin, NS_LITERAL_CSTRING("["))) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  if (StringBeginsWith(aOrigin, NS_LITERAL_CSTRING(NS_NULLPRINCIPAL_SCHEME ":"))) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  nsCOMPtr<nsIPrincipal> prin = BasePrincipal::CreateCodebasePrincipal(aOrigin);
+  prin.forget(aPrincipal);
+  return *aPrincipal ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
 nsScriptSecurityManager::CreateNullPrincipal(JS::Handle<JS::Value> aOriginAttributes,
                                              JSContext* aCx, nsIPrincipal** aPrincipal)
 {
@@ -1093,10 +1111,10 @@ nsScriptSecurityManager::
                                   nsILoadContext* aLoadContext,
                                   nsIPrincipal** aPrincipal)
 {
-  // XXXbholley - Make this more general in bug 1165466.
   OriginAttributes attrs;
-  aLoadContext->GetAppId(&attrs.mAppId);
-  aLoadContext->GetIsInBrowserElement(&attrs.mInBrowser);
+  bool result = attrs.CopyFromLoadContext(aLoadContext);
+  NS_ENSURE_TRUE(result, NS_ERROR_FAILURE);
+
   nsresult rv = MaybeSetAddonIdFromURI(attrs, aURI);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIPrincipal> prin = BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
@@ -1109,8 +1127,11 @@ nsScriptSecurityManager::GetDocShellCodebasePrincipal(nsIURI* aURI,
                                                       nsIDocShell* aDocShell,
                                                       nsIPrincipal** aPrincipal)
 {
-  // XXXbholley - Make this more general in bug 1165466.
-  OriginAttributes attrs(aDocShell->GetAppId(), aDocShell->GetIsInBrowserElement());
+  OriginAttributes attrs;
+  nsDocShell* docShell= nsDocShell::Cast(aDocShell);
+  bool result = attrs.CopyFromLoadContext(docShell);
+  NS_ENSURE_TRUE(result, NS_ERROR_FAILURE);
+
   nsresult rv = MaybeSetAddonIdFromURI(attrs, aURI);
   NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIPrincipal> prin = BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
@@ -1299,7 +1320,7 @@ nsresult nsScriptSecurityManager::Init()
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Create our system principal singleton
-    nsRefPtr<nsSystemPrincipal> system = new nsSystemPrincipal();
+    RefPtr<nsSystemPrincipal> system = new nsSystemPrincipal();
 
     mSystemPrincipal = system;
 
@@ -1358,7 +1379,7 @@ nsScriptSecurityManager::GetScriptSecurityManager()
 /* static */ void
 nsScriptSecurityManager::InitStatics()
 {
-    nsRefPtr<nsScriptSecurityManager> ssManager = new nsScriptSecurityManager();
+    RefPtr<nsScriptSecurityManager> ssManager = new nsScriptSecurityManager();
     nsresult rv = ssManager->Init();
     if (NS_FAILED(rv)) {
         MOZ_CRASH();

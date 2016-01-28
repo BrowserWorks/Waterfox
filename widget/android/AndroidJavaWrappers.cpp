@@ -32,30 +32,14 @@ jfieldID AndroidGeckoEvent::jZField = 0;
 jfieldID AndroidGeckoEvent::jWField = 0;
 jfieldID AndroidGeckoEvent::jDistanceField = 0;
 jfieldID AndroidGeckoEvent::jRectField = 0;
-jfieldID AndroidGeckoEvent::jNativeWindowField = 0;
 
 jfieldID AndroidGeckoEvent::jCharactersField = 0;
 jfieldID AndroidGeckoEvent::jCharactersExtraField = 0;
 jfieldID AndroidGeckoEvent::jDataField = 0;
-jfieldID AndroidGeckoEvent::jDOMPrintableKeyValueField = 0;
-jfieldID AndroidGeckoEvent::jKeyCodeField = 0;
-jfieldID AndroidGeckoEvent::jScanCodeField = 0;
 jfieldID AndroidGeckoEvent::jMetaStateField = 0;
 jfieldID AndroidGeckoEvent::jFlagsField = 0;
-jfieldID AndroidGeckoEvent::jUnicodeCharField = 0;
-jfieldID AndroidGeckoEvent::jBaseUnicodeCharField = 0;
-jfieldID AndroidGeckoEvent::jRepeatCountField = 0;
 jfieldID AndroidGeckoEvent::jCountField = 0;
-jfieldID AndroidGeckoEvent::jStartField = 0;
-jfieldID AndroidGeckoEvent::jEndField = 0;
 jfieldID AndroidGeckoEvent::jPointerIndexField = 0;
-jfieldID AndroidGeckoEvent::jRangeTypeField = 0;
-jfieldID AndroidGeckoEvent::jRangeStylesField = 0;
-jfieldID AndroidGeckoEvent::jRangeLineStyleField = 0;
-jfieldID AndroidGeckoEvent::jRangeBoldLineField = 0;
-jfieldID AndroidGeckoEvent::jRangeForeColorField = 0;
-jfieldID AndroidGeckoEvent::jRangeBackColorField = 0;
-jfieldID AndroidGeckoEvent::jRangeLineColorField = 0;
 jfieldID AndroidGeckoEvent::jLocationField = 0;
 jfieldID AndroidGeckoEvent::jConnectionTypeField = 0;
 jfieldID AndroidGeckoEvent::jIsWifiField = 0;
@@ -70,8 +54,6 @@ jfieldID AndroidGeckoEvent::jGamepadButtonField = 0;
 jfieldID AndroidGeckoEvent::jGamepadButtonPressedField = 0;
 jfieldID AndroidGeckoEvent::jGamepadButtonValueField = 0;
 jfieldID AndroidGeckoEvent::jGamepadValuesField = 0;
-jfieldID AndroidGeckoEvent::jPrefNamesField = 0;
-jfieldID AndroidGeckoEvent::jObjectField = 0;
 
 jclass AndroidPoint::jPointClass = 0;
 jfieldID AndroidPoint::jXField = 0;
@@ -146,25 +128,10 @@ AndroidGeckoEvent::InitGeckoEventClass(JNIEnv *jEnv)
     jCharactersField = geckoEvent.getField("mCharacters", "Ljava/lang/String;");
     jCharactersExtraField = geckoEvent.getField("mCharactersExtra", "Ljava/lang/String;");
     jDataField = geckoEvent.getField("mData", "Ljava/lang/String;");
-    jKeyCodeField = geckoEvent.getField("mKeyCode", "I");
-    jScanCodeField = geckoEvent.getField("mScanCode", "I");
     jMetaStateField = geckoEvent.getField("mMetaState", "I");
     jFlagsField = geckoEvent.getField("mFlags", "I");
-    jUnicodeCharField = geckoEvent.getField("mUnicodeChar", "I");
-    jBaseUnicodeCharField = geckoEvent.getField("mBaseUnicodeChar", "I");
-    jDOMPrintableKeyValueField = geckoEvent.getField("mDOMPrintableKeyValue", "I");
-    jRepeatCountField = geckoEvent.getField("mRepeatCount", "I");
     jCountField = geckoEvent.getField("mCount", "I");
-    jStartField = geckoEvent.getField("mStart", "I");
-    jEndField = geckoEvent.getField("mEnd", "I");
     jPointerIndexField = geckoEvent.getField("mPointerIndex", "I");
-    jRangeTypeField = geckoEvent.getField("mRangeType", "I");
-    jRangeStylesField = geckoEvent.getField("mRangeStyles", "I");
-    jRangeLineStyleField = geckoEvent.getField("mRangeLineStyle", "I");
-    jRangeBoldLineField = geckoEvent.getField("mRangeBoldLine", "Z");
-    jRangeForeColorField = geckoEvent.getField("mRangeForeColor", "I");
-    jRangeBackColorField = geckoEvent.getField("mRangeBackColor", "I");
-    jRangeLineColorField = geckoEvent.getField("mRangeLineColor", "I");
     jLocationField = geckoEvent.getField("mLocation", "Landroid/location/Location;");
     jConnectionTypeField = geckoEvent.getField("mConnectionType", "I");
     jIsWifiField = geckoEvent.getField("mIsWifi", "Z");
@@ -179,8 +146,6 @@ AndroidGeckoEvent::InitGeckoEventClass(JNIEnv *jEnv)
     jGamepadButtonPressedField = geckoEvent.getField("mGamepadButtonPressed", "Z");
     jGamepadButtonValueField = geckoEvent.getField("mGamepadButtonValue", "F");
     jGamepadValuesField = geckoEvent.getField("mGamepadValues", "[F");
-    jPrefNamesField = geckoEvent.getField("mPrefNames", "[Ljava/lang/String;");
-    jObjectField = geckoEvent.getField("mObject", "Ljava/lang/Object;");
 }
 
 void
@@ -402,21 +367,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
             ReadPointArray(mPoints, jenv, jPoints, 2);
             break;
 
-        case KEY_EVENT:
-        case IME_KEY_EVENT:
-            mTime = jenv->GetLongField(jobj, jTimeField);
-            mMetaState = jenv->GetIntField(jobj, jMetaStateField);
-            mFlags = jenv->GetIntField(jobj, jFlagsField);
-            mKeyCode = jenv->GetIntField(jobj, jKeyCodeField);
-            mScanCode = jenv->GetIntField(jobj, jScanCodeField);
-            mUnicodeChar = jenv->GetIntField(jobj, jUnicodeCharField);
-            mBaseUnicodeChar = jenv->GetIntField(jobj, jBaseUnicodeCharField);
-            mDOMPrintableKeyValue =
-                jenv->GetIntField(jobj, jDOMPrintableKeyValueField);
-            mRepeatCount = jenv->GetIntField(jobj, jRepeatCountField);
-            ReadCharactersField(jenv);
-            break;
-
         case NATIVE_GESTURE_EVENT:
             mTime = jenv->GetLongField(jobj, jTimeField);
             mMetaState = jenv->GetIntField(jobj, jMetaStateField);
@@ -442,30 +392,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
 
             break;
 
-        case IME_EVENT:
-            mStart = jenv->GetIntField(jobj, jStartField);
-            mEnd = jenv->GetIntField(jobj, jEndField);
-
-            if (mAction == IME_REPLACE_TEXT ||
-                    mAction == IME_COMPOSE_TEXT) {
-                ReadCharactersField(jenv);
-            } else if (mAction == IME_UPDATE_COMPOSITION ||
-                    mAction == IME_ADD_COMPOSITION_RANGE) {
-                mRangeType = jenv->GetIntField(jobj, jRangeTypeField);
-                mRangeStyles = jenv->GetIntField(jobj, jRangeStylesField);
-                mRangeLineStyle =
-                    jenv->GetIntField(jobj, jRangeLineStyleField);
-                mRangeBoldLine =
-                    jenv->GetBooleanField(jobj, jRangeBoldLineField);
-                mRangeForeColor =
-                    jenv->GetIntField(jobj, jRangeForeColorField);
-                mRangeBackColor =
-                    jenv->GetIntField(jobj, jRangeBackColorField);
-                mRangeLineColor =
-                    jenv->GetIntField(jobj, jRangeLineColorField);
-            }
-            break;
-
         case SENSOR_EVENT:
              mX = jenv->GetDoubleField(jobj, jXField);
              mY = jenv->GetDoubleField(jobj, jYField);
@@ -474,13 +400,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
              mFlags = jenv->GetIntField(jobj, jFlagsField);
              mMetaState = jenv->GetIntField(jobj, jMetaStateField);
              break;
-
-        case PROCESS_OBJECT: {
-            const jobject obj = jenv->GetObjectField(jobj, jObjectField);
-            mObject.Init(obj, jenv);
-            jenv->DeleteLocalRef(obj);
-            break;
-        }
 
         case LOCATION_EVENT: {
             jobject location = jenv->GetObjectField(jobj, jLocationField);
@@ -564,6 +483,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
 
         case TELEMETRY_HISTOGRAM_ADD: {
             ReadCharactersField(jenv);
+            ReadCharactersExtraField(jenv);
             mCount = jenv->GetIntField(jobj, jCountField);
             break;
         }
@@ -606,18 +526,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
                 mCount = jenv->GetIntField(jobj, jCountField);
                 ReadFloatArray(mGamepadValues, jenv, jGamepadValuesField, mCount);
             }
-            break;
-        }
-
-        case PREFERENCES_OBSERVE:
-        case PREFERENCES_GET: {
-            ReadStringArray(mPrefNames, jenv, jPrefNamesField);
-            mCount = jenv->GetIntField(jobj, jCountField);
-            break;
-        }
-
-        case PREFERENCES_REMOVE_OBSERVERS: {
-            mCount = jenv->GetIntField(jobj, jCountField);
             break;
         }
 
@@ -757,7 +665,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         nsIntPoint radii(
             PointRadii()[i].x * scale.scale,
             PointRadii()[i].y * scale.scale);
-        nsRefPtr<Touch> t = new Touch(PointIndicies()[i],
+        RefPtr<Touch> t = new Touch(PointIndicies()[i],
                                       pt,
                                       radii,
                                       Orientations()[i],

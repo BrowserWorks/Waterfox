@@ -348,8 +348,23 @@ nsSVGPathGeometryFrame::GetFrameForPoint(const gfxPoint& aPoint)
 nsRect
 nsSVGPathGeometryFrame::GetCoveredRegion()
 {
+  gfxMatrix canvasTM = GetCanvasTM();
+  if (canvasTM.PreservesAxisAlignedRectangles()) {
+    return nsSVGUtils::TransformFrameRectToOuterSVG(
+             mRect, canvasTM, PresContext());
+  }
+
+  // To get tight bounds we need to compute directly in outer SVG coordinates
+  uint32_t flags = nsSVGUtils::eBBoxIncludeFill |
+                   nsSVGUtils::eBBoxIncludeStroke |
+                   nsSVGUtils::eBBoxIncludeMarkers;
+  gfxRect extent =
+    GetBBoxContribution(ToMatrix(canvasTM), flags).ToThebesRect();
+  nsRect region = nsLayoutUtils::RoundGfxRectToAppRect(
+                    extent, PresContext()->AppUnitsPerCSSPixel());
+
   return nsSVGUtils::TransformFrameRectToOuterSVG(
-           mRect, GetCanvasTM(), PresContext());
+                       region, gfxMatrix(), PresContext());
 }
 
 void
@@ -508,7 +523,7 @@ nsSVGPathGeometryFrame::GetBBoxContribution(const Matrix &aToBBoxUserspace,
     // calculations. To avoid that and meet the expectations of web content we
     // have to use a CAIRO DrawTarget. The most efficient way to do that is to
     // wrap the cached cairo_surface_t from ScreenReferenceSurface():
-    nsRefPtr<gfxASurface> refSurf =
+    RefPtr<gfxASurface> refSurf =
       gfxPlatform::GetPlatform()->ScreenReferenceSurface();
     tmpDT = gfxPlatform::GetPlatform()->
       CreateDrawTargetForSurface(refSurf, IntSize(1, 1));

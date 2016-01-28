@@ -275,21 +275,6 @@ CSSAnimation::QueueEvents()
                                          this));
 }
 
-bool
-CSSAnimation::HasEndEventToQueue() const
-{
-  if (!mEffect) {
-    return false;
-  }
-
-  bool wasActive = mPreviousPhaseOrIteration != PREVIOUS_PHASE_BEFORE &&
-                   mPreviousPhaseOrIteration != PREVIOUS_PHASE_AFTER;
-  bool isActive = mEffect->GetComputedTiming().mPhase ==
-                    ComputedTiming::AnimationPhase_Active;
-
-  return wasActive && !isActive;
-}
-
 CommonAnimationManager*
 CSSAnimation::GetAnimationManager() const
 {
@@ -472,7 +457,7 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
         // the new list of animations with a given name than in the old
         // list, it will be the animations towards the of the beginning of
         // the list that do not match and are treated as new animations.
-        nsRefPtr<CSSAnimation> oldAnim;
+        RefPtr<CSSAnimation> oldAnim;
         size_t oldIdx = collection->mAnimations.Length();
         while (oldIdx-- != 0) {
           CSSAnimation* a = collection->mAnimations[oldIdx]->AsCSSAnimation();
@@ -505,7 +490,7 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
           animationChanged =
             oldEffect->Timing() != newEffect->Timing() ||
             oldEffect->Properties() != newEffect->Properties();
-          oldEffect->SetTiming(newEffect->Timing(), *oldAnim);
+          oldEffect->SetTiming(newEffect->Timing());
           oldEffect->Properties() = newEffect->Properties();
         }
 
@@ -561,7 +546,7 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
     }
   }
   collection->mAnimations.SwapElements(newAnimations);
-  collection->mNeedsRefreshes = true;
+  collection->mStyleChanging = true;
 
   // Cancel removed animations
   for (size_t newAnimIdx = newAnimations.Length(); newAnimIdx-- != 0; ) {
@@ -642,7 +627,7 @@ ResolvedStyleCache::Get(nsPresContext *aPresContext,
   if (!result) {
     nsCOMArray<nsIStyleRule> rules;
     rules.AppendObject(aKeyframe);
-    nsRefPtr<nsStyleContext> resultStrong = aPresContext->StyleSet()->
+    RefPtr<nsStyleContext> resultStrong = aPresContext->StyleSet()->
       ResolveStyleByAddingRules(aParentStyleContext, rules);
     mCache.Put(aKeyframe, resultStrong);
     result = resultStrong;
@@ -662,7 +647,7 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
 
   const nsStyleDisplay *disp = aStyleContext->StyleDisplay();
 
-  nsRefPtr<nsStyleContext> styleWithoutAnimation;
+  RefPtr<nsStyleContext> styleWithoutAnimation;
 
   for (size_t animIdx = 0, animEnd = disp->mAnimationNameCount;
        animIdx != animEnd; ++animIdx) {
@@ -681,7 +666,7 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
       continue;
     }
 
-    nsRefPtr<CSSAnimation> dest =
+    RefPtr<CSSAnimation> dest =
       new CSSAnimation(mPresContext->Document()->GetScopeObject(),
                        src.GetName());
     dest->SetOwningElement(
@@ -698,7 +683,7 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
     timing.mDirection = src.GetDirection();
     timing.mFillMode = src.GetFillMode();
 
-    nsRefPtr<KeyframeEffectReadOnly> destEffect =
+    RefPtr<KeyframeEffectReadOnly> destEffect =
       new KeyframeEffectReadOnly(mPresContext->Document(), aTarget,
                                  aStyleContext->GetPseudoType(), timing);
     dest->SetEffect(destEffect);
@@ -799,14 +784,14 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
       propData.mWinsInCascade = true;
 
       KeyframeData *fromKeyframe = nullptr;
-      nsRefPtr<nsStyleContext> fromContext;
+      RefPtr<nsStyleContext> fromContext;
       bool interpolated = true;
       for (uint32_t wpIdx = 0, wpEnd = keyframesWithProperty.Length();
            wpIdx != wpEnd; ++wpIdx) {
         uint32_t kfIdx = keyframesWithProperty[wpIdx];
         KeyframeData &toKeyframe = sortedKeyframes[kfIdx];
 
-        nsRefPtr<nsStyleContext> toContext =
+        RefPtr<nsStyleContext> toContext =
           resolvedStyles.Get(mPresContext, aStyleContext, toKeyframe.mRule);
 
         if (fromKeyframe) {

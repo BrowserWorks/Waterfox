@@ -307,14 +307,26 @@ DebuggerMemory::setAllocationSamplingProbability(JSContext* cx, unsigned argc, V
     if (!ToNumber(cx, args[0], &probability))
         return false;
 
-    if (probability < 0.0 || probability > 1.0) {
+    // Careful!  This must also reject NaN.
+    if (!(0.0 <= probability && probability <= 1.0)) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
                              "(set allocationSamplingProbability)'s parameter",
                              "not a number between 0 and 1");
         return false;
     }
 
-    memory->getDebugger()->allocationSamplingProbability = probability;
+    Debugger* dbg = memory->getDebugger();
+    if (dbg->allocationSamplingProbability != probability) {
+        dbg->allocationSamplingProbability = probability;
+
+        // If this is a change any debuggees would observe, have all debuggee
+        // compartments recompute their sampling probabilities.
+        if (dbg->enabled && dbg->trackingAllocationSites) {
+            for (auto r = dbg->debuggees.all(); !r.empty(); r.popFront())
+                r.front()->compartment()->chooseAllocationSamplingProbability();
+        }
+    }
+
     args.rval().setUndefined();
     return true;
 }
@@ -540,18 +552,23 @@ DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
 
     {
         Maybe<JS::AutoCheckCannotGC> maybeNoGC;
-        JS::ubi::RootList rootList(cx, maybeNoGC);
-        if (!rootList.init(dbgObj))
+        JS::ubi::RootList rootList(cx->runtime(), maybeNoGC);
+        if (!rootList.init(dbgObj)) {
+            ReportOutOfMemory(cx);
             return false;
+        }
 
-        JS::ubi::CensusTraversal traversal(cx, handler, maybeNoGC.ref());
-        if (!traversal.init())
+        JS::ubi::CensusTraversal traversal(cx->runtime(), handler, maybeNoGC.ref());
+        if (!traversal.init()) {
+            ReportOutOfMemory(cx);
             return false;
+        }
         traversal.wantNames = false;
 
         if (!traversal.addStart(JS::ubi::Node(&rootList)) ||
             !traversal.traverse())
         {
+            ReportOutOfMemory(cx);
             return false;
         }
     }

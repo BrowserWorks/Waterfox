@@ -13,12 +13,10 @@ EXPORTS.theora += [
     'include/theora/theoraenc.h',
 ]
 
+# We allow warnings for third-party code that can be updated from upstream.
 ALLOW_COMPILER_WARNINGS = True
 
 FINAL_LIBRARY = 'gkmedias'
-
-if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
-    NO_VISIBILITY_FLAGS = True
 
 # The encoder is currently not included.
 DEFINES['THEORA_DISABLE_ENCODE'] = True

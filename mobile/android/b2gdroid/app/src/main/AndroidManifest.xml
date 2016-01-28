@@ -28,6 +28,14 @@
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
 
+    <!-- WebSMS -->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.WRITE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
+
+    <uses-feature android:name="android.hardware.telephony"/>
+
     <!-- Tab Queue -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
@@ -48,6 +56,10 @@
 
     <!-- Needed to disable the default lockscreen -->
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application android:label="@string/b2g"
                  android:icon="@drawable/b2g"
@@ -109,6 +121,14 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.updater.UpdateService"
+            android:process="org.mozilla.b2gdroid.UpdateService">
+        </service>
+
+        <receiver android:name="org.mozilla.gecko.AlarmReceiver" >
+        </receiver>
     </application>
 
 </manifest>

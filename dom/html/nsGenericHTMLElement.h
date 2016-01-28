@@ -337,7 +337,7 @@ public:
    * Pass a reference to the image request, since the method may change the
    * value and we want to use the updated value.
    */
-  nsSize GetWidthHeightForImage(nsRefPtr<imgRequestProxy>& aImageRequest);
+  nsSize GetWidthHeightForImage(RefPtr<imgRequestProxy>& aImageRequest);
 
   // XPIDL methods
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
@@ -409,7 +409,7 @@ public:
   NS_IMETHOD GetItemId(nsAString& aId) final override {
     nsString id;
     GetItemId(id);
-    aId.Assign(aId);
+    aId.Assign(id);
     return NS_OK;
   }
   NS_IMETHOD SetItemId(const nsAString& aId) final override {

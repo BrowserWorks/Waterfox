@@ -7,12 +7,13 @@
 #ifndef GLCONTEXT_H_
 #define GLCONTEXT_H_
 
-#include <stdio.h>
-#include <stdint.h>
-#include <ctype.h>
-#include <map>
 #include <bitset>
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <map>
 #include <queue>
+#include <stack>
 
 #ifdef DEBUG
 #include <string.h>
@@ -123,6 +124,7 @@ enum class GLFeature {
     sRGB_framebuffer,
     sRGB_texture,
     sampler_objects,
+    split_framebuffer,
     standard_derivatives,
     sync,
     texture_3D,
@@ -389,6 +391,7 @@ public:
         ANGLE_timer_query,
         APPLE_client_storage,
         APPLE_framebuffer_multisample,
+        APPLE_sync,
         APPLE_texture_range,
         APPLE_vertex_array_object,
         ARB_ES2_compatibility,
@@ -619,7 +622,7 @@ public:
     class LocalErrorScope;
 
 private:
-    LocalErrorScope* mLocalErrorScope;
+    std::stack<const LocalErrorScope*> mLocalErrorScopeStack;
 
 public:
     class LocalErrorScope {
@@ -632,8 +635,7 @@ public:
             : mGL(gl)
             , mHasBeenChecked(false)
         {
-            MOZ_ASSERT(!mGL.mLocalErrorScope);
-            mGL.mLocalErrorScope = this;
+            mGL.mLocalErrorScopeStack.push(this);
 
             mGL.FlushErrors();
 
@@ -653,10 +655,10 @@ public:
 
             MOZ_ASSERT(mGL.fGetError() == LOCAL_GL_NO_ERROR);
 
-            mGL.mTopError = mOldTop;
+            MOZ_ASSERT(mGL.mLocalErrorScopeStack.top() == this);
+            mGL.mLocalErrorScopeStack.pop();
 
-            MOZ_ASSERT(mGL.mLocalErrorScope == this);
-            mGL.mLocalErrorScope = nullptr;
+            mGL.mTopError = mOldTop;
         }
     };
 
@@ -738,7 +740,7 @@ private:
             }
 
             if (err != LOCAL_GL_NO_ERROR &&
-                !mLocalErrorScope)
+                !mLocalErrorScopeStack.size())
             {
                 printf_stderr("[gl:%p] %s: Generated unexpected %s error."
                               " (0x%04x)\n", this, funcName,
@@ -3011,15 +3013,6 @@ public:
         AFTER_GL_CALL;
     }
 
-    void fGetActiveUniformName(GLuint program, GLuint uniformIndex, GLsizei bufSize,
-                               GLsizei* length, GLchar* uniformName)
-    {
-        ASSERT_SYMBOL_PRESENT(fGetActiveUniformName);
-        BEFORE_GL_CALL;
-        mSymbols.fGetActiveUniformName(program, uniformIndex, bufSize, length, uniformName);
-        AFTER_GL_CALL;
-    }
-
     GLuint fGetUniformBlockIndex(GLuint program, const GLchar* uniformBlockName) {
         ASSERT_SYMBOL_PRESENT(fGetUniformBlockIndex);
         BEFORE_GL_CALL;
@@ -3146,6 +3139,16 @@ public:
         const GLubyte* ret = mSymbols.fGetStringi(name, index);
         AFTER_GL_CALL;
         return ret;
+    }
+
+// -----------------------------------------------------------------------------
+// APPLE_framebuffer_multisample
+
+    void fResolveMultisampleFramebufferAPPLE() {
+        BEFORE_GL_CALL;
+        ASSERT_SYMBOL_PRESENT(fResolveMultisampleFramebufferAPPLE);
+        mSymbols.fResolveMultisampleFramebufferAPPLE();
+        AFTER_GL_CALL;
     }
 
 // -----------------------------------------------------------------------------
@@ -3651,6 +3654,28 @@ MarkBitfieldByStrings(const std::vector<nsCString>& strList,
             printf_stderr("  %s%s\n", str.BeginReading(), wasMarked ? "(*)" : "");
     }
 }
+
+/**
+ * Helper function that creates a 2D texture aSize.width x aSize.height with
+ * storage type specified by aFormats. Returns GL texture object id.
+ *
+ * See mozilla::gl::CreateTexture.
+ */
+GLuint CreateTextureForOffscreen(GLContext* aGL, const GLFormats& aFormats,
+                                 const gfx::IntSize& aSize);
+
+/**
+ * Helper function that creates a 2D texture aSize.width x aSize.height with
+ * storage type aInternalFormat. Returns GL texture object id.
+ *
+ * Initialize textyre parameters to:
+ *    GL_TEXTURE_MIN_FILTER = GL_LINEAR
+ *    GL_TEXTURE_MAG_FILTER = GL_LINEAR
+ *    GL_TEXTURE_WRAP_S = GL_CLAMP_TO_EDGE
+ *    GL_TEXTURE_WRAP_T = GL_CLAMP_TO_EDGE
+ */
+GLuint CreateTexture(GLContext* aGL, GLenum aInternalFormat, GLenum aFormat,
+                     GLenum aType, const gfx::IntSize& aSize, bool linear = true);
 
 } /* namespace gl */
 } /* namespace mozilla */

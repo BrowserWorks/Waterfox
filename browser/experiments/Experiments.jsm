@@ -20,8 +20,8 @@ Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/AsyncShutdown.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
-                                  "resource://gre/modules/UpdateChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                  "resource://gre/modules/UpdateUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
@@ -94,6 +94,7 @@ const TELEMETRY_LOG = {
     RECHECK: "RECHECK",
   },
 };
+XPCOMUtils.defineConstant(this, "TELEMETRY_LOG", TELEMETRY_LOG);
 
 const gPrefs = new Preferences(PREF_BRANCH);
 const gPrefsTelemetry = new Preferences(PREF_BRANCH_TELEMETRY);
@@ -275,7 +276,7 @@ Experiments.Policy.prototype = {
   },
 
   updatechannel: function () {
-    return UpdateChannel.get();
+    return UpdateUtils.UpdateChannel;
   },
 
   locale: function () {
@@ -2223,7 +2224,7 @@ this.Experiments.PreviousExperimentProvider = function (experiments) {
 }
 
 this.Experiments.PreviousExperimentProvider.prototype = Object.freeze({
-  get name() "PreviousExperimentProvider",
+  name: "PreviousExperimentProvider",
 
   startup: function () {
     this._log.trace("startup()");

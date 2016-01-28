@@ -8,6 +8,8 @@ Components.utils.import("resource://gre/modules/InlineSpellChecker.jsm");
 Components.utils.import("resource://gre/modules/LoginManagerContextMenu.jsm");
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/Services.jsm");
+
 
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
@@ -42,6 +44,28 @@ nsContextMenu.prototype = {
       else {
         this.hasPageMenu = PageMenuParent.buildAndAddToPopup(this.target, aXulMenu);
       }
+
+      let subject = {
+        menu: aXulMenu,
+        tab: gBrowser ? gBrowser.getTabForBrowser(this.browser) : undefined,
+        isContentSelected: this.isContentSelected,
+        inFrame: this.inFrame,
+        isTextSelected: this.isTextSelected,
+        onTextInput: this.onTextInput,
+        onLink: this.onLink,
+        onImage: this.onImage,
+        onVideo: this.onVideo,
+        onAudio: this.onAudio,
+        onCanvas: this.onCanvas,
+        onEditableArea: this.onEditableArea,
+        srcUrl: this.mediaURL,
+        frameUrl: gContextMenuContentData ? gContextMenuContentData.docLocation : undefined,
+        pageUrl: this.browser ? this.browser.currentURI.spec : undefined,
+        linkUrl: this.linkURL,
+        selectionText: this.isTextSelected ? this.selectionInfo.text : undefined,
+      };
+      subject.wrappedJSObject = subject;
+      Services.obs.notifyObservers(subject, "on-build-contextmenu", null);
     }
 
     this.isFrameImage = document.getElementById("isFrameImage");
@@ -555,7 +579,7 @@ nsContextMenu.prototype = {
   },
 
   inspectNode: function CM_inspectNode() {
-    let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+    let {devtools} = Cu.import("resource://devtools/shared/Loader.jsm", {});
     let gBrowser = this.browser.ownerDocument.defaultView.gBrowser;
     let tt = devtools.TargetFactory.forTab(gBrowser.selectedTab);
     return gDevTools.showToolbox(tt, "inspector").then(function(toolbox) {
@@ -1755,6 +1779,7 @@ nsContextMenu.prototype = {
     // Store searchTerms in context menu item so we know what to search onclick
     menuItem.searchTerms = selectedText;
 
+    // Copied to alert.js' prefillAlertInfo().
     // If the JS character after our truncation point is a trail surrogate,
     // include it in the truncated string to avoid splitting a surrogate pair.
     if (selectedText.length > 15) {

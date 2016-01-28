@@ -42,7 +42,7 @@ HDC
 gfxWindowsNativeDrawing::BeginNativeDrawing()
 {
     if (mRenderState == RENDER_STATE_INIT) {
-        nsRefPtr<gfxASurface> surf;
+        RefPtr<gfxASurface> surf;
         
         if (mContext->GetCairo()) {
           surf = mContext->CurrentSurface(&mDeviceOffset.x, &mDeviceOffset.y);
@@ -185,28 +185,6 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
 }
 
 bool
-gfxWindowsNativeDrawing::IsDoublePass()
-{
-    if (mContext->GetDrawTarget()->GetBackendType() != mozilla::gfx::BackendType::CAIRO ||
-        mContext->GetDrawTarget()->IsDualDrawTarget()) {
-      return true;
-    }
-
-    nsRefPtr<gfxASurface> surf = mContext->CurrentSurface(&mDeviceOffset.x, &mDeviceOffset.y);
-    if (!surf || surf->CairoStatus())
-        return false;
-    if (surf->GetType() != gfxSurfaceType::Win32 &&
-        surf->GetType() != gfxSurfaceType::Win32Printing) {
-        return true;
-    }
-    if ((surf->GetContentType() != gfxContentType::COLOR ||
-         (surf->GetContentType() == gfxContentType::COLOR_ALPHA &&
-          !(mNativeDrawFlags & CAN_DRAW_TO_COLOR_ALPHA))))
-        return true;
-    return false;
-}
-
-bool
 gfxWindowsNativeDrawing::ShouldRenderAgain()
 {
     switch (mRenderState) {
@@ -263,8 +241,8 @@ gfxWindowsNativeDrawing::PaintToContext()
         // nothing to do, it already went to the context
         mRenderState = RENDER_STATE_DONE;
     } else if (mRenderState == RENDER_STATE_ALPHA_RECOVERY_WHITE_DONE) {
-        nsRefPtr<gfxImageSurface> black = mBlackSurface->GetAsImageSurface();
-        nsRefPtr<gfxImageSurface> white = mWhiteSurface->GetAsImageSurface();
+        RefPtr<gfxImageSurface> black = mBlackSurface->GetAsImageSurface();
+        RefPtr<gfxImageSurface> white = mWhiteSurface->GetAsImageSurface();
         if (!gfxAlphaRecovery::RecoverAlpha(black, white)) {
             NS_ERROR("Alpha recovery failure");
             return;
@@ -281,16 +259,16 @@ gfxWindowsNativeDrawing::PaintToContext()
         mContext->NewPath();
         mContext->Rectangle(gfxRect(gfxPoint(0.0, 0.0), mNativeRect.Size()));
 
-        nsRefPtr<gfxPattern> pat = new gfxPattern(source, Matrix());
+        RefPtr<gfxPattern> pat = new gfxPattern(source, Matrix());
 
         gfxMatrix m;
         m.Scale(mScale.width, mScale.height);
         pat->SetMatrix(m);
 
         if (mNativeDrawFlags & DO_NEAREST_NEIGHBOR_FILTERING)
-            pat->SetFilter(GraphicsFilter::FILTER_FAST);
+            pat->SetFilter(Filter::LINEAR);
 
-        pat->SetExtend(gfxPattern::EXTEND_PAD);
+        pat->SetExtend(ExtendMode::CLAMP);
         mContext->SetPattern(pat);
         mContext->Fill();
         mContext->Restore();

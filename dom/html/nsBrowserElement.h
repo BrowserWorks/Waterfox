@@ -73,7 +73,7 @@ public:
   already_AddRefed<dom::DOMRequest> PurgeHistory(ErrorResult& aRv);
 
   void GetAllowedAudioChannels(
-            nsTArray<nsRefPtr<dom::BrowserElementAudioChannel>>& aAudioChannels,
+            nsTArray<RefPtr<dom::BrowserElementAudioChannel>>& aAudioChannels,
             ErrorResult& aRv);
 
   void Mute(ErrorResult& aRv);
@@ -112,14 +112,25 @@ public:
                                                   const dom::BrowserElementExecuteScriptOptions& aOptions,
                                                   ErrorResult& aRv);
 
+  already_AddRefed<dom::DOMRequest> GetStructuredData(ErrorResult& aRv);
+
   void SetNFCFocus(bool isFocus,
                    ErrorResult& aRv);
+
+  // Helper
+  static void GenerateAllowedAudioChannels(
+                 nsPIDOMWindow* aWindow,
+                 nsIFrameLoader* aFrameLoader,
+                 nsIBrowserElementAPI* aAPI,
+                 const nsAString& aManifestURL,
+                 nsTArray<RefPtr<dom::BrowserElementAudioChannel>>& aAudioChannels,
+                 ErrorResult& aRv);
 
 protected:
   NS_IMETHOD_(already_AddRefed<nsFrameLoader>) GetFrameLoader() = 0;
   void InitBrowserElementAPI();
   nsCOMPtr<nsIBrowserElementAPI> mBrowserElementAPI;
-  nsTArray<nsRefPtr<dom::BrowserElementAudioChannel>> mBrowserElementAudioChannels;
+  nsTArray<RefPtr<dom::BrowserElementAudioChannel>> mBrowserElementAudioChannels;
 
 private:
   bool IsBrowserElementOrThrow(ErrorResult& aRv);

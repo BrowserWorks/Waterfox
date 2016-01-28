@@ -350,6 +350,9 @@ pref("browser.link.open_newwindow", 3);
 // 0=force all new windows to tabs, 1=don't force, 2=only force those with no features set
 pref("browser.link.open_newwindow.restriction", 0);
 
+// Image blocking policy
+pref("browser.image_blocking.enabled", false);
+
 // controls which bits of private data to clear. by default we clear them all.
 pref("privacy.item.cache", true);
 pref("privacy.item.cookies", true);
@@ -415,7 +418,7 @@ pref("ui.zoomedview.enabled", false);
 pref("ui.zoomedview.keepLimitSize", 16); // value in layer pixels, used to not keep the large elements in the cluster list (Bug 1191041)
 pref("ui.zoomedview.limitReadableSize", 8); // value in layer pixels
 pref("ui.zoomedview.defaultZoomFactor", 2);
-pref("ui.zoomedview.simplified", true); // Do not display all the zoomed view controls
+pref("ui.zoomedview.simplified", true); // Do not display all the zoomed view controls, do not use size heurisistic
 
 pref("ui.touch.radius.enabled", false);
 pref("ui.touch.radius.leftmm", 3);
@@ -466,11 +469,8 @@ pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/mobile/%VERSION%bet
 #else
 pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/mobile/%VERSION%/releasenotes/");
 #endif
-#if MOZ_UPDATE_CHANNEL == beta
-pref("app.faqURL", "http://www.mozilla.com/%LOCALE%/mobile/beta/faq/");
-#else
-pref("app.faqURL", "http://www.mozilla.com/%LOCALE%/mobile/faq/");
-#endif
+
+pref("app.faqURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq");
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
@@ -589,9 +589,8 @@ pref("media.cache_readahead_limit", 30);
 pref("media.video-queue.default-size", 3);
 
 // Enable the MediaCodec PlatformDecoderModule by default.
-pref("media.fragmented-mp4.enabled", true);
-pref("media.fragmented-mp4.android-media-codec.enabled", true);
-pref("media.fragmented-mp4.android-media-codec.preferred", true);
+pref("media.android-media-codec.enabled", true);
+pref("media.android-media-codec.preferred", true);
 
 // Enable MSE
 pref("media.mediasource.enabled", true);
@@ -624,6 +623,7 @@ pref("browser.safebrowsing.provider.google.appRepURL", "https://sb-ssl.google.co
 pref("browser.safebrowsing.reportPhishMistakeURL", "https://%LOCALE%.phish-error.mozilla.com/?hl=%LOCALE%&url=");
 pref("browser.safebrowsing.reportPhishURL", "https://%LOCALE%.phish-report.mozilla.com/?hl=%LOCALE%&url=");
 pref("browser.safebrowsing.reportMalwareMistakeURL", "https://%LOCALE%.malware-error.mozilla.com/?hl=%LOCALE%&url=");
+pref("browser.safebrowsing.appRepURL", "https://sb-ssl.google.com/safebrowsing/clientreport/download?key=%GOOGLE_API_KEY%");
 
 pref("browser.safebrowsing.id", @MOZ_APP_UA_NAME@);
 
@@ -757,6 +757,9 @@ pref("layout.imagevisibility.numscrollportwidths", 1);
 pref("layout.imagevisibility.numscrollportheights", 1);
 
 pref("layers.enable-tiles", true);
+
+// Speculative 'fix' to work around OOM issues
+pref("layers.tiles.adjust", false);
 
 // Enable the dynamic toolbar
 pref("browser.chrome.dynamictoolbar", true);
@@ -936,13 +939,15 @@ pref("consoleservice.logcat", true);
 // Enable Cardboard VR on mobile, assuming VR at all is enabled
 pref("dom.vr.cardboard.enabled", true);
 
+#ifndef RELEASE_BUILD
+// Enable VR on mobile, making it enable by default.
+pref("dom.vr.enabled", true);
+#endif
+
 pref("browser.tabs.showAudioPlayingIcon", true);
 
-// Enable service workers and fetch interception on non-release Fennec
-#ifndef RELEASE_BUILD
 pref("dom.serviceWorkers.enabled", true);
 pref("dom.serviceWorkers.interception.enabled", true);
-#endif
 
 // The remote content URL where FxAccountsWebChannel messages originate.  Must use HTTPS.
 pref("identity.fxaccounts.remote.webchannel.uri", "https://accounts.firefox.com");

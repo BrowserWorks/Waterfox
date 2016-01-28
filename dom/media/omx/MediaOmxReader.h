@@ -70,8 +70,6 @@ public:
   MediaOmxReader(AbstractMediaDecoder* aDecoder);
   ~MediaOmxReader();
 
-  virtual nsresult Init(MediaDecoderReader* aCloneDonor);
-
 protected:
   virtual void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
 public:
@@ -87,28 +85,18 @@ public:
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
                                 int64_t aTimeThreshold);
 
-  virtual bool HasAudio()
-  {
-    return mHasAudio;
-  }
+  virtual void ReleaseMediaResources() override;
 
-  virtual bool HasVideo()
-  {
-    return mHasVideo;
-  }
+  virtual RefPtr<MediaDecoderReader::MetadataPromise> AsyncReadMetadata() override;
 
-  virtual void ReleaseMediaResources();
-
-  virtual nsRefPtr<MediaDecoderReader::MetadataPromise> AsyncReadMetadata() override;
-
-  virtual nsRefPtr<SeekPromise>
+  virtual RefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
 
   virtual bool IsMediaSeekable() override;
 
   virtual void SetIdle() override;
 
-  virtual nsRefPtr<ShutdownPromise> Shutdown() override;
+  virtual RefPtr<ShutdownPromise> Shutdown() override;
 
   android::sp<android::MediaSource> GetAudioOffloadTrack();
 
@@ -119,6 +107,9 @@ public:
 private:
   class ProcessCachedDataTask;
   class NotifyDataArrivedRunnable;
+
+  virtual bool HasAudio() override { return mHasAudio; }
+  virtual bool HasVideo() override { return mHasVideo; }
 
   bool IsShutdown() {
     MutexAutoLock lock(mShutdownMutex);

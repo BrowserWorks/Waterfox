@@ -46,6 +46,12 @@ var gSyncUI = {
       return;
     }
 
+    // Sync isn't ready yet, but we can still update the UI with an initial
+    // state - we haven't called initUI() yet, but that's OK - that's more
+    // about observers for state changes, and will be called once Sync is
+    // ready to start sending notifications.
+    this.updateUI();
+
     Services.obs.addObserver(this, "weave:service:ready", true);
 
     // Remove the observer if the window is closed before the observer
@@ -143,6 +149,13 @@ var gSyncUI = {
   // still need to track a login-failed state so the "Tools" menu updates
   // with the correct state.
   _loginFailed: function () {
+    // If Sync isn't already ready, we don't want to force it to initialize
+    // by referencing Weave.Status - and it isn't going to be accurate before
+    // Sync is ready anyway.
+    if (!this.weaveService.ready) {
+      this.log.debug("_loginFailed has sync not ready, so returning false");
+      return false;
+    }
     this.log.debug("_loginFailed has sync state=${sync}",
                    { sync: Weave.Status.login});
     return Weave.Status.login == Weave.LOGIN_FAILED_LOGIN_REJECTED;
@@ -253,7 +266,7 @@ var gSyncUI = {
   doSync() {
     this._needsSetup().then(needsSetup => {
       if (!needsSetup) {
-        setTimeout(function () Weave.Service.errorHandler.syncAndReportErrors(), 0);
+        setTimeout(() => Weave.Service.errorHandler.syncAndReportErrors(), 0);
       }
       Services.obs.notifyObservers(null, "cloudsync:user-sync", null);
     }).catch(err => {
@@ -423,13 +436,10 @@ var gSyncUI = {
     // First handle "activity" only.
     switch (topic) {
       case "weave:service:sync:start":
-      case "weave:service:login:start":
         this.onActivityStart();
         break;
       case "weave:service:sync:finish":
       case "weave:service:sync:error":
-      case "weave:service:login:finish":
-      case "weave:service:login:error":
         this.onActivityStop();
         break;
     }
@@ -441,6 +451,8 @@ var gSyncUI = {
         break;
       case "weave:ui:sync:error":
       case "weave:service:setup-complete":
+      case "weave:service:login:finish":
+      case "weave:service:login:start":
         this.updateUI();
         break;
       case "weave:ui:login:error":

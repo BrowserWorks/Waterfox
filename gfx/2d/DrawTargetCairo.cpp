@@ -24,7 +24,9 @@
 
 #ifdef CAIRO_HAS_QUARTZ_SURFACE
 #include "cairo-quartz.h"
+#ifdef MOZ_WIDGET_COCOA
 #include <ApplicationServices/ApplicationServices.h>
+#endif
 #endif
 
 #ifdef CAIRO_HAS_XLIB_SURFACE
@@ -331,6 +333,10 @@ GetCairoSurfaceForSourceSurface(SourceSurface *aSurface,
                                 bool aExistingOnly = false,
                                 const IntRect& aSubImage = IntRect())
 {
+  if (!aSurface) {
+    return nullptr;
+  }
+
   IntRect subimage = IntRect(IntPoint(), aSurface->GetSize());
   if (!aSubImage.IsEmpty()) {
     MOZ_ASSERT(!aExistingOnly);
@@ -677,7 +683,7 @@ GfxFormatForCairoSurface(cairo_surface_t* surface)
   // xlib is currently the only Cairo backend that creates 16bpp surfaces
   if (type == CAIRO_SURFACE_TYPE_XLIB &&
       cairo_xlib_surface_get_depth(surface) == 16) {
-    return SurfaceFormat::R5G6B5;
+    return SurfaceFormat::R5G6B5_UINT16;
   }
 #endif
   return CairoContentToGfxFormat(cairo_surface_get_content(surface));
@@ -785,7 +791,7 @@ DrawTargetCairo::DrawSurface(SourceSurface *aSurface,
                              const DrawSurfaceOptions &aSurfOptions,
                              const DrawOptions &aOptions)
 {
-  if (!IsValid()) {
+  if (!IsValid() || !aSurface) {
     gfxCriticalNote << "DrawSurface with bad surface " << cairo_surface_status(mSurface);
     return;
   }
@@ -1117,7 +1123,7 @@ DrawTargetCairo::ClearRect(const Rect& aRect)
   if (!mContext || aRect.Width() <= 0 || aRect.Height() <= 0 ||
       !IsFinite(aRect.X()) || !IsFinite(aRect.Width()) ||
       !IsFinite(aRect.Y()) || !IsFinite(aRect.Height())) {
-    gfxCriticalError(CriticalLog::DefaultOptions(false)) << "ClearRect with invalid argument " << gfx::hexa(mContext) << " with " << aRect.Width() << "x" << aRect.Height() << " [" << aRect.X() << ", " << aRect.Y() << "]";
+    gfxCriticalNote << "ClearRect with invalid argument " << gfx::hexa(mContext) << " with " << aRect.Width() << "x" << aRect.Height() << " [" << aRect.X() << ", " << aRect.Y() << "]";
   }
 
   cairo_set_antialias(mContext, CAIRO_ANTIALIAS_NONE);
@@ -1574,6 +1580,13 @@ DrawTargetCairo::CreateSourceSurfaceFromNativeSurface(const NativeSurface &aSurf
 already_AddRefed<DrawTarget>
 DrawTargetCairo::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFormat) const
 {
+  if (cairo_surface_status(mSurface)) {
+    RefPtr<DrawTargetCairo> target = new DrawTargetCairo();
+    if (target->Init(aSize, aFormat)) {
+      return target.forget();
+    }
+  }
+
   cairo_surface_t* similar = cairo_surface_create_similar(mSurface,
                                                           GfxFormatToCairoContent(aFormat),
                                                           aSize.width, aSize.height);
@@ -1585,7 +1598,7 @@ DrawTargetCairo::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFo
     }
   }
 
-  gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize))) << "Failed to create similar cairo surface! Size: " << aSize << " Status: " << cairo_surface_status(similar) << " format " << (int)aFormat;
+  gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize))) << "Failed to create similar cairo surface! Size: " << aSize << " Status: " << cairo_surface_status(similar) << cairo_surface_status(mSurface) << " format " << (int)aFormat;
 
   return nullptr;
 }

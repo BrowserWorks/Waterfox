@@ -215,6 +215,7 @@ public:
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
+                            GraphTime aFrom,
                             const AudioBlock& aInput,
                             AudioBlock* aOutput,
                             bool* aFinished) override
@@ -231,7 +232,7 @@ public:
     for (uint32_t i = 0; i < channelCount; ++i) {
       const float* inputSamples;
       float scaledInput[WEBAUDIO_BLOCK_SIZE];
-      if (aInput.mVolume != 1.0) {
+      if (aInput.mVolume != 1.0f) {
         AudioBlockCopyChannelWithScale(
             static_cast<const float*>(aInput.mChannelData[i]),
                                       aInput.mVolume,

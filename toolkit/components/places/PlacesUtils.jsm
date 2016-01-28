@@ -71,8 +71,12 @@ function QI_node(aNode, aIID) {
   }
   return result;
 }
-function asContainer(aNode) QI_node(aNode, Ci.nsINavHistoryContainerResultNode);
-function asQuery(aNode) QI_node(aNode, Ci.nsINavHistoryQueryResultNode);
+function asContainer(aNode) {
+  return QI_node(aNode, Ci.nsINavHistoryContainerResultNode);
+}
+function asQuery(aNode) {
+  return QI_node(aNode, Ci.nsINavHistoryQueryResultNode);
+}
 
 /**
  * Sends a bookmarks notification through the given observers.
@@ -241,8 +245,8 @@ this.PlacesUtils = {
   TOPIC_BOOKMARKS_RESTORE_SUCCESS: "bookmarks-restore-success",
   TOPIC_BOOKMARKS_RESTORE_FAILED: "bookmarks-restore-failed",
 
-  asContainer: function(aNode) asContainer(aNode),
-  asQuery: function(aNode) asQuery(aNode),
+  asContainer: aNode => asContainer(aNode),
+  asQuery: aNode => asQuery(aNode),
 
   endl: NEWLINE,
 
@@ -486,7 +490,7 @@ this.PlacesUtils = {
                    Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT,
                    Ci.nsINavHistoryResultNode.RESULT_TYPE_QUERY],
   nodeIsContainer: function PU_nodeIsContainer(aNode) {
-    return this.containerTypes.indexOf(aNode.type) != -1;
+    return this.containerTypes.includes(aNode.type);
   },
 
   /**
@@ -577,11 +581,11 @@ this.PlacesUtils = {
       if (PlacesUtils.nodeIsFolder(node) &&
           node.type != Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT &&
           asQuery(node).queryOptions.excludeItems) {
-        let node = PlacesUtils.getFolderContents(node.itemId, false, true).root;
+        let folderRoot = PlacesUtils.getFolderContents(node.itemId, false, true).root;
         try {
-          return gatherDataFunc(node);
+          return gatherDataFunc(folderRoot);
         } finally {
-          node.containerOpen = false;
+          folderRoot.containerOpen = false;
         }
       }
       // If we didn't create our own query, do not alter the node's state.
@@ -1656,40 +1660,6 @@ this.PlacesUtils = {
   },
 
   /**
-   * Returns the passed URL with a #-moz-resolution fragment
-   * for the specified dimensions and devicePixelRatio.
-   *
-   * @param aWindow
-   *        A window from where we want to get the device
-   *        pixel Ratio
-   *
-   * @param aURL
-   *        The URL where we should add the fragment
-   *
-   * @param aWidth
-   *        The target image width
-   *
-   * @param aHeight
-   *        The target image height
-   *
-   * @return The URL with the fragment at the end
-   */
-  getImageURLForResolution:
-  function PU_getImageURLForResolution(aWindow, aURL, aWidth = 16, aHeight = 16) {
-    // We only want to modify the URL when the file extension is ".ico" or
-    // it's a data URI with an icon media-type.
-    let uri = Services.io.newURI(aURL, null, null);
-    if ((!(uri instanceof Ci.nsIURL) || uri.fileExtension.toLowerCase() != "ico") &&
-        !/^data:image\/(?:x-icon|icon|ico)/.test(aURL)) {
-      return aURL;
-    }
-    let width  = Math.round(aWidth * aWindow.devicePixelRatio);
-    let height = Math.round(aHeight * aWindow.devicePixelRatio);
-    return aURL + (aURL.includes("#") ? "&" : "#") +
-           "-moz-resolution=" + width + "," + height;
-  },
-
-  /**
    * Get the unique id for an item (a bookmark, a folder or a separator) given
    * its item id.
    *
@@ -2071,48 +2041,67 @@ XPCOMUtils.defineLazyGetter(this, "bundle", function() {
          createBundle(PLACES_STRING_BUNDLE_URI);
 });
 
-XPCOMUtils.defineLazyGetter(this, "gAsyncDBConnPromised",
-  () => new Promise((resolve) => {
-    Sqlite.cloneStorageConnection({
-      connection: PlacesUtils.history.DBConnection,
-      readOnly:   true
-    }).then(conn => {
-      try {
-        Sqlite.shutdown.addBlocker(
-          "PlacesUtils read-only connection closing",
-          conn.close.bind(conn));
-        PlacesUtils.history.shutdownClient.jsclient.addBlocker(
-          "PlacesUtils read-only connection closing",
-          conn.close.bind(conn));
-      } catch(ex) {
-        // It's too late to block shutdown, just close the connection.
-        conn.close();
-        throw ex;
-      }
-      resolve(conn);
+/**
+ * Setup internal databases for closing properly during shutdown.
+ *
+ * 1. Places initiates shutdown.
+ * 2. Before places can move to the step where it closes the low-level connection,
+ *   we need to make sure that we have closed `conn`.
+ * 3. Before we can close `conn`, we need to make sure that all external clients
+ *   have stopped using `conn`.
+ * 4. Before we can close Sqlite, we need to close `conn`.
+ */
+function setupDbForShutdown(conn, name) {
+  try {
+    let state = "0. Not started.";
+    let promiseClosed = new Promise(resolve => {
+      // The service initiates shutdown.
+      // Before it can safely close its connection, we need to make sure
+      // that we have closed the high-level connection.
+      AsyncShutdown.placesClosingInternalConnection.addBlocker(`${name} closing as part of Places shutdown`,
+        Task.async(function*() {
+          state = "1. Service has initiated shutdown";
+
+          // At this stage, all external clients have finished using the
+          // database. We just need to close the high-level connection.
+          yield conn.close();
+          state = "2. Closed Sqlite.jsm connection.";
+
+          resolve();
+        }),
+        () => state
+      );
     });
+
+    // Make sure that Sqlite.jsm doesn't close until we are done
+    // with the high-level connection.
+    Sqlite.shutdown.addBlocker(`${name} must be closed before Sqlite.jsm`,
+      () => promiseClosed,
+      () => state
+    );
+  } catch(ex) {
+    // It's too late to block shutdown, just close the connection.
+    conn.close();
+    throw ex;
+  }
+}
+
+XPCOMUtils.defineLazyGetter(this, "gAsyncDBConnPromised",
+  () => Sqlite.cloneStorageConnection({
+    connection: PlacesUtils.history.DBConnection,
+    readOnly:   true
+  }).then(conn => {
+      setupDbForShutdown(conn, "PlacesUtils read-only connection");
+      return conn;
   })
 );
 
 XPCOMUtils.defineLazyGetter(this, "gAsyncDBWrapperPromised",
-  () => new Promise((resolve) => {
-    Sqlite.wrapStorageConnection({
+  () => Sqlite.wrapStorageConnection({
       connection: PlacesUtils.history.DBConnection,
-    }).then(conn => {
-      try {
-        Sqlite.shutdown.addBlocker(
-          "PlacesUtils wrapped connection closing",
-          conn.close.bind(conn));
-        PlacesUtils.history.shutdownClient.jsclient.addBlocker(
-          "PlacesUtils wrapped connection closing",
-          conn.close.bind(conn));
-      } catch(ex) {
-        // It's too late to block shutdown, just close the connection.
-        conn.close();
-        throw ex;
-      }
-      resolve(conn);
-    });
+  }).then(conn => {
+    setupDbForShutdown(conn, "PlacesUtils wrapped connection");
+    return conn;
   })
 );
 
@@ -2539,45 +2528,61 @@ function TransactionItemCache()
 }
 
 TransactionItemCache.prototype = {
-  set id(v)
-    this._id = (parseInt(v) > 0 ? v : null),
-  get id()
-    this._id || -1,
-  set parentId(v)
-    this._parentId = (parseInt(v) > 0 ? v : null),
-  get parentId()
-    this._parentId || -1,
+  set id(v) {
+    this._id = (parseInt(v) > 0 ? v : null);
+  },
+  get id() {
+    return this._id || -1;
+  },
+  set parentId(v) {
+    this._parentId = (parseInt(v) > 0 ? v : null);
+  },
+  get parentId() {
+    return this._parentId || -1;
+  },
   keyword: null,
   title: null,
   dateAdded: null,
   lastModified: null,
   postData: null,
   itemType: null,
-  set uri(v)
-    this._uri = (v instanceof Ci.nsIURI ? v.clone() : null),
-  get uri()
-    this._uri || null,
-  set feedURI(v)
-    this._feedURI = (v instanceof Ci.nsIURI ? v.clone() : null),
-  get feedURI()
-    this._feedURI || null,
-  set siteURI(v)
-    this._siteURI = (v instanceof Ci.nsIURI ? v.clone() : null),
-  get siteURI()
-    this._siteURI || null,
-  set index(v)
-    this._index = (parseInt(v) >= 0 ? v : null),
+  set uri(v) {
+    this._uri = (v instanceof Ci.nsIURI ? v.clone() : null);
+  },
+  get uri() {
+    return this._uri || null;
+  },
+  set feedURI(v) {
+    this._feedURI = (v instanceof Ci.nsIURI ? v.clone() : null);
+  },
+  get feedURI() {
+    return this._feedURI || null;
+  },
+  set siteURI(v) {
+    this._siteURI = (v instanceof Ci.nsIURI ? v.clone() : null);
+  },
+  get siteURI() {
+    return this._siteURI || null;
+  },
+  set index(v) {
+    this._index = (parseInt(v) >= 0 ? v : null);
+  },
   // Index can be 0.
-  get index()
-    this._index != null ? this._index : PlacesUtils.bookmarks.DEFAULT_INDEX,
-  set annotations(v)
-    this._annotations = Array.isArray(v) ? Cu.cloneInto(v, {}) : null,
-  get annotations()
-    this._annotations || null,
-  set tags(v)
-    this._tags = (v && Array.isArray(v) ? Array.slice(v) : null),
-  get tags()
-    this._tags || null,
+  get index() {
+    return this._index != null ? this._index : PlacesUtils.bookmarks.DEFAULT_INDEX;
+  },
+  set annotations(v) {
+    this._annotations = Array.isArray(v) ? Cu.cloneInto(v, {}) : null;
+  },
+  get annotations() {
+    return this._annotations || null;
+  },
+  set tags(v) {
+    this._tags = (v && Array.isArray(v) ? Array.slice(v) : null);
+  },
+  get tags() {
+    return this._tags || null;
+  },
 };
 
 
@@ -2592,15 +2597,23 @@ function BaseTransaction()
 
 BaseTransaction.prototype = {
   name: null,
-  set childTransactions(v)
-    this._childTransactions = (Array.isArray(v) ? Array.slice(v) : null),
-  get childTransactions()
-    this._childTransactions || null,
+  set childTransactions(v) {
+    this._childTransactions = (Array.isArray(v) ? Array.slice(v) : null);
+  },
+  get childTransactions() {
+    return this._childTransactions || null;
+  },
   doTransaction: function BTXN_doTransaction() {},
-  redoTransaction: function BTXN_redoTransaction() this.doTransaction(),
+  redoTransaction: function BTXN_redoTransaction() {
+    return this.doTransaction();
+  },
   undoTransaction: function BTXN_undoTransaction() {},
-  merge: function BTXN_merge() false,
-  get isTransient() false,
+  merge: function BTXN_merge() {
+    return false;
+  },
+  get isTransient() {
+    return false;
+  },
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsITransaction
   ]),
@@ -2959,7 +2972,7 @@ function PlacesRemoveLivemarkTransaction(aLivemarkId)
   let annosToExclude = [PlacesUtils.LMANNO_FEEDURI,
                         PlacesUtils.LMANNO_SITEURI];
   this.item.annotations = annos.filter(function(aValue, aIndex, aArray) {
-      return annosToExclude.indexOf(aValue.name) == -1;
+      return !annosToExclude.includes(aValue.name);
     });
   this.item.dateAdded = PlacesUtils.bookmarks.getItemDateAdded(this.item.id);
   this.item.lastModified =
@@ -3732,7 +3745,7 @@ PlacesUntagURITransaction.prototype = {
     // set nonexistent tags.
     let tags = PlacesUtils.tagging.getTagsForURI(this.item.uri);
     this.item.tags = this.item.tags.filter(function (aTag) {
-      return tags.indexOf(aTag) != -1;
+      return tags.includes(aTag);
     });
     PlacesUtils.tagging.untagURI(this.item.uri, this.item.tags);
   },

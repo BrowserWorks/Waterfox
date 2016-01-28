@@ -84,7 +84,7 @@ private:
   bool WritePrivateKey(JSStructuredCloneWriter* aWriter,
                        const nsNSSShutDownPreventionLock& aLockProof) const;
 
-  nsRefPtr<nsIGlobalObject> mGlobal;
+  RefPtr<nsIGlobalObject> mGlobal;
   ScopedSECKEYPrivateKey mPrivateKey;
   ScopedCERTCertificate mCertificate;
   SSLKEAType mAuthType;

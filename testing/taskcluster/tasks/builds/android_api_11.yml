@@ -15,7 +15,7 @@ task:
     - 'index.buildbot.revisions.{{head_rev}}.{{project}}.android-api-11'
 
   scopes:
-    - 'docker-worker:cache:build-android-api-11-c6-workspace'
+    - 'docker-worker:cache:build-{{project}}-android-api-11-c6-workspace'
     - 'docker-worker:cache:tooltool-cache'
     - 'docker-worker:relengapi-proxy:tooltool.download.internal'
     - 'docker-worker:relengapi-proxy:tooltool.download.public'
@@ -23,7 +23,7 @@ task:
   payload:
     image: '{{#docker_image}}desktop-build{{/docker_image}}'
     cache:
-      build-android-api-11-c6-workspace: '/home/worker/workspace'
+      build-{{project}}-android-api-11-c6-workspace: '/home/worker/workspace'
       tooltool-cache: '/home/worker/tooltool-cache'
 
     features:
@@ -40,12 +40,6 @@ task:
       MH_CUSTOM_BUILD_VARIANT_CFG: api-11
       MH_BRANCH: {{project}}
       MH_BUILD_POOL: taskcluster
-
-      # image paths
-      TOOLTOOL_CACHE: '/home/worker/tooltool-cache'
-
-      # authentication
-      RELENGAPI_TOKEN: 'TODO' # 1164612: encrypt this secret
 
     maxRunTime: 36000
 

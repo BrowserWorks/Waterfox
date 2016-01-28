@@ -1432,6 +1432,14 @@ var WifiManager = (function() {
                               ? wifiCommand.getConnectionInfoICS
                               : wifiCommand.getConnectionInfoGB;
 
+  manager.ensureSupplicantDetached = aCallback => {
+    if (!manager.enabled) {
+      aCallback();
+      return;
+    }
+    wifiCommand.closeSupplicantConnection(aCallback);
+  };
+
   manager.isHandShakeState = function(state) {
     switch (state) {
       case "AUTHENTICATING":
@@ -2600,7 +2608,8 @@ WifiWorker.prototype = {
   // connect to which ever network it thinks is best, so when we select the
   // proper network (or fail to), we need to re-enable the rest.
   _enableAllNetworks: function() {
-    for each (let net in this.configuredNetworks) {
+    for (let key in this.configuredNetworks) {
+      let net = this.configuredNetworks[key];
       WifiManager.enableNetwork(net.netId, false, function(ok) {
         net.disabled = ok ? 1 : 0;
       });
@@ -2636,7 +2645,9 @@ WifiWorker.prototype = {
 
         // Only fire the event if the link speed changed or the signal
         // strength changed by more than 10%.
-        function tensPlace(percent) ((percent / 10) | 0)
+        function tensPlace(percent) {
+          return (percent / 10) | 0;
+        }
 
         if (last && last.linkSpeed === info.linkSpeed &&
             last.ipAddress === info.ipAddress &&
@@ -3818,10 +3829,14 @@ WifiWorker.prototype = {
       break;
 
     case "xpcom-shutdown":
-      let wifiService = Cc["@mozilla.org/wifi/service;1"].getService(Ci.nsIWifiProxyService);
-      wifiService.shutdown();
-      let wifiCertService = Cc["@mozilla.org/wifi/certservice;1"].getService(Ci.nsIWifiCertService);
-      wifiCertService.shutdown();
+      // Ensure the supplicant is detached from B2G to avoid XPCOM shutdown
+      // blocks forever.
+      WifiManager.ensureSupplicantDetached(() => {
+        let wifiService = Cc["@mozilla.org/wifi/service;1"].getService(Ci.nsIWifiProxyService);
+        wifiService.shutdown();
+        let wifiCertService = Cc["@mozilla.org/wifi/certservice;1"].getService(Ci.nsIWifiCertService);
+        wifiCertService.shutdown();
+      });
       break;
     }
   },

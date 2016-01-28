@@ -74,22 +74,22 @@ SecurityWrapper<Base>::isExtensible(JSContext* cx, HandleObject wrapper, bool* e
     return true;
 }
 
-// For security wrappers, we run the OrdinaryToPrimitive algorithm on the wrapper
-// itself, which means that the existing security policy on operations like
-// toString() will take effect and do the right thing here.
 template <class Base>
 bool
-SecurityWrapper<Base>::defaultValue(JSContext* cx, HandleObject wrapper,
-                                    JSType hint, MutableHandleValue vp) const
+SecurityWrapper<Base>::getBuiltinClass(JSContext* cx, HandleObject wrapper,
+                                       ESClassValue* classValue) const
 {
-    return OrdinaryToPrimitive(cx, wrapper, hint, vp);
+    *classValue = ESClass_Other;
+    return true;
 }
 
 template <class Base>
 bool
-SecurityWrapper<Base>::objectClassIs(HandleObject obj, ESClassValue classValue, JSContext* cx) const
+SecurityWrapper<Base>::isArray(JSContext* cx, HandleObject obj, JS::IsArrayAnswer* answer) const
 {
-    return false;
+    // This should ReportUnwrapDenied(cx), but bug 849730 disagrees.  :-(
+    *answer = JS::IsArrayAnswer::NotArray;
+    return true;
 }
 
 template <class Base>

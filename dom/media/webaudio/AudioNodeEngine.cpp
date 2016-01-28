@@ -17,7 +17,7 @@ ThreadSharedFloatArrayBufferList::Create(uint32_t aChannelCount,
                                          size_t aLength,
                                          const mozilla::fallible_t&)
 {
-  nsRefPtr<ThreadSharedFloatArrayBufferList> buffer =
+  RefPtr<ThreadSharedFloatArrayBufferList> buffer =
     new ThreadSharedFloatArrayBufferList(aChannelCount);
 
   for (uint32_t i = 0; i < aChannelCount; ++i) {
@@ -273,6 +273,7 @@ AudioBufferSumOfSquares(const float* aInput, uint32_t aLength)
 
 void
 AudioNodeEngine::ProcessBlock(AudioNodeStream* aStream,
+                              GraphTime aFrom,
                               const AudioBlock& aInput,
                               AudioBlock* aOutput,
                               bool* aFinished)

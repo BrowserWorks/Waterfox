@@ -291,6 +291,7 @@ selfhosting_srcs := \
   $(srcdir)/builtin/IntlData.js \
   $(srcdir)/builtin/Iterator.js \
   $(srcdir)/builtin/Map.js \
+  $(srcdir)/builtin/Module.js \
   $(srcdir)/builtin/Number.js \
   $(srcdir)/builtin/Object.js \
   $(srcdir)/builtin/Reflect.js \
@@ -310,12 +311,7 @@ selfhosted_out_h_deps := \
   $(srcdir)/builtin/SelfHostingDefines.h \
   $(NULL)
 
-SELFHOSTED_DEFINES += $(DEFINES) $(ACDEFINES)
-ifdef MOZ_DEBUG
-SELFHOSTED_DEFINES += $(MOZ_DEBUG_ENABLE_DEFS)
-else
-SELFHOSTED_DEFINES += $(MOZ_DEBUG_DISABLE_DEFS)
-endif
+SELFHOSTED_DEFINES += $(DEFINES) $(ACDEFINES) $(MOZ_DEBUG_DEFINES)
 
 selfhosted.out.h: $(selfhosted_out_h_deps)
 	$(PYTHON) $(srcdir)/builtin/embedjs.py $(SELFHOSTED_DEFINES) \

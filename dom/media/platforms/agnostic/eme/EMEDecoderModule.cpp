@@ -14,19 +14,11 @@
 #include "nsServiceManagerUtils.h"
 #include "MediaInfo.h"
 #include "nsClassHashtable.h"
+#include "GMPDecoderModule.h"
 
 namespace mozilla {
 
 typedef MozPromiseRequestHolder<CDMProxy::DecryptPromise> DecryptPromiseRequestHolder;
-
-static PLDHashOperator
-DropDecryptPromises(MediaRawData* aKey,
-                    nsAutoPtr<DecryptPromiseRequestHolder>& aData,
-                    void* aUserArg)
-{
-  aData->DisconnectIfExists();
-  return PL_DHASH_REMOVE;
-}
 
 class EMEDecryptor : public MediaDataDecoder {
 
@@ -45,12 +37,12 @@ public:
   {
   }
 
-  virtual nsRefPtr<InitPromise> Init() override {
+  RefPtr<InitPromise> Init() override {
     MOZ_ASSERT(!mIsShutdown);
     return mDecoder->Init();
   }
 
-  virtual nsresult Input(MediaRawData* aSample) override {
+  nsresult Input(MediaRawData* aSample) override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
@@ -104,26 +96,34 @@ public:
     }
   }
 
-  virtual nsresult Flush() override {
+  nsresult Flush() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-    mDecrypts.Enumerate(&DropDecryptPromises, nullptr);
+    for (auto iter = mDecrypts.Iter(); !iter.Done(); iter.Next()) {
+      nsAutoPtr<DecryptPromiseRequestHolder>& holder = iter.Data();
+      holder->DisconnectIfExists();
+      iter.Remove();
+    }
     nsresult rv = mDecoder->Flush();
     unused << NS_WARN_IF(NS_FAILED(rv));
     mSamplesWaitingForKey->Flush();
     return rv;
   }
 
-  virtual nsresult Drain() override {
+  nsresult Drain() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-    mDecrypts.Enumerate(&DropDecryptPromises, nullptr);
+    for (auto iter = mDecrypts.Iter(); !iter.Done(); iter.Next()) {
+      nsAutoPtr<DecryptPromiseRequestHolder>& holder = iter.Data();
+      holder->DisconnectIfExists();
+      iter.Remove();
+    }
     nsresult rv = mDecoder->Drain();
     unused << NS_WARN_IF(NS_FAILED(rv));
     return rv;
   }
 
-  virtual nsresult Shutdown() override {
+  nsresult Shutdown() override {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
     mIsShutdown = true;
@@ -139,12 +139,12 @@ public:
 
 private:
 
-  nsRefPtr<MediaDataDecoder> mDecoder;
+  RefPtr<MediaDataDecoder> mDecoder;
   MediaDataDecoderCallback* mCallback;
-  nsRefPtr<TaskQueue> mTaskQueue;
-  nsRefPtr<CDMProxy> mProxy;
+  RefPtr<TaskQueue> mTaskQueue;
+  RefPtr<CDMProxy> mProxy;
   nsClassHashtable<nsRefPtrHashKey<MediaRawData>, DecryptPromiseRequestHolder> mDecrypts;
-  nsRefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
   bool mIsShutdown;
 };
 
@@ -157,12 +157,12 @@ public:
   {
   }
 
-  virtual nsresult Input(MediaRawData* aSample) override;
-  virtual nsresult Shutdown() override;
+  nsresult Input(MediaRawData* aSample) override;
+  nsresult Shutdown() override;
 
 private:
-  nsRefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
-  nsRefPtr<CDMProxy> mProxy;
+  RefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  RefPtr<CDMProxy> mProxy;
 };
 
 nsresult
@@ -192,7 +192,7 @@ EMEMediaDataDecoderProxy::Shutdown()
 }
 
 EMEDecoderModule::EMEDecoderModule(CDMProxy* aProxy,
-                                   PlatformDecoderModule* aPDM,
+                                   PDMFactory* aPDM,
                                    bool aCDMDecodesAudio,
                                    bool aCDMDecodesVideo)
   : mProxy(aProxy)
@@ -220,7 +220,7 @@ CreateDecoderWrapper(MediaDataDecoderCallback* aCallback, CDMProxy* aProxy, Flus
     return nullptr;
   }
 
-  nsRefPtr<MediaDataDecoderProxy> decoder(new EMEMediaDataDecoderProxy(thread, aCallback, aProxy, aTaskQueue));
+  RefPtr<MediaDataDecoderProxy> decoder(new EMEMediaDataDecoderProxy(thread, aCallback, aProxy, aTaskQueue));
   return decoder.forget();
 }
 
@@ -231,8 +231,10 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      FlushableTaskQueue* aVideoTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  if (mCDMDecodesVideo && aConfig.mCrypto.mValid) {
-    nsRefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aVideoTaskQueue);
+  MOZ_ASSERT(aConfig.mCrypto.mValid);
+
+  if (mCDMDecodesVideo) {
+    RefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aVideoTaskQueue);
     wrapper->SetProxyTarget(new EMEVideoDecoder(mProxy,
                                                 aConfig,
                                                 aLayersBackend,
@@ -243,7 +245,7 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
   }
 
   MOZ_ASSERT(mPDM);
-  nsRefPtr<MediaDataDecoder> decoder(
+  RefPtr<MediaDataDecoder> decoder(
     mPDM->CreateDecoder(aConfig,
                         aVideoTaskQueue,
                         aCallback,
@@ -253,11 +255,7 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
     return nullptr;
   }
 
-  if (!aConfig.mCrypto.mValid) {
-    return decoder.forget();
-  }
-
-  nsRefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
+  RefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
                                                          aCallback,
                                                          mProxy,
                                                          AbstractThread::GetCurrent()->AsTaskQueue()));
@@ -269,8 +267,10 @@ EMEDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
                                      FlushableTaskQueue* aAudioTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  if (mCDMDecodesAudio && aConfig.mCrypto.mValid) {
-    nsRefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aAudioTaskQueue);
+  MOZ_ASSERT(aConfig.mCrypto.mValid);
+
+  if (mCDMDecodesAudio) {
+    RefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aAudioTaskQueue);
     wrapper->SetProxyTarget(new EMEAudioDecoder(mProxy,
                                                 aConfig,
                                                 aAudioTaskQueue,
@@ -279,17 +279,13 @@ EMEDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
   }
 
   MOZ_ASSERT(mPDM);
-  nsRefPtr<MediaDataDecoder> decoder(
+  RefPtr<MediaDataDecoder> decoder(
     mPDM->CreateDecoder(aConfig, aAudioTaskQueue, aCallback));
   if (!decoder) {
     return nullptr;
   }
 
-  if (!aConfig.mCrypto.mValid) {
-    return decoder.forget();
-  }
-
-  nsRefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
+  RefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
                                                          aCallback,
                                                          mProxy,
                                                          AbstractThread::GetCurrent()->AsTaskQueue()));
@@ -304,6 +300,14 @@ EMEDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
   } else {
     return kNeedNone;
   }
+}
+
+bool
+EMEDecoderModule::SupportsMimeType(const nsACString& aMimeType)
+{
+  Maybe<nsCString> gmp;
+  gmp.emplace(NS_ConvertUTF16toUTF8(mProxy->KeySystem()));
+  return GMPDecoderModule::SupportsMimeType(aMimeType, gmp);
 }
 
 } // namespace mozilla

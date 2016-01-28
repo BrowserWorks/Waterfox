@@ -17,6 +17,12 @@
 #include "nsIGlobalObject.h"
 #include "nsTHashtable.h"
 
+// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
+// GetTickCount().
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
+
 namespace mozilla {
 namespace dom {
 
@@ -34,7 +40,10 @@ public:
   }
 
 protected:
-  virtual ~AnimationTimeline() { }
+  virtual ~AnimationTimeline()
+  {
+    mAnimationOrder.clear();
+  }
 
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -42,7 +51,7 @@ public:
 
   nsIGlobalObject* GetParentObject() const { return mWindow; }
 
-  typedef nsTArray<nsRefPtr<Animation>> AnimationSequence;
+  typedef nsTArray<RefPtr<Animation>> AnimationSequence;
 
   // AnimationTimeline methods
   virtual Nullable<TimeDuration> GetCurrentTime() const = 0;
@@ -77,15 +86,29 @@ public:
 
   virtual TimeStamp ToTimeStamp(const TimeDuration& aTimelineTime) const = 0;
 
-  void AddAnimation(Animation& aAnimation);
-  void RemoveAnimation(Animation& aAnimation);
+  /**
+   * Inform this timeline that |aAnimation| which is or was observing the
+   * timeline, has been updated. This serves as both the means to associate
+   * AND disassociate animations with a timeline. The timeline itself will
+   * determine if it needs to begin, continue or stop tracking this animation.
+   */
+  virtual void NotifyAnimationUpdated(Animation& aAnimation);
+
+  void RemoveAnimation(Animation* aAnimation);
 
 protected:
   nsCOMPtr<nsIGlobalObject> mWindow;
 
   // Animations observing this timeline
+  //
+  // We store them in (a) a hashset for quick lookup, and (b) an array
+  // to maintain a fixed sampling order.
+  //
+  // The hashset keeps a strong reference to each animation since
+  // dealing with addref/release with LinkedList is difficult.
   typedef nsTHashtable<nsRefPtrHashKey<dom::Animation>> AnimationSet;
   AnimationSet mAnimations;
+  LinkedList<dom::Animation> mAnimationOrder;
 };
 
 } // namespace dom

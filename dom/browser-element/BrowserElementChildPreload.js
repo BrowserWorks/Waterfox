@@ -12,6 +12,9 @@ var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/Microformats.js");
+Cu.import("resource://gre/modules/ExtensionContent.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "acs",
                                    "@mozilla.org/audiochannel/service;1",
@@ -82,6 +85,38 @@ const COMMAND_MAP = {
 
 var global = this;
 
+function BrowserElementProxyForwarder() {
+}
+
+BrowserElementProxyForwarder.prototype = {
+  init: function() {
+    Services.obs.addObserver(this, "browser-element-api:proxy-call", false);
+    addMessageListener("browser-element-api:proxy", this);
+  },
+
+  uninit: function() {
+    Services.obs.removeObserver(this, "browser-element-api:proxy-call", false);
+    removeMessageListener("browser-element-api:proxy", this);
+  },
+
+  // Observer callback receives messages from BrowserElementProxy.js
+  observe: function(subject, topic, stringifedData) {
+    if (subject !== content) {
+      return;
+    }
+
+    // Forward it to BrowserElementParent.js
+    sendAsyncMessage(topic, JSON.parse(stringifedData));
+  },
+
+  // Message manager callback receives messages from BrowserElementParent.js
+  receiveMessage: function(mmMsg) {
+    // Forward it to BrowserElementProxy.js
+    Services.obs.notifyObservers(
+      content, mmMsg.name, JSON.stringify(mmMsg.json));
+  }
+};
+
 function BrowserElementChild() {
   // Maps outer window id --> weak ref to window.  Used by modal dialog code.
   this._windowIDDict = {};
@@ -100,6 +135,8 @@ function BrowserElementChild() {
   this._isContentWindowCreated = false;
   this._pendingSetInputMethodActive = [];
   this._selectionStateChangedTarget = null;
+
+  this.forwarder = new BrowserElementProxyForwarder();
 
   this._init();
 };
@@ -251,7 +288,8 @@ BrowserElementChild.prototype = {
       "set-audio-channel-volume": this._recvSetAudioChannelVolume,
       "get-audio-channel-muted": this._recvGetAudioChannelMuted,
       "set-audio-channel-muted": this._recvSetAudioChannelMuted,
-      "get-is-audio-channel-active": this._recvIsAudioChannelActive
+      "get-is-audio-channel-active": this._recvIsAudioChannelActive,
+      "get-structured-data": this._recvGetStructuredData
     }
 
     addMessageListener("browser-element-api:call", function(aMessage) {
@@ -284,6 +322,8 @@ BrowserElementChild.prototype = {
     OBSERVED_EVENTS.forEach((aTopic) => {
       Services.obs.addObserver(this, aTopic, false);
     });
+
+    this.forwarder.init();
   },
 
   observe: function(subject, topic, data) {
@@ -323,6 +363,9 @@ BrowserElementChild.prototype = {
     OBSERVED_EVENTS.forEach((aTopic) => {
       Services.obs.removeObserver(this, aTopic);
     });
+
+    this.forwarder.uninit();
+    this.forwarder = null;
   },
 
   get _windowUtils() {
@@ -866,6 +909,7 @@ BrowserElementChild.prototype = {
     var elem = e.target;
     var menuData = {systemTargets: [], contextmenu: null};
     var ctxMenuId = null;
+    var clipboardPlainTextOnly = Services.prefs.getBoolPref('clipboard.plainTextOnly');
     var copyableElements = {
       image: false,
       link: false,
@@ -893,7 +937,7 @@ BrowserElementChild.prototype = {
 
       // Enable copy image/link option
       if (elem.nodeName == 'IMG') {
-        copyableElements.image = true;
+        copyableElements.image = !clipboardPlainTextOnly;
       } else if (elem.nodeName == 'A') {
         copyableElements.link = true;
       }
@@ -912,6 +956,8 @@ BrowserElementChild.prototype = {
     // Pass along the position where the context menu should be located
     menuData.clientX = e.clientX;
     menuData.clientY = e.clientY;
+    menuData.screenX = e.screenX;
+    menuData.screenY = e.screenY;
 
     // The value returned by the contextmenu sync call is true if the embedder
     // called preventDefault() on its contextmenu event.
@@ -927,7 +973,7 @@ BrowserElementChild.prototype = {
   },
 
   _getSystemCtxMenuData: function(elem) {
-    let documentURI = 
+    let documentURI =
       docShell.QueryInterface(Ci.nsIWebNavigation).currentURI.spec;
     if ((elem instanceof Ci.nsIDOMHTMLAnchorElement && elem.href) ||
         (elem instanceof Ci.nsIDOMHTMLAreaElement && elem.href)) {
@@ -1258,7 +1304,7 @@ BrowserElementChild.prototype = {
   },
 
   _buildMenuObj: function(menu, idPrefix, copyableElements) {
-    var menuObj = {type: 'menu', items: []};
+    var menuObj = {type: 'menu', customized: false, items: []};
     // Customized context menu
     if (menu) {
       this._maybeCopyAttribute(menu, menuObj, 'label');
@@ -1274,6 +1320,10 @@ BrowserElementChild.prototype = {
           this._ctxHandlers[id] = child;
           menuObj.items.push(menuitem);
         }
+      }
+
+      if (menuObj.items.length > 0) {
+        menuObj.customized = true;
       }
     }
     // Note: Display "Copy Link" first in order to make sure "Copy Image" is
@@ -1552,6 +1602,300 @@ BrowserElementChild.prototype = {
       msgData.errorMsg = 'Cannot access mozInputMethod.';
     }
     sendAsyncMsg('got-set-input-method-active', msgData);
+  },
+
+  _processMicroformatValue(field, value) {
+    if (['node', 'resolvedNode', 'semanticType'].includes(field)) {
+      return null;
+    } else if (Array.isArray(value)) {
+      var result = value.map(i => this._processMicroformatValue(field, i))
+                        .filter(i => i !== null);
+      return result.length ? result : null;
+    } else if (typeof value == 'string') {
+      return value;
+    } else if (typeof value == 'object' && value !== null) {
+      return this._processMicroformatItem(value);
+    }
+    return null;
+  },
+
+  // This function takes legacy Microformat data (hCard and hCalendar)
+  // and produces the same result that the equivalent Microdata data
+  // would produce.
+  _processMicroformatItem(microformatData) {
+    var result = {};
+
+    if (microformatData.semanticType == 'geo') {
+      return microformatData.latitude + ';' + microformatData.longitude;
+    }
+
+    if (microformatData.semanticType == 'hCard') {
+      result.type = ["http://microformats.org/profile/hcard"];
+    } else if (microformatData.semanticType == 'hCalendar') {
+      result.type = ["http://microformats.org/profile/hcalendar#vevent"];
+    }
+
+    for (let field of Object.getOwnPropertyNames(microformatData)) {
+      var processed = this._processMicroformatValue(field, microformatData[field]);
+      if (processed === null) {
+        continue;
+      }
+      if (!result.properties) {
+        result.properties = {};
+      }
+      if (Array.isArray(processed)) {
+        result.properties[field] = processed;
+      } else {
+        result.properties[field] = [processed];
+      }
+    }
+
+    return result;
+  },
+
+  _findItemProperties: function(node, properties, alreadyProcessed) {
+    if (node.itemProp) {
+      var value;
+
+      if (node.itemScope) {
+        value = this._processItem(node, alreadyProcessed);
+      } else {
+        value = node.itemValue;
+      }
+
+      for (let i = 0; i < node.itemProp.length; ++i) {
+        var property = node.itemProp[i];
+        if (!properties[property]) {
+          properties[property] = [];
+        }
+
+        properties[property].push(value);
+      }
+    }
+
+    if (!node.itemScope) {
+      var childNodes = node.childNodes;
+      for (var childNode of childNodes) {
+        this._findItemProperties(childNode, properties, alreadyProcessed);
+      }
+    }
+  },
+
+  _processItem: function(node, alreadyProcessed = []) {
+    if (alreadyProcessed.includes(node)) {
+      return "ERROR";
+    }
+
+    alreadyProcessed.push(node);
+
+    var result = {};
+
+    if (node.itemId) {
+      result.id = node.itemId;
+    }
+    if (node.itemType) {
+      result.type = [];
+      for (let i = 0; i < node.itemType.length; ++i) {
+        result.type.push(node.itemType[i]);
+      }
+    }
+
+    var properties = {};
+
+    var childNodes = node.childNodes;
+    for (var childNode of childNodes) {
+      this._findItemProperties(childNode, properties, alreadyProcessed);
+    }
+
+    if (node.itemRef) {
+      for (let i = 0; i < node.itemRef.length; ++i) {
+        var refNode = content.document.getElementById(node.itemRef[i]);
+        this._findItemProperties(refNode, properties, alreadyProcessed);
+      }
+    }
+
+    result.properties = properties;
+    return result;
+  },
+
+  _recvGetStructuredData: function(data) {
+    var result = {
+      items: []
+    };
+
+    var microdataItems = content.document.getItems();
+
+    for (let microdataItem of microdataItems) {
+      result.items.push(this._processItem(microdataItem));
+    }
+
+    var hCardItems = Microformats.get("hCard", content.document);
+    for (let hCardItem of hCardItems) {
+      if (!hCardItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
+        result.items.push(this._processMicroformatItem(hCardItem));
+      }
+    }
+
+    var hCalendarItems = Microformats.get("hCalendar", content.document);
+    for (let hCalendarItem of hCalendarItems) {
+      if (!hCalendarItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
+        result.items.push(this._processMicroformatItem(hCalendarItem));
+      }
+    }
+
+    var resultString = JSON.stringify(result);
+
+    sendAsyncMsg('got-structured-data', {
+      id: data.json.id,
+      successRv: resultString
+    });
+  },
+
+  _processMicroformatValue(field, value) {
+    if (['node', 'resolvedNode', 'semanticType'].includes(field)) {
+      return null;
+    } else if (Array.isArray(value)) {
+      var result = value.map(i => this._processMicroformatValue(field, i))
+                        .filter(i => i !== null);
+      return result.length ? result : null;
+    } else if (typeof value == 'string') {
+      return value;
+    } else if (typeof value == 'object' && value !== null) {
+      return this._processMicroformatItem(value);
+    }
+    return null;
+  },
+
+  // This function takes legacy Microformat data (hCard and hCalendar)
+  // and produces the same result that the equivalent Microdata data
+  // would produce.
+  _processMicroformatItem(microformatData) {
+    var result = {};
+
+    if (microformatData.semanticType == 'geo') {
+      return microformatData.latitude + ';' + microformatData.longitude;
+    }
+
+    if (microformatData.semanticType == 'hCard') {
+      result.type = ["http://microformats.org/profile/hcard"];
+    } else if (microformatData.semanticType == 'hCalendar') {
+      result.type = ["http://microformats.org/profile/hcalendar#vevent"];
+    }
+
+    for (let field of Object.getOwnPropertyNames(microformatData)) {
+      var processed = this._processMicroformatValue(field, microformatData[field]);
+      if (processed === null) {
+        continue;
+      }
+      if (!result.properties) {
+        result.properties = {};
+      }
+      if (Array.isArray(processed)) {
+        result.properties[field] = processed;
+      } else {
+        result.properties[field] = [processed];
+      }
+    }
+
+    return result;
+  },
+
+  _findItemProperties: function(node, properties, alreadyProcessed) {
+    if (node.itemProp) {
+      var value;
+
+      if (node.itemScope) {
+        value = this._processItem(node, alreadyProcessed);
+      } else {
+        value = node.itemValue;
+      }
+
+      for (let i = 0; i < node.itemProp.length; ++i) {
+        var property = node.itemProp[i];
+        if (!properties[property]) {
+          properties[property] = [];
+        }
+
+        properties[property].push(value);
+      }
+    }
+
+    if (!node.itemScope) {
+      var childNodes = node.childNodes;
+      for (var childNode of childNodes) {
+        this._findItemProperties(childNode, properties, alreadyProcessed);
+      }
+    }
+  },
+
+  _processItem: function(node, alreadyProcessed = []) {
+    if (alreadyProcessed.includes(node)) {
+      return "ERROR";
+    }
+
+    alreadyProcessed.push(node);
+
+    var result = {};
+
+    if (node.itemId) {
+      result.id = node.itemId;
+    }
+    if (node.itemType) {
+      result.type = [];
+      for (let i = 0; i < node.itemType.length; ++i) {
+        result.type.push(node.itemType[i]);
+      }
+    }
+
+    var properties = {};
+
+    var childNodes = node.childNodes;
+    for (var childNode of childNodes) {
+      this._findItemProperties(childNode, properties, alreadyProcessed);
+    }
+
+    if (node.itemRef) {
+      for (let i = 0; i < node.itemRef.length; ++i) {
+        var refNode = content.document.getElementById(node.itemRef[i]);
+        this._findItemProperties(refNode, properties, alreadyProcessed);
+      }
+    }
+
+    result.properties = properties;
+    return result;
+  },
+
+  _recvGetStructuredData: function(data) {
+    var result = {
+      items: []
+    };
+
+    var microdataItems = content.document.getItems();
+
+    for (let microdataItem of microdataItems) {
+      result.items.push(this._processItem(microdataItem));
+    }
+
+    var hCardItems = Microformats.get("hCard", content.document);
+    for (let hCardItem of hCardItems) {
+      if (!hCardItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
+        result.items.push(this._processMicroformatItem(hCardItem));
+      }
+    }
+
+    var hCalendarItems = Microformats.get("hCalendar", content.document);
+    for (let hCalendarItem of hCalendarItems) {
+      if (!hCalendarItem.node.itemScope) {  // If it's also marked with Microdata, ignore the Microformat
+        result.items.push(this._processMicroformatItem(hCalendarItem));
+      }
+    }
+
+    var resultString = JSON.stringify(result);
+
+    sendAsyncMsg('got-structured-data', {
+      id: data.json.id,
+      successRv: resultString
+    });
   },
 
   // The docShell keeps a weak reference to the progress listener, so we need

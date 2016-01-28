@@ -69,12 +69,12 @@ public:
 
 BasicCompositor::BasicCompositor(nsIWidget *aWidget)
   : mWidget(aWidget)
+  , mDidExternalComposition(false)
 {
   MOZ_COUNT_CTOR(BasicCompositor);
-  SetBackend(LayersBackend::LAYERS_BASIC);
 
   mMaxTextureSize =
-    Factory::GetMaxSurfaceSize(gfxPlatform::GetPlatform()->GetContentBackend());
+    Factory::GetMaxSurfaceSize(gfxPlatform::GetPlatform()->GetContentBackendFor(LayersBackend::LAYERS_BASIC));
 }
 
 BasicCompositor::~BasicCompositor()
@@ -372,12 +372,7 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
     dest->SetTransform(Matrix::Translation(-aRect.x, -aRect.y));
 
     // Get the bounds post-transform.
-    new3DTransform = aTransform;
-    gfxRect bounds = ThebesRect(aRect);
-    bounds.TransformBounds(new3DTransform);
-    bounds.IntersectRect(bounds, gfxRect(offset.x, offset.y, buffer->GetSize().width, buffer->GetSize().height));
-
-    transformBounds = ToRect(bounds);
+    transformBounds = aTransform.TransformAndClipBounds(aRect, Rect(offset.x, offset.y, buffer->GetSize().width, buffer->GetSize().height));
     transformBounds.RoundOut();
 
     // Propagate the coordinate offset to our 2D draw target.
@@ -385,7 +380,7 @@ BasicCompositor::DrawQuad(const gfx::Rect& aRect,
 
     // When we apply the 3D transformation, we do it against a temporary
     // surface, so undo the coordinate offset.
-    new3DTransform = Matrix4x4::Translation(aRect.x, aRect.y, 0) * new3DTransform;
+    new3DTransform = Matrix4x4::Translation(aRect.x, aRect.y, 0) * aTransform;
   }
 
   newTransform.PostTranslate(-offset.x, -offset.y);
@@ -515,9 +510,16 @@ BasicCompositor::BeginFrame(const nsIntRegion& aInvalidRegion,
   IntRect intRect = gfx::IntRect(IntPoint(), mWidgetSize);
   Rect rect = Rect(0, 0, intRect.width, intRect.height);
 
-  // Sometimes the invalid region is larger than we want to draw.
   nsIntRegion invalidRegionSafe;
-  invalidRegionSafe.And(aInvalidRegion, intRect);
+  if (mDidExternalComposition) {
+    // We do not know rendered region during external composition, just redraw
+    // whole widget.
+    invalidRegionSafe = intRect;
+    mDidExternalComposition = false;
+  } else {
+    // Sometimes the invalid region is larger than we want to draw.
+    invalidRegionSafe.And(aInvalidRegion, intRect);
+  }
 
   IntRect invalidRect = invalidRegionSafe.GetBounds();
   mInvalidRect = IntRect(invalidRect.x, invalidRect.y, invalidRect.width, invalidRect.height);
@@ -615,6 +617,17 @@ BasicCompositor::EndFrame()
   mDrawTarget = nullptr;
   mRenderTarget = nullptr;
 }
+
+void
+BasicCompositor::EndFrameForExternalComposition(const gfx::Matrix& aTransform)
+{
+  MOZ_ASSERT(!mTarget);
+  MOZ_ASSERT(!mDrawTarget);
+  MOZ_ASSERT(!mRenderTarget);
+
+  mDidExternalComposition = true;
+}
+
 
 } // namespace layers
 } // namespace mozilla

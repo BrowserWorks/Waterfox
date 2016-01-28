@@ -108,7 +108,7 @@ public:
     aStream << "TileHost(...)"; // fill in as needed
   }
 
-  void DumpTexture(std::stringstream& aStream) {
+  void DumpTexture(std::stringstream& aStream, TextureDumpMode /* aCompress, ignored for host tiles */) {
     // TODO We should combine the OnWhite/OnBlack here an just output a single image.
     CompositableHost::DumpTextureHost(aStream, mTextureHost);
   }
@@ -211,6 +211,8 @@ public:
     return LayerRenderState();
   }
 
+  // Generate effect for layerscope when using hwc.
+  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::Filter& aFilter) override;
 
   virtual bool UpdateThebes(const ThebesBufferData& aData,
                             const nsIntRegion& aUpdated,
@@ -270,7 +272,7 @@ public:
 private:
 
   void RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
-                         const gfxRGBA* aBackgroundColor,
+                         const gfx::Color* aBackgroundColor,
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Filter& aFilter,

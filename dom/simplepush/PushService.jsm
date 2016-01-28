@@ -847,7 +847,7 @@ this.PushService = {
     try {
       // Grab a wakelock before we open the socket to ensure we don't go to sleep
       // before connection the is opened.
-      this._ws.asyncOpen(uri, serverURL, this._wsListener, null);
+      this._ws.asyncOpen(uri, serverURL, 0, this._wsListener, null);
       this._acquireWakeLock();
       this._currentState = STATE_WAITING_FOR_WS_START;
     } catch(e) {
@@ -1542,14 +1542,6 @@ this.PushService = {
     if (this._UAID)
       data["uaid"] = this._UAID;
 
-    function sendHelloMessage(ids) {
-      // On success, ids is an array, on error its not.
-      data["channelIDs"] = ids.map ?
-                           ids.map(function(el) { return el.channelID; }) : [];
-      this._wsSendMessage(data);
-      this._currentState = STATE_WAITING_FOR_HELLO;
-    }
-
     this._getNetworkState((networkState) => {
       if (networkState.ip) {
         // Opening an available UDP port.
@@ -1568,8 +1560,8 @@ this.PushService = {
         };
       }
 
-      this._db.getAllChannelIDs(sendHelloMessage.bind(this),
-                                sendHelloMessage.bind(this));
+      this._wsSendMessage(data);
+      this._currentState = STATE_WAITING_FOR_HELLO;
     });
   },
 

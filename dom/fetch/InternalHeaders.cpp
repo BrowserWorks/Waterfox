@@ -151,13 +151,8 @@ InternalHeaders::Clear()
 void
 InternalHeaders::SetGuard(HeadersGuardEnum aGuard, ErrorResult& aRv)
 {
-  // Rather than re-validate all current headers, just require code to set
-  // this prior to populating the InternalHeaders object.  Allow setting immutable
-  // late, though, as that is pretty much required to have a  useful, immutable
-  // headers object.
-  if (aGuard != HeadersGuardEnum::Immutable && mList.Length() > 0) {
-    aRv.Throw(NS_ERROR_FAILURE);
-  }
+  // The guard is only checked during ::Set() and ::Append() in the spec.  It
+  // does not require revalidating headers already set.
   mGuard = aGuard;
 }
 
@@ -185,7 +180,7 @@ InternalHeaders::IsInvalidName(const nsACString& aName, ErrorResult& aRv)
 {
   if (!NS_IsValidHTTPToken(aName)) {
     NS_ConvertUTF8toUTF16 label(aName);
-    aRv.ThrowTypeError(MSG_INVALID_HEADER_NAME, &label);
+    aRv.ThrowTypeError<MSG_INVALID_HEADER_NAME>(&label);
     return true;
   }
 
@@ -198,7 +193,7 @@ InternalHeaders::IsInvalidValue(const nsACString& aValue, ErrorResult& aRv)
 {
   if (!NS_IsReasonableHTTPHeaderValue(aValue)) {
     NS_ConvertUTF8toUTF16 label(aValue);
-    aRv.ThrowTypeError(MSG_INVALID_HEADER_VALUE, &label);
+    aRv.ThrowTypeError<MSG_INVALID_HEADER_VALUE>(&label);
     return true;
   }
   return false;
@@ -208,7 +203,7 @@ bool
 InternalHeaders::IsImmutable(ErrorResult& aRv) const
 {
   if (mGuard == HeadersGuardEnum::Immutable) {
-    aRv.ThrowTypeError(MSG_HEADERS_IMMUTABLE);
+    aRv.ThrowTypeError<MSG_HEADERS_IMMUTABLE>();
     return true;
   }
   return false;
@@ -259,7 +254,7 @@ InternalHeaders::Fill(const Sequence<Sequence<nsCString>>& aInit, ErrorResult& a
   for (uint32_t i = 0; i < aInit.Length() && !aRv.Failed(); ++i) {
     const Sequence<nsCString>& tuple = aInit[i];
     if (tuple.Length() != 2) {
-      aRv.ThrowTypeError(MSG_INVALID_HEADER_SEQUENCE);
+      aRv.ThrowTypeError<MSG_INVALID_HEADER_SEQUENCE>();
       return;
     }
     Append(tuple[0], tuple[1], aRv);
@@ -292,7 +287,7 @@ InternalHeaders::HasOnlySimpleHeaders() const
 already_AddRefed<InternalHeaders>
 InternalHeaders::BasicHeaders(InternalHeaders* aHeaders)
 {
-  nsRefPtr<InternalHeaders> basic = new InternalHeaders(*aHeaders);
+  RefPtr<InternalHeaders> basic = new InternalHeaders(*aHeaders);
   ErrorResult result;
   // The Set-Cookie headers cannot be invalid mutable headers, so the Delete
   // must succeed.
@@ -307,7 +302,7 @@ InternalHeaders::BasicHeaders(InternalHeaders* aHeaders)
 already_AddRefed<InternalHeaders>
 InternalHeaders::CORSHeaders(InternalHeaders* aHeaders)
 {
-  nsRefPtr<InternalHeaders> cors = new InternalHeaders(aHeaders->mGuard);
+  RefPtr<InternalHeaders> cors = new InternalHeaders(aHeaders->mGuard);
   ErrorResult result;
 
   nsAutoCString acExposedNames;

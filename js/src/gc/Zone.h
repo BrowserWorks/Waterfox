@@ -13,9 +13,11 @@
 
 #include "jscntxt.h"
 
+#include "ds/SplayTree.h"
 #include "gc/FindSCCs.h"
 #include "gc/GCRuntime.h"
 #include "js/TracingAPI.h"
+#include "vm/MallocProvider.h"
 #include "vm/TypeInference.h"
 
 namespace js {
@@ -57,6 +59,11 @@ class ZoneHeapThreshold
                                           JSGCInvocationKind gckind,
                                           const GCSchedulingTunables& tunables);
 };
+
+// Maps a Cell* to a unique, 64bit id.
+using UniqueIdMap = HashMap<Cell*, uint64_t, PointerHasher<Cell*, 3>, SystemAllocPolicy>;
+
+extern uint64_t NextCellUniqueId(JSRuntime* rt);
 
 } // namespace gc
 } // namespace js
@@ -118,7 +125,8 @@ struct Zone : public JS::shadow::Zone,
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                 size_t* typePool,
-                                size_t* baselineStubsOptimized);
+                                size_t* baselineStubsOptimized,
+                                size_t* uniqueIdMap);
 
     void resetGCMallocBytes();
     void setGCMaxMallocBytes(size_t value);
@@ -134,6 +142,8 @@ struct Zone : public JS::shadow::Zone,
     void onTooMuchMalloc();
 
     void* onOutOfMemory(js::AllocFunction allocFunc, size_t nbytes, void* reallocPtr = nullptr) {
+        if (!CurrentThreadCanAccessRuntime(runtime_))
+            return nullptr;
         return runtimeFromMainThread()->onOutOfMemory(allocFunc, nbytes, reallocPtr);
     }
     void reportAllocationOverflow() { js::ReportAllocationOverflow(nullptr); }
@@ -242,6 +252,8 @@ struct Zone : public JS::shadow::Zone,
     LogTenurePromotionQueue awaitingTenureLogging;
 
     void sweepBreakpoints(js::FreeOp* fop);
+    void sweepUniqueIds(js::FreeOp* fop);
+    void sweepWeakMaps();
     void sweepCompartments(js::FreeOp* fop, bool keepAtleastOne, bool lastGC);
 
     js::jit::JitZone* createJitZone(JSContext* cx);
@@ -249,6 +261,9 @@ struct Zone : public JS::shadow::Zone,
     bool isQueuedForBackgroundSweep() {
         return isOnList();
     }
+
+    // Side map for storing a unique ids for cells, independent of address.
+    js::gc::UniqueIdMap uniqueIds_;
 
   public:
     bool hasDebuggers() const { return debuggers && debuggers->length(); }
@@ -258,8 +273,9 @@ struct Zone : public JS::shadow::Zone,
     void enqueueForPromotionToTenuredLogging(JSObject& obj) {
         MOZ_ASSERT(hasDebuggers());
         MOZ_ASSERT(!IsInsideNursery(&obj));
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
         if (!awaitingTenureLogging.append(&obj))
-            js::CrashAtUnhandlableOOM("Zone::enqueueForPromotionToTenuredLogging");
+            oomUnsafe.crash("Zone::enqueueForPromotionToTenuredLogging");
     }
     void logPromotionsToTenured();
 
@@ -267,13 +283,27 @@ struct Zone : public JS::shadow::Zone,
 
     js::TypeZone types;
 
+    /* Live weakmaps in this zone. */
+    mozilla::LinkedList<js::WeakMapBase> gcWeakMapList;
+
     // The set of compartments in this zone.
     typedef js::Vector<JSCompartment*, 1, js::SystemAllocPolicy> CompartmentVector;
     CompartmentVector compartments;
 
-    // This compartment's gray roots.
+    // This zone's gray roots.
     typedef js::Vector<js::gc::Cell*, 0, js::SystemAllocPolicy> GrayRootVector;
     GrayRootVector gcGrayRoots;
+
+    // This zone's weak edges found via graph traversal during marking,
+    // preserved for re-scanning during sweeping.
+    using WeakEdges = js::Vector<js::gc::TenuredCell**, 0, js::SystemAllocPolicy>;
+    WeakEdges gcWeakRefs;
+
+    /*
+     * Mapping from not yet marked keys to a vector of all values that the key
+     * maps to in any live weak map.
+     */
+    js::gc::WeakKeyTable gcWeakKeys;
 
     // A set of edges from this zone to other zones.
     //
@@ -317,6 +347,74 @@ struct Zone : public JS::shadow::Zone,
     bool active;
 
     mozilla::DebugOnly<unsigned> gcLastZoneGroupIndex;
+
+    // Creates a HashNumber based on getUniqueId. Returns false on OOM.
+    bool getHashCode(js::gc::Cell* cell, js::HashNumber* hashp) {
+        uint64_t uid;
+        if (!getUniqueId(cell, &uid))
+            return false;
+        *hashp = js::HashNumber(uid >> 32) ^ js::HashNumber(uid & 0xFFFFFFFF);
+        return true;
+    }
+
+    // Puts an existing UID in |uidp|, or creates a new UID for this Cell and
+    // puts that into |uidp|. Returns false on OOM.
+    bool getUniqueId(js::gc::Cell* cell, uint64_t* uidp) {
+        MOZ_ASSERT(uidp);
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+
+        // Get an existing uid, if one has been set.
+        auto p = uniqueIds_.lookupForAdd(cell);
+        if (p) {
+            *uidp = p->value();
+            return true;
+        }
+
+        // Set a new uid on the cell.
+        *uidp = js::gc::NextCellUniqueId(runtimeFromAnyThread());
+        if (!uniqueIds_.add(p, cell, *uidp))
+            return false;
+
+        // If the cell was in the nursery, hopefully unlikely, then we need to
+        // tell the nursery about it so that it can sweep the uid if the thing
+        // does not get tenured.
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!runtimeFromAnyThread()->gc.nursery.addedUniqueIdToCell(cell))
+            oomUnsafe.crash("failed to allocate tracking data for a nursery uid");
+        return true;
+    }
+
+    // Return true if this cell has a UID associated with it.
+    bool hasUniqueId(js::gc::Cell* cell) {
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        return uniqueIds_.has(cell);
+    }
+
+    // Transfer an id from another cell. This must only be called on behalf of a
+    // moving GC. This method is infallible.
+    void transferUniqueId(js::gc::Cell* tgt, js::gc::Cell* src) {
+        MOZ_ASSERT(src != tgt);
+        MOZ_ASSERT(!IsInsideNursery(tgt));
+        MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtimeFromMainThread()));
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        uniqueIds_.rekeyIfMoved(src, tgt);
+    }
+
+    // Remove any unique id associated with this Cell.
+    void removeUniqueId(js::gc::Cell* cell) {
+        MOZ_ASSERT(js::CurrentThreadCanAccessZone(this));
+        uniqueIds_.remove(cell);
+    }
+
+    // Off-thread parsing should not result in any UIDs being created.
+    void assertNoUniqueIdsInZone() const {
+        MOZ_ASSERT(uniqueIds_.count() == 0);
+    }
+
+#ifdef JSGC_HASH_TABLE_CHECKS
+    // Assert that the UniqueId table has been redirected successfully.
+    void checkUniqueIdTableAfterMovingGC();
+#endif
 
   private:
     js::jit::JitZone* jitZone_;

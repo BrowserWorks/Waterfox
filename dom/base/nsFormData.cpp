@@ -39,7 +39,7 @@ CreateNewFileInstance(Blob& aBlob, const Optional<nsAString>& aFilename)
   } else {
     // If value is already a File and filename is not passed, the spec says not
     // to create a new instance.
-    nsRefPtr<File> file = aBlob.ToFile();
+    RefPtr<File> file = aBlob.ToFile();
     if (file) {
       return file.forget();
     }
@@ -61,7 +61,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsFormData)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOwner)
 
   for (uint32_t i = 0, len = tmp->mFormData.Length(); i < len; ++i) {
-    ImplCycleCollectionUnlink(tmp->mFormData[i].fileValue);
+    ImplCycleCollectionUnlink(tmp->mFormData[i].value);
   }
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
@@ -71,8 +71,8 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsFormData)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOwner)
 
   for (uint32_t i = 0, len = tmp->mFormData.Length(); i < len; ++i) {
-   ImplCycleCollectionTraverse(cb,tmp->mFormData[i].fileValue,
-                               "mFormData[i].fileValue", 0);
+    ImplCycleCollectionTraverse(cb, tmp->mFormData[i].value,
+                                "mFormData[i].GetAsFile()", 0);
   }
 
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
@@ -110,7 +110,7 @@ void
 nsFormData::Append(const nsAString& aName, Blob& aBlob,
                    const Optional<nsAString>& aFilename)
 {
-  nsRefPtr<File> file = CreateNewFileInstance(aBlob, aFilename);
+  RefPtr<File> file = CreateNewFileInstance(aBlob, aFilename);
   AddNameFilePair(aName, file);
 }
 
@@ -127,23 +127,12 @@ nsFormData::Delete(const nsAString& aName)
 }
 
 void
-nsFormData::ExtractValue(const FormDataTuple& aTuple,
-                         OwningFileOrUSVString* aOutValue)
-{
-  if (aTuple.valueIsFile) {
-    aOutValue->SetAsFile() = aTuple.fileValue;
-  } else {
-    aOutValue->SetAsUSVString() = aTuple.stringValue;
-  }
-}
-
-void
 nsFormData::Get(const nsAString& aName,
                 Nullable<OwningFileOrUSVString>& aOutValue)
 {
   for (uint32_t i = 0; i < mFormData.Length(); ++i) {
     if (aName.Equals(mFormData[i].name)) {
-      ExtractValue(mFormData[i], &aOutValue.SetValue());
+      aOutValue.SetValue() = mFormData[i].value;
       return;
     }
   }
@@ -158,7 +147,7 @@ nsFormData::GetAll(const nsAString& aName,
   for (uint32_t i = 0; i < mFormData.Length(); ++i) {
     if (aName.Equals(mFormData[i].name)) {
       OwningFileOrUSVString* element = aValues.AppendElement();
-      ExtractValue(mFormData[i], element);
+      *element = mFormData[i].value;
     }
   }
 }
@@ -211,7 +200,7 @@ nsFormData::Set(const nsAString& aName, Blob& aBlob,
 {
   FormDataTuple* tuple = RemoveAllOthersAndGetFirstFormDataTuple(aName);
   if (tuple) {
-    nsRefPtr<File> file = CreateNewFileInstance(aBlob, aFilename);
+    RefPtr<File> file = CreateNewFileInstance(aBlob, aFilename);
     SetNameFilePair(tuple, aName, file);
   } else {
     Append(aName, aBlob, aFilename);
@@ -227,6 +216,26 @@ nsFormData::Set(const nsAString& aName, const nsAString& aValue)
   } else {
     Append(aName, aValue);
   }
+}
+
+uint32_t
+nsFormData::GetIterableLength() const
+{
+  return mFormData.Length();
+}
+
+const nsAString&
+nsFormData::GetKeyAtIndex(uint32_t aIndex) const
+{
+  MOZ_ASSERT(aIndex < mFormData.Length());
+  return mFormData[aIndex].name;
+}
+
+const OwningFileOrUSVString&
+nsFormData::GetValueAtIndex(uint32_t aIndex) const
+{
+  MOZ_ASSERT(aIndex < mFormData.Length());
+  return mFormData[aIndex].value;
 }
 
 // -------------------------------------------------------------------------
@@ -249,7 +258,7 @@ nsFormData::Append(const nsAString& aName, nsIVariant* aValue)
     free(iid);
 
     nsCOMPtr<nsIDOMBlob> domBlob = do_QueryInterface(supports);
-    nsRefPtr<Blob> blob = static_cast<Blob*>(domBlob.get());
+    RefPtr<Blob> blob = static_cast<Blob*>(domBlob.get());
     if (domBlob) {
       Optional<nsAString> temp;
       Append(aName, *blob, temp);
@@ -280,7 +289,7 @@ nsFormData::Constructor(const GlobalObject& aGlobal,
                         const Optional<NonNull<HTMLFormElement> >& aFormElement,
                         ErrorResult& aRv)
 {
-  nsRefPtr<nsFormData> formData = new nsFormData(aGlobal.GetAsSupports());
+  RefPtr<nsFormData> formData = new nsFormData(aGlobal.GetAsSupports());
   if (aFormElement.WasPassed()) {
     aRv = aFormElement.Value().WalkFormElements(formData);
   }
@@ -297,11 +306,13 @@ nsFormData::GetSendInfo(nsIInputStream** aBody, uint64_t* aContentLength,
   nsFSMultipartFormData fs(NS_LITERAL_CSTRING("UTF-8"), nullptr);
 
   for (uint32_t i = 0; i < mFormData.Length(); ++i) {
-    if (mFormData[i].valueIsFile) {
-      fs.AddNameFilePair(mFormData[i].name, mFormData[i].fileValue);
-    }
-    else {
-      fs.AddNameValuePair(mFormData[i].name, mFormData[i].stringValue);
+    if (mFormData[i].value.IsFile()) {
+      fs.AddNameFilePair(mFormData[i].name, mFormData[i].value.GetAsFile());
+    } else if (mFormData[i].value.IsUSVString()) {
+      fs.AddNameValuePair(mFormData[i].name,
+                          mFormData[i].value.GetAsUSVString());
+    } else {
+      fs.AddNameFilePair(mFormData[i].name, nullptr);
     }
   }
 

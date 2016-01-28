@@ -9,6 +9,7 @@
 #include "FFmpegRuntimeLinker.h"
 #include "mozilla/ArrayUtils.h"
 #include "FFmpegLog.h"
+#include "mozilla/Preferences.h"
 
 #define NUM_ELEMENTS(X) (sizeof(X) / sizeof((X)[0]))
 
@@ -110,7 +111,7 @@ FFmpegRuntimeLinker::CreateDecoderModule()
   if (!Link()) {
     return nullptr;
   }
-  nsRefPtr<PlatformDecoderModule> module = sLib->Factory();
+  RefPtr<PlatformDecoderModule> module = sLib->Factory();
   return module.forget();
 }
 

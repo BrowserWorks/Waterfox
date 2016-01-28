@@ -81,11 +81,13 @@ NS_IMPL_EVENT_HANDLER(nsDOMOfflineResourceList, obsolete)
 
 nsDOMOfflineResourceList::nsDOMOfflineResourceList(nsIURI *aManifestURI,
                                                    nsIURI *aDocumentURI,
+                                                   nsIPrincipal *aLoadingPrincipal,
                                                    nsPIDOMWindow *aWindow)
   : DOMEventTargetHelper(aWindow)
   , mInitialized(false)
   , mManifestURI(aManifestURI)
   , mDocumentURI(aDocumentURI)
+  , mLoadingPrincipal(aLoadingPrincipal)
   , mExposeCacheUpdateStatus(true)
   , mStatus(nsIDOMOfflineResourceList::IDLE)
   , mCachedKeys(nullptr)
@@ -191,7 +193,7 @@ nsDOMOfflineResourceList::GetMozItems(ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<DOMStringList> items = new DOMStringList();
+  RefPtr<DOMStringList> items = new DOMStringList();
 
   // If we are not associated with an application cache, return an
   // empty list.
@@ -226,7 +228,7 @@ NS_IMETHODIMP
 nsDOMOfflineResourceList::GetMozItems(nsISupports** aItems)
 {
   ErrorResult rv;
-  nsRefPtr<DOMStringList> items = GetMozItems(rv);
+  RefPtr<DOMStringList> items = GetMozItems(rv);
   items.forget(aItems);
   return rv.StealNSResult();
 }
@@ -359,7 +361,8 @@ nsDOMOfflineResourceList::MozAdd(const nsAString& aURI)
   rv = appCache->GetClientID(clientID);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = update->InitPartial(mManifestURI, clientID, mDocumentURI);
+  rv = update->InitPartial(mManifestURI, clientID,
+                           mDocumentURI, mLoadingPrincipal);
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = update->AddDynamicURI(requestedURI);
@@ -466,7 +469,7 @@ nsDOMOfflineResourceList::Update()
     do_QueryInterface(GetOwner());
 
   nsCOMPtr<nsIOfflineCacheUpdate> update;
-  rv = updateService->ScheduleUpdate(mManifestURI, mDocumentURI,
+  rv = updateService->ScheduleUpdate(mManifestURI, mDocumentURI, mLoadingPrincipal,
                                      window, getter_AddRefs(update));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -548,7 +551,7 @@ nsDOMOfflineResourceList::SendEvent(const nsAString &aEventName)
     return NS_OK;
   }
 
-  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
   event->InitEvent(aEventName, false, true);
 
   // We assume anyone that managed to call SendEvent is trusted

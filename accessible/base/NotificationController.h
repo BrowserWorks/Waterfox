@@ -8,6 +8,8 @@
 
 #include "EventQueue.h"
 
+#include "mozilla/IndexSequence.h"
+#include "mozilla/Tuple.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsRefreshDriver.h"
 
@@ -54,32 +56,32 @@ private:
  *        longer than the document accessible owning the notification controller
  *        that this notification is processed by.
  */
-template<class Class, class Arg>
+template<class Class, class ... Args>
 class TNotification : public Notification
 {
 public:
-  typedef void (Class::*Callback)(Arg*);
+  typedef void (Class::*Callback)(Args* ...);
 
-  TNotification(Class* aInstance, Callback aCallback, Arg* aArg) :
-    mInstance(aInstance), mCallback(aCallback), mArg(aArg) { }
+  TNotification(Class* aInstance, Callback aCallback, Args* ... aArgs) :
+    mInstance(aInstance), mCallback(aCallback), mArgs(aArgs...) { }
   virtual ~TNotification() { mInstance = nullptr; }
 
   virtual void Process() override
-  {
-    (mInstance->*mCallback)(mArg);
-
-    mInstance = nullptr;
-    mCallback = nullptr;
-    mArg = nullptr;
-  }
+    { ProcessHelper(typename IndexSequenceFor<Args...>::Type()); }
 
 private:
   TNotification(const TNotification&);
   TNotification& operator = (const TNotification&);
 
+  template <size_t... Indices>
+    void ProcessHelper(IndexSequence<Indices...>)
+  {
+     (mInstance->*mCallback)(Get<Indices>(mArgs)...);
+  }
+
   Class* mInstance;
   Callback mCallback;
-  nsRefPtr<Arg> mArg;
+  Tuple<RefPtr<Args> ...> mArgs;
 };
 
 /**
@@ -132,6 +134,12 @@ public:
                                 nsIContent* aEndChildNode);
 
   /**
+   * Start to observe refresh to make notifications and events processing after
+   * layout.
+   */
+  void ScheduleProcessing();
+
+  /**
    * Process the generic notification synchronously if there are no pending
    * layout changes and no notifications are pending or being processed right
    * now. Otherwise, queue it up to process asynchronously.
@@ -153,7 +161,7 @@ public:
       return;
     }
 
-    nsRefPtr<Notification> notification =
+    RefPtr<Notification> notification =
       new TNotification<Class, Arg>(aInstance, aMethod, aArg);
     if (notification && mNotifications.AppendElement(notification))
       ScheduleProcessing();
@@ -165,13 +173,12 @@ public:
    * @note  The caller must guarantee that the given instance still exists when
    *        the notification is processed.
    */
-  template<class Class, class Arg>
+  template<class Class>
   inline void ScheduleNotification(Class* aInstance,
-                                   typename TNotification<Class, Arg>::Callback aMethod,
-                                   Arg* aArg)
+                                   typename TNotification<Class>::Callback aMethod)
   {
-    nsRefPtr<Notification> notification =
-      new TNotification<Class, Arg>(aInstance, aMethod, aArg);
+    RefPtr<Notification> notification =
+      new TNotification<Class>(aInstance, aMethod);
     if (notification && mNotifications.AppendElement(notification))
       ScheduleProcessing();
   }
@@ -186,12 +193,6 @@ protected:
 
   nsCycleCollectingAutoRefCnt mRefCnt;
   NS_DECL_OWNINGTHREAD
-
-  /**
-   * Start to observe refresh to make notifications and events processing after
-   * layout.
-   */
-  void ScheduleProcessing();
 
   /**
    * Return true if the accessible tree state update is pending.
@@ -226,7 +227,7 @@ private:
   /**
    * Child documents that needs to be bound to the tree.
    */
-  nsTArray<nsRefPtr<DocAccessible> > mHangingChildDocuments;
+  nsTArray<RefPtr<DocAccessible> > mHangingChildDocuments;
 
   /**
    * Storage for content inserted notification information.
@@ -256,7 +257,7 @@ private:
     DocAccessible* mDocument;
 
     // The container accessible that content insertion occurs within.
-    nsRefPtr<Accessible> mContainer;
+    RefPtr<Accessible> mContainer;
 
     // Array of inserted contents.
     nsTArray<nsCOMPtr<nsIContent> > mInsertedContent;
@@ -266,7 +267,7 @@ private:
    * A pending accessible tree update notifications for content insertions.
    * Don't make this an nsAutoTArray; we use SwapElements() on it.
    */
-  nsTArray<nsRefPtr<ContentInsertion> > mContentInsertions;
+  nsTArray<RefPtr<ContentInsertion> > mContentInsertions;
 
   template<class T>
   class nsCOMPtrHashKey : public PLDHashEntryHdr
@@ -301,7 +302,7 @@ private:
    * Other notifications like DOM events. Don't make this an nsAutoTArray; we
    * use SwapElements() on it.
    */
-  nsTArray<nsRefPtr<Notification> > mNotifications;
+  nsTArray<RefPtr<Notification> > mNotifications;
 };
 
 } // namespace a11y

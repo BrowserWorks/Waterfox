@@ -191,7 +191,7 @@ nsresult GetInstallYear(uint32_t& aYear)
   time_t raw_time = 0;
   DWORD time_size = sizeof(time_t);
 
-  status = RegQueryValueExW(hKey, NS_LITERAL_STRING("InstallDate").get(),
+  status = RegQueryValueExW(hKey, L"InstallDate",
                             nullptr, &type, (LPBYTE)&raw_time, &time_size);
 
   if (status != ERROR_SUCCESS) {
@@ -679,12 +679,31 @@ nsSystemInfo::Init()
 
 #if defined(MOZ_WIDGET_GTK)
   // This must be done here because NSPR can only separate OS's when compiled, not libraries.
-  char* gtkver = PR_smprintf("GTK %u.%u.%u", gtk_major_version,
-                             gtk_minor_version, gtk_micro_version);
-  if (gtkver) {
+  // 64 bytes is going to be well enough for "GTK " followed by 3 integers
+  // separated with dots.
+  char gtkver[64];
+  ssize_t gtkver_len = 0;
+
+#if MOZ_WIDGET_GTK == 2
+  extern int gtk_read_end_of_the_pipe;
+
+  if (gtk_read_end_of_the_pipe != -1) {
+    do {
+      gtkver_len = read(gtk_read_end_of_the_pipe, &gtkver, sizeof(gtkver));
+    } while (gtkver_len < 0 && errno == EINTR);
+    close(gtk_read_end_of_the_pipe);
+  }
+#endif
+
+  if (gtkver_len <= 0) {
+    gtkver_len = snprintf(gtkver, sizeof(gtkver), "GTK %u.%u.%u",
+                          gtk_major_version, gtk_minor_version,
+                          gtk_micro_version);
+  }
+
+  if (gtkver_len > 0) {
     rv = SetPropertyAsACString(NS_LITERAL_STRING("secondaryLibrary"),
-                               nsDependentCString(gtkver));
-    PR_smprintf_free(gtkver);
+                               nsDependentCString(gtkver, gtkver_len));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -743,6 +762,8 @@ nsSystemInfo::Init()
   if (__system_property_get("ro.build.characteristics", characteristics)) {
     if (!strcmp(characteristics, "tablet")) {
       SetPropertyAsBool(NS_LITERAL_STRING("tablet"), true);
+    } else if (!strcmp(characteristics, "tv")) {
+      SetPropertyAsBool(NS_LITERAL_STRING("tv"), true);
     }
   }
 

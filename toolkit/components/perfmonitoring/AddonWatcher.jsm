@@ -16,7 +16,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
-                                  "resource://gre/modules/devtools/Console.jsm");
+                                  "resource://gre/modules/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PerformanceStats",
                                   "resource://gre/modules/PerformanceStats.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "Telemetry",
@@ -62,6 +62,7 @@ var AddonWatcher = {
    * @type {number}
    */
   _latestWakeup: Date.now(),
+  _latestSnapshot: null,
 
   /**
    * Initialize and launch the AddonWatcher.
@@ -168,7 +169,7 @@ var AddonWatcher = {
       return true;
     }
 
-    let diff = snapshot.processData.subtract(previousSnapshot.processData);
+    let diff = currentSnapshot.processData.subtract(previousSnapshot.processData);
     if (diff.totalCPUTime >= deltaT * THREAD_TAKES_LOTS_OF_CPU_FACTOR ) {
       // The main thread itself is using lots of CPU, perhaps because of
       // an add-on. We need to investigate.
@@ -198,7 +199,7 @@ var AddonWatcher = {
 
     return Task.spawn(function*() {
       try {
-        let previousSnapshot = this._latestSnapshot; // FIXME: Implement
+        let previousSnapshot = this._latestSnapshot;
         let snapshot = this._latestSnapshot = yield this._monitor.promiseSnapshot();
         let isSystemTooBusy = this._isSystemTooBusy(currentWakeup - previousWakeup, snapshot, previousSnapshot);
 
@@ -213,22 +214,15 @@ var AddonWatcher = {
         // By default, warn only after an add-on has been spotted misbehaving 3 times.
         let tolerance = Preferences.get("browser.addon-watch.tolerance", 3);
 
-        for (let item of snapshot.componentsData) {
-          let addonId = item.addonId;
-          if (!item.isSystem || !addonId) {
-            // We are only interested in add-ons.
-            continue;
-          }
+        for (let [addonId, item] of snapshot.addons) {
           if (this._ignoreList.has(addonId)) {
             // This add-on has been explicitly put in the ignore list
             // by the user. Don't waste time with it.
             continue;
           }
 
-          // Store the activity for the group – not the entire add-on, as we
-          // can have one group per process for each add-on.
-          let previous = this._previousPerformanceIndicators[item.groupId];
-          this._previousPerformanceIndicators[item.groupId] = item;
+          let previous = this._previousPerformanceIndicators[addonId];
+          this._previousPerformanceIndicators[addonId] = item;
 
           if (!previous) {
             // This is the first time we see the addon, so we are probably
@@ -242,7 +236,7 @@ var AddonWatcher = {
             // The main event loop is behaving weirdly, most likely because of
             // the system being busy or asleep, so results are not trustworthy.
             // Ignore.
-            continue;
+            return;
           }
 
           // Report misbehaviors to Telemetry
@@ -280,7 +274,7 @@ var AddonWatcher = {
 
             stats.alerts[filter] = (stats.alerts[filter] || 0) + 1;
 
-		    if (stats.alerts[filter] % tolerance != 0) {
+            if (stats.alerts[filter] % tolerance != 0) {
               continue;
             }
 

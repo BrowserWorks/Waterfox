@@ -12,22 +12,15 @@
 #include "nsAutoPtr.h"
 #include "prinrval.h"
 #include "mozilla/Logging.h"
+#include "nsThreadSyncDispatch.h"
 
 using namespace mozilla;
 
-static PRLogModuleInfo*
-GetThreadPoolLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsThreadPool");
-  }
-  return sLog;
-}
+static LazyLogModule sThreadPoolLog("nsThreadPool");
 #ifdef LOG
 #undef LOG
 #endif
-#define LOG(args) MOZ_LOG(GetThreadPoolLog(), mozilla::LogLevel::Debug, args)
+#define LOG(args) MOZ_LOG(sThreadPoolLog, mozilla::LogLevel::Debug, args)
 
 // DESIGN:
 //  o  Allocate anonymous threads.
@@ -48,7 +41,8 @@ NS_IMPL_QUERY_INTERFACE_CI(nsThreadPool, nsIThreadPool, nsIEventTarget,
 NS_IMPL_CI_INTERFACE_GETTER(nsThreadPool, nsIThreadPool, nsIEventTarget)
 
 nsThreadPool::nsThreadPool()
-  : mMonitor("[nsThreadPool.mMonitor]")
+  : mMutex("[nsThreadPool.mMutex]")
+  , mEvents(mMutex)
   , mThreadLimit(DEFAULT_THREAD_LIMIT)
   , mIdleThreadLimit(DEFAULT_IDLE_THREAD_LIMIT)
   , mIdleThreadTimeout(DEFAULT_IDLE_THREAD_TIMEOUT)
@@ -81,7 +75,7 @@ nsThreadPool::PutEvent(already_AddRefed<nsIRunnable>&& aEvent)
   bool spawnThread = false;
   uint32_t stackSize = 0;
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
 
     if (NS_WARN_IF(mShutdown)) {
       return NS_ERROR_NOT_AVAILABLE;
@@ -94,11 +88,11 @@ nsThreadPool::PutEvent(already_AddRefed<nsIRunnable>&& aEvent)
     if (mThreads.Count() < (int32_t)mThreadLimit &&
         // Spawn a new thread if we don't have enough idle threads to serve
         // pending events immediately.
-        mEvents.Count(mon) >= mIdleCount) {
+        mEvents.Count(lock) >= mIdleCount) {
       spawnThread = true;
     }
 
-    mEvents.PutEvent(Move(aEvent), mon);
+    mEvents.PutEvent(Move(aEvent), lock);
     stackSize = mStackSize;
   }
 
@@ -117,7 +111,7 @@ nsThreadPool::PutEvent(already_AddRefed<nsIRunnable>&& aEvent)
 
   bool killThread = false;
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
     if (mThreads.Count() < (int32_t)mThreadLimit) {
       mThreads.AppendObject(thread);
     } else {
@@ -167,7 +161,7 @@ nsThreadPool::Run()
 
   nsCOMPtr<nsIThreadPoolListener> listener;
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
     listener = mListener;
   }
 
@@ -178,8 +172,9 @@ nsThreadPool::Run()
   do {
     nsCOMPtr<nsIRunnable> event;
     {
-      MonitorAutoLock mon(mMonitor);
-      if (!mEvents.GetPendingEvent(getter_AddRefs(event), mon)) {
+      MutexAutoLock lock(mMutex);
+
+      if (!mEvents.GetPendingEvent(getter_AddRefs(event), lock)) {
         PRIntervalTime now     = PR_IntervalNow();
         PRIntervalTime timeout = PR_MillisecondsToInterval(mIdleThreadTimeout);
 
@@ -212,7 +207,7 @@ nsThreadPool::Run()
         } else {
           PRIntervalTime delta = timeout - (now - idleSince);
           LOG(("THRD-P(%p) %s waiting [%d]\n", this, mName.BeginReading(), delta));
-          mon.Wait(delta);
+          mEvents.Wait(delta);
           LOG(("THRD-P(%p) done waiting\n", this));
         }
       } else if (wasIdle) {
@@ -261,7 +256,7 @@ nsThreadPool::Dispatch(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
       return NS_ERROR_NOT_AVAILABLE;
     }
 
-    nsRefPtr<nsThreadSyncDispatch> wrapper =
+    RefPtr<nsThreadSyncDispatch> wrapper =
       new nsThreadSyncDispatch(thread, Move(aEvent));
     PutEvent(wrapper);
 
@@ -278,7 +273,7 @@ nsThreadPool::Dispatch(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
 NS_IMETHODIMP
 nsThreadPool::IsOnCurrentThread(bool* aResult)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   if (NS_WARN_IF(mShutdown)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -300,9 +295,9 @@ nsThreadPool::Shutdown()
   nsCOMArray<nsIThread> threads;
   nsCOMPtr<nsIThreadPoolListener> listener;
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
     mShutdown = true;
-    mon.NotifyAll();
+    mEvents.NotifyAll();
 
     threads.AppendObjects(mThreads);
     mThreads.Clear();
@@ -333,7 +328,7 @@ nsThreadPool::GetThreadLimit(uint32_t* aValue)
 NS_IMETHODIMP
 nsThreadPool::SetThreadLimit(uint32_t aValue)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   LOG(("THRD-P(%p) thread limit [%u]\n", this, aValue));
   mThreadLimit = aValue;
   if (mIdleThreadLimit > mThreadLimit) {
@@ -341,7 +336,7 @@ nsThreadPool::SetThreadLimit(uint32_t aValue)
   }
 
   if (static_cast<uint32_t>(mThreads.Count()) > mThreadLimit) {
-    mon.NotifyAll();  // wake up threads so they observe this change
+    mEvents.NotifyAll();  // wake up threads so they observe this change
   }
   return NS_OK;
 }
@@ -356,7 +351,7 @@ nsThreadPool::GetIdleThreadLimit(uint32_t* aValue)
 NS_IMETHODIMP
 nsThreadPool::SetIdleThreadLimit(uint32_t aValue)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   LOG(("THRD-P(%p) idle thread limit [%u]\n", this, aValue));
   mIdleThreadLimit = aValue;
   if (mIdleThreadLimit > mThreadLimit) {
@@ -365,7 +360,7 @@ nsThreadPool::SetIdleThreadLimit(uint32_t aValue)
 
   // Do we need to kill some idle threads?
   if (mIdleCount > mIdleThreadLimit) {
-    mon.NotifyAll();  // wake up threads so they observe this change
+    mEvents.NotifyAll();  // wake up threads so they observe this change
   }
   return NS_OK;
 }
@@ -380,13 +375,13 @@ nsThreadPool::GetIdleThreadTimeout(uint32_t* aValue)
 NS_IMETHODIMP
 nsThreadPool::SetIdleThreadTimeout(uint32_t aValue)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   uint32_t oldTimeout = mIdleThreadTimeout;
   mIdleThreadTimeout = aValue;
 
   // Do we need to notify any idle threads that their sleep time has shortened?
   if (mIdleThreadTimeout < oldTimeout && mIdleCount > 0) {
-    mon.NotifyAll();  // wake up threads so they observe this change
+    mEvents.NotifyAll();  // wake up threads so they observe this change
   }
   return NS_OK;
 }
@@ -394,7 +389,7 @@ nsThreadPool::SetIdleThreadTimeout(uint32_t aValue)
 NS_IMETHODIMP
 nsThreadPool::GetThreadStackSize(uint32_t* aValue)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   *aValue = mStackSize;
   return NS_OK;
 }
@@ -402,7 +397,7 @@ nsThreadPool::GetThreadStackSize(uint32_t* aValue)
 NS_IMETHODIMP
 nsThreadPool::SetThreadStackSize(uint32_t aValue)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   mStackSize = aValue;
   return NS_OK;
 }
@@ -410,7 +405,7 @@ nsThreadPool::SetThreadStackSize(uint32_t aValue)
 NS_IMETHODIMP
 nsThreadPool::GetListener(nsIThreadPoolListener** aListener)
 {
-  MonitorAutoLock mon(mMonitor);
+  MutexAutoLock lock(mMutex);
   NS_IF_ADDREF(*aListener = mListener);
   return NS_OK;
 }
@@ -420,7 +415,7 @@ nsThreadPool::SetListener(nsIThreadPoolListener* aListener)
 {
   nsCOMPtr<nsIThreadPoolListener> swappedListener(aListener);
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
     mListener.swap(swappedListener);
   }
   return NS_OK;
@@ -430,7 +425,7 @@ NS_IMETHODIMP
 nsThreadPool::SetName(const nsACString& aName)
 {
   {
-    MonitorAutoLock mon(mMonitor);
+    MutexAutoLock lock(mMutex);
     if (mThreads.Count()) {
       return NS_ERROR_NOT_AVAILABLE;
     }

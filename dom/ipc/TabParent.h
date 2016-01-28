@@ -11,6 +11,7 @@
 #include "mozilla/ContentCache.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "mozilla/dom/PBrowserParent.h"
+#include "mozilla/dom/PContent.h"
 #include "mozilla/dom/PFilePickerParent.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/EventForwards.h"
@@ -39,11 +40,16 @@ class nsIDocShell;
 
 namespace mozilla {
 
+namespace a11y {
+class DocAccessibleParent;
+}
+
 namespace jsipc {
 class CpowHolder;
 } // namespace jsipc
 
 namespace layers {
+class AsyncDragMetrics;
 struct FrameMetrics;
 struct TextureFactoryIdentifier;
 } // namespace layers
@@ -83,10 +89,14 @@ class TabParent final : public PBrowserParent
                       , public nsIWebBrowserPersistable
 {
     typedef mozilla::dom::ClonedMessageData ClonedMessageData;
+    typedef mozilla::layers::AsyncDragMetrics AsyncDragMetrics;
 
     virtual ~TabParent();
 
 public:
+    // Helper class for ContentParent::RecvCreateWindow.
+    struct AutoUseNewTab;
+
     // nsITabParent
     NS_DECL_NSITABPARENT
     // nsIDOMEventListener interfaces
@@ -119,6 +129,12 @@ public:
         mBrowserDOMWindow = aBrowserDOMWindow;
     }
 
+    void SetHasContentOpener(bool aHasContentOpener);
+
+    void SwapFrameScriptsFrom(nsTArray<FrameScriptInfo>& aFrameScripts) {
+        aFrameScripts.SwapElements(mDelayedFrameScripts);
+    }
+
     already_AddRefed<nsILoadContext> GetLoadContext();
     already_AddRefed<nsIWidget> GetTopLevelWidget();
     nsIXULBrowserWindow* GetXULBrowserWindow();
@@ -141,19 +157,6 @@ public:
                                             const nsString& aName,
                                             const nsString& aFeatures,
                                             bool* aOutWindowOpened) override;
-    virtual bool RecvCreateWindow(PBrowserParent* aOpener,
-                                  const uint32_t& aChromeFlags,
-                                  const bool& aCalledFromJS,
-                                  const bool& aPositionSpecified,
-                                  const bool& aSizeSpecified,
-                                  const nsCString& aURI,
-                                  const nsString& aName,
-                                  const nsCString& aFeatures,
-                                  const nsCString& aBaseURI,
-                                  nsresult* aResult,
-                                  bool* aWindowIsNew,
-                                  InfallibleTArray<FrameScriptInfo>* aFrameScripts,
-                                  nsCString* aURLToLoad) override;
     virtual bool RecvSyncMessage(const nsString& aMessage,
                                  const ClonedMessageData& aData,
                                  InfallibleTArray<CpowEntry>&& aCpows,
@@ -215,12 +218,10 @@ public:
                                      const uint32_t& aHotspotX,
                                      const uint32_t& aHotspotY,
                                      const bool& aForce) override;
-    virtual bool RecvSetBackgroundColor(const nscolor& aValue) override;
     virtual bool RecvSetStatus(const uint32_t& aType, const nsString& aStatus) override;
     virtual bool RecvIsParentWindowMainWidgetVisible(bool* aIsVisible) override;
     virtual bool RecvShowTooltip(const uint32_t& aX, const uint32_t& aY, const nsString& aTooltip) override;
     virtual bool RecvHideTooltip() override;
-    virtual bool RecvGetTabOffset(LayoutDeviceIntPoint* aPoint) override;
     virtual bool RecvGetDPI(float* aValue) override;
     virtual bool RecvGetDefaultScale(double* aValue) override;
     virtual bool RecvGetMaxTouchPoints(uint32_t* aTouchPoints) override;
@@ -245,6 +246,7 @@ public:
     virtual bool RecvDispatchWheelEvent(const mozilla::WidgetWheelEvent& aEvent) override;
     virtual bool RecvDispatchMouseEvent(const mozilla::WidgetMouseEvent& aEvent) override;
     virtual bool RecvDispatchKeyboardEvent(const mozilla::WidgetKeyboardEvent& aEvent) override;
+    virtual bool RecvStartScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
     virtual PColorPickerParent*
     AllocPColorPickerParent(const nsString& aTitle, const nsString& aInitialColor) override;
@@ -257,6 +259,11 @@ public:
     RecvPDocAccessibleConstructor(PDocAccessibleParent* aDoc,
                                   PDocAccessibleParent* aParentDoc,
                                   const uint64_t& aParentID) override;
+
+    /**
+     * Return the top level doc accessible parent for this tab.
+     */
+    a11y::DocAccessibleParent* GetTopLevelDocAccessible() const;
 
     void LoadURL(nsIURI* aURI);
     // XXX/cjones: it's not clear what we gain by hiding these
@@ -444,8 +451,10 @@ public:
                                int32_t& aDragAreaX, int32_t& aDragAreaY);
     layout::RenderFrameParent* GetRenderFrame();
 
-    virtual PWebBrowserPersistDocumentParent* AllocPWebBrowserPersistDocumentParent(const uint64_t& aOuterWindowID) override;
-    virtual bool DeallocPWebBrowserPersistDocumentParent(PWebBrowserPersistDocumentParent* aActor) override;
+    // Called by HttpChannelParent. The function may use a new process to
+    // reload the URI associated with the given channel.
+    void OnStartSignedPackageRequest(nsIChannel* aChannel,
+                                     const nsACString& aPackageId);
 
 protected:
     bool ReceiveMessage(const nsString& aMessage,
@@ -485,7 +494,9 @@ protected:
     bool InitBrowserConfiguration(const nsCString& aURI,
                                   BrowserConfiguration& aConfiguration);
 
-    void SetHasContentOpener(bool aHasContentOpener);
+    // Decide whether we have to use a new process to reload the URI associated
+    // with the given channel.
+    bool ShouldSwitchProcess(nsIChannel* aChannel);
 
     ContentCacheInParent mContentCache;
 
@@ -500,7 +511,7 @@ protected:
 private:
     void DestroyInternal();
     already_AddRefed<nsFrameLoader> GetFrameLoader(bool aUseCachedFrameLoaderAfterDestroy = false) const;
-    nsRefPtr<nsIContentParent> mManager;
+    RefPtr<nsIContentParent> mManager;
     void TryCacheDPIAndScale();
 
     nsresult UpdatePosition();
@@ -541,7 +552,7 @@ private:
     {
       nsCString mFlavor;
       nsString mStringData;
-      nsRefPtr<mozilla::dom::BlobImpl> mBlobData;
+      RefPtr<mozilla::dom::BlobImpl> mBlobData;
       enum DataType
       {
         eString,
@@ -551,7 +562,7 @@ private:
     };
     nsTArray<nsTArray<DataTransferItem>> mInitialDataTransferItems;
 
-    mozilla::RefPtr<gfx::DataSourceSurface> mDnDVisualization;
+    RefPtr<gfx::DataSourceSurface> mDnDVisualization;
     int32_t mDragAreaX;
     int32_t mDragAreaY;
 
@@ -564,12 +575,9 @@ private:
     // We keep a strong reference to the frameloader after we've sent the
     // Destroy message and before we've received __delete__. This allows us to
     // dispatch message manager messages during this time.
-    nsRefPtr<nsFrameLoader> mFrameLoader;
+    RefPtr<nsFrameLoader> mFrameLoader;
 
     TabId mTabId;
-
-    // Helper class for RecvCreateWindow.
-    struct AutoUseNewTab;
 
     // When loading a new tab or window via window.open, the child process sends
     // a new PBrowser to use. We store that tab in sNextTabParent and then
@@ -621,7 +629,7 @@ private:
     // cursor.  This happens whenever the cursor is in the tab's region.
     bool mTabSetsCursor;
 
-    nsRefPtr<nsIPresShell> mPresShellWithRefreshListener;
+    RefPtr<nsIPresShell> mPresShellWithRefreshListener;
 
     bool mHasContentOpener;
 
@@ -637,6 +645,38 @@ private:
 
 public:
     static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);
+};
+
+struct MOZ_STACK_CLASS TabParent::AutoUseNewTab final
+{
+public:
+    AutoUseNewTab(TabParent* aNewTab, bool* aWindowIsNew, nsCString* aURLToLoad)
+     : mNewTab(aNewTab), mWindowIsNew(aWindowIsNew), mURLToLoad(aURLToLoad)
+    {
+        MOZ_ASSERT(!TabParent::sNextTabParent);
+        MOZ_ASSERT(!aNewTab->mCreatingWindow);
+
+        TabParent::sNextTabParent = aNewTab;
+        aNewTab->mCreatingWindow = true;
+        aNewTab->mDelayedURL.Truncate();
+    }
+
+    ~AutoUseNewTab()
+    {
+        mNewTab->mCreatingWindow = false;
+        *mURLToLoad = mNewTab->mDelayedURL;
+
+        if (TabParent::sNextTabParent) {
+            MOZ_ASSERT(TabParent::sNextTabParent == mNewTab);
+            TabParent::sNextTabParent = nullptr;
+            *mWindowIsNew = false;
+        }
+    }
+
+private:
+    TabParent* mNewTab;
+    bool* mWindowIsNew;
+    nsCString* mURLToLoad;
 };
 
 } // namespace dom

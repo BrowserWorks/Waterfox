@@ -21,7 +21,7 @@ BluetoothMapFolder::BluetoothMapFolder(const nsAString& aFolderName,
 BluetoothMapFolder*
 BluetoothMapFolder::AddSubFolder(const nsAString& aFolderName)
 {
-  nsRefPtr<BluetoothMapFolder> folder = new BluetoothMapFolder(aFolderName,
+  RefPtr<BluetoothMapFolder> folder = new BluetoothMapFolder(aFolderName,
                                                                this);
   mSubFolders.Put(nsString(aFolderName), folder);
 
@@ -76,7 +76,7 @@ BluetoothMapFolder::GetFolderListingObjectString(nsAString& aString,
     const nsAString& key = iter.Key();
     folderListingObejct.Append("<folder name=\"");
     folderListingObejct.Append(NS_ConvertUTF16toUTF8(key).get());
-    folderListingObejct.Append("\">");
+    folderListingObejct.Append("\"/>");
     count++;
   }
 

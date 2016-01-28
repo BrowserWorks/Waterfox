@@ -233,11 +233,6 @@ public:
    */
   nsresult SetSourceSizeHint(uint32_t aSizeHint);
 
-  /* Provide a hint for the requested resolution of the resulting image. */
-  void SetRequestedResolution(const nsIntSize requestedResolution) {
-    mRequestedResolution = requestedResolution;
-  }
-
   /* Provide a hint for the requested dimension of the resulting image. */
   void SetRequestedSampleSize(int requestedSampleSize) {
     mRequestedSampleSize = requestedSampleSize;
@@ -258,7 +253,7 @@ private:
                           gfxContext* aContext,
                           const nsIntSize& aSize,
                           const ImageRegion& aRegion,
-                          GraphicsFilter aFilter,
+                          gfx::Filter aFilter,
                           uint32_t aFlags);
 
   already_AddRefed<gfx::SourceSurface> CopyFrame(uint32_t aWhichFrame,
@@ -280,7 +275,7 @@ private:
 
   nsIntRect GetFirstFrameRect();
 
-  Pair<DrawResult, nsRefPtr<layers::Image>>
+  Pair<DrawResult, RefPtr<layers::Image>>
     GetCurrentImage(layers::ImageContainer* aContainer, uint32_t aFlags);
 
   void UpdateImageContainer();
@@ -365,10 +360,6 @@ private: // data
   // This is currently only used for statistics
   int32_t                        mDecodeCount;
 
-  // If the image contains multiple resolutions, a hint as to which one
-  // should be used
-  nsIntSize                  mRequestedResolution;
-
   // A hint for image decoder that directly scale the image to smaller buffer
   int                        mRequestedSampleSize;
 
@@ -385,7 +376,7 @@ private: // data
 #endif
 
   // The source data for this image.
-  nsRefPtr<SourceBuffer>     mSourceBuffer;
+  RefPtr<SourceBuffer>     mSourceBuffer;
 
   // The number of frames this image has.
   uint32_t                   mFrameCount;
@@ -441,7 +432,7 @@ private: // data
   private:
     explicit HandleErrorWorker(RasterImage* aImage);
 
-    nsRefPtr<RasterImage> mImage;
+    RefPtr<RasterImage> mImage;
   };
 
   // Helpers

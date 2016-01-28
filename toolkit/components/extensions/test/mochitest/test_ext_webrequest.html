@@ -1,0 +1,256 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for simple WebExtension</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="head.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+
+<script type="application/javascript;version=1.8">
+"use strict";
+
+const BASE = "http://mochi.test:8888/tests/toolkit/components/extensions/test/mochitest";
+
+const expected_requested = [BASE + "/file_WebRequest_page1.html",
+                            BASE + "/file_style_good.css",
+                            BASE + "/file_style_bad.css",
+                            BASE + "/file_style_redirect.css",
+                            BASE + "/file_image_good.png",
+                            BASE + "/file_image_bad.png",
+                            BASE + "/file_image_redirect.png",
+                            BASE + "/file_script_good.js",
+                            BASE + "/file_script_bad.js",
+                            BASE + "/file_script_redirect.js",
+                            BASE + "/file_script_xhr.js",
+                            BASE + "/file_WebRequest_page2.html",
+                            BASE + "/nonexistent_script_url.js",
+                            BASE + "/xhr_resource"];
+
+const expected_sendHeaders = [BASE + "/file_WebRequest_page1.html",
+                              BASE + "/file_style_good.css",
+                              BASE + "/file_style_redirect.css",
+                              BASE + "/file_image_good.png",
+                              BASE + "/file_image_redirect.png",
+                              BASE + "/file_script_good.js",
+                              BASE + "/file_script_redirect.js",
+                              BASE + "/file_script_xhr.js",
+                              BASE + "/file_WebRequest_page2.html",
+                              BASE + "/nonexistent_script_url.js",
+                              BASE + "/xhr_resource"];
+
+const expected_complete = [BASE + "/file_WebRequest_page1.html",
+                           BASE + "/file_style_good.css",
+                           BASE + "/file_image_good.png",
+                           BASE + "/file_script_good.js",
+                           BASE + "/file_script_xhr.js",
+                           BASE + "/file_WebRequest_page2.html",
+                           BASE + "/nonexistent_script_url.js",
+                           BASE + "/xhr_resource"];
+
+function removeDupes(list)
+{
+  let j = 0;
+  for (let i = 1; i < list.length; i++) {
+    if (list[i] != list[j]) {
+      j++;
+      if (i != j) {
+        list[j] = list[i];
+      }
+    }
+  }
+  list.length = j + 1;
+}
+
+function compareLists(list1, list2, kind)
+{
+  list1.sort();
+  removeDupes(list1);
+  list2.sort();
+  removeDupes(list2);
+  is(String(list1), String(list2), `${kind} URLs correct`);
+}
+
+function backgroundScript()
+{
+  const BASE = "http://mochi.test:8888/tests/toolkit/components/extensions/test/mochitest";
+
+  var savedTabId = -1;
+
+  function checkType(details)
+  {
+    var expected_type = "???";
+    if (details.url.indexOf("style") != -1) {
+      expected_type = "stylesheet";
+    } else if (details.url.indexOf("image") != -1) {
+      expected_type = "image";
+    } else if (details.url.indexOf("script") != -1) {
+      expected_type = "script";
+    } else if (details.url.indexOf("page1") != -1) {
+      expected_type = "main_frame";
+    } else if (details.url.indexOf("page2") != -1) {
+      expected_type = "sub_frame";
+    } else if (details.url.indexOf("xhr") != -1) {
+      expected_type = "xmlhttprequest";
+    }
+    browser.test.assertEq(details.type, expected_type, "resource type is correct");
+  }
+
+  var frameIDs = new Map();
+
+  var recorded = {requested: [],
+                  beforeSendHeaders: [],
+                  sendHeaders: [],
+                  responseStarted: [],
+                  completed: []};
+
+  function checkResourceType(type)
+  {
+    var key = type.toUpperCase();
+    browser.test.assertTrue(key in browser.webRequest.ResourceType);
+  }
+
+  function onBeforeRequest(details)
+  {
+    browser.test.log(`onBeforeRequest ${details.url}`);
+    checkResourceType(details.type);
+    if (details.url.startsWith(BASE)) {
+      recorded.requested.push(details.url);
+
+      if (savedTabId == -1) {
+        browser.test.assertTrue(details.tabId !== undefined, "tab ID defined");
+        savedTabId = details.tabId;
+      }
+
+      browser.test.assertEq(details.tabId, savedTabId, "correct tab ID");
+      checkType(details);
+
+      frameIDs.set(details.url, details.frameId);
+      if (details.url.indexOf("page1") != -1) {
+        browser.test.assertEq(details.frameId, 0, "frame ID correct");
+        browser.test.assertEq(details.parentFrameId, -1, "parent frame ID correct");
+      }
+      if (details.url.indexOf("page2") != -1) {
+        browser.test.assertTrue(details.frameId != 0, "sub-frame gets its own frame ID");
+        browser.test.assertTrue(details.frameId !== undefined, "sub-frame ID defined");
+        browser.test.assertEq(details.parentFrameId, 0, "parent frame id is correct");
+      }
+    }
+    if (details.url.indexOf("_bad.") != -1) {
+      return {cancel: true};
+    }
+    return {};
+  }
+
+  function onBeforeSendHeaders(details)
+  {
+    browser.test.log(`onBeforeSendHeaders ${details.url}`);
+    checkResourceType(details.type);
+    if (details.url.startsWith(BASE)) {
+      recorded.beforeSendHeaders.push(details.url);
+
+      browser.test.assertEq(details.tabId, savedTabId, "correct tab ID");
+      checkType(details);
+
+      var id = frameIDs.get(details.url);
+      browser.test.assertEq(id, details.frameId, "frame ID same in onBeforeSendHeaders as onBeforeRequest");
+    }
+    if (details.url.indexOf("_redirect.") != -1) {
+      return {redirectUrl: details.url.replace("_redirect.", "_good.")};
+    }
+    return {};
+  }
+
+  function onRecord(kind, details)
+  {
+    checkResourceType(details.type);
+    if (details.url.startsWith(BASE)) {
+      recorded[kind].push(details.url);
+    }
+  }
+
+  browser.webRequest.onBeforeRequest.addListener(onBeforeRequest, {urls: "<all_urls>"}, ["blocking"]);
+  browser.webRequest.onBeforeSendHeaders.addListener(onBeforeSendHeaders, {urls: "<all_urls>"}, ["blocking"]);
+  browser.webRequest.onSendHeaders.addListener(onRecord.bind(null, "sendHeaders"), {urls: "<all_urls>"});
+  browser.webRequest.onResponseStarted.addListener(onRecord.bind(null, "responseStarted"), {urls: "<all_urls>"});
+  browser.webRequest.onCompleted.addListener(onRecord.bind(null, "completed"), {urls: "<all_urls>"});
+
+  function onTestMessage()
+  {
+    browser.test.sendMessage("results", recorded);
+  }
+
+  browser.test.onMessage.addListener(onTestMessage);
+
+  browser.test.sendMessage("ready", browser.webRequest.ResourceType);
+}
+
+function* test_once()
+{
+  let extensionData = {
+    manifest: {
+      permissions: [
+        "webRequest",
+        "webRequestBlocking"
+      ],
+    },
+    background: "(" + backgroundScript.toString() + ")()",
+  };
+
+  let extension = ExtensionTestUtils.loadExtension(extensionData);
+  let [, resourceTypes] = yield Promise.all([extension.startup(), extension.awaitMessage("ready")]);
+  info("webrequest extension loaded");
+
+  for (var key in resourceTypes) {
+    var value = resourceTypes[key];
+    is(key, value.toUpperCase());
+  }
+
+  yield new Promise(resolve => { setTimeout(resolve, 0); });
+
+  let win = window.open();
+
+  // Clear the image cache, since it gets in the way otherwise.
+  var imgTools = SpecialPowers.Cc["@mozilla.org/image/tools;1"].getService(SpecialPowers.Ci.imgITools);
+  var cache = imgTools.getImgCacheForDocument(win.document);
+  cache.clearCache(false);
+
+  //yield waitForLoad(win);
+  info("about:blank loaded");
+
+  win.location = "file_WebRequest_page1.html";
+
+  yield waitForLoad(win);
+  info("test page loaded");
+
+  is(win.success, 2, "Good script ran");
+  is(win.failure, undefined, "Failure script didn't run");
+
+  let style = win.getComputedStyle(win.document.getElementById("test"), null);
+  is(style.getPropertyValue("color"), "rgb(255, 0, 0)", "Good CSS loaded");
+
+  win.close();
+
+  extension.sendMessage("getResults");
+  let recorded = yield extension.awaitMessage("results");
+
+  compareLists(recorded.requested, expected_requested, "requested");
+  compareLists(recorded.beforeSendHeaders, expected_sendHeaders, "beforeSendHeaders");
+  compareLists(recorded.sendHeaders, expected_complete, "sendHeaders");
+  compareLists(recorded.responseStarted, expected_complete, "responseStarted");
+  compareLists(recorded.completed, expected_complete, "completed");
+
+  yield extension.unload();
+  info("webrequest extension unloaded");
+}
+
+// Run the test twice to make sure it works with caching.
+add_task(test_once);
+add_task(test_once);
+</script>
+
+</body>
+</html>

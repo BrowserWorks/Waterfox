@@ -18,6 +18,7 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "nsTArray.h"
+#include "Units.h"
 
 // translucency level for drag images
 #define DRAG_TRANSLUCENCY 0.65
@@ -70,6 +71,15 @@ protected:
   virtual ~nsBaseDragService();
 
   /**
+   * Called from nsBaseDragService to initiate a platform drag from a source
+   * in this process.  This is expected to ensure that StartDragSession() and
+   * EndDragSession() get called if the platform drag is successfully invoked.
+   */
+  virtual nsresult InvokeDragSessionImpl(nsISupportsArray* aTransferableArray,
+                                         nsIScriptableRegion* aDragRgn,
+                                         uint32_t aActionType) = 0;
+
+  /**
    * Draw the drag image, if any, to a surface and return it. The drag image
    * is constructed from mImage if specified, or aDOMNode if mImage is null.
    *
@@ -95,7 +105,7 @@ protected:
                     nsIScriptableRegion* aRegion,
                     int32_t aScreenX, int32_t aScreenY,
                     nsIntRect* aScreenDragRect,
-                    mozilla::RefPtr<SourceSurface>* aSurface,
+                    RefPtr<SourceSurface>* aSurface,
                     nsPresContext **aPresContext);
 
   /**
@@ -107,7 +117,7 @@ protected:
                             mozilla::dom::HTMLCanvasElement* aCanvas,
                             int32_t aScreenX, int32_t aScreenY,
                             nsIntRect* aScreenDragRect,
-                            mozilla::RefPtr<SourceSurface>* aSurface);
+                            RefPtr<SourceSurface>* aSurface);
 
   /**
    * Convert aScreenX and aScreenY from CSS pixels into unscaled device pixels.
@@ -151,9 +161,8 @@ protected:
 
   // used to determine the image to appear on the cursor while dragging
   nsCOMPtr<nsIDOMNode> mImage;
-  // offset of cursor within the image 
-  int32_t mImageX;
-  int32_t mImageY;
+  // offset of cursor within the image
+  mozilla::CSSIntPoint mImageOffset;
 
   // set if a selection is being dragged
   nsCOMPtr<nsISelection> mSelection;
@@ -176,7 +185,7 @@ protected:
   // The input source of the drag event. Possible values are from nsIDOMMouseEvent.
   uint16_t mInputSource;
 
-  nsTArray<nsRefPtr<mozilla::dom::ContentParent>> mChildProcesses;
+  nsTArray<RefPtr<mozilla::dom::ContentParent>> mChildProcesses;
 };
 
 #endif // nsBaseDragService_h__

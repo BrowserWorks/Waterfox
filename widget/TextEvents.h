@@ -390,7 +390,7 @@ public:
   // TextComposition automatically.
   nsString mData;
 
-  nsRefPtr<TextRangeArray> mRanges;
+  RefPtr<TextRangeArray> mRanges;
 
   // If the instance is a clone of another event, mOriginalMessage stores
   // the another event's mMessage.
@@ -582,7 +582,11 @@ public:
     // This is the offset where caret would be if user clicked at the refPoint.
     uint32_t mTentativeCaretOffset;
     nsString mString;
-    // Finally, the coordinates is system coordinates.
+    // mRect is used by eQueryTextRect, eQueryCaretRect, eQueryCharacterAtPoint
+    // and eQueryEditorRect. The coordinates is system coordinates relative to
+    // the top level widget of mFocusedWidget.  E.g., if a <xul:panel> which
+    // is owned by a window has focused editor, the offset of mRect is relative
+    // to the owner window, not the <xul:panel>.
     mozilla::LayoutDeviceIntRect mRect;
     // The return widget has the caret. This is set at all query events.
     nsIWidget* mFocusedWidget;

@@ -1,4 +1,4 @@
-// |jit-test| --no-ggc; allow-unhandlable-oom
+if (!('oomTest' in this))
+    quit();
 
-load(libdir + 'oomTest.js');
 oomTest(newGlobal);

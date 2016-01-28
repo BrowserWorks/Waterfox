@@ -199,7 +199,8 @@ class NsdMulticastDNSManager extends MulticastDNSManager implements NativeEventL
 
         InetAddress host = serviceInfo.getHost();
         if (host != null) {
-            obj.put("host", host.getHostName());
+            obj.put("host", host.getCanonicalHostName());
+            obj.put("address", host.getHostAddress());
         }
 
         int port = serviceInfo.getPort();

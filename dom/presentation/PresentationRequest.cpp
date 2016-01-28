@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/PresentationRequestBinding.h"
-#include "mozilla/dom/PresentationSessionConnectEvent.h"
+#include "mozilla/dom/PresentationConnectionAvailableEvent.h"
 #include "mozilla/dom/Promise.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsCycleCollectionParticipant.h"
@@ -45,7 +45,7 @@ PresentationRequest::Constructor(const GlobalObject& aGlobal,
     return nullptr;
   }
 
-  nsRefPtr<PresentationRequest> request = new PresentationRequest(window, aUrl);
+  RefPtr<PresentationRequest> request = new PresentationRequest(window, aUrl);
   return NS_WARN_IF(!request->Init()) ? nullptr : request.forget();
 }
 
@@ -95,7 +95,7 @@ PresentationRequest::Start(ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = Promise::Create(global, aRv);
+  RefPtr<Promise> promise = Promise::Create(global, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -141,7 +141,7 @@ PresentationRequest::GetAvailability(ErrorResult& aRv)
     return nullptr;
   }
 
-  nsRefPtr<Promise> promise = Promise::Create(global, aRv);
+  RefPtr<Promise> promise = Promise::Create(global, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -151,21 +151,21 @@ PresentationRequest::GetAvailability(ErrorResult& aRv)
 }
 
 nsresult
-PresentationRequest::DispatchSessionConnectEvent(PresentationSession* aSession)
+PresentationRequest::DispatchConnectionAvailableEvent(PresentationConnection* aConnection)
 {
-  PresentationSessionConnectEventInit init;
-  init.mSession = aSession;
+  PresentationConnectionAvailableEventInit init;
+  init.mConnection = aConnection;
 
-  nsRefPtr<PresentationSessionConnectEvent> event =
-    PresentationSessionConnectEvent::Constructor(this,
-                                                 NS_LITERAL_STRING("sessionconnect"),
-                                                 init);
+  RefPtr<PresentationConnectionAvailableEvent> event =
+    PresentationConnectionAvailableEvent::Constructor(this,
+                                                      NS_LITERAL_STRING("connectionavailable"),
+                                                      init);
   if (NS_WARN_IF(!event)) {
     return NS_ERROR_FAILURE;
   }
   event->SetTrusted(true);
 
-  nsRefPtr<AsyncEventDispatcher> asyncDispatcher =
+  RefPtr<AsyncEventDispatcher> asyncDispatcher =
     new AsyncEventDispatcher(this, event);
   return asyncDispatcher->PostDOMEvent();
 }

@@ -17,6 +17,7 @@ namespace dom {
 struct ThreeDPoint;
 class AudioParamTimeline;
 class DelayNodeEngine;
+struct AudioTimelineEvent;
 } // namespace dom
 
 class AudioBlock;
@@ -282,11 +283,10 @@ public:
   {
     NS_ERROR("Invalid SetInt32Parameter index");
   }
-  virtual void SetTimelineParameter(uint32_t aIndex,
-                                    const dom::AudioParamTimeline& aValue,
-                                    TrackRate aSampleRate)
+  virtual void RecvTimelineEvent(uint32_t aIndex,
+                                 dom::AudioTimelineEvent& aValue)
   {
-    NS_ERROR("Invalid SetTimelineParameter index");
+    NS_ERROR("Invalid RecvTimelineEvent index");
   }
   virtual void SetThreeDPointParameter(uint32_t aIndex,
                                        const dom::ThreeDPoint& aValue)
@@ -309,10 +309,13 @@ public:
    * aInput is guaranteed to have float sample format (if it has samples at all)
    * and to have been resampled to the sampling rate for the stream, and to have
    * exactly WEBAUDIO_BLOCK_SIZE samples.
-   * *aFinished is set to false by the caller. If the callee sets it to true,
-   * we'll finish the stream and not call this again.
+   * *aFinished is set to false by the caller. The callee must not set this to
+   * true unless silent output is produced. If set to true, we'll finish the
+   * stream, consider this input inactive on any downstream nodes, and not
+   * call this again.
    */
   virtual void ProcessBlock(AudioNodeStream* aStream,
+                            GraphTime aFrom,
                             const AudioBlock& aInput,
                             AudioBlock* aOutput,
                             bool* aFinished);
@@ -321,7 +324,9 @@ public:
    * ProcessBlock() will be called later, and it then should not change
    * aOutput.  This is used only for DelayNodeEngine in a feedback loop.
    */
-  virtual void ProduceBlockBeforeInput(AudioBlock* aOutput)
+  virtual void ProduceBlockBeforeInput(AudioNodeStream* aStream,
+                                       GraphTime aFrom,
+                                       AudioBlock* aOutput)
   {
     NS_NOTREACHED("ProduceBlockBeforeInput called on wrong engine\n");
   }
@@ -345,6 +350,12 @@ public:
                                     const OutputChunks& aInput,
                                     OutputChunks& aOutput,
                                     bool* aFinished);
+
+  // IsActive() returns true if the engine needs to continue processing an
+  // unfinished stream even when it has silent or no input connections.  This
+  // includes tail-times and when sources have been scheduled to start.  If
+  // returning false, then the stream can be suspended.
+  virtual bool IsActive() const { return false; }
 
   bool HasNode() const
   {

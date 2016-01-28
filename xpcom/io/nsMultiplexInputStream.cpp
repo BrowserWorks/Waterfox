@@ -295,9 +295,6 @@ nsMultiplexInputStream::Read(char* aBuf, uint32_t aCount, uint32_t* aResult)
   return *aResult ? NS_OK : rv;
 }
 
-/* [noscript] unsigned long readSegments (in nsWriteSegmentFun writer,
- *                                        in voidPtr closure,
- *                                        in unsigned long count); */
 NS_IMETHODIMP
 nsMultiplexInputStream::ReadSegments(nsWriteSegmentFun aWriter, void* aClosure,
                                      uint32_t aCount, uint32_t* aResult)
@@ -696,7 +693,7 @@ nsMultiplexInputStreamConstructor(nsISupports* aOuter,
     return NS_ERROR_NO_AGGREGATION;
   }
 
-  nsRefPtr<nsMultiplexInputStream> inst = new nsMultiplexInputStream();
+  RefPtr<nsMultiplexInputStream> inst = new nsMultiplexInputStream();
 
   return inst->QueryInterface(aIID, aResult);
 }
@@ -803,7 +800,7 @@ nsMultiplexInputStream::Clone(nsIInputStream** aClone)
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<nsMultiplexInputStream> clone = new nsMultiplexInputStream();
+  RefPtr<nsMultiplexInputStream> clone = new nsMultiplexInputStream();
 
   nsresult rv;
   uint32_t len = mStreams.Length();

@@ -61,7 +61,7 @@ EventQueue::PushEvent(AccEvent* aEvent)
         ENameValueFlag nameFlag = parent->Name(name);
         // If name is obtained from subtree, fire name change event.
         if (nameFlag == eNameFromSubtree) {
-          nsRefPtr<AccEvent> nameChangeEvent =
+          RefPtr<AccEvent> nameChangeEvent =
             new AccEvent(nsIAccessibleEvent::EVENT_NAME_CHANGE, parent);
           PushEvent(nameChangeEvent);
         }
@@ -482,7 +482,7 @@ void
 EventQueue::ProcessEventQueue()
 {
   // Process only currently queued events.
-  nsTArray<nsRefPtr<AccEvent> > events;
+  nsTArray<RefPtr<AccEvent> > events;
   events.SwapElements(mEvents);
 
   uint32_t eventCount = events.Length();
@@ -546,8 +546,10 @@ EventQueue::ProcessEventQueue()
       }
     }
 
-    if (event->mEventType == nsIAccessibleEvent::EVENT_HIDE)
+    AccHideEvent* hideEvent = downcast_accEvent(event);
+    if (hideEvent && hideEvent->NeedsShutdown()) {
       mDocument->ShutdownChildrenInSubtree(event->mAccessible);
+    }
 
     if (!mDocument)
       return;

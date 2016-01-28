@@ -34,7 +34,7 @@ nsScreen::Create(nsPIDOMWindow* aWindow)
     do_QueryInterface(static_cast<nsPIDOMWindow*>(aWindow));
   NS_ENSURE_TRUE(sgo, nullptr);
 
-  nsRefPtr<nsScreen> screen = new nsScreen(aWindow);
+  RefPtr<nsScreen> screen = new nsScreen(aWindow);
   return screen.forget();
 }
 
@@ -312,7 +312,7 @@ nsScreen::GetWindowInnerRect(nsRect& aRect)
 {
   aRect.x = 0;
   aRect.y = 0;
-  nsCOMPtr<nsIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
   if (!win) {
     return NS_ERROR_FAILURE;
   }

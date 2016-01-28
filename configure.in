@@ -68,13 +68,14 @@ CAIRO_VERSION=1.10
 PANGO_VERSION=1.22.0
 GTK2_VERSION=2.18.0
 GTK3_VERSION=3.4.0
+GDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_4
 WINDRES_VERSION=2.14.90
 W32API_VERSION=3.14
 GNOMEUI_VERSION=2.2.0
 GCONF_VERSION=1.2.1
 STARTUP_NOTIFICATION_VERSION=0.8
 DBUS_VERSION=0.60
-SQLITE_VERSION=3.8.11.1
+SQLITE_VERSION=3.9.1
 
 MSMANIFEST_TOOL=
 
@@ -136,6 +137,8 @@ fi
 MOZ_BUILD_ROOT=`pwd -W 2>/dev/null || pwd`
 
 MOZ_PYTHON
+
+MOZ_BUILD_BACKEND
 
 MOZ_DEFAULT_COMPILER
 
@@ -316,6 +319,7 @@ if test -n "$gonkdir" ; then
     AC_DEFINE(HAVE_PTHREADS)
     MOZ_CHROME_FILE_FORMAT=omni
     direct_nspr_config=1
+    android_cxx_stl=mozstlport
 else
     MOZ_ANDROID_NDK
 
@@ -412,35 +416,7 @@ MOZ_TOOL_VARIABLES
 
 MOZ_CHECK_COMPILER_WRAPPER
 
-MOZ_PATH_PROG(RUSTC, rustc)
-if test -n "$RUSTC"; then
-  AC_MSG_CHECKING([rustc version])
-  RUSTC_VERSION=`$RUSTC --version | cut -d ' ' -f 2`
-  # Parse out semversion elements.
-  _RUSTC_MAJOR_VERSION=`echo ${RUSTC_VERSION} | cut -d . -f 1`
-  _RUSTC_MINOR_VERSION=`echo ${RUSTC_VERSION} | cut -d . -f 2`
-  _RUSTC_EXTRA_VERSION=`echo ${RUSTC_VERSION} | cut -d . -f 3 | cut -d + -f 1`
-  _RUSTC_PATCH_VERSION=`echo ${_RUSTC_EXTRA_VERSION} | cut -d '-' -f 1`
-  AC_MSG_RESULT([$RUSTC_VERSION (v${_RUSTC_MAJOR_VERSION}.${_RUSTC_MINOR_VERSION}.${_RUSTC_PATCH_VERSION})])
-fi
-MOZ_ARG_ENABLE_BOOL([rust],
-                    [  --enable-rust           Include Rust language sources],
-                    [MOZ_RUST=1],
-                    [MOZ_RUST= ])
-if test -z "$RUSTC" -a -n "$MOZ_RUST"; then
-  AC_MSG_ERROR([Rust compiler not found.
-    To compile rust language sources, you must have 'rustc' in your path.
-    See http://www.rust-lang.org/ for more information.])
-fi
-if test -n "$MOZ_RUST" && test -z "$_RUSTC_MAJOR_VERSION" -o \
-  "$_RUSTC_MAJOR_VERSION" -lt 1; then
-  AC_MSG_ERROR([Rust compiler ${RUSTC_VERSION} is too old.
-    To compile Rust language sources please install at least
-    version 1.0 of the 'rustc' toolchain and make sure it is
-    first in your path.
-    You can verify this by typing 'rustc --version'.])
-fi
-AC_SUBST(MOZ_RUST)
+MOZ_RUST_SUPPORT
 
 dnl ========================================================
 dnl Check for MacOS deployment target version
@@ -503,6 +479,9 @@ EOF
       to mozconfig, disable Rust support, or use an alternate toolchain.])
   fi
 fi
+
+AC_PROG_CPP
+AC_PROG_CXXCPP
 
 dnl ========================================================
 dnl Special win32 checks
@@ -608,9 +587,13 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         AC_SUBST(MSVC_DESKTOPCRT_DLL)
 
         # Disable SEH on clang-cl because it doesn't implement them yet.
+        if test -z "$CLANG_CL"; then
+            AC_DEFINE(HAVE_SEH_EXCEPTIONS)
+        else
             # Send our CFLAGS to NSS
             MOZ_CFLAGS_NSS=1
             AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
+        fi
 
         if test -n "$WIN32_REDIST_DIR"; then
           if test ! -d "$WIN32_REDIST_DIR"; then
@@ -689,8 +672,6 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         fi
         CFLAGS="$CFLAGS -D_HAS_EXCEPTIONS=0"
         CXXFLAGS="$CXXFLAGS -D_HAS_EXCEPTIONS=0"
-
-        MOZ_FIND_WINSDK_VERSION
     else
         # Check w32api version
         _W32API_MAJOR_VERSION=`echo $W32API_VERSION | $AWK -F\. '{ print $1 }'`
@@ -742,10 +723,9 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         # strsafe.h on mingw uses macros for function deprecation that pollutes namespace
         # causing problems with local implementations with the same name.
         AC_DEFINE(STRSAFE_NO_DEPRECATE)
-
-        MOZ_WINSDK_MAXVER=0x06030000
     fi # !GNU_CC
 
+    MOZ_FIND_WINSDK_VERSION
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
     AC_DEFINE_UNQUOTED(_WIN32_WINNT,0x$WINVER)
     # Require OS features provided by IE 6.0 SP2 (XP SP2)
@@ -766,9 +746,6 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
     AC_SUBST(MOZ_WINSDK_MAXVER)
     ;;
 esac
-
-AC_PROG_CPP
-AC_PROG_CXXCPP
 
 if test -n "$_WIN32_MSVC"; then
     SKIP_PATH_CHECKS=1
@@ -847,6 +824,7 @@ MOZ_PATH_PROG(RPMBUILD, rpmbuild, :)
 AC_SUBST(RPMBUILD)
 
 MOZ_PATH_PROG(GENISOIMAGE, genisoimage, :)
+MOZ_PATH_PROG(DSYMUTIL, dsymutil, llvm-dsymutil :)
 
 if test "$COMPILE_ENVIRONMENT"; then
 
@@ -1746,7 +1724,7 @@ fi
 dnl ========================================================
 dnl SPS Profiler
 dnl ========================================================
-MOZ_ENABLE_PROFILER_SPS=
+MOZ_ENABLE_PROFILER_SPS=1
 
 case "${OS_TARGET}" in
 Android)
@@ -1883,6 +1861,9 @@ dnl ==============================================================
 MOZILLA_VERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir`
 MOZILLA_UAVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --uaversion`
 MOZILLA_SYMBOLVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --symbolversion`
+if test -z "$MOZILLA_VERSION"; then
+  AC_MSG_ERROR([failed to read version info from milestone file])
+fi
 
 dnl Get version of various core apps from the version files.
 FIREFOX_VERSION=`cat $_topsrcdir/browser/config/version.txt`
@@ -1991,6 +1972,7 @@ case "$target" in
         AC_DEFINE(XP_IOS)
         AC_DEFINE(XP_DARWIN)
         _PLATFORM_DEFAULT_TOOLKIT='cairo-uikit'
+        direct_nspr_config=1
     else
         AC_DEFINE(XP_MACOSX)
         AC_DEFINE(XP_DARWIN)
@@ -2204,7 +2186,7 @@ ia64*-hpux*)
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=5.02
+            WIN32_SUBSYSTEM_VERSION=6.01
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -2235,9 +2217,6 @@ ia64*-hpux*)
         # the same thing as C4244, we disable C4267, too.
         # MSVC warning C4345 warns of newly conformant behavior as of VS2003.
         # MSVC warning C4351 warns of newly conformant behavior as of VS2005.
-        # MSVC warning C4482 warns when an enum value is refered specifing the
-        # name of the enum itself.  This behavior is allowed in C++11, and the
-        # warning has been removed in VS2012.
         # MSVC warning C4800 warns when a value is implicitly cast to bool,
         # because this also forces narrowing to a single byte, which can be a
         # perf hit.  But this matters so little in practice (and often we want
@@ -2245,7 +2224,7 @@ ia64*-hpux*)
         # MSVC warning C4819 warns some UTF-8 characters (e.g. copyright sign)
         # on non-Western system locales even if it is in a comment.
         CFLAGS="$CFLAGS -wd4244 -wd4267 -wd4819"
-        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4345 -wd4351 -wd4482 -wd4800 -wd4819"
+        CXXFLAGS="$CXXFLAGS -wd4251 -wd4244 -wd4267 -wd4345 -wd4351 -wd4800 -wd4819"
         if test -n "$CLANG_CL"; then
             # Suppress the clang-cl warning for the inline 'new' and 'delete' in mozalloc
             CXXFLAGS="$CXXFLAGS -Wno-inline-new-delete"
@@ -2254,7 +2233,7 @@ ia64*-hpux*)
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
         LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib netapi32.lib"
-        MOZ_DEBUG_LDFLAGS='-DEBUG'
+        MOZ_DEBUG_LDFLAGS='-DEBUG -DEBUGTYPE:CV'
         WARNINGS_AS_ERRORS='-WX'
         MOZ_OPTIMIZE_FLAGS='-O1 -Oi'
         MOZ_FIX_LINK_PATHS=
@@ -3367,11 +3346,7 @@ MOZ_CONFIG_NSPR()
 
 dnl set GRE_MILESTONE
 dnl ========================================================
-if test -n "$LIBXUL_SDK"; then
-    GRE_MILESTONE=`$PYTHON "$_topsrcdir"/config/printconfigsetting.py "$LIBXUL_DIST"/bin/platform.ini Build Milestone`
-else
-    GRE_MILESTONE=`tail -n 1 "$_topsrcdir"/config/milestone.txt 2>/dev/null || tail -1 "$_topsrcdir"/config/milestone.txt`
-fi
+GRE_MILESTONE=`tail -n 1 "$_topsrcdir"/config/milestone.txt 2>/dev/null || tail -1 "$_topsrcdir"/config/milestone.txt`
 AC_SUBST(GRE_MILESTONE)
 
 # set RELEASE_BUILD and NIGHTLY_BUILD variables depending on the cycle we're in
@@ -3780,8 +3755,10 @@ MOZ_LOCALE_SWITCHER=
 MOZ_ANDROID_READING_LIST_SERVICE=
 MOZ_ANDROID_SEARCH_ACTIVITY=
 MOZ_ANDROID_DOWNLOADS_INTEGRATION=
+MOZ_ANDROID_GCM=
 MOZ_ANDROID_MLS_STUMBLER=
 MOZ_ANDROID_SHARE_OVERLAY=
+MOZ_EXCLUDE_HYPHENATION_DICTIONARIES=
 MOZ_INSTALL_TRACKING=
 MOZ_SWITCHBOARD=
 ACCESSIBILITY=1
@@ -3795,6 +3772,7 @@ MOZ_SANDBOX=1
 MOZ_BINARY_EXTENSIONS=
 MOZ_ADDON_SIGNING=
 MOZ_REQUIRE_SIGNING=
+MOZ_DEVTOOLS=server
 
 case "$target_os" in
     mingw*)
@@ -3934,6 +3912,14 @@ MOZ_ARG_WITH_STRING(adjust-sdk-keyfile,
   MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN=`cat $withval`)
 AC_SUBST(MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN)
 
+# Allow specifying a GCM sender ID key file that contains the sender ID used for
+# GCM requests.  Note that GCM sender IDs are not sensitive: see, for example,
+# http://stackoverflow.com/a/18216063.
+MOZ_ARG_WITH_STRING(gcm-senderid-keyfile,
+[  --with-gcm-senderid-keyfile=file GCM sender ID for GCM requests],
+  MOZ_ANDROID_GCM_SENDERID=`cat $withval`)
+AC_SUBST(MOZ_ANDROID_GCM_SENDERID)
+
 # Whether to include optional-but-large font files in the final APK.
 # We want this in mobile/android/confvars.sh, so it goes early.
 MOZ_ARG_DISABLE_BOOL(android-include-fonts,
@@ -4012,34 +3998,33 @@ if test -n "$WITH_APP_BASENAME" ; then
     MOZ_APP_BASENAME="$WITH_APP_BASENAME"
 fi
 
-# Now is a good time to test for logic errors, define mismatches, etc.
-case "$MOZ_BUILD_APP" in
-xulrunner)
-  if test "$LIBXUL_SDK"; then
-    AC_MSG_ERROR([Building XULRunner --with-libxul-sdk doesn't make sense; XULRunner provides the libxul SDK.])
-  fi
-  ;;
-esac
-
 # Special cases where we need to AC_DEFINE something. Also a holdover for apps
 # that haven't made a confvars.sh yet. Don't add new stuff here, use
 # MOZ_BUILD_APP.
 case "$MOZ_BUILD_APP" in
 browser)
   AC_DEFINE(MOZ_PHOENIX)
+
+  BUILD_BACKENDS="$BUILD_BACKENDS FasterMake"
   ;;
 
 xulrunner)
   AC_DEFINE(MOZ_XULRUNNER)
   ;;
-b2g)
-  AC_DEFINE(MOZ_B2G)
-  ;;
-b2g/dev)
-  AC_DEFINE(MOZ_B2G)
-  AC_DEFINE(MOZ_MULET)
-  ;;
 esac
+
+if test -n "$MOZ_B2G"; then
+    AC_DEFINE(MOZ_B2G)
+fi
+
+# Graphene is a desktop runtime for running applications with a HTML UI.
+if test -n "$MOZ_GRAPHENE"; then
+    AC_DEFINE(MOZ_GRAPHENE)
+fi
+
+if test -n "$MOZ_MULET"; then
+    AC_DEFINE(MOZ_MULET)
+fi
 
 if test -n "$MOZ_B2GDROID"; then
     AC_DEFINE(MOZ_B2GDROID)
@@ -4065,14 +4050,13 @@ WINNT|Darwin|Android)
 esac
 
 dnl ========================================================
-dnl Check Android SDK version depending on mobile target.
+dnl Ensure Android SDK and build-tools versions depending on
+dnl mobile target.
 dnl ========================================================
 
 if test -z "$gonkdir" ; then
-    # Minimum Android SDK API Level we require.
     case "$MOZ_BUILD_APP" in
     mobile/android | mobile/android/b2gdroid)
-        android_min_api_level=20
         case "$target" in
         *-android*|*-linuxandroid*)
             :
@@ -4082,10 +4066,10 @@ if test -z "$gonkdir" ; then
              See https://wiki.mozilla.org/Mobile/Fennec/Android#Setup_Fennec_mozconfig for more information about the necessary options])
             ;;
         esac
+
+        MOZ_ANDROID_SDK(23, 23.0.1)
         ;;
     esac
-
-    MOZ_ANDROID_SDK($android_min_api_level)
 fi
 
 dnl ========================================================
@@ -4273,6 +4257,8 @@ if test "$COMPILE_ENVIRONMENT"; then
     dnl of a make reference because of how TK_LIBS is mangled in toolkit/library/moz.build
     dnl for GTK+3 builds.
     TK_LIBS=$MOZ_GTK3_LIBS
+    AC_DEFINE_UNQUOTED(GDK_VERSION_MIN_REQUIRED,$GDK_VERSION_MIN_REQUIRED)
+    AC_DEFINE_UNQUOTED(GDK_VERSION_MAX_ALLOWED,$GDK_VERSION_MIN_REQUIRED)
     GLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_32
   fi
   if test "$MOZ_ENABLE_GTK2"; then
@@ -4603,6 +4589,7 @@ dnl values set by configure.sh above.
 dnl ========================================================
 
 MOZ_ANDROID_GOOGLE_PLAY_SERVICES
+MOZ_ANDROID_GOOGLE_CLOUD_MESSAGING
 
 
 dnl ========================================================
@@ -4775,6 +4762,21 @@ fi
 AC_SUBST(MOZ_ENABLE_DBUS)
 
 dnl ========================================================
+dnl = speech-dispatcher support
+dnl ========================================================
+
+if test "$MOZ_ENABLE_GTK" -o "$MOZ_ENABLE_QT"
+then
+    MOZ_SYNTH_SPEECHD=1
+
+    MOZ_ARG_DISABLE_BOOL(synth-speechd,
+    [  --disable-synth-speechd Disable speech-dispatcher support ],
+        MOZ_SYNTH_SPEECHD=,
+        MOZ_SYNTH_SPEECHD=1)
+fi
+AC_SUBST(MOZ_SYNTH_SPEECHD)
+
+dnl ========================================================
 dnl = Enable Android History instead of Places
 dnl ========================================================
 if test -n "$MOZ_ANDROID_HISTORY"; then
@@ -4873,6 +4875,13 @@ if test -n "$MOZ_ANDROID_TAB_QUEUE"; then
     AC_DEFINE(MOZ_ANDROID_TAB_QUEUE)
 fi
 
+dnl =========================================================
+dnl = Whether to exclude hyphenations files in the build
+dnl =========================================================
+if test -n "$MOZ_EXCLUDE_HYPHENATION_DICTIONARIES"; then
+    AC_DEFINE(MOZ_EXCLUDE_HYPHENATION_DICTIONARIES)
+fi
+
 dnl ========================================================
 dnl = Include install tracking on Android
 dnl ========================================================
@@ -4885,6 +4894,13 @@ dnl = Include Switchboard A/B framework on Android
 dnl ========================================================
 if test -n "$MOZ_SWITCHBOARD"; then
     AC_DEFINE(MOZ_SWITCHBOARD)
+fi
+
+dnl ========================================================
+dnl = Enable GCM on Android.
+dnl ========================================================
+if test -n "$MOZ_ANDROID_GCM"; then
+    AC_DEFINE(MOZ_ANDROID_GCM)
 fi
 
 dnl ========================================================
@@ -5148,7 +5164,7 @@ fi;
 dnl ========================================================
 dnl = Apple platform decoder support
 dnl ========================================================
-if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
+if test "$MOZ_WIDGET_TOOLKIT" = "cocoa" || test "$MOZ_WIDGET_TOOLKIT" = "uikit"; then
   MOZ_APPLEMEDIA=1
 fi
 
@@ -5247,7 +5263,7 @@ fi
 
 if test -n "$MOZ_FMP4"; then
     AC_DEFINE(MOZ_FMP4)
-    MOZ_EME=
+    MOZ_EME=1
 fi;
 
 if test x"$MOZ_WIDGET_TOOLKIT" = x"gonk" -a -n "$MOZ_FMP4" -a -n "$ANDROID_VERSION"; then
@@ -6050,7 +6066,7 @@ MOZ_ARG_DISABLE_BOOL(crashreporter,
     [MOZ_CRASHREPORTER=],
     [MOZ_CRASHREPORTER=F # Force enable breakpad])
 
-if test "$OS_ARCH" != "$HOST_OS_ARCH" -a "$OS_ARCH" != "WINNT"; then
+if test "$OS_ARCH" != "$HOST_OS_ARCH" -a "$OS_ARCH" != "WINNT" -a "$OS_ARCH" != "Darwin"; then
   if test "$MOZ_CRASHREPORTER" = F; then
     AC_MSG_ERROR([Cannot --enable-crashreporter, as breakpad tools do not support compiling on $HOST_OS_ARCH while targeting $OS_ARCH.])
   fi
@@ -6277,19 +6293,11 @@ if test -z "$MOZ_ENABLE_GIO" -a `echo "$MOZ_EXTENSIONS" | grep -c gio` -ne 0; th
     MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|gio||'`
 fi
 
-dnl Do not build gio with libxul based apps
-if test -n "$LIBXUL_SDK_DIR" -a `echo "$MOZ_EXTENSIONS" | grep -c gio` -ne 0; then
-    MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|gio||'`
-fi
-
 if test `echo "$MOZ_EXTENSIONS" | grep -c gio` -ne 0; then
     MOZ_GIO_COMPONENT=1
     MOZ_EXTENSIONS=`echo $MOZ_EXTENSIONS | sed -e 's|gio||'`
 fi
 AC_SUBST(MOZ_GIO_COMPONENT)
-
-dnl Remove dupes
-MOZ_EXTENSIONS=`$PYTHON ${srcdir}/build/unix/uniq.py ${MOZ_EXTENSIONS}`
 
 dnl Ensure every extension exists, to avoid mostly-inscrutable error messages
 dnl when trying to build a nonexistent extension.
@@ -7247,6 +7255,9 @@ if test -z "$MOZ_MEMORY"; then
   esac
 else
   AC_DEFINE(MOZ_MEMORY)
+  if test -n "$NIGHTLY_BUILD"; then
+    MOZ_JEMALLOC4=1
+  fi
   if test -n "$MOZ_JEMALLOC4"; then
     AC_DEFINE(MOZ_JEMALLOC4)
   fi
@@ -7505,6 +7516,16 @@ MOZ_ARG_ENABLE_BOOL(reflow-perf,
 if test -n "$MOZ_REFLOW_PERF"; then
     AC_DEFINE(MOZ_REFLOW_PERF)
 fi
+
+dnl ========================================================
+dnl = Horizon build options - set default preferences for
+dnl   the horizon project. Horizon is a browser built on
+dnl   top of the graphene runtime.
+dnl ========================================================
+if test -n "$MOZ_HORIZON"; then
+    AC_DEFINE(MOZ_HORIZON)
+fi
+AC_SUBST(MOZ_HORIZON)
 
 dnl ========================================================
 dnl = Offer a way to disable the startup cache
@@ -8000,13 +8021,8 @@ dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(Static build options)
 
-if test -n "$GKMEDIAS_SHARED_LIBRARY"; then
-  AC_DEFINE(GKMEDIAS_SHARED_LIBRARY)
-fi
-AC_SUBST(GKMEDIAS_SHARED_LIBRARY)
-
 if test -z "$MOZ_NATIVE_ZLIB"; then
-if test -n "$JS_SHARED_LIBRARY" -o "$GKMEDIAS_SHARED_LIBRARY"; then
+if test -n "$JS_SHARED_LIBRARY"; then
   ZLIB_IN_MOZGLUE=1
   AC_DEFINE(ZLIB_IN_MOZGLUE)
 fi
@@ -8358,8 +8374,6 @@ MOZ_ARG_ENABLE_STRING(necko-protocols,
     fi
 done],
     NECKO_PROTOCOLS="$NECKO_PROTOCOLS_DEFAULT")
-dnl Remove dupes
-NECKO_PROTOCOLS=`$PYTHON ${srcdir}/build/unix/uniq.py ${NECKO_PROTOCOLS}`
 AC_SUBST_SET(NECKO_PROTOCOLS)
 for p in $NECKO_PROTOCOLS; do
     AC_DEFINE_UNQUOTED(NECKO_PROTOCOL_$p)
@@ -8464,10 +8478,10 @@ if test -n "$MOZ_SERVICES_CRYPTO"; then
 fi
 
 dnl Build Firefox Health Reporter Service
-dnl AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
-dnl if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
-dnl   AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
-dnl fi
+AC_SUBST(MOZ_SERVICES_HEALTHREPORT)
+if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
+  AC_DEFINE(MOZ_SERVICES_HEALTHREPORT)
+fi
 
 dnl Build Services metrics component
 AC_SUBST(MOZ_SERVICES_METRICS)
@@ -8539,11 +8553,9 @@ AC_SUBST(MOZ_AUTH_EXTENSION)
 AC_SUBST(MOZ_PREF_EXTENSIONS)
 AC_SUBST(MOZ_DEBUG)
 AC_SUBST(MOZ_DEBUG_SYMBOLS)
-AC_SUBST(MOZ_DEBUG_ENABLE_DEFS)
-AC_SUBST(MOZ_DEBUG_DISABLE_DEFS)
 AC_SUBST(MOZ_DEBUG_LDFLAGS)
 AC_SUBST(WARNINGS_AS_ERRORS)
-AC_SUBST(MOZ_EXTENSIONS)
+AC_SUBST_SET(MOZ_EXTENSIONS)
 AC_SUBST(MOZ_ENABLE_PROFILER_SPS)
 AC_SUBST(MOZ_JPROF)
 AC_SUBST(MOZ_INSTRUMENTS)
@@ -8597,6 +8609,7 @@ AC_SUBST(MOZ_WEBSMS_BACKEND)
 AC_SUBST(MOZ_ANDROID_BEAM)
 AC_SUBST(MOZ_LOCALE_SWITCHER)
 AC_SUBST(MOZ_DISABLE_GECKOVIEW)
+AC_SUBST(MOZ_ANDROID_GCM)
 AC_SUBST(MOZ_ANDROID_GECKOLIBS_AAR)
 AC_SUBST(MOZ_ANDROID_READING_LIST_SERVICE)
 AC_SUBST(MOZ_ANDROID_SEARCH_ACTIVITY)
@@ -8608,6 +8621,7 @@ AC_SUBST(MOZ_ANDROID_DOWNLOADS_INTEGRATION)
 AC_SUBST(MOZ_ANDROID_APPLICATION_CLASS)
 AC_SUBST(MOZ_ANDROID_BROWSER_INTENT_CLASS)
 AC_SUBST(MOZ_ANDROID_SEARCH_INTENT_CLASS)
+AC_SUBST(MOZ_EXCLUDE_HYPHENATION_DICTIONARIES)
 AC_SUBST(MOZ_INSTALL_TRACKING)
 AC_SUBST(MOZ_SWITCHBOARD)
 AC_SUBST(ENABLE_STRIP)
@@ -8789,19 +8803,40 @@ if test "$MOZILLA_OFFICIAL"; then
     MOZ_INCLUDE_SOURCE_INFO=1
 fi
 
+# On official builds, we need to know in Telemetry what revision this is built from.
+# This is e.g. needed to match incoming data to a specific revision of the Histograms.json
+# file.
+if test "$MOZILLA_OFFICIAL" && test -d ${_topsrcdir}/.hg; then
+  SOURCE_REV=`cd $_topsrcdir && hg parent --template='{node|short}'`
+  SOURCE_REPO=`cd $_topsrcdir && hg showconfig paths.default | sed -e 's|^ssh://|http://|' -e 's|/$||'`
+  SOURCE_REV_URL=$SOURCE_REPO/rev/$SOURCE_REV
+else
+  SOURCE_REV_URL=
+fi
+AC_SUBST(SOURCE_REV_URL)
+
 AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
 
 AC_DEFINE_UNQUOTED(MOZ_TELEMETRY_DISPLAY_REV, 2)
 AC_SUBST(MOZ_TELEMETRY_DISPLAY_REV)
 
+if test "$MOZ_TELEMETRY_REPORTING"; then
+    AC_DEFINE(MOZ_TELEMETRY_REPORTING)
+
+    # Enable Telemetry by default for nightly and aurora channels
+    if test -z "$RELEASE_BUILD"; then
+      AC_DEFINE(MOZ_TELEMETRY_ON_BY_DEFAULT)
+    fi
+fi
+
 dnl If we have any service that uploads data (and requires data submission
 dnl policy alert), set MOZ_DATA_REPORTING.
 dnl We need SUBST for build system and DEFINE for xul preprocessor.
-dnl if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-dnl  MOZ_DATA_REPORTING=1
-dnl  AC_DEFINE(MOZ_DATA_REPORTING)
-dnl  AC_SUBST(MOZ_DATA_REPORTING)
-dnl fi
+if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
+  MOZ_DATA_REPORTING=1
+  AC_DEFINE(MOZ_DATA_REPORTING)
+  AC_SUBST(MOZ_DATA_REPORTING)
+fi
 
 dnl win32 options
 AC_SUBST(MOZ_BROWSE_INFO)
@@ -8968,6 +9003,7 @@ AC_SUBST_LIST(LIBJPEG_TURBO_ASFLAGS)
 AC_SUBST(MOZ_LIBAV_FFT)
 AC_SUBST(LIBAV_FFT_AS)
 AC_SUBST_LIST(LIBAV_FFT_ASFLAGS)
+AC_SUBST(MOZ_DEVTOOLS)
 
 AC_SUBST(MOZ_PACKAGE_JSSHELL)
 AC_SUBST(MOZ_FOLD_LIBS)
@@ -9101,12 +9137,10 @@ dnl ========================================================
 dnl ICU Support
 dnl ========================================================
 
-# Internationalization isn't built or exposed by default in non-desktop
-# builds.  Bugs to enable:
-#
-#   Android:  bug 864843
+# Internationalization is not built or exposed on Fennec.
+# See Bug 1215256
 
-if test "$MOZ_WIDGET_TOOLKIT" = "android"; then
+if test "$MOZ_BUILD_APP" = "mobile/android"; then
     _INTL_API=no
 else
     _INTL_API=yes
@@ -9125,8 +9159,7 @@ AC_SUBST(JS_SHARED_LIBRARY)
 
 MOZ_CREATE_CONFIG_STATUS()
 
-# No need to run subconfigures when building with LIBXUL_SDK_DIR
-if test "$COMPILE_ENVIRONMENT" -a -z "$LIBXUL_SDK_DIR"; then
+if test "$COMPILE_ENVIRONMENT"; then
   MOZ_SUBCONFIGURE_ICU()
   MOZ_SUBCONFIGURE_FFI()
   MOZ_SUBCONFIGURE_JEMALLOC()
@@ -9194,8 +9227,7 @@ if test -n "$_subconfigure_subdir"; then
   srcdir="$_save_srcdir"
 fi
 
-# No need to run subconfigures when building with LIBXUL_SDK_DIR
-if test "$COMPILE_ENVIRONMENT" -a -z "$LIBXUL_SDK_DIR"; then
+if test "$COMPILE_ENVIRONMENT"; then
 
 export WRAP_LDFLAGS
 
@@ -9274,7 +9306,7 @@ fi
 AC_OUTPUT_SUBDIRS(js/src,$cache_file)
 ac_configure_args="$_SUBDIR_CONFIG_ARGS"
 
-fi # COMPILE_ENVIRONMENT && !LIBXUL_SDK_DIR
+fi # COMPILE_ENVIRONMENT
 
 export WRITE_MOZINFO=1
 dnl we need to run config.status after js/src subconfigure because we're

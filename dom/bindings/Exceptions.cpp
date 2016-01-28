@@ -88,7 +88,7 @@ ThrowExceptionObject(JSContext* aCx, Exception* aException)
 }
 
 bool
-Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
+Throw(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
 {
   if (aRv == NS_ERROR_UNCATCHABLE_EXCEPTION) {
     // Nuke any existing exception on aCx, to make sure we're uncatchable.
@@ -105,7 +105,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
   nsCOMPtr<nsIException> existingException = runtime->GetPendingException();
   if (existingException) {
     nsresult nr;
-    if (NS_SUCCEEDED(existingException->GetResult(&nr)) && 
+    if (NS_SUCCEEDED(existingException->GetResult(&nr)) &&
         aRv == nr) {
       // Reuse the existing exception.
 
@@ -121,7 +121,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
     }
   }
 
-  nsRefPtr<Exception> finalException = CreateException(aCx, aRv, aMessage);
+  RefPtr<Exception> finalException = CreateException(aCx, aRv, aMessage);
 
   MOZ_ASSERT(finalException);
   if (!ThrowExceptionObject(aCx, finalException)) {
@@ -134,7 +134,7 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
 }
 
 void
-ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv, const char* aMessage)
+ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv)
 {
   MOZ_ASSERT(aRv != NS_ERROR_UNCATCHABLE_EXCEPTION,
              "Doesn't make sense to report uncatchable exceptions!");
@@ -144,11 +144,11 @@ ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv, const char* aMessage)
   }
   jsapi.TakeOwnershipOfErrorReporting();
 
-  Throw(jsapi.cx(), aRv, aMessage);
+  Throw(jsapi.cx(), aRv);
 }
 
 already_AddRefed<Exception>
-CreateException(JSContext* aCx, nsresult aRv, const char* aMessage)
+CreateException(JSContext* aCx, nsresult aRv, const nsACString& aMessage)
 {
   // Do we use DOM exceptions for this error code?
   switch (NS_ERROR_GET_MODULE(aRv)) {
@@ -158,16 +158,18 @@ CreateException(JSContext* aCx, nsresult aRv, const char* aMessage)
   case NS_ERROR_MODULE_DOM_INDEXEDDB:
   case NS_ERROR_MODULE_DOM_FILEHANDLE:
   case NS_ERROR_MODULE_DOM_BLUETOOTH:
-    return DOMException::Create(aRv);
+  case NS_ERROR_MODULE_DOM_ANIM:
+    if (aMessage.IsEmpty()) {
+      return DOMException::Create(aRv);
+    }
+    return DOMException::Create(aRv, aMessage);
   default:
     break;
   }
 
   // If not, use the default.
-  // aMessage can be null, so we can't use nsDependentCString on it.
-  nsRefPtr<Exception> exception =
-    new Exception(nsCString(aMessage), aRv,
-                  EmptyCString(), nullptr, nullptr);
+  RefPtr<Exception> exception =
+    new Exception(aMessage, aRv, EmptyCString(), nullptr, nullptr);
   return exception.forget();
 }
 
@@ -386,7 +388,8 @@ static void
 GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
                     JS::SavedFrameResult (*aPropGetter)(JSContext*,
                                                         JS::Handle<JSObject*>,
-                                                        GetterOutParamType),
+                                                        GetterOutParamType,
+                                                        JS::SavedFrameSelfHosted),
                     bool aIsCached, bool* aCanCache, bool* aUseCachedValue,
                     ReturnType aValue)
 {
@@ -404,7 +407,7 @@ GetValueIfNotCached(JSContext* aCx, JSObject* aStack,
   *aUseCachedValue = false;
   JS::ExposeObjectToActiveJS(stack);
 
-  aPropGetter(aCx, stack, aValue);
+  aPropGetter(aCx, stack, aValue, JS::SavedFrameSelfHosted::Exclude);
 }
 
 NS_IMETHODIMP JSStackFrame::GetFilename(nsAString& aFilename)
@@ -674,15 +677,8 @@ NS_IMETHODIMP JSStackFrame::GetCaller(nsIStackFrame** aCaller)
     return StackFrame::GetCaller(aCaller);
   }
 
-  nsCOMPtr<nsIStackFrame> caller;
-  if (callerObj) {
-      caller = new JSStackFrame(callerObj);
-  } else {
-    // Do we really need this dummy frame?  If so, we should document why... I
-    // guess for symmetry with the "nothing on the stack" case, which returns
-    // a single dummy frame?
-    caller = new StackFrame();
-  }
+  nsCOMPtr<nsIStackFrame> caller =
+    callerObj ? new JSStackFrame(callerObj) : nullptr;
   caller.forget(aCaller);
 
   if (canCache) {

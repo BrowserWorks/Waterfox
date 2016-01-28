@@ -100,6 +100,8 @@ public:
   nsresult StartDrag(nsIDOMEvent* aEvent);
   nsresult StopDrag();
 
+  bool StartAPZDrag(mozilla::WidgetGUIEvent* aEvent);
+
   static int32_t GetCurrentPosition(nsIContent* content);
   static int32_t GetMinPosition(nsIContent* content);
   static int32_t GetMaxPosition(nsIContent* content);
@@ -169,7 +171,7 @@ private:
   void PageScroll(nscoord aChange);
  
   nsPoint mDestinationPoint;
-  nsRefPtr<nsSliderMediator> mMediator;
+  RefPtr<nsSliderMediator> mMediator;
 
   float mRatio;
 

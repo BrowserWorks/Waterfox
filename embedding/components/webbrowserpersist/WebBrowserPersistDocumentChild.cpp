@@ -26,7 +26,7 @@ WebBrowserPersistDocumentChild::~WebBrowserPersistDocumentChild()
 void
 WebBrowserPersistDocumentChild::Start(nsIDocument* aDocument)
 {
-    nsRefPtr<WebBrowserPersistLocalDocument> doc;
+    RefPtr<WebBrowserPersistLocalDocument> doc;
     if (aDocument) {
         doc = new WebBrowserPersistLocalDocument(aDocument);
     }
@@ -90,10 +90,14 @@ WebBrowserPersistDocumentChild::AllocPWebBrowserPersistResourcesChild()
 bool
 WebBrowserPersistDocumentChild::RecvPWebBrowserPersistResourcesConstructor(PWebBrowserPersistResourcesChild* aActor)
 {
-    nsRefPtr<WebBrowserPersistResourcesChild> visitor =
+    RefPtr<WebBrowserPersistResourcesChild> visitor =
         static_cast<WebBrowserPersistResourcesChild*>(aActor);
     nsresult rv = mDocument->ReadResources(visitor);
     if (NS_FAILED(rv)) {
+        // This is a sync failure on the child side but an async
+        // failure on the parent side -- it already got NS_OK from
+        // ReadResources, so the error has to be reported via the
+        // visitor instead.
         visitor->EndVisit(mDocument, rv);
     }
     return true;

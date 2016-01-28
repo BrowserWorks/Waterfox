@@ -84,6 +84,7 @@ EXPORTS += [
     'nsHostObjectURI.h',
     'nsIAnimationObserver.h',
     'nsIAttribute.h',
+    'nsIConsoleReportCollector.h',
     'nsIContent.h',
     'nsIContentInlines.h',
     'nsIContentIterator.h',
@@ -142,6 +143,7 @@ if CONFIG['MOZ_WEBRTC']:
     ]
 
 EXPORTS.mozilla += [
+    'ConsoleReportCollector.h',
     'CORSMode.h',
     'FeedWriterEnabled.h',
     'TextInputProcessor.h',
@@ -154,6 +156,7 @@ EXPORTS.mozilla.dom += [
     'BarProps.h',
     'BlobSet.h',
     'ChildIterator.h',
+    'ChromeNodeList.h',
     'ChromeUtils.h',
     'Comment.h',
     'Console.h',
@@ -200,7 +203,7 @@ EXPORTS.mozilla.dom += [
     'ScreenOrientation.h',
     'ScriptSettings.h',
     'ShadowRoot.h',
-    'StructuredCloneHelper.h',
+    'StructuredCloneHolder.h',
     'StructuredCloneTags.h',
     'StyleSheetList.h',
     'SubtleCrypto.h',
@@ -209,6 +212,7 @@ EXPORTS.mozilla.dom += [
     'URL.h',
     'URLSearchParams.h',
     'WebSocket.h',
+    'WindowOrientationObserver.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -216,9 +220,11 @@ UNIFIED_SOURCES += [
     'Attr.cpp',
     'BarProps.cpp',
     'ChildIterator.cpp',
+    'ChromeNodeList.cpp',
     'ChromeUtils.cpp',
     'Comment.cpp',
     'Console.cpp',
+    'ConsoleReportCollector.cpp',
     'Crypto.cpp',
     'DirectionalityUtils.cpp',
     'DocumentFragment.cpp',
@@ -344,7 +350,7 @@ UNIFIED_SOURCES += [
     'ScreenOrientation.cpp',
     'ScriptSettings.cpp',
     'ShadowRoot.cpp',
-    'StructuredCloneHelper.cpp',
+    'StructuredCloneHolder.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
     'Text.cpp',
@@ -355,6 +361,7 @@ UNIFIED_SOURCES += [
     'URLSearchParams.cpp',
     'WebSocket.cpp',
     'WindowNamedPropertiesHandler.cpp',
+    'WindowOrientationObserver.cpp',
 ]
 
 if CONFIG['MOZ_WEBRTC']:

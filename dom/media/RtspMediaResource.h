@@ -71,7 +71,7 @@ class RtspTrackBuffer;
 class RtspMediaResource : public BaseMediaResource
 {
 public:
-  RtspMediaResource(MediaDecoder* aDecoder, nsIChannel* aChannel, nsIURI* aURI,
+  RtspMediaResource(MediaResourceCallback* aCallback, nsIChannel* aChannel, nsIURI* aURI,
                     const nsACString& aContentType);
   virtual ~RtspMediaResource();
 
@@ -176,7 +176,7 @@ public:
   virtual bool     CanClone() override {
     return false;
   }
-  virtual already_AddRefed<MediaResource> CloneData(MediaDecoder* aDecoder)
+  virtual already_AddRefed<MediaResource> CloneData(MediaResourceCallback*)
   override {
     return nullptr;
   }
@@ -213,7 +213,7 @@ public:
     void Revoke();
 
   private:
-    nsRefPtr<RtspMediaResource> mResource;
+    RefPtr<RtspMediaResource> mResource;
   };
   friend class Listener;
 
@@ -226,7 +226,7 @@ protected:
   nsresult OnConnected(uint8_t aIndex, nsIStreamingProtocolMetaData* aMeta);
   nsresult OnDisconnected(uint8_t aIndex, nsresult aReason);
 
-  nsRefPtr<Listener> mListener;
+  RefPtr<Listener> mListener;
 
 private:
   // Notify mDecoder the rtsp stream is suspend. Main thread only.

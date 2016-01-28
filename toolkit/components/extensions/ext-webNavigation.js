@@ -1,4 +1,4 @@
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -45,7 +45,7 @@ function WebNavigationEventManager(context, eventName)
         return;
       }
 
-      return runSafe(context, callback, data2);
+      runSafe(context, callback, data2);
     };
 
     WebNavigation[eventName].addListener(listener);

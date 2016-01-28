@@ -98,6 +98,7 @@ public class FxAccountStatusFragment
   protected Preference emailPreference;
   protected Preference manageAccountPreference;
   protected Preference authServerPreference;
+  protected Preference removeAccountPreference;
 
   protected Preference needsPasswordPreference;
   protected Preference needsUpgradePreference;
@@ -177,6 +178,7 @@ public class FxAccountStatusFragment
       accountCategory.removePreference(manageAccountPreference);
     }
     authServerPreference = ensureFindPreference("auth_server");
+    removeAccountPreference = ensureFindPreference("remove_account");
 
     needsPasswordPreference = ensureFindPreference("needs_credentials");
     needsUpgradePreference = ensureFindPreference("needs_upgrade");
@@ -205,6 +207,7 @@ public class FxAccountStatusFragment
       emailPreference.setOnPreferenceClickListener(this);
     }
     manageAccountPreference.setOnPreferenceClickListener(this);
+    removeAccountPreference.setOnPreferenceClickListener(this);
 
     needsPasswordPreference.setOnPreferenceClickListener(this);
     needsVerificationPreference.setOnPreferenceClickListener(this);
@@ -247,11 +250,18 @@ public class FxAccountStatusFragment
         // There is no native equivalent, bind the click action to fire an intent.
         ActivityUtils.openURLInFennec(getActivity().getApplicationContext(), "about:accounts?action=avatar");
       }
+      // Either we handled the event or there is no native equivalent.
+      return true;
     }
 
     if (preference == manageAccountPreference) {
       // There's no native equivalent, so no need to re-direct through an Intent filter.
       ActivityUtils.openURLInFennec(getActivity().getApplicationContext(), "about:accounts?action=manage");
+      return true;
+    }
+
+    if (preference == removeAccountPreference) {
+      FxAccountStatusActivity.maybeDeleteAndroidAccount(getActivity(), fxAccount.getAndroidAccount(), null);
       return true;
     }
 
@@ -489,7 +499,6 @@ public class FxAccountStatusFragment
     FxAccountSyncStatusHelper.getInstance().startObserving(syncStatusDelegate);
 
     if (AppConstants.MOZ_ANDROID_FIREFOX_ACCOUNT_PROFILES) {
-      profilePreference.getIntent().setData(Uri.parse("about:accounts?action=avatar"));
       // Register a local broadcast receiver to get profile cached notification.
       final IntentFilter intentFilter = new IntentFilter();
       intentFilter.addAction(FxAccountConstants.ACCOUNT_PROFILE_JSON_UPDATED_ACTION);

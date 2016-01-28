@@ -4,10 +4,10 @@
 
 "use strict";
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -73,7 +73,7 @@ const DB_BOOL_METADATA   = ["visible", "active", "userDisabled", "appDisabled",
 // Properties to save in JSON file
 const PROP_JSON_FIELDS = ["id", "syncGUID", "location", "version", "type",
                           "internalName", "updateURL", "updateKey", "optionsURL",
-                          "optionsType", "aboutURL", "iconURL", "icon64URL",
+                          "optionsType", "aboutURL", "icons", "iconURL", "icon64URL",
                           "defaultLocale", "visible", "active", "userDisabled",
                           "appDisabled", "pendingUninstall", "descriptor", "installDate",
                           "updateDate", "applyBackgroundUpdates", "bootstrap",
@@ -1126,6 +1126,18 @@ this.XPIDatabase = {
   },
 
   /**
+   * Asynchronously get all the add-ons in a particular install location.
+   *
+   * @param  aLocation
+   *         The name of the install location
+   * @param  aCallback
+   *         A callback to pass the array of DBAddonInternals to
+   */
+  getAddonsInLocation: function XPIDB_getAddonsInLocation(aLocation, aCallback) {
+    this.getAddonList(aAddon => aAddon._installLocation.name == aLocation, aCallback);
+  },
+
+  /**
    * Asynchronously gets the add-on with the specified ID that is visible.
    *
    * @param  aId
@@ -1187,7 +1199,7 @@ this.XPIDatabase = {
           XPIProvider.runPhase);
       this.syncLoadDB(true);
     }
-    
+
     return _findAddon(this.addonDB,
                       aAddon => aAddon.visible &&
                                 (aAddon.internalName == aInternalName));
@@ -2048,11 +2060,11 @@ this.XPIDatabaseReconcile = {
                               BOOTSTRAP_REASONS.ADDON_UPGRADE :
                               BOOTSTRAP_REASONS.ADDON_DOWNGRADE;
 
-          // If the previous add-on was in a different location, bootstrapped
+          // If the previous add-on was in a different path, bootstrapped
           // and still exists then call its uninstall method.
           if (previousAddon.bootstrap && previousAddon._installLocation &&
-              currentAddon._installLocation != previousAddon._installLocation &&
-              previousAddon._sourceBundle.exists()) {
+              previousAddon._sourceBundle.exists() &&
+              currentAddon._sourceBundle.path != previousAddon._sourceBundle.path) {
 
             XPIProvider.callBootstrapMethod(previousAddon, previousAddon._sourceBundle,
                                             "uninstall", installReason,
@@ -2091,7 +2103,8 @@ this.XPIDatabaseReconcile = {
           version: currentAddon.version,
           type: currentAddon.type,
           descriptor: currentAddon._sourceBundle.persistentDescriptor,
-          multiprocessCompatible: currentAddon.multiprocessCompatible
+          multiprocessCompatible: currentAddon.multiprocessCompatible,
+          runInSafeMode: canRunInSafeMode(currentAddon),
         };
       }
 
@@ -2106,7 +2119,18 @@ this.XPIDatabaseReconcile = {
         continue;
 
       // This add-on vanished
+
+      // If the previous add-on was bootstrapped and still exists then call its
+      // uninstall method.
+      if (previousAddon.bootstrap && previousAddon._sourceBundle.exists()) {
+        XPIProvider.callBootstrapMethod(previousAddon, previousAddon._sourceBundle,
+                                        "uninstall", BOOTSTRAP_REASONS.ADDON_UNINSTALL);
+        XPIProvider.unloadBootstrapScope(previousAddon.id);
+      }
       AddonManagerPrivate.addStartupChange(AddonManager.STARTUP_CHANGE_UNINSTALLED, id);
+
+      // Make sure to flush the cache when an old add-on has gone away
+      flushStartupCache();
     }
 
     // Make sure add-ons from hidden locations are marked invisible and inactive

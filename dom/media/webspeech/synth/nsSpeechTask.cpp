@@ -21,14 +21,18 @@
 extern PRLogModuleInfo* GetSpeechSynthLog();
 #define LOG(type, msg) MOZ_LOG(GetSpeechSynthLog(), type, msg)
 
+#define AUDIO_TRACK 1
+
 namespace mozilla {
 namespace dom {
 
 class SynthStreamListener : public MediaStreamListener
 {
 public:
-  explicit SynthStreamListener(nsSpeechTask* aSpeechTask) :
+  explicit SynthStreamListener(nsSpeechTask* aSpeechTask,
+                               MediaStream* aStream) :
     mSpeechTask(aSpeechTask),
+    mStream(aStream),
     mStarted(false)
   {
   }
@@ -61,6 +65,8 @@ public:
         break;
       case EVENT_REMOVED:
         mSpeechTask = nullptr;
+        // Dereference MediaStream to destroy safety
+        mStream = nullptr;
         break;
       default:
         break;
@@ -81,6 +87,8 @@ private:
   // Raw pointer; if we exist, the stream exists,
   // and 'mSpeechTask' exclusively owns it and therefor exists as well.
   nsSpeechTask* mSpeechTask;
+  // This is KungFuDeathGrip for MediaStream
+  RefPtr<MediaStream> mStream;
 
   bool mStarted;
 };
@@ -130,6 +138,8 @@ nsSpeechTask::~nsSpeechTask()
       mStream->Destroy();
     }
 
+    // This will finally destroyed by SynthStreamListener becasue
+    // MediaStream::Destroy() is async.
     mStream = nullptr;
   }
 
@@ -183,7 +193,7 @@ nsSpeechTask::Setup(nsISpeechTaskCallback* aCallback,
   // mStream is set up in Init() that should be called before this.
   MOZ_ASSERT(mStream);
 
-  mStream->AddListener(new SynthStreamListener(this));
+  mStream->AddListener(new SynthStreamListener(this, mStream));
 
   // XXX: Support more than one channel
   if(NS_WARN_IF(!(aChannels == 1))) {
@@ -193,17 +203,17 @@ nsSpeechTask::Setup(nsISpeechTaskCallback* aCallback,
   mChannels = aChannels;
 
   AudioSegment* segment = new AudioSegment();
-  mStream->AddAudioTrack(1, aRate, 0, segment);
+  mStream->AddAudioTrack(AUDIO_TRACK, aRate, 0, segment);
   mStream->AddAudioOutput(this);
   mStream->SetAudioOutputVolume(this, mVolume);
 
   return NS_OK;
 }
 
-static nsRefPtr<mozilla::SharedBuffer>
+static RefPtr<mozilla::SharedBuffer>
 makeSamples(int16_t* aData, uint32_t aDataLen)
 {
-  nsRefPtr<mozilla::SharedBuffer> samples =
+  RefPtr<mozilla::SharedBuffer> samples =
     SharedBuffer::Create(aDataLen * sizeof(int16_t));
   int16_t* frames = static_cast<int16_t*>(samples->Data());
 
@@ -246,8 +256,14 @@ nsSpeechTask::SendAudio(JS::Handle<JS::Value> aData, JS::Handle<JS::Value> aLand
   // Allow either Int16Array or plain JS Array
   if (JS_IsInt16Array(darray)) {
     tsrc = darray;
-  } else if (JS_IsArrayObject(aCx, darray)) {
-    tsrc = JS_NewInt16ArrayFromArray(aCx, darray);
+  } else {
+    bool isArray;
+    if (!JS_IsArrayObject(aCx, darray, &isArray)) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    if (isArray) {
+      tsrc = JS_NewInt16ArrayFromArray(aCx, darray);
+    }
   }
 
   if (!tsrc) {
@@ -255,7 +271,7 @@ nsSpeechTask::SendAudio(JS::Handle<JS::Value> aData, JS::Handle<JS::Value> aLand
   }
 
   uint32_t dataLen = JS_GetTypedArrayLength(tsrc);
-  nsRefPtr<mozilla::SharedBuffer> samples;
+  RefPtr<mozilla::SharedBuffer> samples;
   {
     JS::AutoCheckCannotGC nogc;
     samples = makeSamples(JS_GetInt16ArrayData(tsrc, nogc), dataLen);
@@ -285,14 +301,14 @@ nsSpeechTask::SendAudioNative(int16_t* aData, uint32_t aDataLen)
     return NS_ERROR_FAILURE;
   }
 
-  nsRefPtr<mozilla::SharedBuffer> samples = makeSamples(aData, aDataLen);
+  RefPtr<mozilla::SharedBuffer> samples = makeSamples(aData, aDataLen);
   SendAudioImpl(samples, aDataLen);
 
   return NS_OK;
 }
 
 void
-nsSpeechTask::SendAudioImpl(nsRefPtr<mozilla::SharedBuffer>& aSamples, uint32_t aDataLen)
+nsSpeechTask::SendAudioImpl(RefPtr<mozilla::SharedBuffer>& aSamples, uint32_t aDataLen)
 {
   if (aDataLen == 0) {
     mStream->EndAllTrackAndFinish();
@@ -389,7 +405,7 @@ nsSpeechTask::DispatchEndImpl(float aElapsedTime, uint32_t aCharIndex)
     mStream->Destroy();
   }
 
-  nsRefPtr<SpeechSynthesisUtterance> utterance = mUtterance;
+  RefPtr<SpeechSynthesisUtterance> utterance = mUtterance;
 
   if (mSpeechSynthesis) {
     mSpeechSynthesis->OnEnd(this);
@@ -664,7 +680,7 @@ nsSpeechTask::CreateAudioChannelAgent()
   }
 
   if (mAudioChannelAgent) {
-    mAudioChannelAgent->NotifyStoppedPlaying(nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY);
+    mAudioChannelAgent->NotifyStoppedPlaying();
   }
 
   mAudioChannelAgent = new AudioChannelAgent();
@@ -681,7 +697,7 @@ void
 nsSpeechTask::DestroyAudioChannelAgent()
 {
   if (mAudioChannelAgent) {
-    mAudioChannelAgent->NotifyStoppedPlaying(nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY);
+    mAudioChannelAgent->NotifyStoppedPlaying();
     mAudioChannelAgent = nullptr;
   }
 }
@@ -703,7 +719,7 @@ nsSpeechTask::WindowAudioCaptureChanged()
 void
 nsSpeechTask::SetAudioOutputVolume(float aVolume)
 {
-  if (mStream) {
+  if (mStream && !mStream->IsDestroyed()) {
     mStream->SetAudioOutputVolume(this, aVolume);
   }
   if (mIndirectAudio) {

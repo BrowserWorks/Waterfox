@@ -12,6 +12,7 @@
 #include "pratom.h"
 #include "GeckoProfiler.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Logging.h"
 #ifdef MOZ_NUWA_PROCESS
 #include "ipc/Nuwa.h"
@@ -39,14 +40,12 @@ static Atomic<int32_t>  gGenerator;
 static TimerThread*     gThread = nullptr;
 
 // This module prints info about the precision of timers.
-PRLogModuleInfo*
+static mozilla::LazyLogModule sTimerLog("nsTimerImpl");
+
+mozilla::LogModule*
 GetTimerLog()
 {
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("nsTimerImpl");
-  }
-  return sLog;
+  return sTimerLog;
 }
 
 // This module prints info about which timers are firing, which is useful for
@@ -62,8 +61,10 @@ GetTimerLog()
 //   InitWithNamedFuncCallback()) then that explicit name will be shown.
 //
 // - Otherwise, if we are on a platform that supports function name lookup
-//   (currently only Mac) then the looked-up name will be shown with a
-//   "[from dladdr]" annotation.
+//   (Mac or Linux) then the looked-up name will be shown with a
+//   "[from dladdr]" annotation. On Mac the looked-up name will be immediately
+//   useful. On Linux it'll need post-processing with
+//   tools/rb/fix_linux_stack.py.
 //
 // - Otherwise, no name will be printed. If many timers hit this case then
 //   you'll need to re-run the workload on a Mac to find out which timers they
@@ -80,14 +81,12 @@ GetTimerLog()
 // More detailed docs are here:
 // https://developer.mozilla.org/en-US/docs/Mozilla/Performance/TimerFirings_logging
 //
-PRLogModuleInfo*
+static mozilla::LazyLogModule sTimerFiringsLog("TimerFirings");
+
+mozilla::LogModule*
 GetTimerFiringsLog()
 {
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("TimerFirings");
-  }
-  return sLog;
+  return sTimerFiringsLog;
 }
 
 #include <math.h>
@@ -574,7 +573,11 @@ nsTimerImpl::Fire()
   }
 }
 
-#if defined(XP_MACOSX)
+#if defined(XP_MACOSX) || (defined(XP_LINUX) && !defined(ANDROID))
+#define USE_DLADDR 1
+#endif
+
+#ifdef USE_DLADDR
 #include <cxxabi.h>
 #include <dlfcn.h>
 #endif
@@ -609,16 +612,15 @@ nsTimerImpl::LogFiring(CallbackType aCallbackType, CallbackUnion aCallback)
 
       } else {
         MOZ_ASSERT(mName.is<NameNothing>());
-#if defined(XP_MACOSX)
+#ifdef USE_DLADDR
         annotation = "[from dladdr] ";
 
         Dl_info info;
-        if (dladdr(reinterpret_cast<void*>(aCallback.c), &info) == 0) {
+        void* addr = reinterpret_cast<void*>(aCallback.c);
+        if (dladdr(addr, &info) == 0) {
           name = "???[dladdr: failed]";
-        } else if (!info.dli_sname) {
-          name = "???[dladdr: no matching symbol]";
 
-        } else {
+        } else if (info.dli_sname) {
           int status;
           name = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
           if (status == 0) {
@@ -635,9 +637,19 @@ nsTimerImpl::LogFiring(CallbackType aCallbackType, CallbackUnion aCallback)
           } else {
             name = "???[__cxa_demangle: unexpected status value]";
           }
+
+        } else if (info.dli_fname) {
+          // The "#0: " prefix is necessary for fix_linux_stack.py to interpret
+          // this string as something to convert.
+          snprintf(buf, buflen, "#0: ???[%s +0x%" PRIxPTR "]\n",
+                   info.dli_fname, uintptr_t(addr) - uintptr_t(info.dli_fbase));
+          name = buf;
+
+        } else {
+          name = "???[dladdr: no symbol or shared object obtained]";
         }
 #else
-        name = "???[dladdr: unavailable/doesn't work on this platform]";
+        name = "???[dladdr is unimplemented or doesn't work well on this OS]";
 #endif
       }
 

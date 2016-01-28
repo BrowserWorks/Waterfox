@@ -42,7 +42,6 @@ class CameraPreviewMediaStream : public MediaStream
 public:
   explicit CameraPreviewMediaStream(DOMMediaStream* aWrapper);
 
-  virtual CameraPreviewMediaStream* AsCameraPreviewStream() override { return this; };
   virtual void AddAudioOutput(void* aKey) override;
   virtual void SetAudioOutputVolume(void* aKey, float aVolume) override;
   virtual void RemoveAudioOutput(void* aKey) override;
@@ -58,7 +57,7 @@ public:
   void Invalidate();
 
   // Call these on any thread.
-  void SetCurrentFrame(const gfxIntSize& aIntrinsicSize, Image* aImage);
+  void SetCurrentFrame(const gfx::IntSize& aIntrinsicSize, Image* aImage);
   void ClearCurrentFrame();
   void RateLimit(bool aLimit);
 
@@ -71,7 +70,7 @@ protected:
   uint32_t mDiscardedFrames;
   bool mRateLimit;
   bool mTrackCreated;
-  nsRefPtr<FakeMediaStreamGraph> mFakeMediaStreamGraph;
+  RefPtr<FakeMediaStreamGraph> mFakeMediaStreamGraph;
 };
 
 } // namespace mozilla

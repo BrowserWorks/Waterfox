@@ -19,8 +19,6 @@ function testUnboxed() {
     var props = Reflect.ownKeys(o);
     assertEq(props[props.length-1], sym);
 
-    // Note: this should really be 0234xyz, this is bug 1175111. It has been
-    // fixed on newer branches.
-    assertEq(Object.getOwnPropertyNames(o).join(""), "024xyz3");
+    assertEq(Object.getOwnPropertyNames(o).join(""), "0234xyz");
 }
 testUnboxed();

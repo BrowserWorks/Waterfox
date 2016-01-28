@@ -30,6 +30,7 @@ class GCMarker;
 class LazyScript;
 class NativeObject;
 class ObjectGroup;
+class WeakMapBase;
 namespace gc {
 struct ArenaHeader;
 } // namespace gc
@@ -137,8 +138,6 @@ class MarkStack
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 };
 
-class WeakMapBase;
-
 namespace gc {
 
 struct WeakKeyTableHashPolicy {
@@ -157,12 +156,12 @@ struct WeakMarkable {
       : weakmap(weakmapArg), key(keyArg) {}
 };
 
-typedef Vector<WeakMarkable, 2, js::SystemAllocPolicy> WeakEntryVector;
+using WeakEntryVector = Vector<WeakMarkable, 2, js::SystemAllocPolicy>;
 
-typedef OrderedHashMap<JS::GCCellPtr,
-                       WeakEntryVector,
-                       WeakKeyTableHashPolicy,
-                       js::SystemAllocPolicy> WeakKeyTable;
+using WeakKeyTable = OrderedHashMap<JS::GCCellPtr,
+                                    WeakEntryVector,
+                                    WeakKeyTableHashPolicy,
+                                    js::SystemAllocPolicy>;
 
 } /* namespace gc */
 
@@ -183,10 +182,11 @@ class GCMarker : public JSTracer
     template <typename T> void traverse(T thing);
 
     // Calls traverse on target after making additional assertions.
+    template <typename S, typename T> void traverseEdge(S source, T* target);
     template <typename S, typename T> void traverseEdge(S source, T target);
-    // C++ requires explicit declarations of partial template instantiations.
-    template <typename S> void traverseEdge(S source, jsid target);
-    template <typename S> void traverseEdge(S source, Value target);
+
+    // Notes a weak graph edge for later sweeping.
+    template <typename T> void noteWeakEdge(T* edge);
 
     /*
      * Care must be taken changing the mark color from gray to black. The cycle
@@ -208,17 +208,7 @@ class GCMarker : public JSTracer
     uint32_t markColor() const { return color; }
 
     void enterWeakMarkingMode();
-
-    void leaveWeakMarkingMode() {
-        MOZ_ASSERT_IF(weakMapAction() == ExpandWeakMaps && !linearWeakMarkingDisabled_, tag_ == TracerKindTag::WeakMarking);
-        tag_ = TracerKindTag::Marking;
-
-        // Table is expensive to maintain when not in weak marking mode, so
-        // we'll rebuild it upon entry rather than allow it to contain stale
-        // data.
-        weakKeys.clear();
-    }
-
+    void leaveWeakMarkingMode();
     void abortLinearWeakMarking() {
         leaveWeakMarkingMode();
         linearWeakMarkingDisabled_ = true;
@@ -247,12 +237,6 @@ class GCMarker : public JSTracer
 #endif
 
     void markEphemeronValues(gc::Cell* markedCell, gc::WeakEntryVector& entry);
-
-    /*
-     * Mapping from not yet marked keys to a vector of all values that the key
-     * maps to in any live weak map.
-     */
-    gc::WeakKeyTable weakKeys;
 
   private:
 #ifdef DEBUG
@@ -290,8 +274,8 @@ class GCMarker : public JSTracer
     template <typename T> void markAndTraceChildren(T* thing);
     template <typename T> void markAndPush(StackTag tag, T* thing);
     template <typename T> void markAndScan(T* thing);
-    template <typename T> void markPotentialEphemeronKeyHelper(T oldThing);
-    template <typename T> void markPotentialEphemeronKey(T* oldThing);
+    template <typename T> void markImplicitEdgesHelper(T oldThing);
+    template <typename T> void markImplicitEdges(T* oldThing);
     void eagerlyMarkChildren(JSLinearString* str);
     void eagerlyMarkChildren(JSRope* rope);
     void eagerlyMarkChildren(JSString* str);
@@ -390,11 +374,7 @@ IsMarkedUnbarriered(T* thingp);
 
 template <typename T>
 bool
-IsMarked(BarrieredBase<T>* thingp);
-
-template <typename T>
-bool
-IsMarked(ReadBarriered<T>* thingp);
+IsMarked(WriteBarrieredBase<T>* thingp);
 
 template <typename T>
 bool
@@ -402,11 +382,14 @@ IsAboutToBeFinalizedUnbarriered(T* thingp);
 
 template <typename T>
 bool
-IsAboutToBeFinalized(BarrieredBase<T>* thingp);
+IsAboutToBeFinalized(WriteBarrieredBase<T>* thingp);
 
 template <typename T>
 bool
-IsAboutToBeFinalized(ReadBarriered<T>* thingp);
+IsAboutToBeFinalized(ReadBarrieredBase<T>* thingp);
+
+bool
+IsAboutToBeFinalizedDuringSweep(TenuredCell& tenured);
 
 inline Cell*
 ToMarkable(const Value& v)
@@ -427,7 +410,7 @@ ToMarkable(Cell* cell)
 MOZ_ALWAYS_INLINE bool
 IsNullTaggedPointer(void* p)
 {
-    return uintptr_t(p) < 32;
+    return uintptr_t(p) <= LargestTaggedNullCellPointer;
 }
 
 // HashKeyRef represents a reference to a HashMap key. This should normally
@@ -470,6 +453,10 @@ DECLARE_REWRAP(js::TaggedProto, JSObject*, js::TaggedProto, );
 
 bool
 UnmarkGrayShapeRecursively(Shape* shape);
+
+template<typename T>
+void
+CheckTracedThing(JSTracer* trc, T* thing);
 
 template<typename T>
 void

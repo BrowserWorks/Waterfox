@@ -38,6 +38,7 @@
 #include "ScrollbarStyles.h"
 #include "nsIMessageManager.h"
 #include "mozilla/RestyleLogging.h"
+#include "Units.h"
 
 class nsAString;
 class nsIPrintSettings;
@@ -636,6 +637,12 @@ public:
   float DevPixelsToFloatCSSPixels(int32_t aPixels)
   { return AppUnitsToFloatCSSPixels(DevPixelsToAppUnits(aPixels)); }
 
+  mozilla::CSSToLayoutDeviceScale CSSToDevPixelScale() const
+  {
+    return mozilla::CSSToLayoutDeviceScale(
+        float(AppUnitsPerCSSPixel()) / float(AppUnitsPerDevPixel()));
+  }
+
   // If there is a remainder, it is rounded to nearest app units.
   nscoord GfxUnitsToAppUnits(gfxFloat aGfxUnits) const;
 
@@ -665,10 +672,17 @@ public:
   nscoord RoundAppUnitsToNearestDevPixels(nscoord aAppUnits) const
   { return DevPixelsToAppUnits(AppUnitsToDevPixels(aAppUnits)); }
 
-  void SetViewportScrollbarStylesOverride(const ScrollbarStyles& aScrollbarStyle)
-  {
-    mViewportStyleScrollbar = aScrollbarStyle;
-  }
+  /**
+   * This checks the root element and the HTML BODY, if any, for an "overflow"
+   * property that should be applied to the viewport. If one is found then we
+   * return the element that we took the overflow from (which should then be
+   * treated as "overflow: visible"), and we store the overflow style here.
+   * If the document is in fullscreen, and the fullscreen element is not the
+   * root, the scrollbar of viewport will be suppressed.
+   * @return if scroll was propagated from some content node, the content node
+   *         it was propagated from.
+   */
+  nsIContent* UpdateViewportScrollbarStylesOverride();
   ScrollbarStyles GetViewportScrollbarStylesOverride()
   {
     return mViewportStyleScrollbar;
@@ -1213,17 +1227,17 @@ protected:
   // for nulling this pointer before it is destroyed
   nsIPresShell* MOZ_NON_OWNING_REF mShell;         // [WEAK]
   nsCOMPtr<nsIDocument> mDocument;
-  nsRefPtr<nsDeviceContext> mDeviceContext; // [STRONG] could be weak, but
+  RefPtr<nsDeviceContext> mDeviceContext; // [STRONG] could be weak, but
                                             // better safe than sorry.
                                             // Cannot reintroduce cycles
                                             // since there is no dependency
                                             // from gfx back to layout.
-  nsRefPtr<mozilla::EventStateManager> mEventManager;
-  nsRefPtr<nsRefreshDriver> mRefreshDriver;
-  nsRefPtr<nsTransitionManager> mTransitionManager;
-  nsRefPtr<nsAnimationManager> mAnimationManager;
-  nsRefPtr<mozilla::RestyleManager> mRestyleManager;
-  nsRefPtr<mozilla::CounterStyleManager> mCounterStyleManager;
+  RefPtr<mozilla::EventStateManager> mEventManager;
+  RefPtr<nsRefreshDriver> mRefreshDriver;
+  RefPtr<nsTransitionManager> mTransitionManager;
+  RefPtr<nsAnimationManager> mAnimationManager;
+  RefPtr<mozilla::RestyleManager> mRestyleManager;
+  RefPtr<mozilla::CounterStyleManager> mCounterStyleManager;
   nsIAtom* MOZ_UNSAFE_REF("always a static atom") mMedium; // initialized by subclass ctors
   nsCOMPtr<nsIAtom> mMediaEmulated;
 

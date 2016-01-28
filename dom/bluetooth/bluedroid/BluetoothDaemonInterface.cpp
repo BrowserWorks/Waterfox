@@ -39,23 +39,13 @@ static const int sRetryInterval = 100; // ms
 //
 // Each |BluetoothDaemon*Module| class implements an individual
 // module of the HAL protocol. Each class contains the abstract
-// methods
+// method
 //
-//  - |Send|,
-//  - |RegisterModule|, and
-//  - |UnregisterModule|.
+//  - |Send|.
 //
 // Module classes use |Send| to send out command PDUs. The socket
 // in |BluetoothDaemonProtocol| is required for sending. The abstract
 // method hides all these internal details from the modules.
-//
-// |RegisterModule| is required during module initialization, when
-// modules must register themselves at the daemon. The register command
-// is not part of the module itself, but contained in the Setup module
-// (id of 0x00). The abstract method |RegisterModule| allows modules to
-// call into the Setup module for generating the register command.
-//
-// |UnregisterModule| works like |RegisterModule|, but for cleanups.
 //
 // |BluetoothDaemonProtocol| also handles PDU receiving. It implements
 // the method |Handle| from |DaemonSocketIOConsumer|. The socket
@@ -66,11 +56,9 @@ static const int sRetryInterval = 100; // ms
 // |HandleSvc|. Further PDU processing is module-dependent.
 //
 // To summarize the interface between |BluetoothDaemonProtocol| and
-// modules; the former implements the abstract methods
+// modules; the former implements the abstract method
 //
 //  - |Send|,
-//  - |RegisterModule|, and
-//  - |UnregisterModule|,
 //
 // which allow modules to send out data. Each module implements the
 // method
@@ -94,12 +82,6 @@ public:
   BluetoothDaemonProtocol();
 
   void SetConnection(DaemonSocket* aConnection);
-
-  nsresult RegisterModule(uint8_t aId, uint8_t aMode, uint32_t aMaxNumClients,
-                          BluetoothSetupResultHandler* aRes) override;
-
-  nsresult UnregisterModule(uint8_t aId,
-                            BluetoothSetupResultHandler* aRes) override;
 
   // Outgoing PDUs
   //
@@ -141,7 +123,7 @@ private:
                      DaemonSocketResultHandler* aRes);
 
   DaemonSocket* mConnection;
-  nsTArray<nsRefPtr<DaemonSocketResultHandler>> mResQ;
+  nsTArray<RefPtr<DaemonSocketResultHandler>> mResQ;
 };
 
 BluetoothDaemonProtocol::BluetoothDaemonProtocol()
@@ -151,22 +133,6 @@ void
 BluetoothDaemonProtocol::SetConnection(DaemonSocket* aConnection)
 {
   mConnection = aConnection;
-}
-
-nsresult
-BluetoothDaemonProtocol::RegisterModule(uint8_t aId, uint8_t aMode,
-                                        uint32_t aMaxNumClients,
-                                        BluetoothSetupResultHandler* aRes)
-{
-  return BluetoothDaemonSetupModule::RegisterModuleCmd(aId, aMode,
-                                                       aMaxNumClients, aRes);
-}
-
-nsresult
-BluetoothDaemonProtocol::UnregisterModule(uint8_t aId,
-                                          BluetoothSetupResultHandler* aRes)
-{
-  return BluetoothDaemonSetupModule::UnregisterModuleCmd(aId, aRes);
 }
 
 nsresult
@@ -279,7 +245,7 @@ BluetoothDaemonProtocol::Handle(DaemonSocketPDU& aPDU)
     return;
   }
 
-  nsRefPtr<DaemonSocketResultHandler> res = FetchResultHandler(header);
+  RefPtr<DaemonSocketResultHandler> res = FetchResultHandler(header);
 
   (this->*(HandleSvc[header.mService]))(header, aPDU, res);
 }
@@ -302,7 +268,7 @@ BluetoothDaemonProtocol::FetchResultHandler(
     return nullptr; // Ignore notifications
   }
 
-  nsRefPtr<DaemonSocketResultHandler> userData = mResQ.ElementAt(0);
+  RefPtr<DaemonSocketResultHandler> userData = mResQ.ElementAt(0);
   mResQ.RemoveElementAt(0);
 
   return userData.forget();
@@ -422,7 +388,9 @@ public:
     if (!mRegisteredSocketModule) {
       mRegisteredSocketModule = true;
       // Init, step 5: Register Socket module
-      mInterface->mProtocol->RegisterModuleCmd(0x02, 0x00,
+      mInterface->mProtocol->RegisterModuleCmd(
+        SETUP_SERVICE_ID_SOCKET,
+        0x00,
         BluetoothDaemonSocketModule::MAX_NUM_CLIENTS, this);
     } else if (mRes) {
       // Init, step 6: Signal success to caller
@@ -432,7 +400,7 @@ public:
 
 private:
   BluetoothDaemonInterface* mInterface;
-  nsRefPtr<BluetoothResultHandler> mRes;
+  RefPtr<BluetoothResultHandler> mRes;
   bool mRegisteredSocketModule;
 };
 
@@ -556,7 +524,7 @@ private:
     if (!mUnregisteredCoreModule) {
       mUnregisteredCoreModule = true;
       // Cleanup, step 2: Unregister Core module
-      mInterface->mProtocol->UnregisterModuleCmd(0x01, this);
+      mInterface->mProtocol->UnregisterModuleCmd(SETUP_SERVICE_ID_CORE, this);
     } else {
       // Cleanup, step 3: Close command channel
       mInterface->mCmdChannel->Close();
@@ -600,7 +568,7 @@ BluetoothDaemonInterface::Cleanup(BluetoothResultHandler* aRes)
 
   // Cleanup, step 1: Unregister Socket module
   nsresult rv = mProtocol->UnregisterModuleCmd(
-    0x02, new CleanupResultHandler(this));
+    SETUP_SERVICE_ID_SOCKET, new CleanupResultHandler(this));
   if (NS_FAILED(rv)) {
     DispatchError(aRes, rv);
     return;
@@ -642,11 +610,11 @@ BluetoothDaemonInterface::GetAdapterProperties(BluetoothResultHandler* aRes)
 }
 
 void
-BluetoothDaemonInterface::GetAdapterProperty(const nsAString& aName,
+BluetoothDaemonInterface::GetAdapterProperty(BluetoothPropertyType aType,
                                              BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetAdapterPropertyCmd(aName, aRes);
+    (mProtocol)->GetAdapterPropertyCmd(aType, aRes);
   if (NS_FAILED(rv)) {
     DispatchError(aRes, rv);
   }
@@ -654,7 +622,7 @@ BluetoothDaemonInterface::GetAdapterProperty(const nsAString& aName,
 
 void
 BluetoothDaemonInterface::SetAdapterProperty(
-  const BluetoothNamedValue& aProperty, BluetoothResultHandler* aRes)
+  const BluetoothProperty& aProperty, BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
     (mProtocol)->SetAdapterPropertyCmd(aProperty, aRes);
@@ -667,7 +635,7 @@ BluetoothDaemonInterface::SetAdapterProperty(
 
 void
 BluetoothDaemonInterface::GetRemoteDeviceProperties(
-  const nsAString& aRemoteAddr, BluetoothResultHandler* aRes)
+  const BluetoothAddress& aRemoteAddr, BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
     (mProtocol)->GetRemoteDevicePropertiesCmd(aRemoteAddr, aRes);
@@ -678,11 +646,11 @@ BluetoothDaemonInterface::GetRemoteDeviceProperties(
 
 void
 BluetoothDaemonInterface::GetRemoteDeviceProperty(
-  const nsAString& aRemoteAddr, const nsAString& aName,
+  const BluetoothAddress& aRemoteAddr, BluetoothPropertyType aType,
   BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetRemoteDevicePropertyCmd(aRemoteAddr, aName, aRes);
+    (mProtocol)->GetRemoteDevicePropertyCmd(aRemoteAddr, aType, aRes);
   if (NS_FAILED(rv)) {
     DispatchError(aRes, rv);
   }
@@ -690,7 +658,7 @@ BluetoothDaemonInterface::GetRemoteDeviceProperty(
 
 void
 BluetoothDaemonInterface::SetRemoteDeviceProperty(
-  const nsAString& aRemoteAddr, const BluetoothNamedValue& aProperty,
+  const BluetoothAddress& aRemoteAddr, const BluetoothProperty& aProperty,
   BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
@@ -703,9 +671,9 @@ BluetoothDaemonInterface::SetRemoteDeviceProperty(
 /* Remote Services */
 
 void
-BluetoothDaemonInterface::GetRemoteServiceRecord(const nsAString& aRemoteAddr,
-                                                 const uint8_t aUuid[16],
-                                                 BluetoothResultHandler* aRes)
+BluetoothDaemonInterface::GetRemoteServiceRecord(
+  const BluetoothAddress& aRemoteAddr, const BluetoothUuid& aUuid,
+  BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
     (mProtocol)->GetRemoteServiceRecordCmd(aRemoteAddr, aUuid, aRes);
@@ -715,8 +683,8 @@ BluetoothDaemonInterface::GetRemoteServiceRecord(const nsAString& aRemoteAddr,
 }
 
 void
-BluetoothDaemonInterface::GetRemoteServices(const nsAString& aRemoteAddr,
-                                            BluetoothResultHandler* aRes)
+BluetoothDaemonInterface::GetRemoteServices(
+  const BluetoothAddress& aRemoteAddr, BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
     (mProtocol)->GetRemoteServicesCmd(aRemoteAddr, aRes);
@@ -750,7 +718,7 @@ BluetoothDaemonInterface::CancelDiscovery(BluetoothResultHandler* aRes)
 /* Bonds */
 
 void
-BluetoothDaemonInterface::CreateBond(const nsAString& aBdAddr,
+BluetoothDaemonInterface::CreateBond(const BluetoothAddress& aBdAddr,
                                      BluetoothTransport aTransport,
                                      BluetoothResultHandler* aRes)
 {
@@ -762,7 +730,7 @@ BluetoothDaemonInterface::CreateBond(const nsAString& aBdAddr,
 }
 
 void
-BluetoothDaemonInterface::RemoveBond(const nsAString& aBdAddr,
+BluetoothDaemonInterface::RemoveBond(const BluetoothAddress& aBdAddr,
                                      BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
@@ -773,7 +741,7 @@ BluetoothDaemonInterface::RemoveBond(const nsAString& aBdAddr,
 }
 
 void
-BluetoothDaemonInterface::CancelBond(const nsAString& aBdAddr,
+BluetoothDaemonInterface::CancelBond(const BluetoothAddress& aBdAddr,
                                      BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
@@ -786,7 +754,7 @@ BluetoothDaemonInterface::CancelBond(const nsAString& aBdAddr,
 /* Connection */
 
 void
-BluetoothDaemonInterface::GetConnectionState(const nsAString& aBdAddr,
+BluetoothDaemonInterface::GetConnectionState(const BluetoothAddress& aBdAddr,
                                              BluetoothResultHandler* aRes)
 {
   // NO-OP: no corresponding interface of current BlueZ
@@ -795,8 +763,9 @@ BluetoothDaemonInterface::GetConnectionState(const nsAString& aBdAddr,
 /* Authentication */
 
 void
-BluetoothDaemonInterface::PinReply(const nsAString& aBdAddr, bool aAccept,
-                                   const nsAString& aPinCode,
+BluetoothDaemonInterface::PinReply(const BluetoothAddress& aBdAddr,
+                                   bool aAccept,
+                                   const BluetoothPinCode& aPinCode,
                                    BluetoothResultHandler* aRes)
 {
   nsresult rv = static_cast<BluetoothDaemonCoreModule*>
@@ -807,7 +776,7 @@ BluetoothDaemonInterface::PinReply(const nsAString& aBdAddr, bool aAccept,
 }
 
 void
-BluetoothDaemonInterface::SspReply(const nsAString& aBdAddr,
+BluetoothDaemonInterface::SspReply(const BluetoothAddress& aBdAddr,
                                    BluetoothSspVariant aVariant,
                                    bool aAccept, uint32_t aPasskey,
                                    BluetoothResultHandler* aRes)
@@ -888,8 +857,20 @@ BluetoothDaemonInterface::DispatchError(BluetoothResultHandler* aRes,
   DispatchError(aRes, status);
 }
 
-// Profile Interfaces
+// Service Interfaces
 //
+
+BluetoothSetupInterface*
+BluetoothDaemonInterface::GetBluetoothSetupInterface()
+{
+  if (mSetupInterface) {
+    return mSetupInterface;
+  }
+
+  mSetupInterface = new BluetoothDaemonSetupInterface(mProtocol);
+
+  return mSetupInterface;
+}
 
 BluetoothSocketInterface*
 BluetoothDaemonInterface::GetBluetoothSocketInterface()
@@ -996,12 +977,14 @@ BluetoothDaemonInterface::OnConnectSuccess(int aIndex)
       }
       break;
     case NTF_CHANNEL: {
-        nsRefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
+        RefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
         mResultHandlerQ.RemoveElementAt(0);
 
         // Init, step 4: Register Core module
         nsresult rv = mProtocol->RegisterModuleCmd(
-          0x01, 0x00, BluetoothDaemonCoreModule::MAX_NUM_CLIENTS,
+          SETUP_SERVICE_ID_CORE,
+          0x00,
+          BluetoothDaemonCoreModule::MAX_NUM_CLIENTS,
           new InitResultHandler(this, res));
         if (NS_FAILED(rv) && res) {
           DispatchError(res, STATUS_FAIL);
@@ -1028,7 +1011,7 @@ BluetoothDaemonInterface::OnConnectError(int aIndex)
     case LISTEN_SOCKET:
       if (!mResultHandlerQ.IsEmpty()) {
         // Signal error to caller
-        nsRefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
+        RefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
         mResultHandlerQ.RemoveElementAt(0);
 
         if (res) {
@@ -1071,7 +1054,7 @@ BluetoothDaemonInterface::OnDisconnect(int aIndex)
       break;
     case LISTEN_SOCKET:
       if (!mResultHandlerQ.IsEmpty()) {
-        nsRefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
+        RefPtr<BluetoothResultHandler> res = mResultHandlerQ.ElementAt(0);
         mResultHandlerQ.RemoveElementAt(0);
         // Cleanup, step 5: Signal success to caller
         if (res) {

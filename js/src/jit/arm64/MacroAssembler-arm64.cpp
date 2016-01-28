@@ -94,8 +94,8 @@ MacroAssemblerCompat::movePatchablePtr(ImmPtr ptr, Register dest)
 
     // Add the entry to the pool, fix up the LDR imm19 offset,
     // and add the completed instruction to the buffer.
-    return armbuffer_.allocEntry(numInst, numPoolEntries,
-                                 (uint8_t*)&instructionScratch, literalAddr);
+    return allocEntry(numInst, numPoolEntries, (uint8_t*)&instructionScratch,
+                      literalAddr);
 }
 
 BufferOffset
@@ -120,8 +120,8 @@ MacroAssemblerCompat::movePatchablePtr(ImmWord ptr, Register dest)
 
     // Add the entry to the pool, fix up the LDR imm19 offset,
     // and add the completed instruction to the buffer.
-    return armbuffer_.allocEntry(numInst, numPoolEntries,
-                                 (uint8_t*)&instructionScratch, literalAddr);
+    return allocEntry(numInst, numPoolEntries, (uint8_t*)&instructionScratch,
+                      literalAddr);
 }
 
 void
@@ -238,8 +238,13 @@ MacroAssemblerCompat::branchValueIsNurseryObject(Condition cond, ValueOperand va
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
     MOZ_ASSERT(temp != ScratchReg && temp != ScratchReg2); // Both may be used internally.
 
-    // 'Value' representing the start of the nursery tagged as a JSObject
     const Nursery& nursery = GetJitContext()->runtime->gcNursery();
+
+    // Avoid creating a bogus ObjectValue below.
+    if (!nursery.exists())
+        return;
+
+    // 'Value' representing the start of the nursery tagged as a JSObject
     Value start = ObjectValue(*reinterpret_cast<JSObject*>(nursery.start()));
 
     movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), temp);

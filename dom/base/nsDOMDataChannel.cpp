@@ -213,11 +213,23 @@ nsDOMDataChannel::BufferedAmount() const
   return mDataChannel->GetBufferedAmount();
 }
 
+uint32_t
+nsDOMDataChannel::BufferedAmountLowThreshold() const
+{
+  return mDataChannel->GetBufferedAmountLowThreshold();
+}
+
 NS_IMETHODIMP
 nsDOMDataChannel::GetBufferedAmount(uint32_t* aBufferedAmount)
 {
   *aBufferedAmount = BufferedAmount();
   return NS_OK;
+}
+
+void
+nsDOMDataChannel::SetBufferedAmountLowThreshold(uint32_t aThreshold)
+{
+  mDataChannel->SetBufferedAmountLowThreshold(aThreshold);
 }
 
 NS_IMETHODIMP nsDOMDataChannel::GetBinaryType(nsAString & aBinaryType)
@@ -401,7 +413,7 @@ nsDOMDataChannel::DoOnMessageAvailable(const nsACString& aData,
     jsData.setString(jsString);
   }
 
-  nsRefPtr<MessageEvent> event = NS_NewDOMMessageEvent(this, nullptr, nullptr);
+  RefPtr<MessageEvent> event = NS_NewDOMMessageEvent(this, nullptr, nullptr);
 
   rv = event->InitMessageEvent(NS_LITERAL_STRING("message"), false, false,
                                jsData, mOrigin, EmptyString(), nullptr);
@@ -442,7 +454,7 @@ nsDOMDataChannel::OnSimpleEvent(nsISupports* aContext, const nsAString& aName)
     return NS_OK;
   }
 
-  nsRefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
+  RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
 
   rv = event->InitEvent(aName, false, false);
   NS_ENSURE_SUCCESS(rv,rv);
@@ -468,6 +480,14 @@ nsDOMDataChannel::OnChannelClosed(nsISupports* aContext)
   return OnSimpleEvent(aContext, NS_LITERAL_STRING("close"));
 }
 
+nsresult
+nsDOMDataChannel::OnBufferLow(nsISupports* aContext)
+{
+  LOG(("%p(%p): %s - Dispatching\n",this,(void*)mDataChannel,__FUNCTION__));
+
+  return OnSimpleEvent(aContext, NS_LITERAL_STRING("bufferedamountlow"));
+}
+
 void
 nsDOMDataChannel::AppReady()
 {
@@ -480,7 +500,7 @@ NS_NewDOMDataChannel(already_AddRefed<mozilla::DataChannel>&& aDataChannel,
                      nsPIDOMWindow* aWindow,
                      nsIDOMDataChannel** aDomDataChannel)
 {
-  nsRefPtr<nsDOMDataChannel> domdc =
+  RefPtr<nsDOMDataChannel> domdc =
     new nsDOMDataChannel(aDataChannel, aWindow);
 
   nsresult rv = domdc->Init(aWindow);

@@ -19,6 +19,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/AnimationEffectReadOnly.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/KeyframeBinding.h"
 #include "mozilla/dom/Nullable.h"
 #include "nsSMILKeySpline.h"
 #include "nsStyleStruct.h" // for nsTimingFunction
@@ -109,28 +110,35 @@ class ComputedTimingFunction
 {
 public:
   typedef nsTimingFunction::Type Type;
+  typedef nsTimingFunction::StepSyntax StepSyntax;
   void Init(const nsTimingFunction &aFunction);
   double GetValue(double aPortion) const;
   const nsSMILKeySpline* GetFunction() const {
-    NS_ASSERTION(mType == nsTimingFunction::Function, "Type mismatch");
+    NS_ASSERTION(HasSpline(), "Type mismatch");
     return &mTimingFunction;
   }
   Type GetType() const { return mType; }
+  bool HasSpline() const { return nsTimingFunction::IsSplineType(mType); }
   uint32_t GetSteps() const { return mSteps; }
+  StepSyntax GetStepSyntax() const { return mStepSyntax; }
   bool operator==(const ComputedTimingFunction& aOther) const {
     return mType == aOther.mType &&
-           (mType == nsTimingFunction::Function ?
+           (HasSpline() ?
             mTimingFunction == aOther.mTimingFunction :
-            mSteps == aOther.mSteps);
+            (mSteps == aOther.mSteps &&
+             mStepSyntax == aOther.mStepSyntax));
   }
   bool operator!=(const ComputedTimingFunction& aOther) const {
     return !(*this == aOther);
   }
+  int32_t Compare(const ComputedTimingFunction& aRhs) const;
+  void AppendToString(nsAString& aResult) const;
 
 private:
   Type mType;
   nsSMILKeySpline mTimingFunction;
   uint32_t mSteps;
+  StepSyntax mStepSyntax;
 };
 
 struct AnimationPropertySegment
@@ -194,6 +202,8 @@ struct ElementPropertyTransition;
 
 namespace dom {
 
+class Animation;
+
 class KeyframeEffectReadOnly : public AnimationEffectReadOnly
 {
 public:
@@ -216,6 +226,12 @@ public:
   }
 
   // KeyframeEffectReadOnly interface
+  static already_AddRefed<KeyframeEffectReadOnly>
+  Constructor(const GlobalObject& aGlobal,
+              Element* aTarget,
+              const Optional<JS::Handle<JSObject*>>& aFrames,
+              const Optional<double>& aOptions,
+              ErrorResult& aRv);
   Element* GetTarget() const {
     // Currently we never return animations from the API whose effect
     // targets a pseudo-element so this should never be called when
@@ -225,6 +241,9 @@ public:
                " pseudo-element is not yet supported.");
     return mTarget;
   }
+  void GetFrames(JSContext*& aCx,
+                 nsTArray<JSObject*>& aResult,
+                 ErrorResult& aRv);
 
   // Temporary workaround to return both the target element and pseudo-type
   // until we implement PseudoElement (bug 1174575).
@@ -234,24 +253,15 @@ public:
     aPseudoType = mPseudoType;
   }
 
-  void SetParentTime(Nullable<TimeDuration> aParentTime);
-
   const AnimationTiming& Timing() const {
     return mTiming;
   }
   AnimationTiming& Timing() {
     return mTiming;
   }
+  void SetTiming(const AnimationTiming& aTiming);
 
-  // FIXME: Drop |aOwningAnimation| once we make AnimationEffects track their
-  // owning animation.
-  void SetTiming(const AnimationTiming& aTiming, Animation& aOwningAnimtion);
-
-  Nullable<TimeDuration> GetLocalTime() const {
-    // Since the *animation* start time is currently always zero, the local
-    // time is equal to the parent time.
-    return mParentTime;
-  }
+  Nullable<TimeDuration> GetLocalTime() const;
 
   // This function takes as input the timing parameters of an animation and
   // returns the computed timing at the specified local time.
@@ -278,9 +288,11 @@ public:
   static StickyTimeDuration
   ActiveDuration(const AnimationTiming& aTiming);
 
-  bool IsInPlay(const Animation& aAnimation) const;
-  bool IsCurrent(const Animation& aAnimation) const;
+  bool IsInPlay() const;
+  bool IsCurrent() const;
   bool IsInEffect() const;
+
+  void SetAnimation(Animation* aAnimation);
 
   const AnimationProperty*
   GetAnimationOfProperty(nsCSSProperty aProperty) const;
@@ -297,20 +309,29 @@ public:
   }
 
   // Updates |aStyleRule| with the animation values produced by this
-  // Animation for the current time except any properties already contained
-  // in |aSetProperties|.
+  // AnimationEffect for the current time except any properties already
+  // contained in |aSetProperties|.
   // Any updated properties are added to |aSetProperties|.
-  void ComposeStyle(nsRefPtr<AnimValuesStyleRule>& aStyleRule,
+  void ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
                     nsCSSPropertySet& aSetProperties);
   bool IsRunningOnCompositor() const;
   void SetIsRunningOnCompositor(nsCSSProperty aProperty, bool aIsRunning);
 
 protected:
-  virtual ~KeyframeEffectReadOnly() { }
+  virtual ~KeyframeEffectReadOnly();
   void ResetIsRunningOnCompositor();
 
+  static AnimationTiming ConvertKeyframeEffectOptions(
+      const Optional<double>& aOptions);
+  static void BuildAnimationPropertyList(
+      JSContext* aCx,
+      Element* aTarget,
+      const Optional<JS::Handle<JSObject*>>& aFrames,
+      InfallibleTArray<AnimationProperty>& aResult,
+      ErrorResult& aRv);
+
   nsCOMPtr<Element> mTarget;
-  Nullable<TimeDuration> mParentTime;
+  RefPtr<Animation> mAnimation;
 
   AnimationTiming mTiming;
   nsCSSPseudoElements::Type mPseudoType;

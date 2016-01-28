@@ -103,8 +103,8 @@ public:
     override;
   virtual bool RecvCaretOffset(const uint64_t& aID, int32_t* aOffset)
     override;
-  virtual bool RecvSetCaretOffset(const uint64_t& aID, const int32_t& aOffset,
-                                  bool* aValid) override;
+  virtual bool RecvSetCaretOffset(const uint64_t& aID, const int32_t& aOffset)
+    override;
 
   virtual bool RecvCharacterCount(const uint64_t& aID, int32_t* aCount)
      override;
@@ -363,6 +363,14 @@ public:
                                     const uint32_t& aRow) override;
   virtual bool RecvTableIsProbablyForLayout(const uint64_t& aID,
                                             bool* aForLayout) override;
+  virtual bool RecvAtkTableColumnHeader(const uint64_t& aID,
+                                        const int32_t& aCol,
+                                        uint64_t* aHeader,
+                                        bool* aOk) override;
+  virtual bool RecvAtkTableRowHeader(const uint64_t& aID,
+                                     const int32_t& aRow,
+                                     uint64_t* aHeader,
+                                     bool* aOk) override;
 
   virtual bool RecvSelectedItems(const uint64_t& aID,
                                  nsTArray<uint64_t>* aSelectedItemIDs) override;
@@ -393,6 +401,10 @@ public:
   virtual bool RecvUnselectAll(const uint64_t& aID,
                                bool* aSuccess) override;
 
+  virtual bool RecvTakeSelection(const uint64_t& aID) override;
+  virtual bool RecvSetSelected(const uint64_t& aID,
+                               const bool& aSelect) override;
+
   virtual bool RecvDoAction(const uint64_t& aID,
                             const uint8_t& aIndex,
                             bool* aSuccess) override;
@@ -415,6 +427,9 @@ public:
   virtual bool RecvKeyboardShortcut(const uint64_t& aID,
                                     uint32_t* aKey,
                                     uint32_t* aModifierMask) override;
+
+  virtual bool RecvAtkKeyBinding(const uint64_t& aID,
+                                 nsString* aResult) override;
 
   virtual bool RecvCurValue(const uint64_t& aID,
                             double* aValue) override;

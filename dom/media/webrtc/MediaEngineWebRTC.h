@@ -138,6 +138,7 @@ public:
     , mNrAllocations(0)
     , mInitDone(false)
     , mStarted(false)
+    , mSampleFrequency(MediaEngine::DEFAULT_SAMPLE_RATE)
     , mEchoOn(false), mAgcOn(false), mNoiseOn(false)
     , mEchoCancel(webrtc::kEcDefault)
     , mAGC(webrtc::kAgcDefault)
@@ -215,7 +216,7 @@ private:
   // from kStarted to kStopped (which are combined with EndTrack()).
   // mSources[] is accessed from webrtc threads.
   Monitor mMonitor;
-  nsTArray<nsRefPtr<SourceMediaStream>> mSources;
+  nsTArray<RefPtr<SourceMediaStream>> mSources;
   nsCOMPtr<nsIThread> mThread;
   int mCapIndex;
   int mChannel;
@@ -227,6 +228,7 @@ private:
   nsString mDeviceName;
   nsCString mDeviceUUID;
 
+  uint32_t mSampleFrequency;
   bool mEchoOn, mAgcOn, mNoiseOn;
   webrtc::EcModes  mEchoCancel;
   webrtc::AgcModes mAGC;
@@ -246,9 +248,9 @@ public:
   void Shutdown() override;
 
   virtual void EnumerateVideoDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineVideoSource>>*) override;
+                                     nsTArray<RefPtr<MediaEngineVideoSource>>*) override;
   virtual void EnumerateAudioDevices(dom::MediaSourceEnum,
-                                     nsTArray<nsRefPtr<MediaEngineAudioSource>>*) override;
+                                     nsTArray<RefPtr<MediaEngineAudioSource>>*) override;
 private:
   ~MediaEngineWebRTC() {
     Shutdown();

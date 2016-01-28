@@ -16,11 +16,13 @@ CppUnitTests([
     'TestCountZeroes',
     'TestEndian',
     'TestEnumSet',
+    'TestFastBernoulliTrial',
     'TestFloatingPoint',
     'TestFunction',
     'TestIntegerPrintfMacros',
     'TestIntegerRange',
     'TestJSONWriter',
+    'TestLinkedList',
     'TestMacroArgs',
     'TestMacroForEach',
     'TestMathAlgorithms',
@@ -40,6 +42,7 @@ CppUnitTests([
     'TestVariant',
     'TestVector',
     'TestWeakPtr',
+    'TestXorShift128PlusRNG',
 ])
 
 if not CONFIG['MOZ_ASAN']:

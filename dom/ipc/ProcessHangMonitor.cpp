@@ -108,7 +108,7 @@ class HangMonitorChild
 
   static Atomic<HangMonitorChild*> sInstance;
 
-  const nsRefPtr<ProcessHangMonitor> mHangMonitor;
+  const RefPtr<ProcessHangMonitor> mHangMonitor;
   Monitor mMonitor;
 
   // Main thread-only.
@@ -204,7 +204,7 @@ public:
  private:
   void ShutdownOnThread();
 
-  const nsRefPtr<ProcessHangMonitor> mHangMonitor;
+  const RefPtr<ProcessHangMonitor> mHangMonitor;
 
   // This field is read-only after construction.
   bool mReportHangs;
@@ -215,7 +215,7 @@ public:
   Monitor mMonitor;
 
   // Must be accessed with mMonitor held.
-  nsRefPtr<HangMonitoredProcess> mProcess;
+  RefPtr<HangMonitoredProcess> mProcess;
   bool mShutdownDone;
   // Map from plugin ID to crash dump ID. Protected by mBrowserCrashDumpHashLock.
   nsDataHashtable<nsUint32HashKey, nsString> mBrowserCrashDumpIds;
@@ -257,6 +257,10 @@ HangMonitorChild::HangMonitorChild(ProcessHangMonitor* aMonitor)
 
 HangMonitorChild::~HangMonitorChild()
 {
+  // For some reason IPDL doesn't automatically delete the channel for a
+  // bridged protocol (bug 1090570). So we have to do it ourselves.
+  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(GetTransport()));
+
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(sInstance == this);
   sInstance = nullptr;
@@ -375,7 +379,7 @@ HangMonitorChild::NotifySlowScript(nsITabChild* aTabChild,
 
   TabId id;
   if (aTabChild) {
-    nsRefPtr<TabChild> tabChild = static_cast<TabChild*>(aTabChild);
+    RefPtr<TabChild> tabChild = static_cast<TabChild*>(aTabChild);
     id = tabChild->GetTabId();
   }
   nsAutoCString filename(aFileName);
@@ -469,7 +473,7 @@ DeleteMinidump(const uint32_t& aPluginId, nsString aCrashId, void* aUserData)
 
 HangMonitorParent::~HangMonitorParent()
 {
-  // For some reason IPDL doesn't autmatically delete the channel for a
+  // For some reason IPDL doesn't automatically delete the channel for a
   // bridged protocol (bug 1090570). So we have to do it ourselves.
   XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(GetTransport()));
 
@@ -558,7 +562,7 @@ public:
   }
 
 private:
-  nsRefPtr<HangMonitoredProcess> mProcess;
+  RefPtr<HangMonitoredProcess> mProcess;
   HangData mHangData;
   nsAutoString mBrowserDumpId;
 };
@@ -744,7 +748,7 @@ HangMonitoredProcess::GetPluginName(nsACString& aPluginName)
 
   uint32_t id = mHangData.get_PluginHangData().pluginId();
 
-  nsRefPtr<nsPluginHost> host = nsPluginHost::GetInst();
+  RefPtr<nsPluginHost> host = nsPluginHost::GetInst();
   nsPluginTag* tag = host->PluginWithId(id);
   if (!tag) {
     return NS_ERROR_UNEXPECTED;

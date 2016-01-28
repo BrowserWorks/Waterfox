@@ -43,13 +43,6 @@ class BaselineCompilerShared
         // If set, insert a PCMappingIndexEntry before encoding the
         // current entry.
         bool addIndexEntry;
-
-        void fixupNativeOffset(MacroAssembler& masm) {
-            CodeOffsetLabel offset(nativeOffset);
-            offset.fixup(&masm);
-            MOZ_ASSERT(offset.offset() <= UINT32_MAX);
-            nativeOffset = (uint32_t) offset.offset();
-        }
     };
 
     js::Vector<PCMappingEntry, 16, SystemAllocPolicy> pcMappingEntries_;
@@ -121,6 +114,10 @@ class BaselineCompilerShared
         // Not delazifying here is ok as the function is guaranteed to have
         // been delazified before compilation started.
         return script->functionNonDelazifying();
+    }
+
+    ModuleObject* module() const {
+        return script->module();
     }
 
     PCMappingSlotInfo getStackTopSlotInfo() {

@@ -389,6 +389,11 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
     if (NS_SUCCEEDED(rv))
       rv = file->AppendNative(NS_LITERAL_CSTRING("distribution"));
   }
+  else if (!strcmp(aProperty, XRE_APP_FEATURES_DIR)) {
+    rv = GetAppDir()->Clone(getter_AddRefs(file));
+    if (NS_SUCCEEDED(rv))
+      rv = file->AppendNative(NS_LITERAL_CSTRING("features"));
+  }
   else if (NS_SUCCEEDED(GetProfileStartupDir(getter_AddRefs(file)))) {
     // We need to allow component, xpt, and chrome registration to
     // occur prior to the profile-after-change notification.
@@ -644,7 +649,10 @@ nsXREDirProvider::LoadExtensionBundleDirectories()
                                NS_EXTENSION_LOCATION);
       LoadExtensionDirectories(parser, "ThemeDirs", mThemeDirectories,
                                NS_SKIN_LOCATION);
-#ifdef MOZ_BUILD_APP_IS_BROWSER
+/* non-Firefox applications that use overrides in their default theme should
+ * define AC_DEFINE(MOZ_SEPARATE_MANIFEST_FOR_THEME_OVERRIDES) in their
+ * configure.in */
+#if defined(MOZ_BUILD_APP_IS_BROWSER) || defined(MOZ_SEPARATE_MANIFEST_FOR_THEME_OVERRIDES)
     } else {
       // In safe mode, still load the default theme directory:
       nsCOMPtr<nsIFile> themeManifest;

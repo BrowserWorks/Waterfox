@@ -31,7 +31,7 @@ InternalResponse::~InternalResponse()
 already_AddRefed<InternalResponse>
 InternalResponse::Clone()
 {
-  nsRefPtr<InternalResponse> clone = CreateIncompleteCopy();
+  RefPtr<InternalResponse> clone = CreateIncompleteCopy();
 
   clone->mHeaders = new InternalHeaders(*mHeaders);
   if (mWrappedResponse) {
@@ -63,7 +63,7 @@ already_AddRefed<InternalResponse>
 InternalResponse::BasicResponse()
 {
   MOZ_ASSERT(!mWrappedResponse, "Can't BasicResponse a already wrapped response");
-  nsRefPtr<InternalResponse> basic = CreateIncompleteCopy();
+  RefPtr<InternalResponse> basic = CreateIncompleteCopy();
   basic->mType = ResponseType::Basic;
   basic->mHeaders = InternalHeaders::BasicHeaders(Headers());
   basic->mWrappedResponse = this;
@@ -74,7 +74,7 @@ already_AddRefed<InternalResponse>
 InternalResponse::CORSResponse()
 {
   MOZ_ASSERT(!mWrappedResponse, "Can't CORSResponse a already wrapped response");
-  nsRefPtr<InternalResponse> cors = CreateIncompleteCopy();
+  RefPtr<InternalResponse> cors = CreateIncompleteCopy();
   cors->mType = ResponseType::Cors;
   cors->mHeaders = InternalHeaders::CORSHeaders(Headers());
   cors->mWrappedResponse = this;
@@ -118,11 +118,24 @@ InternalResponse::StripFragmentAndSetUrl(const nsACString& aUrl)
   return NS_OK;
 }
 
+LoadTainting
+InternalResponse::GetTainting() const
+{
+  switch (mType) {
+    case ResponseType::Cors:
+      return LoadTainting::CORS;
+    case ResponseType::Opaque:
+      return LoadTainting::Opaque;
+    default:
+      return LoadTainting::Basic;
+  }
+}
+
 already_AddRefed<InternalResponse>
 InternalResponse::OpaqueResponse()
 {
   MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueResponse a already wrapped response");
-  nsRefPtr<InternalResponse> response = new InternalResponse(0, EmptyCString());
+  RefPtr<InternalResponse> response = new InternalResponse(0, EmptyCString());
   response->mType = ResponseType::Opaque;
   response->mTerminationReason = mTerminationReason;
   response->mChannelInfo = mChannelInfo;
@@ -137,7 +150,7 @@ already_AddRefed<InternalResponse>
 InternalResponse::OpaqueRedirectResponse()
 {
   MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueRedirectResponse a already wrapped response");
-  nsRefPtr<InternalResponse> response = OpaqueResponse();
+  RefPtr<InternalResponse> response = OpaqueResponse();
   response->mType = ResponseType::Opaqueredirect;
   response->mURL = mURL;
   return response.forget();
@@ -146,7 +159,7 @@ InternalResponse::OpaqueRedirectResponse()
 already_AddRefed<InternalResponse>
 InternalResponse::CreateIncompleteCopy()
 {
-  nsRefPtr<InternalResponse> copy = new InternalResponse(mStatus, mStatusText);
+  RefPtr<InternalResponse> copy = new InternalResponse(mStatus, mStatusText);
   copy->mType = mType;
   copy->mTerminationReason = mTerminationReason;
   copy->mURL = mURL;

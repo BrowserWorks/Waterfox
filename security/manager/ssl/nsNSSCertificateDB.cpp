@@ -437,11 +437,6 @@ nsNSSCertificateDB::handleCACertDownload(nsIArray *x509Certs,
   return ImportValidCACertsInList(certList.get(), ctx, proofOfLock);
 }
 
-/*
- *  [noscript] void importCertificates(in charPtr data, in unsigned long length,
- *                                     in unsigned long type, 
- *                                     in nsIInterfaceRequestor ctx);
- */
 NS_IMETHODIMP 
 nsNSSCertificateDB::ImportCertificates(uint8_t * data, uint32_t length, 
                                        uint32_t type, 
@@ -531,10 +526,6 @@ ImportCertsIntoPermanentStorage(
 } 
 
 
-/*
- *  [noscript] void importEmailCertificates(in charPtr data, in unsigned long length,
- *                                     in nsIInterfaceRequestor ctx);
- */
 NS_IMETHODIMP
 nsNSSCertificateDB::ImportEmailCertificate(uint8_t * data, uint32_t length, 
                                        nsIInterfaceRequestor *ctx)
@@ -820,28 +811,26 @@ void nsNSSCertificateDB::DisplayCertificateAlert(nsIInterfaceRequestor *ctx,
     return;
   }
 
-  nsPSMUITracker tracker;
-  if (!tracker.isUIForbidden()) {
+  nsCOMPtr<nsIInterfaceRequestor> my_ctx = ctx;
+  if (!my_ctx) {
+    my_ctx = new PipUIContext();
+  }
 
-    nsCOMPtr<nsIInterfaceRequestor> my_ctx = ctx;
-    if (!my_ctx)
-      my_ctx = new PipUIContext();
+  // This shall be replaced by embedding ovverridable prompts
+  // as discussed in bug 310446, and should make use of certToShow.
 
-    // This shall be replaced by embedding ovverridable prompts
-    // as discussed in bug 310446, and should make use of certToShow.
+  nsresult rv;
+  nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID, &rv));
+  if (NS_SUCCEEDED(rv)) {
+    nsAutoString tmpMessage;
+    nssComponent->GetPIPNSSBundleString(stringID, tmpMessage);
 
-    nsresult rv;
-    nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID, &rv));
-    if (NS_SUCCEEDED(rv)) {
-      nsAutoString tmpMessage;
-      nssComponent->GetPIPNSSBundleString(stringID, tmpMessage);
-
-      nsCOMPtr<nsIPrompt> prompt (do_GetInterface(my_ctx));
-      if (!prompt)
-        return;
-    
-      prompt->Alert(nullptr, tmpMessage.get());
+    nsCOMPtr<nsIPrompt> prompt (do_GetInterface(my_ctx));
+    if (!prompt) {
+      return;
     }
+
+    prompt->Alert(nullptr, tmpMessage.get());
   }
 }
 
@@ -932,9 +921,6 @@ loser:
   return rv;
 }
 
-/*
- * void deleteCertificate(in nsIX509Cert aCert);
- */
 NS_IMETHODIMP 
 nsNSSCertificateDB::DeleteCertificate(nsIX509Cert *aCert)
 {
@@ -972,11 +958,6 @@ nsNSSCertificateDB::DeleteCertificate(nsIX509Cert *aCert)
   return (srv) ? NS_ERROR_FAILURE : NS_OK;
 }
 
-/*
- * void setCertTrust(in nsIX509Cert cert,
- *                   in unsigned long type,
- *                   in unsigned long trust);
- */
 NS_IMETHODIMP 
 nsNSSCertificateDB::SetCertTrust(nsIX509Cert *cert, 
                                  uint32_t type,
@@ -1386,7 +1367,7 @@ nsNSSCertificateDB::FindCertByEmailAddress(nsISupports *aToken, const char *aEma
   }
 
   // node now contains the first valid certificate with correct usage 
-  nsRefPtr<nsNSSCertificate> nssCert = nsNSSCertificate::Create(node->cert);
+  RefPtr<nsNSSCertificate> nssCert = nsNSSCertificate::Create(node->cert);
   if (!nssCert)
     return NS_ERROR_OUT_OF_MEMORY;
 

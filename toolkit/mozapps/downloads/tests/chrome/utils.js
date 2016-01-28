@@ -6,9 +6,9 @@
  * Provides utility functions for the download manager chrome tests.
  */
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
 
 Components.utils.import("resource://gre/modules/Services.jsm");
 
@@ -110,7 +110,7 @@ function populateDM(DownloadData)
       "state, currBytes, maxBytes, preferredAction, autoResume) " +
     "VALUES (:name, :source, :target, :startTime, :endTime, :state, " +
       ":currBytes, :maxBytes, :preferredAction, :autoResume)");
-  for each (let dl in DownloadData) {
+  for (let dl of DownloadData) {
     for (let prop in dl)
       stmt.params[prop] = dl[prop];
 

@@ -252,11 +252,15 @@ ReportError(JSContext* cx, const char* message, JSErrorReport* reportp,
 static void
 PopulateReportBlame(JSContext* cx, JSErrorReport* report)
 {
+    JSCompartment* compartment = cx->compartment();
+    if (!compartment)
+        return;
+
     /*
      * Walk stack until we find a frame that is associated with a non-builtin
      * rather than a builtin frame and which we're allowed to know about.
      */
-    NonBuiltinFrameIter iter(cx, cx->compartment()->principals());
+    NonBuiltinFrameIter iter(cx, compartment->principals());
     if (iter.done())
         return;
 
@@ -428,8 +432,10 @@ js::ReportErrorVA(JSContext* cx, unsigned flags, const char* format, va_list ap)
         return true;
 
     message = JS_vsmprintf(format, ap);
-    if (!message)
+    if (!message) {
+        ReportOutOfMemory(cx);
         return false;
+    }
     messagelen = strlen(message);
 
     report.flags = flags;
@@ -1195,13 +1201,15 @@ JS::AutoCheckRequestDepth::~AutoCheckRequestDepth()
 #endif
 
 #ifdef JS_CRASH_DIAGNOSTICS
-void CompartmentChecker::check(InterpreterFrame* fp)
+void
+CompartmentChecker::check(InterpreterFrame* fp)
 {
     if (fp)
         check(fp->scopeChain());
 }
 
-void CompartmentChecker::check(AbstractFramePtr frame)
+void
+CompartmentChecker::check(AbstractFramePtr frame)
 {
     if (frame)
         check(frame.scopeChain());
@@ -1209,7 +1217,7 @@ void CompartmentChecker::check(AbstractFramePtr frame)
 #endif
 
 void
-js::CrashAtUnhandlableOOM(const char* reason)
+AutoEnterOOMUnsafeRegion::crash(const char* reason)
 {
     char msgbuf[1024];
     JS_snprintf(msgbuf, sizeof(msgbuf), "[unhandlable oom] %s", reason);

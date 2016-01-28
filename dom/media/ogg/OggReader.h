@@ -50,7 +50,7 @@ protected:
   ~OggReader();
 
 public:
-  virtual nsresult Init(MediaDecoderReader* aCloneDonor) override;
+  virtual nsresult Init() override;
   virtual nsresult ResetDecode() override;
   virtual bool DecodeAudioData() override;
 
@@ -60,24 +60,24 @@ public:
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
                                 int64_t aTimeThreshold) override;
 
-  virtual bool HasAudio() override {
-    return (mVorbisState != 0 && mVorbisState->mActive) ||
-           (mOpusState != 0 && mOpusState->mActive);
-  }
-
-  virtual bool HasVideo() override {
-    return mTheoraState != 0 && mTheoraState->mActive;
-  }
-
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
                                 MetadataTags** aTags) override;
-  virtual nsRefPtr<SeekPromise>
+  virtual RefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
   virtual media::TimeIntervals GetBuffered() override;
 
   virtual bool IsMediaSeekable() override;
 
 private:
+  bool HasAudio() {
+    return (mVorbisState != 0 && mVorbisState->mActive) ||
+           (mOpusState != 0 && mOpusState->mActive);
+  }
+
+  bool HasVideo() {
+    return mTheoraState != 0 && mTheoraState->mActive;
+  }
+
   // TODO: DEPRECATED. This uses synchronous decoding.
   // Stores the presentation time of the first frame we'd be able to play if
   // we started playback at the current position. Returns the first video

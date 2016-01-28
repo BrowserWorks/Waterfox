@@ -50,8 +50,8 @@ Response::~Response()
 Response::Error(const GlobalObject& aGlobal)
 {
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<InternalResponse> error = InternalResponse::NetworkError();
-  nsRefPtr<Response> r = new Response(global, error);
+  RefPtr<InternalResponse> error = InternalResponse::NetworkError();
+  RefPtr<Response> r = new Response(global, error);
   return r.forget();
 }
 
@@ -86,7 +86,7 @@ Response::Redirect(const GlobalObject& aGlobal, const nsAString& aUrl,
     worker->AssertIsOnWorkerThread();
 
     NS_ConvertUTF8toUTF16 baseURL(worker->GetLocationInfo().mHref);
-    nsRefPtr<workers::URL> url =
+    RefPtr<workers::URL> url =
       workers::URL::Constructor(aGlobal, aUrl, baseURL, aRv);
     if (aRv.Failed()) {
       return nullptr;
@@ -100,14 +100,14 @@ Response::Redirect(const GlobalObject& aGlobal, const nsAString& aUrl,
   }
 
   if (aStatus != 301 && aStatus != 302 && aStatus != 303 && aStatus != 307 && aStatus != 308) {
-    aRv.ThrowRangeError(MSG_INVALID_REDIRECT_STATUSCODE_ERROR);
+    aRv.ThrowRangeError<MSG_INVALID_REDIRECT_STATUSCODE_ERROR>();
     return nullptr;
   }
 
   Optional<ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams> body;
   ResponseInit init;
   init.mStatus = aStatus;
-  nsRefPtr<Response> r = Response::Constructor(aGlobal, body, init, aRv);
+  RefPtr<Response> r = Response::Constructor(aGlobal, body, init, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -131,7 +131,7 @@ Response::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
 
   if (aInit.mStatus < 200 || aInit.mStatus > 599) {
-    aRv.ThrowRangeError(MSG_INVALID_RESPONSE_STATUSCODE_ERROR);
+    aRv.ThrowRangeError<MSG_INVALID_RESPONSE_STATUSCODE_ERROR>();
     return nullptr;
   }
 
@@ -142,13 +142,13 @@ Response::Constructor(const GlobalObject& aGlobal,
     statusText.BeginReading(start);
     statusText.EndReading(end);
     if (FindCharInReadable('\r', start, end)) {
-      aRv.ThrowTypeError(MSG_RESPONSE_INVALID_STATUSTEXT_ERROR);
+      aRv.ThrowTypeError<MSG_RESPONSE_INVALID_STATUSTEXT_ERROR>();
       return nullptr;
     }
     // Reset iterator since FindCharInReadable advances it.
     statusText.BeginReading(start);
     if (FindCharInReadable('\n', start, end)) {
-      aRv.ThrowTypeError(MSG_RESPONSE_INVALID_STATUSTEXT_ERROR);
+      aRv.ThrowTypeError<MSG_RESPONSE_INVALID_STATUSTEXT_ERROR>();
       return nullptr;
     }
   } else {
@@ -156,7 +156,7 @@ Response::Constructor(const GlobalObject& aGlobal,
     statusText = NS_LITERAL_CSTRING("OK");
   }
 
-  nsRefPtr<InternalResponse> internalResponse =
+  RefPtr<InternalResponse> internalResponse =
     new InternalResponse(aInit.mStatus, statusText);
 
   // Grab a valid channel info from the global so this response is 'valid' for
@@ -178,14 +178,14 @@ Response::Constructor(const GlobalObject& aGlobal,
     internalResponse->InitChannelInfo(worker->GetChannelInfo());
   }
 
-  nsRefPtr<Response> r = new Response(global, internalResponse);
+  RefPtr<Response> r = new Response(global, internalResponse);
 
   if (aInit.mHeaders.WasPassed()) {
     internalResponse->Headers()->Clear();
 
     // Instead of using Fill, create an object to allow the constructor to
     // unwrap the HeadersInit.
-    nsRefPtr<Headers> headers =
+    RefPtr<Headers> headers =
       Headers::Create(global, aInit.mHeaders.Value(), aRv);
     if (aRv.Failed()) {
       return nullptr;
@@ -198,6 +198,11 @@ Response::Constructor(const GlobalObject& aGlobal,
   }
 
   if (aBody.WasPassed()) {
+    if (aInit.mStatus == 204 || aInit.mStatus == 205 || aInit.mStatus == 304) {
+      aRv.ThrowTypeError<MSG_RESPONSE_NULL_STATUS_WITH_BODY>();
+      return nullptr;
+    }
+
     nsCOMPtr<nsIInputStream> bodyStream;
     nsCString contentType;
     aRv = ExtractByteStreamFromBody(aBody.Value(), getter_AddRefs(bodyStream), contentType);
@@ -205,7 +210,10 @@ Response::Constructor(const GlobalObject& aGlobal,
 
     if (!contentType.IsVoid() &&
         !internalResponse->Headers()->Has(NS_LITERAL_CSTRING("Content-Type"), aRv)) {
-      internalResponse->Headers()->Append(NS_LITERAL_CSTRING("Content-Type"), contentType, aRv);
+      // Ignore Append() failing here.
+      ErrorResult error;
+      internalResponse->Headers()->Append(NS_LITERAL_CSTRING("Content-Type"), contentType, error);
+      error.SuppressException();
     }
 
     if (aRv.Failed()) {
@@ -221,12 +229,12 @@ already_AddRefed<Response>
 Response::Clone(ErrorResult& aRv) const
 {
   if (BodyUsed()) {
-    aRv.ThrowTypeError(MSG_FETCH_BODY_CONSUMED_ERROR);
+    aRv.ThrowTypeError<MSG_FETCH_BODY_CONSUMED_ERROR>();
     return nullptr;
   }
 
-  nsRefPtr<InternalResponse> ir = mInternalResponse->Clone();
-  nsRefPtr<Response> response = new Response(mOwner, ir);
+  RefPtr<InternalResponse> ir = mInternalResponse->Clone();
+  RefPtr<Response> response = new Response(mOwner, ir);
   return response.forget();
 }
 
@@ -240,7 +248,7 @@ Response::SetBody(nsIInputStream* aBody)
 already_AddRefed<InternalResponse>
 Response::GetInternalResponse() const
 {
-  nsRefPtr<InternalResponse> ref = mInternalResponse;
+  RefPtr<InternalResponse> ref = mInternalResponse;
   return ref.forget();
 }
 

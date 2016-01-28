@@ -18,7 +18,7 @@
 #include "mozilla/layers/TextureHost.h"  // for TextureHost, etc
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
-#include "mozilla/nsRefPtr.h"                   // for nsRefPtr
+#include "mozilla/RefPtr.h"                   // for nsRefPtr
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsString.h"                   // for nsAutoCString
@@ -87,7 +87,7 @@ ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
   }
 
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxUtils::sDumpPainting) {
+  if (gfxUtils::sDumpCompositorTextures) {
     RefPtr<gfx::DataSourceSurface> surf = mImageHost->GetAsSurface();
     WriteSnapshotToDumpFile(this, surf);
   }
@@ -166,7 +166,7 @@ ImageLayerComposite::CleanupResources()
 gfx::Filter
 ImageLayerComposite::GetEffectFilter()
 {
-  return gfx::ToFilter(mFilter);
+  return mFilter;
 }
 
 void

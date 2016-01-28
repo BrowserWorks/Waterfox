@@ -60,6 +60,12 @@ const MMI_PROCEDURE_INTERROGATION = "*#";
 const MMI_PROCEDURE_REGISTRATION = "**";
 const MMI_PROCEDURE_ERASURE = "##";
 
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_ACTIVATION", MMI_PROCEDURE_ACTIVATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_DEACTIVATION", MMI_PROCEDURE_DEACTIVATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_INTERROGATION", MMI_PROCEDURE_INTERROGATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_REGISTRATION", MMI_PROCEDURE_REGISTRATION);
+XPCOMUtils.defineConstant(this, "MMI_PROCEDURE_ERASURE", MMI_PROCEDURE_ERASURE);
+
 // MMI call forwarding service codes as defined in TS.22.030 Annex B
 const MMI_SC_CFU = "21";
 const MMI_SC_CF_BUSY = "67";
@@ -157,6 +163,11 @@ const MMI_KS_SERVICE_CLASS_DATA_SYNC = "serviceClassDataSync";
 const MMI_KS_SERVICE_CLASS_DATA_ASYNC = "serviceClassDataAsync";
 const MMI_KS_SERVICE_CLASS_PACKET = "serviceClassPacket";
 const MMI_KS_SERVICE_CLASS_PAD = "serviceClassPad";
+
+// States of USSD Session : DONE -> ONGOING [-> CANCELLING] -> DONE
+const USSD_SESSION_DONE = "DONE";
+const USSD_SESSION_ONGOING = "ONGOING";
+const USSD_SESSION_CANCELLING = "CANCELLING";
 
 const MMI_PROC_TO_CF_ACTION = {};
 MMI_PROC_TO_CF_ACTION[MMI_PROCEDURE_ACTIVATION] = Ci.nsIMobileConnection.CALL_FORWARD_ACTION_ENABLE;
@@ -358,7 +369,6 @@ function TelephonyService() {
   this._isDialing = false;
   this._cachedDialRequest = null;
   this._currentCalls = {};
-  this._currentConferenceState = nsITelephonyService.CALL_STATE_UNKNOWN;
   this._audioStates = [];
   this._ussdSessions = [];
 
@@ -374,7 +384,7 @@ function TelephonyService() {
 
   for (let i = 0; i < this._numClients; ++i) {
     this._audioStates[i] = nsITelephonyAudioService.PHONE_STATE_NORMAL;
-    this._ussdSessions[i] = false;
+    this._ussdSessions[i] = USSD_SESSION_DONE;
     this._currentCalls[i] = {};
     this._enumerateCallsForClient(i);
   }
@@ -1064,14 +1074,22 @@ TelephonyService.prototype = {
 
       // Handle unknown MMI code as USSD.
       default:
-        this._sendUSSDInternal(aClientId, aMmi.fullMMI, aResponse => {
-          if (aResponse.errorMsg) {
-            aCallback.notifyDialMMIError(aResponse.errorMsg);
-            return;
-          }
-
-          aCallback.notifyDialMMISuccess("");
-        });
+        if (this._ussdSessions[aClientId] == USSD_SESSION_ONGOING) {
+          // Cancel the previous ussd session first.
+          this._cancelUSSDInternal(aClientId, aResponse => {
+            // Fail to cancel ussd session, report error instead of sending ussd
+            // request.
+            if (aResponse.errorMsg) {
+              aCallback.notifyDialMMIError(aResponse.errorMsg);
+              return;
+            }
+            this._sendUSSDInternal(aClientId, aMmi.fullMMI,
+                                   this._defaultMMICallbackHandler.bind(this, aCallback));
+          });
+          return;
+        }
+        this._sendUSSDInternal(aClientId, aMmi.fullMMI,
+                               this._defaultMMICallbackHandler.bind(this, aCallback));
         break;
     }
   },
@@ -1678,6 +1696,14 @@ TelephonyService.prototype = {
     }
   },
 
+  _defaultMMICallbackHandler: function(aCallback, aResponse) {
+    if (aResponse.errorMsg) {
+      aCallback.notifyDialMMIError(aResponse.errorMsg);
+    } else {
+      aCallback.notifyDialMMISuccess("");
+    }
+  },
+
   _getCallsWithState: function(aClientId, aState) {
     let calls = [];
     for (let i in this._currentCalls[aClientId]) {
@@ -2013,7 +2039,6 @@ TelephonyService.prototype = {
         calls.push(call);
       }
       this._handleCallStateChanged(aClientId, calls);
-      this._handleConferenceCallStateChanged(nsITelephonyService.CALL_STATE_CONNECTED);
 
       aCallback.notifySuccess();
     });
@@ -2057,7 +2082,6 @@ TelephonyService.prototype = {
     parentCall.isSwitchable = true;
     parentCall.isMergeable = true;
     this._handleCallStateChanged(aClientId, [childCall, parentCall]);
-    this._handleConferenceCallStateChanged(nsITelephonyService.CALL_STATE_UNKNOWN);
   },
 
   // See 3gpp2, S.R0006-522-A v1.0. Table 4, XID 6S.
@@ -2101,11 +2125,24 @@ TelephonyService.prototype = {
       return;
     }
 
-    let foreground = this._currentConferenceState == nsITelephonyService.CALL_STATE_CONNECTED;
-    this._sendToRilWorker(aClientId,
-                          foreground ? "hangUpForeground" : "hangUpBackground",
-                          null,
-                          this._defaultCallbackHandler.bind(this, aCallback));
+    // Find a conference call, and send the corresponding request to RIL worker.
+    for (let index in this._currentCalls[aClientId]) {
+      let call = this._currentCalls[aClientId][index];
+      if (!call.isConference) {
+        continue;
+      }
+
+      let command = call.state === nsITelephonyService.CALL_STATE_CONNECTED ?
+                    "hangUpForeground" : "hangUpBackground";
+      this._sendToRilWorker(aClientId, command, null,
+                            this._defaultCallbackHandler.bind(this, aCallback));
+      return;
+    }
+
+    // There is no conference call.
+    if (DEBUG) debug("hangUpConference: " +
+                     "No conference call in modem[" + aClientId + "].");
+    aCallback.notifyError(RIL.GECKO_ERROR_GENERIC_FAILURE);
   },
 
   _switchConference: function(aClientId, aCallback) {
@@ -2132,24 +2169,12 @@ TelephonyService.prototype = {
   },
 
   _sendUSSDInternal: function(aClientId, aUssd, aCallback) {
-    if (!this._ussdSessions[aClientId]) {
-      this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd }, aResponse => {
-        this._ussdSessions[aClientId] = !aResponse.errorMsg;
-        aCallback(aResponse);
-      });
-      return;
-    }
-
-    // Cancel the previous ussd session first.
-    this._cancelUSSDInternal(aClientId, aResponse => {
-      // Fail to cancel ussd session, report error instead of sending ussd
-      // request.
+    this._ussdSessions[aClientId] = USSD_SESSION_ONGOING;
+    this._sendToRilWorker(aClientId, "sendUSSD", { ussd: aUssd }, aResponse => {
       if (aResponse.errorMsg) {
-        aCallback(aResponse);
-        return;
+        this._ussdSessions[aClientId] = USSD_SESSION_DONE;
       }
-
-      this._sendUSSDInternal(aClientId, aUssd, aCallback);
+      aCallback(aResponse);
     });
   },
 
@@ -2159,8 +2184,11 @@ TelephonyService.prototype = {
   },
 
   _cancelUSSDInternal: function(aClientId, aCallback) {
+    this._ussdSessions[aClientId] = USSD_SESSION_CANCELLING;
     this._sendToRilWorker(aClientId, "cancelUSSD", {}, aResponse => {
-      this._ussdSessions[aClientId] = !!aResponse.errorMsg;
+      if (aResponse.errorMsg) {
+        this._ussdSessions[aClientId] = USSD_SESSION_ONGOING;
+      }
       aCallback(aResponse);
     });
   },
@@ -2211,10 +2239,9 @@ TelephonyService.prototype = {
                              aFailCause = RIL.GECKO_CALL_ERROR_NORMAL_CALL_CLEARING) {
     if (DEBUG) debug("_disconnectCalls: " + JSON.stringify(aCalls));
 
-    // Child cannot live without parent. Let's find all the calls that need to
-    // be disconnected.
+    // In addition to the disconnected call itself, its decedent calls should be
+    // treated as disconnected calls as well.
     let disconnectedCalls = aCalls.slice();
-
     for (let call in aCalls) {
       while (call.childId) {
         call = this._currentCalls[aClientId][call.childId];
@@ -2231,8 +2258,8 @@ TelephonyService.prototype = {
       call.state = nsITelephonyService.CALL_STATE_DISCONNECTED;
       call.disconnectedReason = aFailCause;
 
-      if (call.parentId) {
-        let parentCall = this._currentCalls[aClientId][call.parentId];
+      let parentCall = this._currentCalls[aClientId][call.parentId];
+      if (parentCall) {
         delete parentCall.childId;
       }
 
@@ -2337,12 +2364,6 @@ TelephonyService.prototype = {
 
     this._handleCallStateChanged(aClientId, [...changedCalls]);
 
-    // Should handle conferenceCallStateChange after callStateChanged and
-    // callDisconnected.
-    if (newConferenceState != this._currentConferenceState) {
-      this._handleConferenceCallStateChanged(newConferenceState);
-    }
-
     this._updateAudioState(aClientId);
 
     // Handle cached dial request.
@@ -2422,12 +2443,6 @@ TelephonyService.prototype = {
                              [aClientId, callIndex, notification]);
   },
 
-  _handleConferenceCallStateChanged: function(aState) {
-    if (DEBUG) debug("handleConferenceCallStateChanged: " + aState);
-    this._currentConferenceState = aState;
-    this._notifyAllListeners("conferenceCallStateChanged", [aState]);
-  },
-
   notifyUssdReceived: function(aClientId, aMessage, aSessionEnded) {
     if (DEBUG) {
       debug("notifyUssdReceived for " + aClientId + ": " +
@@ -2435,9 +2450,23 @@ TelephonyService.prototype = {
     }
 
     let oldSession = this._ussdSessions[aClientId];
-    this._ussdSessions[aClientId] = !aSessionEnded;
+    this._ussdSessions[aClientId] =
+      aSessionEnded ? USSD_SESSION_DONE : USSD_SESSION_ONGOING;
 
-    if (!oldSession && !this._ussdSessions[aClientId] && !aMessage) {
+    // We suppress the empty message only when the session is not changed and
+    // is not alive. See Bug 1057455, 1198676.
+    // Moreover, we should allow a notification initiated by network
+    // in which further response is not required.
+    // See |5.2.2 Actions at the UE| in 3GPP TS 22.090:
+    // "
+    //  The network may explicitly indicate to the UE that a response
+    //  from the user is required. ...
+    //  If the network does not indicate that a response is required,
+    //  then the normal MMI procedures on the UE continue to apply.
+    // "
+    if (oldSession != USSD_SESSION_ONGOING &&
+        this._ussdSessions[aClientId] != USSD_SESSION_ONGOING &&
+        !aMessage) {
       return;
     }
 

@@ -11,7 +11,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 var Registry = Cu.import("resource://gre/modules/WindowsRegistry.jsm").WindowsRegistry;
 
-const Windows8WindowFrameColor = {
+var Windows8WindowFrameColor = {
   _windowFrameColor: null,
 
   get: function() {
@@ -31,7 +31,7 @@ const Windows8WindowFrameColor = {
     // Zero-pad the number just to make sure that it is 8 digits.
     customizationColorHex = ("00000000" + customizationColorHex).substr(-8);
     let customizationColorArray = customizationColorHex.match(/../g);
-    let [unused, fgR, fgG, fgB] = customizationColorArray.map(function(val) parseInt(val, 16));
+    let [unused, fgR, fgG, fgB] = customizationColorArray.map(val => parseInt(val, 16));
     let colorizationColorBalance = Registry.readRegKey(HKCU, dwmKey,
                                                        "ColorizationColorBalance") || 78;
      // Window frame base color when Color Intensity is at 0, see bug 1004576.

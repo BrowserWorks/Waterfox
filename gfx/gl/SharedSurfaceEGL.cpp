@@ -10,7 +10,6 @@
 #include "GLLibraryEGL.h"
 #include "GLReadTexImageHelper.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor, etc
-#include "ScopedGLHelpers.h"
 #include "SharedSurface.h"
 #include "TextureGarbageBin.h"
 
@@ -219,6 +218,14 @@ SharedSurface_EGLImage::ToSurfaceDescriptor(layers::SurfaceDescriptor* const out
     return true;
 }
 
+bool
+SharedSurface_EGLImage::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surface)
+{
+    MOZ_ASSERT(out_surface);
+    MOZ_ASSERT(NS_IsMainThread());
+    return sEGLLibrary.ReadbackEGLImage(mImage, out_surface);
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 /*static*/ UniquePtr<SurfaceFactory_EGLImage>
@@ -226,7 +233,7 @@ SurfaceFactory_EGLImage::Create(GLContext* prodGL, const SurfaceCaps& caps,
                                 const RefPtr<layers::ISurfaceAllocator>& allocator,
                                 const layers::TextureFlags& flags)
 {
-    EGLContext context = GLContextEGL::Cast(prodGL)->GetEGLContext();
+    EGLContext context = GLContextEGL::Cast(prodGL)->mContext;
 
     typedef SurfaceFactory_EGLImage ptrT;
     UniquePtr<ptrT> ret;

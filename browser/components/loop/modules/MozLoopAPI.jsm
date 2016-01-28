@@ -9,7 +9,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource:///modules/loop/LoopCalls.jsm");
 Cu.import("resource:///modules/loop/MozLoopService.jsm");
 Cu.import("resource:///modules/loop/LoopRooms.jsm");
 Cu.import("resource:///modules/loop/LoopContacts.jsm");
@@ -25,8 +24,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PageMetadata",
                                         "resource://gre/modules/PageMetadata.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                         "resource://gre/modules/PluralForm.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
-                                        "resource://gre/modules/UpdateChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                        "resource://gre/modules/UpdateUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UITour",
                                         "resource:///modules/UITour.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Social",
@@ -372,8 +371,8 @@ function injectLoopAPI(targetWindow) {
     /**
      * Returns the window data for a specific conversation window id.
      *
-     * This data will be relevant to the type of window, e.g. rooms or calls.
-     * See LoopRooms or LoopCalls for more information.
+     * This data will be relevant to the type of window, e.g. rooms.
+     * See LoopRooms for more information.
      *
      * @param {String} conversationWindowId
      * @returns {Object} The window data or null if error.
@@ -420,22 +419,6 @@ function injectLoopAPI(targetWindow) {
           return roomsAPI;
         }
         return roomsAPI = injectObjectAPI(LoopRooms, targetWindow);
-      }
-    },
-
-    /**
-     * Returns the calls API.
-     *
-     * @returns {Object} The rooms API object
-     */
-    calls: {
-      enumerable: true,
-      get: function() {
-        if (callsAPI) {
-          return callsAPI;
-        }
-
-        return callsAPI = injectObjectAPI(LoopCalls, targetWindow);
       }
     },
 
@@ -568,6 +551,17 @@ function injectLoopAPI(targetWindow) {
     },
 
     /**
+     * Hangup and close all chat windows that are open.
+     */
+    hangupAllChatWindows: {
+      enumerable: true,
+      writable: true,
+      value() {
+        MozLoopService.hangupAllChatWindows();
+      }
+    },
+
+    /**
      * Starts alerting the user about an incoming call
      */
     startAlerting: {
@@ -606,50 +600,6 @@ function injectLoopAPI(targetWindow) {
           ringer.pause();
           ringer = null;
         }
-      }
-    },
-
-    /**
-     * Performs a hawk based request to the loop server.
-     *
-     * Callback parameters:
-     *  - {Object|null} null if success. Otherwise an object:
-     *    {
-     *      code: 401,
-     *      errno: 401,
-     *      error: "Request failed",
-     *      message: "invalid token"
-     *    }
-     *  - {String} The body of the response.
-     *
-     * @param {LOOP_SESSION_TYPE} sessionType The type of session to use for
-     *                                        the request.  This is one of the
-     *                                        LOOP_SESSION_TYPE members
-     * @param {String} path The path to make the request to.
-     * @param {String} method The request method, e.g. 'POST', 'GET'.
-     * @param {Object} payloadObj An object which is converted to JSON and
-     *                            transmitted with the request.
-     * @param {Function} callback Called when the request completes.
-     */
-    hawkRequest: {
-      enumerable: true,
-      writable: true,
-      value: function(sessionType, path, method, payloadObj, callback) {
-        // XXX Should really return a DOM promise here.
-        MozLoopService.hawkRequest(sessionType, path, method, payloadObj).then((response) => {
-          invokeCallback(callback, null, response.body);
-        }, hawkError => {
-          // The hawkError.error property, while usually a string representing
-          // an HTTP response status message, may also incorrectly be a native
-          // error object that will cause the cloning function to fail.
-          invokeCallback(callback, Cu.cloneInto({
-            error: (hawkError.error && typeof hawkError.error == "string")
-                   ? hawkError.error : "Unexpected exception",
-            message: hawkError.message,
-            code: hawkError.code,
-            errno: hawkError.errno,
-          }, targetWindow));
-        }).catch(Cu.reportError);
       }
     },
 
@@ -810,7 +760,7 @@ function injectLoopAPI(targetWindow) {
           // which doesn't have what we need, so log an error.
           try {
             appVersionInfo = Cu.cloneInto({
-              channel: UpdateChannel.get(),
+              channel: UpdateUtils.UpdateChannel,
               version: appInfo.version,
               OS: appInfo.OS
             }, targetWindow);

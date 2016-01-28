@@ -20,7 +20,6 @@ config = {
         "http://pypi.pub.build.mozilla.org/pub",
     ],
     "pip_index": False,
-    "use_talos_json": True,
     "exes": {
         'python': PYTHON,
         'virtualenv': [PYTHON, '/tools/misc-python/virtualenv.py'],
@@ -36,8 +35,6 @@ config = {
         "install",
         "run-tests",
     ],
-    "python_webserver": False,
-    "webroot": '%s/../talos-data' % os.getcwd(),
     "default_blob_upload_servers": [
         "https://blobupload.elasticbeanstalk.com",
     ],

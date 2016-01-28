@@ -73,6 +73,12 @@ class BluetoothHfpManager : public BluetoothHfpManagerBase
                           , public BluetoothHandsfreeNotificationHandler
                           , public BatteryObserver
 {
+  enum {
+    MODE_HEADSET = 0x00,
+    MODE_NARROWBAND_SPEECH = 0x01,
+    MODE_NARRAWBAND_WIDEBAND_SPEECH = 0x02
+  };
+
 public:
   BT_DECL_HFP_MGR_BASE
 
@@ -117,29 +123,29 @@ public:
   //
 
   void ConnectionStateNotification(BluetoothHandsfreeConnectionState aState,
-                                   const nsAString& aBdAddress) override;
+                                   const BluetoothAddress& aBdAddress) override;
   void AudioStateNotification(BluetoothHandsfreeAudioState aState,
-                              const nsAString& aBdAddress) override;
-  void AnswerCallNotification(const nsAString& aBdAddress) override;
-  void HangupCallNotification(const nsAString& aBdAddress) override;
+                              const BluetoothAddress& aBdAddress) override;
+  void AnswerCallNotification(const BluetoothAddress& aBdAddress) override;
+  void HangupCallNotification(const BluetoothAddress& aBdAddress) override;
   void VolumeNotification(BluetoothHandsfreeVolumeType aType,
                           int aVolume,
-                          const nsAString& aBdAddress) override;
+                          const BluetoothAddress& aBdAddress) override;
   void DtmfNotification(char aDtmf,
-                        const nsAString& aBdAddress) override;
+                        const BluetoothAddress& aBdAddress) override;
   void NRECNotification(BluetoothHandsfreeNRECState aNrec,
-                        const nsAString& aBdAddr) override;
+                        const BluetoothAddress& aBdAddr) override;
   void CallHoldNotification(BluetoothHandsfreeCallHoldType aChld,
-                            const nsAString& aBdAddress) override;
+                            const BluetoothAddress& aBdAddress) override;
   void DialCallNotification(const nsAString& aNumber,
-                            const nsAString& aBdAddress) override;
-  void CnumNotification(const nsAString& aBdAddress) override;
-  void CindNotification(const nsAString& aBdAddress) override;
-  void CopsNotification(const nsAString& aBdAddress) override;
-  void ClccNotification(const nsAString& aBdAddress) override;
+                            const BluetoothAddress& aBdAddress) override;
+  void CnumNotification(const BluetoothAddress& aBdAddress) override;
+  void CindNotification(const BluetoothAddress& aBdAddress) override;
+  void CopsNotification(const BluetoothAddress& aBdAddress) override;
+  void ClccNotification(const BluetoothAddress& aBdAddress) override;
   void UnknownAtNotification(const nsACString& aAtString,
-                             const nsAString& aBdAddress) override;
-  void KeyPressedNotification(const nsAString& aBdAddress) override;
+                             const BluetoothAddress& aBdAddress) override;
+  void KeyPressedNotification(const BluetoothAddress& aBdAddress) override;
 
 protected:
   virtual ~BluetoothHfpManager();
@@ -151,21 +157,20 @@ private:
   class ConnectResultHandler;
   class CopsResponseResultHandler;
   class ClccResponseResultHandler;
-  class CleanupInitResultHandler;
-  class CleanupResultHandler;
   class CloseScoRunnable;
   class CloseScoTask;
-  class DeinitResultHandlerRunnable;
+  class DeinitProfileResultHandlerRunnable;
   class DeviceStatusNotificationResultHandler;
   class DisconnectAudioResultHandler;
   class DisconnectResultHandler;
   class FormattedAtResponseResultHandler;
   class GetVolumeTask;
-  class InitResultHandlerRunnable;
+  class InitProfileResultHandlerRunnable;
   class MainThreadTask;
-  class OnErrorProfileResultHandlerRunnable;
   class PhoneStateChangeResultHandler;
+  class RegisterModuleResultHandler;
   class RespondToBLDNTask;
+  class UnregisterModuleResultHandler;
   class VolumeControlResultHandler;
 
   friend class BluetoothHfpManagerObserver;
@@ -223,7 +228,7 @@ private:
 
   nsTArray<Call> mCurrentCallArray;
   nsAutoPtr<BluetoothRilListener> mListener;
-  nsRefPtr<BluetoothProfileController> mController;
+  RefPtr<BluetoothProfileController> mController;
 
   // CDMA-specific variable
   Call mCdmaSecondCall;

@@ -34,6 +34,10 @@
 #include "ClientLayerManager.h"
 #include "FrameLayerBuilder.h"
 
+#ifdef MOZ_ANDROID_APZ
+#include "AndroidBridge.h"
+#endif
+
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
@@ -218,8 +222,12 @@ public:
 
   virtual void PostDelayedTask(Task* aTask, int aDelayMs) override
   {
+#ifdef MOZ_ANDROID_APZ
+    AndroidBridge::Bridge()->PostTaskToUiThread(aTask, aDelayMs);
+#else
     (MessageLoop::current() ? MessageLoop::current() : mUILoop)->
        PostDelayedTask(FROM_HERE, aTask, aDelayMs);
+#endif
   }
 
   virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion) override
@@ -290,7 +298,6 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
   : mLayersId(0)
   , mFrameLoader(aFrameLoader)
   , mFrameLoaderDestroyed(false)
-  , mBackgroundColor(gfxRGBA(1, 1, 1))
   , mAsyncPanZoomEnabled(false)
 {
   *aId = 0;
@@ -299,7 +306,7 @@ RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
     return;
   }
 
-  nsRefPtr<LayerManager> lm = GetFrom(mFrameLoader);
+  RefPtr<LayerManager> lm = GetFrom(mFrameLoader);
 
   mAsyncPanZoomEnabled = lm && lm->AsyncPanZoomEnabled();
 
@@ -339,7 +346,11 @@ RenderFrameParent::GetApzcTreeManager()
   // created and the static getter knows which CompositorParent is
   // instantiated with this layers ID. That's why try to fetch it when
   // we first need it and cache the result.
-  if (!mApzcTreeManager && mAsyncPanZoomEnabled) {
+  // Note: the IsParentProcess check is to deal with nested content process
+  // scenarios, since in those cases we can have RenderFrameParent instances
+  // in a child process, but the APZC machinery is not in that process. Bug
+  // 1020199 should fix this more comprehensively.
+  if (!mApzcTreeManager && mAsyncPanZoomEnabled && XRE_IsParentProcess()) {
     mApzcTreeManager = CompositorParent::GetAPZCTreeManager(mLayersId);
   }
   return mApzcTreeManager.get();
@@ -386,7 +397,7 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
     return nullptr;
   }
 
-  nsRefPtr<Layer> layer =
+  RefPtr<Layer> layer =
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, aItem));
   if (!layer) {
     layer = aManager->CreateRefLayer();
@@ -417,7 +428,7 @@ RenderFrameParent::OwnerContentChanged(nsIContent* aContent)
   MOZ_ASSERT(!mFrameLoader || mFrameLoader->GetOwnerContent() == aContent,
              "Don't build new map if owner is same!");
 
-  nsRefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
+  RefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
     ClientLayerManager *clientManager =
@@ -587,9 +598,24 @@ RenderFrameParent::HitTest(const nsRect& aRect)
 }
 
 void
+RenderFrameParent::StartScrollbarDrag(const AsyncDragMetrics& aDragMetrics)
+{
+  if (GetApzcTreeManager()) {
+    uint64_t layersId = GetLayersId();
+    ScrollableLayerGuid guid(layersId, aDragMetrics.mPresShellId,
+                             aDragMetrics.mViewId);
+
+    APZThreadUtils::RunOnControllerThread(
+      NewRunnableMethod(GetApzcTreeManager(),
+                        &APZCTreeManager::StartScrollbarDrag,
+                        guid, aDragMetrics));
+  }
+}
+
+void
 RenderFrameParent::GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier)
 {
-  nsRefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
+  RefPtr<LayerManager> lm = mFrameLoader ? GetFrom(mFrameLoader) : nullptr;
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
     *aTextureFactoryIdentifier =
@@ -649,7 +675,7 @@ nsDisplayRemote::BuildLayer(nsDisplayListBuilder* aBuilder,
   int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
   nsIntRect visibleRect = GetVisibleRect().ToNearestPixels(appUnitsPerDevPixel);
   visibleRect += aContainerParameters.mOffset;
-  nsRefPtr<Layer> layer = mRemoteFrame->BuildLayer(aBuilder, mFrame, aManager, visibleRect, this, aContainerParameters);
+  RefPtr<Layer> layer = mRemoteFrame->BuildLayer(aBuilder, mFrame, aManager, visibleRect, this, aContainerParameters);
   if (layer && layer->AsContainerLayer()) {
     layer->AsContainerLayer()->SetEventRegionsOverride(mEventRegionsOverride);
   }

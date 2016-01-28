@@ -165,8 +165,8 @@ var gMainPane = {
         }
 
         let tmp = {};
-        Components.utils.import("resource://gre/modules/UpdateChannel.jsm", tmp);
-        if (!e10sCheckbox.checked && tmp.UpdateChannel.get() != "default") {
+        Components.utils.import("resource://gre/modules/UpdateUtils.jsm", tmp);
+        if (!e10sCheckbox.checked && tmp.UpdateUtils.UpdateChannel != "default") {
           Services.prefs.setBoolPref("browser.requestE10sFeedback", true);
           Services.prompt.alert(window, brandName, bundle.getString("e10sFeedbackAfterRestart"));
         }
@@ -298,7 +298,9 @@ var gMainPane = {
   {
     let homePage = document.getElementById("browser.startup.homepage");
     let tabs = this._getTabsForHomePage();
-    function getTabURI(t) t.linkedBrowser.currentURI.spec;
+    function getTabURI(t) {
+      return t.linkedBrowser.currentURI.spec;
+    }
 
     // FIXME Bug 244192: using dangerous "|" joiner!
     if (tabs.length)

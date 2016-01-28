@@ -9,9 +9,11 @@
 #include <stddef.h>                     // for size_t
 #include <stdint.h>                     // for uint32_t, uint64_t
 #include "mozilla/Attributes.h"         // for override
+#include "mozilla/Atomics.h"
 #include "mozilla/RefPtr.h"             // for already_AddRefed
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory, etc
 #include "mozilla/layers/AsyncTransactionTracker.h" // for AsyncTransactionTrackerHolder
+#include "mozilla/layers/CanvasClient.h"
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/PImageBridgeChild.h"
@@ -32,6 +34,7 @@ class Shmem;
 
 namespace layers {
 
+class AsyncCanvasRenderer;
 class AsyncTransactionTracker;
 class ImageClient;
 class ImageContainer;
@@ -138,6 +141,15 @@ public:
    * Can be called from any thread.
    */
   static bool IsCreated();
+  /**
+   * Returns true if the singleton's ShutDown() was called.
+   *
+   * Can be called from any thread.
+   */
+  static bool IsShutDown()
+  {
+    return sIsShutDown;
+  }
 
   /**
    * returns the singleton instance.
@@ -185,7 +197,7 @@ public:
   ~ImageBridgeChild();
 
   virtual PTextureChild*
-  AllocPTextureChild(const SurfaceDescriptor& aSharedData, const TextureFlags& aFlags) override;
+  AllocPTextureChild(const SurfaceDescriptor& aSharedData, const LayersBackend& aLayersBackend, const TextureFlags& aFlags) override;
 
   virtual bool
   DeallocPTextureChild(PTextureChild* actor) override;
@@ -210,11 +222,19 @@ public:
                                                   ImageContainer* aImageContainer);
   already_AddRefed<ImageClient> CreateImageClientNow(CompositableType aType,
                                                      ImageContainer* aImageContainer);
+  already_AddRefed<CanvasClient> CreateCanvasClient(CanvasClient::CanvasClientType aType,
+                                                    TextureFlags aFlag);
+  already_AddRefed<CanvasClient> CreateCanvasClientNow(CanvasClient::CanvasClientType aType,
+                                                       TextureFlags aFlag);
 
   static void DispatchReleaseImageClient(ImageClient* aClient,
                                          PImageContainerChild* aChild = nullptr);
+  static void DispatchReleaseCanvasClient(CanvasClient* aClient);
   static void DispatchReleaseTextureClient(TextureClient* aClient);
   static void DispatchImageClientUpdate(ImageClient* aClient, ImageContainer* aContainer);
+
+  static void UpdateAsyncCanvasRenderer(AsyncCanvasRenderer* aClient);
+  static void UpdateAsyncCanvasRendererNow(AsyncCanvasRenderer* aClient);
 
   /**
    * Flush all Images sent to CompositableHost.
@@ -292,6 +312,7 @@ public:
   virtual void DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
 
   virtual PTextureChild* CreateTexture(const SurfaceDescriptor& aSharedData,
+                                       LayersBackend aLayersBackend,
                                        TextureFlags aFlags) override;
 
   virtual bool IsSameProcess() const override;
@@ -307,7 +328,8 @@ protected:
                                   bool aUnsafe);
 
   CompositableTransaction* mTxn;
-  bool mShuttingDown;
+  Atomic<bool> mShuttingDown;
+  static Atomic<bool> sIsShutDown;
 };
 
 } // namespace layers

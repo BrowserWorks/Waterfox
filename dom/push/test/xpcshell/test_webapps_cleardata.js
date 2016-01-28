@@ -6,8 +6,6 @@
 const {PushDB, PushService, PushServiceWebSocket} = serviceExports;
 
 const userAgentID = 'bd744428-f125-436a-b6d0-dd0c9845837f';
-const channelIDs = ['0ef2ad4a-6c49-41ad-af6e-95d2425276bf', '4818b54a-97c5-4277-ad5d-0bfe630e4e50'];
-var channelIDCounter = 0;
 
 function run_test() {
   do_get_profile();
@@ -25,6 +23,9 @@ function run_test() {
 add_task(function* test_webapps_cleardata() {
   let db = PushServiceWebSocket.newPushDB();
   do_register_cleanup(() => {return db.drop().then(_ => db.close());});
+
+  let unregisterDone;
+  let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
 
   PushService.init({
     serverURI: "wss://push.example.org",
@@ -50,7 +51,10 @@ add_task(function* test_webapps_cleardata() {
             uaid: userAgentID,
             pushEndpoint: 'https://example.com/update/' + Math.random(),
           }));
-        }
+        },
+        onUnregister(data) {
+          unregisterDone();
+        },
       });
     }
   });
@@ -84,5 +88,8 @@ add_task(function* test_webapps_cleardata() {
     'https://example.org/1',
     ChromeUtils.originAttributesToSuffix({ appId: 1, inBrowser: true }));
   ok(registration, 'Registration for { 1, true } should still exist.');
+
+  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
+    'Timed out waiting for unregister');
 });
 

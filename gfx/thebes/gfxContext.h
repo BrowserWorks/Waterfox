@@ -46,6 +46,7 @@ class ClipExporter;
  */
 class gfxContext final {
     typedef mozilla::gfx::CapStyle CapStyle;
+    typedef mozilla::gfx::CompositionOp CompositionOp;
     typedef mozilla::gfx::JoinStyle JoinStyle;
     typedef mozilla::gfx::FillRule FillRule;
     typedef mozilla::gfx::Path Path;
@@ -255,21 +256,21 @@ public:
      * Set a solid color to use for drawing.  This color is in the device color space
      * and is not transformed.
      */
-    void SetDeviceColor(const gfxRGBA& c);
+    void SetDeviceColor(const mozilla::gfx::Color& aColor);
 
     /**
      * Gets the current color.  It's returned in the device color space.
      * returns false if there is something other than a color
      *         set as the current source (pattern, surface, etc)
      */
-    bool GetDeviceColor(gfxRGBA& c);
+    bool GetDeviceColor(mozilla::gfx::Color& aColorOut);
 
     /**
      * Set a solid color in the sRGB color space to use for drawing.
      * If CMS is not enabled, the color is treated as a device-space color
      * and this call is identical to SetDeviceColor().
      */
-    void SetColor(const gfxRGBA& c);
+    void SetColor(const mozilla::gfx::Color& aColor);
 
     /**
      * Uses a surface for drawing. This is a shorthand for creating a
@@ -371,52 +372,13 @@ public:
     FillRule CurrentFillRule() const;
 
     /**
-     ** Operators and Rendering control
-     **/
-
-    // define enum for operators (clear, src, dst, etc)
-    enum GraphicsOperator {
-        OPERATOR_SOURCE,
-
-        OPERATOR_OVER,
-        OPERATOR_IN,
-        OPERATOR_OUT,
-        OPERATOR_ATOP,
-
-        OPERATOR_DEST,
-        OPERATOR_DEST_OVER,
-        OPERATOR_DEST_IN,
-        OPERATOR_DEST_OUT,
-        OPERATOR_DEST_ATOP,
-
-        OPERATOR_XOR,
-        OPERATOR_ADD,
-        OPERATOR_SATURATE,
-
-        OPERATOR_MULTIPLY,
-        OPERATOR_SCREEN,
-        OPERATOR_OVERLAY,
-        OPERATOR_DARKEN,
-        OPERATOR_LIGHTEN,
-        OPERATOR_COLOR_DODGE,
-        OPERATOR_COLOR_BURN,
-        OPERATOR_HARD_LIGHT,
-        OPERATOR_SOFT_LIGHT,
-        OPERATOR_DIFFERENCE,
-        OPERATOR_EXCLUSION,
-        OPERATOR_HUE,
-        OPERATOR_SATURATION,
-        OPERATOR_COLOR,
-        OPERATOR_LUMINOSITY
-    };
-    /**
      * Sets the operator used for all further drawing. The operator affects
      * how drawing something will modify the destination. For example, the
      * OVER operator will do alpha blending of source and destination, while
      * SOURCE will replace the destination with the source.
      */
-    void SetOperator(GraphicsOperator op);
-    GraphicsOperator CurrentOperator() const;
+    void SetOp(CompositionOp op);
+    CompositionOp CurrentOp() const;
 
     void SetAntialiasMode(mozilla::gfx::AntialiasMode mode);
     mozilla::gfx::AntialiasMode CurrentAntialiasMode() const;
@@ -477,7 +439,7 @@ public:
      * the correct results and using an opaque pushed surface gives better
      * quality and performance.
      * This API really only makes sense if you do a PopGroupToSource and
-     * immediate Paint with OPERATOR_OVER.
+     * immediate Paint with OP_OVER.
      */
     void PushGroupAndCopyBackground(gfxContentType content = gfxContentType::COLOR);
     already_AddRefed<gfxPattern> PopGroup();
@@ -525,7 +487,6 @@ private:
   typedef mozilla::gfx::Color Color;
   typedef mozilla::gfx::StrokeOptions StrokeOptions;
   typedef mozilla::gfx::Float Float;
-  typedef mozilla::gfx::CompositionOp CompositionOp;
   typedef mozilla::gfx::PathBuilder PathBuilder;
   typedef mozilla::gfx::SourceSurface SourceSurface;
   
@@ -541,14 +502,14 @@ private:
 
     mozilla::gfx::CompositionOp op;
     Color color;
-    nsRefPtr<gfxPattern> pattern;
-    nsRefPtr<gfxASurface> sourceSurfCairo;
-    mozilla::RefPtr<SourceSurface> sourceSurface;
+    RefPtr<gfxPattern> pattern;
+    RefPtr<gfxASurface> sourceSurfCairo;
+    RefPtr<SourceSurface> sourceSurface;
     mozilla::gfx::Point sourceSurfaceDeviceOffset;
     Matrix surfTransform;
     Matrix transform;
     struct PushedClip {
-      mozilla::RefPtr<Path> path;
+      RefPtr<Path> path;
       Rect rect;
       Matrix transform;
     };
@@ -557,8 +518,8 @@ private:
     bool clipWasReset;
     mozilla::gfx::FillRule fillRule;
     StrokeOptions strokeOptions;
-    mozilla::RefPtr<DrawTarget> drawTarget;
-    mozilla::RefPtr<DrawTarget> parentTarget;
+    RefPtr<DrawTarget> drawTarget;
+    RefPtr<DrawTarget> parentTarget;
     mozilla::gfx::AntialiasMode aaMode;
     bool patternTransformChanged;
     Matrix patternTransform;
@@ -584,8 +545,8 @@ private:
   bool mTransformChanged;
   Matrix mPathTransform;
   Rect mRect;
-  mozilla::RefPtr<PathBuilder> mPathBuilder;
-  mozilla::RefPtr<Path> mPath;
+  RefPtr<PathBuilder> mPathBuilder;
+  RefPtr<Path> mPath;
   Matrix mTransform;
   nsTArray<AzureState> mStateStack;
 
@@ -594,8 +555,8 @@ private:
 
   cairo_t *mRefCairo;
 
-  mozilla::RefPtr<DrawTarget> mDT;
-  mozilla::RefPtr<DrawTarget> mOriginalDT;
+  RefPtr<DrawTarget> mDT;
+  RefPtr<DrawTarget> mOriginalDT;
 };
 
 /**
@@ -710,7 +671,7 @@ public:
     }
 
 private:
-    mozilla::RefPtr<mozilla::gfx::DrawTarget> mDT;
+    RefPtr<mozilla::gfx::DrawTarget> mDT;
     bool mSubpixelAntialiasingEnabled;
 };
 

@@ -188,6 +188,45 @@ struct ReplyTovCardListingRequest
   uint16_t phonebookSize;
 };
 
+struct ReplyToFolderListingRequest
+{
+  uint16_t masId;
+  nsString folderList;
+};
+
+struct ReplyToMessagesListingRequest
+{
+  uint16_t masId;
+  PBlob blob;
+  bool newMessage;
+  nsString timeStamp;
+  uint16_t size;
+};
+
+struct ReplyToGetMessageRequest
+{
+  uint16_t masId;
+  PBlob blob;
+};
+
+struct ReplyToSetMessageStatusRequest
+{
+  uint16_t masId;
+  bool messageStatus;
+};
+
+struct ReplyToSendMessageRequest
+{
+  uint16_t masId;
+  bool messageStatus;
+};
+
+struct ReplyToMessageUpdateRequest
+{
+  uint16_t masId;
+  bool messageStatus;
+};
+
 struct AnswerWaitingCallRequest
 {
 };
@@ -309,6 +348,74 @@ struct UnregisterGattServerRequest
   int serverIf;
 };
 
+struct GattServerAddServiceRequest
+{
+  nsString appUuid;
+  BluetoothGattServiceId serviceId;
+  uint16_t handleCount;
+};
+
+struct GattServerAddIncludedServiceRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+  BluetoothAttributeHandle includedServiceHandle;
+};
+
+struct GattServerAddCharacteristicRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+  BluetoothUuid characteristicUuid;
+  BluetoothGattAttrPerm permissions;
+  BluetoothGattCharProp properties;
+};
+
+struct GattServerAddDescriptorRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+  BluetoothAttributeHandle characteristicHandle;
+  BluetoothUuid descriptorUuid;
+  BluetoothGattAttrPerm permissions;
+};
+
+struct GattServerRemoveServiceRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+};
+
+struct GattServerStartServiceRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+};
+
+struct GattServerStopServiceRequest
+{
+  nsString appUuid;
+  BluetoothAttributeHandle serviceHandle;
+};
+
+struct GattServerSendResponseRequest
+{
+  nsString appUuid;
+  nsString address;
+  uint16_t status;
+  int32_t requestId;
+  BluetoothGattResponse response;
+};
+
+struct GattServerSendIndicationRequest
+{
+  nsString appUuid;
+  nsString address;
+  BluetoothAttributeHandle characteristicHandle;
+  bool confirm;
+  uint8_t[] value;
+};
+
 union Request
 {
   GetAdaptersRequest;
@@ -343,6 +450,12 @@ union Request
   ReplyTovCardPullingRequest;
   ReplyToPhonebookPullingRequest;
   ReplyTovCardListingRequest;
+  ReplyToFolderListingRequest;
+  ReplyToMessagesListingRequest;
+  ReplyToGetMessageRequest;
+  ReplyToSetMessageStatusRequest;
+  ReplyToSendMessageRequest;
+  ReplyToMessageUpdateRequest;
   AnswerWaitingCallRequest;
   IgnoreWaitingCallRequest;
   ToggleCallsRequest;
@@ -362,6 +475,15 @@ union Request
   GattServerConnectPeripheralRequest;
   GattServerDisconnectPeripheralRequest;
   UnregisterGattServerRequest;
+  GattServerAddServiceRequest;
+  GattServerAddIncludedServiceRequest;
+  GattServerAddCharacteristicRequest;
+  GattServerAddDescriptorRequest;
+  GattServerRemoveServiceRequest;
+  GattServerStartServiceRequest;
+  GattServerStopServiceRequest;
+  GattServerSendResponseRequest;
+  GattServerSendIndicationRequest;
 };
 
 protocol PBluetooth

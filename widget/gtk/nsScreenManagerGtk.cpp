@@ -99,6 +99,11 @@ nsScreenManagerGtk :: EnsureInit()
     return NS_OK;
 
   mRootWindow = gdk_get_default_root_window();
+  if (!mRootWindow) {
+    // Sometimes we don't initial X (e.g., xpcshell)
+    return NS_OK;
+  }
+
   g_object_ref(mRootWindow);
 
   // GDK_PROPERTY_CHANGE_MASK ==> PropertyChangeMask, for PropertyNotify
@@ -152,7 +157,7 @@ nsScreenManagerGtk :: Init()
   if (!screenInfo || numScreens == 1) {
     numScreens = 1;
 #endif
-    nsRefPtr<nsScreenGtk> screen;
+    RefPtr<nsScreenGtk> screen;
 
     if (mCachedScreenArray.Count() > 0) {
       screen = static_cast<nsScreenGtk*>(mCachedScreenArray[0]);
@@ -174,7 +179,7 @@ nsScreenManagerGtk :: Init()
     printf("Xinerama superpowers activated for %d screens!\n", numScreens);
 #endif
     for (int i = 0; i < numScreens; ++i) {
-      nsRefPtr<nsScreenGtk> screen;
+      RefPtr<nsScreenGtk> screen;
       if (mCachedScreenArray.Count() > i) {
         screen = static_cast<nsScreenGtk*>(mCachedScreenArray[i]);
       } else {

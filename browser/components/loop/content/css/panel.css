@@ -76,147 +76,6 @@ body {
   border-radius: 3px;
 }
 
-/* Tabs and tab selection buttons */
-
-.tab-view-container {
-  width: 100%;
-  background-image: url("../shared/img/beta-ribbon.svg#beta-ribbon");
-  background-color: #fbfbfb;
-  background-size: 36px 36px;
-  background-repeat: no-repeat;
-  flex: 1;
-  display: flex;
-  flex-flow: column nowrap;
-  overflow: hidden;
-}
-
-.tab-view {
-  position: relative;
-  width: 100%;
-  height: 4rem;
-  line-height: 3.7rem;
-  color: #4A4A4A;
-  list-style: none;
-  border-bottom: 2px solid #ccc;
-}
-
-.tab-view > li {
-  display: inline-block;
-  text-align: center;
-  padding: 0;
-  cursor: pointer;
-}
-
-.tab-view > .slide-bar {
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  height: .2em;
-  width: 50%;
-  background: #00A9DC;
-  border: none;
-  transition: margin .3s ease-in-out;
-}
-
-.tab-view li:nth-child(1).selected ~ .slide-bar {
-  margin-left: 0;
-}
-
-.tab-view li:nth-child(2).selected ~ .slide-bar {
-  margin-left: 50%;
-}
-
-html[dir="rtl"] .tab-view li:nth-child(1).selected ~ .slide-bar {
-  margin-left: 50%;
-}
-
-html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
-  margin-left: 0;
-}
-
-.tab-view > li > div {
-  font-size: 1.2rem;
-  pointer-events: none;
-  display: inline;
-}
-
-.tab-view > li:before {
-  content: "";
-  pointer-events: none;
-  display: inline-block;
-  -moz-margin-end: .5rem;
-  vertical-align: middle;
-  height: 1.4rem;
-  width: 1.4rem;
-  transition-property: background-image;
-}
-
-.tab-view > li.selected {
-  transition-delay: .3s;
-}
-
-.tab-view > li[data-tab-name="rooms"]:before {
-  background-image: url("../shared/img/icons-14x14.svg#hello");
-}
-
-.tab-view > li[data-tab-name="rooms"]:hover:before {
-  background-image: url("../shared/img/icons-14x14.svg#hello-hover");
-}
-
-.tab-view > li[data-tab-name="rooms"].selected:before {
-  background-image: url("../shared/img/icons-14x14.svg#hello-active");
-}
-
-.tab-view > li[data-tab-name="contacts"]:before {
-  background-image: url("../shared/img/icons-14x14.svg#contacts");
-}
-
-.tab-view > li[data-tab-name="contacts"]:hover:before {
-  background-image: url("../shared/img/icons-14x14.svg#contacts-hover");
-}
-
-.tab-view > li[data-tab-name="contacts"].selected:before {
-  background-image: url("../shared/img/icons-14x14.svg#contacts-active");
-}
-
-/* Styling for one tab */
-.tab-view li:first-child:nth-last-child(2) {
-  width: 100%;
-}
-
-.tab-view li:first-child:nth-last-child(2) > span {
-  display: none;
-}
-
-.tab-view li:first-child:nth-last-child(2) > span {
-  display: none;
-}
-
-.tab-view li:first-child:nth-last-child(2):before {
-  background-image: url("../shared/img/icons-14x14.svg#hello-hover");
-}
-
-.tab-view li:first-child:nth-last-child(2) ~ li {
-  /* hide the tab-slider when there is only one tab shown */
-  display: none;
-}
-
-.tab-view li:first-child:nth-last-child(3),
-.tab-view li:first-child:nth-last-child(3) ~ li {
-  width: 50%;
-}
-
-.tab {
-  display: none;
-  flex: 1;
-  overflow: auto;
-}
-
-.tab.selected {
-  display: flex;
-  flex-flow: column nowrap;
-}
-
 /* Content area and input fields */
 
 .content-area {
@@ -232,8 +91,7 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   -moz-padding-start: 20px;
 }
 
-.fte-get-started-container + .generate-url > #share-link-header,
-.tab-view + .tab .content-area > .generate-url > #share-link-header {
+.fte-get-started-container + .generate-url > #share-link-header {
   /* The header shouldn't be indented if the tabs are present. */
   -moz-padding-start: 0;
 }
@@ -272,29 +130,22 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   border: 0.1rem solid #5cccee;
 }
 
-/* Rooms and contacts shared CSS */
+/* Rooms CSS */
 
-.contact-list-empty,
-.contact-search-list-empty,
 .no-conversations-message {
-  background-repeat: no-repeat;
-  background-position: top center;
+  /* example of vertical aligning a container in an element see:
+     http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/ */
   text-align: center;
   color: #4a4a4a;
   font-weight: lighter;
-}
-
-
-
-.no-conversations-message {
-  /* example of vertical aligning a container in an element
-    see: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/ */
   position: relative;
   top: 50%;
   transform: translateY(-50%);
   padding-top: 11rem;
   padding-bottom: 1rem;
   background-image: url("../shared/img/empty_conversations.svg");
+  background-repeat: no-repeat;
+  background-position: top center;
 }
 
 .panel-text-medium,
@@ -331,33 +182,32 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   flex: 1;
   display: flex;
   flex-flow: column nowrap;
+  width: 100%;
 }
 
 .rooms > h1 {
-  font-weight: bold;
   color: #666;
+  font-size: 1rem;
   padding: .5rem 0;
   height: 3rem;
   line-height: 3rem;
-  font-size: 1.1rem;
   margin: 0 15px;
 }
 
 .new-room-view {
+  border-bottom: 1px solid #d8d8d8;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid #d8d8d8;
 }
 
-.new-room-view > .context-checkbox-checked {
+.new-room-view.context-checkbox-checked {
   background-color: #dbf7ff;
 }
 
 .new-room-view > .context {
-  border-top: 1px solid #ebebeb;
   flex: 1;
   border-radius: 3px 3px 0 0;
-  padding: 6px 15px 8px;
+  padding: 1rem 1.5rem 0.5rem;
 }
 
 .new-room-view > .context > .context-enabled {
@@ -390,19 +240,21 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
 }
 
 .new-room-view > .btn {
-  flex: 1;
-  height: 3rem;
-  display: block;
+  border-radius: 5px;
   font-size: 1.2rem;
-  margin: 7px 15px 0 15px;
-  padding: .5rem 1rem;
-  border-radius: 4px;
+  font-weight: bold;
+  margin: 0.5rem 1.5rem 1rem;
+  padding: 1rem;
 }
 
-/* Remove when bug 1142671 is backed out. */
-.new-room-view > .context.hide + .new-room-button {
-  border-radius: 3px;
-  margin-top: 0.5rem;
+.new-room-view > .stop-sharing-button {
+  background-color: #d13f1a;
+  border-color: #d13f1a;
+}
+
+.new-room-view > .stop-sharing-button:hover {
+  background-color: #ef6745;
+  border-color: #ef6745;
 }
 
 .room-list {
@@ -414,6 +266,7 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   overflow-x: hidden;
   display: flex;
   flex-flow: column nowrap;
+  width: 100%;
 }
 
 .room-list-empty {
@@ -437,17 +290,15 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   line-height: 2.4rem;
   color: #000;
   /* See .room-entry-context-item for the margin/size reductions.
-    * An extra 40px to make space for the call button and chevron. */
-  width: calc(100% - 1rem - 56px);
-
+   * An extra 16px to make space for the edit button. */
+  width: calc(100% - 1rem - 32px);
 }
 
-.room-list > .room-entry.room-active > h2 {
+.room-list > .room-entry.room-active:not(.room-opened) > h2 {
   font-weight: bold;
-  color: #000;
 }
 
-.room-list > .room-entry:hover {
+.room-list > .room-entry:not(.room-opened):hover {
   background: #dbf7ff;
 }
 
@@ -518,27 +369,9 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   vertical-align: middle;
 }
 
-.room-list > .room-entry > h2:before {
-  content: "";
-  display: inline-block;
-  background-image: url("../shared/img/icons-14x14.svg#hello");
-  background-repeat: no-repeat;
-  background-size: cover;
-  width: 13px;
-  height: 13px;
-  -moz-margin-end: 1rem;
-  margin-bottom: -3px;
-}
-
-.room-list > .room-entry.room-active > h2:before {
-  background-image: url("../shared/img/icons-14x14.svg#hello-active");
-}
-
-/* Room entry context button (call button + chevron) */
+/* Room entry context button (edit button) */
 .room-entry-context-actions {
   display: none;
-  border-radius: 30px;
-  background: #56b397;
   vertical-align: top;
 }
 
@@ -546,41 +379,17 @@ html[dir="rtl"] .tab-view li:nth-child(2).selected ~ .slide-bar {
   display: inline-block;
 }
 
-.room-entry:hover .room-entry-context-actions:hover {
-  background: #50e3c2;
-}
-
-/* Room entry call button */
-.room-entry-call-btn {
-  border-top-left-radius: 30px;
-  border-bottom-left-radius: 30px;
-  background-color: transparent;
-  background-image: url("../shared/img/icons-14x14.svg#video-white");
-  background-position: right center;
-}
-
-html[dir="rtl"] .room-entry-call-btn {
-  background-position: left center;
-}
-
-/* Room entry context menu */
-.room-entry-context-menu-chevron {
-  display: inline-block;
-  border-top-right-radius: 30px;
-  border-bottom-right-radius: 30px;
-  background-image: url("../shared/img/icons-10x10.svg#dropdown-white");
+/* Room entry edit button */
+.room-entry-context-edit-btn {
+  background-image: url("../shared/img/icons-10x10.svg#edit-darkgrey");
   background-position: center;
-  cursor: pointer;
-}
-
-/* Common styles for chevron and call button. */
-.room-entry-context-menu-chevron,
-.room-entry-call-btn {
-  width: 30px;
-  height: 24px;
-  background-size: 12px;
   background-repeat: no-repeat;
+  background-size: 12px;
+  cursor: pointer;
+  display: inline-block;
+  height: 24px;
   vertical-align: middle;
+  width: 16px;
 }
 
 html[dir="rtl"] .room-entry-context-actions > .dropdown-menu {
@@ -597,16 +406,11 @@ html[dir="rtl"] .room-entry-context-actions > .dropdown-menu {
 /* Keep ".room-list > .room-entry > h2" in sync with these. */
 .room-entry-context-item {
   display: inline-block;
+  -moz-margin-end: 1rem;
   vertical-align: middle;
-  -moz-margin-start: 1rem;
-  height: 16px;
 }
 
-.room-entry:hover .room-entry-context-item {
-  display: none;
-}
-
-.room-entry-context-item > a > img {
+.room-entry-context-item > img {
   height: 16px;
   width: 16px;
 }
@@ -775,55 +579,6 @@ html[dir="rtl"] .generate-url-spinner {
   text-decoration: none;
 }
 
-/* DnD menu */
-
-.dnd-status {
-  border: 1px solid transparent;
-  padding: 2px 4px;
-  margin: 0;
-  /* Undo the start border + padding so that unhovered dnd-status is aligned
-     as if there was no additional spacing. */
-  -moz-margin-start: calc(-1px + -4px);
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.dnd-status:hover {
-  border-color: #ddd;
-  background-color: #f1f1f1;
-}
-
-.status-available:before,
-.status-unavailable:before {
-  content: "";
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  vertical-align: bottom;
-  background-repeat: no-repeat;
-  background-size: cover;
-  -moz-margin-end: .2rem;
-  margin-bottom: -3px;
-}
-
-.dropdown-menu-item.status-available:before,
-.dropdown-menu-item.status-unavailable:before {
-  margin-bottom: 2px;
-}
-
-html[dir="rtl"] .dropdown-menu-item.status-available:before,
-html[dir="rtl"] .dropdown-menu-item.status-unavailable:before {
-  margin-right: -3px;
-}
-
-.status-available:before {
-  background-image: url("../shared/img/icons-16x16.svg#status-available");
-}
-
-.status-unavailable:before {
-  background-image: url("../shared/img/icons-16x16.svg#status-unavailable");
-}
-
 /* Status badges -- Available/Unavailable */
 .status {
   display: inline-block;
@@ -883,42 +638,18 @@ html[dir="rtl"] .user-details .dropdown-menu {
   right: 14px;
 }
 
+.entries-divider {
+  border-left: 0;
+  border-right: 0;
+  border-bottom: solid 1px #d8d8d8;
+}
+
 html[dir="rtl"] .settings-menu .dropdown-menu {
   /* This is specified separately rather than using -moz-margin-start etc, as
      we need to override .dropdown-menu's values which can't use the gecko
      specific extensions. */
   left: 14px;
   right: auto;
-}
-
-.settings-menu .icon {
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  width: 12px;
-  height: 12px;
-  -moz-margin-end: 1em;
-  margin-top: 2px;
-}
-
-.settings-menu .icon-tour {
-  background-image: url("../shared/img/icons-16x16.svg#tour");
-}
-
-.settings-menu .icon-account {
-  background-image: url(../shared/img/svg/glyph-account-16x16.svg);
-}
-
-.settings-menu .icon-signin {
-  background-image: url(../shared/img/svg/glyph-signin-16x16.svg);
-}
-
-.settings-menu .icon-signout {
-  background-image: url(../shared/img/svg/glyph-signout-16x16.svg);
-}
-
-.settings-menu .icon-help {
-  background-image: url(../shared/img/svg/glyph-help-16x16.svg);
 }
 
 /* Footer */

@@ -97,13 +97,6 @@ const SEARCH_SERVICE_METADATA_WRITTEN  = "write-metadata-to-disk-complete";
  */
 const SEARCH_SERVICE_CACHE_WRITTEN  = "write-cache-to-disk-complete";
 
-const SEARCH_TYPE_MOZSEARCH      = Ci.nsISearchEngine.TYPE_MOZSEARCH;
-const SEARCH_TYPE_OPENSEARCH     = Ci.nsISearchEngine.TYPE_OPENSEARCH;
-const SEARCH_TYPE_SHERLOCK       = Ci.nsISearchEngine.TYPE_SHERLOCK;
-
-const SEARCH_DATA_XML            = Ci.nsISearchEngine.DATA_XML;
-const SEARCH_DATA_TEXT           = Ci.nsISearchEngine.DATA_TEXT;
-
 // Delay for lazy serialization (ms)
 const LAZY_SERIALIZE_DELAY = 100;
 
@@ -219,12 +212,6 @@ const SEARCH_DEFAULT_UPDATE_INTERVAL = 7;
 // default engine for the region, in seconds. Only used if the response
 // from the server doesn't specify an interval.
 const SEARCH_GEO_DEFAULT_UPDATE_INTERVAL = 2592000; // 30 days.
-
-// Returns false for whitespace-only or commented out lines in a
-// Sherlock file, true otherwise.
-function isUsefulLine(aLine) {
-  return !(/^\s*($|#)/i.test(aLine));
-}
 
 this.__defineGetter__("FileUtils", function() {
   delete this.FileUtils;
@@ -873,29 +860,6 @@ function getVerificationHash(aName) {
   return hasher.finish(true);
 }
 
-
-/**
- * Used to verify a given DOM node's localName and namespaceURI.
- * @param aElement
- *        The element to verify.
- * @param aLocalNameArray
- *        An array of strings to compare against aElement's localName.
- * @param aNameSpaceArray
- *        An array of strings to compare against aElement's namespaceURI.
- *
- * @returns false if aElement is null, or if its localName or namespaceURI
- *          does not match one of the elements in the aLocalNameArray or
- *          aNameSpaceArray arrays, respectively.
- * @throws NS_ERROR_INVALID_ARG if aLocalNameArray or aNameSpaceArray are null.
- */
-function checkNameSpace(aElement, aLocalNameArray, aNameSpaceArray) {
-  if (!aLocalNameArray || !aNameSpaceArray)
-    FAIL("missing aLocalNameArray or aNameSpaceArray for checkNameSpace");
-  return (aElement                                                &&
-          (aLocalNameArray.indexOf(aElement.localName)    != -1)  &&
-          (aNameSpaceArray.indexOf(aElement.namespaceURI) != -1));
-}
-
 /**
  * Safely close a nsISafeOutputStream.
  * @param aFOS
@@ -949,128 +913,6 @@ function getDir(aKey, aIFace) {
     FAIL("getDir requires a directory key!");
 
   return Services.dirsvc.get(aKey, aIFace || Ci.nsIFile);
-}
-
-/**
- * The following two functions are essentially copied from
- * nsInternetSearchService. They are required for backwards compatibility.
- */
-function queryCharsetFromCode(aCode) {
-  const codes = [];
-  codes[0] = "macintosh";
-  codes[6] = "x-mac-greek";
-  codes[35] = "x-mac-turkish";
-  codes[513] = "ISO-8859-1";
-  codes[514] = "ISO-8859-2";
-  codes[517] = "ISO-8859-5";
-  codes[518] = "ISO-8859-6";
-  codes[519] = "ISO-8859-7";
-  codes[520] = "ISO-8859-8";
-  codes[521] = "ISO-8859-9";
-  codes[1280] = "windows-1252";
-  codes[1281] = "windows-1250";
-  codes[1282] = "windows-1251";
-  codes[1283] = "windows-1253";
-  codes[1284] = "windows-1254";
-  codes[1285] = "windows-1255";
-  codes[1286] = "windows-1256";
-  codes[1584] = "GB2312";
-  codes[1585] = "gbk";
-  codes[1600] = "EUC-KR";
-  codes[2080] = "ISO-2022-JP";
-  codes[2096] = "ISO-2022-CN";
-  codes[2112] = "ISO-2022-KR";
-  codes[2336] = "EUC-JP";
-  codes[2352] = "GB2312";
-  codes[2353] = "x-euc-tw";
-  codes[2368] = "EUC-KR";
-  codes[2561] = "Shift_JIS";
-  codes[2562] = "KOI8-R";
-  codes[2563] = "Big5";
-  codes[2565] = "HZ-GB-2312";
-
-  if (codes[aCode])
-    return codes[aCode];
-
-  // Don't bother being fancy about what to return in the failure case.
-  return "windows-1252";
-}
-function fileCharsetFromCode(aCode) {
-  const codes = [
-    "macintosh",             // 0
-    "Shift_JIS",             // 1
-    "Big5",                  // 2
-    "EUC-KR",                // 3
-    "X-MAC-ARABIC",          // 4
-    "X-MAC-HEBREW",          // 5
-    "X-MAC-GREEK",           // 6
-    "X-MAC-CYRILLIC",        // 7
-    "X-MAC-DEVANAGARI" ,     // 9
-    "X-MAC-GURMUKHI",        // 10
-    "X-MAC-GUJARATI",        // 11
-    "X-MAC-ORIYA",           // 12
-    "X-MAC-BENGALI",         // 13
-    "X-MAC-TAMIL",           // 14
-    "X-MAC-TELUGU",          // 15
-    "X-MAC-KANNADA",         // 16
-    "X-MAC-MALAYALAM",       // 17
-    "X-MAC-SINHALESE",       // 18
-    "X-MAC-BURMESE",         // 19
-    "X-MAC-KHMER",           // 20
-    "X-MAC-THAI",            // 21
-    "X-MAC-LAOTIAN",         // 22
-    "X-MAC-GEORGIAN",        // 23
-    "X-MAC-ARMENIAN",        // 24
-    "GB2312",                // 25
-    "X-MAC-TIBETAN",         // 26
-    "X-MAC-MONGOLIAN",       // 27
-    "X-MAC-ETHIOPIC",        // 28
-    "X-MAC-CENTRALEURROMAN", // 29
-    "X-MAC-VIETNAMESE",      // 30
-    "X-MAC-EXTARABIC"        // 31
-  ];
-  // Sherlock files have always defaulted to macintosh, so do that here too
-  return codes[aCode] || codes[0];
-}
-
-/**
- * Returns a string interpretation of aBytes using aCharset, or null on
- * failure.
- */
-function bytesToString(aBytes, aCharset) {
-  var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
-                  createInstance(Ci.nsIScriptableUnicodeConverter);
-  LOG("bytesToString: converting using charset: " + aCharset);
-
-  try {
-    converter.charset = aCharset;
-    return converter.convertFromByteArray(aBytes, aBytes.length);
-  } catch (ex) {}
-
-  return null;
-}
-
-/**
- * Converts an array of bytes representing a Sherlock file into an array of
- * lines representing the useful data from the file.
- *
- * @param aBytes
- *        The array of bytes representing the Sherlock file.
- * @param aCharsetCode
- *        An integer value representing a character set code to be passed to
- *        fileCharsetFromCode, or null for the default Sherlock encoding.
- */
-function sherlockBytesToLines(aBytes, aCharsetCode) {
-  // fileCharsetFromCode returns the default encoding if aCharsetCode is null
-  var charset = fileCharsetFromCode(aCharsetCode);
-
-  var dataString = bytesToString(aBytes, charset);
-  if (!dataString)
-    FAIL("sherlockBytesToLines: Couldn't convert byte array!", Cr.NS_ERROR_FAILURE);
-
-  // Split the string into lines, and filter out comments and
-  // whitespace-only lines
-  return dataString.split(NEW_LINES).filter(isUsefulLine);
 }
 
 /**
@@ -1171,8 +1013,9 @@ function sanitizeName(aName) {
  * @param prefName
  *        The name of the pref.
  **/
-function getMozParamPref(prefName)
-  Services.prefs.getCharPref(BROWSER_SEARCH_PREF + "param." + prefName);
+function getMozParamPref(prefName) {
+  return Services.prefs.getCharPref(BROWSER_SEARCH_PREF + "param." + prefName);
+}
 
 /**
  * Notifies watchers of SEARCH_ENGINE_TOPIC about changes to an engine or to
@@ -1399,8 +1242,9 @@ EngineURL.prototype = {
     return queryParam ? queryParam.name : "";
   },
 
-  _hasRelation: function SRC_EURL__hasRelation(aRel)
-    this.rels.some(function(e) e == aRel.toLowerCase()),
+  _hasRelation: function SRC_EURL__hasRelation(aRel) {
+    return this.rels.some(e => e == aRel.toLowerCase());
+  },
 
   _initWithJSON: function SRC_EURL__initWithJSON(aJson, aEngine) {
     if (!aJson.params)
@@ -1411,12 +1255,7 @@ EngineURL.prototype = {
     for (let i = 0; i < aJson.params.length; ++i) {
       let param = aJson.params[i];
       if (param.mozparam) {
-        if (param.condition == "defaultEngine") {
-          if (aEngine._isDefaultEngine())
-            this.addParam(param.name, param.trueValue);
-          else
-            this.addParam(param.name, param.falseValue);
-        } else if (param.condition == "pref") {
+        if (param.condition == "pref") {
           let value = getMozParamPref(param.pref);
           this.addParam(param.name, value);
         }
@@ -1431,7 +1270,7 @@ EngineURL.prototype = {
    * Creates a JavaScript object that represents this URL.
    * @returns An object suitable for serialization as JSON.
    **/
-  _serializeToJSON: function SRCH_EURL__serializeToJSON() {
+  toJSON: function SRCH_EURL_toJSON() {
     var json = {
       template: this.template,
       rels: this.rels,
@@ -1443,8 +1282,9 @@ EngineURL.prototype = {
     if (this.method != "GET")
       json.method = this.method;
 
-    function collapseMozParams(aParam)
-      this.mozparams[aParam.name] || aParam;
+    function collapseMozParams(aParam) {
+      return this.mozparams[aParam.name] || aParam;
+    }
     json.params = this.params.map(collapseMozParams, this);
 
     return json;
@@ -1486,15 +1326,11 @@ EngineURL.prototype = {
  * @param aLocation
  *        A nsILocalFile or nsIURI object representing the location of the
  *        search engine data file.
- * @param aSourceDataType
- *        The data type of the file used to describe the engine. Must be either
- *        DATA_XML or DATA_TEXT.
  * @param aIsReadOnly
  *        Boolean indicating whether the engine should be treated as read-only.
  *        Read only engines cannot be serialized to file.
  */
-function Engine(aLocation, aSourceDataType, aIsReadOnly) {
-  this._dataType = aSourceDataType;
+function Engine(aLocation, aIsReadOnly) {
   this._readOnly = aIsReadOnly;
   this._urls = [];
 
@@ -1533,11 +1369,8 @@ Engine.prototype = {
   // A distribution-unique identifier for the engine. Either null or set
   // when loaded. See getter.
   _identifier: undefined,
-  // The data describing the engine. Is either an array of bytes, for Sherlock
-  // files, or an XML document element, for XML plugins.
+  // The data describing the engine, in the form of an XML document element.
   _data: null,
-  // The engine's data type. See data types (DATA_) defined above.
-  _dataType: null,
   // Whether or not the engine is readonly.
   _readOnly: true,
   // The engine's description
@@ -1561,12 +1394,8 @@ Engine.prototype = {
   // Set to true if the engine has a preferred icon (an icon that should not be
   // overridden by a non-preferred icon).
   _hasPreferredIcon: null,
-  // Whether the engine is hidden from the user.
-  _hidden: null,
   // The engine's name.
   _name: null,
-  // The engine type. See engine types (TYPE_) defined above.
-  _type: null,
   // The name of the charset used to submit the search terms.
   _queryCharset: null,
   // The engine's raw SearchForm value (URL string pointing to a search form).
@@ -1618,10 +1447,8 @@ Engine.prototype = {
   _extensionID: null,
 
   /**
-   * Retrieves the data from the engine's file. If the engine's dataType is
-   * XML, the document element is placed in the engine's data field. For text
-   * engines, the data is just read directly from file and placed as an array
-   * of lines in the engine's data field.
+   * Retrieves the data from the engine's file.
+   * The document element is placed in the engine's data field.
    */
   _initFromFile: function SRCH_ENG_initFromFile() {
     if (!this._file || !this._file.exists())
@@ -1632,19 +1459,13 @@ Engine.prototype = {
 
     fileInStream.init(this._file, MODE_RDONLY, FileUtils.PERMS_FILE, false);
 
-    if (this._dataType == SEARCH_DATA_XML) {
-      var domParser = Cc["@mozilla.org/xmlextras/domparser;1"].
-                      createInstance(Ci.nsIDOMParser);
-      var doc = domParser.parseFromStream(fileInStream, "UTF-8",
-                                          this._file.fileSize,
-                                          "text/xml");
+    var domParser = Cc["@mozilla.org/xmlextras/domparser;1"].
+                    createInstance(Ci.nsIDOMParser);
+    var doc = domParser.parseFromStream(fileInStream, "UTF-8",
+                                        this._file.fileSize,
+                                        "text/xml");
 
-      this._data = doc.documentElement;
-    } else {
-      ERROR("Unsuppored engine _dataType in _initFromFile: \"" +
-            this._dataType + "\"",
-            Cr.NS_ERROR_UNEXPECTED);
-    }
+    this._data = doc.documentElement;
     fileInStream.close();
 
     // Now that the data is loaded, initialize the engine object
@@ -1652,8 +1473,8 @@ Engine.prototype = {
   },
 
   /**
-   * Retrieves the data from the engine's file asynchronously. If the engine's
-   * dataType is XML, the document element is placed in the engine's data field.
+   * Retrieves the data from the engine's file asynchronously.
+   * The document element is placed in the engine's data field.
    *
    * @returns {Promise} A promise, resolved successfully if initializing from
    * data succeeds, rejected if it fails.
@@ -1663,14 +1484,8 @@ Engine.prototype = {
       if (!this._file || !(yield OS.File.exists(this._file.path)))
         FAIL("File must exist before calling initFromFile!", Cr.NS_ERROR_UNEXPECTED);
 
-      if (this._dataType == SEARCH_DATA_XML) {
-        let fileURI = NetUtil.ioService.newFileURI(this._file);
-        yield this._retrieveSearchXMLData(fileURI.spec);
-      } else {
-        ERROR("Unsuppored engine _dataType in _initFromFile: \"" +
-              this._dataType + "\"",
-              Cr.NS_ERROR_UNEXPECTED);
-      }
+      let fileURI = NetUtil.ioService.newFileURI(this._file);
+      yield this._retrieveSearchXMLData(fileURI.spec);
 
       // Now that the data is loaded, initialize the engine object
       this._initFromData();
@@ -1880,21 +1695,10 @@ Engine.prototype = {
       aEngine._file = engineToUpdate._file;
     }
 
-    switch (aEngine._dataType) {
-      case SEARCH_DATA_XML:
-        var parser = Cc["@mozilla.org/xmlextras/domparser;1"].
-                     createInstance(Ci.nsIDOMParser);
-        var doc = parser.parseFromBuffer(aBytes, aBytes.length, "text/xml");
-        aEngine._data = doc.documentElement;
-        break;
-      case SEARCH_DATA_TEXT:
-        aEngine._data = aBytes;
-        break;
-      default:
-        promptError();
-        LOG("_onLoad: Bogus engine _dataType: \"" + this._dataType + "\"");
-        return;
-    }
+    var parser = Cc["@mozilla.org/xmlextras/domparser;1"].
+                 createInstance(Ci.nsIDOMParser);
+    var doc = parser.parseFromBuffer(aBytes, aBytes.length, "text/xml");
+    aEngine._data = doc.documentElement;
 
     try {
       // Initialize the engine from the obtained data
@@ -2081,7 +1885,7 @@ Engine.prototype = {
                                                         Services.scriptSecurityManager.getSystemPrincipal(),
                                                         null,      // aTriggeringPrincipal
                                                         Ci.nsILoadInfo.SEC_NORMAL,
-                                                        Ci.nsIContentPolicy.TYPE_IMAGE);
+                                                        Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
 
         let iconLoadCallback = function (aByteArray, aEngine) {
           // This callback may run after we've already set a preferred icon,
@@ -2133,36 +1937,18 @@ Engine.prototype = {
     ENSURE_WARN(this._data, "Can't init an engine with no data!",
                 Cr.NS_ERROR_UNEXPECTED);
 
-    // Find out what type of engine we are
-    switch (this._dataType) {
-      case SEARCH_DATA_XML:
-        if (checkNameSpace(this._data, [MOZSEARCH_LOCALNAME],
-            [MOZSEARCH_NS_10])) {
+    // Ensure we have a supported engine type before attempting to parse it.
+    let element = this._data;
+    if ((element.localName == MOZSEARCH_LOCALNAME &&
+         element.namespaceURI == MOZSEARCH_NS_10) ||
+        (element.localName == OPENSEARCH_LOCALNAME &&
+         OPENSEARCH_NAMESPACES.indexOf(element.namespaceURI) != -1)) {
+      LOG("_init: Initing search plugin from " + this._location);
 
-          LOG("_init: Initing MozSearch plugin from " + this._location);
+      this._parse();
 
-          this._type = SEARCH_TYPE_MOZSEARCH;
-          this._parseAsMozSearch();
-
-        } else if (checkNameSpace(this._data, [OPENSEARCH_LOCALNAME],
-                                  OPENSEARCH_NAMESPACES)) {
-
-          LOG("_init: Initing OpenSearch plugin from " + this._location);
-
-          this._type = SEARCH_TYPE_OPENSEARCH;
-          this._parseAsOpenSearch();
-
-        } else
-          FAIL(this._location + " is not a valid search plugin.", Cr.NS_ERROR_FAILURE);
-
-        break;
-      case SEARCH_DATA_TEXT:
-        LOG("_init: Initing Sherlock plugin from " + this._location);
-
-        // the only text-based format we support is Sherlock
-        this._type = SEARCH_TYPE_SHERLOCK;
-        this._parseAsSherlock();
-    }
+    } else
+      FAIL(this._location + " is not a valid search plugin.", Cr.NS_ERROR_FAILURE);
 
     // No need to keep a ref to our data (which in some cases can be a document
     // element) past this point
@@ -2248,19 +2034,6 @@ Engine.prototype = {
             // _addMozParam is not needed here since it can be serialized fine without. _addMozParam
             // also requires a unique "name" which is not normally the case when @purpose is used.
             break;
-          case "defaultEngine":
-            // If this engine was the default search engine, use the true value
-            if (this._isDefaultEngine())
-              value = param.getAttribute("trueValue");
-            else
-              value = param.getAttribute("falseValue");
-            url.addParam(param.getAttribute("name"), value);
-            url._addMozParam({"name": param.getAttribute("name"),
-                              "falseValue": param.getAttribute("falseValue"),
-                              "trueValue": param.getAttribute("trueValue"),
-                              "condition": "defaultEngine"});
-            break;
-
           case "pref":
             try {
               value = getMozParamPref(param.getAttribute("pref"), value);
@@ -2282,17 +2055,6 @@ Engine.prototype = {
     this._urls.push(url);
   },
 
-  _isDefaultEngine: function SRCH_ENG__isDefaultEngine() {
-    let defaultPrefB = Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF);
-    let nsIPLS = Ci.nsIPrefLocalizedString;
-    let defaultEngine;
-    let pref = getGeoSpecificPrefName("defaultenginename");
-    try {
-      defaultEngine = defaultPrefB.getComplexValue(pref, nsIPLS).data;
-    } catch (ex) {}
-    return this.name == defaultEngine;
-  },
-
   /**
    * Get the icon from an OpenSearch Image element.
    * @see http://opensearch.a9.com/spec/1.1/description/#image
@@ -2312,16 +2074,11 @@ Engine.prototype = {
     this._setIcon(aElement.textContent, isPrefered, width, height);
   },
 
-  _parseAsMozSearch: function SRCH_ENG_parseAsMoz() {
-    //forward to the OpenSearch parser
-    this._parseAsOpenSearch();
-  },
-
   /**
    * Extract search engine information from the collected data to initialize
    * the engine object.
    */
-  _parseAsOpenSearch: function SRCH_ENG_parseAsOS() {
+  _parse: function SRCH_ENG_parse() {
     var doc = this._data;
 
     // The OpenSearch spec sets a default value for the input encoding.
@@ -2341,7 +2098,7 @@ Engine.prototype = {
             this._parseURL(child);
           } catch (ex) {
             // Parsing of the element failed, just skip it.
-            LOG("_parseAsOpenSearch: failed to parse URL child: " + ex);
+            LOG("_parse: failed to parse URL child: " + ex);
           }
           break;
         case "Image":
@@ -2366,324 +2123,13 @@ Engine.prototype = {
           break;
         case "ExtensionID":
           this._extensionID = child.textContent;
-          breakk;
+          break;
       }
     }
     if (!this.name || (this._urls.length == 0))
-      FAIL("_parseAsOpenSearch: No name, or missing URL!", Cr.NS_ERROR_FAILURE);
+      FAIL("_parse: No name, or missing URL!", Cr.NS_ERROR_FAILURE);
     if (!this.supportsResponseType(URLTYPE_SEARCH_HTML))
-      FAIL("_parseAsOpenSearch: No text/html result type!", Cr.NS_ERROR_FAILURE);
-  },
-
-  /**
-   * Extract search engine information from the collected data to initialize
-   * the engine object.
-   */
-  _parseAsSherlock: function SRCH_ENG_parseAsSherlock() {
-    /**
-     * Extracts one Sherlock "section" from aSource. A section is essentially
-     * an HTML element with attributes, but each attribute must be on a new
-     * line, by definition.
-     *
-     * @param aLines
-     *        An array of lines from the sherlock file.
-     * @param aSection
-     *        The name of the section (e.g. "search" or "browser"). This value
-     *        is not case sensitive.
-     * @returns an object whose properties correspond to the section's
-     *          attributes.
-     */
-    function getSection(aLines, aSection) {
-      LOG("_parseAsSherlock::getSection: Sherlock lines:\n" +
-          aLines.join("\n"));
-      var lines = aLines;
-      var startMark = new RegExp("^\\s*<" + aSection.toLowerCase() + "\\s*",
-                                 "gi");
-      var endMark   = /\s*>\s*$/gi;
-
-      var foundStart = false;
-      var startLine, numberOfLines;
-      // Find the beginning and end of the section
-      for (var i = 0; i < lines.length; i++) {
-        if (foundStart) {
-          if (endMark.test(lines[i])) {
-            numberOfLines = i - startLine;
-            // Remove the end marker
-            lines[i] = lines[i].replace(endMark, "");
-            // If the endmarker was not the only thing on the line, include
-            // this line in the results
-            if (lines[i])
-              numberOfLines++;
-            break;
-          }
-        } else {
-          if (startMark.test(lines[i])) {
-            foundStart = true;
-            // Remove the start marker
-            lines[i] = lines[i].replace(startMark, "");
-            startLine = i;
-            // If the line is empty, don't include it in the result
-            if (!lines[i])
-              startLine++;
-          }
-        }
-      }
-      LOG("_parseAsSherlock::getSection: Start index: " + startLine +
-          "\nNumber of lines: " + numberOfLines);
-      lines = lines.splice(startLine, numberOfLines);
-      LOG("_parseAsSherlock::getSection: Section lines:\n" +
-          lines.join("\n"));
-
-      var section = {};
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-
-        var els = line.split("=");
-        var name = els.shift().trim().toLowerCase();
-        var value = els.join("=").trim();
-
-        if (!name || !value)
-          continue;
-
-        // Strip leading and trailing whitespace, remove quotes from the
-        // value, and remove any trailing slashes or ">" characters
-        value = value.replace(/^["']/, "")
-                     .replace(/["']\s*[\\\/]?>?\s*$/, "") || "";
-        value = value.trim();
-
-        // Don't clobber existing attributes
-        if (!(name in section))
-          section[name] = value;
-      }
-      return section;
-    }
-
-    /**
-     * Returns an array of name-value pair arrays representing the Sherlock
-     * file's input elements. User defined inputs return USER_DEFINED
-     * as the value. Elements are returned in the order they appear in the
-     * source file.
-     *
-     *   Example:
-     *      <input name="foo" value="bar">
-     *      <input name="foopy" user>
-     *   Returns:
-     *      [["foo", "bar"], ["foopy", "{searchTerms}"]]
-     *
-     * @param aLines
-     *        An array of lines from the source file.
-     */
-    function getInputs(aLines) {
-
-      /**
-       * Extracts an attribute value from a given a line of text.
-       *    Example: <input value="foo" name="bar">
-       *      Extracts the string |foo| or |bar| given an input aAttr of
-       *      |value| or |name|.
-       * Attributes may be quoted or unquoted. If unquoted, any whitespace
-       * indicates the end of the attribute value.
-       *    Example: < value=22 33 name=44\334 >
-       *      Returns |22| for "value" and |44\334| for "name".
-       *
-       * @param aAttr
-       *        The name of the attribute for which to obtain the value. This
-       *        value is not case sensitive.
-       * @param aLine
-       *        The line containing the attribute.
-       *
-       * @returns the attribute value, or an empty string if the attribute
-       *          doesn't exist.
-       */
-      function getAttr(aAttr, aLine) {
-        // Used to determine whether an "input" line from a Sherlock file is a
-        // "user defined" input.
-        const userInput = /(\s|["'=])user(\s|[>="'\/\\+]|$)/i;
-
-        LOG("_parseAsSherlock::getAttr: Getting attr: \"" +
-            aAttr + "\" for line: \"" + aLine + "\"");
-        // We're not case sensitive, but we want to return the attribute value
-        // in its original case, so create a copy of the source
-        var lLine = aLine.toLowerCase();
-        var attr = aAttr.toLowerCase();
-
-        var attrStart = lLine.search(new RegExp("\\s" + attr, "i"));
-        if (attrStart == -1) {
-
-          // If this is the "user defined input" (i.e. contains the empty
-          // "user" attribute), return our special keyword
-          if (userInput.test(lLine) && attr == "value") {
-            LOG("_parseAsSherlock::getAttr: Found user input!\nLine:\"" + lLine
-                + "\"");
-            return USER_DEFINED;
-          }
-          // The attribute doesn't exist - ignore
-          LOG("_parseAsSherlock::getAttr: Failed to find attribute:\nLine:\""
-              + lLine + "\"\nAttr:\"" + attr + "\"");
-          return "";
-        }
-
-        var valueStart = lLine.indexOf("=", attrStart) + "=".length;
-        if (valueStart == -1)
-          return "";
-
-        var quoteStart = lLine.indexOf("\"", valueStart);
-        if (quoteStart == -1) {
-
-          // Unquoted attribute, get the rest of the line, trimmed at the first
-          // sign of whitespace. If the rest of the line is only whitespace,
-          // returns a blank string.
-          return lLine.substr(valueStart).replace(/\s.*$/, "");
-
-        } else {
-          // Make sure that there's only whitespace between the start of the
-          // value and the first quote. If there is, end the attribute value at
-          // the first sign of whitespace. This prevents us from falling into
-          // the next attribute if this is an unquoted attribute followed by a
-          // quoted attribute.
-          var betweenEqualAndQuote = lLine.substring(valueStart, quoteStart);
-          if (/\S/.test(betweenEqualAndQuote))
-            return lLine.substr(valueStart).replace(/\s.*$/, "");
-
-          // Adjust the start index to account for the opening quote
-          valueStart = quoteStart + "\"".length;
-          // Find the closing quote
-          var valueEnd = lLine.indexOf("\"", valueStart);
-          // If there is no closing quote, just go to the end of the line
-          if (valueEnd == -1)
-            valueEnd = aLine.length;
-        }
-        return aLine.substring(valueStart, valueEnd);
-      }
-
-      var inputs = [];
-
-      LOG("_parseAsSherlock::getInputs: Lines:\n" + aLines);
-      // Filter out everything but non-inputs
-      let lines = aLines.filter(function (line) {
-        return /^\s*<input/i.test(line);
-      });
-      LOG("_parseAsSherlock::getInputs: Filtered lines:\n" + lines);
-
-      lines.forEach(function (line) {
-        // Strip leading/trailing whitespace and remove the surrounding markup
-        // ("<input" and ">")
-        line = line.trim().replace(/^<input/i, "").replace(/>$/, "");
-
-        // If this is one of the "directional" inputs (<inputnext>/<inputprev>)
-        const directionalInput = /^(prev|next)/i;
-        if (directionalInput.test(line)) {
-
-          // Make it look like a normal input by removing "prev" or "next"
-          line = line.replace(directionalInput, "");
-
-          // If it has a name, give it a dummy value to match previous
-          // nsInternetSearchService behavior
-          if (/name\s*=/i.test(line)) {
-            line += " value=\"0\"";
-          } else
-            return; // Line has no name, skip it
-        }
-
-        var attrName = getAttr("name", line);
-        var attrValue = getAttr("value", line);
-        LOG("_parseAsSherlock::getInputs: Got input:\nName:\"" + attrName +
-            "\"\nValue:\"" + attrValue + "\"");
-        if (attrValue)
-          inputs.push([attrName, attrValue]);
-      });
-      return inputs;
-    }
-
-    function err(aErr) {
-      FAIL("_parseAsSherlock::err: Sherlock param error:\n" + aErr,
-           Cr.NS_ERROR_FAILURE);
-    }
-
-    // First try converting our byte array using the default Sherlock encoding.
-    // If this fails, or if we find a sourceTextEncoding attribute, we need to
-    // reconvert the byte array using the specified encoding.
-    var sherlockLines, searchSection, sourceTextEncoding, browserSection;
-    try {
-      sherlockLines = sherlockBytesToLines(this._data);
-      searchSection = getSection(sherlockLines, "search");
-      browserSection = getSection(sherlockLines, "browser");
-      sourceTextEncoding = parseInt(searchSection["sourcetextencoding"]);
-      if (sourceTextEncoding) {
-        // Re-convert the bytes using the found sourceTextEncoding
-        sherlockLines = sherlockBytesToLines(this._data, sourceTextEncoding);
-        searchSection = getSection(sherlockLines, "search");
-        browserSection = getSection(sherlockLines, "browser");
-      }
-    } catch (ex) {
-      // The conversion using the default charset failed. Remove any non-ascii
-      // bytes and try to find a sourceTextEncoding.
-      var asciiBytes = this._data.filter(function (n) {return !(0x80 & n);});
-      var asciiString = String.fromCharCode.apply(null, asciiBytes);
-      sherlockLines = asciiString.split(NEW_LINES).filter(isUsefulLine);
-      searchSection = getSection(sherlockLines, "search");
-      sourceTextEncoding = parseInt(searchSection["sourcetextencoding"]);
-      if (sourceTextEncoding) {
-        sherlockLines = sherlockBytesToLines(this._data, sourceTextEncoding);
-        searchSection = getSection(sherlockLines, "search");
-        browserSection = getSection(sherlockLines, "browser");
-      } else
-        ERROR("Couldn't find a working charset", Cr.NS_ERROR_FAILURE);
-    }
-
-    LOG("_parseAsSherlock: Search section:\n" + searchSection.toSource());
-
-    this._name = searchSection["name"] || err("Missing name!");
-    this._description = searchSection["description"] || "";
-    this._queryCharset = searchSection["querycharset"] ||
-                         queryCharsetFromCode(searchSection["queryencoding"]);
-    this._searchForm = searchSection["searchform"];
-
-    this._updateInterval = parseInt(browserSection["updatecheckdays"]);
-
-    this._updateURL = browserSection["update"];
-    this._iconUpdateURL = browserSection["updateicon"];
-
-    var method = (searchSection["method"] || "GET").toUpperCase();
-    var template = searchSection["action"] || err("Missing action!");
-
-    var inputs = getInputs(sherlockLines);
-    LOG("_parseAsSherlock: Inputs:\n" + inputs.toSource());
-
-    var url = null;
-
-    if (method == "GET") {
-      // Here's how we construct the input string:
-      // <input> is first:  Name Attr:  Prefix      Data           Example:
-      // YES                EMPTY       None        <value>        TEMPLATE<value>
-      // YES                NON-EMPTY   ?           <name>=<value> TEMPLATE?<name>=<value>
-      // NO                 EMPTY       ------------- <ignored> --------------
-      // NO                 NON-EMPTY   &           <name>=<value> TEMPLATE?<n1>=<v1>&<n2>=<v2>
-      for (var i = 0; i < inputs.length; i++) {
-        var name  = inputs[i][0];
-        var value = inputs[i][1];
-        if (i==0) {
-          if (name == "")
-            template += USER_DEFINED;
-          else
-            template += "?" + name + "=" + value;
-        } else if (name != "")
-          template += "&" + name + "=" + value;
-      }
-      url = new EngineURL(URLTYPE_SEARCH_HTML, method, template);
-
-    } else if (method == "POST") {
-      // Create the URL object and just add the parameters directly
-      url = new EngineURL(URLTYPE_SEARCH_HTML, method, template);
-      for (var i = 0; i < inputs.length; i++) {
-        var name  = inputs[i][0];
-        var value = inputs[i][1];
-        if (name)
-          url.addParam(name, value);
-      }
-    } else
-      err("Invalid method!");
-
-    this._urls.push(url);
+      FAIL("_parse: No text/html result type!", Cr.NS_ERROR_FAILURE);
   },
 
   /**
@@ -2697,8 +2143,6 @@ Engine.prototype = {
       this._hasPreferredIcon = true;
     else
       this._hasPreferredIcon = false;
-    this._hidden = aJson._hidden;
-    this._type = aJson.type || SEARCH_TYPE_MOZSEARCH;
     this._queryCharset = aJson.queryCharset || DEFAULT_QUERY_CHARSET;
     this.__searchForm = aJson.__searchForm;
     this.__installLocation = aJson._installLocation || SEARCH_APP_DIR;
@@ -2726,44 +2170,36 @@ Engine.prototype = {
 
   /**
    * Creates a JavaScript object that represents this engine.
-   * @param aFilter
-   *        Whether or not to filter out common default values. Recommended for
-   *        use with _initWithJSON().
    * @returns An object suitable for serialization as JSON.
    **/
-  _serializeToJSON: function SRCH_ENG__serializeToJSON(aFilter) {
+  toJSON: function SRCH_ENG_toJSON() {
     var json = {
       _id: this._id,
       _name: this._name,
-      _hidden: this.hidden,
       description: this.description,
       __searchForm: this.__searchForm,
       _iconURL: this._iconURL,
       _iconMapObj: this._iconMapObj,
-      _urls: [url._serializeToJSON() for each(url in this._urls)]
+      _urls: this._urls
     };
 
     if (this._file instanceof Ci.nsILocalFile)
       json.filePath = this._file.persistentDescriptor;
     if (this._uri)
       json._url = this._uri.spec;
-    if (this._installLocation != SEARCH_APP_DIR || !aFilter)
+    if (this._installLocation != SEARCH_APP_DIR)
       json._installLocation = this._installLocation;
-    if (this._updateInterval || !aFilter)
+    if (this._updateInterval)
       json._updateInterval = this._updateInterval;
-    if (this._updateURL || !aFilter)
+    if (this._updateURL)
       json._updateURL = this._updateURL;
-    if (this._iconUpdateURL || !aFilter)
+    if (this._iconUpdateURL)
       json._iconUpdateURL = this._iconUpdateURL;
-    if (!this._hasPreferredIcon || !aFilter)
+    if (!this._hasPreferredIcon)
       json._hasPreferredIcon = this._hasPreferredIcon;
-    if (this.type != SEARCH_TYPE_MOZSEARCH || !aFilter)
-      json.type = this.type;
-    if (this.queryCharset != DEFAULT_QUERY_CHARSET || !aFilter)
+    if (this.queryCharset != DEFAULT_QUERY_CHARSET)
       json.queryCharset = this.queryCharset;
-    if (this._dataType != SEARCH_DATA_XML || !aFilter)
-      json._dataType = this._dataType;
-    if (!this._readOnly || !aFilter)
+    if (!this._readOnly)
       json._readOnly = this._readOnly;
     if (this._extensionID) {
       json.extensionID = this._extensionID;
@@ -2932,14 +2368,11 @@ Engine.prototype = {
   },
 
   get hidden() {
-    if (this._hidden === null)
-      this._hidden = engineMetadataService.getAttr(this, "hidden") || false;
-    return this._hidden;
+    return engineMetadataService.getAttr(this, "hidden") || false;
   },
   set hidden(val) {
     var value = !!val;
-    if (value != this._hidden) {
-      this._hidden = value;
+    if (value != this.hidden) {
       engineMetadataService.setAttr(this, "hidden", value);
       notifyAction(this, SEARCH_ENGINE_CHANGED);
     }
@@ -3144,10 +2577,6 @@ Engine.prototype = {
     return this._name;
   },
 
-  get type() {
-    return this._type;
-  },
-
   get searchForm() {
     return this._getSearchFormWithPurpose();
   },
@@ -3178,7 +2607,7 @@ Engine.prototype = {
   get queryCharset() {
     if (this._queryCharset)
       return this._queryCharset;
-    return this._queryCharset = queryCharsetFromCode(/* get the default */);
+    return this._queryCharset = "windows-1252"; // the default
   },
 
   // from nsISearchEngine
@@ -3649,7 +3078,8 @@ SearchService.prototype = {
       return null;
     };
 
-    for each (let engine in this._engines) {
+    for (let name in this._engines) {
+      let engine = this._engines[name];
       let parent = getParent(engine);
       if (!parent) {
         LOG("Error: no parent for engine " + engine._location + ", failing to cache it");
@@ -3664,7 +3094,7 @@ SearchService.prototype = {
         cacheEntry.engines = [];
         cache.directories[cacheKey] = cacheEntry;
       }
-      cache.directories[cacheKey].engines.push(engine._serializeToJSON(true));
+      cache.directories[cacheKey].engines.push(engine);
     }
 
     try {
@@ -3729,10 +3159,12 @@ SearchService.prototype = {
               cache.directories[aDir.path].lastModifiedTime != aDir.lastModifiedTime);
     }
 
-    function notInCachePath(aPathToLoad)
-      cachePaths.indexOf(aPathToLoad.path) == -1;
-    function notInCacheVisibleEngines(aEngineName)
-      cache.visibleDefaultEngines.indexOf(aEngineName) == -1;
+    function notInCachePath(aPathToLoad) {
+      return cachePaths.indexOf(aPathToLoad.path) == -1;
+    }
+    function notInCacheVisibleEngines(aEngineName) {
+      return cache.visibleDefaultEngines.indexOf(aEngineName) == -1;
+    }
 
     let buildID = Services.appinfo.platformBuildID;
     let cachePaths = [path for (path in cache.directories)];
@@ -3760,8 +3192,10 @@ SearchService.prototype = {
     }
 
     LOG("_loadEngines: loading from cache directories");
-    for each (let dir in cache.directories)
+    for (let cacheKey in cache.directories) {
+      let dir = cache.directories[cacheKey];
       this._loadEnginesFromCache(dir);
+    }
 
     LOG("_loadEngines: done");
   },
@@ -3851,10 +3285,12 @@ SearchService.prototype = {
         });
       }
 
-      function notInCachePath(aPathToLoad)
-        cachePaths.indexOf(aPathToLoad.path) == -1;
-      function notInCacheVisibleEngines(aEngineName)
-        cache.visibleDefaultEngines.indexOf(aEngineName) == -1;
+      function notInCachePath(aPathToLoad) {
+        return cachePaths.indexOf(aPathToLoad.path) == -1;
+      }
+      function notInCacheVisibleEngines(aEngineName) {
+        return cache.visibleDefaultEngines.indexOf(aEngineName) == -1;
+      }
 
       let buildID = Services.appinfo.platformBuildID;
       let cachePaths = [path for (path in cache.directories)];
@@ -3894,8 +3330,10 @@ SearchService.prototype = {
       }
 
       LOG("_asyncLoadEngines: loading from cache directories");
-      for each (let dir in cache.directories)
+      for (let cacheKey in cache.directories) {
+        let dir = cache.directories[cacheKey];
         this._loadEnginesFromCache(dir);
+      }
 
       LOG("_asyncLoadEngines: done");
     }.bind(this));
@@ -4041,15 +3479,6 @@ SearchService.prototype = {
       // Schedule the engine's next update, if it isn't already.
       if (!engineMetadataService.getAttr(aEngine, "updateexpir"))
         engineUpdateService.scheduleNextUpdate(aEngine);
-
-      // We need to save the engine's _dataType, if this is the first time the
-      // engine is added to the dataStore, since ._dataType isn't persisted
-      // and will change on the next startup (since the engine will then be
-      // XML). We need this so that we know how to load any future updates from
-      // this engine.
-      if (!engineMetadataService.getAttr(aEngine, "updatedatatype"))
-        engineMetadataService.setAttr(aEngine, "updatedatatype",
-                                      aEngine._dataType);
     }
   },
 
@@ -4062,10 +3491,10 @@ SearchService.prototype = {
       try {
         let engine;
         if (json.filePath)
-          engine = new Engine({type: "filePath", value: json.filePath}, json._dataType,
+          engine = new Engine({type: "filePath", value: json.filePath},
                                json._readOnly);
         else if (json._url)
-          engine = new Engine({type: "uri", value: json._url}, json._dataType, json._readOnly);
+          engine = new Engine({type: "uri", value: json._url}, json._readOnly);
 
         engine._initWithJSON(json);
         this._addEngineToStore(engine);
@@ -4103,7 +3532,7 @@ SearchService.prototype = {
 
       var addedEngine = null;
       try {
-        addedEngine = new Engine(file, SEARCH_DATA_XML, !isWritable);
+        addedEngine = new Engine(file, !isWritable);
         addedEngine._initFromFile();
       } catch (ex) {
         LOG("_loadEnginesFromDir: Failed to load " + file.path + "!\n" + ex);
@@ -4151,7 +3580,7 @@ SearchService.prototype = {
         try {
           let file = new FileUtils.File(osfile.path);
           let isWritable = isInProfile;
-          addedEngine = new Engine(file, SEARCH_DATA_XML, !isWritable);
+          addedEngine = new Engine(file, !isWritable);
           yield checkForSyncCompletion(addedEngine._asyncInitFromFile());
         } catch (ex if ex.result != Cr.NS_ERROR_ALREADY_INITIALIZED) {
           LOG("_asyncLoadEnginesFromDir: Failed to load " + osfile.path + "!\n" + ex);
@@ -4168,7 +3597,7 @@ SearchService.prototype = {
       try {
         LOG("_loadFromChromeURLs: loading engine from chrome url: " + url);
 
-        let engine = new Engine(makeURI(url), SEARCH_DATA_XML, true);
+        let engine = new Engine(makeURI(url), true);
 
         engine._initFromURISync();
 
@@ -4193,7 +3622,7 @@ SearchService.prototype = {
       for (let url of aURLs) {
         try {
           LOG("_asyncLoadFromChromeURLs: loading engine from chrome url: " + url);
-          let engine = new Engine(NetUtil.newURI(url), SEARCH_DATA_XML, true);
+          let engine = new Engine(NetUtil.newURI(url), true);
           yield checkForSyncCompletion(engine._asyncInitFromURI());
           engines.push(engine);
         } catch (ex if ex.result != Cr.NS_ERROR_ALREADY_INITIALIZED) {
@@ -4292,7 +3721,7 @@ SearchService.prototype = {
 
   _parseListTxt: function SRCH_SVC_parseListTxt(list, jarPackaging,
                                                 chromeFiles, uris) {
-    let names = list.split("\n").filter(function (n) !!n);
+    let names = list.split("\n").filter(n => !!n);
     // This maps the names of our built-in engines to a boolean
     // indicating whether it should be hidden by default.
     let jarNames = new Map();
@@ -4394,7 +3823,8 @@ SearchService.prototype = {
       // Flag to keep track of whether or not we need to call _saveSortedEngineList.
       let needToSaveEngineList = false;
 
-      for each (engine in this._engines) {
+      for (let name in this._engines) {
+        let engine = this._engines[name];
         var orderNumber = engineMetadataService.getAttr(engine, "order");
 
         // Since the DB isn't regularly cleared, and engine files may disappear
@@ -4428,7 +3858,7 @@ SearchService.prototype = {
         var extras =
           Services.prefs.getChildList(BROWSER_SEARCH_PREF + "order.extra.");
 
-        for each (prefName in extras) {
+        for (prefName of extras) {
           engineName = Services.prefs.getCharPref(prefName);
 
           engine = this._engines[engineName];
@@ -4460,7 +3890,8 @@ SearchService.prototype = {
     // Array for the remaining engines, alphabetically sorted.
     let alphaEngines = [];
 
-    for each (engine in this._engines) {
+    for (let name in this._engines) {
+      let engine = this._engines[name];
       if (!(engine.name in addedEngines))
         alphaEngines.push(this._engines[engine.name]);
     }
@@ -4569,7 +4000,7 @@ SearchService.prototype = {
     try {
       var extras = Services.prefs.getChildList(BROWSER_SEARCH_PREF + "order.extra.");
 
-      for each (var prefName in extras) {
+      for (var prefName of extras) {
         engineName = Services.prefs.getCharPref(prefName);
 
         if (!(engineName in engineOrder))
@@ -4640,7 +4071,7 @@ SearchService.prototype = {
     if (this._engines[aName])
       FAIL("An engine with that name already exists!", Cr.NS_ERROR_FILE_ALREADY_EXISTS);
 
-    var engine = new Engine(getSanitizedFile(aName), SEARCH_DATA_XML, false);
+    var engine = new Engine(getSanitizedFile(aName), false);
     engine._initFromMetadata(aName, aIconURL, aAlias, aDescription,
                              aMethod, aTemplate, aExtensionID);
     this._addEngineToStore(engine);
@@ -4652,7 +4083,7 @@ SearchService.prototype = {
     this._ensureInitialized();
     try {
       var uri = makeURI(aEngineURL);
-      var engine = new Engine(uri, aDataType, false);
+      var engine = new Engine(uri, false);
       if (aCallback) {
         engine._installCallback = function (errorCode) {
           try {
@@ -4785,7 +4216,8 @@ SearchService.prototype = {
 
   restoreDefaultEngines: function SRCH_SVC_resetDefaultEngines() {
     this._ensureInitialized();
-    for each (var e in this._engines) {
+    for (let name in this._engines) {
+      let e = this._engines[name];
       // Unhide all default engines
       if (e.hidden && e._isDefault)
         e.hidden = false;
@@ -5177,8 +4609,8 @@ SearchService.prototype = {
     // Therefore, we need to walk our engine-list, looking for expired engines
     var currentTime = Date.now();
     LOG("currentTime: " + currentTime);
-    for each (let engine in this._engines) {
-      engine = engine.wrappedJSObject;
+    for (let name in this._engines) {
+      let engine = this._engines[name].wrappedJSObject;
       if (!engine._hasUpdates)
         continue;
 
@@ -5457,8 +4889,10 @@ var engineMetadataService = {
   /**
    * Flush any waiting write.
    */
-  finalize: function () this._lazyWriter ? this._lazyWriter.finalize()
-                                         : Promise.resolve(),
+  finalize: function () {
+    return this._lazyWriter ? this._lazyWriter.finalize()
+                            : Promise.resolve();
+  },
 
   /**
    * Commit changes to disk, asynchronously.
@@ -5542,14 +4976,8 @@ var engineUpdateService = {
         return;
       }
 
-      let dataType = engineMetadataService.getAttr(engine, "updatedatatype");
-      if (!dataType) {
-        ULOG("No loadtype to update engine!");
-        return;
-      }
-
       ULOG("updating " + engine.name + " from " + updateURI.spec);
-      testEngine = new Engine(updateURI, dataType, false);
+      testEngine = new Engine(updateURI, false);
       testEngine._engineToUpdate = engine;
       testEngine._initFromURIAndLoad();
     } else

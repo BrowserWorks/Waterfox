@@ -189,6 +189,52 @@ public:
                       uint16_t aPhonebookSize,
                       BluetoothReplyRunnable* aRunnable) override;
 
+  virtual void
+  ReplyToMapFolderListing(long aMasId,
+                          const nsAString& aFolderlists,
+                          BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapMessagesListing(BlobParent* aBlobParent,
+                            BlobChild* aBlobChild,
+                            long aMasId,
+                            bool aNewMessage,
+                            const nsAString& aTimestamp,
+                            int aSize,
+                            BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapMessagesListing(long aMasId,
+                            Blob* aBlob,
+                            bool aNewMessage,
+                            const nsAString& aTimestamp,
+                            int aSize,
+                            BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapGetMessage(BlobParent* aBlobParent,
+                       BlobChild* aBlobChild,
+                       long aMasId,
+                       BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapGetMessage(Blob* aBlob,
+                       long aMasId,
+                       BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapSetMessageStatus(long aMasId,
+                             bool aStatus,
+                             BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapSendMessage(
+    long aMasId, bool aStatus, BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ReplyToMapMessageUpdate(
+    long aMasId, bool aStatus, BluetoothReplyRunnable* aRunnable) override;
+
 #ifdef MOZ_B2G_RIL
   virtual void
   AnswerWaitingCall(BluetoothReplyRunnable* aRunnable) override;
@@ -287,7 +333,7 @@ public:
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharacteristicId,
     const BluetoothGattId& aDescriptorId,
-    BluetoothReplyRunnable* aRunnable);
+    BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattClientWriteDescriptorValueInternal(
@@ -296,23 +342,91 @@ public:
     const BluetoothGattId& aCharacteristicId,
     const BluetoothGattId& aDescriptorId,
     const nsTArray<uint8_t>& aValue,
-    BluetoothReplyRunnable* aRunnable);
+    BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerConnectPeripheralInternal(
     const nsAString& aAppUuid,
     const nsAString& aAddress,
-    BluetoothReplyRunnable* aRunnable);
+    BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerDisconnectPeripheralInternal(
     const nsAString& aAppUuid,
     const nsAString& aAddress,
-    BluetoothReplyRunnable* aRunnable);
+    BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   UnregisterGattServerInternal(int aServerIf,
                                BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerAddServiceInternal(
+    const nsAString& aAppUuid,
+    const BluetoothGattServiceId& aServiceId,
+    uint16_t aHandleCount,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerAddIncludedServiceInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothAttributeHandle& aIncludedServiceHandle,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerAddCharacteristicInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothUuid& aCharacteristicUuid,
+    BluetoothGattAttrPerm aPermissions,
+    BluetoothGattCharProp aProperties,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerAddDescriptorInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    const BluetoothAttributeHandle& aCharacteristicHandle,
+    const BluetoothUuid& aDescriptorUuid,
+    BluetoothGattAttrPerm aPermissions,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerRemoveServiceInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerStartServiceInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerStopServiceInternal(
+    const nsAString& aAppUuid,
+    const BluetoothAttributeHandle& aServiceHandle,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerSendResponseInternal(
+    const nsAString& aAppUuid,
+    const nsAString& aAddress,
+    uint16_t aStatus,
+    int32_t aRequestId,
+    const BluetoothGattResponse& aRsp,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  GattServerSendIndicationInternal(
+    const nsAString& aAppUuid,
+    const nsAString& aAddress,
+    const BluetoothAttributeHandle& aCharacteristicHandle,
+    bool aConfirm,
+    const nsTArray<uint8_t>& aValue,
+    BluetoothReplyRunnable* aRunnable) override;
 
 protected:
   BluetoothServiceChildProcess();

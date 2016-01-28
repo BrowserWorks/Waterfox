@@ -51,7 +51,6 @@
 
 #include "frontend/ParseNode-inl.h"
 #include "frontend/Parser-inl.h"
-#include "jit/AtomicOperations-inl.h"
 #include "jit/MacroAssembler-inl.h"
 
 using namespace js;
@@ -106,7 +105,7 @@ static inline ParseNode*
 ReturnExpr(ParseNode* pn)
 {
     MOZ_ASSERT(pn->isKind(PNK_RETURN));
-    return BinaryLeft(pn);
+    return UnaryKid(pn);
 }
 
 static inline ParseNode*
@@ -774,6 +773,10 @@ class MOZ_STACK_CLASS ModuleValidator
             MOZ_ASSERT(isAnyArrayView());
             return u.viewInfo.isSharedView_;
         }
+        void setViewIsSharedView() {
+            MOZ_ASSERT(isAnyArrayView());
+            u.viewInfo.isSharedView_ = true;
+        }
         bool isMathFunction() const {
             return which_ == MathBuiltinFunction;
         }
@@ -919,6 +922,7 @@ class MOZ_STACK_CLASS ModuleValidator
     bool                                    canValidateChangeHeap_;
     bool                                    hasChangeHeap_;
     bool                                    supportsSimd_;
+    bool                                    atomicsPresent_;
 
     ScopedJSDeletePtr<ModuleCompileResults> compileResults_;
     DebugOnly<bool>                         finishedFunctionBodies_;
@@ -944,6 +948,7 @@ class MOZ_STACK_CLASS ModuleValidator
         canValidateChangeHeap_(false),
         hasChangeHeap_(false),
         supportsSimd_(cx->jitSupportsSimd()),
+        atomicsPresent_(false),
         compileResults_(nullptr),
         finishedFunctionBodies_(false)
     {
@@ -1156,6 +1161,7 @@ class MOZ_STACK_CLASS ModuleValidator
         Global* global = moduleLifo_.new_<Global>(Global::AtomicsBuiltinFunction);
         if (!global)
             return false;
+        atomicsPresent_ = true;
         global->u.atomicsBuiltinFunc_ = func;
         return globals_.putNew(varName, global);
     }
@@ -1304,8 +1310,12 @@ class MOZ_STACK_CLASS ModuleValidator
     }
 
     // Error handling.
+    bool hasAlreadyFailed() const {
+        return !!errorString_;
+    }
+
     bool failOffset(uint32_t offset, const char* str) {
-        MOZ_ASSERT(!errorString_);
+        MOZ_ASSERT(!hasAlreadyFailed());
         MOZ_ASSERT(errorOffset_ == UINT32_MAX);
         MOZ_ASSERT(str);
         errorOffset_ = offset;
@@ -1318,7 +1328,7 @@ class MOZ_STACK_CLASS ModuleValidator
     }
 
     bool failfVAOffset(uint32_t offset, const char* fmt, va_list ap) {
-        MOZ_ASSERT(!errorString_);
+        MOZ_ASSERT(!hasAlreadyFailed());
         MOZ_ASSERT(errorOffset_ == UINT32_MAX);
         MOZ_ASSERT(fmt);
         errorOffset_ = offset;
@@ -1495,7 +1505,7 @@ class MOZ_STACK_CLASS ModuleValidator
                 AsmJSModule::RelativeLink link(AsmJSModule::RelativeLink::RawPointer);
                 link.patchAtOffset = tableBaseOffset + elemIndex * sizeof(uint8_t*);
                 Label* entry = functionEntry(table.elem(elemIndex).funcIndex());
-                link.targetOffset = masm().actualOffset(entry->offset());
+                link.targetOffset = entry->offset();
                 if (!module_->addRelativeLink(link))
                     return false;
             }
@@ -1506,6 +1516,14 @@ class MOZ_STACK_CLASS ModuleValidator
     }
 
     void startFunctionBodies() {
+        if (atomicsPresent_) {
+            for (GlobalMap::Range r = globals_.all() ; !r.empty() ; r.popFront()) {
+                Global* g = r.front().value();
+                if (g->isAnyArrayView())
+                    g->setViewIsSharedView();
+            }
+            module_->setViewsAreShared();
+        }
         module_->startFunctionBodies();
     }
     bool finishFunctionBodies(ScopedJSDeletePtr<ModuleCompileResults>* compileResults) {
@@ -1517,6 +1535,7 @@ class MOZ_STACK_CLASS ModuleValidator
             if (!module().addFunctionCounts(compileResults_->functionCount(i)))
                 return false;
         }
+
 #if defined(MOZ_VTUNE) || defined(JS_ION_PERF)
         for (size_t i = 0; i < compileResults_->numProfiledFunctions(); ++i) {
             if (!module().addProfiledFunction(Move(compileResults_->profiledFunction(i))))
@@ -1524,7 +1543,7 @@ class MOZ_STACK_CLASS ModuleValidator
         }
 #endif // defined(MOZ_VTUNE) || defined(JS_ION_PERF)
 
-        // Hand in code ranges, script counts and perf profiling data to the AsmJSModule
+        // Hand in code ranges to the AsmJSModule
         for (size_t i = 0; i < compileResults_->numCodeRanges(); ++i) {
             AsmJSModule::FunctionCodeRange& codeRange = compileResults_->codeRange(i);
             if (!module().addFunctionCodeRange(codeRange.name(), Move(codeRange)))
@@ -6349,8 +6368,7 @@ ParseFunction(ModuleValidator& m, ParseNode** fnOut)
         return false;
 
     Directives newDirectives = directives;
-    AsmJSParseContext funpc(&m.parser(), outerpc, fn, funbox, &newDirectives,
-                            /* blockScopeDepth = */ 0);
+    AsmJSParseContext funpc(&m.parser(), outerpc, fn, funbox, &newDirectives);
     if (!funpc.init(m.parser()))
         return false;
 
@@ -6397,6 +6415,9 @@ CheckFunction(ModuleValidator& m, LifoAlloc& lifo, AsmFunction** funcOut)
     }
 
     AsmFunction* asmFunc = lifo.new_<AsmFunction>(lifo);
+    if (!asmFunc)
+        return false;
+
     FunctionValidator f(m, *asmFunc, fn);
     if (!f.init())
         return false;
@@ -6786,10 +6807,14 @@ CheckFunctions(ModuleValidator& m, ScopedJSDeletePtr<ModuleCompileResults>* resu
     if (!CheckFunctionsParallel(m, group, results)) {
         CancelOutstandingJobs(group);
 
-        // If failure was triggered by a helper thread, report error.
-        if (void* maybeFunc = HelperThreadState().maybeAsmJSFailedFunction()) {
-            AsmFunction* func = reinterpret_cast<AsmFunction*>(maybeFunc);
-            return m.failOffset(func->srcBegin(), "allocation failure during compilation");
+        // If a validation error didn't occur on the main thread, either a
+        // syntax error occurred and will be signalled by the regular parser,
+        // or an error occurred on an helper thread.
+        if (!m.hasAlreadyFailed()) {
+            if (void* maybeFunc = HelperThreadState().maybeAsmJSFailedFunction()) {
+                AsmFunction* func = reinterpret_cast<AsmFunction*>(maybeFunc);
+                return m.failOffset(func->srcBegin(), "allocation failure during compilation");
+            }
         }
 
         // Otherwise, the error occurred on the main thread and was already reported.
@@ -7030,7 +7055,7 @@ GenerateEntry(ModuleValidator& m, unsigned exportIndex)
     // Save the return address if it wasn't already saved by the call insn.
 #if defined(JS_CODEGEN_ARM)
     masm.push(lr);
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     masm.push(ra);
 #elif defined(JS_CODEGEN_X86)
     static const unsigned EntryFrameSize = sizeof(void*);
@@ -7042,15 +7067,15 @@ GenerateEntry(ModuleValidator& m, unsigned exportIndex)
     masm.PushRegsInMask(NonVolatileRegs);
     MOZ_ASSERT(masm.framePushed() == FramePushedAfterSave);
 
-    // ARM and MIPS have a globally-pinned GlobalReg (x64 uses RIP-relative
+    // ARM and MIPS/MIPS64 have a globally-pinned GlobalReg (x64 uses RIP-relative
     // addressing, x86 uses immediates in effective addresses). For the
     // AsmJSGlobalRegBias addition, see Assembler-(mips,arm).h.
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     masm.movePtr(IntArgReg1, GlobalReg);
     masm.addPtr(Imm32(AsmJSGlobalRegBias), GlobalReg);
 #endif
 
-    // ARM, MIPS and x64 have a globally-pinned HeapReg (x86 uses immediates in
+    // ARM, MIPS/MIPS64 and x64 have a globally-pinned HeapReg (x86 uses immediates in
     // effective addresses). Loading the heap register depends on the global
     // register already having been loaded.
     masm.loadAsmJSHeapRegisterFromGlobalData();
@@ -7359,7 +7384,7 @@ GenerateFFIInterpExit(ModuleValidator& m, const Signature& sig, unsigned exitInd
     return !masm.oom() && m.finishGeneratingInterpExit(exitIndex, &begin, &profilingReturn);
 }
 
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 static const unsigned MaybeSavedGlobalReg = sizeof(void*);
 #else
 static const unsigned MaybeSavedGlobalReg = 0;
@@ -7403,7 +7428,7 @@ GenerateFFIIonExit(ModuleValidator& m, const Signature& sig, unsigned exitIndex,
     m.masm().append(AsmJSGlobalAccess(masm.leaRipRelative(callee), globalDataOffset));
 #elif defined(JS_CODEGEN_X86)
     m.masm().append(AsmJSGlobalAccess(masm.movlWithPatch(Imm32(0), callee), globalDataOffset));
-#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     masm.computeEffectiveAddress(Address(GlobalReg, globalDataOffset - AsmJSGlobalRegBias), callee);
 #endif
 
@@ -7439,7 +7464,7 @@ GenerateFFIIonExit(ModuleValidator& m, const Signature& sig, unsigned exitIndex,
     //    so they must be explicitly preserved. Only save GlobalReg since
     //    HeapReg must be reloaded (from global data) after the call since the
     //    heap may change during the FFI call.
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     static_assert(MaybeSavedGlobalReg == sizeof(void*), "stack frame accounting");
     masm.storePtr(GlobalReg, Address(masm.getStackPointer(), ionFrameBytes));
 #endif
@@ -7555,7 +7580,7 @@ GenerateFFIIonExit(ModuleValidator& m, const Signature& sig, unsigned exitIndex,
     }
 
     // Reload the global register since Ion code can clobber any register.
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     static_assert(MaybeSavedGlobalReg == sizeof(void*), "stack frame accounting");
     masm.loadPtr(Address(masm.getStackPointer(), ionFrameBytes), GlobalReg);
 #endif
@@ -7870,7 +7895,7 @@ GenerateAsyncInterruptExit(ModuleValidator& m, Label* throwLabel)
     masm.PopRegsInMask(AllRegsExceptSP); // restore all GP/FP registers (except SP)
     masm.popFlags();              // after this, nothing that sets conditions
     masm.ret();                   // pop resumePC into PC
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     // Reserve space to store resumePC.
     masm.subFromStackPtr(Imm32(sizeof(intptr_t)));
     // set to zero so we can use masm.framePushed() below.
@@ -8128,7 +8153,9 @@ CheckModule(ExclusiveContext* cx, AsmJSParser& parser, ParseNode* stmtList,
     m.startFunctionBodies();
 
 #if !defined(ENABLE_SHARED_ARRAY_BUFFER)
-    MOZ_ASSERT(!m.module().hasArrayView() || !m.module().isSharedView());
+    if (m.module().hasArrayView() && m.module().isSharedView())
+        return m.failOffset(m.parser().tokenStream.currentToken().pos.begin,
+                            "shared views not supported by this build");
 #endif
 
     ScopedJSDeletePtr<ModuleCompileResults> mcd;
@@ -8174,7 +8201,11 @@ CheckModule(ExclusiveContext* cx, AsmJSParser& parser, ParseNode* stmtList,
 static bool
 Warn(AsmJSParser& parser, int errorNumber, const char* str)
 {
-    parser.reportNoOffset(ParseWarning, /* strict = */ false, errorNumber, str ? str : "");
+    ParseReportKind reportKind = parser.options().throwOnAsmJSValidationFailureOption &&
+                                 errorNumber == JSMSG_USE_ASM_TYPE_FAIL
+                                 ? ParseError
+                                 : ParseWarning;
+    parser.reportNoOffset(reportKind, /* strict = */ false, errorNumber, str ? str : "");
     return false;
 }
 
@@ -8202,6 +8233,10 @@ EstablishPreconditions(ExclusiveContext* cx, AsmJSParser& parser)
 
     if (parser.pc->isArrowFunction())
         return Warn(parser, JSMSG_USE_ASM_TYPE_FAIL, "Disabled by arrow function context");
+
+    // Class constructors are also methods
+    if (parser.pc->isMethod())
+        return Warn(parser, JSMSG_USE_ASM_TYPE_FAIL, "Disabled by class constructor or method context");
 
     return true;
 }

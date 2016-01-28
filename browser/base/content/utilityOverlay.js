@@ -9,16 +9,17 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Components.utils.import("resource:///modules/RecentWindow.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "NewTabURL",
-  "resource:///modules/NewTabURL.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
+                                   "@mozilla.org/browser/aboutnewtab-service;1",
+                                   "nsIAboutNewTabService");
 
 this.__defineGetter__("BROWSER_NEW_TAB_URL", () => {
   if (PrivateBrowsingUtils.isWindowPrivate(window) &&
       !PrivateBrowsingUtils.permanentPrivateBrowsing &&
-      !NewTabURL.overridden) {
+      !aboutNewTabService.overridden) {
     return "about:privatebrowsing";
   }
-  return NewTabURL.get();
+  return aboutNewTabService.newTabURL;
 });
 
 var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
@@ -173,6 +174,7 @@ function whereToOpenLink( e, ignoreButton, ignoreAlt )
  *   skipTabAnimation     (boolean)
  *   allowPinnedTabHostChange (boolean)
  *   allowPopups          (boolean)
+ *   userContextId        (unsigned int)
  */
 function openUILinkIn(url, where, aAllowThirdPartyFixup, aPostData, aReferrerURI) {
   var params;
@@ -216,6 +218,8 @@ function openLinkIn(url, where, params) {
   var aAllowPinnedTabHostChange = !!params.allowPinnedTabHostChange;
   var aNoReferrer           = params.noReferrer;
   var aAllowPopups          = !!params.allowPopups;
+  var aUserContextId        = params.userContextId;
+  var aIndicateErrorPageLoad = params.indicateErrorPageLoad;
 
   if (where == "save") {
     if (!aInitiatingDoc) {
@@ -335,6 +339,9 @@ function openLinkIn(url, where, params) {
     if (aAllowPopups) {
       flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_POPUPS;
     }
+    if (aIndicateErrorPageLoad) {
+      flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ERROR_LOAD_CHANGES_RV;
+    }
 
     w.gBrowser.loadURIWithFlags(url, {
       flags: flags,
@@ -357,7 +364,8 @@ function openLinkIn(url, where, params) {
       relatedToCurrent: aRelatedToCurrent,
       skipAnimation: aSkipTabAnimation,
       allowMixedContent: aAllowMixedContent,
-      noReferrer: aNoReferrer
+      noReferrer: aNoReferrer,
+      userContextId: aUserContextId
     });
     break;
   }

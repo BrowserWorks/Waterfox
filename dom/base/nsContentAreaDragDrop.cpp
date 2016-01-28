@@ -57,6 +57,7 @@
 #include "TabParent.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLAreaElement.h"
+#include "nsVariant.h"
 
 using namespace mozilla::dom;
 
@@ -350,7 +351,7 @@ DragDataProducer::GetNodeString(nsIContent* inNode,
   // use a range to get the text-equivalent of the node
   nsCOMPtr<nsIDocument> doc = node->OwnerDoc();
   mozilla::ErrorResult rv;
-  nsRefPtr<nsRange> range = doc->CreateRange(rv);
+  RefPtr<nsRange> range = doc->CreateRange(rv);
   if (range) {
     range->SelectNode(*node, rv);
     range->ToString(outNodeString);
@@ -392,7 +393,7 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
       return NS_OK;
   }
   else {
-    mWindow->GetSelection(getter_AddRefs(selection));
+    selection = mWindow->GetSelection();
     if (!selection)
       return NS_OK;
 
@@ -420,7 +421,7 @@ DragDataProducer::Produce(DataTransfer* aDataTransfer,
   if (isChromeShell && !editingElement) {
     nsCOMPtr<nsIFrameLoaderOwner> flo = do_QueryInterface(mTarget);
     if (flo) {
-      nsRefPtr<nsFrameLoader> fl = flo->GetFrameLoader();
+      RefPtr<nsFrameLoader> fl = flo->GetFrameLoader();
       if (fl) {
         TabParent* tp = static_cast<TabParent*>(fl->GetRemoteBrowser());
         if (tp) {
@@ -726,11 +727,9 @@ DragDataProducer::AddString(DataTransfer* aDataTransfer,
                             const nsAString& aData,
                             nsIPrincipal* aPrincipal)
 {
-  nsCOMPtr<nsIWritableVariant> variant = do_CreateInstance(NS_VARIANT_CONTRACTID);
-  if (variant) {
-    variant->SetAsAString(aData);
-    aDataTransfer->SetDataWithPrincipal(aFlavor, variant, 0, aPrincipal);
-  }
+  RefPtr<nsVariantCC> variant = new nsVariantCC();
+  variant->SetAsAString(aData);
+  aDataTransfer->SetDataWithPrincipal(aFlavor, variant, 0, aPrincipal);
 }
 
 nsresult
@@ -784,12 +783,10 @@ DragDataProducer::AddStringsToDataTransfer(nsIContent* aDragNode,
   // a new flavor so as not to confuse anyone who is really registered
   // for image/gif or image/jpg.
   if (mImage) {
-    nsCOMPtr<nsIWritableVariant> variant = do_CreateInstance(NS_VARIANT_CONTRACTID);
-    if (variant) {
-      variant->SetAsISupports(mImage);
-      aDataTransfer->SetDataWithPrincipal(NS_LITERAL_STRING(kNativeImageMime),
-                                          variant, 0, principal);
-    }
+    RefPtr<nsVariantCC> variant = new nsVariantCC();
+    variant->SetAsISupports(mImage);
+    aDataTransfer->SetDataWithPrincipal(NS_LITERAL_STRING(kNativeImageMime),
+                                        variant, 0, principal);
 
     // assume the image comes from a file, and add a file promise. We
     // register ourselves as a nsIFlavorDataProvider, and will use the
@@ -798,12 +795,10 @@ DragDataProducer::AddStringsToDataTransfer(nsIContent* aDragNode,
     nsCOMPtr<nsIFlavorDataProvider> dataProvider =
       new nsContentAreaDragDropDataProvider();
     if (dataProvider) {
-      nsCOMPtr<nsIWritableVariant> variant = do_CreateInstance(NS_VARIANT_CONTRACTID);
-      if (variant) {
-        variant->SetAsISupports(dataProvider);
-        aDataTransfer->SetDataWithPrincipal(NS_LITERAL_STRING(kFilePromiseMime),
-                                            variant, 0, principal);
-      }
+      RefPtr<nsVariantCC> variant = new nsVariantCC();
+      variant->SetAsISupports(dataProvider);
+      aDataTransfer->SetDataWithPrincipal(NS_LITERAL_STRING(kFilePromiseMime),
+                                          variant, 0, principal);
     }
 
     AddString(aDataTransfer, NS_LITERAL_STRING(kFilePromiseURLMime),

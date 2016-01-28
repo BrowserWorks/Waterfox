@@ -14,12 +14,12 @@
 #include "nsContentUtils.h"
 #include "nsSVGEffects.h"
 #include "nsSVGAnimatedTransformList.h"
-#include "gfxColor.h"
 
 // XXX Tight coupling with content classes ahead!
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::gfx;
 
 //----------------------------------------------------------------------
 // Helper classes
@@ -235,7 +235,7 @@ nsSVGGradientFrame::GetPaintServerPattern(nsIFrame* aSource,
   // SVG specification says that no stops should be treated like
   // the corresponding fill or stroke had "none" specified.
   if (nStops == 0) {
-    nsRefPtr<gfxPattern> pattern = new gfxPattern(gfxRGBA(0, 0, 0, 0));
+    RefPtr<gfxPattern> pattern = new gfxPattern(Color());
     return pattern.forget();
   }
 
@@ -245,12 +245,9 @@ nsSVGGradientFrame::GetPaintServerPattern(nsIFrame* aSource,
     float stopOpacity = stopFrames[nStops-1]->StyleSVGReset()->mStopOpacity;
     nscolor stopColor = stopFrames[nStops-1]->StyleSVGReset()->mStopColor;
 
-    nsRefPtr<gfxPattern> pattern = new gfxPattern(
-                           gfxRGBA(NS_GET_R(stopColor)/255.0,
-                                   NS_GET_G(stopColor)/255.0,
-                                   NS_GET_B(stopColor)/255.0,
-                                   NS_GET_A(stopColor)/255.0 *
-                                     stopOpacity * aGraphicOpacity));
+    Color stopColor2 = Color::FromABGR(stopColor);
+    stopColor2.a *= stopOpacity * aGraphicOpacity;
+    RefPtr<gfxPattern> pattern = new gfxPattern(stopColor2);
     return pattern.forget();
   }
 
@@ -275,17 +272,17 @@ nsSVGGradientFrame::GetPaintServerPattern(nsIFrame* aSource,
     return nullptr;
   }
 
-  nsRefPtr<gfxPattern> gradient = CreateGradient();
+  RefPtr<gfxPattern> gradient = CreateGradient();
   if (!gradient || gradient->CairoStatus())
     return nullptr;
 
   uint16_t aSpread = GetSpreadMethod();
   if (aSpread == SVG_SPREADMETHOD_PAD)
-    gradient->SetExtend(gfxPattern::EXTEND_PAD);
+    gradient->SetExtend(ExtendMode::CLAMP);
   else if (aSpread == SVG_SPREADMETHOD_REFLECT)
-    gradient->SetExtend(gfxPattern::EXTEND_REFLECT);
+    gradient->SetExtend(ExtendMode::REFLECT);
   else if (aSpread == SVG_SPREADMETHOD_REPEAT)
-    gradient->SetExtend(gfxPattern::EXTEND_REPEAT);
+    gradient->SetExtend(ExtendMode::REPEAT);
 
   gradient->SetMatrix(patternMatrix);
 
@@ -303,12 +300,9 @@ nsSVGGradientFrame::GetPaintServerPattern(nsIFrame* aSource,
     else
       lastOffset = offset;
 
-    gradient->AddColorStop(offset,
-                           gfxRGBA(NS_GET_R(stopColor)/255.0,
-                                   NS_GET_G(stopColor)/255.0,
-                                   NS_GET_B(stopColor)/255.0,
-                                   NS_GET_A(stopColor)/255.0 *
-                                     stopOpacity * aGraphicOpacity));
+    Color stopColor2 = Color::FromABGR(stopColor);
+    stopColor2.a *= stopOpacity * aGraphicOpacity;
+    gradient->AddColorStop(offset, stopColor2);
   }
 
   return gradient.forget();
@@ -505,7 +499,7 @@ nsSVGLinearGradientFrame::CreateGradient()
   x2 = GetLengthValue(dom::SVGLinearGradientElement::ATTR_X2);
   y2 = GetLengthValue(dom::SVGLinearGradientElement::ATTR_Y2);
 
-  nsRefPtr<gfxPattern> pattern = new gfxPattern(x1, y1, x2, y2);
+  RefPtr<gfxPattern> pattern = new gfxPattern(x1, y1, x2, y2);
   return pattern.forget();
 }
 
@@ -650,7 +644,7 @@ nsSVGRadialGradientFrame::CreateGradient()
     }
   }
 
-  nsRefPtr<gfxPattern> pattern = new gfxPattern(fx, fy, 0, cx, cy, r);
+  RefPtr<gfxPattern> pattern = new gfxPattern(fx, fy, 0, cx, cy, r);
   return pattern.forget();
 }
 

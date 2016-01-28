@@ -376,26 +376,8 @@ class RecursiveMakeBackend(CommonBackend):
         self._backend_files = {}
         self._idl_dirs = set()
 
-        def detailed(summary):
-            s = '{:d} total backend files; ' \
-                '{:d} created; {:d} updated; {:d} unchanged; ' \
-                '{:d} deleted; {:d} -> {:d} Makefile'.format(
-                summary.created_count + summary.updated_count +
-                summary.unchanged_count,
-                summary.created_count,
-                summary.updated_count,
-                summary.unchanged_count,
-                summary.deleted_count,
-                summary.makefile_in_count,
-                summary.makefile_out_count)
-
-            return s
-
-        # This is a little kludgy and could be improved with a better API.
-        self.summary.backend_detailed_summary = types.MethodType(detailed,
-            self.summary)
-        self.summary.makefile_in_count = 0
-        self.summary.makefile_out_count = 0
+        self._makefile_in_count = 0
+        self._makefile_out_count = 0
 
         self._test_manifests = {}
 
@@ -428,6 +410,13 @@ class RecursiveMakeBackend(CommonBackend):
             'tools': set(),
         }
 
+    def summary(self):
+        summary = super(RecursiveMakeBackend, self).summary()
+        summary.extend('; {makefile_in:d} -> {makefile_out:d} Makefile',
+                       makefile_in=self._makefile_in_count,
+                       makefile_out=self._makefile_out_count)
+        return summary
+
     def _get_backend_file_for(self, obj):
         if obj.objdir not in self._backend_files:
             self._backend_files[obj.objdir] = \
@@ -439,11 +428,11 @@ class RecursiveMakeBackend(CommonBackend):
         """Write out build files necessary to build with recursive make."""
 
         if not isinstance(obj, ContextDerived):
-            return
+            return False
 
         backend_file = self._get_backend_file_for(obj)
 
-        CommonBackend.consume_object(self, obj)
+        consumed = CommonBackend.consume_object(self, obj)
 
         # CommonBackend handles XPIDLFile and TestManifest, but we want to do
         # some extra things for them.
@@ -456,8 +445,8 @@ class RecursiveMakeBackend(CommonBackend):
             self._process_test_manifest(obj, backend_file)
 
         # If CommonBackend acknowledged the object, we're done with it.
-        if obj._ack:
-            return
+        if consumed:
+            return True
 
         if isinstance(obj, DirectoryTraversal):
             self._process_directory_traversal(obj, backend_file)
@@ -516,13 +505,16 @@ class RecursiveMakeBackend(CommonBackend):
             self._process_exports(obj, obj.exports, backend_file)
 
         elif isinstance(obj, GeneratedFile):
+            dep_file = "%s.pp" % obj.output
             backend_file.write('GENERATED_FILES += %s\n' % obj.output)
+            backend_file.write('EXTRA_MDDEPEND_FILES += %s\n' % dep_file)
             if obj.script:
                 backend_file.write("""{output}: {script}{inputs}
 \t$(REPORT_BUILD)
-\t$(call py_action,file_generate,{script} {method} {output}{inputs})
+\t$(call py_action,file_generate,{script} {method} {output} $(MDDEPDIR)/{dep_file}{inputs})
 
 """.format(output=obj.output,
+           dep_file=dep_file,
            inputs=' ' + ' '.join(obj.inputs) if obj.inputs else '',
            script=obj.script,
            method=obj.method))
@@ -587,7 +579,7 @@ class RecursiveMakeBackend(CommonBackend):
             elif isinstance(obj.wrapped, AndroidEclipseProjectData):
                 self._process_android_eclipse_project_data(obj.wrapped, backend_file)
             else:
-                return
+                return False
 
         elif isinstance(obj, SharedLibrary):
             self._process_shared_library(obj, backend_file)
@@ -613,24 +605,29 @@ class RecursiveMakeBackend(CommonBackend):
                 backend_file.write('DIST_FILES += %s\n' % f)
 
         elif isinstance(obj, AndroidResDirs):
+            # Order matters.
             for p in obj.paths:
                 backend_file.write('ANDROID_RES_DIRS += %s\n' % p.full_path)
 
         elif isinstance(obj, AndroidAssetsDirs):
+            # Order matters.
             for p in obj.paths:
                 backend_file.write('ANDROID_ASSETS_DIRS += %s\n' % p.full_path)
 
         elif isinstance(obj, AndroidExtraResDirs):
-            for p in obj.paths:
-                backend_file.write('ANDROID_EXTRA_RES_DIRS += %s\n' % p.full_path)
+            # Order does not matter.
+            for p in sorted(set(p.full_path for p in obj.paths)):
+                backend_file.write('ANDROID_EXTRA_RES_DIRS += %s\n' % p)
 
         elif isinstance(obj, AndroidExtraPackages):
-            for p in obj.packages:
+            # Order does not matter.
+            for p in sorted(set(obj.packages)):
                 backend_file.write('ANDROID_EXTRA_PACKAGES += %s\n' % p)
 
         else:
-            return
-        obj.ack()
+            return False
+
+        return True
 
     def _fill_root_mk(self):
         """
@@ -802,7 +799,7 @@ class RecursiveMakeBackend(CommonBackend):
                 if not stub:
                     self.log(logging.DEBUG, 'substitute_makefile',
                         {'path': makefile}, 'Substituting makefile: {path}')
-                    self.summary.makefile_in_count += 1
+                    self._makefile_in_count += 1
 
                     for tier, skiplist in self._may_skip.items():
                         if bf.relobjdir in skiplist:
@@ -1255,7 +1252,7 @@ INSTALL_TARGETS += %(prefix)s
                 (target, ' '.join(mozpath.join('generated', f) for f in jar.generated_sources)))
         if jar.extra_jars:
             backend_file.write('%s_EXTRA_JARS := %s\n' %
-                (target, ' '.join(jar.extra_jars)))
+                (target, ' '.join(sorted(set(jar.extra_jars)))))
         if jar.javac_flags:
             backend_file.write('%s_JAVAC_FLAGS := %s\n' %
                 (target, ' '.join(jar.javac_flags)))
@@ -1451,7 +1448,7 @@ INSTALL_TARGETS += %(prefix)s
             # the autogenerated one automatically.
             self.backend_input_files.add(obj.input_path)
 
-        self.summary.makefile_out_count += 1
+        self._makefile_out_count += 1
 
     def _handle_ipdl_sources(self, ipdl_dir, sorted_ipdl_sources,
                              unified_ipdl_cppsrcs_mapping):
@@ -1504,7 +1501,7 @@ INSTALL_TARGETS += %(prefix)s
                 # which would modify content in the source directory.
                 '$(RM) $@',
                 '$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) '
-                    '$(XULPPFLAGS) $< -o $@)'
+                    '$(MOZ_DEBUG_DEFINES) $< -o $@)'
             ])
 
         self._add_unified_build_rules(mk,

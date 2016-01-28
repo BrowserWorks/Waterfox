@@ -112,7 +112,7 @@ private:
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    ScopedSECKEYPublicKey publicKey(mKeyPair.mPublicKey.get()->GetPublicKey());
+    ScopedSECKEYPublicKey publicKey(mKeyPair->mPublicKey.get()->GetPublicKey());
     ScopedCERTSubjectPublicKeyInfo spki(
         SECKEY_CreateSubjectPublicKeyInfo(publicKey));
     if (!spki) {
@@ -180,7 +180,7 @@ private:
       return NS_ERROR_DOM_UNKNOWN_ERR;
     }
 
-    ScopedSECKEYPrivateKey privateKey(mKeyPair.mPrivateKey.get()->GetPrivateKey());
+    ScopedSECKEYPrivateKey privateKey(mKeyPair->mPrivateKey.get()->GetPrivateKey());
     rv = SEC_DerSignData(arena, signedCert, innerDER.data, innerDER.len,
                          privateKey, mSignatureAlg);
     if (rv != SECSuccess) {
@@ -199,7 +199,13 @@ private:
         return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
       }
 
-      mSignatureAlg = SEC_OID_PKCS1_SHA1_WITH_RSA_ENCRYPTION;
+      KeyAlgorithmProxy& alg = mKeyPair->mPublicKey.get()->Algorithm();
+      if (alg.mType != KeyAlgorithmProxy::RSA ||
+          !alg.mRsa.mHash.mName.EqualsLiteral(WEBCRYPTO_ALG_SHA256)) {
+        return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+      }
+
+      mSignatureAlg = SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION;
       mAuthType = ssl_kea_rsa;
 
     } else if (mAlgName.EqualsLiteral(WEBCRYPTO_ALG_ECDSA)) {
@@ -232,9 +238,9 @@ private:
   {
     // Make copies of the private key and certificate, otherwise, when this
     // object is deleted, the structures they reference will be deleted too.
-    SECKEYPrivateKey* key = mKeyPair.mPrivateKey.get()->GetPrivateKey();
+    SECKEYPrivateKey* key = mKeyPair->mPrivateKey.get()->GetPrivateKey();
     CERTCertificate* cert = CERT_DupCertificate(mCertificate);
-    nsRefPtr<RTCCertificate> result =
+    RefPtr<RTCCertificate> result =
         new RTCCertificate(mResultPromise->GetParentObject(),
                            key, cert, mAuthType, mExpires);
     mResultPromise->MaybeResolve(result);
@@ -247,7 +253,7 @@ RTCCertificate::GenerateCertificate(
     ErrorResult& aRv, JSCompartment* aCompartment)
 {
   nsIGlobalObject* global = xpc::NativeGlobal(aGlobal.Get());
-  nsRefPtr<Promise> p = Promise::Create(global, aRv);
+  RefPtr<Promise> p = Promise::Create(global, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -255,7 +261,7 @@ RTCCertificate::GenerateCertificate(
   if (!usages.AppendElement(NS_LITERAL_STRING("sign"), fallible)) {
     return nullptr;
   }
-  nsRefPtr<WebCryptoTask> task =
+  RefPtr<WebCryptoTask> task =
       new GenerateRTCCertificateTask(aGlobal.Context(),
                                      aKeygenAlgorithm, usages);
   task->DispatchWithPromise(p);

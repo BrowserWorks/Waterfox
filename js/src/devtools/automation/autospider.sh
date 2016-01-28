@@ -213,19 +213,23 @@ elif [[ "$VARIANT" = "arm-sim" ||
     export JSTESTS_EXTRA_ARGS=--jitflags=debug
 elif [[ "$VARIANT" = arm64* ]]; then
     # The ARM64 JIT is not yet fully functional, and asm.js does not work.
-    # Just run "make check". We mostly care about not breaking the build at this point.
+    # Just run "make check" and jsapi-tests.
     RUN_JITTEST=false
-    RUN_JSAPITESTS=false
     RUN_JSTESTS=false
 fi
 
 $COMMAND_PREFIX $MAKE check || exit 1
+
+RESULT=0
+
 if $RUN_JITTEST; then
-    $COMMAND_PREFIX $MAKE check-jit-test || exit 1
+    $COMMAND_PREFIX $MAKE check-jit-test || RESULT=$?
 fi
 if $RUN_JSAPITESTS; then
-    $COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
+    $COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || RESULT=$?
 fi
 if $RUN_JSTESTS; then
-    $COMMAND_PREFIX $MAKE check-jstests || exit 1
+    $COMMAND_PREFIX $MAKE check-jstests || RESULT=$?
 fi
+
+exit $RESULT

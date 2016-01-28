@@ -159,7 +159,7 @@ protected:
     void AllocateAndInit(long aStride, int32_t aMinimalAllocation, bool aClear);
     void InitFromSurface(cairo_surface_t *csurf);
 
-    long ComputeStride() const { 
+    long ComputeStride() const {
         if (mSize.height < 0 || mSize.width < 0) {
             return 0;
         }
@@ -183,7 +183,7 @@ protected:
                        const mozilla::gfx::IntSize& aSize,
                        gfxImageFormat aFormat);
 private:
-    nsRefPtr<gfxImageSurface> mParent;
+    RefPtr<gfxImageSurface> mParent;
 };
 
 #endif /* GFX_IMAGESURFACE_H */

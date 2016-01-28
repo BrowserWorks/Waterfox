@@ -7,7 +7,7 @@
 #ifndef MediaSink_h_
 #define MediaSink_h_
 
-#include "mozilla/nsRefPtr.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/MozPromise.h"
 #include "nsISupportsImpl.h"
 #include "MediaInfo.h"
@@ -57,7 +57,7 @@ public:
   // Return a promise which is resolved when the track finishes
   // or null if no such track.
   // Must be called after playback starts.
-  virtual nsRefPtr<GenericPromise> OnEnded(TrackType aType) = 0;
+  virtual RefPtr<GenericPromise> OnEnded(TrackType aType) = 0;
 
   // Return the end time of the audio/video data that has been consumed
   // or -1 if no such track.
@@ -92,6 +92,11 @@ public:
 
   // Pause/resume the playback. Only work after playback starts.
   virtual void SetPlaying(bool aPlaying) = 0;
+
+  // Single frame rendering operation may need to be done before playback
+  // started (1st frame) or right after seek completed or playback stopped.
+  // Do nothing if this sink has no video track. Can be called in any state.
+  virtual void Redraw() {};
 
   // Begin a playback session with the provided start time and media info.
   // Must be called when playback is stopped.

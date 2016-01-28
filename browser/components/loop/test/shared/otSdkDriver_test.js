@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-describe("loop.OTSdkDriver", function () {
+describe("loop.OTSdkDriver", function() {
   "use strict";
 
   var expect = chai.expect;
@@ -68,6 +68,7 @@ describe("loop.OTSdkDriver", function () {
     window.OT = {
       ExceptionCodes: {
         CONNECT_FAILED: 1006,
+        TERMS_OF_SERVICE_FAILURE: 1026,
         UNABLE_TO_PUBLISH: 1500
       }
     };
@@ -109,8 +110,21 @@ describe("loop.OTSdkDriver", function () {
 
     it("should throw an error if the sdk is missing", function() {
       expect(function() {
-        new loop.OTSdkDriver({dispatcher: dispatcher});
+        new loop.OTSdkDriver({ dispatcher: dispatcher });
       }).to.Throw(/sdk/);
+    });
+
+    it("should set the metrics to zero", function() {
+      driver = new loop.OTSdkDriver({
+        dispatcher: dispatcher,
+        sdk: sdk
+      });
+
+      expect(driver._metrics).eql({
+        connections: 0,
+        sendStreams: 0,
+        recvStreams: 0
+      });
     });
   });
 
@@ -326,7 +340,7 @@ describe("loop.OTSdkDriver", function () {
       sinon.assert.calledWithExactly(sdk.initSession, "3216549870");
     });
 
-    it("should connect the session", function () {
+    it("should connect the session", function() {
       driver.connectSession(sessionData);
 
       sinon.assert.calledOnce(session.connect);
@@ -336,7 +350,7 @@ describe("loop.OTSdkDriver", function () {
     it("should set the two-way media start time to 'uninitialized' " +
        "when sessionData.sendTwoWayMediaTelemetry is true'", function() {
       driver.connectSession(_.extend(sessionData,
-                                     {sendTwoWayMediaTelemetry: true}));
+                                     { sendTwoWayMediaTelemetry: true }));
 
       expect(driver._getTwoWayMediaStartTime()).to.eql(
         driver.CONNECTION_START_TIME_UNINITIALIZED);
@@ -471,6 +485,22 @@ describe("loop.OTSdkDriver", function () {
       driver.disconnectSession();
 
       expect(subscribedEvents).eql([]);
+    });
+
+    it("should reset the metrics to zero", function() {
+      driver._metrics = {
+        connections: 1,
+        sendStreams: 2,
+        recvStreams: 3
+      };
+
+      driver.disconnectSession();
+
+      expect(driver._metrics).eql({
+        connections: 0,
+        sendStreams: 0,
+        recvStreams: 0
+      });
     });
 
     it("should dispatch a DataChannelsAvailable action with available = false", function() {
@@ -672,7 +702,7 @@ describe("loop.OTSdkDriver", function () {
         id: "localUser"
       };
       session.trigger("connectionCreated", {
-        connection: {id: "remoteUser"}
+        connection: { id: "remoteUser" }
       });
       expect(driver.connections).to.include.keys("remoteUser");
 
@@ -681,7 +711,7 @@ describe("loop.OTSdkDriver", function () {
 
       // Add another remote connection.
       session.trigger("connectionCreated", {
-        connection: {id: "remoteUser2"}
+        connection: { id: "remoteUser2" }
       });
       expect(driver.connections).to.include.keys("remoteUser", "remoteUser2");
 
@@ -718,7 +748,7 @@ describe("loop.OTSdkDriver", function () {
       fakeStream = {
         hasVideo: true,
         videoType: "camera",
-        videoDimensions: {width: 1, height: 2}
+        videoDimensions: { width: 1, height: 2 }
       };
 
       fakeSubscriberObject = _.extend({
@@ -880,7 +910,7 @@ describe("loop.OTSdkDriver", function () {
         stream = {
           hasVideo: true,
           videoType: "camera",
-          videoDimensions: {width: 1, height: 2}
+          videoDimensions: { width: 1, height: 2 }
         };
       });
 
@@ -892,7 +922,7 @@ describe("loop.OTSdkDriver", function () {
           new sharedActions.VideoDimensionsChanged({
             isLocal: true,
             videoType: "camera",
-            dimensions: {width: 1, height: 2}
+            dimensions: { width: 1, height: 2 }
           }));
       });
 
@@ -925,7 +955,7 @@ describe("loop.OTSdkDriver", function () {
         driver._metrics.recvStreams = 1;
         driver._metrics.connections = 2;
 
-        publisher.trigger("streamCreated", {stream: stream});
+        publisher.trigger("streamCreated", { stream: stream });
 
         sinon.assert.called(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
@@ -1252,7 +1282,7 @@ describe("loop.OTSdkDriver", function () {
         driver._metrics.sendStreams = 1;
         driver._metrics.recvStreams = 1;
 
-        session.trigger("streamDestroyed", {stream: stream});
+        session.trigger("streamDestroyed", { stream: stream });
 
         sinon.assert.called(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
@@ -1485,7 +1515,7 @@ describe("loop.OTSdkDriver", function () {
       it("should dispatch a RemoteVideoStatus action", function() {
         session.subscribe.yieldsOn(driver, null, fakeSubscriberObject,
           videoElement).returns(this.fakeSubscriberObject);
-        session.trigger("streamCreated", {stream: fakeSubscriberObject.stream});
+        session.trigger("streamCreated", { stream: fakeSubscriberObject.stream });
         driver._mockSubscribeEl.appendChild(videoElement);
 
         fakeSubscriberObject.trigger("videoEnabled");
@@ -1502,7 +1532,7 @@ describe("loop.OTSdkDriver", function () {
       it("should dispatch a RemoteVideoStatus action", function() {
         session.subscribe.yieldsOn(driver, null, fakeSubscriberObject,
           videoElement).returns(this.fakeSubscriberObject);
-        session.trigger("streamCreated", {stream: fakeSubscriberObject.stream});
+        session.trigger("streamCreated", { stream: fakeSubscriberObject.stream });
 
 
         fakeSubscriberObject.trigger("videoDisabled");
@@ -1585,6 +1615,26 @@ describe("loop.OTSdkDriver", function () {
           }));
       });
 
+      describe("Unable to publish (not GetUserMedia)", function() {
+        it("should notify metrics", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.UNABLE_TO_PUBLISH,
+            message: "Fake",
+            title: "Connect Failed"
+          });
+
+          sinon.assert.calledOnce(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionStatus({
+              event: "sdk.exception." + OT.ExceptionCodes.UNABLE_TO_PUBLISH + ".Fake",
+              state: "starting",
+              connections: 0,
+              sendStreams: 0,
+              recvStreams: 0
+            }));
+        });
+      });
+
       describe("Unable to publish (GetUserMedia)", function() {
         it("should destroy the publisher", function() {
           sdk.trigger("exception", {
@@ -1624,6 +1674,83 @@ describe("loop.OTSdkDriver", function () {
           sinon.assert.calledWithExactly(dispatcher.dispatch,
             new sharedActions.ConnectionFailure({
               reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
+            }));
+        });
+      });
+
+      describe("ToS Failure", function() {
+        it("should dispatch a ConnectionFailure action", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.TERMS_OF_SERVICE_FAILURE,
+            message: "Fake"
+          });
+
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionFailure({
+              reason: FAILURE_DETAILS.TOS_FAILURE
+            }));
+        });
+
+        it("should notify metrics", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.TERMS_OF_SERVICE_FAILURE,
+            message: "Fake"
+          });
+
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionStatus({
+              event: "sdk.exception." + OT.ExceptionCodes.TERMS_OF_SERVICE_FAILURE,
+              state: "starting",
+              connections: 0,
+              sendStreams: 0,
+              recvStreams: 0
+            }));
+        });
+      });
+
+      describe("ICE failed", function() {
+        it("should dispatch a ConnectionFailure action (Publisher)", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.PUBLISHER_ICE_WORKFLOW_FAILED,
+            message: "ICE failed"
+          });
+
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionFailure({
+              reason: FAILURE_DETAILS.ICE_FAILED
+            }));
+        });
+
+        it("should dispatch a ConnectionFailure action (Subscriber)", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.SUBSCRIBER_ICE_WORKFLOW_FAILED,
+            message: "ICE failed"
+          });
+
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionFailure({
+              reason: FAILURE_DETAILS.ICE_FAILED
+            }));
+        });
+
+        it("should notify metrics", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.PUBLISHER_ICE_WORKFLOW_FAILED,
+            message: "ICE failed"
+          });
+
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionStatus({
+              event: "sdk.exception." + OT.ExceptionCodes.PUBLISHER_ICE_WORKFLOW_FAILED,
+              state: "starting",
+              connections: 0,
+              sendStreams: 0,
+              recvStreams: 0
             }));
         });
       });

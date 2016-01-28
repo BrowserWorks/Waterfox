@@ -232,6 +232,12 @@ class HashMap
         return impl.putNew(k, mozilla::Forward<KeyInput>(k), mozilla::Forward<ValueInput>(v));
     }
 
+    // Only call this to populate an empty map after reserving space with init().
+    template<typename KeyInput, typename ValueInput>
+    void putNewInfallible(KeyInput&& k, ValueInput&& v) {
+        impl.putNewInfallible(k, mozilla::Forward<KeyInput>(k), mozilla::Forward<ValueInput>(v));
+    }
+
     // Add (k,defaultValue) if |k| is not found. Return a false-y Ptr on oom.
     Ptr lookupWithDefault(const Key& k, const Value& defaultValue) {
         AddPtr p = lookupForAdd(k);
@@ -463,6 +469,12 @@ class HashSet
         return impl.putNew(l, mozilla::Forward<U>(u));
     }
 
+    // Only call this to populate an empty set after reserving space with init().
+    template <typename U>
+    void putNewInfallible(const Lookup& l, U&& u) {
+        impl.putNewInfallible(l, mozilla::Forward<U>(u));
+    }
+
     void remove(const Lookup& l) {
         if (Ptr p = lookup(l))
             remove(p);
@@ -653,8 +665,6 @@ class HashMapEntry
     template <class> friend class detail::HashTableEntry;
     template <class, class, class, class> friend class HashMap;
 
-    Key & mutableKey() { return key_; }
-
   public:
     template<typename KeyInput, typename ValueInput>
     HashMapEntry(KeyInput&& k, ValueInput&& v)
@@ -670,9 +680,10 @@ class HashMapEntry
     typedef Key KeyType;
     typedef Value ValueType;
 
-    const Key & key() const { return key_; }
-    const Value & value() const { return value_; }
-    Value & value() { return value_; }
+    const Key& key() const { return key_; }
+    Key& mutableKey() { return key_; }
+    const Value& value() const { return value_; }
+    Value& value() { return value_; }
 
   private:
     HashMapEntry(const HashMapEntry&) = delete;
@@ -741,6 +752,7 @@ class HashTableEntry
     }
 
     T& get() { MOZ_ASSERT(isLive()); return *mem.addr(); }
+    NonConstT& getMutable() { MOZ_ASSERT(isLive()); return *mem.addr(); }
 
     bool isFree() const    { return keyHash == sFreeKey; }
     void clearLive()       { MOZ_ASSERT(isLive()); keyHash = sFreeKey; mem.addr()->~T(); }
@@ -980,6 +992,16 @@ class HashTable : private AllocPolicy
 #endif
         }
 
+        NonConstT& mutableFront() {
+            MOZ_ASSERT(!this->empty());
+#ifdef JS_DEBUG
+            MOZ_ASSERT(this->validEntry);
+            MOZ_ASSERT(this->generation == this->Range::table_->generation());
+            MOZ_ASSERT(this->mutationCount == this->Range::table_->mutationCount);
+#endif
+            return this->cur->getMutable();
+        }
+
         // Removes the |front()| element and re-inserts it into the table with
         // a new key at the new Lookup position.  |front()| is invalid after
         // this operation until the next call to |popFront()|.
@@ -1102,11 +1124,24 @@ class HashTable : private AllocPolicy
         return keyHash & ~sCollisionBit;
     }
 
-    static Entry* createTable(AllocPolicy& alloc, uint32_t capacity)
+    enum FailureBehavior { DontReportFailure = false, ReportFailure = true };
+
+    static Entry* createTable(AllocPolicy& alloc, uint32_t capacity,
+                              FailureBehavior reportFailure = ReportFailure)
     {
         static_assert(sFreeKey == 0,
                       "newly-calloc'd tables have to be considered empty");
-        return alloc.template pod_calloc<Entry>(capacity);
+        if (reportFailure)
+            return alloc.template pod_calloc<Entry>(capacity);
+
+        return alloc.template maybe_pod_calloc<Entry>(capacity);
+    }
+
+    static Entry* maybeCreateTable(AllocPolicy& alloc, uint32_t capacity)
+    {
+        static_assert(sFreeKey == 0,
+                      "newly-calloc'd tables have to be considered empty");
+        return alloc.template maybe_pod_calloc<Entry>(capacity);
     }
 
     static void destroyTable(AllocPolicy& alloc, Entry* oldTable, uint32_t capacity)
@@ -1345,7 +1380,7 @@ class HashTable : private AllocPolicy
 
     enum RebuildStatus { NotOverloaded, Rehashed, RehashFailed };
 
-    RebuildStatus changeTableSize(int deltaLog2)
+    RebuildStatus changeTableSize(int deltaLog2, FailureBehavior reportFailure = ReportFailure)
     {
         // Look, but don't touch, until we succeed in getting new entry store.
         Entry* oldTable = table;
@@ -1353,11 +1388,12 @@ class HashTable : private AllocPolicy
         uint32_t newLog2 = sHashBits - hashShift + deltaLog2;
         uint32_t newCapacity = JS_BIT(newLog2);
         if (MOZ_UNLIKELY(newCapacity > sMaxCapacity)) {
-            this->reportAllocOverflow();
+            if (reportFailure)
+                this->reportAllocOverflow();
             return RehashFailed;
         }
 
-        Entry* newTable = createTable(*this, newCapacity);
+        Entry* newTable = createTable(*this, newCapacity, reportFailure);
         if (!newTable)
             return RehashFailed;
 
@@ -1383,14 +1419,19 @@ class HashTable : private AllocPolicy
         return Rehashed;
     }
 
-    RebuildStatus checkOverloaded()
+    bool shouldCompressTable()
+    {
+        // Compress if a quarter or more of all entries are removed.
+        return removedCount >= (capacity() >> 2);
+    }
+
+    RebuildStatus checkOverloaded(FailureBehavior reportFailure = ReportFailure)
     {
         if (!overloaded())
             return NotOverloaded;
 
-        // Compress if a quarter or more of all entries are removed.
         int deltaLog2;
-        if (removedCount >= (capacity() >> 2)) {
+        if (shouldCompressTable()) {
             METER(stats.compresses++);
             deltaLog2 = 0;
         } else {
@@ -1398,14 +1439,14 @@ class HashTable : private AllocPolicy
             deltaLog2 = 1;
         }
 
-        return changeTableSize(deltaLog2);
+        return changeTableSize(deltaLog2, reportFailure);
     }
 
     // Infallibly rehash the table if we are overloaded with removals.
     void checkOverRemoved()
     {
         if (overloaded()) {
-            if (checkOverloaded() == RehashFailed)
+            if (checkOverloaded(DontReportFailure) == RehashFailed)
                 rehashTableInPlace();
         }
     }
@@ -1432,7 +1473,7 @@ class HashTable : private AllocPolicy
     {
         if (underloaded()) {
             METER(stats.shrinks++);
-            (void) changeTableSize(-1);
+            (void) changeTableSize(-1, DontReportFailure);
         }
     }
 
@@ -1448,9 +1489,8 @@ class HashTable : private AllocPolicy
             resizeLog2--;
         }
 
-        if (resizeLog2 != 0) {
-            changeTableSize(resizeLog2);
-        }
+        if (resizeLog2 != 0)
+            (void) changeTableSize(resizeLog2, DontReportFailure);
     }
 
     // This is identical to changeTableSize(currentSize), but without requiring
@@ -1605,6 +1645,8 @@ class HashTable : private AllocPolicy
         // Changing an entry from removed to live does not affect whether we
         // are overloaded and can be handled separately.
         if (p.entry_->isRemoved()) {
+            if (!this->checkSimulatedOOM())
+                return false;
             METER(stats.addOverRemoved++);
             removedCount--;
             p.keyHash |= sCollisionBit;
@@ -1612,6 +1654,8 @@ class HashTable : private AllocPolicy
             // Preserve the validity of |p.entry_|.
             RebuildStatus status = checkOverloaded();
             if (status == RehashFailed)
+                return false;
+            if (!this->checkSimulatedOOM())
                 return false;
             if (status == Rehashed)
                 p.entry_ = &findFreeEntry(p.keyHash);
@@ -1636,6 +1680,7 @@ class HashTable : private AllocPolicy
 
         HashNumber keyHash = prepareHash(l);
         Entry* entry = &findFreeEntry(keyHash);
+        MOZ_ASSERT(entry);
 
         if (entry->isRemoved()) {
             METER(stats.addOverRemoved++);
@@ -1655,6 +1700,9 @@ class HashTable : private AllocPolicy
     template <typename... Args>
     bool putNew(const Lookup& l, Args&&... args)
     {
+        if (!this->checkSimulatedOOM())
+            return false;
+
         if (checkOverloaded() == RehashFailed)
             return false;
 

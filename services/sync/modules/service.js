@@ -4,10 +4,10 @@
 
 this.EXPORTED_SYMBOLS = ["Service"];
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 // How long before refreshing the cluster
 const CLUSTER_BACKOFF = 5 * 60 * 1000; // 5 minutes
@@ -79,7 +79,9 @@ Sync11Service.prototype = {
   metaURL: null,
   cryptoKeyURL: null,
 
-  get serverURL() Svc.Prefs.get("serverURL"),
+  get serverURL() {
+    return Svc.Prefs.get("serverURL");
+  },
   set serverURL(value) {
     if (!value.endsWith("/")) {
       value += "/";
@@ -94,7 +96,9 @@ Sync11Service.prototype = {
     Svc.Prefs.reset("clusterURL");
   },
 
-  get clusterURL() Svc.Prefs.get("clusterURL", ""),
+  get clusterURL() {
+    return Svc.Prefs.get("clusterURL", "");
+  },
   set clusterURL(value) {
     Svc.Prefs.set("clusterURL", value);
     this._updateCachedURLs();
@@ -765,8 +769,12 @@ Sync11Service.prototype = {
             return this.verifyLogin(false);
           }
 
-          // We must have the right cluster, but the server doesn't expect us
-          this.status.login = LOGIN_FAILED_LOGIN_REJECTED;
+          // We must have the right cluster, but the server doesn't expect us.
+          // The implications of this depend on the identity being used - for
+          // the legacy identity, it's an authoritatively "incorrect password",
+          // (ie, LOGIN_FAILED_LOGIN_REJECTED) but for FxA it probably means
+          // "transient error fetching auth token".
+          this.status.login = this.identity.loginStatusFromVerification404();
           return false;
 
         default:
@@ -990,6 +998,7 @@ Sync11Service.prototype = {
       }
 
       // Ask the identity manager to explicitly login now.
+      this._log.info("Logging in the user.");
       let cb = Async.makeSpinningCallback();
       this.identity.ensureLoggedIn().then(
         () => cb(null),
@@ -1005,9 +1014,9 @@ Sync11Service.prototype = {
           && (username || password || passphrase)) {
         Svc.Obs.notify("weave:service:setup-complete");
       }
-      this._log.info("Logging in the user.");
       this._updateCachedURLs();
 
+      this._log.info("User logged in successfully - verifying login.");
       if (!this.verifyLogin()) {
         // verifyLogin sets the failure states here.
         throw "Login failed: " + this.status.login;

@@ -376,6 +376,7 @@ class NameResolver
           case PNK_EXPORT_BATCH_SPEC:
           case PNK_FRESHENBLOCK:
           case PNK_OBJECT_PROPERTY_NAME:
+          case PNK_POSHOLDER:
             MOZ_ASSERT(cur->isArity(PN_NULLARY));
             break;
 
@@ -500,18 +501,11 @@ class NameResolver
             break;
 
           case PNK_RETURN:
-            MOZ_ASSERT(cur->isArity(PN_BINARY));
-            if (ParseNode* returnValue = cur->pn_left) {
+            MOZ_ASSERT(cur->isArity(PN_UNARY));
+            if (ParseNode* returnValue = cur->pn_kid) {
                 if (!resolve(returnValue, prefix))
                     return false;
             }
-#ifdef DEBUG
-            if (ParseNode* internalAssignForGenerators = cur->pn_right) {
-                MOZ_ASSERT(internalAssignForGenerators->isKind(PNK_NAME));
-                MOZ_ASSERT(internalAssignForGenerators->pn_atom == cx->names().dotGenRVal);
-                MOZ_ASSERT(internalAssignForGenerators->isAssigned());
-            }
-#endif
             break;
 
           case PNK_IMPORT:
@@ -673,6 +667,7 @@ class NameResolver
           case PNK_COMMA:
           case PNK_NEW:
           case PNK_CALL:
+          case PNK_SUPERCALL:
           case PNK_GENEXP:
           case PNK_ARRAY:
           case PNK_STATEMENTLIST:
@@ -682,7 +677,6 @@ class NameResolver
           case PNK_VAR:
           case PNK_CONST:
           case PNK_LET:
-          case PNK_GLOBALCONST:
             MOZ_ASSERT(cur->isArity(PN_LIST));
             for (ParseNode* element = cur->pn_head; element; element = element->pn_next) {
                 if (!resolve(element, prefix))
@@ -797,7 +791,6 @@ class NameResolver
           case PNK_EXPORT_SPEC: // by PNK_EXPORT_SPEC_LIST
           case PNK_CALLSITEOBJ: // by PNK_TAGGED_TEMPLATE
           case PNK_CLASSNAMES:  // by PNK_CLASS
-          case PNK_POSHOLDER:   // by PNK_NEWTARGET, PNK_DOT
             MOZ_CRASH("should have been handled by a parent node");
 
           case PNK_LIMIT: // invalid sentinel value

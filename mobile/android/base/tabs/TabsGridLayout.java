@@ -51,6 +51,7 @@ import java.util.List;
 class TabsGridLayout extends GridView
                      implements TabsLayout,
                                 Tabs.OnTabsChangedListener {
+
     private static final String LOGTAG = "Gecko" + TabsGridLayout.class.getSimpleName();
 
     public static final int ANIM_DELAY_MULTIPLE_MS = 20;
@@ -85,6 +86,8 @@ class TabsGridLayout extends GridView
         // The clipToPadding setting in the styles.xml doesn't seem to be working (bug 1101784)
         // so lets set it manually in code for the moment as it's needed for the padding animation
         setClipToPadding(false);
+
+        setVerticalFadingEdgeEnabled(false);
 
         final Resources resources = getResources();
         columnWidth = resources.getDimensionPixelSize(R.dimen.tab_panel_column_width);
@@ -170,9 +173,15 @@ class TabsGridLayout extends GridView
         Tabs.registerOnTabsChangedListener(this);
         refreshTabsData();
 
-        Tab currentlySelectedTab = Tabs.getInstance().getSelectedTab();
-        if (lastSelectedTabId != currentlySelectedTab.getId()) {
-            smoothScrollToPosition(tabsAdapter.getPositionForTab(currentlySelectedTab));
+        final Tab currentlySelectedTab = Tabs.getInstance().getSelectedTab();
+        final int position =  currentlySelectedTab != null ? tabsAdapter.getPositionForTab(currentlySelectedTab) : -1;
+        if (position != -1) {
+            final boolean selectionChanged = lastSelectedTabId != currentlySelectedTab.getId();
+            final boolean positionIsVisible = position >= getFirstVisiblePosition() && position <= getLastVisiblePosition();
+
+            if (selectionChanged || !positionIsVisible) {
+                smoothScrollToPosition(position);
+            }
         }
     }
 
@@ -198,8 +207,11 @@ class TabsGridLayout extends GridView
     public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
         switch (msg) {
             case ADDED:
-                // Refresh the list to make sure the new tab is added in the right position.
-                refreshTabsData();
+                // Refresh only if panel is shown. show() will call refreshTabsData() later again.
+                if (tabsPanel.isShown()) {
+                    // Refresh the list to make sure the new tab is added in the right position.
+                    refreshTabsData();
+                }
                 break;
 
             case CLOSED:
@@ -266,15 +278,26 @@ class TabsGridLayout extends GridView
      *
      * @param selected position of the selected tab
      */
-    private void updateSelectedStyle(int selected) {
-        for (int i = 0; i < tabsAdapter.getCount(); i++) {
-            // setItemChecked doesn't exist until API 11, despite what the API docs say!
-            if (AppConstants.Versions.feature11Plus) {
-                setItemChecked(i, (i == selected));
-            } else {
-                setSelection(i);
+    private void updateSelectedStyle(final int selected) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                final int displayCount = tabsAdapter.getCount();
+
+                for (int i = 0; i < displayCount; i++) {
+                    final Tab tab = tabsAdapter.getItem(i);
+                    final boolean checked = displayCount == 1 || i == selected;
+                    final View tabView = getViewForTab(tab);
+                    if (tabView != null) {
+                        ((TabsLayoutItemView) tabView).setChecked(checked);
+                    }
+                    // setItemChecked doesn't exist until API 11, despite what the API docs say!
+                    if (AppConstants.Versions.feature11Plus) {
+                        setItemChecked(i, checked);
+                    }
+                }
             }
-        }
+        });
     }
 
     private void refreshTabsData() {
@@ -325,6 +348,10 @@ class TabsGridLayout extends GridView
     }
 
     void closeTab(View v) {
+        if (tabsAdapter.getCount() == 1) {
+            autoHidePanel();
+        }
+
         TabsLayoutItemView itemView = (TabsLayoutItemView) v.getTag();
         Tab tab = Tabs.getInstance().getTab(itemView.getTabId());
 

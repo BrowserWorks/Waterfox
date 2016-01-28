@@ -45,29 +45,44 @@ Http2CheckListener.prototype = {
   onDataAvailableFired: false,
   isHttp2Connection: false,
   shouldBeHttp2 : true,
+  accum : 0,
+  expected: -1,
+  shouldSucceed: true,
 
   onStartRequest: function testOnStartRequest(request, ctx) {
     this.onStartRequestFired = true;
-    if (!Components.isSuccessCode(request.status))
+    if (this.shouldSucceed && !Components.isSuccessCode(request.status)) {
       do_throw("Channel should have a success code! (" + request.status + ")");
+    } else if (!this.shouldSucceed && Components.isSuccessCode(request.status)) {
+      do_throw("Channel succeeded unexpectedly!");
+    }
 
     do_check_true(request instanceof Components.interfaces.nsIHttpChannel);
-    do_check_eq(request.responseStatus, 200);
-    do_check_eq(request.requestSucceeded, true);
+    do_check_eq(request.requestSucceeded, this.shouldSucceed);
+    if (this.shouldSucceed) {
+      do_check_eq(request.responseStatus, 200);
+    }
   },
 
   onDataAvailable: function testOnDataAvailable(request, ctx, stream, off, cnt) {
     this.onDataAvailableFired = true;
     this.isHttp2Connection = checkIsHttp2(request);
-
+    this.accum += cnt;
     read_stream(stream, cnt);
   },
 
   onStopRequest: function testOnStopRequest(request, ctx, status) {
     do_check_true(this.onStartRequestFired);
-    do_check_true(Components.isSuccessCode(status));
-    do_check_true(this.onDataAvailableFired);
-    do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+    if (this.expected != -1) {
+      do_check_eq(this.accum, this.expected);
+    }
+    if (this.shouldSucceed) {
+      do_check_true(Components.isSuccessCode(status));
+      do_check_true(this.onDataAvailableFired);
+      do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+    } else {
+      do_check_false(Components.isSuccessCode(status));
+    }
 
     run_next_test();
     do_test_finished();
@@ -279,6 +294,62 @@ function makeChan(url) {
                              Ci.nsIContentPolicy.TYPE_OTHER).QueryInterface(Ci.nsIHttpChannel);
 
   return chan;
+}
+
+var ResumeStalledChannelListener = function() {};
+
+ResumeStalledChannelListener.prototype = {
+  onStartRequestFired: false,
+  onDataAvailableFired: false,
+  isHttp2Connection: false,
+  shouldBeHttp2 : true,
+  resumable : null,
+
+  onStartRequest: function testOnStartRequest(request, ctx) {
+    this.onStartRequestFired = true;
+    if (!Components.isSuccessCode(request.status))
+      do_throw("Channel should have a success code! (" + request.status + ")");
+
+    do_check_true(request instanceof Components.interfaces.nsIHttpChannel);
+    do_check_eq(request.responseStatus, 200);
+    do_check_eq(request.requestSucceeded, true);
+  },
+
+  onDataAvailable: function testOnDataAvailable(request, ctx, stream, off, cnt) {
+    this.onDataAvailableFired = true;
+    this.isHttp2Connection = checkIsHttp2(request);
+    read_stream(stream, cnt);
+  },
+
+  onStopRequest: function testOnStopRequest(request, ctx, status) {
+    do_check_true(this.onStartRequestFired);
+    do_check_true(Components.isSuccessCode(status));
+    do_check_true(this.onDataAvailableFired);
+    do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+    this.resumable.resume();
+  }
+};
+
+// test a large download that creates stream flow control and
+// confirm we can do another independent stream while the download
+// stream is stuck
+function test_http2_blocking_download() {
+  var chan = makeChan("https://localhost:" + serverPort + "/bigdownload");
+  var internalChannel = chan.QueryInterface(Ci.nsIHttpChannelInternal);
+  internalChannel.initialRwin = 500000; // make the stream.suspend push back in h2
+  var listener = new Http2CheckListener();
+  listener.expected = 3 * 1024 * 1024;
+  chan.asyncOpen(listener, null);
+  chan.suspend();
+  // wait 5 seconds so that stream flow control kicks in and then see if we
+  // can do a basic transaction (i.e. session not blocked). afterwards resume
+  // channel
+  do_timeout(5000, function() {
+      var simpleChannel = makeChan("https://localhost:" + serverPort + "/");
+      var sl = new ResumeStalledChannelListener();
+      sl.resumable = chan;
+      simpleChannel.asyncOpen(sl, null);
+  });
 }
 
 // Make sure we make a HTTP2 connection and both us and the server mark it as such
@@ -743,6 +814,57 @@ function test_http2_continuations() {
   chan.asyncOpen(listener, chan);
 }
 
+function Http2IllegalHpackValidationListener() { }
+Http2IllegalHpackValidationListener.prototype = new Http2CheckListener();
+Http2IllegalHpackValidationListener.prototype.shouldGoAway = false;
+
+Http2IllegalHpackValidationListener.prototype.onStopRequest = function (request, ctx, status) {
+  var wentAway = (request.getResponseHeader('X-Did-Goaway') === 'yes');
+  do_check_eq(wentAway, this.shouldGoAway);
+
+  do_check_true(this.onStartRequestFired);
+  do_check_true(this.onDataAvailableFired);
+  do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+
+  run_next_test();
+  do_test_finished();
+};
+
+function Http2IllegalHpackListener() { }
+Http2IllegalHpackListener.prototype = new Http2CheckListener();
+Http2IllegalHpackListener.prototype.shouldGoAway = false;
+
+Http2IllegalHpackListener.prototype.onStopRequest = function (request, ctx, status) {
+  var chan = makeChan("https://localhost:" + serverPort + "/illegalhpack_validate");
+  var listener = new Http2IllegalHpackValidationListener();
+  listener.shouldGoAway = this.shouldGoAway;
+  chan.asyncOpen(listener, null);
+};
+
+function test_http2_illegalhpacksoft() {
+  var chan = makeChan("https://localhost:" + serverPort + "/illegalhpacksoft");
+  var listener = new Http2IllegalHpackListener();
+  listener.shouldGoAway = false;
+  listener.shouldSucceed = false;
+  chan.asyncOpen(listener, null);
+}
+
+function test_http2_illegalhpackhard() {
+  var chan = makeChan("https://localhost:" + serverPort + "/illegalhpackhard");
+  var listener = new Http2IllegalHpackListener();
+  listener.shouldGoAway = true;
+  listener.shouldSucceed = false;
+  chan.asyncOpen(listener, null);
+}
+
+function test_http2_folded_header() {
+  var chan = makeChan("https://localhost:" + serverPort + "/foldedheader");
+  chan.loadGroup = loadGroup;
+  var listener = new Http2CheckListener();
+  listener.shouldSucceed = false;
+  chan.asyncOpen(listener, null);
+}
+
 function test_complete() {
   resetPrefs();
   do_test_pending();
@@ -781,6 +903,10 @@ var tests = [ test_http2_post_big
             , test_http2_patch
             , test_http2_pushapi_1
             , test_http2_continuations
+            , test_http2_blocking_download
+            , test_http2_illegalhpacksoft
+            , test_http2_illegalhpackhard
+            , test_http2_folded_header
             // Add new tests above here - best to add new tests before h1
             // streams get too involved
             // These next two must always come in this order
@@ -796,6 +922,7 @@ var current_test = 0;
 
 function run_next_test() {
   if (current_test < tests.length) {
+    dump("starting test number " + current_test + "\n");
     tests[current_test]();
     current_test++;
     do_test_pending();
@@ -879,7 +1006,7 @@ function resetPrefs() {
 
 function run_test() {
   var env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
-  serverPort = env.get("MOZHTTP2-PORT");
+  serverPort = env.get("MOZHTTP2_PORT");
   do_check_neq(serverPort, null);
   dump("using port " + serverPort + "\n");
 

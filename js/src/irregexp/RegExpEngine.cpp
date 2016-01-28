@@ -997,7 +997,9 @@ ChoiceNode::FilterASCII(int depth, bool ignore_case)
             alternatives()[i].node()->FilterASCII(depth - 1, ignore_case);
         if (replacement != nullptr) {
             alternatives()[i].set_node(replacement);
-            new_alternatives.append(alternatives()[i]);
+            AutoEnterOOMUnsafeRegion oomUnsafe;
+            if (!new_alternatives.append(alternatives()[i]))
+                oomUnsafe.crash("ChoiceNode::FilterASCII");
         }
     }
 
@@ -1509,8 +1511,9 @@ class irregexp::RegExpCompiler
                         int capture_count);
 
     inline void AddWork(RegExpNode* node) {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
         if (!work_list_.append(node))
-            CrashAtUnhandlableOOM("AddWork");
+            oomUnsafe.crash("AddWork");
     }
 
     static const int kImplementationOffset = 0;
@@ -1650,7 +1653,7 @@ IsNativeRegExpEnabled(JSContext* cx)
 RegExpCode
 irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData* data,
                          HandleLinearString sample, bool is_global, bool ignore_case,
-                         bool is_ascii, bool match_only, bool force_bytecode)
+                         bool is_ascii, bool match_only, bool force_bytecode, bool sticky)
 {
     if ((data->capture_count + 1) * 2 - 1 > RegExpMacroAssembler::kMaxRegister) {
         JS_ReportError(cx, "regexp too big");
@@ -1676,7 +1679,7 @@ irregexp::CompilePattern(JSContext* cx, RegExpShared* shared, RegExpCompileData*
                                                       compiler.accept());
     RegExpNode* node = captured_body;
     bool is_end_anchored = data->tree->IsAnchoredAtEnd();
-    bool is_start_anchored = data->tree->IsAnchoredAtStart();
+    bool is_start_anchored = sticky || data->tree->IsAnchoredAtStart();
     int max_length = data->tree->max_match();
     if (!is_start_anchored) {
         // Add a .*? at the beginning, outside the body capture, unless
@@ -2394,9 +2397,13 @@ BoyerMooreLookahead::EmitSkipInstructions(RegExpMacroAssembler* masm)
         return true;
     }
 
-    uint8_t* boolean_skip_table = static_cast<uint8_t*>(js_malloc(kSize));
-    if (!boolean_skip_table || !masm->shared->addTable(boolean_skip_table))
-        CrashAtUnhandlableOOM("Table malloc");
+    uint8_t* boolean_skip_table;
+    {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        boolean_skip_table = static_cast<uint8_t*>(js_malloc(kSize));
+        if (!boolean_skip_table || !masm->shared->addTable(boolean_skip_table))
+            oomUnsafe.crash("Table malloc");
+    }
 
     int skip_distance = GetSkipTable(min_lookahead, max_lookahead, boolean_skip_table);
     MOZ_ASSERT(skip_distance != 0);
@@ -3101,9 +3108,13 @@ EmitUseLookupTable(RegExpMacroAssembler* masm,
     }
 
     // TODO(erikcorry): Cache these.
-    uint8_t* ba = static_cast<uint8_t*>(js_malloc(kSize));
-    if (!ba || !masm->shared->addTable(ba))
-        CrashAtUnhandlableOOM("Table malloc");
+    uint8_t* ba;
+    {
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        ba = static_cast<uint8_t*>(js_malloc(kSize));
+        if (!ba || !masm->shared->addTable(ba))
+            oomUnsafe.crash("Table malloc");
+    }
 
     for (int i = 0; i < kSize; i++)
         ba[i] = templ[i];

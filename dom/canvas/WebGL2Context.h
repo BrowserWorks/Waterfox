@@ -24,6 +24,7 @@ class WebGLVertexArrayObject;
 namespace dom {
 class OwningUnsignedLongOrUint32ArrayOrBoolean;
 class OwningWebGLBufferOrLongLong;
+class ArrayBufferViewOrSharedArrayBufferView;
 } // namespace dom
 
 class WebGL2Context
@@ -51,8 +52,16 @@ public:
 
     void CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
                            GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size);
+
+private:
+    template<typename BufferT>
+    void GetBufferSubDataT(GLenum target, GLintptr offset, const BufferT& data);
+
+public:
     void GetBufferSubData(GLenum target, GLintptr offset,
                           const dom::Nullable<dom::ArrayBuffer>& maybeData);
+    void GetBufferSubData(GLenum target, GLintptr offset,
+                          const dom::SharedArrayBuffer& data);
 
 
     // -------------------------------------------------------------------------
@@ -62,6 +71,11 @@ public:
                          GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                          GLbitfield mask, GLenum filter);
     void FramebufferTextureLayer(GLenum target, GLenum attachment, WebGLTexture* texture, GLint level, GLint layer);
+
+    virtual JS::Value GetFramebufferAttachmentParameter(JSContext* cx, GLenum target,
+                                                        GLenum attachment, GLenum pname,
+                                                        ErrorResult& rv) override;
+
     void InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>& attachments,
                                ErrorResult& rv);
     void InvalidateSubFramebuffer (GLenum target, const dom::Sequence<GLenum>& attachments, GLint x, GLint y,
@@ -88,12 +102,12 @@ public:
     void TexImage3D(GLenum target, GLint level, GLenum internalformat,
                     GLsizei width, GLsizei height, GLsizei depth,
                     GLint border, GLenum format, GLenum type,
-                    const dom::Nullable<dom::ArrayBufferView>& pixels,
+                    const dom::Nullable<dom::ArrayBufferViewOrSharedArrayBufferView>& pixels,
                     ErrorResult& rv);
     void TexSubImage3D(GLenum target, GLint level,
                        GLint xoffset, GLint yoffset, GLint zoffset,
                        GLsizei width, GLsizei height, GLsizei depth,
-                       GLenum format, GLenum type, const dom::Nullable<dom::ArrayBufferView>& pixels,
+                       GLenum format, GLenum type, const dom::Nullable<dom::ArrayBufferViewOrSharedArrayBufferView>& pixels,
                        ErrorResult& rv);
     void TexSubImage3D(GLenum target, GLint level,
                        GLint xoffset, GLint yoffset, GLint zoffset,
@@ -109,10 +123,10 @@ public:
                            GLint x, GLint y, GLsizei width, GLsizei height);
     void CompressedTexImage3D(GLenum target, GLint level, GLenum internalformat,
                               GLsizei width, GLsizei height, GLsizei depth,
-                              GLint border, GLsizei imageSize, const dom::ArrayBufferView& data);
+                              GLint border, GLsizei imageSize, const dom::ArrayBufferViewOrSharedArrayBufferView& data);
     void CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
                                  GLsizei width, GLsizei height, GLsizei depth,
-                                 GLenum format, GLsizei imageSize, const dom::ArrayBufferView& data);
+                                 GLenum format, GLsizei imageSize, const dom::ArrayBufferViewOrSharedArrayBufferView& data);
 
 
     // -------------------------------------------------------------------------

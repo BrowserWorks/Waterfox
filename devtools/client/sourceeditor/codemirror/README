@@ -1,0 +1,109 @@
+This is the CodeMirror editor packaged for the Mozilla Project. CodeMirror
+is a JavaScript component that provides a code editor in the browser. When
+a mode is available for the language you are coding in, it will color your
+code, and optionally help with indentation.
+
+# Upgrade
+
+Currently used version is 5.7.0. To upgrade, download a new version of
+CodeMirror from the project's page [1] and replace all JavaScript and
+CSS files inside the codemirror directory [2].
+
+To confirm the functionality run mochitests for the following components:
+
+ * sourceeditor
+ * scratchpad
+ * debugger
+ * styleditor
+ * netmonitor
+
+The sourceeditor component contains imported CodeMirror tests [3].
+
+ * Some tests were commented out because we don't use that functionality
+   within Firefox (for example Ruby editing mode). Be careful when updating
+   files test/codemirror.html and test/vimemacs.html; they were modified to
+   co-exist with Mozilla's testing infrastructure. Basically, vimemacs.html
+   is a copy of codemirror.html but only with VIM and Emacs mode tests
+   enabled.
+ * In cm_comment_test.js comment out fallbackToBlock and fallbackToLine
+   tests.
+ * The search addon (search.js) was slightly modified to make search
+   UI localizable (see patch below).
+
+Other than that, we don't have any Mozilla-specific patches applied to
+CodeMirror itself.
+
+# Addons
+
+To install a new CodeMirror addon add it to the codemirror directory,
+jar.mn [4] file and editor.js [5]. Also, add it to the License section
+below.
+
+# License
+
+The following files in this directory and devtools/client/sourceeditor/test/codemirror/
+are licensed according to the contents in the LICENSE file.
+
+# Localization patches
+
+diff --git a/devtools/client/sourceeditor/codemirror/addon/search/search.js b/devtools/client/sourceeditor/codemirror/addon/search/search.js
+--- a/devtools/client/sourceeditor/codemirror/addon/search/search.js
++++ b/devtools/client/sourceeditor/codemirror/addon/search/search.js
+@@ -92,32 +92,47 @@
+     } else {
+       query = parseString(query)
+     }
+     if (typeof query == "string" ? query == "" : query.test(""))
+       query = /x^/;
+     return query;
+   }
+
+-  var queryDialog =
+-    'Search: <input type="text" style="width: 10em" class="CodeMirror-search-field"/> <span style="color: #888" class="CodeMirror-search-hint">(Use /re/ syntax for regexp search)</span>';
++  var queryDialog;
+
+   function startSearch(cm, state, query) {
+     state.queryText = query;
+     state.query = parseQuery(query);
+     cm.removeOverlay(state.overlay, queryCaseInsensitive(state.query));
+     state.overlay = searchOverlay(state.query, queryCaseInsensitive(state.query));
+     cm.addOverlay(state.overlay);
+     if (cm.showMatchesOnScrollbar) {
+       if (state.annotate) { state.annotate.clear(); state.annotate = null; }
+       state.annotate = cm.showMatchesOnScrollbar(state.query, queryCaseInsensitive(state.query));
+     }
+   }
+
+   function doSearch(cm, rev, persistent) {
++    if (!queryDialog) {
++      let doc = cm.getWrapperElement().ownerDocument;
++      let inp = doc.createElement("input");
++
++      inp.type = "search";
++      inp.placeholder = cm.l10n("findCmd.promptMessage");
++      inp.style.MozMarginStart = "1em";
++      inp.style.MozMarginEnd = "1em";
++      inp.style.flexGrow = "1";
++      inp.addEventListener("focus", () => inp.select());
++
++      queryDialog = doc.createElement("div");
++      queryDialog.appendChild(inp);
++      queryDialog.style.display = "flex";
++    }
++
+     var state = getSearchState(cm);
+     if (state.query) return findNext(cm, rev);
+     var q = cm.getSelection() || state.lastQuery;
+     if (persistent && cm.openDialog) {
+       var hiding = null
+       persistentDialog(cm, queryDialog, q, function(query, event) {
+         CodeMirror.e_stop(event);
+         if (!query) return;
+
+# Footnotes
+
+[1] http://codemirror.net
+[2] devtools/client/sourceeditor/codemirror
+[3] devtools/client/sourceeditor/test/browser_codemirror.js
+[4] devtools/client/jar.mn
+[5] devtools/client/sourceeditor/editor.js

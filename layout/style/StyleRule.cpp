@@ -286,6 +286,19 @@ nsAttrSelector::~nsAttrSelector(void)
   NS_CSS_DELETE_LIST_MEMBER(nsAttrSelector, this, mNext);
 }
 
+size_t
+nsAttrSelector::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+  size_t n = 0;
+  const nsAttrSelector* p = this;
+  while (p) {
+    n += aMallocSizeOf(p);
+    n += p->mValue.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+    p = p->mNext;
+  }
+  return n;
+}
+
 // -- nsCSSSelector -------------------------------
 
 nsCSSSelector::nsCSSSelector(void)
@@ -924,11 +937,8 @@ nsCSSSelector::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
     MEASURE(s->mClassList);
     MEASURE(s->mPseudoClassList);
     MEASURE(s->mNegations);
+    MEASURE(s->mAttrList);
 
-    // Measurement of the following members may be added later if DMD finds it is
-    // worthwhile:
-    // - s->mAttrList
-    //
     // The following members aren't measured:
     // - s->mLowercaseTag, because it's an atom and therefore shared
     // - s->mCasedTag, because it's an atom and therefore shared
@@ -1234,7 +1244,7 @@ DOMCSSDeclarationImpl::SetCSSDeclaration(css::Declaration* aDecl)
 
   mozAutoDocUpdate updateBatch(owningDoc, UPDATE_STYLE, true);
 
-  nsRefPtr<css::StyleRule> oldRule = mRule;
+  RefPtr<css::StyleRule> oldRule = mRule;
   mRule = oldRule->DeclarationChanged(aDecl, true).take();
   if (!mRule)
     return NS_ERROR_OUT_OF_MEMORY;
@@ -1492,7 +1502,7 @@ StyleRule::GetType() const
 /* virtual */ already_AddRefed<Rule>
 StyleRule::Clone() const
 {
-  nsRefPtr<Rule> clone = new StyleRule(*this);
+  RefPtr<Rule> clone = new StyleRule(*this);
   return clone.forget();
 }
 
@@ -1521,7 +1531,7 @@ StyleRule::GetExistingDOMRule()
 StyleRule::DeclarationChanged(Declaration* aDecl,
                               bool aHandleContainer)
 {
-  nsRefPtr<StyleRule> clone = new StyleRule(*this, aDecl);
+  RefPtr<StyleRule> clone = new StyleRule(*this, aDecl);
 
   if (aHandleContainer) {
     CSSStyleSheet* sheet = GetStyleSheet();

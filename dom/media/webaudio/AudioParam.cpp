@@ -28,36 +28,26 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(AudioParam)
 
 NS_IMPL_CYCLE_COLLECTING_NATIVE_ADDREF(AudioParam)
-
-NS_IMETHODIMP_(MozExternalRefCountType)
-AudioParam::Release()
-{
-  if (mRefCnt.get() == 1) {
-    // We are about to be deleted, disconnect the object from the graph before
-    // the derived type is destroyed.
-    DisconnectFromGraphAndDestroyStream();
-  }
-  NS_IMPL_CC_NATIVE_RELEASE_BODY(AudioParam)
-}
+NS_IMPL_CYCLE_COLLECTING_NATIVE_RELEASE(AudioParam)
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(AudioParam, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(AudioParam, Release)
 
 AudioParam::AudioParam(AudioNode* aNode,
-                       AudioParam::CallbackType aCallback,
+                       uint32_t aIndex,
                        float aDefaultValue,
                        const char* aName)
   : AudioParamTimeline(aDefaultValue)
   , mNode(aNode)
-  , mCallback(aCallback)
-  , mDefaultValue(aDefaultValue)
   , mName(aName)
+  , mIndex(aIndex)
+  , mDefaultValue(aDefaultValue)
 {
 }
 
 AudioParam::~AudioParam()
 {
-  MOZ_ASSERT(mInputNodes.IsEmpty());
+  DisconnectFromGraphAndDestroyStream();
 }
 
 JSObject*
@@ -69,13 +59,13 @@ AudioParam::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 void
 AudioParam::DisconnectFromGraphAndDestroyStream()
 {
-  // Addref this temporarily so the refcount bumping below doesn't destroy us
-  // prematurely
-  nsRefPtr<AudioParam> kungFuDeathGrip = this;
+  MOZ_ASSERT(mRefCnt.get() > mInputNodes.Length(),
+             "Caller should be holding a reference or have called "
+             "mRefCnt.stabilizeForDeletion()");
 
   while (!mInputNodes.IsEmpty()) {
     uint32_t i = mInputNodes.Length() - 1;
-    nsRefPtr<AudioNode> input = mInputNodes[i].mInputNode;
+    RefPtr<AudioNode> input = mInputNodes[i].mInputNode;
     mInputNodes.RemoveElementAt(i);
     input->RemoveOutputParam(this);
   }
@@ -99,7 +89,7 @@ AudioParam::Stream()
   }
 
   AudioNodeEngine* engine = new AudioNodeEngine(nullptr);
-  nsRefPtr<AudioNodeStream> stream =
+  RefPtr<AudioNodeStream> stream =
     AudioNodeStream::Create(mNode->Context(), engine,
                             AudioNodeStream::NO_STREAM_FLAGS);
 
@@ -114,13 +104,24 @@ AudioParam::Stream()
   // Setup the AudioParam's stream as an input to the owner AudioNode's stream
   AudioNodeStream* nodeStream = mNode->GetStream();
   if (nodeStream) {
-    mNodeStreamPort = nodeStream->AllocateInputPort(mStream);
+    mNodeStreamPort =
+      nodeStream->AllocateInputPort(mStream, AudioNodeStream::AUDIO_TRACK);
   }
 
-  // Let the MSG's copy of AudioParamTimeline know about the change in the stream
-  mCallback(mNode);
+  // Send the stream to the timeline on the MSG side.
+  AudioTimelineEvent event(mStream);
+  SendEventToEngine(event);
 
   return mStream;
+}
+
+void
+AudioParam::SendEventToEngine(const AudioTimelineEvent& aEvent)
+{
+  AudioNodeStream* stream = mNode->GetStream();
+  if (stream) {
+    stream->SendTimelineEvent(mIndex, aEvent);
+  }
 }
 
 float

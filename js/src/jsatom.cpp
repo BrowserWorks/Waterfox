@@ -199,11 +199,9 @@ js::MarkAtoms(JSTracer* trc)
         if (!entry.isPinned())
             continue;
 
-        JSAtom* atom = entry.asPtr();
-        bool tagged = entry.isPinned();
+        JSAtom* atom = entry.asPtrUnbarriered();
         TraceRoot(trc, &atom, "interned_atom");
-        if (entry.asPtr() != atom)
-            e.rekeyFront(AtomHasher::Lookup(atom), AtomStateEntry(atom, tagged));
+        MOZ_ASSERT(entry.asPtrUnbarriered() == atom);
     }
 }
 
@@ -252,7 +250,7 @@ JSRuntime::sweepAtoms()
 
     for (AtomSet::Enum e(*atoms_); !e.empty(); e.popFront()) {
         AtomStateEntry entry = e.front();
-        JSAtom* atom = entry.asPtr();
+        JSAtom* atom = entry.asPtrUnbarriered();
         bool isDying = IsAboutToBeFinalizedUnbarriered(&atom);
 
         /* Pinned or interned key cannot be finalized. */
@@ -498,7 +496,12 @@ js::ToAtom(ExclusiveContext* cx, typename MaybeRooted<Value, allowGC>::HandleTyp
     if (str->isAtom())
         return &str->asAtom();
 
-    return AtomizeString(cx, str);
+    JSAtom* atom = AtomizeString(cx, str);
+    if (!atom && !allowGC) {
+        MOZ_ASSERT_IF(cx->isJSContext(), cx->asJSContext()->isThrowingOutOfMemory());
+        cx->recoverFromOutOfMemory();
+    }
+    return atom;
 }
 
 template JSAtom*

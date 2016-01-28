@@ -84,7 +84,7 @@ public:
    * temporary results to aContext and then overpainting them with final
    * results, by using a temporary buffer when necessary. In BUFFERED
    * mode we always completely overwrite the contents of aContext's
-   * destination surface (within the clip region) using OPERATOR_SOURCE.
+   * destination surface (within the clip region) using OP_SOURCE.
    */
   void SetDefaultTarget(gfxContext* aContext);
   virtual void SetDefaultTargetConfiguration(BufferMode aDoubleBuffering, ScreenRotation aRotation);
@@ -182,11 +182,11 @@ protected:
   // buffers.
   nsIWidget* mWidget;
   // The default context for BeginTransaction.
-  nsRefPtr<gfxContext> mDefaultTarget;
+  RefPtr<gfxContext> mDefaultTarget;
   // The context to draw into.
-  nsRefPtr<gfxContext> mTarget;
+  RefPtr<gfxContext> mTarget;
   // Image factory we use.
-  nsRefPtr<ImageFactory> mFactory;
+  RefPtr<ImageFactory> mFactory;
 
   BufferMode mDoubleBuffering;
   BasicLayerManagerType mType;

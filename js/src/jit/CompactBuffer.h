@@ -125,7 +125,8 @@ class CompactBufferWriter
     }
     void writeByteAt(uint32_t pos, uint32_t byte) {
         MOZ_ASSERT(byte <= 0xFF);
-        buffer_[pos] = byte;
+        if (!oom())
+            buffer_[pos] = byte;
     }
     void writeUnsigned(uint32_t value) {
         do {
@@ -167,7 +168,7 @@ class CompactBufferWriter
     }
     void writeNativeEndianUint32_t(uint32_t value) {
         // Must be at 4-byte boundary
-        MOZ_ASSERT(length() % sizeof(uint32_t) == 0);
+        MOZ_ASSERT_IF(!oom(), length() % sizeof(uint32_t) == 0);
         writeFixedUint32_t(0);
         if (oom())
             return;
@@ -178,9 +179,11 @@ class CompactBufferWriter
         return buffer_.length();
     }
     uint8_t* buffer() {
+        MOZ_ASSERT(!oom());
         return &buffer_[0];
     }
     const uint8_t* buffer() const {
+        MOZ_ASSERT(!oom());
         return &buffer_[0];
     }
     bool oom() const {

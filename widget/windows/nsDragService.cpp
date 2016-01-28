@@ -170,18 +170,11 @@ nsDragService::CreateDragImage(nsIDOMNode *aDOMNode,
 }
 
 //-------------------------------------------------------------------------
-NS_IMETHODIMP
-nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
-                                 nsISupportsArray *anArrayTransferables,
-                                 nsIScriptableRegion *aRegion,
-                                 uint32_t aActionType)
+nsresult
+nsDragService::InvokeDragSessionImpl(nsISupportsArray* anArrayTransferables,
+                                     nsIScriptableRegion* aRegion,
+                                     uint32_t aActionType)
 {
-  nsresult rv = nsBaseDragService::InvokeDragSession(aDOMNode,
-                                                     anArrayTransferables,
-                                                     aRegion,
-                                                     aActionType);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // Try and get source URI of the items that are being dragged
   nsIURI *uri = nullptr;
 
@@ -191,7 +184,7 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
   }
 
   uint32_t numItemsToDrag = 0;
-  rv = anArrayTransferables->Count(&numItemsToDrag);
+  nsresult rv = anArrayTransferables->Count(&numItemsToDrag);
   if (!numItemsToDrag)
     return NS_ERROR_FAILURE;
 
@@ -202,7 +195,7 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
   // "collection" object to fake out the OS. This collection contains
   // one |IDataObject| for each transferable. If there is just the one
   // (most cases), only pass around the native |IDataObject|.
-  nsRefPtr<IDataObject> itemToDrag;
+  RefPtr<IDataObject> itemToDrag;
   if (numItemsToDrag > 1) {
     nsDataObjCollection * dataObjCollection = new nsDataObjCollection();
     if (!dataObjCollection)
@@ -214,8 +207,8 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
       nsCOMPtr<nsITransferable> trans(do_QueryInterface(supports));
       if (trans) {
         // set the requestingNode on the transferable
-        trans->SetRequestingNode(aDOMNode);
-        nsRefPtr<IDataObject> dataObj;
+        trans->SetRequestingNode(mSourceNode);
+        RefPtr<IDataObject> dataObj;
         rv = nsClipboard::CreateNativeDataObject(trans,
                                                  getter_AddRefs(dataObj), uri);
         NS_ENSURE_SUCCESS(rv, rv);
@@ -233,7 +226,7 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
     nsCOMPtr<nsITransferable> trans(do_QueryInterface(supports));
     if (trans) {
       // set the requestingNode on the transferable
-      trans->SetRequestingNode(aDOMNode);
+      trans->SetRequestingNode(mSourceNode);
       rv = nsClipboard::CreateNativeDataObject(trans,
                                                getter_AddRefs(itemToDrag),
                                                uri);
@@ -247,7 +240,7 @@ nsDragService::InvokeDragSession(nsIDOMNode *aDOMNode,
                                  CLSCTX_INPROC_SERVER,
                                  IID_IDragSourceHelper, (void**)&pdsh))) {
     SHDRAGIMAGE sdi;
-    if (CreateDragImage(aDOMNode, aRegion, &sdi)) {
+    if (CreateDragImage(mSourceNode, aRegion, &sdi)) {
       if (FAILED(pdsh->InitializeFromBitmap(&sdi, itemToDrag)))
         DeleteObject(sdi.hbmpDragImage);
     }
@@ -265,7 +258,7 @@ nsDragService::StartInvokingDragSession(IDataObject * aDataObj,
 {
   // To do the drag we need to create an object that
   // implements the IDataObject interface (for OLE)
-  nsRefPtr<nsNativeDragSource> nativeDragSrc =
+  RefPtr<nsNativeDragSource> nativeDragSrc =
     new nsNativeDragSource(mDataTransfer);
 
   // Now figure out what the native drag effect should be
@@ -290,7 +283,7 @@ nsDragService::StartInvokingDragSession(IDataObject * aDataObj,
   StartDragSession();
   OpenDragPopup();
 
-  nsRefPtr<IAsyncOperation> pAsyncOp;
+  RefPtr<IAsyncOperation> pAsyncOp;
   // Offer to do an async drag
   if (SUCCEEDED(aDataObj->QueryInterface(IID_IAsyncOperation,
                                          getter_AddRefs(pAsyncOp)))) {

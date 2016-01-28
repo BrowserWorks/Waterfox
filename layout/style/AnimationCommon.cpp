@@ -53,7 +53,6 @@ IsGeometricProperty(nsCSSProperty aProperty)
 
 CommonAnimationManager::CommonAnimationManager(nsPresContext *aPresContext)
   : mPresContext(aPresContext)
-  , mIsObservingRefreshDriver(false)
 {
 }
 
@@ -74,14 +73,6 @@ CommonAnimationManager::Disconnect()
 void
 CommonAnimationManager::AddElementCollection(AnimationCollection* aCollection)
 {
-  if (!mIsObservingRefreshDriver) {
-    NS_ASSERTION(aCollection->mNeedsRefreshes,
-      "Added data which doesn't need refreshing?");
-    // We need to observe the refresh driver.
-    mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
-    mIsObservingRefreshDriver = true;
-  }
-
   mElementCollections.insertBack(aCollection);
 }
 
@@ -91,41 +82,6 @@ CommonAnimationManager::RemoveAllElementCollections()
  while (AnimationCollection* head = mElementCollections.getFirst()) {
    head->Destroy(); // Note: this removes 'head' from mElementCollections.
  }
-}
-
-void
-CommonAnimationManager::MaybeStartObservingRefreshDriver()
-{
-  if (mIsObservingRefreshDriver || !NeedsRefresh()) {
-    return;
-  }
-
-  mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
-  mIsObservingRefreshDriver = true;
-}
-
-void
-CommonAnimationManager::MaybeStartOrStopObservingRefreshDriver()
-{
-  bool needsRefresh = NeedsRefresh();
-  if (needsRefresh && !mIsObservingRefreshDriver) {
-    mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
-  } else if (!needsRefresh && mIsObservingRefreshDriver) {
-    mPresContext->RefreshDriver()->RemoveRefreshObserver(this, Flush_Style);
-  }
-  mIsObservingRefreshDriver = needsRefresh;
-}
-
-bool
-CommonAnimationManager::NeedsRefresh() const
-{
-  for (const AnimationCollection* collection = mElementCollections.getFirst();
-       collection; collection = collection->getNext()) {
-    if (collection->mNeedsRefreshes) {
-      return true;
-    }
-  }
-  return false;
 }
 
 AnimationCollection*
@@ -410,31 +366,6 @@ CommonAnimationManager::GetAnimationRule(mozilla::dom::Element* aElement,
     mPresContext->RefreshDriver()->MostRecentRefresh());
 
   return collection->mStyleRule;
-}
-
-/* virtual */ void
-CommonAnimationManager::WillRefresh(TimeStamp aTime)
-{
-  MOZ_ASSERT(mPresContext,
-             "refresh driver should not notify additional observers "
-             "after pres context has been destroyed");
-  if (!mPresContext->GetPresShell()) {
-    // Someone might be keeping mPresContext alive past the point
-    // where it has been torn down; don't bother doing anything in
-    // this case.  But do get rid of all our animations so we stop
-    // triggering refreshes.
-    RemoveAllElementCollections();
-    return;
-  }
-
-  nsAutoAnimationMutationBatch mb(mPresContext->Document());
-
-  for (AnimationCollection* collection = mElementCollections.getFirst();
-       collection; collection = collection->getNext()) {
-    collection->Tick();
-  }
-
-  MaybeStartOrStopObservingRefreshDriver();
 }
 
 void
@@ -766,7 +697,7 @@ AnimationCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime)
 {
   mHasPendingAnimationRestyle = false;
 
-  if (!mNeedsRefreshes) {
+  if (!mStyleChanging) {
     mStyleRuleRefreshTime = aRefreshTime;
     return;
   }
@@ -785,8 +716,8 @@ AnimationCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime)
 
   mStyleRuleRefreshTime = aRefreshTime;
   mStyleRule = nullptr;
-  // We'll set mNeedsRefreshes to true below in all cases where we need them.
-  mNeedsRefreshes = false;
+  // We'll set mStyleChanging to true below if necessary.
+  mStyleChanging = false;
 
   // If multiple animations specify behavior for the same property the
   // animation which occurs last in the value of animation-name wins.
@@ -795,10 +726,8 @@ AnimationCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime)
   nsCSSPropertySet properties;
 
   for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
-    mAnimations[animIdx]->ComposeStyle(mStyleRule, properties, mNeedsRefreshes);
+    mAnimations[animIdx]->ComposeStyle(mStyleRule, properties, mStyleChanging);
   }
-
-  mManager->MaybeStartObservingRefreshDriver();
 }
 
 bool
@@ -913,10 +842,7 @@ AnimationCollection::RequestRestyle(RestyleType aRestyleType)
 
   if (aRestyleType == RestyleType::Layer) {
     mStyleRuleRefreshTime = TimeStamp();
-    // FIXME: We should be able to remove these two lines once we move
-    // ticking to animation timelines as part of bug 1151731.
-    mNeedsRefreshes = true;
-    mManager->MaybeStartObservingRefreshDriver();
+    mStyleChanging = true;
 
     // Prompt layers to re-sync their animations.
     presContext->ClearLastStyleUpdateForAllAnimations();
@@ -989,7 +915,7 @@ AnimationCollection::HasCurrentAnimationsForProperties(
     const Animation& anim = *mAnimations[animIdx];
     const KeyframeEffectReadOnly* effect = anim.GetEffect();
     if (effect &&
-        effect->IsCurrent(anim) &&
+        effect->IsCurrent() &&
         effect->HasAnimationOfProperties(aProperties, aPropertyCount)) {
       return true;
     }

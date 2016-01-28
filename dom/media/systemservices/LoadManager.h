@@ -50,15 +50,18 @@ private:
                          float aLowLoadThreshold);
     ~LoadManagerSingleton();
 
-    void LoadHasChanged();
+    void LoadHasChanged(webrtc::CPULoadState aNewState);
 
-    nsRefPtr<LoadMonitor> mLoadMonitor;
+    RefPtr<LoadMonitor> mLoadMonitor;
 
     // This protects access to the mObservers list, the current state, and
     // pretty much all the other members (below).
     Mutex mLock;
     nsTArray<webrtc::CPULoadStateObserver*> mObservers;
     webrtc::CPULoadState mCurrentState;
+    TimeStamp mLastStateChange;
+    float mTimeInState[static_cast<int>(webrtc::kLoadLast)];
+
     // Set when overuse was signaled to us, and hasn't been un-signaled yet.
     bool  mOveruseActive;
     float mLoadSum;

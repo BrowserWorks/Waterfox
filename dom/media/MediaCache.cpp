@@ -338,7 +338,7 @@ protected:
   // The Blocks describing the cache entries.
   nsTArray<Block> mIndex;
   // Writer which performs IO, asynchronously writing cache blocks.
-  nsRefPtr<FileBlockCache> mFileCache;
+  RefPtr<FileBlockCache> mFileCache;
   // The list of free blocks; they are not ordered.
   BlockList       mFreeBlocks;
   // True if an event to run Update() has been queued but not processed
@@ -452,7 +452,7 @@ void MediaCacheStream::BlockList::RemoveBlock(int32_t aBlock)
     mEntries.GetEntry(entry->mNextBlock)->mPrevBlock = entry->mPrevBlock;
     mEntries.GetEntry(entry->mPrevBlock)->mNextBlock = entry->mNextBlock;
   }
-  mEntries.RemoveEntry(aBlock);
+  mEntries.RemoveEntry(entry);
   --mCount;
 }
 

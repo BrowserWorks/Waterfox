@@ -1,7 +1,7 @@
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
-const Cu = Components.utils;
+var Cc = Components.classes;
+var Ci = Components.interfaces;
+var Cr = Components.results;
+var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://testing-common/httpd.js");
@@ -46,7 +46,8 @@ NotificationCallbacks.prototype = {
     if (iid.equals(Ci.nsILoadContext))
       return this;
     throw Cr.NS_ERROR_NO_INTERFACE;
-  }
+  },
+  originAttributes: {}
 };
 
 var gImgPath = 'http://localhost:' + server.identity.primaryPort + '/image.png';

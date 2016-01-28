@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -141,6 +141,7 @@ var snapshotFormatters = {
         $.new("td", [
           $.new("a", experiment.detailURL, null, {href : experiment.detailURL,})
         ]),
+        $.new("td", experiment.branch),
       ]);
     }));
   },
@@ -203,7 +204,7 @@ var snapshotFormatters = {
     let apzInfo = [];
     let formatApzInfo = function (info) {
       let out = [];
-      for (let type of ['Wheel', 'Touch']) {
+      for (let type of ['Wheel', 'Touch', 'Drag']) {
         let key = 'Apz' + type + 'Input';
         let warningKey = key + 'Warning';
 

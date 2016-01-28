@@ -3,12 +3,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-const {MozLoopService, LOOP_SESSION_TYPE} =
+const { MozLoopService, LOOP_SESSION_TYPE } =
   Cu.import("resource:///modules/loop/MozLoopService.jsm", {});
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
                                   "resource://services-common/utils.js");
@@ -17,6 +17,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm
 this.EXPORTED_SYMBOLS = ["LoopRoomsCache"];
 
 const LOOP_ROOMS_CACHE_FILENAME = "loopRoomsCache.json";
+XPCOMUtils.defineConstant(this, "LOOP_ROOMS_CACHE_FILENAME", LOOP_ROOMS_CACHE_FILENAME);
 
 /**
  * RoomsCache is a cache for saving simple rooms data to the disk in case we
@@ -62,7 +63,7 @@ LoopRoomsCache.prototype = {
   _setCache: function(contents) {
     this._cache = contents;
 
-    return OS.File.makeDir(this.baseDir, {ignoreExisting: true}).then(() => {
+    return OS.File.makeDir(this.baseDir, { ignoreExisting: true }).then(() => {
         return CommonUtils.writeJSON(contents, this.path);
       });
   },
@@ -80,7 +81,7 @@ LoopRoomsCache.prototype = {
 
     try {
       return (this._cache = yield CommonUtils.readJSON(this.path));
-    } catch(error) {
+    } catch (error) {
       if (!error.becauseNoSuchFile) {
         MozLoopService.log.debug("Error reading the cache:", error);
       }
@@ -130,7 +131,7 @@ LoopRoomsCache.prototype = {
    */
   setKey: Task.async(function* (sessionType, roomToken, roomKey) {
     if (sessionType != LOOP_SESSION_TYPE.FXA) {
-      return;
+      return Promise.resolve();
     }
 
     let cache = yield this._getCache();

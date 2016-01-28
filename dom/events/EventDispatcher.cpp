@@ -36,6 +36,7 @@
 #include "mozilla/dom/TouchEvent.h"
 #include "mozilla/dom/TransitionEvent.h"
 #include "mozilla/dom/WheelEvent.h"
+#include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/XULCommandEvent.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
@@ -239,7 +240,7 @@ public:
   // Event retargeting must happen whenever mNewTarget is non-null.
   nsCOMPtr<EventTarget>             mNewTarget;
   // Cache mTarget's event listener manager.
-  nsRefPtr<EventListenerManager>    mManager;
+  RefPtr<EventListenerManager>    mManager;
 };
 
 EventTargetChainItem::EventTargetChainItem(EventTarget* aTarget)
@@ -519,7 +520,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
 
   // If we have a PresContext, make sure it doesn't die before
   // event dispatching is finished.
-  nsRefPtr<nsPresContext> kungFuDeathGrip(aPresContext);
+  RefPtr<nsPresContext> kungFuDeathGrip(aPresContext);
 
   ELMCreationDetector cd;
   nsTArray<EventTargetChainItem> chain;
@@ -709,7 +710,9 @@ EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
 
     if (!dontResetTrusted) {
       //Check security state to determine if dispatcher is trusted
-      aDOMEvent->SetTrusted(nsContentUtils::ThreadsafeIsCallerChrome());
+      bool trusted = NS_IsMainThread() ? nsContentUtils::LegacyIsCallerChromeOrNativeCode()
+                                       : mozilla::dom::workers::IsCurrentThreadRunningChromeWorker();
+      aDOMEvent->SetTrusted(trusted);
     }
 
     return EventDispatcher::Dispatch(aTarget, aPresContext, innerEvent,

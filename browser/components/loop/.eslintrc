@@ -19,7 +19,8 @@
     "chai": false,
     "console": false,
     "loop": true,
-    "mozRTCSessionDescription": false,
+    "MozActivity": false,
+    "RTCSessionDescription": false,
     "OT": false,
     "performance": false,
     "Promise": false,
@@ -33,16 +34,19 @@
     // problems they find, one at a time.
 
     // Eslint built-in rules are documented at <http://eslint.org/docs/rules/>
+    "array-bracket-spacing": [2, "never"],
     "block-spacing": [2, "always"],
     "callback-return": 0,         // TBD
     "camelcase": 0,               // TODO: set to 2
     "comma-spacing": 2,
+    "comma-style": 2,
     "computed-property-spacing": [2, "never"],
-    "consistent-return": 0,       // TODO: set to 2
+    "consistent-return": 2,
     "curly": [2, "all"],
     "dot-location": [2, "property"],
     "eol-last": 2,
     "eqeqeq": [2, "smart"],
+    "jsx-quotes": [2, "prefer-double"],
     "key-spacing": [2, {"beforeColon": false, "afterColon": true }],
     "linebreak-style": [2, "unix"],
     "new-cap": 0,                 // TODO: set to 2
@@ -50,7 +54,7 @@
     "no-alert": 2,
     "no-array-constructor": 2,
     "no-caller": 2,
-    "no-catch-shadow": 0,         // TODO: set to 2
+    "no-catch-shadow": 2,
     "no-class-assign": 2,
     "no-const-assign": 2,
     "no-console": 0,              // Leave as 0. We use console logging in content code.
@@ -60,6 +64,7 @@
     "no-extend-native": 2, // XXX
     "no-extra-bind": 0,           // Leave as 0
     "no-extra-parens": 0,         // TODO: (bug?) [2, "functions"],
+    "no-extra-semi": 2,
     "no-implied-eval": 2,
     "no-invalid-this": 0,         // TBD
     "no-iterator": 2,
@@ -67,8 +72,10 @@
     "no-labels": 2,
     "no-lone-blocks": 2,
     "no-loop-func": 2,
-    "no-multi-spaces": 0,         // TBD.
+    "no-mixed-spaces-and-tabs": 2,
+    "no-multi-spaces": 2,
     "no-multi-str": 2,
+    "no-multiple-empty-lines": 2,
     "no-native-reassign": 2,
     "no-new": 2,
     "no-new-func": 2,
@@ -93,11 +100,17 @@
     "no-use-before-define": 0,    // TODO: Set to 2
     "no-useless-call": 2,
     "no-with": 2,
-    "object-curly-spacing": 0,    // [2, "always"],
+    "object-curly-spacing": [2, "always"],
+    "operator-assignment": [2, "always"],
     "quotes": [2, "double", "avoid-escape"],
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],
+    "space-after-keywords": 2,
+    "space-before-blocks": 2,
+    "space-before-function-paren": [2, "never"],
+    "space-before-keywords": 2,
     "space-infix-ops": 2,
+    "space-in-parens": [2, "never"],
     "space-return-throw-case": 2,
     "space-unary-ops": [2, {"words": true, "nonwords": false}],
     "spaced-comment": [2, "always"],
@@ -105,22 +118,18 @@
     "yoda": [2, "never"],
     // eslint-plugin-react rules. These are documented at
     // <https://github.com/yannickcr/eslint-plugin-react#list-of-supported-rules>
-    "react/jsx-quotes": [2, "double", "avoid-escape"],
     "react/jsx-no-undef": 2,
     "react/jsx-sort-props": 2,
     "react/jsx-sort-prop-types": 2,
     "react/jsx-uses-vars": 2,
     "react/jsx-no-duplicate-props": 2,
-    // Need to fix the couple of instances which don't
-    // currently pass this rule.
-    "react/no-did-mount-set-state": 0,
+    "react/no-did-mount-set-state": 2,
     "react/no-did-update-set-state": 2,
     "react/no-unknown-property": 2,
     "react/prop-types": 2,
     "react/self-closing-comp": 2,
     "react/wrap-multilines": 2,
-    // We would probably want to go with a variant of never.
-    "react/jsx-curly-spacing": 0,
+    "react/jsx-curly-spacing": [2, "never"],
     // Not worth it: React is defined globally
     "react/jsx-uses-react": 0,
     "react/react-in-jsx-scope": 0,

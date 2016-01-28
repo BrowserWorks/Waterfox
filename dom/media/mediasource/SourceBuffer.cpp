@@ -56,7 +56,7 @@ public:
   }
 
 private:
-  nsRefPtr<SourceBuffer> mSourceBuffer;
+  RefPtr<SourceBuffer> mSourceBuffer;
   uint32_t mUpdateID;
 };
 
@@ -118,19 +118,31 @@ SourceBuffer::SetTimestampOffset(double aTimestampOffset, ErrorResult& aRv)
   }
 }
 
-already_AddRefed<TimeRanges>
+TimeRanges*
 SourceBuffer::GetBuffered(ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  // http://w3c.github.io/media-source/index.html#widl-SourceBuffer-buffered
+  // 1. If this object has been removed from the sourceBuffers attribute of the parent media source then throw an InvalidStateError exception and abort these steps.
   if (!IsAttached()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
   }
-  media::TimeIntervals ranges = mContentManager->Buffered();
-  MSE_DEBUGV("ranges=%s", DumpTimeRanges(ranges).get());
-  nsRefPtr<dom::TimeRanges> tr = new dom::TimeRanges();
-  ranges.ToTimeRanges(tr);
-  return tr.forget();
+  bool rangeChanged = true;
+  media::TimeIntervals intersection = mContentManager->Buffered();
+  MSE_DEBUGV("intersection=%s", DumpTimeRanges(intersection).get());
+  if (mBuffered) {
+    media::TimeIntervals currentValue(mBuffered);
+    rangeChanged = (intersection != currentValue);
+    MSE_DEBUGV("currentValue=%s", DumpTimeRanges(currentValue).get());
+  }
+  // 5. If intersection ranges does not contain the exact same range information as the current value of this attribute, then update the current value of this attribute to intersection ranges.
+  if (rangeChanged) {
+    mBuffered = new TimeRanges(ToSupports(this));
+    intersection.ToTimeRanges(mBuffered);
+  }
+  // 6. Return the current value of this attribute.
+  return mBuffered;
 }
 
 media::TimeIntervals
@@ -253,7 +265,7 @@ SourceBuffer::RangeRemoval(double aStart, double aEnd)
 {
   StartUpdating();
 
-  nsRefPtr<SourceBuffer> self = this;
+  RefPtr<SourceBuffer> self = this;
   mContentManager->RangeRemoval(TimeUnit::FromSeconds(aStart),
                                 TimeUnit::FromSeconds(aEnd))
     ->Then(AbstractThread::MainThread(), __func__,
@@ -419,7 +431,7 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
 {
   MSE_DEBUG("AppendData(aLength=%u)", aLength);
 
-  nsRefPtr<MediaByteBuffer> data = PrepareAppend(aData, aLength, aRv);
+  RefPtr<MediaByteBuffer> data = PrepareAppend(aData, aLength, aRv);
   if (!data) {
     return;
   }
@@ -575,7 +587,7 @@ SourceBuffer::PrepareAppend(const uint8_t* aData, uint32_t aLength, ErrorResult&
     return nullptr;
   }
 
-  nsRefPtr<MediaByteBuffer> data = new MediaByteBuffer();
+  RefPtr<MediaByteBuffer> data = new MediaByteBuffer();
   if (!data->AppendElements(aData, aLength, fallible)) {
     aRv.Throw(NS_ERROR_DOM_QUOTA_EXCEEDED_ERR);
     return nullptr;
@@ -588,7 +600,7 @@ SourceBuffer::GetBufferedStart()
 {
   MOZ_ASSERT(NS_IsMainThread());
   ErrorResult dummy;
-  nsRefPtr<TimeRanges> ranges = GetBuffered(dummy);
+  RefPtr<TimeRanges> ranges = GetBuffered(dummy);
   return ranges->Length() > 0 ? ranges->GetStartTime() : 0;
 }
 
@@ -597,7 +609,7 @@ SourceBuffer::GetBufferedEnd()
 {
   MOZ_ASSERT(NS_IsMainThread());
   ErrorResult dummy;
-  nsRefPtr<TimeRanges> ranges = GetBuffered(dummy);
+  RefPtr<TimeRanges> ranges = GetBuffered(dummy);
   return ranges->Length() > 0 ? ranges->GetEndTime() : 0;
 }
 
@@ -634,11 +646,13 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(SourceBuffer)
     manager->Detach();
   }
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mMediaSource)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBuffered)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(DOMEventTargetHelper)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(SourceBuffer,
                                                   DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaSource)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBuffered)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_ADDREF_INHERITED(SourceBuffer, DOMEventTargetHelper)

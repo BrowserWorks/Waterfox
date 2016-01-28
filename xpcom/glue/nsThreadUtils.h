@@ -106,6 +106,8 @@ extern NS_METHOD NS_GetCurrentThread(nsIThread** aResult);
  *   If event is null.
  */
 extern NS_METHOD NS_DispatchToCurrentThread(nsIRunnable* aEvent);
+extern NS_METHOD
+NS_DispatchToCurrentThread(already_AddRefed<nsIRunnable>&& aEvent);
 
 /**
  * Dispatch the given event to the main thread.
@@ -303,7 +305,7 @@ public:
 template<class ClassType, bool Owning>
 struct nsRunnableMethodReceiver
 {
-  nsRefPtr<ClassType> mObj;
+  RefPtr<ClassType> mObj;
   explicit nsRunnableMethodReceiver(ClassType* aObj) : mObj(aObj) {}
   ~nsRunnableMethodReceiver() { Revoke(); }
   ClassType* Get() const { return mObj.get(); }
@@ -447,7 +449,7 @@ struct IsParameterStorageClass<StoreConstRefPassByConstLRef<S>>
 template<typename T>
 struct StorensRefPtrPassByPtr
 {
-  typedef nsRefPtr<T> stored_type;
+  typedef RefPtr<T> stored_type;
   typedef T* passed_type;
   stored_type m;
   template <typename A>
@@ -544,7 +546,7 @@ struct IsRefcountedSmartPointer : public mozilla::FalseType
 {};
 
 template<typename T>
-struct IsRefcountedSmartPointer<nsRefPtr<T>> : public mozilla::TrueType
+struct IsRefcountedSmartPointer<RefPtr<T>> : public mozilla::TrueType
 {};
 
 template<typename T>
@@ -558,7 +560,7 @@ struct StripSmartPointer
 };
 
 template<typename T>
-struct StripSmartPointer<nsRefPtr<T>>
+struct StripSmartPointer<RefPtr<T>>
 {
   typedef T Type;
 };
@@ -622,15 +624,15 @@ struct NonParameterStorageClass
 
 // Choose storage&passing strategy based on preferred storage type:
 // - If IsParameterStorageClass<T>::value is true, use as-is.
-// - RC*       -> StorensRefPtrPassByPtr<RC>     : Store nsRefPtr<RC>, pass RC*
+// - RC*       -> StorensRefPtrPassByPtr<RC>     : Store RefPtr<RC>, pass RC*
 //   ^^ RC quacks like a ref-counted type (i.e., has AddRef and Release methods)
 // - const T*  -> StoreConstPtrPassByConstPtr<T> : Store const T*, pass const T*
 // - T*        -> StorePtrPassByPtr<T>           : Store T*, pass T*.
 // - const T&  -> StoreConstRefPassByConstLRef<T>: Store const T&, pass const T&.
 // - T&        -> StoreRefPassByLRef<T>          : Store T&, pass T&.
 // - T&&       -> StoreCopyPassByRRef<T>         : Store T, pass Move(T).
-// - nsRefPtr<T>, nsCOMPtr<T>
-//             -> StorensRefPtrPassByPtr<T>      : Store nsRefPtr<T>, pass T*
+// - RefPtr<T>, nsCOMPtr<T>
+//             -> StorensRefPtrPassByPtr<T>      : Store RefPtr<T>, pass T*
 // - Other T   -> StoreCopyPassByValue<T>        : Store T, pass T.
 // Other available explicit options:
 // -              StoreCopyPassByConstLRef<T>    : Store T, pass const T&.
@@ -1013,7 +1015,7 @@ private:
   nsRevocableEventPtr(const nsRevocableEventPtr&);
   nsRevocableEventPtr& operator=(const nsRevocableEventPtr&);
 
-  nsRefPtr<T> mEvent;
+  RefPtr<T> mEvent;
 };
 
 /**

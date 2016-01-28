@@ -9,7 +9,8 @@
 #ifndef jit_mips_shared_AtomicOperations_mips_shared_h
 #define jit_mips_shared_AtomicOperations_mips_shared_h
 
-#include "jit/AtomicOperations.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/Types.h"
 
 #if defined(__clang__) || defined(__GNUC__)
 
@@ -152,6 +153,32 @@ js::jit::AtomicOperations::fetchXorSeqCst(T* addr, T val)
 # else
     return __atomic_fetch_xor(addr, val, __ATOMIC_SEQ_CST);
 # endif
+}
+
+template<typename T>
+inline T
+js::jit::AtomicOperations::loadSafeWhenRacy(T* addr)
+{
+    return *addr;               // FIXME (1208663): not yet safe
+}
+
+template<typename T>
+inline void
+js::jit::AtomicOperations::storeSafeWhenRacy(T* addr, T val)
+{
+    *addr = val;                // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memcpySafeWhenRacy(void* dest, const void* src, size_t nbytes)
+{
+    ::memcpy(dest, src, nbytes); // FIXME (1208663): not yet safe
+}
+
+inline void
+js::jit::AtomicOperations::memmoveSafeWhenRacy(void* dest, const void* src, size_t nbytes)
+{
+    ::memmove(dest, src, nbytes); // FIXME (1208663): not yet safe
 }
 
 template<typename T>

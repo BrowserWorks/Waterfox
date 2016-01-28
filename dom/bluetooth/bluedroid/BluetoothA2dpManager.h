@@ -17,6 +17,8 @@ class BluetoothA2dpManager : public BluetoothProfileManagerBase
                            , public BluetoothA2dpNotificationHandler
 {
 public:
+  static const int MAX_NUM_CLIENTS;
+
   BT_DECL_PROFILE_MGR_BASE
   virtual void GetName(nsACString& aName)
   {
@@ -47,12 +49,12 @@ protected:
   virtual ~BluetoothA2dpManager();
 
 private:
-  class CleanupA2dpResultHandler;
-  class CleanupA2dpResultHandlerRunnable;
   class ConnectResultHandler;
+  class DeinitProfileResultHandlerRunnable;
   class DisconnectResultHandler;
-  class InitA2dpResultHandler;
-  class OnErrorProfileResultHandlerRunnable;
+  class InitProfileResultHandlerRunnable;
+  class RegisterModuleResultHandler;
+  class UnregisterModuleResultHandler;
 
   BluetoothA2dpManager();
 
@@ -60,12 +62,12 @@ private:
   void NotifyConnectionStatusChanged();
 
   void ConnectionStateNotification(BluetoothA2dpConnectionState aState,
-                                   const nsAString& aBdAddr) override;
+                                   const BluetoothAddress& aBdAddr) override;
   void AudioStateNotification(BluetoothA2dpAudioState aState,
-                              const nsAString& aBdAddr) override;
+                              const BluetoothAddress& aBdAddr) override;
 
   nsString mDeviceAddress;
-  nsRefPtr<BluetoothProfileController> mController;
+  RefPtr<BluetoothProfileController> mController;
 
   // A2DP data member
   bool mA2dpConnected;

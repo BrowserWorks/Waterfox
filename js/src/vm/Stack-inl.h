@@ -35,7 +35,7 @@ namespace js {
 static inline bool
 IsCacheableNonGlobalScope(JSObject* obj)
 {
-    bool cacheable = (obj->is<CallObject>() || obj->is<BlockObject>() || obj->is<DeclEnvObject>());
+    bool cacheable = obj->is<CallObject>() || obj->is<BlockObject>() || obj->is<DeclEnvObject>();
 
     MOZ_ASSERT_IF(cacheable, !obj->getOps()->lookupProperty);
     return cacheable;
@@ -59,12 +59,18 @@ InterpreterFrame::global() const
 }
 
 inline JSObject&
-InterpreterFrame::varObj()
+InterpreterFrame::varObj() const
 {
     JSObject* obj = scopeChain();
     while (!obj->isQualifiedVarObj())
         obj = obj->enclosingScope();
     return *obj;
+}
+
+inline ClonedBlockObject&
+InterpreterFrame::extensibleLexicalScope() const
+{
+    return NearestEnclosingExtensibleLexicalScope(scopeChain());
 }
 
 inline JSCompartment*
@@ -572,6 +578,16 @@ AbstractFramePtr::isFunctionFrame() const
     if (isBaselineFrame())
         return asBaselineFrame()->isFunctionFrame();
     return asRematerializedFrame()->isFunctionFrame();
+}
+
+inline bool
+AbstractFramePtr::isModuleFrame() const
+{
+    if (isInterpreterFrame())
+        return asInterpreterFrame()->isModuleFrame();
+    if (isBaselineFrame())
+        return asBaselineFrame()->isModuleFrame();
+    return asRematerializedFrame()->isModuleFrame();
 }
 
 inline bool

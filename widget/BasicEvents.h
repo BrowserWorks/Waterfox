@@ -113,7 +113,7 @@ public:
   bool mWantReplyFromContentProcess : 1;
   // The event's action will be handled by APZ. The main thread should not
   // perform its associated action. This is currently only relevant for
-  // wheel events.
+  // wheel and touch events.
   bool mHandledByAPZ : 1;
 
   // If the event is being handled in target phase, returns true.
@@ -272,6 +272,12 @@ public:
     target = aCopyTargets ? aEvent.target : nullptr;
     currentTarget = aCopyTargets ? aEvent.currentTarget : nullptr;
     originalTarget = aCopyTargets ? aEvent.originalTarget : nullptr;
+  }
+
+  void PreventDefault()
+  {
+    mFlags.mDefaultPrevented = true;
+    mFlags.mDefaultPreventedByChrome = true;
   }
 
   /**

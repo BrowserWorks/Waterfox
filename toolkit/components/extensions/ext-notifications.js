@@ -1,15 +1,16 @@
-const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
   ignoreEvent,
+  runSafe,
 } = ExtensionUtils;
 
 // WeakMap[Extension -> Set[Notification]]
 var notificationsMap = new WeakMap();
 
-// WeakMap[Extension -> callback]
+// WeakMap[Extension -> Set[callback]]
 var notificationCallbacksMap = new WeakMap();
 
 // Manages a notification popup (notifications API) created by the extension.
@@ -54,8 +55,8 @@ Notification.prototype = {
       return;
     }
 
-    if (notificationCallbacksMap.has(this.extension)) {
-      notificationCallbackMap.get(this.extension)(this);
+    for (let callback in notificationCallbacksMap.get(this.extension)) {
+      callback(this);
     }
 
     notificationsMap.get(this.extension).delete(this);
@@ -64,6 +65,7 @@ Notification.prototype = {
 
 extensions.on("startup", (type, extension) => {
   notificationsMap.set(extension, new Set());
+  notificationCallbacksMap.set(extension, new Set());
 });
 
 extensions.on("shutdown", (type, extension) => {
@@ -71,6 +73,7 @@ extensions.on("shutdown", (type, extension) => {
     notification.clear();
   }
   notificationsMap.delete(extension);
+  notificationCallbacksMap.delete(extension);
 });
 
 var nextId = 0;
@@ -128,9 +131,9 @@ extensions.registerPrivilegedAPI("notifications", (extension, context) => {
           fire(notification.id, true);
         };
 
-        notificationCallbackMap.set(extension, listener);
+        notificationCallbacksMap.get(extension).add(listener);
         return () => {
-          notificationCallbackMap.delete(extension);
+          notificationCallbacksMap.get(extension).delete(listener);
         };
       }).api(),
 

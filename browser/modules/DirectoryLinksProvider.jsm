@@ -17,6 +17,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm")
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
@@ -26,11 +27,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "OS",
   "resource://gre/modules/osfile.jsm")
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
   "resource://gre/modules/Promise.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
-  "resource://gre/modules/UpdateChannel.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+  "resource://gre/modules/UpdateUtils.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "eTLD",
   "@mozilla.org/network/effective-tld-service;1",
   "nsIEffectiveTLDService");
+
+// ensure remote new tab doesn't go beyond aurora
+if (!AppConstants.RELEASE_BUILD) {
+  XPCOMUtils.defineLazyModuleGetter(this, "RemoteNewTabUtils",
+    "resource:///modules/RemoteNewTabUtils.jsm");
+}
+
 XPCOMUtils.defineLazyGetter(this, "gTextDecoder", () => {
   return new TextDecoder();
 });
@@ -165,12 +173,14 @@ var DirectoryLinksProvider = {
    */
   _newTabHasInadjacentSite: false,
 
-  get _observedPrefs() Object.freeze({
-    enhanced: PREF_NEWTAB_ENHANCED,
-    linksURL: PREF_DIRECTORY_SOURCE,
-    matchOSLocale: PREF_MATCH_OS_LOCALE,
-    prefSelectedLocale: PREF_SELECTED_LOCALE,
-  }),
+  get _observedPrefs() {
+    return Object.freeze({
+      enhanced: PREF_NEWTAB_ENHANCED,
+      linksURL: PREF_DIRECTORY_SOURCE,
+      matchOSLocale: PREF_MATCH_OS_LOCALE,
+      prefSelectedLocale: PREF_SELECTED_LOCALE,
+    });
+  },
 
   get _linksURL() {
     if (!this.__linksURL) {
@@ -286,7 +296,7 @@ var DirectoryLinksProvider = {
   _fetchAndCacheLinks: function DirectoryLinksProvider_fetchAndCacheLinks(uri) {
     // Replace with the same display locale used for selecting links data
     uri = uri.replace("%LOCALE%", this.locale);
-    uri = uri.replace("%CHANNEL%", UpdateChannel.get());
+    uri = uri.replace("%CHANNEL%", UpdateUtils.UpdateChannel);
 
     return this._downloadJsonData(uri).then(json => {
       return OS.File.writeAtomic(this._directoryFilePath, json, {tmpPath: this._directoryFilePath + ".tmp"});
@@ -502,6 +512,7 @@ var DirectoryLinksProvider = {
   handleSuggestedTileBlock: function DirectoryLinksProvider_handleSuggestedTileBlock() {
     this._updateFrequencyCapSettings({url: FAKE_SUGGESTED_BLOCK_URL});
     this._writeFrequencyCapFile();
+    this._updateSuggestedTile();
   },
 
   /**
@@ -755,6 +766,12 @@ var DirectoryLinksProvider = {
 
     NewTabUtils.placesProvider.addObserver(this);
     NewTabUtils.links.addObserver(this);
+
+    // ensure remote new tab doesn't go beyond aurora
+    if (!AppConstants.RELEASE_BUILD) {
+      RemoteNewTabUtils.placesProvider.addObserver(this);
+      RemoteNewTabUtils.links.addObserver(this);
+    }
 
     return Task.spawn(function() {
       // get the last modified time of the links file if it exists

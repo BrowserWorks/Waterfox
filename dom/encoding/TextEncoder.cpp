@@ -21,14 +21,14 @@ TextEncoder::Init(const nsAString& aEncoding, ErrorResult& aRv)
   // If encoding is failure, or is none of utf-8, utf-16, and utf-16be,
   // throw a RangeError (https://encoding.spec.whatwg.org/#dom-textencoder).
   if (!EncodingUtils::FindEncodingForLabel(label, mEncoding)) {
-    aRv.ThrowRangeError(MSG_ENCODING_NOT_SUPPORTED, &label);
+    aRv.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(&label);
     return;
   }
 
   if (!mEncoding.EqualsLiteral("UTF-8") &&
       !mEncoding.EqualsLiteral("UTF-16LE") &&
       !mEncoding.EqualsLiteral("UTF-16BE")) {
-    aRv.ThrowRangeError(MSG_DOM_ENCODING_NOT_UTF);
+    aRv.ThrowRangeError<MSG_DOM_ENCODING_NOT_UTF>();
     return;
   }
 
@@ -46,7 +46,7 @@ TextEncoder::Encode(JSContext* aCx,
   // Run the steps of the encoding algorithm.
   int32_t srcLen = aString.Length();
   int32_t maxLen;
-  const char16_t* data = PromiseFlatString(aString).get();
+  const char16_t* data = aString.BeginReading();
   nsresult rv = mEncoder->GetMaxLength(data, srcLen, &maxLen);
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);

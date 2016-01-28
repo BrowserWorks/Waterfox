@@ -5,7 +5,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
+    'dec/bit_reader.h',
     'dec/decode.h',
+    'dec/huffman.h',
+    'dec/port.h',
+    'dec/state.h',
     'dec/streams.h',
     'dec/types.h',
 ]
@@ -13,9 +17,13 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'dec/bit_reader.c',
     'dec/decode.c',
+    'dec/dictionary.c',
     'dec/huffman.c',
-    'dec/safe_malloc.c',
+    'dec/state.c',
     'dec/streams.c',
 ]
+
+# We allow warnings for third-party code that can be updated from upstream.
+ALLOW_COMPILER_WARNINGS = True
 
 Library('brotli')

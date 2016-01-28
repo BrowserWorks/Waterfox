@@ -196,14 +196,23 @@ DecoderTraits::IsWebMTypeAndEnabled(const nsACString& aType)
   return false;
 }
 
+/* static */ bool
+DecoderTraits::IsWebMAudioType(const nsACString& aType)
+{
+#ifdef MOZ_WEBM
+  return aType.EqualsASCII("audio/webm");
+#endif
+  return false;
+}
+
 #ifdef MOZ_GSTREAMER
 static bool
 IsGStreamerSupportedType(const nsACString& aMimeType)
 {
-  if (!MediaDecoder::IsGStreamerEnabled())
+  if (DecoderTraits::IsWebMTypeAndEnabled(aMimeType))
     return false;
 
-  if (DecoderTraits::IsWebMTypeAndEnabled(aMimeType) && !Preferences::GetBool("media.prefer-gstreamer", false))
+  if (!MediaDecoder::IsGStreamerEnabled())
     return false;
 
   if (IsOggType(aMimeType) && !Preferences::GetBool("media.prefer-gstreamer", false))
@@ -347,9 +356,7 @@ static bool
 IsMP4SupportedType(const nsACString& aType,
                    const nsAString& aCodecs = EmptyString())
 {
-  // MP4Decoder/Reader is currently used for MSE and mp4 files local playback.
-  bool haveAAC, haveMP3, haveH264;
-  return MP4Decoder::CanHandleMediaType(aType, aCodecs, haveAAC, haveH264, haveMP3);
+  return MP4Decoder::CanHandleMediaType(aType, aCodecs);
 }
 #endif
 
@@ -366,7 +373,10 @@ static bool
 IsMP3SupportedType(const nsACString& aType,
                    const nsAString& aCodecs = EmptyString())
 {
-  return aType.EqualsASCII("audio/mpeg") && MP3Decoder::IsEnabled();
+#ifdef MOZ_OMX_DECODER
+  return false;
+#endif
+  return MP3Decoder::CanHandleMediaType(aType, aCodecs);
 }
 
 #ifdef MOZ_APPLEMEDIA
@@ -584,37 +594,37 @@ already_AddRefed<MediaDecoder>
 InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsRefPtr<MediaDecoder> decoder;
+  RefPtr<MediaDecoder> decoder;
 
 #ifdef MOZ_FMP4
   if (IsMP4SupportedType(aType)) {
-    decoder = new MP4Decoder();
+    decoder = new MP4Decoder(aOwner);
     return decoder.forget();
   }
 #endif
   if (IsMP3SupportedType(aType)) {
-    decoder = new MP3Decoder();
+    decoder = new MP3Decoder(aOwner);
     return decoder.forget();
   }
 #ifdef MOZ_GSTREAMER
   if (IsGStreamerSupportedType(aType)) {
-    decoder = new GStreamerDecoder();
+    decoder = new GStreamerDecoder(aOwner);
     return decoder.forget();
   }
 #endif
 #ifdef MOZ_RAW
   if (IsRawType(aType)) {
-    decoder = new RawDecoder();
+    decoder = new RawDecoder(aOwner);
     return decoder.forget();
   }
 #endif
   if (IsOggType(aType)) {
-    decoder = new OggDecoder();
+    decoder = new OggDecoder(aOwner);
     return decoder.forget();
   }
 #ifdef MOZ_WAVE
   if (IsWaveType(aType)) {
-    decoder = new WaveDecoder();
+    decoder = new WaveDecoder(aOwner);
     return decoder.forget();
   }
 #endif
@@ -637,10 +647,10 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
     }
 #if ANDROID_VERSION >= 18
     decoder = MediaDecoder::IsOmxAsyncEnabled()
-      ? static_cast<MediaDecoder*>(new MediaCodecDecoder())
-      : static_cast<MediaDecoder*>(new MediaOmxDecoder());
+      ? static_cast<MediaDecoder*>(new MediaCodecDecoder(aOwner))
+      : static_cast<MediaDecoder*>(new MediaOmxDecoder(aOwner));
 #else
-    decoder = new MediaOmxDecoder();
+    decoder = new MediaOmxDecoder(aOwner);
 #endif
     return decoder.forget();
   }
@@ -649,10 +659,10 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
   if (IsRtspSupportedType(aType)) {
 #if ANDROID_VERSION >= 18
     decoder = MediaDecoder::IsOmxAsyncEnabled()
-      ? static_cast<MediaDecoder*>(new RtspMediaCodecDecoder())
-      : static_cast<MediaDecoder*>(new RtspOmxDecoder());
+      ? static_cast<MediaDecoder*>(new RtspMediaCodecDecoder(aOwner))
+      : static_cast<MediaDecoder*>(new RtspOmxDecoder(aOwner));
 #else
-    decoder = new RtspOmxDecoder();
+    decoder = new RtspOmxDecoder(aOwner);
 #endif
     return decoder.forget();
   }
@@ -660,31 +670,29 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 #ifdef MOZ_ANDROID_OMX
   if (MediaDecoder::IsAndroidMediaEnabled() &&
       EnsureAndroidMediaPluginHost()->FindDecoder(aType, nullptr)) {
-    decoder = new AndroidMediaDecoder(aType);
+    decoder = new AndroidMediaDecoder(aOwner, aType);
     return decoder.forget();
   }
 #endif
   if (DecoderTraits::IsWebMTypeAndEnabled(aType)) {
-    decoder = new WebMDecoder();
+    decoder = new WebMDecoder(aOwner);
     return decoder.forget();
   }
 #ifdef MOZ_DIRECTSHOW
   // Note: DirectShow should come before WMF, so that we prefer DirectShow's
   // MP3 support over WMF's.
   if (IsDirectShowSupportedType(aType)) {
-    decoder = new DirectShowDecoder();
+    decoder = new DirectShowDecoder(aOwner);
     return decoder.forget();
   }
 #endif
 #ifdef MOZ_APPLEMEDIA
   if (IsAppleMediaSupportedType(aType)) {
-    decoder = new AppleDecoder();
+    decoder = new AppleDecoder(aOwner);
     return decoder.forget();
   }
 #endif
 
-  NS_ENSURE_TRUE(decoder != nullptr, nullptr);
-  NS_ENSURE_TRUE(decoder->Init(aOwner), nullptr);
   return nullptr;
 }
 
@@ -693,11 +701,7 @@ already_AddRefed<MediaDecoder>
 DecoderTraits::CreateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  nsRefPtr<MediaDecoder> decoder(InstantiateDecoder(aType, aOwner));
-  NS_ENSURE_TRUE(decoder != nullptr, nullptr);
-  NS_ENSURE_TRUE(decoder->Init(aOwner), nullptr);
-
-  return decoder.forget();
+  return InstantiateDecoder(aType, aOwner);
 }
 
 /* static */

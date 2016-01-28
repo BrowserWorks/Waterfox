@@ -1329,25 +1329,10 @@ void nsWindow::SetThemeRegion()
  *
  **************************************************************/
 
-void nsWindow::ConfigureAPZCTreeManager()
-{
-  nsBaseWidget::ConfigureAPZCTreeManager();
-
-  // When APZ is enabled, we can actually enable raw touch events because we
-  // have code that can deal with them properly. If APZ is not enabled, this
-  // function doesn't get called, and |mGesture| will take care of touch-based
-  // scrolling. Note that RegisterTouchWindow may still do nothing depending
-  // on touch events prefs, and so it is possible to enable APZ without
-  // also enabling touch support.
-  RegisterTouchWindow();
-}
-
 void nsWindow::RegisterTouchWindow() {
-  if (Preferences::GetInt("dom.w3c_touch_events.enabled", 0)) {
-    mTouchWindow = true;
-    mGesture.RegisterTouchWindow(mWnd);
-    ::EnumChildWindows(mWnd, nsWindow::RegisterTouchForDescendants, 0);
-  }
+  mTouchWindow = true;
+  mGesture.RegisterTouchWindow(mWnd);
+  ::EnumChildWindows(mWnd, nsWindow::RegisterTouchForDescendants, 0);
 }
 
 BOOL CALLBACK nsWindow::RegisterTouchForDescendants(HWND aWnd, LPARAM aMsg) {
@@ -2320,7 +2305,7 @@ NS_IMETHODIMP
 nsWindow::SetNonClientMargins(nsIntMargin &margins)
 {
   if (!mIsTopWidgetWindow ||
-      mBorderStyle & eBorderStyle_none)
+      mBorderStyle == eBorderStyle_none)
     return NS_ERROR_INVALID_ARG;
 
   if (mHideChrome) {
@@ -2629,7 +2614,7 @@ NS_IMETHODIMP nsWindow::SetCursor(imgIContainer* aCursor,
 
   HCURSOR cursor;
   // No scaling
-  gfxIntSize size(0, 0);
+  IntSize size(0, 0);
   rv = nsWindowGfx::CreateIcon(aCursor, true, aHotspotX, aHotspotY, size, &cursor);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3395,16 +3380,9 @@ NS_METHOD nsWindow::EnableDragDrop(bool aEnable)
 
 NS_METHOD nsWindow::CaptureMouse(bool aCapture)
 {
-  if (!nsToolkit::gMouseTrailer) {
-    NS_ERROR("nsWindow::CaptureMouse called after nsToolkit destroyed");
-    return NS_OK;
-  }
-
   if (aCapture) {
-    nsToolkit::gMouseTrailer->SetCaptureWindow(mWnd);
     ::SetCapture(mWnd);
   } else {
-    nsToolkit::gMouseTrailer->SetCaptureWindow(nullptr);
     ::ReleaseCapture();
   }
   sIsInMouseCapture = aCapture;
@@ -3701,7 +3679,7 @@ nsWindow::StartRemoteDrawing()
                "Unexpected render mode for remote drawing");
 
   HDC dc = (HDC)GetNativeData(NS_NATIVE_GRAPHIC);
-  nsRefPtr<gfxASurface> surf;
+  RefPtr<gfxASurface> surf;
 
   if (mTransparencyMode == eTransparencyTransparent) {
     if (!mTransparentSurface) {
@@ -3752,7 +3730,7 @@ nsWindow::EndRemoteDrawing()
 void
 nsWindow::UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries)
 {
-  nsRefPtr<LayerManager> layerManager = GetLayerManager();
+  RefPtr<LayerManager> layerManager = GetLayerManager();
   if (!layerManager) {
     return;
   }
@@ -4219,12 +4197,7 @@ nsWindow::DispatchMouseEvent(EventMessage aEventMessage, WPARAM wParam,
 
   // call the event callback
   if (mWidgetListener) {
-    if (nsToolkit::gMouseTrailer)
-      nsToolkit::gMouseTrailer->Disable();
     if (aEventMessage == eMouseMove) {
-      if (nsToolkit::gMouseTrailer && !sIsInMouseCapture) {
-        nsToolkit::gMouseTrailer->SetMouseTrailerWindow(mWnd);
-      }
       nsIntRect rect;
       GetBounds(rect);
       rect.x = 0;
@@ -4256,9 +4229,6 @@ nsWindow::DispatchMouseEvent(EventMessage aEventMessage, WPARAM wParam,
     }
 
     result = ConvertStatus(DispatchInputEvent(&event));
-
-    if (nsToolkit::gMouseTrailer)
-      nsToolkit::gMouseTrailer->Enable();
 
     // Release the widget with NS_IF_RELEASE() just in case
     // the context menu key code in EventListenerManager::HandleEvent()
@@ -4409,7 +4379,8 @@ void
 nsWindow::IPCWindowProcHandler(UINT& msg, WPARAM& wParam, LPARAM& lParam)
 {
   MOZ_ASSERT_IF(msg != WM_GETOBJECT,
-                !mozilla::ipc::MessageChannel::IsPumpingMessages());
+                !mozilla::ipc::MessageChannel::IsPumpingMessages() ||
+                mozilla::ipc::SuppressedNeuteringRegion::IsNeuteringSuppressed());
 
   // Modal UI being displayed in windowless plugins.
   if (mozilla::ipc::MessageChannel::IsSpinLoopActive() &&
@@ -5111,6 +5082,15 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
 
     case WM_MOUSEMOVE:
     {
+      if (!mMousePresent) {
+        // First MOOUSEMOVE over the client area. Ask for MOUSELEAVE
+        TRACKMOUSEEVENT mTrack;
+        mTrack.cbSize = sizeof(TRACKMOUSEEVENT);
+        mTrack.dwFlags = TME_LEAVE;
+        mTrack.dwHoverTime = 0;
+        mTrack.hwndTrack = mWnd;
+        TrackMouseEvent(&mTrack);
+      }
       mMousePresent = true;
 
       // Suppress dispatch of pending events
@@ -6705,22 +6685,11 @@ void nsWindow::OnDestroy()
 
   IMEHandler::OnDestroyWindow(this);
 
-  // Turn off mouse trails if enabled.
-  MouseTrailer* mtrailer = nsToolkit::gMouseTrailer;
-  if (mtrailer) {
-    if (mtrailer->GetMouseTrailerWindow() == mWnd)
-      mtrailer->DestroyTimer();
-
-    if (mtrailer->GetCaptureWindow() == mWnd)
-      mtrailer->SetCaptureWindow(nullptr);
-  }
-
   // Free GDI window class objects
   if (mBrush) {
     VERIFY(::DeleteObject(mBrush));
     mBrush = nullptr;
   }
-
 
   // Destroy any custom cursor resources.
   if (mCursor == -1)
@@ -6975,8 +6944,8 @@ void nsWindow::ResizeTranslucentWindow(int32_t aNewWidth, int32_t aNewHeight, bo
   if (!force && aNewWidth == mBounds.width && aNewHeight == mBounds.height)
     return;
 
-  nsRefPtr<gfxWindowsSurface> newSurface =
-    new gfxWindowsSurface(gfxIntSize(aNewWidth, aNewHeight), gfxImageFormat::ARGB32);
+  RefPtr<gfxWindowsSurface> newSurface =
+    new gfxWindowsSurface(IntSize(aNewWidth, aNewHeight), gfxImageFormat::ARGB32);
   mTransparentSurface = newSurface;
   mMemoryDC = newSurface->GetDC();
 }
@@ -7737,7 +7706,7 @@ bool nsWindow::CaptureWidgetOnScreen(RefPtr<DrawTarget> aDT)
                    ? 0
                    : gfxWindowsSurface::FLAG_IS_TRANSPARENT;
 
-  nsRefPtr<gfxASurface> surf = new gfxWindowsSurface(dc, flags);
+  RefPtr<gfxASurface> surf = new gfxWindowsSurface(dc, flags);
   IntSize size(surf->GetSize().width, surf->GetSize().height);
   if (size.width <= 0 || size.height <= 0) {
     ::ReleaseDC(mWnd, dc);

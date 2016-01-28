@@ -856,7 +856,8 @@ this.AddonRepository = {
 
       // Include any compatibility overrides for addons not hosted by the
       // remote repository.
-      for each (let addonCompat in aCompatData) {
+      for (let id in aCompatData) {
+        let addonCompat = aCompatData[id];
         if (addonCompat.hosted)
           continue;
 
@@ -963,7 +964,7 @@ this.AddonRepository = {
     this._searching = false;
     this._request = null;
     // The callback may want to trigger a new search so clear references early
-    let addons = [result.addon for each(result in aResults)];
+    let addons = aResults.map(result => result.addon);
     let callback = this._callback;
     this._callback = null;
     callback.searchSucceeded(addons, addons.length, aTotalResults);
@@ -989,7 +990,7 @@ this.AddonRepository = {
   // Returns null if not unique tag name.
   _getUniqueDirectDescendant: function AddonRepo_getUniqueDirectDescendant(aElement, aTagName) {
     let elementsList = Array.filter(aElement.children,
-                                    function arrayFiltering(aChild) aChild.tagName == aTagName);
+                                    aChild => aChild.tagName == aTagName);
     return (elementsList.length == 1) ? elementsList[0] : null;
   },
 
@@ -1303,7 +1304,7 @@ this.AddonRepository = {
 
       // Ignore add-on missing a required attribute
       let requiredAttributes = ["id", "name", "version", "type", "creator"];
-      if (requiredAttributes.some(function parseAddons_attributeFilter(aAttribute) !result.addon[aAttribute]))
+      if (requiredAttributes.some(aAttribute => !result.addon[aAttribute]))
         continue;
 
       // Ignore add-on with a type AddonManager doesn't understand:
@@ -1428,7 +1429,7 @@ this.AddonRepository = {
 
     let rangeNodes = aElement.querySelectorAll("version_ranges > version_range");
     compat.compatRanges = Array.map(rangeNodes, parseRangeNode.bind(this))
-                               .filter(function compatRangesFilter(aItem) !!aItem);
+                               .filter(aItem => !!aItem);
     if (compat.compatRanges.length == 0)
       return;
 
@@ -1501,7 +1502,7 @@ this.AddonRepository = {
     let localAddonIds = {ids: null, sourceURIs: null};
 
     AddonManager.getAllAddons(function getLocalAddonIds_getAllAddons(aAddons) {
-      localAddonIds.ids = [a.id for each (a in aAddons)];
+      localAddonIds.ids = aAddons.map(a => a.id);
       if (localAddonIds.sourceURIs)
         aCallback(localAddonIds);
     });

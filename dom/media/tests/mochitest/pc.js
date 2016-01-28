@@ -214,11 +214,21 @@ PeerConnectionTest.prototype.send = function(data, options) {
            this.pcLocal.dataChannels[this.pcLocal.dataChannels.length - 1];
   var target = options.targetChannel ||
            this.pcRemote.dataChannels[this.pcRemote.dataChannels.length - 1];
+  var bufferedamount = options.bufferedAmountLowThreshold || 0;
+  var bufferlow_fired = true; // to make testing later easier
+  if (bufferedamount != 0) {
+    source.bufferedAmountLowThreshold = bufferedamount;
+    bufferlow_fired = false;
+    source.onbufferedamountlow = function() {
+      bufferlow_fired = true;
+    };
+  }
 
   return new Promise(resolve => {
     // Register event handler for the target channel
-    target.onmessage = e => {
-      resolve({ channel: target, data: e.data });
+      target.onmessage = e => {
+        ok(bufferlow_fired, "bufferedamountlow event fired");
+	resolve({ channel: target, data: e.data });
     };
 
     source.send(data);
@@ -271,7 +281,7 @@ PeerConnectionTest.prototype.createDataChannel = function(options) {
 PeerConnectionTest.prototype.createAnswer = function(peer) {
   return peer.createAnswer().then(answer => {
     // make a copy so this does not get updated with ICE candidates
-    this.originalAnswer = new mozRTCSessionDescription(JSON.parse(JSON.stringify(answer)));
+    this.originalAnswer = new RTCSessionDescription(JSON.parse(JSON.stringify(answer)));
     return answer;
   });
 };
@@ -286,7 +296,7 @@ PeerConnectionTest.prototype.createAnswer = function(peer) {
 PeerConnectionTest.prototype.createOffer = function(peer) {
   return peer.createOffer().then(offer => {
     // make a copy so this does not get updated with ICE candidates
-    this.originalOffer = new mozRTCSessionDescription(JSON.parse(JSON.stringify(offer)));
+    this.originalOffer = new RTCSessionDescription(JSON.parse(JSON.stringify(offer)));
     return offer;
   });
 };
@@ -297,7 +307,7 @@ PeerConnectionTest.prototype.createOffer = function(peer) {
  *
  * @param {PeerConnectionWrapper} peer
           The peer connection wrapper to run the command on
- * @param {mozRTCSessionDescription} desc
+ * @param {RTCSessionDescription} desc
  *        Session description for the local description request
  */
 PeerConnectionTest.prototype.setLocalDescription =
@@ -366,7 +376,7 @@ PeerConnectionTest.prototype.setOfferOptions = function(options) {
  *
  * @param {PeerConnectionWrapper} peer
           The peer connection wrapper to run the command on
- * @param {mozRTCSessionDescription} desc
+ * @param {RTCSessionDescription} desc
  *        Session description for the remote description request
  */
 PeerConnectionTest.prototype.setRemoteDescription =
@@ -563,6 +573,7 @@ function DataChannelWrapper(dataChannel, peerConnectionWrapper) {
   createOneShotEventWrapper(this, this._channel, 'close');
   createOneShotEventWrapper(this, this._channel, 'error');
   createOneShotEventWrapper(this, this._channel, 'message');
+  createOneShotEventWrapper(this, this._channel, 'bufferedamountlow');
 
   this.opened = timerGuard(new Promise(resolve => {
     this._channel.onopen = () => {
@@ -641,6 +652,16 @@ DataChannelWrapper.prototype = {
   },
 
   /**
+   * Sets the bufferlowthreshold of the channel
+   *
+   * @param {integer} amoutn
+   *        The new threshold for the chanel
+   */
+  set bufferedAmountLowThreshold(amount) {
+    this._channel.bufferedAmountLowThreshold = amount;
+  },
+
+  /**
    * Close the data channel
    */
   close : function () {
@@ -709,7 +730,7 @@ function PeerConnectionWrapper(label, configuration) {
   this.iceCheckingRestartExpected = false;
 
   info("Creating " + this);
-  this._pc = new mozRTCPeerConnection(this.configuration);
+  this._pc = new RTCPeerConnection(this.configuration);
 
   /**
    * Setup callback handlers
@@ -963,7 +984,7 @@ PeerConnectionWrapper.prototype = {
    * Sets the local description and automatically handles the failure case.
    *
    * @param {object} desc
-   *        mozRTCSessionDescription for the local description request
+   *        RTCSessionDescription for the local description request
    */
   setLocalDescription : function(desc) {
     this.observedNegotiationNeeded = undefined;
@@ -977,7 +998,7 @@ PeerConnectionWrapper.prototype = {
    * causes the test case to fail if the call succeeds.
    *
    * @param {object} desc
-   *        mozRTCSessionDescription for the local description request
+   *        RTCSessionDescription for the local description request
    * @returns {Promise}
    *        A promise that resolves to the expected error
    */
@@ -994,7 +1015,7 @@ PeerConnectionWrapper.prototype = {
    * Sets the remote description and automatically handles the failure case.
    *
    * @param {object} desc
-   *        mozRTCSessionDescription for the remote description request
+   *        RTCSessionDescription for the remote description request
    */
   setRemoteDescription : function(desc) {
     this.observedNegotiationNeeded = undefined;
@@ -1014,7 +1035,7 @@ PeerConnectionWrapper.prototype = {
    * causes the test case to fail if the call succeeds.
    *
    * @param {object} desc
-   *        mozRTCSessionDescription for the remote description request
+   *        RTCSessionDescription for the remote description request
    * @returns {Promise}
    *        a promise that resolve to the returned error
    */
@@ -1115,7 +1136,7 @@ PeerConnectionWrapper.prototype = {
    * later, depending on the state of the PeerConnection.
    *
    * @param {object} candidate
-   *        The mozRTCIceCandidate to be added or stored
+   *        The RTCIceCandidate to be added or stored
    */
   storeOrAddIceCandidate : function(candidate) {
     this._remote_ice_candidates.push(candidate);

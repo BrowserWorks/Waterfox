@@ -128,11 +128,13 @@ this.PlacesUIUtils = {
     return bundle.GetStringFromName(key);
   },
 
-  get _copyableAnnotations() [
-    this.DESCRIPTION_ANNO,
-    this.LOAD_IN_SIDEBAR_ANNO,
-    PlacesUtils.READ_ONLY_ANNO,
-  ],
+  get _copyableAnnotations() {
+    return [
+      this.DESCRIPTION_ANNO,
+      this.LOAD_IN_SIDEBAR_ANNO,
+      PlacesUtils.READ_ONLY_ANNO,
+    ];
+  },
 
   /**
    * Get a transaction for copying a uri item (either a bookmark or a history
@@ -168,7 +170,7 @@ this.PlacesUIUtils = {
     let annos = [];
     if (aData.annos) {
       annos = aData.annos.filter(function (aAnno) {
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1;
+        return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
 
@@ -280,7 +282,7 @@ this.PlacesUIUtils = {
     let annos = [];
     if (aData.annos) {
       annos = aData.annos.filter(function (aAnno) {
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1;
+        return this._copyableAnnotations.includes(aAnno.name);
       }, this);
     }
 
@@ -321,7 +323,7 @@ this.PlacesUIUtils = {
         else if (aAnno.name == PlacesUtils.LMANNO_SITEURI) {
           siteURI = PlacesUtils._uri(aAnno.value);
         }
-        return this._copyableAnnotations.indexOf(aAnno.name) != -1
+        return this._copyableAnnotations.includes(aAnno.name)
       }, this);
     }
 
@@ -409,11 +411,11 @@ this.PlacesUIUtils = {
    *          move/insert command.
    */
   getTransactionForData: function(aData, aType, aNewParentGuid, aIndex, aCopy) {
-    if (this.SUPPORTED_FLAVORS.indexOf(aData.type) == -1)
+    if (!this.SUPPORTED_FLAVORS.includes(aData.type))
       throw new Error(`Unsupported '${aData.type}' data type`);
 
     if ("itemGuid" in aData) {
-      if (this.PLACES_FLAVORS.indexOf(aData.type) == -1)
+      if (!this.PLACES_FLAVORS.includes(aData.type))
         throw new Error (`itemGuid unexpectedly set on ${aData.type} data`);
 
       let info = { guid: aData.itemGuid
@@ -464,7 +466,7 @@ this.PlacesUIUtils = {
     // a folder picker or not, since it needs more horizontal space than the
     // other controls.
     let hasFolderPicker = !("hiddenRows" in aInfo) ||
-                          aInfo.hiddenRows.indexOf("folderPicker") == -1;
+                          !aInfo.hiddenRows.includes("folderPicker");
     // Use a different chrome url to persist different sizes.
     let dialogURL = hasFolderPicker ?
                     "chrome://browser/content/places/bookmarkProperties2.xul" :
@@ -1043,7 +1045,7 @@ this.PlacesUIUtils = {
 
         // Check that all queries have valid parents.
         let parentId = bs.getFolderIdForItem(query.itemId);
-        if (items.indexOf(parentId) == -1 && parentId != leftPaneRoot) {
+        if (!items.includes(parentId) && parentId != leftPaneRoot) {
           // The parent is not part of the left pane, bail out and create a new
           // left pane root.
           corrupt = true;
@@ -1437,68 +1439,68 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
   PlacesUtils;
 
   return {
-    aggregateTransactions: function(aName, aTransactions)
+    aggregateTransactions: (aName, aTransactions) =>
       new PlacesAggregatedTransaction(aName, aTransactions),
 
-    createFolder: function(aName, aContainer, aIndex, aAnnotations,
-                           aChildItemsTransactions)
+    createFolder: (aName, aContainer, aIndex, aAnnotations,
+                   aChildItemsTransactions) =>
       new PlacesCreateFolderTransaction(aName, aContainer, aIndex, aAnnotations,
                                         aChildItemsTransactions),
 
-    createItem: function(aURI, aContainer, aIndex, aTitle, aKeyword,
-                         aAnnotations, aChildTransactions)
+    createItem: (aURI, aContainer, aIndex, aTitle, aKeyword,
+                 aAnnotations, aChildTransactions) =>
       new PlacesCreateBookmarkTransaction(aURI, aContainer, aIndex, aTitle,
                                           aKeyword, aAnnotations,
                                           aChildTransactions),
 
-    createSeparator: function(aContainer, aIndex)
+    createSeparator: (aContainer, aIndex) =>
       new PlacesCreateSeparatorTransaction(aContainer, aIndex),
 
-    createLivemark: function(aFeedURI, aSiteURI, aName, aContainer, aIndex,
-                             aAnnotations)
+    createLivemark: (aFeedURI, aSiteURI, aName, aContainer, aIndex,
+                     aAnnotations) =>
       new PlacesCreateLivemarkTransaction(aFeedURI, aSiteURI, aName, aContainer,
                                           aIndex, aAnnotations),
 
-    moveItem: function(aItemId, aNewContainer, aNewIndex)
+    moveItem: (aItemId, aNewContainer, aNewIndex) =>
       new PlacesMoveItemTransaction(aItemId, aNewContainer, aNewIndex),
 
-    removeItem: function(aItemId)
+    removeItem: (aItemId) =>
       new PlacesRemoveItemTransaction(aItemId),
 
-    editItemTitle: function(aItemId, aNewTitle)
+    editItemTitle: (aItemId, aNewTitle) =>
       new PlacesEditItemTitleTransaction(aItemId, aNewTitle),
 
-    editBookmarkURI: function(aItemId, aNewURI)
+    editBookmarkURI: (aItemId, aNewURI) =>
       new PlacesEditBookmarkURITransaction(aItemId, aNewURI),
 
-    setItemAnnotation: function(aItemId, aAnnotationObject)
+    setItemAnnotation: (aItemId, aAnnotationObject) =>
       new PlacesSetItemAnnotationTransaction(aItemId, aAnnotationObject),
 
-    setPageAnnotation: function(aURI, aAnnotationObject)
+    setPageAnnotation: (aURI, aAnnotationObject) =>
       new PlacesSetPageAnnotationTransaction(aURI, aAnnotationObject),
 
-    editBookmarkKeyword: function(aItemId, aNewKeyword)
+    editBookmarkKeyword: (aItemId, aNewKeyword) =>
       new PlacesEditBookmarkKeywordTransaction(aItemId, aNewKeyword),
 
-    editLivemarkSiteURI: function(aLivemarkId, aSiteURI)
+    editLivemarkSiteURI: (aLivemarkId, aSiteURI) =>
       new PlacesEditLivemarkSiteURITransaction(aLivemarkId, aSiteURI),
 
-    editLivemarkFeedURI: function(aLivemarkId, aFeedURI)
+    editLivemarkFeedURI: (aLivemarkId, aFeedURI) =>
       new PlacesEditLivemarkFeedURITransaction(aLivemarkId, aFeedURI),
 
-    editItemDateAdded: function(aItemId, aNewDateAdded)
+    editItemDateAdded: (aItemId, aNewDateAdded) =>
       new PlacesEditItemDateAddedTransaction(aItemId, aNewDateAdded),
 
-    editItemLastModified: function(aItemId, aNewLastModified)
+    editItemLastModified: (aItemId, aNewLastModified) =>
       new PlacesEditItemLastModifiedTransaction(aItemId, aNewLastModified),
 
-    sortFolderByName: function(aFolderId)
+    sortFolderByName: (aFolderId) =>
       new PlacesSortFolderByNameTransaction(aFolderId),
 
-    tagURI: function(aURI, aTags)
+    tagURI: (aURI, aTags) =>
       new PlacesTagURITransaction(aURI, aTags),
 
-    untagURI: function(aURI, aTags)
+    untagURI: (aURI, aTags) =>
       new PlacesUntagURITransaction(aURI, aTags),
 
     /**
@@ -1542,49 +1544,53 @@ XPCOMUtils.defineLazyGetter(PlacesUIUtils, "ptm", function() {
     ////////////////////////////////////////////////////////////////////////////
     //// nsITransactionManager forwarders.
 
-    beginBatch: function()
+    beginBatch: () =>
       PlacesUtils.transactionManager.beginBatch(null),
 
-    endBatch: function()
+    endBatch: () =>
       PlacesUtils.transactionManager.endBatch(false),
 
-    doTransaction: function(txn)
+    doTransaction: (txn) =>
       PlacesUtils.transactionManager.doTransaction(txn),
 
-    undoTransaction: function()
+    undoTransaction: () =>
       PlacesUtils.transactionManager.undoTransaction(),
 
-    redoTransaction: function()
+    redoTransaction: () =>
       PlacesUtils.transactionManager.redoTransaction(),
 
-    get numberOfUndoItems()
-      PlacesUtils.transactionManager.numberOfUndoItems,
-    get numberOfRedoItems()
-      PlacesUtils.transactionManager.numberOfRedoItems,
-    get maxTransactionCount()
-      PlacesUtils.transactionManager.maxTransactionCount,
-    set maxTransactionCount(val)
-      PlacesUtils.transactionManager.maxTransactionCount = val,
+    get numberOfUndoItems() {
+      return PlacesUtils.transactionManager.numberOfUndoItems;
+    },
+    get numberOfRedoItems() {
+      return PlacesUtils.transactionManager.numberOfRedoItems;
+    },
+    get maxTransactionCount() {
+      return PlacesUtils.transactionManager.maxTransactionCount;
+    },
+    set maxTransactionCount(val) {
+      PlacesUtils.transactionManager.maxTransactionCount = val;
+    },
 
-    clear: function()
+    clear: () =>
       PlacesUtils.transactionManager.clear(),
 
-    peekUndoStack: function()
+    peekUndoStack: () =>
       PlacesUtils.transactionManager.peekUndoStack(),
 
-    peekRedoStack: function()
+    peekRedoStack: () =>
       PlacesUtils.transactionManager.peekRedoStack(),
 
-    getUndoStack: function()
+    getUndoStack: () =>
       PlacesUtils.transactionManager.getUndoStack(),
 
-    getRedoStack: function()
+    getRedoStack: () =>
       PlacesUtils.transactionManager.getRedoStack(),
 
-    AddListener: function(aListener)
+    AddListener: (aListener) =>
       PlacesUtils.transactionManager.AddListener(aListener),
 
-    RemoveListener: function(aListener)
+    RemoveListener: (aListener) =>
       PlacesUtils.transactionManager.RemoveListener(aListener)
   }
 });

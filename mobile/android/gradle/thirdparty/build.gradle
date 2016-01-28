@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
 
     defaultConfig {
         targetSdkVersion 22
@@ -21,13 +21,14 @@ android {
     sourceSets {
         main {
             java {
-                // Thirdparty Adjust SDK code is included in the thirdparty_adjust_sdk project.
-                exclude 'com/adjust/**'
+                if (!mozconfig.substs.MOZ_INSTALL_TRACKING) {
+                    exclude 'com/adjust/**'
+                }
             }
         }
     }
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:22.2.0'
+    compile 'com.android.support:support-v4:23.0.1'
 }

@@ -1,16 +1,8 @@
-// -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
-
-const Ci = Components.interfaces;
-const Cc = Components.classes;
-
-var windowMediator = Cc["@mozilla.org/appshell/window-mediator;1"]
-                       .getService(Ci.nsIWindowMediator);
+var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 // Copied from nsILookAndFeel.h, see comments on eMetric_AlertNotificationOrigin
 const NS_ALERT_HORIZONTAL = 1;
@@ -18,6 +10,9 @@ const NS_ALERT_LEFT = 2;
 const NS_ALERT_TOP = 4;
 
 const WINDOW_MARGIN = 10;
+const BODY_TEXT_LIMIT = 200;
+
+Cu.import("resource://gre/modules/Services.jsm");
 
 var gOrigin = 0; // Default value: alert from bottom right.
 var gReplacedWindow = null;
@@ -38,21 +33,53 @@ function prefillAlertInfo() {
   // arguments[7] --> lang
   // arguments[8] --> replaced alert window (nsIDOMWindow)
   // arguments[9] --> an optional callback listener (nsIObserver)
+  // arguments[10] -> the nsIURI.hostPort of the origin, optional
 
   switch (window.arguments.length) {
     default:
+    case 11: {
+      if (window.arguments[10]) {
+        let alertBox = document.getElementById("alertBox");
+        alertBox.setAttribute("hasOrigin", true);
+
+        let hostPort = window.arguments[10];
+        const ALERT_BUNDLE = Services.strings.createBundle(
+          "chrome://alerts/locale/alert.properties");
+        const BRAND_BUNDLE = Services.strings.createBundle(
+          "chrome://branding/locale/brand.properties");
+        const BRAND_NAME = BRAND_BUNDLE.GetStringFromName("brandShortName");
+        let label = document.getElementById("alertSourceLabel");
+        label.setAttribute("value",
+          ALERT_BUNDLE.formatStringFromName("source.label",
+                                            [hostPort],
+                                            1));
+        let doNotDisturbMenuItem = document.getElementById("doNotDisturbMenuItem");
+        doNotDisturbMenuItem.setAttribute("label",
+          ALERT_BUNDLE.formatStringFromName("doNotDisturb.label",
+                                            [BRAND_NAME],
+                                            1));
+        let disableForOrigin = document.getElementById("disableForOriginMenuItem");
+        disableForOrigin.setAttribute("label",
+          ALERT_BUNDLE.formatStringFromName("webActions.disableForOrigin.label",
+                                            [hostPort],
+                                            1));
+        let openSettings = document.getElementById("openSettingsMenuItem");
+        openSettings.setAttribute("label",
+          ALERT_BUNDLE.GetStringFromName("webActions.settings.label"));
+      }
+    }
     case 10:
       gAlertListener = window.arguments[9];
     case 9:
       gReplacedWindow = window.arguments[8];
     case 8:
       if (window.arguments[7]) {
-        document.getElementById('alertTitleLabel').setAttribute('lang', window.arguments[7]);
-        document.getElementById('alertTextLabel').setAttribute('lang', window.arguments[7]);
+        document.getElementById("alertTitleLabel").setAttribute("lang", window.arguments[7]);
+        document.getElementById("alertTextLabel").setAttribute("lang", window.arguments[7]);
       }
     case 7:
       if (window.arguments[6]) {
-        document.getElementById('alertNotification').style.direction = window.arguments[6];
+        document.getElementById("alertNotification").style.direction = window.arguments[6];
       }
     case 6:
       gOrigin = window.arguments[5];
@@ -61,16 +88,44 @@ function prefillAlertInfo() {
     case 4:
       gAlertTextClickable = window.arguments[3];
       if (gAlertTextClickable) {
-        document.getElementById('alertNotification').setAttribute('clickable', true);
-        document.getElementById('alertTextLabel').setAttribute('clickable', true);
+        document.getElementById("alertNotification").setAttribute("clickable", true);
+        document.getElementById("alertTextLabel").setAttribute("clickable", true);
       }
     case 3:
-      document.getElementById('alertTextLabel').textContent = window.arguments[2];
+      if (window.arguments[2]) {
+        document.getElementById("alertBox").setAttribute("hasBodyText", true);
+        let bodyText = window.arguments[2];
+        let bodyTextLabel = document.getElementById("alertTextLabel");
+
+        if (bodyText.length > BODY_TEXT_LIMIT) {
+          bodyTextLabel.setAttribute("tooltiptext", bodyText);
+
+          let ellipsis = "\u2026";
+          try {
+            ellipsis = Services.prefs.getComplexValue("intl.ellipsis",
+                                                      Ci.nsIPrefLocalizedString).data;
+          } catch (e) { }
+
+          // Copied from nsContextMenu.js' formatSearchContextItem().
+          // If the JS character after our truncation point is a trail surrogate,
+          // include it in the truncated string to avoid splitting a surrogate pair.
+          let truncLength = BODY_TEXT_LIMIT;
+          let truncChar = bodyText[BODY_TEXT_LIMIT].charCodeAt(0);
+          if (truncChar >= 0xDC00 && truncChar <= 0xDFFF) {
+            truncLength++;
+          }
+
+          bodyText = bodyText.substring(0, truncLength) +
+                     ellipsis;
+        }
+        bodyTextLabel.textContent = bodyText;
+      }
     case 2:
-      document.getElementById('alertTitleLabel').setAttribute('value', window.arguments[1]);
+      document.getElementById("alertTitleLabel").setAttribute("value", window.arguments[1]);
     case 1:
       if (window.arguments[0]) {
-        document.getElementById('alertImage').setAttribute('src', window.arguments[0]);
+        document.getElementById("alertBox").setAttribute("hasImage", true);
+        document.getElementById("alertImage").setAttribute("src", window.arguments[0]);
       }
     case 0:
       break;
@@ -78,7 +133,7 @@ function prefillAlertInfo() {
 }
 
 function onAlertLoad() {
-  const ALERT_DURATION_IMMEDIATE = 4000;
+  const ALERT_DURATION_IMMEDIATE = 12000;
   let alertTextBox = document.getElementById("alertTextBox");
   let alertImageBox = document.getElementById("alertImageBox");
   alertImageBox.style.minHeight = alertTextBox.scrollHeight + "px";
@@ -100,13 +155,19 @@ function onAlertLoad() {
   } else {
     let alertBox = document.getElementById("alertBox");
     alertBox.addEventListener("animationend", function hideAlert(event) {
-      if (event.animationName == "alert-animation") {
+      if (event.animationName == "alert-animation" ||
+          event.animationName == "alert-clicked-animation" ||
+          event.animationName == "alert-closing-animation") {
         alertBox.removeEventListener("animationend", hideAlert, false);
         window.close();
       }
     }, false);
     alertBox.setAttribute("animate", true);
   }
+
+  let alertSettings = document.getElementById("alertSettings");
+  alertSettings.addEventListener("focus", onAlertSettingsFocus);
+  alertSettings.addEventListener("click", onAlertSettingsClick);
 
   let ev = new CustomEvent("AlertActive", {bubbles: true, cancelable: true});
   document.documentElement.dispatchEvent(ev);
@@ -121,7 +182,7 @@ function moveWindowToReplace(aReplacedAlert) {
 
   // Move windows that come after the replaced alert if the height is different.
   if (heightDelta != 0) {
-    let windows = windowMediator.getEnumerator('alert:alert');
+    let windows = Services.wm.getEnumerator("alert:alert");
     while (windows.hasMoreElements()) {
       let alertWindow = windows.getNext();
       // boolean to determine if the alert window is after the replaced alert.
@@ -151,7 +212,7 @@ function moveWindowToEnd() {
           screen.availTop + screen.availHeight - window.outerHeight;
 
   // Position the window at the end of all alerts.
-  let windows = windowMediator.getEnumerator('alert:alert');
+  let windows = Services.wm.getEnumerator("alert:alert");
   while (windows.hasMoreElements()) {
     let alertWindow = windows.getNext();
     if (alertWindow != window) {
@@ -174,7 +235,7 @@ function onAlertBeforeUnload() {
   if (!gIsReplaced) {
     // Move other alert windows to fill the gap left by closing alert.
     let heightDelta = window.outerHeight + WINDOW_MARGIN;
-    let windows = windowMediator.getEnumerator('alert:alert');
+    let windows = Services.wm.getEnumerator("alert:alert");
     while (windows.hasMoreElements()) {
       let alertWindow = windows.getNext();
       if (alertWindow != window) {
@@ -201,5 +262,53 @@ function onAlertClick() {
     gAlertListener.observe(null, "alertclickcallback", gAlertCookie);
   }
 
-  window.close();
+  let alertBox = document.getElementById("alertBox");
+  if (alertBox.getAttribute("animate") == "true") {
+    // Closed when the animation ends.
+    alertBox.setAttribute("clicked", "true");
+  } else {
+    window.close();
+  }
+}
+
+function doNotDisturb() {
+  const alertService = Cc["@mozilla.org/alerts-service;1"]
+                         .getService(Ci.nsIAlertsService)
+                         .QueryInterface(Ci.nsIAlertsDoNotDisturb);
+  alertService.manualDoNotDisturb = true;
+  Services.telemetry.getHistogramById("WEB_NOTIFICATION_MENU")
+                    .add(0);
+  onAlertClose();
+}
+
+function disableForOrigin() {
+  gAlertListener.observe(null, "alertdisablecallback", gAlertCookie);
+  onAlertClose();
+}
+
+function onAlertSettingsFocus(event) {
+  event.target.removeAttribute("focusedViaMouse");
+}
+
+function onAlertSettingsClick(event) {
+  // XXXjaws Hack used to remove the focus-ring only
+  // from mouse interaction, but focus-ring drawing
+  // should only be enabled when interacting via keyboard.
+  event.target.setAttribute("focusedViaMouse", true);
+  event.stopPropagation();
+}
+
+function openSettings() {
+  gAlertListener.observe(null, "alertsettingscallback", gAlertCookie);
+  onAlertClose();
+}
+
+function onAlertClose() {
+  let alertBox = document.getElementById("alertBox");
+  if (alertBox.getAttribute("animate") == "true") {
+    // Closed when the animation ends.
+    alertBox.setAttribute("closing", "true");
+  } else {
+    window.close();
+  }
 }

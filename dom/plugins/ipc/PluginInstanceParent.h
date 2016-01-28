@@ -169,7 +169,7 @@ public:
 
     virtual PPluginSurfaceParent*
     AllocPPluginSurfaceParent(const WindowsSharedMemoryHandle& handle,
-                              const gfxIntSize& size,
+                              const mozilla::gfx::IntSize& size,
                               const bool& transparent) override;
 
     virtual bool
@@ -340,7 +340,7 @@ private:
 
 private:
     PluginModuleParent* mParent;
-    nsRefPtr<PluginAsyncSurrogate> mSurrogate;
+    RefPtr<PluginAsyncSurrogate> mSurrogate;
     bool mUseSurrogate;
     NPP mNPP;
     const NPNetscapeFuncs* mNPNIface;
@@ -353,11 +353,6 @@ private:
 
 #if defined(OS_WIN)
 private:
-    // Used in rendering windowless plugins in other processes.
-    bool SharedSurfaceSetWindow(const NPWindow* aWindow, NPRemoteWindow& aRemoteWindow);
-    void SharedSurfaceBeforePaint(RECT &rect, NPRemoteEvent& npremoteevent);
-    void SharedSurfaceAfterPaint(NPEvent* npevent);
-    void SharedSurfaceRelease();
     // Used in handling parent/child forwarding of events.
     static LRESULT CALLBACK PluginWindowHookProc(HWND hWnd, UINT message,
                                                  WPARAM wParam, LPARAM lParam);
@@ -368,7 +363,6 @@ private:
     void MaybeCreateChildPopupSurrogate();
 
 private:
-    gfx::SharedDIBWin  mSharedSurfaceDib;
     nsIntRect          mPluginPort;
     nsIntRect          mSharedSize;
     HWND               mPluginHWND;
@@ -393,7 +387,7 @@ private:
 #endif // definied(MOZ_WIDGET_COCOA)
 
     // ObjectFrame layer wrapper
-    nsRefPtr<gfxASurface>    mFrontSurface;
+    RefPtr<gfxASurface>    mFrontSurface;
     // For windowless+transparent instances, this surface contains a
     // "pretty recent" copy of the pixels under its <object> frame.
     // On the plugin side, we use this surface to avoid doing alpha
@@ -403,9 +397,9 @@ private:
     // We have explicitly chosen not to provide any guarantees about
     // the consistency of the pixels in |mBackground|.  A plugin may
     // be able to observe partial updates to the background.
-    nsRefPtr<gfxASurface>    mBackground;
+    RefPtr<gfxASurface>    mBackground;
 
-    nsRefPtr<ImageContainer> mImageContainer;
+    RefPtr<ImageContainer> mImageContainer;
 };
 
 
