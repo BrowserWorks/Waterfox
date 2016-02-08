@@ -1341,7 +1341,7 @@ def GenerateOutputForConfig(target_list, target_dicts, data, params,
   if flavor == 'win':
     cc = 'cl.exe'
     cxx = 'cl.exe'
-    ld = 'link.exe'
+    ld = 'xilink.exe'
     gyp.msvs_emulation.GenerateEnvironmentFiles(
         toplevel_build, generator_flags, OpenOutput)
     ld_host = '$ld'
@@ -1392,7 +1392,7 @@ def GenerateOutputForConfig(target_list, target_dicts, data, params,
   if flavor == 'win':
     master_ninja.variable('ld', ld)
     master_ninja.variable('idl', 'midl.exe')
-    master_ninja.variable('ar', 'lib.exe')
+    master_ninja.variable('ar', 'xilib.exe')
     master_ninja.variable('rc', 'rc.exe')
     master_ninja.variable('asm', 'ml.exe')
     master_ninja.variable('mt', 'mt.exe')

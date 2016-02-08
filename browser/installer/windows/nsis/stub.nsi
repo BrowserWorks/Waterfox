@@ -316,7 +316,7 @@ Function .onInit
 !ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Win7
   ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWin7}
+  ${OrUnless} ${AtLeastWinXP}
     MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
     Quit
   ${EndUnless}
@@ -360,7 +360,7 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -396,7 +396,7 @@ Function .onInit
   ${EndIf}
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     StrCpy $ProgressbarMarqueeIntervalMS "10"
   ${Else}
     StrCpy $ProgressbarMarqueeIntervalMS "50"
@@ -641,7 +641,7 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinVista}
+    ${AndIf} ${AtLeastWinXP}
       ; Check to see if this install location is currently set as the default
       ; browser by Default Programs which is only available on Vista and above.
       ClearErrors
@@ -897,7 +897,7 @@ Function createOptions
   SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
   SendMessage $0 ${WM_SETFONT} $FontNormal 0
 
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     StrCpy $0 "$(ADD_SC_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"

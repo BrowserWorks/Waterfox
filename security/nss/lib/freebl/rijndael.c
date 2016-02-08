@@ -31,6 +31,9 @@ static int has_intel_avx = 0;
 static int has_intel_clmul = 0;
 static PRBool use_hw_gcm = PR_FALSE;
 #endif
+#if defined(_MSC_VER) && !defined(_M_IX86)
+#include <intrin.h>  /* for _xgetbv() */
+#endif
 #endif  /* USE_HW_AES */
 
 /*

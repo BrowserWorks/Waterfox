@@ -133,7 +133,7 @@ Function un.onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif

@@ -2392,63 +2392,6 @@ Debugger::removeAllocationsTrackingForAllDebuggees()
 
 
 /*** Debugger JSObjects **************************************************************************/
-
-void
-Debugger::markCrossCompartmentEdges(JSTracer* trc)
-{
-    objects.markCrossCompartmentEdges<DebuggerObject_trace>(trc);
-    environments.markCrossCompartmentEdges<DebuggerEnv_trace>(trc);
-    scripts.markCrossCompartmentEdges<DebuggerScript_trace>(trc);
-    sources.markCrossCompartmentEdges<DebuggerSource_trace>(trc);
-
-    // Because we don't have access to a `cx` inside
-    // `Debugger::logTenurePromotion`, we can't hold onto CCWs inside the log,
-    // and instead have unwrapped cross-compartment edges. We need to be sure to
-    // mark those here.
-    TenurePromotionsLog::trace(&tenurePromotionsLog, trc);
-}
-
-/*
- * Ordinarily, WeakMap keys and values are marked because at some point it was
- * discovered that the WeakMap was live; that is, some object containing the
- * WeakMap was marked during mark phase.
- *
- * However, during zone GC, we have to do something about cross-compartment
- * edges in non-GC'd compartments. Since the source may be live, we
- * conservatively assume it is and mark the edge.
- *
- * Each Debugger object keeps four cross-compartment WeakMaps: objects, scripts,
- * script source objects, and environments. They have the property that all
- * their values are in the same compartment as the Debugger object, but we have
- * to mark the keys and the private pointer in the wrapper object.
- *
- * We must scan all Debugger objects regardless of whether they *currently* have
- * any debuggees in a compartment being GC'd, because the WeakMap entries
- * persist even when debuggees are removed.
- *
- * This happens during the initial mark phase, not iterative marking, because
- * all the edges being reported here are strong references.
- *
- * This method is also used during compacting GC to update cross compartment
- * pointers in zones that are not currently being compacted.
- */
-/* static */ void
-Debugger::markIncomingCrossCompartmentEdges(JSTracer* trc)
-{
-    JSRuntime* rt = trc->runtime();
-    gc::State state = rt->gc.state();
-    MOZ_ASSERT(state == gc::MARK_ROOTS || state == gc::COMPACT);
-
-    for (Debugger* dbg : rt->debuggerList) {
-        Zone* zone = dbg->object->zone();
-        if ((state == gc::MARK_ROOTS && !zone->isCollecting()) ||
-            (state == gc::COMPACT && !zone->isGCCompacting()))
-        {
-            dbg->markCrossCompartmentEdges(trc);
-        }
-    }
-}
-
 /*
  * This method has two tasks:
  *   1. Mark Debugger objects that are unreachable except for debugger hooks that

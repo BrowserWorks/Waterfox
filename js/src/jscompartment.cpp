@@ -571,7 +571,6 @@ JSCompartment::traceIncomingCrossCompartmentEdgesForZoneGC(JSTracer* trc)
         if (!c->zone()->isCollecting())
             c->traceOutgoingCrossCompartmentWrappers(trc);
     }
-    Debugger::markIncomingCrossCompartmentEdges(trc);
 }
 
 void

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// The entry point specified by link.exe /ENTRY option.
+// The entry point specified by xilink.exe /ENTRY option.
 extern "C" void MainEntryPoint() {
 }
 

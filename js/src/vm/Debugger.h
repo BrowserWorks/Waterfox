@@ -134,18 +134,6 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     }
 
   public:
-    template <void (traceValueEdges)(JSTracer*, JSObject*)>
-    void markCrossCompartmentEdges(JSTracer* tracer) {
-        for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
-            traceValueEdges(tracer, e.front().value());
-            Key key = e.front().key();
-            TraceEdge(tracer, &key, "Debugger WeakMap key");
-            if (key != e.front().key())
-                e.rekeyFront(key);
-            key.unsafeSet(nullptr);
-        }
-    }
-
     bool hasKeyInZone(JS::Zone* zone) {
         CountMap::Ptr p = zoneCounts.lookup(zone);
         MOZ_ASSERT_IF(p.found(), p->value() > 0);
@@ -516,7 +504,6 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void traceObject(JSTracer* trc, JSObject* obj);
     void trace(JSTracer* trc);
     static void finalize(FreeOp* fop, JSObject* obj);
-    void markCrossCompartmentEdges(JSTracer* tracer);
 
     static const Class jsclass;
 
@@ -713,7 +700,6 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * Debugger objects that are definitely live but not yet marked, it marks
      * them and returns true. If not, it returns false.
      */
-    static void markIncomingCrossCompartmentEdges(JSTracer* tracer);
     static bool markAllIteratively(GCMarker* trc);
     static void markAll(JSTracer* trc);
     static void sweepAll(FreeOp* fop);

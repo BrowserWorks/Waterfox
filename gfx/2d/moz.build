@@ -141,7 +141,6 @@ UNIFIED_SOURCES += [
     'FilterProcessingScalar.cpp',
     'ImageScaling.cpp',
     'JobScheduler.cpp',
-    'Matrix.cpp',
     'Path.cpp',
     'PathCairo.cpp',
     'PathRecording.cpp',
@@ -155,6 +154,7 @@ UNIFIED_SOURCES += [
 ]
 
 SOURCES += [
+    'Matrix.cpp',
     'PathHelpers.cpp', # Uses _USE_MATH_DEFINES
 ]
 

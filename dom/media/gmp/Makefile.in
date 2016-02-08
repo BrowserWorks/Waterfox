@@ -1,0 +1,8 @@
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(HOST_OS_ARCH),WINNT)
+Unified_cpp_dom_media_gmp1.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Unified_cpp_dom_media_gmp1.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+Unified_cpp_dom_media_gmp0.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Unified_cpp_dom_media_gmp0.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+endif

@@ -2488,8 +2488,8 @@ test -n "$target_alias" &&
   program_prefix=${target_alias}-
 
 MOD_MAJOR_VERSION=4
-MOD_MINOR_VERSION=11
-MOD_PATCH_VERSION=0
+MOD_MINOR_VERSION=10
+MOD_PATCH_VERSION=10
 NSPR_MODNAME=nspr20
 _HAVE_PTHREADS=
 USE_PTHREADS=
@@ -7088,9 +7088,7 @@ tools are selected during the Xcode/Developer Tools installation." "$LINENO" 5
         _MSVC_VER_FILTER='s|.* \([0-9]\+\.[0-9]\+\.[0-9]\+\(\.[0-9]\+\)\?\).*|\1|p'
 
         CC_VERSION=`${CC} -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
-        if test -z "$CC_VERSION"; then
-            as_fn_error $? "Could not determine MSC version." "$LINENO" 5
-        fi
+
 
         _CC_MAJOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $1 }'`
         _CC_MINOR_VERSION=`echo ${CC_VERSION} | awk -F\. '{ print $2 }'`

@@ -466,7 +466,7 @@ endif # WINNT
 ifdef _MSC_VER
 ifeq ($(CPU_ARCH),x86_64)
 # set stack to 2MB on x64 build.  See bug 582910
-WIN32_EXE_LDFLAGS	+= -STACK:2097152
+WIN32_EXE_LDFLAGS	+= -STACK:2097152 -FORCE
 endif
 endif
 

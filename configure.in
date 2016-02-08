@@ -559,8 +559,6 @@ case "$target" in
             MSVS_VERSION=2015
             MSVC_C_RUNTIME_DLL=vcruntime140.dll
             MSVC_CXX_RUNTIME_DLL=msvcp140.dll
-            MSVC_APPCRT_DLL=appcrt140.dll
-            MSVC_DESKTOPCRT_DLL=desktopcrt140.dll
 
             # -Wv:18 disables all warnings introduced after VS2013
             # See http://blogs.msdn.com/b/vcblog/archive/2014/11/12/improvements-to-warnings-in-the-c-compiler.aspx
@@ -575,6 +573,13 @@ case "$target" in
             # C4091: 'typedef ': ignored on left of '' when no variable is declared
             CFLAGS="$CFLAGS -wd4091"
             CXXFLAGS="$CXXFLAGS -wd4091"
+
+            if test -n "$WIN_UCRT_REDIST_DIR"; then
+              if test ! -d "$WIN_UCRT_REDIST_DIR"; then
+                AC_MSG_ERROR([Invalid Windows UCRT Redist directory: ${WIN_UCRT_REDIST_DIR}])
+              fi
+              WIN_UCRT_REDIST_DIR=`cd "$WIN_UCRT_REDIST_DIR" && pwd`
+            fi
         else
             AC_MSG_ERROR([This version (${_CC_MAJOR_VERSION}.${_CC_MINOR_VERSION}.${_CC_BUILD_VERSION}) of the MSVC compiler is unsupported.
 You must install Visual C++ 2013 Update 3 or newer in order to build.
@@ -583,17 +588,11 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         AC_SUBST(MSVS_VERSION)
         AC_SUBST(MSVC_C_RUNTIME_DLL)
         AC_SUBST(MSVC_CXX_RUNTIME_DLL)
-        AC_SUBST(MSVC_APPCRT_DLL)
-        AC_SUBST(MSVC_DESKTOPCRT_DLL)
 
-        # Disable SEH on clang-cl because it doesn't implement them yet.
-        if test -z "$CLANG_CL"; then
-            AC_DEFINE(HAVE_SEH_EXCEPTIONS)
-        else
-            # Send our CFLAGS to NSS
-            MOZ_CFLAGS_NSS=1
-            AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
-        fi
+        # Send our CFLAGS to NSS
+        MOZ_CFLAGS_NSS=1
+        AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
+
 
         if test -n "$WIN32_REDIST_DIR"; then
           if test ! -d "$WIN32_REDIST_DIR"; then
@@ -623,9 +622,6 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         # Check linker version
         _LD_FULL_VERSION=`"${LD}" -v 2>&1 | sed -nre "$_MSVC_VER_FILTER"`
         _LD_MAJOR_VERSION=`echo ${_LD_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
-        if test "$_LD_MAJOR_VERSION" != "$_CC_SUITE"; then
-            AC_MSG_ERROR([The linker major version, $_LD_FULL_VERSION,  does not match the compiler suite version, $_CC_SUITE.])
-        fi
 
         INCREMENTAL_LINKER=1
 
@@ -2186,7 +2182,7 @@ ia64*-hpux*)
         if test "$CPU_ARCH" = "x86"; then
             WIN32_SUBSYSTEM_VERSION=5.01
         else
-            WIN32_SUBSYSTEM_VERSION=6.01
+            WIN32_SUBSYSTEM_VERSION=5.02
         fi
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
@@ -2233,7 +2229,7 @@ ia64*-hpux*)
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
         LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib netapi32.lib"
-        MOZ_DEBUG_LDFLAGS='-DEBUG -DEBUGTYPE:CV'
+        MOZ_DEBUG_LDFLAGS='-DEBUG'
         WARNINGS_AS_ERRORS='-WX'
         MOZ_OPTIMIZE_FLAGS='-O1 -Oi'
         MOZ_FIX_LINK_PATHS=

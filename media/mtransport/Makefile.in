@@ -1,0 +1,8 @@
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(HOST_OS_ARCH),WINNT)
+nr_socket_prsock.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+nr_socket_prsock.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+transportflow.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+transportflow.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+endif

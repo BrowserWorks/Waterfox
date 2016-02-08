@@ -1,0 +1,115 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+include('/build/gyp.mozbuild')
+
+webrtc_non_unified_sources = [
+    'trunk/webrtc/common_audio/vad/vad_core.c',                                  # Because of name clash in the kInitCheck variable
+    'trunk/webrtc/common_audio/vad/webrtc_vad.c',                                # Because of name clash in the kInitCheck variable
+    'trunk/webrtc/modules/audio_coding/codecs/g722/g722_decode.c',               # Because of name clash in the saturate function
+    'trunk/webrtc/modules/audio_coding/codecs/g722/g722_encode.c',               # Because of name clash in the saturate function
+    'trunk/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_filter.c',   # Because of name clash in the kDampFilter variable
+    'trunk/webrtc/modules/audio_coding/codecs/isac/fix/source/pitch_filter_c.c', # Because of name clash in the kDampFilter variable
+    'trunk/webrtc/modules/audio_coding/neteq/audio_vector.cc',                   # Because of explicit template specializations
+    'trunk/webrtc/modules/audio_device/linux/audio_device_pulse_linux.cc',       # Because of LATE()
+    'trunk/webrtc/modules/audio_device/linux/audio_mixer_manager_pulse_linux.cc',# Because of LATE()
+    'trunk/webrtc/modules/audio_device/opensl/opensles_input.cc',                # Because of name clash in the kOption variable
+    'trunk/webrtc/modules/audio_device/opensl/opensles_output.cc',               # Because of name clash in the kOption variable
+    'trunk/webrtc/modules/audio_device/opensl/single_rw_fifo.cc',                # Because of name clash with #define FF
+    'trunk/webrtc/modules/audio_device/win/audio_device_core_win.cc',            # Because of ordering assumptions in strsafe.h
+    'trunk/webrtc/modules/audio_processing/aec/aec_core.c',                      # Because of name clash in the ComfortNoise function
+    'trunk/webrtc/modules/audio_processing/aecm/aecm_core.c',                    # Because of name clash in the ComfortNoise function
+    'trunk/webrtc/modules/audio_processing/aecm/echo_control_mobile.c',          # Because of name clash in the kInitCheck variable
+    'trunk/webrtc/modules/audio_processing/agc/analog_agc.c',                    # Because of name clash in the kInitCheck variable
+    'trunk/webrtc/modules/audio_processing/echo_cancellation_impl.cc',           # Because of name clash in the MapError function
+    'trunk/webrtc/modules/audio_processing/echo_control_mobile_impl.cc',         # Because of name clash in the MapError function
+    'trunk/webrtc/modules/audio_processing/gain_control_impl.cc',                # Because of name clash in the Handle typedef
+    'trunk/webrtc/modules/audio_processing/high_pass_filter_impl.cc',            # Because of name clash in the Handle typedef
+    'trunk/webrtc/modules/audio_processing/noise_suppression_impl.cc',           # Because of name clash in the Handle typedef
+    'trunk/webrtc/modules/video_capture/mac/qtkit/video_capture_qtkit.mm',       # Because of name clash in the nsAutoreleasePool class
+    'trunk/webrtc/modules/video_capture/mac/qtkit/video_capture_qtkit_info.mm',  # Because of name clash in the nsAutoreleasePool class
+    'trunk/webrtc/modules/video_capture/windows/device_info_ds.cc',              # Because of the MEDIASUBTYPE_HDYC variable
+    'trunk/webrtc/modules/video_capture/windows/help_functions_ds.cc',           # Because of initguid.h
+    'trunk/webrtc/modules/video_capture/windows/sink_filter_ds.cc',              # Because of the MEDIASUBTYPE_HDYC variable and initguid.h
+]
+
+GYP_DIRS += ['trunk']
+
+GYP_DIRS['trunk'].input = 'trunk/peerconnection.gyp'
+GYP_DIRS['trunk'].variables = gyp_vars
+# We allow warnings for third-party code that can be updated from upstream.
+GYP_DIRS['trunk'].sandbox_vars['ALLOW_COMPILER_WARNINGS'] = True
+GYP_DIRS['trunk'].sandbox_vars['FINAL_LIBRARY'] = 'webrtc'
+GYP_DIRS['trunk'].non_unified_sources += webrtc_non_unified_sources
+
+if CONFIG['MOZ_WEBRTC_SIGNALING']:
+    GYP_DIRS += ['signaling']
+    GYP_DIRS['signaling'].input = 'signaling/signaling.gyp'
+    GYP_DIRS['signaling'].variables = gyp_vars.copy()
+    GYP_DIRS['signaling'].variables.update(
+        build_for_test=0,
+        build_for_standalone=0
+    )
+    GYP_DIRS['signaling'].sandbox_vars['FINAL_LIBRARY'] = 'xul'
+    # Excluded for various symbol conflicts
+    signaling_non_unified_sources = [
+        'signaling/src/common/browser_logging/CSFLog.cpp',
+        'signaling/src/jsep/JsepSessionImpl.cpp',
+        'signaling/src/media-conduit/AudioConduit.cpp',
+        'signaling/src/media-conduit/CodecStatistics.cpp',
+        'signaling/src/media-conduit/MediaCodecVideoCodec.cpp',
+        'signaling/src/media-conduit/VideoConduit.cpp',
+        'signaling/src/media-conduit/WebrtcMediaCodecVP8VideoCodec.cpp',
+        'signaling/src/mediapipeline/MediaPipeline.cpp',
+        'signaling/src/mediapipeline/MediaPipelineFilter.cpp',
+        'signaling/src/mediapipeline/SrtpFlow.cpp',
+        'signaling/src/peerconnection/MediaPipelineFactory.cpp',
+        'signaling/src/peerconnection/MediaStreamList.cpp',
+        'signaling/src/peerconnection/PeerConnectionCtx.cpp',
+        'signaling/src/peerconnection/PeerConnectionImpl.cpp',
+        'signaling/src/peerconnection/PeerConnectionMedia.cpp',
+        'signaling/src/peerconnection/WebrtcGlobalInformation.cpp',
+        'signaling/src/sdp/sipcc/cpr_string.c',
+        'signaling/src/sdp/sipcc/sdp_access.c',
+        'signaling/src/sdp/sipcc/sdp_attr.c',
+        'signaling/src/sdp/sipcc/sdp_attr_access.c',
+        'signaling/src/sdp/sipcc/sdp_base64.c',
+        'signaling/src/sdp/sipcc/sdp_config.c',
+        'signaling/src/sdp/sipcc/sdp_main.c',
+        'signaling/src/sdp/sipcc/sdp_services_unix.c',
+        'signaling/src/sdp/sipcc/sdp_token.c',
+        'signaling/src/sdp/sipcc/sdp_utils.c',
+    ]
+
+    GYP_DIRS['signaling'].non_unified_sources += signaling_non_unified_sources
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+    GYP_DIRS += ['trunk/testing']
+    GYP_DIRS['trunk/testing'].input = 'trunk/testing/gtest.gyp'
+    GYP_DIRS['trunk/testing'].variables = gyp_vars
+    # We allow warnings for third-party code that can be updated from upstream.
+    GYP_DIRS['trunk/testing'].sandbox_vars['ALLOW_COMPILER_WARNINGS'] = True
+    GYP_DIRS['trunk/testing'].non_unified_sources += webrtc_non_unified_sources
+
+    if CONFIG['MOZ_WEBRTC_SIGNALING']:
+        GYP_DIRS += ['signalingtest']
+        GYP_DIRS['signalingtest'].input = 'signaling/signaling.gyp'
+        GYP_DIRS['signalingtest'].variables = gyp_vars.copy()
+        GYP_DIRS['signalingtest'].variables.update(
+            build_for_test=1,
+            moz_webrtc_mediacodec=0,
+            build_for_standalone=0
+        )
+        GYP_DIRS['signalingtest'].non_unified_sources += signaling_non_unified_sources
+
+        GYP_DIRS += ['signalingstandalone']
+        GYP_DIRS['signalingstandalone'].input = 'signaling/signaling.gyp'
+        GYP_DIRS['signalingstandalone'].variables = gyp_vars.copy()
+        GYP_DIRS['signalingstandalone'].variables.update(
+            build_for_test=0,
+            build_for_standalone=1
+        )
+        GYP_DIRS['signalingstandalone'].non_unified_sources += signaling_non_unified_sources

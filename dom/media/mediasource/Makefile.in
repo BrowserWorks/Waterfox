@@ -1,0 +1,6 @@
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(HOST_OS_ARCH),WINNT)
+Unified_cpp_media_mediasource0.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Unified_cpp_media_mediasource0.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+endif

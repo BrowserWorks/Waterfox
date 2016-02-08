@@ -1,0 +1,18 @@
+include $(topsrcdir)/config/rules.mk
+
+ifeq ($(HOST_OS_ARCH),WINNT)
+MediaPipeline.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+MediaPipeline.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+MediaPipelineFactory.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+MediaPipelineFactory.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+PeerConnectionCtx.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+PeerConnectionCtx.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+PeerConnectionImpl.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+PeerConnectionImpl.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+PeerConnectionMedia.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+PeerConnectionMedia.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+Unified_cpp_webrtc_signaling0.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Unified_cpp_webrtc_signaling0.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+WebrtcGlobalInformation.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+WebrtcGlobalInformation.$(OBJ_SUFFIX): CXXFLAGS := $(CXXFLAGS:O3=O2)
+endif
