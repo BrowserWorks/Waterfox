@@ -235,8 +235,8 @@ for ($j = 1; $j < 4; $j++)
 my $winappversion = "$appver[0],$appver[1],$appver[2],$appver[3]";
 
 my $copyright = "License: MPL 2";
-my $company = "Mozilla Foundation";
-my $trademarks = "Mozilla";
+my $company = "Waterfox Project";
+my $trademarks = "Waterfox Project";
 my $productname = $displayname;
 
 

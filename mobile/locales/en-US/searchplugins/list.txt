@@ -1,7 +1,8 @@
-amazondotcom
+bing
+ddg
+disconnect
+ecosia
 google
-twitter
+startpage
 wikipedia
 yahoo
-bing
-duckduckgo

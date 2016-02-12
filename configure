@@ -4792,11 +4792,11 @@ EOF
             CFLAGS="$CFLAGS -wd4091"
             CXXFLAGS="$CXXFLAGS -wd4091"
 
-            if test -n "$WIN_UCRT_REDIST_DIR"; then
-              if test ! -d "$WIN_UCRT_REDIST_DIR"; then
-                { echo "configure: error: Invalid Windows UCRT Redist directory: ${WIN_UCRT_REDIST_DIR}" 1>&2; echo "configure: error: Invalid Windows UCRT Redist directory: ${WIN_UCRT_REDIST_DIR}" 1>&5; exit 1; }
+            if test -n "$WIN_ICL_REDIST_DIR"; then
+              if test ! -d "$WIN_ICL_REDIST_DIR"; then
+                { echo "configure: error: Invalid Intel C++ Redist directory: ${WIN_ICL_REDIST_DIR}" 1>&2; echo "configure: error: Invalid Intel C++ Redist directory: ${WIN_ICL_REDIST_DIR}" 1>&5; exit 1; }
               fi
-              WIN_UCRT_REDIST_DIR=`cd "$WIN_UCRT_REDIST_DIR" && pwd`
+              WIN_ICL_REDIST_DIR=`cd "$WIN_ICL_REDIST_DIR" && pwd`
             fi
         else
             { echo "configure: error: This version (${_CC_MAJOR_VERSION}.${_CC_MINOR_VERSION}.${_CC_BUILD_VERSION}) of the MSVC compiler is unsupported.
@@ -21595,7 +21595,7 @@ cat >> confdefs.h <<\EOF
 #define MOZ_FMP4 1
 EOF
 
-    MOZ_EME=1
+    MOZ_EME=
 fi;
 
 if test x"$MOZ_WIDGET_TOOLKIT" = x"gonk" -a -n "$MOZ_FMP4" -a -n "$ANDROID_VERSION"; then
@@ -28833,17 +28833,6 @@ EOF
 fi
 
 
-if test -n "$MOZ_SERVICES_HEALTHREPORT"; then
-  cat >> confdefs.pytmp <<\EOF
-    (''' MOZ_SERVICES_HEALTHREPORT ''', ' 1 ')
-EOF
-cat >> confdefs.h <<\EOF
-#define MOZ_SERVICES_HEALTHREPORT 1
-EOF
-
-fi
-
-
 if test -n "$MOZ_SERVICES_METRICS"; then
   cat >> confdefs.pytmp <<\EOF
     (''' MOZ_SERVICES_METRICS ''', ' 1 ')
@@ -29264,39 +29253,6 @@ EOF
 
 
 
-if test "$MOZ_TELEMETRY_REPORTING"; then
-    cat >> confdefs.pytmp <<\EOF
-    (''' MOZ_TELEMETRY_REPORTING ''', ' 1 ')
-EOF
-cat >> confdefs.h <<\EOF
-#define MOZ_TELEMETRY_REPORTING 1
-EOF
-
-
-    # Enable Telemetry by default for nightly and aurora channels
-    if test -z "$RELEASE_BUILD"; then
-      cat >> confdefs.pytmp <<\EOF
-    (''' MOZ_TELEMETRY_ON_BY_DEFAULT ''', ' 1 ')
-EOF
-cat >> confdefs.h <<\EOF
-#define MOZ_TELEMETRY_ON_BY_DEFAULT 1
-EOF
-
-    fi
-fi
-
-if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=1
-  cat >> confdefs.pytmp <<\EOF
-    (''' MOZ_DATA_REPORTING ''', ' 1 ')
-EOF
-cat >> confdefs.h <<\EOF
-#define MOZ_DATA_REPORTING 1
-EOF
-
-  
-fi
-
 
 
 
@@ -29503,12 +29459,12 @@ if test -n "$COMPILE_ENVIRONMENT"; then
 for ac_func in posix_fadvise posix_fallocate
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
-echo "configure:29507: checking for $ac_func" >&5
+echo "configure:29463: checking for $ac_func" >&5
 if eval "test \"`echo '$''{'ac_cv_func2_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 29512 "configure"
+#line 29468 "configure"
 #define $ac_func innocuous_$ac_func
 #include "confdefs.h"
 #undef $ac_func
@@ -29535,7 +29491,7 @@ $ac_func();
 
 ; return 0; }
 EOF
-if { (eval echo configure:29539: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:29495: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_func2_$ac_func=yes"
 else
@@ -29570,7 +29526,7 @@ if test "$MOZ_X11"; then
                 _SAVE_CFLAGS=$CFLAGS
     CFLAGS="$CFLAGS $XCFLAGS"
     cat > conftest.$ac_ext <<EOF
-#line 29574 "configure"
+#line 29530 "configure"
 #include "confdefs.h"
 
         #include <stdio.h>
@@ -29589,7 +29545,7 @@ int main() {
     
 ; return 0; }
 EOF
-if { (eval echo configure:29593: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+if { (eval echo configure:29549: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
   :
 else
   echo "configure: failed program was:" >&5
@@ -29765,7 +29721,7 @@ if test -n "$MOZ_NATIVE_ICU"; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:29769: checking for $ac_word" >&5
+echo "configure:29725: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -29809,19 +29765,19 @@ fi
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
         echo $ac_n "checking for icu-i18n >= 50.1""... $ac_c" 1>&6
-echo "configure:29813: checking for icu-i18n >= 50.1" >&5
+echo "configure:29769: checking for icu-i18n >= 50.1" >&5
 
         if $PKG_CONFIG --exists "icu-i18n >= 50.1" ; then
             echo "$ac_t""yes" 1>&6
             succeeded=yes
 
             echo $ac_n "checking MOZ_ICU_CFLAGS""... $ac_c" 1>&6
-echo "configure:29820: checking MOZ_ICU_CFLAGS" >&5
+echo "configure:29776: checking MOZ_ICU_CFLAGS" >&5
             MOZ_ICU_CFLAGS=`$PKG_CONFIG --cflags "icu-i18n >= 50.1"`
             echo "$ac_t""$MOZ_ICU_CFLAGS" 1>&6
 
             echo $ac_n "checking MOZ_ICU_LIBS""... $ac_c" 1>&6
-echo "configure:29825: checking MOZ_ICU_LIBS" >&5
+echo "configure:29781: checking MOZ_ICU_LIBS" >&5
             ## Remove evil flags like -Wl,--export-dynamic
             MOZ_ICU_LIBS="`$PKG_CONFIG --libs \"icu-i18n >= 50.1\" |sed s/-Wl,--export-dynamic//g`"
             echo "$ac_t""$MOZ_ICU_LIBS" 1>&6
@@ -30624,7 +30580,6 @@ sed 's/$/,/' >> $CONFIG_STATUS <<EOF
     (''' BUILD_CTYPES ''', r''' $BUILD_CTYPES ''')
     (''' MOZ_SERVICES_COMMON ''', r''' $MOZ_SERVICES_COMMON ''')
     (''' MOZ_SERVICES_CRYPTO ''', r''' $MOZ_SERVICES_CRYPTO ''')
-    (''' MOZ_SERVICES_HEALTHREPORT ''', r''' $MOZ_SERVICES_HEALTHREPORT ''')
     (''' MOZ_SERVICES_METRICS ''', r''' $MOZ_SERVICES_METRICS ''')
     (''' MOZ_SERVICES_NOTIFICATIONS ''', r''' $MOZ_SERVICES_NOTIFICATIONS ''')
     (''' MOZ_SERVICES_SYNC ''', r''' $MOZ_SERVICES_SYNC ''')
@@ -30753,7 +30708,6 @@ sed 's/$/,/' >> $CONFIG_STATUS <<EOF
     (''' SOURCE_REV_URL ''', r''' $SOURCE_REV_URL ''')
     (''' MOZ_INCLUDE_SOURCE_INFO ''', r''' $MOZ_INCLUDE_SOURCE_INFO ''')
     (''' MOZ_TELEMETRY_DISPLAY_REV ''', r''' $MOZ_TELEMETRY_DISPLAY_REV ''')
-    (''' MOZ_DATA_REPORTING ''', r''' $MOZ_DATA_REPORTING ''')
     (''' MOZ_BROWSE_INFO ''', r''' $MOZ_BROWSE_INFO ''')
     (''' WIN32_REDIST_DIR ''', r''' $WIN32_REDIST_DIR ''')
     (''' MOZ_NATIVE_JPEG ''', r''' $MOZ_NATIVE_JPEG ''')

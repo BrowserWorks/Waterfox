@@ -70,9 +70,10 @@
 @BINPATH@/@MSVC_C_RUNTIME_DLL@
 @BINPATH@/@MSVC_CXX_RUNTIME_DLL@
 #endif
-#if MOZ_PACKAGE_WIN_UCRT_DLLS
-@BINPATH@/api-ms-win-*.dll
-@BINPATH@/ucrtbase.dll
+#if MOZ_PACKAGE_WIN_ICL_DLLS
+@BINPATH@/libiomp5md.dll
+@BINPATH@/libmmd.dll
+@BINPATH@/svml_dispmd.dll
 #endif
 #endif
 #ifndef MOZ_NATIVE_ICU

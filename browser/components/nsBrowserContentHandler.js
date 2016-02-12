@@ -547,7 +547,7 @@ nsBrowserContentHandler.prototype = {
     if (overridePage == "about:blank")
       overridePage = "";
 
-    // Temporary override page for users who are running Firefox on Windows 10 for their first time.
+/*     // Temporary override page for users who are running Firefox on Windows 10 for their first time.
     let platformVersion = Services.sysinfo.getProperty("version");
     if (AppConstants.platform == "win" &&
         Services.vc.compare(platformVersion, "10") == 0 &&
@@ -561,7 +561,7 @@ nsBrowserContentHandler.prototype = {
           additionalPage += "&utm_content=firstrun";
         }
       }
-    }
+    } */
 
     if (additionalPage && additionalPage != "about:blank") {
       if (overridePage) {
