@@ -1,3 +1,18 @@
+The Waterfox source code is made to be able to be compiled by Intel's C++ compiler for Windows. You should be able to
+install it and compile Waterfox without any issues. Other modifications and patches that are more
+upstream have been implemented as well to fix any compatibility/security issues that Mozilla may 
+lag behind in implementing (usually due to not being high priority). High request features removed by Mozilla but wanted by users are retained (if they aren't removed due to security).
+
+Waterfox is released under the Mozilla Public License Version 2.0:
+
+	https://www.mozilla.org/MPL/2.0/
+	
+Waterfox binaries are kindly being redistributed free off charge by:
+
+ ![MaxCDN](https://raw.githubusercontent.com/MaxCDN/media/master/Logos/maxcdn-logo-full-rgb-300px.png)
+
+From Mozilla's Readme.txt:
+
 An explanation of the Mozilla Source Code Directory Structure and links to
 project pages with documentation can be found at:
 
@@ -22,6 +37,6 @@ You can download nightly development builds from the Mozilla FTP server.
 Keep in mind that nightly builds, which are used by Mozilla developers for
 testing, may be buggy. Firefox nightlies, for example, can be found at:
 
-    https://archive.mozilla.org/pub/firefox/nightly/latest-mozilla-central/
+    ftp://ftp.mozilla.org/pub/firefox/nightly/latest-trunk/
             - or -
     http://nightly.mozilla.org/
