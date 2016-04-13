@@ -1,0 +1,45 @@
+<!ENTITY pane.tabGroups.label "Ljepblêdgroepen">
+<!ENTITY pane.session.label "Back-up meitsje / werstelle">
+<!ENTITY cat.general.label "Algemien">
+<!ENTITY cat.keyboardshortcuts.label "Fluchtoetsen">
+<!ENTITY cat.backup.label "Back-up fan ljepblêdgroepen meitsje">
+<!ENTITY cat.restore.label "Ljepblêdgroepen werstelle">
+<!ENTITY cat.clear.label "Ljepblêdgroepen wiskje">
+<!ENTITY opt.animateZoom.label2 "Transysjes animearje">
+<!ENTITY opt.animateZoom.tooltip "Floeiende oergongen by yngean en ferlitten fan de ljepblêdgroepenmoadus, troch fan it aktuele ljepblêd nei de groepenmoadus út te zoomen, en by ferlitten fan de groepenmoadus wer nei it ljepblêd yn te zoomen.">
+<!ENTITY opt.tabViewKeyset.label "Groepenmoadus yngean en ferlitten">
+<!ENTITY opt.nextGroupKeyset.label "Wikselje nei de folgjende groep">
+<!ENTITY opt.previousGroupKeyset.label "Wikselje nei de foarige groep">
+<!ENTITY sessionRestore.caption "Ljepblêdgroepen behâlde by werstarten">
+<!ENTITY sessionRestore.description "Om jo ljepblêden troch Firefox ûnthâlde te litten, moat it jo finsters en ljepblêden tusken sesjes werstelle. Oars moatte jo jo groepen hieltyd by yt sluten en weriepenjen fan de browser opnij gearstalle.">
+<!ENTITY sessionRestore.button.label "Myn ljepblêden en finsters fan de foarige kear toane as Firefox start">
+<!ENTITY sessionRestore.button.tooltip.a "Dit is itselde as it wizigjen fan de foarkar ‘As Firefox start’ nei ‘Myn finsters en ljepblêden fan de foarige kear toane’ yn de opsjes fan Firefox.">
+<!ENTITY sessionRestore.button.tooltip.b "As jo dy opsje dêr letter wizigje, ferlieze jo opnij jo ljepblêdgroepen by it werstarten fan de browser, oant jo dit weromsette of opnij op dizze knop klikke.">
+<!ENTITY session.backup.button "Back-upbestân meitsje">
+<!ENTITY session.backup.description "Eksportearje jo ljepblêdgroepen nei in back-upbestân foar bewarring, sadat jo se wannear nedich letter werstelle kinne.">
+<!ENTITY session.backup.autoloaded "It bewarre bestân is hjir ûnder laden. Befêstigje dat de back-up fan jo groepen en ljepblêden slagge is.">
+<!ENTITY session.backup.alldata.checkbox.label "Back-up fan sesjegegevens meitsje">
+<!ENTITY session.backup.alldata.checkbox.tooltip.a "Dit kin handig wêze foar letter by it werstellen fan groepen fan dit back-upbestân út. Oars sille jo allinnich de groepen sels werstelle kinne, en de ljepblêden dy\'t der op dit stuit yn iepene binne.">
+<!ENTITY session.backup.alldata.checkbox.tooltip.b "As jo gjin belang hawwe oan it behâlden fan skiednis, formulieren of oare gegevens fan jo ljepblêden, hawwe jo dit net nedich.">
+<!ENTITY session.backup.alldata.caution.a "Warskôging! Hjirtroch wurde ek alle gegevens fan de aktuele sesje eksportearre.">
+<!ENTITY session.backup.alldata.caution.b "Wês foarsichtich mei wa der tagong hat ta dit bestân; it befettet gegevens fan al jo ljepblêden, wêrûnder sideskiednis, formuliergegevens en oare persoanlike en mooglik gefoelige gegevens.">
+<!ENTITY session.restore.load.button "Back-upbestân lade">
+<!ENTITY session.restore.migrated.button "Migraasjeback-up lade">
+<!ENTITY session.restore.migrated.tooltip "Dit is de back-up dy\'t troch Firefox oanmakke waard doe\'t it bywurke waard, folgjend op de ferwidering fan de ynboude Ljepblêdgroepen. Dizze soa al jo groepen en ljepblêden fan foar de fernijing befetsje moatte.">
+<!ENTITY session.restore.import.button "Selektearre items nei dit finster ymportearje">
+<!ENTITY session.restore.import.tooltip.a "Nei dat jo op dizze knop klikke, kinne jo nei de ljepblêdgroepenmoadus wikselje en de nij ymportearre groepen oarderje lykas gebrûkelik.">
+<!ENTITY session.restore.import.tooltip.b "Hâld der rekkening mei dat jo allinnich nije groepen ymportearje kinne; jo kinne gjin ljepblêden yn besteande groepen ymportearje. Dit hâldt yn dat jo frij ienfâldich dûbele groepen oerhâlde kinne as jo deselde groep twa kear ymportearje. Gean yn dat gefal nei de ljepblêdgroepenmoadus en slút de net-winske groepen.">
+<!ENTITY session.restore.description "Laad in back-upbestân dat de ljepblêdgroepen d\'t jo werstelle wolle befettet. Kies dêrnei de winske groepen en ljepblêden. Dizze wurde yn dit finster laden, sadat jo se krekt as alle oare benaderje kinne, skikke en oanpasse.">
+<!ENTITY session.restore.invalid "It selektearre bestân is ûnjildich, skansearre, of befettet gjin ljepblêdgroepengegevens.">
+<!ENTITY session.restore.finished "De selektearre groepen binne nei dit finster ymportearre. Gean no nei de ljepblêdgroepenmoadus om se krekt as alle oare groepen te benaderjen.">
+<!ENTITY session.restore.list.check "Ymportearje">
+<!ENTITY session.restore.list.items "Groepen en ljepblêden">
+<!ENTITY session.clear.button "Groepengegevens wiskje">
+<!ENTITY session.clear.tooltip "Dit soe nea nedich hoege te wêzen; it is ienfâldiger en feiliger om de ljepblêdgroepenmoadus te iepenjen en net-winske groepen te sluten.">
+<!ENTITY session.clear.description.a "Alle groepengegevens fan de aktuele sesje wiskje.">
+<!ENTITY session.clear.description.f "Doch dit allinnich as jo witte wat jo dogge!">
+<!ENTITY session.clear.description.b "Meitsje in back-up fan jo groepen en ljepblêden eardat jo fierdergean.">
+<!ENTITY session.clear.description.c "Hjir troch wurdenal jo browserfinsters en harren sichtbere ljepblêden opnij laden">
+<!ENTITY session.clear.description.g ", en alle ljepblêden yn net-aktive groepen fuortsmiten.">
+<!ENTITY session.clear.description.d "Warskôging: dizze aksje kin net ûngedien makke wurde!">
+<!ENTITY session.clear.description.e "Binne jo wis dat jo trochgean wolle?">

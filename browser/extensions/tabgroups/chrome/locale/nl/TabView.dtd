@@ -1,0 +1,14 @@
+<!ENTITY moveToGroup.label "Verplaatsen naar groep">
+<!ENTITY moveToGroup.accesskey "r">
+<!ENTITY moveToNewGroup.label "Nieuwe groep">
+<!ENTITY viewTabGroups.label "Tabbladgroepen">
+<!ENTITY viewTabGroups.tooltip "Uw tabbladen groeperen">
+<!ENTITY viewTabGroups.accesskey "T">
+<!ENTITY buttonSearchTabs.label "Tabbladgroepen doorzoeken">
+<!ENTITY buttonExitTabGroups.label "Tabbladgroepen sluiten">
+<!ENTITY buttonOptionsTabGroups.label "Voorkeuren van tabbladgroepen wijzigen">
+<!ENTITY buttonHelpTabGroups.label "Tabbladgroepen gebruiken">
+<!ENTITY sessionRestoreNotice.label "Uw tabbladen en groepen zullen de volgende keer dat u de browser start niet worden hersteld! Klik hier om dit in orde te maken.">
+<!ENTITY sessionRestoreNotice.dismiss.tooltip "Deze waarschuwing verwijderen totdat ik de browser herstart">
+<!ENTITY sessionRestoreAutoChanged.label "Uw tabbladen en groepen zullen de volgende keer dat u de browser start automatisch worden hersteld.">
+<!ENTITY sessionRestorePrivate.label "Dit is een privévenster; uw tabbladen en groepen kunnen niet worden hersteld zodra u het sluit.">

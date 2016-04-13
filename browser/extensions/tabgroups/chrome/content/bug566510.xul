@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<overlay id="bug566510_overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+	<menu id="objName-context_tabViewMenu" observes="multiselectionContextBroadcaster"/>
+	<menuitem id="objName-context_tabViewNewGroup" oncommand="bug566510_TabView.moveTabsTo(TabContextMenu.contextTab, null);"/>
+
+</overlay>

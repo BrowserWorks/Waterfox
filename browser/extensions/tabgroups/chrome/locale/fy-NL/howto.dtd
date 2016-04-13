@@ -1,0 +1,31 @@
+<!ENTITY howto.pane.label "Tabbladgroepen gebruiken">
+<!ENTITY howto.overview.a "Tabbladgroepen zijn geweldig voor het groeperen van tabbladen op taak. Zo kunt u bijvoorbeeld een groep tabbladen hebben die aan het zoeken naar een cadeau zijn gerelateerd, en een andere groep voor het online betalen van uw rekeningen. Probeer groepen te maken voor dingen die u normaal gesproken online doet en gebruik tabbladgroepen om hiertussen te wisselen. Het is een eenvoudige manier om georganiseerd te blijven.">
+<!ENTITY howto.create.caption "Hoe maak ik een tabbladgroep aan?">
+<!ENTITY howto.create.step1 "Wissel naar de tabbladgroepenweergave via de werkbalkknop, of via de sneltoets.">
+<!ENTITY howto.create.step2a "Als u de tabbladgroepenweergave voor het eerst gebruikt, ziet u miniatuurweergaven van al uw tabbladen in één groep. Om een nieuwe groep te maken, sleept u een tabblad eenvoudig uit de groep; er wordt dan een kader omheen getekend.">
+<!ENTITY howto.create.step2b "U kunt verdergaan met het toevoegen van tabbladen aan de nieuwe groep en meer groepen aanmaken.">
+<!ENTITY howto.create.step3 "Als u klaar bent, klikt u op een tabblad om de weergave te verlaten. U keert terug naar Firefox, het aangeklikte tabblad wordt actief en alleen de tabbladen in die groep worden zichtbaar.">
+<!ENTITY howto.switch.caption "Hoe wissel ik tussen tabbladgroepen?">
+<!ENTITY howto.switch.description "Wisselen tussen tabbladgroepen is eenvoudig. Ga hiervoor naar de tabbladgroepenweergave, en klik op de tabbladgroep die u wilt weergeven. Het tabblad waarop u hebt geklikt wordt actief, en alleen de tabbladen in die groep worden zichtbaar.">
+<!ENTITY howto.search.caption "Hoe doorzoek ik mijn tabbladen?">
+<!ENTITY howto.search.step1 "Ga naar de tabbladgroepenweergave.">
+<!ENTITY howto.search.step2a "Klik op de zoekknop aan de rechterkant van het venster om het zoekveld zichtbaar te maken, en begin dan met het typen van de naam van het tabblad dat u probeert te vinden.">
+<!ENTITY howto.search.step2b "Of begin eenvoudig met typen, en er zal automatisch worden gezocht.">
+<!ENTITY howto.search.step3 "Terwijl u typt, worden de tabbladen die met uw zoektermen overeenkomen gemarkeerd. Klik dan op een tabblad om het te selecteren en naar Firefox terug te keren.">
+<!ENTITY howto.search.final "Als u meerdere Firefox-vensters hebt geopend, kunt u onder in het venster tabbladen van andere vensters zien die met uw zoektermen overeenkomen. Op een van deze resultaten klikken brengt u naar dat Firefox-venster, tabblad en die groep.">
+<!ENTITY howto.organize.caption "Hoe orden ik mijn tabbladgroepen?">
+<!ENTITY howto.organize.description1 "Tabbladgroepen kunnen eenvoudig van grootte worden gewijzigd, herschikt en benoemd. Zodra u klaar bent met een groep, kunt u deze sluiten en direct alle tabbladen ervan verlaten.">
+<!ENTITY howto.organize.description2 "Open de tabbladgroepenweergave.">
+<!ENTITY howto.resize.caption "Grootte van tabbladgroepen wijzigen">
+<!ENTITY howto.resize.description1 "Klik en versleep de vergrotingsgreep in de rechteronderhoek van een groep om deze groter of kleiner te maken. Tijdens het aanpassen van de groep zullen de tabbladen evenredig groter of kleiner worden.">
+<!ENTITY howto.resize.description2 "Als u de groep klein genoeg maakt, zullen de tabbladen op elkaar worden gestapeld. Onder deze stapel zal een knop voor een voorbeeldweergave verschijnen. Klik op deze knop om te zien welke tabbladen er in de stapel zitten, zonder de grootte van de groep te wijzigen.">
+<!ENTITY howto.rearrange.caption "Tabbladgroepen herschikken">
+<!ENTITY howto.rearrange.description "Klik en sleep op een leeg gebied langs de randen of onderkant van een groep om deze over het scherm te bewegen.">
+<!ENTITY howto.name.caption "Tabbladgroepen een naam geven">
+<!ENTITY howto.name.description "Klik naast het potloodpictogram boven in een groep en typ hiervoor een naam in. Druk daarna op Enter, of klik op een ander gebied in het venster.">
+<!ENTITY howto.close.caption "Tabbladgroepen sluiten">
+<!ENTITY howto.close.description1 "Elke tabbladgroep heeft een sluitknop in de rechterbovenhoek. Door hierop te klikken, worden de groep en alle tabbladen erin gesloten.">
+<!ENTITY howto.close.description2 "Als u per ongeluk een tabbladgroep hebt gesloten, kunt u op de knop Groep sluiten ongedaan maken klikken om deze te herstellen voordat u de weergave verlaat.">
+<!ENTITY howto.pinned.caption "Vastgemaakte tabbladen in tabbladgroepen">
+<!ENTITY howto.pinned.description "Als u vastgemaakte tabbladen met tabbladgroepen gebruikt, zullen deze aan de rechterkant van elke tabbladgroep worden voorgesteld door het pictogram van hun website.">
+<!ENTITY howto.credits "Dit paneel is gebaseerd op een oorspronkelijk artikel op support.mozilla.org, geschreven door deze fijne mensen: ">

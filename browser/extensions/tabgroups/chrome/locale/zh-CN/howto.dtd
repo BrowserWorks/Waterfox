@@ -1,0 +1,31 @@
+<!ENTITY howto.pane.label "使用指南">
+<!ENTITY howto.overview.a "Tab Groups 特别适合根据不同任务为标签页分组。例如，你可以有一组和搜寻礼物有关的标签页，也可以有另一组和在线支付账单的标签页。试着为你日常在线做所的事创建分组并使用 Tab Groups 在这些群组之间切换。在保持事情有条理方面，它着实很方便。">
+<!ENTITY howto.create.caption "如何新建标签页群组？">
+<!ENTITY howto.create.step1 "点击工具栏按钮或使用键盘快捷键进入标签页群组查看模式。">
+<!ENTITY howto.create.step2a "当你首次进入了标签页群组视图后，你会看到所有的标签页的缩略图都在一个分组里。要创建一个新的分组，只要将这个分组中的任意一个标签拖到分组外面，这时 Firefox 会自动在这两个标签周围形成盒子。">
+<!ENTITY howto.create.step2b "然后你就可以继续向这个新的分组添加标签页，还能创建更多的分组。">
+<!ENTITY howto.create.step3 "在这些都完成后，你可以在任意一个标签页上点击一下就可以退出标签页群组视图。然后返回到了 Firefox 时，你点击的那个标签页会处于激活状态，并且只有这个标签页所在的分组才是可见的。">
+<!ENTITY howto.switch.caption "如何在组与组之间切换？">
+<!ENTITY howto.switch.description "在组与组之间切换很简单，只需进入标签页群组查看模式，点击你要查看的标签页群组。这时你点击的那个标签页会处于激活状态，并且只有这个标签页所在的分组才是可见的。">
+<!ENTITY howto.search.caption "如何进行标签页搜索？">
+<!ENTITY howto.search.step1 "进入标签页群组查看模式。">
+<!ENTITY howto.search.step2a "点击窗口右边的搜索按钮打开搜索框，然后开始输入你想要查找的标签页的名字。">
+<!ENTITY howto.search.step2b "或者你可以在标签页群组视图开始键盘输入，搜索会自动生成。">
+<!ENTITY howto.search.step3 "随着你的键入，符合你搜索条件的标签页会被高亮显示。然后点击对应的标签页，并返回到 Firefox。">
+<!ENTITY howto.search.final "如果你打开了不止一个 Firefox 窗口，你可能还会看到其他窗口中符合搜索条件的标签页被列出在了当前窗口的底部。点击其中的一个会切换到该标签页所在的窗口，以及对应的标签页和分组。">
+<!ENTITY howto.organize.caption "如何组织标签页群组？">
+<!ENTITY howto.organize.description1 "你可以轻松的调整分组的大小，重新排列，对其进行命名，甚至一次关闭所有的分组。">
+<!ENTITY howto.organize.description2 "进入标签页群组查看模式。">
+<!ENTITY howto.resize.caption "调整标签页分组的大小">
+<!ENTITY howto.resize.description1 "点击并拖动分组右下角的大小调整手柄，使分组变大或者变小。当你调整分组的大小时，分组里标签的大小也会相应变大或变小。">
+<!ENTITY howto.resize.description2 "如果分组被调整到小于特定大小时，标签会相互堆叠在一起。在堆叠的下方，会出现一个预览按钮。单击预览按钮就可以在不改变分组大小的情况下查看堆叠中包含的标签。">
+<!ENTITY howto.rearrange.caption "重新排列分组">
+<!ENTITY howto.rearrange.description "在分组两侧或者底部的空白区域单击并拖动可以让分组在屏幕上移动。">
+<!ENTITY howto.name.caption "命名标签页分组">
+<!ENTITY howto.name.description "在标签页分组顶部的铅笔图标旁点击，并为其键入一个名字。然后单击回车键或在窗口的其他区域单击即可。">
+<!ENTITY howto.close.caption "关闭标签页分组">
+<!ENTITY howto.close.description1 "每个标签页分组在右上角都有一个关闭按钮。单击就可以关闭此分组以及其中的所有标签页。">
+<!ENTITY howto.close.description2 "如果不你小心关闭了标签页分组，可以在离开标签页群组视图之前单击撤销关闭分组按钮来恢复这些标签页。">
+<!ENTITY howto.pinned.caption "分组里的固定标签页">
+<!ENTITY howto.pinned.description "如果你在使用分组里固定的标签页功能，在分组的右侧它们会以站点图标的形式显示出来。">
+<!ENTITY howto.credits "本版面基于 support.mozilla.org 的这篇文章，它是由以下好心人编写的：">

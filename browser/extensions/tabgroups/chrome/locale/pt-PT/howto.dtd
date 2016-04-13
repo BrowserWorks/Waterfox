@@ -1,0 +1,31 @@
+<!ENTITY howto.pane.label "Como Usar">
+<!ENTITY howto.overview.a "Grupos de Separadores são óptimos para agrupar separadores por tarefa. Por exemplo, podes ter um grupo de separadores para a pesquisa de um presente e outro para pagares as contas online. Tenta criar grupos para tarefas que realizas normalmente e usa os Grupos de Separadores para alternar entre eles. É uma maneira fácil de te manteres organizado.">
+<!ENTITY howto.create.caption "Como crio um Grupo de Separadores?">
+<!ENTITY howto.create.step1 "Entra no modo Grupo de Separadores, através do botão da barra de ferramentas ou do atalho de teclado.">
+<!ENTITY howto.create.step2a "Quando entrares pela primeira vez no modo Grupo de Separadores, irás ver previsualizações de todos os teus separadores num só grupo. Para criares um grupo novo, basta arrastares um desses separadores para fora do grupo, vai aparecer uma caixa nova à sua volta.">
+<!ENTITY howto.create.step2b "Podes adicionar quantos separadores quiseres a esse grupo novo ou criar ainda mais grupos.">
+<!ENTITY howto.create.step3 "Quando terminares, seleciona um separador ou um grupo para saires do modo de grupos. Irás voltar ao Firefox, o separador que selecionaste estará ativo e apenas estarão visíveis os separadores desse grupo.">
+<!ENTITY howto.switch.caption "Como alterno entre Grupos de Separadores?">
+<!ENTITY howto.switch.description "Aternar entre grupos é simples. Basta entrares no modo de grupos e selecionares o grupo ou o separador que queres. Esse separador estará ativo e apenas estarão visíveis os separadores desse grupo.">
+<!ENTITY howto.search.caption "Como procuro por um separador?">
+<!ENTITY howto.search.step1 "Entra no modo Grupos de Separadores.">
+<!ENTITY howto.search.step2a "Prime o botão de pesquisa no lado direito da janela para ativar a caixa de pesquisa e insere o nome do separador que procuras.">
+<!ENTITY howto.search.step2b "Ou começa logo a escrever para pesquisar imediatamente.">
+<!ENTITY howto.search.step3 "À medida que escreves, os separadores encontrados serão realçados. Seleciona um para voltares ao Firefox.">
+<!ENTITY howto.search.final "Se tiveres mais do que uma janela do Firefox aberta, poderás ver separadores de outras janelas que resultem da procura no fundo da janela. Se selecionares um desses, irás para a janela, grupo e separador correspondentes.">
+<!ENTITY howto.organize.caption "Como organizo os meus Grupos de Separadores?">
+<!ENTITY howto.organize.description1 "Os Grupos de Separadores são facilmente dimensionados, posicionados e nomeados. Quando não precisares mais de um grupo, podes fechá-lo para o remover junto com todos os seus separadores.">
+<!ENTITY howto.organize.description2 "Entra no modo Grupos de Separadores.">
+<!ENTITY howto.resize.caption "Dimensionar">
+<!ENTITY howto.resize.description1 "Arrasta o canto inferior-direito de um grupo para o aumentares ou diminuires. À medida que o grupo é redimensionado, os seus separadores também se tornam maiores ou menores de acordo com a ação.">
+<!ENTITY howto.resize.description2 "Se fizeres o grupo demasiado pequeno, os seus separadores são mostrados empilhados. Abaixo deles, estará visível um botão de previsualização. Ao premi-lo, poderás ver quais separadores estão empilhados no grupo sem ser necessário redimensioná-lo.">
+<!ENTITY howto.rearrange.caption "Posicionar">
+<!ENTITY howto.rearrange.description "Clica e arrasta numa área vazia de um grupo para o moveres pelo ecrã.">
+<!ENTITY howto.name.caption "Nomear">
+<!ENTITY howto.name.description "Clica na área junto ao ícone do lápis no topo do grupo e escreve o nome para designá-lo. Depois basta premir Enter ou clicar numa outra área qualquer da janela.">
+<!ENTITY howto.close.caption "Fechar">
+<!ENTITY howto.close.description1 "Cada grupo tem um botão para o fechar no canto superior-direito. Este botão não só remove o grupo como também fecha todos os seus separadores.">
+<!ENTITY howto.close.description2 "Se fechares um grupo por acidente, podes carregar no botão Anular o Fecho do Grupo para o restaurar antes de saires do modo de Grupos de Separadores.">
+<!ENTITY howto.pinned.caption "Separadores de Aplicação nos Grupos de Separadores">
+<!ENTITY howto.pinned.description "Separadores de Aplicação abertos são representados pelos seus ícones à direita de todos os grupos.">
+<!ENTITY howto.credits "Este painel é baseado num artigo originalmente em support.mozilla.org, escrito por esta boa gente:">

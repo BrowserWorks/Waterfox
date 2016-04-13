@@ -1,0 +1,13 @@
+<!ENTITY preferences.button "Preferences">
+<!ENTITY preferences.undo.label "Undo">
+<!ENTITY preferences.redo.label "Redo">
+<!ENTITY preferences.undoredo.tooltip "Quickly revert any change made to the add-on's preferences, including importing from a file and restoring defaults.">
+<!ENTITY preferences.import.label "Import from file...">
+<!ENTITY preferences.import.tooltip "Load add-on preferences from a previously exported file on your computer.">
+<!ENTITY preferences.export.label "Export to file...">
+<!ENTITY preferences.export.tooltip "Save your add-on preferences into an external file for safekeeping.">
+<!ENTITY preferences.reset.label "Restore defaults">
+<!ENTITY preferences.reset.tooltip.a "All preferences are rolled back to their default values, as if the add-on was fresh installed.">
+<!ENTITY preferences.reset.tooltip.b "Button placements in toolbars are unaffected, to revert those use the Restore Defaults button in Customize view instead.">
+<!ENTITY preferences.jumpto.label "Jump to preference...">
+<!ENTITY preferences.jumpto.tooltip "Type in a word and you'll be taken to the first preference that contains it.">

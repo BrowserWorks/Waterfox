@@ -1,0 +1,14 @@
+<!ENTITY moveToGroup.label "移动到分组">
+<!ENTITY moveToGroup.accesskey "M">
+<!ENTITY moveToNewGroup.label "新建分组">
+<!ENTITY viewTabGroups.label "Tab Groups">
+<!ENTITY viewTabGroups.tooltip "为你的标签页分组">
+<!ENTITY viewTabGroups.accesskey "G">
+<!ENTITY buttonSearchTabs.label "搜索标签页群组">
+<!ENTITY buttonExitTabGroups.label "离开标签页群组">
+<!ENTITY buttonOptionsTabGroups.label "修改标签页群组首选项">
+<!ENTITY buttonHelpTabGroups.label "如何使用标签页群组">
+<!ENTITY sessionRestoreNotice.label "浏览器在下次启动时才能恢复你的标签页及分组！点击这里修复该问题。">
+<!ENTITY sessionRestoreNotice.dismiss.tooltip "在重新启动浏览器之前忽略此警告">
+<!ENTITY sessionRestoreAutoChanged.label "你的标签页和分组将在浏览器下次启动时自动恢复。">
+<!ENTITY sessionRestorePrivate.label "你打开的是隐私窗口，在关闭前你无法恢复标签页和分组。">

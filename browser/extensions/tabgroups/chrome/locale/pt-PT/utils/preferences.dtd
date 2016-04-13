@@ -1,0 +1,13 @@
+<!ENTITY preferences.button "Preferências">
+<!ENTITY preferences.undo.label "Anular">
+<!ENTITY preferences.redo.label "Repetir">
+<!ENTITY preferences.undoredo.tooltip "Reverte rapidamente qualquer alteração feita às preferências do extra, incluindo importar de ficheiro e restaurar as predefinições.">
+<!ENTITY preferences.import.label "Importar de ficheiro...">
+<!ENTITY preferences.import.tooltip "Carrega preferências do extra guardadas num ficheiro no computador.">
+<!ENTITY preferences.export.label "Exportar para ficheiro...">
+<!ENTITY preferences.export.tooltip "Guarda as preferências do extra num ficheiro externo como cópia de segurança.">
+<!ENTITY preferences.reset.label "Restaurar predefinições">
+<!ENTITY preferences.reset.tooltip.a "Todas as preferências são restauradas para os seus valores de origem, como se o extra tivesse sido acabado de instalar.">
+<!ENTITY preferences.reset.tooltip.b "Colocações de botões em barras de ferramentas não são afectadas, para reverter essas usa antes o botao Restaurar Predefinições na vista de Costumização.">
+<!ENTITY preferences.jumpto.label "Ir para preferência...">
+<!ENTITY preferences.jumpto.tooltip "Insere uma palavra e a página leva-te à primeira preferência que a contém.">

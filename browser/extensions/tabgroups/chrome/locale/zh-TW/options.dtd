@@ -1,0 +1,45 @@
+<!ENTITY pane.tabGroups.label "分頁群組">
+<!ENTITY pane.session.label "備份／復原">
+<!ENTITY cat.general.label "一般">
+<!ENTITY cat.keyboardshortcuts.label "鍵盤快捷鍵">
+<!ENTITY cat.backup.label "備份您的分頁群組">
+<!ENTITY cat.restore.label "復原分頁群組">
+<!ENTITY cat.clear.label "清除分頁群組">
+<!ENTITY opt.animateZoom.label2 "動畫轉變">
+<!ENTITY opt.animateZoom.tooltip "當進入與離開分頁群組模式時，平滑轉換縮小目前分頁至群組模式，並當離開群組模式時放大至分頁。">
+<!ENTITY opt.tabViewKeyset.label "進入與離開群組模式">
+<!ENTITY opt.nextGroupKeyset.label "切換到下一個群組">
+<!ENTITY opt.previousGroupKeyset.label "切換到上一個群組">
+<!ENTITY sessionRestore.caption "將分頁群組保留至跨越重新啟動">
+<!ENTITY sessionRestore.description "為了讓 Firefox 記住您的分頁群組，它需要在工作階段間復原您的視窗與分頁。否則您就必需在每次關閉並重開瀏覽器時復原您的群組。">
+<!ENTITY sessionRestore.button.label "顯示上次 Firefox 啟動後，我的視窗與分頁">
+<!ENTITY sessionRestore.button.tooltip.a "這就跟在 Firefox 的選項變更偏好設定「當 Firefox 啟動」到「顯示自上次以來，我的視窗與分頁」">
+<!ENTITY sessionRestore.button.tooltip.b "若您之後再度變更該選項，您將會在重新啟動瀏覽器後再度失去您的分頁群組，直到您變更回來後或是直到您再次按下此按鈕。">
+<!ENTITY session.backup.button "建立備份檔">
+<!ENTITY session.backup.description "匯出您的分頁群組到備份檔中以作為保險櫃使用，這樣您就可以在梢後的時間，在需要的時候復原他們。">
+<!ENTITY session.backup.autoloaded "儲存的檔案已被載入。請確認您的群組與分頁已經正確地備份了。">
+<!ENTITY session.backup.alldata.checkbox.label "備份工作階段資料">
+<!ENTITY session.backup.alldata.checkbox.tooltip.a "這將會在稍後當從備份檔中復原群組時很有用。否則，您只能復原群組本身與在其中開啟的分頁。">
+<!ENTITY session.backup.alldata.checkbox.tooltip.b "若您不在乎保留分頁歷史、表單或是其他任何從您分頁而來的資料，那您就不需要這個。">
+<!ENTITY session.backup.alldata.caution.a "警告！這也將會匯出所有目前工作階段的資料。">
+<!ENTITY session.backup.alldata.caution.b "請注意可以存取這個檔案的人，這將會包含所有從您的分頁而來的資訊，包含了頁面歷史、表單資料以及其他私密且可能有潛在性敏感的資訊。">
+<!ENTITY session.restore.load.button "載入備份檔案">
+<!ENTITY session.restore.migrated.button "載入遷移備份">
+<!ENTITY session.restore.migrated.tooltip "這是由 Firefox 在它更新時建立的備份，同時也移除了它原生的分頁群組。它應該包含在更新前您所有的群組與分頁。">
+<!ENTITY session.restore.import.button "匯入選定的項目到此視窗中">
+<!ENTITY session.restore.import.tooltip.a "在按下按鈕後，您可以進入分頁群組模式並像平常一樣排列新匯入的群組。">
+<!ENTITY session.restore.import.tooltip.b "注意您只能匯入新群組，您不能匯入分頁到已有的群組中。這代表了若您匯入同一個群組兩次，您會得到重覆的群組。在這種情況下，只要進入分頁群組模式，然後關閉您不想要的那一個就可以了。">
+<!ENTITY session.restore.description "載入包含您想要復原的分頁群組的備份檔案。然後選擇您要的群組與分頁。他們將會載入到這個視窗，然後您就像其他的分頁與群組一樣，可以存取、排列與自訂。">
+<!ENTITY session.restore.invalid "選定的檔案無效、毀損或是不包含任合分頁群組資訊。">
+<!ENTITY session.restore.finished "選定的群組已匯入此視窗。現在進入分頁群組模式就可以像任何其他的群組一樣存取。">
+<!ENTITY session.restore.list.check "匯入">
+<!ENTITY session.restore.list.items "群組與分頁">
+<!ENTITY session.clear.button "清除群組資料">
+<!ENTITY session.clear.tooltip "您應該不需要這個，它只是較簡單且較安全的進入分頁群組模式並關閉您不想要的群組。">
+<!ENTITY session.clear.description.a "從目前的工作階段清除所有群組資料。">
+<!ENTITY session.clear.description.f "只在您知道這在幹嘛的時候做這個！">
+<!ENTITY session.clear.description.b "請在繼續前備份您的群組與分頁。">
+<!ENTITY session.clear.description.c "這將會重新載入您所有的瀏覽器視窗及它們的可見分頁">
+<!ENTITY session.clear.description.g "，並移除在非活躍群組中的所有分頁。">
+<!ENTITY session.clear.description.d "警告：這個動作將無法復原！">
+<!ENTITY session.clear.description.e "您確定您要繼續嗎？">

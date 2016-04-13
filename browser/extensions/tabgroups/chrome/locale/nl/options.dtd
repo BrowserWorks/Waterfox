@@ -1,0 +1,45 @@
+<!ENTITY pane.tabGroups.label "Tabbladgroepen">
+<!ENTITY pane.session.label "Back-up maken / herstellen">
+<!ENTITY cat.general.label "Algemeen">
+<!ENTITY cat.keyboardshortcuts.label "Sneltoetsen">
+<!ENTITY cat.backup.label "Back-up van tabbladgroepen maken">
+<!ENTITY cat.restore.label "Tabbladgroepen herstellen">
+<!ENTITY cat.clear.label "Tabbladgroepen wissen">
+<!ENTITY opt.animateZoom.label2 "Vloeiende overgangen">
+<!ENTITY opt.animateZoom.tooltip "Vloeiende overgangen bij betreden en verlaten van de tabbladgroepenmodus, door van het huidige tabblad naar de groepenmodus uit te zoomen, en bij verlaten van de groepenmodus weer naar het tabblad in te zoomen.">
+<!ENTITY opt.tabViewKeyset.label "Groepenmodus betreden en verlaten">
+<!ENTITY opt.nextGroupKeyset.label "Wisselen naar de volgende groep">
+<!ENTITY opt.previousGroupKeyset.label "Wisselen naar de vorige groep">
+<!ENTITY sessionRestore.caption "Tabbladgroepen behouden bij herstarten">
+<!ENTITY sessionRestore.description "Om uw tabbladen door Firefox te laten onthouden, dient het uw vensters en tabbladen tussen sessies te herstellen. Anders dient u uw groepen telkens bij het sluiten en heropenen van de browser opnieuw samen te stellen.">
+<!ENTITY sessionRestore.button.label "Mijn tabbladen en vensters van de vorige keer tonen als Firefox start">
+<!ENTITY sessionRestore.button.tooltip.a "Dit is hetzelfde als het wijzigen van de voorkeur ‘Als Firefox start’ naar ‘Mijn vensters en tabbladen van de vorige keer tonen’ in de opties van Firefox.">
+<!ENTITY sessionRestore.button.tooltip.b "Als u die optie daar later wijzigt, verliest u opnieuw uw tabbladgroepen bij het herstarten van de browser, totdat u dit terugzet of opnieuw op deze knop klikt.">
+<!ENTITY session.backup.button "Back-upbestand maken">
+<!ENTITY session.backup.description "Exporteer uw tabbladgroepen naar een back-upbestand voor bewaring, zodat u ze wanneer nodig op een later tijdstip kunt herstellen.">
+<!ENTITY session.backup.autoloaded "Het opgeslagen bestand is hieronder geladen. Bevestig dat de back-up van uw groepen en tabbladen is gelukt.">
+<!ENTITY session.backup.alldata.checkbox.label "Back-up van sessiegegevens maken">
+<!ENTITY session.backup.alldata.checkbox.tooltip.a "Dit kan handig zijn voor later bij het herstellen van groepen vanuit dit back-upbestand. Anders zult u alleen de groepen zelf kunnen herstellen, en de tabbladen die er momenteel in zijn geopend.">
+<!ENTITY session.backup.alldata.checkbox.tooltip.b "Als u geen belang hecht aan het behouden van geschiedenis, formulieren of andere gegevens van uw tabbladen, hebt u dit niet nodig.">
+<!ENTITY session.backup.alldata.caution.a "Waarschuwing! Hierdoor worden ook alle gegevens van de huidige sessie geëxporteerd.">
+<!ENTITY session.backup.alldata.caution.b "Wees voorzitchtig met wie er toegang heeft tot dit bestand; het bevat gegevens van al uw tabbladen, waaronder paginageschiedenis, formuliergegevens en andere persoonlijke en mogelijk gevoelige gegevens.">
+<!ENTITY session.restore.load.button "Back-upbestand laden">
+<!ENTITY session.restore.migrated.button "Migratieback-up laden">
+<!ENTITY session.restore.migrated.tooltip "Dit is de back-up die door Firefox werd aangemaakt toen het werd bijgewerkt, volgend op de verwijdering van de ingebouwde Tabbladgroepen. Deze zou al uw groepen en tabbladen van voor de update moeten bevatten.">
+<!ENTITY session.restore.import.button "Geselecteerde items naar dit venster importeren">
+<!ENTITY session.restore.import.tooltip.a "Nadat u op deze knop klikt, kunt u naar de tabbladgroepenmodus wisselen en de nieuw geïmporteerde groepen ordenen zoals gebruikelijk.">
+<!ENTITY session.restore.import.tooltip.b "Houd er rekening mee dat u alleen nieuwe groepen kunt importeren; u kunt geen tabbladen in bestaande groepen importeren. Dit houdt in dat u vrij eenvoudig dubbele groepen kunt overhouden als u dezelfde groep twee keer importeert. Ga in dat geval naar de tabbladgroepenmodus en sluit de niet-gewenste groepen.">
+<!ENTITY session.restore.description "Laad een back-upbestand dat de tabbladgroepen die u wilt herstellen bevat. Kies daarna de gewenste groepen en tabbladen. Deze worden in dit venster geladen, zodat u ze net als alle andere kunt benaderen, schikken en aanpassen.">
+<!ENTITY session.restore.invalid "Het geselecteerde bestand is ongeldig, beschadigd, of bevat geen tabbladgroepengegevens.">
+<!ENTITY session.restore.finished "De geselecteerde groepen zijn naar dit venster geïmporteerd. Ga nu naar de tabbladgroepenmodus om ze net als alle andere groepen te benaderen.">
+<!ENTITY session.restore.list.check "Importeren">
+<!ENTITY session.restore.list.items "Groepen en tabbladen">
+<!ENTITY session.clear.button "Groepengegevens wissen">
+<!ENTITY session.clear.tooltip "Dit zou nooit nodig hoeven te zijn; het is eenvoudiger en veiliger om de tabbladgroepenmodus te openen en niet-gewenste groepen te sluiten.">
+<!ENTITY session.clear.description.a "Alle groepengegevens van de huidige sessie wissen.">
+<!ENTITY session.clear.description.f "Doe dit alleen als u weet wat u doet!">
+<!ENTITY session.clear.description.b "Maak een back-up van uw groepen en tabbladen voordat u verdergaat.">
+<!ENTITY session.clear.description.c "Hierdoor worden al uw browservensters en hun zichtbare tabbladen opnieuw geladen">
+<!ENTITY session.clear.description.g ", en alle tabbladen in niet-actieve groepen verwijderd.">
+<!ENTITY session.clear.description.d "Waarschuwing: deze actie kan niet ongedaan worden gemaakt!">
+<!ENTITY session.clear.description.e "Weet u zeker dat u wilt doorgaan?">

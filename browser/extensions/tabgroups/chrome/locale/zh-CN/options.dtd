@@ -1,0 +1,45 @@
+<!ENTITY pane.tabGroups.label "标签页群组">
+<!ENTITY pane.session.label "备份/恢复">
+<!ENTITY cat.general.label "常规">
+<!ENTITY cat.keyboardshortcuts.label "键盘快捷键">
+<!ENTITY cat.backup.label "备份你的标签页群组">
+<!ENTITY cat.restore.label "恢复标签页群组">
+<!ENTITY cat.clear.label "清除标签页群组">
+<!ENTITY opt.animateZoom.label2 "Animate transitions">
+<!ENTITY opt.animateZoom.tooltip "进入和离开标签页群组模式时显示平滑过渡效果，即进入标签页群组时将当前标签页缩入，离开标签页群组时放大。">
+<!ENTITY opt.tabViewKeyset.label "进入和离开标签页群组模式">
+<!ENTITY opt.nextGroupKeyset.label "切换到下一个分组">
+<!ENTITY opt.previousGroupKeyset.label "切换到上一个分组">
+<!ENTITY sessionRestore.caption "浏览器重启动时保留标签页群组">
+<!ENTITY sessionRestore.description "如要 Firefox 记住你的标签页群组，你需要开启在两次浏览会话之间恢复窗口和标签页的功能。否则你需要在每次浏览器关闭并重新打开后重建你的标签页群组。">
+<!ENTITY sessionRestore.button.label "Firefox 启动时显示上次打开的窗口和标签页">
+<!ENTITY sessionRestore.button.tooltip.a "此选项和修改“Firefox 启动时：显示上次打开的窗口和标签页”是同样的效果。">
+<!ENTITY sessionRestore.button.tooltip.b "如果你之后修改了此选项，重启浏览器后标签页群组又会丢失，除非你修改回此选项或点击这里的按钮。">
+<!ENTITY session.backup.button "创建备份文件">
+<!ENTITY session.backup.description "将你的标签页群组导出为一个备份文件便于合理保存，以便在有需要的时候恢复它们。">
+<!ENTITY session.backup.autoloaded "下面载入的是所保存的文件，请确认你的分组和标签页已正确备份。">
+<!ENTITY session.backup.alldata.checkbox.label "备份浏览会话数据">
+<!ENTITY session.backup.alldata.checkbox.tooltip.a "此选项或许在你从备份文件恢复分组时有帮助。否则你只能恢复分组本身及其当前所打开的标签页。">
+<!ENTITY session.backup.alldata.checkbox.tooltip.b "如果你不想保留标签页历史、表单或其他数据，你可以不勾选此项。">
+<!ENTITY session.backup.alldata.caution.a "警告！这么做会一并导出当前所有浏览会话数据。">
+<!ENTITY session.backup.alldata.caution.b "请小心此文件可被他人访问，文件包含你标签页里的信息，包括网页历史、表单数据和其他私人的或潜在的敏感信息。">
+<!ENTITY session.restore.load.button "载入备份文件">
+<!ENTITY session.restore.migrated.button "载入迁移备份文件">
+<!ENTITY session.restore.migrated.tooltip "此文件是在 Firefox 更新后删除原生标签页群组时创建的备份文件，包含你更新前所有的分组和标签页。">
+<!ENTITY session.restore.import.button "将所选的项目导入到此窗口">
+<!ENTITY session.restore.import.tooltip.a "点击此按钮后，你可以进入标签页群组模式并按往常那样调整新导入的分组。">
+<!ENTITY session.restore.import.tooltip.b "请注意你只能导入新的分组，而不能将标签页导入已有的分组。这表示在你两次导入相同的分组时你可以轻松找到重复的分组。这时只要进入标签页群组模式并关闭你不需要的分组。">
+<!ENTITY session.restore.description "载入你要恢复标签页群组的备份文件，然后选择你要导入的分组和标签页。数据会在此窗口中载入，你可以在此访问、调整和自定义它们。">
+<!ENTITY session.restore.invalid "所选文件无效、损坏或不包含任何标签页群组信息。">
+<!ENTITY session.restore.finished "所选的分组已导入到此窗口中，你可以进入标签页群组模式并像其他分组一样访问它们。">
+<!ENTITY session.restore.list.check "导入">
+<!ENTITY session.restore.list.items "分组和标签页">
+<!ENTITY session.clear.button "清除分组数据">
+<!ENTITY session.clear.tooltip "最好是都不需要进行此操作，对于进入标签页分组并关闭你不需要的分组，它只是一个更简单和安全的方式。">
+<!ENTITY session.clear.description.a "清除当前浏览会话中的所有分组数据。">
+<!ENTITY session.clear.description.f "请在确切知晓的情况下进行此项操作！">
+<!ENTITY session.clear.description.b "请在操作前备份你的分组和标签页。">
+<!ENTITY session.clear.description.c "这么做会重新载入所有的浏览器窗口及可见的标签页">
+<!ENTITY session.clear.description.g "，并删除非活动分组的所有标签页。">
+<!ENTITY session.clear.description.d "警告：此项操作无法撤销！">
+<!ENTITY session.clear.description.e "你确定要执行操作吗？">

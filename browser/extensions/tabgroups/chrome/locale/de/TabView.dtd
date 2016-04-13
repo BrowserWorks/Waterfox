@@ -1,0 +1,14 @@
+<!ENTITY moveToGroup.label "In Gruppe verschieben">
+<!ENTITY moveToGroup.accesskey "V">
+<!ENTITY moveToNewGroup.label "Neue Gruppe">
+<!ENTITY viewTabGroups.label "Tabgruppen">
+<!ENTITY viewTabGroups.tooltip "Tabs gruppieren">
+<!ENTITY viewTabGroups.accesskey "G">
+<!ENTITY buttonSearchTabs.label "Nach Tabgruppen suchen">
+<!ENTITY buttonExitTabGroups.label "Tabgruppen schließen">
+<!ENTITY buttonOptionsTabGroups.label "Tabgruppen-Einstellungen ändern">
+<!ENTITY buttonHelpTabGroups.label "Wie man Tabgruppen verwendet">
+<!ENTITY sessionRestoreNotice.label "Ihre Tabs und Gruppen werden beim nächsten Browserstart nicht wiederhergestellt! Klicken Sie hier, um das zu ändern.">
+<!ENTITY sessionRestoreNotice.dismiss.tooltip "Diese Warnung bis zum nächsten Neustart des Browsers unterdrücken">
+<!ENTITY sessionRestoreAutoChanged.label "Ihre Tabs und Gruppen werden automatisch beim nächsten Browserstart wiederhergestellt.">
+<!ENTITY sessionRestorePrivate.label "Die Tabs und Gruppen dieses privaten Fensters können nach dem Schließen nicht wiederhergestellt werden.">

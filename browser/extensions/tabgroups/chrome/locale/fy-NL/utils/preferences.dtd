@@ -1,0 +1,13 @@
+<!ENTITY preferences.button "Foarkarren">
+<!ENTITY preferences.undo.label "Ungedien meitsje">
+<!ENTITY preferences.redo.label "Opnij útfiere">
+<!ENTITY preferences.undoredo.tooltip "Fluch oanbrochte wizigingen oan de foarkarren fan de add-on ûngedien meitsje, wêrûnder it ymportearjen fan in bestân út en it weromsetten fan standertwearden.">
+<!ENTITY preferences.import.label "Ymportearje út bestân…">
+<!ENTITY preferences.import.tooltip "Add-on-foarkarren fan in earder eksportearre bestân op jo kompjûter lade.">
+<!ENTITY preferences.export.label "Eksportearje nei bestân…">
+<!ENTITY preferences.export.tooltip "Jo add-on-foarkarren nei in ekstern bestân bewarje foar bewarring.">
+<!ENTITY preferences.reset.label "Standertwearden weromsette">
+<!ENTITY preferences.reset.tooltip.a "Alle foarkarren wurde nei harren standertwearden weromset, as oft de add-on krekt ynstallearre is.">
+<!ENTITY preferences.reset.tooltip.b "Pleatsingen fan knoppen yn arkbalken wurden net beynfloede; brûk hjirfoar de knop Standertynstellingen werstelle yn de werjefte Oanpasse.">
+<!ENTITY preferences.jumpto.label "Nei foarkar…">
+<!ENTITY preferences.jumpto.tooltip "Typ in wurd, en jo wurde nei de earste foarkar dy\'t it befettet brocht.">

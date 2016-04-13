@@ -1,0 +1,31 @@
+<!ENTITY howto.pane.label "如何使用">
+<!ENTITY howto.overview.a "分頁群組是用來依工作分類群組化的分頁的絕佳方法。舉例來說，您可能會有一個群組是與找禮物相關，而另一個群組是與您的線上付款相關。嘗試為您平常在線上所作的事建立群組，並使用分頁群組在它們之間切換。這是一個讓事情有條不紊的好方法。">
+<!ENTITY howto.create.caption "我要如何建立分頁群組？">
+<!ENTITY howto.create.step1 "不論是透過工具列按鈕或鍵盤快捷鍵都可以進入分頁群組檢視。">
+<!ENTITY howto.create.step2a "當您第一次進入分頁群組檢視，您將會看到在一個群組中有著您所有分頁的縮圖預覽。要建立一個新的群組，只要拖曳一個分頁到由框框繪製出的群組外。">
+<!ENTITY howto.create.step2b "您可以繼續加入分頁到該新群組以及建立更多群組。">
+<!ENTITY howto.create.step3 "當您完成後，只要點選分頁以離開檢視。您將會回到 Firefox，您點選的分頁將會回到前景，且只有該分頁所在的群組可見。">
+<!ENTITY howto.switch.caption "我要如何在分頁群組間切換？">
+<!ENTITY howto.switch.description "在分頁群組間切換相當簡單。只要進入分頁群組檢視，然後在您要檢視的分頁群組上點選。您點選的分頁將會回到前景，且只有該分頁所在的群組可見。">
+<!ENTITY howto.search.caption "我要如何在我的分頁間搜尋？">
+<!ENTITY howto.search.step1 "進入分頁群組檢視">
+<!ENTITY howto.search.step2a "點選在視窗右邊的搜尋按鈕，就會把您帶到搜尋框，然後您只需要開始鍵入您要尋找的分頁名稱。">
+<!ENTITY howto.search.step2b "或只要開始打字就會自動開始搜尋。">
+<!ENTITY howto.search.step3 "在您輸入時，符合您搜尋的分頁將會被突顯。只要點選分頁以選取它，然後就會回到 Firefox。">
+<!ENTITY howto.search.final "若您開啟了多於一個的 Firefox 視窗，您將會看到從其他視窗而來的符合搜尋條件的分頁列在視窗底部。點選其中的一個就會切換到該 Firefox 視窗、分頁與群組。">
+<!ENTITY howto.organize.caption "我要如何組織我的分頁群組？">
+<!ENTITY howto.organize.description1 "分頁群組可以很容易的重新調整大小、重新排列及命名。當您在某個群組中完成工作後，您可以關閉它並一次關閉其中的所有分頁。">
+<!ENTITY howto.organize.description2 "進入分頁群組檢視。">
+<!ENTITY howto.resize.caption "調整分頁群組大小">
+<!ENTITY howto.resize.description1 "在群組的右下角點選並拖曳調整大小可以讓群組更大或更小。當您調整群組的大小時，該群組中的分頁將會相對應的變大或變小。">
+<!ENTITY howto.resize.description2 "若您讓群組變得足夠小，分頁們將會互相堆疊起來。在堆疊下面，將會出現一個預覽按鈕。點選預覽按鈕以觀看有哪些分頁在堆疊內而不需要變更群組的大小。">
+<!ENTITY howto.rearrange.caption "重新排列分頁群組">
+<!ENTITY howto.rearrange.description "在一個空的區域上點選並沿著群組的邊邊或底部拖曳來讓它在螢幕四周移動。">
+<!ENTITY howto.name.caption "命名分頁群組">
+<!ENTITY howto.name.description "點選在群組頂部的鉛筆圖示，並輸入要給它的名字。然後只要按下 Enter 或在視窗其它區域點擊就可以了。">
+<!ENTITY howto.close.caption "關閉分頁群組">
+<!ENTITY howto.close.description1 "每個分頁群組的右上角都有一個關閉按鈕。點選它將會關閉該群組以及其中所有的分頁。">
+<!ENTITY howto.close.description2 "若您意外地關祕了一個分頁群組，您可以點選復原關閉的群組按鈕以在離開前恢復它。">
+<!ENTITY howto.pinned.caption "在分頁群組中釘選分頁">
+<!ENTITY howto.pinned.description "當您與分頁群組一同使用釘選分頁，它們將會在每個分頁群組的右邊以它們的網頁圖示表示。">
+<!ENTITY howto.credits "這些說明是基於原先在 support.mozilla.org 上的一篇文章，由以下這些人所編寫：">

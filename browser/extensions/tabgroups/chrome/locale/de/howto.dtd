@@ -1,0 +1,31 @@
+<!ENTITY howto.pane.label "Anleitung">
+<!ENTITY howto.overview.a "Tabgruppen sind gut dafür geeignet, Tabs nach Aufgaben zu sortieren. Zum Beispiel können Sie eine Tabgruppe für die Suche nach einem Geschenk und eine andere für das Bezahlen Ihrer Rechnungen haben. Erstellen Sie Gruppen für Dinge, die Sie häufig im Internet tun und verwenden Sie die Tabgruppen, um zwischen verschiedenen Aufgaben zu wechseln. So können Sie leicht den Überblick behalten.">
+<!ENTITY howto.create.caption "Wie erstelle ich eine Tabgruppe?">
+<!ENTITY howto.create.step1 "Wechseln Sie über die Schaltfläche in der Symbolleiste oder das Tastaturkürzel in die Tabgruppen-Ansicht.">
+<!ENTITY howto.create.step2a "Wenn Sie zum ersten Mal in die Tabgruppen-Ansicht wechseln, sehen Sie Vorschaubilder von allen Tabs in einer Gruppe. Um eine neue Gruppe zu erstellen, können Sie einfach einen Tab aus der Gruppe ziehen, woraufhin ein Feld um diesen entsteht.">
+<!ENTITY howto.create.step2b "Sie können weitere Tabs zu dieser neuen Gruppe hinzufügen oder weitere Gruppen erstellen.">
+<!ENTITY howto.create.step3 "Wenn Sie fertig sind, klicken Sie einfach auf einen Tab, um die Ansicht zu verlassen. Sie kehren nun zu Firefox zurück, wobei der Tab, auf den Sie geklickt haben, aktiv ist und nur die Tabs der entsprechenden Gruppe sichtbar sind.">
+<!ENTITY howto.switch.caption "Wie wechsle ich zwischen verschiedenen Tabgruppen?">
+<!ENTITY howto.switch.description "Sie können leicht zwischen den verschiedenen Tabgruppen wechseln. Gehen Sie dazu in die Tabgruppen-Ansicht und klicken Sie auf die gewünschte Tabgruppe. Der Tab, auf den Sie geklickt haben, ist daraufhin aktiv und nur die Tabs dieser Gruppe sind sichtbar.">
+<!ENTITY howto.search.caption "Wie durchsuche ich meine Tabs?">
+<!ENTITY howto.search.step1 "Wechseln Sie in die Tabgruppenansicht.">
+<!ENTITY howto.search.step2a "Klicken Sie auf die Suchschaltfläche am rechten Rand des Fensters, um das Suchfeld einzublenden und beginnen Sie dann damit, den Namen des gesuchten Tabs einzugeben.">
+<!ENTITY howto.search.step2b "Sie können auch einfach mit dem Tippen beginnen, um die Suche automatisch zu starten.">
+<!ENTITY howto.search.step3 "Während des Tippens werden die am Besten zu Ihrer Suchanfrage passenden Tabs hervorgehoben. Klicken Sie einfach auf einen Tab, um diesen auszuwählen und in Firefox anzuzeigen.">
+<!ENTITY howto.search.final "Wenn Sie mehr als ein Firefox-Fenster geöffnet haben, sehen Sie an der Unterseite des Fensters möglicherweise Tabs aus anderen Fenstern, die zu Ihrer Suchanfrage passen. Wenn Sie darauf klicken werden Sie zum entsprechenden Tab in der entsprechenden Gruppe im entsprechenden Fenster weitergeleitet.">
+<!ENTITY howto.organize.caption "Wie verwalte ich meine Tabgruppen?">
+<!ENTITY howto.organize.description1 "Tabgruppen können leicht vergrößert, verkleinert, neu angeorgnet und umbenannt werden. Wenn Sie eine Tabgruppe nicht mehr benötigen, können Sie diese schließen und dadurch alle enthaltenen Tabs auf einmal loswerden.">
+<!ENTITY howto.organize.description2 "Wechseln Sie in die Tabgruppenansicht.">
+<!ENTITY howto.resize.caption "Die Größe von Tabgruppen ändern">
+<!ENTITY howto.resize.description1 "Klicken Sie auf das Vergrößerungs-/Verkleinerungs-Symbol in der rechten unteren Ecke einer Tabgruppe und ziehen Sie daran, um die Größe der Gruppe zu ändern. Die Tabs werden dann auch entsprechend größer oder kleiner dargestellt.">
+<!ENTITY howto.resize.description2 "Wenn Sie die Tabgruppe klein genug machen, werden die Tabs übereinander gestapelt. Darunter ist dann eine Vorschau-Schaltfläche zu sehen. Klicken Sie auf diese, um einen Überblick über die Tabs in dieser Gruppe zu erhalten, ohne die Größe ändern zu müssen.">
+<!ENTITY howto.rearrange.caption "Tabgruppen neu anordnen">
+<!ENTITY howto.rearrange.description "Klicken Sie auf einen freien Bereich an den Seiten oder an der Unterseite einer Gruppe und ziehen Sie sie herum, um sie an eine andere Stelle auf dem Bildschirm zu befördern.">
+<!ENTITY howto.name.caption "Tabgruppen benennen">
+<!ENTITY howto.name.description "Klicken Sie oben in einer Tabgruppe neben das Stiftsymbol und geben Sie einen Namen für die Gruppe ein. Drücken Sie anschließend einfach die Eingabetaste oder klicken Sie in einen anderen Bereich des Fensters.">
+<!ENTITY howto.close.caption "Tabgruppen schließen">
+<!ENTITY howto.close.description1 "Jede Tabgruppe hat in der rechten oberen Ecke eine Schaltfläche zum Schließen. Durch Klicken auf diese wird die Tabgruppe mit all ihren Tabs geschlossen.">
+<!ENTITY howto.close.description2 "Wenn Sie eine Tabgruppe aus Versehen geschlossen haben, können Sie vor dem Verlassen dieser Ansicht auf die Schaltfläche zum Rückgängigmachen des Schließvorgangs einer Tabgruppe klicken, um diese wiederherzustellen.">
+<!ENTITY howto.pinned.caption "Angeheftete Tabs in Tabgruppen">
+<!ENTITY howto.pinned.description "Wenn Sie angeheftete Tabs in Tabgruppen verwenden, werden diese rechts von der entsprechenden Tabgruppe durch das Symbol der jeweiligen Website gekennzeichnet.">
+<!ENTITY howto.credits "Diese Seite basiert auf einem Artikel, der ursprünglich auf support.mozilla.org von diesen netten Menschen verfasst wurde:">

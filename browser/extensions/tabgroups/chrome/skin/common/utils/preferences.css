@@ -1,0 +1,174 @@
+@namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+
+/* for now since the add-ons have no RTL locales, force LTR direction in the preferences pane,
+   this can be easily overriden in defaults.css by importing a stylesheet included in the RTL locale folder */
+page { direction: ltr; }
+
+.header,
+caption {
+	text-shadow: 0 1px 0 rgba(255,255,255,0.75);
+	color: #484848;
+}
+
+/* for checkboxes displayed horizontally */
+.smallindent {
+	-moz-margin-end: 14px;
+}
+groupbox label.smallindent {
+	-moz-margin-end: 14px !important;
+}
+
+/* nodes that aren't visible but should still occupy their space in the layout */
+[invisible="true"] { visibility: hidden; }
+
+/* make sure any disabled box, node, link, text, selector or whatever doesn't have any interaction */
+[disabled="true"] {
+	pointer-events: none;
+	-moz-user-focus: ignore;
+}
+
+/* trick to get colorpickers to work in in-content preferences */
+colorpicker * {
+	-moz-user-select: none;
+}
+
+/* for the DnDprefs system */
+
+[DnDpref],
+[DnDpref] * {
+	-moz-user-select: none;
+}
+
+[DnDpref] {
+	display: block;
+	flex: 1 1 auto;
+	overflow: auto;
+	min-height: 3em;
+	padding: 4px;
+}
+
+[DnDpref] .DnDpref-item-container {
+	width: 9em;
+	position: relative;
+	overflow: hidden;
+	margin-top: 3px;
+	margin-bottom: 3px;
+	padding-top: 1.3em;
+}
+
+[DnDpref] .DnDpref-item-container.DnDpref-area-placeholder,
+[DnDpref] .DnDpref-item-container .DnDpref-icon-container > * {
+	pointer-events: none;
+}
+
+[DnDpref] .DnDpref-item-container:not(.DnDpref-area-placeholder) {
+	transition: transform .3s ease-in-out, background-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+[DnDpref] .DnDpref-item-container:not(.DnDpref-area-placeholder):not([itemDisabled="true"]) {
+	cursor: grab;
+}
+
+[DnDpref] .DnDpref-item-container:not(.DnDpref-area-placeholder):not([itemDisabled="true"])[mousedown] {
+	cursor: grabbing;
+}
+
+[DnDpref] .DnDpref-item-container:not(.DnDpref-area-placeholder):hover {
+	background-color: rgba(17,73,104,.15);
+	box-shadow: 0 0 3px rgba(17,73,104,.15);
+}
+
+[DnDpref] .DnDpref-item-container:not([hidden="true"]) {
+	display: inline-block;
+}
+
+[DnDpref] .DnDpref-item-container[notransition] {
+	transition: none;
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-icon-container {
+	/* icon margin + icon height + label height + label margin */
+	min-height: calc(53px + 2.2em);
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-icon {
+	height: 32px;
+	width: 32px;
+	margin: 8px calc((9em - 32px) / 2);
+	transition: transform .3s cubic-bezier(.6, 2, .75, 1.5);
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-icon[disabled="true"] {
+	filter: grayscale(100%);
+}
+
+[DnDpref] .DnDpref-item-container[mousedown] .DnDpref-icon {
+	transform: scale(1.3);
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-enable-container {
+	position: absolute;
+	top: 0px;
+	left: 4px;
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-enable:hover {
+	cursor: default;
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-enable .checkbox-label-box,
+[DnDpref] .DnDpref-item-container.DnDpref-area-placeholder .DnDpref-enable {
+	display: none;
+}
+
+[DnDpref] .DnDpref-item-container .DnDpref-label {
+	line-height: 1.1;
+	min-height: 2.2em;
+	max-height: 2.2em;
+	clip: rect(auto, auto, 2.3em, auto);
+	margin-top: 2px;
+	margin-bottom: 3px;
+	text-align: center;
+	-moz-hyphens: auto;
+}
+
+/* footer controls */
+
+page[currentcategory="paneAbout"] #main-footer {
+	visibility: collapse;
+}
+
+#main-footer {
+	font-size: 1.25em;
+	padding: 15px 40px;
+	box-shadow: inset 0 1px 0 #c1c1c1;
+}
+
+#main-footer button .button-box {
+	padding-top: 5px;
+	padding-bottom: 5px;
+	-moz-padding-start: 13px !important;
+}
+
+#main-footer button .dropmarker-icon {
+	width: 16px;
+	height: 16px;
+	transform: rotate(180deg);
+}
+
+#main-footer textbox[notfound] {
+	background-color: #f66;
+	color: white;
+}
+
+.highlight {
+	background-color: rgb(255,255,0);
+	box-shadow: 0 0 1px 4px rgb(255,255,0);
+	transition: background-color 150ms, box-shadow 150ms;
+}
+
+/* I hope this doesn't break anything... */
+checkbox.highlight,
+radio.highlight {
+	-moz-appearance: none;
+}

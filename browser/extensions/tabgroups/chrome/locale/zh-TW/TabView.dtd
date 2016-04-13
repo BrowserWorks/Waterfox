@@ -1,0 +1,14 @@
+<!ENTITY moveToGroup.label "移動至群組">
+<!ENTITY moveToGroup.accesskey "M">
+<!ENTITY moveToNewGroup.label "新群組">
+<!ENTITY viewTabGroups.label "分頁群組">
+<!ENTITY viewTabGroups.tooltip "將您的分頁分組">
+<!ENTITY viewTabGroups.accesskey "G">
+<!ENTITY buttonSearchTabs.label "搜尋分頁群組">
+<!ENTITY buttonExitTabGroups.label "結束分頁群組">
+<!ENTITY buttonOptionsTabGroups.label "變更分頁群組偏好設定">
+<!ENTITY buttonHelpTabGroups.label "如何使用分頁群組">
+<!ENTITY sessionRestoreNotice.label "您的分頁與群組將不會在下次您啟動瀏覽器時回復！點選以修復它。">
+<!ENTITY sessionRestoreNotice.dismiss.tooltip "忽略此警告直到我重新啟動瀏覽器">
+<!ENTITY sessionRestoreAutoChanged.label "您的分頁與群組將會在下次您啟動瀏覽器時回復。">
+<!ENTITY sessionRestorePrivate.label "這是一個隱私視窗，您的分頁與群組在您關閉它後將不會儲存。">

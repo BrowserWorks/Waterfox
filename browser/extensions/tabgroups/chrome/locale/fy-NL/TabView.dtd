@@ -1,0 +1,14 @@
+<!ENTITY moveToGroup.label "Ferpleatse nei groep">
+<!ENTITY moveToGroup.accesskey "r">
+<!ENTITY moveToNewGroup.label "Nije groep">
+<!ENTITY viewTabGroups.label "Ljepblêdgroepen">
+<!ENTITY viewTabGroups.tooltip "Jo ljepblêden groepearje">
+<!ENTITY viewTabGroups.accesskey "L">
+<!ENTITY buttonSearchTabs.label "Ljepblêdgroepen trochsykje">
+<!ENTITY buttonExitTabGroups.label "Ljepblêdgroepen slute">
+<!ENTITY buttonOptionsTabGroups.label "Foarkarren fan ljepblêdgroepen wizigje">
+<!ENTITY buttonHelpTabGroups.label "Ljepblêdgroepen brûke">
+<!ENTITY sessionRestoreNotice.label "Jo ljepblêden en groepen sille de folgjende kear dat jo de browser starte net wersteld wurde! Klik hjir om dit yn oarder te meitsjen.">
+<!ENTITY sessionRestoreNotice.dismiss.tooltip "Dizze warskôging fuortsmite oant ik de browser werstart">
+<!ENTITY sessionRestoreAutoChanged.label "Jo ljepblêden en groepen sille de folgjende kear dat jo de browser starte automatys wersteld wurde.">
+<!ENTITY sessionRestorePrivate.label "Dit is in priveefinster; jo ljepblêden en groepen kinne net wersteld wurde sa gau as jo it slute.">

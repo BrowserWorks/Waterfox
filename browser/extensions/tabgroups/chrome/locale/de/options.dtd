@@ -1,0 +1,45 @@
+<!ENTITY pane.tabGroups.label "Tabgruppen">
+<!ENTITY pane.session.label "Sichern / Wiederherstellen">
+<!ENTITY cat.general.label "Allgemein">
+<!ENTITY cat.keyboardshortcuts.label "Tastaturkürzel">
+<!ENTITY cat.backup.label "Tabgruppen sichern">
+<!ENTITY cat.restore.label "Tabgruppen wiederherstellen">
+<!ENTITY cat.clear.label "Tabgruppen entfernen">
+<!ENTITY opt.animateZoom.label2 "Übergänge animieren">
+<!ENTITY opt.animateZoom.tooltip "Weiche Übergänge beim Betreten oder Verlassen des Tabgruppen-Modus', indem aus dem aktuellen Tab beim Betreten des Modus' herausgezoomt und beim verlassen des Modus' wieder wieder hineingezoomen wird.">
+<!ENTITY opt.tabViewKeyset.label "Gruppen-Modus starten oder beenden">
+<!ENTITY opt.nextGroupKeyset.label "Zur nächsten Gruppe wechseln">
+<!ENTITY opt.previousGroupKeyset.label "Zur vorherigen Gruppe wechseln">
+<!ENTITY sessionRestore.caption "Tabgruppen beim Neustart des Browsers behalten">
+<!ENTITY sessionRestore.description "Damit sich Firefox an Ihre Tabgruppen erinnert, müssen Fenster und Tabs sitzungsübergreifend gespeichert werden. Ansonsten müssen Sie jedes Mal, wenn Sie den Browser schließen und wieder neu öffnen, Ihre Gruppen wiederherstellen.">
+<!ENTITY sessionRestore.button.label "Fenster und Tabs der letzten Sitzung anzeigen, wenn Firefox startet">
+<!ENTITY sessionRestore.button.tooltip.a "Dies macht das gleiche, als wenn Sie die Option „Wenn Firefox gestartet wird”  in den Firefox-Einstellungen auf „Fenster und Tabs der letzten Sitzung anzeigen“ stellen.">
+<!ENTITY sessionRestore.button.tooltip.b "Wenn Sie diese Einstellung dort nachträglich ändern, verlieren Sie Ihre Tabgruppen beim Neustarten des Browsers erneut, bis Sie sie zurückändern oder wieder auf diese Schaltfläche klicken.">
+<!ENTITY session.backup.button "Backup-Datei erstellen">
+<!ENTITY session.backup.description "Exportieren Sie Ihre Tabgruppen sicherheitshalber in eine Sicherungsdatei, damit Sie sie später gegebenenfalls wiederherstellen können.">
+<!ENTITY session.backup.autoloaded "Die gespeicherte Datei wurde unten geladen. Bestätigen Sie bitte, dass Ihre Gruppen und Tabs korrekt gesichert wurden.">
+<!ENTITY session.backup.alldata.checkbox.label "Sitzungsdaten sichern">
+<!ENTITY session.backup.alldata.checkbox.tooltip.a "Dies kann später nützlich sein, wenn Sie Gruppen aus dieser Sicherungsdatei wiederherstellen. Andernfalls können Sie ausschließlich die Gruppen selbst und die darin geöffneten Tabs wiederherstellen.">
+<!ENTITY session.backup.alldata.checkbox.tooltip.b "Wenn es Sie nicht stört, dass Tabverlauf, Formulare und andere Daten von Ihren Tabs gespeichert werden, müssen Sie dies nicht tun.">
+<!ENTITY session.backup.alldata.caution.a "Warnung! Dies exportiert alle Daten der aktuellen Sitzung.">
+<!ENTITY session.backup.alldata.caution.b "Achten Sie darauf, wer Zugriff auf diese Datei hat. Sie enthält Daten Ihrer Tabs wie die Surf-Chronik, Formulardaten und andere pivate, potentiell sensible Daten.">
+<!ENTITY session.restore.load.button "Sicherungsdatei laden">
+<!ENTITY session.restore.migrated.button "Migrationssicherung laden">
+<!ENTITY session.restore.migrated.tooltip "Dies ist die Sicherungsdatei, die von Firefox beim Aktualisieren aufgrund der Entfernung der alten Tabgruppen-Funktion erstellt wurde. Sie sollte alle Ihre Gruppen und Tabs von vor der Aktualisierung beinhalten.">
+<!ENTITY session.restore.import.button "Ausgewählte Elemente in dieses Fenster kopieren">
+<!ENTITY session.restore.import.tooltip.a "Nachdem Sie auf diese Schaltfläche geklickt haben, können Sie in den Tabgruppen-Modus wechseln und die neu importierten Gruppen wie gewohnt anordnen.">
+<!ENTITY session.restore.import.tooltip.b "Bitte beachten Sie, dass Sie nur neue Gruppen importieren können. Wenn Sie die gleiche Gruppe zweimal importieren, existiert diese anschließend entsprechend doppelt. In diesem Fall können Sie in den Tabgruppen-Modus wechseln und die nicht benötigten Gruppen schließen.">
+<!ENTITY session.restore.description "Laden Sie eine die wiederherzustellenden Tabgruppen enthaltende Sicherungsdatei. Wählen Sie anschließend die gewünschten Tabs und Gruppen aus. Sie werden dann in dieses Fenster geladen, damit Sie darauf zugreifen, sie anordnen und sie anpassen können.">
+<!ENTITY session.restore.invalid "Die ausgewählte Datei ist ungültig, beschädigt oder enthält keine Tabgruppen-Daten.">
+<!ENTITY session.restore.finished "Die ausgewählten Gruppen wurden in dieses Fenster importiert. Wechseln Sie jetzt in den Tabgruppen-Modus, um auf sie ganz normal zugreifen zu können.">
+<!ENTITY session.restore.list.check "Importieren">
+<!ENTITY session.restore.list.items "Gruppen und Tabs">
+<!ENTITY session.clear.button "Gruppendaten entfernen">
+<!ENTITY session.clear.tooltip "Sie sollten dies nie tun müssen: Es ist einfacher und sicherer in den Tabgruppen-Modus zu wechseln und nicht mehr benötigte Gruppen zu schließen.">
+<!ENTITY session.clear.description.a "Alle Gruppendaten der aktuellen Sitzung entfernen.">
+<!ENTITY session.clear.description.f "Tun Sie dies nur, wenn Sie wissen, was Sie tun!">
+<!ENTITY session.clear.description.b "Sichern Sie Ihre Gruppen und Tabs bevor Sie fortfahren.">
+<!ENTITY session.clear.description.c "Dies lädt alle Browserfenster und deren sichtbare Tabs neu">
+<!ENTITY session.clear.description.g "und entfernt alle Tabs in inaktiven Gruppen.">
+<!ENTITY session.clear.description.d "Warnung: Dies kann nicht rückgängig gemacht werden!">
+<!ENTITY session.clear.description.e "Möchten Sie wirklich fortfahren?">

@@ -1,0 +1,13 @@
+<!ENTITY preferences.button "偏好設定">
+<!ENTITY preferences.undo.label "復原">
+<!ENTITY preferences.redo.label "重做">
+<!ENTITY preferences.undoredo.tooltip "快速復原任何對擴充套件偏好設定所作出的變更，包含從檔案匯入及回復至預設值。">
+<!ENTITY preferences.import.label "從檔案匯入...">
+<!ENTITY preferences.import.tooltip "自在您電腦上先前匯出的檔案載入擴充套件偏好設定。">
+<!ENTITY preferences.export.label "匯出至檔案...">
+<!ENTITY preferences.export.tooltip "將您的擴充套件偏好設定儲存到外部檔案以供留存。">
+<!ENTITY preferences.reset.label "回復至預設值">
+<!ENTITY preferences.reset.tooltip.a "所有偏好設定將會退復原至預設值，就像這個擴充套件是全新安裝的一樣。">
+<!ENTITY preferences.reset.tooltip.b "在工具列上的按鈕位置不會被影響，要復原那些請使用在自訂裡面的「回復至預設值」按鈕。">
+<!ENTITY preferences.jumpto.label "跳至偏好設定...">
+<!ENTITY preferences.jumpto.tooltip "輸入文字，然後您就會被帶到第一個包含該文字的偏好設定。">
