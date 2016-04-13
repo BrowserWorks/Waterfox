@@ -21,7 +21,7 @@
 
 pref("keyword.enabled", false);
 pref("general.useragent.locale", "chrome://global/locale/intl.properties");
-pref("general.useragent.compatMode.firefox", false);
+pref("general.useragent.compatMode.firefox", true);
 
 // This pref exists only for testing purposes. In order to disable all
 // overrides by default, don't initialize UserAgentOverrides.jsm.
@@ -29,7 +29,7 @@ pref("general.useragent.site_specific_overrides", true);
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
-pref("general.warnOnAboutConfig", true);
+pref("general.warnOnAboutConfig", false);
 
 // maximum number of dated backups to keep at any time
 pref("browser.bookmarks.max_backups",       5);
@@ -144,7 +144,7 @@ pref("dom.workers.enabled", true);
 // The number of workers per domain allowed to run concurrently.
 pref("dom.workers.maxPerDomain", 20);
 
-pref("dom.serviceWorkers.enabled", false);
+pref("dom.serviceWorkers.enabled", true);
 
 // Allow service workers to intercept network requests using the fetch event
 pref("dom.serviceWorkers.interception.enabled", false);
@@ -178,11 +178,7 @@ pref("dom.performance.enable_notify_performance_timing", false);
 
 // Whether the Gamepad API is enabled
 pref("dom.gamepad.enabled", true);
-#ifdef RELEASE_BUILD
-pref("dom.gamepad.non_standard_events.enabled", false);
-#else
 pref("dom.gamepad.non_standard_events.enabled", true);
-#endif
 
 // Whether the KeyboardEvent.code is enabled
 pref("dom.keyboardevent.code.enabled", true);
@@ -486,10 +482,10 @@ pref("media.getusermedia.audiocapture.enabled", false);
 
 // TextTrack support
 pref("media.webvtt.enabled", true);
-pref("media.webvtt.regions.enabled", false);
+pref("media.webvtt.regions.enabled", true);
 
 // AudioTrack and VideoTrack support
-pref("media.track.enabled", false);
+pref("media.track.enabled", true);
 
 // Whether to enable MediaSource support.
 pref("media.mediasource.enabled", true);
@@ -497,15 +493,15 @@ pref("media.mediasource.enabled", true);
 pref("media.mediasource.mp4.enabled", true);
 
 #if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
-pref("media.mediasource.webm.enabled", false);
+pref("media.mediasource.webm.enabled", true);
 #else
 pref("media.mediasource.webm.enabled", true);
 #endif
 pref("media.mediasource.webm.audio.enabled", true);
 
 #ifdef MOZ_WEBSPEECH
-pref("media.webspeech.recognition.enable", false);
-pref("media.webspeech.synth.enabled", false);
+pref("media.webspeech.recognition.enable", true);
+pref("media.webspeech.synth.enabled", true);
 #endif
 #ifdef MOZ_WEBM_ENCODER
 pref("media.encoder.webm.enabled", true);
@@ -753,9 +749,9 @@ pref("ui.scrollToClick", 0);
 
 // provide ability to turn on support for canvas focus rings
 pref("canvas.focusring.enabled", true);
-pref("canvas.customfocusring.enabled", false);
-pref("canvas.hitregions.enabled", false);
-pref("canvas.filters.enabled", false);
+pref("canvas.customfocusring.enabled", true);
+pref("canvas.hitregions.enabled", true);
+pref("canvas.filters.enabled", true);
 // Add support for canvas path objects
 pref("canvas.path.enabled", true);
 pref("canvas.capturestream.enabled", true);
@@ -831,11 +827,11 @@ pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
+pref("toolkit.telemetry.server", "");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
-pref("toolkit.telemetry.server_owner", "Mozilla");
+pref("toolkit.telemetry.server_owner", "");
 // Information page about telemetry (temporary ; will be about:telemetry in the end)
-pref("toolkit.telemetry.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#telemetry");
+pref("toolkit.telemetry.infoURL", "");
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
 pref("toolkit.telemetry.debugSlowSql", false);
@@ -1120,7 +1116,7 @@ pref("content.sink.pending_event_mode", 0);
 pref("privacy.popups.disable_from_plugins", 2);
 
 // send "do not track" HTTP header, disabled by default
-pref("privacy.donottrackheader.enabled",    false);
+pref("privacy.donottrackheader.enabled",    true);
 // Enforce tracking protection in all modes
 pref("privacy.trackingprotection.enabled",  false);
 // Enforce tracking protection in Private Browsing mode
@@ -2523,11 +2519,7 @@ pref("layout.spammy_warnings.enabled", false);
 pref("layout.float-fragments-inside-column.enabled", true);
 
 // Is support for the Web Animations API enabled?
-#ifdef RELEASE_BUILD
-pref("dom.animations-api.core.enabled", false);
-#else
 pref("dom.animations-api.core.enabled", true);
-#endif
 
 // pref to permit users to make verified SOAP calls by default
 pref("capability.policy.default.SOAPCall.invokeVerifySourceHeader", "allAccess");
@@ -2661,11 +2653,7 @@ pref("svg.marker-improvements.enabled", true);
 // See https://svgwg.org/svg2-draft/single-page.html#types-SVGBoundingBoxOptions
 pref("svg.new-getBBox.enabled", false);
 
-#ifdef RELEASE_BUILD
-pref("svg.transform-box.enabled", false);
-#else
 pref("svg.transform-box.enabled", true);
-#endif // RELEASE_BUILD
 
 // Default font types and sizes by locale
 pref("font.default.ar", "sans-serif");
@@ -4850,11 +4838,7 @@ pref("captivedetect.maxWaitingTime", 5000);
 pref("captivedetect.pollingTime", 3000);
 pref("captivedetect.maxRetryCount", 5);
 
-#ifdef RELEASE_BUILD
-pref("dom.forms.inputmode", false);
-#else
 pref("dom.forms.inputmode", true);
-#endif
 
 // InputMethods for soft keyboards in B2G
 pref("dom.mozInputMethod.enabled", false);
@@ -5086,7 +5070,7 @@ pref("media.gmp-manager.url", "https://aus5.mozilla.org/update/3/GMP/%VERSION%/%
 // final certificate and all certificates the connection is redirected to before
 // the final certificate for the url specified in the |media.gmp-manager.url|
 // preference must be built-in.
-pref("media.gmp-manager.cert.requireBuiltIn", true);
+pref("media.gmp-manager.cert.requireBuiltIn", false);
 
 // The |media.gmp-manager.certs.| preference branch contains branches that are
 // sequentially numbered starting at 1 that contain attribute name / value
@@ -5104,7 +5088,7 @@ pref("media.gmp-manager.cert.requireBuiltIn", true);
 // the |media.gmp-manager.url.override| preference should ONLY be used for testing.
 // IMPORTANT! app.update.certs.* prefs should also be updated if these
 // are updated.
-pref("media.gmp-manager.cert.checkAttributes", true);
+pref("media.gmp-manager.cert.checkAttributes", false);
 pref("media.gmp-manager.certs.1.issuerName", "CN=DigiCert SHA2 Secure Server CA,O=DigiCert Inc,C=US");
 pref("media.gmp-manager.certs.1.commonName", "aus5.mozilla.org");
 pref("media.gmp-manager.certs.2.issuerName", "CN=thawte SSL CA - G2,O=\"thawte, Inc.\",C=US");
